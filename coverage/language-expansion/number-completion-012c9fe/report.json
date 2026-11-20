@@ -1,0 +1,1114 @@
+{
+  "schema": "semantic-v8-supplementary-completion-regression/1",
+  "status": "passed",
+  "startedAt": "2026-11-20T17:38:05.241Z",
+  "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "pinsBefore": {
+    "producer": {
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "status": ""
+    },
+    "consumer": {
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "status": ""
+    }
+  },
+  "sourceSuite": {
+    "path": "test/semantic-protocol-completion-source-v8.test.js",
+    "sha256": "76073d741eb3189209e490843e913571f8635e1ac7fc7c94cf27a7c77af1d6a7"
+  },
+  "sourcePolicy": {
+    "schema": "semantic-native-policy/8",
+    "consumerRepository": "werg/megatoken",
+    "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+    "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7"
+  },
+  "nativePolicy": {
+    "schema": "semantic-native-policy/8",
+    "consumerRepository": "werg/megatoken",
+    "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+    "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7"
+  },
+  "externalPolicy": {
+    "file": "native-policy.json",
+    "sha256": "481d763ac583aee751f9826f1f5aa0f2b9ff583dd442a99b5bcc1a367cfbcccc",
+    "reason": "Exact unchanged copy of the committed matching policy; no contract, tokenizer or consumer fields are replaced."
+  },
+  "contractBytesSha256": "4e8242c443fff11011e71539bbe5279aa81c62e53db3c0d88335ac9e2032d273",
+  "tokenizerEvidence": {
+    "identity": {
+      "name": "inclusionAI/Ling-3.0-tiny",
+      "revision": "9a98e35fe1c9ee255f78dd64771c7ae15a799481",
+      "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+      "fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "codecVersion": "raw-byte-bpe-v2;binary=single-byte-v1;special-merges=masked",
+      "vocabSize": 157184
+    },
+    "qualification": {
+      "schema": "semantic-codec-meter/1",
+      "status": "qualified",
+      "scope": "byte-exact-token-meter-only",
+      "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+      "consumerClean": true,
+      "codecSourceSha256": "98de7394ae3c4f47fe86d2767aaa103b8569de446913135a89de914af7182200",
+      "pythonVersion": "3.12.14",
+      "tokenizersVersion": "0.23.3",
+      "nativeAdmission": false
+    }
+  },
+  "declared": 13,
+  "cases": [
+    {
+      "id": "caller-catch",
+      "body": "const o={valueOf(){throw 7;}};try{return Number(o);}catch(e){return e+1;}",
+      "expected": [
+        "num",
+        8
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "caller-catch",
+        "family": "number-cleanup-source:caller-catch",
+        "source": "\"use strict\";function run(){const o={valueOf(){throw 7;}};try{return Number(o);}catch(e){return e+1;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "caller-finally-override",
+      "body": "const o={valueOf(){throw 7;}};try{return Number(o);}finally{return 11;}",
+      "expected": [
+        "num",
+        11
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "caller-finally-override",
+        "family": "number-cleanup-source:caller-finally-override",
+        "source": "\"use strict\";function run(){const o={valueOf(){throw 7;}};try{return Number(o);}finally{return 11;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "callback-finally-override",
+      "body": "const o={valueOf(){try{throw 7;}finally{return 5;}}};return Number(o);",
+      "expected": [
+        "num",
+        5
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "callback-finally-override",
+        "family": "number-cleanup-source:callback-finally-override",
+        "source": "\"use strict\";function run(){const o={valueOf(){try{throw 7;}finally{return 5;}}};return Number(o);}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "callback-finally-throws",
+      "body": "const o={valueOf(){try{return 3;}finally{throw 9;}}};try{return Number(o);}catch(e){return e+1;}",
+      "expected": [
+        "num",
+        10
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "callback-finally-throws",
+        "family": "number-cleanup-source:callback-finally-throws",
+        "source": "\"use strict\";function run(){const o={valueOf(){try{return 3;}finally{throw 9;}}};try{return Number(o);}catch(e){return e+1;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "nested-conversion-cleanup",
+      "body": "let log=\"\";const inner={valueOf(){log+=\"i\";throw 5;}};const outer={valueOf(){try{return Number(inner);}finally{log+=\"f\";}}};try{Number(outer);}catch(e){return log+e;}",
+      "expected": [
+        "str",
+        "if5"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "nested-conversion-cleanup",
+        "family": "number-cleanup-source:nested-conversion-cleanup",
+        "source": "\"use strict\";function run(){let log=\"\";const inner={valueOf(){log+=\"i\";throw 5;}};const outer={valueOf(){try{return Number(inner);}finally{log+=\"f\";}}};try{Number(outer);}catch(e){return log+e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "nested-catch-preserves-outer-return",
+      "body": "const o={valueOf(){throw 7;}};try{return 2;}finally{try{Number(o);}catch(e){const handled=e+1;}}",
+      "expected": [
+        "num",
+        2
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "nested-catch-preserves-outer-return",
+        "family": "number-cleanup-source:nested-catch-preserves-outer-return",
+        "source": "\"use strict\";function run(){const o={valueOf(){throw 7;}};try{return 2;}finally{try{Number(o);}catch(e){const handled=e+1;}}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "callback-catches-helper",
+      "body": "function fail(){throw 7;}const o={valueOf(){try{return fail();}catch(e){return e-4;}}};return Number(o);",
+      "expected": [
+        "num",
+        3
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "callback-catches-helper",
+        "family": "number-cleanup-source:callback-catches-helper",
+        "source": "\"use strict\";function run(){function fail(){throw 7;}const o={valueOf(){try{return fail();}catch(e){return e-4;}}};return Number(o);}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "no-fallback-after-throw",
+      "body": "let log=\"\";const o={valueOf(){log+=\"v\";throw 7;},toString(){log+=\"wrong\";return \"3\";}};try{Number(o);}catch(e){return log+e;}",
+      "expected": [
+        "str",
+        "v7"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "no-fallback-after-throw",
+        "family": "number-cleanup-source:no-fallback-after-throw",
+        "source": "\"use strict\";function run(){let log=\"\";const o={valueOf(){log+=\"v\";throw 7;},toString(){log+=\"wrong\";return \"3\";}};try{Number(o);}catch(e){return log+e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "normal-cleanup",
+      "body": "let total=0;const o={valueOf(){try{return 3;}finally{total+=10;}}};return Number(o)+total;",
+      "expected": [
+        "num",
+        13
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "normal-cleanup",
+        "family": "number-cleanup-source:normal-cleanup",
+        "source": "\"use strict\";function run(){let total=0;const o={valueOf(){try{return 3;}finally{total+=10;}}};return Number(o)+total;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "later-conversion",
+      "body": "const bad={valueOf(){throw 7;}};const good={valueOf(){return 3;}};try{Number(bad);}catch{}return Number(good);",
+      "expected": [
+        "num",
+        3
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "later-conversion",
+        "family": "number-cleanup-source:later-conversion",
+        "source": "\"use strict\";function run(){const bad={valueOf(){throw 7;}};const good={valueOf(){return 3;}};try{Number(bad);}catch{}return Number(good);}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "retained-cleanup-boundaries",
+      "body": "const o={valueOf(){try{throw 7;}finally{const n=2+3;}}};try{return 2;}finally{try{Number(o);}catch(e){const handled=e+1;}}",
+      "expected": [
+        "num",
+        2
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "retained-cleanup-boundaries",
+        "family": "number-cleanup-source:retained-cleanup-boundaries",
+        "source": "\"use strict\";function run(){const o={valueOf(){try{throw 7;}finally{const n=2+3;}}};try{return 2;}finally{try{Number(o);}catch(e){const handled=e+1;}}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "handler-scope-control",
+      "body": "const o={valueOf(){throw 7;}};try{Number(o);}catch(e){return e;}",
+      "expected": [
+        "num",
+        7
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "handler-scope-control",
+        "family": "number-cleanup-source:handler-scope-control",
+        "source": "\"use strict\";function run(){const o={valueOf(){throw 7;}};try{Number(o);}catch(e){return e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "symbol-cleanup-refusal",
+      "body": "try{throw Symbol(\"x\");}catch(e){return 3;}",
+      "expectedSource": "unsupported",
+      "fixture": {
+        "id": "symbol-cleanup-refusal",
+        "family": "number-cleanup-source:symbol-cleanup-refusal",
+        "source": "\"use strict\";function run(){try{throw Symbol(\"x\");}catch(e){return 3;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    }
+  ],
+  "scope": "Twelve positive Number callback catch/finally cases and the one explicit Symbol cleanup refusal in the current declared focused suite. The former loop-target refusal was removed from this source suite when supported; historical fourteen-case results retain their original inventory. Supplementary only; frozen broad-population results retain their original producer/consumer pins and denominators.",
+  "nativeDeadlineMs": 120000,
+  "optimizerSteps": 0,
+  "modelExecution": "unmeasured",
+  "nativeServing": "unmeasured",
+  "defaultPromotion": "not-qualified",
+  "rows": [
+    {
+      "id": "caller-catch",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:38:05.248Z",
+      "sourceResult": "caller-catch.result.json",
+      "sourceArtifact": "caller-catch.source.json",
+      "nativeReceipt": "caller-catch.native.json",
+      "admittedArtifact": "caller-catch.admitted.json",
+      "nativeInput": "caller-catch.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 20,
+        "contexts": 18,
+        "generatedRecords": 18,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 7,
+        "protocolRecords": 11,
+        "generatedTokens": 657,
+        "observedTokens": 19135
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 52
+      },
+      "costArtifact": "caller-catch.costs.json",
+      "flatTokens": {
+        "generated": 657,
+        "terminal": 18,
+        "observedAndContext": 18453,
+        "peakContext": 1154,
+        "cumulativeContext": 18453,
+        "total": 19128,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          8
+        ]
+      },
+      "finishedAt": "2026-11-20T17:38:32.276Z"
+    },
+    {
+      "id": "caller-finally-override",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:38:32.280Z",
+      "sourceResult": "caller-finally-override.result.json",
+      "sourceArtifact": "caller-finally-override.source.json",
+      "nativeReceipt": "caller-finally-override.native.json",
+      "admittedArtifact": "caller-finally-override.admitted.json",
+      "nativeInput": "caller-finally-override.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 17,
+        "contexts": 15,
+        "generatedRecords": 15,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 4,
+        "protocolRecords": 11,
+        "generatedTokens": 520,
+        "observedTokens": 15558
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 43
+      },
+      "costArtifact": "caller-finally-override.costs.json",
+      "flatTokens": {
+        "generated": 520,
+        "terminal": 15,
+        "observedAndContext": 14917,
+        "peakContext": 1148,
+        "cumulativeContext": 14917,
+        "total": 15452,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          11
+        ]
+      },
+      "finishedAt": "2026-11-20T17:38:57.277Z"
+    },
+    {
+      "id": "callback-finally-override",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:38:57.294Z",
+      "sourceResult": "callback-finally-override.result.json",
+      "sourceArtifact": "callback-finally-override.source.json",
+      "nativeReceipt": "callback-finally-override.native.json",
+      "admittedArtifact": "callback-finally-override.admitted.json",
+      "nativeInput": "callback-finally-override.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 19,
+        "contexts": 17,
+        "generatedRecords": 17,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 5,
+        "protocolRecords": 12,
+        "generatedTokens": 571,
+        "observedTokens": 17726
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 49
+      },
+      "costArtifact": "callback-finally-override.costs.json",
+      "flatTokens": {
+        "generated": 571,
+        "terminal": 17,
+        "observedAndContext": 17115,
+        "peakContext": 1164,
+        "cumulativeContext": 17115,
+        "total": 17703,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          5
+        ]
+      },
+      "finishedAt": "2026-11-20T17:39:22.515Z"
+    },
+    {
+      "id": "callback-finally-throws",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:39:22.515Z",
+      "sourceResult": "callback-finally-throws.result.json",
+      "sourceArtifact": "callback-finally-throws.source.json",
+      "nativeReceipt": "callback-finally-throws.native.json",
+      "admittedArtifact": "callback-finally-throws.admitted.json",
+      "nativeInput": "callback-finally-throws.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 22,
+        "contexts": 20,
+        "generatedRecords": 20,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 9,
+        "protocolRecords": 11,
+        "generatedTokens": 889,
+        "observedTokens": 21812
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 59
+      },
+      "costArtifact": "callback-finally-throws.costs.json",
+      "flatTokens": {
+        "generated": 889,
+        "terminal": 20,
+        "observedAndContext": 21081,
+        "peakContext": 1210,
+        "cumulativeContext": 21081,
+        "total": 21990,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          10
+        ]
+      },
+      "finishedAt": "2026-11-20T17:39:40.437Z"
+    },
+    {
+      "id": "nested-conversion-cleanup",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:39:40.482Z",
+      "sourceResult": "nested-conversion-cleanup.result.json",
+      "sourceArtifact": "nested-conversion-cleanup.source.json",
+      "nativeReceipt": "nested-conversion-cleanup.native.json",
+      "admittedArtifact": "nested-conversion-cleanup.admitted.json",
+      "nativeInput": "nested-conversion-cleanup.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 38,
+        "contexts": 36,
+        "generatedRecords": 36,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 14,
+        "protocolRecords": 21,
+        "generatedTokens": 1429,
+        "observedTokens": 54437
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 131
+      },
+      "costArtifact": "nested-conversion-cleanup.costs.json",
+      "flatTokens": {
+        "generated": 1429,
+        "terminal": 36,
+        "observedAndContext": 53447,
+        "peakContext": 1739,
+        "cumulativeContext": 53447,
+        "total": 54912,
+        "detailedShare": 0.9783065080475857
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "if5"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:40:23.032Z"
+    },
+    {
+      "id": "nested-catch-preserves-outer-return",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:40:23.050Z",
+      "sourceResult": "nested-catch-preserves-outer-return.result.json",
+      "sourceArtifact": "nested-catch-preserves-outer-return.source.json",
+      "nativeReceipt": "nested-catch-preserves-outer-return.native.json",
+      "admittedArtifact": "nested-catch-preserves-outer-return.admitted.json",
+      "nativeInput": "nested-catch-preserves-outer-return.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 24,
+        "contexts": 22,
+        "generatedRecords": 22,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 11,
+        "protocolRecords": 11,
+        "generatedTokens": 1027,
+        "observedTokens": 23953
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 65
+      },
+      "costArtifact": "nested-catch-preserves-outer-return.costs.json",
+      "flatTokens": {
+        "generated": 1027,
+        "terminal": 22,
+        "observedAndContext": 23283,
+        "peakContext": 1194,
+        "cumulativeContext": 23283,
+        "total": 24332,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          2
+        ]
+      },
+      "finishedAt": "2026-11-20T17:41:06.659Z"
+    },
+    {
+      "id": "callback-catches-helper",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:41:06.666Z",
+      "sourceResult": "callback-catches-helper.result.json",
+      "sourceArtifact": "callback-catches-helper.source.json",
+      "nativeReceipt": "callback-catches-helper.native.json",
+      "admittedArtifact": "callback-catches-helper.admitted.json",
+      "nativeInput": "callback-catches-helper.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 27,
+        "contexts": 25,
+        "generatedRecords": 25,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 9,
+        "protocolRecords": 16,
+        "generatedTokens": 855,
+        "observedTokens": 28506
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 73
+      },
+      "costArtifact": "callback-catches-helper.costs.json",
+      "flatTokens": {
+        "generated": 855,
+        "terminal": 25,
+        "observedAndContext": 27808,
+        "peakContext": 1299,
+        "cumulativeContext": 27808,
+        "total": 28688,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          3
+        ]
+      },
+      "finishedAt": "2026-11-20T17:41:41.171Z"
+    },
+    {
+      "id": "no-fallback-after-throw",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:41:41.174Z",
+      "sourceResult": "no-fallback-after-throw.result.json",
+      "sourceArtifact": "no-fallback-after-throw.source.json",
+      "nativeReceipt": "no-fallback-after-throw.native.json",
+      "admittedArtifact": "no-fallback-after-throw.admitted.json",
+      "nativeInput": "no-fallback-after-throw.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 26,
+        "contexts": 24,
+        "generatedRecords": 24,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 9,
+        "protocolRecords": 14,
+        "generatedTokens": 903,
+        "observedTokens": 36915
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 88
+      },
+      "costArtifact": "no-fallback-after-throw.costs.json",
+      "flatTokens": {
+        "generated": 903,
+        "terminal": 24,
+        "observedAndContext": 35679,
+        "peakContext": 1678,
+        "cumulativeContext": 35679,
+        "total": 36606,
+        "detailedShare": 0.9656699889258029
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "v7"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:42:24.873Z"
+    },
+    {
+      "id": "normal-cleanup",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:42:24.879Z",
+      "sourceResult": "normal-cleanup.result.json",
+      "sourceArtifact": "normal-cleanup.source.json",
+      "nativeReceipt": "normal-cleanup.native.json",
+      "admittedArtifact": "normal-cleanup.admitted.json",
+      "nativeInput": "normal-cleanup.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 23,
+        "contexts": 21,
+        "generatedRecords": 21,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 8,
+        "protocolRecords": 12,
+        "generatedTokens": 738,
+        "observedTokens": 26246
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 64
+      },
+      "costArtifact": "normal-cleanup.costs.json",
+      "flatTokens": {
+        "generated": 738,
+        "terminal": 21,
+        "observedAndContext": 25408,
+        "peakContext": 1382,
+        "cumulativeContext": 25408,
+        "total": 26167,
+        "detailedShare": 0.9579945799457995
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          13
+        ]
+      },
+      "finishedAt": "2026-11-20T17:42:55.576Z"
+    },
+    {
+      "id": "later-conversion",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:42:55.577Z",
+      "sourceResult": "later-conversion.result.json",
+      "sourceArtifact": "later-conversion.source.json",
+      "nativeReceipt": "later-conversion.native.json",
+      "admittedArtifact": "later-conversion.admitted.json",
+      "nativeInput": "later-conversion.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 31,
+        "contexts": 29,
+        "generatedRecords": 29,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 7,
+        "protocolRecords": 22,
+        "generatedTokens": 976,
+        "observedTokens": 39713
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 90
+      },
+      "costArtifact": "later-conversion.costs.json",
+      "flatTokens": {
+        "generated": 976,
+        "terminal": 29,
+        "observedAndContext": 38941,
+        "peakContext": 1552,
+        "cumulativeContext": 38941,
+        "total": 39946,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          3
+        ]
+      },
+      "finishedAt": "2026-11-20T17:43:37.726Z"
+    },
+    {
+      "id": "retained-cleanup-boundaries",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:43:37.730Z",
+      "sourceResult": "retained-cleanup-boundaries.result.json",
+      "sourceArtifact": "retained-cleanup-boundaries.source.json",
+      "nativeReceipt": "retained-cleanup-boundaries.native.json",
+      "admittedArtifact": "retained-cleanup-boundaries.admitted.json",
+      "nativeInput": "retained-cleanup-boundaries.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 28,
+        "contexts": 26,
+        "generatedRecords": 26,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 15,
+        "protocolRecords": 11,
+        "generatedTokens": 1406,
+        "observedTokens": 29600
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 77
+      },
+      "costArtifact": "retained-cleanup-boundaries.costs.json",
+      "flatTokens": {
+        "generated": 1406,
+        "terminal": 26,
+        "observedAndContext": 28836,
+        "peakContext": 1265,
+        "cumulativeContext": 28836,
+        "total": 30268,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          2
+        ]
+      },
+      "finishedAt": "2026-11-20T17:44:13.948Z"
+    },
+    {
+      "id": "handler-scope-control",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:44:13.958Z",
+      "sourceResult": "handler-scope-control.result.json",
+      "sourceArtifact": "handler-scope-control.source.json",
+      "nativeReceipt": "handler-scope-control.native.json",
+      "admittedArtifact": "handler-scope-control.admitted.json",
+      "nativeInput": "handler-scope-control.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 19,
+        "contexts": 17,
+        "generatedRecords": 17,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 6,
+        "protocolRecords": 11,
+        "generatedTokens": 605,
+        "observedTokens": 17808
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 49
+      },
+      "costArtifact": "handler-scope-control.costs.json",
+      "flatTokens": {
+        "generated": 605,
+        "terminal": 17,
+        "observedAndContext": 17189,
+        "peakContext": 1151,
+        "cumulativeContext": 17189,
+        "total": 17811,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          7
+        ]
+      },
+      "finishedAt": "2026-11-20T17:44:44.311Z"
+    },
+    {
+      "id": "symbol-cleanup-refusal",
+      "expectedSource": "unsupported",
+      "source": "unsupported",
+      "native": "untested",
+      "cost": "untested",
+      "startedAt": "2026-11-20T17:44:44.316Z",
+      "sourceResult": "symbol-cleanup-refusal.result.json",
+      "reason": "Protocol source projection: ordinary completion: Symbol catch requires a protocol transfer",
+      "expectedRefusal": true,
+      "finishedAt": "2026-11-20T17:44:44.371Z"
+    }
+  ],
+  "artifacts": {
+    "caller-catch.result.json": "80903b40f7c07cb3f7a453c6681dab53e4e8693aa4c72aececb4a4ee927921dd",
+    "caller-catch.source.json": "f5c1253f72b699fdaabf0562cd34cccb6088a6616e9d8a4e8db17ed555c1d11e",
+    "caller-catch.native.json": "6df2d7dea02aafb5b178982fedcfab5a55dab1cfceb29f449cf0b25ceb61eefb",
+    "caller-catch.admitted.json": "796f2f3a2a328f2bf2478c2d40dc9c5ff003ddcc323aebbfb5e47e4d079d78ae",
+    "caller-catch.native-input.json": "c47c729c793afa493068bb4e38153b4f4db9f3fc5b11e0cd5ec073bbf1d63cd8",
+    "caller-catch.costs.json": "b791ee020e13c7455aa49fd85e09e29ba9112e823cbef06838180b269ef2be80",
+    "caller-finally-override.result.json": "206c97895766f0440f8671ae824889ffa2a9e201146ca2e7298798dd381bfb68",
+    "caller-finally-override.source.json": "d94b2695ca5f0a050864b07df481c09b3c469fee92557bc459b7718b9f25e6ad",
+    "caller-finally-override.native.json": "c6bdb48d4ae2874c87b9cd573ff408c9d3f1e2e1b5ca5c9d15092fc6bee9c1d3",
+    "caller-finally-override.admitted.json": "87d5fd120e98b5552030543bd49b2b32dff349fd6a9b098a4529211c43c3f5c0",
+    "caller-finally-override.native-input.json": "3d5bb3f5b50de17ac14a331b4bf2b620b77d7ae5b58947664fd4613ed8fabc72",
+    "caller-finally-override.costs.json": "1269157b81a5ea1f597d45e10ec45eece71791a5af9132973699e863ad6c5982",
+    "callback-finally-override.result.json": "c578328ff72f9892e9c94d876028eb2c54e242eae39099a761950ea8fe1030b1",
+    "callback-finally-override.source.json": "4761996d6d9f277cddcd65d6185b75825be3652981808108d398269e519b6c33",
+    "callback-finally-override.native.json": "88053eb6506e2aa6da3b6888c88774cb2a2665010fe1e364dc31e6d8ce935133",
+    "callback-finally-override.admitted.json": "8cf8b4309d8c9e93ba05128a799e2eb7af7aa56634f6340346e6cb27653955b6",
+    "callback-finally-override.native-input.json": "62d3174af7d93fee2971b062efeba852c8c9124c7af20ffd9743075470b65674",
+    "callback-finally-override.costs.json": "91f0df56554fec070b8f0e3c613fc894093dc783a295bbe1a4d320e6f50bcbf3",
+    "callback-finally-throws.result.json": "55d5d9c5768b2c989f5fcefde4d890448742044ed1de6d93510b4f75a7bf7ac7",
+    "callback-finally-throws.source.json": "0cc6a868d3386e748e5e4b4a4d6111faaa9921b89f9b1b2643dba5621d1b4e2e",
+    "callback-finally-throws.native.json": "25571e7223976fb2f717ff6336dbc3ee5a541e24dedbae0f2288633cdd82580f",
+    "callback-finally-throws.admitted.json": "43688767c6511c1e59cd9cb807758002c04ea6fd1bafe6631cadc8f874e7cb9c",
+    "callback-finally-throws.native-input.json": "181a3e139b257cf5cf0cbbd1178407f74ec106d95d0090771d3ef51a25521872",
+    "callback-finally-throws.costs.json": "66cc844e1396afcc607c3df559ab5a4efc401f176faae88b2a4929dfc4122191",
+    "nested-conversion-cleanup.result.json": "2a862fafcef900d517d78a4f15bc37285924cb4ab583c7887126566197fbba98",
+    "nested-conversion-cleanup.source.json": "95dd4a34bd0b7b1bce02ecdf822d559b1cfbf9a57ce74cbd4ba883471a026212",
+    "nested-conversion-cleanup.native.json": "fcfc45fd0befaa0241419b8a6b6bcc29b025ec035a46d0f9ebf09779d79e9013",
+    "nested-conversion-cleanup.admitted.json": "c094bef8063e78f8377f90c78ee26f638781bede705a7059558053c8aa8c145b",
+    "nested-conversion-cleanup.native-input.json": "583b774278915c3e150b3fec67b18fd48a1dfceb365c63e6b840f893c299b3fe",
+    "nested-conversion-cleanup.costs.json": "ac31779715b89f4ab8471274c970b3247c2190ac7e2fc2ae895da9b14707e3a1",
+    "nested-catch-preserves-outer-return.result.json": "07d9b6949bbe180c43693ef3bc66c8b7688dc1774bbf1e838f861210dc14bb98",
+    "nested-catch-preserves-outer-return.source.json": "51c334ce686f0671805afb2bda77a10ea777e60e3e022606a2ade3cb500626bd",
+    "nested-catch-preserves-outer-return.native.json": "ce7fcf00576298e7e09056c96a0528cd37e4901f5da27fb061bac2f9710c2697",
+    "nested-catch-preserves-outer-return.admitted.json": "b06287c6a357b69ca0b94d60fed93463d0e34150bfe75ce91e63bb0360d934ec",
+    "nested-catch-preserves-outer-return.native-input.json": "002729b718210ff8ca6d603fe8df5d629e0167d0ccab06ea955ca2c763565a25",
+    "nested-catch-preserves-outer-return.costs.json": "47158add6b158951d19626d5b11c5faa6a2883356e982c69334c5e3b668ed2ad",
+    "callback-catches-helper.result.json": "9dc6a4fe737446fcdd2779e3cb3232fdf37e8dae9e9846653cbd09dc8f59e2d2",
+    "callback-catches-helper.source.json": "5586c3c5405b3be8f525ff77e3728d79346bbdac26f3a53390d244309c9e3787",
+    "callback-catches-helper.native.json": "c0e5c6ef034667da61543866d6772deb35d9976c1833e9afd456831ff5bcdbf7",
+    "callback-catches-helper.admitted.json": "6acf30037d20dcda21e4de370c0f7dcc3808afdbdcdb9088419132d077c2bab4",
+    "callback-catches-helper.native-input.json": "57dd34ef00095b31186daad941ede7a6fd37cd3ef07b2187623242b8ed5ab110",
+    "callback-catches-helper.costs.json": "2691fd5df421d74606ac77114a70d3bfa9c2cd67380f948089c4e8da9c7d2651",
+    "no-fallback-after-throw.result.json": "4c728df25c31fa4b6d530b86546cd3393f4a55d0540078a22e838321cccd8362",
+    "no-fallback-after-throw.source.json": "e615178b422c2006ef08d90d9db6758442055bec0383c702ae3bd3e934d7f89f",
+    "no-fallback-after-throw.native.json": "5ca58ae7131fc8468fa0198d52c9732a6925e713b865e9dd47f49d7caddf90fb",
+    "no-fallback-after-throw.admitted.json": "d8b5f6aa32335b815942dcdfa6a95cecf4dc4b8a8727a0392f0450ecf15f5bd3",
+    "no-fallback-after-throw.native-input.json": "e77aaaa1621b59696eae5d60fa30c525d71c26f42e2313255a311b618f7a2031",
+    "no-fallback-after-throw.costs.json": "46987f0e32041c6142e780cb59d65c1c433d4e8b1dd088728dfcf5a1478c53b5",
+    "normal-cleanup.result.json": "6ddf7e37b3fef9dc5b55522cb00f0b0281071596c81baa14521186d923b5c6a5",
+    "normal-cleanup.source.json": "9bd1d0d84c879da2bba40abfc561cdb6c54dec5e74c753f6b693b2e822aea617",
+    "normal-cleanup.native.json": "33f8f3b62099511d46045ae40f99a8d0fdd56c1c8e11888bc11aa771d765d5ef",
+    "normal-cleanup.admitted.json": "456f6776e5a6300da678c8fbf4413e39c304ed358e633a70cefc7b71b4c91d9c",
+    "normal-cleanup.native-input.json": "7bf23b02ac8b24b6c037576f0b3b8b3e74a18ade2433aaeed8acb35b4d8723cc",
+    "normal-cleanup.costs.json": "f92b07018b55b794f3e2e75b8bb9e0f55af80a9ec3d5de444f2d07f93f0e86f4",
+    "later-conversion.result.json": "133f358cb9730520408248e7a6d03f300371b54b05187aac64576944d331b248",
+    "later-conversion.source.json": "6532e211c0d39b2ace8815f5a6e61fed5e1c4877ee008f482670ef5af91bc710",
+    "later-conversion.native.json": "adfb0fe09268c180e47cccce73fbe7c00e2ad1f6effe77b9a6ab8ea35501e416",
+    "later-conversion.admitted.json": "84f0af3b753306f7bed5217af98af69e7f2bd14180073708cc65c6ebe68cc2ac",
+    "later-conversion.native-input.json": "e1574e6fe29442f60f95a698fc18fcadc61c8f47449c22b8d1f81a3be3186a67",
+    "later-conversion.costs.json": "5874b110db2b40fefc44726ee84ff07e3106ca317122023ec75410f1009cfc7b",
+    "retained-cleanup-boundaries.result.json": "9f4cb55c140231273717d2b8dbc616156c0684f65fe562755cd3814e5407c7b4",
+    "retained-cleanup-boundaries.source.json": "2b7eb10f515a9068ada5f676093e1c7d1c4cf10998cb7ca0848273b551ce922d",
+    "retained-cleanup-boundaries.native.json": "62e4c7e2b6d7bcfa7ed359fb204d0d55a44d3bd8822d2f84bff8b46c675ec1c0",
+    "retained-cleanup-boundaries.admitted.json": "6f553cf7d7bfd24f57ecec9a66042889025a2d3887d03c1ad406d5f995be3719",
+    "retained-cleanup-boundaries.native-input.json": "1764e3eddf378755a36e69527a93fd0a40e46068e29dfc90c20ac65ed8d2a89b",
+    "retained-cleanup-boundaries.costs.json": "3aa6b2224f554f61795af7faa796310f9384ff4eff245d32160ecfd15631287e",
+    "handler-scope-control.result.json": "03497336b236049348988445998438fc9e8571b3f03abba955b2473ced095242",
+    "handler-scope-control.source.json": "cc7ff73886aadbc2b280da844730e2806d77e6f008bbeb7a01a04ec1adc837da",
+    "handler-scope-control.native.json": "afb57016e9613fb80211eb54cd981552a2ece019df4aa546e15d400b8e00ccbb",
+    "handler-scope-control.admitted.json": "70176f88259ba35d63462def2e98e2189851281c2cd91997d688247ab93d8747",
+    "handler-scope-control.native-input.json": "ea08f7b6ee7fc55174c370fcf17eb40a425fc05b785c54efa5d52b4a5b9c1c5d",
+    "handler-scope-control.costs.json": "587c6ebec8b4ab0f58414304908791bb22d7061bbd061597def3f1951a740145",
+    "symbol-cleanup-refusal.result.json": "ce05b7efe79b6624f08927f1dc29d72bab4810af2948f90914ffa8167185c939"
+  },
+  "finishedAt": "2026-11-20T17:44:45.378Z",
+  "pinsAfter": {
+    "producer": {
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "status": ""
+    },
+    "consumer": {
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "status": ""
+    }
+  },
+  "sourceQualified": 12,
+  "nativeAdmitted": 12,
+  "expectedSourceRefusals": 1,
+  "tokenMeasured": 12,
+  "identityUnchanged": true
+}
