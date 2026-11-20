@@ -54,7 +54,7 @@ export function validateNumberConversionEvent(state,event,programs,fail){
     if(change.table!=='frames'||eq(change.before?.pendingNumberConversion,change.after?.pendingNumberConversion)||change===ownChange)continue;
     const before=change.before?.pendingNumberConversion,after=change.after?.pendingNumberConversion;
     if(!conversionWaiting(before))fail('Number continuation changed outside its source operation');
-    validatePrimitiveConversionReturn(before,after,state,event,fail);
+    validatePrimitiveConversionReturn(before,after,state,event,fail,programs);
     if(after&&(change.before.pc!==change.after.pc||!eq(change.before.stack,change.after.stack)))
       fail('Number callback changed its caller operand stack');
   }

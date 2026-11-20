@@ -13,6 +13,7 @@ import {encodeNativeGraph,validateOwnedGraph} from './host/graph-codec.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
 import {supportsPinnedRegExp,testPinnedRegExp,scanPinnedReplacement} from './owned-pinned-regexp.js';
 import {createNumberConversion,advanceNumberConversion} from './owned-number-conversion.js';
+import {createPrimitiveConversion,advancePrimitiveConversion} from './owned-primitive-conversion.js';
 import {ownedHasProperty} from './owned-has-property.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
@@ -90,6 +91,33 @@ function valueKey(tagged) {
   if (!['str','num','bool','null','undefined','bigint'].includes(tagged[0]))
     throw new TypeError('Property keys requiring guest coercion are unsupported');
   return stringPropertyKey(String(decode(tagged)));
+}
+function propertyKeySlot(frame,instruction){
+  const op=instruction.op;
+  if(['GET_PROP','GET_METHOD','UPDATE_PROP','PROPERTY_KEY'].includes(op)||
+    op==='DUP2'&&instruction.arg?.cachePropertyKey===true)return frame.stack.length-1;
+  return op==='PUT_PROP'?frame.stack.length-2:null;
+}
+function retainedPropertyKey(frame,instruction,state){
+  const stackIndex=propertyKeySlot(frame,instruction),key=frame.stack[stackIndex];
+  if(stackIndex===null||key?.value[0]!=='ref')return null;
+  // GetValue/PutValue perform ToObject before ToPropertyKey. A nullish base
+  // must fail at the ordinary instruction without running the key's hooks.
+  if(instruction.op!=='PROPERTY_KEY'&&['null','undefined'].includes(frame.stack[stackIndex-1]?.value[0]))return null;
+  if(!['object','array'].includes(state.heap[key.value[1]]?.kind))
+    throw new TypeError('PropertyKey conversion requires an owned ordinary object');
+  let cacheBinding=null;
+  if(instruction.op==='GET_PROP'&&instruction.arg?.cachePropertyKey){
+    const name=instruction.arg.cachePropertyKey;
+    if(typeof name!=='string'||!/^\[\[logical key [1-9]\d*\]\]$/.test(name))
+      throw new Error('Invalid internal property reference binding');
+    const {env,cell}=lookup(state,frame.envId,name);
+    if(cell.kind!=='const'||!cell.initialized||!equal(cell.token.value,key.value))
+      throw new Error('Property reference binding lost its original key');
+    cacheBinding={envId:env.id,name,token:copy(cell.token),version:cell.version};
+  }
+  return {pc:frame.pc,opcode:instruction.op,stackIndex,stack:copy(frame.stack),cacheBinding,
+    conversion:createPrimitiveConversion('PropertyKey',key.value,instruction.siteId)};
 }
 function arrayIndex(key) {
   return /^(0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295;
@@ -739,19 +767,41 @@ export class Runtime {
     this.events.push(event);return event;
   }
   stackPush(frame,value,origin){frame.stack.push(token(value,origin));}
+  invokePrimitiveConversion(draft,frame,method,receiver,args,eventId,goal){
+    const fn=draft.heap[method[1]];
+    if(fn?.kind!=='function'||fn.async||this.programs[fn.codeId].generator)
+      throw new TypeError('Async/generator '+goal+' conversion callback requires its owned profile');
+    const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,frame.id,null,
+      args.map(value=>token(value,eventId)),this.functionThis(fn,receiver),fn.id);
+    draft.control.a0.activeFrameId=child;return child;
+  }
   advanceNumberConversion(draft,frame,eventId){
     const outcome=advanceNumberConversion(frame.pendingNumberConversion,{heap:draft.heap,
-      invoke:(method,receiver,args)=>{
-        const fn=draft.heap[method[1]];
-        if(fn.async||this.programs[fn.codeId].generator)
-          throw new TypeError('Async/generator Number conversion callback requires its owned profile');
-        const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,frame.id,null,
-          args.map(value=>token(value,eventId)),this.functionThis(fn,receiver),fn.id);
-        draft.control.a0.activeFrameId=child;return child;
-      }});
+      invoke:(method,receiver,args)=>this.invokePrimitiveConversion(draft,frame,method,receiver,args,eventId,'Number')});
     if(outcome.fault){delete frame.pendingNumberConversion;guestFault(outcome.fault.name,outcome.fault.message);}
     if(outcome.done){delete frame.pendingNumberConversion;this.stackPush(frame,outcome.value,eventId);}
     return {reads:outcome.reads,...(outcome.done?{result:outcome.value}:{causes:[{kind:'invocation',frameId:outcome.child}]})};
+  }
+  advancePropertyKeyConversion(draft,frame,eventId){
+    const pending=frame.pendingPropertyKeyConversion;
+    if(frame.pc!==pending.pc||!equal(frame.stack,pending.stack))
+      throw new Error('PropertyKey conversion lost its retained reference stack');
+    const outcome=advancePrimitiveConversion(pending.conversion,{heap:draft.heap,
+      invoke:(method,receiver,args)=>this.invokePrimitiveConversion(draft,frame,method,receiver,args,eventId,'PropertyKey')});
+    if(outcome.fault){delete frame.pendingPropertyKeyConversion;guestFault(outcome.fault.name,outcome.fault.message);}
+    if(outcome.done){
+      frame.stack[pending.stackIndex]=token(outcome.value,eventId);
+      const binding=pending.cacheBinding;
+      if(binding){
+        const cell=draft.envs[binding.envId]?.bindings[binding.name];
+        if(!cell||cell.version!==binding.version||!equal(cell.token,binding.token))
+          throw new Error('PropertyKey conversion lost its cached reference binding');
+        cell.token=token(outcome.value,eventId);cell.version++;
+      }
+      delete frame.pendingPropertyKeyConversion;
+    }
+    return {operands:[pending.conversion.input],origins:[pending.stack[pending.stackIndex].origin],
+      reads:outcome.reads,...(outcome.done?{result:outcome.value}:{causes:[{kind:'invocation',frameId:outcome.child}]})};
   }
   completeFrame(draft,frame,value,origin) {
     frame.status='completed';
@@ -812,6 +862,12 @@ export class Runtime {
       if(caller.pendingNumberConversion?.waitingFrameId===frame.id){
         const pending=caller.pendingNumberConversion;
         if(!['waiting','getter-waiting'].includes(pending.phase))throw new Error('Number conversion callback returned twice');
+        pending.phase=pending.phase==='getter-waiting'?'getter-returned':'returned';pending.result=copy(value);
+        draft.control.a0.activeFrameId=caller.id;return;
+      }
+      if(caller.pendingPropertyKeyConversion?.conversion.waitingFrameId===frame.id){
+        const pending=caller.pendingPropertyKeyConversion.conversion;
+        if(!['waiting','getter-waiting'].includes(pending.phase))throw new Error('PropertyKey callback returned twice');
         pending.phase=pending.phase==='getter-waiting'?'getter-returned':'returned';pending.result=copy(value);
         draft.control.a0.activeFrameId=caller.id;return;
       }
@@ -1325,6 +1381,7 @@ export class Runtime {
          }
          if(caller.pendingProperty?.waitingFrameId===frame.id)caller.pendingProperty=null;
          if(caller.pendingNumberConversion?.waitingFrameId===frame.id)delete caller.pendingNumberConversion;
+         if(caller.pendingPropertyKeyConversion?.conversion.waitingFrameId===frame.id)delete caller.pendingPropertyKeyConversion;
          if(caller.pendingArrayMethod?.waitingFrameId===frame.id)delete caller.pendingArrayMethod;
         draft.control.a0.activeFrameId=caller.id;
         const waiting=caller.operationId&&draft.operations[caller.operationId]?.coercion?.waitingFrameId;
@@ -1408,6 +1465,24 @@ export class Runtime {
     }
     const inst=this.programs[frame.codeId].instructions[frame.pc];
     if(!inst)throw new Error('Program counter out of range');
+    const retained=frame.pendingPropertyKeyConversion;
+    if(retained&&!['returned','getter-returned'].includes(retained.conversion.phase))
+      throw new Error('PropertyKey conversion is still waiting for its callback');
+    const reference=retained??retainedPropertyKey(frame,inst,this.state);
+    if(reference){
+      const operation=retained?'property.key.resume':'property.key.convert';
+      return this.commit(operation,(s,eventId)=>{
+        const parent=s.frames[frame.id];
+        if(!retained)parent.pendingPropertyKeyConversion=copy(reference);
+        try{return this.advancePropertyKeyConversion(s,parent,eventId);}
+        catch(error){
+          if(!(error instanceof GuestFault))throw error;
+          const completion={type:'throw',errorType:error.name,message:error.message,origin:eventId};
+          completion.value=this.caughtError(s,completion,eventId);this.routeCompletion(s,parent,completion,eventId);
+          return {completion};
+        }
+      },{siteId:inst.siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
+    }
     const {op,arg}=inst;
     return this.commit(opNames[op],(s,eventId)=>{
       const f=s.frames[frame.id], st=f.stack;f.pc++;
@@ -1555,9 +1630,10 @@ export class Runtime {
               supplyingEvent:before.origin??null}]};
         }
         case 'UPDATE_PROP':{
-          const key=pop(),base=pop(),property=valueKey(key.value);
+          const key=pop(),base=pop();
           if(['undefined','null'].includes(base.value[0]))
             guestFault('TypeError','Cannot update properties of '+base.value[0]);
+          const property=valueKey(key.value);
           if(base.value[0]!=='ref')throw new TypeError('Unowned update receiver');
           const obj=s.heap[base.value[1]];
           if(!obj||!['object','array'].includes(obj.kind))
@@ -1910,7 +1986,10 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
           return {...operands(base,item),...result(base.value)};
         }
         case 'GET_PROP':case 'GET_METHOD':{
-          const key=pop(),base=pop(),property=valueKey(key.value);let v,read=null;
+          const key=pop(),base=pop();
+          if(['null','undefined'].includes(base.value[0]))
+            guestFault('TypeError',`Cannot read properties of ${base.value[0]}`);
+          const property=valueKey(key.value);let v,read=null;
           if(base.value[0]==='intrinsic'&&base.value[1]==='Math'&&property==='random' &&
              !Number.isInteger(s.control.a0.randomSeed)){
             const completion={type:'unsupported',feature:'Math.random requires an explicit deterministic fixture seed'};
@@ -2394,9 +2473,10 @@ if(obj.kind==='set'){
           return {...operands(base,key,value),...result(value.value)};
         }
         case 'PUT_PROP':{
-          const v=pop(),key=pop(),base=pop(),property=valueKey(key.value);
+          const v=pop(),key=pop(),base=pop();
           if(['null','undefined'].includes(base.value[0]))
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
+          const property=valueKey(key.value);
            if(base.value[0]!=='ref'||!s.heap[base.value[1]])throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
           if(object.kind==='iterator'&&property===symbolPropertyKey('well-known:toStringTag')&&

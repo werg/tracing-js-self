@@ -42,7 +42,8 @@ function lookup(heap,input,key,fail){
     if(proto===null){slot={value:['undefined'],origin:null};break;}
     if(['Object.prototype','Array.prototype'].includes(proto)){
       slot={value:key==='valueOf'?['builtinfn','Object.valueOf']:key==='toString'?
-        ['builtinfn',proto==='Array.prototype'?'Array.toString':'Object.toString']:['undefined'],origin:null};
+        ['builtinfn',proto==='Array.prototype'?'Array.toString':'Object.toString']:
+        proto==='Array.prototype'&&key==='join'?['builtinfn','Array.prototype.join']:['undefined'],origin:null};
       break;
     }
     current=heap[proto];
@@ -60,8 +61,11 @@ function builtin(heap,input,name,fail){
     if(tag.accessor)fail('Conversion intrinsic stringification needs an owned accessor profile');
     return ['str','[object '+(tag.value[0]==='str'?tag.value[1]:object.kind==='array'?'Array':'Object')+']'];
   }
-  if(name!=='Array.toString'||object.kind!=='array'||Object.hasOwn(object.properties,'join'))
+  if(name!=='Array.toString'||object.kind!=='array')
     fail('Conversion intrinsic is outside its owned data profile');
+  const join=lookup(heap,input,'join',fail);
+  if(join.accessor||!eq(join.value,['builtinfn','Array.prototype.join']))
+    fail('Conversion intrinsic array has an overridden join');
   const count=decode(object.properties.length.value),parts=[];
   if(!Number.isSafeInteger(count)||count<0||count>10000)fail('Conversion intrinsic array exceeds its data budget');
   for(let i=0;i<count;i++){
@@ -158,12 +162,19 @@ export function validatePrimitiveConversionAdvance(before,after,parentId,state,e
   return expected;
 }
 
-export function validatePrimitiveConversionReturn(before,after,state,event,fail){
+export function validatePrimitiveConversionReturn(before,after,state,event,fail,programs=null){
   const goal=before.operation,child=event.stateChanges.find(patch=>patch.table==='frames'&&patch.id===before.waitingFrameId)?.after;
   if(after){
     const phase=before.phase==='getter-waiting'?'getter-returned':'returned';
     if(after.phase!==phase||!eq({...after,phase:before.phase,result:null},before)||
       child?.status!=='completed'||!eq(child.completion?.value?.value,after.result))
       fail(goal+' callback did not retain its actual return value');
+    if(programs){
+      const previous=state.frames[before.waitingFrameId],instruction=programs[previous?.codeId]?.instructions[previous?.pc],
+        expected=instruction?.op==='RETURN'?previous.stack.at(-1):instruction?.op==='END_FINALLY'&&
+          previous.handlers.at(-1)?.pending?.type==='return'?previous.handlers.at(-1).pending.value:null;
+      if(event.invocationId!==before.waitingFrameId||!expected||!eq(child.completion.value,expected))
+        fail(goal+' callback return does not match its source return or retained cleanup');
+    }
   }else if(child?.status!=='thrown')fail(goal+' callback continuation disappeared before completion');
 }

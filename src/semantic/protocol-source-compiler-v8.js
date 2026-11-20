@@ -81,6 +81,11 @@ function referencedNames(node){const names=new Set();
 }
 export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROTOCOL_SOURCE_ADAPTERS_V8}={}){
   if(validateBundle(bundle).valid!==true||replayExact(bundle).valid!==true)refuse('invalid owned archive');
+  // Immediate builtin key conversion has no retained callback frame. Refuse
+  // its events as well as callback state until a paired key protocol exists;
+  // an agreeing final property read cannot certify the omitted conversion.
+  if(bundle.events.some(event=>['property.key.convert','property.key.resume'].includes(event.operation)))
+    refuse('retained property-key conversion requires its own source/public/native protocol');
   const entry=bundle.entrySpec;if(entry?.kind!=='function')refuse('explicit function entry required');
   const source=bundle.sources.find(row=>row.sourceId===entry.sourceId)?.text;
   adapters=adapters.map(adapter=>typeof adapter==='function'?adapter({bundle,source}):adapter).filter(Boolean);

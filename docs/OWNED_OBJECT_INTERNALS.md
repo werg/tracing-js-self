@@ -46,9 +46,12 @@ bounded data/accessor subset. Getter-only assignment failure is modeled in
 strict and sloppy code, but general non-writable data descriptors, primitive
 receivers and full strict Proxy invariants remain outside this claim.
 
-`OrdinaryToPrimitive` can call **data** conversion methods reached through
-prototype links. A conversion-method **accessor** still requires an owned
-spec-phase getter continuation and is not allowed to silently fall back.
+Arithmetic's `OrdinaryToPrimitive` spec-command machine can call **data**
+conversion methods reached through prototype links; method-selection accessors
+remain unsupported there. `Number(object)` and ordinary computed property keys
+now use a shared retained getter/method kernel. Its ordering, JSON boundaries,
+independent checks and remaining profile limits are documented in
+[OWNED_PROPERTY_KEY_CONVERSION.md](OWNED_PROPERTY_KEY_CONVERSION.md).
 
 The compiler's `new Proxy` syntax exists only in `bounded-js-subset/2`.
 It is not enabled in `training-js/1`, which accepts a separate strict

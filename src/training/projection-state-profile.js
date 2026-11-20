@@ -30,20 +30,24 @@ export function checkEffectfulProjectionState(bundle){
   let snapshots=0;
   for(const node of Object.values(bundle.initialState?.heap??{})){inspectHeap(node,null,{boundary:true});snapshots++;}
   for(const frame of Object.values(bundle.initialState?.frames??{}))
-    if(frame.constructReceiver||frame.newTarget||frame.afterInstanceInitialization||frame.classStaticResult||frame.pendingNumberConversion)
+    if(frame.constructReceiver||frame.newTarget||frame.afterInstanceInitialization||frame.classStaticResult||frame.pendingNumberConversion||frame.pendingPropertyKeyConversion)
       reject('construction completion state requires an explicit v8 protocol profile');
   for(const control of Object.values(bundle.initialState?.control??{}))
     if(Object.keys(control.templateObjects??{}).length)
       reject('template site identity cache requires an explicit v8 protocol profile');
-  for(const event of bundle.events??[])for(const change of event.stateChanges??[]){
+  for(const event of bundle.events??[]){
+    if(['property.key.convert','property.key.resume'].includes(event.operation))
+      reject('retained property-key conversion requires an explicit v8 protocol profile');
+    for(const change of event.stateChanges??[]){
     if(change.table==='heap'&&change.after){
       inspectHeap(change.after,change.before,{boundary:change.before===null&&event.operation==='external.input.deliver'});snapshots++;
     }
     if(change.table==='frames'&&change.after&&(change.after.constructReceiver||change.after.newTarget||
-      change.after.afterInstanceInitialization||change.after.classStaticResult||change.after.pendingNumberConversion))
+      change.after.afterInstanceInitialization||change.after.classStaticResult||change.after.pendingNumberConversion||change.after.pendingPropertyKeyConversion))
       reject('construction completion state requires an explicit v8 protocol profile');
     if(change.table==='control'&&Object.keys(change.after?.templateObjects??{}).length)
       reject('template site identity cache requires an explicit v8 protocol profile');
+    }
   }
   return {valid:true,checkedHeapSnapshots:snapshots};
 }

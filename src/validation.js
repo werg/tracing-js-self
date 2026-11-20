@@ -8,6 +8,7 @@ import {validateConstructionEvent} from './construction-validation.js';
 import {validateSuperEvent} from './super-validation.js';
 import {isBinaryMemoryKind,validateBinaryMemoryState,validateBinaryMemoryEvent} from './binary-memory-validation.js';
 import {validateNumberConversionState,validateNumberConversionEvent} from './number-conversion-validation.js';
+import {validatePropertyKeyConversionState,validatePropertyKeyConversionEvent} from './property-key-conversion-validation.js';
 import {validatePromiseResolutionState,validatePromiseResolutionEvent} from './promise-resolution-validation.js';
 import {validateScriptSequenceState,validateScriptSequenceEvent} from './script-validation.js';
 import {validateScriptHostEvent} from './script-host-validation.js';
@@ -35,6 +36,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
   validateBinaryMemoryState(state,fail,binaryIds);
   const sites=new Set(bundle.sites.map(s=>s.siteId));
   validateNumberConversionState(state,bundle.programs,sites,fail);
+  validatePropertyKeyConversionState(state,bundle.programs,sites,fail);
   validatePromiseResolutionState(state,fail);
   validateScriptSequenceState(state,bundle,fail,{initial:true});
   const seen=new Set();
@@ -153,7 +155,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     if(e.completion && !['spec.operation.complete','completion.throw','external.input.deliver',
       'job.enter','binding.read','binding.write','binding.update','primitive.unary',
       'property.read','property.write','property.update','primitive.binary','reference.this','call.return','call.enter','proxy.allocate',
-      'object.construct','completion.finally.end','execution.unsupported','regexp.allocate','intrinsic.number.resume'].includes(e.operation))
+      'object.construct','completion.finally.end','execution.unsupported','regexp.allocate','intrinsic.number.resume',
+      'property.key.convert','property.key.resume'].includes(e.operation))
       fail('Completion metadata without an owned completion operation',e.eventId);
     validateSpecEvent(state,e,fail);
     validateGeneratorEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
@@ -166,6 +169,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     validateSuperEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateBinaryMemoryEvent(e,message=>fail(message,e.eventId));
     validateNumberConversionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validatePropertyKeyConversionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validatePromiseResolutionEvent(state,e,message=>fail(message,e.eventId));
     validateScriptSequenceEvent(state,e,bundle,message=>fail(message,e.eventId));
     validateScriptHostEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
@@ -198,6 +202,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     for(const patch of e.stateChanges)if(patch.table==='heap'&&isBinaryMemoryKind(patch.after?.kind))binaryIds.add(patch.id);
     validateBinaryMemoryState(state,message=>fail(message,e.eventId),binaryIds);
     validateNumberConversionState(state,bundle.programs,sites,message=>fail(message,e.eventId));
+    validatePropertyKeyConversionState(state,bundle.programs,sites,message=>fail(message,e.eventId));
     validatePromiseResolutionState(state,message=>fail(message,e.eventId));
     validateScriptSequenceState(state,bundle,message=>fail(message,e.eventId));
     validateSymbolReferences({operands:e.operands,result:e.result,changed:e.stateChanges.map(p=>p.after??p.record??null)},state.heap,message=>fail(message,e.eventId));

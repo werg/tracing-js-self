@@ -139,7 +139,12 @@ export function ordinaryBuiltin(heap, receiver, name) {
     return ['str','[object '+(tag.method.value[0]==='str'?tag.method.value[1]:obj.kind==='array'?'Array':'Object')+']'];
   }
   if(name==='Array.toString') {
-    if(obj.kind!=='array'||Object.hasOwn(obj.properties,'join'))return null;
+    if(obj.kind!=='array')return null;
+    // Array::toString performs Get(join). This primitive data leaf may only
+    // stand in for the default method; never skip an own/inherited getter or
+    // an overridden join whose call would have observable guest effects.
+    const join=ordinaryGet(heap,receiver,'join');
+    if(!join||join.method.value[0]!=='builtinfn'||join.method.value[1]!=='Array.prototype.join')return null;
     const length=decode(obj.properties.length.value);
     // The implemented Array::join leaf covers dense primitive data arrays.
     // Accessors, sparse/inherited indices and nested objects fail closed.
