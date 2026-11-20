@@ -1,0 +1,19 @@
+{
+  "schema": "v8-dataset-qualification-inputs/1",
+  "producerRevision": "8d1f7b5b24d385ce067e9a3d64cce37140a26a56",
+  "inputCandidates": 33,
+  "sources": [
+    {
+      "population": "interoperability",
+      "declared": 22,
+      "reportSha256": "d882fcac517b7697b48934dce559920670c3bf1f2f2e04bc6635926e00a7b552",
+      "populationDigest": "2a167264dd92a0164b1ebdbf8d41c4b7cf075a2620c2d6fe74381bc342081293"
+    },
+    {
+      "population": "gallery",
+      "declared": 11,
+      "reportSha256": "55dc919f6acc1f729fa8442e2f34b13cee3c450c958b62d28966ee8d693e3f35",
+      "populationDigest": "a3e6e71d45781a75ad1d6a5902b1e1797c41bb14f8d91e358871a28ac470b839"
+    }
+  ]
+}
