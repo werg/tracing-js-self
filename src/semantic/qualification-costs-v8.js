@@ -7,6 +7,16 @@ const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const fail=message=>{throw new TypeError('V8 qualification costs: '+message);};
 const require=(condition,message)=>{if(!condition)fail(message);};
 
+// The frontend profile and the qualified public execution profile describe
+// different boundaries. In particular, training-js/1 alone does not identify
+// which bounded protocol adapters supplied an admitted script's public state.
+export function qualificationProfiles(result){
+  const side=result.exported?.sidecar;
+  return {sourceProfile:result.sourceProfile??'training-js/1',
+    executionProfile:side?.protocolProfile??side?.profile??null,
+    protocolExtensions:structuredClone(side?.protocolExtensions??[])};
+}
+
 // Cost measurement reuses exact qualified artifacts, never reruns a teacher or
 // drops a failed source case to make the measured denominator look better.
 export function readQualificationCostInputs(directory){

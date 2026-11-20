@@ -11,6 +11,7 @@ import {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_INTEROPERABILITY_DIGEST} from '.
 import {hashAlgorithmData} from '../src/semantic/program.js';
 import {atomicWrite} from '../src/corpus/campaign-store.mjs';
 import {openQualificationProgress,mapQualificationCases,selectQualificationCaseIds} from '../src/corpus/qualification-progress.mjs';
+import {qualificationProfiles} from '../src/semantic/qualification-costs-v8.js';
 
 const valued=new Set(['--out','--megatoken','--tokenizer','--python','--native-policy','--population','--inputs','--cases','--worker-timeout-ms','--worker-memory-mb','--native-timeout-ms','--workers']),flags=new Map();
 const boolean=new Set(['--prepare-only','--resume']);
@@ -69,7 +70,7 @@ const rows=await mapQualificationCases(fixtures,workers,async fixture=>{
       result:{status:'untested',reason:'Not selected by --cases; retained in the declared population',
         sourceProfile:fixture.sourceProfile??'training-js/1'},durationMs:0,peakRssBytes:null};
   const result=execution.result,row={id:fixture.id,family:fixture.family??fixture.id,status:result.status,
-    reason:result.reason??null,sourceProfile:result.sourceProfile??'training-js/1',
+    reason:result.reason??null,...qualificationProfiles(result),
     source:result.exported?'passed':result.status,native:'untested',durationMs:execution.durationMs,peakRssBytes:execution.peakRssBytes};
   if(result.exported){
     saveCase(fixture.id+'.source.json',result.exported);row.sourceArtifact=fixture.id+'.source.json';

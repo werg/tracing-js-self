@@ -40,7 +40,8 @@ try{
     if(cached){rows.push(cached.row);Object.assign(artifacts,cached.artifacts);
       process.stderr.write(JSON.stringify({id:source.id,status:cached.row.status,resumed:true})+'\n');continue;}
     const row={id:source.id,source:source.source,sourceReason:source.reason,native:source.native,
-      sourceProfile:source.sourceProfile,regionCoverage:source.regionCoverage??null,
+      sourceProfile:source.sourceProfile,executionProfile:source.executionProfile??null,
+      protocolExtensions:structuredClone(source.protocolExtensions??[]),regionCoverage:source.regionCoverage??null,
       status:'source-unqualified',cost:null,nativePacking:null,durationMs:0,peakRssBytes:null};
     const started=performance.now(),names=[];
     if(source.source==='passed'){

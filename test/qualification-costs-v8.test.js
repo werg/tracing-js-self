@@ -4,8 +4,29 @@ import {mkdtempSync,rmSync,writeFileSync,readFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
-import {readQualificationCostInputs,summarizeQualificationCosts} from '../src/semantic/qualification-costs-v8.js';
+import {qualificationProfiles,readQualificationCostInputs,summarizeQualificationCosts} from '../src/semantic/qualification-costs-v8.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
+
+test('qualification retains actual bounded execution profiles separately from frontend acceptance',()=>{
+  const fixtures=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url)));
+  const ordinary=fixtures.cases.find(row=>row.artifact.sidecar.protocolProfile==='symbols-ordinary-properties/1'),
+    extended=fixtures.cases.find(row=>row.artifact.sidecar.protocolExtensions?.length);
+  assert(ordinary&&extended,'both base and extended source profiles must remain in interoperability');
+  assert.deepEqual(qualificationProfiles({exported:ordinary.artifact,profile:'untrusted-wrapper'}),
+    {sourceProfile:'training-js/1',executionProfile:'symbols-ordinary-properties/1',protocolExtensions:[]});
+  const profiles=qualificationProfiles({exported:extended.artifact,profile:'untrusted-wrapper'});
+  assert.equal(profiles.sourceProfile,'training-js/1');
+  assert.equal(profiles.executionProfile,'protocol-source-extensions/1');
+  assert.deepEqual(profiles.protocolExtensions,extended.artifact.sidecar.protocolExtensions);
+  profiles.protocolExtensions.push('changed');
+  assert(!extended.artifact.sidecar.protocolExtensions.includes('changed'));
+  assert.deepEqual(qualificationProfiles({sourceProfile:'evaluated-module-regions/1',
+    exported:{sidecar:{profile:'compositional-regions/1'}}}),
+  {sourceProfile:'evaluated-module-regions/1',executionProfile:'compositional-regions/1',protocolExtensions:[]});
+  for(const status of ['unsupported','resource_limited','untested'])
+    assert.deepEqual(qualificationProfiles({status,profile:'protocol-source-extensions/1'}),
+      {sourceProfile:'training-js/1',executionProfile:null,protocolExtensions:[]});
+});
 
 function fixture(t){
   const directory=mkdtempSync(join(tmpdir(),'qualification-costs-'));
