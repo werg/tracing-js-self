@@ -194,14 +194,16 @@ function complete(controller,record){
   const protocol=state(controller);
   require(['return','throw'].includes(record.kind),'call completion kind');
   require(controller.stack.at(-1)===record.invocation,'completion has wrong active invocation');known(controller,record.value);
-  require(!controller.activeJob,'job completion needs its declared scheduler profile');
   if(controller.stack.length>1){
     const frame=protocol.callFrames.at(-1);
     require(frame?.child===record.invocation&&frame.parent===controller.stack.at(-2),'call scope completion mismatch');
     controller.stack.pop();protocol.callFrames.pop();
     controller.receiver=copy(frame.priorReceiver);controller.captureAliases=new Map(frame.priorAliases);
     controller.lastReturn={kind:record.kind,value:copy(record.value)};
-  }else{controller.stack.pop();controller.pending={kind:record.kind,value:copy(record.value)};}
+  }else{
+    require(!controller.activeJob,'job completion needs its declared scheduler profile');
+    controller.stack.pop();controller.pending={kind:record.kind,value:copy(record.value)};
+  }
 }
 function allocate(controller,record){
   require(record.properties.length+(record.objectKind==='array'?1:0)<=PROTOCOL_V8_LIMITS.properties,'ordinary property count bound');

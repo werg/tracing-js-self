@@ -173,6 +173,28 @@ test('arrow receiver capture differs from a dynamic method receiver and scoped d
   assert.deepEqual(c.receiver,['undefined']);
 });
 
+test('nested protocol completions preserve their active scheduler job and restore the parent call scope',()=>{
+  for(const kind of ['return','throw']){
+    const c=controller();apply(c,
+      {kind:'bind',name:'captured',value:['num',1]},
+      allocation('receiver'),
+      allocation('helper',[],{objectKind:'closure',code:'helper',functionKind:'ordinary',captures:[{binding:'value',cell:'captured'}]}));
+    c.activeJob='job1';c.captureAliases=new Map([['parent','captured']]);
+    const before=wire(c);
+    assert.throws(()=>apply(c,{kind,invocation:'invocation1',value:['num',2]}),/scheduler profile/);
+    assert.deepEqual(wire(c),before);
+    apply(c,{kind:'call',child:'helper1',callee:['ref','helper'],receiver:['ref','receiver'],arguments:[]});
+    assert.deepEqual(c.receiver,['ref','receiver']);
+    assert.equal(c.captureAliases.get('value'),'captured');
+    assert.throws(()=>assertProtocolDetailCompatible(c,{kind,fields:{value:['num',2]}}),/scoped/);
+    apply(c,{kind,invocation:'helper1',value:['num',2]});
+    assert.equal(c.activeJob,'job1');assert.deepEqual(c.stack,['invocation1']);
+    assert.deepEqual(c.receiver,['undefined']);assert.deepEqual([...c.captureAliases],[['parent','captured']]);
+    assert.deepEqual(c.lastReturn,{kind,value:['num',2]});assert.equal(c.protocol.callFrames.length,0);
+    assert.throws(()=>apply(c,{kind,invocation:'invocation1',value:['num',2]}),/scheduler profile/);
+  }
+});
+
 test('canonical protocol records refuse unknown fields, noncanonical JSON and observing inputs',()=>{
   const record={kind:'symbol.create',id:'o1',description:['str','x']},line=encodeProtocolRecordV8(record);
   assert.deepEqual(decodeProtocolRecordV8(line),record);
