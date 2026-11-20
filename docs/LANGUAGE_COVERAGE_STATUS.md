@@ -1,7 +1,7 @@
 # Language coverage engineering completion ledger
 
 **Engineering qualification completed, 20 November 2026. V6 remains the
-production default; broader model-quality and promotion gates remain open.**
+production default. Final branch checks are tracked separately in the two PRs.**
 
 This ledger tracks the bounded candidate delivered by
 [tracing-js-self PR #46](https://github.com/werg/tracing-js-self/pull/46) and its
@@ -18,26 +18,58 @@ correctness or native admission for a claimed slice. It also does not declare
 every roadmap wave, unrestricted ECMAScript, or standard-format promotion done.
 V6 remains the production default.
 
-## Completed engineering work
+## Completed engineering work, hardest first
 
 The implementation, source/native qualification, exact costs, dataset readmission,
 and bounded real-model experiments are retained at explicit revisions. Later
 changes update tests, documentation and evidence; they do not relabel older runs.
+The workstreams below are ranked by implementation and qualification difficulty.
 
 | Workstream | Completed result | Evidence limit |
 | --- | --- | --- |
-| Live selected execution and independent native serving | Public APIs, exact entry/state/cutoff checks, frozen generation settings, original emitted bytes/tokens, full acknowledgements, deferred-observation ingestion, callbacks, cancellation and private source scoring are integrated. All five optional native coordinator gates on the existing compact selected-execution path passed an isolated run with the original bounds: four controlled engineering cases and one actual initialized-model rejection. | [The original full run](../coverage/language-expansion/producer-regression-012c9fe/README.md) remains failed. [The isolated follow-up](../coverage/language-expansion/native-orchestration-isolated-012c9fe/README.md) has its own exact compatible served bundle and explicit substitution provenance. Public completion alone does not establish source correspondence. |
-| Protocol correctness | Current supplementary populations passed 2/2 abrupt Number cases, 12 cleanup positives plus one expected refusal, 16 custom-iterator positives plus four refusals, and 14 flat-binding positives plus three refusals. | These are separate declared inventories that may overlap. General patterns, async iteration and other documented exclusions remain outside the qualified profiles. |
-| Complete population and costs | All 665 expansion, 26 interoperability and 11 original-gallery cases passed source qualification, native admission, exact flat-token measurement and native physical packing. Independent ordinary and streaming meters agree on every physical artifact for all 665 expansion cases. | These finite, overlapping populations do not establish unrestricted ECMAScript conformance, model quality, serving latency or cache savings. |
-| Dataset and reproducibility | All 37 episodes were freshly source/native-admitted after global component split binding: 1,021 complete examples and 33,850 generated tokens including EOS. A second independent export reproduced the complete dataset and all 37 native input/receipt pairs byte for byte. | Both exports represent the same 37 episodes, not a doubled population. They performed zero optimizer steps. |
-| Model measurement | Current-contract revalidation of the previously fitted 256-step model, with zero additional optimizer updates, records 3/3 source-qualified completions on its sole training input, 0/3 on a separate input of the same program, and 0/6 for the zero-update baseline. Two separate four-step diagnostics each completed 0/2 executions. | External comprehension and general held-out usefulness remain unqualified. The historical 43 MB fitted/checkpoint archive has no published retrieval location; the independent audit verifies retained output and source scoring, without repeating neural inference from that archive. |
-| Regression, contracts and reconciliation | The updated-code Node 20/22/24 matrix passed. The retained Node 24 job has 1,836 passes, eight explicit skips, and no failures/cancellations. The focused native v8 gate passed 244 tests without skips. Contracts, reference checks, profiles, public commands and both PR descriptions are reconciled. | Every result retains its actual tested commit/tree and command. Eight hosted environment-dependent skips are not passes. Final live branch checks are linked in the two open PRs. |
+| 1 — Live selected execution and independent native serving | Public APIs, exact entry/state/cutoff checks, frozen generation settings, original emitted bytes/tokens, full acknowledgements, deferred-observation ingestion, callbacks, cancellation and private source scoring are integrated. All five optional native coordinator gates on the existing compact selected-execution path passed an isolated run with the original bounds: four controlled engineering cases and one actual initialized-model rejection. | [The original full run](../coverage/language-expansion/producer-regression-012c9fe/README.md) remains failed. [The isolated follow-up](../coverage/language-expansion/native-orchestration-isolated-012c9fe/README.md) has its own exact compatible served bundle and explicit substitution provenance. Public completion alone does not establish source correspondence. |
+| 2 — Protocol correctness | Current supplementary populations passed 2/2 abrupt Number cases, 12 cleanup positives plus one expected refusal, 16 custom-iterator positives plus four refusals, and 14 flat-binding positives plus three refusals. | These are separate declared inventories that may overlap. General patterns, async iteration and other documented exclusions remain outside the qualified profiles. |
+| 3 — Complete population and costs | All 665 expansion, 26 interoperability and 11 original-gallery cases passed source qualification, native admission, exact flat-token measurement and native physical packing. Independent ordinary and streaming meters agree on every physical artifact for all 665 expansion cases. | These finite, overlapping populations do not establish unrestricted ECMAScript conformance, model quality, serving latency or cache savings. |
+| 4 — Dataset and reproducibility | All 37 episodes were freshly source/native-admitted after global component split binding: 1,021 complete examples and 33,850 generated tokens including EOS. A second independent export reproduced the complete dataset and all 37 native input/receipt pairs byte for byte. | Both exports represent the same 37 episodes, not a doubled population. They performed zero optimizer steps. |
+| 5 — Retained model measurement and audit | Current-contract revalidation of the previously fitted 256-step model, with zero additional optimizer updates, records 3/3 source-qualified completions on its sole training input, 0/3 on a separate input of the same program, and 0/6 for the zero-update baseline. Two separate four-step diagnostics each completed 0/2 executions. | External comprehension and general held-out usefulness remain unqualified. The historical 43 MB fitted/checkpoint archive has no published retrieval location; the independent audit verifies retained output and source scoring, without repeating neural inference from that archive. |
+| 6 — Regression, contracts and reconciliation | The updated-code Node 20/22/24 matrix passed. The retained Node 24 job has 1,836 passes, eight explicit skips, and no failures/cancellations. The focused native v8 gate passed 244 tests without skips. Contracts, reference checks, profiles, public commands and both PR descriptions are reconciled. | Every result retains its actual tested commit/tree and command. Eight hosted environment-dependent skips are not passes. Final branch checks are tracked in the two PRs and are qualified only by their own observed results. |
 
 The [complete current population packet](../coverage/language-expansion/native-v8-012c9fe-all/README.md),
 [production dataset](../coverage/language-expansion/dataset-v8-012c9fe/README.md),
 [independent dataset replication](../coverage/language-expansion/dataset-v8-012c9fe-independent/README.md),
 and [evidence index](../coverage/language-expansion/README.md) contain the full
 inputs, dispositions, costs, original failures, checksums and reproduction commands.
+
+The [independent completion audit](../coverage/language-expansion/completion-audit-6423989/README.md)
+rechecks the integrated archives, receipt bindings, masks and complete cost
+accounting without repeating native execution or tokenizer encoding. Its
+separate fresh local regression passed **1,838 tests with six explicit skips**
+and all reference/contract checks; the receipt explains the unchanged executable
+inputs across the concurrent documentation/evidence integration.
+
+## Outside this PR: research and default promotion
+
+The candidate-shipping scope in §10.4 excludes the following work from this
+PR's completion checklist. These evidence gaps remain recorded and are not
+counted as successful qualifications:
+
+- External-model comprehension and a powered notation comparison: no external
+  responses exist for the 228-task declaration.
+- General held-out-program/family execution and controlled comparisons of
+  token cost, latency or cache reuse at matched usefulness: the bounded
+  diagnostics do not supply those studies.
+- Regenerating the historical 256-step model experiment from its original
+  weights: its 43 MB checkpoint archive has no published retrieval location.
+  Retained-output decoding and private source scoring remain independently
+  verifiable within their documented scope.
+- Unrestricted language profiles outside the bounded coverage matrix, including
+  async iteration, unrestricted coercion/Proxy/construction/Promise assimilation,
+  arbitrary host/DOM behavior, dynamic evaluation, GC observability and
+  cross-agent memory.
+- M7 coordinated default promotion: **not performed; v6 remains the default**.
+
+These exclusions do not waive correctness, native admission, exact evidence or
+explicit refusal accounting for any supported candidate slice.
 
 ## Plan milestone mapping
 
@@ -165,9 +197,10 @@ substitute for actual model output.
 | Matched historical comparison | **42** identical source/input rows: total flat tokens **13,139,870 → 1,286,652** (90.21% lower); generated **34,554 → 33,132** (4.12% lower). **Eight** rows cost more | Same packet retains every matched row and regression. Most savings concern submitted context. This is not a controlled model-serving efficiency comparison. |
 | Split-bound production dataset | **37/37 episodes, 1,021 examples, 34 split-isolated components; 33,850 generated tokens including 1,021 EOS** | [Production dataset](../coverage/language-expansion/dataset-v8-012c9fe/README.md) and [independent byte-identical replication](../coverage/language-expansion/dataset-v8-012c9fe-independent/README.md); zero optimizer steps |
 | Actual native model experiment | Current contract: **3/3 fitted training-input**, **0/3 fitted separate-input**, **0/6 baseline** source-qualified completions. Separate four-step diagnostics each **0/2** | [Current result and independent audit](../coverage/language-expansion/native-v8-fit-39c4036/README.md); historical 256-step checkpoint archive remains unavailable. The [four-step fitted bundles](evidence/semantic-v8-diagnostic-pilot/2026-11-20/README.md) are fully archived. |
-| Associated PRs and review | Producer [#46](https://github.com/werg/tracing-js-self/pull/46) and consumer [#37](https://github.com/werg/megatoken/pull/37) contain the pushed implementation/evidence and current check links. Base consumer [#36](https://github.com/werg/megatoken/pull/36) is merged. All 71 existing review threads were resolved when checked | The two current PRs remain open. Their live final-head checks are distinct from the retained immutable run receipts. |
+| Associated PRs and review | Producer [#46](https://github.com/werg/tracing-js-self/pull/46) and consumer [#37](https://github.com/werg/megatoken/pull/37) contain the pushed implementation/evidence and current check links. Base consumer [#36](https://github.com/werg/megatoken/pull/36) is merged. All 71 existing review threads were resolved when checked | The two current PRs remain open. Their live final-head check results remain distinct from the retained immutable run receipts. |
 
 External comprehension, general held-out learned execution, controlled cost per
 useful execution, latency/cache benefits and coordinated default promotion
 remain **unmeasured or unqualified** by these bounded results. Shipping this
-candidate under plan §10.4 preserves those gates and all declared profile limits.
+candidate under plan §10.4 preserves those separate research/promotion gates and
+all declared profile limits without making them blockers for this PR.

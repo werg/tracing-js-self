@@ -33,7 +33,9 @@ An [independent export](coverage/language-expansion/dataset-v8-012c9fe-independe
 reproduced the complete dataset and all 37 native input/receipt pairs byte for byte.
 The [completion ledger](docs/LANGUAGE_COVERAGE_STATUS.md) links the full producer,
 native and integration regressions, current profile evidence and bounded actual
-model diagnostics. Model-quality and default-promotion gates remain separate.
+model diagnostics. External comprehension, general learned execution, controlled
+serving-efficiency studies and default promotion are outside this bounded
+candidate's completion scope; their unmeasured status remains explicit.
 
 ```js
 import {verifyRegionTrainingCase} from 'tracing-js-self/semantic';

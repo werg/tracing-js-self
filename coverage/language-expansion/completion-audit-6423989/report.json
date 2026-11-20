@@ -1,0 +1,207 @@
+{
+  "schema": "semantic-v8-completion-retained-audit/1",
+  "passed": true,
+  "scope": "Retained archive integrity, source/native receipt bindings, masks and physical cost accounting.",
+  "freshNativeExecution": false,
+  "physicalTokenIdsReencoded": false,
+  "freshSourceExecution": false,
+  "freshModelExecution": false,
+  "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "identityChecks": {
+    "auditedRevision": "64239894b36607de1265b67c337f537f3fc9a163",
+    "evidencePackages": {
+      "native-v8-012c9fe-all": {
+        "originCommit": "0ebbb1d3a3aeefee230bc70d591e472225534290",
+        "tree": "76b5ba89677392b69b586b88b86865c89302bbc0",
+        "checksumFileSha256": "ffc15695026b27ae415f52ae9a408b8abba6506417f06925bca823c463f80c75",
+        "packageFilesChecked": 80
+      },
+      "dataset-v8-012c9fe-independent": {
+        "originCommit": "2cebc6123c2d5c2b22795e0160f68899de6001d7",
+        "tree": "932f9df3d479ef7bb42f38464ffd5ad180ef7786",
+        "checksumFileSha256": "f90f7b1240422375d9de567bc0e0ed971175c92bfa788950bbab67bdfd2a8019",
+        "packageFilesChecked": 18
+      },
+      "dataset-v8-012c9fe": {
+        "originCommit": "60fe332b7968c1c1f2fe696c642649bd301ad7c2",
+        "tree": "050b6cbbcf5701bf2fad43ceca21a70e3dde9aa1",
+        "checksumFileSha256": "eefaef9ac1843c86150cb39605977561e8aa26f673123b1f2c9a6b1313cc6590",
+        "packageFilesChecked": 16
+      }
+    },
+    "producerInputs": {
+      "src": "b2a3ea67a33d7b205afad954535e1c62cf8031ef",
+      "tools": "a1dab445a2570359fc1eeac60ac528a34d452600",
+      "contracts": "07755963457ffe7c31982693d4d4cfd0babaaf5b",
+      "fixtures": "9cef74093fce1a804f7a9196df2d6331b01dfbe4",
+      "package.json": "f917861c6ca9133ebfb5ebdc703de236d03654d1",
+      "package-lock.json": "265bf893d149c3cd70a6b3156c1a557dd6eda6a2"
+    }
+  },
+  "verifierSha256": "f9a23a74bbfd98def06f66057c3c7eed991095bf417354065f5b64f560ae4e7c",
+  "archives": [
+    {
+      "archive": "all-artifacts.tar.xz",
+      "members": 5994,
+      "uncompressedBytes": 986797086,
+      "verified": true,
+      "population": "all",
+      "declared": 665,
+      "admitted": 665,
+      "physicalPredictions": 7630,
+      "flatTokens": {
+        "generated": 247403,
+        "terminal": 7630,
+        "observedAndContext": 8663223,
+        "total": 8918256,
+        "detailed": 214211
+      }
+    },
+    {
+      "archive": "gallery-artifacts.tar.xz",
+      "members": 108,
+      "uncompressedBytes": 17568820,
+      "verified": true,
+      "population": "gallery",
+      "declared": 11,
+      "admitted": 11,
+      "physicalPredictions": 97,
+      "flatTokens": {
+        "generated": 3378,
+        "terminal": 97,
+        "observedAndContext": 139863,
+        "total": 143338,
+        "detailed": 2915
+      }
+    },
+    {
+      "archive": "interoperability-artifacts.tar.xz",
+      "members": 243,
+      "uncompressedBytes": 111850637,
+      "verified": true,
+      "population": "interoperability",
+      "declared": 26,
+      "admitted": 26,
+      "physicalPredictions": 924,
+      "flatTokens": {
+        "generated": 29451,
+        "terminal": 924,
+        "observedAndContext": 1470900,
+        "total": 1501275,
+        "detailed": 28472
+      }
+    },
+    {
+      "archive": "comparison-artifacts.tar.xz",
+      "members": 2,
+      "uncompressedBytes": 305476,
+      "verified": true
+    },
+    {
+      "archive": "reference-artifacts.tar.xz",
+      "members": 6,
+      "uncompressedBytes": 624842,
+      "verified": true
+    },
+    {
+      "archive": "policy-artifacts.tar.xz",
+      "members": 1,
+      "uncompressedBytes": 602,
+      "verified": true
+    },
+    {
+      "archive": "consumer-validation-artifacts.tar.xz",
+      "members": 9,
+      "uncompressedBytes": 56029,
+      "verified": true
+    }
+  ],
+  "coordinatedProvenanceMembersVerified": 2122,
+  "datasetReplication": {
+    "independentMembersVerified": 115,
+    "publishedMembersVerified": 100,
+    "byteIdenticalCoreFiles": 87,
+    "retainedDatasetCheck": {
+      "schema": "v8-dataset-retained-evidence-check/1",
+      "passed": true,
+      "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+      "scope": "retained-evidence-integrity-and-physical-token-check",
+      "freshNativeExecution": false,
+      "manifestFilesChecked": 10,
+      "nativeInputsChecked": 37,
+      "episodes": {
+        "train": 26,
+        "validation": 7,
+        "test": 4
+      },
+      "examples": {
+        "train": 646,
+        "validation": 239,
+        "test": 136
+      },
+      "generatedTokensWithEOS": 33850,
+      "eosTokens": 1021,
+      "manifestHashes": true,
+      "exactNativeInputHashes": true,
+      "receiptBindings": true,
+      "frozenComponentSplits": true,
+      "exactCausalContextBytes": true,
+      "generatedOnlyMasks": true,
+      "allCompleteEpisodeTargets": true,
+      "physicalTokenIdsReencoded": false,
+      "byteRoundTripsRechecked": false,
+      "codecSourceSha256": null,
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "pythonVersion": "3.12.14",
+      "tokenizersVersion": null,
+      "optimizerSteps": 0,
+      "learningClaim": null
+    }
+  },
+  "comparison": {
+    "declaredRows": 703,
+    "paired": 42,
+    "dispositions": {
+      "paired": 42,
+      "baseline-unmeasured": 7,
+      "current-case-ambiguous": 1,
+      "baseline-not-retained": 653
+    },
+    "before": {
+      "predictions": 1075,
+      "generatedBytes": 114536,
+      "promptBytes": 40671530,
+      "peakPromptBytes": 174112,
+      "generatedTokens": 34554,
+      "detailedTokens": 34375,
+      "promptTokens": 13104241,
+      "terminalTokens": 1075,
+      "flatTotalTokens": 13139870,
+      "peakPromptTokens": 54944
+    },
+    "after": {
+      "predictions": 1010,
+      "generatedBytes": 109883,
+      "promptBytes": 3532872,
+      "peakPromptBytes": 8454,
+      "generatedTokens": 33132,
+      "detailedTokens": 31831,
+      "promptTokens": 1252510,
+      "terminalTokens": 1010,
+      "flatTotalTokens": 1286652,
+      "peakPromptTokens": 2875
+    },
+    "flatTokenRegressions": [
+      "real-utilities-61b4b4c012b0705b0a6b660a",
+      "real-utilities-4dd52bb7e01ee8083fe45cd2",
+      "compound-pure",
+      "object-alias",
+      "pure-helper",
+      "dense-loop",
+      "counter-0",
+      "redundant-cell-write"
+    ]
+  }
+}
