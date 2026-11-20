@@ -16,12 +16,13 @@ unmeasured later implementation changes.
 | [Frozen producer regression](producer-regression-9d4f6b3/README.md) | 1,834 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `9d4f6b3`; full logs and clean identities retained. A subsequent 24/24 targeted run at `562f6f2` has separate coordinator-reported identity and original logs. |
 | [Latest production dataset](dataset-v8-492328f/README.md) | 34 freshly admitted episodes and 898 complete examples, with actual tokenizer re-encoding, masks, EOS and frozen component splits checked | Producer `492328f`, consumer `cb311db`; fresh 23-case interoperability and 11-case gallery admission; zero optimizer steps |
 
-Two later focused Number populations have separate exact receipts and do not
-change those corpus denominators:
+Focused Number populations have separate exact receipts and do not change
+those corpus denominators. The current abrupt pair has been freshly readmitted
+under the final expanded contract:
 
 | Supplementary evidence | Measured result | Scope |
 | --- | --- | --- |
-| [Direct and nested Number callback throws](number-abrupt-3a1992b/README.md) | 2/2 source/native/token admissions | Producer `3a1992b`, consumer `418385b`; exact abrupt completions and suppressed fallback |
+| [Direct and nested Number callback throws](number-abrupt-012c9fe/README.md) | 2/2 fresh source/native/token admissions | Producer `012c9fe`, consumer `39c4036`; final contract, exact abrupt completions and suppressed fallback. The earlier [3a1992b pair](number-abrupt-3a1992b/README.md) retains its own historical receipts. |
 | [Number callback catch/finally](number-completion-ddaac82/README.md) | 14 declared: 12 source/native/token admissions and two explicit source refusals | Producer `ddaac82`, consumer `91aea0d`; preserves the failed admission attempt at consumer `1967695` separately |
 
 All eight former enumeration refusals and the previous generator continuation
