@@ -228,7 +228,7 @@ export function evaluateTermV8(term,{inputs=new Map(),values=new Map(),heap=new 
     if(node.op==='fold_left'){
       const input=sub(node.input),initial=sub(node.initial),items=validateDenseNumericArray(input,{heap});
       if(initial[0]!=='num')fail('numeric fold initial value');
-      let result=native(initial);for(const item of items)result+=native(item);return scalar(result);
+      let result=native(initial);for(const item of items){if(--budget.remaining<0)fail('semantic work budget');result+=native(item);}return scalar(result);
     }
     const args=node.args.map(sub);
     return evaluateTerm({op:node.op,args:args.map(tag=>({op:'literal',value:tag}))},{heap});
