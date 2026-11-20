@@ -1,13 +1,24 @@
-// Source-only class and object-method inventory, shared with independent observers. This module
+// Source-only class and callable inventory, shared with independent observers. This module
 // never imports the owned compiler, journal, protocol machine or evaluator.
 import {parse} from 'acorn';
 
 export const CONSTRUCTION_SOURCE_CALLABLE_PREFIX_V8='class:';
 export function constructionSourceInventoryV8(source){
-  const classes=[],methods=new Map(),objectMethods=new Map(),synthetic=new Map();
-  function visit(node){
+  const classes=[],methods=new Map(),objectMethods=new Map(),ordinaryFunctions=new Map(),synthetic=new Map(),
+    ordinaryNames=new Set(),constructions=[],prototypeMembers=[];
+  function visit(node,parent=null){
     if(!node||typeof node!=='object')return;
-    if(Array.isArray(node)){node.forEach(visit);return;}
+    if(Array.isArray(node)){node.forEach(child=>visit(child,parent));return;}
+    if(['FunctionDeclaration','FunctionExpression'].includes(node.type)&&!node.async&&!node.generator&&
+      parent?.type!=='MethodDefinition'&&!(parent?.type==='Property'&&(parent.method||['get','set'].includes(parent.kind)))){
+      ordinaryFunctions.set(node.start,node);
+      if(node.id)ordinaryNames.add(node.id.name);
+      if(parent?.type==='VariableDeclarator'&&parent.id.type==='Identifier')ordinaryNames.add(parent.id.name);
+      if(parent?.type==='AssignmentExpression'&&parent.left.type==='Identifier')ordinaryNames.add(parent.left.name);
+    }
+    if(node.type==='NewExpression')constructions.push(node.callee);
+    if(node.type==='MemberExpression'&&(!node.computed&&node.property.name==='prototype'||
+      node.computed&&node.property.type==='Literal'&&node.property.value==='prototype'))prototypeMembers.push(node);
     if(node.type==='ObjectExpression')for(const element of node.properties)
       if(element.type==='Property'&&(element.method||['get','set'].includes(element.kind)))
         objectMethods.set(element.value.start,{objectNode:node,element});
@@ -36,10 +47,13 @@ export function constructionSourceInventoryV8(source){
         }
       }
     }
-    for(const [key,child]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(child);
+    for(const [key,child]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(child,node);
   }
   visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));
-  return {classes,methods,objectMethods,synthetic};
+  const ordinaryExpression=node=>node&&((node.type==='Identifier'&&ordinaryNames.has(node.name))||ordinaryFunctions.has(node.start));
+  const ordinaryConstruction=constructions.some(ordinaryExpression)||prototypeMembers.some(node=>ordinaryExpression(node.object))||
+    classes.some(item=>ordinaryExpression(item.node.superClass));
+  return {classes,methods,objectMethods,ordinaryFunctions,ordinaryConstruction,prototypeMembers,synthetic};
 }
 
 /** Exact source membership only; construction capabilities remain separate. */

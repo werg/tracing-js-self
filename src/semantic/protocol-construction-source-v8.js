@@ -1,4 +1,4 @@
-// Teacher-only lowering of owned class transitions to explicit public records.
+// Teacher-only lowering of owned construction transitions to explicit public records.
 // The serving machine receives no owned frames, bytecode, patches or journal.
 import {propertyKeyValue,stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
 import {decode,encode} from '../values.js';
@@ -16,12 +16,16 @@ const scalar=value=>Array.isArray(value)&&['undefined','null','bool','str','num'
 const finished=frame=>['completed','thrown'].includes(frame.status);
 
 export function createConstructionSourceAdapterV8({bundle,source}){
-  const inventory=constructionSourceInventoryV8(source);if(!inventory.classes.length&&!inventory.objectMethods.size)return null;
+  const inventory=constructionSourceInventoryV8(source);
+  if(!inventory.classes.length&&!inventory.objectMethods.size&&!inventory.ordinaryConstruction)return null;
   const classes=new Map(inventory.classes.map(item=>[item.node.start,item])),definitions=new Map(),roles=new Map();
   for(const program of Object.values(bundle.programs))for(let index=0;index<program.instructions.length;index++){
-    const instruction=program.instructions[index];if(instruction.op!=='MAKE_FUNCTION')continue;
+    const instruction=program.instructions[index];if(!['DEF_FN','MAKE_FUNCTION'].includes(instruction.op))continue;
     const code=instruction.arg.codeId,method=inventory.methods.get(instruction.start),item=classes.get(instruction.start),
       objectMethod=inventory.objectMethods.get(instruction.start);
+    if(inventory.ordinaryFunctions.has(instruction.start)){
+      definitions.set(code,{placement:'ordinary-function',node:inventory.ordinaryFunctions.get(instruction.start)});continue;
+    }
     if(objectMethod){definitions.set(code,{placement:'object-method',node:objectMethod.element.value});continue;}
     if(method){definitions.set(code,{classNode:method.classNode,placement:method.element.kind==='constructor'?'constructor':'method',node:method.element.value});continue;}
     if(!item)continue;
@@ -64,11 +68,36 @@ export function createConstructionSourceAdapterV8({bundle,source}){
     return {constructorKind:isClass?(definition.classNode.superClass?'derived':'base'):
       definition?.placement==='object-method'||node.arrow||node.nonConstructible?null:'base',classConstructor:isClass};
   }
+  function initializeOrdinaryPrototypes(ctx,event){
+    let initialized=false;
+    for(const change of event.stateChanges){
+      const node=change.after;
+      if(change.table!=='heap'||node?.kind!=='function'||!node.prototypeInitialized||change.before?.prototypeInitialized||node.classConstructor)continue;
+      require(ctx,definitions.get(node.codeId)?.placement==='ordinary-function'&&!node.arrow&&!node.async&&!node.nonConstructible,
+        'initialized ordinary prototype has no constructible source function');
+      ctx.tag(ref(node.id),event);
+      const prototype=node.properties?.prototype?.value;
+      require(ctx,scalar(prototype)&&!node.accessors?.prototype,'ordinary prototype must be a data property');
+      for(const allocation of event.stateChanges.filter(row=>row.table==='heap'&&row.before===null&&row.after?.kind==='object')){
+        const candidate=allocation.after;
+        if(candidate.properties?.constructor?.value?.[1]!==node.id)continue;
+        require(ctx,ctx.eq(candidate.properties.constructor.value,ref(node.id))&&ctx.orderedKeys(candidate).length===1&&
+          ctx.eq(ctx.descriptor(candidate,'constructor'),{kind:'data',value:ref(node.id),writable:true,enumerable:false,configurable:true})&&
+          ctx.prototype(candidate)==='ordinary','ordinary prototype allocation and constructor backlink');
+        ctx.publish(candidate,event);
+      }
+      if(prototype[0]==='ref')require(ctx,ctx.published.has(prototype[1]),'ordinary prototype identity was not published');
+      emit(ctx,{kind:'property.define',object:node.id,key:['str','prototype'],descriptor:ctx.descriptor(node,'prototype'),success:true},event);
+      initialized=true;
+    }
+    return initialized;
+  }
   function enter(ctx,event,{mode='ordinary',owner=null}={}){
     const child=addedFrame(event),callee=event.operands[0];
     require(ctx,child&&callee?.[0]==='ref','constructor must enter an owned invocation');
     const fn=ctx.state.heap[callee[1]];
-    require(ctx,definitions.get(fn?.codeId)?.placement==='constructor','ordinary and exotic constructor metadata needs its separate source profile');
+    require(ctx,['constructor','ordinary-function'].includes(definitions.get(fn?.codeId)?.placement)&&capability(fn).constructorKind!==null,
+      'constructor has no constructible source function');
     const retained=child.afterInstanceInitialization,receiver=retained?.receiver??child.constructReceiver??child.thisValue,
       newTarget=retained?.newTarget??child.newTarget,id='construction:'+child.id;
     require(ctx,newTarget?.[0]==='ref','constructor newTarget is missing');
@@ -128,11 +157,17 @@ export function createConstructionSourceAdapterV8({bundle,source}){
     },
     event(ctx,event,row){
       const inst=instruction(ctx,event);if(!inst)return false;const op=inst.op;
+      const ordinaryPrototypeInitialized=initializeOrdinaryPrototypes(ctx,event);
       if(['CLASS_CREATE','SET_HOME_OBJECT','CLASS_INITIALIZER','CLASS_FINISH','CLASS_CONSTRUCTOR_GUARD','CONSTRUCT',
         'SUPER_CONSTRUCTOR','SUPER_CALL','SUPER_FORWARD_CALL','SUPER_BIND','THIS','NEW_TARGET','PROPERTY_KEY',
         'PRIVATE_DEFINE','PRIVATE_GET','PRIVATE_GET_METHOD','PRIVATE_SET','PRIVATE_HAS','PRIVATE_UPDATE'].includes(op))
         require(ctx,event.completion?.type!=='throw','guest abrupt construction/private operation requires its own public record');
-      if(op==='CLASS_CREATE'){
+      if(ordinaryPrototypeInitialized&&['GET_PROP','GET_METHOD'].includes(op)){
+        const [object,key]=event.operands;
+        require(ctx,object?.[0]==='ref'&&ctx.eq(key,['str','prototype'])&&!row?.child,'ordinary prototype read shape');
+        emit(ctx,{kind:'property.get',object:object[1],key,receiver:ctx.tag(object,event),
+          result:ctx.tag(event.result?.[0]==='method'?event.result[1]:event.result,event)},event);
+      }else if(op==='CLASS_CREATE'){
         const id=event.operands[0]?.[1],node=after(ctx,event,'heap',id),definition=definitions.get(node?.codeId),prototype=node?.properties?.prototype?.value;
         require(ctx,definition?.placement==='constructor'&&prototype?.[0]==='ref','class constructor/prototype identities');
         require(ctx,inst.arg.derived===!!definition.classNode.superClass,'class heritage differs from source');
@@ -252,7 +287,10 @@ export function createConstructionSourceAdapterV8({bundle,source}){
         if(Object.hasOwn(node,'classConstructor'))require(ctx,node.classConstructor===expected.classConstructor,'owned class capability differs from source');
         if(expected.classConstructor&&node.homeObject)require(ctx,node.classConstructor===true&&node.prototypeInitialized===true,
           'linked class constructor metadata is incomplete');
-        if(node.prototypeInitialized)require(ctx,expected.classConstructor&&node.properties?.prototype?.value?.[0]==='ref','initialized function prototype requires the declared class profile');
+        if(node.prototypeInitialized)require(ctx,expected.classConstructor?node.properties?.prototype?.value?.[0]==='ref':
+          definitions.get(node.codeId)?.placement==='ordinary-function'&&expected.constructorKind==='base'&&
+            scalar(node.properties?.prototype?.value)&&!node.accessors?.prototype,
+          'initialized function prototype requires a declared constructible source function');
         if(Object.hasOwn(node,'derivedConstructor')||node.classConstructor&&expected.constructorKind==='derived')
           require(ctx,node.derivedConstructor===true&&expected.classConstructor&&expected.constructorKind==='derived','derived constructor metadata disagrees with source');
       }

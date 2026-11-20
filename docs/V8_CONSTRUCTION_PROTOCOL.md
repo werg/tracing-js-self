@@ -162,6 +162,26 @@ Class methods retain their separate full descriptor, home-object and private
 state observations. Consistently changing an ordinary helper's capability in
 the teacher and public replay is still rejected by this independent check.
 
+Source-declared ordinary constructors also use the same `callable.define`,
+`construct.enter` and `construct.finish` records. Their lazily materialized
+prototype objects are published with the actual identity, constructor backlink
+and data descriptor flags before construction or a prototype read. Ordinary
+function prototypes remain writable, unlike class prototypes. The existing
+construction machine chooses the receiver prototype from actual newTarget and
+checks primitive-return fallback and object-return substitution. Classes may
+also inherit from an admitted ordinary source constructor.
+
+Independent instrumentation registers ordinary native prototype visibility at
+source `.prototype` access and constructor body entry, after argument evaluation.
+The registration returns the identical value and uses descriptor inspection;
+it does not execute the constructor or invoke a getter. Observed ordinary
+function prototypes, their backlinks and receiver prototype chains are checked
+with the same metadata identity table. Native function `name` and `length` stay
+outside this bounded ordinary function view; class function metadata keeps its
+full existing audit. A changed ordinary prototype descriptor still fails the
+independent audit when the teacher archive and public replay agree on the same
+incorrect descriptor and the scalar result is unchanged.
+
 `createConstructionSourceAdapterV8` lowers class declarations, actual function
 name/length descriptors, method home objects, initializer ownership and private
 identities to the shared public component. Its constructor operations retain
@@ -186,9 +206,9 @@ Unused class declarations still receive metadata
 evidence. This is local source/public qualification; native consumer admission
 is a separate required gate.
 
-The initial adapter explicitly refuses private accessors and object-valued
+The adapter explicitly refuses private accessors and object-valued
 private update conversion, constructor arrows, constructor exception handlers,
-ordinary/exotic constructors, uninitialized closure captures and super-property references.
+exotic constructors, uninitialized closure captures and super-property references.
 These refusals do not remove the corresponding owned runtime support. They
 identify the additional public continuation or source proof required before
 the cases can receive full source/native admission.

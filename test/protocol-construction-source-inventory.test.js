@@ -28,3 +28,15 @@ test('ordinary object methods and accessors have exact source callable membershi
   assert.deepEqual([...inventory.objectMethods.values()].map(row=>row.element.kind),['init','get','set']);
   for(const [start,row]of inventory.objectMethods)assert.equal(source.slice(start,row.element.value.end).startsWith('('),true);
 });
+
+test('ordinary constructors have exact source membership separate from methods and intrinsic construction',()=>{
+  const source='function C(){}const D=function(){};const object={m(){},get n(){return 1;}};new C();',
+    inventory=constructionSourceInventoryV8(source);
+  assert.equal(inventory.ordinaryConstruction,true);
+  assert.deepEqual([...inventory.ordinaryFunctions.values()].map(node=>node.type),['FunctionDeclaration','FunctionExpression']);
+  for(const text of ['function C(){};C.prototype;','const C=function(){};new C();','new (function(){})();',
+    'function C(){};class D extends C{};'])assert.equal(constructionSourceInventoryV8(text).ordinaryConstruction,true,text);
+  for(const text of ['function run(){return new Promise(r=>r(1));}',
+    'function* C(){};C.prototype;','async function C(){};C.prototype;'])
+    assert.equal(constructionSourceInventoryV8(text).ordinaryConstruction,false,text);
+});

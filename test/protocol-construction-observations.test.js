@@ -113,3 +113,19 @@ test('independent construction capability probes neither invoke functions nor re
   assert(nonconstructor.objects.some(node=>node.annotations?.some(row=>row.name==='ordinary-nonconstructible/1')));
   assert.equal(calls,0);assert.equal(reads,0);
 });
+
+test('ordinary constructor observations retain lazy prototype descriptors backlinks and receiver identities',()=>{
+  const checked=observe('"use strict";function run(){function C(n){this.n=n;}const before=C;const a=new C(4);const b=new C(5);return 7;}');
+  assert.equal(checked.audit.status,'agreed',JSON.stringify(checked.audit));
+  assert.equal(checked.native[0].objects[0].kind,'function');
+  assert.equal(Object.hasOwn(checked.native[0].objects[0],'properties'),false);
+  const objects=checked.native.at(-1).objects,constructor=objects.find(node=>
+    node.annotations?.some(row=>row.name==='ordinary-function-prototype/1'));
+  const descriptor=constructor.properties.find(row=>row.key[1]==='prototype').descriptor,
+    prototype=objects.find(node=>node.id===descriptor.value[1]);
+  assert.deepEqual({...descriptor,value:null},{kind:'data',value:null,writable:true,enumerable:false,configurable:false});
+  assert.deepEqual(prototype.properties.find(row=>row.key[1]==='constructor').descriptor,
+    {kind:'data',value:['ref',constructor.id],writable:true,enumerable:false,configurable:true});
+  const receivers=objects.filter(node=>node.properties?.some(row=>row.key[1]==='n'));
+  assert.equal(receivers.length,2);for(const receiver of receivers)assert.deepEqual(receiver.prototype,descriptor.value);
+});

@@ -156,3 +156,43 @@ test('independent callable observations reject a consistently nonconstructible t
   await assert.rejects(()=>auditProtocolSourceV8({bundle:mutant.bundle,
     referenceInput:{source,entry:'run',inputGraph:encodeNativeGraph([])},outcome:mutant.compiled.outcome}),/metadataAudit.*mismatch/);
 });
+
+test('every ordinary-constructor benchmark input qualifies through shared public construction and prototype records',async()=>{
+  const family=LANGUAGE_EXPANSION_FAMILIES.find(row=>row.id==='class-instance-state'),source=family.variants[1].source;
+  for(const args of family.inputs){
+    const result=await verifyRegionTrainingCase({source,entry:family.entry,args,family:family.family});
+    assert(result.exported,result.reason);const artifact=result.exported,controller=RegionExecutionHarness.replay(artifact).controller;
+    assert.deepEqual(controller.materialize(controller.completion.value),[args[0]+1,args[0]+1]);
+    const records=artifact.public.timeline.filter(row=>row.kind==='protocol').map(row=>decodeProtocolRecordV8(row.fields.line));
+    assert(records.some(row=>row.kind==='callable.define'&&row.constructorKind==='base'&&!row.classConstructor));
+    for(const kind of ['construct.enter','construct.finish','property.define'])assert(records.some(row=>row.kind===kind),kind);
+  }
+});
+
+test('ordinary construction preserves newTarget early function observations primitive returns and object substitution',async()=>{
+  for(const body of [
+    'function C(n){this.n=n;this.target=new.target;}const kept=C;function arg(){const before=C;return 4;}const o=new C(arg());return o.target===C?o.n:0;',
+    'function C(){this.n=4;return 9;}const o=new C();return o.n;',
+    'function C(){this.n=4;return {n:8};}const kept=C;const o=new C();return o.n;',
+    'const C=function(n){this.n=n;};const o=new C(4);return o.n;',
+    'function C(){this.n=4;}C.prototype={shared:3};const o=new C();return o.n+o.shared;',
+    'function A(n){this.n=n;}class C extends A{constructor(n){super(n);}}const o=new C(4);return o.n;'
+  ]){const {compiled}=await checked('"use strict";function run(){'+body+'}');replay(compiled,{checkpoints:true});}
+});
+
+test('independent ordinary prototype metadata rejects a consistently wrong teacher and public descriptor',async()=>{
+  const source='"use strict";function run(){function C(){this.n=4;}const o=new C();return 7;}',
+    original=Runtime.prototype.commit;let mutant;
+  try{
+    Runtime.prototype.commit=function(operation,callback,options){return original.call(this,operation,(draft,eventId)=>{
+      const result=callback(draft,eventId);
+      for(const node of Object.values(draft.heap))if(node.kind==='function'&&node.prototypeInitialized&&!node.classConstructor)
+        node.dataAttributes.prototype.writable=false;
+      return result;
+    },options);};
+    mutant=build(source);
+  }finally{Runtime.prototype.commit=original;}
+  assert.deepEqual(mutant.compiled.outcome.graph.roots.at(-1),['num',7]);replay(mutant.compiled);
+  await assert.rejects(()=>auditProtocolSourceV8({bundle:mutant.bundle,
+    referenceInput:{source,entry:'run',inputGraph:encodeNativeGraph([])},outcome:mutant.compiled.outcome}),/metadataAudit.*mismatch/);
+});

@@ -7,9 +7,9 @@ import {constructionSourceInventoryV8} from './protocol-construction-source-inve
 
 export const CONSTRUCTION_OBSERVATION_PROFILE_V8='class-private-metadata/1';
 const registerName='__tracingProtocolConstructionRegister';
+const ordinaryName='__tracingProtocolOrdinaryPrototype';
 const fail=message=>{throw new TypeError('Construction metadata observation: '+message);};
 const ref=id=>['ref',id];
-const sourceClasses=source=>constructionSourceInventoryV8(source).classes;
 const construct=Reflect.construct,PrivateProxy=Proxy;
 const constructionProbe=Object.freeze({construct:()=>({})});
 const nonconstructibleAnnotation=()=>({name:'ordinary-nonconstructible/1',values:[],data:{}});
@@ -46,7 +46,8 @@ function ownedInventory(bundle,classes){
 
 export function createConstructionObservationAdapterV8({source,side='native',bundle=null}={}){
   const inventory=constructionSourceInventoryV8(source),classes=inventory.classes,
-    observeOrdinaryCapabilities=inventory.objectMethods.size>0;
+    observeOrdinaryPrototypes=inventory.ordinaryConstruction,
+    observeOrdinaryCapabilities=inventory.objectMethods.size>0||observeOrdinaryPrototypes;
   if(!classes.length&&!observeOrdinaryCapabilities)return null;
   for(const item of classes)for(const entry of item.privateNames)
     if(!['field','method'].includes(entry.kind))fail('private accessor metadata requires an accessor protocol');
@@ -59,7 +60,17 @@ export function createConstructionObservationAdapterV8({source,side='native',bun
   }
   infer(parse(source,{ecmaVersion:'latest',sourceType:'script'}));
   const classByStart=new Map(classes.map(item=>[item.node.start,item])),nativeClasses=[],nativeClass=new WeakMap(),nativeHome=new WeakMap(),
+    nativeOrdinaryPrototypes=new WeakSet(),
     owned=side==='owned'?ownedInventory(bundle,classes):null;
+  function ordinaryPrototype(value){
+    // Called at an actual source .prototype access or ordinary constructor body
+    // entry. Inspect descriptors only; never call the function or get a guest
+    // property. Native function name/length remain outside this bounded view.
+    if(typeof value!=='function'||nativeClass.has(value))return value;
+    if(types.isProxy(value))fail('Proxy constructor prototype requires its own profile');
+    if(isConstructor(value))nativeOrdinaryPrototypes.add(value);
+    return value;
+  }
   function register(constructor,start,readers){
     if(typeof constructor!=='function'||types.isProxy(constructor)||nativeClass.has(constructor))fail('invalid native class registration');
     const item=classByStart.get(start),prototype=Object.getOwnPropertyDescriptor(constructor,'prototype')?.value;
@@ -77,7 +88,7 @@ export function createConstructionObservationAdapterV8({source,side='native',bun
     }
   }
   function instrument(text){
-    const current=sourceClasses(text);
+    const currentInventory=constructionSourceInventoryV8(text),current=currentInventory.classes;
     if(current.length!==classes.length)fail('completion instrumentation changed the class inventory');
     const insertions=current.flatMap(({node},index)=>{
       const item=classes[index],readers=item.privateNames.map(entry=>
@@ -91,7 +102,22 @@ export function createConstructionObservationAdapterV8({source,side='native',bun
       if(name!==undefined){const key=JSON.stringify(name);
         result.push({at:node.start,text:'({['+key+']:'},{at:node.end,text:'})['+key+']'});}
       return result;
-    }).sort((a,b)=>b.at-a.at);
+    });
+    if(observeOrdinaryPrototypes){
+      if(currentInventory.ordinaryFunctions.size!==inventory.ordinaryFunctions.size)
+        fail('completion instrumentation changed the ordinary function inventory');
+      for(const node of currentInventory.ordinaryFunctions.values()){
+        const directives=node.body.body.filter(statement=>statement.type==='ExpressionStatement'&&typeof statement.directive==='string');
+        insertions.push({at:directives.at(-1)?.end??node.body.start+1,text:';'+ordinaryName+'(new.target);'});
+      }
+      // Wrapping only the receiver preserves evaluation count, method receiver,
+      // and property access semantics. The hook returns the identical value.
+      for(const member of currentInventory.prototypeMembers)
+        insertions.push({at:member.object.start,text:ordinaryName+'('},{at:member.object.end,text:')'});
+      for(const {node}of current)if(node.superClass)
+        insertions.push({at:node.superClass.start,text:ordinaryName+'('},{at:node.superClass.end,text:')'});
+    }
+    insertions.sort((a,b)=>b.at-a.at);
     for(const insertion of insertions)text=text.slice(0,insertion.at)+insertion.text+text.slice(insertion.at);
     return text;
   }
@@ -111,6 +137,11 @@ export function createConstructionObservationAdapterV8({source,side='native',bun
         data:{name:entry.name,kind:entry.kind,static:entry.static}});
     }
     if(!annotations.length&&typeof value==='function'){
+      if(observeOrdinaryPrototypes&&nativeOrdinaryPrototypes.has(value)){
+        const observed=ctx.defaultNode(value,{includeFunctions:true});
+        return {...observed,properties:observed.properties.filter(row=>!['name','length'].includes(row.key)),
+          annotations:[{name:'ordinary-function-prototype/1',values:[],data:{}}]};
+      }
       if(observeOrdinaryCapabilities&&!isConstructor(value))
         return {...ctx.defaultNode(value),annotations:[nonconstructibleAnnotation()]};
       return null;
@@ -136,6 +167,11 @@ export function createConstructionObservationAdapterV8({source,side='native',bun
     }
     if(Object.keys(node.privateSlots??{}).some(key=>!accounted.has(key)))ctx.fail('unregistered private element identity');
     if(!annotations.length&&node.kind==='function'){
+      if(observeOrdinaryPrototypes&&node.prototypeInitialized){
+        if(node.arrow||node.async||node.nonConstructible)ctx.fail('nonconstructor has an ordinary initialized prototype');
+        return {...ctx.defaultNode(value,{includeFunctions:true}),
+          annotations:[{name:'ordinary-function-prototype/1',values:[],data:{}}]};
+      }
       if(observeOrdinaryCapabilities&&(node.arrow||node.nonConstructible))
         return {...ctx.defaultNode(value),annotations:[nonconstructibleAnnotation()]};
       return null;
@@ -151,6 +187,6 @@ export function createConstructionObservationAdapterV8({source,side='native',bun
     for(const [key,child]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))reserved(child);
   }
   reserved(parse(source,{ecmaVersion:'latest',sourceType:'script'}));
-  return {id:CONSTRUCTION_OBSERVATION_PROFILE_V8,instrument,globals:{[registerName]:register},
+  return {id:CONSTRUCTION_OBSERVATION_PROFILE_V8,instrument,globals:{[registerName]:register,[ordinaryName]:ordinaryPrototype},
     metadataAdapter:side==='owned'?{ownedNode}:{nativeNode}};
 }
