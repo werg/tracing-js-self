@@ -1,0 +1,63 @@
+{
+  "schema": "producer-regression-file-inventory/1",
+  "producerRevision": "b66c19be960f114b69787746b2487e6f23a73577",
+  "producerTree": "447832396b33feea21d39c8d2b7b54b1a5659dc3",
+  "generatedAt": "2026-11-20T13:18:42.676174+00:00",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4272,
+      "sha256": "ff850a37fad11b04c9f750854350a26c59f833920fd9e83e76de259c7380da48"
+    },
+    {
+      "path": "code-manifest.json",
+      "bytes": 120826,
+      "sha256": "98f5d71fd308291b8fe48d73668c10b6ae79d0ccfa5439e93973d990a923ec31"
+    },
+    {
+      "path": "contracts.stderr.log",
+      "bytes": 359,
+      "sha256": "25d89fcefd423c031268e765c73e08af43281ee3564531e22106ed57c2db948f"
+    },
+    {
+      "path": "contracts.stdout.log",
+      "bytes": 2457,
+      "sha256": "8a22064f320a4bcb7c772be462bdcdd47f5806bc74c00e30d044bdc2124033af"
+    },
+    {
+      "path": "reference.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reference.stdout.log",
+      "bytes": 393,
+      "sha256": "fc53ef9d327aa46a3968f073e1c35d1ca05af8710d42c3cfc903c8db54d9e560"
+    },
+    {
+      "path": "run_validation.py",
+      "bytes": 6512,
+      "sha256": "7b44b13164d347c265f446ebf2863a10b0aeb4ce04536bff09c84d0c7c8e375e"
+    },
+    {
+      "path": "summary.json",
+      "bytes": 24626,
+      "sha256": "c17bbb65f6a83e340c88413ca85662fba59872663599372340487d3aeb0ce612"
+    },
+    {
+      "path": "test-files.json",
+      "bytes": 12647,
+      "sha256": "b673c612e1c59c0e19227588ae404f9ad115da9ba6eb727c18c1afcede6bd096"
+    },
+    {
+      "path": "unit.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "unit.stdout.log",
+      "bytes": 172162,
+      "sha256": "21f45464b37f5447ad61fda16f402d344864f7df10f959203113bc120889f80b"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "semantic-v8-stream-cli-equivalence/1",
+  "passed": true,
+  "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "qualifiedCases": 11,
+  "everyPhysicalArtifactByteIdentical": true,
+  "allSummariesExactlyEqual": true,
+  "rowsEqualExceptMeasuredDuration": true,
+  "ordinaryCliRunReceipt": "/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/gallery-receipt.json",
+  "ordinaryCliRunReceiptSha256": "3df094764bd363621ba5f4b5cac35dc2a16a349a1211f9e19950722910c92c89",
+  "ordinaryReportSha256": "3bc6cfce21f829b431d36c623929c4366717f5bab81cfffe3737dc8da7414fd0",
+  "streamReportSha256": "b31acf8d22d32ec0ad34778a40c29f05734760d3ffeb669018b391ac60f06aff",
+  "sourceAdmissionsPerformed": 0,
+  "nativeAdmissionsPerformed": 0,
+  "scope": "Fresh streamed exact-token measurement of all11 already-qualified gallery cases agrees byte-for-byte with the independently executed ordinary frozen cost CLI; no report or source admission was synthesized."
+}

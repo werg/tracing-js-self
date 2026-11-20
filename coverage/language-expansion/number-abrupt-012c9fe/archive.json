@@ -1,0 +1,81 @@
+{
+  "schema": "semantic-v8-supplementary-archive/1",
+  "population": "number-abrupt",
+  "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "archive": {
+    "file": "artifacts.tar.xz",
+    "bytes": 51332,
+    "sha256": "98fb69da42e5dc46e3ec4411e63ecc2d37d0050ee057d4e0c5db899ddc83a71f"
+  },
+  "memberHashesRechecked": true,
+  "files": [
+    {
+      "path": "number-abrupt-direct.admitted.json",
+      "bytes": 295548,
+      "sha256": "42101d83f977f34be38b868832c51c407dd2a5f508711775fc07361acee083c4"
+    },
+    {
+      "path": "number-abrupt-direct.costs.json",
+      "bytes": 450058,
+      "sha256": "2620780d2a4699e8efe93c97fbf6cde04bb1e9359b8b92139de07e5015b82484"
+    },
+    {
+      "path": "number-abrupt-direct.native-input.json",
+      "bytes": 119310,
+      "sha256": "d0ff3a0c86c257455e6c081a457bf5a7eadca654c6ee6b7c68b31f60ecd7806c"
+    },
+    {
+      "path": "number-abrupt-direct.native.json",
+      "bytes": 2600,
+      "sha256": "5b42174803c4752eda1197e319d8226f056fb28c21457c90f6e374feda883c45"
+    },
+    {
+      "path": "number-abrupt-direct.result.json",
+      "bytes": 312801,
+      "sha256": "f58c09a06945898496b1c5de17570b6f8743d2d703af62ef159b5c8388a517da"
+    },
+    {
+      "path": "number-abrupt-direct.source.json",
+      "bytes": 292697,
+      "sha256": "20e248e211009062e76f02dad5904aadb1c984c24aa94f078b288b6ec378f608"
+    },
+    {
+      "path": "number-abrupt-nested.admitted.json",
+      "bytes": 418437,
+      "sha256": "ec2b88b739d7630ac665ebc075eb8f110253462b4f32418297647cc3ddda71f6"
+    },
+    {
+      "path": "number-abrupt-nested.costs.json",
+      "bytes": 787805,
+      "sha256": "d7bf31c5373fcec33e35fc221ee6f870f19d1a8a040fc30714d6cff169cb57d9"
+    },
+    {
+      "path": "number-abrupt-nested.native-input.json",
+      "bytes": 172162,
+      "sha256": "e7fcf662d43d552da5814b5a1180948b7eac312df91de28f276420a99673bc71"
+    },
+    {
+      "path": "number-abrupt-nested.native.json",
+      "bytes": 2600,
+      "sha256": "5d8586152f3f60db10075199a63be0e3e5c1734d9dee1cccb2efce4580ede4ad"
+    },
+    {
+      "path": "number-abrupt-nested.result.json",
+      "bytes": 444569,
+      "sha256": "0547312b19e263348949361b32666c9ae8ccf66a83c51b08e2fe6da39384e7bd"
+    },
+    {
+      "path": "number-abrupt-nested.source.json",
+      "bytes": 415586,
+      "sha256": "08692f6687a5f2508efa47b24e5e4c32bab2985e74dd6278f1bd5ac259268cd1"
+    },
+    {
+      "path": "report.json",
+      "bytes": 9012,
+      "sha256": "e5b1e9cb6020216b818d56b7519c49128cf0d2597a5c74ff88d601970447e7a7"
+    }
+  ],
+  "freshNativeExecution": false,
+  "scope": "Packaging verifies retained bytes; fresh execution is established by the exact source-bound receipts in the successful run."
+}

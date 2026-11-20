@@ -1,0 +1,12 @@
+{"id":"compound-pure","status":"measured"}
+{"id":"branch-1","status":"measured"}
+{"id":"object-alias","status":"measured"}
+{"id":"pure-helper","status":"measured"}
+{"id":"dense-loop","status":"measured"}
+{"id":"throw-finally","status":"measured"}
+{"id":"counter-0","status":"measured"}
+{"id":"rejection-finally","status":"measured"}
+{"id":"callback-captured-write","status":"measured"}
+{"id":"persistent-external-trigger","status":"measured"}
+{"id":"redundant-cell-write","status":"measured"}
+{"output":"/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/gallery-costs","producerRevision":"012c9fe49a082319bf98ac0c571596da925741a4","summary":{"declared":11,"sourceQualified":11,"sourceDispositions":{"passed":11},"compactEpisodes":9,"whollyDetailedEpisodes":2,"regionCoverage":{"measuredEpisodes":11,"unmeasuredEpisodes":0,"compact":10,"detailed":15,"compactRecords":10,"detailedRecords":87},"flat":{"sourceQualified":11,"measured":11,"unmeasured":0,"dispositions":{"passed":11},"bytes":{"generated":11618,"detailed":10163,"detailedShare":0.8747632983301773,"cumulativeContext":402808,"peakContext":8454},"tokenMeasurement":"passed","tokenMeasuredEpisodes":11,"tokens":{"generated":3378,"detailed":2915,"detailedShare":0.8629366489046774,"terminal":97,"observedAndContext":139863,"total":143338,"peakContext":2875},"scope":"Sums cover measured episodes only; source refusals and measurement limits remain in the declared denominator."},"nativePacking":{"status":"measured","measuredEpisodes":11,"unmeasuredEpisodes":0,"generatedTokens":3378,"observedTokens":158551,"terminalTokens":0,"physicalRecords":407,"logicalRecords":169,"scope":"Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."},"model":{"status":"unmeasured","nextStep":null,"completedExecution":null,"latencyMs":null},"nativeServing":{"status":"unmeasured","latencyMs":null,"cacheSavings":null},"defaultPromotion":"not-qualified"}}

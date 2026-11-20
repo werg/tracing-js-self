@@ -1,0 +1,22 @@
+{
+  "schema": "semantic-test-baseline/1",
+  "producerRevision": "87700e4230360b4a9e564d939cc194b7a6daeb0e",
+  "sourceRevision": "c165dad8e8226167ec1649cbe6d654cf8662aaf8",
+  "command": "npm test",
+  "nodeVersion": "v24.22.3",
+  "tests": 1224,
+  "passed": 1217,
+  "skipped": 6,
+  "failed": 1,
+  "status": "failed",
+  "logSha256": "af733bda7f2243faf93afc973f4daeb92df0dfb9b9bd78d22d966fd81f4d9572",
+  "failures": [
+    {
+      "file": "test/fixtures/test262-module-reference.mjs",
+      "line": 80,
+      "expected": "unsupported",
+      "actual": "failed",
+      "case": "pinned Test262 native module async negative completion"
+    }
+  ]
+}

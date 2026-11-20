@@ -1,0 +1,71 @@
+{
+  "schema": "semantic-v8-retention-run/1",
+  "startedAt": "2026-11-20T13:38:59.627724+00:00",
+  "finishedAt": "2026-11-20T13:42:04.071783+00:00",
+  "commands": [
+    {
+      "command": [
+        "node",
+        "/workspace/scratch/1d835fe8168d/producer-release-regression/coverage/language-expansion/native-v8-8d1f7b5-all/retain-native-inputs.mjs",
+        "/workspace/scratch/1d835fe8168d/final-v8/native-all"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 4.525486500002444,
+      "stdout": "{\"root\":\"/workspace/scratch/1d835fe8168d/final-v8/native-all\",\"retainedNativeInputs\":665,\"declared\":665,\"sourceQualified\":665,\"nativeAdmitted\":665}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "/workspace/scratch/1d835fe8168d/producer-release-regression/coverage/language-expansion/native-v8-8d1f7b5-all/retain-native-inputs.mjs",
+        "/workspace/scratch/1d835fe8168d/final-v8/native-gallery"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.2106616609999037,
+      "stdout": "{\"root\":\"/workspace/scratch/1d835fe8168d/final-v8/native-gallery\",\"retainedNativeInputs\":11,\"declared\":11,\"sourceQualified\":11,\"nativeAdmitted\":11}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "/workspace/scratch/1d835fe8168d/producer-release-regression/coverage/language-expansion/native-v8-8d1f7b5-all/retain-native-inputs.mjs",
+        "/workspace/scratch/1d835fe8168d/final-v8/native-interoperability"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.8378795770004217,
+      "stdout": "{\"root\":\"/workspace/scratch/1d835fe8168d/final-v8/native-interoperability\",\"retainedNativeInputs\":23,\"declared\":23,\"sourceQualified\":23,\"nativeAdmitted\":23}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/1d835fe8168d/producer-release-regression/coverage/language-expansion/native-v8-8d1f7b5-all/retain-evidence.py",
+        "--output",
+        "/workspace/scratch/1d835fe8168d/final-v8/retained-native",
+        "--population",
+        "all:/workspace/scratch/1d835fe8168d/final-v8/native-all:/workspace/scratch/1d835fe8168d/final-v8/costs-all",
+        "--population",
+        "gallery:/workspace/scratch/1d835fe8168d/final-v8/native-gallery:/workspace/scratch/1d835fe8168d/final-v8/costs-gallery",
+        "--population",
+        "interoperability:/workspace/scratch/1d835fe8168d/final-v8/native-interoperability:/workspace/scratch/1d835fe8168d/final-v8/costs-interoperability",
+        "--comparison",
+        "/workspace/scratch/1d835fe8168d/final-v8/paired-serving-costs.json",
+        "--comparison-inputs",
+        "/workspace/scratch/1d835fe8168d/final-v8/comparison-inputs.json",
+        "--reference",
+        "/workspace/scratch/1d835fe8168d/final-v8/reference",
+        "--policy",
+        "/workspace/scratch/1d835fe8168d/producer-release-regression/contracts/semantic-native-policy-v8.json",
+        "--validation",
+        "/workspace/scratch/1d835fe8168d/final-validation/consumer-final",
+        "--max-archive-bytes",
+        "8000000"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 173.37220725899897,
+      "stdout": "{\"output\": \"/workspace/scratch/1d835fe8168d/final-v8/retained-native\", \"archives\": [{\"file\": \"all-artifacts.tar.xz\", \"compressedBytes\": 7760792, \"sha256\": \"4696fbf6b82a0c50c455936e007c16cc8e18b617839f8a1f6ddce361f132b5a0\"}, {\"file\": \"gallery-artifacts.tar.xz\", \"compressedBytes\": 239948, \"sha256\": \"fb2c48a6f341e791ebbb1799db22fcdc17262462a46410e89d996dc5fe504330\"}, {\"file\": \"interoperability-artifacts.tar.xz\", \"compressedBytes\": 879588, \"sha256\": \"ae576dccd15bccee41d706b977858a3258146a469a5877c685dacce4bb95d0d9\"}, {\"file\": \"comparison-artifacts.tar.xz\", \"compressedBytes\": 18208, \"sha256\": \"ce8965aaf9d22256f1163fcdb7efcb13149f1b704f1a6a08ac786cf27fe94e6f\"}, {\"file\": \"reference-artifacts.tar.xz\", \"compressedBytes\": 39236, \"sha256\": \"27fc2ca2ae60834222b7696b417133bc12af6d086027e7dd834f56cdb7fda430\"}, {\"file\": \"policy-artifacts.tar.xz\", \"compressedBytes\": 552, \"sha256\": \"085a5308f94209e96c320083d70b0c3c5a620a110cd7e1518e66f53a1d799884\"}, {\"file\": \"consumer-validation-artifacts.tar.xz\", \"compressedBytes\": 7484, \"sha256\": \"c00eb228731030e978cd61e2ef6102cac1d7c8ec8952657c44b3b60139a13074\"}], \"files\": 6345}\n",
+      "stderr": ""
+    }
+  ],
+  "scope": "Integrity verification, exact input reconstruction and retention; no new source/native/model execution."
+}

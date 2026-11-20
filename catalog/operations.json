@@ -45,6 +45,11 @@
       "kind": "algorithm"
     },
     {
+      "operationId": "function.home",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
       "operationId": "primitive.binary",
       "version": 1,
       "kind": "primitive"
@@ -240,6 +245,11 @@
       "kind": "algorithm"
     },
     {
+      "operationId": "reference.super",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
       "operationId": "spec.internal.get",
       "version": 1,
       "kind": "owned-spec-phase"
@@ -286,6 +296,21 @@
     },
     {
       "operationId": "host.task.enter",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
+      "operationId": "completion.pending.read",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
+      "operationId": "continuation.yield",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
+      "operationId": "intrinsic.number.resume",
       "version": 1,
       "kind": "algorithm"
     }

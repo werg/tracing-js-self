@@ -2,9 +2,11 @@
 // ApplyStringOrNumericBinaryOperator. No JS generators/closures hold guest work.
 // References and domain limits are recorded in docs/OWNED_ARITHMETIC.md.
 import { encode, decode, token } from './values.js';
+import {symbolPropertyKey} from './property-keys.js';
+import {GENERATOR_INTRINSIC_PROTOTYPES,generatorIntrinsicProperty} from './owned-generator-objects.js';
 import { ARITHMETIC_OPERATORS, specStep } from './spec-schema.js';
 
-const primitives = new Set(['undefined', 'null', 'bool', 'str', 'num', 'bigint']);
+const primitives = new Set(['undefined', 'null', 'bool', 'str', 'num', 'bigint', 'symbol']);
 export const isOwnedArithmetic = operator => ARITHMETIC_OPERATORS.includes(operator);
 
 export function createArithmetic({ id, frameId, operator, left, right, siteId, sourceId, codeId }) {
@@ -60,7 +62,7 @@ function numeric(operator, left, right) {
 // A null return is a fail-closed exotic/accessor/intrinsic operation.
 export function objectPrototype(obj) {
   return Object.hasOwn(obj,'prototype')?obj.prototype:
-    obj.kind==='array'?'Array.prototype':'Object.prototype';
+    obj.kind==='array'?'Array.prototype':obj.kind==='function'?'Function.prototype':'Object.prototype';
 }
 export function ordinaryGet(heap, receiver, name) {
   const original=receiver[0]==='ref'?heap[receiver[1]]:null;
@@ -85,12 +87,20 @@ export function ordinaryGet(heap, receiver, name) {
       return {method,observation:observation(method)};
     }
     const proto=objectPrototype(current);
+    if(GENERATOR_INTRINSIC_PROTOTYPES.includes(proto)){
+      const method=token(generatorIntrinsicProperty(proto,name).value);
+      return {method,observation:observation(method)};
+    }
     if(proto===null){
       const method=token(['undefined']);
       return {method,observation:observation(method)};
     }
     if(proto==='Array.prototype'){
-      if(['push','pop','includes','indexOf','lastIndexOf','slice','concat','join','splice','unshift','shift','at','filter','map','reduce','sort','some','forEach','reverse','fill','copyWithin','toReversed','with'].includes(name)){
+      if(name===symbolPropertyKey('well-known:iterator')){
+        const method=token(['builtinfn','Array.prototype.values']);
+        return {method,observation:observation(method)};
+      }
+      if(['push','pop','includes','indexOf','lastIndexOf','slice','concat','join','splice','unshift','shift','at','filter','map','reduce','sort','some','every','find','findIndex','forEach','reverse','fill','copyWithin','toReversed','with','values','keys','entries'].includes(name)){
         const method=token(['builtinfn','Array.prototype.'+name]);
         return {method,observation:observation(method)};
       }
@@ -119,7 +129,11 @@ export function ordinaryBuiltin(heap, receiver, name) {
   const obj=receiver[0]==='ref'?heap[receiver[1]]:null;
   if(!obj||!['object','array'].includes(obj.kind))return null;
   if(name==='Object.valueOf')return receiver;
-  if(name==='Object.toString')return ['str',obj.kind==='array'?'[object Array]':'[object Object]'];
+  if(name==='Object.toString'){
+    const tag=ordinaryGet(heap,receiver,symbolPropertyKey('well-known:toStringTag'));
+    if(!tag)return null;
+    return ['str','[object '+(tag.method.value[0]==='str'?tag.method.value[1]:obj.kind==='array'?'Array':'Object')+']'];
+  }
   if(name==='Array.toString') {
     if(obj.kind!=='array'||Object.hasOwn(obj.properties,'join'))return null;
     const length=decode(obj.properties.length.value);
@@ -131,7 +145,7 @@ export function ordinaryBuiltin(heap, receiver, name) {
       const property=obj.properties[String(i)];
       if(!property)return null;
       const value=property.value;
-      if(!primitives.has(value[0]))return null;
+      if(!primitives.has(value[0])||value[0]==='symbol')return null;
       parts.push(['null','undefined'].includes(value[0])?'':String(decode(value)));
     }
     return ['str',parts.join(',')];
@@ -158,7 +172,9 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
        !['array','object'].includes(heap[input.value[1]].kind)) {
       unsupported();return;
     }
-    record.coercion={side:left?'left':'right',input,register,resume,index:0,
+    const protocol=ordinaryGet(heap,input.value,symbolPropertyKey('well-known:toPrimitive'));
+    const index=protocol&&['null','undefined'].includes(protocol.method.value[0])?0:-1;
+    record.coercion={side:left?'left':'right',input,register,resume,index,
       method:null,waitingFrameId:null};
     record.phase='coercion-get';
   };
@@ -169,6 +185,9 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
       record.phase=c.resume;
       record.coercion=null;
     } else {
+      if(c.index===-1){
+        complete({type:'throw',errorType:'TypeError',message:'Symbol.toPrimitive must return a primitive',origin:eventId});return;
+      }
       c.index++;
       c.method=null;c.waitingFrameId=null;
       if(c.index===2)complete({type:'throw',errorType:'TypeError',
@@ -189,7 +208,7 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
     }
     case 'coercion-get': {
       const c=record.coercion;use(c.input);
-      const name=c.index===0?'valueOf':'toString';
+      const name=c.index===-1?symbolPropertyKey('well-known:toPrimitive'):c.index===0?'valueOf':'toString';
       const obtained=ordinaryGet(heap,c.input.value,name);
       if(!obtained){unsupported();break;}
       c.method=obtained.method;
@@ -200,19 +219,27 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
     case 'coercion-call': {
       const c=record.coercion;use(c.method,c.input);
       const v=c.method.value;
+      if(c.index===-1&&['null','undefined'].includes(v[0])){
+        c.index=0;c.method=null;c.waitingFrameId=null;record.phase='coercion-get';break;
+      }
       if(v[0]==='ref'&&heap[v[1]]?.kind==='function'){
         // An async valueOf returns a Promise object even before its first
         // suspension. Its asynchronous guest reaction behavior is not part
         // of this ordinary coercion subset.
         if(heap[v[1]].async){unsupported('AsyncToPrimitive');break;}
         if(!invoke)throw new Error('Missing owned conversion call dispatcher');
-        c.waitingFrameId=invoke(v,c.input.value);
+        c.waitingFrameId=invoke(v,c.input.value,c.index===-1?
+          [token(['str',['right-primitive','select'].includes(c.resume)?'default':'number'],eventId)]:[]);
         record.phase='coercion-return';
       }else if(v[0]==='builtinfn' && ['Object.valueOf','Object.toString','Array.toString'].includes(v[1])){
         const value=ordinaryBuiltin(heap,c.input.value,v[1]);
         if(value===null){unsupported('ArrayToString(complex)');break;}
         finishCoercion(value);
       }else{
+        if(c.index===-1){
+          if(['builtinfn','intrinsic','hostfn'].includes(v[0])){unsupported('UnownedToPrimitiveCallable');break;}
+          complete({type:'throw',errorType:'TypeError',message:'Symbol.toPrimitive is not callable',origin:eventId});break;
+        }
         // A non-callable property is skipped, as in OrdinaryToPrimitive.
         finishCoercion(c.input.value);
       }
@@ -240,6 +267,9 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
     case 'left-string': case 'right-string': {
       const left = record.phase === 'left-string';
       const input = left ? r.leftPrimitive : r.rightPrimitive; use(input);
+      if(input.value[0]==='symbol'){
+        complete({type:'throw',errorType:'TypeError',message:'Cannot convert a Symbol value to a string',origin:eventId});break;
+      }
       write(left ? 'leftString' : 'rightString', toString(input.value));
       record.phase = left ? 'right-string' : 'concatenate'; break;
     }
@@ -272,6 +302,9 @@ export function advanceArithmetic(record, eventId, {heap=null,invoke=null,takeRe
     case 'left-number': case 'right-number': {
       const left = record.phase === 'left-number';
       const input = left ? r.leftNumericPrimitive : r.rightNumericPrimitive; use(input);
+      if(input.value[0]==='symbol'){
+        complete({type:'throw',errorType:'TypeError',message:'Cannot convert a Symbol value to a number',origin:eventId});break;
+      }
       write(left ? 'leftNumeric' : 'rightNumeric', toNumber(input.value));
       record.phase = left ? 'right-numeric' : 'numeric-types'; break;
     }

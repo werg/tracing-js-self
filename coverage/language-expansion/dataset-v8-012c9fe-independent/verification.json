@@ -1,0 +1,37 @@
+{
+  "schema": "v8-dataset-retained-evidence-check/1",
+  "passed": true,
+  "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "scope": "retained-evidence-integrity-and-physical-token-check",
+  "freshNativeExecution": false,
+  "manifestFilesChecked": 10,
+  "nativeInputsChecked": 37,
+  "episodes": {
+    "train": 26,
+    "validation": 7,
+    "test": 4
+  },
+  "examples": {
+    "train": 646,
+    "validation": 239,
+    "test": 136
+  },
+  "generatedTokensWithEOS": 33850,
+  "eosTokens": 1021,
+  "manifestHashes": true,
+  "exactNativeInputHashes": true,
+  "receiptBindings": true,
+  "frozenComponentSplits": true,
+  "exactCausalContextBytes": true,
+  "generatedOnlyMasks": true,
+  "allCompleteEpisodeTargets": true,
+  "physicalTokenIdsReencoded": true,
+  "byteRoundTripsRechecked": true,
+  "codecSourceSha256": "98de7394ae3c4f47fe86d2767aaa103b8569de446913135a89de914af7182200",
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "pythonVersion": "3.12.14",
+  "tokenizersVersion": "0.23.3",
+  "optimizerSteps": 0,
+  "learningClaim": null
+}

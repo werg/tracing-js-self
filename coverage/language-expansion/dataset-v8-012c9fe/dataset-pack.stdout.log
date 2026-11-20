@@ -1,0 +1,11 @@
+{
+  "output": "/workspace/scratch/d11743e0247b/tracing-js-self/coverage/language-expansion/dataset-v8-012c9fe",
+  "episodes": 37,
+  "examples": 1021,
+  "generatedTokensWithEOS": 33850,
+  "archiveSha256": "0c9fd5da9c0ffb4e5564776d9c6ae75d073b8c5483fec7f34a8440337f43128d",
+  "archiveBytes": 605572,
+  "archiveMembers": 100,
+  "repeatBuildIdentical": true,
+  "allMemberHashesChecked": true
+}

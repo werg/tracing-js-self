@@ -11,7 +11,7 @@ import {buildGenerationShardPlan,verifyGenerationShardPlan,runGenerationShard,re
 
 const tasks=[1,2,3].map((n,index)=>({kind:'source',fixture:{id:'case-'+index,family:'shared-increment',
   source:'"use strict";function run(x){return x+1;}',entry:'run',args:[n],fixture:{calls:[]}}}));
-tasks.push({kind:'source',fixture:{id:'unsupported',family:'unsupported-this',source:'"use strict";function run(){return this;}',entry:'run',args:[],fixture:{calls:[]}}});
+tasks.push({kind:'source',fixture:{id:'unsupported',family:'unsupported-dynamic-source',source:'"use strict";function run(){return eval("1");}',entry:'run',args:[],fixture:{calls:[]}}});
 const registry=buildSourceRegistry(candidateSourceInventory(tasks));
 const identity={schema:'semantic-generation-identity/1',producerRevision:'a'.repeat(40),recipe:'test-only',
   registryDigest:canonicalHash(registry),nativePolicy:null,bounds:{memoryMb:256,timeoutMs:30000,maxOutputBytes:8388608}};

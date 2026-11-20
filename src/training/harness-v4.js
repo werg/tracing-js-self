@@ -45,6 +45,14 @@ function graphOf(values){
   return {roots:graph.roots,objects:graph.objects.map(({properties,...node})=>
     ({...node,properties:properties.map(([key,value])=>({key,value}))}))};
 }
+function canonicalResultGraph(graph){
+  validateGraph(graph);
+  // Record field order has no guest meaning. Keep identity, property and tag
+  // arrays in their observed order while matching canonical detailed JSON.
+  return {objects:graph.objects.map(node=>({id:node.id,kind:node.kind,
+    properties:node.properties.map(property=>({key:property.key,value:clone(property.value)})),
+    ...(Object.hasOwn(node,'prototype')?{prototype:node.prototype}:{})})),roots:clone(graph.roots)};
+}
 function remapGraph(graph,reserved){
   const aliases=new Map();let ordinal=0;
   for(const node of graph.objects){
@@ -683,17 +691,19 @@ export class SelectedExecutionHarness {
       'Unknown, duplicate or uncommitted result');
     demand(status==='fulfilled'||status==='rejected','Invalid result status');
     const activation=this.invocations.get(invocationId);
+    const captured=explicitResult===null?canonicalResultGraph(graphOf([value])):null,
+      declared=explicitGraph===null?null:canonicalResultGraph(explicitGraph);
     const resultDigest=createHash('sha256').update(JSON.stringify({status,
-      graph:explicitResult===null?graphOf([value]):{result:explicitResult,graph:explicitGraph}})).digest('hex');
+      graph:explicitResult===null?captured:{result:explicitResult,graph:declared}})).digest('hex');
     if(intent.status==='settled'){
       demand(intent.resultDigest===resultDigest,'Conflicting duplicate result');
       this.deliveries.push({invocationId,effectId,status:'duplicate'});
       return clone(intent.result);
     }
-    let graph=explicitGraph,result=explicitResult;
+    let graph=declared,result=explicitResult;
     if(result===null){
       if(value!==null&&typeof value==='object'){
-        graph=remapGraph(graphOf([value]),new Set(activation.controller.heap.keys()));
+        graph=remapGraph(captured,new Set(activation.controller.heap.keys()));
         result=graph.roots[0];
       }else result=tag(value);
     }

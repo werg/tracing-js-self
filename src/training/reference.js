@@ -45,7 +45,7 @@ export function referenceOutcome({source,entry,args,initialHeap,timeout=1000,obs
       if(entity.kind==='array') result.length=scalar(entity.properties.length.value);
       for(const [key,record] of Object.entries(entity.properties)) {
         if(entity.kind==='array' && key==='length') continue;
-        Object.defineProperty(result,key,{value:visit(record.value),writable:true,
+        Object.defineProperty(result,key.startsWith('\\u0000string:')?key.slice(8):key,{value:visit(record.value),writable:true,
           configurable:true,enumerable:true});
       }
       return result;

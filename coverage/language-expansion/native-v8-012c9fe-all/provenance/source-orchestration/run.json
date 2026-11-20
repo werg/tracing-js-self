@@ -1,0 +1,160 @@
+{
+  "schema": "semantic-v8-current-qualification-run/1",
+  "status": "running",
+  "startedAt": "2026-11-20T17:26:37.095140+00:00",
+  "pinsBefore": {
+    "producer": {
+      "path": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "trackedChanges": "",
+      "untrackedChanges": ""
+    },
+    "consumer": {
+      "path": "/workspace/scratch/754a49249d01/qualification-consumer-39c4036",
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "trackedChanges": "",
+      "untrackedChanges": ""
+    }
+  },
+  "environmentOverrides": {
+    "TRACING_JS_SELF_ROOT": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+    "MEGATOKEN_NATIVE_SOURCE_PRODUCER": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+    "MEGATOKEN_ROOT": "/workspace/scratch/754a49249d01/qualification-consumer-39c4036",
+    "MEGATOKEN_PYTHON": "/workspace/scratch/754a49249d01/native-v8-venv/bin/python",
+    "PYTHONPATH": "/workspace/scratch/754a49249d01/qualification-consumer-39c4036/src",
+    "MEGATOKEN_TOKENIZER_JSON": "/workspace/scratch/754a49249d01/native-v8-tokenizer.json",
+    "SEMANTIC_V8_NATIVE_POLICY": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe/contracts/semantic-native-policy-v8.json",
+    "V8_DATASET_CAPTURE": "/workspace/scratch/754a49249d01/qualification-012c9fe-39c4036/v8-dataset-012c9fe/native-inputs",
+    "TMPDIR": "/workspace/scratch/754a49249d01/qualification-012c9fe-39c4036/tmp",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "runtime": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "tokenizers": "0.23.3",
+    "megatoken": "/workspace/scratch/754a49249d01/qualification-consumer-39c4036/src/megatoken/__init__.py",
+    "node": "v24.22.3"
+  },
+  "tokenizer": {
+    "path": "/workspace/scratch/754a49249d01/native-v8-tokenizer.json",
+    "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "bytes": 12205732
+  },
+  "workers": 6,
+  "commands": [
+    {
+      "name": "native-all",
+      "command": [
+        "node",
+        "tools/qualify-semantic-v8.mjs",
+        "--out",
+        "/workspace/scratch/754a49249d01/qualification-012c9fe-39c4036/native-all",
+        "--population",
+        "all",
+        "--inputs",
+        "all",
+        "--workers",
+        "6",
+        "--megatoken",
+        "/workspace/scratch/754a49249d01/qualification-consumer-39c4036",
+        "--tokenizer",
+        "/workspace/scratch/754a49249d01/native-v8-tokenizer.json",
+        "--python",
+        "/workspace/scratch/754a49249d01/native-v8-venv/bin/python",
+        "--native-policy",
+        "contracts/semantic-native-policy-v8.json"
+      ],
+      "cwd": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+      "startedAt": "2026-11-20T17:26:37.145824+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T18:15:09.465070+00:00",
+      "durationSeconds": 2912.314805629998,
+      "exitCode": 0,
+      "pinsAfter": {
+        "producer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+          "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+          "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        },
+        "consumer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-consumer-39c4036",
+          "revision": "39c4036564428e44cc89caf261f517d856482695",
+          "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        }
+      },
+      "stdout": {
+        "path": "native-all.stdout.log",
+        "sha256": "9ccab93cf924e252fc1da226f2f82db89ec392621d9ae95d4bf0e76b80923ce2",
+        "bytes": 206
+      },
+      "stderr": {
+        "path": "native-all.stderr.log",
+        "sha256": "84d4c6f7e5cf10444f14876fda3397846b19dd60764ab2a6b1284da04b52d42e",
+        "bytes": 54974
+      }
+    },
+    {
+      "name": "costs-all",
+      "command": [
+        "node",
+        "tools/measure-semantic-v8.mjs",
+        "--qualification",
+        "/workspace/scratch/754a49249d01/qualification-012c9fe-39c4036/native-all",
+        "--out",
+        "/workspace/scratch/754a49249d01/qualification-012c9fe-39c4036/costs-all",
+        "--tokenizer-module",
+        "tools/semantic-v8-tokenizer-adapter.mjs"
+      ],
+      "cwd": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+      "startedAt": "2026-11-20T18:15:09.559452+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T18:16:46.625828+00:00",
+      "durationSeconds": 97.06581901900063,
+      "exitCode": 0,
+      "pinsAfter": {
+        "producer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+          "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+          "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        },
+        "consumer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-consumer-39c4036",
+          "revision": "39c4036564428e44cc89caf261f517d856482695",
+          "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        }
+      },
+      "stdout": {
+        "path": "costs-all.stdout.log",
+        "sha256": "20752c72e0b13a182b65179f435bf63f770abc703f4ab5f739036f0f6230a56b",
+        "bytes": 1561
+      },
+      "stderr": {
+        "path": "costs-all.stderr.log",
+        "sha256": "cab3a36d64799e682d2b232d4963c59849c7be883330f4735c928f00274cb19c",
+        "bytes": 43004
+      }
+    },
+    {
+      "name": "retain-inputs-all",
+      "command": [
+        "node",
+        "/workspace/scratch/754a49249d01/qualification-tools/retain-native-inputs.mjs",
+        "/workspace/scratch/754a49249d01/qualification-012c9fe-39c4036/native-all"
+      ],
+      "cwd": "/workspace/scratch/754a49249d01/qualification-producer-012c9fe",
+      "startedAt": "2026-11-20T18:16:46.712666+00:00",
+      "status": "running"
+    }
+  ],
+  "scope": "Fresh expansion source/native admission and exact costs; same-pair interoperability/gallery executed independently and adopted by exact hash checks; fresh combined split-bound dataset. Zero optimizer steps, no model or serving claim."
+}

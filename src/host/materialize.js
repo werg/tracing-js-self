@@ -2,6 +2,7 @@
 // Never call a guest function, getter, toJSON, Symbol.toPrimitive or prototype.
 // This is a transport encoder, not an ECMAScript ToJSON operation.
 import {decode} from '../values.js';
+import {stringPropertyName,isSymbolPropertyKey} from '../property-keys.js';
 import {GRAPH_CODEC,materializeOwnedGraph,decodeOwnedGraph} from './graph-codec.js';
 
 export {GRAPH_CODEC,materializeOwnedGraph,decodeOwnedGraph,encodeNativeGraph,
@@ -63,6 +64,8 @@ export function materializeJson(heap, args,
         const obj=heap[payload];
         if(!['array','object'].includes(obj.kind) || !obj.properties)
           throw new TypeError('Unsupported external guest identity');
+        if([...Object.keys(obj.properties),...Object.keys(obj.accessors??{})].some(isSymbolPropertyKey))
+          throw new TypeError('Symbol property transport is outside the data boundary profile');
         const record={id:payload,version:obj.version,shapeVersion:obj.shapeVersion??0,
           properties:{}};
         versions.push(record);
@@ -87,7 +90,7 @@ export function materializeJson(heap, args,
           for(const key of Object.keys(obj.properties)){
             if(key==='__proto__')throw new TypeError('Unsupported external prototype key');
             record.properties[key]=obj.propertyVersions?.[key]??0;
-            entries.push(literal(key)+':'+serialize(obj.properties[key].value,depth+1));
+            entries.push(literal(stringPropertyName(key))+':'+serialize(obj.properties[key].value,depth+1));
           }
           output='{'+entries.join(',')+'}';
         }

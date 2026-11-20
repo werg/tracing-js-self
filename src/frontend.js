@@ -14,8 +14,9 @@ export function collectVarBindings(statements) {
       case 'Block':n.body.forEach(visit);break;
       case 'If':visit(n.consequent);visit(n.alternate);break;
       case 'For':visit(n.init);visit(n.body);break;
-      case 'ForOf':if(n.kind==='var')names.add(n.id);visit(n.body);break;
-      case 'While':case 'DoWhile':visit(n.body);break;
+      case 'ForIn':case 'ForOf':if(n.kind==='var')for(const name of n.bindings?n.bindings.map(b=>b.name):[n.id])names.add(name);visit(n.body);break;
+      case 'While':case 'DoWhile':case 'Label':visit(n.body);break;
+      case 'Switch':for(const c of n.cases)c.body.forEach(visit);break;
       case 'Try':visit(n.block);visit(n.handler?.body);visit(n.finalizer);break;
       // Descendant functions own their separate environment.
       case 'Function':case 'FunctionExpr':break;
@@ -105,15 +106,15 @@ export function parse(source) {
     if(x.value==='function'||(x.value==='async'&&peek().value==='function')){
       const async=x.value==='async';
       if(async)need('function');
-      if(peek().value!=='(')throw new SyntaxError('Named function expression not owned');
+      const localName=peek().value==='('?null:name();
       need('(');const params=[];
       if(!match(')')){do{params.push(name());}while(match(','));need(')');}
       const body=block();
-      return {type:'FunctionExpr',params,async,arrow:false,body,start:x.start,end:body.end};
+      return {type:'FunctionExpr',params,async,arrow:false,name:localName,body,start:x.start,end:body.end};
     }
     if (x.value === 'new') {
       const callee=take();
-      if(!['Proxy','Set','Promise','SharedArrayBuffer','DataView'].includes(callee.value)&&!SHARED_CONSTRUCTORS.has(callee.value))
+      if(!['Proxy','Set','Promise','ArrayBuffer','SharedArrayBuffer','DataView'].includes(callee.value)&&!SHARED_CONSTRUCTORS.has(callee.value))
         throw new SyntaxError('Unsupported bounded constructor');
       need('(');
       const args=[];if(!match(')')){do{args.push(expression(0,false));}while(match(','));need(')');}
@@ -182,7 +183,7 @@ export function parse(source) {
 let site=0;
 export function compile(ast) {
   site=0;const programs={};let next=0;
-  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false,parameterSites=[]) {
+  function bodyProgram(body,params=[],async=false,defaults=[],restIndex=-1,inheritedStrict=false,parameterSites=[],parameterPatterns=[],generator=false,classConstructor=false) {
     // Strictness belongs to the lexical code, not to the caller. Only an
     // unescaped, unparenthesized string in the directive prologue enables it;
     // nested functions (including arrows/default initializers) inherit it.
@@ -196,24 +197,25 @@ export function compile(ast) {
     const id=`code${++next}`, instructions=[];let loopDepth=0,forOfIndex=0;
     const emit=(op,arg,node)=>{const inst={op,arg,siteId:`s${++site}`,start:node?.start??0,end:node?.end??0};instructions.push(inst);return instructions.length-1;};
     // Declarations are created before execution for a block's scope.
-    function statements(nodes,scoped=false) {
-      if(scoped) emit('ENTER_SCOPE',null,nodes[0]);
+    function predeclare(nodes) {
       for(const n of nodes){
-        const declarations=n.type==='VariableGroup'?n.declarations:
-          n.type==='PatternBinding'?n.bindings.map(b=>({
-            id:b.name,kind:n.kind,start:b.start,end:b.end
-          })):
-          n.type==='Variable'?[n]:[];
+        const declarations=(n.type==='VariableGroup'?n.declarations:[n]).flatMap(d=>
+          d.type==='PatternBinding'?d.bindings.map(b=>({id:b.name,kind:d.kind,start:b.start,end:b.end})):
+          ['Variable','ClassBinding'].includes(d.type)?[d]:[]);
         for(const d of declarations)if(d.kind!=='var')emit('DECLARE',{name:d.id,kind:d.kind},d);
       }
       for(const n of nodes)if(n.type==='Function'){
-        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites);
+        const fid=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites,n.parameterPatterns,n.generator);
         emit('DEF_FN',{name:n.id,codeId:fid,params:n.params,async:n.async},n);
       }
+    }
+    function statements(nodes,scoped=false) {
+      if(scoped)emit('ENTER_SCOPE',null,nodes[0]);
+      predeclare(nodes);
       for(const n of nodes)if(n.type!=='Function')stmt(n);
       if(scoped)emit('LEAVE_SCOPE',null,nodes.at(-1));
     }
-    function expr(n) {
+    function expr(n,inferredName=null) {
       switch(n.type){
         case 'Literal': emit('CONST',{value:n.value,raw:n.raw},n);break;
         case 'OwnedPinnedRegExp':
@@ -221,20 +223,34 @@ export function compile(ast) {
         case 'DeferredRegExp':
           emit('UNSUPPORTED_EXPRESSION','RegExp execution requires owned matching semantics',n);break;
         case 'Construct':
-          emit('GET',n.callee,n);
+          if(typeof n.callee==='string')emit('GET',n.callee,n);else expr(n.callee);
           for(const a of n.args)expr(a);
           emit('CONSTRUCT',n.args.length,n);break;
         case 'FunctionExpr':{
-          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict,n.parameterSites);
-          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async},n);
+          const codeId=bodyProgram(n.body.body,n.params,n.async,n.defaults,n.restIndex,strict||n.strict===true,n.parameterSites,n.parameterPatterns,n.generator,n.classConstructor===true);
+          emit('MAKE_FUNCTION',{codeId,arrow:n.arrow,async:n.async,nonConstructible:n.nonConstructible===true,...(n.name?{name:n.name}:n.generator&&inferredName!==null?{inferredName}:{})},n);
           break;
         }
+        case 'ClassExpr':emitClass(n,inferredName);break;
+        case 'PrivateMember':expr(n.object);emit('PRIVATE_GET',{name:n.name},n);break;
+        case 'PrivateHas':expr(n.object);emit('PRIVATE_HAS',{name:n.name},n);break;
+        case 'Yield':expr(n.argument);emit('YIELD',null,n);break;
+        case 'YieldDelegate':emitYieldDelegate(n);break;
+        case 'TaggedTemplate':
+          if(n.tag.type==='PrivateMember'){expr(n.tag.object);emit('PRIVATE_GET_METHOD',{name:n.tag.name},n.tag);}
+          else if(n.tag.type==='SuperMember'){superReference(n.tag);emit('SUPER_GET_METHOD',null,n.tag);}
+          else if(n.tag.type==='Member'){expr(n.tag.object);expr(n.tag.property);emit('GET_METHOD',null,n.tag);}
+          else expr(n.tag);
+          emit('GET_TEMPLATE_OBJECT',{cooked:n.cooked,raw:n.raw},n);
+          for(const expression of n.expressions)expr(expression);
+          emit('CALL',n.expressions.length+1,n);break;
         case 'Template':
           for(const expression of n.expressions)expr(expression);
           emit('TEMPLATE',{quasis:n.quasis,count:n.expressions.length},n);
           break;
         case 'Identifier':emit('GET',n.name,n);break;
         case 'This':emit('THIS',null,n);break;
+        case 'NewTarget':emit('NEW_TARGET',null,n);break;
         case 'Unary':
           // typeof of an identifier must inspect the binding without first
           // throwing on an unresolvable name. Owned TDZ remains observable.
@@ -243,7 +259,9 @@ export function compile(ast) {
           else {expr(n.argument);emit('UNARY',n.operator,n);}
           break;
         case 'Update':
-          if(n.argument){
+          if(n.argument?.type==='PrivateMember'){
+            expr(n.argument.object);emit('PRIVATE_UPDATE',{name:n.argument.name,operator:n.operator,prefix:n.prefix},n);
+          }else if(n.argument){
             expr(n.argument.object);expr(n.argument.property);
             emit('UPDATE_PROP',{operator:n.operator,prefix:n.prefix},n);
           }else emit('UPDATE_BINDING',{name:n.name,operator:n.operator,prefix:n.prefix},n);
@@ -266,6 +284,17 @@ export function compile(ast) {
         }
         case 'Await':expr(n.argument);emit('AWAIT',null,n);break;
         case 'Binary':
+          if(n.operator==='instanceof'){
+            const salt=++forOfIndex,left='[[instance value '+salt+']]',right='[[instance constructor '+salt+']]';
+            emit('ENTER_SCOPE',null,n);for(const name of [left,right])emit('DECLARE',{name,kind:'const'},n);
+            expr(n.left);emit('INIT',left,n);expr(n.right);emit('REQUIRE_OBJECT',null,n);emit('INIT',right,n);
+            emit('GET',right,n);emit('CONST',{value:['symbol','well-known:hasInstance']},n);emit('GET_METHOD',null,n);
+            const hook=emit('LOGICAL_JUMP',{operator:'??',to:null},n);emit('POP',null,n);
+            emit('GET',left,n);emit('GET',right,n);emit('INSTANCEOF_DEFAULT',null,n);
+            const done=emit('JUMP',null,n);instructions[hook].arg.to=instructions.length;
+            emit('GET',left,n);emit('CALL',1,n);emit('INSTANCEOF_RESULT',null,n);
+            instructions[done].arg=instructions.length;emit('LEAVE_SCOPE',null,n);break;
+          }
           if(['&&','||','??'].includes(n.operator)) {expr(n.left);const j=emit('LOGICAL_JUMP',{operator:n.operator,to:null},n);emit('POP',null,n);expr(n.right);instructions[j].arg.to=instructions.length;}
           else {expr(n.left);expr(n.right);emit('BINARY',n.operator,n);}break;
         case 'OptionalChain':{
@@ -300,8 +329,15 @@ export function compile(ast) {
           break;
         }
         case 'Member':expr(n.object);expr(n.property);emit('GET_PROP',null,n);break;
+        case 'SuperMember':superReference(n);emit('SUPER_GET',null,n);break;
+        case 'SuperCall':
+          emit('SUPER_CONSTRUCTOR',null,n);
+          for(const argument of n.args){expr(argument.type==='Spread'?argument.argument:argument);if(argument.type==='Spread')emit('SPREAD',null,argument);}
+          emit('SUPER_CALL',n.args.some(a=>a.type==='Spread')?{count:n.args.length,spread:n.args.flatMap((a,i)=>a.type==='Spread'?[i]:[])}:n.args.length,n);
+          emit('SUPER_BIND',null,n);break;
         case 'Call':
-          if(n.callee.type==='Member'){expr(n.callee.object);expr(n.callee.property);emit('GET_METHOD',null,n.callee);}else expr(n.callee);
+          if(n.callee.type==='SuperMember'){superReference(n.callee);emit('SUPER_GET_METHOD',null,n.callee);}
+          else if(n.callee.type==='PrivateMember'){expr(n.callee.object);emit('PRIVATE_GET_METHOD',{name:n.callee.name},n.callee);}else if(n.callee.type==='Member'){expr(n.callee.object);expr(n.callee.property);emit('GET_METHOD',null,n.callee);}else expr(n.callee);
           for(const a of n.args){
             expr(a.type==='Spread'?a.argument:a);
             if(a.type==='Spread')emit('SPREAD',null,a);
@@ -311,31 +347,83 @@ export function compile(ast) {
             n.args.length,n);break;
         case 'Proxy':expr(n.target);expr(n.handler);emit('NEW_PROXY',null,n);break;
         case 'Array':
-          emit('NEW_ARRAY',null,n);
-          if(n.elements.some(element=>element.type==='Spread')){
+          emit('NEW_ARRAY',n.elements.includes(null)&&!n.elements.some(element=>element?.type==='Spread')?
+            {length:n.elements.length}:null,n);
+          if(n.elements.some(element=>element?.type==='Spread')){
             // Commit each spread before evaluating the following element.
             // In particular, a later call may mutate the spread's source.
             for(const element of n.elements){
               emit('DUP',null,n);
-              expr(element.type==='Spread'?element.argument:element);
-              if(element.type==='Spread')emit('SPREAD',null,element);
-              emit('APPEND_ARRAY',{spread:element.type==='Spread'},n);
+              if(element===null)emit('CONST',{value:['undefined']},n);
+              else expr(element.type==='Spread'?element.argument:element);
+              if(element?.type==='Spread')emit('SPREAD',null,element);
+              emit('APPEND_ARRAY',{spread:element?.type==='Spread',...(element===null?{hole:true}:{})},n);
               emit('POP',null,n);
             }
           }else for(let i=0;i<n.elements.length;i++){
+            if(n.elements[i]===null)continue;
             emit('DUP',null,n);emit('CONST',{value:['str',String(i)]},n);
             expr(n.elements[i]);emit('PUT_PROP',null,n);emit('POP',null,n);
           }
           break;
-        case 'Object':emit('NEW_OBJECT',null,n);for(const item of n.properties){emit('DUP',null,n);emit('CONST',{value:['str',item.key]},n);expr(item.value);emit('PUT_PROP',null,n);emit('POP',null,n);}break;
+        case 'Object':{
+          const spreads=n.properties.some(item=>item.kind==='spread');
+          let saved=null;
+          if(spreads){
+            emit('ENTER_SCOPE',null,n);saved='[[object '+(++forOfIndex)+']]';
+            emit('DECLARE',{name:saved,kind:'const'},n);
+          }
+          emit('NEW_OBJECT',null,n);
+          if(spreads)emit('INIT',saved,n);
+          for(const item of n.properties){
+            if(item.kind==='spread'){
+              const source='[[spread '+(++forOfIndex)+']]';
+              emit('DECLARE',{name:source,kind:'const'},item);
+              expr(item.value);emit('INIT',source,item);copyOwn(saved,source,[],item);continue;
+            }
+            if(spreads)emit('GET',saved,n);else emit('DUP',null,n);
+            if(item.computedKey)expr(item.computedKey);
+            else emit('CONST',{value:['str',item.key]},n);
+            expr(item.value,item.kind==='prototype'?null:{stack:true});
+            if(item.value.nonConstructible&&containsSuperProperty(item.value))emit('SET_HOME_OBJECT',{offset:2},item);
+            emit('DEFINE_LITERAL_PROP',{kind:item.kind??'init'},item.start===undefined?n:item);
+            emit('POP',null,n);
+          }
+          if(spreads){emit('GET',saved,n);emit('LEAVE_SCOPE',null,n);}
+          break;
+        }
+        case 'PatternAssignment':emitPattern(n,true);break;
         case 'Assign':
+          if(n.left.type==='SuperMember'){
+            superReference(n.left);
+            if(n.operator!=='='){emit('DUP',null,n.left);emit('SUPER_GET',null,n.left);}
+            expr(n.right);if(n.operator!=='=')emit('BINARY',n.operator.slice(0,-1),n);
+            emit('SUPER_SET',null,n);break;
+          }
+          if(n.left.type==='PrivateMember'){
+            const name=n.left.name;
+            if(['&&=','||=','??='].includes(n.operator)){
+              const saved='[[private receiver '+(++forOfIndex)+']]';
+              emit('ENTER_SCOPE',null,n);emit('DECLARE',{name:saved,kind:'const'},n);
+              expr(n.left.object);emit('INIT',saved,n);emit('GET',saved,n);emit('PRIVATE_GET',{name},n.left);
+              const guard=emit('LOGICAL_JUMP',{operator:n.operator.slice(0,-1),to:null},n);
+              emit('POP',null,n);emit('GET',saved,n);expr(n.right);emit('PRIVATE_SET',{name},n);
+              instructions[guard].arg.to=instructions.length;emit('LEAVE_SCOPE',null,n);
+            }else{
+              expr(n.left.object);
+              if(n.operator!=='='){emit('DUP',null,n);emit('PRIVATE_GET',{name},n.left);}
+              expr(n.right);if(n.operator!=='=')emit('BINARY',n.operator.slice(0,-1),n);
+              emit('PRIVATE_SET',{name},n);
+            }
+            break;
+          }
           if(['&&=','||=','??='].includes(n.operator)){
             const operator=n.operator.slice(0,-1);
             if(n.left.type==='Identifier'){
               emit('GET',n.left.name,n.left);
               const guard=emit('LOGICAL_JUMP',{operator,to:null},n);
               emit('POP',null,n);
-              expr(n.right);
+              expr(n.right,n.left.name);
               emit('SET',n.left.name,n);
               instructions[guard].arg.to=instructions.length;
             }else{
@@ -365,7 +453,7 @@ export function compile(ast) {
           }
           if(n.left.type==='Identifier') {
             if(n.operator!=='=')emit('GET',n.left.name,n.left);
-            expr(n.right);if(n.operator!== '=')emit('BINARY',n.operator.slice(0,-1),n);
+            expr(n.right,n.operator==='='?n.left.name:null);if(n.operator!== '=')emit('BINARY',n.operator.slice(0,-1),n);
             emit('SET',n.left.name,n);
           }else{
             expr(n.left.object);expr(n.left.property);
@@ -381,19 +469,148 @@ export function compile(ast) {
         default:throw new SyntaxError(`Unsupported expression: ${n.type}`);
       }
     }
-    function stmt(n){
-      switch(n.type){
-        case 'Variable':{
-          if(n.kind==='var'){
-            if(n.init){expr(n.init);emit('SET',n.id,n);emit('POP',null,n);}
-          }else{
-            if(n.init)expr(n.init);else emit('CONST',{value:['undefined']},n);
-            emit('INIT',n.id,n);
-          }
-          break;
+    function superReference(n){emit('THIS',null,n);expr(n.property);emit('SUPER_REFERENCE',null,n);}
+    function containsSuperProperty(node){
+      return node!==null&&typeof node==='object'&&(node.type==='SuperMember'||Object.values(node).some(value=>
+        Array.isArray(value)?value.some(containsSuperProperty):containsSuperProperty(value)));
+    }
+    // CopyDataProperties snapshots key identities, then rechecks each own
+    // descriptor before reading. Each getter is an ordinary owned GET_PROP
+    // continuation, so later throws never replay already completed reads.
+    function copyOwn(target,source,excluded,node,{required=false}={}){
+      const salt=++forOfIndex,keys='[[copy keys '+salt+']]',index='[[copy index '+salt+']]',key='[[copy key '+salt+']]';
+      for(const name of [keys,index,key])emit('DECLARE',{name,kind:'let'},node);
+      emit('GET',source,node);for(const name of excluded)emit('GET',name,node);
+      emit('COPY_KEYS',{exclude:excluded.length,required},node);emit('INIT',keys,node);
+      emit('CONST',{value:['num',0]},node);emit('INIT',index,node);
+      emit('CONST',{value:['undefined']},node);emit('INIT',key,node);
+      const top=instructions.length;
+      emit('GET',keys,node);emit('CONST',{value:['str','length']},node);emit('GET_PROP',null,node);
+      emit('GET',index,node);emit('BINARY','>',node);const done=emit('JUMP_IF_FALSE',null,node);
+      emit('GET',keys,node);emit('GET',index,node);emit('GET_PROP',null,node);emit('SET',key,node);emit('POP',null,node);
+      emit('GET',source,node);emit('GET',key,node);emit('HAS_ENUMERABLE_OWN',null,node);
+      const skip=emit('JUMP_IF_FALSE',null,node);
+      emit('GET',target,node);emit('GET',key,node);emit('GET',source,node);emit('GET',key,node);
+      emit('GET_PROP',null,node);emit('DEFINE_LITERAL_PROP',{kind:'init'},node);emit('POP',null,node);
+      instructions[skip].arg=instructions.length;
+      emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},node);emit('POP',null,node);
+      emit('JUMP',top,node);instructions[done].arg=instructions.length;
+    }
+    function emitYieldDelegate(n){
+      const salt=++forOfIndex,iterator='[[delegate '+salt+']]',next='[[delegate next '+salt+']]',
+        kind='[[delegate kind '+salt+']]',sent='[[delegate sent '+salt+']]',step='[[delegate step '+salt+']]';
+      emit('ENTER_SCOPE',null,n);
+      for(const name of [iterator,next,kind,sent,step])emit('DECLARE',{name,kind:'let'},n);
+      expr(n.argument);emit('CONST',{value:['symbol','well-known:iterator']},n);emit('GET_METHOD',null,n);emit('CALL',0,n);
+      emit('REQUIRE_OBJECT',null,n);emit('INIT',iterator,n);
+      emit('GET',iterator,n);emit('CONST',{value:['str','next']},n);emit('GET_METHOD',null,n);emit('INIT',next,n);
+      emit('CONST',{value:['str','next']},n);emit('INIT',kind,n);
+      for(const name of [sent,step]){emit('CONST',{value:['undefined']},n);emit('INIT',name,n);}
+      const top=instructions.length;
+      emit('GET',kind,n);emit('CONST',{value:['str','next']},n);emit('BINARY','===',n);
+      const abrupt=emit('JUMP_IF_FALSE',null,n);
+      emit('GET',next,n);emit('GET',sent,n);emit('CALL',1,n);emit('REQUIRE_OBJECT',null,n);emit('SET',step,n);emit('POP',null,n);
+      const nextResult=emit('JUMP',null,n);
+      instructions[abrupt].arg=instructions.length;
+      emit('GET',iterator,n);emit('GET',kind,n);emit('GET_METHOD',null,n);
+      const provided=emit('LOGICAL_JUMP',{operator:'??',to:null},n);emit('POP',null,n);
+      emit('GET',kind,n);emit('CONST',{value:['str','return']},n);emit('BINARY','===',n);
+      const missingThrow=emit('JUMP_IF_FALSE',null,n);
+      emit('GET',sent,n);emit('RETURN',null,n);
+      instructions[missingThrow].arg=instructions.length;
+      // A missing throw method closes with a normal completion. A cleanup
+      // failure wins; otherwise the missing-throw TypeError is raised.
+      emit('GET',iterator,n);emit('CONST',{value:['str','return']},n);emit('GET_METHOD',null,n);
+      const close=emit('LOGICAL_JUMP',{operator:'??',to:null},n);emit('POP',null,n);
+      const noClose=emit('JUMP',null,n);instructions[close].arg.to=instructions.length;
+      emit('CALL',0,n);emit('REQUIRE_OBJECT',null,n);emit('POP',null,n);
+      instructions[noClose].arg=instructions.length;emit('ITERATOR_THROW_MISSING',null,n);
+      instructions[provided].arg.to=instructions.length;
+      emit('GET',sent,n);emit('CALL',1,n);emit('REQUIRE_OBJECT',null,n);emit('SET',step,n);emit('POP',null,n);
+      instructions[nextResult].arg=instructions.length;
+      emit('GET',step,n);emit('CONST',{value:['str','done']},n);emit('GET_PROP',null,n);
+      const yielded=emit('JUMP_IF_FALSE',null,n);
+      emit('GET',step,n);emit('CONST',{value:['str','value']},n);emit('GET_PROP',null,n);
+      emit('GET',kind,n);emit('CONST',{value:['str','return']},n);emit('BINARY','===',n);
+      const normal=emit('JUMP_IF_FALSE',null,n);emit('RETURN',null,n);
+      instructions[normal].arg=instructions.length;emit('LEAVE_SCOPE',null,n);
+      const end=emit('JUMP',null,n);
+      instructions[yielded].arg=instructions.length;
+      emit('GET',step,n);emit('DELEGATE_YIELD',null,n);
+      emit('DELEGATE_RESUME_KIND',null,n);emit('SET',kind,n);emit('POP',null,n);
+      emit('DELEGATE_RESUME_VALUE',null,n);emit('SET',sent,n);emit('POP',null,n);
+      emit('JUMP',top,n);instructions[end].arg=instructions.length;
+    }
+    function emitClass(n,inferredName){
+      const salt=++forOfIndex,klass='[[class '+salt+']]',proto='[[class prototype '+salt+']]',heritage='[[class heritage '+salt+']]',className='[[class name '+salt+']]';
+      emit('ENTER_SCOPE',null,n);
+      emit('DECLARE',{name:className,kind:'const'},n);
+      if(!n.name&&inferredName?.stack)emit('DUP',null,n);else emit('CONST',{value:['str',n.name??(typeof inferredName==='string'?inferredName:'')]},n);
+      emit('INIT',className,n);
+      if(n.name)emit('DECLARE',{name:n.name,kind:'const'},n);
+      emit('DECLARE',{name:klass,kind:'const'},n);emit('DECLARE',{name:proto,kind:'const'},n);
+      if(n.superClass){emit('DECLARE',{name:heritage,kind:'const'},n);expr(n.superClass);emit('INIT',heritage,n);}
+      const explicit=n.elements.find(element=>element.kind==='constructor');
+      const ctor=explicit?.value??{...n,type:'FunctionExpr',params:[],defaults:[],parameterSites:[],parameterPatterns:[],restIndex:-1,async:false,arrow:false,
+        body:{...n,type:'Block',body:n.superClass?[{...n,type:'DefaultSuper'}]:[]}};
+      expr({...ctor,strict:true,classConstructor:true});emit('INIT',klass,n);emit('GET',klass,n);
+      if(n.superClass)emit('GET',heritage,n);
+      emit('GET',className,n);
+      emit('CLASS_CREATE',{named:true,derived:!!n.superClass,privateNames:n.elements.filter(e=>e.privateName).map(e=>e.privateName)},n);emit('POP',null,n);
+      emit('GET',klass,n);emit('CONST',{value:['str','prototype']},n);emit('GET_PROP',null,n);emit('INIT',proto,n);
+      const instanceMethods=[],staticMethods=[],instanceFields=[],staticFields=[];
+      for(const element of n.elements){
+        if(element.kind==='constructor')continue;
+        if(element.kind==='block'){staticFields.push({...element,type:'Block',body:element.body});continue;}
+        let key=null;
+        if(!element.privateName){
+          const name='[[class key '+(++forOfIndex)+']]';emit('DECLARE',{name,kind:'const'},element);
+          if(element.computedKey)expr(element.computedKey);else emit('CONST',{value:['str',element.key]},element);
+          emit('PROPERTY_KEY',null,element);
+          emit('INIT',name,element);key={...element,type:'Identifier',name};
         }
-        case 'VariableGroup':for(const declaration of n.declarations)stmt(declaration);break;
-        case 'PatternBinding':{
+        if(element.kind==='field'){
+          (element.static?staticFields:instanceFields).push({...element,type:'ClassField',key,value:element.value});continue;
+        }
+        if(element.privateName){
+          const name='[[private method '+(++forOfIndex)+']]';emit('DECLARE',{name,kind:'const'},element);
+          expr(element.value);emit('SET_HOME_OBJECT',{name:element.static?klass:proto,methodName:{privateName:'#'+element.privateName}},element);emit('INIT',name,element);
+          (element.static?staticMethods:instanceMethods).push({...element,type:'ClassField',privateKind:'method',value:{...element,type:'Identifier',name}});
+        }else{
+          emit('GET',element.static?klass:proto,element);expr(key);expr(element.value);
+          emit('SET_HOME_OBJECT',{name:element.static?klass:proto,methodName:{binding:key.name,prefix:['get','set'].includes(element.kind)?element.kind:null}},element);
+          emit('DEFINE_LITERAL_PROP',{kind:element.kind==='method'?'init':element.kind,enumerable:false},element);emit('POP',null,element);
+        }
+      }
+      for(const [isStatic,body] of [[false,[...instanceMethods,...instanceFields]],[true,[...staticMethods,...staticFields]]]){
+        if(!body.length)continue;
+        const codeId=bodyProgram(body,[],false,[],-1,true);
+        emit('GET',klass,n);emit('MAKE_FUNCTION',{codeId,arrow:false,async:false,nonConstructible:true},n);
+        emit('SET_HOME_OBJECT',{name:isStatic?klass:proto},n);
+        emit('CLASS_INITIALIZER',{static:isStatic},n);emit('POP',null,n);
+      }
+      emit('GET',klass,n);emit('CLASS_FINISH',{name:n.name},n);emit('LEAVE_SCOPE',null,n);
+    }
+    function iteratorClose(iterator,node){
+      const performClose=()=>{
+        emit('GET',iterator,node);emit('CONST',{value:['str','return']},node);emit('GET_METHOD',null,node);
+        const present=emit('LOGICAL_JUMP',{operator:'??',to:null},node);
+        emit('POP',null,node);const absent=emit('JUMP',null,node);
+        instructions[present].arg.to=instructions.length;
+        emit('CALL',0,node);emit('REQUIRE_OBJECT',null,node);emit('POP',null,node);
+        instructions[absent].arg=instructions.length;
+      };
+      emit('PENDING_THROW',null,node);const normal=emit('JUMP_IF_FALSE',null,node);
+      // The incoming throw survives a return getter/call failure. A normal
+      // completion, including early binding completion, is replaced by it.
+      const suppress=emit('TRY_ENTER',null,node);performClose();emit('TRY_NORMAL',null,node);
+      const catchPc=instructions.length;emit('BIND_CATCH',null,node);emit('TRY_NORMAL',null,node);
+      instructions[suppress].arg={catchPc,finallyPc:null,afterPc:instructions.length};
+      const closed=emit('JUMP',null,node);
+      instructions[normal].arg=instructions.length;performClose();
+      instructions[closed].arg=instructions.length;
+    }
+    function emitPattern(n,result=false){
           // Every nested initializer/get/default remains an owned bytecode
           // effect. Hidden generated names are inaccessible to guest syntax.
           // The temporary scope is distinct from the lexical declarations.
@@ -403,19 +620,38 @@ export function compile(ast) {
             emit('DECLARE',{name,kind:'let'},node);
             return name;
           };
+          const preparedTargets=new Map();
+          function prepareTarget(pattern){
+            while(pattern.type==='PatternDefault')pattern=pattern.target;
+            if(pattern.type!=='PatternMember')return;
+            const object=temporary(pattern),key=temporary(pattern);
+            expr(pattern.target.object);emit('INIT',object,pattern);
+            expr(pattern.target.property);emit('INIT',key,pattern);
+            // Destructuring evaluates the assignment reference before the
+            // iterator is advanced; PutValue itself still follows the value.
+            preparedTargets.set(pattern,{object,key});
+          }
           function bindPattern(pattern,variable){
             if(pattern.type==='PatternName'){
               emit('GET',variable,pattern);
-              emit(n.kind==='var'?'SET':'INIT',pattern.name,pattern);
-              if(n.kind==='var')emit('POP',null,pattern);
+              emit(['var','assignment'].includes(n.kind)?'SET':'INIT',pattern.name,pattern);
+              if(['var','assignment'].includes(n.kind))emit('POP',null,pattern);
               return;
+            }
+            if(pattern.type==='PatternSkip')return;
+            if(pattern.type==='PatternMember'){
+              const prepared=preparedTargets.get(pattern);
+              if(prepared){emit('GET',prepared.object,pattern);emit('GET',prepared.key,pattern);}
+              else{expr(pattern.target.object);expr(pattern.target.property);}
+              emit('GET',variable,pattern);
+              emit('PUT_PROP',null,pattern);emit('POP',null,pattern);return;
             }
             if(pattern.type==='PatternDefault'){
               emit('GET',variable,pattern);
               emit('CONST',{value:['undefined']},pattern);
               emit('BINARY','===',pattern);
               const skip=emit('JUMP_IF_FALSE',null,pattern);
-              expr(pattern.fallback);
+              expr(pattern.fallback,pattern.target.type==='PatternName'?pattern.target.name:null);
               emit('SET',variable,pattern);
               emit('POP',null,pattern);
               instructions[skip].arg=instructions.length;
@@ -423,35 +659,90 @@ export function compile(ast) {
               return;
             }
             if(pattern.type==='PatternArray'){
-              emit('GET','Array',pattern);
-              emit('CONST',{value:['str','isArray']},pattern);
-              emit('GET_METHOD',null,pattern);
-              emit('GET',variable,pattern);
-              emit('CALL',1,pattern);
-              const invalid=emit('JUMP_IF_FALSE',null,pattern);
-              const accepted=emit('JUMP',null,pattern);
-              instructions[invalid].arg=instructions.length;
-              emit('UNSUPPORTED_EXPRESSION',
-                'Array binding requires an owned standard array',pattern);
-              instructions[accepted].arg=instructions.length;
-              for(const entry of pattern.elements){
-                const child=temporary(entry);
-                emit('GET',variable,entry);
-                emit('CONST',{value:['num',entry.index]},entry);
-                emit('GET_PROP',null,entry);
-                emit('INIT',child,entry);
-                bindPattern(entry.target,child);
+              emit('GET',variable,pattern);emit('ITERATOR_ARRAY_GUARD',null,pattern);
+              const general=emit('JUMP_IF_FALSE',null,pattern);
+              function elements(fast){
+                const done=temporary(pattern),index=fast?temporary(pattern):null,
+                  iterator=fast?null:temporary(pattern),next=fast?null:temporary(pattern),
+                  step=fast?null:temporary(pattern),close=fast?null:temporary(pattern);
+                emit('CONST',{value:['bool',false]},pattern);emit('INIT',done,pattern);
+                if(fast){emit('CONST',{value:['num',0]},pattern);emit('INIT',index,pattern);}
+                else{
+                  emit('GET',variable,pattern);emit('CONST',{value:['symbol','well-known:iterator']},pattern);
+                  emit('GET_METHOD',null,pattern);emit('CALL',0,pattern);emit('REQUIRE_OBJECT',null,pattern);emit('INIT',iterator,pattern);
+                  emit('GET',iterator,pattern);emit('CONST',{value:['str','next']},pattern);emit('GET_METHOD',null,pattern);emit('INIT',next,pattern);
+                  emit('CONST',{value:['undefined']},pattern);emit('INIT',step,pattern);
+                  emit('CONST',{value:['bool',true]},pattern);emit('INIT',close,pattern);
+                }
+                const handler=fast?null:emit('TRY_ENTER',null,pattern);
+                const advance=(child,skip=false)=>{
+                  emit('GET',done,pattern);const active=emit('JUMP_IF_FALSE',null,pattern),alreadyDone=emit('JUMP',null,pattern);
+                  instructions[active].arg=instructions.length;
+                  if(fast){
+                    emit('GET',variable,pattern);emit('CONST',{value:['str','length']},pattern);emit('GET_PROP',null,pattern);
+                    emit('GET',index,pattern);emit('BINARY','>',pattern);const exhausted=emit('JUMP_IF_FALSE',null,pattern);
+                    if(!skip){emit('GET',variable,pattern);emit('GET',index,pattern);emit('GET_PROP',null,pattern);emit('SET',child,pattern);emit('POP',null,pattern);}
+                    emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},pattern);emit('POP',null,pattern);
+                    const advanced=emit('JUMP',null,pattern);instructions[exhausted].arg=instructions.length;
+                    emit('CONST',{value:['bool',true]},pattern);emit('SET',done,pattern);emit('POP',null,pattern);
+                    instructions[advanced].arg=instructions.length;
+                  }else{
+                    // A next/done/value failure completes the iterator record
+                    // without IteratorClose; a later binding failure closes.
+                    emit('CONST',{value:['bool',false]},pattern);emit('SET',close,pattern);emit('POP',null,pattern);
+                    emit('GET',next,pattern);emit('CALL',0,pattern);emit('REQUIRE_OBJECT',null,pattern);emit('SET',step,pattern);emit('POP',null,pattern);
+                    emit('GET',step,pattern);emit('CONST',{value:['str','done']},pattern);emit('GET_PROP',null,pattern);
+                    const available=emit('JUMP_IF_FALSE',null,pattern);
+                    emit('CONST',{value:['bool',true]},pattern);emit('SET',done,pattern);emit('POP',null,pattern);
+                    const exhausted=emit('JUMP',null,pattern);instructions[available].arg=instructions.length;
+                    if(!skip){emit('GET',step,pattern);emit('CONST',{value:['str','value']},pattern);emit('GET_PROP',null,pattern);emit('SET',child,pattern);emit('POP',null,pattern);}
+                    emit('CONST',{value:['bool',true]},pattern);emit('SET',close,pattern);emit('POP',null,pattern);
+                    instructions[exhausted].arg=instructions.length;
+                  }
+                  instructions[alreadyDone].arg=instructions.length;
+                };
+                for(const entry of pattern.elements){
+                  const child=temporary(entry);prepareTarget(entry.target);
+                  if(entry.rest){
+                    emit('NEW_ARRAY',null,entry);emit('INIT',child,entry);
+                    const value=temporary(entry);emit('CONST',{value:['undefined']},entry);emit('INIT',value,entry);
+                    const top=instructions.length;advance(value);
+                    emit('GET',done,pattern);const available=emit('JUMP_IF_FALSE',null,pattern),end=emit('JUMP',null,pattern);
+                    instructions[available].arg=instructions.length;
+                    emit('GET',child,entry);emit('GET',value,entry);emit('APPEND_ARRAY',{spread:false},entry);emit('POP',null,entry);
+                    emit('JUMP',top,entry);instructions[end].arg=instructions.length;bindPattern(entry.target,child);
+                  }else{
+                    emit('CONST',{value:['undefined']},entry);emit('INIT',child,entry);
+                    advance(child,entry.target.type==='PatternSkip');bindPattern(entry.target,child);
+                  }
+                }
+                if(!fast){
+                  emit('TRY_NORMAL',null,pattern);const finallyPc=instructions.length;
+                  emit('GET',close,pattern);const skipClose=emit('JUMP_IF_FALSE',null,pattern);
+                  iteratorClose(iterator,pattern);instructions[skipClose].arg=instructions.length;emit('END_FINALLY',null,pattern);
+                  instructions[handler].arg={catchPc:null,finallyPc,afterPc:instructions.length};
+                }
               }
+              elements(true);const end=emit('JUMP',null,pattern);instructions[general].arg=instructions.length;
+              elements(false);instructions[end].arg=instructions.length;
               return;
             }
             if(pattern.type==='PatternObject'){
+              emit('GET',variable,pattern);emit('REQUIRE_COERCIBLE',null,pattern);emit('POP',null,pattern);
+              const excluded=[];
               for(const entry of pattern.entries){
                 const child=temporary(entry);
-                emit('GET',variable,entry);
-                if(entry.computedKey)expr(entry.computedKey);
-                else emit('CONST',{value:['str',entry.key]},entry);
-                emit('GET_PROP',null,entry);
-                emit('INIT',child,entry);
+                if(entry.rest){
+                  emit('NEW_OBJECT',null,entry);emit('INIT',child,entry);
+                  copyOwn(child,variable,excluded,entry,{required:true});
+                }else{
+                  const key=temporary(entry);excluded.push(key);
+                  emit('GET',variable,entry);
+                  if(entry.computedKey)expr(entry.computedKey);
+                  else emit('CONST',{value:['str',entry.key]},entry);
+                  emit('DUP',null,entry);emit('INIT',key,entry);
+                  emit('GET_PROP',null,entry);emit('INIT',child,entry);
+                }
                 bindPattern(entry.target,child);
               }
               return;
@@ -461,29 +752,74 @@ export function compile(ast) {
           const root=temporary(n);
           expr(n.init);emit('INIT',root,n);
           bindPattern(n.pattern,root);
+          if(result)emit('GET',root,n);
           emit('LEAVE_SCOPE',null,n);
+    }
+    function stmt(n){
+      switch(n.type){
+        case 'Variable':{
+          if(n.kind==='var'){
+            if(n.init){expr(n.init,n.id);emit('SET',n.id,n);emit('POP',null,n);}
+          }else{
+            if(n.init)expr(n.init,n.id);else emit('CONST',{value:['undefined']},n);
+            emit('INIT',n.id,n);
+          }
           break;
         }
+        case 'ClassBinding':expr(n.value);emit('INIT',n.id,n);break;
+        case 'DefaultSuper':emit('SUPER_FORWARD_CALL',null,n);emit('SUPER_BIND',null,n);emit('POP',null,n);break;
+        case 'ClassField':
+          emit('THIS',null,n);
+          if(!n.privateName)expr(n.key);
+          expr(n.value,n.privateName?'#'+n.privateName:{stack:true});
+          if(n.privateName)emit('PRIVATE_DEFINE',{name:n.privateName,kind:n.privateKind??'field'},n);
+          else emit('DEFINE_LITERAL_PROP',{kind:'init',enumerable:true},n);
+          emit('POP',null,n);break;
+        case 'VariableGroup':for(const declaration of n.declarations)stmt(declaration);break;
+        case 'PatternBinding':emitPattern(n);break;
         case 'Expression':expr(n.expr);emit('POP',null,n);break;
         case 'Return':if(n.argument)expr(n.argument);else emit('CONST',{value:['undefined']},n);emit('RETURN',null,n);break;
         case 'Throw':expr(n.argument);emit('THROW',null,n);break;
         case 'Block':statements(n.body,true);break;
+        case 'Label':{
+          const labels=[...(n.labels??[]),n.label];
+          if(['For','ForIn','ForOf','While','DoWhile','Switch','Label'].includes(n.body.type)){
+            stmt({...n.body,labels});break;
+          }
+          const entry=emit('LOOP_ENTER',null,n);
+          loopDepth++;stmt(n.body);loopDepth--;
+          const end=instructions.length;emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:null,labels};
+          break;
+        }
         case 'Switch':{
-          // Each declared arm returns: discriminant once and no fallthrough.
-          expr(n.discriminant);
-          const fallback=n.cases.find(c=>!c.test);
+          // Evaluate the discriminant outside the CaseBlock lexical scope.
+          // All cases share one scope; tests stop at the first match while
+          // bodies then fall through without evaluating later case tests.
+          expr(n.discriminant);emit('ENTER_SCOPE',null,n);
+          const saved='[[switch '+(++forOfIndex)+']]';
+          emit('DECLARE',{name:saved,kind:'const'},n);emit('INIT',saved,n);
+          predeclare(n.cases.flatMap(c=>c.body));
+          const entry=emit('LOOP_ENTER',null,n),jumps=new Map();
           for(const c of n.cases){
             if(!c.test)continue;
-            emit('DUP',null,c.test);
-            expr(c.test);
-            emit('BINARY','===',n);
-            const next=emit('JUMP_IF_FALSE',null,n);
-            emit('POP',null,c.test);
-            stmt(c.body);
-            instructions[next].arg=instructions.length;
+            emit('GET',saved,n);expr(c.test);emit('BINARY','===',n);
+            const skip=emit('JUMP_IF_FALSE',null,n);
+            jumps.set(c,emit('JUMP',null,n));
+            instructions[skip].arg=instructions.length;
           }
-          emit('POP',null,n);
-          if(fallback)stmt(fallback.body);
+          const noMatch=emit('JUMP',null,n);
+          loopDepth++;
+          for(const c of n.cases){
+            if(c.test)instructions[jumps.get(c)].arg=instructions.length;
+            else instructions[noMatch].arg=instructions.length;
+            for(const node of c.body)if(node.type!=='Function')stmt(node);
+          }
+          loopDepth--;
+          const end=instructions.length;emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:null,labels:n.labels??[]};
+          if(instructions[noMatch].arg===null)instructions[noMatch].arg=end;
+          emit('LEAVE_SCOPE',null,n);
           break;
         }
         case 'If':{expr(n.test);const no=emit('JUMP_IF_FALSE',null,n.test);stmt(n.consequent);if(n.alternate){const end=emit('JUMP',null,n);instructions[no].arg=instructions.length;stmt(n.alternate);instructions[end].arg=instructions.length;}else instructions[no].arg=instructions.length;break;}
@@ -493,7 +829,7 @@ export function compile(ast) {
           loopDepth++;stmt(n.body);loopDepth--;
           emit('JUMP',top,n);
           const end=instructions.length;emit('LOOP_EXIT',null,n);
-          instructions[entry].arg={breakPc:end,continuePc:top};
+          instructions[entry].arg={breakPc:end,continuePc:top,labels:n.labels??[]};
           instructions[no].arg=end;break;
         }
         case 'DoWhile':{
@@ -505,97 +841,107 @@ export function compile(ast) {
           emit('JUMP',top,n);
           const end=instructions.length;
           emit('LOOP_EXIT',null,n);
-          instructions[entry].arg={breakPc:end,continuePc:testPc};
+          instructions[entry].arg={breakPc:end,continuePc:testPc,labels:n.labels??[]};
           instructions[no].arg=end;
           break;
         }
+        case 'ForIn':{
+          const salt=++forOfIndex,enumerator='[[for-in cursor '+salt+']]',step='[[for-in step '+salt+']]',
+            item=n.bindings?'[[for-in item '+salt+']]':n.id;
+          emit('ENTER_SCOPE',null,n);
+          for(const name of [enumerator,step])emit('DECLARE',{name,kind:'let'},n);
+          if(n.kind!=='var')for(const name of n.bindings?n.bindings.map(b=>b.name):[n.id])emit('DECLARE',{name,kind:n.kind},n);
+          expr(n.iterable);emit('FOR_IN_CREATE',null,n);emit('INIT',enumerator,n);
+          emit('CONST',{value:['undefined']},n);emit('INIT',step,n);
+          const entry=emit('LOOP_ENTER',null,n),top=instructions.length;
+          emit('GET',enumerator,n);emit('FOR_IN_NEXT',null,n);emit('SET',step,n);emit('POP',null,n);
+          emit('GET',step,n);emit('CONST',{value:['str','done']},n);emit('GET_PROP',null,n);
+          const body=emit('JUMP_IF_FALSE',null,n),done=emit('JUMP',null,n);
+          instructions[body].arg=instructions.length;
+          emit('ENTER_SCOPE',null,n);
+          if(n.bindings)emit('DECLARE',{name:item,kind:'const'},n);
+          if(n.kind!=='var')for(const name of n.bindings?n.bindings.map(b=>b.name):[n.id])emit('DECLARE',{name,kind:n.kind},n);
+          emit('GET',step,n);emit('CONST',{value:['str','value']},n);emit('GET_PROP',null,n);
+          emit(n.kind==='var'&&!n.bindings?'SET':'INIT',item,n);if(n.kind==='var'&&!n.bindings)emit('POP',null,n);
+          if(n.pattern)emitPattern({...n,type:'PatternBinding',init:{...n,type:'Identifier',name:item}});
+          loopDepth++;stmt(n.body);loopDepth--;emit('LEAVE_SCOPE',null,n);emit('JUMP',top,n);
+          const end=instructions.length;emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:top,labels:n.labels??[]};instructions[done].arg=end;
+          emit('LEAVE_SCOPE',null,n);break;
+        }
         case 'ForOf':{
-          // A fail-closed owned iterator slice: ordinary dense arrays only.
-          // The hidden state names cannot be spelled by guest JavaScript and
-          // retain one evaluated iterable across every iteration.
-          const salt=++forOfIndex;
+          const salt=++forOfIndex,iterable='[[for-of iterable '+salt+']]';
           const item=n.bindings?'[[for-of item '+salt+']]':n.id;
-          const iterable='[[for-of iterable '+salt+']]';
           const index='[[for-of index '+salt+']]';
           emit('ENTER_SCOPE',null,n);
-          emit('DECLARE',{name:iterable,kind:'let'},n);
-          emit('DECLARE',{name:index,kind:'let'},n);
+          emit('DECLARE',{name:iterable,kind:'const'},n);
+          // The lexical loop header shadows its own iterable expression.
+          if(n.kind!=='var')for(const name of n.bindings?n.bindings.map(b=>b.name):[n.id])
+            emit('DECLARE',{name,kind:n.kind},n);
           expr(n.iterable);emit('INIT',iterable,n);
-          emit('CONST',{value:['num',0]},n);emit('INIT',index,n);
-          // An array iterator has observable built-in semantics distinct from
-          // property enumeration. Never pretend arbitrary iterables are arrays.
-          emit('GET','Array',n);
-          emit('CONST',{value:['str','isArray']},n);
-          emit('GET_METHOD',null,n);
-          emit('GET',iterable,n);
-          emit('CALL',1,n);
-          const invalid=emit('JUMP_IF_FALSE',null,n);
-          const accepted=emit('JUMP',null,n);
-          instructions[invalid].arg=instructions.length;
-          emit('CONST',{value:['str','Unsupported for-of iterable: owned array required']},n);
-          emit('THROW',null,n);
-          instructions[accepted].arg=instructions.length;
-          const entry=emit('LOOP_ENTER',null,n);
-          const top=instructions.length;
-          emit('GET',iterable,n);
-          emit('CONST',{value:['str','length']},n);
-          emit('GET_PROP',null,n);
-          emit('GET',index,n);
-          emit('BINARY','>',n); // array.length > index
-          const no=emit('JUMP_IF_FALSE',null,n);
-          if(n.kind!=='var'){
+          const bind=load=>{
             emit('ENTER_SCOPE',null,n);
-            emit('DECLARE',{name:item,kind:n.kind},n);
-            for(const binding of n.bindings??[])
-              emit('DECLARE',{name:binding.name,kind:n.kind},binding);
-          }
-          emit('GET',iterable,n);
-          emit('GET',index,n);
-          emit('GET_PROP',null,n);
-          emit(n.kind==='var'?'SET':'INIT',item,n);
-          if(n.kind==='var')emit('POP',null,n);
-          if(n.bindings){
-            // For each iteration the fresh lexical scope owns both the
-            // iterator value and each destructured lexical capture.
-            emit('GET','Array',n);
-            emit('CONST',{value:['str','isArray']},n);
-            emit('GET_METHOD',null,n);
-            emit('GET',item,n);
-            emit('CALL',1,n);
-            const invalidItem=emit('JUMP_IF_FALSE',null,n);
-            const acceptedItem=emit('JUMP',null,n);
-            instructions[invalidItem].arg=instructions.length;
-            emit('UNSUPPORTED_EXPRESSION',
-              'for-of array binding requires an owned array item',n);
-            instructions[acceptedItem].arg=instructions.length;
-            for(const binding of n.bindings){
-              emit('GET',item,binding);
-              emit('CONST',{value:['num',binding.index]},binding);
-              emit('GET_PROP',null,binding);
-              if(binding.fallback){
-                emit('DUP',null,binding);
-                emit('CONST',{value:['undefined']},binding);
-                emit('BINARY','===',binding);
-                const skip=emit('JUMP_IF_FALSE',null,binding);
-                emit('POP',null,binding);
-                expr(binding.fallback);
-                instructions[skip].arg=instructions.length;
-              }
-              emit('INIT',binding.name,binding);
-            }
-          }
-          loopDepth++;stmt(n.body);loopDepth--;
-          if(n.kind!=='var')emit('LEAVE_SCOPE',null,n);
+            if(n.bindings)emit('DECLARE',{name:item,kind:'const'},n);
+            if(n.kind!=='var')for(const name of n.bindings?n.bindings.map(b=>b.name):[n.id])
+              emit('DECLARE',{name,kind:n.kind},n);
+            load();emit(n.kind==='var'&&!n.bindings?'SET':'INIT',item,n);
+            if(n.kind==='var'&&!n.bindings)emit('POP',null,n);
+            if(n.pattern)emitPattern({...n,type:'PatternBinding',init:{...n,type:'Identifier',name:item}});
+            loopDepth++;stmt(n.body);loopDepth--;
+            emit('LEAVE_SCOPE',null,n);
+          };
+          // Preserve the existing detailed array path only when the standard
+          // iterator is actually selected. Custom/inherited hooks take the
+          // owned protocol path below, with a cached next method and cleanup.
+          emit('GET',iterable,n);emit('ITERATOR_ARRAY_GUARD',null,n);
+          const general=emit('JUMP_IF_FALSE',null,n);
+          emit('DECLARE',{name:index,kind:'let'},n);
+          emit('CONST',{value:['num',0]},n);emit('INIT',index,n);
+          const entry=emit('LOOP_ENTER',null,n),top=instructions.length;
+          emit('GET',iterable,n);emit('CONST',{value:['str','length']},n);emit('GET_PROP',null,n);
+          emit('GET',index,n);emit('BINARY','>',n);
+          const no=emit('JUMP_IF_FALSE',null,n);
+          bind(()=>{emit('GET',iterable,n);emit('GET',index,n);emit('GET_PROP',null,n);});
           const updatePc=instructions.length;
-          emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},n);
-          emit('POP',null,n);
+          emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},n);emit('POP',null,n);
           emit('JUMP',top,n);
-          const end=instructions.length;
-          emit('LOOP_EXIT',null,n);
-          instructions[entry].arg={breakPc:end,continuePc:updatePc};
+          const end=instructions.length;emit('LOOP_EXIT',null,n);
+          instructions[entry].arg={breakPc:end,continuePc:updatePc,labels:n.labels??[]};
           instructions[no].arg=end;
-          emit('LEAVE_SCOPE',null,n);
-          break;
+          const fastEnd=emit('JUMP',null,n);
+          instructions[general].arg=instructions.length;
+          const iterator='[[iterator '+salt+']]',next='[[iterator next '+salt+']]',
+            step='[[iterator step '+salt+']]',close='[[iterator close '+salt+']]';
+          for(const name of [iterator,next,step,close])emit('DECLARE',{name,kind:'let'},n);
+          emit('GET',iterable,n);emit('CONST',{value:['symbol','well-known:iterator']},n);
+          emit('GET_METHOD',null,n);emit('CALL',0,n);emit('REQUIRE_OBJECT',null,n);emit('INIT',iterator,n);
+          emit('GET',iterator,n);emit('CONST',{value:['str','next']},n);emit('GET_METHOD',null,n);emit('INIT',next,n);
+          emit('CONST',{value:['undefined']},n);emit('INIT',step,n);
+          emit('CONST',{value:['bool',false]},n);emit('INIT',close,n);
+          const handler=emit('TRY_ENTER',null,n),loop=emit('LOOP_ENTER',null,n),begin=instructions.length;
+          emit('CONST',{value:['bool',false]},n);emit('SET',close,n);emit('POP',null,n);
+          emit('GET',next,n);emit('CALL',0,n);emit('REQUIRE_OBJECT',null,n);emit('SET',step,n);emit('POP',null,n);
+          emit('GET',step,n);emit('CONST',{value:['str','done']},n);emit('GET_PROP',null,n);
+          const body=emit('JUMP_IF_FALSE',null,n),finish=emit('JUMP',null,n);
+          instructions[body].arg=instructions.length;
+          // Iterator next/done/value failures do not close. Binding and body
+          // abrupt completions do, after the value has been obtained.
+          bind(()=>{
+            emit('GET',step,n);emit('CONST',{value:['str','value']},n);emit('GET_PROP',null,n);
+            emit('CONST',{value:['bool',true]},n);emit('SET',close,n);emit('POP',null,n);
+          });
+          emit('JUMP',begin,n);
+          const exit=instructions.length;emit('LOOP_EXIT',null,n);emit('TRY_NORMAL',null,n);
+          instructions[loop].arg={breakPc:exit,continuePc:begin,labels:n.labels??[]};
+          instructions[finish].arg=exit;
+          const finallyPc=instructions.length;
+          emit('GET',close,n);const skipClose=emit('JUMP_IF_FALSE',null,n);
+          iteratorClose(iterator,n);
+          instructions[skipClose].arg=instructions.length;
+          emit('END_FINALLY',null,n);
+          instructions[handler].arg={catchPc:null,finallyPc,afterPc:instructions.length};
+          instructions[fastEnd].arg=instructions.length;
+          emit('LEAVE_SCOPE',null,n);break;
         }
         case 'For':{
           const declarations=n.init?.type==='VariableGroup'?n.init.declarations:
@@ -623,14 +969,14 @@ export function compile(ast) {
           emit('JUMP',top,n);
           const end=instructions.length;
           emit('LOOP_EXIT',null,n);
-          instructions[entry].arg={breakPc:end,continuePc:updatePc};
+          instructions[entry].arg={breakPc:end,continuePc:updatePc,labels:n.labels??[]};
           if(no!==null)instructions[no].arg=end;
           if(lexical)emit('LEAVE_SCOPE',null,n);
           break;
         }
         case 'Break':case 'Continue':
           if(!loopDepth)throw new SyntaxError(n.type.toLowerCase()+' outside loop');
-          emit('LOOP_JUMP',n.type.toLowerCase(),n);break;
+          emit('LOOP_JUMP',n.label?{kind:n.type.toLowerCase(),label:n.label}:n.type.toLowerCase(),n);break;
         case 'Try':{
           const entry=emit('TRY_ENTER',null,n);
           stmt(n.block);emit('TRY_NORMAL',null,n.block);
@@ -657,7 +1003,8 @@ export function compile(ast) {
     // A parameter expression has its own environment. All parameter names
     // exist in TDZ before initialization, then initialize left to right;
     // body var/function declarations are introduced only afterwards.
-    const parameterExpressions=defaults.some(Boolean);
+    const parameterExpressions=defaults.some(Boolean)||parameterPatterns.some(Boolean);
+    if(classConstructor)emit('CLASS_CONSTRUCTOR_GUARD',null,body[0]??ast);
     if(parameterExpressions){
       params.forEach((name,i)=>{
         const initializer=defaults[i];
@@ -666,20 +1013,28 @@ export function compile(ast) {
         // Supplied arguments initialize at their parameter, never at the first
         // body declaration. A shared body span would invent a second source
         // declaration receipt for this implicit binding operation.
-        if(!initializer){emit('PARAM_INIT',name,parameter);return;}
+        if(!initializer)emit('PARAM_INIT',name,parameter);
+        else {
         const guard=emit('DEFAULT_GUARD',{name,skipPc:null},initializer);
-        expr(initializer);
+        expr(initializer,name.startsWith('[[')?null:name);
         emit('INIT',name,initializer);
         const done=emit('JUMP',null,initializer);
         instructions[guard].arg.skipPc=instructions.length;
         emit('PARAM_INIT',name,parameter);
         instructions[done].arg=instructions.length;
+        }
+        const parsed=parameterPatterns[i];
+        if(parsed)emitPattern({...parameter,...parsed,kind:'parameter',
+          init:{...parameter,type:'Identifier',name}});
       });
       emit('ENTER_BODY_ENV',null,body[0]);
     }
+    if(generator)emit('GENERATOR_START',null,ast);
     statements(body);
     emit('CONST',{value:['undefined']},ast);emit('RETURN',null,ast);
-    programs[id]={id,params,restIndex,async,strict,parameterExpressions,varNames:collectVarBindings(body),instructions};return id;
+    const firstDefault=defaults.findIndex(Boolean),functionLength=Math.min(params.length,restIndex<0?Infinity:restIndex,firstDefault<0?Infinity:firstDefault);
+    programs[id]={id,params,restIndex,async,generator:generator===true,strict,parameterExpressions,functionLength,
+      patternNames:parameterPatterns.flatMap(p=>(p?.bindings??[]).map(b=>b.name)),varNames:collectVarBindings(body),instructions};return id;
   }
   const entry=bodyProgram(ast.body);
   return {entry,programs,sites:Object.values(programs).flatMap(x=>x.instructions.map(({siteId,start,end,op})=>({siteId,start,end,op,codeId:x.id})))};

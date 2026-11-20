@@ -218,6 +218,35 @@ export function lowerJavaScript({source,entry,inputTypes=null,maxOperations=128,
       const value=operation(node.operator==='++'?'+':'-',[{...converted,type:'number'},literal(1)],node);
       target.set(value);return node.prefix?value:converted;
     }
+    if(node.type==='CallExpression'&&!node.optional&&node.callee.type==='MemberExpression'&&
+      !node.callee.optional&&!node.callee.computed&&named(node.callee.property,'reduce')){
+      const input=expression(node.callee.object,scope,context);
+      ensure(input.term?.op==='input','reduce requires an original ordinary-array input',node);
+      ensure(node.arguments.length===2,'reduce requires an explicit initial accumulator',node);
+      const callback=node.arguments[0],initial=expression(node.arguments[1],scope,context);
+      ensure(['ArrowFunctionExpression','FunctionExpression'].includes(callback.type)&&!callback.async&&
+        !callback.generator&&!callback.id&&callback.params.length===2&&
+        callback.params.every(param=>param.type==='Identifier')&&callback.params[0].name!==callback.params[1].name,
+        'reduce requires a pure callback with exactly accumulator and element parameters',callback);
+      ensure(same(initial.term,{op:'literal',value:['num',0]}),
+        'sum reduction starts at positive zero',node);
+      const callbackScope=new Scope();
+      callbackScope.declare(callback.params[0].name,{term:{op:'ref',id:'acc0'},type:'number'},true,callback.params[0]);
+      callbackScope.declare(callback.params[1].name,{term:{op:'ref',id:'element'},type:'number'},true,callback.params[1]);
+      const result=callback.body.type==='BlockStatement'?
+        runStatements(callback.body.body,callbackScope,context)?.value:expression(callback.body,callbackScope,context);
+      ensure(same(result?.term,{op:'add',args:[{op:'ref',id:'acc0'},{op:'ref',id:'element'}]}),
+        'sum reduction must add accumulator then element exactly once',callback);
+      constrainInput(input.term.id,'dense-number-array',node);
+      record('ordered-numeric-reduce',node,
+        ['Original intrinsic reduce on a dense ordinary array with no own replacement.',
+          'Finite binary64 elements; at most 128 iterations; positive-zero initialization.',
+          'Pure exact-arity callback; no index or array parameter, captures, mutation, hooks or effects.',
+          'The same ascending left-to-right addition order as the certified loop.']);
+      sourceSites.push({kind:'fold',syntax:'Array.reduce',site:span(node)});
+      return {term:{op:'fold_left',input:input.term,initial:initial.term,step:'add',
+        order:'ascending',profile:'dense-number-array/1'},type:'number'};
+    }
     if(node.type==='CallExpression'&&!node.optional&&node.callee.type==='Identifier'){
       ensure(!scope.resolve(node.callee.name)&&functions.has(node.callee.name),
         'unknown, shadowed, or effectful call requires a boundary',node);

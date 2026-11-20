@@ -1,0 +1,65 @@
+{
+  "observedAt": "2026-11-20T17:32:13.293555+00:00",
+  "dependencyInstall": {
+    "command": "npm ci --no-audit --no-fund",
+    "exitCode": 0,
+    "nodeModulesIsSymlink": false,
+    "packageLock": {
+      "path": "/workspace/scratch/d11743e0247b/producer-regression-012c9fe/package-lock.json",
+      "bytes": 2742,
+      "sha256": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88"
+    },
+    "stdout": {
+      "path": "/workspace/scratch/d11743e0247b/final-validation/producer-012c9fe/npm-ci.stdout.log",
+      "bytes": 24,
+      "sha256": "f8d2c01f4ea85f0389dfa7c03526b22414404a93d574f1e1f3baa89fe92f210c"
+    },
+    "stderr": {
+      "path": "/workspace/scratch/d11743e0247b/final-validation/producer-012c9fe/npm-ci.stderr.log",
+      "bytes": 359,
+      "sha256": "25d89fcefd423c031268e765c73e08af43281ee3564531e22106ed57c2db948f"
+    }
+  },
+  "consumer": {
+    "root": "/workspace/scratch/d11743e0247b/v8-final-native",
+    "revision": "39c4036564428e44cc89caf261f517d856482695",
+    "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+    "trackedChanges": ""
+  },
+  "legacyTokenizerConsumer": {
+    "root": "/workspace/scratch/d11743e0247b/producer-tokenizer-7b36617",
+    "revision": "7b36617a446fafe21b5f28ae5ec73956e246f7bf",
+    "tree": "4ea5361e8d8b7fb84a2f44e4796568e9bd0e6f22",
+    "trackedChanges": ""
+  },
+  "tokenizer": {
+    "path": "/workspace/scratch/d11743e0247b/tokenizer.json",
+    "bytes": 12205732,
+    "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "nativePolicy": {
+    "path": "/workspace/scratch/d11743e0247b/producer-regression-012c9fe/contracts/semantic-native-policy-v8.json",
+    "bytes": 602,
+    "sha256": "481d763ac583aee751f9826f1f5aa0f2b9ff583dd442a99b5bcc1a367cfbcccc"
+  },
+  "legacyTokenizerPolicy": {
+    "path": "/workspace/scratch/d11743e0247b/producer-regression-012c9fe/contracts/native-admission-policy-v6.json",
+    "bytes": 249,
+    "sha256": "e77f5ae92b22904e15c12058a3f7f949256411ad4111ba2fb7b0af6a8483b5ab"
+  },
+  "servedBundle": {
+    "root": "/workspace/scratch/d11743e0247b/v8-native-bounded-fit/baseline",
+    "manifest": {
+      "path": "/workspace/scratch/d11743e0247b/v8-native-bounded-fit/baseline/manifest.json",
+      "bytes": 7785,
+      "sha256": "40b8ca1e79659cb1d609c85bfa62ef6c58301b5409385e63f0197663d11ba539"
+    },
+    "config": {
+      "path": "/workspace/scratch/d11743e0247b/v8-native-bounded-fit/baseline/model_config.json",
+      "bytes": 1398,
+      "sha256": "ed7a2f92ac01415c92ae93b8fc1144c5e260c9bbed8f5ba1da9dc7ff399f910f"
+    },
+    "modelSha256FromManifest": "2a7eefffb21e8901150e6932ccd3d7f048fa2efb0ed4d9ebc9072feab43f0452",
+    "scope": "Zero-update initialized native Tiny; four controlled lifecycle gates and actual initialized-model rejection, no learned-success claim"
+  }
+}

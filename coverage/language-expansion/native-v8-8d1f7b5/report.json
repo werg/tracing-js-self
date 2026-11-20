@@ -1,0 +1,595 @@
+{
+  "schema": "semantic-v8-population-results/1",
+  "populations": [
+    {
+      "id": "interop",
+      "producerRevision": "8d1f7b5b24d385ce067e9a3d64cce37140a26a56",
+      "nativePolicy": {
+        "schema": "semantic-native-policy/8",
+        "consumerRepository": "werg/megatoken",
+        "consumerRevision": "be3a8d789f2ea8c76a77c7f2f14eff717960d64e",
+        "contractDigest": "0880cbd31fe3dd749f3566f96183741451ae51c5fd58a309bf1b8a3fafa27e46",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "interoperabilityDigest": "6ff5cbe1b22fd9ab891275aef124e3bd0cfbb756709603c5f95ddc7dd31f780c"
+      },
+      "populationDigest": "2a167264dd92a0164b1ebdbf8d41c4b7cf075a2620c2d6fe74381bc342081293",
+      "declared": 22,
+      "sourceQualified": 22,
+      "nativeAdmitted": 22,
+      "sourceDispositions": {
+        "passed": 22
+      },
+      "nativeDispositions": {
+        "passed": 22
+      },
+      "costs": {
+        "declared": 22,
+        "sourceQualified": 22,
+        "sourceDispositions": {
+          "passed": 22
+        },
+        "compactEpisodes": 13,
+        "whollyDetailedEpisodes": 9,
+        "regionCoverage": {
+          "measuredEpisodes": 22,
+          "unmeasuredEpisodes": 0,
+          "compact": 23,
+          "detailed": 42,
+          "compactRecords": 23,
+          "detailedRecords": 738
+        },
+        "flat": {
+          "sourceQualified": 22,
+          "measured": 22,
+          "unmeasured": 0,
+          "dispositions": {
+            "passed": 22
+          },
+          "bytes": {
+            "generated": 81025,
+            "detailed": 78347,
+            "detailedShare": 0.9669484726936131,
+            "cumulativeContext": 3783326,
+            "peakContext": 9168
+          },
+          "tokenMeasurement": "passed",
+          "tokenMeasuredEpisodes": 22,
+          "tokens": {
+            "generated": 23867,
+            "detailed": 23012,
+            "detailedShare": 0.9641764779821511,
+            "terminal": 761,
+            "observedAndContext": 1217943,
+            "total": 1242571,
+            "peakContext": 2933
+          },
+          "scope": "Sums cover measured episodes only; source refusals and measurement limits remain in the declared denominator."
+        },
+        "nativePacking": {
+          "status": "measured",
+          "measuredEpisodes": 22,
+          "unmeasuredEpisodes": 0,
+          "generatedTokens": 23867,
+          "observedTokens": 1244727,
+          "terminalTokens": 0,
+          "physicalRecords": 2848,
+          "logicalRecords": 809,
+          "scope": "Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."
+        },
+        "model": {
+          "status": "unmeasured",
+          "nextStep": null,
+          "completedExecution": null,
+          "latencyMs": null
+        },
+        "nativeServing": {
+          "status": "unmeasured",
+          "latencyMs": null,
+          "cacheSavings": null
+        },
+        "defaultPromotion": "not-qualified"
+      },
+      "families": {
+        "async-counter": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "builtin-iterator-mixed-arithmetic": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "class-construction-source": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "expansion:class-instance-state": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "expansion:enumeration-own-keys": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "generator-cleanup-suspension": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:class-private-coercion": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:generator-delegation-cleanup": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:promise-join-rejection-finally": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:proxy-traps-arithmetic": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:typed-views-shared-backing": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "logical-source-choices": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "promise-executor-source": {
+          "declared": 3,
+          "sourceQualified": 3,
+          "nativeAdmitted": 3,
+          "sourceDispositions": {
+            "passed": 3
+          },
+          "nativeDispositions": {
+            "passed": 3
+          }
+        },
+        "protocol-source-promise-all-reaction": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "protocol-symbol-getter": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "source-base-initializer-throw": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "source-derived-initializer-throw": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "synchronous-generator-source": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "v8-contract-getter": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "v8-contract-map": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        }
+      },
+      "unqualified": []
+    },
+    {
+      "id": "gallery",
+      "producerRevision": "8d1f7b5b24d385ce067e9a3d64cce37140a26a56",
+      "nativePolicy": {
+        "schema": "semantic-native-policy/8",
+        "consumerRepository": "werg/megatoken",
+        "consumerRevision": "be3a8d789f2ea8c76a77c7f2f14eff717960d64e",
+        "contractDigest": "0880cbd31fe3dd749f3566f96183741451ae51c5fd58a309bf1b8a3fafa27e46",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "interoperabilityDigest": "6ff5cbe1b22fd9ab891275aef124e3bd0cfbb756709603c5f95ddc7dd31f780c"
+      },
+      "populationDigest": "a3e6e71d45781a75ad1d6a5902b1e1797c41bb14f8d91e358871a28ac470b839",
+      "declared": 11,
+      "sourceQualified": 11,
+      "nativeAdmitted": 11,
+      "sourceDispositions": {
+        "passed": 11
+      },
+      "nativeDispositions": {
+        "passed": 11
+      },
+      "costs": {
+        "declared": 11,
+        "sourceQualified": 11,
+        "sourceDispositions": {
+          "passed": 11
+        },
+        "compactEpisodes": 9,
+        "whollyDetailedEpisodes": 2,
+        "regionCoverage": {
+          "measuredEpisodes": 11,
+          "unmeasuredEpisodes": 0,
+          "compact": 10,
+          "detailed": 15,
+          "compactRecords": 10,
+          "detailedRecords": 87
+        },
+        "flat": {
+          "sourceQualified": 11,
+          "measured": 11,
+          "unmeasured": 0,
+          "dispositions": {
+            "passed": 11
+          },
+          "bytes": {
+            "generated": 11618,
+            "detailed": 10163,
+            "detailedShare": 0.8747632983301773,
+            "cumulativeContext": 402808,
+            "peakContext": 8454
+          },
+          "tokenMeasurement": "passed",
+          "tokenMeasuredEpisodes": 11,
+          "tokens": {
+            "generated": 3378,
+            "detailed": 2915,
+            "detailedShare": 0.8629366489046774,
+            "terminal": 97,
+            "observedAndContext": 139863,
+            "total": 143338,
+            "peakContext": 2875
+          },
+          "scope": "Sums cover measured episodes only; source refusals and measurement limits remain in the declared denominator."
+        },
+        "nativePacking": {
+          "status": "measured",
+          "measuredEpisodes": 11,
+          "unmeasuredEpisodes": 0,
+          "generatedTokens": 3378,
+          "observedTokens": 158551,
+          "terminalTokens": 0,
+          "physicalRecords": 407,
+          "logicalRecords": 169,
+          "scope": "Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."
+        },
+        "model": {
+          "status": "unmeasured",
+          "nextStep": null,
+          "completedExecution": null,
+          "latencyMs": null
+        },
+        "nativeServing": {
+          "status": "unmeasured",
+          "latencyMs": null,
+          "cacheSavings": null
+        },
+        "defaultPromotion": "not-qualified"
+      },
+      "families": {
+        "async-cleanup": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "async-counter": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "compound-pure": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "observed-branch": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "owned-callback": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "persistent-external-trigger": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "trace-gallery-dense-loop": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "trace-gallery-object-alias": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "trace-gallery-pure-helper": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "trace-gallery-redundant-cell-write": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "trace-gallery-throw-finally": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        }
+      },
+      "unqualified": []
+    }
+  ],
+  "model": {
+    "status": "unmeasured",
+    "reason": "No external model responses or execution runs were available."
+  },
+  "nativeServing": {
+    "status": "unmeasured"
+  },
+  "defaultPromotion": "not-qualified",
+  "consumerValidation": {
+    "schema": "semantic-native-validation/1",
+    "consumerRevision": "be3a8d789f2ea8c76a77c7f2f14eff717960d64e",
+    "consumerTreeClean": true,
+    "python": "3.12.14",
+    "tokenizers": "0.23.3",
+    "ruff": "0.17.6",
+    "focusedTests": {
+      "passed": 178,
+      "failed": 0,
+      "skipped": 0,
+      "log": "focused-tests.log",
+      "liveSourceProducerRevision": "2f9bca8c38b0773daccf4f0e97ba8bb2ca7d0bac",
+      "command": "PYTHONPATH=src MEGATOKEN_NATIVE_SOURCE_PRODUCER=/workspace/scratch/46f8e0aafae6/native-source-final python -m unittest tests.test_algorithm_v7 tests.test_algorithm_v8 tests.test_native_v8 tests.test_native_detail_regressions_v8 tests.test_native_primitives_v8 tests.test_protocol_v8 tests.test_protocol_properties tests.test_memory_v8 tests.test_construction_v8 tests.test_admit_semantic_v8 tests.test_protocol_boundaries_v8 tests.test_generator_boundaries_v8 tests.test_proxy_v8 tests.test_promise_executor_v8 tests.test_promise_executor_boundaries_v8 tests.test_promise_scheduler_v8 tests.test_number_v8 tests.test_promise_join_v8 -q"
+    },
+    "checks": [
+      {
+        "name": "lint",
+        "command": [
+          "/workspace/scratch/46f8e0aafae6/native-venv/bin/ruff",
+          "check",
+          "src",
+          "tests",
+          "scripts"
+        ],
+        "exitCode": 0,
+        "log": "lint.log"
+      },
+      {
+        "name": "format",
+        "command": [
+          "/workspace/scratch/46f8e0aafae6/native-venv/bin/ruff",
+          "format",
+          "--check",
+          "src",
+          "tests",
+          "scripts"
+        ],
+        "exitCode": 0,
+        "log": "format.log"
+      },
+      {
+        "name": "diff-check",
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "exitCode": 0,
+        "log": "diff-check.log"
+      }
+    ]
+  }
+}

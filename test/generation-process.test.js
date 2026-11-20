@@ -28,6 +28,17 @@ test('bounded generation process keeps the source gate and reports measured RSS'
   assert.ok(run.durationMs>0);assert.ok(run.peakRssBytes>0);
   assert.equal(Object.keys(generationEnvironment()).some(key=>/TOKEN|SECRET|PROXY/i.test(key)),false);
 });
+test('bounded workers use the requested versioned producer without relabeling source evidence',async t=>{
+  for(const traceVersion of [7,8]){
+    const run=await runGenerationProcess({...task,traceVersion},{outputDirectory:directory(t),timeoutMs:30000});
+    assert.equal(run.result.status,'locally_verified',run.result.reason);
+    assert.equal(run.result.exported.public.schema,'semantic-execution/'+traceVersion);
+    assert.equal(run.result.exported.sidecar.referenceStatus,'agreed');
+    assert.ok(run.peakRssBytes>0);
+  }
+  const unknown=await runGenerationProcess({...task,traceVersion:9},{outputDirectory:directory(t),timeoutMs:30000});
+  assert.equal(unknown.result.status,'collection_failed');assert.match(unknown.result.reason,/trace version/);
+});
 test('times out or cancels workers and refuses oversized evidence with explicit statuses',async t=>{
   const outputDirectory=directory(t);
   const limited=await runGenerationProcess(task,{outputDirectory,maxOutputBytes:1024,timeoutMs:30000});

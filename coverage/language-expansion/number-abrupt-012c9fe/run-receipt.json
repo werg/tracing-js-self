@@ -1,0 +1,62 @@
+{
+  "schema": "current-native-supplement-run/1",
+  "startedAt": "2026-11-20T17:37:53.713598+00:00",
+  "suite": "abrupt_number",
+  "command": [
+    "node",
+    "/workspace/scratch/754a49249d01/native-current-supplements-012c9fe-39c4036/qualify_abrupt_number.mjs",
+    "/workspace/scratch/754a49249d01/native-producer-current-012c9fe",
+    "/workspace/scratch/754a49249d01/native-current-supplements-012c9fe-39c4036/abrupt-number",
+    "012c9fe49a082319bf98ac0c571596da925741a4",
+    "39c4036564428e44cc89caf261f517d856482695"
+  ],
+  "cwd": "/workspace/scratch/754a49249d01/native-producer-current-012c9fe",
+  "pins": {
+    "consumer": {
+      "path": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "status": ""
+    },
+    "producer": {
+      "path": "/workspace/scratch/754a49249d01/native-producer-current-012c9fe",
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "status": ""
+    }
+  },
+  "helper": "/workspace/scratch/754a49249d01/native-current-supplements-012c9fe-39c4036/qualify_abrupt_number.mjs",
+  "helperSha256": "cb3d90e42054d5027f922bb26b6ee4d9fdaaff2f4a136c261c1901246e0d8a71",
+  "helperSource": "/workspace/scratch/754a49249d01/native-supplement-tools/qualify_abrupt_number.mjs",
+  "nativeDeadlineMs": 120000,
+  "log": "/workspace/scratch/754a49249d01/native-current-supplements-012c9fe-39c4036/abrupt_number.log",
+  "output": "/workspace/scratch/754a49249d01/native-current-supplements-012c9fe-39c4036/abrupt-number",
+  "finishedAt": "2026-11-20T17:38:52.011707+00:00",
+  "durationSeconds": 58.297408570004336,
+  "exitCode": 0,
+  "logSha256": "a2bb704f98e34bd20914035a10efcca13d3d61287609e7d9b5693d1a92f4466e",
+  "finalPins": {
+    "consumer": {
+      "path": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "status": ""
+    },
+    "producer": {
+      "path": "/workspace/scratch/754a49249d01/native-producer-current-012c9fe",
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "status": ""
+    }
+  },
+  "report": "/workspace/scratch/754a49249d01/native-current-supplements-012c9fe-39c4036/abrupt-number/report.json",
+  "reportSha256": "e5b1e9cb6020216b818d56b7519c49128cf0d2597a5c74ff88d601970447e7a7",
+  "counts": {
+    "declared": 2,
+    "sourceQualified": 2,
+    "nativeAdmitted": 2,
+    "tokenMeasured": 2,
+    "expectedSourceRefusals": null
+  },
+  "passed": true
+}

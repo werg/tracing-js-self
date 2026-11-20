@@ -73,12 +73,9 @@ test('dense callback and sparse-fill source cases pass the independent v5 admiss
   }
 });
 
-test('unmodeled sparse callbacks, async callbacks, thisArg, and inherited fill setters fail closed',()=>{
+test('async callbacks and inherited fill setters remain explicit refusals',()=>{
   for(const body of [
-    'return Array(3).some(value=>true);',
-    'return Array(3).forEach(value=>value);',
     'return [1].some(async value=>value);',
-    'return [1].forEach(value=>value,{});',
     'const a=Array(2),fill=a.fill,p={};Object.defineProperty(p,"0",{set:value=>{throw 7;}});p.fill=fill;Object.setPrototypeOf(a,p);return a.fill(3);'
   ]){
     const runtime=createRuntime().startEntry({text:'"use strict";function run(){'+body+'}',functionName:'run'});

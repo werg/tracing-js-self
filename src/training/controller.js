@@ -9,6 +9,10 @@ import {hostOperation} from '../host/operations.js';
 import {checkSemanticRegionClaim} from './semantic-regions.js';
 
 const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+function arrayIndex(key){
+  if(typeof key!=='string'||!/^(0|[1-9][0-9]{0,9})$/.test(key))return null;
+  const index=Number(key);return index<4294967295?index:null;
+}
 function fail(category,message) {
   const error=new Error(message);error.category=category;throw error;
 }
@@ -94,7 +98,7 @@ export class SemanticController {
   }
   settlePromise(identity,status,value,{external=false}={}){
     const promise=this.promise(identity);
-    if(promise.state!=='pending')fail('promise','Promise already settled');
+    if(promise.state!=='pending'||promise.adopted)fail('promise','Promise already settled or adopting');
     if(promise.external&&!external)fail('authority','Only a broker observation settles an external Promise');
     if(status==='fulfilled'&&value[0]==='ref'&&this.heap.get(value[1])?.kind==='promise'){
       const target=value[1];let cursor=target;
@@ -108,6 +112,13 @@ export class SemanticController {
     }
     promise.state=status;promise.result=structuredClone(value);
     this.refreshReady();
+  }
+  schedulerClosure(identity){
+    const closure=this.heap.get(identity);
+    if(closure?.kind!=='closure')fail('capture','Scheduler requires an owned closure');
+    if(closure.generatorFunction||closure.promiseResolver)
+      fail('capture','Generator and resolving functions require their explicit call protocol');
+    return closure;
   }
   refreshReady(){
     // Adoption and reaction readiness are deterministic consequences of a
@@ -184,7 +195,7 @@ export class SemanticController {
   }
   commit(line,{mode='generated',track=this.trackId}={}){
     const prior=structuredClone({
-      heap:this.heap,locals:this.locals,stack:this.stack,completion:this.completion,
+      heap:this.heap,locals:this.locals,stack:this.stack,completion:this.completion,receiver:this.receiver,
       effects:this.effects,jobs:this.jobs,ready:this.ready,
       pending:this.pending,lastReturn:this.lastReturn,fixtureReplies:this.fixtureReplies,
       claims:this.claims,generated:this.generated,history:this.history,
@@ -296,14 +307,14 @@ export class SemanticController {
           if(!f.present||f.value[0]!=='num'||!Number.isSafeInteger(f.value[1])||
              f.value[1]<0||f.value[1]>4096)fail('array','Invalid length mutation');
           for(const key of obj.properties.keys())
-            if(/^(0|[1-9][0-9]*)$/.test(key)&&Number(key)>=f.value[1])
+            if(arrayIndex(key)!==null&&arrayIndex(key)>=f.value[1])
               obj.properties.delete(key);
         }
         if(f.present)obj.properties.set(f.key,structuredClone(f.value));
         else obj.properties.delete(f.key);
-        if(obj.kind==='array'&&/^(0|[1-9][0-9]*)$/.test(f.key)&&
-           Number(f.key)>=obj.properties.get('length')[1])
-          obj.properties.set('length',['num',Number(f.key)+1]);
+        const index=arrayIndex(f.key);
+        if(obj.kind==='array'&&f.present&&index!==null&&index>=obj.properties.get('length')[1])
+          obj.properties.set('length',['num',index+1]);
       }else if(kind==='call'){
         if(typeof f.child!=='string'||this.frameFunctions.has(f.child))
           fail('invocation','Duplicate child invocation');
@@ -415,14 +426,14 @@ export class SemanticController {
         if(f.action==='create')this.createPromise(f.promise);
         else if(f.action==='resolve'||f.action==='reject')
           this.settlePromise(f.promise,f.action==='resolve'?'fulfilled':'rejected',f.value);
-        else if(f.action==='adopt')
+        else if(f.action==='adopt'){
+          this.promise(f.target);
           this.settlePromise(f.promise,'fulfilled',['ref',f.target]);
+        }
         else {
           this.promise(f.promise);
           if(this.jobs.has(f.job)||this.continuations.has(f.job))fail('job','Duplicate reaction identity');
-          if(f.closure&&this.heap.get(f.closure)?.kind!=='closure')fail('capture','Reaction requires owned closure');
-          if(f.rejectionClosure&&this.heap.get(f.rejectionClosure)?.kind!=='closure')
-            fail('capture','Rejected reaction requires owned closure');
+          for(const identity of [f.closure,f.rejectionClosure])if(identity)this.schedulerClosure(identity);
           if(f.target)this.createPromise(f.target);
           this.jobs.set(f.job,{status:'waiting',owner:this.rootInvocation,promise:f.promise,
             reaction:f.reaction,closure:f.closure??null,rejectionClosure:f.rejectionClosure??null,target:f.target??null,
@@ -441,9 +452,12 @@ export class SemanticController {
           fail('continuation','Duplicate continuation identity');
         this.continuations.set(f.continuation,{state:'waiting',promise:f.promise,
           invocation:this.stack.pop(),sequence:++this.scheduler.registration,
-          activeJob:this.activeJob,captureAliases:[...this.captureAliases]});
+          activeJob:this.activeJob,captureAliases:[...this.captureAliases],
+          ...(this.protocol?{receiver:structuredClone(this.receiver)}:{})});
         if(this.activeJob){
-          this.captureAliases=new Map(this.jobs.get(this.activeJob).priorAliases);
+          const job=this.jobs.get(this.activeJob);
+          this.captureAliases=new Map(job.priorAliases);
+          if(Object.hasOwn(job,'priorReceiver'))this.receiver=structuredClone(job.priorReceiver);
           this.activeJob=null;
         }
         this.refreshReady();
@@ -459,11 +473,12 @@ export class SemanticController {
         this.stack.push(continuation.invocation);
         this.activeJob=continuation.activeJob;
         this.captureAliases=new Map(continuation.captureAliases);
+        if(Object.hasOwn(continuation,'receiver'))this.receiver=structuredClone(continuation.receiver);
       }else if(kind==='job'){
         if(f.action==='enqueue'){
           if(this.jobs.has(f.job)||this.continuations.has(f.job))fail('job','Duplicate scheduled job');
           if(f.owner!==this.rootInvocation)fail('job','Job owner must match its invocation domain');
-          if(f.closure&&this.heap.get(f.closure)?.kind!=='closure')fail('capture','Job requires an owned closure');
+          if(f.closure)this.schedulerClosure(f.closure);
           this.jobs.set(f.job,{status:'queued',owner:f.owner,closure:f.closure??null,
             readySequence:++this.scheduler.ready});
           this.ready.push(f.job);
@@ -484,8 +499,12 @@ export class SemanticController {
             if(job.reaction!=='finally')argument=promise.result;
           }
           if(callback){
-              const closure=this.heap.get(callback);
+              const closure=this.schedulerClosure(callback);
               job.priorAliases=[...this.captureAliases];
+              if(this.protocol){
+                job.priorReceiver=structuredClone(this.receiver);
+                this.receiver=structuredClone(closure.functionKind==='arrow'?closure.lexicalReceiver:['undefined']);
+              }
               this.captureAliases=new Map((closure.captures??[]).map(c=>[c.binding,c.cell]));
               const fn=analyzeSemanticProgram(this.source.source).functions.find(fn=>
                 fn.name===closure.code||'function:'+fn.start===closure.code);
@@ -507,9 +526,14 @@ export class SemanticController {
           const job=this.jobs.get(f.job);
           if(this.stack.length||this.activeJob&&this.activeJob!==f.job)
             fail('job','Cannot complete a running callback frame');
+          if([...this.continuations.values()].some(continuation=>
+            continuation.activeJob===f.job&&continuation.state!=='resumed'))
+            fail('job','Cannot complete a suspended callback frame');
           job.status='completed';
           if(this.activeJob===f.job){
-            this.captureAliases=new Map(job.priorAliases);this.activeJob=null;
+            this.captureAliases=new Map(job.priorAliases);
+            if(Object.hasOwn(job,'priorReceiver'))this.receiver=structuredClone(job.priorReceiver);
+            this.activeJob=null;
           }
           if(job.promise){
             const returned=job.returned;

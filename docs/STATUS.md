@@ -1,8 +1,20 @@
 # Current execution tracing status
 
-**Only model-facing execution representation:** `semantic-execution/6`,
+**Default model-facing execution representation:** `semantic-execution/6`,
 `semantic-trace/6`, `semantic-context/6`, `semantic-continuation/6`,
 `selected-harness/2`.
+
+The explicitly selected [v8 candidate](SEMANTIC_REGIONS_V8.md) adds checked
+compositional regions and bounded protocol source profiles. Its
+[final engineering qualification](../coverage/language-expansion/native-v8-b66c19b-all/README.md)
+at producer `b66c19b` / consumer `6adf99f` passes all 665 expansion, 23
+interoperability and 11 gallery cases, with exact tokens and native packing.
+The [producer regression](../coverage/language-expansion/producer-regression-b66c19b/README.md)
+passes 1,778 tests with six conditional skips; the consumer passes 214 tests
+without skips. The [verified dataset](../coverage/language-expansion/dataset-v8-b66c19b/README.md)
+contains 34 freshly admitted episodes and 898 complete examples. External model
+results, native serving performance and default promotion remain independent,
+unqualified gates; zero optimizer steps were performed for this dataset.
 
 The canonical target is a **source-grounded semantic account**: calculations
 are checked expressions paired with the value computed at that point;
@@ -171,9 +183,10 @@ Local source validation is not the same as native data admission. A
 production training sample must additionally pass complete selected
 record replay, strict observable reference agreement, pinned native
 tokenizer, native action/visibility/loss checks, and family/split
-provenance. Schema changes require coordinated version changes, fresh collection and
-preparation with the separately versioned Megatoken consumer; old artifacts
-are rejected rather than migrated. No model-learning improvement
+provenance. During pre-release development, schema changes update the producer,
+Megatoken consumer, fixtures and examples together in place, with fresh
+qualification at exact revisions. Historical artifacts retain their original
+identity and do not qualify changed code. No model-learning improvement
 is claimed from compactness alone; learned quality must be measured
 with genuine held-out model runs.
 

@@ -1,6 +1,9 @@
 import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } from './values.js';
-import {SHARED_TYPES,SHARED_TYPE_NAMES,newSharedBuffer,newSharedView,newSharedDataView,effectiveDataViewLength,DATA_VIEW_GETTERS,DATA_VIEW_SETTERS,readSharedDataView,writeSharedDataView,growSharedBuffer,effectiveSharedLength,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
+import {WELL_KNOWN_SYMBOLS,wellKnownSymbol,stringPropertyKey,symbolPropertyKey,isSymbolPropertyKey,propertyKeyValue} from './property-keys.js';
+import {SHARED_TYPES,SHARED_TYPE_NAMES,newArrayBuffer,isOwnedBuffer,isOwnedTypedView,isOwnedDataView,newSharedBuffer,newSharedView,newSharedDataView,effectiveDataViewLength,DATA_VIEW_GETTERS,DATA_VIEW_SETTERS,readSharedDataView,writeSharedDataView,growSharedBuffer,effectiveSharedLength,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
+import {BinaryProfileError,BinaryResourceError,binaryIndex,binaryInteger,binaryElement,binaryNumericKey,binaryValidIndex} from './owned-binary-coercion.js';
 import { parse, compile } from './frontend.js';
+import {GENERATOR_INTRINSIC_PROTOTYPES,generatorIntrinsicParent,generatorIntrinsicProperty,generatorInstancePrototype} from './owned-generator-objects.js';
 import { importGraph } from './training/graph.js';
 import { parseTraining, TRAINING_PARSER } from './training/profile.js';
 import { createArithmetic, advanceArithmetic, isOwnedArithmetic, ordinaryGet, ordinaryBuiltin, objectPrototype } from './spec-operations.js';
@@ -9,9 +12,17 @@ import {hostOperation,prepareHostRequest,HOST_METHODS,SUBSCRIPTION_CLOSERS} from
 import {encodeNativeGraph,validateOwnedGraph} from './host/graph-codec.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
 import {supportsPinnedRegExp,testPinnedRegExp,scanPinnedReplacement} from './owned-pinned-regexp.js';
+import {createNumberConversion,advanceNumberConversion} from './owned-number-conversion.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
+function binaryGuest(operation){
+  try{return operation();}catch(error){
+    if(error instanceof BinaryProfileError)throw error;
+    if(['TypeError','RangeError','SyntaxError'].includes(error.name))guestFault(error.name,error.message);
+    throw error;
+  }
+}
 function bindingTdz(binding,name){
   const error=new GuestFault('ReferenceError',`Cannot access '${name}' before initialization`);
   // Parameter initialization additionally binds its fault to the actual
@@ -41,8 +52,14 @@ const opNames = {
   CONST:'literal.materialize', GET:'binding.read',
   DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
-  CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
-  GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
+  CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', GENERATOR_START:'call.return', YIELD:'continuation.yield', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
+  GET_TEMPLATE_OBJECT:'array.allocate', PROPERTY_KEY:'property.read', CLASS_CONSTRUCTOR_GUARD:'call.enter', CLASS_CREATE:'object.construct', CLASS_INITIALIZER:'property.write', CLASS_FINISH:'call.enter', PRIVATE_GET:'property.read', PRIVATE_GET_METHOD:'property.read', PRIVATE_HAS:'primitive.binary', PRIVATE_DEFINE:'property.write', PRIVATE_SET:'property.write', PRIVATE_UPDATE:'property.update',
+  SET_HOME_OBJECT:'function.home', SUPER_REFERENCE:'reference.super', SUPER_GET:'property.read', SUPER_GET_METHOD:'property.read', SUPER_SET:'property.write', SUPER_CONSTRUCTOR:'property.read',
+  DELEGATE_YIELD:'continuation.yield', DELEGATE_RESUME_KIND:'completion.pending.read', DELEGATE_RESUME_VALUE:'completion.pending.read', ITERATOR_THROW_MISSING:'call.enter',
+  INSTANCEOF_DEFAULT:'primitive.binary', INSTANCEOF_RESULT:'primitive.binary',
+  FOR_IN_CREATE:'object.allocate', FOR_IN_NEXT:'property.read', NEW_TARGET:'reference.this',
+  SUPER_CALL:'object.construct', SUPER_FORWARD_CALL:'object.construct', SUPER_BIND:'call.enter',
+  GET_PROP:'property.read', GET_METHOD:'property.read', SPREAD:'property.read', PUT_PROP:'property.write', DEFINE_LITERAL_PROP:'property.write', COPY_KEYS:'array.allocate', HAS_ENUMERABLE_OWN:'property.read', REQUIRE_COERCIBLE:'property.read', REQUIRE_OBJECT:'property.read', ITERATOR_ARRAY_GUARD:'property.read', PENDING_THROW:'completion.pending.read', APPEND_ARRAY:'property.write', TEMPLATE:'template.substitute', ENTER_SCOPE:'environment.enter',
   LEAVE_SCOPE:'environment.leave', CLONE_LOOP_ENV:'environment.iteration', JUMP:'control.jump', JUMP_IF_FALSE:'control.branch', LOGICAL_JUMP:'control.branch',
   TRY_ENTER:'completion.handler.enter', TRY_NORMAL:'completion.handler.normal',
   BIND_CATCH:'completion.catch.bind', END_FINALLY:'completion.finally.end',
@@ -67,9 +84,10 @@ function lookup(draft, envId, name) {
   guestFault('ReferenceError',`${name} is not defined`);
 }
 function valueKey(tagged) {
+  if(tagged[0]==='symbol')return symbolPropertyKey(tagged[1]);
   if (!['str','num','bool','null','undefined','bigint'].includes(tagged[0]))
     throw new TypeError('Property keys requiring guest coercion are unsupported');
-  return String(decode(tagged));
+  return stringPropertyKey(String(decode(tagged)));
 }
 function arrayIndex(key) {
   return /^(0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295;
@@ -91,7 +109,7 @@ function spreadSnapshot(heap,source) {
   }else{
     const obj=value[0]==='ref'?heap[value[1]]:null;
     if(obj?.kind!=='array'||objectPrototype(obj)!=='Array.prototype'||
-       Object.keys(obj.accessors??{}).length)
+       Object.keys(obj.accessors??{}).length||Object.hasOwn(obj.properties,symbolPropertyKey('well-known:iterator')))
       throw new TypeError('Spread requires an ordinary dense array or primitive string');
     const length=decode(obj.properties.length.value);
     if(!Number.isSafeInteger(length)||length<0||length>10000)
@@ -108,10 +126,38 @@ function spreadSnapshot(heap,source) {
   }
   return {values,reads};
 }
+// CreateListFromArrayLike is a read of length followed by indexed [[Get]]s,
+// not iteration. Holes become undefined and inherited data remains visible.
+// Getter, proxy and object-length coercion continuations need their own slice.
+function callArgumentList(heap,value,{nullable=false}={}) {
+  if(nullable&&['undefined','null'].includes(value[0]))return {values:[],reads:[]};
+  if(value[0]!=='ref'){
+    if(['undefined','null','bool','num','str','bigint','symbol'].includes(value[0]))
+      guestFault('TypeError','Apply argument list must be an object');
+    throw new TypeError('Apply argument list requires owned ordinary storage');
+  }
+  if(!['object','array'].includes(heap[value[1]]?.kind))
+    throw new TypeError('Apply argument list requires owned ordinary storage');
+  const length=ordinaryGet(heap,value,'length');
+  if(!length)throw new TypeError('Apply argument length requires an owned data property');
+  const raw=length.method.value;
+  if(['symbol','bigint'].includes(raw[0]))guestFault('TypeError','Apply length cannot convert to a Number');
+  if(!['undefined','null','bool','num','str'].includes(raw[0]))
+    throw new TypeError('Apply argument length coercion requires its owned continuation');
+  const numeric=Number(decode(raw)),size=Number.isNaN(numeric)||numeric<=0?0:Math.floor(numeric);
+  if(!Number.isSafeInteger(size)||size>10000)throw new RangeError('Owned apply argument budget exceeded');
+  const values=[],reads=[length.observation];
+  for(let index=0;index<size;index++){
+    const read=ordinaryGet(heap,value,String(index));
+    if(!read)throw new TypeError('Apply indexed access requires an owned data property');
+    values.push(copy(read.method));reads.push(read.observation);
+  }
+  return {values,reads};
+}
 // ES SameValue/SameValueZero over the owned value codec. Never use JS object
 // equality for guest reference identities; they live in the serializable heap.
 const comparableTags=new Set(['undefined','null','bool','str','num','bigint',
-  'ref','promise','intrinsic','builtinfn','hostfn']);
+  'ref','promise','intrinsic','builtinfn','hostfn','symbol']);
 function ownedSameValue(a,b,zeroEqual=false) {
   if(!comparableTags.has(a?.[0])||!comparableTags.has(b?.[0]))
     throw new TypeError('Unmodeled guest equality value');
@@ -156,7 +202,7 @@ function proxyRoute(heap,receiver,operation) {
       throw new TypeError('Unsupported proxy handler identity');
     const trap=ordinaryGet(heap,['ref',handler.id],operation);
     if(!trap)throw new TypeError('Proxy handler accessor trap unmodeled');
-    if(trap.method.value[0]!=='undefined')
+    if(!['undefined','null'].includes(trap.method.value[0]))
       return {kind:'trap',method:trap.method.value,observation:trap.observation,
         target:['ref',obj.targetId],handler:['ref',handler.id],receiver};
     obj=heap[obj.targetId];
@@ -165,10 +211,111 @@ function proxyRoute(heap,receiver,operation) {
     throw new TypeError('Unmodeled proxy target internal method');
   return {kind:'ordinary',target:['ref',obj.id],receiver};
 }
-function putOwn(obj,key,value,eventId) {
+function ownPropertyKeys(obj){
+  const present=key=>Object.hasOwn(obj.properties??{},key)||Object.hasOwn(obj.accessors??{},key);
+  const known=[...new Set([...(obj.propertyOrder??[]),...Object.keys(obj.properties??{}),...Object.keys(obj.accessors??{})])].filter(present);
+  return [...known.filter(arrayIndex).sort((a,b)=>Number(a)-Number(b)),...known.filter(key=>!arrayIndex(key)&&!isSymbolPropertyKey(key)),...known.filter(isSymbolPropertyKey)];
+}
+function enumerableOwn(obj,key){
+  return Object.hasOwn(obj.accessors??{},key)?obj.accessors[key].enumerable:
+    Object.hasOwn(obj.properties??{},key)&&obj.dataAttributes?.[key]?.enumerable!==false&&!(obj.kind==='array'&&key==='length');
+}
+function enumerationSnapshot(heap,source){
+  const chain=[],keys=[],visited=new Set(),objects=new Set();
+  if(source[0]==='str')return {chain,keys:Array.from({length:source[1].length},(_,i)=>String(i))};
+  if(['undefined','null','bool','num','bigint','symbol'].includes(source[0]))return {chain,keys};
+  if(source[0]!=='ref')throw new TypeError('For-in requires owned ordinary storage');
+  let object=heap[source[1]];
+  while(object){
+    if(!['object','array','function'].includes(object.kind))throw new TypeError('For-in exotic enumeration is outside the ordinary profile');
+    if(objects.has(object.id)||chain.length===128)throw new TypeError('For-in prototype chain exceeds owned budget');objects.add(object.id);
+    const own=ownPropertyKeys(object).filter(key=>!isSymbolPropertyKey(key)).map(key=>[key,!!enumerableOwn(object,key)]);
+    if(object.kind==='function')for(const key of ['name','length','prototype','caller','arguments'])
+      if(!own.some(row=>row[0]===key))own.push([key,false]);
+    const prototype=objectPrototype(object);chain.push({id:object.id,prototype,keys:own});
+    for(const [key,enumerable] of own)if(!visited.has(key)){
+      visited.add(key);if(enumerable)keys.push(propertyKeyValue(key)[1]);
+      if(visited.size>10000)throw new RangeError('For-in key budget exceeded');
+    }
+    if(prototype===null||['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(prototype))break;
+    object=heap[prototype];if(!object)throw new Error('For-in prototype identity missing');
+  }
+  return {chain,keys};
+}
+function functionProperty(heap,object,key){
+  const seen=new Set();
+  while(object){
+    if(!['object','array','function','generator'].includes(object.kind)||seen.has(object.id))throw new TypeError('Unmodeled function prototype chain');
+    seen.add(object.id);
+    if(Object.hasOwn(object.properties??{},key))return {owner:object,slot:object.properties[key],attributes:object.dataAttributes?.[key]};
+    if(Object.hasOwn(object.accessors??{},key))return {owner:object,accessor:object.accessors[key]};
+    const proto=objectPrototype(object);
+    if(GENERATOR_INTRINSIC_PROTOTYPES.includes(proto)){
+      const found=generatorIntrinsicProperty(proto,key);return {slot:token(found.value),attributes:found.attributes};
+    }
+    if(proto==='Function.prototype'){
+      if(key===symbolPropertyKey('well-known:hasInstance'))
+        return {slot:token(['builtinfn','Function.prototype.hasInstance']),attributes:{writable:false}};
+      if(['call','apply'].includes(key))return {slot:token(['builtinfn','Function.prototype.'+key]),
+        attributes:{writable:true,enumerable:false,configurable:true}};
+      return {};
+    }
+    if(proto===null||['Object.prototype','Array.prototype'].includes(proto))return {};
+    object=heap[proto];if(!object)throw new Error('Function prototype identity missing');
+  }
+  return {};
+}
+// Ordinary [[Set]] reports failure; the source reference's strictness decides
+// whether PutValue throws. Internal builtin writes keep putOwn's throwing
+// contract, so Object.assign and array methods cannot silently ignore errors.
+function ordinaryDataWriteFailure(heap,object,key,attributes){
+  if(attributes?.writable===false){
+    const property=propertyKeyValue(key),description=property[0]==='symbol'?
+      (property[1].startsWith('well-known:')?['str','Symbol.'+property[1].slice(11)]:heap[property[1]]?.description):null,
+      name=property[0]==='str'?property[1]:'Symbol('+(description?.[0]==='str'?description[1]:'')+')',
+      receiver=object.kind==='array'?'[object Array]':objectPrototype(object)===null?'[object Object]':'#<Object>';
+    return `Cannot assign to read only property '${name}' of object '${receiver}'`;
+  }
+  if(object.extensible===false&&!Object.hasOwn(object.properties,key)&&!Object.hasOwn(object.accessors??{},key))
+    return 'Cannot add property to non-extensible object';
+  return null;
+}
+function superProperty(heap,base,key){
+  let current=base[0]==='ref'?base[1]:base[0]==='intrinsic'?base[1]:null;
+  if(current===null)guestFault('TypeError','Super base is null');
+  const seen=new Set();
+  while(!['Object.prototype','Array.prototype','Function.prototype'].includes(current)){
+    const object=heap[current];
+    if(!object||!['object','array','function'].includes(object.kind)||seen.has(current))
+      throw new TypeError('Super property requires an owned ordinary prototype chain');
+    seen.add(current);
+    if(Object.hasOwn(object.properties??{},key))return {owner:object,slot:object.properties[key],attributes:object.dataAttributes?.[key]};
+    if(Object.hasOwn(object.accessors??{},key))return {owner:object,accessor:object.accessors[key]};
+    current=objectPrototype(object);if(current===null)return {};
+  }
+  if(current==='Function.prototype'){
+    if(key===symbolPropertyKey('well-known:hasInstance'))return {slot:token(['builtinfn','Function.prototype.hasInstance']),attributes:{writable:false}};
+    if(['call','apply','bind','caller','arguments','constructor'].includes(key))throw new TypeError('Super Function intrinsic property is outside profile');
+    if(key==='length'||key==='name')return {slot:token(key==='length'?['num',0]:['str','']),attributes:{writable:false}};
+  }
+  if(current==='Array.prototype'){
+    if(key==='length')return {slot:token(['num',0])};
+    if(key===symbolPropertyKey('well-known:iterator'))return {slot:token(['builtinfn','Array.prototype.values'])};
+    if(['push','pop','includes','indexOf','lastIndexOf','slice','concat','join','splice','unshift','shift','at','filter','map','reduce','sort','some','every','find','findIndex','forEach','reverse','fill','copyWithin','toReversed','with','values','keys','entries'].includes(key))return {slot:token(['builtinfn','Array.prototype.'+key])};
+    if(key==='toString')return {slot:token(['builtinfn','Array.toString'])};
+    if(key in Array.prototype&&key!=='valueOf')throw new TypeError('Super Array intrinsic property is outside profile');
+  }
+  if(key==='toString'||key==='valueOf')return {slot:token(['builtinfn',key==='toString'?'Object.toString':'Object.valueOf'])};
+  if(key in Object.prototype)throw new TypeError('Super Object intrinsic property is outside profile');
+  return {};
+}
+function putOwn(obj,key,value,eventId,{literal=false}={}) {
+  if(!literal&&obj.dataAttributes?.[key]?.writable===false)guestFault('TypeError','Cannot assign to read only property');
+  if(obj.extensible===false&&!Object.hasOwn(obj.properties,key)&&!Object.hasOwn(obj.accessors??{},key))
+    guestFault('TypeError','Cannot add property to non-extensible object');
   if(obj.declaredError)
     throw new TypeError('Declared error mutation is outside the bounded error profile');
-  if (key === '__proto__') throw new TypeError('Prototype mutation is not implemented by the bounded profile');
+  if (key === '__proto__'&&!literal) throw new TypeError('Prototype mutation is not implemented by the bounded profile');
   if (obj.kind === 'array' && key === 'length') {
     if (value[0] !== 'num') throw new TypeError('Array length coercion is outside the profile');
     const length = decode(value);
@@ -186,6 +333,8 @@ function putOwn(obj,key,value,eventId) {
     return;
   }
   const existed = Object.hasOwn(obj.properties,key);
+  if(!existed&&!Object.hasOwn(obj.accessors??{},key))
+    (obj.propertyOrder??=Object.keys(obj.properties).concat(Object.keys(obj.accessors??{}))).push(key);
   Object.defineProperty(obj.properties,key,{value:token(value,eventId),enumerable:true,configurable:true,writable:true});
   obj.propertyVersions[key] = (Object.hasOwn(obj.propertyVersions,key) ? obj.propertyVersions[key] : 0) + 1;
   if (!existed) obj.shapeVersion++;
@@ -240,8 +389,148 @@ export class Runtime {
   }
   next(draft,kind) {const ids=draft.counters.ids;return `${kind==='operation'?'op':kind[0]}${++ids[kind]}`;}
   newEnv(draft,parent=null) {const id=this.next(draft,'env');draft.envs[id]={id,parent,bindings:{},version:0};return id;}
+  newSymbol(draft,description,eventId,registeredKey=undefined){
+    const id=this.next(draft,'obj');
+    draft.heap[id]={id,kind:'symbol',description:copy(description),
+      ...(registeredKey===undefined?{}:{registeredKey}),properties:{},propertyVersions:{},shapeVersion:0,version:0};
+    return ['symbol',id];
+  }
+  symbolDescription(draft,value){
+    if(value[1].startsWith('well-known:')){
+      const name=value[1].slice('well-known:'.length);
+      if(!WELL_KNOWN_SYMBOLS.includes(name))throw new TypeError('Unknown well-known symbol');
+      return ['str','Symbol.'+name];
+    }
+    const entity=draft.heap[value[1]];
+    if(entity?.kind!=='symbol')throw new TypeError('Unknown owned symbol');
+    return entity.description;
+  }
+  functionProperties(draft,fn,eventId,{prototype=false}={}){
+    fn.properties??={};fn.propertyVersions??={};fn.shapeVersion??=0;
+    if(!prototype)return;
+    if(fn.arrow||fn.async)return;
+    if(this.programs[fn.codeId].generator){
+      if(!fn.generatorFunction)throw new Error('Generator function metadata missing');
+      return;
+    }
+    if(fn.nonConstructible)return;
+    if(fn.prototypeInitialized)return;
+    fn.prototypeInitialized=true;
+    if(Object.hasOwn(fn.properties,'prototype'))return;
+    const id=this.next(draft,'obj');
+    draft.heap[id]={id,kind:'object',properties:{constructor:token(['ref',fn.id],eventId)},
+      propertyVersions:{constructor:1},dataAttributes:{constructor:{enumerable:false,writable:true,configurable:true}},
+      propertyOrder:['constructor'],shapeVersion:1,version:0};
+    putOwn(fn,'prototype',['ref',id],eventId);
+    fn.dataAttributes??={};fn.dataAttributes.prototype={enumerable:false,writable:true,configurable:false};
+  }
+  generatorFunctionProperties(draft,fn,name,eventId){
+    if(!this.programs[fn.codeId].generator)return;
+    if(fn.generatorFunction)throw new Error('Generator function metadata initialized twice');
+    fn.generatorFunction=true;fn.nonConstructible=true;fn.prototype='GeneratorFunction.prototype';
+    this.functionProperties(draft,fn,eventId);
+    if(name[0]==='symbol'){
+      const description=this.symbolDescription(draft,name);name=['str',description[0]==='undefined'?'':'['+description[1]+']'];
+    }else if(['str','num','bool','null','undefined','bigint'].includes(name[0]))name=['str',String(decode(name))];
+    else throw new TypeError('Generator inferred name requires an owned property key');
+    for(const [key,value] of [['length',['num',this.programs[fn.codeId].functionLength??this.programs[fn.codeId].params.length]],['name',name]]){
+      putOwn(fn,key,value,eventId);(fn.dataAttributes??={})[key]={writable:false,enumerable:false,configurable:true};
+    }
+    const id=this.next(draft,'obj');
+    draft.heap[id]={id,kind:'object',prototype:'Generator.prototype',properties:{},propertyVersions:{},shapeVersion:0,version:0};
+    putOwn(fn,'prototype',['ref',id],eventId);
+    fn.dataAttributes.prototype={writable:true,enumerable:false,configurable:false};
+  }
+  classFunctionProperties(draft,fn,name,eventId,prefix=null){
+    this.functionProperties(draft,fn,eventId);
+    if(name[0]==='symbol'){
+      const description=this.symbolDescription(draft,name);name=['str',description[0]==='undefined'?'':'['+description[1]+']'];
+    }else name=['str',String(decode(name))];
+    if(prefix!==null)name=['str',prefix+' '+name[1]];
+    for(const [key,value] of [['length',['num',this.programs[fn.codeId].functionLength??this.programs[fn.codeId].params.length]],['name',name]]){
+      if(Object.hasOwn(fn.properties,key)&&!fn.generatorFunction)throw new Error('Class function metadata initialized twice');
+      if(fn.generatorFunction&&key==='length')continue;
+      putOwn(fn,key,value,eventId,{literal:fn.generatorFunction===true});(fn.dataAttributes??={})[key]={writable:false,enumerable:false,configurable:true};
+    }
+  }
+  ordinaryHasInstance(draft,constructor,candidate,eventId){
+    const target=constructor[0]==='ref'?draft.heap[constructor[1]]:null;
+    const intrinsic=constructor[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(constructor[1]);
+    if(target?.kind!=='function'&&!intrinsic&&constructor[0]!=='builtinfn')return false;
+    if(!['ref','promise','intrinsic','builtinfn','hostfn'].includes(candidate[0]))return false;
+    let sought;
+    if(target?.kind==='function'){
+      this.functionProperties(draft,target,eventId,{prototype:true});
+      const prototype=target.properties.prototype?.value??U;
+      if(prototype[0]==='ref')sought=prototype[1];
+      else if(prototype[0]==='intrinsic'&&['Object.prototype','Array.prototype','Function.prototype'].includes(prototype[1]))sought=prototype[1];
+      else if(['promise','builtinfn','hostfn','intrinsic'].includes(prototype[0]))throw new TypeError('Exotic constructor prototype outside ordinary instanceof profile');
+      else guestFault('TypeError','Function has non-object prototype in instanceof check');
+    }else if(intrinsic&&['Object','Array'].includes(constructor[1]))sought=constructor[1]+'.prototype';
+    else if(constructor[0]==='builtinfn')guestFault('TypeError','Function has non-object prototype in instanceof check');
+    else throw new TypeError('Intrinsic instanceof requires its owned prototype profile');
+    let current=candidate,seen=new Set();
+    while(true){
+      let prototype;
+      if(current[0]==='ref'){
+        const object=draft.heap[current[1]];
+        if(!object)throw new Error('Unknown instanceof identity');
+        if(object.kind==='proxy')throw new TypeError('Proxy GetPrototypeOf requires an owned instanceof continuation');
+        if(seen.has(object.id))throw new Error('Cyclic instanceof prototype');seen.add(object.id);
+        prototype=objectPrototype(object);
+      }else if(current[0]==='intrinsic'&&GENERATOR_INTRINSIC_PROTOTYPES.includes(current[1]))prototype=generatorIntrinsicParent(current[1]);
+      else if(current[0]==='intrinsic'&&current[1]==='Object.prototype')prototype=null;
+      else prototype='Object.prototype';
+      if(prototype===null)return false;
+      if(prototype===sought)return true;
+      current=['intrinsic',prototype];
+      if(!['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(prototype))current=['ref',prototype];
+      else if(prototype==='Object.prototype')return false;
+    }
+  }
+  beginConstruction(draft,constructor,args,callerFrameId,eventId,newTarget=constructor){
+    const target=constructor[0]==='ref'?draft.heap[constructor[1]]:null;
+    if(target?.kind!=='function'||target.arrow||target.async||this.programs[target.codeId].generator||target.nonConstructible)
+      guestFault('TypeError','Function is not a constructor');
+    if(target.derivedConstructor){
+      const id=this.newFrame(draft,target.codeId,target.closureEnvId,callerFrameId,null,args,U,target.id),frame=draft.frames[id];
+      frame.constructKind='derived';frame.constructorId=target.id;frame.thisInitialized=false;
+      frame.newTarget=newTarget;frame.constructorArguments=copy(args);return id;
+    }
+    const newTargetFunction=newTarget[0]==='ref'?draft.heap[newTarget[1]]:null;
+    if(newTargetFunction?.kind!=='function')throw new TypeError('Owned construction needs an ordinary newTarget');
+    this.functionProperties(draft,newTargetFunction,eventId,{prototype:true});
+    const supplied=newTargetFunction.properties.prototype?.value??U,prototype=supplied[0]==='ref'?draft.heap[supplied[1]]:null;
+    if(prototype&&!['object','array'].includes(prototype.kind))throw new TypeError('Constructor prototype outside owned ordinary object profile');
+    const intrinsicPrototype=supplied[0]==='intrinsic'&&['Object.prototype','Array.prototype','Function.prototype'].includes(supplied[1])?supplied[1]:null;
+    const receiver=this.next(draft,'obj');draft.heap[receiver]={id:receiver,kind:'object',
+      prototype:prototype?.id??intrinsicPrototype??'Object.prototype',properties:{},propertyVersions:{},shapeVersion:0,version:0};
+    if(target.instanceInitializer){
+      const initializer=draft.heap[target.instanceInitializer[1]],id=this.newFrame(draft,initializer.codeId,initializer.closureEnvId,callerFrameId,null,[],['ref',receiver],initializer.id);
+      draft.frames[id].afterInstanceInitialization={constructorId:target.id,args,receiver:['ref',receiver],newTarget};return id;
+    }
+    const id=this.newFrame(draft,target.codeId,target.closureEnvId,callerFrameId,null,args,['ref',receiver],target.id);
+    draft.frames[id].constructReceiver=['ref',receiver];draft.frames[id].newTarget=newTarget;
+    draft.frames[id].constructorId=target.id;draft.frames[id].constructKind='base';draft.frames[id].thisInitialized=true;return id;
+  }
   newPromise(draft,status='pending',value=null) {const id=this.next(draft,'promise');draft.promises[id]={id,status,value,observers:[],adopters:[],adopting:null,resolverCalled:false,thenableSerial:0,thenableLocked:false,thenableSeen:[],version:0};return id;}
-  newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U) {
+  functionThis(fn,receiver=U){
+    return !fn.arrow?receiver:fn.lexicalThisFrameId?['thisbinding',fn.lexicalThisFrameId]:fn.lexicalThis;
+  }
+  setHomeObject(draft,fn,home,eventId){
+    if(fn.kind!=='function'||fn.arrow||home[0]!=='ref'||!['object','array','function'].includes(draft.heap[home[1]]?.kind))
+      throw new Error('Invalid owned method home object');
+    if(fn.homeObject)throw new Error('Method home object initialized twice');
+    fn.homeObject=home;
+    fn.closureEnvId=this.newEnv(draft,fn.closureEnvId);
+    draft.envs[fn.closureEnvId].bindings['[[home object]]']={kind:'const',initialized:true,token:token(home,eventId),version:0};
+  }
+  newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U,functionId=null) {
+    const thisBindingFrameId=thisValue[0]==='thisbinding'?thisValue[1]:null;
+    if(thisBindingFrameId){
+      if(!draft.frames[thisBindingFrameId])throw new Error('Lexical receiver frame is missing');
+      thisValue=draft.frames[thisBindingFrameId].thisValue;
+    }
     const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
     const restIndex=this.programs[codeId].restIndex??-1;
@@ -260,11 +549,22 @@ export class Runtime {
       draft.envs[envId].bindings[name]={kind:'parameter',
         initialized:!this.programs[codeId].parameterExpressions,token:binding,version:0};
     });
+    for(const name of this.programs[codeId].patternNames??[])
+      draft.envs[envId].bindings[name]={kind:'parameter',initialized:false,token:token(U),version:0};
     for(const name of this.programs[codeId].parameterExpressions?[]:(this.programs[codeId].varNames??[]))
       if(!Object.hasOwn(draft.envs[envId].bindings,name))
         draft.envs[envId].bindings[name]={kind:'var',initialized:true,
           token:token(U),version:0};
     draft.frames[id]={id,codeId,pc:0,stack:[],envId,callerFrameId,asyncPromiseId,status:'running',blockedOn:null,awaiting:null,operationId:null,pendingCoercionThrow:null,handlers:[],loops:[],thisValue,version:0};
+    if(thisBindingFrameId)draft.frames[id].thisBindingFrameId=thisBindingFrameId;
+    if(this.programs[codeId].generator){
+      const generatorId=this.next(draft,'obj');
+      const target=draft.heap[functionId];
+      if(target?.codeId!==codeId||target.closureEnvId!==parentEnv)throw new Error('Generator frame lost its callee identity');
+      draft.heap[generatorId]={id:generatorId,kind:'generator',frameId:id,functionId,prototype:generatorInstancePrototype(draft.heap,target),state:'initializing',
+        properties:{},propertyVersions:{},shapeVersion:0,version:0};
+      draft.frames[id].generatorId=generatorId;
+    }
     return id;
   }
   start(source) {
@@ -277,7 +577,7 @@ export class Runtime {
     for(const name of ['queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','BigInt','String','Math','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','ArrayBuffer','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
@@ -305,6 +605,7 @@ export class Runtime {
       throw new SyntaxError('Duplicate function declaration');
     const selected=definitions.find(x=>x.arg.name===functionName);
     if(!selected)throw new ReferenceError('Unknown entry function');
+    if(this.programs[selected.arg.codeId].generator)throw new SyntaxError('Generator entry requires an ordinary consumer wrapper');
     const state=this.state, global=this.newEnv(state);
     state.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
     state.envs[global].bindings.NaN={kind:'const',initialized:true,token:token(['num','NaN']),version:0};
@@ -321,7 +622,7 @@ export class Runtime {
     for(const name of ['parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','BigInt','String','Math','Promise','Set','Error','TypeError','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Error','TypeError','ArrayBuffer','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
@@ -358,6 +659,7 @@ export class Runtime {
       const id=this.next(state,'obj');
       state.heap[id]={id,kind:'function',codeId:def.arg.codeId,
         closureEnvId:global,async:!!def.arg.async,version:0};
+      this.generatorFunctionProperties(state,state.heap[id],['str',def.arg.name],null);
       state.envs[global].bindings[def.arg.name]={kind:'function',initialized:true,token:token(['ref',id]),version:0};
     }
     const imported=importGraph(state,args,kind=>this.next(state,kind));
@@ -386,13 +688,71 @@ export class Runtime {
     this.events.push(event);return event;
   }
   stackPush(frame,value,origin){frame.stack.push(token(value,origin));}
+  advanceNumberConversion(draft,frame,eventId){
+    const outcome=advanceNumberConversion(frame.pendingNumberConversion,{heap:draft.heap,
+      invoke:(method,receiver,args)=>{
+        const fn=draft.heap[method[1]];
+        if(fn.async||this.programs[fn.codeId].generator)
+          throw new TypeError('Async/generator Number conversion callback requires its owned profile');
+        const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,frame.id,null,
+          args.map(value=>token(value,eventId)),this.functionThis(fn,receiver),fn.id);
+        draft.control.a0.activeFrameId=child;return child;
+      }});
+    if(outcome.fault){delete frame.pendingNumberConversion;guestFault(outcome.fault.name,outcome.fault.message);}
+    if(outcome.done){delete frame.pendingNumberConversion;this.stackPush(frame,outcome.value,eventId);}
+    return {reads:outcome.reads,...(outcome.done?{result:outcome.value}:{causes:[{kind:'invocation',frameId:outcome.child}]})};
+  }
   completeFrame(draft,frame,value,origin) {
     frame.status='completed';
     frame.completion={type:'return',value:token(value,origin)};
+    if(frame.afterInstanceInitialization){
+      const pending=frame.afterInstanceInitialization,target=draft.heap[pending.constructorId];
+      const id=this.newFrame(draft,target.codeId,target.closureEnvId,frame.callerFrameId,null,pending.args,pending.receiver,target.id);
+      draft.frames[id].constructReceiver=pending.receiver;draft.frames[id].newTarget=pending.newTarget;
+      draft.frames[id].constructorId=pending.constructorId;draft.frames[id].constructKind='base';draft.frames[id].thisInitialized=true;
+      draft.control.a0.activeFrameId=id;return;
+    }
+    if(frame.classStaticResult)value=frame.classStaticResult;
+    if(frame.superInitializedResult)value=frame.superInitializedResult;
+    if(frame.constructKind==='derived'&&!['ref','promise','intrinsic','builtinfn','hostfn'].includes(value[0])){
+      if(value[0]!=='undefined')guestFault('TypeError','Derived constructor may only return an object or undefined');
+      if(!frame.thisInitialized)guestFault('ReferenceError','Derived constructor returned before super initialized this');
+      value=frame.thisValue;
+    }
+    if(frame.constructReceiver&&!['ref','promise','intrinsic','builtinfn','hostfn'].includes(value[0]))value=frame.constructReceiver;
+    if(frame.generatorId){
+      draft.heap[frame.generatorId].state='completed';
+      value=this.iteratorResult(draft,value,true,origin);
+    }
+    this.deliverFrameValue(draft,frame,value,origin);
+  }
+  iteratorResult(draft,value,done,origin){
+    const id=this.next(draft,'obj');
+    draft.heap[id]={id,kind:'object',properties:{value:token(value,origin),done:token(['bool',done],origin)},
+      propertyVersions:{value:1,done:1},shapeVersion:2,version:0};
+    return ['ref',id];
+  }
+  suspendGenerator(draft,frame,value,origin,initial=false,direct=false){
+    const generator=draft.heap[frame.generatorId];
+    if(generator?.kind!=='generator')throw new Error('Yield outside owned generator frame');
+    generator.state=initial?'suspendedStart':'suspendedYield';
+    frame.status='suspended-generator';
+    const output=initial?['ref',generator.id]:direct?value:this.iteratorResult(draft,value,false,origin);
+    frame.completion={type:'return',value:token(output,origin)};
+    this.deliverFrameValue(draft,frame,output,origin);frame.callerFrameId=null;
+    return output;
+  }
+  deliverFrameValue(draft,frame,value,origin){
     if(frame.asyncPromiseId){this.resolvePromise(draft,frame.asyncPromiseId,value,origin);value=['promise',frame.asyncPromiseId];}
     if(frame.reactionPromiseId)this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
     if(frame.callerFrameId){
       const caller=draft.frames[frame.callerFrameId];
+      if(caller.pendingNumberConversion?.waitingFrameId===frame.id){
+        const pending=caller.pendingNumberConversion;
+        if(pending.phase!=='waiting')throw new Error('Number conversion callback returned twice');
+        pending.phase='returned';pending.result=copy(value);
+        draft.control.a0.activeFrameId=caller.id;return;
+      }
       if(caller.pendingPromiseExecutor?.waitingFrameId===frame.id){
         const pending=caller.pendingPromiseExecutor;delete caller.pendingPromiseExecutor;
         this.stackPush(caller,['promise',pending.promiseId],origin);
@@ -427,15 +787,19 @@ export class Runtime {
           putOwn(out,String(decode(out.properties.length.value)),
             pending.currentValue,origin);
         else if(pending.method==='reduce')pending.accumulator=value;
-        const someMatched=pending.method==='some'&&truthy(value);
+        const matched=truthy(value),currentIndex=pending.index;
+        const stop=(['some','find','findIndex'].includes(pending.method)&&matched)||
+          pending.method==='every'&&!matched;
         pending.index++;
         pending.waitingFrameId=null;
-        if(!someMatched&&pending.index<pending.length){
+        if(!stop&&pending.index<pending.length){
           draft.control.a0.activeFrameId=caller.id;
           return;
         }
         value=pending.method==='reduce'?pending.accumulator:
-          pending.method==='forEach'?U:pending.method==='some'?['bool',someMatched]:['ref',pending.outputId];
+          pending.method==='forEach'?U:pending.method==='some'?['bool',stop]:
+          pending.method==='every'?['bool',!stop]:pending.method==='find'?(stop?pending.currentValue:U):
+          pending.method==='findIndex'?['num',stop?currentIndex:-1]:['ref',pending.outputId];
         delete caller.pendingArrayMethod;
         }
       }
@@ -459,6 +823,30 @@ export class Runtime {
       const pending=caller.pendingProperty;
       if(pending?.waitingFrameId===frame.id){
         caller.pendingProperty=null;
+        if(pending.proxy){
+          // Proxy invariants inspect the target after the trap has returned:
+          // the callback may have changed its descriptor in the meantime.
+          // The trap frame still completed normally; any invariant failure
+          // belongs to the waiting property access in its caller.
+          const target=draft.heap[pending.proxy.target[1]],key=pending.proxy.key,
+            data=target.properties[key],attributes=target.dataAttributes?.[key],
+            accessor=target.accessors?.[key];
+          let message=null;
+          if(pending.kind==='set'&&!truthy(value)){
+            if(pending.proxy.strict)message="'set' on proxy: trap returned falsish for property '"+key+"'";
+          }else if(data&&attributes?.configurable===false&&attributes.writable===false&&
+              !ownedSameValue(data.value,pending.kind==='get'?value:pending.value))
+            message='Proxy '+pending.kind+' trap contradicted a non-configurable, non-writable target property';
+          else if(accessor?.configurable===false&&accessor[pending.kind].value[0]==='undefined'&&
+              (pending.kind==='set'||value[0]!=='undefined'))
+            message='Proxy '+pending.kind+' trap contradicted a non-configurable target accessor';
+          if(message){
+            const completion={type:'throw',errorType:'TypeError',message,origin};
+            completion.value=this.caughtError(draft,completion,origin);
+            draft.control.a0.activeFrameId=caller.id;
+            this.routeCompletion(draft,caller,completion,origin);return;
+          }
+        }
         if(pending.kind==='get'&&pending.method)value=['method',value,pending.receiver];
         if(pending.kind==='set')value=pending.value;
       }
@@ -517,7 +905,7 @@ export class Runtime {
     if(match.group!==null)params.push(token(['str',match.group]));
     params.push(token(['num',match.start]),token(['str',p.text]));
     const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,
-      params,fn.arrow?fn.lexicalThis:U);
+      params,this.functionThis(fn),fn.id);
     p.waitingFrameId=child;
     draft.control.a0.activeFrameId=child;
     return child;
@@ -535,22 +923,25 @@ export class Runtime {
         throw new TypeError('Sort comparator mutated target array');
       const fn=draft.heap[p.callbackId];
       const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,
-        p.pair.map(v=>token(v)),fn.arrow?fn.lexicalThis:U);
+        p.pair.map(v=>token(v)),this.functionThis(fn),fn.id);
       p.waitingFrameId=child;
       draft.control.a0.activeFrameId=child;
       return true;
     }
     for(;p.index<p.length;p.index++){
+      if(![null,'Array.prototype','Object.prototype'].includes(objectPrototype(array)))
+        throw new TypeError('Array callback inherited index semantics outside profile');
       const index=String(p.index),slot=array.properties[index];
-      if(!slot||Object.hasOwn(array.accessors??{},index))
-        throw new TypeError('Array callback needs owned data slots');
-      const value=slot.value;
+      if(Object.hasOwn(array.accessors??{},index))
+        throw new TypeError('Array callback accessor continuation outside profile');
+      if(!slot&&!['find','findIndex'].includes(p.method))continue;
+      const value=slot?.value??U;
       const fn=draft.heap[p.callbackId];
       const params=p.method==='reduce'?
         [token(p.accumulator),token(value),token(['num',p.index]),token(['ref',p.arrayId])]:
         [token(value),token(['num',p.index]),token(['ref',p.arrayId])];
       const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,params,
-        fn.arrow?fn.lexicalThis:U);
+        this.functionThis(fn,p.thisArg??U),fn.id);
       p.currentValue=value;
       p.waitingFrameId=child;
       draft.control.a0.activeFrameId=child;
@@ -703,6 +1094,7 @@ export class Runtime {
       this.completeFrame(draft,frame,completion.value.value,completion.value.origin);
     }else if(completion.type==='throw'){
       frame.status='thrown';frame.completion=copy(completion);
+      if(frame.generatorId)draft.heap[frame.generatorId].state='completed';
       if(frame.thenableJob&&!frame.asyncPromiseId){
          const p=draft.promises[frame.thenableJob.promiseId];
          if(p?.status==='pending'&&!p.thenableLocked){
@@ -735,12 +1127,16 @@ export class Runtime {
            const p=draft.promises[pending.promiseId];
            if(p.status==='pending'&&!p.resolverCalled){
              const reason=this.caughtError(draft,completion,eventId);
+             // Promise construction rejects through the same resolving pair,
+             // consuming its shared first-call cell before publishing rejection.
+             p.resolverCalled=true;
              this.rejectPromise(draft,p.id,reason.value,reason.origin);
            }
            this.stackPush(caller,['promise',p.id],eventId);
            draft.control.a0.activeFrameId=caller.id;return;
          }
          if(caller.pendingProperty?.waitingFrameId===frame.id)caller.pendingProperty=null;
+         if(caller.pendingNumberConversion?.waitingFrameId===frame.id)delete caller.pendingNumberConversion;
          if(caller.pendingArrayMethod?.waitingFrameId===frame.id)delete caller.pendingArrayMethod;
         draft.control.a0.activeFrameId=caller.id;
         const waiting=caller.operationId&&draft.operations[caller.operationId]?.coercion?.waitingFrameId;
@@ -757,15 +1153,15 @@ export class Runtime {
       const current=s.operations[operation.id],f=s.frames[frame.id];
       const detail=advanceArithmetic(current,eventId,{
         heap:s.heap,
-        invoke:(method,receiver)=>{
+        invoke:(method,receiver,args=[])=>{
           const target=s.heap[method[1]];
           const promiseId=target.async?this.newPromise(s):null;
-          const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,[],receiver);
+          const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,this.functionThis(target,receiver),target.id);
           s.control.a0.activeFrameId=id;
           return id;
         },
         takeReturn:waitingId=>{
-          if(s.frames[waitingId]?.status!=='completed'||!f.stack.length)
+          if(!['completed','suspended-generator'].includes(s.frames[waitingId]?.status)||!f.stack.length)
             throw new Error('Missing owned conversion call result');
           return f.stack.pop();
         },
@@ -787,6 +1183,19 @@ export class Runtime {
     const c=this.state.control.a0,frame=c.activeFrameId&&this.state.frames[c.activeFrameId];
     if(!frame||frame.status!=='running')return null;
     if(frame.operationId)return this.stepArithmetic(frame);
+    if(frame.pendingNumberConversion?.phase==='returned'){
+      const siteId=frame.pendingNumberConversion.siteId;
+      return this.commit('intrinsic.number.resume',(s,eventId)=>{
+        const parent=s.frames[frame.id];
+        try{return this.advanceNumberConversion(s,parent,eventId);}
+        catch(error){
+          if(!(error instanceof GuestFault))throw error;
+          const completion={type:'throw',errorType:error.name,message:error.message,origin:eventId};
+          completion.value=this.caughtError(s,completion,eventId);this.routeCompletion(s,parent,completion,eventId);
+          return {completion};
+        }
+      },{siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
+    }
     if(frame.pendingStringReplace?.waitingFrameId===null){
       const siteId=frame.pendingStringReplace.siteId;
       return this.commit('call.enter',(s)=>{
@@ -799,8 +1208,13 @@ export class Runtime {
       const siteId=frame.pendingArrayMethod.siteId;
       return this.commit('call.enter',(s,eventId)=>{
         const parent=s.frames[frame.id];
-        if(!this.advanceArrayCallback(s,parent,eventId))
-          throw new Error('Missing next owned array callback');
+        if(!this.advanceArrayCallback(s,parent,eventId)){
+          const p=parent.pendingArrayMethod;
+          const value=p.method==='reduce'?p.accumulator:p.method==='forEach'||p.method==='find'?U:
+            p.method==='findIndex'?['num',-1]:p.method==='some'?['bool',false]:
+            p.method==='every'?['bool',true]:['ref',p.outputId];
+          delete parent.pendingArrayMethod;this.stackPush(parent,value,eventId);return {result:value};
+        }
         return {causes:[{kind:'invocation',frameId:parent.pendingArrayMethod.waitingFrameId}]};
       },{siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
     }
@@ -814,10 +1228,71 @@ export class Runtime {
       const operands=(...t)=>({operands:t.map(x=>x.value),origins:t.map(x=>x.origin)});
       try { switch(op){
         case 'CONST':return result(arg.value);
-        case 'THIS':
-          if(f.thisValue[0]==='undefined')
+        case 'FOR_IN_CREATE':{
+          const source=pop(),snapshot=enumerationSnapshot(s.heap,source.value),id=this.next(s,'obj');
+          s.heap[id]={id,kind:'enumerator',source:source.value,...snapshot,nextIndex:0,done:false,
+            properties:{},propertyVersions:{},shapeVersion:0,version:0};
+          return {...operands(source),...result(['ref',id])};
+        }
+        case 'FOR_IN_NEXT':{
+          const value=pop(),cursor=value.value[0]==='ref'?s.heap[value.value[1]]:null;
+          if(cursor?.kind!=='enumerator')throw new Error('For-in cursor identity missing');
+          if(!equal(enumerationSnapshot(s.heap,cursor.source).chain,cursor.chain))
+            throw new TypeError('For-in key descriptor or prototype mutation outside the stable enumeration profile');
+          const key=cursor.keys[cursor.nextIndex];
+          cursor.done=cursor.nextIndex>=cursor.keys.length;if(!cursor.done)cursor.nextIndex++;
+          return {...operands(value),...result(this.iteratorResult(s,cursor.done?U:['str',key],cursor.done,eventId))};
+        }
+        case 'INSTANCEOF_RESULT':{const value=pop();return {...operands(value),...result(['bool',truthy(value.value)])};}
+        case 'INSTANCEOF_DEFAULT':{
+          const constructor=pop(),value=pop(),target=constructor.value[0]==='ref'?s.heap[constructor.value[1]]:null;
+          if(target?.kind!=='function'&&!['builtinfn','hostfn'].includes(constructor.value[0])&&
+             !(constructor.value[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(constructor.value[1])))
+            guestFault('TypeError','Right-hand side of instanceof is not callable');
+          return {...operands(value,constructor),...result(['bool',this.ordinaryHasInstance(s,constructor.value,value.value,eventId)])};
+        }
+        case 'GET_TEMPLATE_OBJECT':{
+          const known=s.control.a0.templateObjects?.[inst.siteId];
+          if(known)return result(['ref',known]);
+          const make=(values,raw=false)=>{
+            const id=this.next(s,'obj'),object=s.heap[id]={id,kind:'array',properties:{length:token(['num',values.length],eventId)},
+              propertyVersions:{length:1},dataAttributes:{length:{enumerable:false,writable:false,configurable:false}},shapeVersion:1,version:0};
+            values.forEach((value,index)=>{
+              putOwn(object,String(index),value,eventId);
+              object.dataAttributes[index]={enumerable:true,writable:false,configurable:false};
+            });
+            if(raw)object.extensible=false;
+            return object;
+          };
+          const raw=make(arg.raw.map(text=>['str',text]),true),cooked=make(arg.cooked);
+          putOwn(cooked,'raw',['ref',raw.id],eventId);cooked.dataAttributes.raw={enumerable:false,writable:false,configurable:false};
+          cooked.extensible=false;cooked.templateSite=inst.siteId;raw.templateRawOf=inst.siteId;
+          (s.control.a0.templateObjects??={})[inst.siteId]=cooked.id;
+          return result(['ref',cooked.id]);
+        }
+        case 'PROPERTY_KEY':{const value=pop();return {...operands(value),...result(propertyKeyValue(valueKey(value.value)))};}
+        case 'CLASS_CONSTRUCTOR_GUARD':
+          if(!f.newTarget)guestFault('TypeError','Class constructor cannot be invoked without new');
+          return {};
+        case 'ITERATOR_THROW_MISSING':guestFault('TypeError','Delegated iterator has no throw method');break;
+        case 'DELEGATE_RESUME_KIND':
+          if(!f.delegateResume)throw new Error('Missing delegated completion');
+          return result(['str',f.delegateResume.kind]);
+        case 'DELEGATE_RESUME_VALUE':{
+          if(!f.delegateResume)throw new Error('Missing delegated value');
+          const value=f.delegateResume.value;delete f.delegateResume;return {...operands(value),...result(value.value)};
+        }
+        case 'NEW_TARGET':{
+          const owner=f.thisBindingFrameId?s.frames[f.thisBindingFrameId]:f;
+          return result(owner.newTarget??U);
+        }
+        case 'THIS':{
+          const owner=f.thisBindingFrameId?s.frames[f.thisBindingFrameId]:f;
+          if(owner.thisInitialized===false)guestFault('ReferenceError','Must call super constructor before accessing this');
+          if(owner.thisValue[0]==='undefined'&&!this.programs[f.codeId].strict)
             throw new TypeError('Global sloppy this is not modeled by the bounded object profile');
-          return result(f.thisValue);
+          return result(owner.thisValue);
+        }
         case 'DECLARE':{const e=s.envs[f.envId];if(Object.hasOwn(e.bindings,arg.name))throw new SyntaxError(`Duplicate declaration ${arg.name}`);e.bindings[arg.name]={kind:arg.kind,initialized:false,token:null,version:0};return {};}
         case 'INIT':{const v=pop(),b=lookup(s,f.envId,arg);if(b.cell.initialized)throw new Error('Already initialized');b.cell.initialized=true;b.cell.token=v;b.cell.version++;return {...operands(v),result:v.value};}
         case 'PARAM_INIT':{
@@ -899,13 +1374,20 @@ export class Runtime {
           const obj=s.heap[base.value[1]];
           if(!obj||!['object','array'].includes(obj.kind))
             throw new TypeError('Proxy, function and exotic updates require owned internal methods');
-          if(propertyAccessor(s.heap,base.value,property))
+          const described=functionProperty(s.heap,obj,property);
+          if(described.accessor)
             throw new TypeError('Accessor updates need an owned getter/setter continuation');
           const found=ordinaryGet(s.heap,base.value,property);
           if(!found)throw new TypeError('Unowned update property read');
           const old=found.method;
           const {next,oldNumeric}=scalarUpdate(old.value,arg.operator);
           const returned=arg.prefix?next:oldNumeric;
+          const failure=ordinaryDataWriteFailure(s.heap,obj,property,described.attributes);
+          if(failure&&this.programs[f.codeId].strict)guestFault('TypeError',failure);
+          if(failure){
+            this.stackPush(f,returned,eventId);
+            return {...operands(base,key,old),result:returned,reads:[found.observation]};
+          }
           if(this.entrySpec && obj.kind==='array'){
             if(arrayIndex(property) &&
                Number(property)>decode(obj.properties.length.value))
@@ -920,12 +1402,20 @@ export class Runtime {
         }
         case 'MAKE_FUNCTION':{
           const id=this.next(s,'obj');
+          // A named expression owns an immutable self binding outside its
+          // parameter/body environments. It neither leaks nor captures an
+          // outer alias that a later assignment can replace.
+          const closureEnvId=arg.name?this.newEnv(s,f.envId):f.envId;
+          if(arg.name)s.envs[closureEnvId].bindings[arg.name]={kind:'const',
+            initialized:true,token:token(['ref',id],eventId),version:0};
           s.heap[id]={id,kind:'function',codeId:arg.codeId,
-            closureEnvId:f.envId,async:arg.async===true,arrow:arg.arrow===true,
-            lexicalThis:arg.arrow?f.thisValue:null,version:0};
+            closureEnvId,async:arg.async===true,arrow:arg.arrow===true,nonConstructible:arg.nonConstructible===true,
+            lexicalThis:arg.arrow?f.thisValue:null,
+            ...(arg.arrow&&(f.thisBindingFrameId||f.newTarget)?{lexicalThisFrameId:f.thisBindingFrameId??f.id}:{}),version:0};
+          this.generatorFunctionProperties(s,s.heap[id],arg.name?['str',arg.name]:arg.inferredName?.stack?f.stack.at(-1).value:['str',arg.inferredName??''],eventId);
           return result(['ref',id]);
         }
-        case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
+        case 'DEF_FN':{const e=s.envs[f.envId],id=this.next(s,'obj');s.heap[id]={id,kind:'function',codeId:arg.codeId,closureEnvId:f.envId,async:arg.async,version:0};this.generatorFunctionProperties(s,s.heap[id],['str',arg.name],eventId);e.bindings[arg.name]={kind:'function',initialized:true,token:token(['ref',id],eventId),version:0};return {result:['ref',id]};}
         case 'ENTER_SCOPE':f.envId=this.newEnv(s,f.envId);return {};
         case 'LEAVE_SCOPE':f.envId=s.envs[f.envId].parent;return {};
         case 'CLONE_LOOP_ENV':{
@@ -992,12 +1482,16 @@ export class Runtime {
           if(!f.loops.length)throw new Error('No active loop');
           f.loops.pop();return {};
         case 'LOOP_JUMP':{
-          const loop=f.loops.at(-1);
-          if(!loop)throw new Error('No active loop for break/continue');
-          this.routeCompletion(s,f,{type:'jump',kind:arg,
-            targetPc:arg==='break'?loop.breakPc:loop.continuePc,
+          const kind=typeof arg==='string'?arg:arg.kind,label=typeof arg==='string'?null:arg.label;
+          const index=f.loops.findLastIndex(loop=>
+            (label?(loop.labels??[]).includes(label):true)&&
+            (kind==='break'||loop.continuePc!==null));
+          const loop=f.loops[index];
+          if(!loop)throw new Error('No active target for break/continue');
+          this.routeCompletion(s,f,{type:'jump',kind,
+            targetPc:kind==='break'?loop.breakPc:loop.continuePc,
             envId:loop.envId,stackDepth:loop.stackDepth,
-            handlerDepth:loop.handlerDepth,loopDepth:f.loops.length},eventId);
+            handlerDepth:loop.handlerDepth,loopDepth:index+1},eventId);
           return {};
         }
         case 'TEMPLATE':{
@@ -1019,6 +1513,8 @@ export class Runtime {
         }
         case 'BINARY':{
           const b=pop(),a=pop();
+          if([a,b].some(value=>value.value[0]==='symbol')&&!isOwnedArithmetic(arg)&&!['===','!==','==','!='].includes(arg))
+            guestFault('TypeError','Cannot convert a Symbol value to a number');
           if(!isOwnedArithmetic(arg))return {...operands(a,b),...result(primitiveBinary(arg,a.value,b.value))};
           const id=this.next(s,'operation');
           if([a,b].some(item=>item.value[0]==='ref'&&s.heap[item.value[1]]?.declaredError)&&
@@ -1031,6 +1527,8 @@ export class Runtime {
         }
         case 'UNARY':{
           const a=pop();
+          if(a.value[0]==='symbol'&&!['typeof','!','void'].includes(arg))
+            guestFault('TypeError','Cannot convert a Symbol value to a number');
           if(arg==='+' && a.value[0]==='bigint')
             guestFault('TypeError','Cannot convert a BigInt value to a number');
           return {...operands(a),...result(primitiveUnary(arg,a.value,s.heap))};
@@ -1074,6 +1572,12 @@ export class Runtime {
         case 'CONSTRUCT':{
           const args=[];for(let i=0;i<arg;i++)args.unshift(pop());
           const fn=pop();
+          if(fn.value[0]==='ref'&&s.heap[fn.value[1]]?.kind==='function'){
+            const id=this.beginConstruction(s,fn.value,args,f.id,eventId);
+            s.control.a0.activeFrameId=id;
+            return {...operands(fn,...args),causes:[{kind:'invocation',frameId:id}]};
+          }
+          if(fn.value[0]==='intrinsic'&&fn.value[1]==='Symbol')guestFault('TypeError','Symbol is not a constructor');
           if(fn.value[0]==='intrinsic'&&['Error','TypeError'].includes(fn.value[1])){
             if(args.length>1)throw new TypeError('Error options are outside the bounded error profile');
             const value=args[0]?.value??U;
@@ -1096,59 +1600,71 @@ export class Runtime {
              const inner=executor.async?this.newPromise(s):null;
               const id=this.newFrame(s,executor.codeId,executor.closureEnvId,f.id,inner,
                [token(resolve,eventId),token(reject,eventId)],
-               executor.arrow?executor.lexicalThis:U);
+               this.functionThis(executor),executor.id);
              s.frames[id].promiseExecutorTarget=p;
              f.pendingPromiseExecutor={waitingFrameId:id,promiseId:p};
              s.control.a0.activeFrameId=id;
              return {...operands(fn,...args),causes:[{kind:'invocation',frameId:id}],
                result:['promise',p]};
            }
+          if(fn.value[0]==='intrinsic'&&fn.value[1]==='ArrayBuffer'){
+            const length=binaryGuest(()=>binaryIndex(args[0]?.value));
+            if(length>1024)throw new BinaryResourceError('ArrayBuffer exceeds the 1024-byte owned profile');
+            if(args[1]?.value[0]!==undefined&&args[1].value[0]!=='undefined')
+              throw new BinaryProfileError('Resizable ArrayBuffer options require their own profile');
+            const id=this.next(s,'obj');s.heap[id]=newArrayBuffer(id,length);
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
            if(fn.value[0]==='intrinsic'&&fn.value[1]==='SharedArrayBuffer'){
-  const length=args.length===0?0:args[0]?.value[0]==='num'?decode(args[0].value):NaN;
-  if(!Number.isSafeInteger(length)||length<0||length>1024)
-    guestFault('RangeError','SharedArrayBuffer byteLength out of bounds');
-  if(args.length>2)guestFault('TypeError','SAB takes at most two arguments');
+  const length=binaryGuest(()=>binaryIndex(args[0]?.value));
+  if(length>1024)throw new BinaryResourceError('SharedArrayBuffer exceeds the 1024-byte owned profile');
   let max;
-  if(args.length===2){
+  if(args[1]?.value[0]!==undefined&&args[1].value[0]!=='undefined'){
     const opts=args[1]?.value[0]==='ref'?s.heap[args[1].value[1]]:null;
     if(opts?.kind!=='object'||Object.keys(opts.accessors??{}).length)
-      guestFault('TypeError','SAB options require owned data object');
+      throw new BinaryProfileError('SAB options require an owned data-object profile');
     const supplied=opts.properties.maxByteLength?.value;
     if(supplied&&supplied[0]!=='undefined'){
-      if(supplied[0]!=='num'||!Number.isSafeInteger(decode(supplied)))
-        guestFault('RangeError','SAB maxByteLength requires bounded integer');
-      max=decode(supplied);
+      max=binaryGuest(()=>binaryIndex(supplied));
     }
   }
-  if(max!==undefined&&(max<length||max>1024))
-    guestFault('RangeError','Invalid maxByteLength');
+  if(max!==undefined&&max<length)guestFault('RangeError','Invalid maxByteLength');
+  if(max>1024)throw new BinaryResourceError('SharedArrayBuffer maximum exceeds the 1024-byte owned profile');
   const id=this.next(s,'obj');s.heap[id]=newSharedBuffer(id,length,max);
   return {...operands(fn,...args),...result(['ref',id])};
 }
 if(fn.value[0]==='intrinsic'&&fn.value[1]==='DataView'){
   const b=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
-  if(b?.kind!=='shared-int32-buffer'||args.length>3)
-    guestFault('TypeError','DataView needs an owned SharedArrayBuffer');
-  const offset=args.length<2?0:args[1]?.value[0]==='num'?decode(args[1].value):NaN;
-  const length=args.length<3?undefined:args[2]?.value[0]==='num'?decode(args[2].value):NaN;
-  if(!Number.isSafeInteger(offset)||offset<0||offset>b.byteLength||
-     (length!==undefined&&(!Number.isSafeInteger(length)||length<0||offset+length>b.byteLength)))
-    guestFault('RangeError','DataView length or offset outside buffer');
+  if(!isOwnedBuffer(b))guestFault('TypeError','DataView needs an owned ArrayBuffer or SharedArrayBuffer');
+  const offset=binaryGuest(()=>binaryIndex(args[1]?.value));
+  const length=args[2]?.value[0]===undefined||args[2].value[0]==='undefined'?undefined:
+    binaryGuest(()=>binaryIndex(args[2].value));
   const id=this.next(s,'obj');
-  s.heap[id]=newSharedDataView(id,b,offset,length);
+  s.heap[id]=binaryGuest(()=>newSharedDataView(id,b,offset,length));
   return {...operands(fn,...args),...result(['ref',id])};
 }
 if(fn.value[0]==='intrinsic'&&Object.hasOwn(SHARED_TYPES,fn.value[1])){
-  const b=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
-  if(args.length<1||b?.kind!=='shared-int32-buffer')
-    guestFault('TypeError','Shared typed-array constructor needs owned SAB');
-  const offset=args.length<2?0:args[1]?.value[0]==='num'?decode(args[1].value):NaN;
-  const length=args.length<3?undefined:args[2]?.value[0]==='num'?decode(args[2].value):NaN;
+  const input=args[0]?.value??U;
+  let b=input[0]==='ref'?s.heap[input[1]]:null,offset,length;
+  if(isOwnedBuffer(b)){
+    offset=binaryGuest(()=>binaryIndex(args[1]?.value));
+    // Alignment is checked before converting the optional length.
+    if(offset%SHARED_TYPES[fn.value[1]].bytes)guestFault('RangeError','Typed-array offset is not aligned');
+    length=args[2]?.value[0]===undefined||args[2].value[0]==='undefined'?undefined:
+      binaryGuest(()=>binaryIndex(args[2].value));
+  }else{
+    if(input[0]==='ref')throw new BinaryProfileError('Typed-array iterable/array-like construction requires its own profile');
+    length=binaryGuest(()=>binaryIndex(input));offset=0;
+    const bytes=length*SHARED_TYPES[fn.value[1]].bytes;
+    if(bytes>1024)throw new BinaryResourceError('Typed-array storage exceeds the 1024-byte owned profile');
+    const bufferId=this.next(s,'obj');b=s.heap[bufferId]=newArrayBuffer(bufferId,bytes);
+  }
   const id=this.next(s,'obj');
-  s.heap[id]=newSharedView(id,b,fn.value[1],offset,length);
+  s.heap[id]=binaryGuest(()=>newSharedView(id,b,fn.value[1],offset,length));
   return {...operands(fn,...args),...result(['ref',id])};
 }
 if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
+            if(!['ref','intrinsic'].includes(fn.value[0])||fn.value[0]==='ref'&&s.heap[fn.value[1]]?.kind!=='proxy')guestFault('TypeError','Value is not a constructor');
             const completion={type:'unsupported',feature:'Constructor requires owned semantics: '+String(fn.value[1])};
             this.failFrame(s,f,completion);return {...operands(fn,...args),completion};
           }
@@ -1189,7 +1705,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             properties:{},propertyVersions:{},shapeVersion:0,version:0};
           return {...operands(target,handler),...result(['ref',id])};
         }
-        case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};if(op==='NEW_ARRAY'){s.heap[id].properties.length=token(['num',0],eventId);s.heap[id].propertyVersions.length=0;}return result(['ref',id]);}
+        case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};if(op==='NEW_ARRAY'){s.heap[id].properties.length=token(['num',arg?.length??0],eventId);s.heap[id].propertyVersions.length=0;}return result(['ref',id]);}
         case 'SPREAD':{
           const source=pop(),snapshot=spreadSnapshot(s.heap,source);
           return {...operands(source,...snapshot.values),
@@ -1205,7 +1721,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
           const values=arg.spread?item.value[1]:[item.value],start=decode(obj.properties.length.value);
           if(!Number.isSafeInteger(start)||start<0||start+values.length>10000)
             throw new RangeError('Owned array literal length budget exceeded');
-          for(let i=0;i<values.length;i++)putOwn(obj,String(start+i),values[i],eventId);
+          if(arg.hole)putOwn(obj,'length',['num',start+1],eventId);
+          else for(let i=0;i<values.length;i++)putOwn(obj,String(start+i),values[i],eventId);
           return {...operands(base,item),...result(base.value)};
         }
         case 'GET_PROP':case 'GET_METHOD':{
@@ -1217,6 +1734,10 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             return {...operands(base,key),completion};
           }
           if(base.value[0]==='host')v=['hostfn',base.value[1]==='demo'?(HOST_METHODS[property]??`demo.${property}`):`${base.value[1]}.${property}`];
+          else if(base.value[0]==='intrinsic'&&GENERATOR_INTRINSIC_PROTOTYPES.includes(base.value[1]))
+            v=generatorIntrinsicProperty(base.value[1],property).value;
+          else if(['intrinsic','builtinfn','hostfn'].includes(base.value[0])&&property===symbolPropertyKey('well-known:hasInstance'))
+            v=base.value[0]==='intrinsic'&&['Math','Reflect','Atomics','Object.prototype','Array.prototype'].includes(base.value[1])?U:['builtinfn','Function.prototype.hasInstance'];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Date' &&
                   property==='now')v=['hostfn','platform.dateNow'];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Atomics' &&
@@ -1230,8 +1751,22 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
                ['isFinite','isNaN','isInteger','isSafeInteger'].includes(property)) ||
               (base.value[1]==='Array' && ['isArray','from'].includes(property))))
             v=['builtinfn',base.value[1]+'.'+property];
+          else if(base.value[0]==='intrinsic'&&base.value[1]==='Symbol'){
+            if(WELL_KNOWN_SYMBOLS.includes(property))v=wellKnownSymbol(property);
+            else if(['for','keyFor'].includes(property))v=['builtinfn','Symbol.'+property];
+            else throw new TypeError('Unmodeled Symbol static property');
+          }
+          else if(base.value[0]==='intrinsic'&&base.value[1]==='Reflect'&&['ownKeys','apply'].includes(property))v=['builtinfn','Reflect.'+property];
+          else if(base.value[0]==='symbol'){
+            if(property==='description')v=this.symbolDescription(s,base.value);
+            else if(['toString','valueOf'].includes(property))v=['builtinfn','Symbol.prototype.'+property];
+            else if(property===symbolPropertyKey('well-known:toPrimitive'))v=['builtinfn','Symbol.prototype.valueOf'];
+            else v=U;
+          }
+          else if(base.value[0]==='intrinsic'&&base.value[1]==='ArrayBuffer'&&property==='isView')
+            v=['builtinfn','ArrayBuffer.isView'];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
-             ['create','setPrototypeOf','getPrototypeOf','defineProperty','hasOwn','keys','values','entries','assign','is'].includes(property))
+             ['create','setPrototypeOf','getPrototypeOf','defineProperty','getOwnPropertyDescriptor','isFrozen','hasOwn','keys','values','entries','assign','is','getOwnPropertySymbols','getOwnPropertyNames'].includes(property))
             v=['builtinfn',`Object.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' && property==='prototype')
             v=['intrinsic','Object.prototype'];
@@ -1251,7 +1786,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
            else if(base.value[0]==='str'){
              // String primitive reads never consult the host object graph.
              const text=base.value[1];
-             if(property==='length')v=['num',text.length];
+             if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','String.prototype.iterator'];
+             else if(property==='length')v=['num',text.length];
              else if(arrayIndex(property)&&Number(property)<text.length)
                v=['str',text[Number(property)]];
              else if(['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd','split','replace'].includes(property))
@@ -1263,8 +1799,41 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
            else if(base.value[0]==='ref'){
              const obj=s.heap[base.value[1]];
              if(!obj)throw new ReferenceError('Unknown guest identity');
+             if(obj.kind==='function'||obj.kind==='generator'){
+               if(obj.kind==='function')this.functionProperties(s,obj,eventId,{prototype:property==='prototype'});
+               const found=functionProperty(s.heap,obj,property);
+               if(obj.kind==='function'&&['name','length'].includes(property)&&!Object.hasOwn(obj.properties,property)&&!Object.hasOwn(obj.accessors??{},property)||
+                  ['constructor','__proto__','toString','valueOf','call','apply','bind'].includes(property)&&!found.slot&&!found.accessor)
+                 throw new TypeError('Unmodeled function prototype reflection or call adapter');
+               if(obj.kind==='function'&&['arguments','caller'].includes(property)&&!found.slot&&!found.accessor)guestFault('TypeError','Restricted strict function property');
+               const accessor=found.accessor;
+               if(accessor){
+                 if(accessor.get.value[0]==='undefined')return {...operands(base,key),...result(op==='GET_METHOD'?['method',U,base.value]:U)};
+                 const getter=s.heap[accessor.get.value[1]];
+                 if(getter?.kind!=='function'||getter.async)throw new TypeError('Unsupported function getter continuation');
+                 const id=this.newFrame(s,getter.codeId,getter.closureEnvId,f.id,null,[],this.functionThis(getter,base.value),getter.id);
+                 f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id};s.control.a0.activeFrameId=id;
+                 return {...operands(base,key),causes:[{kind:'invocation',frameId:id}]};
+               }
+               const slot=found.slot;v=slot?.value??U;
+               return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v),reads:[{
+                 kind:'property',objectId:obj.id,key:property,present:!!slot,version:obj.propertyVersions[property]??0,
+                 shapeVersion:obj.shapeVersion,value:v,supplyingEvent:slot?.origin??null}]};
+             }
              if(obj.declaredError&&!['name','message'].includes(property))
                throw new TypeError('Declared error exposes only name and message');
+             if(obj.kind==='iterator'){
+               const slot=Object.hasOwn(obj.properties,property)?obj.properties[property]:null;
+               if(slot)v=slot.value;
+               else if(property==='next')v=['builtinfn','Iterator.next'];
+               else if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','Iterator.identity'];
+               else if(property===symbolPropertyKey('well-known:toStringTag'))v=['str',obj.iterationKind==='string'?'String Iterator':'Array Iterator'];
+               else if(['constructor','__proto__','toString','valueOf'].includes(property))throw new TypeError('Unmodeled iterator prototype property');
+               else v=U;
+               return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v),...(slot?{reads:[{
+                 kind:'property',objectId:obj.id,key:property,present:true,version:obj.propertyVersions[property]??0,
+                 shapeVersion:obj.shapeVersion,value:v,supplyingEvent:slot.origin??null}]}:{})};
+             }
              if(obj.kind==='regexp'){
                if(property==='test'){
                  const method=['builtinfn','RegExp.prototype.test'];
@@ -1280,6 +1849,15 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
                }
                throw new TypeError('Unmodeled RegExp property '+property);
              }
+             if(obj.kind==='array-buffer'){
+  if(['byteLength','maxByteLength'].includes(property))return {...operands(base,key),...result(['num',obj.byteLength])};
+  if(['resizable','detached'].includes(property))return {...operands(base,key),...result(['bool',false])};
+  if(property==='slice'){
+    const method=['builtinfn','ArrayBuffer.prototype.slice'];
+    return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
+  }
+  throw new BinaryProfileError('ArrayBuffer property requires its own profile: '+String(property));
+}
              if(obj.kind==='shared-int32-buffer'){
   if(property==='byteLength')return {...operands(base,key),...result(['num',obj.byteLength])};
   if(property==='maxByteLength')return {...operands(base,key),...result(['num',obj.maxByteLength??obj.byteLength])};
@@ -1292,9 +1870,9 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
     const method=['builtinfn','SharedArrayBuffer.prototype.slice'];
     return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
   }
-  guestFault('TypeError','Unmodeled SAB property');
+  throw new BinaryProfileError('Unmodeled SharedArrayBuffer property profile');
 }
-if(obj.kind==='shared-data-view'){
+if(isOwnedDataView(obj)){
   const length=effectiveDataViewLength(s.heap[obj.bufferId],obj);
   if(property==='byteLength')return {...operands(base,key),...result(['num',length])};
   if(property==='byteOffset')return {...operands(base,key),...result(['num',obj.byteOffset])};
@@ -1303,9 +1881,9 @@ if(obj.kind==='shared-data-view'){
     const method=['builtinfn','DataView.prototype.'+property];
     return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
   }
-  guestFault('TypeError','Unmodeled shared DataView property');
+  throw new BinaryProfileError('Unmodeled DataView property profile');
 }
-if(obj.kind==='shared-int32-view'){
+if(isOwnedTypedView(obj)){
   const bytes=SHARED_TYPES[obj.elementType].bytes;
   const length=effectiveSharedLength(s.heap[obj.bufferId],obj);
   for(const [prop,v] of Object.entries({length,byteLength:length*bytes,
@@ -1316,9 +1894,9 @@ if(obj.kind==='shared-int32-view'){
     const method=['builtinfn','TypedArray.prototype.subarray'];
     return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
   }
-  if(!arrayIndex(property)||Number(property)>=length)
-    guestFault('TypeError','Unmodeled shared view property');
-  return {...operands(base,key),...result(readSharedElement(s.heap[obj.bufferId],obj,Number(property)))};
+  const index=binaryNumericKey(property);
+  if(index===undefined)throw new BinaryProfileError('Typed-array ordinary property needs its own profile');
+  return {...operands(base,key),...result(binaryValidIndex(index,length)?readSharedElement(s.heap[obj.bufferId],obj,index):U)};
 }
 if(obj.kind==='set'){
                if(['has','add'].includes(property)){
@@ -1332,15 +1910,16 @@ if(obj.kind==='set'){
                {kind:'ordinary',target:base.value,receiver:base.value};
              if(route.kind==='trap'){
                const target=s.heap[route.target[1]];
-               if(Object.hasOwn(target?.accessors??{},property)&&!target.accessors[property].configurable)
-                 throw new TypeError('Proxy get invariant for non-configurable accessor not modeled');
+               if(!['object','array'].includes(target?.kind))
+                 throw new TypeError('Proxy trap target invariants require ordinary storage');
                const trap=route.method;
                if(!this.callableGuest(s,trap)||s.heap[trap[1]].async)
                  throw new TypeError('Proxy get trap must be synchronous guest function');
                const fn=s.heap[trap[1]];
                const id=this.newFrame(s,fn.codeId,fn.closureEnvId,
-                 f.id,null,[token(route.target),key,token(base.value)],route.handler);
-               f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id};
+                 f.id,null,[token(route.target),key,token(base.value)],this.functionThis(fn,route.handler),fn.id);
+               f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id,
+                 proxy:{target:route.target,key:property,strict:!!this.programs[f.codeId].strict}};
                s.control.a0.activeFrameId=id;
                return {...operands(base,key),causes:[{kind:'invocation',frameId:id}],
                  reads:[route.observation]};
@@ -1353,7 +1932,7 @@ if(obj.kind==='set'){
                  if(!this.callableGuest(s,getter)||s.heap[getter[1]].async)
                    throw new TypeError('Unsupported accessor getter continuation');
                  const target=s.heap[getter[1]];
-                 const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,[],base.value);
+                 const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,[],this.functionThis(target,base.value),target.id);
                  f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id};
                  s.control.a0.activeFrameId=id;
                  return {...operands(base,key),causes:[{kind:'invocation',frameId:id}]};
@@ -1370,16 +1949,296 @@ if(obj.kind==='set'){
           const output=op==='GET_METHOD'?['method',v,base.value]:v;
           return {...operands(base,key),...result(output),reads:read?[read]:[]};
         }
+        case 'PENDING_THROW':{
+          const handler=f.handlers.findLast(item=>item.phase==='finally');
+          if(!handler)throw new Error('Pending completion read outside finally');
+          return result(['bool',handler.pending?.type==='throw']);
+        }
+        case 'ITERATOR_ARRAY_GUARD':{
+          const source=pop(),obj=source.value[0]==='ref'?s.heap[source.value[1]]:null;
+          const key=symbolPropertyKey('well-known:iterator');
+          return {...operands(source),...result(['bool',obj?.kind==='array'&&objectPrototype(obj)==='Array.prototype'&&
+            !Object.hasOwn(obj.properties,key)&&!Object.hasOwn(obj.accessors??{},key)])};
+        }
+        case 'REQUIRE_OBJECT':{
+          const value=pop();
+          if(!['ref','promise','intrinsic','builtinfn','hostfn'].includes(value.value[0]))
+            guestFault('TypeError','Iterator result must be an object');
+          return {...operands(value),...result(value.value)};
+        }
+        case 'REQUIRE_COERCIBLE':{
+          const value=pop();
+          if(['null','undefined'].includes(value.value[0]))guestFault('TypeError','Cannot destructure null or undefined');
+          return {...operands(value),...result(value.value)};
+        }
+        case 'COPY_KEYS':{
+          const exclusions=[];for(let i=0;i<arg.exclude;i++)exclusions.unshift(pop());
+          const source=pop(),value=source.value,excluded=new Set(exclusions.map(item=>valueKey(item.value)));
+          let keys=[];
+          if(value[0]==='ref'){
+            const obj=s.heap[value[1]];
+            if(!obj||!['object','array'].includes(obj.kind))
+              throw new TypeError('Property copying requires ordinary owned keys');
+            keys=ownPropertyKeys(obj);
+          }else if(value[0]==='str')keys=Array.from({length:value[1].length},(_,i)=>String(i));
+          else if(['null','undefined'].includes(value[0])&&arg.required)
+            guestFault('TypeError','Cannot destructure null or undefined');
+          else if(!['null','undefined','num','bool','bigint','symbol'].includes(value[0]))
+            throw new TypeError('Property copying source outside profile');
+          keys=keys.filter(key=>!excluded.has(key));
+          if(keys.length>10000)throw new RangeError('Property copy key budget');
+          const id=this.next(s,'obj'),obj=s.heap[id]={id,kind:'array',properties:{length:token(['num',keys.length],eventId)},propertyVersions:{length:0},shapeVersion:0,version:0};
+          keys.forEach((key,i)=>putOwn(obj,String(i),propertyKeyValue(key),eventId));
+          return {...operands(source,...exclusions),...result(['ref',id])};
+        }
+        case 'HAS_ENUMERABLE_OWN':{
+          const key=pop(),source=pop(),name=valueKey(key.value),value=source.value;
+          const present=value[0]==='str'?arrayIndex(name)&&Number(name)<value[1].length:
+            value[0]==='ref'?enumerableOwn(s.heap[value[1]],name):false;
+          return {...operands(source,key),...result(['bool',!!present])};
+        }
+        case 'SET_HOME_OBJECT':{
+          const value=pop(),home=arg.name?lookup(s,f.envId,arg.name).cell.token:f.stack.at(-arg.offset);
+          const fn=s.heap[value.value[1]];
+          if(arg.methodName){
+            const name=arg.methodName.privateName?['str',arg.methodName.privateName]:lookup(s,f.envId,arg.methodName.binding).cell.token.value;
+            this.classFunctionProperties(s,fn,name,eventId,arg.methodName.prefix??null);
+          }
+          this.setHomeObject(s,fn,home.value,eventId);
+          return {...operands(value,home),...result(value.value)};
+        }
+        case 'SUPER_REFERENCE':{
+          const key=pop(),receiver=pop(),home=lookup(s,f.envId,'[[home object]]').cell.token;
+          const parent=objectPrototype(s.heap[home.value[1]]),base=parent===null?['null']:
+            ['Object.prototype','Array.prototype','Function.prototype'].includes(parent)?['intrinsic',parent]:['ref',parent];
+          return {...operands(receiver,key,home),...result(['superreference',base,receiver.value,key.value])};
+        }
+        case 'SUPER_GET':case 'SUPER_GET_METHOD':case 'SUPER_SET':{
+          const assigned=op==='SUPER_SET'?pop():null,reference=pop();
+          if(reference.value[0]!=='superreference')throw new Error('Super property lost its reference');
+          const [,base,receiver,key]=reference.value,property=valueKey(key),found=superProperty(s.heap,base,property);
+          const inputs=[token(receiver,reference.origin),token(key,reference.origin),...(assigned?[assigned]:[])];
+          if(assigned){
+            if(found.accessor){
+              const setter=found.accessor.set.value;
+              if(setter[0]==='undefined')guestFault('TypeError','Cannot assign to a super getter without a setter');
+              const fn=s.heap[setter[1]];
+              if(fn?.kind!=='function'||fn.async)throw new TypeError('Super setter requires a synchronous owned continuation');
+              const id=this.newFrame(s,fn.codeId,fn.closureEnvId,f.id,null,[assigned],this.functionThis(fn,receiver),fn.id);
+              f.pendingProperty={kind:'set',value:assigned.value,waitingFrameId:id};s.control.a0.activeFrameId=id;
+              return {...operands(...inputs),causes:[{kind:'invocation',frameId:id}]};
+            }
+            if(found.attributes?.writable===false)guestFault('TypeError','Cannot assign to a readonly super property');
+            const object=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(!object)guestFault('TypeError','Super assignment receiver is not an object');
+            if(!['object','array','function'].includes(object.kind))throw new TypeError('Super assignment requires owned ordinary receiver internal methods');
+            if(object.kind==='function')this.functionProperties(s,object,eventId,{prototype:property==='prototype'});
+            if(Object.hasOwn(object.accessors??{},property)||object.dataAttributes?.[property]?.writable===false)
+              guestFault('TypeError','Super assignment receiver property is not writable data');
+            putOwn(object,property,assigned.value,eventId);
+            return {...operands(...inputs),...result(assigned.value)};
+          }
+          if(found.accessor&&found.accessor.get.value[0]!=='undefined'){
+            const getter=s.heap[found.accessor.get.value[1]];
+            if(getter?.kind!=='function'||getter.async)throw new TypeError('Super getter requires a synchronous owned continuation');
+            const id=this.newFrame(s,getter.codeId,getter.closureEnvId,f.id,null,[],this.functionThis(getter,receiver),getter.id);
+            f.pendingProperty={kind:'get',receiver,method:op==='SUPER_GET_METHOD',waitingFrameId:id};s.control.a0.activeFrameId=id;
+            return {...operands(...inputs),causes:[{kind:'invocation',frameId:id}]};
+          }
+          const value=found.slot?.value??U;
+          return {...operands(...inputs),...result(op==='SUPER_GET_METHOD'?['method',value,receiver]:value)};
+        }
+        case 'SUPER_CONSTRUCTOR':{
+          const owner=f.thisBindingFrameId?s.frames[f.thisBindingFrameId]:f;
+          if(owner.constructKind!=='derived')throw new Error('Super call has no derived constructor context');
+          const parent=s.heap[owner.constructorId].prototype;
+          return result(parent==='Function.prototype'?U:['ref',parent]);
+        }
+        case 'SUPER_CALL':case 'SUPER_FORWARD_CALL':{
+          const owner=f.thisBindingFrameId?s.frames[f.thisBindingFrameId]:f;
+          if(owner.constructKind!=='derived')throw new Error('Super call has no derived constructor context');
+          let args=owner.constructorArguments;
+          if(op==='SUPER_CALL'){
+            const count=typeof arg==='number'?arg:arg.count,raw=[];for(let i=0;i<count;i++)raw.unshift(pop());
+            args=raw.flatMap((value,i)=>arg?.spread?.includes(i)?value.value[1].map(item=>token(item,value.origin)):[value]);
+          }
+          if(args.length>10000)throw new RangeError('Owned super argument budget exceeded');
+          const parent=s.heap[owner.constructorId].prototype;
+          const constructor=op==='SUPER_CALL'?pop().value:parent==='Function.prototype'?U:['ref',parent];
+          const id=this.beginConstruction(s,constructor,args,f.id,eventId,owner.newTarget);s.control.a0.activeFrameId=id;
+          return {operands:[constructor,...args.map(x=>x.value)],origins:[null,...args.map(x=>x.origin)],causes:[{kind:'invocation',frameId:id}]};
+        }
+        case 'SUPER_BIND':{
+          const value=pop(),owner=f.thisBindingFrameId?s.frames[f.thisBindingFrameId]:f;
+          if(owner.thisInitialized)guestFault('ReferenceError','Super constructor already initialized this');
+          if(!['ref','promise','intrinsic','builtinfn','hostfn'].includes(value.value[0]))throw new Error('Super constructor returned a primitive');
+          owner.thisValue=value.value;owner.thisInitialized=true;
+          const klass=s.heap[owner.constructorId];
+          if(klass.instanceInitializer){
+            const initializer=s.heap[klass.instanceInitializer[1]],id=this.newFrame(s,initializer.codeId,initializer.closureEnvId,f.id,null,[],value.value,initializer.id);
+            s.frames[id].superInitializedResult=value.value;s.control.a0.activeFrameId=id;
+            return {...operands(value),causes:[{kind:'invocation',frameId:id}]};
+          }
+          return {...operands(value),...result(value.value)};
+        }
+        case 'CLASS_CREATE':{
+          const name=arg.named?pop():null,heritage=arg.derived?pop():null,value=pop(),klass=value.value[0]==='ref'?s.heap[value.value[1]]:null;
+          if(klass?.kind!=='function')throw new Error('Class constructor function missing');
+          klass.classConstructor=true;
+          if(name)this.classFunctionProperties(s,klass,name.value,eventId);
+          this.functionProperties(s,klass,eventId,{prototype:true});
+          this.setHomeObject(s,klass,klass.properties.prototype.value,eventId);
+          klass.dataAttributes.prototype.writable=false;
+          if(heritage){
+            let parentPrototype=null,parent='Function.prototype';
+            if(heritage.value[0]!=='null'){
+              if(heritage.value[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype','Function.prototype'].includes(heritage.value[1]))
+                throw new TypeError('Builtin class heritage requires its owned derived-construction profile');
+              const base=heritage.value[0]==='ref'?s.heap[heritage.value[1]]:null;
+              if(base?.kind==='proxy')throw new TypeError('Proxy class heritage requires owned constructor internal methods');
+              if(base?.kind!=='function'||base.arrow||base.async||base.nonConstructible||this.programs[base.codeId].generator)
+                guestFault('TypeError','Class extends value is not an owned constructor or null');
+              this.functionProperties(s,base,eventId,{prototype:true});
+              const prototype=base.properties.prototype?.value??U;
+              if(prototype[0]==='ref'&&['object','array'].includes(s.heap[prototype[1]]?.kind))parentPrototype=prototype[1];
+              else if(prototype[0]==='intrinsic'&&['Object.prototype','Array.prototype','Function.prototype'].includes(prototype[1]))parentPrototype=prototype[1];
+              else if(['ref','promise','intrinsic','builtinfn','hostfn'].includes(prototype[0]))throw new TypeError('Exotic class heritage prototype requires a separate profile');
+              else if(prototype[0]!=='null')guestFault('TypeError','Class extends constructor has an invalid prototype');
+              parent=base.id;
+            }
+            klass.derivedConstructor=true;klass.prototype=parent;
+            s.heap[klass.properties.prototype.value[1]].prototype=parentPrototype;
+          }
+          const environment=s.envs[f.envId];
+          [...new Set(arg.privateNames)].forEach((name,index)=>{
+            environment.bindings['[[private '+name+']]']={kind:'const',initialized:true,
+              token:token(['str','private:'+klass.id+':'+index],eventId),version:0};
+          });
+          return {...operands(value,...(heritage?[heritage]:[]),...(name?[name]:[])),...result(value.value)};
+        }
+        case 'CLASS_INITIALIZER':{
+          const initializer=pop(),value=pop(),klass=s.heap[value.value[1]];
+          if(klass?.classConstructor!==true||!this.callableGuest(s,initializer.value))
+            throw new Error('Invalid owned class initializer');
+          klass[arg.static?'staticInitializer':'instanceInitializer']=initializer.value;
+          return {...operands(value,initializer),...result(value.value)};
+        }
+        case 'CLASS_FINISH':{
+          const value=pop(),klass=s.heap[value.value[1]];
+          if(klass?.classConstructor!==true)throw new Error('Invalid owned class completion');
+          if(arg.name){
+            const binding=lookup(s,f.envId,arg.name).cell;
+            if(binding.initialized)throw new Error('Class inner name initialized twice');
+            binding.initialized=true;binding.token=value;binding.version++;
+          }
+          if(klass.staticInitializer){
+            const initializer=s.heap[klass.staticInitializer[1]],id=this.newFrame(s,initializer.codeId,initializer.closureEnvId,f.id,null,[],value.value,initializer.id);
+            s.frames[id].classStaticResult=value.value;s.control.a0.activeFrameId=id;
+            return {...operands(value),causes:[{kind:'invocation',frameId:id}]};
+          }
+          return {...operands(value),...result(value.value)};
+        }
+        case 'PRIVATE_GET':case 'PRIVATE_GET_METHOD':case 'PRIVATE_HAS':case 'PRIVATE_DEFINE':case 'PRIVATE_SET':case 'PRIVATE_UPDATE':{
+          const supplied=['PRIVATE_DEFINE','PRIVATE_SET'].includes(op)?pop():null,base=pop();
+          const binding=lookup(s,f.envId,'[[private '+arg.name+']]').cell;
+          if(!binding.initialized||binding.token?.value?.[0]!=='str')throw new Error('Missing lexical private name');
+          const key=binding.token.value[1],object=base.value[0]==='ref'?s.heap[base.value[1]]:null;
+          if(!object&&op==='PRIVATE_DEFINE'&&['promise','intrinsic','builtinfn','hostfn'].includes(base.value[0]))
+            throw new TypeError('Private initialization on an exotic result requires its owned slot profile');
+          if(!object&&op==='PRIVATE_HAS'&&['promise','intrinsic','builtinfn','hostfn'].includes(base.value[0]))
+            return {...operands(base),...result(['bool',false])};
+          if(!object)guestFault('TypeError','Private member receiver is not an object');
+          const present=Object.hasOwn(object.privateSlots??{},key);
+          if(op==='PRIVATE_HAS')return {...operands(base),...result(['bool',present])};
+          if(op==='PRIVATE_DEFINE'){
+            if(present)guestFault('TypeError','Private member is already initialized');
+            object.privateSlots??={};object.privateKinds??={};object.privateVersions??={};
+            object.privateSlots[key]=token(supplied.value,eventId);object.privateKinds[key]=arg.kind;object.privateVersions[key]=1;
+            return {...operands(base,supplied),...result(supplied.value)};
+          }
+          if(!present)guestFault('TypeError','Receiver does not have this private member');
+          const old=object.privateSlots[key],read={kind:'private',objectId:object.id,key,
+            version:object.privateVersions[key],value:old.value,supplyingEvent:old.origin??null};
+          if(['PRIVATE_GET','PRIVATE_GET_METHOD'].includes(op))
+            return {...operands(base),...result(op==='PRIVATE_GET_METHOD'?['method',old.value,base.value]:old.value),reads:[read]};
+          if(object.privateKinds[key]!=='field')guestFault('TypeError','Private method is not writable');
+          const updated=op==='PRIVATE_UPDATE'?scalarUpdate(old.value,arg.operator):null;
+          const value=supplied?.value??updated.next;
+          object.privateSlots[key]=token(value,eventId);object.privateVersions[key]++;
+          return {...operands(base,...(supplied?[supplied]:[])),...result(updated&&!arg.prefix?updated.oldNumeric:value),reads:[read]};
+        }
+        case 'DEFINE_LITERAL_PROP':{
+          const value=pop(),key=pop(),base=pop(),name=valueKey(key.value);
+          const obj=base.value[0]==='ref'?s.heap[base.value[1]]:null;
+          if(!['object','array','function'].includes(obj?.kind))throw new TypeError('Literal definitions require an owned ordinary object');
+          if(obj.kind==='function')this.functionProperties(s,obj,eventId,{prototype:name==='prototype'});
+          if(arg.kind!=='prototype'&&(obj.dataAttributes?.[name]?.configurable===false||obj.accessors?.[name]?.configurable===false))
+            guestFault('TypeError','Cannot redefine non-configurable property');
+          if(obj.kind==='array'&&name==='length')guestFault('TypeError','Cannot redefine non-configurable array length');
+          if(arg.kind==='prototype'){
+            if(value.value[0]==='null')obj.prototype=null;
+            else if(value.value[0]==='ref'){
+              if(!['object','array'].includes(s.heap[value.value[1]]?.kind))
+                throw new TypeError('Literal prototype is outside the ordinary object profile');
+              obj.prototype=value.value[1];
+            }
+          }else if(arg.kind==='init'){
+            // Object literal definitions never call a pre-existing setter.
+            putOwn(obj,name,value.value,eventId,{literal:true});
+            if(obj.accessors)delete obj.accessors[name];
+            if(arg.enumerable!==undefined||obj.dataAttributes?.[name]){
+              obj.dataAttributes??={};obj.dataAttributes[name]={enumerable:arg.enumerable??true,writable:true,configurable:true};
+            }
+          }else if(['get','set'].includes(arg.kind)){
+            if(!this.callableGuest(s,value.value))throw new TypeError('Literal accessor must be an owned function');
+            const previous=obj.accessors?.[name];
+            if(!previous&&!Object.hasOwn(obj.properties,name))
+              (obj.propertyOrder??=Object.keys(obj.properties).concat(Object.keys(obj.accessors??{}))).push(name);
+            obj.accessors??={};
+            obj.accessors[name]={get:previous?.get??token(U),set:previous?.set??token(U),
+              [arg.kind]:value,enumerable:arg.enumerable??true,configurable:true};
+            delete obj.properties[name];
+            if(obj.dataAttributes)delete obj.dataAttributes[name];
+            obj.propertyVersions[name]=(obj.propertyVersions[name]??0)+1;obj.shapeVersion++;
+          }else throw new TypeError('Unknown literal property kind');
+          return {...operands(base,key,value),...result(value.value)};
+        }
         case 'PUT_PROP':{
           const v=pop(),key=pop(),base=pop(),property=valueKey(key.value);
           if(['null','undefined'].includes(base.value[0]))
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
-           if(base.value[0]!=='ref'||!s.heap[base.value[1]]||s.heap[base.value[1]].kind==='function')throw new TypeError('Not a writable guest object');
+           if(base.value[0]!=='ref'||!s.heap[base.value[1]])throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
-          if(object.kind==='shared-int32-view'){
-  if(!arrayIndex(property)||Number(property)>=effectiveSharedLength(s.heap[object.bufferId],object))
-    guestFault('TypeError','Unmodeled typed-array property assignment');
-  writeSharedElement(s.heap[object.bufferId],object,Number(property),v.value);
+          if(object.kind==='iterator'&&property===symbolPropertyKey('well-known:toStringTag')&&
+             !Object.hasOwn(object.properties,property)){
+            if(this.programs[f.codeId].strict)guestFault('TypeError','Cannot assign inherited readonly iterator property');
+            return {...operands(base,key,v),...result(v.value)};
+          }
+          if(object.kind==='function'||object.kind==='generator'){
+            if(object.kind==='function'){
+              if(['arguments','caller'].includes(property)||['name','length'].includes(property)&&!Object.hasOwn(object.properties??{},property))throw new TypeError('Function descriptor assignment outside profile');
+              this.functionProperties(s,object,eventId);
+            }
+            const found=functionProperty(s.heap,object,property);
+            if(found.attributes?.writable===false)guestFault('TypeError','Cannot assign inherited readonly function property');
+            const accessor=found.accessor;
+            if(accessor){
+              if(accessor.set.value[0]==='undefined')guestFault('TypeError','Cannot assign to getter only property');
+              const setter=s.heap[accessor.set.value[1]];
+              if(setter?.kind!=='function'||setter.async)throw new TypeError('Unsupported function setter continuation');
+              const id=this.newFrame(s,setter.codeId,setter.closureEnvId,f.id,null,[v],this.functionThis(setter,base.value),setter.id);
+              f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id};s.control.a0.activeFrameId=id;
+              return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}]};
+            }
+            if(object.kind==='function'&&property==='prototype')object.prototypeInitialized=true;
+            putOwn(object,property,v.value,eventId);return {...operands(base,key,v),...result(v.value)};
+          }
+          if(isOwnedTypedView(object)){
+  const index=binaryNumericKey(property);
+  if(index===undefined)throw new BinaryProfileError('Typed-array ordinary property assignment needs its own profile');
+  const converted=binaryGuest(()=>binaryElement(v.value,SHARED_TYPES[object.elementType]));
+  if(binaryValidIndex(index,effectiveSharedLength(s.heap[object.bufferId],object)))
+    writeSharedElement(s.heap[object.bufferId],object,index,encode(converted));
   return {...operands(base,key,v),...result(v.value)};
 }
 if(object.kind==='regexp'){
@@ -1390,28 +2249,30 @@ if(object.kind==='regexp'){
             putOwn(object,'lastIndex',v.value,eventId);
             return {...operands(base,key,v),...result(v.value)};
           }
-          if(['shared-int32-buffer','shared-int32-view','shared-data-view'].includes(object.kind))
-            guestFault('TypeError','Direct shared-memory writes are not owned; use Atomics');
+          if(isOwnedBuffer(object)||isOwnedTypedView(object)||isOwnedDataView(object))
+            throw new BinaryProfileError('Binary-memory ordinary property assignment needs its own profile');
           if(object.kind==='set')
             throw new TypeError('Owned intrinsic internal slots are not guest-writable properties');
           const route=object.kind==='proxy'?proxyRoute(s.heap,base.value,'set'):
             {kind:'ordinary',target:base.value,receiver:base.value};
           if(route.kind==='trap'){
             const target=s.heap[route.target[1]];
-            if(Object.hasOwn(target?.accessors??{},property)&&!target.accessors[property].configurable)
-              throw new TypeError('Proxy set invariant for non-configurable accessor not modeled');
+            if(!['object','array'].includes(target?.kind))
+              throw new TypeError('Proxy trap target invariants require ordinary storage');
             if(!this.callableGuest(s,route.method)||s.heap[route.method[1]].async)
               throw new TypeError('Proxy set trap must be synchronous guest function');
             const fn=s.heap[route.method[1]];
             const id=this.newFrame(s,fn.codeId,fn.closureEnvId,
-              f.id,null,[token(route.target),key,v,token(base.value)],route.handler);
-            f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id};
+              f.id,null,[token(route.target),key,v,token(base.value)],this.functionThis(fn,route.handler),fn.id);
+            f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id,
+              proxy:{target:route.target,key:property,strict:!!this.programs[f.codeId].strict}};
             s.control.a0.activeFrameId=id;
             return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}],
               reads:[route.observation]};
           }
           const obj=s.heap[route.target[1]];
-          const accessor=propertyAccessor(s.heap,route.target,property);
+          const described=['object','array'].includes(obj.kind)?functionProperty(s.heap,obj,property):null,
+            accessor=described?.accessor??propertyAccessor(s.heap,route.target,property);
           if(accessor){
             const setter=accessor.set.value;
             if(setter[0]==='undefined'){
@@ -1429,10 +2290,15 @@ if(object.kind==='regexp'){
             if(!this.callableGuest(s,setter)||s.heap[setter[1]].async)
               throw new TypeError('Unsupported accessor setter continuation');
             const target=s.heap[setter[1]];
-            const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,[v],base.value);
+            const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,null,[v],this.functionThis(target,base.value),target.id);
             f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id};
             s.control.a0.activeFrameId=id;
             return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}]};
+          }
+          const failure=ordinaryDataWriteFailure(s.heap,obj,property,described?.attributes);
+          if(failure){
+            if(this.programs[f.codeId].strict)guestFault('TypeError',failure);
+            return {...operands(base,key,v),...result(v.value)};
           }
           if(this.entrySpec && obj.kind==='array') {
             const oldLength=decode(obj.properties.length.value);
@@ -1465,8 +2331,150 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn'&&['Function.prototype.call','Function.prototype.apply','Reflect.apply'].includes(callable[1])){
+            const reflect=callable[1]==='Reflect.apply',targetValue=reflect?args[0]?.value??U:receiver,
+              thisValue=args[reflect?1:0]?.value??U,
+              target=targetValue[0]==='ref'?s.heap[targetValue[1]]:null;
+            // Check callability before touching the array-like argument list.
+            if(target?.kind!=='function'){
+              if(['intrinsic','builtinfn','hostfn'].includes(targetValue[0])||target?.kind==='proxy')
+                throw new TypeError('Call adapter requires an owned function target');
+              guestFault('TypeError','Call adapter target is not callable');
+            }
+            const list=callable[1]==='Function.prototype.call'?{values:args.slice(1),reads:[]}:
+              callArgumentList(s.heap,args[reflect?2:1]?.value??U,{nullable:!reflect});
+            const promiseId=target.async?this.newPromise(s):null,
+              id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,list.values,
+                this.functionThis(target,thisValue),target.id);
+            s.control.a0.activeFrameId=id;
+            return {...operands(fn,...args),result:targetValue,reads:list.reads,causes:[{kind:'invocation',frameId:id}]};
+          }
+          if(callable[0]==='builtinfn'&&callable[1]==='Function.prototype.hasInstance')
+            return {...operands(fn,...args),...result(['bool',this.ordinaryHasInstance(s,receiver,args[0]?.value??U,eventId)])};
+          if(callable[0]==='builtinfn'&&receiver[0]==='ref'&&s.heap[receiver[1]]?.extensible===false&&
+             ['push','pop','shift','unshift','splice'].some(method=>callable[1]==='Array.prototype.'+method))
+            guestFault('TypeError','Cannot mutate frozen template array');
+          if(callable[0]==='builtinfn'&&callable[1]==='Array.prototype.sort'&&receiver[0]==='ref'&&s.heap[receiver[1]]?.extensible===false)
+            throw new TypeError('Sorting a frozen array requires ordered readonly write completions');
+          if(callable[0]==='builtinfn'&&callable[1].startsWith('Generator.')){
+            const generator=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(generator?.kind!=='generator')guestFault('TypeError','Generator receiver has no owned continuation');
+            const method=callable[1].slice('Generator.'.length),sent=args[0]??token(U,eventId);
+            if(method==='identity')return {...operands(fn,...args),...result(receiver)};
+            if(['initializing','executing'].includes(generator.state))guestFault('TypeError','Generator is already running');
+            const target=s.frames[generator.frameId],initial=generator.state==='suspendedStart';
+            if(generator.state==='completed'||initial&&method!=='next'){
+              generator.state='completed';target.status='completed';
+              if(method==='throw'){
+                const completion={type:'throw',value:sent};
+                this.routeCompletion(s,f,completion,eventId);return {...operands(fn,...args),completion};
+              }
+              return {...operands(fn,...args),...result(this.iteratorResult(s,method==='return'?sent.value:U,true,eventId))};
+            }
+            if(!['suspendedStart','suspendedYield'].includes(generator.state))throw new Error('Invalid generator suspension state');
+            generator.state='executing';target.status='running';target.callerFrameId=f.id;delete target.completion;
+            s.control.a0.activeFrameId=target.id;
+            const completion=method==='return'?{type:'return',value:sent}:method==='throw'?{type:'throw',value:sent}:null;
+            const delegated=target.delegateYield===true;
+            if(delegated){target.delegateResume={kind:method,value:sent};delete target.delegateYield;}
+            else if(completion)this.routeCompletion(s,target,completion,eventId);
+            else if(!initial)this.stackPush(target,sent.value,eventId);
+            if(method==='return'&&s.control.a0.activeFrameId===f.id&&target.status==='completed')
+              return {...operands(fn,...args),result:f.stack.at(-1).value};
+            return {...operands(fn,...args),causes:[{kind:'invocation',frameId:target.id}],
+              ...(method==='throw'&&!delegated?{completion}:{})};
+          }
+          if(callable[0]==='builtinfn'&&['Array.prototype.values','Array.prototype.keys','Array.prototype.entries','String.prototype.iterator'].includes(callable[1])){
+            const string=callable[1]==='String.prototype.iterator';
+            if(string?receiver[0]!=='str':receiver[0]!=='ref'||s.heap[receiver[1]]?.kind!=='array')
+              guestFault('TypeError','Iterator method requires its owned receiver');
+            const id=this.next(s,'obj');
+            s.heap[id]={id,kind:'iterator',iterated:copy(receiver),nextIndex:0,done:false,
+              iterationKind:string?'string':callable[1].slice('Array.prototype.'.length),
+              properties:{},propertyVersions:{},shapeVersion:0,version:0};
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
+          if(callable[0]==='builtinfn'&&['Iterator.next','Iterator.identity'].includes(callable[1])){
+            const iterator=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(callable[1]==='Iterator.identity')return {...operands(fn,...args),...result(receiver)};
+            if(iterator?.kind!=='iterator')guestFault('TypeError','Iterator receiver has no owned state');
+            let value=U;
+            if(!iterator.done){
+              const index=iterator.nextIndex;
+              if(index>10000)throw new RangeError('Owned iterator step budget');
+              if(iterator.iterationKind==='string'){
+                const text=iterator.iterated[1];
+                if(index>=text.length)iterator.done=true;
+                else{
+                  const code=text.charCodeAt(index),next=text.charCodeAt(index+1),width=
+                    code>=0xd800&&code<=0xdbff&&next>=0xdc00&&next<=0xdfff?2:1;
+                  value=['str',text.slice(index,index+width)];iterator.nextIndex+=width;
+                }
+              }else{
+                const array=s.heap[iterator.iterated[1]],length=decode(array.properties.length.value);
+                if(index>=length)iterator.done=true;
+                else{
+                  iterator.nextIndex++;
+                  if(iterator.iterationKind==='keys')value=['num',index];
+                  else{
+                    const property=ordinaryGet(s.heap,iterator.iterated,String(index));
+                    if(!property)throw new TypeError('Builtin iterator index getter requires an owned continuation');
+                    value=property.method.value;
+                    if(iterator.iterationKind==='entries'){
+                      const pair=this.next(s,'obj');s.heap[pair]={id:pair,kind:'array',properties:{
+                        0:token(['num',index],eventId),1:token(value,eventId),length:token(['num',2],eventId)},
+                        propertyVersions:{0:1,1:1,length:1},shapeVersion:3,version:0};value=['ref',pair];
+                    }
+                  }
+                }
+              }
+            }
+            const id=this.next(s,'obj');s.heap[id]={id,kind:'object',properties:{
+              value:token(value,eventId),done:token(['bool',iterator.done],eventId)},
+              propertyVersions:{value:1,done:1},shapeVersion:2,version:0};
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
+          if(callable[0]==='intrinsic'&&callable[1]==='Symbol'){
+            const value=args[0]?.value??U;
+            if(value[0]==='symbol')guestFault('TypeError','Cannot convert a Symbol value to a string');
+            if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
+              throw new TypeError('Symbol description requires owned scalar coercion');
+            const description=value[0]==='undefined'?U:['str',String(decode(value))];
+            return {...operands(fn,...args),...result(this.newSymbol(s,description,eventId))};
+          }
+          if(callable[0]==='builtinfn'&&['Symbol.for','Symbol.keyFor'].includes(callable[1])){
+            const value=args[0]?.value??U;
+            if(callable[1]==='Symbol.keyFor'){
+              if(value[0]!=='symbol')guestFault('TypeError','Symbol.keyFor requires a symbol');
+              const symbol=s.heap[value[1]];
+              return {...operands(fn,...args),...result(symbol?.registeredKey===undefined?U:['str',symbol.registeredKey])};
+            }
+            if(value[0]==='symbol')guestFault('TypeError','Cannot convert a Symbol value to a string');
+            if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
+              throw new TypeError('Symbol registry key requires owned scalar coercion');
+            const key=String(decode(value)),existing=Object.values(s.heap).find(entity=>entity.kind==='symbol'&&entity.registeredKey===key);
+            return {...operands(fn,...args),...result(existing?['symbol',existing.id]:this.newSymbol(s,['str',key],eventId,key))};
+          }
+          if(callable[0]==='builtinfn'&&callable[1].startsWith('Symbol.prototype.')){
+            if(receiver[0]!=='symbol')guestFault('TypeError','Symbol method requires a symbol receiver');
+            const description=this.symbolDescription(s,receiver);
+            return {...operands(fn,...args),...result(callable[1]==='Symbol.prototype.valueOf'?receiver:
+              ['str','Symbol('+(description[0]==='undefined'?'':description[1])+')'])};
+          }
           if(callable[0]==='intrinsic'&&['Number','BigInt','String'].includes(callable[1])){
             const value=args[0]?.value??U;
+            if(callable[1]==='Number'&&value[0]==='ref'){
+              if(!['object','array'].includes(s.heap[value[1]]?.kind))
+                throw new TypeError('Number object conversion requires an owned ordinary object');
+              if(f.pendingNumberConversion)throw new Error('Number conversion already active in this frame');
+              f.pendingNumberConversion=createNumberConversion(value,inst.siteId);
+              return {...operands(fn,...args),...this.advanceNumberConversion(s,f,eventId)};
+            }
+            if(value[0]==='symbol'){
+              if(callable[1]!=='String')guestFault('TypeError','Cannot convert a Symbol value to a number');
+              const description=this.symbolDescription(s,value);
+              return {...operands(fn,...args),...result(['str','Symbol('+(description[0]==='undefined'?'':description[1])+')'])};
+            }
             // An explicit primitive-only intrinsic leaf. CALL has already
             // evaluated every argument in order; unused extra arguments are
             // not coerced. Owned objects require a separate continuation and
@@ -1562,28 +2570,38 @@ if(callable[0]==='builtinfn' && callable[1]==='queueMicrotask'){
               putOwn(array,String(i),set.properties[String(i)].value,eventId);
             return {...operands(fn,...args),...result(['ref',id])};
           }
-          if(callable[0]==='builtinfn'&&callable[1].startsWith('DataView.prototype.')){
+          if(callable[0]==='builtinfn'&&callable[1]==='ArrayBuffer.isView'){
+  const node=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
+  return {...operands(fn,...args),...result(['bool',isOwnedTypedView(node)||isOwnedDataView(node)])};
+}
+if(callable[0]==='builtinfn'&&callable[1]==='ArrayBuffer.prototype.slice'){
+  const b=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+  if(b?.kind!=='array-buffer')guestFault('TypeError','Invalid ArrayBuffer slice receiver');
+  const clip=n=>n<0?Math.max(0,b.byteLength+n):Math.min(b.byteLength,n);
+  const begin=clip(binaryGuest(()=>binaryInteger(args[0]?.value)));
+  const end=args[1]?.value[0]===undefined||args[1].value[0]==='undefined'?b.byteLength:
+    clip(binaryGuest(()=>binaryInteger(args[1].value)));
+  const id=this.next(s,'obj'),length=Math.max(0,end-begin),out=newArrayBuffer(id,length);
+  out.bytes=b.bytes.slice(begin,begin+length);s.heap[id]=out;
+  return {...operands(fn,...args),...result(['ref',id])};
+}
+if(callable[0]==='builtinfn'&&callable[1].startsWith('DataView.prototype.')){
   const view=receiver[0]==='ref'?s.heap[receiver[1]]:null;
-  if(view?.kind!=='shared-data-view')
+  if(!isOwnedDataView(view))
     guestFault('TypeError','Invalid owned DataView receiver');
   const method=callable[1].slice('DataView.prototype.'.length);
   const getter=DATA_VIEW_GETTERS.includes(method),setter=DATA_VIEW_SETTERS.includes(method);
   if(!getter&&!setter)throw new Error('Invalid DataView method');
   const min=setter?2:1;
-  if(args.length<min||args.length>min+1)
-    guestFault('TypeError','Bounded DataView arity');
-  const offset=args[0]?.value[0]==='num'?decode(args[0].value):NaN;
+  const offset=binaryGuest(()=>binaryIndex(args[0]?.value));
   const width=SHARED_TYPES[method.slice(3)+'Array'].bytes;
   const length=effectiveDataViewLength(s.heap[view.bufferId],view);
-  if(!Number.isSafeInteger(offset)||offset<0||offset+width>length)
-    guestFault('RangeError','Owned DataView byte index out of bounds');
+  // SetViewValue converts the value before checking the view bounds.
+  const converted=setter?binaryGuest(()=>binaryElement(args[1]?.value??U,SHARED_TYPES[method.slice(3)+'Array'])):null;
+  if(offset+width>length)guestFault('RangeError','Owned DataView byte index out of bounds');
   const littleEndian=truthy(args[min]?.value??['bool',false]);
   if(setter){
-    const v=args[1]?.value;
-    if(SHARED_TYPES[method.slice(3)+'Array'].bigint?v?.[0]!=='bigint':
-      !['num','bool','str','null','undefined'].includes(v?.[0]))
-      guestFault('TypeError','Unowned DataView value coercion');
-    writeSharedDataView(s.heap[view.bufferId],view,method,offset,v,littleEndian);
+    writeSharedDataView(s.heap[view.bufferId],view,method,offset,encode(converted),littleEndian);
     return {...operands(fn,...args),...result(U)};
   }
   return {...operands(fn,...args),
@@ -1591,16 +2609,16 @@ if(callable[0]==='builtinfn' && callable[1]==='queueMicrotask'){
 }
 if(callable[0]==='builtinfn'&&callable[1]==='TypedArray.prototype.subarray'){
   const view=receiver[0]==='ref'?s.heap[receiver[1]]:null;
-  if(view?.kind!=='shared-int32-view'||args.length>2)guestFault('TypeError','Invalid subarray call');
+  if(!isOwnedTypedView(view))guestFault('TypeError','Invalid subarray receiver');
   const full=effectiveSharedLength(s.heap[view.bufferId],view);
   const clip=(n,otherwise)=>n===undefined?otherwise:
     n<0?Math.max(0,full+Math.trunc(n)):Math.min(full,Math.trunc(n));
-  const a=clip(args[0]?.value[0]==='num'?decode(args[0].value):undefined,0);
-  const b=clip(args[1]?.value[0]==='num'?decode(args[1].value):undefined,full);
+  const a=clip(binaryGuest(()=>binaryInteger(args[0]?.value)),0);
+  const b=args[1]?.value[0]===undefined||args[1].value[0]==='undefined'?full:clip(binaryGuest(()=>binaryInteger(args[1].value)),full);
   const id=this.next(s,'obj');
   s.heap[id]=newSharedView(id,s.heap[view.bufferId],view.elementType,
     view.byteOffset+a*SHARED_TYPES[view.elementType].bytes,
-    args.length<2&&view.lengthTracking?undefined:Math.max(0,b-a));
+    (args[1]?.value[0]===undefined||args[1].value[0]==='undefined')&&view.lengthTracking?undefined:Math.max(0,b-a));
   return {...operands(fn,...args),...result(['ref',id])};
 }
 if(callable[0]==='builtinfn'&&callable[1]==='SharedArrayBuffer.prototype.grow'){
@@ -1659,15 +2677,26 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               putOwn(array,String(i),entry.value,eventId));
             return {...operands(fn,...args),...result(['ref',id])};
           }
+          if(callable[0]==='builtinfn'&&['map','filter','slice','splice','concat'].some(method=>callable[1]==='Array.prototype.'+method)){
+            const array=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(array?.kind==='array'&&(objectPrototype(array)!=='Array.prototype'||
+               Object.hasOwn(array.properties,'constructor')||Object.hasOwn(array.accessors??{},'constructor')))
+              throw new TypeError('Array species lookup is outside the default ordinary array profile');
+            if(callable[1]==='Array.prototype.concat')for(const input of [receiver,...args.map(arg=>arg.value)]){
+              if(input[0]!=='ref'||!['object','array'].includes(s.heap[input[1]]?.kind))continue;
+              const hook=ordinaryGet(s.heap,input,symbolPropertyKey('well-known:isConcatSpreadable'));
+              if(!hook||hook.method.value[0]!=='undefined')throw new TypeError('Symbol.isConcatSpreadable requires an owned concat protocol');
+            }
+          }
           if(callable[0]==='ref' && s.heap[callable[1]]?.kind==='function'){
             const target=s.heap[callable[1]],promiseId=target.async?this.newPromise(s):null;
             const id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,args,
-              target.arrow?target.lexicalThis:receiver);
+              this.functionThis(target,receiver),target.id);
             s.control.a0.activeFrameId=id;
             return {...operands(fn,...args),result:['ref',callable[1]],causes:[{kind:'invocation',frameId:id}]};
           }
           if(callable[0]==='builtinfn' &&
-             ['filter','map','reduce','sort','some','forEach'].some(m=>callable[1]==='Array.prototype.'+m)){
+             ['filter','map','reduce','sort','some','every','find','findIndex','forEach'].some(m=>callable[1]==='Array.prototype.'+m)){
             const array=receiver[0]==='ref'?s.heap[receiver[1]]:null;
             if(!array||array.kind!=='array'||Object.keys(array.accessors??{}).length)
               throw new TypeError('Array callback needs owned array data');
@@ -1680,8 +2709,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             if(s.heap[callback[1]].async)
               throw new TypeError('Async array callback is outside the bounded profile');
             const method=callable[1].slice('Array.prototype.'.length);
-            if(method!=='reduce'&&args.length>1)
-              throw new TypeError('Unsupported callback thisArg');
+            if(args.length>(method==='sort'?1:2))
+              throw new TypeError('Array callback argument budget');
             if(method==='sort'&&length>64)
               throw new RangeError('Sort comparator budget exceeded');
             if(method==='reduce' && args.length>2)
@@ -1695,14 +2724,16 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               if(args.length>1)accumulator=args[1].value;
               else {
                 if(length===0)guestFault('TypeError','Reduce of empty array with no initial value');
-                const first=array.properties['0'];
-                if(!first)throw new TypeError('Sparse reduction first slot unmodeled');
-                accumulator=first.value;start=1;
+                if(![null,'Array.prototype','Object.prototype'].includes(objectPrototype(array)))
+                  throw new TypeError('Reduction inherited index semantics outside profile');
+                while(start<length&&!Object.hasOwn(array.properties,String(start)))start++;
+                if(start===length)guestFault('TypeError','Reduce of empty array with no initial value');
+                accumulator=array.properties[String(start)].value;start++;
               }
             }
             f.pendingArrayMethod={method,arrayId:array.id,callbackId:callback[1],
               outputId,length,index:start,accumulator,waitingFrameId:null,
-              siteId:inst.siteId,currentValue:U};
+              siteId:inst.siteId,currentValue:U,thisArg:method==='reduce'?U:args[1]?.value??U};
             if(method==='sort'){
               const slots=[];
               for(let i=0;i<length;i++){
@@ -1720,7 +2751,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               return {...operands(fn,...args),causes:[{kind:'invocation',frameId:f.pendingArrayMethod.waitingFrameId}]};
             delete f.pendingArrayMethod;
             return {...operands(fn,...args),...result(method==='reduce'?accumulator:
-              method==='forEach'?U:method==='some'?['bool',false]:['ref',outputId])};
+              method==='forEach'||method==='find'?U:method==='findIndex'?['num',-1]:
+              method==='some'?['bool',false]:method==='every'?['bool',true]:['ref',outputId])};
           }
           if(callable[0]==='builtinfn' && callable[1].startsWith('Number.prototype.')){
             const method=callable[1].slice('Number.prototype.'.length);
@@ -1772,9 +2804,14 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               throw new TypeError('Unsupported RegExp guest callback replacement');
             const pattern=decode(regex.properties['[[Source]]'].value);
             const flags=decode(regex.properties['[[Flags]]'].value);
-            if(decode(regex.properties.lastIndex.value)!==0)
-              throw new TypeError('Owned replacement requires initial RegExp.lastIndex = 0');
             const matches=scanPinnedReplacement(pattern,flags,receiver[1]);
+            // A global replacement collects matches from zero and finishes
+            // matching before invoking callbacks. Callback writes to lastIndex
+            // then remain visible to later callbacks and the caller.
+            if(regex.dataAttributes?.lastIndex?.writable===false)
+              guestFault('TypeError','Cannot assign to read only property');
+            if(!Object.is(decode(regex.properties.lastIndex.value),0))
+              putOwn(regex,'lastIndex',['num',0],eventId);
             if(!matches.length)return {...operands(fn,...args),...result(receiver)};
             f.pendingStringReplace={text:receiver[1],matches,index:0,lastEnd:0,
               output:'',callbackId:callback.id,waitingFrameId:null,siteId:inst.siteId};
@@ -1904,19 +2941,43 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 throw new TypeError('Object.assign source requires an owned data object');
               if(item===target)
                 throw new TypeError('Object.assign self-source requires ordered reentrant property semantics');
-              for(const [key,record] of Object.entries(item.properties)){
-                if(item.kind==='array'&&key==='length')continue;
+              for(const key of ownPropertyKeys(item)){
+                if(!enumerableOwn(item,key))continue;
                 if(key==='__proto__')
                   throw new TypeError('Object.assign prototype setter not modeled');
-                copies.push([key,record.value]);
+                copies.push([key,item.properties[key].value]);
               }
             }
             for(const [key,value] of copies)putOwn(target,key,value,eventId);
             return {...operands(fn,...args),...result(ref)};
           }
-          if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys','Object.values','Object.entries'].includes(callable[1])){
+          if(callable[0]==='builtinfn'&&['Object.isFrozen','Object.getOwnPropertyDescriptor'].includes(callable[1])){
+            const base=args[0]?.value??U,object=base[0]==='ref'?s.heap[base[1]]:null;
+            if(callable[1]==='Object.isFrozen'){
+              const primitive=!['ref','promise','intrinsic','builtinfn','hostfn'].includes(base[0]);
+              const frozen=primitive||object?.extensible===false&&ownPropertyKeys(object).every(key=>{
+                const accessor=object.accessors?.[key],data=object.dataAttributes?.[key];
+                return accessor?accessor.configurable===false:data?.configurable===false&&data.writable===false;
+              });
+              return {...operands(fn,...args),...result(['bool',!!frozen])};
+            }
+            if(!object||!['object','array','generator'].includes(object.kind)&&!(object.kind==='function'&&object.properties?.name&&object.properties?.length))
+              throw new TypeError('Own descriptor reflection requires owned ordinary storage');
+            const key=valueKey(args[1]?.value??U),accessor=object.accessors?.[key],slot=object.properties[key];
+            if(!accessor&&!slot)return {...operands(fn,...args),...result(U)};
+            const attributes=object.dataAttributes?.[key],arrayLength=object.kind==='array'&&key==='length';
+            const fields=accessor?{get:accessor.get.value,set:accessor.set.value,enumerable:['bool',accessor.enumerable],configurable:['bool',accessor.configurable]}:
+              {value:slot.value,writable:['bool',attributes?.writable??true],enumerable:['bool',attributes?.enumerable??!arrayLength],configurable:['bool',attributes?.configurable??!arrayLength]};
+            const id=this.next(s,'obj'),descriptor=s.heap[id]={id,kind:'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};
+            for(const [name,value] of Object.entries(fields))putOwn(descriptor,name,value,eventId);
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
+          if(callable[0]==='builtinfn' && ['Object.hasOwn','Object.keys','Object.values','Object.entries','Object.getOwnPropertySymbols','Object.getOwnPropertyNames','Reflect.ownKeys'].includes(callable[1])){
             const base=args[0]?.value??U,obj=base[0]==='ref'?s.heap[base[1]]:null;
-            if(!obj||!['object','array'].includes(obj.kind))
+            if(obj?.kind==='function'&&!['Object.keys','Object.values','Object.entries'].includes(callable[1])&&
+               !(obj.properties?.name&&obj.properties?.length))
+              throw new TypeError('Function descriptor reflection requires the complete Function profile');
+            if(!obj||!['object','array','function','generator'].includes(obj.kind))
               throw new TypeError('Object builtin requires an owned ordinary reference');
             if(callable[1]==='Object.hasOwn'){
               const property=valueKey(args[1]?.value??U);
@@ -1924,20 +2985,25 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 Object.hasOwn(obj.properties,property) ||
                 Object.hasOwn(obj.accessors??{},property)])};
             }
-            if(Object.keys(obj.accessors??{}).length)
-              throw new TypeError('Ordered accessor enumeration is outside the bounded profile');
-            const keys=Object.keys(obj.properties).filter(k=>obj.kind!=='array'||k!=='length');
+            const keysOnly=['Object.keys','Object.getOwnPropertySymbols','Object.getOwnPropertyNames','Reflect.ownKeys'].includes(callable[1]);
+            if(!keysOnly&&Object.keys(obj.accessors??{}).length)
+              throw new TypeError('Ordered accessor value enumeration is outside the bounded profile');
+            const keys=ownPropertyKeys(obj).filter(key=>{
+              if(callable[1]==='Reflect.ownKeys')return true;
+              if(callable[1]==='Object.getOwnPropertySymbols')return isSymbolPropertyKey(key);
+              return !isSymbolPropertyKey(key)&&(callable[1]==='Object.getOwnPropertyNames'||enumerableOwn(obj,key));
+            });
             const id=this.next(s,'obj');
             const array=s.heap[id]={id,kind:'array',properties:{length:token(['num',0],eventId)},
               propertyVersions:{length:0},shapeVersion:0,version:0};
             keys.forEach((key,i)=>{
-              let member=callable[1]==='Object.keys'?['str',key]:obj.properties[key].value;
+              let member=keysOnly?propertyKeyValue(key):obj.properties[key].value;
               if(callable[1]==='Object.entries'){
                 const pairId=this.next(s,'obj');
                 const pair=s.heap[pairId]={id:pairId,kind:'array',
                   properties:{length:token(['num',0],eventId)},
                   propertyVersions:{length:0},shapeVersion:0,version:0};
-                putOwn(pair,'0',['str',key],eventId);
+                putOwn(pair,'0',propertyKeyValue(key),eventId);
                 putOwn(pair,'1',member,eventId);
                 member=['ref',pairId];
               }
@@ -2050,8 +3116,10 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                const reversed=slots.slice().reverse();
                if(method==='toReversed')out=makeArray(reversed);
                else{
-                 for(let i=0;i<length;i++)
+                 for(let i=0;i<Math.floor(length/2);i++){
                    putOwn(obj,String(i),reversed[i],eventId);
+                   putOwn(obj,String(length-1-i),reversed[length-1-i],eventId);
+                 }
                  out=receiver;
                }
              }else if(method==='fill'){
@@ -2161,8 +3229,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
            if(callable[0]==='builtinfn' && ['Object.create','Object.setPrototypeOf','Object.getPrototypeOf','Object.defineProperty'].includes(callable[1])){
             const primitiveProto=v=>{
               if(v?.[0]==='null')return null;
-              if(v?.[0]==='intrinsic' && ['Object.prototype','Array.prototype'].includes(v[1]))return v[1];
-              if(v?.[0]==='ref' && ['object','array'].includes(s.heap[v[1]]?.kind))return v[1];
+              if(v?.[0]==='intrinsic' && ['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(v[1]))return v[1];
+              if(v?.[0]==='ref' && ['object','array','function','generator'].includes(s.heap[v[1]]?.kind))return v[1];
               guestFault('TypeError','Prototype must be null or an owned ordinary object');
             };
             const v=args[0]?.value??U, obj=v[0]==='ref'?s.heap[v[1]]:null;
@@ -2182,13 +3250,37 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               const d=descriptor.properties;
               if(![null,'Object.prototype','Array.prototype'].includes(objectPrototype(descriptor)))
                 throw new TypeError('Inherited descriptor fields are outside the bounded profile');
-              const previous=obj.accessors?.[name];
-              if(!Object.hasOwn(d,'get')&&!Object.hasOwn(d,'set')&&!previous)
-                throw new TypeError('Only accessor descriptors are modeled');
-              if(Object.hasOwn(d,'value')||Object.hasOwn(d,'writable'))
-                if(Object.hasOwn(d,'get')||Object.hasOwn(d,'set'))
-                  guestFault('TypeError','Invalid mixed data/accessor descriptor');
-                else throw new TypeError('Data descriptor conversion is outside the bounded profile');
+              const previous=Object.hasOwn(obj.accessors??{},name)?obj.accessors[name]:null;
+              if(obj.extensible===false&&!Object.hasOwn(obj.properties,name)&&!previous)
+                guestFault('TypeError','Cannot define property on non-extensible object');
+              const accessorDescriptor=Object.hasOwn(d,'get')||Object.hasOwn(d,'set'),
+                dataDescriptor=Object.hasOwn(d,'value')||Object.hasOwn(d,'writable');
+              if(accessorDescriptor&&dataDescriptor)guestFault('TypeError','Invalid mixed data/accessor descriptor');
+              if(!accessorDescriptor&&(!previous||dataDescriptor)){
+                // ArraySetLength and indexed descriptor deletion need their
+                // own ordered continuation. Ordinary data definitions retain
+                // exactly the supplied fields and preserve omitted metadata.
+                if(obj.kind==='array'&&(name==='length'||arrayIndex(name)))
+                  throw new TypeError('Array data descriptors require their explicit length profile');
+                const present=Object.hasOwn(obj.properties,name),attributes=present?
+                  {writable:true,enumerable:true,configurable:true,...obj.dataAttributes?.[name]}:null,
+                  value=d.value??(present?obj.properties[name]:token(U)),
+                  writable=Object.hasOwn(d,'writable')?truthy(d.writable.value):attributes?.writable??false,
+                  enumerable=Object.hasOwn(d,'enumerable')?truthy(d.enumerable.value):previous?.enumerable??attributes?.enumerable??false,
+                  configurable=Object.hasOwn(d,'configurable')?truthy(d.configurable.value):previous?.configurable??attributes?.configurable??false;
+                const current=previous??attributes;
+                if(current?.configurable===false&&(configurable||enumerable!==current.enumerable||previous||
+                  attributes.writable===false&&(writable||!ownedSameValue(value.value,obj.properties[name].value))))
+                  guestFault('TypeError','Cannot redefine a non-configurable property');
+                putOwn(obj,name,value.value,eventId,{literal:true});
+                if(previous)delete obj.accessors[name];
+                obj.dataAttributes??={};
+                Object.defineProperty(obj.dataAttributes,name,{value:{writable,enumerable,configurable},
+                  enumerable:true,configurable:true,writable:true});
+                return {...operands(fn,...args),...result(v)};
+              }
+              if(obj.dataAttributes?.[name]?.configurable===false&&accessorDescriptor)
+                guestFault('TypeError','Cannot redefine frozen data property');
               // ValidateAndApplyPropertyDescriptor preserves absent fields
               // when changing an existing property. New accessors alone get
               // the false/undefined defaults; replacing ordinary own data
@@ -2207,17 +3299,19 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 guestFault('TypeError','Cannot redefine a non-configurable or reserved property');
               const existingData=Object.hasOwn(obj.properties,name),
                 enumerable=Object.hasOwn(d,'enumerable')?truthy(d.enumerable.value):
-                  previous?.enumerable??existingData,
+                  previous?.enumerable??obj.dataAttributes?.[name]?.enumerable??existingData,
                 configurable=Object.hasOwn(d,'configurable')?truthy(d.configurable.value):
-                  previous?.configurable??existingData;
+                  previous?.configurable??obj.dataAttributes?.[name]?.configurable??existingData;
               if(previous&&!previous.configurable&&
                  (configurable||enumerable!==previous.enumerable||
                   !ownedSameValue(getter.value,previous.get.value)||
                   !ownedSameValue(setter.value,previous.set.value)))
                 guestFault('TypeError','Cannot redefine a non-configurable property');
+              if(!previous&&!existingData)(obj.propertyOrder??=ownPropertyKeys(obj)).push(name);
               obj.accessors??={};
               obj.accessors[name]={get:getter,set:setter,enumerable,configurable};
               delete obj.properties[name];
+              if(obj.dataAttributes)delete obj.dataAttributes[name];
               obj.propertyVersions[name]=(Object.hasOwn(obj.propertyVersions,name)?obj.propertyVersions[name]:0)+1;
               obj.shapeVersion++;
               return {...operands(fn,...args),...result(v)};
@@ -2233,26 +3327,33 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 shapeVersion:0,version:0};
               return {...operands(fn,...args),...result(['ref',id])};
             }
-            if(!obj||!['object','array'].includes(obj.kind))
+            if(callable[1]==='Object.getPrototypeOf'&&v[0]==='intrinsic'&&GENERATOR_INTRINSIC_PROTOTYPES.includes(v[1]))
+              return {...operands(fn,...args),...result(['intrinsic',generatorIntrinsicParent(v[1])])};
+            if(callable[1]==='Object.getPrototypeOf'&&v[0]==='intrinsic'&&['Object.prototype','Array.prototype','Function.prototype'].includes(v[1]))
+              return {...operands(fn,...args),...result(v[1]==='Object.prototype'?['null']:['intrinsic','Object.prototype'])};
+            if(!obj||!['object','array','function','generator'].includes(obj.kind))
               guestFault('TypeError','Prototype operation requires an owned ordinary object');
             if(callable[1]==='Object.getPrototypeOf'){
               const proto=objectPrototype(obj);
               const out=proto===null?['null']:
-                proto==='Object.prototype'||proto==='Array.prototype'?['intrinsic',proto]:['ref',proto];
+                ['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(proto)?['intrinsic',proto]:['ref',proto];
               return {...operands(fn,...args),...result(out)};
             }
             const proto=primitiveProto(args[1]?.value??U);
             const visited=new Set([obj.id]);
             let current=proto;
-            while(current!==null && current!=='Object.prototype' && current!=='Array.prototype'){
+            while(current!==null && !['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(current)){
               if(visited.has(current))guestFault('TypeError','Cyclic prototype value');
               visited.add(current);
               const next=s.heap[current];
-              if(!next||!['object','array'].includes(next.kind))
+              if(!next||!['object','array','function','generator'].includes(next.kind))
                 throw new TypeError('Broken prototype identity');
               current=objectPrototype(next);
             }
-            if(objectPrototype(obj)!==proto){obj.prototype=proto;obj.shapeVersion++;}
+            if(objectPrototype(obj)!==proto){
+              if(obj.extensible===false)guestFault('TypeError','Cannot set prototype of non-extensible object');
+              obj.prototype=proto;obj.shapeVersion++;
+            }
             return {...operands(fn,...args),...result(v)};
           }
           if(callable[0]==='builtinfn' && ['Object.valueOf','Object.toString','Array.toString'].includes(callable[1])){
@@ -2282,6 +3383,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
           if(callable[0]==='builtinfn' && callable[1].startsWith('Atomics.')){
   const method=callable[1].slice(8);
   const view=args[0]?.value[0]==='ref'?s.heap[args[0].value[1]]:null;
+  if(view?.kind==='typed-array')throw new BinaryProfileError('Non-shared Atomics require separate protocol qualification');
   if(view?.kind!=='shared-int32-view')
     guestFault('TypeError','Atomics requires owned integer shared view');
   const index=args[1]?.value[0]==='num'?decode(args[1].value):NaN;
@@ -2358,6 +3460,18 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
            if(v[0]!=='promise')this.resolvePromise(s,promiseId,v,a.origin);
           f.awaiting=promiseId;this.observePromise(s,promiseId,{kind:'await',frameId:f.id});
           this.suspendAsync(s,f);return {...operands(a),causes:[{kind:'promise',promiseId}]};
+        }
+        case 'GENERATOR_START':{
+          const output=this.suspendGenerator(s,f,U,eventId,true);return {result:output};
+        }
+        case 'DELEGATE_YIELD':{
+          const value=pop();f.delegateYield=true;
+          const output=this.suspendGenerator(s,f,value.value,eventId,false,true);
+          return {...operands(value),result:output};
+        }
+        case 'YIELD':{
+          const value=pop(),output=this.suspendGenerator(s,f,value.value,eventId);
+          return {...operands(value),result:output};
         }
         case 'RETURN':{const v=pop();this.routeCompletion(s,f,{type:'return',value:v},eventId);return {...operands(v),result:v.value};}
         case 'THROW':{const v=pop(),completion={type:'throw',value:v};this.routeCompletion(s,f,completion,eventId);return {...operands(v),completion};}
@@ -2475,8 +3589,8 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
         for(const node of i.graph.objects){
           const id=identities.get(node.id),properties={},propertyVersions={};
           for(const member of node.properties){
-            properties[member.key]=token(value(member.value),eventId);
-            propertyVersions[member.key]=0;
+            properties[stringPropertyKey(member.key)]=token(value(member.value),eventId);
+            propertyVersions[stringPropertyKey(member.key)]=0;
           }
           s.heap[id]={id,kind:node.kind,...(node.prototype===null?{prototype:null}:{}),
             properties,propertyVersions,shapeVersion:0,version:0};
@@ -2529,7 +3643,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
          const reject=['builtinfn','Promise.thenable.reject:'+p.id+':'+job.serial];
          const inner=fn.async?this.newPromise(s):null;
          const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,
-           [token(resolve,eventId),token(reject,eventId)],['ref',job.thenableId]);
+           [token(resolve,eventId),token(reject,eventId)],this.functionThis(fn,['ref',job.thenableId]),fn.id);
          s.frames[id].thenableJob={promiseId:p.id,serial:job.serial};
          s.control.a0.activeFrameId=id;
          return {causes:[{kind:'promise',promiseId:p.id},{kind:'invocation',frameId:id}],
@@ -2543,7 +3657,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
              effect.args[i]?.[0]==='ref'&&effect.args[i][1]===job.functionId))
           throw new Error('External callback has no owned registered function');
         const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,null,
-          job.args.map(v=>token(v,eventId)),fn.arrow?fn.lexicalThis:U);
+          job.args.map(v=>token(v,eventId)),this.functionThis(fn),fn.id);
         s.frames[id].reactionJob=true;
         s.control.a0.activeFrameId=id;
         return {causes:[{kind:'effect',effectId:job.effectId},
@@ -2555,7 +3669,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
           throw new Error('Queued microtask lacks owned function identity');
         const inner=callback.async?this.newPromise(s):null;
         const id=this.newFrame(s,callback.codeId,callback.closureEnvId,null,inner,[],
-          callback.arrow?callback.lexicalThis:U);
+          this.functionThis(callback),callback.id);
         s.frames[id].reactionJob=true;
         s.control.a0.activeFrameId=id;
         return {causes:[{kind:'invocation',frameId:id}],result:U};
@@ -2632,7 +3746,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
         const fn=s.heap[callback[1]];
         const args=isFinally?[]:[original];
         const inner=fn.async?this.newPromise(s):null;
-        const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,args,U);
+        const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,args,this.functionThis(fn),fn.id);
         const child=s.frames[id];
         child.reactionJob=true;
         if(inner)this.resolvePromise(s,targetPromiseId,['promise',inner],eventId);
@@ -2675,7 +3789,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       if(fn?.kind!=='function')throw new Error('Virtual timer callback identity missing');
       const inner=fn.async?this.newPromise(s):null;
       const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,[],
-        fn.arrow?fn.lexicalThis:U);
+        this.functionThis(fn),fn.id);
       s.frames[id].reactionJob=true;
       clock.activeFrameId=id;
       return {causes:[{kind:'invocation',frameId:id}],result:['num',clock.now]};
@@ -2726,6 +3840,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
     const bundle={manifest:{schema:'semantic-tracing-run/2',profile:this.entrySpec?'training-js/1':'bounded-js-subset/2',completeSemanticTrace:false,
       completeEcma262:false,completeHostIntegration:false,coverage:'docs/STATUS.md',chunkPolicy:'accumulate-until-wait/1',
       eventVersion:2,operationVersion:2,mutationSchema:'owned-spec-commands/2',
+      ownedSymbols:{revision:1,propertyKeys:'owned-property-key/1',hostTransport:'unsupported'},
       ownedArithmetic:{revision:2,referenceEngineRevision:ENGINE_REVISION,operators:['+','-','*','/','%','**'],domain:'primitives-and-bounded-ordinary-data-objects'},
       guestExecution:'owned-bytecode-and-spec-phase-machine',replay:'bounded-deterministic-reexecution/2'},
       sources:this.sources,sites:this.sites,programs:this.programs,entrySpec:this.entrySpec??null,initialState:this.initialState,finalState:this.state,

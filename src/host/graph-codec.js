@@ -2,6 +2,7 @@
 // The JSON API codec intentionally remains narrower. This codec never invokes
 // accessors, coercions, proxies or guest functions while taking a snapshot.
 import {encode,decode} from '../values.js';
+import {stringPropertyName} from '../property-keys.js';
 import {inspectDataObject} from '../training/data-graph-contract.js';
 
 export const GRAPH_CODEC='owned-graph/1';
@@ -67,7 +68,7 @@ export function materializeOwnedGraph(heap,args,options={}){
       const slot=Object.getOwnPropertyDescriptor(entity.properties,key);
       requireValue(slot&&own(slot,'value')&&slot.value&&own(slot.value,'value'),
         'Owned properties require value descriptors');
-      node.properties.push({key,value:visit(slot.value.value,depth+1)});
+      node.properties.push({key:stringPropertyName(key),value:visit(slot.value.value,depth+1)});
       version.properties[key]=entity.propertyVersions?.[key]??0;
     }
     if(entity.kind==='array'){

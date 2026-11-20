@@ -4,12 +4,74 @@ An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstra
 
 This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [current semantic-execution scope](docs/SEMANTIC_REASONING_TRACE.md) and [coverage ledger](coverage/required.json).
 
+## Current pre-release candidate
+
+This repository and its companion, `werg/megatoken`, are pre-release. APIs and
+saved formats change in place; affected producers, consumers and fixtures are
+updated together. Existing numeric labels identify implementation paths and
+do not promise compatibility. See the [development instructions](AGENTS.md).
+
+The [compositional v8 candidate](docs/SEMANTIC_REGIONS_V8.md) combines compact
+calculations with checked property access, calls, cleanup and suspension in one
+shared state. Its bounded source profiles cover Symbols and ordinary properties,
+ordinary `for…in` enumeration, shared binary views, construction and private fields,
+Number conversion and ordinary cleanup, builtin and bounded custom iterators,
+flat iterable declarations, synchronous generators and delegation,
+Promise joins/executors, and ordinary Proxy get/set traps. Each profile documents its supported boundaries;
+the candidate does not claim unrestricted ECMAScript coverage. The
+[Promise scheduling profile](docs/V8_PROMISE_SCHEDULER.md) documents the resolution
+and cleanup jobs that require separate checked protocols.
+
+The [complete-population engineering qualification](coverage/language-expansion/native-v8-012c9fe-all/README.md)
+passes all 665 expansion cases, 26 interoperability cases and 11 original-gallery
+cases through source/native admission and exact token metering at producer
+`012c9fe` / consumer `39c4036`. The
+[latest verified dataset](coverage/language-expansion/dataset-v8-012c9fe/README.md)
+contains 37 freshly admitted episodes and 1,021 complete examples at the same
+pair, with exact prompt/target tokens, masks and frozen component splits checked.
+An [independent export](coverage/language-expansion/dataset-v8-012c9fe-independent/README.md)
+reproduced the complete dataset and all 37 native input/receipt pairs byte for byte.
+The [completion ledger](docs/LANGUAGE_COVERAGE_STATUS.md) links the full producer,
+native and integration regressions, current profile evidence and bounded actual
+model diagnostics. External comprehension, general learned execution, controlled
+serving-efficiency studies and default promotion are outside this bounded
+candidate's completion scope; their unmeasured status remains explicit.
+
+```js
+import {verifyRegionTrainingCase} from 'tracing-js-self/semantic';
+
+const checked = await verifyRegionTrainingCase({
+  id: 'double-elements', family: 'ordered-map', entry: 'run',
+  source: '"use strict";function run(xs){return xs.map(x=>x*2);}',
+  args: [[2, 3, 4]], fixture: {calls: []}
+});
+console.log(checked.status, checked.exported?.sidecar.regionCoverage);
+```
+
+```sh
+npm run test:semantic-v8
+npm run contracts:check
+node tools/language-expansion-benchmark.mjs --out ../v8-coverage \
+  --mode coverage --population all --inputs all --trace-version 8
+node tools/qualify-semantic-v8.mjs --out ../v8-source-check \
+  --population interoperability --prepare-only
+```
+
+The interoperability command includes every declared protocol source example.
+The full benchmark retains all 665 declared attempts and their actual
+dispositions; the original 11-case gallery is a separate population.
+[Evaluation instructions](docs/LANGUAGE_EXPANSION_EVALUATION.md)
+cover exact token measurements and independent native admission. Source checks,
+native replay and token accounting do not establish model comprehension or
+learned execution; those measurements remain separate. The existing default
+command path is v6, and v8 is selected explicitly through these APIs and tools.
+
 The [algorithm representation refactor](docs/SEMANTIC_ALGORITHM_IMPLEMENTATION.md)
 builds on the v6 baseline: several certified source forms should share a typed
 core that states the computation and relevant effects. Its
 [semantic and observation contract](docs/SEMANTIC_ALGORITHM_CONTRACT.md)
 defines the bounded equivalences, causal boundaries, and qualification gates.
-The ledger separates completed work from release evidence; historical artifacts
+The ledger separates completed work from validation evidence; historical artifacts
 keep their original versions.
 
 The current v6 pipeline includes bounded synchronous and asynchronous
@@ -428,8 +490,8 @@ See [integration boundaries](docs/NATLANG_INTEGRATION.md) and
 
 For mutable ESM exports, import-cell aliasing, dependency initialization and
 bounded top-level `await`, the separate opt-in
-`tracing-js-self/evaluated-modules` entry point executes an explicit **acyclic**
-in-memory source graph through the owned interpreter. Optional versioned native
+`tracing-js-self/evaluated-modules` entry point executes an explicit
+in-memory source graph, including synchronous cycles and live imported cells, through the owned interpreter. Optional versioned native
 services record guest input arrival and delivery; replay invokes no native
 service. This is neither a persistent ESM realm nor a general module loader.
 See [evaluated module profile](docs/EVALUATED_MODULES.md).
@@ -467,3 +529,14 @@ pins its original three tested implementations; it does not qualify v5 artifacts
 or certify learned model quality.
 
 
+
+## Language coverage expansion
+
+The [coverage plan](docs/LANGUAGE_COVERAGE_PLAN.md) distinguishes parser acceptance,
+owned execution, independent source checks, compact recognition, detailed
+fallback, native admission, and actual model success. Generate a fresh v7
+report with `npm run coverage:current -- --out coverage/current-v7.json`; add
+`--population gallery` for the unchanged eleven-case regression gallery.
+`--version 6` explicitly selects the historical producer. A historical receipt
+is not a result for the current revision. Unconfigured native, tokenizer, and
+model stages remain untested; bytes are never reported as token estimates.

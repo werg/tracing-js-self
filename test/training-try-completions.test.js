@@ -42,6 +42,6 @@ test('natlang TS catch/finally guest values execute and exactly replay',()=>{
   assert.equal(result.result,8);
   assert.equal(archives.length,1);
 });
-test('destructured catch and exotic thrown values remain outside profile',()=>{
-  assert.equal(verifyOwnedSourceCase({source:strict('function f(){try{throw 1;}catch({message}){return message;}}'),entry:'f'}).status,'unsupported');
+test('destructured catch observes primitive properties through owned binding',()=>{
+  assert.equal(verifyOwnedSourceCase({source:strict('function f(){try{throw 1;}catch({message}){return message;}}'),entry:'f'}).status,'locally_verified');
 });

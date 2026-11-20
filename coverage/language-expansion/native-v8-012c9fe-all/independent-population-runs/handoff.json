@@ -1,0 +1,121 @@
+{
+  "schema": "native-current-qualification-handoff/1",
+  "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "declared": 37,
+  "sourceQualified": 37,
+  "nativeAdmitted": 37,
+  "tokenMeasured": 37,
+  "nativePackingMeasured": 37,
+  "retainedNativeInputs": 37,
+  "populations": [
+    {
+      "population": "interoperability",
+      "counts": {
+        "declared": 26,
+        "sourceQualified": 26,
+        "nativeAdmitted": 26,
+        "tokenMeasured": 26,
+        "nativePackingMeasured": 26,
+        "retainedNativeInputs": 26
+      },
+      "flatTokens": {
+        "generated": 29451,
+        "detailed": 28472,
+        "detailedShare": 0.9667583443686123,
+        "terminal": 924,
+        "observedAndContext": 1470900,
+        "total": 1501275,
+        "peakContext": 2933
+      },
+      "nativePacking": {
+        "status": "measured",
+        "measuredEpisodes": 26,
+        "unmeasuredEpisodes": 0,
+        "generatedTokens": 29451,
+        "observedTokens": 1500471,
+        "terminalTokens": 0,
+        "physicalRecords": 3430,
+        "logicalRecords": 980,
+        "scope": "Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."
+      },
+      "files": [
+        {
+          "path": "/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/interoperability/report.json",
+          "sha256": "e85bb884c22f8e8195581adf0f7409a6f9bb045e62155d76770f123b52b21878"
+        },
+        {
+          "path": "/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/interoperability-costs/report.json",
+          "sha256": "9f2c2200fe25d6c1fcdfb621fe5db20a9fdaf4dd33e2f1e5d894519e1c3ed70f"
+        },
+        {
+          "path": "/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/interoperability-receipt.json",
+          "sha256": "2a198deaac051525c5e0655728d745eb881992022198983cddafed67822887fb"
+        },
+        {
+          "path": "/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/interoperability/native-inputs-manifest.json",
+          "sha256": "dce6f3a076e1256f383d971b5591097f29ab32fd36df9c06ee4b2115ec7e6b71"
+        }
+      ]
+    },
+    {
+      "population": "gallery",
+      "counts": {
+        "declared": 11,
+        "sourceQualified": 11,
+        "nativeAdmitted": 11,
+        "tokenMeasured": 11,
+        "nativePackingMeasured": 11,
+        "retainedNativeInputs": 11
+      },
+      "flatTokens": {
+        "generated": 3378,
+        "detailed": 2915,
+        "detailedShare": 0.8629366489046774,
+        "terminal": 97,
+        "observedAndContext": 139863,
+        "total": 143338,
+        "peakContext": 2875
+      },
+      "nativePacking": {
+        "status": "measured",
+        "measuredEpisodes": 11,
+        "unmeasuredEpisodes": 0,
+        "generatedTokens": 3378,
+        "observedTokens": 158551,
+        "terminalTokens": 0,
+        "physicalRecords": 407,
+        "logicalRecords": 169,
+        "scope": "Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."
+      },
+      "files": [
+        {
+          "path": "/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/gallery/report.json",
+          "sha256": "f70d5ae9d4154c129fe0e885389ca6f0ccafab64e77eefc59fdeb2377d750a63"
+        },
+        {
+          "path": "/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/gallery-costs/report.json",
+          "sha256": "3bc6cfce21f829b431d36c623929c4366717f5bab81cfffe3737dc8da7414fd0"
+        },
+        {
+          "path": "/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/gallery-receipt.json",
+          "sha256": "3df094764bd363621ba5f4b5cac35dc2a16a349a1211f9e19950722910c92c89"
+        },
+        {
+          "path": "/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/gallery/native-inputs-manifest.json",
+          "sha256": "063376eaabbe54db5d416e1d84a07c840c5b3ce11828c907db78a156cb55cb8c"
+        }
+      ]
+    }
+  ],
+  "helpers": [
+    {
+      "path": "/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/qualify_native_012_39.py",
+      "sha256": "6146f50b5938180bbcf83dc5afc0374679aefead7e12c693b26628519f3bdfc9"
+    },
+    {
+      "path": "/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/retain-native-inputs.mjs",
+      "sha256": "582c78f86fee40434c5f1973b59300ce6baf0da6d31657799c776c5354fb9516"
+    }
+  ]
+}

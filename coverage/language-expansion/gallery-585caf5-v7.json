@@ -1,0 +1,1030 @@
+{
+  "schema": "semantic-capability-ledger/3",
+  "producerRevision": "585caf58b38360d7e3b53c861e3c64cb611c0eb3",
+  "population": "gallery",
+  "populationDigest": "9db75b13c080debd7f984e9b5c9e05378ecd70e6dcb3a721720e5e156297a18e",
+  "contracts": {
+    "execution": "semantic-execution/7",
+    "trace": "semantic-trace/7",
+    "context": "semantic-context/7",
+    "continuation": "semantic-continuation/7"
+  },
+  "environment": {
+    "schema": "semantic-execution-environment/1",
+    "node": "24.22.3",
+    "v8": "13.6.233.17-node.63",
+    "platform": "linux",
+    "arch": "x64",
+    "timezone": "Europe/Berlin",
+    "parser": "8.15.0",
+    "typescript": "5.9.3",
+    "packageLockDigest": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88",
+    "implementationDigest": "3e17deed6b60710eacb746217e84e64f370a9ffa176db8e3d22dbcffc08d5566",
+    "locale": "en-US",
+    "referenceIsolation": {
+      "schema": "semantic-reference-isolation/1",
+      "mode": "trusted-process",
+      "launcherSha256": "b9d3bd23d092083173508fd570c3d5b6dc4e0e98fc9814e3df543e634351ea24"
+    }
+  },
+  "nativePolicy": null,
+  "unit": "declared source/input/fixture probe",
+  "rows": [
+    {
+      "id": "compound-pure",
+      "feature": "compound-pure",
+      "profile": "training-js/1",
+      "traceVersion": 7,
+      "sourceDigest": "095956b8d5e642b98014804fbb8681eabd0642629adeb0048f1bd4d3539d8378",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "projectionAndPublicReplay": "passed",
+        "compactRecognition": "passed",
+        "normalizationConvergence": "untested",
+        "negativeSeparation": "untested",
+        "detailedFallback": "untested",
+        "nativeAdmission": "untested",
+        "modelComprehension": "untested",
+        "modelNextStep": "untested",
+        "modelExecution": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "d8907e3841b45c7a2cdf1fc4e51e3e45eb9c1544fad18de34657d8ba7db09add",
+      "representation": "algorithm",
+      "executionProfile": "algorithm-execution/1",
+      "sourceEvidence": {
+        "schema": "effectful-source-checks/5",
+        "status": "agreed",
+        "computations": 4,
+        "branches": 0,
+        "completions": {
+          "schema": "source-completions/1",
+          "status": "agreed",
+          "checked": 1,
+          "counts": {
+            "return": 1
+          },
+          "referenceValues": "scalars-and-input-rooted-reference-identity",
+          "uncovered": [
+            "intermediate-reference-property-snapshots",
+            "implicit-parameter-initialization",
+            "implicit-call-throws-without-a-catch-or-finally",
+            "Promise-job-internals"
+          ]
+        }
+      },
+      "regions": {
+        "status": "passed",
+        "unit": "whole episode",
+        "compact": 1,
+        "detailed": 0,
+        "total": 1
+      },
+      "domain": [
+        {
+          "id": "a0",
+          "type": "number"
+        },
+        {
+          "id": "a1",
+          "type": "number"
+        },
+        {
+          "id": "a2",
+          "type": "number"
+        },
+        {
+          "id": "a3",
+          "type": "number"
+        }
+      ],
+      "publicCost": {
+        "generatedRecords": 2,
+        "generatedBytes": 66,
+        "detailedBytes": 0,
+        "detailedByteShare": 0,
+        "generatedTokens": null,
+        "detailedTokenShare": null,
+        "tokenStatus": "untested",
+        "reason": "No actual serving tokenizer measurement is supplied to this ledger"
+      }
+    },
+    {
+      "id": "branch-1",
+      "feature": "observed-branch",
+      "profile": "training-js/1",
+      "traceVersion": 7,
+      "sourceDigest": "1c2b658e1a1de075e08711945b9912ad09ce0ac887af2b5559953e2135d1c19e",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "projectionAndPublicReplay": "passed",
+        "compactRecognition": "unsupported",
+        "normalizationConvergence": "untested",
+        "negativeSeparation": "untested",
+        "detailedFallback": "passed",
+        "nativeAdmission": "untested",
+        "modelComprehension": "untested",
+        "modelNextStep": "untested",
+        "modelExecution": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "detailed-fallback",
+      "reason": "No certified algorithm profile: Algorithm lowering: ordinary functions with distinct simple parameters required; Algorithm effect lowering: control flow, mutation, callbacks, and cleanup retain detailed boundaries",
+      "identityDigest": "d59a72f230ee5f49b015dc18a0cac7427b8d3ba955dbdb7f4fe82cf386d6435c",
+      "representation": "detailed",
+      "executionProfile": "selected-detailed/1",
+      "sourceEvidence": {
+        "schema": "effectful-source-checks/5",
+        "status": "agreed",
+        "computations": 1,
+        "branches": 1,
+        "completions": {
+          "schema": "source-completions/1",
+          "status": "agreed",
+          "checked": 5,
+          "counts": {
+            "call": 2,
+            "initialize": 1,
+            "statement": 1,
+            "return": 1
+          },
+          "referenceValues": "scalars-and-input-rooted-reference-identity",
+          "uncovered": [
+            "intermediate-reference-property-snapshots",
+            "implicit-parameter-initialization",
+            "implicit-call-throws-without-a-catch-or-finally",
+            "Promise-job-internals"
+          ]
+        }
+      },
+      "regions": {
+        "status": "passed",
+        "unit": "whole episode",
+        "compact": 0,
+        "detailed": 1,
+        "total": 1
+      },
+      "domain": null,
+      "publicCost": {
+        "generatedRecords": 10,
+        "generatedBytes": 1230,
+        "detailedBytes": 1230,
+        "detailedByteShare": 1,
+        "generatedTokens": null,
+        "detailedTokenShare": null,
+        "tokenStatus": "untested",
+        "reason": "No actual serving tokenizer measurement is supplied to this ledger"
+      }
+    },
+    {
+      "id": "object-alias",
+      "feature": "trace-gallery-object-alias",
+      "profile": "training-js/1",
+      "traceVersion": 7,
+      "sourceDigest": "a79f96969a9e998e30426d73d177fd6da414e68bb8633bb80b4a232188a53759",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "projectionAndPublicReplay": "passed",
+        "compactRecognition": "passed",
+        "normalizationConvergence": "untested",
+        "negativeSeparation": "untested",
+        "detailedFallback": "untested",
+        "nativeAdmission": "untested",
+        "modelComprehension": "untested",
+        "modelNextStep": "untested",
+        "modelExecution": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "1d84417c0315d97e25e0e17182f598e7d753fec51233035e38cb0a76a4de2e1f",
+      "representation": "algorithm",
+      "executionProfile": "algorithm-execution/1",
+      "sourceEvidence": {
+        "schema": "effectful-source-checks/5",
+        "status": "agreed",
+        "computations": 1,
+        "branches": 0,
+        "completions": {
+          "schema": "source-completions/1",
+          "status": "agreed",
+          "checked": 5,
+          "counts": {
+            "initialize": 2,
+            "assign": 1,
+            "statement": 1,
+            "return": 1
+          },
+          "referenceValues": "scalars-and-input-rooted-reference-identity",
+          "uncovered": [
+            "intermediate-reference-property-snapshots",
+            "implicit-parameter-initialization",
+            "implicit-call-throws-without-a-catch-or-finally",
+            "Promise-job-internals"
+          ]
+        }
+      },
+      "regions": {
+        "status": "passed",
+        "unit": "whole episode",
+        "compact": 1,
+        "detailed": 0,
+        "total": 1
+      },
+      "domain": [],
+      "publicCost": {
+        "generatedRecords": 2,
+        "generatedBytes": 27,
+        "detailedBytes": 0,
+        "detailedByteShare": 0,
+        "generatedTokens": null,
+        "detailedTokenShare": null,
+        "tokenStatus": "untested",
+        "reason": "No actual serving tokenizer measurement is supplied to this ledger"
+      }
+    },
+    {
+      "id": "pure-helper",
+      "feature": "trace-gallery-pure-helper",
+      "profile": "training-js/1",
+      "traceVersion": 7,
+      "sourceDigest": "931a68136e0cf2c145397920f9e3e0b9739898def603de0ae1325d9e4b786a46",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "projectionAndPublicReplay": "passed",
+        "compactRecognition": "passed",
+        "normalizationConvergence": "untested",
+        "negativeSeparation": "untested",
+        "detailedFallback": "untested",
+        "nativeAdmission": "untested",
+        "modelComprehension": "untested",
+        "modelNextStep": "untested",
+        "modelExecution": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "64463fb0a41d9c6f419e3999d85b3f4e806141d29acce262d5a95ea1f6af96bd",
+      "representation": "algorithm",
+      "executionProfile": "algorithm-execution/1",
+      "sourceEvidence": {
+        "schema": "effectful-source-checks/5",
+        "status": "agreed",
+        "computations": 1,
+        "branches": 0,
+        "completions": {
+          "schema": "source-completions/1",
+          "status": "agreed",
+          "checked": 3,
+          "counts": {
+            "return": 2,
+            "call": 1
+          },
+          "referenceValues": "scalars-and-input-rooted-reference-identity",
+          "uncovered": [
+            "intermediate-reference-property-snapshots",
+            "implicit-parameter-initialization",
+            "implicit-call-throws-without-a-catch-or-finally",
+            "Promise-job-internals"
+          ]
+        }
+      },
+      "regions": {
+        "status": "passed",
+        "unit": "whole episode",
+        "compact": 1,
+        "detailed": 0,
+        "total": 1
+      },
+      "domain": [
+        {
+          "id": "a0",
+          "type": "number"
+        }
+      ],
+      "publicCost": {
+        "generatedRecords": 2,
+        "generatedBytes": 29,
+        "detailedBytes": 0,
+        "detailedByteShare": 0,
+        "generatedTokens": null,
+        "detailedTokenShare": null,
+        "tokenStatus": "untested",
+        "reason": "No actual serving tokenizer measurement is supplied to this ledger"
+      }
+    },
+    {
+      "id": "dense-loop",
+      "feature": "trace-gallery-dense-loop",
+      "profile": "training-js/1",
+      "traceVersion": 7,
+      "sourceDigest": "fbfc3bd66a3f72a6d349ba94ce18f82aa7a3a45f7706828f3722b9195e92605d",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "projectionAndPublicReplay": "passed",
+        "compactRecognition": "passed",
+        "normalizationConvergence": "untested",
+        "negativeSeparation": "untested",
+        "detailedFallback": "untested",
+        "nativeAdmission": "untested",
+        "modelComprehension": "untested",
+        "modelNextStep": "untested",
+        "modelExecution": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "abe6a9cd2d6e43185ca7f6492be03ca3f9c61a425bd0283fc8085935d4dcb7c6",
+      "representation": "algorithm",
+      "executionProfile": "algorithm-execution/1",
+      "sourceEvidence": {
+        "schema": "effectful-source-checks/5",
+        "status": "agreed",
+        "computations": 10,
+        "branches": 4,
+        "completions": {
+          "schema": "source-completions/1",
+          "status": "agreed",
+          "checked": 9,
+          "counts": {
+            "initialize": 2,
+            "assign": 3,
+            "statement": 3,
+            "return": 1
+          },
+          "referenceValues": "scalars-and-input-rooted-reference-identity",
+          "uncovered": [
+            "intermediate-reference-property-snapshots",
+            "implicit-parameter-initialization",
+            "implicit-call-throws-without-a-catch-or-finally",
+            "Promise-job-internals"
+          ]
+        }
+      },
+      "regions": {
+        "status": "passed",
+        "unit": "whole episode",
+        "compact": 1,
+        "detailed": 0,
+        "total": 1
+      },
+      "domain": [
+        {
+          "id": "a0",
+          "type": "dense-number-array"
+        }
+      ],
+      "publicCost": {
+        "generatedRecords": 2,
+        "generatedBytes": 40,
+        "detailedBytes": 0,
+        "detailedByteShare": 0,
+        "generatedTokens": null,
+        "detailedTokenShare": null,
+        "tokenStatus": "untested",
+        "reason": "No actual serving tokenizer measurement is supplied to this ledger"
+      }
+    },
+    {
+      "id": "throw-finally",
+      "feature": "trace-gallery-throw-finally",
+      "profile": "training-js/1",
+      "traceVersion": 7,
+      "sourceDigest": "baa355b771c825674c7c4a14dd779167e7c507b1a8fddaa8a9558041d28b2bba",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "projectionAndPublicReplay": "passed",
+        "compactRecognition": "unsupported",
+        "normalizationConvergence": "untested",
+        "negativeSeparation": "untested",
+        "detailedFallback": "passed",
+        "nativeAdmission": "untested",
+        "modelComprehension": "untested",
+        "modelNextStep": "untested",
+        "modelExecution": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "detailed-fallback",
+      "reason": "No certified algorithm profile: Algorithm lowering: unsupported statement TryStatement; Algorithm effect lowering: a simple asynchronous entry is required",
+      "identityDigest": "680c113b4cba15a43904d59caba6ffd36eebf3414d92a87d459b01ce2789e41a",
+      "representation": "detailed",
+      "executionProfile": "selected-detailed/1",
+      "sourceEvidence": {
+        "schema": "effectful-source-checks/5",
+        "status": "agreed",
+        "computations": 2,
+        "branches": 0,
+        "completions": {
+          "schema": "source-completions/1",
+          "status": "agreed",
+          "checked": 9,
+          "counts": {
+            "initialize": 1,
+            "throw": 1,
+            "catch": 1,
+            "assign": 2,
+            "statement": 2,
+            "finally": 1,
+            "return": 1
+          },
+          "referenceValues": "scalars-and-input-rooted-reference-identity",
+          "uncovered": [
+            "intermediate-reference-property-snapshots",
+            "implicit-parameter-initialization",
+            "implicit-call-throws-without-a-catch-or-finally",
+            "Promise-job-internals"
+          ]
+        }
+      },
+      "regions": {
+        "status": "passed",
+        "unit": "whole episode",
+        "compact": 0,
+        "detailed": 1,
+        "total": 1
+      },
+      "domain": null,
+      "publicCost": {
+        "generatedRecords": 7,
+        "generatedBytes": 820,
+        "detailedBytes": 820,
+        "detailedByteShare": 1,
+        "generatedTokens": null,
+        "detailedTokenShare": null,
+        "tokenStatus": "untested",
+        "reason": "No actual serving tokenizer measurement is supplied to this ledger"
+      }
+    },
+    {
+      "id": "counter-0",
+      "feature": "async-counter",
+      "profile": "training-js/1",
+      "traceVersion": 7,
+      "sourceDigest": "a66d7c5931a75114127af903b09b9e6cddd8a56036ce361a6eed7ecc10162ba5",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "projectionAndPublicReplay": "passed",
+        "compactRecognition": "passed",
+        "normalizationConvergence": "untested",
+        "negativeSeparation": "untested",
+        "detailedFallback": "untested",
+        "nativeAdmission": "untested",
+        "modelComprehension": "untested",
+        "modelNextStep": "untested",
+        "modelExecution": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "90cb5cf6587ef945104d070e371a4dd6b2008f403a1e408e2dbe19b58a33f765",
+      "representation": "algorithm",
+      "executionProfile": "algorithm-execution/1",
+      "sourceEvidence": {
+        "schema": "effectful-source-checks/5",
+        "status": "agreed",
+        "computations": 1,
+        "branches": 0,
+        "completions": {
+          "schema": "source-completions/1",
+          "status": "agreed",
+          "checked": 6,
+          "counts": {
+            "call": 2,
+            "initialize": 2,
+            "statement": 1,
+            "return": 1
+          },
+          "referenceValues": "scalars-and-input-rooted-reference-identity",
+          "uncovered": [
+            "intermediate-reference-property-snapshots",
+            "implicit-parameter-initialization",
+            "implicit-call-throws-without-a-catch-or-finally",
+            "Promise-job-internals"
+          ]
+        }
+      },
+      "regions": {
+        "status": "passed",
+        "unit": "whole episode",
+        "compact": 1,
+        "detailed": 0,
+        "total": 1
+      },
+      "domain": [
+        "non-BigInt scalar inputs and observations",
+        "one outstanding request",
+        "immediate await for each promise",
+        "no callbacks or cleanup",
+        "no retained or shared state"
+      ],
+      "publicCost": {
+        "generatedRecords": 4,
+        "generatedBytes": 108,
+        "detailedBytes": 0,
+        "detailedByteShare": 0,
+        "generatedTokens": null,
+        "detailedTokenShare": null,
+        "tokenStatus": "untested",
+        "reason": "No actual serving tokenizer measurement is supplied to this ledger"
+      }
+    },
+    {
+      "id": "rejection-finally",
+      "feature": "async-cleanup",
+      "profile": "training-js/1",
+      "traceVersion": 7,
+      "sourceDigest": "94f8ab29474acf921dec98bba8db63bbcab27f11ef687ef50cc84f0c997fe4f7",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "projectionAndPublicReplay": "passed",
+        "compactRecognition": "unsupported",
+        "normalizationConvergence": "untested",
+        "negativeSeparation": "untested",
+        "detailedFallback": "passed",
+        "nativeAdmission": "untested",
+        "modelComprehension": "untested",
+        "modelNextStep": "untested",
+        "modelExecution": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "detailed-fallback",
+      "reason": "No certified algorithm profile: Algorithm lowering: ordinary functions with distinct simple parameters required; Algorithm effect lowering: control flow, mutation, callbacks, and cleanup retain detailed boundaries",
+      "identityDigest": "ec713683641b2a9ded6a0c39212c9f361faacc1a8f86a18dfac53c1d50abed4a",
+      "representation": "detailed",
+      "executionProfile": "selected-detailed/1",
+      "sourceEvidence": {
+        "schema": "effectful-source-checks/5",
+        "status": "agreed",
+        "computations": 0,
+        "branches": 0,
+        "completions": {
+          "schema": "source-completions/1",
+          "status": "agreed",
+          "checked": 8,
+          "counts": {
+            "call": 3,
+            "catch": 1,
+            "statement": 2,
+            "return": 1,
+            "finally": 1
+          },
+          "referenceValues": "scalars-and-input-rooted-reference-identity",
+          "uncovered": [
+            "intermediate-reference-property-snapshots",
+            "implicit-parameter-initialization",
+            "implicit-call-throws-without-a-catch-or-finally",
+            "Promise-job-internals"
+          ]
+        }
+      },
+      "regions": {
+        "status": "passed",
+        "unit": "whole episode",
+        "compact": 0,
+        "detailed": 1,
+        "total": 1
+      },
+      "domain": null,
+      "publicCost": {
+        "generatedRecords": 11,
+        "generatedBytes": 1369,
+        "detailedBytes": 1369,
+        "detailedByteShare": 1,
+        "generatedTokens": null,
+        "detailedTokenShare": null,
+        "tokenStatus": "untested",
+        "reason": "No actual serving tokenizer measurement is supplied to this ledger"
+      }
+    },
+    {
+      "id": "callback-captured-write",
+      "feature": "owned-callback",
+      "profile": "training-js/1",
+      "traceVersion": 7,
+      "sourceDigest": "5420f516a01b66ccf06ccc9e83a2935bfc2cd3e13dee62316a27b52ec60cee83",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "projectionAndPublicReplay": "passed",
+        "compactRecognition": "unsupported",
+        "normalizationConvergence": "untested",
+        "negativeSeparation": "untested",
+        "detailedFallback": "passed",
+        "nativeAdmission": "untested",
+        "modelComprehension": "untested",
+        "modelNextStep": "untested",
+        "modelExecution": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "detailed-fallback",
+      "reason": "No certified algorithm profile: Algorithm lowering: ordinary functions with distinct simple parameters required; Algorithm effect lowering: operation is outside the serial counter profile",
+      "identityDigest": "2b2dcb265dd2dc8fea95d2229945e3d36ad0ceb50ee4040cb36fba24fff375f9",
+      "representation": "detailed",
+      "executionProfile": "selected-detailed/1",
+      "sourceEvidence": {
+        "schema": "effectful-source-checks/5",
+        "status": "agreed",
+        "computations": 2,
+        "branches": 0,
+        "completions": {
+          "schema": "source-completions/1",
+          "status": "agreed",
+          "checked": 14,
+          "counts": {
+            "initialize": 1,
+            "call": 4,
+            "assign": 2,
+            "statement": 6,
+            "return": 1
+          },
+          "referenceValues": "scalars-and-input-rooted-reference-identity",
+          "uncovered": [
+            "intermediate-reference-property-snapshots",
+            "implicit-parameter-initialization",
+            "implicit-call-throws-without-a-catch-or-finally",
+            "Promise-job-internals"
+          ]
+        }
+      },
+      "regions": {
+        "status": "passed",
+        "unit": "whole episode",
+        "compact": 0,
+        "detailed": 1,
+        "total": 1
+      },
+      "domain": null,
+      "publicCost": {
+        "generatedRecords": 20,
+        "generatedBytes": 2397,
+        "detailedBytes": 2397,
+        "detailedByteShare": 1,
+        "generatedTokens": null,
+        "detailedTokenShare": null,
+        "tokenStatus": "untested",
+        "reason": "No actual serving tokenizer measurement is supplied to this ledger"
+      }
+    },
+    {
+      "id": "persistent-external-trigger",
+      "feature": "persistent-external-trigger",
+      "profile": "training-js/1",
+      "traceVersion": 7,
+      "sourceDigest": "93a8f0b65add29cc6846e215f00bc7894e7ce50ac358ec97555cf106dbdff0f3",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "projectionAndPublicReplay": "passed",
+        "compactRecognition": "unsupported",
+        "normalizationConvergence": "untested",
+        "negativeSeparation": "untested",
+        "detailedFallback": "passed",
+        "nativeAdmission": "untested",
+        "modelComprehension": "untested",
+        "modelNextStep": "untested",
+        "modelExecution": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "detailed-fallback",
+      "reason": "No certified algorithm profile: Algorithm lowering: ordinary functions with distinct simple parameters required; Algorithm effect lowering: operation is outside the serial counter profile",
+      "identityDigest": "103a3bcb8ac7d92d801bb60a48f22cc9dd901561dd554c05cd8fe2c31b4db222",
+      "representation": "detailed",
+      "executionProfile": "selected-detailed/1",
+      "sourceEvidence": {
+        "schema": "effectful-source-checks/5",
+        "status": "agreed",
+        "computations": 2,
+        "branches": 0,
+        "completions": {
+          "schema": "source-completions/1",
+          "status": "agreed",
+          "checked": 16,
+          "counts": {
+            "initialize": 2,
+            "call": 5,
+            "assign": 2,
+            "statement": 6,
+            "return": 1
+          },
+          "referenceValues": "scalars-and-input-rooted-reference-identity",
+          "uncovered": [
+            "intermediate-reference-property-snapshots",
+            "implicit-parameter-initialization",
+            "implicit-call-throws-without-a-catch-or-finally",
+            "Promise-job-internals"
+          ]
+        }
+      },
+      "regions": {
+        "status": "passed",
+        "unit": "whole episode",
+        "compact": 0,
+        "detailed": 1,
+        "total": 1
+      },
+      "domain": null,
+      "publicCost": {
+        "generatedRecords": 28,
+        "generatedBytes": 3285,
+        "detailedBytes": 3285,
+        "detailedByteShare": 1,
+        "generatedTokens": null,
+        "detailedTokenShare": null,
+        "tokenStatus": "untested",
+        "reason": "No actual serving tokenizer measurement is supplied to this ledger"
+      }
+    },
+    {
+      "id": "redundant-cell-write",
+      "feature": "trace-gallery-redundant-cell-write",
+      "profile": "training-js/1",
+      "traceVersion": 7,
+      "sourceDigest": "27cb1b660fdcf904f42e849f98f11efa72a6b3aad83ecea94952aa0b07aac6e4",
+      "stages": {
+        "frontend": "passed",
+        "ownedEvaluation": "passed",
+        "independentOutcome": "passed",
+        "independentIntermediate": "passed",
+        "projectionAndPublicReplay": "passed",
+        "compactRecognition": "passed",
+        "normalizationConvergence": "untested",
+        "negativeSeparation": "untested",
+        "detailedFallback": "untested",
+        "nativeAdmission": "untested",
+        "modelComprehension": "untested",
+        "modelNextStep": "untested",
+        "modelExecution": "untested",
+        "modelEvaluation": "untested"
+      },
+      "disposition": "locally_verified",
+      "reason": null,
+      "identityDigest": "a8442d5747b15362641cdb6aaf4eaba1e49dffe9d6c319e6f78633c04eb2fd4c",
+      "representation": "algorithm",
+      "executionProfile": "algorithm-execution/1",
+      "sourceEvidence": {
+        "schema": "effectful-source-checks/5",
+        "status": "agreed",
+        "computations": 0,
+        "branches": 0,
+        "completions": {
+          "schema": "source-completions/1",
+          "status": "agreed",
+          "checked": 6,
+          "counts": {
+            "initialize": 1,
+            "assign": 2,
+            "statement": 2,
+            "return": 1
+          },
+          "referenceValues": "scalars-and-input-rooted-reference-identity",
+          "uncovered": [
+            "intermediate-reference-property-snapshots",
+            "implicit-parameter-initialization",
+            "implicit-call-throws-without-a-catch-or-finally",
+            "Promise-job-internals"
+          ]
+        }
+      },
+      "regions": {
+        "status": "passed",
+        "unit": "whole episode",
+        "compact": 1,
+        "detailed": 0,
+        "total": 1
+      },
+      "domain": [
+        {
+          "id": "a0",
+          "type": "scalar"
+        }
+      ],
+      "publicCost": {
+        "generatedRecords": 1,
+        "generatedBytes": 8,
+        "detailedBytes": 0,
+        "detailedByteShare": 0,
+        "generatedTokens": null,
+        "detailedTokenShare": null,
+        "tokenStatus": "untested",
+        "reason": "No actual serving tokenizer measurement is supplied to this ledger"
+      }
+    }
+  ],
+  "totals": {
+    "frontend": {
+      "total": 11,
+      "attempted": 11,
+      "passed": 11,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 0
+    },
+    "ownedEvaluation": {
+      "total": 11,
+      "attempted": 11,
+      "passed": 11,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 0
+    },
+    "independentOutcome": {
+      "total": 11,
+      "attempted": 11,
+      "passed": 11,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 0
+    },
+    "independentIntermediate": {
+      "total": 11,
+      "attempted": 11,
+      "passed": 11,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 0
+    },
+    "projectionAndPublicReplay": {
+      "total": 11,
+      "attempted": 11,
+      "passed": 11,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 0
+    },
+    "compactRecognition": {
+      "total": 11,
+      "attempted": 11,
+      "passed": 6,
+      "failed": 0,
+      "unsupported": 5,
+      "resource_limited": 0,
+      "untested": 0
+    },
+    "normalizationConvergence": {
+      "total": 11,
+      "attempted": 0,
+      "passed": 0,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 11
+    },
+    "negativeSeparation": {
+      "total": 11,
+      "attempted": 0,
+      "passed": 0,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 11
+    },
+    "detailedFallback": {
+      "total": 11,
+      "attempted": 5,
+      "passed": 5,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 6
+    },
+    "nativeAdmission": {
+      "total": 11,
+      "attempted": 0,
+      "passed": 0,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 11
+    },
+    "modelComprehension": {
+      "total": 11,
+      "attempted": 0,
+      "passed": 0,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 11
+    },
+    "modelNextStep": {
+      "total": 11,
+      "attempted": 0,
+      "passed": 0,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 11
+    },
+    "modelExecution": {
+      "total": 11,
+      "attempted": 0,
+      "passed": 0,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 11
+    },
+    "modelEvaluation": {
+      "total": 11,
+      "attempted": 0,
+      "passed": 0,
+      "failed": 0,
+      "unsupported": 0,
+      "resource_limited": 0,
+      "untested": 11
+    }
+  },
+  "coverage": {
+    "episodes": {
+      "declared": 11,
+      "qualified": 11,
+      "wholeCompact": 6,
+      "mixed": 0,
+      "whollyDetailed": 5
+    },
+    "regions": {
+      "compact": 6,
+      "detailed": 5,
+      "total": 11,
+      "unmeasuredEpisodes": 0
+    },
+    "tokens": {
+      "status": "untested",
+      "detailedShare": null
+    }
+  },
+  "qualification": {
+    "normalization": "untested",
+    "comprehension": "untested",
+    "nextStep": "untested",
+    "completedExecution": "untested",
+    "nativeServingCost": "untested",
+    "standardPromotion": "not-qualified"
+  },
+  "otherProfiles": [
+    {
+      "profile": "bounded-js-subset/2",
+      "status": "untested",
+      "reason": "This command measures the strict training path only; separate profile tests are not promoted to this ladder."
+    },
+    {
+      "profile": "static-module/1",
+      "status": "untested",
+      "reason": "This command measures the strict training path only; separate profile tests are not promoted to this ladder."
+    },
+    {
+      "profile": "evaluated-module/1",
+      "status": "untested",
+      "reason": "This command measures the strict training path only; separate profile tests are not promoted to this ladder."
+    }
+  ],
+  "otherAdapters": [
+    {
+      "adapter": "typescript/5.9.3",
+      "targetProfile": "training-js/1",
+      "status": "untested",
+      "reason": "Syntax lowering and source-map preservation require their separate adapter tests."
+    }
+  ],
+  "claims": {
+    "fullEcmaScript": false,
+    "fullTest262": false,
+    "optimizerSteps": 0,
+    "learnedSuccess": null
+  },
+  "limitation": "Finite probes measure distinctions, not exhaustive feature conformance. Native admission is measured only when configured; model evaluation remains untested by this command."
+}

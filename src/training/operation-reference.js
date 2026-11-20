@@ -14,15 +14,16 @@ const observedOperations=new Set([
 function sourceOperationNodes(source) {
   const ast=parseAcorn(source,{ecmaVersion:2022,sourceType:'script'});
   const nodes=[];
-  function visit(value){
-    if(Array.isArray(value)){for(const child of value)visit(child);return;}
+  function visit(value,parent=null){
+    if(Array.isArray(value)){for(const child of value)visit(child,parent);return;}
     if(!value||typeof value!=='object')return;
     if(value.type==='BinaryExpression'||value.type==='UnaryExpression'||
        (value.type==='AssignmentExpression'&&value.operator!=='=')||
-       value.type==='UpdateExpression'||value.type==='TemplateLiteral')
-      nodes.push({start:value.start,end:value.end,site:String(value.start)+':'+value.end});
+       value.type==='UpdateExpression'||value.type==='TemplateLiteral'&&parent?.type!=='TaggedTemplateExpression')
+      nodes.push({start:value.start,end:value.end,site:String(value.start)+':'+value.end,
+        logicalAssignment:value.type==='AssignmentExpression'&&['&&=','||=','??='].includes(value.operator)});
     for(const [name,child] of Object.entries(value))
-      if(name!=='start'&&name!=='end'&&name!=='loc')visit(child);
+      if(name!=='start'&&name!=='end'&&name!=='loc')visit(child,value);
   }
   visit(ast);
   return nodes;
@@ -70,10 +71,28 @@ export function auditReferenceOperations({source,entry,args,initialHeap,bundle,r
   // operations; an independent V8 source instrumenter has no matching AST
   // operator at those locations. Keep them in the journal, and separate
   // their coverage status from auditable source expressions.
-  const sourceSites=new Set(sourceOperationNodes(source).map(node=>node.site));
+  const sourceNodes=sourceOperationNodes(source),sourceSites=new Set(sourceNodes.map(node=>node.site)),
+    logicalAssignments=new Set(sourceNodes.filter(node=>node.logicalAssignment).map(node=>node.site));
   const unverified=new Set();
   for(const row of normalized.events){
     const event=eventsById.get(row.journalEvent),operation=event?.operation;
+    const site=row.source?String(row.source.start)+':'+row.source.end:null;
+    if(logicalAssignments.has(site)){
+      // The value of a logical assignment is the old LHS on the skipped path,
+      // or the assigned RHS after a completed write. Neither is a binary op.
+      // A setter/trap continuation without a completed value remains unverified.
+      if(event.completion?.type==='throw')continue;
+      const skipped=operation==='control.branch'&&row.path==='use-left';
+      if(skipped||['binding.write','property.write'].includes(operation)){
+        const result=skipped?row.test:row.result;
+        if(!Array.isArray(result))return {schema,status:'unverified',
+          reason:'Logical assignment has no independently observable completion',eventId:row.journalEvent};
+        expected.push({site,value:result});covered.updates++;continue;
+      }
+      // Branch/read bookkeeping is covered separately, not a claimed source
+      // arithmetic operation at the logical-assignment span.
+      if(operation)unverified.add(operation);continue;
+    }
     if(!observedOperations.has(operation)){
       if(operation)unverified.add(operation);
       continue;

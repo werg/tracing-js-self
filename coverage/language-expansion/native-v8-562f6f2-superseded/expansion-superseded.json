@@ -1,0 +1,19 @@
+{
+  "schema": "semantic-v8-superseded-attempt/1",
+  "status": "interrupted-superseded",
+  "finishedAt": "2026-11-20T17:23:45.446002+00:00",
+  "exitCode": 130,
+  "reason": "The external synchronized contract/fixture update publishes producer012c9fe and consumer39c4036 with a new contract digest and three added source interoperability fixtures. The coordinator stopped this fixed old-contract prefix and requested fresh final665/26/11 qualification. No existing receipt is relabeled as the new contract.",
+  "producerRevision": "562f6f2e8e63a0be775acf2e0be145dc6f9f264c",
+  "consumerRevision": "d26afd9d7a901e740cf29d4bce610be755cac640",
+  "replacementProducerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "replacementConsumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "declared": 665,
+  "recordedAttempts": 168,
+  "sourceQualified": 168,
+  "nativeAdmitted": 168,
+  "untestedOrUncommitted": 497,
+  "runReceiptSha256": "6b0544d7f591d10b247472c9b8630b76e5eb338bcefc25b7ab2120dae3b104ea",
+  "runnerSha256": "fd3ea0cfc5da8d60464868205ce53d08b2cc586a1d03e654dae5e7bc853376ac",
+  "scope": "Interrupted earlier-contract prefix only; excluded from final-pair population and dataset denominators."
+}

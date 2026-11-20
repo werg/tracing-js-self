@@ -4,10 +4,20 @@ import {parseTraining} from './profile.js';
 import {verifyEffectfulTrainingCase} from './effectful-admit.js';
 import {EFFECTFUL_ENGINEERING_FIXTURES} from './engineering-fixtures.js';
 import {admissionEnvironment} from './admission-identity.js';
+import {verifyAlgorithmTrainingCase,admitAlgorithmEvidence} from '../semantic/compiler.js';
+import {admitRegionEvidence} from '../semantic/compiler-v8.js';
+import {hashAlgorithmData} from '../semantic/program.js';
+import {encodeNativeGraph} from '../host/graph-codec.js';
 
-export const CAPABILITY_STAGES=Object.freeze([
+export const LEGACY_CAPABILITY_STAGES=Object.freeze([
   'frontend','ownedEvaluation','independentOutcome','independentIntermediate',
   'v6ProjectionAndPublicReplay','nativeAdmission','modelEvaluation'
+]);
+export const CAPABILITY_STAGES=Object.freeze([
+  'frontend','ownedEvaluation','independentOutcome','independentIntermediate',
+  'projectionAndPublicReplay','compactRecognition','normalizationConvergence',
+  'negativeSeparation','detailedFallback','nativeAdmission','modelComprehension',
+  'modelNextStep','modelExecution','modelEvaluation'
 ]);
 export const CAPABILITY_STATUSES=Object.freeze(['passed','failed','unsupported','resource_limited','untested']);
 const pure=(id,body,args=[])=>({id,feature:id,source:'"use strict";'+body,entry:'run',args,fixture:{calls:[]}});
@@ -63,8 +73,8 @@ export const CAPABILITY_CASES=Object.freeze([
     })
 ]);
 
-export function summarizeCapabilityRows(rows){
-  return Object.fromEntries(CAPABILITY_STAGES.map(stage=>{
+export function summarizeCapabilityRows(rows,{stages=CAPABILITY_STAGES}={}){
+  return Object.fromEntries(stages.map(stage=>{
     const counts=Object.fromEntries(CAPABILITY_STATUSES.map(status=>[status,0]));
     for(const row of rows){
       const status=row.stages[stage];
@@ -74,45 +84,135 @@ export function summarizeCapabilityRows(rows){
     return [stage,{total:rows.length,attempted:rows.length-counts.untested,...counts}];
   }));
 }
+const limited=result=>/limit|timeout|deadline|bound.exceeded/.test(result.status+' '+(result.reason??''));
+const disposition=result=>limited(result)?'resource_limited':
+  /unsupported|refused/.test(result.status)?'unsupported':'failed';
+const generatedRows=exported=>(exported?.public?.timeline??[]).filter(row=>row.mode==='generated');
+const targetLine=row=>row.line??row.fields?.line??'';
+function regionCoverage(exported){
+  const representation=exported.public.representation;
+  // An episode is the only abstraction unit in v7. Never call its individual
+  // arithmetic records independently certified regions.
+  const regions=representation==='mixed'?exported.public.regions:null;
+  const measured=exported.sidecar?.regionCoverage;
+  if(representation==='mixed'&&measured){
+    if(!['compactRegions','detailedRegions','compactRecords','detailedRecords'].every(key=>
+      Number.isSafeInteger(measured[key])&&measured[key]>=0))throw new TypeError('Invalid certified mixed-region counts');
+    return {status:'passed',unit:'certified region',compact:measured.compactRegions,
+      detailed:measured.detailedRegions,total:measured.compactRegions+measured.detailedRegions,
+      compactRecords:measured.compactRecords,detailedRecords:measured.detailedRecords};
+  }
+  if(representation==='mixed'&&!Array.isArray(regions))return {
+    status:'untested',reason:'The producer did not publish a certified region inventory',
+    compact:null,detailed:null,total:null};
+  const kinds=regions?regions.map(region=>region.representation):[representation];
+  if(kinds.some(kind=>!['algorithm','compact','detailed'].includes(kind)))throw new TypeError('Unknown region representation');
+  return {status:'passed',unit:regions?'certified region':'whole episode',
+    compact:kinds.filter(kind=>kind!=='detailed').length,
+    detailed:kinds.filter(kind=>kind==='detailed').length,total:kinds.length};
+}
+
+/** Native admission, compact recognition and model success are distinct gates.
+ * v8 requires its actual compiler adapter; changing a version label cannot
+ * create a measured v8 receipt. */
 export async function buildCapabilityLedger({producerRevision=null,cases=CAPABILITY_CASES,
-    nativeConsumer=null,nativePolicy=null}={}){
+    nativeConsumer=null,nativePolicy=null,traceVersion=7,verifyCase=null,contracts=null,
+    population='capabilities',modelEvidence=null,onProgress=()=>{}}={}){
+  if(![6,7,8].includes(traceVersion))throw new TypeError('Capability traceVersion must be 6, 7 or 8');
+  if(traceVersion===8&&(typeof verifyCase!=='function'||!contracts||
+    contracts.execution!=='semantic-execution/8'||contracts.trace!=='semantic-trace/8'))
+    throw new TypeError('V8 coverage needs its real compiler and exact contracts');
+  if(modelEvidence!==null)throw new TypeError('Model evidence must be scored by the frozen experiment, not injected into a capability receipt');
+  const legacy=traceVersion===6,stageNames=legacy?LEGACY_CAPABILITY_STAGES:CAPABILITY_STAGES;
+  const versionContracts=contracts??{execution:`semantic-execution/${traceVersion}`,
+    trace:`semantic-trace/${traceVersion}`,context:`semantic-context/${traceVersion}`,
+    continuation:`semantic-continuation/${traceVersion}`,...(legacy?{harness:'selected-harness/2'}:{})};
+  const verifier=verifyCase??(legacy?verifyEffectfulTrainingCase:verifyAlgorithmTrainingCase);
   const rows=[];
   for(const fixture of cases){
-    const stages=Object.fromEntries(CAPABILITY_STAGES.map(stage=>[stage,'untested']));
-    const row={id:fixture.id,feature:fixture.feature,profile:'training-js/1',stages};
+    const stages=Object.fromEntries(stageNames.map(stage=>[stage,'untested']));
+    const row={id:fixture.id,feature:fixture.feature??fixture.family??fixture.id,
+      profile:fixture.sourceProfile??'training-js/1',traceVersion,sourceDigest:hashAlgorithmData(fixture.source),stages};
     try{parseTraining(fixture.source);stages.frontend='passed';}
-    catch(error){stages.frontend='unsupported';row.reason=error.message;rows.push(row);continue;}
-    const result=await verifyEffectfulTrainingCase({...fixture,family:'capability:'+fixture.id,producerRevision,
-      nativeConsumer,nativePolicy});
+    catch(error){stages.frontend='unsupported';row.disposition='frontend-refused';
+      row.reason=error.message;rows.push(row);await onProgress(row,{fixture,result:null});continue;}
+    let result;
+    try{result=await verifier({...fixture,family:fixture.family??'capability:'+fixture.id,producerRevision,
+      nativeConsumer:legacy?nativeConsumer:null,nativePolicy:legacy?nativePolicy:null});}
+    catch(error){result={status:error.category?.startsWith('unsupported')?'unsupported':'failed',
+      reason:error.message,phase:'verifier'};}
     row.disposition=result.status;row.reason=result.reason??null;
-    const success=['locally_verified','admitted'].includes(result.status);
+    const success=['locally_verified','admitted','detailed-fallback','mixed'].includes(result.status);
     const afterTeacher=success||['projection','reference','native-consumer'].includes(result.phase);
-    stages.ownedEvaluation=afterTeacher?'passed':
-      /limit|timeout|deadline/.test(result.status)?'resource_limited':
-      result.status==='unsupported'?'unsupported':'failed';
+    stages.ownedEvaluation=afterTeacher?'passed':disposition(result);
     if(afterTeacher){
       const projected=success||['reference','native-consumer'].includes(result.phase);
-      stages.v6ProjectionAndPublicReplay=projected?'passed':result.status==='projection_refused'?'unsupported':'failed';
+      stages[legacy?'v6ProjectionAndPublicReplay':'projectionAndPublicReplay']=projected?'passed':disposition(result);
       if(projected){
         const referenced=success||result.phase==='native-consumer';
-        const intermediateMismatch=['reference_operation_mismatch','reference_branch_mismatch'].includes(result.status);
-        stages.independentOutcome=referenced||intermediateMismatch?'passed':/timeout|limit/.test(result.status)?'resource_limited':'failed';
+        const intermediateMismatch=['reference_operation_mismatch','reference_branch_mismatch',
+          'reference_completion_mismatch'].includes(result.status);
+        stages.independentOutcome=referenced||intermediateMismatch?'passed':limited(result)?'resource_limited':'failed';
         stages.independentIntermediate=referenced?'passed':intermediateMismatch?'failed':'untested';
       }
     }
+    // The v8 compiler runs independent source admission before attempting its
+    // new projection. A local projection refusal must not erase that evidence.
+    if(traceVersion===8&&['locally_verified','admitted'].includes(result.sourceStatus)){
+      stages.ownedEvaluation='passed';stages.independentOutcome='passed';stages.independentIntermediate='passed';
+    }
     if(result.status==='admitted')stages.nativeAdmission='passed';
-    else if(result.phase==='native-consumer')stages.nativeAdmission='failed';
+    else if(result.phase==='native-consumer')stages.nativeAdmission=disposition(result);
     if(result.exported){
-      row.identityDigest=result.exported.sidecar.identityDigest;
-      if(result.status==='admitted')row.nativeReceipt=result.exported.sidecar.nativeAdmission;
+      const artifact=result.exported,side=artifact.sidecar;
+      row.identityDigest=side.identityDigest??side.definitionDigest??side.sourceArtifactDigest;
+      row.representation=artifact.public.representation??'detailed';
+      row.executionProfile=side.protocolProfile??side.profile??(legacy?'selected-detailed/1':null);
+      row.sourceEvidence=side.sourceEvidence?.sourceChecks??side.reference?.sourceChecks??
+        side.sourceArtifact?.sidecar?.reference?.sourceChecks??null;
+      if(!legacy){
+        if(artifact.public.schema!==versionContracts.execution||artifact.public.traceFormat!==versionContracts.trace)
+          throw new TypeError('Capability artifact differs from the declared execution/trace contract');
+        row.regions=regionCoverage(artifact);
+        stages.compactRecognition=row.regions.compact>0?'passed':'unsupported';
+        stages.detailedFallback=row.regions.detailed>0?'passed':'untested';
+        row.domain=side.provenance?.inputGuards??side.provenance?.preconditions??null;
+        const records=generatedRows(artifact),allBytes=records.reduce((n,item)=>n+Buffer.byteLength(targetLine(item)),0);
+        const detailBytes=records.filter(item=>row.representation==='detailed'||item.representation==='detailed'||
+          traceVersion===8&&['semantic','protocol'].includes(item.kind)||
+          targetLine(item).startsWith('detail ')).reduce((n,item)=>n+Buffer.byteLength(targetLine(item)),0);
+        row.publicCost={generatedRecords:records.length,generatedBytes:allBytes,detailedBytes:detailBytes,
+          detailedByteShare:allBytes?detailBytes/allBytes:0,generatedTokens:null,detailedTokenShare:null,
+          tokenStatus:'untested',reason:'No actual serving tokenizer measurement is supplied to this ledger'};
+        if(nativeConsumer&&success){
+          try{
+            const admitted=await (traceVersion===8?admitRegionEvidence:admitAlgorithmEvidence)(artifact,{nativeConsumer,nativePolicy});
+            stages.nativeAdmission='passed';row.nativeReceipt=admitted.native;
+          }catch(error){stages.nativeAdmission=CAPABILITY_STATUSES.includes(error.disposition)?error.disposition:
+            /limit|timeout|deadline/.test(error.message)?'resource_limited':'failed';
+            row.nativeReason=error.message;row.reason=error.message;}
+        }
+      }
+      if(result.status==='admitted')row.nativeReceipt=side.nativeAdmission;
     }
     rows.push(row);
+    await onProgress(row,{fixture,result});
   }
-  return {schema:'semantic-capability-ledger/2',producerRevision,
-    contracts:{execution:'semantic-execution/6',trace:'semantic-trace/6',context:'semantic-context/6',
-      continuation:'semantic-continuation/6',harness:'selected-harness/2'},
+  const measured=rows.filter(row=>row.regions?.status==='passed'),compact=measured.reduce((n,row)=>n+row.regions.compact,0),
+    detailed=measured.reduce((n,row)=>n+row.regions.detailed,0);
+  return {schema:legacy?'semantic-capability-ledger/2':'semantic-capability-ledger/3',producerRevision,
+    population,populationDigest:hashAlgorithmData(cases.map(({id,source,entry,args,fixture})=>({
+      id,source,entry,args:encodeNativeGraph(args??[]),fixture:encodeNativeGraph([fixture??null])}))),contracts:versionContracts,
     environment:admissionEnvironment(),nativePolicy,unit:'declared source/input/fixture probe',rows,
-    totals:summarizeCapabilityRows(rows),
+    totals:summarizeCapabilityRows(rows,{stages:stageNames}),
+    ...(!legacy?{coverage:{episodes:{declared:rows.length,qualified:measured.length,
+      wholeCompact:measured.filter(row=>row.regions.detailed===0).length,
+      mixed:measured.filter(row=>row.regions.compact>0&&row.regions.detailed>0).length,
+      whollyDetailed:measured.filter(row=>row.regions.compact===0).length},
+      regions:{compact,detailed,total:compact+detailed,unmeasuredEpisodes:rows.length-measured.length},
+      tokens:{status:'untested',detailedShare:null}},
+      qualification:{normalization:'untested',comprehension:'untested',nextStep:'untested',
+        completedExecution:'untested',nativeServingCost:'untested',standardPromotion:'not-qualified'}}:{}),
     otherProfiles:['bounded-js-subset/2','static-module/1','evaluated-module/1'].map(profile=>({
       profile,status:'untested',reason:'This command measures the strict training path only; separate profile tests are not promoted to this ladder.'})),
     otherAdapters:[{adapter:'typescript/5.9.3',targetProfile:'training-js/1',status:'untested',

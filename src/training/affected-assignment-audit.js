@@ -7,11 +7,14 @@ import {parse} from 'acorn';
 import {createHash} from 'node:crypto';
 import {validateBundle} from '../validation.js';
 import {decode} from '../values.js';
+import {stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
 
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
 const own=(object,key)=>Object.hasOwn(object??{},key);
 const prototype=object=>own(object,'prototype')?object.prototype:
   object.kind==='array'?'Array.prototype':'Object.prototype';
+const definitionWrites=new Set(['DEFINE_LITERAL_PROP','APPEND_ARRAY','CLASS_INITIALIZER',
+  'PRIVATE_DEFINE','PRIVATE_SET']);
 
 // Derive strictness from original bytes. Historical bytecode predates the
 // strict flag, and a faulty teacher flag is not authority for source mode.
@@ -45,12 +48,12 @@ function strictRegions(source){
 
 function accessorAt(heap,id,key){
   const visited=new Set();
-  while(id!==null&&!['Object.prototype','Array.prototype'].includes(id)){
+  while(id!==null&&!['Object.prototype','Array.prototype','Function.prototype'].includes(id)){
     if(visited.has(id))return {unknown:'cyclic_prototype'};
     visited.add(id);
     const object=heap[id];
     if(!object)return {unknown:'missing_receiver_or_prototype'};
-    if(!['object','array'].includes(object.kind))return {unknown:'nonordinary_receiver_or_prototype'};
+    if(!['object','array','function'].includes(object.kind))return {unknown:'nonordinary_receiver_or_prototype'};
     if(own(object.properties,key))return {accessor:null};
     if(own(object.accessors,key))return {accessor:object.accessors[key],owner:id};
     id=prototype(object);
@@ -87,6 +90,7 @@ export function auditAffectedAssignments(value,{id=null,producerRevision=null}={
   // have already run; scanning never runs a getter or executes guest source.
   const heap=structuredClone(bundle.initialState.heap),frames=structuredClone(bundle.initialState.frames);
   const sites=new Map(bundle.sites.map(site=>[site.siteId,site]));
+  const encodedKeys=bundle.manifest.ownedSymbols?.propertyKeys==='owned-property-key/1';
   for(const event of bundle.events){
     if(event.operation==='property.write'){
       row.propertyWriteEvents++;
@@ -95,7 +99,13 @@ export function auditAffectedAssignments(value,{id=null,producerRevision=null}={
       const detail={eventId:event.eventId,sourceId,siteId:event.siteId,
         start:site?.start??null,end:site?.end??null};
       const uncertain=reason=>row.uncertainEvents.push({...detail,reason});
-      if(instruction?.op!=='PUT_PROP'||instruction.siteId!==event.siteId||!site)
+      // These exact bytecodes create data/accessor definitions or mutate
+      // separate internal slots. They do not execute the ordinary [[Set]]
+      // path implicated by the historical defect. Unknown writes still
+      // quarantine the audit; a broad property.write label is not enough.
+      if(instruction?.siteId===event.siteId&&site&&definitionWrites.has(instruction.op)){
+        // Known non-[[Set]] operation, outside this narrow susceptibility scan.
+      }else if(instruction?.op!=='PUT_PROP'||instruction.siteId!==event.siteId||!site)
         uncertain('Property write lacks an exact pre-state PUT_PROP site');
       else if(parseErrors.has(sourceId))uncertain('Original source mode could not be parsed: '+parseErrors.get(sourceId));
       else{
@@ -104,10 +114,10 @@ export function auditAffectedAssignments(value,{id=null,producerRevision=null}={
         const [base,key,value]=frame.stack.slice(-3).map(token=>token.value);
         if(!region||!base||!key||!value)uncertain('Missing source region or evaluated assignment operands');
         else if(base[0]!=='ref')uncertain('Nonordinary property receiver is outside this audit');
-        else if(!['str','num','bool','null','undefined','bigint'].includes(key[0]))
+        else if(!['str','num','bool','null','undefined','bigint','symbol'].includes(key[0]))
           uncertain('Property key requires unsupported coercion');
         else{
-          const property=String(decode(key)),found=accessorAt(heap,base[1],property);
+          const property=key[0]==='symbol'?symbolPropertyKey(key[1]):encodedKeys?stringPropertyKey(String(decode(key))):String(decode(key)),found=accessorAt(heap,base[1],property);
           if(found.unknown)uncertain(found.unknown);
           else if(found.accessor?.set?.value?.[0]==='undefined'){
             if(!region.strict)row.sloppyGetterOnlyEvents++;

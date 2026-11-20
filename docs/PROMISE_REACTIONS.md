@@ -14,12 +14,21 @@ it. A handler returning its own result Promise rejects with a guest `TypeError`.
 
 ## Scope and remaining limitations
 
-This is **not** a complete Promise implementation. It does not provide the
-Promise constructor/executor, arbitrary thenable assimilation, species and
-subclassing, combinators (`all`, `race`, `any`, `allSettled`), native
-rejection hooks, native scheduling or complete job/agent semantics. The bounded
-source parser only accepts named guest functions as callback sources. Proxy
-interference and inherited accessor/prototype methods remain unsupported.
+The bounded owned runtime supports Promise construction/executors, `resolve`,
+`reject`, `then`, `catch`, `finally`, `all`, `race`, `any`, `allSettled`,
+`withResolvers`, and owned thenable assimilation. These claims describe the
+bounded script/runtime profile at baseline `c165dad8e8226167ec1649cbe6d654cf8662aaf8`;
+strict `training-js/1` exposure and independently checked training admission are
+separate gates. The constructor/executor and thenable tests are
+`test/owned-promise-executors.test.js`,
+`test/owned-promise-thenables-combinators.test.js`,
+`test/owned-thenable-assimilation.test.js`, and
+`test/owned-promise-with-resolvers.test.js`.
+
+This is a bounded implementation. Species, subclassing, arbitrary iterable
+inputs, native rejection hooks, and full host job/agent semantics are not
+qualified by these tests. The current capability ledger records strict frontend
+acceptance and source/native admission independently of runtime support.
 
 `test/promise-reactions.test.js` exercises ordering, pass-through,
 rejection, synchronous and async callbacks, host-delivery postponement,
@@ -56,8 +65,9 @@ entries. Values and owned Promises subscribe to explicit queued settlement jobs;
 `all` preserves input order, waits for all fulfillment, and rejects on first
 rejection; `race` settles on the first processed reaction. Empty `all`
 fulfills with an owned array while empty `race` remains pending. There is
-still no arbitrary iterator protocol, thenable assimilation, Promise executor,
-species/subclassing, or `any` / `allSettled`.
+no arbitrary iterator protocol or species/subclassing support in this array
+profile. Subsequent owned-runtime slices added executors, thenable assimilation,
+`any`, `allSettled`, and `withResolvers` as described above.
 
 `setTimeout`, `clearTimeout`, `setInterval`, and `clearInterval` accept
 owned callbacks and explicit bounded virtual millisecond delays. They use an

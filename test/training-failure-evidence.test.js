@@ -31,7 +31,7 @@ test('native refusal retains original source, inputs, oracle modes, environment 
   assert.throws(()=>verifyFailureRecord(record),/evidence changed/);
 });
 test('unsupported source is retained separately from oracle, projection and resource failures',async()=>{
-  const source='"use strict";function run(){return this;}';
+  const source='"use strict";function run(){return eval("1");}';
   const result=await verifyEffectfulTrainingCase({...fixture,source});
   assert.equal(result.status,'unsupported');
   assert.equal(result.category,'unsupported_source');

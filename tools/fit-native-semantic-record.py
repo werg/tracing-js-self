@@ -111,6 +111,7 @@ class TrainerBoundaryReached(BaseException):
 
 def capture_training_boundary(model, trained, episode, assets, codec, config,
                               target: bytes, seed: int):
+    """Replay the deliberately frozen prefix in the actual service's grad mode."""
     import torch
     from unittest.mock import patch
     from megatoken.model.multitrack import MultiTrackGenerator
@@ -154,7 +155,12 @@ def capture_training_boundary(model, trained, episode, assets, codec, config,
     )
     ledger = LossLedger(dict(batch.counts), dict(batch.counts), config.loss_weights)
     model.eval()
-    with patch.object(MultiTrackGenerator, "supervised_meridian", stop_at_first_target):
+    # This decoder-only experiment detaches and reuses the prefix; it never
+    # differentiates through that replay. Match the no-grad serving computation
+    # here as well: CPU attention selects different arithmetic kernels when its
+    # inputs require gradients. The selected decoder loss below still builds
+    # its real gradient graph and runs the unchanged optimizer.
+    with torch.no_grad(), patch.object(MultiTrackGenerator, "supervised_meridian", stop_at_first_target):
         try:
             forward_meridian_batch(
                 model, batch, ledger, config, torch.device("cpu"),
@@ -170,6 +176,7 @@ def capture_training_boundary(model, trained, episode, assets, codec, config,
     captured["targetFreeMask"] = list(targets[0].free_mask)
     captured["window"] = {"start": item.window.start, "end": item.window.end}
     captured["seed"] = seed
+    captured["prefixReplayGradientEnabled"] = False
     return captured
 
 
@@ -367,7 +374,7 @@ def fit(model, codec, chunking, prefix, target, state, train_kwargs, optimizer, 
                 "sampleDifference": sample_diff, "recurrentState": state_diff,
                 "sampleAbsoluteTolerance": 1e-6,
                 "firstSampleBitwiseEqual": sample_hash == initial_service["samples"][0]["sample"]["float32Sha256"],
-                "comparisonExecution": "Gradient-enabled trainer boundary versus no-grad actual service; finite float32 tolerances are retained with original hashes",
+                "comparisonExecution": "Gradient-enabled decoder loss on a frozen prefix replayed without gradients versus no-grad actual service; finite float32 tolerances are retained with original hashes",
                 "trainerTracks": captured["prior"]["tracks"],
                 "trainerEventIds": captured["sample"]["eventIds"],
                 "servingTracks": baseline_service["tracks"],
@@ -587,6 +594,7 @@ def main() -> int:
         "targetKind": strict_kind,
         "checkpointStateSha256": base_checkpoint_sha,
         "stateShape": list(train["state"].raw.shape),
+        "prefixReplayGradientEnabled": train["prefixReplayGradientEnabled"],
     })
 
     original_payload = trained.payload

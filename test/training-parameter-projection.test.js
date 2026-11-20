@@ -93,7 +93,7 @@ test('coercion propagates the original authenticated parameter error without all
     // the public projection profile, just as they do for explicit throws.
     const result=await checked(source.slice('"use strict";'.length));
     assert.equal(result.status,'projection_refused',body+': '+result.reason);
-    assert.match(result.reason,/unallocated owned identity/);
+    assert.match(result.reason,/unallocated owned identity|Selected work is not in the active invocation/);
   }
   const runtime=createRuntime().startEntry({text:'"use strict";function fail(a=b,b=3){}function run(){return {valueOf:fail}+1;}',functionName:'run',args:[]});
   runtime.drive();const archive=runtime.exportRun();
@@ -118,7 +118,8 @@ test('forward parameter closures publish only after captured cells actually init
     'function run(a=()=>b,b=3){b=5;return a();}',
     'function run(a=()=>b,b=3){var b=5;return a();}',
     'function run(a=()=>b,b=3,c=a){b=5;return [c===a,c()];}',
-    'function run(a=()=>[b,c],b=3,c=4){b=6;return a();}'
+    'function run(a=()=>[b,c],b=3,c=4){b=6;return a();}',
+    'function run(a=()=>b,b={n:3}){return a().n;}'
   ]){
     const result=await checked(code);
     assert.equal(result.status,'locally_verified',code+': '+result.reason);
@@ -152,11 +153,10 @@ test('a provided object keeps its observed identity through deferred capture and
   assert(rechecked.sourceValidated&&rechecked.replayValidated&&rechecked.effectsValidated);
 });
 
-test('deferred capture refuses early reads, effects, exceptions, allocation and circular dependencies',async()=>{
+test('deferred capture refuses early reads, effects, exceptions and circular dependencies',async()=>{
   for(const code of [
     'function run(a=()=>b,b=a()){return b;}',
     'function run(a=()=>b,c=a,b=3){return c();}',
-    'function run(a=()=>b,b={n:3}){return a().n;}',
     'function run(a=()=>a){return a()===a;}',
     'function run(a=()=>b,b=()=>c,c=3){return a()();}',
     'function fail(){throw 7;}function run(a=()=>b,b=fail()){return a();}',

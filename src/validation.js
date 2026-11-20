@@ -1,5 +1,16 @@
+import {validateGeneratorState,validateGeneratorEvent} from './generator-validation.js';
+import {validatePrivateEvent} from './private-validation.js';
+import {validateTemplateEvent} from './template-validation.js';
+import {validateEnumerationEvent} from './enumeration-validation.js';
+import {validateReceiverEvent} from './receiver-validation.js';
+import {validateCallAdapterEvent} from './call-adapter-validation.js';
+import {validateConstructionEvent} from './construction-validation.js';
+import {validateSuperEvent} from './super-validation.js';
+import {isBinaryMemoryKind,validateBinaryMemoryState,validateBinaryMemoryEvent} from './binary-memory-validation.js';
+import {validateNumberConversionState,validateNumberConversionEvent} from './number-conversion-validation.js';
 // Read-only validation. Does not import the evaluator or call its mutation routines.
 import { readFileSync } from 'node:fs';
+import {validateSymbolReferences,validateSymbolAllocation} from './symbol-validation.js';
 import { validateHostJournal } from './host-journal.js';
 import { validateSpecEvent, applySpecCommand } from './spec-validation.js';
 const clone = x => structuredClone(x);
@@ -14,7 +25,13 @@ function fail(message,eventId=null){throw new TraceValidationError(message,event
 export function reconstruct(bundle,{throughEventId=null}={}) {
   if(bundle.manifest?.schema!=='semantic-tracing-run/2')fail('Unknown run schema');
   const state=clone(bundle.initialState);
+  validateSymbolReferences(state,state.heap,fail);
+  const generatorIds=new Set(Object.values(state.heap).filter(entity=>entity.kind==='generator'||entity.kind==='function'&&bundle.programs[entity.codeId]?.generator).map(entity=>entity.id));
+  validateGeneratorState(state,bundle.programs,fail,generatorIds);
+  const binaryIds=new Set(Object.values(state.heap).filter(entity=>isBinaryMemoryKind(entity.kind)).map(entity=>entity.id));
+  validateBinaryMemoryState(state,fail,binaryIds);
   const sites=new Set(bundle.sites.map(s=>s.siteId));
+  validateNumberConversionState(state,bundle.programs,sites,fail);
   const seen=new Set();
   const parameterTdzOrigins=new Map();
   for(let i=0;i<bundle.events.length;i++) {
@@ -119,11 +136,22 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     const patched=new Set();
     if(e.completion && !['spec.operation.complete','completion.throw','external.input.deliver',
       'job.enter','binding.read','binding.write','binding.update','primitive.unary',
-      'property.read','property.write','property.update','call.enter','proxy.allocate',
-      'object.construct','execution.unsupported','regexp.allocate'].includes(e.operation))
+      'property.read','property.write','property.update','primitive.binary','reference.this','call.return','call.enter','proxy.allocate',
+      'object.construct','completion.finally.end','execution.unsupported','regexp.allocate','intrinsic.number.resume'].includes(e.operation))
       fail('Completion metadata without an owned completion operation',e.eventId);
     validateSpecEvent(state,e,fail);
+    validateGeneratorEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validatePrivateEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateTemplateEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateEnumerationEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateReceiverEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateCallAdapterEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateConstructionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateSuperEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateBinaryMemoryEvent(e,message=>fail(message,e.eventId));
+    validateNumberConversionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     for(const p of e.stateChanges) {
+      validateSymbolAllocation(p,e,message=>fail(message,e.eventId));
       if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);
       patched.add(`${p.table}:${p.id}`);
       if(p.table==='operations') {
@@ -146,6 +174,12 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       if(p.after && p.after.version!==(p.before?.version??0)+1)fail('Invalid record version',e.eventId);
       if(p.after===null)delete state[p.table][p.id];else state[p.table][p.id]=clone(p.after);
     }
+    for(const patch of e.stateChanges)if(patch.table==='heap'&&(patch.after?.kind==='generator'||patch.after?.kind==='function'&&bundle.programs[patch.after.codeId]?.generator))generatorIds.add(patch.id);
+    validateGeneratorState(state,bundle.programs,message=>fail(message,e.eventId),generatorIds);
+    for(const patch of e.stateChanges)if(patch.table==='heap'&&isBinaryMemoryKind(patch.after?.kind))binaryIds.add(patch.id);
+    validateBinaryMemoryState(state,message=>fail(message,e.eventId),binaryIds);
+    validateNumberConversionState(state,bundle.programs,sites,message=>fail(message,e.eventId));
+    validateSymbolReferences({operands:e.operands,result:e.result,changed:e.stateChanges.map(p=>p.after??p.record??null)},state.heap,message=>fail(message,e.eventId));
     if(job && !eq(state.control.a0.queue.slice(0,queuedBefore.length),queuedBefore))
       fail('Guest job FIFO order changed during entry',e.eventId);
     if(bundle.manifest.schema==='semantic-tracing-run/2') {
@@ -159,6 +193,11 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
           if(hostThrow ? !eq(c.value,{value:delivered.value,origin:e.eventId}) :
              !eq(e.operands,[c.value?.value]) || !eq(e.operandOrigins,[c.value?.origin]))
             fail('Throw completion value/provenance mismatch',e.eventId);
+        }else if(e.operation==='call.enter'&&e.operands[0]?.[0]==='method'&&
+          eq(e.operands[0][1],['builtinfn','Generator.throw'])&&
+          state.heap[e.operands[0][2]?.[1]]?.kind==='generator'&&c.errorType===undefined){
+          const expected={value:e.operands[1]??['undefined'],origin:e.operandOrigins[1]??e.eventId};
+          if(!eq(c.value,expected))fail('Generator throw value/provenance mismatch',e.eventId);
         }else if(e.operation==='job.enter'){
           const p=state.promises[e.causes.find(x=>x.kind==='promise')?.promiseId];
           if(p?.status!=='rejected'||!eq(c.value,p.value)||

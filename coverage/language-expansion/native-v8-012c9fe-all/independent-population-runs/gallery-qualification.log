@@ -1,0 +1,12 @@
+{"id":"compound-pure","status":"admitted","native":"passed"}
+{"id":"branch-1","status":"admitted","native":"passed"}
+{"id":"object-alias","status":"admitted","native":"passed"}
+{"id":"pure-helper","status":"admitted","native":"passed"}
+{"id":"dense-loop","status":"admitted","native":"passed"}
+{"id":"throw-finally","status":"admitted","native":"passed"}
+{"id":"rejection-finally","status":"admitted","native":"passed"}
+{"id":"counter-0","status":"admitted","native":"passed"}
+{"id":"callback-captured-write","status":"admitted","native":"passed"}
+{"id":"persistent-external-trigger","status":"admitted","native":"passed"}
+{"id":"redundant-cell-write","status":"admitted","native":"passed"}
+{"output":"/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/gallery","producerRevision":"012c9fe49a082319bf98ac0c571596da925741a4","sourceQualified":11,"nativeAdmitted":11,"declared":11}

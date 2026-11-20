@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import {instrumentCompletionSource,createCompletionCapture,COMPLETION_HOOK,
   ownedCompletionObservations,compareCompletionObservations} from '../src/training/completion-reference.js';
 import {verifyEffectfulTrainingCase,recheckEffectfulAdmission} from '../src/training/effectful-admit.js';
+import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
 import {auditTeacherMutations} from '../tools/audit-teacher-mutations.mjs';
 
 test('once-evaluated completion observations preserve call/key/getter/argument ordering',()=>{
@@ -18,6 +19,28 @@ test('once-evaluated completion observations preserve call/key/getter/argument o
   assert.equal(actual,original);assert.equal(actual,'bkas3');
   assert(observations.some(x=>x.kind==='finally'));
   assert.equal(observations.filter(x=>x.kind==='assign'&&x.value?.[1]===3).length,2);
+});
+
+test('optional method completion records receiver short-circuit before arguments and preserves this',async()=>{
+  const source='"use strict";function run(enabled){let calls=0;const object=enabled?{n:7,read:function(x){return this.n+x;}}:null;'+
+    'const result=object?.read(++calls);return [result,calls];}';
+  for(const enabled of [false,true]){
+    const result=await verifyRegionTrainingCase({id:'optional-receiver-lazy-arguments',family:'optional-receiver-lazy-arguments',
+      source,entry:'run',args:[enabled],fixture:{calls:[]}});
+    assert.equal(result.status,'locally_verified',result.reason);
+    const evidence=result.exported.sidecar.sourceArtifact.sidecar;
+    const observations=ownedCompletionObservations(evidence.archive,source);
+    const call=observations.find(row=>row.kind==='call'&&source.slice(...row.site.split(':').map(Number)).startsWith('object?.read'));
+    const initialize=observations.find(row=>row.kind==='initialize'&&source.slice(...row.site.split(':').map(Number)).startsWith('result='));
+    assert(call&&initialize,'call completion and enclosing binding completion are independently observed');
+    assert(observations.indexOf(call)<observations.indexOf(initialize),'call completes before the binding initializes');
+    assert.deepEqual(call.value,enabled?['num',8]:['undefined']);
+    assert.equal(evidence.reference.sourceChecks.completions.status,'agreed');
+    const graph=evidence.reference.outcome.graph,returned=graph.objects.find(object=>object.kind==='array');
+    const props=Object.fromEntries(returned.properties);
+    assert.deepEqual(props['0'],enabled?['num',8]:['undefined']);
+    assert.deepEqual(props['1'],['num',enabled?1:0]);
+  }
 });
 
 test('the overwritten getter-only regression certifies catch and the exact binding sequence',async()=>{
@@ -40,6 +63,19 @@ test('reference identity observations preserve aliasing without reading user pro
   capture('a','initialize',object);capture('b','assign',object);capture('c','initialize',{});
   assert.equal(getters,0);
   assert.deepEqual(observations.map(row=>row.value),[['identity','object',1],['identity','object',1],['identity','object',2]]);
+});
+
+test('class declaration observations use the outer binding after static completion and skip abrupt evaluation',async()=>{
+  const {createRuntime}=await import('../src/runtime.js');
+  const source='"use strict";function run(){let n=0;try{class C{static{n=1;throw 2;}}}catch(e){n+=e;}class D{static{n+=4;}}return n;}';
+  const capture=createCompletionCapture(),observed=vm.runInNewContext(instrumentCompletionSource(source)+';run()',
+    {[COMPLETION_HOOK]:capture.capture});
+  assert.equal(observed,vm.runInNewContext(source+';run()'));assert.equal(observed,7);
+  const runtime=createRuntime().startEntry({text:source,functionName:'run',args:[]});runtime.drive();
+  const expected=ownedCompletionObservations(runtime.exportRun(),source);
+  assert.equal(compareCompletionObservations(expected,capture.observations).status,'agreed');
+  const initialized=expected.filter(row=>row.kind==='initialize'&&source.slice(...row.site.split(':').map(Number)).startsWith('class'));
+  assert.equal(initialized.length,1);assert(source.slice(...initialized[0].site.split(':').map(Number)).startsWith('class D'));
 });
 
 test('observations preserve return ASI, bare returns, nested wrappers and loop transfers',async()=>{

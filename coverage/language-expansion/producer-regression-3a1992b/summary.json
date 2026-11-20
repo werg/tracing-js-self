@@ -1,0 +1,798 @@
+{
+  "schema": "producer-regression-receipt/1",
+  "scope": "Full producer regression, generated-contract checks, and eight native reference-fixture checks; not source/native consumer admission.",
+  "status": "passed",
+  "startedAt": "2026-11-20T16:36:15.736545+00:00",
+  "worktree": "/workspace/scratch/754a49249d01/producer-final-regression-3a1992b",
+  "producerBefore": {
+    "revision": "3a1992b4462e8e2affa6baa04e9075ba3b01d04a",
+    "tree": "903da3860401f5f1a174a933ac03a8c5ae558b1a",
+    "trackedChanges": "",
+    "topLevelTreesAndBlobs": [
+      {
+        "path": ".github",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "875d9fe70d0c89d973141179b98831a92d5b7f1b"
+      },
+      {
+        "path": ".gitignore",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8b769c44100cd871e4cdc042c105364e4ddb6dbd"
+      },
+      {
+        "path": ".nvmrc",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "229b3ce85a631ccd5991b25f75f414171ccc7942"
+      },
+      {
+        "path": "AGENTS.md",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ab3b1c31536a7ec1fc463b39599826aff7c47e71"
+      },
+      {
+        "path": "README.md",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "699f95eac02be6f0ed2972c6ef445d21e4810899"
+      },
+      {
+        "path": "bin",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "213c84a7906e4136d01f5a886e9bbbb89091f752"
+      },
+      {
+        "path": "catalog",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "6107c116137573920017517fa14539e7896c1469"
+      },
+      {
+        "path": "conformance",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "e938df75ddbd7d8e16ecc46a54d07b1fea413ab7"
+      },
+      {
+        "path": "contracts",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "99d355f66c0d8db6f80b0efd19112f8792dffbd8"
+      },
+      {
+        "path": "corpus",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "b827151248fcd1a19a69c0de44dbeeec0fac9d9b"
+      },
+      {
+        "path": "coverage",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "86bae6ffec7f3b648e4d282081e625a12ac77dae"
+      },
+      {
+        "path": "docs",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "839281b2e9b3891cdad01302ff4d9d5405a9724e"
+      },
+      {
+        "path": "examples",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "d5679f713d533c4bdaaf5c17962e474273a3024c"
+      },
+      {
+        "path": "fixtures",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "74857746a0fbcf4ec6772c88d7b91e419699bbb8"
+      },
+      {
+        "path": "package-lock.json",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "265bf893d149c3cd70a6b3156c1a557dd6eda6a2"
+      },
+      {
+        "path": "package.json",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1a27c7f9652ffa6532c5768b9f9eeaad5dd20182"
+      },
+      {
+        "path": "profiles",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "5f125aaece4df3484e72ec62024e5f979a744aef"
+      },
+      {
+        "path": "scripts",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "373bbddbd25c2ff25e2b9c47b75fdc047324551d"
+      },
+      {
+        "path": "src",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "7da633ec2b92f0a2e4d46966f09c22a951200498"
+      },
+      {
+        "path": "test",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "5caeaa1f19f67f516e36fb4e5d469fa0e3bb8fbe"
+      },
+      {
+        "path": "tools",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "0c86654043e81e1a1ee67525e92552990bd56793"
+      }
+    ]
+  },
+  "node": {
+    "version": "v24.22.3",
+    "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node"
+  },
+  "npmVersion": "11.19.1",
+  "environmentOverrides": {
+    "TMPDIR": "/workspace/scratch/754a49249d01/producer-validation-tmp"
+  },
+  "codeManifest": {
+    "path": "code-manifest.json",
+    "sha256": "d31617f7a420be2b98ae50aec9974d75885157ad7b0e8d329913eb78804781f4",
+    "files": 722
+  },
+  "testInventory": {
+    "path": "test-files.json",
+    "sha256": "48a3469786fc11dede6d18fd6cb3253de1478511a341a68095ff7b3725d21d55",
+    "files": 295
+  },
+  "commands": [
+    {
+      "name": "unit",
+      "command": "node --test --test-concurrency=4 test/*.test.js",
+      "cwd": "/workspace/scratch/754a49249d01/producer-final-regression-3a1992b",
+      "startedAt": "2026-11-20T16:36:16.138154+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T16:43:18.800414+00:00",
+      "durationSeconds": 422.661996,
+      "exitCode": 0,
+      "stdout": {
+        "path": "unit.stdout.log",
+        "sha256": "a019267d280a235126e00e2d82d57bb7bfb521047c09fe814380c87692e6d345",
+        "bytes": 173552
+      },
+      "stderr": {
+        "path": "unit.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "counts": {
+        "tests": 1800,
+        "suites": 0,
+        "pass": 1794,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 6,
+        "todo": 0
+      },
+      "failureLines": [],
+      "skipLines": [],
+      "producerAfter": {
+        "revision": "3a1992b4462e8e2affa6baa04e9075ba3b01d04a",
+        "tree": "903da3860401f5f1a174a933ac03a8c5ae558b1a",
+        "trackedChanges": "",
+        "topLevelTreesAndBlobs": [
+          {
+            "path": ".github",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "875d9fe70d0c89d973141179b98831a92d5b7f1b"
+          },
+          {
+            "path": ".gitignore",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "8b769c44100cd871e4cdc042c105364e4ddb6dbd"
+          },
+          {
+            "path": ".nvmrc",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "229b3ce85a631ccd5991b25f75f414171ccc7942"
+          },
+          {
+            "path": "AGENTS.md",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "ab3b1c31536a7ec1fc463b39599826aff7c47e71"
+          },
+          {
+            "path": "README.md",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "699f95eac02be6f0ed2972c6ef445d21e4810899"
+          },
+          {
+            "path": "bin",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "213c84a7906e4136d01f5a886e9bbbb89091f752"
+          },
+          {
+            "path": "catalog",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "6107c116137573920017517fa14539e7896c1469"
+          },
+          {
+            "path": "conformance",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "e938df75ddbd7d8e16ecc46a54d07b1fea413ab7"
+          },
+          {
+            "path": "contracts",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "99d355f66c0d8db6f80b0efd19112f8792dffbd8"
+          },
+          {
+            "path": "corpus",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "b827151248fcd1a19a69c0de44dbeeec0fac9d9b"
+          },
+          {
+            "path": "coverage",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "86bae6ffec7f3b648e4d282081e625a12ac77dae"
+          },
+          {
+            "path": "docs",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "839281b2e9b3891cdad01302ff4d9d5405a9724e"
+          },
+          {
+            "path": "examples",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "d5679f713d533c4bdaaf5c17962e474273a3024c"
+          },
+          {
+            "path": "fixtures",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "74857746a0fbcf4ec6772c88d7b91e419699bbb8"
+          },
+          {
+            "path": "package-lock.json",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "265bf893d149c3cd70a6b3156c1a557dd6eda6a2"
+          },
+          {
+            "path": "package.json",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "1a27c7f9652ffa6532c5768b9f9eeaad5dd20182"
+          },
+          {
+            "path": "profiles",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "5f125aaece4df3484e72ec62024e5f979a744aef"
+          },
+          {
+            "path": "scripts",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "373bbddbd25c2ff25e2b9c47b75fdc047324551d"
+          },
+          {
+            "path": "src",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "7da633ec2b92f0a2e4d46966f09c22a951200498"
+          },
+          {
+            "path": "test",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "5caeaa1f19f67f516e36fb4e5d469fa0e3bb8fbe"
+          },
+          {
+            "path": "tools",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "0c86654043e81e1a1ee67525e92552990bd56793"
+          }
+        ]
+      }
+    },
+    {
+      "name": "contracts",
+      "command": "npm run contracts:check",
+      "cwd": "/workspace/scratch/754a49249d01/producer-final-regression-3a1992b",
+      "startedAt": "2026-11-20T16:43:19.072619+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T16:43:41.410655+00:00",
+      "durationSeconds": 22.337765,
+      "exitCode": 0,
+      "stdout": {
+        "path": "contracts.stdout.log",
+        "sha256": "90589d033f69b6d3131463b2870b621d6fb00c056286b5a9abb40e53572bc956",
+        "bytes": 2457
+      },
+      "stderr": {
+        "path": "contracts.stderr.log",
+        "sha256": "25d89fcefd423c031268e765c73e08af43281ee3564531e22106ed57c2db948f",
+        "bytes": 359
+      },
+      "checks": [
+        "tools/generate-host-contract.mjs --check",
+        "tools/generate-semantic-contract.mjs --check",
+        "tools/generate-semantic-algorithm-contract.mjs --check",
+        "tools/generate-semantic-execution-contract.mjs --check",
+        "tools/generate-semantic-region-contract.mjs --check"
+      ],
+      "counts": {
+        "checks": 5,
+        "passed": 5
+      },
+      "producerAfter": {
+        "revision": "3a1992b4462e8e2affa6baa04e9075ba3b01d04a",
+        "tree": "903da3860401f5f1a174a933ac03a8c5ae558b1a",
+        "trackedChanges": "",
+        "topLevelTreesAndBlobs": [
+          {
+            "path": ".github",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "875d9fe70d0c89d973141179b98831a92d5b7f1b"
+          },
+          {
+            "path": ".gitignore",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "8b769c44100cd871e4cdc042c105364e4ddb6dbd"
+          },
+          {
+            "path": ".nvmrc",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "229b3ce85a631ccd5991b25f75f414171ccc7942"
+          },
+          {
+            "path": "AGENTS.md",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "ab3b1c31536a7ec1fc463b39599826aff7c47e71"
+          },
+          {
+            "path": "README.md",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "699f95eac02be6f0ed2972c6ef445d21e4810899"
+          },
+          {
+            "path": "bin",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "213c84a7906e4136d01f5a886e9bbbb89091f752"
+          },
+          {
+            "path": "catalog",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "6107c116137573920017517fa14539e7896c1469"
+          },
+          {
+            "path": "conformance",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "e938df75ddbd7d8e16ecc46a54d07b1fea413ab7"
+          },
+          {
+            "path": "contracts",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "99d355f66c0d8db6f80b0efd19112f8792dffbd8"
+          },
+          {
+            "path": "corpus",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "b827151248fcd1a19a69c0de44dbeeec0fac9d9b"
+          },
+          {
+            "path": "coverage",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "86bae6ffec7f3b648e4d282081e625a12ac77dae"
+          },
+          {
+            "path": "docs",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "839281b2e9b3891cdad01302ff4d9d5405a9724e"
+          },
+          {
+            "path": "examples",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "d5679f713d533c4bdaaf5c17962e474273a3024c"
+          },
+          {
+            "path": "fixtures",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "74857746a0fbcf4ec6772c88d7b91e419699bbb8"
+          },
+          {
+            "path": "package-lock.json",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "265bf893d149c3cd70a6b3156c1a557dd6eda6a2"
+          },
+          {
+            "path": "package.json",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "1a27c7f9652ffa6532c5768b9f9eeaad5dd20182"
+          },
+          {
+            "path": "profiles",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "5f125aaece4df3484e72ec62024e5f979a744aef"
+          },
+          {
+            "path": "scripts",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "373bbddbd25c2ff25e2b9c47b75fdc047324551d"
+          },
+          {
+            "path": "src",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "7da633ec2b92f0a2e4d46966f09c22a951200498"
+          },
+          {
+            "path": "test",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "5caeaa1f19f67f516e36fb4e5d469fa0e3bb8fbe"
+          },
+          {
+            "path": "tools",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "0c86654043e81e1a1ee67525e92552990bd56793"
+          }
+        ]
+      }
+    },
+    {
+      "name": "reference",
+      "command": "node fixtures/reference/reference-fixture.mjs",
+      "cwd": "/workspace/scratch/754a49249d01/producer-final-regression-3a1992b",
+      "startedAt": "2026-11-20T16:43:41.446952+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T16:43:41.600402+00:00",
+      "durationSeconds": 0.152528,
+      "exitCode": 0,
+      "stdout": {
+        "path": "reference.stdout.log",
+        "sha256": "fc53ef9d327aa46a3968f073e1c35d1ca05af8710d42c3cfc903c8db54d9e560",
+        "bytes": 393
+      },
+      "stderr": {
+        "path": "reference.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "counts": {
+        "checks": 8,
+        "passed": 8,
+        "failed": 0
+      },
+      "checks": [
+        "getterReadOnce",
+        "bufferCoherenceAcrossCallback",
+        "synchronousThrowPreserved",
+        "reverseCompletionOrder",
+        "internalAwaitSuspends",
+        "permittedBatchingEquivalent",
+        "transcriptStoreDoesNotRepeatMockEffect",
+        "duplicateConversionDetected"
+      ],
+      "result": {
+        "answer": 47,
+        "optionReads": 1,
+        "memory": 7,
+        "caught": "fixture boom"
+      },
+      "producerAfter": {
+        "revision": "3a1992b4462e8e2affa6baa04e9075ba3b01d04a",
+        "tree": "903da3860401f5f1a174a933ac03a8c5ae558b1a",
+        "trackedChanges": "",
+        "topLevelTreesAndBlobs": [
+          {
+            "path": ".github",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "875d9fe70d0c89d973141179b98831a92d5b7f1b"
+          },
+          {
+            "path": ".gitignore",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "8b769c44100cd871e4cdc042c105364e4ddb6dbd"
+          },
+          {
+            "path": ".nvmrc",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "229b3ce85a631ccd5991b25f75f414171ccc7942"
+          },
+          {
+            "path": "AGENTS.md",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "ab3b1c31536a7ec1fc463b39599826aff7c47e71"
+          },
+          {
+            "path": "README.md",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "699f95eac02be6f0ed2972c6ef445d21e4810899"
+          },
+          {
+            "path": "bin",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "213c84a7906e4136d01f5a886e9bbbb89091f752"
+          },
+          {
+            "path": "catalog",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "6107c116137573920017517fa14539e7896c1469"
+          },
+          {
+            "path": "conformance",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "e938df75ddbd7d8e16ecc46a54d07b1fea413ab7"
+          },
+          {
+            "path": "contracts",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "99d355f66c0d8db6f80b0efd19112f8792dffbd8"
+          },
+          {
+            "path": "corpus",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "b827151248fcd1a19a69c0de44dbeeec0fac9d9b"
+          },
+          {
+            "path": "coverage",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "86bae6ffec7f3b648e4d282081e625a12ac77dae"
+          },
+          {
+            "path": "docs",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "839281b2e9b3891cdad01302ff4d9d5405a9724e"
+          },
+          {
+            "path": "examples",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "d5679f713d533c4bdaaf5c17962e474273a3024c"
+          },
+          {
+            "path": "fixtures",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "74857746a0fbcf4ec6772c88d7b91e419699bbb8"
+          },
+          {
+            "path": "package-lock.json",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "265bf893d149c3cd70a6b3156c1a557dd6eda6a2"
+          },
+          {
+            "path": "package.json",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "1a27c7f9652ffa6532c5768b9f9eeaad5dd20182"
+          },
+          {
+            "path": "profiles",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "5f125aaece4df3484e72ec62024e5f979a744aef"
+          },
+          {
+            "path": "scripts",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "373bbddbd25c2ff25e2b9c47b75fdc047324551d"
+          },
+          {
+            "path": "src",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "7da633ec2b92f0a2e4d46966f09c22a951200498"
+          },
+          {
+            "path": "test",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "5caeaa1f19f67f516e36fb4e5d469fa0e3bb8fbe"
+          },
+          {
+            "path": "tools",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "0c86654043e81e1a1ee67525e92552990bd56793"
+          }
+        ]
+      }
+    }
+  ],
+  "finishedAt": "2026-11-20T16:43:41.630603+00:00",
+  "durationSeconds": 445.492487,
+  "producerAfter": {
+    "revision": "3a1992b4462e8e2affa6baa04e9075ba3b01d04a",
+    "tree": "903da3860401f5f1a174a933ac03a8c5ae558b1a",
+    "trackedChanges": "",
+    "topLevelTreesAndBlobs": [
+      {
+        "path": ".github",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "875d9fe70d0c89d973141179b98831a92d5b7f1b"
+      },
+      {
+        "path": ".gitignore",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8b769c44100cd871e4cdc042c105364e4ddb6dbd"
+      },
+      {
+        "path": ".nvmrc",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "229b3ce85a631ccd5991b25f75f414171ccc7942"
+      },
+      {
+        "path": "AGENTS.md",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ab3b1c31536a7ec1fc463b39599826aff7c47e71"
+      },
+      {
+        "path": "README.md",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "699f95eac02be6f0ed2972c6ef445d21e4810899"
+      },
+      {
+        "path": "bin",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "213c84a7906e4136d01f5a886e9bbbb89091f752"
+      },
+      {
+        "path": "catalog",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "6107c116137573920017517fa14539e7896c1469"
+      },
+      {
+        "path": "conformance",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "e938df75ddbd7d8e16ecc46a54d07b1fea413ab7"
+      },
+      {
+        "path": "contracts",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "99d355f66c0d8db6f80b0efd19112f8792dffbd8"
+      },
+      {
+        "path": "corpus",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "b827151248fcd1a19a69c0de44dbeeec0fac9d9b"
+      },
+      {
+        "path": "coverage",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "86bae6ffec7f3b648e4d282081e625a12ac77dae"
+      },
+      {
+        "path": "docs",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "839281b2e9b3891cdad01302ff4d9d5405a9724e"
+      },
+      {
+        "path": "examples",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "d5679f713d533c4bdaaf5c17962e474273a3024c"
+      },
+      {
+        "path": "fixtures",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "74857746a0fbcf4ec6772c88d7b91e419699bbb8"
+      },
+      {
+        "path": "package-lock.json",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "265bf893d149c3cd70a6b3156c1a557dd6eda6a2"
+      },
+      {
+        "path": "package.json",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "1a27c7f9652ffa6532c5768b9f9eeaad5dd20182"
+      },
+      {
+        "path": "profiles",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "5f125aaece4df3484e72ec62024e5f979a744aef"
+      },
+      {
+        "path": "scripts",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "373bbddbd25c2ff25e2b9c47b75fdc047324551d"
+      },
+      {
+        "path": "src",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "7da633ec2b92f0a2e4d46966f09c22a951200498"
+      },
+      {
+        "path": "test",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "5caeaa1f19f67f516e36fb4e5d469fa0e3bb8fbe"
+      },
+      {
+        "path": "tools",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "0c86654043e81e1a1ee67525e92552990bd56793"
+      }
+    ]
+  },
+  "identityUnchanged": true
+}

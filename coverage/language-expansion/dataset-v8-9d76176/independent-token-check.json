@@ -1,0 +1,17 @@
+{
+  "schema": "v8-dataset-physical-check/1",
+  "passed": true,
+  "targets": {
+    "train": 63,
+    "validation": 2,
+    "test": 32
+  },
+  "generatedTokensWithEOS": 3475,
+  "registryDigest": "2a0b3162e77330d5057dbbb20cae5bd697532542eec66f3a935ca8502b939729",
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "byteRoundTrips": true,
+  "generatedOnlyMasks": true,
+  "manifestHashes": true,
+  "frozenComponentSplits": true,
+  "optimizerSteps": 0
+}

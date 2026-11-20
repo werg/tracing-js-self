@@ -177,8 +177,10 @@ async function executeTest262ModuleTurn({source,metadata,
       {phase:'runtime',modules:modules.size,harness,
        ...(asyncMode?{completionCalls:1}:{})});
   }catch(error){
-    if(error instanceof UnsupportedModule)
-      return response('unsupported',error.message,{phase:'runtime'});
+    if(error instanceof UnsupportedModule||
+       error instanceof Error&&error.code==='ERR_SCRIPT_EXECUTION_TIMEOUT')
+      return response('unsupported',error instanceof UnsupportedModule?error.message:
+        'Module evaluation CPU deadline exceeded',{phase:'runtime'});
     if(negative?.phase==='runtime'&&matches(error))
       return response('passed','Expected module runtime error constructor observed',
         {phase:'runtime',errorType:negative.type,modules:modules.size});

@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {verifyEffectfulTrainingCase,recheckEffectfulAdmission} from '../src/training/effectful-admit.js';
 import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 import {controlledEvaluationCase,evaluateSelectedCase} from '../src/training/selected-evaluation.js';
+import {verifyRegionTrainingCase,recheckRegionEvidence} from '../src/semantic/compiler-v8.js';
+import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 
 async function qualify(body){
   const source='"use strict";'+body;
@@ -50,8 +52,29 @@ test('uncaught numeric conversion errors complete selected execution after final
   assert.equal(actual.failure,null,JSON.stringify(actual.failure));assert.deepEqual(actual.outcome,fixture.expected);
   assert.equal(actual.outcome.completion.kind,'throw');
 });
-test('owned object conversion remains an explicit uncaught profile refusal',async()=>{
-  for(const intrinsic of ['Number','BigInt','String']){
+test('owned Number callbacks require protocol evidence and restore their original receiver',async()=>{
+  const source='"use strict";function run(){const o={x:7,valueOf:function(){return this.x;}};return Number(o);}',
+    fixture={source,entry:'run',family:'number-object-protocol',fixture:{calls:[]}},
+    historical=await verifyEffectfulTrainingCase(fixture);
+  assert.equal(historical.status,'projection_refused',historical.reason);
+  assert.match(historical.reason,/explicit v8 protocol profile/);
+  assert.equal(historical.exported,undefined);
+  const result=await verifyRegionTrainingCase(fixture);assert(result.exported,result.reason);
+  const artifact=result.exported;
+  assert(artifact.sidecar.protocolExtensions.includes('number-conversion-source/1'));
+  assert.equal(artifact.sidecar.sourceArtifact.sidecar.reference.extensionAudit.status,'agreed');
+  const cut=artifact.public.timeline.findIndex(row=>row.fields?.line?.includes('"kind":"number.call"'))+1;
+  assert(cut>0);
+  const partial=RegionExecutionHarness.replay({...artifact.public,timeline:artifact.public.timeline.slice(0,cut)},{requireTerminal:false}),
+    restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(partial.checkpoint())));
+  for(const row of artifact.public.timeline.slice(cut))
+    restored.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+  assert.deepEqual(restored.exportEpisode(),artifact.public);
+  assert.deepEqual(restored.controller.completion,{kind:'return',value:['num',7]});
+  assert.equal((await recheckRegionEvidence(artifact)).sourceValidated,true);
+});
+test('BigInt and String object conversion remain explicit uncaught profile refusals',async()=>{
+  for(const intrinsic of ['BigInt','String']){
     const result=await verifyEffectfulTrainingCase({source:'"use strict";function run(){try{return '+intrinsic+
       '({valueOf:function(){return 7;}});}catch(error){return 8;}}',entry:'run',family:'numeric-object-refusal',fixture:{calls:[]}});
     assert.equal(result.status,'unsupported',result.reason);

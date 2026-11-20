@@ -1,0 +1,135 @@
+{
+  "schema": "native-orchestration-isolated-diagnostic/1",
+  "preparedAt": "2026-11-20T18:12:37.792147+00:00",
+  "scope": "Five existing optional native coordinator gates, serially, at unchanged clean source/native revisions. No optimizer, source recollection or semantic code change. This does not overwrite or upgrade the original full-suite failures.",
+  "command": [
+    "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "--test",
+    "--test-concurrency=1",
+    "--test-name-pattern=^(native |actual initialized-weight native coordinator)",
+    "--test-reporter=tap",
+    "test/training-orchestration-evaluation.test.js"
+  ],
+  "cwd": "/workspace/scratch/754a49249d01/native-producer-current-012c9fe",
+  "environment": {
+    "TMPDIR": "/workspace/scratch/754a49249d01/native-orchestration-isolated-012c9fe-39c4036/tmp",
+    "PYTHONPATH": "/workspace/scratch/754a49249d01/native-consumer-39c4036/src",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "MEGATOKEN_ROOT": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+    "MEGATOKEN_REPOSITORY": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+    "MEGATOKEN_PYTHON": "/workspace/scratch/754a49249d01/native-v8-venv/bin/python",
+    "MEGATOKEN_TOKENIZER_JSON": "/workspace/scratch/754a49249d01/native-v8-tokenizer.json",
+    "MEGATOKEN_NATIVE_SOURCE_PRODUCER": "/workspace/scratch/754a49249d01/native-producer-current-012c9fe",
+    "TRACING_JS_SELF_ROOT": "/workspace/scratch/754a49249d01/native-producer-current-012c9fe",
+    "SEMANTIC_V8_NATIVE_POLICY": "/workspace/scratch/754a49249d01/native-producer-current-012c9fe/contracts/semantic-native-policy-v8.json",
+    "MEGATOKEN_ORCHESTRATION_SERVED": "/workspace/scratch/754a49249d01/native-v8-cli-smoke/served",
+    "MEGATOKEN_ORCHESTRATION_EVIDENCE_DIR": "/workspace/scratch/754a49249d01/native-orchestration-isolated-012c9fe-39c4036/native-orchestration"
+  },
+  "identities": {
+    "pins": {
+      "producer": {
+        "path": "/workspace/scratch/754a49249d01/native-producer-current-012c9fe",
+        "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+        "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+        "status": ""
+      },
+      "consumer": {
+        "path": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+        "revision": "39c4036564428e44cc89caf261f517d856482695",
+        "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+        "status": ""
+      }
+    },
+    "served": {
+      "manifest.json": {
+        "path": "/workspace/scratch/754a49249d01/native-v8-cli-smoke/served/manifest.json",
+        "bytes": 7785,
+        "sha256": "6edcf9536d2262144d81f99faa627e186429adc24e7bf5555a30be4152909df9"
+      },
+      "model.safetensors": {
+        "path": "/workspace/scratch/754a49249d01/native-v8-cli-smoke/served/model.safetensors",
+        "bytes": 16250168,
+        "sha256": "2a7eefffb21e8901150e6932ccd3d7f048fa2efb0ed4d9ebc9072feab43f0452"
+      },
+      "model_config.json": {
+        "path": "/workspace/scratch/754a49249d01/native-v8-cli-smoke/served/model_config.json",
+        "bytes": 1398,
+        "sha256": "ed7a2f92ac01415c92ae93b8fc1144c5e260c9bbed8f5ba1da9dc7ff399f910f"
+      },
+      "tokenizer.json": {
+        "path": "/workspace/scratch/754a49249d01/native-v8-cli-smoke/served/tokenizer.json",
+        "bytes": 12205732,
+        "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+      },
+      "transducer.pt": {
+        "path": "/workspace/scratch/754a49249d01/native-v8-cli-smoke/served/transducer.pt",
+        "bytes": 4853,
+        "sha256": "a2e076c845470e79f0e56e7b771c1abed2f793cf2d327eb2fccca3d531894aff"
+      }
+    },
+    "manifestDifferencesFromOriginal": {
+      "checkpoint_sha256": {
+        "local": "7b274eed764cd14c7fbcd815a8575a148a6acfe55aae239db05b675d1a8b5801",
+        "recorded": "5a221c7debde04a73168e0f0c0abe5fa6e51ff114e0ef73b2b647b403d81bccf"
+      },
+      "transducer_sha256": {
+        "local": "a2e076c845470e79f0e56e7b771c1abed2f793cf2d327eb2fccca3d531894aff",
+        "recorded": "f355a3f3e4b8fabb84c5f97b2d9b596052b8ebfd12985105f2c0c7dd54ff8ba5"
+      }
+    }
+  },
+  "test": {
+    "path": "/workspace/scratch/754a49249d01/native-producer-current-012c9fe/test/training-orchestration-evaluation.test.js",
+    "bytes": 25428,
+    "sha256": "e1cf8dc40212638fe5c4a081ee8404a1fd0bf236a04a53aab181999077ebcf10"
+  },
+  "originalFailureReceipt": {
+    "path": "/workspace/scratch/754a49249d01/tracing-js-self/coverage/language-expansion/producer-regression-012c9fe/summary.json",
+    "bytes": 28408,
+    "sha256": "b7ee424870614b63b1110b9092753bc584472b61bebfd6ccfed0c56d8e4c6db4"
+  },
+  "originalFailureArchive": {
+    "path": "/workspace/scratch/754a49249d01/tracing-js-self/coverage/language-expansion/producer-regression-012c9fe/native-orchestration.tar.xz",
+    "bytes": 32784,
+    "sha256": "611aa5d865925b2e7104eeae8014e6a15c45a53d5c4d78a92f2c5a9526bf6565"
+  },
+  "recordedManifest": {
+    "path": "/workspace/scratch/754a49249d01/native-v8-external-evidence-audit/retained/training/baseline/manifest.json",
+    "bytes": 7785,
+    "sha256": "40b8ca1e79659cb1d609c85bfa62ef6c58301b5409385e63f0197663d11ba539"
+  },
+  "substitution": "The available initialized served bundle has identical model weights, model configuration, production tokenizer, chunking and serving-format identities. Its checkpoint identity and transducer-bank bytes differ from the unavailable original full bundle and are explicitly recorded; this is a compatible-bundle diagnostic, not byte-identical whole-bundle reproduction.",
+  "unchangedBounds": {
+    "rpcMs": 30000,
+    "evaluationMs": {
+      "services": 60000,
+      "retainedContext": 240000,
+      "budget": 30000,
+      "invalidChild": 30000,
+      "modelRejection": 30000
+    },
+    "cleanupMs": {
+      "services": 1000,
+      "retainedContext": 3000,
+      "budget": 1000,
+      "invalidChild": 1000,
+      "modelRejection": 1000
+    },
+    "testMs": {
+      "default": 120000,
+      "retainedContext": 290000
+    }
+  },
+  "runtime": {
+    "node": "v24.22.3",
+    "pythonExecutable": "/workspace/scratch/754a49249d01/native-v8-venv/bin/python"
+  },
+  "runner": {
+    "path": "/workspace/scratch/754a49249d01/run_native_orchestration_isolated.py",
+    "bytes": 8834,
+    "sha256": "91381d34566b14da1feba838193fab3ee1534805f8e8d30fd4ee3e16c5007b10"
+  }
+}

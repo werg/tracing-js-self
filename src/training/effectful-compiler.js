@@ -16,6 +16,8 @@ import {analyzeSemanticProgram} from './semantic-program.js';
 import {sourceLinkedComputation,sourceLinkedDecision} from './semantic-source.js';
 import {DECLARED_EXCEPTION_PROFILE} from './exception-profile.js';
 import {inspectSemanticRegion,evaluateSemanticRegion,checkSemanticRegionClaim} from './semantic-regions.js';
+import {checkEffectfulProjectionState} from './projection-state-profile.js';
+import {inspectOwnedDataEntity} from './data-graph-contract.js';
 
 const copy=value=>structuredClone(value);
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
@@ -63,6 +65,18 @@ function closureReferences(source){
   visit(parse(source,{ecmaVersion:'latest'}));return result;
 }
 
+function parameterSourceRegions(source){
+  const result=new Map();
+  function visit(node){
+    if(!node||typeof node!=='object')return;
+    if(Array.isArray(node)){for(const child of node)visit(child);return;}
+    if(['FunctionDeclaration','FunctionExpression','ArrowFunctionExpression'].includes(node.type))
+      result.set(node.start,node.params.map(param=>({start:param.start,end:param.end})));
+    for(const value of Object.values(node))if(value&&typeof value==='object')visit(value);
+  }
+  visit(parse(source,{ecmaVersion:'latest'}));return result;
+}
+
 export function ownedEffectfulOutcome(bundle){
   // Async entry returns the Promise owned by the original entry frame. A
   // rejection does not complete the entire agent, and a later callback can
@@ -90,27 +104,35 @@ export function ownedEffectfulOutcome(bundle){
 export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='program1',
     invocationId='invocation1',trackId='worker1',realmId='realm1',sourceLineage=null,
     maxGenerated=16384,realmPolicy='retained',triggerId='teacher-entry',checkpointAtFirstAwait=false,
-    representation='compact',maxOperators=8,localStateCompaction=true,semanticRegions=true}={}){
+    representation='compact',maxOperators=8,localStateCompaction=true,semanticRegions=true,regionAdapter=null}={}){
   if(typeof checkpointAtFirstAwait!=='boolean')refuse('checkpointAtFirstAwait must be boolean');
   if(typeof localStateCompaction!=='boolean')refuse('localStateCompaction must be boolean');
   if(typeof semanticRegions!=='boolean')refuse('semanticRegions must be boolean');
+  if(regionAdapter!==null&&(regionAdapter.schema!=='semantic-region-teacher-adapter/1'||
+    typeof regionAdapter.createHarness!=='function'||typeof regionAdapter.replay!=='function'||
+    typeof regionAdapter.encodeProtocol!=='function'||semanticRegions))
+    refuse('region adapter requires a checked harness and explicit detailed source projection');
+  const sourceValue=value=>graphValue(value)||regionAdapter?.isValue?.(value)===true;
   if(representation!=='compact')refuse('Only the canonical semantic trace is supported');
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
     refuse('compact expressions require an operator bound from 1 through 8');
   validateBundle(bundle);replayExact(bundle);
+  checkEffectfulProjectionState(bundle);
   const semantic=normalizeJournal(bundle);validateSemantic(bundle,semantic);
   const entry=bundle.entrySpec;
   if(entry?.kind!=='function')refuse('an explicit owned function entry is required');
   const source=bundle.sources.find(item=>item.sourceId===entry.sourceId)?.text;
   if(typeof source!=='string')refuse('exact source bytes are unavailable');
-  const sourceReferences=closureReferences(source),functionReferences=new Map();
+  const sourceReferences=closureReferences(source),functionReferences=new Map(),
+    sourceParameters=parameterSourceRegions(source),functionParameters=new Map();
   const binaryNodes=binarySourceNodes(source),operationStarts=new Map();
   const privateSites=new Map(bundle.sites.map(site=>[site.siteId,site]));
   for(const event of bundle.events)for(const change of event.stateChanges)
     if(change.kind==='operation.create')operationStarts.set(change.id,{event,operation:change.record});
   const capabilities=[...new Set(analyzeSemanticProgram(source).sites.map(site=>site.operation).filter(Boolean))].sort();
   for(const operation of capabilities)hostOperation(operation);
-  let harness=new SelectedExecutionHarness({sessionId,maxGenerated,automaticDelivery:false});
+  let harness=regionAdapter?regionAdapter.createHarness({sessionId,maxGenerated,automaticDelivery:false}):
+    new SelectedExecutionHarness({sessionId,maxGenerated,automaticDelivery:false});
   harness.publishProgram({programId,source,entry:entry.functionName,capabilities,
     randomSeed:bundle.initialState.control.a0.randomSeed??null});
   // Rest parameters are ordinary arrays already created at the *entry*
@@ -208,6 +230,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const reactionFrames=new Map(),reactionTargets=new Set(),microtasks=new Map(),privatePromises=new Set();
   const awaitingCompletion=new Map();
   const deferredClosures=new Map();
+  const publishingInitialClosures=new Set();
   const pendingComputations=[];
   let fusedComputations=0,foldedComputations=0,fusedBindings=0,removedCellWrites=0;
   let cellOrdinal=0,frameOrdinal=0,continuationOrdinal=0,eventOrdinal=0,generated=0,jobOrdinal=0;
@@ -216,11 +239,13 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       functionNames.set(instruction.arg.codeId,instruction.op==='DEF_FN'?
         instruction.arg.name:'function:'+instruction.start);
       functionReferences.set(instruction.arg.codeId,sourceReferences.get(instruction.start)??new Set());
+      functionParameters.set(instruction.arg.codeId,sourceParameters.get(instruction.start)??[]);
     }
   const rootFor=frame=>roots.get(frame)??invocationId;
   const frameId=frame=>{if(!frames.has(frame))frames.set(frame,'guest'+(++frameOrdinal));return frames.get(frame);};
   const identity=id=>publicIdentities.get(id)??id;
   const tag=value=>{
+    const extended=regionAdapter?.tag?.(value);if(extended!==undefined&&extended!==null)return copy(extended);
     if(!graphValue(value))refuse('unrepresentable value '+JSON.stringify(value));
     return value[0]==='promise'?['ref',value[1]]:value[0]==='ref'?['ref',identity(value[1])]:copy(value);
   };
@@ -279,7 +304,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   };
   function commitEmission(owner,kind,fields,certificate){
     if(++generated>maxGenerated)throw new RangeError('Effectful teacher record budget');
-    const line=encodeWitness(kind,fields);
+    const line=kind==='protocol'&&regionAdapter?regionAdapter.encodeProtocol(fields):encodeWitness(kind,fields);
     harness.prepareModelContext(owner);
     harness.selected(owner,line);
     const receipt=harness.timeline.findLast(item=>item.kind==='semantic'&&item.invocationId===owner);
@@ -290,6 +315,12 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     for(const item of pendingComputations)commitEmission(item.owner,'compute',item.fields,item.certificate);
     pendingComputations.length=0;
   }
+  function emitProtocol(owner,record,event=null,rule='source-protocol/1'){
+    if(!regionAdapter)refuse('protocol source emission requires the v8 region adapter');
+    flushComputations();
+    return commitEmission(owner,'protocol',record,{rule,journalEvents:event?[event.eventId]:[],
+      source:event?.siteId?{sourceId:event.sourceId,siteId:event.siteId}:null});
+  }
   function pendingBinding(row,event){
     if(!['binding.initialize','binding.write'].includes(event.operation)||
        row?.op!=='value'||row.writes?.length!==1||row.writes[0].kind!=='cell')
@@ -298,11 +329,28 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     if(!last||last.fields.bind||last.owner!==rootFor(row.invocation)||
        last.fields.invocation!==frameId(row.invocation)||
        !row.dependsOn.includes(rows.get(last.producer)?.id)||
-       !graphValue(write.value)||!isDeepStrictEqual(tag(write.value),last.fields.result))
+       !sourceValue(write.value)||!isDeepStrictEqual(tag(write.value),last.fields.result))
       return null;
     return {last,write};
   }
   function emit(owner,kind,fields,event=null,rule=kind){
+    // Top-level source declarations already exist at the owned entry, but are
+    // not ordinary input-graph objects. Publish a referenced initial closure
+    // before any public binding/operand can name its identity. This uses only
+    // the immutable entry entity and current lexical cells, never final state.
+    const publish=value=>{
+      if(!value||typeof value!=='object')return;
+      if(Array.isArray(value)&&value[0]==='ref'){
+        if(!(kind==='allocate'&&value[1]===fields.name)&&!controller(owner).heap.has(value[1]))
+          publishInitialClosure(value[1],owner,event);
+        return;
+      }
+      for(const child of Object.values(value))publish(child);
+    };publish(fields);
+    if(kind==='allocate'){
+      const record=regionAdapter?.allocation?.(extensionContext,event,fields);
+      if(record)return emitProtocol(owner,record,event,'source-owned-closure/1');
+    }
     // Canonical production reduction over an already committed local cell.
     // A normal assignment to an already published lexical cell is idempotent
     // only when the exact cell and tagged value already match. This cannot
@@ -381,7 +429,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   }
   function seedBindings(frame,owner,event=null){
     const actual=state.frames[frame],env=state.envs[actual?.envId];
-    for(const [name,binding] of Object.entries(env?.bindings??{}))if(binding.initialized&&graphValue(binding.token?.value)){
+    for(const [name,binding] of Object.entries(env?.bindings??{}))if(binding.initialized&&sourceValue(binding.token?.value)){
       const value=tag(binding.token.value),nameId=cell(actual.envId,name);
       if(!controller(owner).locals.has(nameId))emit(owner,'bind',{name:nameId,value},event,'parameter-binding');
     }
@@ -389,7 +437,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   function writes(row,owner,event){
     for(const change of row.writes??[]){
       if(change.kind==='cell'){
-        if(!graphValue(change.value))refuse('unrepresentable captured cell');
+        if(!sourceValue(change.value))refuse('unrepresentable captured cell');
         const deferred=change.value[0]==='ref'&&deferredClosures.get(change.value[1]);
         if(deferred){
           const binding=state.envs[change.env]?.bindings?.[change.key];
@@ -404,7 +452,21 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       else refuse('unknown mutation family');
     }
   }
-  function allocations(row,owner,event){
+  function publishInitialClosure(id,owner,event){
+    const initial=bundle.initialState.heap[id],current=state.heap[id];
+    if(!initial)return; // The ordinary selected identity check remains final.
+    if(initial.kind!=='function'||!isDeepStrictEqual(initial,current)||
+      Object.keys(initial.properties??{}).length||initial.prototypeInitialized||initial.classConstructor||
+      initial.privateSlots||initial.instanceInitializer||initial.staticInitializer)
+      refuse('unpublished initial identity requires an explicit behavioral-state profile');
+    if(publishingInitialClosures.has(id))refuse('cyclic initial closure capture requires explicit cells');
+    publishingInitialClosures.add(id);
+    try{
+      allocations({allocations:[{identity:id,kind:'function',codeId:initial.codeId,
+        capture:initial.closureEnvId,properties:[]}]},owner,event,{initial});
+    }finally{publishingInitialClosures.delete(id);}
+  }
+  function allocations(row,owner,event,{initial=null}={}){
     for(const allocation of row.allocations??[]){
       if(controller(owner).heap.has(identity(allocation.identity)))continue;
       const fields={name:identity(allocation.identity),kind:allocation.kind==='function'?'closure':allocation.kind,
@@ -423,7 +485,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
               // The nearest declaration shadows all outer namesakes, even
               // before initialization. Never substitute an outer/final value.
               if(!binding.initialized&&binding.kind!=='parameter'){unresolvedLexical=true;continue;}
-              if(binding.initialized&&!graphValue(binding.token?.value))continue;
+              if(binding.initialized&&!sourceValue(binding.token?.value))continue;
               captureBindings.push({environment:env,name,cell:cell(env,name)});
             }
         const unresolved=captureBindings.filter(relation=>
@@ -434,7 +496,9 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
              allocation.capture!==parameterEnv||unresolved.some(relation=>relation.environment!==parameterEnv))
             refuse('closure has unsupported deferred parameter captures');
           deferredClosures.set(allocation.identity,{owner,fields,parameterEnv,
-            frame:event.invocationId,event,captureBindings,writes:[],events:[event.eventId]});
+            frame:event.invocationId,event,captureBindings,writes:[],events:[event.eventId],
+            parameterRegions:functionParameters.get(state.frames[event.invocationId]?.codeId)??[],
+            patternEnvironments:new Set([parameterEnv]),patternObjects:new Set(),patternProof:false});
           continue;
         }
         for(const relation of captureBindings){
@@ -444,7 +508,9 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
           fields.captures.push({binding:relation.name,cell:relation.cell});
         }
       }
-      emit(owner,'allocate',fields,event,'allocate');
+      emit(owner,'allocate',fields,event,initial?'initial-source-closure':'allocate');
+      if(initial)certificates.at(-1).initialState={identity:initial.id,code:initial.codeId,
+        closureEnvironment:initial.closureEnvId,entityDigest:hash(initial)};
     }
   }
   function guardDeferredClosures(row,event){
@@ -452,20 +518,87 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       // Only read-free, call-free parameter housekeeping can commute with an
       // unpublished allocation. This intentionally excludes other defaults,
       // heap writes/allocations, effects, exceptions, jobs and checkpoints.
-      if(event.invocationId!==pending.frame||event.completion||
+      const basic=!(event.invocationId!==pending.frame||event.completion||
          !['binding.default.guard','literal.materialize','control.jump','binding.initialize'].includes(event.operation)||
          event.stateChanges.some(change=>!['frames','envs'].includes(change.table)||
            change.table==='frames'&&change.id!==pending.frame||
-           change.table==='envs'&&(event.operation!=='binding.initialize'||change.id!==pending.parameterEnv)))
-        refuse('deferred parameter closure crosses an observable or unsupported operation: '+event.operation);
+           change.table==='envs'&&(event.operation!=='binding.initialize'||change.id!==pending.parameterEnv)));
+      let parameterInitialize=true;
       if(event.operation==='binding.initialize'){
         const write=row?.writes?.[0],binding=write&&state.envs[write.env]?.bindings?.[write.key];
-        if(row?.writes?.length!==1||write.kind!=='cell'||write.env!==pending.parameterEnv||
-           binding?.kind!=='parameter'||binding.initialized)
-          refuse('deferred closure crossed a non-parameter initialization');
+        parameterInitialize=row?.writes?.length===1&&write.kind==='cell'&&write.env===pending.parameterEnv&&
+          binding?.kind==='parameter'&&!binding.initialized;
       }
+      if(!basic||!parameterInitialize)guardDeferredParameterData(pending,row,event);
       pending.events.push(event.eventId);
     }
+  }
+  function guardDeferredParameterData(pending,row,event){
+    const reject=()=>refuse('deferred parameter closure crosses an observable or unsupported operation: '+event.operation);
+    const allowed=new Set(['binding.default.guard','literal.materialize','control.jump','binding.initialize',
+      'binding.read','binding.declare','binding.write','environment.enter','environment.leave',
+      'stack.pop','stack.duplicate','primitive.binary','control.branch','object.allocate','array.allocate',
+      'property.read','property.write']);
+    const site=privateSites.get(event.siteId);
+    if(event.invocationId!==pending.frame||event.completion||!allowed.has(event.operation)||!site||
+      !pending.parameterRegions.some(region=>site.start>=region.start&&site.end<=region.end))reject();
+    const unpublished=value=>Array.isArray(value)&&value[0]==='ref'&&deferredClosures.has(value[1]);
+    if((event.operands??[]).some(unpublished)||unpublished(event.result)||
+      (event.readObservations??[]).some(read=>unpublished(read.value)))reject();
+    const temporary=name=>/^\[\[pattern [0-9]+\]\]$/.test(name);
+    const createsEnvironment=event.operation==='environment.enter',createsObject=['object.allocate','array.allocate'].includes(event.operation);
+    const newEnvironments=[],newObjects=[];
+    for(const change of event.stateChanges){
+      if(change.table==='frames'){if(change.id!==pending.frame)reject();continue;}
+      if(change.table==='counters'){if(!createsEnvironment&&!createsObject)reject();continue;}
+      if(change.table==='envs'){
+        if(createsEnvironment){
+          if(change.before!==null||!change.after||!pending.patternEnvironments.has(change.after.parent)||
+            Object.keys(change.after.bindings??{}).length)reject();
+          newEnvironments.push(change.id);continue;
+        }
+        if(!pending.patternEnvironments.has(change.id)||!change.before||!change.after)reject();
+        if(event.operation==='binding.declare'){
+          const before=change.before.bindings,after=change.after.bindings;
+          if(change.id===pending.parameterEnv||Object.keys(before).some(name=>!isDeepStrictEqual(before[name],after[name])))reject();
+          const additions=Object.keys(after).filter(name=>!Object.hasOwn(before,name));
+          if(additions.length!==1||!temporary(additions[0])||after[additions[0]].initialized)reject();
+        }else if(['binding.initialize','binding.write'].includes(event.operation)){
+          const write=row?.writes?.[0],binding=write&&state.envs[write.env]?.bindings?.[write.key];
+          if(row?.writes?.length!==1||write.kind!=='cell'||write.env!==change.id||!binding||!sourceValue(write.value))reject();
+          if(change.id===pending.parameterEnv){
+            if(event.operation!=='binding.initialize'||binding.kind!=='parameter'||binding.initialized)reject();
+          }else if(!temporary(write.key))reject();
+        }else reject();
+        continue;
+      }
+      if(change.table==='heap'){
+        if(createsObject){
+          if(change.before!==null||!['object','array'].includes(change.after?.kind)||
+            Object.keys(change.after.properties??{}).some(key=>key!=='length'))reject();
+          try{inspectOwnedDataEntity(change.after);}catch{reject();}
+          newObjects.push(change.id);continue;
+        }
+        if(event.operation!=='property.write'||!pending.patternObjects.has(change.id))reject();
+        try{inspectOwnedDataEntity(change.before);inspectOwnedDataEntity(change.after);}catch{reject();}
+        if(!row?.writes?.length||row.writes.some(write=>write.kind!=='property'||write.object!==change.id||
+          !write.present||!sourceValue(write.value)||unpublished(write.value)))reject();
+        continue;
+      }
+      reject();
+    }
+    for(const read of event.readObservations??[]){
+      if(read.kind==='binding'){
+        if(!pending.patternEnvironments.has(read.envId)||!sourceValue(read.value))reject();
+      }else if(read.kind==='property'){
+        try{inspectOwnedDataEntity(state.heap[read.objectId]);}catch{reject();}
+        if(!sourceValue(read.value))reject();
+      }else reject();
+    }
+    if(event.operation==='primitive.binary'&&(event.operands??[]).some(value=>!sourceValue(value)||['ref','promise'].includes(value[0])))reject();
+    for(const id of newEnvironments)pending.patternEnvironments.add(id);
+    for(const id of newObjects)pending.patternObjects.add(id);
+    pending.patternProof=true;
   }
   function flushDeferredClosures(event){
     for(const [identity,pending] of deferredClosures){
@@ -474,15 +607,18 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       if(captures.some(({binding})=>!binding?.initialized))continue;
       if(!pending.writes.length)refuse('deferred parameter closure lacks its initializing write');
       for(const {binding} of captures)
-        if(!graphValue(binding.token?.value)||binding.token.value[0]==='ref'&&
+        if(!sourceValue(binding.token?.value)||binding.token.value[0]==='ref'&&
            (deferredClosures.has(binding.token.value[1])||!controller(pending.owner).heap.has(tag(binding.token.value)[1])))
           refuse('deferred parameter capture depends on an unpublished identity');
       const emitDeferred=(kind,fields)=>{
         flushComputations();
-        return commitEmission(pending.owner,kind,fields,{
-          rule:'owned-deferred-parameter-closure/4',journalEvents:[...pending.events],
+        const record=kind==='allocate'?regionAdapter?.allocation?.(extensionContext,pending.event,fields):null;
+        return commitEmission(pending.owner,record?'protocol':kind,record??fields,{
+          rule:pending.patternProof?'owned-deferred-parameter-initialization/1':'owned-deferred-parameter-closure/4',journalEvents:[...pending.events],
           allocationEvent:pending.event.eventId,initializationBoundary:event.eventId,
           capturedCells:copy(pending.captureBindings),
+          ...(pending.patternProof?{parameterDataProof:{regions:copy(pending.parameterRegions),
+            environments:[...pending.patternEnvironments],allocations:[...pending.patternObjects]}}:{}),
           source:{sourceId:pending.event.sourceId,siteId:pending.event.siteId}});
       };
       for(const {relation,binding} of captures){
@@ -498,6 +634,13 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       deferredClosures.delete(identity);
     }
   }
+  const extensionContext={bundle,source,semantic,state,controller,identity,tag,frameId,rootFor,cell,
+    emit,emitProtocol,allocations,writes,publishInitialClosure,refuse,copy,
+    registerFrame(frame,owner){roots.set(frame,owner);return frameId(frame);},
+    get harness(){return harness;},
+    claimDataIdentity(id){certifiedDataIdentities.add(identity(id));},
+    get rootInvocation(){return invocationId;}};
+  regionAdapter?.setup?.(extensionContext);
   // Initial owned result Promises are part of entering an async function, not
   // external observations or values taken from its eventual final heap.
   for(const id of Object.keys(bundle.initialState.promises))promise(id,invocationId);
@@ -569,7 +712,8 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         }
       }
     }
-    if(event.operation==='external.callback.enqueue'){
+    if(regionAdapter?.event?.(extensionContext,event,row)===true){handled=true;
+    }else if(event.operation==='external.callback.enqueue'){
       const queue=event.stateChanges.find(change=>change.table==='control')?.after?.queue??[];
       const callback=queue.at(-1);
       if(callback?.kind!=='external-callback')refuse('callback lacks owned queue receipt');
@@ -652,7 +796,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         if([...harness.handlers.values()].some(handler=>handler.state!=='closed'))
           refuse('native listener checkpoint needs explicit reattachment evidence absent from this source journal');
         const packet=JSON.parse(JSON.stringify(harness.checkpoint()));
-        harness=SelectedExecutionHarness.restore(packet);
+        harness=regionAdapter?regionAdapter.restore(packet):SelectedExecutionHarness.restore(packet);
         harness.evictSource(trackId,programId);
         harness.restoreSource(trackId,programId,{digest:harness.programs.get(programId).digest});
         checkpoints.push({schema:'semantic-checkpoint-evidence/4',journalEvent:event.eventId,
@@ -705,6 +849,14 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       handled=true;
     }else if(row?.op==='call'){
       roots.set(row.child,owner);
+      // Apply's arguments come from ordered array-like reads committed in
+      // this CALL, rather than from separately evaluated source expressions.
+      if(row.callAdapter)for(const read of row.reads??[]){
+        const object=identity(read.objectId??read.object),key=read.key??read.property;
+        if(read.kind!=='property'||typeof key!=='string'||!sourceValue(read.value)||!controller(owner).heap.has(object))
+          refuse('call adapter argument read requires published ordinary data');
+        emit(owner,'read',{object,key,present:read.present??true,value:tag(read.value)},event,'call-adapter-read');
+      }
       allocations(row,owner,event);
       emit(owner,'call',{child:frameId(row.child),callee:functionNames.get(row.code)??row.code,
         receiver:tag(row.receiver),arguments:row.arguments.map(tag)},event,'call');writes(row,owner,event);handled=true;
@@ -777,7 +929,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     }else if(row?.op==='read'){
       for(const read of row.reads??[])if(read.kind==='property'&&controller(owner).heap.has(identity(read.objectId??read.object))){
         const object=identity(read.objectId??read.object),key=read.key??read.property;
-        if(typeof key==='string'&&graphValue(read.value))emit(owner,'read',{object,key,
+        if(typeof key==='string'&&sourceValue(read.value))emit(owner,'read',{object,key,
           present:read.present??true,value:tag(read.value)},event,'read');
       }
       handled=true;
@@ -789,6 +941,13 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       }
       handled=true;
     }
+    // One owned throw may close helper and executor scopes before reaching an
+    // ordinary root/job completion. Extensions consume only their exact exits;
+    // the remaining lifecycle stays with the shared completion projector.
+    const completionResult=regionAdapter?.completion?.(extensionContext,event,row,fact),
+      handledCompletion=completionResult===true,
+      completedInvocations=new Set(completionResult?.invocations??[]);
+    if(handledCompletion||completedInvocations.size)handled=true;
     // Promise resolution is generated exactly where the journal changes it;
     // externally caused settlements have already entered as observations.
     for(const change of promiseChanges){
@@ -801,7 +960,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       const publicPromise=controller(owner).heap.get(change.id);
       if(['fulfilled','rejected'].includes(change.after?.status)&&publicPromise?.state===change.after.status&&
         isDeepStrictEqual(publicPromise.result,tag(change.after.value.value))){settledPromises.add(change.id);continue;}
-      if(change.after?.adopting&&change.before?.adopting!==change.after.adopting){
+      if(change.after?.adopting&&change.before?.adopting!==change.after.adopting&&publicPromise?.adopted!==change.after.adopting){
         emit(owner,'promise',{action:'adopt',promise:change.id,target:change.after.adopting},event,'promise-adoption');
       }else if(['fulfilled','rejected'].includes(change.after?.status)&&
           change.before?.status!==change.after.status&&!settledPromises.has(change.id)){
@@ -810,15 +969,16 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         settledPromises.add(change.id);
       }
     }
-    if(fact?.operation==='catch-bind'){
+    if(!handledCompletion&&fact?.operation==='catch-bind'){
       const env=event.stateChanges.find(change=>change.table==='envs'&&change.before===null)?.id;
       emit(owner,'bind',{name:cell(env,fact.name),value:tag(fact.value)},event,'catch-binding');handled=true;
-    }else if(fact?.operation==='transfer'){
+    }else if(!handledCompletion&&fact?.operation==='transfer'){
       emit(owner,'transfer',{kind:fact.kind,value:tag(fact.value),handler:fact.handler,
         invocation:frameId(fact.invocation)},event,'completion-transfer');handled=true;
-    }else if(['return','throw','unhandled-throw'].includes(fact?.operation)){
-      if(row)writes(row,owner,event);
+    }else if(!handledCompletion&&['return','throw','unhandled-throw'].includes(fact?.operation)){
+      if(row&&!completedInvocations.size)writes(row,owner,event);
       for(const exit of [fact,...(fact.unwound??[])]){
+        if(completedInvocations.has(exit.invocation))continue;
         const frame=state.frames[exit.invocation],asyncResult=frame?.asyncPromiseId;
         const value=asyncResult?['ref',asyncResult]:tag(exit.value??event.operands?.[0]);
         const kind=asyncResult?'return':exit.operation==='return'?'return':'throw';
@@ -834,6 +994,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       if(row)refuse('unprojected semantic family '+row.op);
       elided.push({journalEvent:event.eventId,operation:event.operation,reason:'private-machine-transition'});
     }
+    regionAdapter?.checkEvent?.(extensionContext,event,row);
     for(const change of event.stateChanges){
       if(change.after===null)delete state[change.table][change.id];
       else state[change.table][change.id]=copy(change.after);
@@ -866,7 +1027,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       foldedConditions:foldedComputations,fusedBindings,...(localStateCompaction?{
         rule:'local-cell-idempotence/1',removedCellWrites}:{})},
     generatedRecords:generated,publicDigest:hash(exported.public)};
-  const replayed=SelectedExecutionHarness.replay(exported);
+  const replayed=regionAdapter?regionAdapter.replay(exported):SelectedExecutionHarness.replay(exported);
   for(const activation of replayed.invocations.values())
     if(activation.controller.firstWitnessViolation)refuse('selected replay has an inconsistent computation');
   const expected=ownedEffectfulOutcome(bundle),selected=replayed.invocations.get(invocationId).controller;

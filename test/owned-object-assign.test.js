@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createRuntime,validateBundle,replayExact} from 'tracing-js-self';
 import {realizeGraph,describeGraph} from '../src/training/graph.js';
 import {verifyOwnedSourceCase} from 'tracing-js-self/training';
+import {runtimeDifferential} from './helpers/runtime-frontier.js';
 
 function run(body,args){
   const runtime=createRuntime().startEntry({
@@ -34,6 +35,13 @@ test('Object.assign copies owned dense array enumerable indices but not length',
   assert.deepEqual(result,Object.assign({name:'x'},source));
   assert.equal(Object.hasOwn(result,'length'),false);
 });
+test('Object.assign skips non-enumerable class and template data properties',()=>{
+  runtimeDifferential('class C{m(){return 1;}}C.prototype.visible=3;const copy=Object.assign({},C.prototype);return [Object.keys(copy),copy.visible,Object.hasOwn(copy,"m"),Object.hasOwn(copy,"constructor")];');
+  runtimeDifferential('function tag(parts){const copy=Object.assign({},parts);return [Object.keys(copy),copy[0],copy[1],Object.hasOwn(copy,"raw"),Object.hasOwn(copy,"length")];}return tag`first${7}last`;');
+});
+test('Object.assign retains enumerable symbol values and ordinary own-key order',()=>{
+  runtimeDifferential('const first=Symbol("first"),last=Symbol("last"),source={};source[first]=1;source.b=2;source[2]=3;source.a=4;source[last]=5;source[1]=6;const target=Object.assign({z:0},source);const keys=Reflect.ownKeys(target);return [Object.keys(target),keys[5]===first,keys[6]===last,target[first],target[last]];');
+});
 test('Object.assign writes the same target object identity and avoids native fallback',()=>{
   const body=`
     const target={a:1};const copy=Object.assign(target,a,b);
@@ -53,5 +61,5 @@ test('Object.assign rejects unsafe exotic sources without returning successful g
   assert.throws(()=>createRuntime().startEntry({
     text:'"use strict";function f(){return Object.assign({},new Proxy({x:2},{}));}',
     functionName:'f',args:[]
-  }),/Unsupported training-js\/1 NewExpression/);
+  }).drive(),/Object.assign source requires an owned data object/);
 });

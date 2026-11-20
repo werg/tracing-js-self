@@ -31,6 +31,10 @@ export function isReference(value) {
   return Array.isArray(value) && referenceKinds.has(value[0]);
 }
 export function primitiveBinary(op, left, right) {
+  if((left[0]==='symbol'||right[0]==='symbol')&&['===','!==','==','!='].includes(op)&&!isReference(left)&&!isReference(right)){
+    const same=left[0]===right[0]&&left[1]===right[1];
+    return encode(op==='==='||op==='=='?same:!same);
+  }
   if (isReference(left) || isReference(right)) {
     if (['===','!==','==','!='].includes(op)) {
       // The bounded profile has only identity comparisons for references.
@@ -74,10 +78,15 @@ export function primitiveBinary(op, left, right) {
 }
 export function primitiveUnary(op, arg, heap = null) {
   if(op === 'void')return U;
+  if(arg[0]==='symbol'){
+    if(op==='typeof')return ['str','symbol'];
+    if(op==='!')return ['bool',false];
+    throw new TypeError('Symbol numeric coercion requires a guest TypeError');
+  }
   if (isReference(arg)) {
     if (op === 'typeof') {
       const isFunction = arg[0] === 'hostfn' || arg[0] === 'builtinfn' ||
-        (arg[0] === 'intrinsic' && ['Object','Array','Number','BigInt','String','Promise'].includes(arg[1])) ||
+        (arg[0] === 'intrinsic' && ['Object','Array','Number','BigInt','String','Symbol','Promise','Function.prototype'].includes(arg[1])) ||
         (arg[0] === 'ref' && heap?.[arg[1]]?.kind === 'function');
       return encode(isFunction ? 'function' : 'object');
     }
@@ -95,7 +104,7 @@ export function primitiveUnary(op, arg, heap = null) {
   }
 }
 export function truthy(value) {
-  if (isReference(value)) return true;
+  if (isReference(value)||value?.[0]==='symbol') return true;
   return !!decode(value);
 }
 export function token(value, origin = null) { return { value, origin }; }

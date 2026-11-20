@@ -7,6 +7,7 @@ import {evaluateAlgorithm,evaluateTerm,validateAlgorithmInputs,checkAlgorithmCla
 import {normalizeAlgorithm} from '../src/semantic/normalize-algorithm.js';
 import {compareObservableGraphs,compareObservables,OBSERVATION_CONTRACT_VERSION} from '../src/semantic/observables.js';
 import {createTransformationReceipt,verifyTransformationReceipt,transformationReceiptDigest} from '../src/semantic/provenance.js';
+import {evaluateTermV8} from '../src/semantic/algorithm-v8.js';
 
 const lit=value=>({op:'literal',value:num(value)}),input=id=>({op:'input',id}),ref=id=>({op:'ref',id});
 const op=(name,...args)=>({op:name,args});
@@ -88,6 +89,13 @@ test('primitive meanings preserve number/string addition, bigint failures, NaN a
   assert.deepEqual(evaluateTerm(op('divide',lit(1),lit(0))),['num','+Infinity']);
   assert.throws(()=>evaluateTerm(op('add',lit(1n),lit(1))),TypeError);
   assert.throws(()=>evaluateTerm(op('divide',lit(1n),lit(0n))),RangeError);
+});
+
+test('legacy fold charges every numeric item to the semantic work budget',()=>{
+  const term={op:'fold_left',input:{op:'array',items:[lit(1),lit(2),lit(3)]},initial:lit(0),step:'add',
+    order:'ascending',profile:'dense-number-array/1'};
+  assert.throws(()=>evaluateTermV8(term,{budget:{remaining:8}}),/semantic work budget/);
+  assert.deepEqual(evaluateTermV8(term,{budget:{remaining:9}}),num(6));
 });
 
 test('selections and logical terms preserve lazy evaluation and primitive truth',()=>{

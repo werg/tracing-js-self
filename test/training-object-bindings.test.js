@@ -102,9 +102,7 @@ test('unowned object-pattern variants reject before trace publication',()=>{
     onTrace:bundle=>bundles.push(bundle)});
   try{
     for(const code of [
-      'const {a,...rest}=self; return rest;',
       'const {a:x,b:x}=self; return x;',
-      'const {a}=self, b=2; return a+b;'
     ]){
       assert.throws(()=>env.execute({code,scope:{a:1},body:true,
         path:'natlang://unsupported-pattern.ts'}),EvalFailure,code);

@@ -1,0 +1,1431 @@
+{
+  "schema": "semantic-v8-supplementary-iterable-binding-regression/1",
+  "status": "passed",
+  "startedAt": "2026-11-20T17:26:44.248Z",
+  "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "pinsBefore": {
+    "producer": {
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "status": ""
+    },
+    "consumer": {
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "status": ""
+    }
+  },
+  "sourceSuite": {
+    "path": "test/semantic-protocol-iterable-binding-source-v8.test.js",
+    "sha256": "500470b7b1291d5b3f2be1955d6ac3f2f54c903a2951af5f820ab56a4d6936ae"
+  },
+  "sourcePolicy": {
+    "schema": "semantic-native-policy/8",
+    "consumerRepository": "werg/megatoken",
+    "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+    "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7"
+  },
+  "nativePolicy": {
+    "schema": "semantic-native-policy/8",
+    "consumerRepository": "werg/megatoken",
+    "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+    "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7"
+  },
+  "externalPolicy": {
+    "file": "native-policy.json",
+    "sha256": "481d763ac583aee751f9826f1f5aa0f2b9ff583dd442a99b5bcc1a367cfbcccc",
+    "reason": "Bind the synchronized clean producer/consumer pair without modifying the committed producer policy or source files."
+  },
+  "contractBytesSha256": "4e8242c443fff11011e71539bbe5279aa81c62e53db3c0d88335ac9e2032d273",
+  "tokenizerEvidence": {
+    "identity": {
+      "name": "inclusionAI/Ling-3.0-tiny",
+      "revision": "9a98e35fe1c9ee255f78dd64771c7ae15a799481",
+      "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+      "fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "codecVersion": "raw-byte-bpe-v2;binary=single-byte-v1;special-merges=masked",
+      "vocabSize": 157184
+    },
+    "qualification": {
+      "schema": "semantic-codec-meter/1",
+      "status": "qualified",
+      "scope": "byte-exact-token-meter-only",
+      "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+      "consumerClean": true,
+      "codecSourceSha256": "98de7394ae3c4f47fe86d2767aaa103b8569de446913135a89de914af7182200",
+      "pythonVersion": "3.12.14",
+      "tokenizersVersion": "0.23.3",
+      "nativeAdmission": false
+    }
+  },
+  "declared": 17,
+  "cases": [
+    {
+      "id": "early-close",
+      "body": "let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {done:false,value:3};},return(){log+=\"c\";return {};}};const [first]=it;return first+log;",
+      "expected": [
+        "str",
+        "3c"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "early-close",
+        "family": "iterable-binding-source:early-close",
+        "source": "\"use strict\";function run(){let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {done:false,value:3};},return(){log+=\"c\";return {};}};const [first]=it;return first+log;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "empty-pattern",
+      "body": "let log=\"\";const it={[Symbol.iterator](){log+=\"a\";return this;},get next(){log+=\"g\";return function(){throw 7;};},return(){log+=\"c\";return {};}};const []=it;return log;",
+      "expected": [
+        "str",
+        "agc"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "empty-pattern",
+        "family": "iterable-binding-source:empty-pattern",
+        "source": "\"use strict\";function run(){let log=\"\";const it={[Symbol.iterator](){log+=\"a\";return this;},get next(){log+=\"g\";return function(){throw 7;};},return(){log+=\"c\";return {};}};const []=it;return log;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "array-override",
+      "body": "const a=[1];a[Symbol.iterator]=function(){let done=false;return {next(){const r={done,value:9};done=true;return r;}};};const [first]=a;return first;",
+      "expected": [
+        "num",
+        9
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "array-override",
+        "family": "iterable-binding-source:array-override",
+        "source": "\"use strict\";function run(){const a=[1];a[Symbol.iterator]=function(){let done=false;return {next(){const r={done,value:9};done=true;return r;}};};const [first]=a;return first;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "cached-next",
+      "body": "let gets=0,calls=0,closed=0;let next=function(){calls++;this.next=()=>{throw 99;};return {done:false,value:this.mark+calls};};const it={mark:10,get next(){gets++;return next;},set next(v){next=v;},[Symbol.iterator](){return this;},return(){closed++;return {};}};const [a,b]=it;return a+\":\"+b+\":\"+gets+\":\"+calls+\":\"+closed;",
+      "expected": [
+        "str",
+        "11:12:1:2:1"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "cached-next",
+        "family": "iterable-binding-source:cached-next",
+        "source": "\"use strict\";function run(){let gets=0,calls=0,closed=0;let next=function(){calls++;this.next=()=>{throw 99;};return {done:false,value:this.mark+calls};};const it={mark:10,get next(){gets++;return next;},set next(v){next=v;},[Symbol.iterator](){return this;},return(){closed++;return {};}};const [a,b]=it;return a+\":\"+b+\":\"+gets+\":\"+calls+\":\"+closed;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "elision",
+      "body": "let log=\"\";let i=0;const it={[Symbol.iterator](){return this;},next(){log+=\"n\";return {get done(){log+=\"d\";return false;},get value(){log+=\"v\";return ++i;}};},return(){log+=\"c\";return {};}};const [,second]=it;return second+log;",
+      "expected": [
+        "str",
+        "1ndndvc"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "elision",
+        "family": "iterable-binding-source:elision",
+        "source": "\"use strict\";function run(){let log=\"\";let i=0;const it={[Symbol.iterator](){return this;},next(){log+=\"n\";return {get done(){log+=\"d\";return false;},get value(){log+=\"v\";return ++i;}};},return(){log+=\"c\";return {};}};const [,second]=it;return second+log;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "rest-exhaustion",
+      "body": "let i=0;const it={[Symbol.iterator](){return this;},next(){return {done:i===3,value:i++};},return(){throw 99;}};const [first,...tail]=it;return first+tail[0]+tail[1];",
+      "expected": [
+        "num",
+        3
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "rest-exhaustion",
+        "family": "iterable-binding-source:rest-exhaustion",
+        "source": "\"use strict\";function run(){let i=0;const it={[Symbol.iterator](){return this;},next(){return {done:i===3,value:i++};},return(){throw 99;}};const [first,...tail]=it;return first+tail[0]+tail[1];}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "throwing-default",
+      "body": "let log=\"\";function fail(){throw 7;}const it={[Symbol.iterator](){return this;},next(){return {done:false,value:undefined};},return(){log+=\"c\";throw 9;}};try{const [first=fail()]=it;}catch(e){return log+e;}",
+      "expected": [
+        "str",
+        "c7"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "throwing-default",
+        "family": "iterable-binding-source:throwing-default",
+        "source": "\"use strict\";function run(){let log=\"\";function fail(){throw 7;}const it={[Symbol.iterator](){return this;},next(){return {done:false,value:undefined};},return(){log+=\"c\";throw 9;}};try{const [first=fail()]=it;}catch(e){return log+e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "next-failure",
+      "body": "let closed=0;const it={[Symbol.iterator](){return this;},next(){throw 7;},return(){closed++;return {};}};try{const [first]=it;}catch(e){return closed+\":\"+e;}",
+      "expected": [
+        "str",
+        "0:7"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "next-failure",
+        "family": "iterable-binding-source:next-failure",
+        "source": "\"use strict\";function run(){let closed=0;const it={[Symbol.iterator](){return this;},next(){throw 7;},return(){closed++;return {};}};try{const [first]=it;}catch(e){return closed+\":\"+e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "done-failure",
+      "body": "let closed=0;const it={[Symbol.iterator](){return this;},next(){return {get done(){throw 7;}};},return(){closed++;return {};}};try{const [first]=it;}catch(e){return closed+\":\"+e;}",
+      "expected": [
+        "str",
+        "0:7"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "done-failure",
+        "family": "iterable-binding-source:done-failure",
+        "source": "\"use strict\";function run(){let closed=0;const it={[Symbol.iterator](){return this;},next(){return {get done(){throw 7;}};},return(){closed++;return {};}};try{const [first]=it;}catch(e){return closed+\":\"+e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "value-failure",
+      "body": "let closed=0;const it={[Symbol.iterator](){return this;},next(){return {done:false,get value(){throw 7;}};},return(){closed++;return {};}};try{const [first]=it;}catch(e){return closed+\":\"+e;}",
+      "expected": [
+        "str",
+        "0:7"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "value-failure",
+        "family": "iterable-binding-source:value-failure",
+        "source": "\"use strict\";function run(){let closed=0;const it={[Symbol.iterator](){return this;},next(){return {done:false,get value(){throw 7;}};},return(){closed++;return {};}};try{const [first]=it;}catch(e){return closed+\":\"+e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "completed-array-stays-done",
+      "body": "const a=[];const [first=(a.push(1,2),0),second=5]=a;return first+second;",
+      "expected": [
+        "num",
+        5
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "completed-array-stays-done",
+        "family": "iterable-binding-source:completed-array-stays-done",
+        "source": "\"use strict\";function run(){const a=[];const [first=(a.push(1,2),0),second=5]=a;return first+second;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "active-array-observes-growth",
+      "body": "const a=[undefined];const [first=(a.push(2),1),second,...tail]=a;return first+second+tail.length;",
+      "expected": [
+        "num",
+        3
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "active-array-observes-growth",
+        "family": "iterable-binding-source:active-array-observes-growth",
+        "source": "\"use strict\";function run(){const a=[undefined];const [first=(a.push(2),1),second,...tail]=a;return first+second+tail.length;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "done-skips-further-next",
+      "body": "let calls=0,closed=0;const it={[Symbol.iterator](){return this;},next(){calls++;return {done:true,get value(){throw 9;}};},return(){closed++;return {};}};const [first=3,second=4,...tail]=it;return first+second+\":\"+calls+\":\"+closed;",
+      "expected": [
+        "str",
+        "7:1:0"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "done-skips-further-next",
+        "family": "iterable-binding-source:done-skips-further-next",
+        "source": "\"use strict\";function run(){let calls=0,closed=0;const it={[Symbol.iterator](){return this;},next(){calls++;return {done:true,get value(){throw 9;}};},return(){closed++;return {};}};const [first=3,second=4,...tail]=it;return first+second+\":\"+calls+\":\"+closed;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "default-number-throw",
+      "body": "const o={valueOf(){throw 7;}};const it={[Symbol.iterator](){return this;},next(){return {done:false,value:undefined};},return(){throw 9;}};try{const [first=Number(o)]=it;}catch(e){return e;}",
+      "expected": [
+        "num",
+        7
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "default-number-throw",
+        "family": "iterable-binding-source:default-number-throw",
+        "source": "\"use strict\";function run(){const o={valueOf(){throw 7;}};const it={[Symbol.iterator](){return this;},next(){return {done:false,value:undefined};},return(){throw 9;}};try{const [first=Number(o)]=it;}catch(e){return e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "nested-binding-refusal",
+      "body": "const [[first]]=[[3]];return first;",
+      "expectedSource": "unsupported",
+      "fixture": {
+        "id": "nested-binding-refusal",
+        "family": "iterable-binding-source:nested-binding-refusal",
+        "source": "\"use strict\";function run(){const [[first]]=[[3]];return first;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "assignment-binding-refusal",
+      "body": "let first=0;[first]=[3];return first;",
+      "expectedSource": "unsupported",
+      "fixture": {
+        "id": "assignment-binding-refusal",
+        "family": "iterable-binding-source:assignment-binding-refusal",
+        "source": "\"use strict\";function run(){let first=0;[first]=[3];return first;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "string-builtin-binding-refusal",
+      "body": "const [first]=\"a\";return first;",
+      "expectedSource": "unsupported",
+      "fixture": {
+        "id": "string-builtin-binding-refusal",
+        "family": "iterable-binding-source:string-builtin-binding-refusal",
+        "source": "\"use strict\";function run(){const [first]=\"a\";return first;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    }
+  ],
+  "scope": "Fourteen positive flat iterable-binding cases and three explicit source refusals from the declared focused suite. Supplementary only; frozen broad-population results retain their original producer/consumer pins and denominators.",
+  "nativeTimeoutMs": 300000,
+  "optimizerSteps": 0,
+  "modelExecution": "unmeasured",
+  "nativeServing": "unmeasured",
+  "defaultPromotion": "not-qualified",
+  "rows": [
+    {
+      "id": "early-close",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:26:44.255Z",
+      "sourceResult": "early-close.result.json",
+      "sourceArtifact": "early-close.source.json",
+      "observationRows": 17,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "nativeReceipt": "early-close.native.json",
+      "admittedArtifact": "early-close.admitted.json",
+      "nativeInput": "early-close.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 57,
+        "contexts": 55,
+        "generatedRecords": 55,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 24,
+        "protocolRecords": 29,
+        "generatedTokens": 1891,
+        "observedTokens": 96871
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 214
+      },
+      "costArtifact": "early-close.costs.json",
+      "flatTokens": {
+        "generated": 1891,
+        "terminal": 55,
+        "observedAndContext": 96140,
+        "peakContext": 2059,
+        "cumulativeContext": 96140,
+        "total": 98086,
+        "detailedShare": 0.9661554732945531
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "3c"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:27:58.745Z"
+    },
+    {
+      "id": "empty-pattern",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:27:58.752Z",
+      "sourceResult": "empty-pattern.result.json",
+      "sourceArtifact": "empty-pattern.source.json",
+      "observationRows": 11,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "nativeReceipt": "empty-pattern.native.json",
+      "admittedArtifact": "empty-pattern.admitted.json",
+      "nativeInput": "empty-pattern.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 50,
+        "contexts": 48,
+        "generatedRecords": 48,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 20,
+        "protocolRecords": 26,
+        "generatedTokens": 1706,
+        "observedTokens": 82149
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 185
+      },
+      "costArtifact": "empty-pattern.costs.json",
+      "flatTokens": {
+        "generated": 1706,
+        "terminal": 48,
+        "observedAndContext": 81252,
+        "peakContext": 1989,
+        "cumulativeContext": 81252,
+        "total": 83006,
+        "detailedShare": 0.9624853458382181
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "agc"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:29:19.153Z"
+    },
+    {
+      "id": "array-override",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:29:19.228Z",
+      "sourceResult": "array-override.result.json",
+      "sourceArtifact": "array-override.source.json",
+      "observationRows": 15,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "nativeReceipt": "array-override.native.json",
+      "admittedArtifact": "array-override.admitted.json",
+      "nativeInput": "array-override.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 52,
+        "contexts": 50,
+        "generatedRecords": 50,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 25,
+        "protocolRecords": 24,
+        "generatedTokens": 1664,
+        "observedTokens": 91777
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 198
+      },
+      "costArtifact": "array-override.costs.json",
+      "flatTokens": {
+        "generated": 1664,
+        "terminal": 50,
+        "observedAndContext": 90826,
+        "peakContext": 2079,
+        "cumulativeContext": 90826,
+        "total": 92540,
+        "detailedShare": 0.9813701923076923
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          9
+        ]
+      },
+      "finishedAt": "2026-11-20T17:30:35.166Z"
+    },
+    {
+      "id": "cached-next",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:30:35.181Z",
+      "sourceResult": "cached-next.result.json",
+      "sourceArtifact": "cached-next.source.json",
+      "observationRows": 23,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "nativeReceipt": "cached-next.native.json",
+      "admittedArtifact": "cached-next.admitted.json",
+      "nativeInput": "cached-next.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 109,
+        "contexts": 107,
+        "generatedRecords": 107,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 45,
+        "protocolRecords": 60,
+        "generatedTokens": 3694,
+        "observedTokens": 286010
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 586
+      },
+      "costArtifact": "cached-next.costs.json",
+      "flatTokens": {
+        "generated": 3694,
+        "terminal": 107,
+        "observedAndContext": 284708,
+        "peakContext": 3199,
+        "cumulativeContext": 284708,
+        "total": 288509,
+        "detailedShare": 0.9759068760151597
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "11:12:1:2:1"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:33:19.373Z"
+    },
+    {
+      "id": "elision",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:33:19.386Z",
+      "sourceResult": "elision.result.json",
+      "sourceArtifact": "elision.source.json",
+      "observationRows": 21,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "nativeReceipt": "elision.native.json",
+      "admittedArtifact": "elision.admitted.json",
+      "nativeInput": "elision.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 95,
+        "contexts": 93,
+        "generatedRecords": 93,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 42,
+        "protocolRecords": 49,
+        "generatedTokens": 3275,
+        "observedTokens": 218814
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 468
+      },
+      "costArtifact": "elision.costs.json",
+      "flatTokens": {
+        "generated": 3275,
+        "terminal": 93,
+        "observedAndContext": 218189,
+        "peakContext": 2875,
+        "cumulativeContext": 218189,
+        "total": 221557,
+        "detailedShare": 0.9774045801526717
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "1ndndvc"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:34:55.688Z"
+    },
+    {
+      "id": "rest-exhaustion",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:34:55.714Z",
+      "sourceResult": "rest-exhaustion.result.json",
+      "sourceArtifact": "rest-exhaustion.source.json",
+      "observationRows": 29,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "nativeReceipt": "rest-exhaustion.native.json",
+      "admittedArtifact": "rest-exhaustion.admitted.json",
+      "nativeInput": "rest-exhaustion.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 111,
+        "contexts": 109,
+        "generatedRecords": 109,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 59,
+        "protocolRecords": 49,
+        "generatedTokens": 3808,
+        "observedTokens": 200663
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 451
+      },
+      "costArtifact": "rest-exhaustion.costs.json",
+      "flatTokens": {
+        "generated": 3808,
+        "terminal": 109,
+        "observedAndContext": 201108,
+        "peakContext": 2324,
+        "cumulativeContext": 201108,
+        "total": 205025,
+        "detailedShare": 0.991859243697479
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          3
+        ]
+      },
+      "finishedAt": "2026-11-20T17:37:20.493Z"
+    },
+    {
+      "id": "throwing-default",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:37:20.494Z",
+      "sourceResult": "throwing-default.result.json",
+      "sourceArtifact": "throwing-default.source.json",
+      "observationRows": 17,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "nativeReceipt": "throwing-default.native.json",
+      "admittedArtifact": "throwing-default.admitted.json",
+      "nativeInput": "throwing-default.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 71,
+        "contexts": 69,
+        "generatedRecords": 69,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 36,
+        "protocolRecords": 32,
+        "generatedTokens": 2896,
+        "observedTokens": 116607
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 264
+      },
+      "costArtifact": "throwing-default.costs.json",
+      "flatTokens": {
+        "generated": 2896,
+        "terminal": 69,
+        "observedAndContext": 116123,
+        "peakContext": 1992,
+        "cumulativeContext": 116123,
+        "total": 119088,
+        "detailedShare": 0.9892955801104972
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "c7"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:38:33.317Z"
+    },
+    {
+      "id": "next-failure",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:38:33.321Z",
+      "sourceResult": "next-failure.result.json",
+      "sourceArtifact": "next-failure.source.json",
+      "observationRows": 9,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "nativeReceipt": "next-failure.native.json",
+      "admittedArtifact": "next-failure.admitted.json",
+      "nativeInput": "next-failure.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 44,
+        "contexts": 42,
+        "generatedRecords": 42,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 22,
+        "protocolRecords": 19,
+        "generatedTokens": 1610,
+        "observedTokens": 62265
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 150
+      },
+      "costArtifact": "next-failure.costs.json",
+      "flatTokens": {
+        "generated": 1610,
+        "terminal": 42,
+        "observedAndContext": 61466,
+        "peakContext": 1691,
+        "cumulativeContext": 61466,
+        "total": 63118,
+        "detailedShare": 0.9807453416149068
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "0:7"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:39:25.182Z"
+    },
+    {
+      "id": "done-failure",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:39:25.182Z",
+      "sourceResult": "done-failure.result.json",
+      "sourceArtifact": "done-failure.source.json",
+      "observationRows": 11,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "nativeReceipt": "done-failure.native.json",
+      "admittedArtifact": "done-failure.admitted.json",
+      "nativeInput": "done-failure.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 52,
+        "contexts": 50,
+        "generatedRecords": 50,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 23,
+        "protocolRecords": 26,
+        "generatedTokens": 1893,
+        "observedTokens": 78678
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 185
+      },
+      "costArtifact": "done-failure.costs.json",
+      "flatTokens": {
+        "generated": 1893,
+        "terminal": 50,
+        "observedAndContext": 77924,
+        "peakContext": 1935,
+        "cumulativeContext": 77924,
+        "total": 79867,
+        "detailedShare": 0.9836238774432118
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "0:7"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:40:28.019Z"
+    },
+    {
+      "id": "value-failure",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:40:28.031Z",
+      "sourceResult": "value-failure.result.json",
+      "sourceArtifact": "value-failure.source.json",
+      "observationRows": 13,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "nativeReceipt": "value-failure.native.json",
+      "admittedArtifact": "value-failure.admitted.json",
+      "nativeInput": "value-failure.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 55,
+        "contexts": 53,
+        "generatedRecords": 53,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 24,
+        "protocolRecords": 28,
+        "generatedTokens": 2016,
+        "observedTokens": 85165
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 197
+      },
+      "costArtifact": "value-failure.costs.json",
+      "flatTokens": {
+        "generated": 2016,
+        "terminal": 53,
+        "observedAndContext": 84410,
+        "peakContext": 1973,
+        "cumulativeContext": 84410,
+        "total": 86479,
+        "detailedShare": 0.9846230158730159
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "0:7"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:41:24.948Z"
+    },
+    {
+      "id": "completed-array-stays-done",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:41:24.950Z",
+      "sourceResult": "completed-array-stays-done.result.json",
+      "sourceArtifact": "completed-array-stays-done.source.json",
+      "observationRows": 0,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "custom-iterator-source/1"
+      ],
+      "nativeReceipt": "completed-array-stays-done.native.json",
+      "admittedArtifact": "completed-array-stays-done.admitted.json",
+      "nativeInput": "completed-array-stays-done.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 32,
+        "contexts": 30,
+        "generatedRecords": 30,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 21,
+        "protocolRecords": 8,
+        "generatedTokens": 955,
+        "observedTokens": 33617
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 92
+      },
+      "costArtifact": "completed-array-stays-done.costs.json",
+      "flatTokens": {
+        "generated": 955,
+        "terminal": 30,
+        "observedAndContext": 32996,
+        "peakContext": 1231,
+        "cumulativeContext": 32996,
+        "total": 33981,
+        "detailedShare": 0.9675392670157068
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          5
+        ]
+      },
+      "finishedAt": "2026-11-20T17:42:02.427Z"
+    },
+    {
+      "id": "active-array-observes-growth",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:42:02.438Z",
+      "sourceResult": "active-array-observes-growth.result.json",
+      "sourceArtifact": "active-array-observes-growth.source.json",
+      "observationRows": 0,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "custom-iterator-source/1"
+      ],
+      "nativeReceipt": "active-array-observes-growth.native.json",
+      "admittedArtifact": "active-array-observes-growth.admitted.json",
+      "nativeInput": "active-array-observes-growth.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 53,
+        "contexts": 51,
+        "generatedRecords": 51,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 37,
+        "protocolRecords": 14,
+        "generatedTokens": 1683,
+        "observedTokens": 49850
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 142
+      },
+      "costArtifact": "active-array-observes-growth.costs.json",
+      "flatTokens": {
+        "generated": 1683,
+        "terminal": 51,
+        "observedAndContext": 49760,
+        "peakContext": 1088,
+        "cumulativeContext": 49760,
+        "total": 51494,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          3
+        ]
+      },
+      "finishedAt": "2026-11-20T17:43:00.012Z"
+    },
+    {
+      "id": "done-skips-further-next",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:43:00.043Z",
+      "sourceResult": "done-skips-further-next.result.json",
+      "sourceArtifact": "done-skips-further-next.source.json",
+      "observationRows": 11,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "nativeReceipt": "done-skips-further-next.native.json",
+      "admittedArtifact": "done-skips-further-next.admitted.json",
+      "nativeInput": "done-skips-further-next.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 66,
+        "contexts": 64,
+        "generatedRecords": 64,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 36,
+        "protocolRecords": 26,
+        "generatedTokens": 2180,
+        "observedTokens": 128342
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 285
+      },
+      "costArtifact": "done-skips-further-next.costs.json",
+      "flatTokens": {
+        "generated": 2180,
+        "terminal": 64,
+        "observedAndContext": 127176,
+        "peakContext": 2305,
+        "cumulativeContext": 127176,
+        "total": 129420,
+        "detailedShare": 0.9655963302752294
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "7:1:0"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:44:46.452Z"
+    },
+    {
+      "id": "default-number-throw",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:44:46.455Z",
+      "sourceResult": "default-number-throw.result.json",
+      "sourceArtifact": "default-number-throw.source.json",
+      "observationRows": 17,
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "number-conversion-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "nativeReceipt": "default-number-throw.native.json",
+      "admittedArtifact": "default-number-throw.admitted.json",
+      "nativeInput": "default-number-throw.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 73,
+        "contexts": 71,
+        "generatedRecords": 71,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 33,
+        "protocolRecords": 38,
+        "generatedTokens": 2929,
+        "observedTokens": 110885
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 260
+      },
+      "costArtifact": "default-number-throw.costs.json",
+      "flatTokens": {
+        "generated": 2929,
+        "terminal": 71,
+        "observedAndContext": 110729,
+        "peakContext": 1927,
+        "cumulativeContext": 110729,
+        "total": 113729,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          7
+        ]
+      },
+      "finishedAt": "2026-11-20T17:46:22.376Z"
+    },
+    {
+      "id": "nested-binding-refusal",
+      "expectedSource": "unsupported",
+      "source": "unsupported",
+      "native": "untested",
+      "cost": "untested",
+      "startedAt": "2026-11-20T17:46:22.392Z",
+      "sourceResult": "nested-binding-refusal.result.json",
+      "reason": "Protocol source projection: array iteration guard lacks its qualified synchronous loop or binding pattern",
+      "expectedRefusal": true,
+      "finishedAt": "2026-11-20T17:46:22.843Z"
+    },
+    {
+      "id": "assignment-binding-refusal",
+      "expectedSource": "unsupported",
+      "source": "unsupported",
+      "native": "untested",
+      "cost": "untested",
+      "startedAt": "2026-11-20T17:46:22.844Z",
+      "sourceResult": "assignment-binding-refusal.result.json",
+      "reason": "Protocol source projection: array iteration guard lacks its qualified synchronous loop or binding pattern",
+      "expectedRefusal": true,
+      "finishedAt": "2026-11-20T17:46:23.085Z"
+    },
+    {
+      "id": "string-builtin-binding-refusal",
+      "expectedSource": "unsupported",
+      "source": "unsupported",
+      "native": "untested",
+      "cost": "untested",
+      "startedAt": "2026-11-20T17:46:23.086Z",
+      "sourceResult": "string-builtin-binding-refusal.result.json",
+      "reason": "Protocol source projection: observable ToPropertyKey requires a coercion protocol",
+      "expectedRefusal": true,
+      "finishedAt": "2026-11-20T17:46:23.461Z"
+    }
+  ],
+  "artifacts": {
+    "early-close.result.json": "8385cf6c0cd27361349f7ac4fb7eca770d3a3161847a74ad5b47f01d7758db08",
+    "early-close.source.json": "114959727c8c020467547d7116a4cbbcf5098874379a80a50271df130426f599",
+    "early-close.native.json": "85eb59b42a0cd78af35ffead4892a201c8ef53c0356079a126d904e0c8490405",
+    "early-close.admitted.json": "9bb1996e694e8e5bb3202627fb20ea61a46b91235fc6b2e0dcddd17efc93ac29",
+    "early-close.native-input.json": "b0257392002389c0a4a97295f09273107ea8323c3b7e81b5fe7c264f6a811f22",
+    "early-close.costs.json": "e3aa6f6948ed550278b78b85b6fc0a98aff3092a43c7750726e2a77446b974c7",
+    "empty-pattern.result.json": "bea064d056b8d09143ae3d949bf9f4814d0e2c75f722ebff8a5fdedcdfba94eb",
+    "empty-pattern.source.json": "1eb348d25b2cdaa26cff3fc6fb68640d6bcb960b187b6ccf10435fef9dc57ae5",
+    "empty-pattern.native.json": "053b6886a6dae523e42f51bd7b57b85b582e8bb5302f11d9e8a5ab76f17d19a6",
+    "empty-pattern.admitted.json": "1ac1f5040b361afffc89a224db6ab326f36c670ba8abecf651cd50e6927183d1",
+    "empty-pattern.native-input.json": "8bedb60bfa5d874958459fb65c3d20c060824a822154c2b7242552686372c404",
+    "empty-pattern.costs.json": "158ab8e404329bcb56d4bb72a3f84c79585f4db9450ec9c9ba3b3e9b8a25663b",
+    "array-override.result.json": "7e6d2bc7a85d297c031425fc6809446640f152b1d4c9a25b47ffd9f0c7d0bf6c",
+    "array-override.source.json": "7a8157b4ed062e8ba5089a9477b01906e9d673fe8dedc96bf86e25970e28068b",
+    "array-override.native.json": "f26191d9192e1530526cee0be446c368ee18aaba3074638df5f5bb10f3cbdede",
+    "array-override.admitted.json": "95ad6973eb39defb69f366034e425b1fcd5ef5eb9f21d1f72938de0b10d5106d",
+    "array-override.native-input.json": "c5d583289d3e592d6f322313c046b424468f0f73e9a315f52af045950fc991c4",
+    "array-override.costs.json": "7344dc9232dc4a2057c478730a2b8f4b66a548dea759b8539d1d078f32613133",
+    "cached-next.result.json": "e898719393e2ef7d7666cb333b2234cccac0139c6fb9700eb501755166026174",
+    "cached-next.source.json": "ed923b7f4d7517e69a570ba6bb0a23a673f48f4772fddd922bc7a3f914999435",
+    "cached-next.native.json": "d44801d9923c38f9b61a9924e38fe7335c486d6095bb39162c86b171f94c9f29",
+    "cached-next.admitted.json": "0d78f926f091eb01d1ebe1106128426e4f18637f97209881519485640cc726f2",
+    "cached-next.native-input.json": "a3044efe3624f90d4d7767d96a9f5d8cdf94fc566069aef73f59f9a58101bc6c",
+    "cached-next.costs.json": "8cde8c7c73f65c4742f248fc5c4586f949e114d7bc8edc8c9192975c73c6888d",
+    "elision.result.json": "d1c6c2c425101ada46befba69a776cf77c2a96295149124601f4c8b312027f6d",
+    "elision.source.json": "03b97e5cedb0e4e7869f3c9c4fc539bd8fd265a545e26a4a8c0fd60d009570b2",
+    "elision.native.json": "851252e1f79aa262f11cc93fc1205c8bf9b92afcd8b28d5ea2450e64973ac281",
+    "elision.admitted.json": "dcaccd5e72e9356acd453534bb1f7fcbacbefa23445927030e670311bac6cf8a",
+    "elision.native-input.json": "9238648a3ad4200b506527459f0f28d8f72a53023267487e8fd851aaeaebdbe6",
+    "elision.costs.json": "0adeca4669650272b0e0fd7c56945764237c74d64329abec7519564f13663b54",
+    "rest-exhaustion.result.json": "b1d0d2746bef17356b7aed0cdde7a65706d2771d3725ca9de4eab8840b2688a2",
+    "rest-exhaustion.source.json": "c923c07d07eb68c6955b17a058da20586dae9c24ff11060a3fac3147467a53b6",
+    "rest-exhaustion.native.json": "dc0caa8fd3fecfc098d75d025eebe766053a85c9529e8230eb550d2156a7c037",
+    "rest-exhaustion.admitted.json": "13a941ba8eddffa4f7933d70ba876faf6483b77a63e86d0e4d968c33fb7c3542",
+    "rest-exhaustion.native-input.json": "d590bef69ac2f312015cce8beb84039296a2b83b146265dfa8271837ccd918f6",
+    "rest-exhaustion.costs.json": "75c8ee2df389c889502b8f6a4758313c0200e8db66b643891a9e264f505eeb92",
+    "throwing-default.result.json": "733cca32ed8cdd90bb45f1e4d19362b14dc49da0df93b7ecf120492659e47507",
+    "throwing-default.source.json": "07a0fb82ce4b4cf80a6a56ee52564b574abb43e81e7fef22405f8d148f0fae32",
+    "throwing-default.native.json": "914247dd2dec0e10cc34ed314b4193ecca969f7c06d2fe76fe5730e5c7e7a8d6",
+    "throwing-default.admitted.json": "edd20d1c6ad2958936b486685032888e9d64b4f911ed1e4636e89454c42e4ded",
+    "throwing-default.native-input.json": "387783c2890eac2b63fd02a6377587b2057cdf1d0943a0b27d7b74ba383d8f43",
+    "throwing-default.costs.json": "857b9e21cfcfeb665c69b5b298b516eebfc5bf73334fcc7669577dac8e5e5d20",
+    "next-failure.result.json": "8e73693acdc9ff3dc846ed1c30826914a4663fd099e17ec997528917128e596d",
+    "next-failure.source.json": "04a691f99918dbe39001556b30a79737af4b01603bba161f304abb9403082f84",
+    "next-failure.native.json": "d9159ba64f2141db2f06717fe2323c4a4e0828a1612a5cbcb2785bd1cb2ad296",
+    "next-failure.admitted.json": "7e45cc6ff89ced2ed0feacb500ef790a4124218647afda917de2078ac826ce18",
+    "next-failure.native-input.json": "abe01dc185c7c2881a25d38e9a96643e1dfbaa39d02adfa45feeb5eb97d15e0b",
+    "next-failure.costs.json": "8293329e24b1304a40e2b005ca9dd8acc78136cdcaa002c2ae039c0578784b81",
+    "done-failure.result.json": "3fd151433aa6c1b355ad7c079e5b2a6fbb182cdf22d63d44762e917534ec5e97",
+    "done-failure.source.json": "48fbb4e6958926ec437aa7703bfb8a2916867aaa72a30ec9aa2f06eba9112164",
+    "done-failure.native.json": "87e0fec41358897fd7fe8ba9d5576746035ed9d0330494ec842c11f3a3353fe1",
+    "done-failure.admitted.json": "8a87ae55d62ced51c8c96d2d4b8422128e7745293f8fb1d6df2ad5bf092af133",
+    "done-failure.native-input.json": "59f0b0e25a2d9d5853d65b8457abadca8752d4bd2cc4cd82680ca23716d69255",
+    "done-failure.costs.json": "613f6c2adcf271a773652ac1ee6b9a3092ac630897e124bcd88c4409b607d97c",
+    "value-failure.result.json": "ef7f1bfd826a0ecde718dc3a54e0e142450f41d9064d21747f42dafc89be7af8",
+    "value-failure.source.json": "d3cd9f7a7d2b6b3f0b63130b26dded1c68063e86dbce9ac81f0a4f0e68339f11",
+    "value-failure.native.json": "fef638631a356b675b23bf7210749b8aef4c5629a76e9e974a6fd92285fa192c",
+    "value-failure.admitted.json": "0a2be66f9c387a285a6a2591db251e4c374f486d2ea90921cc04c6a7820aec83",
+    "value-failure.native-input.json": "2be4d9e94b5e1ea1d02adc751a8e59861a47452f4842657c308d1ed7957424ea",
+    "value-failure.costs.json": "d8345eb3b2ea95b3958d569a067637f20c163e259e55c2b4daacc15619e46c4d",
+    "completed-array-stays-done.result.json": "1f4214b572645a7c6e921a1f25c19b075ae1823da1ef53b72fd58c2ef8e7f20b",
+    "completed-array-stays-done.source.json": "512de8cf5b1fe486b501e332c07ca5cb195b75342c99f1327ce494febc98e6df",
+    "completed-array-stays-done.native.json": "b4f65914f9ed82f560933b70b7556423c0bf6cb5879b966c89099cbd3c643cc4",
+    "completed-array-stays-done.admitted.json": "74427321317d51afd926d4c81fd941c954bf0b244f3cc77981ee9cf4968c3967",
+    "completed-array-stays-done.native-input.json": "70571352b3bad518b34b1d26c65e713e9d38bdcc3e9630a5dbfb257dd6e3fa0a",
+    "completed-array-stays-done.costs.json": "e44ef39c934dce8705feeb7cbe4213de536f5b9a46a44b7575f8266ff0dddf78",
+    "active-array-observes-growth.result.json": "d27febd7e03338d5568f552a4731a9be2e5a34dfbd7fc7230a4e270915e2a2be",
+    "active-array-observes-growth.source.json": "d9968e25586eb078cca3f3369f5ab0a7b127bbec0efd0cf6087899f47f756623",
+    "active-array-observes-growth.native.json": "fabe328d4e1c422712bef521e298dda57c460a7450648e77339b08597e62e641",
+    "active-array-observes-growth.admitted.json": "1631377f512e5187c2fc897070fa71e2292b1e6182f3770e9a9620eb11dec09e",
+    "active-array-observes-growth.native-input.json": "6e422247f05e3f14309bde35eb6c54bbfa18fd43a8a3637c69a3abf92e7891d2",
+    "active-array-observes-growth.costs.json": "f89b6bd125290c5185fe98b640a2923cc187f365351c345ad7eedbccbc5e649e",
+    "done-skips-further-next.result.json": "3424e2939896f7cd0584f88c8703b04d998324205fc02cd9036cb3d503e01013",
+    "done-skips-further-next.source.json": "94a699527b18aeb2da55f22b57fd6c66636dfcad24f6bd6b743a91586a633daa",
+    "done-skips-further-next.native.json": "d7f13ecfe748a092d14469741e35145f2d829687ba47c093d5b271537246654e",
+    "done-skips-further-next.admitted.json": "fa19317ec2177871f96888c85f38251c31313e5c5274c19afd84b613c3553de3",
+    "done-skips-further-next.native-input.json": "18b7f35d159587557571e6143a4fa25e6bef76c6e3e156d7afe92bde69e24d51",
+    "done-skips-further-next.costs.json": "0bad36d73aa889f6449fb5ea0fc87f4d3539cff1af900514dfd29676f4d0e5ba",
+    "default-number-throw.result.json": "f6454446130a8b49897bdeda5eaf59fff27512a488fb746c45dc009e8e915b73",
+    "default-number-throw.source.json": "21a62f05d470118921978c0a64cf905e80587dbb9e8e93d4694f031d3894e566",
+    "default-number-throw.native.json": "e15b6f22e6184eec03053e1691d7a561105bf9f9af1379995ce9a15c3db2c4d8",
+    "default-number-throw.admitted.json": "f85229296c449497e2f3514d3b1f053d9bf66f7f3989a23929473a5bc48c4259",
+    "default-number-throw.native-input.json": "b2b3b9c030818a1b076e157c0971f020740f99daa5bb5c15c4237875da2884ad",
+    "default-number-throw.costs.json": "43b98a52ffaa60b2054816b3b405da9272251b5d2f7780faf6e14e404b711eca",
+    "nested-binding-refusal.result.json": "db8ce78b67d877112a9ff3e1a97dae4b8b6e6cf84967e4455dca25b55038eab6",
+    "assignment-binding-refusal.result.json": "67b4f8fe2052fcb0c1ae2334b9fba9aebaca1a40f4ea54bed5885e228893095b",
+    "string-builtin-binding-refusal.result.json": "4b15ecaee436dd4dd56736d1dfedad4b4b1c77dd7d47af2c7319caa353a09fd7"
+  },
+  "finishedAt": "2026-11-20T17:46:24.475Z",
+  "pinsAfter": {
+    "producer": {
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "status": ""
+    },
+    "consumer": {
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "status": ""
+    }
+  },
+  "sourceQualified": 14,
+  "nativeAdmitted": 14,
+  "expectedSourceRefusals": 3,
+  "tokenMeasured": 14,
+  "identityUnchanged": true
+}

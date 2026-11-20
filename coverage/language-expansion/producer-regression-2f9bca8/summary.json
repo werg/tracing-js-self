@@ -1,0 +1,67 @@
+{
+  "schema": "producer-final-regression/1",
+  "producerRevision": "2f9bca8c38b0773daccf4f0e97ba8bb2ca7d0bac",
+  "node": "v24.22.3",
+  "startedAt": "2026-11-20T11:02:54.971151+00:00",
+  "checkout": "/workspace/scratch/46f8e0aafae6/producer-regression-runtime-2f9bca8",
+  "temporaryDirectory": "/workspace/scratch/46f8e0aafae6/tmp",
+  "commands": [
+    {
+      "name": "tests",
+      "command": "node --test --test-concurrency=4 test/*.test.js",
+      "exitCode": 0,
+      "durationSeconds": 418.246,
+      "log": "/workspace/scratch/46f8e0aafae6/producer-final-evidence-2f9bca8/tests.log",
+      "summary": {
+        "tests": 1746,
+        "suites": 0,
+        "pass": 1740,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 6,
+        "todo": 0
+      }
+    },
+    {
+      "name": "reference",
+      "command": "node fixtures/reference/reference-fixture.mjs",
+      "exitCode": 0,
+      "durationSeconds": 0.126,
+      "log": "/workspace/scratch/46f8e0aafae6/producer-final-evidence-2f9bca8/reference.log"
+    }
+  ],
+  "finishedAt": "2026-11-20T11:09:53.353427+00:00",
+  "checkoutStatus": "",
+  "passed": true,
+  "testFileCount": 288,
+  "skippedTests": [
+    "﹣ actual pinned ByteCodec reproduces the frozen gallery and meters exact v7/context bytes (0.356944ms) # Exact external consumer/tokenizer paths were not supplied",
+    "﹣ native compact coordinator runs async, callback and throwing children in one process with exact whole-task receipts (0.439969ms) # Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates",
+    "﹣ native bounded context resumes the exact captured cell despite compact callback history (0.42861ms) # Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates",
+    "﹣ native coordinator budget cancellation leaves no selected guest, effect, or live track (0.449386ms) # Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates",
+    "﹣ native rejected semantic child preserves its committed bytes and cancels its waiting parent (0.34987ms) # Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates",
+    "﹣ actual initialized-weight native coordinator preserves rejected bytes and token costs with no fixture fallback (0.13417ms) # Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates"
+  ],
+  "artifacts": [
+    {
+      "file": "tests.log",
+      "bytes": 168057,
+      "sha256": "1e11e33c1ed5f7ce372cac164f847b63bd4e2ce38eea26bb760526014f167bec"
+    },
+    {
+      "file": "reference.log",
+      "bytes": 393,
+      "sha256": "fc53ef9d327aa46a3968f073e1c35d1ca05af8710d42c3cfc903c8db54d9e560"
+    }
+  ],
+  "referenceChecks": [
+    "getterReadOnce",
+    "bufferCoherenceAcrossCallback",
+    "synchronousThrowPreserved",
+    "reverseCompletionOrder",
+    "internalAwaitSuspends",
+    "permittedBatchingEquivalent",
+    "transcriptStoreDoesNotRepeatMockEffect",
+    "duplicateConversionDetected"
+  ]
+}

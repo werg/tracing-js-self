@@ -1,0 +1,12 @@
+{
+  "schema": "interrupted-qualification-disposition/1",
+  "producerRevision": "ea4ccffc1ea1c5f57ff9b94b2ad4c51cfc60c709",
+  "consumerRevision": "6adf99f1301557ee5b95269581a3acd4162496b4",
+  "disposition": "interrupted-before-final-report",
+  "declared": 665,
+  "recordedAttempts": 102,
+  "nativeAdmitted": 102,
+  "untestedOrUncommitted": 563,
+  "reason": "Stopped after independently reproducing live graph-valued result receipt ordering that breaks public context agreement and producer checkpoint restore; final qualification will use the repaired producer. No case failure was observed in this recorded prefix.",
+  "stoppedAt": "2026-11-20T13:03:52.219143+00:00"
+}

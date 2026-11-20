@@ -3,6 +3,7 @@
 import {parse} from 'acorn';
 import {isDeepStrictEqual} from 'node:util';
 import {encode,decode} from '../values.js';
+import {stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
 
 export const COMPLETION_OBSERVATION_SCHEMA='source-completions/1';
 export const COMPLETION_HOOK='__tracingSourceCompletion';
@@ -22,6 +23,13 @@ export function completionObservationPlan(source){
       throw new TypeError('Reserved independent observation hook in source');
     const nested=depth+Number(['FunctionDeclaration','FunctionExpression','ArrowFunctionExpression'].includes(node.type));
     if(depth){
+      if(node.type==='ClassDeclaration'&&node.id){
+        const key=site(node);sites.set('initialize:'+key,node);
+        // Class evaluation (including all static initializers) finishes before
+        // the outer lexical binding is observed. Abrupt evaluation reaches no
+        // hook, and declarations keep their original lexical scope.
+        insertions.push({at:node.end,text:';'+COMPLETION_HOOK+'('+JSON.stringify(key)+',"initialize",'+node.id.name+');'});
+      }
       if(node.type==='VariableDeclarator'&&node.id.type==='Identifier'&&
         !['ForOfStatement','ForInStatement'].includes(parent?.parentType)){
         if(node.init)add(node,'initialize',node.init);
@@ -31,7 +39,7 @@ export function completionObservationPlan(source){
         }
       }
       if(node.type==='AssignmentExpression'&&!['&&=','||=','??='].includes(node.operator))add(node,'assign',node,2);
-      if(node.type==='CallExpression'&&!node.optional)add(node,'call',node,3);
+      if(['CallExpression','TaggedTemplateExpression'].includes(node.type))add(node,'call',node,3);
       if(node.type==='ArrowFunctionExpression'&&node.body.type!=='BlockStatement')add(node.body,'return',node.body,-1);
       if(node.type==='ExpressionStatement'&&!node.directive)add(node,'statement',node.expression,-1);
       if(node.type==='ReturnStatement'||node.type==='ThrowStatement'){
@@ -92,7 +100,7 @@ export function instrumentCompletionSource(source){
 // serialization, coercion, iterator, getter or user function is invoked here.
 export function createCompletionCapture({limit=32768,initialValues=[]}={}){
   if(!Number.isSafeInteger(limit)||limit<1)throw new TypeError('Invalid observation limit');
-  const observations=[],identities=new WeakMap();let next=0;
+  const observations=[],identities=new WeakMap(),symbolIdentities=new Map();let next=0;
   const seed=value=>{
     if(value===null||!['object','function'].includes(typeof value)||identities.has(value))return;
     identities.set(value,++next);
@@ -110,7 +118,10 @@ export function createCompletionCapture({limit=32768,initialValues=[]}={}){
     if(observations.length>=limit)throw new RangeError('Source completion observation cap');
     const row={site,kind};
     if(!['finally','break','continue'].includes(kind)){
-      if(value!==null&&['object','function'].includes(typeof value)){
+      if(typeof value==='symbol'){
+        if(!symbolIdentities.has(value))symbolIdentities.set(value,++next);
+        row.value=['identity','symbol',symbolIdentities.get(value)];
+      }else if(value!==null&&['object','function'].includes(typeof value)){
         if(!identities.has(value))identities.set(value,++next);
         row.value=['identity',typeof value,identities.get(value)];
       }else row.value=encode(value);
@@ -120,10 +131,17 @@ export function createCompletionCapture({limit=32768,initialValues=[]}={}){
   return {observations,capture};
 }
 
-export function ownedCompletionObservations(bundle,source){
+export function ownedCompletionObservations(bundle,source,{onObservation=null,assignmentValue=null}={}){
   const plan=completionObservationPlan(source),siteById=new Map(bundle.sites.map(x=>[x.siteId,x]));
   const identities=new Map(),pending=new Map(),observations=[];let next=0;
-  const state={heap:{...bundle.initialState.heap},envs:{...bundle.initialState.envs},frames:{...bundle.initialState.frames}};
+  const calls=new Set();
+  const hasOptionalChain=node=>{
+    if(!node||typeof node!=='object')return false;
+    if(node.type==='ChainExpression'||node.optional===true)return true;
+    return hasOptionalChain(node.callee)||hasOptionalChain(node.object);
+  };
+  const state={heap:{...bundle.initialState.heap},envs:{...bundle.initialState.envs},frames:{...bundle.initialState.frames},
+    promises:{...bundle.initialState.promises}};
   const seed=tag=>{
     if(!Array.isArray(tag)||tag[0]!=='ref'||identities.has(JSON.stringify(tag)))return;
     identities.set(JSON.stringify(tag),++next);
@@ -149,13 +167,16 @@ export function ownedCompletionObservations(bundle,source){
     if(['undefined','null','bool','str','num','bigint','missing-storage'].includes(tag[0]))return tag;
     const key=JSON.stringify(tag);
     if(!identities.has(key))identities.set(key,++next);
-    const kind=tag[0]==='ref'?bundle.finalState.heap[tag[1]]?.kind==='function'?'function':'object':
+    const kind=tag[0]==='symbol'?'symbol':tag[0]==='ref'?bundle.finalState.heap[tag[1]]?.kind==='function'?'function':'object':
       tag[0]==='builtinfn'||tag[0]==='intrinsic'&&tag[1]!=='Math'&&tag[1]!=='Atomics'?'function':'object';
     return ['identity',kind,identities.get(key)];
   };
-  const emit=(key,kind,tag)=>observations.push({site:key,kind,
-    ...(!['finally','break','continue'].includes(kind)?{value:value(tag)}:{})});
+  let observationEvent=null;
+  const emit=(key,kind,tag)=>{const row={site:key,kind,
+    ...(!['finally','break','continue'].includes(kind)?{value:value(tag)}:{})};
+    observations.push(row);if(onObservation)onObservation({row,tag,state,event:observationEvent});};
   for(const event of bundle.events){
+    observationEvent=event;
     const previousFrame=state.frames[event.invocationId];
     for(const change of event.stateChanges){
       if(!state[change.table])continue;
@@ -167,11 +188,36 @@ export function ownedCompletionObservations(bundle,source){
     const instructions=bundle.programs[event.codeId]?.instructions;
     const instruction=instructions?.find(x=>x.siteId===event.siteId);
     const abrupt=event.completion?.type==='throw';
+    // An optional chain can finish with undefined before CALL executes. The
+    // independent source observer wraps the whole CallExpression and still
+    // records that expression completion. Match it at the owned undefined
+    // short-circuit literal, before any enclosing initializer completes.
+    if(!abrupt&&event.operation==='literal.materialize'&&instruction?.op==='CONST'&&
+      instruction.arg?.value?.[0]==='undefined'&&location){
+      for(const [identity,node] of plan.sites){
+        if(!identity.startsWith('call:')||calls.has(identity.slice('call:'.length))||!hasOptionalChain(node))continue;
+        if(node.start===location.start&&node.end>=location.end){
+          emit(identity.slice('call:'.length),'call',['undefined']);calls.add(identity.slice('call:'.length));
+        }
+      }
+    }
     if(!abrupt&&['binding.initialize','binding.write'].includes(event.operation)&&plan.sites.has('initialize:'+key)){
       const declaration=plan.sites.get('initialize:'+key);
-      if(instruction?.arg!==declaration.id.name)
-        throw new TypeError('Source initialization site names a different committed binding');
-      emit(key,'initialize',storedCell(previousFrame?.envId,instruction?.arg));
+      // Class lowering initializes private compiler cells at the same source
+      // span. Only its named outer INIT is the declaration completion; the
+      // class's inner self binding is initialized by CLASS_FINISH instead.
+      const internalClassCell=declaration.type==='ClassDeclaration'&&instruction?.op==='INIT'&&instruction.arg?.startsWith('[[');
+      if(!internalClassCell){
+        if(instruction?.arg!==declaration.id.name)
+          throw new TypeError('Source initialization site names a different committed binding');
+        emit(key,'initialize',storedCell(previousFrame?.envId,instruction?.arg));
+      }
+    }
+    if(!abrupt&&event.operation==='binding.read'&&plan.sites.has('assign:'+key)){
+      const assignment=plan.sites.get('assign:'+key);
+      if(['ArrayPattern','ObjectPattern'].includes(assignment.left?.type)&&
+         instruction?.op==='GET'&&instruction.arg?.startsWith('[[pattern '))
+        emit(key,'assign',event.result);
     }
     if(!abrupt&&['binding.write','property.write'].includes(event.operation)&&plan.sites.has('assign:'+key)){
       if(event.causes.some(c=>c.kind==='invocation'))
@@ -182,22 +228,38 @@ export function ownedCompletionObservations(bundle,source){
         // correct assignment-expression result.
         let stored=event.result;
         if(event.operation==='binding.write')stored=storedCell(previousFrame?.envId,instruction?.arg);
+        else if(instruction?.op==='PRIVATE_SET'){
+          const [base]=event.operands??[],brand=storedCell(previousFrame?.envId,'[[private '+instruction.arg.name+']]');
+          if(base?.[0]!=='ref'||brand?.[0]!=='str')throw new TypeError('Source private assignment has no committed lexical identity');
+          stored=state.heap[base[1]]?.privateSlots?.[brand[1]]?.value??['missing-storage'];
+        }
         else{
           const [base,property]=event.operands??[];
-          if(base?.[0]!=='ref'||!['str','num','bool','null','undefined','bigint'].includes(property?.[0]))
+          if(base?.[0]!=='ref'||!['str','num','bool','null','undefined','bigint','symbol'].includes(property?.[0]))
             throw new TypeError('Source assignment storage is outside the independently observed property profile');
           const object=state.heap[base[1]];
-          if(!object||object.kind==='proxy')throw new TypeError('Source assignment storage requires an ordinary receiver');
-          const key=String(decode(property));
+          if(!object)throw new TypeError('Source assignment storage requires a known receiver');
+          const key=property[0]==='symbol'?symbolPropertyKey(property[1]):stringPropertyKey(String(decode(property)));
           // A successful ordinary assignment must leave its stored value in
           // the receiver. Looking only at changed patches misses dropped writes.
-          stored=object.properties?.[key]?.value??['missing-storage'];
+          // Exotic assignment completion may differ from the stored lane (for
+          // example, Uint8Array assignment returns 257 while storing 1). A
+          // separately qualified observer checks that storage in its metadata
+          // receipts; ordinary writes retain this direct stored-value audit.
+          const projected=assignmentValue?.({event,instruction,object,key,state});
+          if(object.kind==='proxy'&&(projected===undefined||projected===null))
+            throw new TypeError('Source Proxy assignment storage requires its independent target observer');
+          stored=projected??object.properties?.[key]?.value??['missing-storage'];
         }
         emit(key,'assign',stored);
       }
     }
-    if(!abrupt&&event.operation==='call.enter'&&plan.sites.has('call:'+key)&&!pending.has(event.invocationId)){
-      if(!event.causes.some(c=>c.kind==='invocation')&&Array.isArray(event.result))emit(key,'call',event.result);
+    // Generator.throw injects an abrupt completion into the retained frame.
+    // If that frame catches it or enters cleanup, the caller still awaits the
+    // eventual yield/result; the injection is not the call's final completion.
+    const resumedInvocation=abrupt&&event.causes.some(c=>c.kind==='invocation'&&state.frames[c.frameId]?.status==='running');
+    if((!abrupt||resumedInvocation)&&event.operation==='call.enter'&&plan.sites.has('call:'+key)&&!pending.has(event.invocationId)){
+      if(!event.causes.some(c=>c.kind==='invocation')&&Array.isArray(event.result)){emit(key,'call',event.result);calls.add(key);}
       else if(patch?.after)pending.set(event.invocationId,{site:key,kind:'call',depth:patch.after.stack.length,pc:patch.after.pc});
     }
     if(event.operation==='stack.pop'&&plan.sites.has('statement:'+key))emit(key,'statement',event.operands[0]);
@@ -205,14 +267,17 @@ export function ownedCompletionObservations(bundle,source){
     if(event.operation==='completion.throw'&&plan.sites.has('throw:'+key))emit(key,'throw',event.completion.value.value);
     if(event.operation==='completion.catch.bind'&&plan.sites.has('catch:'+key)){
       const node=plan.sites.get('catch:'+key);
-      emit(key,'catch',node.param?storedCell(state.frames[event.invocationId]?.envId,node.param.name):['undefined']);
+      emit(key,'catch',node.param?.type==='Identifier'?storedCell(state.frames[event.invocationId]?.envId,node.param.name):['undefined']);
     }
-    if(event.operation==='completion.loop.jump'&&plan.sites.has(instruction?.arg+':'+key))emit(key,instruction.arg);
+    const jumpKind=typeof instruction?.arg==='string'?instruction.arg:instruction?.arg?.kind;
+    if(event.operation==='completion.loop.jump'&&plan.sites.has(jumpKind+':'+key))emit(key,jumpKind);
     for(const change of event.stateChanges.filter(p=>p.table==='frames'&&p.before&&p.after)){
       const waiting=pending.get(change.id);
       if(waiting&&change.before.pc===waiting.pc){
         if(change.after.pc===waiting.pc&&change.after.stack.length>waiting.depth&&change.before.stack.length<=waiting.depth){
-          emit(waiting.site,waiting.kind,change.after.stack[waiting.depth].value);pending.delete(change.id);
+          emit(waiting.site,waiting.kind,change.after.stack[waiting.depth].value);
+          if(waiting.kind==='call')calls.add(waiting.site);
+          pending.delete(change.id);
         }else if(change.after.pc!==waiting.pc||['thrown','unsupported'].includes(change.after.status))pending.delete(change.id);
       }
       for(const handler of change.after.handlers??[]){

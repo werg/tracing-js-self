@@ -13,17 +13,17 @@ export const SPEC_TRANSITIONS = Object.freeze({
   'left-primitive': ['right-primitive', 'coercion-get', 'complete'],
   'right-primitive': ['select', 'coercion-get', 'complete'],
   select: ['left-string', 'left-numeric'],
-  'left-string': ['right-string'],
-  'right-string': ['concatenate'],
+  'left-string': ['right-string','complete'],
+  'right-string': ['concatenate','complete'],
   concatenate: ['complete'],
   'left-numeric': ['left-numeric-primitive'],
   'left-numeric-primitive': ['left-numeric-kind', 'coercion-get', 'complete'],
   'left-numeric-kind': ['right-numeric', 'left-number'],
-  'left-number': ['right-numeric'],
+  'left-number': ['right-numeric','complete'],
   'right-numeric': ['right-numeric-primitive'],
   'right-numeric-primitive': ['right-numeric-kind', 'coercion-get', 'complete'],
   'right-numeric-kind': ['numeric-types', 'right-number'],
-  'right-number': ['numeric-types'],
+  'right-number': ['numeric-types','complete'],
   'numeric-types': ['apply', 'complete'],
   apply: ['complete'],
   complete: ['done'],
@@ -37,7 +37,8 @@ export function specStep(record) {
   let operation, algorithm, clause, step;
   const phase = record.phase;
   if (phase==='coercion-get'||phase==='coercion-call'||phase==='coercion-return'){
-    algorithm='OrdinaryToPrimitive';clause='sec-ordinarytoprimitive';
+    const protocol=record.coercion?.index===-1;
+    algorithm=protocol?'ToPrimitive':'OrdinaryToPrimitive';clause=protocol?'sec-toprimitive':'sec-ordinarytoprimitive';
     operation=phase==='coercion-get'?'spec.internal.get':
       phase==='coercion-call'?'spec.internal.call':'spec.internal.return';
     step=phase==='coercion-get'?'Get conversion method':

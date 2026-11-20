@@ -125,3 +125,23 @@ test('production training subpath emits explicit harness invocations and exact s
   assert.equal(result.exported.public.groups,undefined);
   assert.equal(SelectedExecutionHarness.replay(result.exported).invocations.get('invocation1').controller.completion.value[1],5);
 });
+
+test('semantic package entry publishes the implemented protocol source profile identities',async()=>{
+  const semantic=await import('tracing-js-self/semantic');
+  assert.deepEqual({
+    construction:semantic.CONSTRUCTION_SOURCE_PROFILE_V8,
+    number:semantic.NUMBER_SOURCE_PROFILE_V8,
+    generator:semantic.GENERATOR_SOURCE_PROFILE_V8,
+    proxy:semantic.PROXY_SOURCE_PROFILE_V8
+  },{
+    construction:'class-private-source/1',number:'number-conversion-source/1',
+    generator:'synchronous-generator-source/1',proxy:'ordinary-data-proxy-source/1'
+  });
+  assert.equal(typeof semantic.verifyProtocolRegionTrainingCase,'function');
+  assert.equal(typeof semantic.commitCausalLmV8Selection,'function');
+  assert.equal(typeof semantic.createNativeV8ProcessSelector,'function');
+  assert.equal(typeof semantic.createNativeV8PythonSelector,'function');
+  for(const name of ['runSelectedRegionExecution','prepareRegionExecutionCase','freezeRegionExecutionStudy',
+    'validateRegionExecutionStudy','scoreSelectedRegionExecution','runFrozenRegionExecutionStudy'])
+    assert.equal(typeof semantic[name],'function',name+' is available through the public semantic entry');
+});

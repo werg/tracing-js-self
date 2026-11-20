@@ -1,6 +1,7 @@
 // Independent, read-only interpretation of spec mutation commands. This module
 // imports only the data vocabulary; it never calls execution/mutation routines.
 import { ARITHMETIC_OPERATORS, SPEC_REGISTERS, SPEC_TRANSITIONS, specStep } from './spec-schema.js';
+import {symbolPropertyKey} from './property-keys.js';
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const copy = value => structuredClone(value);
 const own = (object, name) => Object.hasOwn(object, name);
@@ -14,6 +15,7 @@ function scalar(value) {
   switch (value[0]) {
     case 'bool': return typeof value[1] === 'boolean';
     case 'str': return typeof value[1] === 'string';
+    case 'symbol': return typeof value[1]==='string'&&value[1].length>0;
     case 'bigint': return typeof value[1] === 'string' && /^(0|-?[1-9]\d*)$/.test(value[1]);
     case 'num': return typeof value[1] === 'number'
       ? Number.isFinite(value[1]) && !Object.is(value[1], -0)
@@ -214,8 +216,22 @@ export function applySpecCommand(state, command, event, seen, fail) {
        !keys(nextCoercion,['side','input','register','resume','index','method','waitingFrameId']) ||
        nextCoercion.side!==(left?'left':'right') || !eq(nextCoercion.input,input) ||
        nextCoercion.register!==register||nextCoercion.resume!==resume||
-       nextCoercion.index!==0||nextCoercion.method!==null||nextCoercion.waitingFrameId!==null)
+       ![-1,0].includes(nextCoercion.index)||nextCoercion.method!==null||nextCoercion.waitingFrameId!==null)
       bad('Malformed owned coercion entry');
+    const protocolKey=symbolPropertyKey('well-known:toPrimitive');
+    let object=state.heap[input.value[1]],method={value:['undefined']};const seen=new Set();
+    for(;;){
+      if(!object||seen.has(object.id))bad('Invalid conversion protocol prototype');
+      seen.add(object.id);
+      if(Object.hasOwn(object.accessors??{},protocolKey)){method=null;break;}
+      if(Object.hasOwn(object.properties,protocolKey)){method=object.properties[protocolKey];break;}
+      const proto=Object.hasOwn(object,'prototype')?object.prototype:object.kind==='array'?'Array.prototype':'Object.prototype';
+      if(proto===null||proto==='Array.prototype'||proto==='Object.prototype')break;
+      object=state.heap[proto];
+    }
+    const expectedIndex=method&&['null','undefined'].includes(method.value[0])?0:-1;
+    if(nextCoercion.index!==expectedIndex)bad('Conversion skipped its Symbol.toPrimitive hook');
+
   } else if(r.phase==='coercion-get') {
     if(!oldCoercion)bad('Invalid owned conversion receiver');
     if(command.to==='coercion-call' &&
@@ -226,7 +242,7 @@ export function applySpecCommand(state, command, event, seen, fail) {
         nextCoercion.waitingFrameId!==null))
       bad('Invalid owned method lookup');
     const obj=state.heap[oldCoercion.input.value[1]];
-    const name=oldCoercion.index===0?'valueOf':'toString';
+    const name=oldCoercion.index===-1?symbolPropertyKey('well-known:toPrimitive'):oldCoercion.index===0?'valueOf':'toString';
     if(!obj||!['object','array'].includes(obj.kind))bad('Unowned internal method receiver');
     // Independently traverse the owned prototype records. The read producer
     // can belong to an ancestor, while its receiving object retains its own
@@ -247,11 +263,11 @@ export function applySpecCommand(state, command, event, seen, fail) {
         current.kind==='array'?'Array.prototype':'Object.prototype';
       if(proto===null){method={value:['undefined'],origin:null};break;}
       if(proto==='Object.prototype'){
-        method={value:['builtinfn',name==='valueOf'?'Object.valueOf':'Object.toString'],origin:null};
+        method={value:oldCoercion.index===-1?['undefined']:['builtinfn',name==='valueOf'?'Object.valueOf':'Object.toString'],origin:null};
         break;
       }
       if(proto==='Array.prototype'){
-        method={value:['builtinfn',name==='valueOf'?'Object.valueOf':'Array.toString'],origin:null};
+        method={value:oldCoercion.index===-1?['undefined']:['builtinfn',name==='valueOf'?'Object.valueOf':'Array.toString'],origin:null};
         break;
       }
       current=state.heap[proto];
@@ -271,8 +287,7 @@ export function applySpecCommand(state, command, event, seen, fail) {
         bad('Owned [[Get]] method/provenance mismatch');
     }
   } else if(r.phase==='coercion-call' || r.phase==='coercion-return'){
-    if(!oldCoercion||!['valueOf','toString'].includes(oldCoercion.index===0?'valueOf':
-       oldCoercion.index===1?'toString':'invalid'))bad('Invalid coercion method ordinal');
+    if(!oldCoercion||![-1,0,1].includes(oldCoercion.index))bad('Invalid coercion method ordinal');
     if(command.to==='coercion-return') {
       const child=state.frames[nextCoercion?.waitingFrameId];
       const target=state.heap[oldCoercion.method?.value?.[1]];
@@ -285,11 +300,20 @@ export function applySpecCommand(state, command, event, seen, fail) {
          !eq(nextCoercion.method,oldCoercion.method)||
          nextCoercion.index!==oldCoercion.index)
         bad('Unowned guest method call');
+      if(oldCoercion.index===-1){
+        const hint=['right-primitive','select'].includes(oldCoercion.resume)?'default':'number';
+        const parameter=Object.values(state.envs[child.envId]?.bindings??{}).find(cell=>cell.kind==='parameter');
+        const actual=parameter?.token.value,rest=actual?.[0]==='ref'?state.heap[actual[1]]:null;
+        if(parameter&&!eq(actual,['str',hint])&&!(rest?.kind==='array'&&eq(rest.properties.length.value,['num',1])&&eq(rest.properties['0']?.value,['str',hint])))
+          bad('Incorrect Symbol.toPrimitive hint');
+      }
+
     } else if(command.to==='coercion-get'){
       if(!nextCoercion||nextCoercion.index!==oldCoercion.index+1||
+         oldCoercion.index===-1&&(r.phase!=='coercion-call'||!['null','undefined'].includes(oldCoercion.method.value[0]))||
          (r.phase==='coercion-return' &&
-           ['undefined','null','bool','num','str','bigint'].includes(event.operands[0]?.[0]))||
-         nextCoercion.index!==1||nextCoercion.method!==null||
+           ['undefined','null','bool','num','str','bigint','symbol'].includes(event.operands[0]?.[0]))||
+         ![0,1].includes(nextCoercion.index)||nextCoercion.method!==null||
          nextCoercion.waitingFrameId!==null||
          !eq(nextCoercion.input,oldCoercion.input))
         bad('Invalid conversion method fallback');
@@ -316,13 +340,15 @@ export function applySpecCommand(state, command, event, seen, fail) {
       } else if (!keys(completion,['type','errorType','message','origin']) || completion.origin !== event.eventId ||
           typeof completion.message !== 'string' ||
           !((r.phase === 'numeric-types' && completion.errorType === 'TypeError') ||
+            (['left-string','right-string','left-number','right-number'].includes(r.phase)&&
+              event.operands[0]?.[0]==='symbol'&&completion.errorType==='TypeError') ||
             (r.phase === 'apply' && completion.errorType === 'RangeError') ||
             (['coercion-call','coercion-return'].includes(r.phase) &&
               completion.errorType==='TypeError'))) bad('Invalid abrupt spec completion');
     } else if (completion.type === 'unsupported') {
       if (!keys(completion,['type','feature','message','origin']) || completion.origin !== event.eventId ||
           !(r.phase.endsWith('-primitive') || r.phase==='coercion-get' || r.phase==='coercion-call') ||
-          !['ToPrimitive(Object)','ArrayToString(complex)','AsyncToPrimitive'].includes(completion.feature) ||
+          !['ToPrimitive(Object)','ArrayToString(complex)','AsyncToPrimitive','UnownedToPrimitiveCallable'].includes(completion.feature) ||
           typeof completion.message !== 'string') bad('Invalid unsupported spec completion');
     } else bad('Unknown spec completion');
   } else if (completion !== null) bad('Unexpected early spec completion');

@@ -30,7 +30,7 @@ jobs:
         with:
           repository: werg/megatoken
           # Exact paired consumer; old checkpoint and prepared formats are rejected.
-          ref: d644e3dfc01a22a14f039a9c063d7b65937d8e8f
+          ref: 7b36617a446fafe21b5f28ae5ec73956e246f7bf
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -167,7 +167,7 @@ jobs:
           PY
       - name: Qualify the current v6 source capability ledger
         run: |
-          node tools/generate-capability-ledger.mjs --out "$RUNNER_TEMP/current-v6-capabilities.json" \
+          node tools/generate-capability-ledger.mjs --version 6 --out "$RUNNER_TEMP/current-v6-capabilities.json" \
             --megatoken megatoken --python python --tokenizer "$RUNNER_TEMP/tokenizer.json" \
             --native-policy contracts/native-admission-policy-v6.json --require-native
       - name: Retain machine-readable evidence in the run log

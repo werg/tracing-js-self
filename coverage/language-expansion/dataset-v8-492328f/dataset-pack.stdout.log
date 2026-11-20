@@ -1,0 +1,11 @@
+{
+  "output": "/workspace/scratch/35319cab5bbc/dataset-v8-492328f",
+  "episodes": 34,
+  "examples": 898,
+  "generatedTokensWithEOS": 29374,
+  "archiveSha256": "659eba319b9286c1a81021a05e0750913f488f0faa4d93f935a5b1a683373b67",
+  "archiveBytes": 549212,
+  "archiveMembers": 95,
+  "repeatBuildIdentical": true,
+  "allMemberHashesChecked": true
+}

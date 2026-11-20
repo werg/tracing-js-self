@@ -177,7 +177,7 @@ test('native input arrival can be out of await order during ESM evaluation',asyn
 test('linker preflights unsupported guest syntax even when its function is never invoked',()=>{
   assert.throws(()=>linkEvaluatedModules({
     modules:{'main.js':'export function run(){return 4;}'+
-      'export function unused(){return new Date(0);}'},
+      'export function unused(){return eval("1");}'},
     entryModule:'main.js',exportName:'run'
   }),/Unsupported evaluated-module.*unowned generated guest syntax/);
 });

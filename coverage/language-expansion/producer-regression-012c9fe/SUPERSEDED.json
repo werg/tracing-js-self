@@ -1,0 +1,8 @@
+{
+  "schema": "producer-regression-supersession/1",
+  "observedAt": "2026-11-20T17:39:51.450990+00:00",
+  "measuredRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "replacementTestRevision": "fb1b672e8e4022deb21858f3e347e24389e25794",
+  "reason": "Current-test fixes update the declared interoperability inventory from23 to26, isolate native mock request timing from process startup, and increase callback-test preparation timeout without changing its execution deadline. Source implementation, contracts, fixtures, tools and package remain separately checked for exact equivalence.",
+  "handling": "Original non-TTY process could not be safely targeted across isolated process namespaces; original full run is allowed to settle unchanged. Actual outcomes and raw logs are preserved, never upgraded or relabelled."
+}
