@@ -205,8 +205,39 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       ...(node.kind==='function'?{code:codeFor(node),functionKind:node.arrow?'arrow':'ordinary',lexicalReceiver:node.arrow?node.lexicalThis:null}:{})};
     if(!eq(expected,describeProtocolObjectV8(controller,node.id)))refuse('shared descriptor/heap state differs after owned transition '+node.id);
   }
+  function arrayMutationReceiver(value,method){
+    const node=value?.[0]==='ref'?state.heap[value[1]]:null;
+    if(node?.kind!=='array'||!['Array.prototype',undefined].includes(node.prototype)||
+      descriptor(node,method.slice('Array.prototype.'.length))!==null)
+      refuse('array mutation requires an unchanged ordinary builtin method');
+    const length=node.properties.length?.value;
+    if(length?.[0]!=='num'||!Number.isSafeInteger(length[1])||length[1]<0||length[1]>10000)
+      refuse('array mutation requires a bounded own length');
+    return node;
+  }
   function builtin(event,row,changes){
     const raw=row.operands[0],callee=raw?.[0]==='method'?raw[1]:raw,args=row.operands.slice(1),name=callee?.[0]==='intrinsic'?callee[1]:callee?.[0]==='builtinfn'?callee[1]:null;
+    if(['Array.prototype.push','Array.prototype.pop'].includes(name)){
+      if(raw[0]!=='method')refuse('array mutation requires its original method receiver');
+      const receiver=tag(raw[2],event),node=arrayMutationReceiver(receiver,name),length=node.properties.length.value[1];
+      if(changes.some(change=>change.id!==node.id))refuse('array mutation has an undeclared heap effect');
+      emit({kind:'property.get',object:node.id,key:['str','length'],receiver,result:['num',length]},event,'owned-source-array-length/1');
+      if(name==='Array.prototype.push'){
+        if(length+args.length>10000)refuse('array push exceeds the bounded length');
+        args.forEach((value,index)=>emit({kind:'property.set',object:node.id,key:['str',String(length+index)],
+          receiver,value:tag(value,event),success:true},event,'owned-source-array-append/1'));
+        emit({kind:'property.set',object:node.id,key:['str','length'],receiver,value:['num',length+args.length],success:true},event,'owned-source-array-length/1');
+        compute({op:'binary',operator:'+',left:lit(['num',length]),right:lit(['num',args.length])},row.result,event);
+      }else{
+        if(length){
+          const last=descriptor(node,String(length-1));
+          if(last?.kind!=='data')refuse('array pop requires an own final data element');
+          emit({kind:'property.get',object:node.id,key:['str',String(length-1)],receiver,result:tag(row.result,event)},event,'owned-source-array-pop/1');
+        }else if(!eq(row.result,['undefined']))refuse('empty array pop must return undefined');
+        emit({kind:'property.set',object:node.id,key:['str','length'],receiver,value:['num',Math.max(0,length-1)],success:true},event,'owned-source-array-length/1');
+      }
+      return;
+    }
     if(name==='Symbol'||name==='Symbol.for'){
       const value=args[0]??['undefined'];if(value[0]==='ref'||value[0]==='symbol')refuse('Symbol description/key conversion needs a coercion protocol');
       const id=row.result?.[1];if(row.result?.[0]!=='symbol')refuse('Symbol result identity missing');
@@ -288,7 +319,14 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       else if(row.allocations?.length)for(const allocation of row.allocations){const node=heapChanges.find(change=>change.id===allocation.identity)?.after;if(!node)refuse('allocation patch missing');publish(node,event);}
       else if(event.operation==='property.read'){
         const [base,property]=row.operands;
-        if(base?.[0]==='ref')emit({kind:'property.get',object:base[1],key:key(property),receiver:tag(base,event),
+        const output=row.result?.[0]==='method'?row.result[1]:row.result;
+        if(output?.[0]==='builtinfn'&&['Array.prototype.push','Array.prototype.pop'].includes(output[1])){
+          // A builtin method is not a public first-class value. Its direct call
+          // is expanded into checked length reads and ordinary property writes.
+          // Capturing or replacing the method still requires a callable profile.
+          arrayMutationReceiver(base,output[1]);
+          if(!eq(property,['str',output[1].slice('Array.prototype.'.length)]))refuse('array method lookup key differs');
+        }else if(base?.[0]==='ref')emit({kind:'property.get',object:base[1],key:key(property),receiver:tag(base,event),
           result:tag(row.result?.[0]==='method'?row.result[1]:row.result,event)},event,'owned-source-property-read/1');
         else if(base?.[0]==='symbol'&&property?.[0]==='str'&&property[1]==='description')
           emit({kind:'symbol.read',symbol:tag(base,event),operation:'description',result:tag(row.result,event),bind:null},event);
