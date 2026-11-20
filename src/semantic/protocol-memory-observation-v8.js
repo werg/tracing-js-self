@@ -38,9 +38,13 @@ export function createMemoryObservationAdapterV8(){
         if(buffer){
           const shared=types.isSharedArrayBuffer(value),getters=shared?sab:ab,byteLength=call(getters.byteLength,value);
           if(byteLength>1024)throw new RangeError('Independent binary byte bound');
+          // Node 20 has no ArrayBuffer.prototype.detached getter. Creating the
+          // intrinsic view independently proves that the buffer is attached:
+          // detached buffers throw here even when their byteLength is zero.
+          const bytes=Array.from(new Uint8Array(value));
           const metadata={byteLength,maxByteLength:call(getters.maxByteLength,value),
-            ...(shared?{growable:call(sab.growable,value)}:{resizable:call(ab.resizable,value),detached:call(ab.detached,value)}),
-            bytes:Array.from(new Uint8Array(value))};
+            ...(shared?{growable:call(sab.growable,value)}:{resizable:call(ab.resizable,value),detached:ab.detached?call(ab.detached,value):false}),
+            bytes};
           return {...base,kind:shared?'shared-int32-buffer':'array-buffer',annotations:[annotation('binary-buffer',[],metadata)]};
         }
         const getters=dataView?dv:ta,backing=call(getters.buffer,value),shared=types.isSharedArrayBuffer(backing),
