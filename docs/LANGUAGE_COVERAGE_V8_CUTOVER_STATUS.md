@@ -18,6 +18,27 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Overall progress
 
+### Difficulty order and active priorities
+
+Per the requested hardest/least-defined-first order, work follows this ranking.
+Dependencies and regression repairs are completed within the affected increment;
+easy cleanup does not displace the difficult semantic work. The ranking is an
+engineering assessment, not a completion percentage or a schedule estimate.
+
+| Priority | Difficulty | Work and uncertainty to resolve | Active next slice |
+| --- | --- | --- | --- |
+| 1 | Very high | Protocol, host-effect, callback and crash-recovery composition: shared state, unique transition ownership and no repeated external work. | Mixed Promise protocol and authorized host effect; independent native replay and complete restoration before callback expansion. |
+| 2 | Very high | Complete continuation semantics: retained references, partially evaluated calls/conversions, cleanup, pending jobs and permitted next actions. | Shared resumable conversion state and cached property keys, with JSON restore and tampered-state rejection. |
+| 3 | Very high | General Promise resolution and asynchronous module public/native semantics, including adoption, thenables, sibling ordering and async cycles. | Preserve corrected owned behavior; qualify each newly represented job independently before widening admission. |
+| 4 | Very high; separate profiles | Dynamic code/realms, shared-memory agents, weak references and finalization; permitted outcomes and host obligations need explicit definitions. | Retain all obligations in the full target; define a bounded executable slice and observation rules for each before implementation. |
+| 5 | High | Direct V8 source certification and neutral execution core: remove old wire/episode dependencies across compilation, replay and lifecycle. | Direct V8 source artifact and recheck, independent source observers and runtime import-absence controls. |
+| 6 | High | Real training and live model lifecycle: source/tokenizer/model/optimizer/policy identities and recovery must agree end to end. | Actual-policy preparation, normal optimizer/export/reload and serving provenance; source admission must never imply learned success. |
+| 7 | High | Objects, Proxy, construction, coercion, iteration, collections, binary memory and RegExp interact through observable hooks and partial failure. | General mechanisms first, then method-level and cross-feature slices with native counterparts. |
+| 8 | Medium to high; dependency-gated | Full qualification, V6 production parity, default routing, installed legacy absence and coordinated release/rollback. | Repair current regressions; retain exact fresh evidence and every unfinished population. Final default/removal changes must precede final qualification. |
+
+The 17-package tally below remains the acceptance ledger. A delivered increment
+does not close an entire ranked item or work package.
+
 **0 of 17 work packages complete.** Work packages may contain delivered increments
 without satisfying their complete exit gate. The status table must not conflate
 owned execution, public representation, independent native admission, training,
@@ -243,3 +264,24 @@ serving, and measured learned success.
   an explicit public-job mapping is required before that existing capability is
   qualified again. Pinned-oracle, real-source, inspection, and V7 CI lanes passed;
   this is not an all-green final-head result.
+
+- Format-neutral source admission checkpoint: independent original-source
+  reference checks and source identity authority are extracted from historical
+  clients. The original admission/seed/rejection regression suite has 15 passing
+  tests. Published producer commit: `a85916ec3f8c32a3374857a5e4c8902fd9bc9f72`.
+  Direct V8 compilation and its absence controls are the next part of this work.
+
+- Promise production regression repair: adoption and callable-finally forwarding
+  are represented as distinct queued jobs, preserving dependencies and delayed
+  settlement. All 14 historical effectful/synchronous-throw regressions and three
+  new ordering, boundary-restore and tampering checks pass. Published producer
+  commit: `076a5c3f94c1e8574d87efe0f80a161bbe44ddd7`. These preserve existing
+  production behavior; general V8 adoption/finally promotion remains refused.
+
+- Campaign recovery repair: resume preserves completed passes and failures and
+  executes only unfinished stages. Explicit `--retry` appends new attempts while
+  retaining earlier failures; partial path typos fail before overwriting evidence.
+  All 17 campaign/catalog controls pass, zero failed/skipped. The first added
+  interruption test exposed nondeterministic ordering between independent workers;
+  its deterministic one-worker control now checks exact recovery without assuming
+  a cross-worker completion order. No full-suite execution claim is made here.

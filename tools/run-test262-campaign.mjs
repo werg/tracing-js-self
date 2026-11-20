@@ -14,7 +14,7 @@ const booleans=new Set(['--all']);
 for(let i=2;i<process.argv.length;i++){
   const key=process.argv[i],value=booleans.has(key)?true:process.argv[++i];
   if(!['--catalog','--suite-root','--out','--stages','--paths','--cases','--limit','--all','--resume','--check',
-    '--jobs','--max-steps','--max-source-bytes','--reference-timeout-ms','--worker-timeout-ms','--heap-mb'].includes(key)||
+    '--jobs','--max-steps','--max-source-bytes','--reference-timeout-ms','--worker-timeout-ms','--heap-mb','--retry'].includes(key)||
     flags.has(key)||value===undefined||typeof value==='string'&&value.startsWith('--'))
     throw new TypeError('Invalid original Test262 campaign argument: '+key);
   flags.set(key,value);
@@ -26,6 +26,10 @@ const number=(name,fallback,min=1,max=Number.MAX_SAFE_INTEGER)=>{
 };
 const baseInput=readTest262Json(flags.get('--catalog')??join(root,'artifacts/conformance/test262-d53ebc8b-frozen-catalog.json.xz'));
 const baseCatalog=baseInput.catalog??baseInput;
+const retryStatuses=flags.has('--retry')?flags.get('--retry').split(','):[];
+if(flags.has('--retry')&&(!flags.has('--resume')||!retryStatuses.length||new Set(retryStatuses).size!==retryStatuses.length||
+  retryStatuses.some(status=>!['failed','unsupported','resource_limited','environment_unavailable','infrastructure_error'].includes(status))))
+  throw new TypeError('--retry requires --resume and unique terminal non-pass dispositions');
 if(flags.has('--check')){
   const report=readTest262Json(flags.get('--check'));
   validateOriginalTest262Report(report,{baseCatalog,implementation:report.campaign.implementation});
@@ -45,7 +49,10 @@ if(flags.has('--check')){
   let selected=catalog.variants;
   if(flags.has('--paths')){
     const paths=flags.get('--paths').split(',');
-    if(paths.some(path=>!path.startsWith('test/')||path.includes('..')))throw new TypeError('Selection paths must be safe test paths');
+    if(new Set(paths).size!==paths.length||paths.some(path=>!path.startsWith('test/')||path.includes('..')))
+      throw new TypeError('Selection paths must be unique safe test paths');
+    if(paths.some(path=>!selected.some(row=>path.endsWith('/')?row.path.startsWith(path):row.path===path)))
+      throw new TypeError('--paths contains a path with no frozen variants');
     selected=selected.filter(row=>paths.some(path=>path.endsWith('/')?row.path.startsWith(path):row.path===path));
     if(!selected.length)throw new TypeError('--paths selected no frozen variants');
   }
@@ -79,9 +86,19 @@ if(flags.has('--check')){
   checkpoint();
   console.log(JSON.stringify({phase:'acquired',catalogDigest:catalog.digest,population:catalog.variants.length,
     selected:selected.length,sourceRevision:catalog.suiteRevision,output}));
+  const rows=new Map(campaign.rows.map(row=>[row.id,row]));
+  const shouldRun=stage=>stage.status==='not_run'||retryStatuses.includes(stage.status);
   const syntaxResults=new Map();let pending=[];
   for(let index=0;index<selected.length;index++){
     const variant=selected[index];let syntax;
+    const retained=rows.get(variant.id);
+    if(!shouldRun(retained.stages.parseStatic)){
+      const attempt=retained.attempts[retained.stages.parseStatic.attempt-1];
+      if(attempt?.stage!=='parseStatic'||typeof attempt.evidence?.parseOnly!=='boolean')
+        throw new TypeError('Retained parse attempt is missing its execution boundary');
+      syntaxResults.set(variant.id,{status:attempt.status,parseOnly:attempt.evidence.parseOnly});
+      continue;
+    }
     try{
       const prepared=prepareOfficialTest262Variant({variant,profile,suiteRevision:catalog.suiteRevision,sources});
       prepared.code??=(variant.mode==='strict'?'"use strict";\n':'')+prepared.source;
@@ -98,11 +115,17 @@ if(flags.has('--check')){
       console.log(JSON.stringify({phase:'parse',completed:index+1,selected:selected.length}));
     }
   }
+  if(pending.length){campaign=recordTest262Stages(campaign,pending);pending=[];checkpoint();}
+  // A resumed parse attempt can invalidate dependent results. Plan execution
+  // from the newly committed ledger, not from the pre-parse checkpoint.
+  const executionRows=new Map(campaign.rows.map(row=>[row.id,row]));
   const tasks=[];
   for(const variant of selected){
     const syntax=syntaxResults.get(variant.id);
-    if(stages.includes('owned')&&syntax.status==='passed'&&!syntax.parseOnly)tasks.push({variant,authority:'owned'});
-    if(stages.includes('reference'))tasks.push({variant,authority:'reference'});
+    const retained=executionRows.get(variant.id);
+    if(stages.includes('owned')&&syntax.status==='passed'&&!syntax.parseOnly&&shouldRun(retained.stages.ownedExecution))
+      tasks.push({variant,authority:'owned'});
+    if(stages.includes('reference')&&shouldRun(retained.stages.independentReference))tasks.push({variant,authority:'reference'});
   }
   let cursor=0,completed=0;
   const work=async()=>{
