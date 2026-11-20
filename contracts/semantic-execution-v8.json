@@ -503,7 +503,7 @@
           "super.finish": [
             "kind",
             "owner",
-            "result"
+            "completion"
           ],
           "iterator.lookup": [
             "kind",
@@ -1888,7 +1888,7 @@
       "default": "not promoted by engineering receipts alone"
     }
   },
-  "digest": "174ee07d7f2c6d1601332c23f9cb9e53b8233cad908b5abff995dcd3b10dc1e6",
+  "digest": "5cf992a16a3de77edb3c7b732673950b9afc037458f51b316d8b2801c43f29ae",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
   "fixtures": [
     {
@@ -1913,7 +1913,7 @@
       "reason": "old artifacts require their original contract"
     }
   ],
-  "interoperabilityDigest": "bd623249b218c69a822ab0a683cf265418c7fcac38f4c672ef2b379951ab116c",
+  "interoperabilityDigest": "fd5cb7bda86cd703d4dacf48d0acf468f1fc23e210623de97aa84a9c736e6eb0",
   "interoperability": [
     {
       "id": "ordered-map",
@@ -1952,8 +1952,8 @@
     },
     {
       "id": "protocol-region:source-derived-private-arithmetic",
-      "publicDigest": "3bfe01e095d764ec1883a13260fc9ec4d61f4536161188bd9346de081dba92cb",
-      "contextDigest": "5616241138fb319d558defbace8d8e58900940b453972720a9e11bb641525abd"
+      "publicDigest": "49cbcd4007c3439d45bc8f9b3353b09d5ccca005c972d649eec2db95c0c9b463",
+      "contextDigest": "43baf9c535f89a441952fdd43c166f2f3cf7e4389869c344962159646ca11a8e"
     },
     {
       "id": "protocol-region:builtin-iterator-mixed-arithmetic",
@@ -1989,6 +1989,16 @@
       "id": "protocol-region:source-proxy-traps-arithmetic",
       "publicDigest": "8a7028de68baae6e315499727f843814ccfe340ec7ec13d78c2890be118a9952",
       "contextDigest": "2e586831fb90d84958046b8093b090604816f82aec8738fa1b0463f492611610"
+    },
+    {
+      "id": "protocol-region:source-base-initializer-throw",
+      "publicDigest": "80f87fe2375a8e30ebdffa5e10643d69098523b172780e7ebfedc6b68012e777",
+      "contextDigest": "810964987bc26ca93e645e864821274c840970c4583b3ad2845810c76b23acf2"
+    },
+    {
+      "id": "protocol-region:source-derived-initializer-throw",
+      "publicDigest": "308db677ef00a9bb681a3013e557b724db1c81d3995c279df5a33bdd09af52b6",
+      "contextDigest": "5a32cc6dfc66828359491becee84020c860973435b6c8743ffcaf26b74a36def"
     }
   ]
 }
