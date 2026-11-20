@@ -5,6 +5,18 @@ import {join,resolve} from 'node:path';
 import {CampaignStore,sha256,atomicWrite} from './campaign-store.mjs';
 
 const artifactName=/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/;
+
+// A diagnostic selection changes which cases execute, never the population.
+// Canonical population order also makes the selection part of resume identity.
+export function selectQualificationCaseIds(cases,requested=null){
+  const ids=cases.map(row=>row.id);
+  if(new Set(ids).size!==ids.length)throw new TypeError('Duplicate qualification case identity');
+  if(requested===null)return ids;
+  if(!Array.isArray(requested)||requested.length===0||new Set(requested).size!==requested.length||
+    requested.some(id=>!ids.includes(id)))throw new TypeError('Unknown or duplicate qualification case');
+  const selected=new Set(requested);return ids.filter(id=>selected.has(id));
+}
+
 export function openQualificationProgress(directory,identity,{resume=false}={}){
   directory=resolve(directory);
   if(!resume&&existsSync(directory))throw new Error('Qualification output already exists; use --resume or a new directory');

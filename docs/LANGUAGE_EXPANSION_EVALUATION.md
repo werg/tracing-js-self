@@ -101,6 +101,11 @@ that the returned receipt binds that source, public execution and every context.
 
 The native runner also accepts `--prepare-only` for source diagnostics and
 `--resume` to finish an interrupted run at the same revision and settings.
+`--cases ID,ID` executes a diagnostic subset while retaining the entire frozen
+population, its declared denominator, and an explicit `untested` result for
+every unselected case. The selected IDs are recorded in population order and
+bound to resume identity. A partial selection cannot produce a fully admitted
+native population or silently become a different selection on resume.
 `--workers` bounds independent jobs (default one, maximum sixteen); each job
 keeps its own source process memory/time limits and native admission deadline.
 `--native-timeout-ms` sets that deadline, separately from

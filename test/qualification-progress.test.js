@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync,appendFileSync,readFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {openQualificationProgress,mapQualificationCases} from '../src/corpus/qualification-progress.mjs';
+import {openQualificationProgress,mapQualificationCases,selectQualificationCaseIds} from '../src/corpus/qualification-progress.mjs';
 
 const identity={producerRevision:'fixed-producer',populationDigest:'fixed-population',nativePolicy:null,
   bounds:{timeoutMs:1000,memoryMb:128},workers:2};
@@ -11,6 +11,18 @@ const task={kind:'source',fixture:{id:'case',source:'function run(){return 1;}',
 const row={id:'case',status:'locally_verified',source:'passed',native:'untested',durationMs:10,peakRssBytes:1024};
 function directory(t){const parent=mkdtempSync(join(tmpdir(),'qualification-progress-'));
   t.after(()=>rmSync(parent,{recursive:true,force:true}));return join(parent,'run');}
+
+test('diagnostic selections retain the full population and bind resume to canonical selected IDs',t=>{
+  const cases=[{id:'first'},{id:'second'},{id:'third'}],selectedCaseIds=selectQualificationCaseIds(cases,['third','first']);
+  assert.deepEqual(selectedCaseIds,['first','third']);
+  assert.deepEqual(cases,[{id:'first'},{id:'second'},{id:'third'}]);
+  assert.deepEqual(selectQualificationCaseIds(cases),['first','second','third']);
+  for(const ids of [[],['missing'],['first','first']])assert.throws(()=>selectQualificationCaseIds(cases,ids),/qualification case/);
+  assert.throws(()=>selectQualificationCaseIds([{id:'first'},{id:'first'}]),/Duplicate/);
+  const path=directory(t),run=openQualificationProgress(path,{...identity,selectedCaseIds});run.close();
+  assert.throws(()=>openQualificationProgress(path,{...identity,selectedCaseIds:['second']},{resume:true}),/identity changed/);
+  openQualificationProgress(path,{...identity,selectedCaseIds:selectQualificationCaseIds(cases,['first','third'])},{resume:true}).close();
+});
 
 test('resume preserves refusals and completed evidence while leaving incomplete cases untested',t=>{
   const path=directory(t),run=openQualificationProgress(path,identity);

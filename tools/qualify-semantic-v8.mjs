@@ -10,7 +10,7 @@ import {admitRegionEvidence} from '../src/semantic/compiler-v8.js';
 import {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_INTEROPERABILITY_DIGEST} from '../src/semantic/native-v8.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 import {atomicWrite} from '../src/corpus/campaign-store.mjs';
-import {openQualificationProgress,mapQualificationCases} from '../src/corpus/qualification-progress.mjs';
+import {openQualificationProgress,mapQualificationCases,selectQualificationCaseIds} from '../src/corpus/qualification-progress.mjs';
 
 const valued=new Set(['--out','--megatoken','--tokenizer','--python','--native-policy','--population','--inputs','--cases','--worker-timeout-ms','--worker-memory-mb','--native-timeout-ms','--workers']),flags=new Map();
 const boolean=new Set(['--prepare-only','--resume']);
@@ -19,7 +19,7 @@ for(let i=2;i<process.argv.length;i++){
   if(boolean.has(key))flags.set(key,true);
   else {const value=process.argv[++i];if(!value||value.startsWith('--'))throw new Error('Missing value for '+key);flags.set(key,value);}
 }
-if(!flags.has('--out'))throw new Error('Usage: node tools/qualify-semantic-v8.mjs --out DIRECTORY [--resume] [--workers 1..16] [--population interoperability|all|families|gallery|interactions|real-source] [--inputs all|first] [--prepare-only | --megatoken DIR --tokenizer FILE --python PYTHON --native-policy FILE]');
+if(!flags.has('--out'))throw new Error('Usage: node tools/qualify-semantic-v8.mjs --out DIRECTORY [--resume] [--workers 1..16] [--population interoperability|all|families|gallery|interactions|real-source] [--inputs all|first] [--cases ID,ID] [--prepare-only | --megatoken DIR --tokenizer FILE --python PYTHON --native-policy FILE]');
 const root=fileURLToPath(new URL('..',import.meta.url)),output=resolve(flags.get('--out')),
   population=flags.get('--population')??'interoperability',inputs=flags.get('--inputs')??'all',
   prepareOnly=flags.get('--prepare-only')===true,workers=Number(flags.get('--workers')??1),
@@ -30,11 +30,9 @@ if(!Number.isSafeInteger(workers)||workers<1||workers>16||!Number.isSafeInteger(
   !Number.isSafeInteger(bounds.memoryMb)||bounds.memoryMb<64||bounds.memoryMb>8192||
   !Number.isSafeInteger(nativeTimeoutMs)||nativeTimeoutMs<10||nativeTimeoutMs>3600000)throw new Error('Invalid qualification worker or resource bounds');
 const selected=regionQualificationPopulation({population,allInputs:inputs==='all'});
-let fixtures=[...selected.scripts,...selected.modules];
-if(new Set(fixtures.map(row=>row.id)).size!==fixtures.length)throw new Error('Duplicate qualification case identity');
-if(flags.has('--cases')){const ids=flags.get('--cases').split(',');
-  if(new Set(ids).size!==ids.length||ids.some(id=>!fixtures.some(row=>row.id===id)))throw new Error('Unknown or duplicate qualification case');
-  fixtures=fixtures.filter(row=>ids.includes(row.id));}
+const fixtures=[...selected.scripts,...selected.modules],
+  selectedCaseIds=selectQualificationCaseIds(fixtures,flags.has('--cases')?flags.get('--cases').split(','):null),
+  selectedIds=new Set(selectedCaseIds);
 const producerRevision=execFileSync('git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8'}).trim();
 if(execFileSync('git',['-C',root,'status','--porcelain','--untracked-files=no'],{encoding:'utf8'}).trim())
   throw new Error('Qualification requires a committed producer');
@@ -44,7 +42,7 @@ const settings=prepareOnly?null:loadNativeV8Settings({megatoken:flags.get('--meg
 const nativeConsumer=settings?createNativeV8Consumer(settings):null;
 const taskFor=fixture=>({kind:fixture.modules?'module':'source',traceVersion:8,fixture,producerRevision});
 const inventory={schema:'semantic-v8-qualification-population/1',producerRevision,population,inputs,
-  declared:fixtures.length,tasks:fixtures.map(fixture=>encodeGenerationTask(taskFor(fixture)))};
+  declared:fixtures.length,selectedCaseIds,tasks:fixtures.map(fixture=>encodeGenerationTask(taskFor(fixture)))};
 const populationDigest=hashAlgorithmData(inventory);
 const progress=openQualificationProgress(output,{schema:'semantic-v8-qualification-progress/1',populationDigest,producerRevision,
   contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,interoperabilityDigest:V8_INTEROPERABILITY_DIGEST,
@@ -66,8 +64,10 @@ const rows=await mapQualificationCases(fixtures,workers,async fixture=>{
     return cached.row;}
   const names=[];
   const saveCase=(name,value)=>{save(name,value);names.push(name);};
-  const execution=await runGenerationProcess(taskFor(fixture),
-    {outputDirectory:join(output,'workers'),...bounds});
+  const execution=selectedIds.has(fixture.id)?await runGenerationProcess(taskFor(fixture),
+    {outputDirectory:join(output,'workers'),...bounds}):{
+      result:{status:'untested',reason:'Not selected by --cases; retained in the declared population',
+        sourceProfile:fixture.sourceProfile??'training-js/1'},durationMs:0,peakRssBytes:null};
   const result=execution.result,row={id:fixture.id,family:fixture.family??fixture.id,status:result.status,
     reason:result.reason??null,sourceProfile:result.sourceProfile??'training-js/1',
     source:result.exported?'passed':result.status,native:'untested',durationMs:execution.durationMs,peakRssBytes:execution.peakRssBytes};
@@ -86,7 +86,7 @@ const rows=await mapQualificationCases(fixtures,workers,async fixture=>{
   process.stderr.write(JSON.stringify({id:row.id,status:row.status,native:row.native})+'\n');
   return row;
 });
-const report={schema:'semantic-v8-qualification/1',producerRevision,population,inputs,populationDigest,declared:fixtures.length,
+const report={schema:'semantic-v8-qualification/1',producerRevision,population,inputs,populationDigest,declared:fixtures.length,selectedCaseIds,
   contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,interoperabilityDigest:V8_INTEROPERABILITY_DIGEST,nativePolicy:settings?.policy??null,
   progressDigest:progress.digest,workers,workerBounds:bounds,nativeTimeoutMs,artifactDigestEncoding:'sha256 of exact UTF-8 file bytes',
   preparationOnly:prepareOnly,rows,artifacts,sourceQualified:rows.filter(row=>row.source==='passed').length,

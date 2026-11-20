@@ -54,14 +54,16 @@ test('summary weights detail by measured tokens and keeps source and cost failur
       generatedTokens:10,observedTokens:40,terminalTokens:0,physicalRecords:6,logicalRecords:4}},
     {id:'large',source:'passed',regionCoverage:coverage,cost:cost(90,9)},
     {id:'limited',source:'passed',regionCoverage:coverage,cost:{status:'resource_limited'}},
-    {id:'refused',source:'unsupported',cost:null}];
+    {id:'refused',source:'unsupported',cost:null},
+    {id:'not-selected',source:'untested',cost:null}];
   const result=summarizeQualificationCosts(rows,{tokenizer:true});
-  assert.equal(result.declared,4);assert.equal(result.sourceQualified,3);
-  assert.equal(result.regionCoverage.unmeasuredEpisodes,1);assert.equal(result.flat.unmeasured,2);
+  assert.equal(result.declared,5);assert.equal(result.sourceQualified,3);
+  assert.deepEqual(result.sourceDispositions,{passed:3,unsupported:1,untested:1});
+  assert.equal(result.regionCoverage.unmeasuredEpisodes,2);assert.equal(result.flat.unmeasured,3);
   assert.deepEqual(result.flat.dispositions,{passed:2,resource_limited:1});
   assert.equal(result.flat.tokenMeasurement,'partial');assert.equal(result.flat.tokens.detailedShare,0.14);
   assert.equal(result.flat.tokens.total,308);assert.equal(result.nativePacking.physicalRecords,6);
-  assert.equal(result.nativePacking.unmeasuredEpisodes,3);
+  assert.equal(result.nativePacking.unmeasuredEpisodes,4);
   assert.equal(result.nativeServing.status,'unmeasured');assert.equal(result.defaultPromotion,'not-qualified');
   const bytesOnly=summarizeQualificationCosts(rows.map(row=>({...row,
     cost:row.cost?.status==='passed'?{...row.cost,tokens:{total:null},detailedTokens:null}:row.cost})));
