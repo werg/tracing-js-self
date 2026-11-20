@@ -5,9 +5,38 @@ import ts from 'typescript';
 import {SourceMap} from 'node:module';
 
 const COMPILER='typescript/'+ts.version;
+const IDENTITY_COMPILER='identity-javascript/1';
+const base64='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+function sourceMapVLQ(number){
+  let value=number<0?(-number)*2+1:number*2,result='';
+  do{
+    let digit=value%32;value=Math.floor(value/32);
+    if(value)digit+=32;
+    result+=base64[digit];
+  }while(value);
+  return result;
+}
+function identityJavaScript(text,path){
+  // Source-map columns count UTF-16 code units, as do Acorn source offsets.
+  // Map every column, including line ends, so findEntry does not quietly
+  // collapse original columns to a line-start approximation.
+  let previousColumn=0;
+  const mappings=text.split('\n').map((line,index)=>{
+    const first=[0,0,index===0?0:1,-previousColumn].map(sourceMapVLQ).join('');
+    previousColumn=line.length;
+    return first+',CAAC'.repeat(line.length);
+  }).join(';');
+  return {javascript:text,compiler:IDENTITY_COMPILER,sourceMap:{version:3,
+    file:path,sourceRoot:'',sources:[path],names:[],sourcesContent:[text],mappings}};
+}
 export function compileBoundedTypeScript(text,{path='trace.ts'}={}) {
   if(typeof text!=='string'||text.length>131072)
     throw new TypeError('TypeScript source must be bounded text');
+  // Ordinary JavaScript needs no TypeScript transformation. In particular,
+  // TypeScript 5.9.3 can duplicate a following statement when reparsing an
+  // await/object-getter module. Preserve original JS bytes and identify this
+  // path honestly; the caller's owned parser still validates the syntax.
+  if(/\.(?:js|mjs|cjs)$/.test(path))return identityJavaScript(text,path);
   // Keep optional syntax in the pinned ES2022 output. The owned frontend
   // records its nullish branches directly, rather than executing TypeScript
   // emitter temporaries. Receiver-sensitive optional method calls fail closed.

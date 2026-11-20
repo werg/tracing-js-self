@@ -13,6 +13,7 @@ import {executeWithNativeServices} from './host/native-driver.js';
 import {validateBundle} from './validation.js';
 import {replayExact} from './replay.js';
 import {realizeGraph} from './training/graph.js';
+import {hasTopLevelAwait,lowerModuleAwaits,ownedModuleSchedulerSource} from './evaluated-module-scheduler.js';
 
 const namePattern=/^[A-Za-z_$][A-Za-z0-9_$]*$/;
 const reject=reason=>{throw new SyntaxError('Unsupported evaluated-module/1: '+reason);};
@@ -256,7 +257,8 @@ function parseModule(file,text,sources){
   // JS modules can contain a source-level import binding not referenced in
   // the emitted code; preflight all such imports without executing anything.
   return {file,text,lowering,symbols,imports,namespaceImports,exports,forwards,
-    stars:[...new Set(stars)],deps:[...deps],functions,initializers};
+    stars:[...new Set(stars)],deps:[...deps],functions,initializers,
+    hasTLA:initializers.some(part=>hasTopLevelAwait(part.node))};
 }
 function bindingNames(pattern,out=[]){
   if(!pattern)return out;
@@ -321,6 +323,8 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
       return;
     }
     if(node.type==='Identifier'){
+      if(node.name.startsWith('__traced_eval_'))
+        reject('reserved generated identifier '+node.name+' in '+module.file);
       if(namespaceBindings.has(node.name))
         reject('namespace identity escapes a static property read in '+module.file);
       const replacement=names.get(node.name);
@@ -388,7 +392,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
         args:ownDataArray(a.value,'Module call args',64)};
     });
   }
-  const modulesByFile=new Map(),visiting=new Set(),visited=new Set(),order=[];
+  const modulesByFile=new Map(),visited=new Set(),order=[];
   const cycles=[];
   function get(file){
     if(!modulesByFile.has(file))
@@ -403,16 +407,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       // Cyclic module async execution has separate ESM dependency promises
       // and possible deadlocks. Never replace that scheduler with a flat
       // approximation: admit only syntactically synchronous cycles.
-      const containsAwait=(value)=>{
-        if(!value||typeof value!=='object')return false;
-        if(Array.isArray(value))return value.some(containsAwait);
-        if(value.type==='AwaitExpression'||value.type==='ForOfStatement'&&value.await)
-          return true;
-        return Object.entries(value).some(([key,child])=>
-          key!=='start'&&key!=='end'&&key!=='loc'&&
-          typeof child==='object'&&containsAwait(child));
-      };
-      if(members.some(name=>get(name).initializers.some(part=>containsAwait(part.node))))
+      if(members.some(name=>get(name).hasTLA))
         reject('cyclic module initialization with await requires owned async ESM dependency scheduling');
       const marker=members.join(' -> ')+' -> '+file;
       if(!cycles.some(c=>c.path===marker))
@@ -426,6 +421,20 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     visited.add(file);order.push(file);
   }
   visit(entryModule);
+  const indices=new Map(order.map((file,index)=>[file,index]));
+  function dependsOn(file,dependency,seen=new Set()){
+    if(file===dependency)return true;
+    if(seen.has(file))return false;
+    seen.add(file);
+    return get(file).deps.some(from=>dependsOn(from,dependency,seen));
+  }
+  // A later module that does not depend on an earlier async module must
+  // start while that module is suspended. Flattening the postorder would
+  // serialize sibling bodies, including a synchronous sibling after TLA.
+  const scheduled=order.some((file,index)=>order.slice(0,index).some(prior=>
+    get(prior).hasTLA&&!dependsOn(file,prior)));
+  if(scheduled&&cycles.length)
+    reject('cyclic module graphs with parallel await require owned async ESM dependency scheduling');
   const renamed=new Map();
   for(const [index,file] of order.entries()){
     const names=new Map();
@@ -484,17 +493,23 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       reject('cannot invoke a non-function module export '+call.exportName);
     return {...call,binding};
   }):null;
+  const linkedAccess=binding=>scheduled?
+    '__traced_eval_cells['+indices.get(binding.file)+'].'+binding.linked+'()':
+    binding.linked;
   const bound=new Map(),links=[];
   const namespaces=new Map();
   for(const file of order){
     const module=get(file),names=new Map(renamed.get(file));
     const reads=new Map();
     for(const [local,from] of module.namespaceImports)
-      reads.set(local,exported=>required(from,exported));
+      reads.set(local,exported=>{
+        const binding=required(from,exported);
+        return {...binding,linked:linkedAccess(binding)};
+      });
     namespaces.set(file,reads);
     for(const [local,imp] of module.imports){
       const resolved=required(imp.module,imp.name);
-      names.set(local,resolved.linked);
+      names.set(local,linkedAccess(resolved));
       links.push({from:file,local,source:imp.module,exportName:imp.name,
         binding:resolved.linked,live:true});
     }
@@ -512,29 +527,73 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     source+='  '+fragment+'\n';
     spans.push({file,kind,start,end:source.length});
   };
-  // Instantiation: hoist every linked function before executing any body.
-  // Imported reads share a single renamed lexical binding, not a snapshot.
-  for(const file of order){
-    const module=get(file),names=bound.get(file);
-    for(const fn of module.functions)
-      append(file,'instantiate',rewrite(module,fn,names,new Set(),namespaces.get(file)));
-  }
-  // Evaluation: side effects and mutable lexicals execute in module request
-  // dependency order, once, in the *same* owned guest invocation/heap.
-  for(const file of order){
+  function initializers(file,lower=false){
     const module=get(file),names=bound.get(file);
     for(const item of module.initializers){
+      let fragment;
       if(item.kind==='default'){
-        append(file,'evaluate','const '+names.get(item.local)+' = ('+
-          rewrite(module,item.node,names,new Set(),namespaces.get(file))+');');
+        fragment='const '+names.get(item.local)+' = ('+
+          rewrite(module,item.node,names,new Set(),namespaces.get(file))+');';
       }else{
         const initialIdentifiers=new Set();
         if(item.node.type==='VariableDeclaration')
           for(const declarator of item.node.declarations)
             initialIdentifiers.add(declarator.id.start);
-        append(file,'evaluate',rewrite(module,item.node,names,initialIdentifiers,namespaces.get(file)));
+        fragment=rewrite(module,item.node,names,initialIdentifiers,namespaces.get(file));
       }
+      append(file,'evaluate',lower?lowerModuleAwaits(fragment):fragment);
     }
+  }
+  if(scheduled){
+    append(null,'scheduler-state','const __traced_eval_cells=[];\n'+
+      '  const __traced_eval_modules=[];\n'+
+      '  const __traced_eval_entry_index='+indices.get(entryModule)+';');
+    for(const file of order){
+      const module=get(file),names=bound.get(file),index=indices.get(file);
+      append(file,'environment','function* __traced_eval_module_'+index+'(){');
+      for(const fn of module.functions)
+        append(file,'instantiate',rewrite(module,fn,names,new Set(),namespaces.get(file)));
+      // Capturing a getter does not read its lexical binding. Functions are
+      // already initialized while let/const stay in TDZ until evaluation.
+      const getters=[...renamed.get(file).values()].map(name=>
+        name+':()=>'+name);
+      append(file,'bindings','yield {'+getters.join(',')+'};');
+      initializers(file,true);
+      append(file,'environment','}');
+    }
+    for(const file of order){
+      const module=get(file),index=indices.get(file);
+      append(file,'module-record','__traced_eval_modules['+index+']={'+
+        'index:'+index+',entry:'+(file===entryModule)+',hasTLA:'+module.hasTLA+
+        ',dependencies:'+JSON.stringify(module.deps.map(from=>indices.get(from)))+
+        ',parents:[],pending:0,asyncOrder:0,status:"linked",failed:false,'+
+        'error:undefined,execution:undefined,iterator:__traced_eval_module_'+index+'()};');
+    }
+    for(const file of order){
+      const index=indices.get(file);
+      append(file,'instantiate-environment','__traced_eval_cells['+index+']='+
+        '__traced_eval_modules['+index+'].iterator.next().value;');
+    }
+    append(null,'async-scheduler',ownedModuleSchedulerSource);
+  }else{
+    // The already-qualified synchronous/single-chain profile shares lexical
+    // cells directly. Parallel async graphs use retained environments above.
+    for(const file of order){
+      const module=get(file),names=bound.get(file);
+      for(const fn of module.functions)
+        append(file,'instantiate',rewrite(module,fn,names,new Set(),namespaces.get(file)));
+    }
+    for(const file of order){
+      initializers(file);
+      // ExecuteAsyncModule settles an execution Promise, whose fulfillment
+      // reaction readies dependent bodies in a later job. Even a syntactic
+      // await hidden in an untaken branch has that completion boundary.
+      if(get(file).hasTLA)append(file,'async-completion','await undefined;');
+    }
+    // The entry invocation follows completion of graph evaluation, just as
+    // the caller awaiting the graph's top-level capability does. This also
+    // lets already-enqueued module jobs precede that invocation for sync ESM.
+    append(entryModule,'invoke-after-evaluation','await undefined;');
   }
   if(requested){
     // All calls execute after initialization in a single owned activation;
@@ -543,15 +602,15 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       const parameters=callArgs.map((_,j)=>
         'self.calls['+i+'].args['+j+']').join(',');
       const expression=binding.kind==='function'?
-        binding.linked+'('+parameters+')':binding.linked;
+        linkedAccess(binding)+'('+parameters+')':linkedAccess(binding);
       source+='  const __traced_eval_result_'+i+'=await '+expression+';\n';
     });
     source+='  return ['+requested.map((_,i)=>
       '__traced_eval_result_'+i).join(',')+'];\n';
   }else if(selected.kind==='function'){
     const argumentsText=checkedArgs.map((_,i)=>'self.args['+i+']').join(',');
-    source+='  return await '+selected.linked+'('+argumentsText+');\n';
-  }else source+='  return await '+selected.linked+';\n';
+    source+='  return await '+linkedAccess(selected)+'('+argumentsText+');\n';
+  }else source+='  return await '+linkedAccess(selected)+';\n';
   source+='}\n';
   if(source.length>262144)
     throw new RangeError('Linked module entry exceeds bounded source limit');
@@ -562,7 +621,10 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   catch(error){reject('unowned generated guest syntax: '+error.message);}
   const metadata={
     profile:'evaluated-module/1',entryModule,exportName,
+    evaluationStrategy:scheduled?'async-dependency-scheduler':'dependency-concatenation',
     evaluationOrder:order.slice(),cycles,linkedBinding:selected.linked,
+    ...(scheduled?{asyncDependencies:order.map(file=>({file,index:indices.get(file),
+      hasTLA:get(file).hasTLA,dependencies:get(file).deps.slice()}))}:{}),
     ...(requested?{calls:requested.map(({exportName,binding})=>({
       exportName,binding:binding.linked}))}:{}),
     instantiationAndEvaluation:spans,links,

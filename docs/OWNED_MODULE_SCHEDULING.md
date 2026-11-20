@@ -1,0 +1,130 @@
+# Bounded owned module scheduling
+
+`executeEvaluatedModules` evaluates guest source in the owned runtime. Native
+ESM is used only by independent reference tests. This implementation does not
+claim complete ESM, public source qualification for the new scheduler, or a
+durable host module loader.
+
+## Independent async branches
+
+A dependency postorder is not an execution schedule when a module suspends at
+top-level await. If the first dependency records `a`, awaits, then records `A`,
+and an independent sibling records `b`, awaits, then records `B`, native ESM
+records `abAB`. Executing concatenated module bodies instead records `aAbB`.
+A synchronous sibling must also start before the first dependency resumes.
+
+The linker chooses `metadata.evaluationStrategy =
+"async-dependency-scheduler"` whenever a later module does not depend on an
+earlier module with syntactic top-level await. Such graphs use one retained
+generator environment per module. All generators are instantiated and primed
+before evaluation. Their initial yield publishes getters for lexical cells;
+creating those getters does not read uninitialized `let` or `const` bindings.
+Function declarations are already initialized. Imported reads and static
+namespace reads call the getter for the original binding, preserving identity,
+mutable values, closures, and temporal dead zones.
+
+Only awaits at module scope become parenthesized generator yields. Awaits in
+nested async functions remain ordinary async-function syntax. An owned async
+driver awaits each yielded operand and resumes the generator with either its
+fulfilled value or its thrown rejection. That uses existing owned Promise and
+generator continuations, including synchronous then-getter lookup, thenable
+assimilation, and catch/finally unwinding.
+
+Every module has an owned record containing its status, dependencies, async
+parent indices, pending dependency count, async evaluation order, generator,
+execution Promise, and failure value. Completion of an async driver runs one
+Promise reaction. That reaction gathers ready ancestors before executing them
+in DFS async order. Synchronous ancestors run in that same reaction; each async
+ancestor starts its own driver. There are no extra Promise jobs per dependency
+edge. Shared dependencies execute once. An async rejection skips its dependent
+ancestors while already-started independent siblings continue. A synchronous
+throw during the initial DFS stops evaluation of later, unvisited siblings.
+
+The dependency and completion rules follow the acyclic part of ECMA-262 2026
+[InnerModuleEvaluation, ExecuteAsyncModule, GatherAvailableAncestors, and
+AsyncModuleExecutionFulfilled/Rejected](https://tc39.es/ecma262/2026/multipage/ecmascript-language-scripts-and-modules.html#sec-innermoduleevaluation).
+
+## Existing synchronous and single-chain graphs
+
+Graphs whose evaluation does not require concurrent branches retain the
+`dependency-concatenation` representation used by the already-qualified module
+source fixtures. Syntactically async modules now have an explicit completion
+job before dependent bodies execute. This boundary exists even when an await
+appears only in an untaken branch. An export invocation follows completion of
+graph evaluation. These boundaries prevent queued module work from being
+overtaken by dependent initializers or the invocation.
+
+Nested async functions do not make a module syntactically async. In particular,
+their await expressions no longer cause an otherwise synchronous cycle to be
+rejected as an async cycle.
+
+## Original JavaScript and TypeScript provenance
+
+Original `.js`, `.mjs`, and `.cjs` text now passes through
+`compileBoundedTypeScript` byte for byte, with the explicit compiler label
+`identity-javascript/1` and an identity source map. The owned parser still
+checks all source syntax before execution. The extension does not grant
+CommonJS semantics; these entry points still accept the declared ESM profile.
+
+This fixes an observed TypeScript 5.9.3 emitter defect in the previous path,
+which unnecessarily transformed JavaScript. For example:
+
+```js
+import { add } from './state.js';
+const value = await {
+  get then() {
+    return function (resolve) { resolve(7); };
+  }
+};
+queueMicrotask(() => add('q'));
+```
+
+Passing this module through the pinned `transpileModule` emitted the final
+`queueMicrotask` statement twice without a diagnostic. The independent original
+ESM scheduler test found `agbtpB7qqm` in owned execution versus native
+`agbtpB7qm`; exact JavaScript pass-through removes the duplicate. This is a
+source transformation defect, not a Promise or scheduler allowance.
+
+Typed TypeScript still uses the pinned TypeScript compiler. Its original text
+and source maps are provenance, and generated JavaScript is the semantic input.
+Historical TS-generated evidence is not relabeled as proof about original TS
+semantics. The new JavaScript path does not establish general TS transformation
+equivalence or fix the upstream emitter.
+
+## Saved state and evidence
+
+Scheduler records, module environments, pending awaits, Promise reactions, and
+generator program counters are all ordinary owned state. Tests restore a JSON
+copy at instantiation, await suspension, and queued completion boundaries and
+require an identical final archive, independent validation, and exact replay.
+A pending-host-input test restores two suspended sibling reads, delivers their
+results in reverse order, and proves that neither initialization nor native
+dispatch runs again.
+
+The native differentials execute the original ESM files with Node's loader.
+They cover siblings, shared diamonds, DFS ancestor ordering, untaken awaits,
+then getters and competing microtasks, nested awaits, caught rejection,
+finally, live imports, namespace reads, lexical TDZ, hoisted functions,
+initial/async throws, and continued independent work after failure.
+
+These are owned-runtime and original-source differential results. The new
+scheduler is not promoted to the public/native source-qualified trace lane.
+No test count here represents general Test262 or full ESM conformance.
+
+## Remaining boundaries
+
+- Cycles containing top-level await remain refused. Cyclic graphs combined
+  with parallel await scheduling are also refused; full async SCC scheduling,
+  cycle roots, deadlock behavior, and module evaluation capabilities need their
+  own implementation and evidence.
+- Module namespace exotic objects, namespace receiver calls, dynamic imports,
+  top-level classes, general module declarations, import attributes, package
+  resolution, and a native host loader remain outside this bounded profile.
+- Top-level `for await` needs an owned async-iterator continuation and is
+  refused by the scheduler. Nested async generators remain outside the owned
+  generator profile.
+- Arbitrary intrinsic mutation, Promise species/subclasses, and host unhandled
+  rejection policy remain separate Promise/runtime boundaries.
+- The existing retained-module-session convenience API still replays its
+  committed call history. The generator snapshots tested here retain actual
+  VM state; they do not turn that convenience API into a durable host session.

@@ -47,7 +47,7 @@ serving, and measured learned success.
 
 - [x] Owned-runtime Promise adoption preserves competing microtask order (`dqa`); public/native expansion remains open.
 - [x] Owned-runtime repeated thenable identity can fulfill; public/native expansion remains open.
-- [ ] Sibling top-level-await modules begin independently (`abAB`).
+- [x] Bounded acyclic owned top-level-await modules begin independently (`abAB`); public/native scheduler projection remains explicitly unqualified.
 - [x] A selected capability shard retains every catalog row and marks other rows not selected.
 - [ ] Ordinary training rejects unadmitted or policy-mismatched V8 data even when
   the generic unverified-data option is enabled.
@@ -167,3 +167,16 @@ serving, and measured learned success.
   focused checks pass. The positive unit fixture injects source/tokenizer audit
   boundaries explicitly; it is not evidence of real pinned-asset admission.
   A separate bounded CPU optimizer/checkpoint/resume test is being qualified.
+
+- Owned module scheduling increment: acyclic parallel TLA uses retained per-module
+  generator environments, dependency counters and ordered async-parent release.
+  Native original-ESM differentials cover sibling/diamond/ancestor order, thenable
+  jobs, lexical TDZ/live cells and failures before/after await. JSON VM restore
+  preserves instantiation, suspension, queued completion and reversed sibling
+  host-input delivery without redispatch. Single-chain completion jobs are fixed.
+  Original JavaScript now bypasses an observed TypeScript 5.9.3 emitter duplication
+  while retaining exact identity maps; typed TS retains pinned lowering/provenance.
+  Eighty-five focused module/TS/source tests pass, zero failed/skipped.
+  Public/native promotion of the new async scheduler is explicitly refused, even
+  if saved metadata lies about the strategy. Async SCC cycles, namespace exotics,
+  dynamic imports, host loaders and the durable session API remain open.
