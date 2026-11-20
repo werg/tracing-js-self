@@ -5,7 +5,7 @@ import {BinaryProfileError,BinaryResourceError,binaryIndex,binaryInteger,binaryE
 import { parse, compile } from './frontend.js';
 import {GENERATOR_INTRINSIC_PROTOTYPES,generatorIntrinsicParent,generatorIntrinsicProperty,generatorInstancePrototype} from './owned-generator-objects.js';
 import { importGraph } from './training/graph.js';
-import { parseTraining, TRAINING_PARSER } from './training/profile.js';
+import { parseTraining, TRAINING_PARSER, parseOwnedScript, OWNED_SCRIPT_PARSER } from './training/profile.js';
 import { createArithmetic, advanceArithmetic, isOwnedArithmetic, ordinaryGet, ordinaryBuiltin, objectPrototype } from './spec-operations.js';
 import { operationMutation } from './spec-mutations.js';
 import {hostOperation,prepareHostRequest,HOST_METHODS,SUBSCRIPTION_CLOSERS} from './host/operations.js';
@@ -374,17 +374,18 @@ export class Runtime {
     }
     this.chunkStart=0;this.chunkBefore='q0';this.result=U;
   }
-  registerSource({text,url='<inline>',goal='script',trainingProfile=false}={}) {
+  registerSource({text,url='<inline>',goal='script',trainingProfile=false,scriptProfile=false}={}) {
     if(this.started)throw new Error('Source registry is frozen after start');
     if(goal!=='script')throw new SyntaxError('Only script goal is implemented');
     if(typeof text!=='string')throw new TypeError('Source text required');
+    if(trainingProfile&&scriptProfile)throw new TypeError('Select one owned source profile');
     const sourceId=`src${this.sources.length+1}`;
-    const compiled=compile(trainingProfile?parseTraining(text):parse(text));
+    const compiled=compile(trainingProfile?parseTraining(text):scriptProfile?parseOwnedScript(text):parse(text));
     const rename={};
     for(const id of Object.keys(compiled.programs))rename[id]=`${sourceId}:${id}`;
     for(const [id,program] of Object.entries(compiled.programs))this.programs[rename[id]]={...program,id:rename[id],instructions:program.instructions.map(inst=>['DEF_FN','MAKE_FUNCTION'].includes(inst.op)?{...inst,arg:{...inst.arg,codeId:rename[inst.arg.codeId]},siteId:`${sourceId}:${inst.siteId}`}:{...inst,siteId:`${sourceId}:${inst.siteId}`})};
     this.sites.push(...compiled.sites.map(site=>({...site,siteId:`${sourceId}:${site.siteId}`,codeId:rename[site.codeId],sourceId})));
-    const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:trainingProfile?TRAINING_PARSER:'bounded-pratt/2'};
+    const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:trainingProfile?TRAINING_PARSER:scriptProfile?OWNED_SCRIPT_PARSER:'bounded-pratt/2'};
     this.sources.push(record);return record;
   }
   next(draft,kind) {const ids=draft.counters.ids;return `${kind==='operation'?'op':kind[0]}${++ids[kind]}`;}
@@ -525,13 +526,13 @@ export class Runtime {
     fn.closureEnvId=this.newEnv(draft,fn.closureEnvId);
     draft.envs[fn.closureEnvId].bindings['[[home object]]']={kind:'const',initialized:true,token:token(home,eventId),version:0};
   }
-  newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U,functionId=null) {
+  newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U,functionId=null,scriptEnvironmentId=null) {
     const thisBindingFrameId=thisValue[0]==='thisbinding'?thisValue[1]:null;
     if(thisBindingFrameId){
       if(!draft.frames[thisBindingFrameId])throw new Error('Lexical receiver frame is missing');
       thisValue=draft.frames[thisBindingFrameId].thisValue;
     }
-    const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
+    const id=this.next(draft,'frame'),envId=scriptEnvironmentId??this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
     const restIndex=this.programs[codeId].restIndex??-1;
     params.forEach((name,i)=>{
@@ -581,11 +582,58 @@ export class Runtime {
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
+    if(source.parser===OWNED_SCRIPT_PARSER){
+      for(const [name,value] of [['NaN',['num','NaN']],['Infinity',['num','+Infinity']]])
+        s.envs[global].bindings[name]={kind:'const',initialized:true,token:token(value),version:0};
+      for(const name of ['Set','Error','TypeError'])
+        s.envs[global].bindings[name]={kind:'const',initialized:true,token:token(['intrinsic',name]),version:0};
+      for(const name of ['parseInt','isNaN'])
+        s.envs[global].bindings[name]={kind:'const',initialized:true,token:token(['builtinfn',name]),version:0};
+    }
     s.control.a0.globalEnvId=global;
     s.control.a0.activeFrameId=this.newFrame(s,source.entry,global);
     s.control.a0.status='running';this.started=true;
     this.initialState=copy(this.state);this.checkpoints.q0=copy(this.state);
     return this;
+  }
+  /** Evaluate separately parsed scripts in one fresh owned global environment.
+   * Script declaration instantiation occurs at its entry, after prior scripts,
+   * rather than hoisting future test declarations into harness initialization. */
+  startScriptSequence(sources){
+    if(this.started)throw new Error('Run already started');
+    if(!Array.isArray(sources)||!sources.length||new Set(sources.map(source=>source?.sourceId)).size!==sources.length||
+      sources.some(source=>source?.parser!==OWNED_SCRIPT_PARSER||!this.sources.includes(source)))
+      throw new TypeError('Script sequence requires unique registered owned script sources');
+    this.start(sources[0]);
+    const environmentId=this.state.frames[this.state.control.a0.activeFrameId].envId;
+    this.state.control.a0.scriptSequence={sourceIds:sources.map(source=>source.sourceId),nextIndex:1,environmentId};
+    this.entrySpec={kind:'scripts',sourceIds:sources.map(source=>source.sourceId)};
+    this.initialState=copy(this.state);this.checkpoints.q0=copy(this.state);
+    return this;
+  }
+  enterNextScript(){
+    const control=this.state.control.a0,sequence=control.scriptSequence;
+    if(!sequence||sequence.nextIndex>=sequence.sourceIds.length||control.activeFrameId||
+      control.queue.length||['failed','unsupported'].includes(control.status)||this.prepared())
+      throw new Error('No ready next owned script');
+    const source=this.sources.find(source=>source.sourceId===sequence.sourceIds[sequence.nextIndex]);
+    if(source?.parser!==OWNED_SCRIPT_PARSER)throw new Error('Unregistered owned script entry');
+    const program=this.programs[source.entry],environment=this.state.envs[sequence.environmentId];
+    // Full GlobalDeclarationInstantiation (global property descriptors and
+    // lexical conflicts) remains a separate profile. Never silently overwrite
+    // an earlier lexical binding while executing a harness/test sequence.
+    const declarations=program.instructions.filter(inst=>inst.op==='DEF_FN').map(inst=>inst.arg.name);
+    for(const name of [...program.varNames,...declarations]){
+      const existing=environment.bindings[name];
+      if(existing&&!['var','function'].includes(existing.kind))
+        throw new TypeError('Unsupported owned script global declaration collision: '+name);
+    }
+    return this.commit('script.enter',s=>{
+      const id=this.newFrame(s,source.entry,s.control.a0.globalEnvId,null,null,[],U,null,sequence.environmentId);
+      s.control.a0.activeFrameId=id;s.control.a0.scriptSequence.nextIndex++;
+      s.control.a0.status='running';delete s.control.a0.completion;
+      return {operands:[['str',source.sourceId]],causes:[{kind:'invocation',frameId:id}]};
+    },{sourceId:source.sourceId,codeId:source.entry});
   }
   /** Explicit invocation entry for training-js/1. The top level contains only
    * an exact strict directive and named ordinary function declarations. */
@@ -3927,6 +3975,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       if(active?.status==='running') {this.step();continue;}
       if(active?.status==='blocked'){this.seal('waiting');return {kind:'waiting',waitingOn:active.blockedOn,pendingEffects:this.chunks.at(-1).exit.pendingEffects};}
       if(c.queue.length){this.enterQueuedJob();continue;}
+      if(c.scriptSequence&&c.scriptSequence.nextIndex<c.scriptSequence.sourceIds.length){this.enterNextScript();continue;}
       if(c.timers.length){this.enterTimerTask();continue;}
       const pendingPromises=Object.values(this.state.promises).some(p=>p.status==='pending');
       const pendingEffects=Object.values(this.state.effects).some(e=>e.external==='pending');
@@ -3940,7 +3989,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
   inspectState() {return copy(this.state);}
   inspectOpenChunk() {return {before:this.chunkBefore,eventIds:this.events.slice(this.chunkStart).map(e=>e.eventId),open:true};}
   exportRun() {
-    const bundle={manifest:{schema:'semantic-tracing-run/2',profile:this.entrySpec?'training-js/1':'bounded-js-subset/2',completeSemanticTrace:false,
+    const bundle={manifest:{schema:'semantic-tracing-run/2',profile:this.entrySpec?.kind==='scripts'||this.sources[0]?.parser===OWNED_SCRIPT_PARSER?'owned-script/1':this.entrySpec?'training-js/1':'bounded-js-subset/2',completeSemanticTrace:false,
       completeEcma262:false,completeHostIntegration:false,coverage:'docs/STATUS.md',chunkPolicy:'accumulate-until-wait/1',
       eventVersion:2,operationVersion:2,mutationSchema:'owned-spec-commands/2',
       ownedSymbols:{revision:1,propertyKeys:'owned-property-key/1',hostTransport:'unsupported'},

@@ -7,6 +7,8 @@ import {supportsPinnedRegExp} from '../owned-pinned-regexp.js';
 
 export const TRAINING_PROFILE='training-js/1';
 export const TRAINING_PARSER='acorn/8.15.0:training-js/1';
+export const OWNED_SCRIPT_PROFILE='owned-script/1';
+export const OWNED_SCRIPT_PARSER='acorn/8.15.0:owned-script/1';
 const binaries=new Set(['+','-','*','/','%','**','<','<=','>','>=','===','!==','==','!=',
   '&','|','^','<<','>>','>>>','instanceof']);
 const logical=new Set(['&&','||','??']);
@@ -16,15 +18,26 @@ const unary=new Set(['!','-','+','typeof','void','~']);
 const ownedConstructors=new Set(['Set','Error','TypeError','Symbol','Promise','ArrayBuffer','SharedArrayBuffer','DataView',
   'Int8Array','Uint8Array','Int16Array','Uint16Array','Int32Array','Uint32Array',
   'BigInt64Array','BigUint64Array','Float32Array','Float64Array']);
-const reject=(node,why) => {throw new SyntaxError(
-  'Unsupported training-js/1 '+why+' at '+(node.start ?? '?')+':'+(node.end ?? '?'));};
-
 export function parseTraining(source) {
+  return parseOwnedProfile(source,{training:true});
+}
+
+/** Original global script code, lowered through the same owned operations.
+ * This removes only training-entry restrictions; unsupported operations still
+ * refuse and no source is wrapped in a function or delegated to a host engine. */
+export function parseOwnedScript(source){
+  return parseOwnedProfile(source,{training:false});
+}
+
+function parseOwnedProfile(source,{training}){
+  const profile=training?TRAINING_PROFILE:OWNED_SCRIPT_PROFILE;
+  const reject=(node,why)=>{throw new SyntaxError('Unsupported '+profile+' '+why+' at '+
+    (node.start??'?')+':'+(node.end??'?'));};
   if(typeof source!=='string')throw new TypeError('Training source must be text');
-  const parsed=acornParse(source,{ecmaVersion:2022,sourceType:'script',locations:true,
+  const parsed=acornParse(source,{ecmaVersion:training?2022:2026,sourceType:'script',locations:true,
     allowAwaitOutsideFunction:false,allowReturnOutsideFunction:false});
-  if(parsed.body[0]?.type!=='ExpressionStatement' ||
-     parsed.body[0].directive!=='use strict')
+  if(training&&(parsed.body[0]?.type!=='ExpressionStatement' ||
+     parsed.body[0].directive!=='use strict'))
     reject(parsed,'explicit "use strict" directive is required');
   // Top-level initialization is modeled only for literal scalars and
   // explicitly owned references to immutable Math methods. Arbitrary module
@@ -35,7 +48,7 @@ export function parseTraining(source) {
     n?.type==='MemberExpression'&&!n.computed&&
     n.object?.type==='Identifier'&&n.object.name==='Math'&&
     ['ceil','floor','min','max'].includes(n.property?.name);
-  if(parsed.body.slice(1).some(n=>n.type!=='FunctionDeclaration' &&
+  if(training&&parsed.body.slice(1).some(n=>n.type!=='FunctionDeclaration' &&
     !(n.type==='VariableDeclaration'&&n.declarations.every(d=>
       d.id.type==='Identifier'&&staticGlobal(d.init)))))
     reject(parsed,'top-level declaration must be a function or static owned data');
@@ -374,7 +387,7 @@ export function parseTraining(source) {
     function value(n,e){
       switch(n.type){
         case 'Identifier':
-          if(!has(n.name,e))reject(n,'unbound identifier '+n.name);
+          if(training&&!has(n.name,e))reject(n,'unbound identifier '+n.name);
           break;
         case 'ClassExpr':{
           const classEnv={names:new Set(n.name?[n.name]:[]),parent:e};
@@ -406,7 +419,7 @@ export function parseTraining(source) {
           value(n.test,e);value(n.consequent,e);value(n.alternate,e);break;
         case 'Update':
           if(n.argument)value(n.argument,e);
-          else if(!has(n.name,e))reject(n,'unbound update target '+n.name);
+          else if(training&&!has(n.name,e))reject(n,'unbound update target '+n.name);
           break;
         case 'OptionalChain':
           value(n.base,e);
@@ -437,7 +450,7 @@ export function parseTraining(source) {
         case 'ClassBinding':value(n.value,e);break;
         case 'PatternBinding':case 'PatternAssignment':{
           function defaults(node){
-            if(node.type==='PatternName'&&n.kind==='assignment'){if(!has(node.name,e))reject(node,'unbound assignment '+node.name);}
+            if(node.type==='PatternName'&&n.kind==='assignment'){if(training&&!has(node.name,e))reject(node,'unbound assignment '+node.name);}
             else if(node.type==='PatternMember')value(node.target,e);
             else if(node.type==='PatternDefault'){
               value(node.fallback,e);defaults(node.target);
@@ -516,5 +529,5 @@ export function parseTraining(source) {
     statements.forEach(n=>statement(n,env));
   }
   scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','ArrayBuffer','SharedArrayBuffer','DataView',...ownedConstructors,'Atomics']),parent:null},[],false,true);
-  return {type:'Program',body,start:0,end:source.length,profile:TRAINING_PROFILE};
+  return {type:'Program',body,start:0,end:source.length,profile};
 }

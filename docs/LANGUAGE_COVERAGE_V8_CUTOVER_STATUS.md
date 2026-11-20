@@ -140,3 +140,14 @@ serving, and measured learned success.
   The first broad check found a legacy error-label regression from the schema
   extraction; the wire adapter now restores its own diagnostic prefix and that
   check passes. V8 lifecycle/source routing still needs migration to this core.
+
+- Original-script foundation: official pinned `assert.js`, `sta.js` and named
+  harness dependencies are retained byte-for-byte with their license and lock.
+  Each harness/test script enters separately, preserving source bytes, strictness,
+  global lexical cells and declaration timing. The `script.enter` transition has
+  an independent structural validator and replay rule; forged source/state/order
+  and prior-script failure are covered. The original official assertion harness
+  passes a true assertion and produces a guest failure for a false assertion.
+  Combined script/selected/Test262-runtime controls: 27 passed, zero failed/skipped.
+  Full original-source Test262 runner, async completion and Error-constructor
+  identity qualification remain open.

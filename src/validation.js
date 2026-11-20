@@ -9,6 +9,7 @@ import {validateSuperEvent} from './super-validation.js';
 import {isBinaryMemoryKind,validateBinaryMemoryState,validateBinaryMemoryEvent} from './binary-memory-validation.js';
 import {validateNumberConversionState,validateNumberConversionEvent} from './number-conversion-validation.js';
 import {validatePromiseResolutionState,validatePromiseResolutionEvent} from './promise-resolution-validation.js';
+import {validateScriptSequenceState,validateScriptSequenceEvent} from './script-validation.js';
 // Read-only validation. Does not import the evaluator or call its mutation routines.
 import { readFileSync } from 'node:fs';
 import {validateSymbolReferences,validateSymbolAllocation} from './symbol-validation.js';
@@ -34,6 +35,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
   const sites=new Set(bundle.sites.map(s=>s.siteId));
   validateNumberConversionState(state,bundle.programs,sites,fail);
   validatePromiseResolutionState(state,fail);
+  validateScriptSequenceState(state,bundle,fail,{initial:true});
   const seen=new Set();
   const parameterTdzOrigins=new Map();
   for(let i=0;i<bundle.events.length;i++) {
@@ -164,6 +166,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     validateBinaryMemoryEvent(e,message=>fail(message,e.eventId));
     validateNumberConversionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validatePromiseResolutionEvent(state,e,message=>fail(message,e.eventId));
+    validateScriptSequenceEvent(state,e,bundle,message=>fail(message,e.eventId));
     for(const p of e.stateChanges) {
       validateSymbolAllocation(p,e,message=>fail(message,e.eventId));
       if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);
@@ -194,6 +197,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     validateBinaryMemoryState(state,message=>fail(message,e.eventId),binaryIds);
     validateNumberConversionState(state,bundle.programs,sites,message=>fail(message,e.eventId));
     validatePromiseResolutionState(state,message=>fail(message,e.eventId));
+    validateScriptSequenceState(state,bundle,message=>fail(message,e.eventId));
     validateSymbolReferences({operands:e.operands,result:e.result,changed:e.stateChanges.map(p=>p.after??p.record??null)},state.heap,message=>fail(message,e.eventId));
     if(job && !eq(state.control.a0.queue.slice(0,queuedBefore.length),queuedBefore))
       fail('Guest job FIFO order changed during entry',e.eventId);

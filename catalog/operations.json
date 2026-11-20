@@ -313,6 +313,11 @@
       "operationId": "intrinsic.number.resume",
       "version": 1,
       "kind": "algorithm"
+    },
+    {
+      "operationId": "script.enter",
+      "version": 1,
+      "kind": "algorithm"
     }
   ]
 }
