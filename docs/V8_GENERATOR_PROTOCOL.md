@@ -163,13 +163,21 @@ Native consumer qualification remains a separate exact-contract gate.
 
 The source adapter explicitly refuses custom delegated callables/accessors,
 the absent-throw TypeError continuation of builtin iterators, loop-target cleanup,
-generator own-property mutation, parameter expressions and async generators.
+assignment over inherited generator intrinsics, parameter expressions and async generators.
 Implicit exotic failures require their separately checked abrupt continuations.
 Hoisted closures may retain declared capture cells before initialization. The
 source projection publishes no placeholder or future value for those cells;
 generator creation and resumption require their initializers to have committed.
 An early call with an uninitialized capture remains an explicit source refusal.
 Initialized lexical closures retain the same live cells across suspension.
+
+Own ordinary data on a generator instance uses the shared property records and
+descriptor checker. String and Symbol keys, object aliases and mutations remain
+visible across suspension and restoration. Independent metadata checks those
+same descriptors at source observation points, so an unchanged final scalar
+cannot conceal a changed own value. Assignment over inherited generator
+intrinsics remains outside this source slice; it needs the intrinsic's checked
+assignment capability as well as the existing callable selection rules.
 
 The public machine is bounded to 4,096 generator allocations, yields and
 arguments, with the enclosing protocol's call-depth and record-count limits.

@@ -197,7 +197,36 @@ test('delegated throw is consumed by the inner catch outer catch or exact termin
     {expected:{kind:'throw',value:['num',7]}});
 });
 
-test('custom delegation missing-throw errors and own-property extensions retain explicit source refusals',async()=>{
+test('generator own data preserves Symbol keys aliases and mutations across suspended checkpoints',async()=>{
+  const artifact=await qualified('function* g(n){yield n;return n+1;}const it=g(x),alias=it,key=Symbol("state"),shared={value:4};'+
+    'it.extra=1;it[key]=shared;it.extra+=it.next().value;shared.value=7;return alias.extra+it[key].value+it.next().value;',
+    {expected:{kind:'return',value:['num',13]}});
+  const timeline=artifact.public.timeline,cut=timeline.findIndex(row=>row.fields?.line?.includes('"kind":"generator.yield"'))+1;
+  assert(cut>0);
+  const prefix=RegionExecutionHarness.replay({...artifact.public,timeline:timeline.slice(0,cut)},{requireTerminal:false}),
+    packet=JSON.parse(JSON.stringify(prefix.checkpoint())),restored=RegionExecutionHarness.restore(packet),
+    generator=[...restored.controller.heap.values()].find(node=>node.kind==='generator');
+  assert.equal(generator.phase,'suspendedYield');assert.deepEqual(generator.properties.get('extra'),['num',1]);
+  assert([...generator.properties].some(([key,value])=>Array.isArray(key)&&key[0]==='symbol'&&value[0]==='ref'));
+  for(const row of timeline.slice(cut))restored.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+  assert.deepEqual(restored.exportEpisode(),artifact.public);
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
+test('independent generator metadata rejects an altered own descriptor when all scalar observations agree',()=>{
+  const text=source('function* g(){yield 1;}const it=g();it.extra=3;return 1;'),
+    bundle=archive(text),mutant=structuredClone(bundle),observed=native(text),
+    id=Object.values(bundle.finalState.heap).find(node=>node.kind==='generator').id;
+  for(const event of mutant.events)for(const change of event.stateChanges)if(change.table==='heap'&&change.id===id)
+    for(const node of [change.before,change.after])if(node?.properties.extra)
+      (node.dataAttributes??={}).extra={writable:true,enumerable:false,configurable:true};
+  mutant.finalState.heap[id].dataAttributes={extra:{writable:true,enumerable:false,configurable:true}};
+  const owned=ownedProtocolSourceObservations(mutant,text);
+  assert.deepEqual(owned.completions,observed.capture.observations);
+  assert.equal(compareProtocolMetadata(owned.metadata,observed.capture.metadata).status,'mismatch');
+});
+
+test('custom delegation missing-throw errors and intrinsic method overrides retain explicit source refusals',async()=>{
   for(const body of [
     'function* g(){yield* {[Symbol.iterator](){return {next(){return {done:true,value:1};}};}};}const it=g();return it.next().value;',
     'function* g(){yield* [1,2];}const it=g();it.next();it.throw(7);'
@@ -205,5 +234,5 @@ test('custom delegation missing-throw errors and own-property extensions retain 
     const result=await verifyProtocolRegionTrainingCase({source:source(body),entry:'run',args:[2],family:'generator-refusal'});
     assert.equal(result.status,'unsupported');assert(!result.exported);
   }
-  assert.throws(()=>compileProtocolSourceV8(archive(source('function* g(){yield 1;}const it=g();it.extra=3;return it.extra;'))),/own-property/);
+  assert.throws(()=>compileProtocolSourceV8(archive(source('function* g(){yield 1;}const it=g();it.next=()=>({value:9,done:false});return it.next().value;'))),/intrinsic.*callable profile|intrinsic.*callable protocol/);
 });

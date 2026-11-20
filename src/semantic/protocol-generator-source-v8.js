@@ -1,7 +1,6 @@
 // Teacher-only generator projection. No archived frame, operand stack or program
 // counter becomes a public record; lifecycle transitions use the shared heap.
 import {GENERATOR_INTRINSICS_V8} from './protocol-generator-v8.js';
-import {describeProtocolObjectV8} from './protocol-state-v8.js';
 
 export const GENERATOR_SOURCE_PROFILE_V8='synchronous-generator-source/1';
 const U=['undefined'],ref=id=>['ref',id];
@@ -45,14 +44,7 @@ export function createGeneratorSourceAdapterV8({bundle}){
   function checkOrdinary(ctx,node){
     // Ordinary descriptor comparison for functions/prototypes stays in the
     // common source checker; the instance has its own ordinary property view.
-    if(node.kind==='generator'){
-      const actual=describeProtocolObjectV8(ctx.controller,node.id);
-      require(ctx,actual.kind==='generator'&&ctx.eq(actual.prototype,ctx.prototype(node))&&actual.extensible===(node.extensible!==false),
-        'generator ordinary prototype/extensibility changed');
-      require(ctx,!Object.keys(node.accessors??{}).length&&!Object.keys(node.properties??{}).length,
-        'generator own-property source extension requires its declared descriptor profile');
-      require(ctx,actual.properties.length===0,'generator own properties differ');
-    }
+    if(node.kind==='generator')ctx.baseCheckHeap(node);
   }
   function finish(ctx,change,event){
     if(completed.has(event.eventId+':'+change.id))return true;
