@@ -18,14 +18,17 @@ const records=[
 // the complete interoperability manifest is written after every example passes.
 if(!check)await writeFile(new URL('../contracts/semantic-execution-v8.json',import.meta.url),
   JSON.stringify(semanticV8Contract(records),null,2)+'\n');
-const {verifyRegionTrainingCase}=await import('../src/semantic/compiler-v8.js');
+const {verifyRegionTrainingCase,recheckRegionEvidence}=await import('../src/semantic/compiler-v8.js');
 const fixtures=regionQualificationFixtures();
 const examples=[];
 for(const fixture of fixtures){
   const result=await verifyRegionTrainingCase(fixture);
   if(!result.exported)throw new Error(fixture.id+': '+result.reason);
+  const checked=await recheckRegionEvidence(result.exported);
+  if(!checked.sourceValidated||!checked.projectionValidated||!checked.replayValidated)
+    throw new Error(fixture.id+': independent shared-state source recheck failed');
   examples.push({id:fixture.id,public:result.exported.public,contexts:result.exported.contexts,
-    sourceCheck:result.exported.sidecar.sourceArtifact.sidecar.reference.sourceChecks.status,
+    sourceCheck:'agreed',
     regionCoverage:result.exported.sidecar.regionCoverage});
 }
 const protocolFixtures=JSON.parse(await readFile(new URL('../test/fixtures/semantic-protocol-v8.json',import.meta.url),'utf8'));
