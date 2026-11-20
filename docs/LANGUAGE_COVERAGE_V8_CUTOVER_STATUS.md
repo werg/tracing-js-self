@@ -48,7 +48,7 @@ serving, and measured learned success.
 - [ ] Pending Promise adoption preserves competing microtask order (`dqa`).
 - [ ] A distinct thenable resolving to itself once is called again and can fulfill.
 - [ ] Sibling top-level-await modules begin independently (`abAB`).
-- [ ] A selected capability shard retains every catalog row and marks other rows unrun.
+- [x] A selected capability shard retains every catalog row and marks other rows not selected.
 - [ ] Ordinary training rejects unadmitted or policy-mismatched V8 data even when
   the generic unverified-data option is enabled.
 
@@ -71,3 +71,9 @@ serving, and measured learned success.
 - Initial checkpoint: retained both requested plans, recorded exact merged
   baselines, created paired branches and the full 17-package remaining-work tally.
   No new semantic or conformance result is claimed by this documentation commit.
+
+- Coverage selection increment: capability shards now retain the complete catalog,
+  publish separate population/selection identities, reject invalid selections,
+  and mark all unselected stages explicitly. `node --test
+  test/capability-ledger.test.js`: 11 passed, zero failed/skipped, including the CLI.
+  This closes the selected-shard defect, not the full edition inventory or runner.
