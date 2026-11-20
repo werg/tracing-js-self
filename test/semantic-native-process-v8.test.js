@@ -19,7 +19,8 @@ function fakeServer({alter='',initializeAlter='',commitAlter='',completeAlter=''
       const request=JSON.parse(line);let result;
       if(request.op==='initialize'){
         result={schema:'semantic-inference-identity/8',checkpointIdentity:request.checkpointIdentity,
-          tokenizerIdentity:request.tokenizerIdentity,seed:request.seed};${initializeAlter}
+          tokenizerIdentity:request.tokenizerIdentity,trainingIdentity:request.trainingIdentity??null,
+          seed:request.seed};${initializeAlter}
         modelIdentity=result;
       }else if(request.op==='select'){
         ${hang?'continue;':''}
@@ -27,6 +28,7 @@ function fakeServer({alter='',initializeAlter='',commitAlter='',completeAlter=''
         result={schema:'semantic-model-output/8',record,selection:{modelSelected:true,selectionId:'selection:'+request.id,
           origin:'actual-model-selected',checkpointIdentity:${JSON.stringify(identity.checkpointIdentity)},
           tokenizerIdentity:${JSON.stringify(identity.tokenizerIdentity)},prefixDigest:request.context.prefixDigest,
+          trainingIdentity:modelIdentity.trainingIdentity??null,
           contextDigest:hashAlgorithmData(request.context),payloadHex,
           fragments:[{tokenIds:[...Buffer.from(record)],payloadHex}]}};${alter}
         nativeAttempts.push({...result.selection,status:'awaiting-commit'});
@@ -164,6 +166,31 @@ test('native v8 failed initialization cannot leave an earlier checkpoint active'
     await assert.rejects(select.initialize({...identity,seed:2}),/identity/);
     await assert.rejects(select(boundary().input),/not attested/);
   }finally{select.close();}
+});
+
+test('native ordinary training lineage is bound at initialization, selection and recovery',async()=>{
+  const expected={...identity,trainingIdentity:'b'.repeat(64)},select=selector();
+  let checkpoint;
+  try{
+    assert.equal((await select.initialize(expected)).trainingIdentity,expected.trainingIdentity);
+    const selected=await select(boundary().input);
+    assert.equal(selected.selection.trainingIdentity,expected.trainingIdentity);
+    checkpoint=await select.checkpoint();
+    assert.equal(checkpoint.identity.trainingIdentity,expected.trainingIdentity);
+  }finally{select.close();}
+  const restored=selector();
+  try{assert.equal((await restored.restore({checkpoint})).restored,true);}
+  finally{restored.close();}
+  for(const initializeAlter of ["delete result.trainingIdentity;","result.trainingIdentity='f'.repeat(64);"]){
+    const wrong=selector({initializeAlter});
+    try{await assert.rejects(wrong.initialize(expected),/loaded model identity/);}
+    finally{wrong.close();}
+  }
+  for(const alter of ["delete result.selection.trainingIdentity;","result.selection.trainingIdentity='f'.repeat(64);"]){
+    const wrong=selector({alter});
+    try{await wrong.initialize(expected);await assert.rejects(wrong(boundary().input),/frozen checkpoint/);}
+    finally{wrong.close();}
+  }
 });
 
 test('native v8 malformed UTF-8 and deadlines terminate the transport',async t=>{

@@ -89,7 +89,8 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     const capturedEpoch=epoch,capturedIdentity=identity,contextDigest=hashAlgorithmData(input.context);
     const evidence={attempt:attempts.length,session:input.session,invocationId:input.context.invocationId,
       prefixDigest:input.context.prefixDigest,contextDigest,checkpointIdentity:identity.checkpointIdentity,
-      tokenizerIdentity:identity.tokenizerIdentity,status:'submitted',elapsedMs:null,selection:null,
+      tokenizerIdentity:identity.tokenizerIdentity,trainingIdentity:identity.trainingIdentity??null,
+      status:'submitted',elapsedMs:null,selection:null,
       record:null,failure:null,failureEvidence:null};
     attempts.push(evidence);const started=performance.now();
     let output=null,provenanceValidated=false;
@@ -107,6 +108,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       demand(selection?.modelSelected===true&&selection.origin==='actual-model-selected'&&
         typeof selection.selectionId==='string'&&selection.selectionId.length>0&&
         selection.checkpointIdentity===identity.checkpointIdentity&&selection.tokenizerIdentity===identity.tokenizerIdentity&&
+        (selection.trainingIdentity??null)===(identity.trainingIdentity??null)&&
         selection.prefixDigest===input.context.prefixDigest&&selection.contextDigest===contextDigest,
         'model selection is not bound to the frozen checkpoint and current prefix');
       demand(typeof selection.payloadHex==='string'&&/^(?:[0-9a-f]{2})+$/.test(selection.payloadHex)&&
@@ -134,6 +136,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
           partial.session===input.session&&partial.invocationId===input.context.invocationId&&
           partial.checkpointIdentity===capturedIdentity.checkpointIdentity&&
           partial.tokenizerIdentity===capturedIdentity.tokenizerIdentity&&
+          (partial.trainingIdentity??null)===(capturedIdentity.trainingIdentity??null)&&
           partial.prefixDigest===input.context.prefixDigest&&partial.contextDigest===contextDigest&&
           typeof partial.payloadHex==='string'&&/^(?:[0-9a-f]{2})*$/.test(partial.payloadHex)&&
           Array.isArray(fragments)&&fragments.length>0&&fragments.every(fragment=>
@@ -152,11 +155,14 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   select.initialize=async input=>{
     const capturedEpoch=++epoch;identity=null;sessions.clear();
     demand(input&&HASH.test(input.checkpointIdentity??'')&&HASH.test(input.tokenizerIdentity??'')&&
-      Number.isSafeInteger(input.seed)&&input.seed>=0,'frozen checkpoint, tokenizer and seed required');
+      (input.trainingIdentity==null||HASH.test(input.trainingIdentity))&&
+      Number.isSafeInteger(input.seed)&&input.seed>=0,'frozen checkpoint, tokenizer, training lineage and seed required');
     const receipt=await request({op:'initialize',seed:input.seed,
-      checkpointIdentity:input.checkpointIdentity,tokenizerIdentity:input.tokenizerIdentity});
+      checkpointIdentity:input.checkpointIdentity,tokenizerIdentity:input.tokenizerIdentity,
+      trainingIdentity:input.trainingIdentity??null});
     demand(capturedEpoch===epoch&&receipt?.schema==='semantic-inference-identity/8'&&
       receipt.checkpointIdentity===input.checkpointIdentity&&receipt.tokenizerIdentity===input.tokenizerIdentity&&
+      (receipt.trainingIdentity??null)===(input.trainingIdentity??null)&&
       receipt.seed===input.seed,'loaded model identity differs from frozen experiment');
     identity=copy(receipt);return copy(receipt);
   };
@@ -213,6 +219,8 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       hashAlgorithmData(checkpoint.native.initialization)===hashAlgorithmData(checkpoint.identity)&&
       HASH.test(checkpoint.identity?.checkpointIdentity??'')&&HASH.test(checkpoint.identity?.tokenizerIdentity??''),
       'invalid native transport checkpoint');
+    demand(checkpoint.identity.trainingIdentity==null||HASH.test(checkpoint.identity.trainingIdentity),
+      'invalid retained training-lineage identity');
     const native=checkpoint.native,{digest:nativeDigest,...nativeBody}=native;
     demand(HASH.test(nativeDigest??'')&&nativeDigest===hashAlgorithmData(nativeBody)&&
       Array.isArray(native.attempts)&&native.sessions&&typeof native.sessions==='object',

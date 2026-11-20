@@ -12,6 +12,7 @@ const usage=`Usage:
   node tools/run-semantic-v8-experiment.mjs freeze --input CASES.json --out NEW_DIRECTORY
     --model-id ID --model-revision REVISION --settings SETTINGS.json
     --checkpoint HASH --tokenizer HASH [--origin model|engineering] [--seed NUMBER ...]
+    [--training-identity HASH]
     [--max-predictions N] [--max-generated N] [--max-outstanding N]
     [--max-stale-retries N] [--timeout-ms N]
   node tools/run-semantic-v8-experiment.mjs run --study STUDY.json --cases CASES.json
@@ -28,11 +29,13 @@ A selector module exports createSelector(configuration), which receives only
 model/settings/identities/limits, never cases, expected records or future replies.
 Engineering fixture injections must declare --origin engineering. Reports never
 count untested cases as successes or infer source success from a final value.
+Ordinary V8 bundles require --training-identity equal to the exported serving
+lineage digest. Null remains available only for bundles without ordinary V8 lineage.
 `;
 const [command,...argv]=process.argv.slice(2);
 if(command==='--help'||command==='help'||!command){process.stdout.write(usage);process.exit(command?0:1);}
 const allowed=command==='freeze'?new Set(['--input','--out','--model-id','--model-revision','--settings',
-  '--checkpoint','--tokenizer','--origin','--seed','--max-predictions','--max-generated','--max-outstanding',
+  '--checkpoint','--tokenizer','--training-identity','--origin','--seed','--max-predictions','--max-generated','--max-outstanding',
   '--max-stale-retries','--timeout-ms']):command==='run'?new Set(['--study','--cases','--out',
   '--selector-module','--megatoken','--served','--python','--case']):null;
 if(!allowed)throw new Error(usage);
@@ -56,6 +59,7 @@ if(command==='freeze'){
     fixture:row.fixture??null}));
   const study=freezeRegionExecutionStudy(cases,{model:{id:required('--model-id'),revision:required('--model-revision')},
     settings:read(required('--settings')),checkpointIdentity:required('--checkpoint'),tokenizerIdentity:required('--tokenizer'),
+    trainingIdentity:options.get('--training-identity')??null,
     origin:options.get('--origin')??'model',seeds:(options.get('--seed')??['17']).map(Number),
     maxPredictions:numeric('--max-predictions',4096),maxGenerated:numeric('--max-generated',16384),
     maxOutstanding:numeric('--max-outstanding',64),maxStaleRetries:numeric('--max-stale-retries',8),
@@ -79,6 +83,7 @@ if(command==='freeze'){
       if(typeof loaded.createSelector!=='function')throw new Error('Selector module must export createSelector(configuration)');
       select=await loaded.createSelector(structuredClone({model:study.model,settings:study.settings,
         checkpointIdentity:study.checkpointIdentity,tokenizerIdentity:study.tokenizerIdentity,
+        trainingIdentity:study.trainingIdentity??null,
         origin:study.origin,limits:study.limits}));
     }else{
       const settings=study.settings;

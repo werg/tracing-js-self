@@ -17,14 +17,15 @@ const originalFragments=(payloadHex,selection)=>isPayloadHex(payloadHex)&&Array.
     fragment.tokenIds.every(id=>Number.isSafeInteger(id)&&id>=0)&&isPayloadHex(fragment.payloadHex))&&
   Buffer.concat(selection.fragments.map(fragment=>Buffer.from(fragment.payloadHex,'hex')))
     .equals(Buffer.from(payloadHex,'hex'));
-const boundPayload=(payloadHex,selection,context,checkpointIdentity,tokenizerIdentity)=>
+const boundPayload=(payloadHex,selection,context,checkpointIdentity,tokenizerIdentity,trainingIdentity=null)=>
   selection?.modelSelected===true&&selection.origin==='actual-model-selected'&&
   typeof selection.selectionId==='string'&&selection.selectionId.length>0&&
   selection.checkpointIdentity===checkpointIdentity&&selection.tokenizerIdentity===tokenizerIdentity&&
+  (selection.trainingIdentity??null)===trainingIdentity&&
   selection.prefixDigest===context.prefixDigest&&selection.contextDigest===hashAlgorithmData(context)&&
   selection.payloadHex===payloadHex&&originalFragments(payloadHex,selection);
-const boundSelection=(record,selection,context,checkpointIdentity,tokenizerIdentity)=>typeof record==='string'&&
-  boundPayload(Buffer.from(record,'utf8').toString('hex'),selection,context,checkpointIdentity,tokenizerIdentity);
+const boundSelection=(record,selection,context,checkpointIdentity,tokenizerIdentity,trainingIdentity=null)=>typeof record==='string'&&
+  boundPayload(Buffer.from(record,'utf8').toString('hex'),selection,context,checkpointIdentity,tokenizerIdentity,trainingIdentity);
 const attemptPayload=row=>typeof row.record==='string'?Buffer.from(row.record,'utf8').toString('hex'):
   isPayloadHex(row.rawPayloadHex)?row.rawPayloadHex:null;
 const recoveryTickets=new WeakSet();
@@ -73,7 +74,8 @@ function verifyDriverCheckpoint(packet,policy){
   for(const [index,attempt]of packet.attempts.entries()){
     const retained=transport.attempts[index],model=native.attempts[index];
     demand(attempt.attempt===index&&['accepted','stale'].includes(attempt.status)&&
-      boundSelection(attempt.record,attempt.selection,attempt.context,policy.checkpointIdentity,policy.tokenizerIdentity)&&
+      boundSelection(attempt.record,attempt.selection,attempt.context,policy.checkpointIdentity,policy.tokenizerIdentity,
+        policy.nativeIdentity.trainingIdentity??null)&&
       retained?.attempt===index&&retained.session===session&&retained.invocationId===attempt.invocationId&&
       retained.record===attempt.record&&isDeepStrictEqual(retained.selection,attempt.selection)&&
       retained.status===(attempt.status==='accepted'?'accepted':'rejected')&&
@@ -144,10 +146,14 @@ function driverFacade(bridge,contexts,predictions){
 export class RegionSelectedModelDriver extends SelectedExecutionDriver {
   constructor({select,harness=new RegionExecutionHarness(),maxSelections=4096,maxOutstanding=64,
       maxStaleRetries=8,origin='model',checkpointIdentity=null,tokenizerIdentity=null,nativeIdentity=null,
+      trainingIdentity=nativeIdentity?.trainingIdentity??null,
       hostLimits=null,automaticDelivery=null,signal=null,recovery=null}={}){
     demand(typeof select==='function'&&['model','engineering'].includes(origin),'selector and explicit origin required');
     if(origin==='model')demand(typeof select.commit==='function'&&HASH.test(checkpointIdentity??'')&&HASH.test(tokenizerIdentity??''),
       'model selections require pinned identities and native commit acknowledgments');
+    demand(trainingIdentity===null||HASH.test(trainingIdentity),'invalid expected training-lineage identity');
+    demand(nativeIdentity===null||(nativeIdentity.trainingIdentity??null)===trainingIdentity,
+      'native identity differs from the expected training lineage');
     demand(recovery===null||recoveryTickets.has(recovery),'driver recovery must pass verified restoration');
     const retainedHostLimits={maxGenerated:harness.inner.maxGenerated,maxOutstanding:harness.inner.maxOutstanding};
     demand(hostLimits===null||isDeepStrictEqual(hostLimits,retainedHostLimits),
@@ -185,7 +191,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
         if(origin==='model')demand(selection?.modelSelected===true&&selection.origin==='actual-model-selected',
           'model experiment requires original model selection provenance');
         demand(typeof record==='string','one original canonical v8 record required');
-        if(origin==='model')demand(boundSelection(record,selection,current.context,checkpointIdentity,tokenizerIdentity),
+        if(origin==='model')demand(boundSelection(record,selection,current.context,checkpointIdentity,tokenizerIdentity,trainingIdentity),
           'selected bytes, model identity or causal provenance differ from the frozen invocation');
         attempt.provenanceValidated=origin==='model';
         decodeCausalLmV8Target(record);attempt.completeRecord=true;attempt.status='decoded';
@@ -201,8 +207,8 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
               attempt.rawPayloadHex=typeof error.evidence.rawPayloadHex==='string'?error.evidence.rawPayloadHex:
                 Buffer.from(attempt.record,'utf8').toString('hex');
               const bound=attempt.record!==null?boundSelection(attempt.record,attempt.selection,
-                attempt.context,checkpointIdentity,tokenizerIdentity):
-                boundPayload(attempt.rawPayloadHex,attempt.selection,attempt.context,checkpointIdentity,tokenizerIdentity)&&
+                attempt.context,checkpointIdentity,tokenizerIdentity,trainingIdentity):
+                boundPayload(attempt.rawPayloadHex,attempt.selection,attempt.context,checkpointIdentity,tokenizerIdentity,trainingIdentity)&&
                   attempt.selection.session===harness.inner.sessionId&&attempt.selection.invocationId===attempt.invocationId;
               attempt.provenanceValidated=origin==='model'&&error.evidence.schema==='semantic-native-selection-failure/1'&&
                 error.evidence.provenanceValidated===true&&bound;
@@ -352,9 +358,10 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
  * Fixture replies and callbacks are supplied only when the selected request
  * reaches the ordinary broker; none are included in a model request. */
 export async function runSelectedRegionExecution({initialPublic,fixture={calls:[]},select,
-    checkpointIdentity,tokenizerIdentity,seed=17,origin='model',maxPredictions=4096,
+    checkpointIdentity,tokenizerIdentity,trainingIdentity=null,seed=17,origin='model',maxPredictions=4096,
     maxGenerated=16384,maxStaleRetries=8,maxOutstanding=64,timeoutMs=15000,generationSettings=null}={}){
   demand(HASH.test(checkpointIdentity??'')&&HASH.test(tokenizerIdentity??'')&&
+    (trainingIdentity===null||HASH.test(trainingIdentity))&&
     Number.isSafeInteger(seed)&&seed>=0,'frozen checkpoint, tokenizer and seed required');
   demand(positive(maxPredictions,100000)&&positive(maxGenerated,1000000)&&positive(maxOutstanding,1024)&&
     positive(timeoutMs,300000)&&Number.isSafeInteger(maxStaleRetries)&&maxStaleRetries>=0&&maxStaleRetries<=1000,
@@ -381,7 +388,8 @@ export async function runSelectedRegionExecution({initialPublic,fixture={calls:[
     return result;
   };
   const abort=new AbortController(),driver=new RegionSelectedModelDriver({select,harness,
-    maxSelections:maxPredictions,maxStaleRetries,maxOutstanding,origin,checkpointIdentity,tokenizerIdentity,signal:abort.signal}),
+    maxSelections:maxPredictions,maxStaleRetries,maxOutstanding,origin,checkpointIdentity,tokenizerIdentity,
+    trainingIdentity,signal:abort.signal}),
     invocationId=initialPublic.timeline.find(row=>row.kind==='invocation').fields.invocationId,
     started=performance.now();
   let inferenceIdentity=null,failure=null,cleanupFailure=null,outcome=null,deadlineExceeded=false;
@@ -389,8 +397,9 @@ export async function runSelectedRegionExecution({initialPublic,fixture={calls:[
   const onAbort=()=>rejectAbort(abort.signal.reason);abort.signal.addEventListener('abort',onAbort,{once:true});
   const timer=setTimeout(()=>{deadlineExceeded=true;abort.abort(new Error('Selected v8 execution deadline exceeded'));},timeoutMs);
   try{
-    inferenceIdentity=copy(await Promise.race([select.initialize({seed,checkpointIdentity,tokenizerIdentity}),aborted]));
+    inferenceIdentity=copy(await Promise.race([select.initialize({seed,checkpointIdentity,tokenizerIdentity,trainingIdentity}),aborted]));
     demand(inferenceIdentity?.checkpointIdentity===checkpointIdentity&&inferenceIdentity.tokenizerIdentity===tokenizerIdentity&&
+      (inferenceIdentity.trainingIdentity??null)===trainingIdentity&&
       inferenceIdentity.seed===seed,'selector attestation differs from the frozen experiment');
     if(origin==='model')demand(isDeepStrictEqual(inferenceIdentity.generationSettings,requestedSettings),
       'loaded generation settings differ from the frozen experiment');
@@ -416,7 +425,7 @@ export async function runSelectedRegionExecution({initialPublic,fixture={calls:[
     publicCompleted=!failure&&controllers.every(row=>row.status==='completed'),
     firstViolation=controllers.map(row=>row.controller.firstWitnessViolation).find(Boolean)??null;
   if(publicCompleted)RegionExecutionHarness.replay(publicData);
-  const result={schema:'semantic-selected-execution-result/8',origin,checkpointIdentity,tokenizerIdentity,seed,
+  const result={schema:'semantic-selected-execution-result/8',origin,checkpointIdentity,tokenizerIdentity,trainingIdentity,seed,
     generationSettings:requestedSettings,
     inferenceIdentity,status:failure?(failure.message.includes('budget')||deadlineExceeded?'resource_limited':'failed'):
       publicCompleted?'completed':'incomplete',publicAccepted:!firstViolation&&!failure,publicCompleted,
