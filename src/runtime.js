@@ -13,9 +13,11 @@ import {encodeNativeGraph,validateOwnedGraph} from './host/graph-codec.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
 import {supportsPinnedRegExp,testPinnedRegExp,scanPinnedReplacement} from './owned-pinned-regexp.js';
 import {createNumberConversion,advanceNumberConversion} from './owned-number-conversion.js';
+import {ownedHasProperty} from './owned-has-property.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
+const ERROR_CONSTRUCTORS=['Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError'];
 function binaryGuest(operation){
   try{return operation();}catch(error){
     if(error instanceof BinaryProfileError)throw error;
@@ -585,10 +587,11 @@ export class Runtime {
     if(source.parser===OWNED_SCRIPT_PARSER){
       for(const [name,value] of [['NaN',['num','NaN']],['Infinity',['num','+Infinity']]])
         s.envs[global].bindings[name]={kind:'const',initialized:true,token:token(value),version:0};
-      for(const name of ['Set','Error','TypeError'])
+      for(const name of ['Set',...ERROR_CONSTRUCTORS])
         s.envs[global].bindings[name]={kind:'const',initialized:true,token:token(['intrinsic',name]),version:0};
-      for(const name of ['parseInt','isNaN'])
+      for(const name of ['parseInt','isNaN','print'])
         s.envs[global].bindings[name]={kind:'const',initialized:true,token:token(['builtinfn',name]),version:0};
+      s.control.a0.test262Output=[];
     }
     s.control.a0.globalEnvId=global;
     s.control.a0.activeFrameId=this.newFrame(s,source.entry,global);
@@ -670,7 +673,7 @@ export class Runtime {
     for(const name of ['parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Error','TypeError','ArrayBuffer','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set',...ERROR_CONSTRUCTORS,'ArrayBuffer','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
@@ -1229,9 +1232,17 @@ export class Runtime {
       name:token(['str',completion.errorType],eventId),
       message:token(['str',completion.message??''],eventId)
     },propertyVersions:{name:1,message:1},shapeVersion:2,version:0};
-    // Only own name/message data properties are modeled, not Error prototypes,
-    // stacks, identity of native constructors, or instanceof.
+    // Declared constructor identity is modeled without importing a native
+    // Error. Mutable Error prototypes, stacks and instanceof remain separate.
     return token(['ref',id],eventId);
+  }
+  newDeclaredError(draft,name,args,eventId){
+    if(args.length>1)throw new TypeError('Error options are outside the bounded error profile');
+    const value=args[0]?.value??U;
+    if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
+      throw new TypeError('Error message requires owned scalar coercion');
+    return this.caughtError(draft,{errorType:name,
+      message:value[0]==='undefined'?'':String(decode(value))},eventId).value;
   }
   routeCompletion(draft,frame,completion,eventId) {
     const stop=completion.type==='jump'?completion.handlerDepth:0;
@@ -1565,7 +1576,7 @@ export class Runtime {
             this.stackPush(f,returned,eventId);
             return {...operands(base,key,old),result:returned,reads:[found.observation]};
           }
-          if(this.entrySpec && obj.kind==='array'){
+          if(this.entrySpec?.kind==='function' && obj.kind==='array'){
             if(arrayIndex(property) &&
                Number(property)>decode(obj.properties.length.value))
               throw new TypeError('Sparse array updates are outside training-js/1');
@@ -1690,6 +1701,12 @@ export class Runtime {
         }
         case 'BINARY':{
           const b=pop(),a=pop();
+          if(arg==='in'){
+            if(!['ref','promise','intrinsic','builtinfn','hostfn','host'].includes(b.value[0]))
+              guestFault('TypeError','Right-hand side of in is not an object');
+            const key=valueKey(a.value);
+            return {...operands(a,b),...result(['bool',ownedHasProperty(s.heap,b.value,key)])};
+          }
           if([a,b].some(value=>value.value[0]==='symbol')&&!isOwnedArithmetic(arg)&&!['===','!==','==','!='].includes(arg))
             guestFault('TypeError','Cannot convert a Symbol value to a number');
           if(!isOwnedArithmetic(arg))return {...operands(a,b),...result(primitiveBinary(arg,a.value,b.value))};
@@ -1755,18 +1772,8 @@ export class Runtime {
             return {...operands(fn,...args),causes:[{kind:'invocation',frameId:id}]};
           }
           if(fn.value[0]==='intrinsic'&&fn.value[1]==='Symbol')guestFault('TypeError','Symbol is not a constructor');
-          if(fn.value[0]==='intrinsic'&&['Error','TypeError'].includes(fn.value[1])){
-            if(args.length>1)throw new TypeError('Error options are outside the bounded error profile');
-            const value=args[0]?.value??U;
-            if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
-              throw new TypeError('Error message requires owned scalar coercion');
-            const id=this.next(s,'obj');
-            s.heap[id]={id,kind:'object',declaredError:fn.value[1],properties:{
-              name:token(['str',fn.value[1]],eventId),
-              message:token(['str',value[0]==='undefined'?'':String(decode(value))],eventId)
-            },propertyVersions:{name:1,message:1},shapeVersion:2,version:0};
-            return {...operands(fn,...args),...result(['ref',id])};
-          }
+          if(fn.value[0]==='intrinsic'&&ERROR_CONSTRUCTORS.includes(fn.value[1]))
+            return {...operands(fn,...args),...result(this.newDeclaredError(s,fn.value[1],args,eventId))};
           if(fn.value[0]==='intrinsic'&&fn.value[1]==='Promise'){
              if(args.length!==1||!this.callableGuest(s,args[0]?.value))
                guestFault('TypeError','Promise executor must be callable');
@@ -1921,6 +1928,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
              ['load','store','add','sub','and','or','xor','exchange','compareExchange','wait','notify'].includes(property))
             v=['builtinfn','Atomics.'+property];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject','all','race','allSettled','any','withResolvers'].includes(property))v=['builtinfn',`Promise.${property}`];
+          else if(base.value[0]==='intrinsic'&&ERROR_CONSTRUCTORS.includes(base.value[1])&&property==='name')
+            v=['str',base.value[1]];
           else if(base.value[0]==='intrinsic' &&
              ((base.value[1]==='Math' &&
                ['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot','random'].includes(property)) ||
@@ -1996,6 +2005,10 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
                return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v),reads:[{
                  kind:'property',objectId:obj.id,key:property,present:!!slot,version:obj.propertyVersions[property]??0,
                  shapeVersion:obj.shapeVersion,value:v,supplyingEvent:slot?.origin??null}]};
+             }
+             if(obj.declaredError&&property==='constructor'){
+               const constructor=['intrinsic',obj.declaredError];
+               return {...operands(base,key),...result(op==='GET_METHOD'?['method',constructor,base.value]:constructor)};
              }
              if(obj.declaredError&&!['name','message'].includes(property))
                throw new TypeError('Declared error exposes only name and message');
@@ -2477,7 +2490,7 @@ if(object.kind==='regexp'){
             if(this.programs[f.codeId].strict)guestFault('TypeError',failure);
             return {...operands(base,key,v),...result(v.value)};
           }
-          if(this.entrySpec && obj.kind==='array') {
+          if(this.entrySpec?.kind==='function' && obj.kind==='array') {
             const oldLength=decode(obj.properties.length.value);
             // Array length growth and out-of-range writes create actual
             // absent slots, never invented `undefined` properties. Enforce a
@@ -2947,6 +2960,15 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               throw new TypeError('Number fixed-digit count outside supported range');
             return {...operands(fn,...args),...result(encode(
               Number.prototype[method].call(number,format)))};
+          }
+          if(callable[0]==='intrinsic'&&ERROR_CONSTRUCTORS.includes(callable[1]))
+            return {...operands(fn,...args),...result(this.newDeclaredError(s,callable[1],args,eventId))};
+          if(callable[0]==='builtinfn'&&callable[1]==='print'){
+            if(!Array.isArray(s.control.a0.test262Output)||args.length!==1||args[0].value[0]!=='str')
+              throw new TypeError('Owned Test262 print requires one string in the script host profile');
+            if(s.control.a0.test262Output.length>=10000)throw new RangeError('Owned print budget exceeded');
+            s.control.a0.test262Output.push(token(args[0].value,eventId));
+            return {...operands(fn,...args),...result(U)};
           }
           if(callable[0]==='builtinfn' && ['parseInt','isNaN'].includes(callable[1])){
             if(callable[1]==='parseInt'){

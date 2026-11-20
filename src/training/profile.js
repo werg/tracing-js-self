@@ -10,12 +10,12 @@ export const TRAINING_PARSER='acorn/8.15.0:training-js/1';
 export const OWNED_SCRIPT_PROFILE='owned-script/1';
 export const OWNED_SCRIPT_PARSER='acorn/8.15.0:owned-script/1';
 const binaries=new Set(['+','-','*','/','%','**','<','<=','>','>=','===','!==','==','!=',
-  '&','|','^','<<','>>','>>>','instanceof']);
+  '&','|','^','<<','>>','>>>','instanceof','in']);
 const logical=new Set(['&&','||','??']);
 const assignments=new Set(['=','&&=','||=','??=','+=','-=','*=','/=','%=','**=',
   '&=','|=','^=','<<=','>>=','>>>=']);
 const unary=new Set(['!','-','+','typeof','void','~']);
-const ownedConstructors=new Set(['Set','Error','TypeError','Symbol','Promise','ArrayBuffer','SharedArrayBuffer','DataView',
+const ownedConstructors=new Set(['Set','Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError','Symbol','Promise','ArrayBuffer','SharedArrayBuffer','DataView',
   'Int8Array','Uint8Array','Int16Array','Uint16Array','Int32Array','Uint32Array',
   'BigInt64Array','BigUint64Array','Float32Array','Float64Array']);
 export function parseTraining(source) {

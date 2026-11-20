@@ -10,6 +10,7 @@ import {isBinaryMemoryKind,validateBinaryMemoryState,validateBinaryMemoryEvent} 
 import {validateNumberConversionState,validateNumberConversionEvent} from './number-conversion-validation.js';
 import {validatePromiseResolutionState,validatePromiseResolutionEvent} from './promise-resolution-validation.js';
 import {validateScriptSequenceState,validateScriptSequenceEvent} from './script-validation.js';
+import {validateScriptHostEvent} from './script-host-validation.js';
 // Read-only validation. Does not import the evaluator or call its mutation routines.
 import { readFileSync } from 'node:fs';
 import {validateSymbolReferences,validateSymbolAllocation} from './symbol-validation.js';
@@ -167,6 +168,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     validateNumberConversionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validatePromiseResolutionEvent(state,e,message=>fail(message,e.eventId));
     validateScriptSequenceEvent(state,e,bundle,message=>fail(message,e.eventId));
+    validateScriptHostEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     for(const p of e.stateChanges) {
       validateSymbolAllocation(p,e,message=>fail(message,e.eventId));
       if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);

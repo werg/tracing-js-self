@@ -34,7 +34,7 @@ serving, and measured learned success.
 | 7 | Protocol/effect/lifecycle composition | Not started | Protocol → effect → callback → protocol, reentrancy, guest errors, cancellation and restore with independent source/native checks. |
 | 8 | Ordinary V8 training admission | In progress | Strict preparation policy and normal recipe/loader/config/stage/resume checks; no verification-flag or unverified-data bypass; source eligibility distinct from learned outcomes. |
 | 9 | Canonical selected serving and live restore | Not started | Standard serving route, training/serving byte parity, acknowledged-state restore, random/budget state, callbacks/child work, no redispatch. |
-| 10 | References, coercion and abrupt operations | Not started | General references, property keys, guest error objects, partial effects, nested binding and cleanup; source/public/native/restore cases. |
+| 10 | References, coercion and abrupt operations | In progress | General references, property keys, guest error objects, partial effects, nested binding and cleanup; source/public/native/restore cases. |
 | 11 | Promises, async and scheduler | In progress | Adoption order, repeated thenables, getter/throw/first-call/finally behavior; public/native transitions; combinators, async functions/generators and module interactions. |
 | 12 | Collections, construction, Proxy and iteration | Not started | Sparse/effectful arrays, collections, internal methods, private accessors, iterator consumers/delegation and checkpoint behavior. |
 | 13 | Modules, persistent sessions, TS and host graphs | In progress | Per-module evaluation and sibling TLA scheduling, cycles/live bindings/namespaces/imports, persistent restore, emitted-JS provenance and host graph/lifecycle parity. |
@@ -151,3 +151,19 @@ serving, and measured learned success.
   Combined script/selected/Test262-runtime controls: 27 passed, zero failed/skipped.
   Full original-source Test262 runner, async completion and Error-constructor
   identity qualification remain open.
+
+- Official-harness host prerequisites: original `assert.throws` now observes owned
+  Error constructor identities; ordinary `in` checks descriptor presence, Symbol
+  keys and supported prototype ancestry without calling accessors. Original async
+  `doneprintHandle.js` publishes a bounded, independently validated print journal
+  after owned Promise jobs. Thirty focused host/script/runner checks pass, with
+  zero failed/skipped. These are bounded owned capabilities, not full `in`, async,
+  Test262 host, public/native or edition qualification.
+
+- Ordinary V8 training increment (consumer PR 38): exact producer/consumer,
+  registry and tokenizer policy; fresh preparation CLI; normal shard/batch checks;
+  complete normalized episode reconstruction; resume policy pinning; unknown or
+  missing semantic-schema, unverified-target and byte-fallback refusals. Five
+  focused checks pass. The positive unit fixture injects source/tokenizer audit
+  boundaries explicitly; it is not evidence of real pinned-asset admission.
+  A separate bounded CPU optimizer/checkpoint/resume test is being qualified.

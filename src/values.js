@@ -86,7 +86,11 @@ export function primitiveUnary(op, arg, heap = null) {
   if (isReference(arg)) {
     if (op === 'typeof') {
       const isFunction = arg[0] === 'hostfn' || arg[0] === 'builtinfn' ||
-        (arg[0] === 'intrinsic' && ['Object','Array','Number','BigInt','String','Symbol','Promise','Function.prototype'].includes(arg[1])) ||
+        (arg[0] === 'intrinsic' && ['Object','Array','Number','BigInt','String','Symbol','Promise','Set',
+          'Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError',
+          'ArrayBuffer','SharedArrayBuffer','DataView','Int8Array','Uint8Array','Int16Array','Uint16Array',
+          'Int32Array','Uint32Array','BigInt64Array','BigUint64Array','Float32Array','Float64Array',
+          'Function.prototype'].includes(arg[1])) ||
         (arg[0] === 'ref' && heap?.[arg[1]]?.kind === 'function');
       return encode(isFunction ? 'function' : 'object');
     }
