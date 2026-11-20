@@ -31,6 +31,24 @@ retain their original producer, consumer and verification identities.
 
 ## What the native input diagnosis established
 
+The [final hosted qualification](evidence/roadmap-hosted-53daa93/README.md)
+completed all six primary workflows at producer `53daa93…` and companion
+`9a9dd35…`. All five source/native corpus jobs and their full prepared-row
+reconstruction passed. Exact prepared counts are engineering 25,
+training-v4 50, benchmark-v1 128, real-source 100 and generated-v1 61; these
+are separate recipe populations. Original compact coverage reports are
+retained for engineering, training-v4 and generated-v1. Benchmark and
+real-source reports remain inside their oversized hosted artifacts, with
+unobserved selection counts explicitly null in the compact receipt.
+
+The independent hosted restore verified all 200 archived engineering files
+and replayed all 25 original positive attempts under the exact original
+runtime. Native requalification during restoration remains untested. The
+final actual model comparison reproduced the failed Gaussian result at the
+same zero-update seed/checkpoint. Complete logs, original captures, source
+fixture, runtime identities and stage accounting are retained in the linked
+receipt; no optimization or successful learning follows from these passes.
+
 The first direct invocation of `run(a,b){ return a & b; }`, with inputs `6,3`,
 was freshly source-certified and passed through the real data and serving
 adapters at the frozen companion revision. Capture stopped before neural

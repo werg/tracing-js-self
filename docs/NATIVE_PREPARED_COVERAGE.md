@@ -6,6 +6,17 @@ which the existing native subset materializer can consume. It does not
 regenerate a witness, change a frozen split, repair a target, or issue an
 admission receipt.
 
+The [hosted qualification at `53daa93…`](evidence/roadmap-hosted-53daa93/README.md)
+completed native reconstruction and coverage for all five maintained recipes.
+The retained engineering report selects 18 training rows with all 55 measured
+training features, compared with 52 features for the 18-row identity-ordered
+control; their scored-position counts are 7,218 and 6,918 respectively.
+Both retain all 15 training families. No optimizer consumed this selection.
+Original detailed coverage reports are retained for engineering, training-v4
+and generated-v1. Benchmark and real-source detailed membership remains in
+their large hosted artifacts and is explicitly unavailable in the compact
+qualification receipt.
+
 ## Complete input and selection
 
 ```sh

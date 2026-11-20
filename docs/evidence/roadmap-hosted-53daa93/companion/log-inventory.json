@@ -1,0 +1,16 @@
+[
+  {
+    "file": "companion-python311.log.gz",
+    "compressedBytes": 16240,
+    "compressedSha256": "2d86bd7b4708c711e0334823f22d8073ac6311957223496961b105c547ab7dcf",
+    "uncompressedBytes": 74088,
+    "uncompressedSha256": "b65c584bd1b248b6e8cf9b4ae3ec721977dfe07e0e4ce1f3850009b571e319a7"
+  },
+  {
+    "file": "companion-python312.log.gz",
+    "compressedBytes": 16648,
+    "compressedSha256": "799deecb593d88a759ce2959eacb19016eb0b43971b45322f39adb43f631ad2f",
+    "uncompressedBytes": 77272,
+    "uncompressedSha256": "ed43502f1240fd863107b26f4c79f0e0e764683084cdd1ebff9dcbc268c2d272"
+  }
+]

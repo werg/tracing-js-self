@@ -1,0 +1,12 @@
+[
+  {
+    "file": "candidate.json",
+    "bytes": 40067,
+    "sha256": "14827b58de074842fc515ffd8b94f92cd6fdc8422f63f9d6a6df8416ff47faf1"
+  },
+  {
+    "file": "native-input-parity.json",
+    "bytes": 29494,
+    "sha256": "cbb43fe6a0c847528c3a98f883cbd06fc6ec2f6bb87f9e2445cb44e2ee86d0db"
+  }
+]

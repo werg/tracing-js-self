@@ -1,0 +1,1184 @@
+{
+  "behavior_coverage": {
+    "episodes": {
+      "test|semantic_execution|public_context_window": 11,
+      "test|semantic_execution|semantic_code_invocation": 11,
+      "train|semantic_execution|public_context_window": 43,
+      "train|semantic_execution|semantic_code_invocation": 43,
+      "validation|semantic_execution|public_context_window": 7,
+      "validation|semantic_execution|semantic_code_invocation": 7
+    },
+    "original_families": {
+      "test|semantic_execution|public_context_window": 3,
+      "test|semantic_execution|semantic_code_invocation": 3,
+      "train|semantic_execution|public_context_window": 11,
+      "train|semantic_execution|semantic_code_invocation": 11,
+      "validation|semantic_execution|public_context_window": 2,
+      "validation|semantic_execution|semantic_code_invocation": 2
+    },
+    "original_family_ids": {
+      "test|semantic_execution|public_context_window": [
+        "generated-grammar:1de0d2838f7e94ff352dd6a0",
+        "generated-grammar:37d82be30acc634bd6393143",
+        "generated-grammar:e1e4f2b56b6447ff1215265b"
+      ],
+      "test|semantic_execution|semantic_code_invocation": [
+        "generated-grammar:1de0d2838f7e94ff352dd6a0",
+        "generated-grammar:37d82be30acc634bd6393143",
+        "generated-grammar:e1e4f2b56b6447ff1215265b"
+      ],
+      "train|semantic_execution|public_context_window": [
+        "generated-grammar:16676a89ce7afd1e5aa0effe",
+        "generated-grammar:18f9c826ee8389d4b113a786",
+        "generated-grammar:3011613fcf46de149162e15a",
+        "generated-grammar:56070b0c432bb43f1a275006",
+        "generated-grammar:669b15ff4d2d77b507aa79b4",
+        "generated-grammar:7c79ad8b055501600f2f43a4",
+        "generated-grammar:a79adfbbe5c55d19b361a954",
+        "generated-grammar:ae3e58f163acb8a56796be20",
+        "generated-grammar:c463c20543c011d6508ffff4",
+        "generated-grammar:cd1dad873b9995b0801ad356",
+        "generated-grammar:f37ddea2adca6b372e6a45dc"
+      ],
+      "train|semantic_execution|semantic_code_invocation": [
+        "generated-grammar:16676a89ce7afd1e5aa0effe",
+        "generated-grammar:18f9c826ee8389d4b113a786",
+        "generated-grammar:3011613fcf46de149162e15a",
+        "generated-grammar:56070b0c432bb43f1a275006",
+        "generated-grammar:669b15ff4d2d77b507aa79b4",
+        "generated-grammar:7c79ad8b055501600f2f43a4",
+        "generated-grammar:a79adfbbe5c55d19b361a954",
+        "generated-grammar:ae3e58f163acb8a56796be20",
+        "generated-grammar:c463c20543c011d6508ffff4",
+        "generated-grammar:cd1dad873b9995b0801ad356",
+        "generated-grammar:f37ddea2adca6b372e6a45dc"
+      ],
+      "validation|semantic_execution|public_context_window": [
+        "generated-grammar:7083d531fdfc1289532dbcc4",
+        "generated-grammar:c27cefd49666819b7b822323"
+      ],
+      "validation|semantic_execution|semantic_code_invocation": [
+        "generated-grammar:7083d531fdfc1289532dbcc4",
+        "generated-grammar:c27cefd49666819b7b822323"
+      ]
+    },
+    "version": 2
+  },
+  "census": {
+    "U": 227098,
+    "U_definition": "Raw-codec tokens in accepted deduplicated complete transcripts, including shared context.",
+    "accepted_episodes": 61,
+    "duplicates": 3,
+    "executed_transcript_U": 158350,
+    "filtered_rows": 0,
+    "free_position_candidates": 73694,
+    "free_position_candidates_definition": "The static masked target inventory: positions that could carry loss.",
+    "incomplete_transcript_U": 0,
+    "independent_families": 16,
+    "parser_review_rows": 0,
+    "quarantined": 0,
+    "rejected_rows": 0,
+    "simulated_transcript_U": 0,
+    "strata": [
+      {
+        "U": 4232,
+        "eligible_assistant_tokens": 1564,
+        "episodes": 1,
+        "executed_observation_tokens": 2668,
+        "families": 1,
+        "free_position_candidates": 1564,
+        "source_id": "semantic-harness:032ca524f7473933",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 571
+      },
+      {
+        "U": 2239,
+        "eligible_assistant_tokens": 241,
+        "episodes": 1,
+        "executed_observation_tokens": 1998,
+        "families": 1,
+        "free_position_candidates": 241,
+        "source_id": "semantic-harness:05de8ce05e19139a",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 3735,
+        "eligible_assistant_tokens": 902,
+        "episodes": 1,
+        "executed_observation_tokens": 2833,
+        "families": 1,
+        "free_position_candidates": 902,
+        "source_id": "semantic-harness:090058c96efeda13",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 599
+      },
+      {
+        "U": 3799,
+        "eligible_assistant_tokens": 924,
+        "episodes": 1,
+        "executed_observation_tokens": 2875,
+        "families": 1,
+        "free_position_candidates": 924,
+        "source_id": "semantic-harness:0e2a2d278daaf98b",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 589
+      },
+      {
+        "U": 2896,
+        "eligible_assistant_tokens": 782,
+        "episodes": 1,
+        "executed_observation_tokens": 2114,
+        "families": 1,
+        "free_position_candidates": 782,
+        "source_id": "semantic-harness:16d6062652b5fa21",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 7374,
+        "eligible_assistant_tokens": 3233,
+        "episodes": 1,
+        "executed_observation_tokens": 4141,
+        "families": 1,
+        "free_position_candidates": 3233,
+        "source_id": "semantic-harness:1a2293883cc3bc75",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 2090
+      },
+      {
+        "U": 3360,
+        "eligible_assistant_tokens": 1037,
+        "episodes": 1,
+        "executed_observation_tokens": 2323,
+        "families": 1,
+        "free_position_candidates": 1037,
+        "source_id": "semantic-harness:1c578649655dcd92",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 543
+      },
+      {
+        "U": 2139,
+        "eligible_assistant_tokens": 241,
+        "episodes": 1,
+        "executed_observation_tokens": 1898,
+        "families": 1,
+        "free_position_candidates": 241,
+        "source_id": "semantic-harness:2b8588b95c0c3f54",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2626,
+        "eligible_assistant_tokens": 405,
+        "episodes": 1,
+        "executed_observation_tokens": 2221,
+        "families": 1,
+        "free_position_candidates": 405,
+        "source_id": "semantic-harness:2b99d197b0b3d04a",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2614,
+        "eligible_assistant_tokens": 644,
+        "episodes": 1,
+        "executed_observation_tokens": 1970,
+        "families": 1,
+        "free_position_candidates": 644,
+        "source_id": "semantic-harness:2fdc06272b6f74da",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 4158,
+        "eligible_assistant_tokens": 1374,
+        "episodes": 1,
+        "executed_observation_tokens": 2784,
+        "families": 1,
+        "free_position_candidates": 1374,
+        "source_id": "semantic-harness:32e4640c85a515f2",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 603
+      },
+      {
+        "U": 2700,
+        "eligible_assistant_tokens": 682,
+        "episodes": 1,
+        "executed_observation_tokens": 2018,
+        "families": 1,
+        "free_position_candidates": 682,
+        "source_id": "semantic-harness:3464758a2dd2e7b1",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 8096,
+        "eligible_assistant_tokens": 3623,
+        "episodes": 1,
+        "executed_observation_tokens": 4473,
+        "families": 1,
+        "free_position_candidates": 3623,
+        "source_id": "semantic-harness:36a433a8806c2d67",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 2120
+      },
+      {
+        "U": 4665,
+        "eligible_assistant_tokens": 1764,
+        "episodes": 1,
+        "executed_observation_tokens": 2901,
+        "families": 1,
+        "free_position_candidates": 1764,
+        "source_id": "semantic-harness:37b3686bfdd3003c",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 588
+      },
+      {
+        "U": 3439,
+        "eligible_assistant_tokens": 794,
+        "episodes": 1,
+        "executed_observation_tokens": 2645,
+        "families": 1,
+        "free_position_candidates": 794,
+        "source_id": "semantic-harness:39a55636e1077a05",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 601
+      },
+      {
+        "U": 5693,
+        "eligible_assistant_tokens": 2324,
+        "episodes": 1,
+        "executed_observation_tokens": 3369,
+        "families": 1,
+        "free_position_candidates": 2324,
+        "source_id": "semantic-harness:3a3548fa0a820f3e",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 1325
+      },
+      {
+        "U": 2198,
+        "eligible_assistant_tokens": 241,
+        "episodes": 1,
+        "executed_observation_tokens": 1957,
+        "families": 1,
+        "free_position_candidates": 241,
+        "source_id": "semantic-harness:3cf9766828760bc0",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 5830,
+        "eligible_assistant_tokens": 2595,
+        "episodes": 1,
+        "executed_observation_tokens": 3235,
+        "families": 1,
+        "free_position_candidates": 2595,
+        "source_id": "semantic-harness:3ede40867f81d57d",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 1296
+      },
+      {
+        "U": 3921,
+        "eligible_assistant_tokens": 1472,
+        "episodes": 1,
+        "executed_observation_tokens": 2449,
+        "families": 1,
+        "free_position_candidates": 1472,
+        "source_id": "semantic-harness:4424ec1f2b125aaf",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 557
+      },
+      {
+        "U": 4151,
+        "eligible_assistant_tokens": 1484,
+        "episodes": 1,
+        "executed_observation_tokens": 2667,
+        "families": 1,
+        "free_position_candidates": 1484,
+        "source_id": "semantic-harness:46e91ea18c69c7f1",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 577
+      },
+      {
+        "U": 2190,
+        "eligible_assistant_tokens": 241,
+        "episodes": 1,
+        "executed_observation_tokens": 1949,
+        "families": 1,
+        "free_position_candidates": 241,
+        "source_id": "semantic-harness:4d94385500d0d737",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 5956,
+        "eligible_assistant_tokens": 2523,
+        "episodes": 1,
+        "executed_observation_tokens": 3433,
+        "families": 1,
+        "free_position_candidates": 2523,
+        "source_id": "semantic-harness:510a4c2117d3312a",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 1283
+      },
+      {
+        "U": 2053,
+        "eligible_assistant_tokens": 241,
+        "episodes": 1,
+        "executed_observation_tokens": 1812,
+        "families": 1,
+        "free_position_candidates": 241,
+        "source_id": "semantic-harness:54958e89a4c2378f",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2574,
+        "eligible_assistant_tokens": 405,
+        "episodes": 1,
+        "executed_observation_tokens": 2169,
+        "families": 1,
+        "free_position_candidates": 405,
+        "source_id": "semantic-harness:556a44c5dc33d01e",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2546,
+        "eligible_assistant_tokens": 457,
+        "episodes": 1,
+        "executed_observation_tokens": 2089,
+        "families": 1,
+        "free_position_candidates": 457,
+        "source_id": "semantic-harness:580fae46a5069006",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2100,
+        "eligible_assistant_tokens": 241,
+        "episodes": 1,
+        "executed_observation_tokens": 1859,
+        "families": 1,
+        "free_position_candidates": 241,
+        "source_id": "semantic-harness:5a5a8b86c1f972a4",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2585,
+        "eligible_assistant_tokens": 574,
+        "episodes": 1,
+        "executed_observation_tokens": 2011,
+        "families": 1,
+        "free_position_candidates": 574,
+        "source_id": "semantic-harness:612422ff72616ab2",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 5451,
+        "eligible_assistant_tokens": 2057,
+        "episodes": 1,
+        "executed_observation_tokens": 3394,
+        "families": 1,
+        "free_position_candidates": 2057,
+        "source_id": "semantic-harness:62880fa8e2887bae",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 1240
+      },
+      {
+        "U": 4004,
+        "eligible_assistant_tokens": 1448,
+        "episodes": 1,
+        "executed_observation_tokens": 2556,
+        "families": 1,
+        "free_position_candidates": 1448,
+        "source_id": "semantic-harness:6809485a5267474b",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 566
+      },
+      {
+        "U": 2616,
+        "eligible_assistant_tokens": 705,
+        "episodes": 1,
+        "executed_observation_tokens": 1911,
+        "families": 1,
+        "free_position_candidates": 705,
+        "source_id": "semantic-harness:68a60c8a7de075a2",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2388,
+        "eligible_assistant_tokens": 622,
+        "episodes": 1,
+        "executed_observation_tokens": 1766,
+        "families": 1,
+        "free_position_candidates": 622,
+        "source_id": "semantic-harness:72cec025e9f8b18b",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1989,
+        "eligible_assistant_tokens": 189,
+        "episodes": 1,
+        "executed_observation_tokens": 1800,
+        "families": 1,
+        "free_position_candidates": 189,
+        "source_id": "semantic-harness:7328dbff01dd5792",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 3731,
+        "eligible_assistant_tokens": 1209,
+        "episodes": 1,
+        "executed_observation_tokens": 2522,
+        "families": 1,
+        "free_position_candidates": 1209,
+        "source_id": "semantic-harness:7b0f021ae6b17d2c",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 571
+      },
+      {
+        "U": 2714,
+        "eligible_assistant_tokens": 752,
+        "episodes": 1,
+        "executed_observation_tokens": 1962,
+        "families": 1,
+        "free_position_candidates": 752,
+        "source_id": "semantic-harness:7f13e249b4a030ce",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2421,
+        "eligible_assistant_tokens": 608,
+        "episodes": 1,
+        "executed_observation_tokens": 1813,
+        "families": 1,
+        "free_position_candidates": 608,
+        "source_id": "semantic-harness:887ead0284ad877d",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 3820,
+        "eligible_assistant_tokens": 1416,
+        "episodes": 1,
+        "executed_observation_tokens": 2404,
+        "families": 1,
+        "free_position_candidates": 1416,
+        "source_id": "semantic-harness:9f163e5412cbfd53",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 559
+      },
+      {
+        "U": 1942,
+        "eligible_assistant_tokens": 189,
+        "episodes": 1,
+        "executed_observation_tokens": 1753,
+        "families": 1,
+        "free_position_candidates": 189,
+        "source_id": "semantic-harness:a13f40658d312314",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 4388,
+        "eligible_assistant_tokens": 1622,
+        "episodes": 1,
+        "executed_observation_tokens": 2766,
+        "families": 1,
+        "free_position_candidates": 1622,
+        "source_id": "semantic-harness:a1d5327ed3eb9e68",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 573
+      },
+      {
+        "U": 2104,
+        "eligible_assistant_tokens": 241,
+        "episodes": 1,
+        "executed_observation_tokens": 1863,
+        "families": 1,
+        "free_position_candidates": 241,
+        "source_id": "semantic-harness:adac9db74bbfa379",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 1890,
+        "eligible_assistant_tokens": 189,
+        "episodes": 1,
+        "executed_observation_tokens": 1701,
+        "families": 1,
+        "free_position_candidates": 189,
+        "source_id": "semantic-harness:b2f079ca5bf00894",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2246,
+        "eligible_assistant_tokens": 241,
+        "episodes": 1,
+        "executed_observation_tokens": 2005,
+        "families": 1,
+        "free_position_candidates": 241,
+        "source_id": "semantic-harness:bb40ed8671d64a36",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 7091,
+        "eligible_assistant_tokens": 2884,
+        "episodes": 1,
+        "executed_observation_tokens": 4207,
+        "families": 1,
+        "free_position_candidates": 2884,
+        "source_id": "semantic-harness:c21a383ba40f96d4",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 2146
+      },
+      {
+        "U": 4196,
+        "eligible_assistant_tokens": 1594,
+        "episodes": 1,
+        "executed_observation_tokens": 2602,
+        "families": 1,
+        "free_position_candidates": 1594,
+        "source_id": "semantic-harness:c563e4f52d2c5774",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 561
+      },
+      {
+        "U": 4319,
+        "eligible_assistant_tokens": 1711,
+        "episodes": 1,
+        "executed_observation_tokens": 2608,
+        "families": 1,
+        "free_position_candidates": 1711,
+        "source_id": "semantic-harness:c765d7b98706e677",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 566
+      },
+      {
+        "U": 2342,
+        "eligible_assistant_tokens": 241,
+        "episodes": 1,
+        "executed_observation_tokens": 2101,
+        "families": 1,
+        "free_position_candidates": 241,
+        "source_id": "semantic-harness:ccecdfe374c6797c",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2384,
+        "eligible_assistant_tokens": 405,
+        "episodes": 1,
+        "executed_observation_tokens": 1979,
+        "families": 1,
+        "free_position_candidates": 405,
+        "source_id": "semantic-harness:d14ac6813684b1e6",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 7503,
+        "eligible_assistant_tokens": 3189,
+        "episodes": 1,
+        "executed_observation_tokens": 4314,
+        "families": 1,
+        "free_position_candidates": 3189,
+        "source_id": "semantic-harness:d32d0b28e0e13b44",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 2165
+      },
+      {
+        "U": 4298,
+        "eligible_assistant_tokens": 1650,
+        "episodes": 1,
+        "executed_observation_tokens": 2648,
+        "families": 1,
+        "free_position_candidates": 1650,
+        "source_id": "semantic-harness:db7de2fc661ee3ed",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 577
+      },
+      {
+        "U": 4323,
+        "eligible_assistant_tokens": 1709,
+        "episodes": 1,
+        "executed_observation_tokens": 2614,
+        "families": 1,
+        "free_position_candidates": 1709,
+        "source_id": "semantic-harness:dcb01b41b55d078b",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 565
+      },
+      {
+        "U": 6562,
+        "eligible_assistant_tokens": 2894,
+        "episodes": 1,
+        "executed_observation_tokens": 3668,
+        "families": 1,
+        "free_position_candidates": 2894,
+        "source_id": "semantic-harness:dde0221592d471c8",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 1275
+      },
+      {
+        "U": 3742,
+        "eligible_assistant_tokens": 1209,
+        "episodes": 1,
+        "executed_observation_tokens": 2533,
+        "families": 1,
+        "free_position_candidates": 1209,
+        "source_id": "semantic-harness:e1558ab6a31c9e0f",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 578
+      },
+      {
+        "U": 3834,
+        "eligible_assistant_tokens": 1359,
+        "episodes": 1,
+        "executed_observation_tokens": 2475,
+        "families": 1,
+        "free_position_candidates": 1359,
+        "source_id": "semantic-harness:e5f457eac1d71dad",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 571
+      },
+      {
+        "U": 3793,
+        "eligible_assistant_tokens": 1454,
+        "episodes": 1,
+        "executed_observation_tokens": 2339,
+        "families": 1,
+        "free_position_candidates": 1454,
+        "source_id": "semantic-harness:e67de7bd197e9511",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 546
+      },
+      {
+        "U": 2314,
+        "eligible_assistant_tokens": 600,
+        "episodes": 1,
+        "executed_observation_tokens": 1714,
+        "families": 1,
+        "free_position_candidates": 600,
+        "source_id": "semantic-harness:e86c3e4fc19d45ba",
+        "split": "validation",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2395,
+        "eligible_assistant_tokens": 519,
+        "episodes": 1,
+        "executed_observation_tokens": 1876,
+        "families": 1,
+        "free_position_candidates": 519,
+        "source_id": "semantic-harness:e894245078bf20fe",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 2722,
+        "eligible_assistant_tokens": 620,
+        "episodes": 1,
+        "executed_observation_tokens": 2102,
+        "families": 1,
+        "free_position_candidates": 620,
+        "source_id": "semantic-harness:eaa6c3906e2777e3",
+        "split": "test",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 4605,
+        "eligible_assistant_tokens": 1756,
+        "episodes": 1,
+        "executed_observation_tokens": 2849,
+        "families": 1,
+        "free_position_candidates": 1756,
+        "source_id": "semantic-harness:ec80ff90937d49de",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 588
+      },
+      {
+        "U": 7794,
+        "eligible_assistant_tokens": 3432,
+        "episodes": 1,
+        "executed_observation_tokens": 4362,
+        "families": 1,
+        "free_position_candidates": 3432,
+        "source_id": "semantic-harness:f4fe299a6cf1076f",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 2155
+      },
+      {
+        "U": 2430,
+        "eligible_assistant_tokens": 605,
+        "episodes": 1,
+        "executed_observation_tokens": 1825,
+        "families": 1,
+        "free_position_candidates": 605,
+        "source_id": "semantic-harness:f6d555b86fd6e07b",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      },
+      {
+        "U": 6487,
+        "eligible_assistant_tokens": 2848,
+        "episodes": 1,
+        "executed_observation_tokens": 3639,
+        "families": 1,
+        "free_position_candidates": 2848,
+        "source_id": "semantic-harness:fb9588b9f85a4bdb",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 1299
+      },
+      {
+        "U": 2391,
+        "eligible_assistant_tokens": 519,
+        "episodes": 1,
+        "executed_observation_tokens": 1872,
+        "families": 1,
+        "free_position_candidates": 519,
+        "source_id": "semantic-harness:fccecaae80a728d7",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      }
+    ],
+    "verified_success_U": 227098
+  },
+  "chunking": {
+    "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "config": {
+      "chat_template": "auto",
+      "code_tree_scale": 1.5,
+      "hard_max_tokens": 1024,
+      "limits": {
+        "isolate_native": true,
+        "max_depth": 12,
+        "max_injections": 2048,
+        "max_nodes": 100000,
+        "max_parse_bytes": 1048576,
+        "max_parse_milliseconds": 0,
+        "max_regions": 20000,
+        "max_tree_depth": 128,
+        "worker_timeout_ms": 5000
+      },
+      "max_bytes": 16384,
+      "parser_backend": "tree_sitter",
+      "planner_max_edges": 64,
+      "soft_max_tokens": 768,
+      "target_tokens": 512,
+      "tree_distance_budget": 4.0,
+      "tree_distance_weight": 0.15,
+      "use_icu": false,
+      "version": "recursive-parser-v2"
+    },
+    "config_fingerprint": "ca1d218228965a402e138c834f9324a6c7204f91d4ef8eaca78a4e469f09d62d",
+    "fingerprint": "db0c61d60d52105ed2c8ae71dbb2fc91df338f5b89160a38b02ca1ecc0ee6fe4",
+    "parsers": {
+      "chat": {
+        "templates": {
+          "chatml": {
+            "aliases": [
+              "qwen"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3c7c696d5f656e647c3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "chatml",
+            "prefixes": [],
+            "separator": "0a",
+            "start": "3c7c696d5f73746172747c3e"
+          },
+          "deepseek": {
+            "aliases": [
+              "deepseek-v3",
+              "deepseek-r1"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3cefbd9c656e64e296816f66e2968173656e74656e6365efbd9c3e"
+            ],
+            "format_markers": [],
+            "mode": "deepseek",
+            "name": "deepseek",
+            "prefixes": [
+              "3cefbd9c626567696ee296816f66e2968173656e74656e6365efbd9c3e"
+            ],
+            "separator": "3cefbd9c417373697374616e74efbd9c3e",
+            "start": "3cefbd9c55736572efbd9c3e"
+          },
+          "gemma": {
+            "aliases": [
+              "gemma2",
+              "gemma3"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3c656e645f6f665f7475726e3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "gemma",
+            "prefixes": [
+              "3c626f733e"
+            ],
+            "separator": "0a",
+            "start": "3c73746172745f6f665f7475726e3e"
+          },
+          "harmony": {
+            "aliases": [],
+            "allow_named_tools": true,
+            "body_newlines": 0,
+            "channel_markers": [
+              "3c7c6368616e6e656c7c3e"
+            ],
+            "ends": [
+              "3c7c656e647c3e",
+              "3c7c72657475726e7c3e",
+              "3c7c63616c6c7c3e"
+            ],
+            "format_markers": [
+              "3c7c636f6e73747261696e7c3e"
+            ],
+            "mode": "delimited",
+            "name": "harmony",
+            "prefixes": [],
+            "separator": "3c7c6d6573736167657c3e",
+            "start": "3c7c73746172747c3e"
+          },
+          "harmony_legacy": {
+            "aliases": [],
+            "allow_named_tools": true,
+            "body_newlines": 0,
+            "channel_markers": [
+              "3c7c6d6574615f7365707c3e"
+            ],
+            "ends": [
+              "3c7c696d5f656e647c3e",
+              "3c7c66696d5f7375666669787c3e",
+              "3c7c676869737375657c3e"
+            ],
+            "format_markers": [
+              "3c7c6d6574615f73746172747c3e"
+            ],
+            "mode": "delimited",
+            "name": "harmony_legacy",
+            "prefixes": [
+              "3c7c656e646f66746578747c3e"
+            ],
+            "separator": "3c7c696d5f7365707c3e",
+            "start": "3c7c696d5f73746172747c3e"
+          },
+          "inst": {
+            "aliases": [
+              "llama2",
+              "llama-2",
+              "mistral"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3c2f733e"
+            ],
+            "format_markers": [],
+            "mode": "inst",
+            "name": "inst",
+            "prefixes": [
+              "3c733e"
+            ],
+            "separator": "5b2f494e53545d",
+            "start": "5b494e53545d"
+          },
+          "llama3": {
+            "aliases": [
+              "llama-3",
+              "llama3.1",
+              "llama3.2",
+              "llama3.3"
+            ],
+            "allow_named_tools": true,
+            "body_newlines": 2,
+            "channel_markers": [],
+            "ends": [
+              "3c7c656f745f69647c3e",
+              "3c7c656f6d5f69647c3e",
+              "3c7c656e645f6f665f746578747c3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "llama3",
+            "prefixes": [
+              "3c7c626567696e5f6f665f746578747c3e"
+            ],
+            "separator": "3c7c656e645f6865616465725f69647c3e",
+            "start": "3c7c73746172745f6865616465725f69647c3e"
+          },
+          "phi3": {
+            "aliases": [
+              "phi-3",
+              "phi4"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 1,
+            "channel_markers": [],
+            "ends": [
+              "3c7c656e647c3e",
+              "3c7c656e646f66746578747c3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "phi3",
+            "prefixes": [],
+            "separator": "7c3e",
+            "start": "3c7c"
+          }
+        },
+        "version": "chat-framing-v1"
+      },
+      "implementation": "fa3498a4ec29931ba08113d0f14e1e96478d4637d5a220940be68fe33ed97061",
+      "prose": {
+        "icu": null,
+        "rules": "unicode-prose-v1",
+        "unicode": "16.0.0",
+        "uniseg": "0.10.1"
+      },
+      "syntax": {
+        "backend": "tree_sitter",
+        "grammar_dependencies": {
+          "tree-sitter-c-sharp": "0.23.5",
+          "tree-sitter-embedded-template": "0.25.0",
+          "tree-sitter-yaml": "0.7.2"
+        },
+        "markdown_it_py": "4.0.0",
+        "network": "disabled",
+        "providers": [],
+        "registry": "offline-grammar-registry-v1",
+        "tree_sitter": "0.25.2",
+        "tree_sitter_language_pack": "0.13.0"
+      }
+    }
+  },
+  "chunking_stats": {
+    "boundaries": {
+      "end": 2986,
+      "word": 114
+    },
+    "bytes": 630927,
+    "diagnostics": {},
+    "forced_splits": 0,
+    "histogram": {
+      "0": 0,
+      "1024": 12,
+      "128": 0,
+      "192": 22,
+      "256": 58,
+      "32": 2053,
+      "384": 47,
+      "512": 28,
+      "64": 657,
+      "768": 165,
+      "96": 58,
+      ">1024": 0
+    },
+    "histogram_kind": "disjoint buckets, inclusive upper bounds",
+    "languages": {
+      "text": 3100
+    },
+    "max_positions": 905,
+    "mean_positions": 73.2574193548387,
+    "over_soft_max": 12,
+    "positions": 227098,
+    "records": 3100,
+    "reference_tokens": 227098,
+    "unversioned_records": 0
+  },
+  "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "complete": true,
+  "counts": {
+    "*": 61,
+    "split:test": 11,
+    "split:test|stream:semantic_execution": 11,
+    "split:train": 43,
+    "split:train|stream:semantic_execution": 43,
+    "split:validation": 7,
+    "split:validation|stream:semantic_execution": 7,
+    "stream:semantic_execution": 61
+  },
+  "dedup": {
+    "anchor_count": 8,
+    "evaluation_after": null,
+    "max_candidates": 4096,
+    "max_descendants_per_parent": 1024,
+    "min_near_words": 40,
+    "near_threshold": 0.94,
+    "shingle_words": 5,
+    "sketch_size": 256,
+    "split_seed": "semantic-family/4",
+    "train_fraction": 0.8,
+    "validation_fraction": 0.1
+  },
+  "feature_counts": {},
+  "feature_extractors": [],
+  "fingerprint": "1ac02cf94e0bb04d9dcf14f5885b35785edbb396dc1d224d742112c0e4926833",
+  "index": {
+    "path": "index.sqlite",
+    "sha256": "9a988b1512823917c8b1ae74e941cfaea9b13e992889091900e70d7dc879c18b"
+  },
+  "parser_review": {},
+  "pipeline_fingerprint": "70899d154a42f94457429ee500ef10e7595352d556e0c88f985ca7894412b4b4",
+  "schema_version": 7,
+  "scored_media_counts": {},
+  "shards": [
+    {
+      "bytes": 7938631,
+      "episodes": 61,
+      "path": "episodes-000000.jsonl",
+      "sha256": "db00d98e6e0521b6850cd6dd1f99c854f147e9f27c3af21ae8a0585ccf9c7c31"
+    }
+  ],
+  "sources": [
+    {
+      "catalogDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
+      "consumerRevision": "9a9dd3593c6887d63012dd5c953e914557dca386",
+      "fixtureDigest": "78b2a67d9782207700891d04b2f44d244bc74c3b754902b427e06daa465c462e",
+      "maxHistory": 1024,
+      "maxPositions": 1024,
+      "producerRevision": "53daa939dba0a0202402dc980a17a6682e719b37",
+      "representation": "compact",
+      "schema": "semantic-preparation/4",
+      "schemaDigest": "79667fecba710da15804c240657a88b4557277e6159d4ded7a11312c7625fbba",
+      "splitSeed": "semantic-family/4",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+    }
+  ],
+  "structured_supply": {
+    "counts": {
+      "test|semantic_execution|episode_views": 11,
+      "test|semantic_execution|event_modality:text": 603,
+      "test|semantic_execution|group_clock:unknown": 603,
+      "test|semantic_execution|group_modalities:text": 603,
+      "test|semantic_execution|group_width:1": 603,
+      "test|semantic_execution|record_provenance:executed": 91,
+      "test|semantic_execution|record_provenance:teacher": 512,
+      "train|semantic_execution|episode_views": 43,
+      "train|semantic_execution|event_modality:text": 2235,
+      "train|semantic_execution|group_clock:unknown": 2235,
+      "train|semantic_execution|group_modalities:text": 2235,
+      "train|semantic_execution|group_width:1": 2235,
+      "train|semantic_execution|record_provenance:executed": 355,
+      "train|semantic_execution|record_provenance:teacher": 1880,
+      "validation|semantic_execution|episode_views": 7,
+      "validation|semantic_execution|event_modality:text": 262,
+      "validation|semantic_execution|group_clock:unknown": 262,
+      "validation|semantic_execution|group_modalities:text": 262,
+      "validation|semantic_execution|group_width:1": 262,
+      "validation|semantic_execution|record_provenance:executed": 43,
+      "validation|semantic_execution|record_provenance:teacher": 219
+    },
+    "denominators": "group_* count committed groups; event_* and availability count events; record_* count physical records; language_pair and episode_views count episodes; original_families deduplicate each dimension",
+    "original_families": {
+      "test|semantic_execution|episode_views": 3,
+      "test|semantic_execution|event_modality:text": 3,
+      "test|semantic_execution|group_clock:unknown": 3,
+      "test|semantic_execution|group_modalities:text": 3,
+      "test|semantic_execution|group_width:1": 3,
+      "test|semantic_execution|record_provenance:executed": 3,
+      "test|semantic_execution|record_provenance:teacher": 3,
+      "train|semantic_execution|episode_views": 11,
+      "train|semantic_execution|event_modality:text": 11,
+      "train|semantic_execution|group_clock:unknown": 11,
+      "train|semantic_execution|group_modalities:text": 11,
+      "train|semantic_execution|group_width:1": 11,
+      "train|semantic_execution|record_provenance:executed": 11,
+      "train|semantic_execution|record_provenance:teacher": 11,
+      "validation|semantic_execution|episode_views": 2,
+      "validation|semantic_execution|event_modality:text": 2,
+      "validation|semantic_execution|group_clock:unknown": 2,
+      "validation|semantic_execution|group_modalities:text": 2,
+      "validation|semantic_execution|group_width:1": 2,
+      "validation|semantic_execution|record_provenance:executed": 2,
+      "validation|semantic_execution|record_provenance:teacher": 2
+    },
+    "version": 1
+  }
+}

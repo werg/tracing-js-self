@@ -1,0 +1,33 @@
+{
+  "job": {
+    "slug": "selected-harness",
+    "runId": 44390717993,
+    "jobId": 135107280852
+  },
+  "logMetadata": {},
+  "savedAtUtc": "2026-11-18 20:27:30 UTC",
+  "rawLog": {
+    "path": "selected-harness.job.log.gz",
+    "encoding": "utf-8",
+    "compression": "gzip",
+    "decodedBytes": 51655,
+    "decodedSha256": "9eaae26320472ebc3c0e8c577bcb11cb170e7652d40ebb938f3fde71a9ac1c9b",
+    "storedBytes": 13346,
+    "storedSha256": "55b05ad0b7a698b06ea5fe7b93203cdb6d8ce9cd5ee119755bbd2713178c8d06"
+  },
+  "jobsApiSnapshot": {
+    "path": "selected-harness.jobs-api.json",
+    "bytes": 2319,
+    "sha256": "e54149658b5992233c265a725652e3a3ede1af765ec105a8578dbaaff9b99cfe",
+    "format": "JSON serialization of exact connector tool response"
+  },
+  "source": {
+    "repo": "werg/tracing-js-self",
+    "url": "https://github.com/werg/tracing-js-self/actions/runs/44390717993/job/135107280852",
+    "jobsTool": "github_fetch_workflow_run_jobs",
+    "logsTool": "github_fetch_workflow_job_logs"
+  },
+  "testedCheckout": "6b9acf98e14f73a5865b4b38ac0390f119f101ab",
+  "headCommit": "53daa939dba0a0202402dc980a17a6682e719b37",
+  "baseCommit": "9ab2b75a58d744265ff5dd9f4d00450a9286c00e"
+}

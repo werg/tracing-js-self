@@ -1,0 +1,28 @@
+{
+  "schema": "semantic-conditional-evidence-compression/1",
+  "finalReportSha256": "84850d0aeac82c0902daa0f86f1b0fedec6677e7e8d531938e26750d5a5a0418",
+  "files": [
+    {
+      "originalFile": "corpus--compound-pure.json",
+      "originalBytes": 4161171,
+      "originalSha256": "f6a3ff2b5b3c4947950347b365bb2b771a3c1f5e77944d639cc1366eba3314f4",
+      "expectedFromFinalReport": "f6a3ff2b5b3c4947950347b365bb2b771a3c1f5e77944d639cc1366eba3314f4",
+      "storedFile": "corpus--compound-pure.json.gz",
+      "encoding": "gzip",
+      "storedBytes": 724544,
+      "storedSha256": "d716eaf9c9211dd4b6d0b6e03987ded2cecf63c11ac2c1e2f841c46a153a5e66",
+      "losslessRoundTripVerified": true
+    },
+    {
+      "originalFile": "native-conditional-probe--serving-conditional.json",
+      "originalBytes": 4214624,
+      "originalSha256": "789a87aed214f8a2c35482406067382fb283528811059eddd3e8a1c68071e3e1",
+      "expectedFromFinalReport": "789a87aed214f8a2c35482406067382fb283528811059eddd3e8a1c68071e3e1",
+      "storedFile": "native-conditional-probe--serving-conditional.json.gz",
+      "encoding": "gzip",
+      "storedBytes": 755234,
+      "storedSha256": "5dcbb73fb623a9d4ffbdc034531665afa3188395b128460780fc817701207d01",
+      "losslessRoundTripVerified": true
+    }
+  ]
+}

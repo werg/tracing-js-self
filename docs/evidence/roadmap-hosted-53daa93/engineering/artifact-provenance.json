@@ -1,0 +1,187 @@
+{
+  "artifact": {
+    "id": 14469675812,
+    "name": "semantic-v5-engineering-admission-and-evaluation",
+    "size_in_bytes": 155692841,
+    "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14469675812",
+    "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14469675812/zip",
+    "expired": false,
+    "created_at": "2026-11-18T20:30:38Z",
+    "expires_at": "2027-02-16T20:24:35Z",
+    "updated_at": "2026-11-18T20:30:38Z",
+    "digest": "sha256:b1c2fc2fe4544fd1061cc84bd22fd01bf0cc2204df0a5949bab6815a49b2b2ea",
+    "workflow_run": {
+      "id": 44390718053,
+      "repository_id": 1429775465,
+      "head_repository_id": 1429775465,
+      "head_branch": "codex/execution-training-roadmap-20261118",
+      "head_sha": "53daa939dba0a0202402dc980a17a6682e719b37"
+    }
+  },
+  "transport": "Exact bounded HTTP ranges over approved artifact URL",
+  "verification": "ZIP member CRC checked; SHA-256 measured per retained original member; entire artifact SHA-256 reported by GitHub API and not recomputed from partial retrieval",
+  "downloadedBytes": 6795049,
+  "members": [
+    {
+      "path": "native-run-identity.json",
+      "storedFile": "native-run-identity.json",
+      "bytes": 386,
+      "sha256": "ed46258c4bf63aae98bea355fd0953058afa424dda0e4ddd97e46f85f0764360",
+      "crc32": "2e2a8f93"
+    },
+    {
+      "path": "native-environment.json",
+      "storedFile": "native-environment.json",
+      "bytes": 2340,
+      "sha256": "fee2e1c02edc289ae3abcf9afb6cda7907b5111095107808215195a992755383",
+      "crc32": "398040a0"
+    },
+    {
+      "path": "source-dispositions.json",
+      "storedFile": "source-dispositions.json",
+      "bytes": 326,
+      "sha256": "ac0b22674e103660de1ae648d10e1293c29318902c8a89af0b79332eb88d2ccf",
+      "crc32": "2fd44d2d"
+    },
+    {
+      "path": "native-capabilities.json",
+      "storedFile": "native-capabilities.json",
+      "bytes": 46354,
+      "sha256": "bec6ce2c3d2e939f1883d8389f467253f5dc2d9a2c1e69d6e12efb209b17b14e",
+      "crc32": "8be68bcd"
+    },
+    {
+      "path": "evaluation.json",
+      "storedFile": "evaluation.json",
+      "bytes": 13007,
+      "sha256": "d48778d27aebc4e548240c9458c3ab9b83770d0d1ff54eb5199ce36ba136348d",
+      "crc32": "c0c5e35a"
+    },
+    {
+      "path": "native-input-parity.json",
+      "storedFile": "native-input-parity.json",
+      "bytes": 35417,
+      "sha256": "f35aa7b6a016b6efa9aa7e6dad1003bccc4199a5cf76e5d714aa764db70d22fb",
+      "crc32": "0557f37a"
+    },
+    {
+      "path": "native-conditional-probe/report.json",
+      "storedFile": "native-conditional-probe--report.json",
+      "bytes": 8367,
+      "sha256": "84850d0aeac82c0902daa0f86f1b0fedec6677e7e8d531938e26750d5a5a0418",
+      "crc32": "2a83e935"
+    },
+    {
+      "path": "native-conditional-probe/comparison.json",
+      "storedFile": "native-conditional-probe--comparison.json",
+      "bytes": 1210,
+      "sha256": "5aed4594c62c5ce56855602bda6f5f57498215381b67e9e400733cd7209bec83",
+      "crc32": "464bea8f"
+    },
+    {
+      "path": "native-conditional-probe/training-conditional.json",
+      "storedFile": "native-conditional-probe--training-conditional.json",
+      "bytes": 40209,
+      "sha256": "a41ec84f98c4477676f1bcfc25143f334ce9f8cbc57789c2239bba93d76b7564",
+      "crc32": "f35fc08d"
+    },
+    {
+      "path": "native-conditional-probe/initialization/initialized-untrained/metadata.json",
+      "storedFile": "native-conditional-probe--initialization--initialized-untrained--metadata.json",
+      "bytes": 413,
+      "sha256": "8323d9204aa87f35feb780c1aa7c91c2df4f38ed86b31663dee4c5e71136541a",
+      "crc32": "9e1c5e01"
+    },
+    {
+      "path": "native-conditional-probe/served-exact/manifest.json",
+      "storedFile": "native-conditional-probe--served-exact--manifest.json",
+      "bytes": 7786,
+      "sha256": "aa7ee6e5d30dae6945ea48ce6e403fc8736ab659e2b10e62e685b44d064f60db",
+      "crc32": "78611593"
+    },
+    {
+      "path": "native-inference/inference-check.json",
+      "storedFile": "native-inference--inference-check.json",
+      "bytes": 1872,
+      "sha256": "607811e971bffbf9cf143b07e7fe51ea462d0a415ec4e0f8d1f793614d4b0b6d",
+      "crc32": "1c60cf60"
+    },
+    {
+      "path": "native-orchestration-validation.json",
+      "storedFile": "native-orchestration-validation.json",
+      "bytes": 5175,
+      "sha256": "95b0f0f3e904a9b822f24dfd4ec6bd518a8a5d71f88dbca403f69f4eb465ce3b",
+      "crc32": "6a9b0d02"
+    },
+    {
+      "path": "corpus/manifest.json",
+      "storedFile": "corpus--manifest.json",
+      "bytes": 147884,
+      "sha256": "de3ddbb4ff1b0157ae12b6d2cd6e7f4b540ea448fee843656dbdf9874989c9e5",
+      "crc32": "8fd453cb"
+    },
+    {
+      "path": "release/archive-receipt.json",
+      "storedFile": "release--archive-receipt.json",
+      "bytes": 265,
+      "sha256": "d1a2123ccd1a4c2d61f4c57afb7ca322cd2dce5b7f2ab40d81f7acb90eb8ec42",
+      "crc32": "da192fb6"
+    },
+    {
+      "path": "release/native-qualification-summary.json",
+      "storedFile": "release--native-qualification-summary.json",
+      "bytes": 488,
+      "sha256": "4b3a521421d0e175a1925ad7ae3b0fe41007e0a9112fac22f5302ec16e24f3db",
+      "crc32": "fa080b82"
+    },
+    {
+      "path": "release/prepared/manifest.json",
+      "storedFile": "release--prepared--manifest.json",
+      "bytes": 28706,
+      "sha256": "79b9745c1fff9c6404da0fd9ed262f837ae7fd9417d579bb20d2c1f4171b87ac",
+      "crc32": "0dddf0fc"
+    },
+    {
+      "path": "release/release-manifest.json",
+      "storedFile": "release--release-manifest.json",
+      "bytes": 52589,
+      "sha256": "e76f7517f61c156433a07e6e7b70e314544426e8c9911a488b9d6cca257cc5fb",
+      "crc32": "9acc99ce"
+    },
+    {
+      "path": "native-prepared-sampler/sampler.json",
+      "storedFile": "native-prepared-sampler--sampler.json",
+      "bytes": 59589,
+      "sha256": "a65353d3841db95af0144a3b94a022e4cd41afb489965b895a01a35ce5302073",
+      "crc32": "13322370"
+    },
+    {
+      "path": "native-prepared-sampler/campaign-verification.json",
+      "storedFile": "native-prepared-sampler--campaign-verification.json",
+      "bytes": 134957,
+      "sha256": "d1deeb6b72b8e169950ddedf4961227d5be3aeaae909f8abfe30792d5056ca2e",
+      "crc32": "6b550f7f"
+    },
+    {
+      "path": "native-prepared-sampler/inventory-verification.json",
+      "storedFile": "native-prepared-sampler--inventory-verification.json",
+      "bytes": 50777,
+      "sha256": "af35a3dc5b6acff87566764b3e3763c7a8c67417b7b0ca6aa5168d4eb5eb11be",
+      "crc32": "1cc8c7be"
+    },
+    {
+      "path": "native-prepared-coverage/coverage.json",
+      "storedFile": "native-prepared-coverage--coverage.json",
+      "bytes": 85100,
+      "sha256": "008cad8282524494a146b963798d971cfd47053e28e657fcd88a1cacbde1db4b",
+      "crc32": "99e7663f"
+    },
+    {
+      "path": "native-prepared-coverage/sampler.json",
+      "storedFile": "native-prepared-coverage--sampler.json",
+      "bytes": 268888,
+      "sha256": "c6ed5c88287ad9fe1ce6afc0368754b5ed3e290d3e1cbb5806de7471b0536a27",
+      "crc32": "fc2f5d2e"
+    }
+  ]
+}

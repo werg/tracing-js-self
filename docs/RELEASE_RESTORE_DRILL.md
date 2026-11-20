@@ -135,6 +135,17 @@ separate step; affected historical rows need original-source/input
 requalification or quarantine. This drill also retains the project's declared
 trusted-source subprocess boundary; it does not certify a new OS sandbox.
 
+## Executed hosted drill
+
+The [executed hosted drill at `53daa93…`](evidence/roadmap-hosted-53daa93/README.md)
+verified the original engineering archive's 200 files / 312,325,944 bytes
+and replayed all 25 positive attempts with zero failures in a separate
+GitHub-hosted job. Its original Node 24.22.3, V8 13.6.233.17-node.63 and npm
+11.9.0 runtime matched exactly. The external job identity is retained beside
+the unmodified restore receipt; the tool's own fresh-machine flag remains
+false. Native requalification was untested and prepared data was checked
+as an archive inventory.
+
 ## Local validation
 
 ```sh

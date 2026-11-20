@@ -1,0 +1,802 @@
+{
+  "accepted": [
+    {
+      "episodeId": "semantic:harness:fba62319ed1f42485126196acd7eb700d0b1ad7f4f6dc8f356bf0d4ab63b3ff1",
+      "generatedTokens": 123,
+      "id": "rectangle-perimeter-pure",
+      "sourceCluster": "component:080454a79068cf56288f751b447e9ed260d3f72c6a1275a6d95876e645292f16",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:44c694c0148fb3c0934d142840d30a52575d8165ece633b5d463776902fb48ca",
+      "generatedTokens": 765,
+      "id": "rectangle-perimeter-callbacks-recovery",
+      "sourceCluster": "component:080454a79068cf56288f751b447e9ed260d3f72c6a1275a6d95876e645292f16",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9966e07ff587344ecfb447b11f50c6558ea1411f04bd5aae71dd5b87fb53a7c1",
+      "generatedTokens": 696,
+      "id": "rectangle-perimeter-repeated",
+      "sourceCluster": "component:080454a79068cf56288f751b447e9ed260d3f72c6a1275a6d95876e645292f16",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:113ecd2227c4c6be01f8cb8c9a3de9da4e15f58eb2cfc90f584e88b0e464e788",
+      "generatedTokens": 98,
+      "id": "rectangular-capacity-pure",
+      "sourceCluster": "component:33caeae7ca931ac696eb5f275ba5009ee68a6b59c3e730fbed3f4a4a60a490a6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:75a84bacf56903d0f714f564117e1b5157c2ee555dee7f5c1f077a2cc141800f",
+      "generatedTokens": 750,
+      "id": "rectangular-capacity-callbacks-recovery",
+      "sourceCluster": "component:33caeae7ca931ac696eb5f275ba5009ee68a6b59c3e730fbed3f4a4a60a490a6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:ddcea9b4baf79046859f22a4d24a4ee72c49052067fb11efa15ec2c351750341",
+      "generatedTokens": 656,
+      "id": "rectangular-capacity-repeated",
+      "sourceCluster": "component:33caeae7ca931ac696eb5f275ba5009ee68a6b59c3e730fbed3f4a4a60a490a6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c84d1ffd4cd4f97955b6b671e8f06cf785eb344de524a5a7574291b20535e6db",
+      "generatedTokens": 141,
+      "id": "squared-distance-pure",
+      "sourceCluster": "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:e7de9edd56573ea617e8ea8af95143b43fc1c052210f61f772e460c106b43a9a",
+      "generatedTokens": 783,
+      "id": "squared-distance-callbacks-recovery",
+      "sourceCluster": "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:7ed191e45f27e5f173c55a16451ec6f977532ccd089a7030d5b452c554006708",
+      "generatedTokens": 732,
+      "id": "squared-distance-repeated",
+      "sourceCluster": "component:a1aca22a005b30bee347b92eb12ac5df8fe0cd43e6193d281902118660f96548",
+      "split": "test"
+    },
+    {
+      "episodeId": "semantic:harness:88e2ace520a39841addf994f4eba36d2a1e35b87db95743e44af7efc9456f761",
+      "generatedTokens": 148,
+      "id": "absolute-distance-pure",
+      "sourceCluster": "component:fb2d044c0e59c89c33a9262602ff563214e85a24873e50974301a65a97b36015",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:e5757df53ed1d1468171fd4cdff59c5ee88137991a19be9d7632a2985571dc43",
+      "generatedTokens": 788,
+      "id": "absolute-distance-callbacks-recovery",
+      "sourceCluster": "component:fb2d044c0e59c89c33a9262602ff563214e85a24873e50974301a65a97b36015",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:ee0232ab2782e82a0004d5878465d091d3bd420a605a40716fb57ab07ad6724f",
+      "generatedTokens": 750,
+      "id": "absolute-distance-repeated",
+      "sourceCluster": "component:fb2d044c0e59c89c33a9262602ff563214e85a24873e50974301a65a97b36015",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:09220a31bd6254e3663e85898d711e089b5a36331497562f80fc35611e90f7a7",
+      "generatedTokens": 171,
+      "id": "weighted-average-pure",
+      "sourceCluster": "component:b260fdc736ef9b4a08e74ffc196402dc235c454e5910b784f92b6c983fdd0093",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:a37c7355111a2256090cad55e7745af423f463538a42a95ce2f25d0a50a0bb81",
+      "generatedTokens": 802,
+      "id": "weighted-average-callbacks-recovery",
+      "sourceCluster": "component:b260fdc736ef9b4a08e74ffc196402dc235c454e5910b784f92b6c983fdd0093",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:61bb16d1e7825f88d44344c8ca8dad91277160b9e401623014f887c86601aebf",
+      "generatedTokens": 786,
+      "id": "weighted-average-repeated",
+      "sourceCluster": "component:b260fdc736ef9b4a08e74ffc196402dc235c454e5910b784f92b6c983fdd0093",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:038307c234aa339ec924107b68302d075a59b657a9230eb9c94ec1749c06197c",
+      "generatedTokens": 158,
+      "id": "unit-conversion-pure",
+      "sourceCluster": "component:e4380665faad6b650dbf7c6e96ef7f5400ad9b6bbf9373378eac5e6d5ba68544",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9bc714d4ddf6ad6f7ebc44a98d7707baa6ee1d61b22c8424f5ac1eb2cbaa0345",
+      "generatedTokens": 896,
+      "id": "unit-conversion-callbacks-recovery",
+      "sourceCluster": "component:e4380665faad6b650dbf7c6e96ef7f5400ad9b6bbf9373378eac5e6d5ba68544",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:7b3c6856dadce83429ecd174f8ef9e7911963e2115d7960a73f6630a978a7c09",
+      "generatedTokens": 774,
+      "id": "unit-conversion-repeated",
+      "sourceCluster": "component:e4380665faad6b650dbf7c6e96ef7f5400ad9b6bbf9373378eac5e6d5ba68544",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:36ccb12c8f9695bdf25815c9750e5a0a2b4820abe2afd8aa71717713771578ab",
+      "generatedTokens": 169,
+      "id": "triangular-series-pure",
+      "sourceCluster": "component:ac8ef5823fc273122acb2fabb68c86604e1aee56e408cd41459099fda0eea2c9",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:a57eb351e4700b2223d02962fd1574027ea983b0c38d7be570720c3f0786eb45",
+      "generatedTokens": 812,
+      "id": "triangular-series-callbacks-recovery",
+      "sourceCluster": "component:ac8ef5823fc273122acb2fabb68c86604e1aee56e408cd41459099fda0eea2c9",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:cf76284a34ef90b412463cd8b644769759693ab453cf130916768ddc018fa0ac",
+      "generatedTokens": 788,
+      "id": "triangular-series-repeated",
+      "sourceCluster": "component:ac8ef5823fc273122acb2fabb68c86604e1aee56e408cd41459099fda0eea2c9",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:54c0851f7588cc49e4e27b32a708fd76aa1df1face7b4c33aa27aa45ed15fe75",
+      "generatedTokens": 148,
+      "id": "modular-clock-pure",
+      "sourceCluster": "component:6303712fdfcd482742bc13c6d1e6109b6bb8153f0603d252565afc199d1ea22f",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:28985e6946e08127945acd26897ac3b465467ebf6643aa0749cf781bf513d75b",
+      "generatedTokens": 785,
+      "id": "modular-clock-callbacks-recovery",
+      "sourceCluster": "component:6303712fdfcd482742bc13c6d1e6109b6bb8153f0603d252565afc199d1ea22f",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:db8211bfc1c4897b41cadd8fe13064ab805aee4ccf99a3084a79f1b51ec12a00",
+      "generatedTokens": 746,
+      "id": "modular-clock-repeated",
+      "sourceCluster": "component:6303712fdfcd482742bc13c6d1e6109b6bb8153f0603d252565afc199d1ea22f",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:30021e1c97f818e91bbec48258fcb3cbf35622d1405453996acdc7ed4f5576c3",
+      "generatedTokens": 48,
+      "id": "flag-intersection-pure",
+      "sourceCluster": "component:09875bb9e11053c27436acf6a1e1576e57c51984908be23967536cfe430976e9",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:97ae934a989c42f8a5bacded21ab6810a60ac2b8be875c796b8c3bf2f25ad4fb",
+      "generatedTokens": 693,
+      "id": "flag-intersection-callbacks-recovery",
+      "sourceCluster": "component:09875bb9e11053c27436acf6a1e1576e57c51984908be23967536cfe430976e9",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c2ac66e97f4ba72891d890f6a301a6aaeb483ab3719969d178307f018d49bb07",
+      "generatedTokens": 560,
+      "id": "flag-intersection-repeated",
+      "sourceCluster": "component:09875bb9e11053c27436acf6a1e1576e57c51984908be23967536cfe430976e9",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:fecfd138837bb62fda7fd09312517b3bea1f84c4a3d8138c26b598b30aef9c1b",
+      "generatedTokens": 49,
+      "id": "flag-union-pure",
+      "sourceCluster": "component:d0e516e1f60b02dbbceab3e53444a1002ca0b0d1eff8946500e841428a6b0aea",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:3e94176b1783ee8adcb4e160849083e9ad291adfafb287caa936356a2efb51d9",
+      "generatedTokens": 701,
+      "id": "flag-union-callbacks-recovery",
+      "sourceCluster": "component:d0e516e1f60b02dbbceab3e53444a1002ca0b0d1eff8946500e841428a6b0aea",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:252ca67f127744aae26303affc63514938108c4246f4473ce0036a335b1a7f8b",
+      "generatedTokens": 564,
+      "id": "flag-union-repeated",
+      "sourceCluster": "component:d0e516e1f60b02dbbceab3e53444a1002ca0b0d1eff8946500e841428a6b0aea",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:4f759fb5f5487fdf794d117d8ffe13a6e8bddbcd0f6aff3914803a5d7c52c8ba",
+      "generatedTokens": 148,
+      "id": "inventory-shortfall-pure",
+      "sourceCluster": "component:f6b1003276dafd2946473bc7ff1540e65324b727d6a018e00b27f56393c4ffe4",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:677e86d4e532f8973a8b9a92647a39bc928ebc197839f120fbfcd2d214a901cd",
+      "generatedTokens": 798,
+      "id": "inventory-shortfall-callbacks-recovery",
+      "sourceCluster": "component:f6b1003276dafd2946473bc7ff1540e65324b727d6a018e00b27f56393c4ffe4",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:20d8de5c3896cbcc000af066e96691da26da0863addc797e5f29e69cce54f132",
+      "generatedTokens": 760,
+      "id": "inventory-shortfall-repeated",
+      "sourceCluster": "component:f6b1003276dafd2946473bc7ff1540e65324b727d6a018e00b27f56393c4ffe4",
+      "split": "validation"
+    },
+    {
+      "episodeId": "semantic:harness:408430d565020c885e651c6c2167971728db4834d3b461c0a1464f7883da2e56",
+      "generatedTokens": 176,
+      "id": "capped-budget-pure",
+      "sourceCluster": "component:106f9ee70d334ae990bbff58b91c339b3362b98ae0acbacd14c1e3900dbaebf3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:e8a40e4e0718a8977fccab4fcadc5ec51220e890ad49e5489074a696fa75076d",
+      "generatedTokens": 829,
+      "id": "capped-budget-callbacks-recovery",
+      "sourceCluster": "component:106f9ee70d334ae990bbff58b91c339b3362b98ae0acbacd14c1e3900dbaebf3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:4446c19f06c1374147cef92017d52671cdfb2265fc561e5125db825b9896e875",
+      "generatedTokens": 858,
+      "id": "capped-budget-repeated",
+      "sourceCluster": "component:106f9ee70d334ae990bbff58b91c339b3362b98ae0acbacd14c1e3900dbaebf3",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:4122959a0bc61fd14f49c6b72d69262b4ee77efc8fee1ccb34c011fd327ef882",
+      "generatedTokens": 249,
+      "id": "overtime-rate-pure",
+      "sourceCluster": "component:b2c1fea4c059f2aefcfdafc304a3cdb953788ddce66edb8b12d96593e8de32a1",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:935a33220f2238301ede39f4a193ac16d9e1303b20759234c28e29ec60724d3d",
+      "generatedTokens": 902,
+      "id": "overtime-rate-callbacks-recovery",
+      "sourceCluster": "component:b2c1fea4c059f2aefcfdafc304a3cdb953788ddce66edb8b12d96593e8de32a1",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9ab031f0b5cbc75c6fcb0710b2b625e31e7afe04486f9b6120c71864e4ec775e",
+      "generatedTokens": 865,
+      "id": "overtime-rate-repeated",
+      "sourceCluster": "component:b2c1fea4c059f2aefcfdafc304a3cdb953788ddce66edb8b12d96593e8de32a1",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:491e73833ce7eca2a1a01373fcf5bba524f30171d3c280d3527a0b8c343a5d8e",
+      "generatedTokens": 125,
+      "id": "midpoint-pure",
+      "sourceCluster": "component:e9c677fe55677a0881b3aacb2f162dc282e0c72245b9adca5d59bfa87ca62b7d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:3caa8af2550c31c9da7663ca4165c8354d7904543db8a9aa489dfb617f8f01f3",
+      "generatedTokens": 767,
+      "id": "midpoint-callbacks-recovery",
+      "sourceCluster": "component:e9c677fe55677a0881b3aacb2f162dc282e0c72245b9adca5d59bfa87ca62b7d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:9ea9dac831242fde16c7e398790568c46e2472b7a5ea41e406b81f3387c52f57",
+      "generatedTokens": 694,
+      "id": "midpoint-repeated",
+      "sourceCluster": "component:e9c677fe55677a0881b3aacb2f162dc282e0c72245b9adca5d59bfa87ca62b7d",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:c892d38cddcc9ddf0d953458dae5287eaa041dce5cf83d5eb041d536ea227e1a",
+      "generatedTokens": 151,
+      "id": "relative-growth-pure",
+      "sourceCluster": "component:a736c179c5d8cd0af33999cad5919ab763f4b3963c941f7e121deaa36c1bfab4",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:2e62e577bd9f5946029ee629a82a42860f54a60286add0f49ed3cfd1c3f52a5a",
+      "generatedTokens": 872,
+      "id": "relative-growth-callbacks-recovery",
+      "sourceCluster": "component:a736c179c5d8cd0af33999cad5919ab763f4b3963c941f7e121deaa36c1bfab4",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:ef06649fa63b63061bede5e8af5418692f313d59a2cebedbde01e081e2ec34ff",
+      "generatedTokens": 746,
+      "id": "relative-growth-repeated",
+      "sourceCluster": "component:a736c179c5d8cd0af33999cad5919ab763f4b3963c941f7e121deaa36c1bfab4",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:2cd2f27b748a13a21409bfec04d973ae4d58f035cfaed799a7a5464212187f68",
+      "generatedTokens": 232,
+      "id": "parity-adjustment-pure",
+      "sourceCluster": "component:fc95c781a8db6b73ae6c2b364e9a9899ecfef0e22a4ef68b5232be1e11fb2ba6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:3a4f3314b98a9130bfcf29ae8a6c457662e766d4b14239f276db518cdf48b9a0",
+      "generatedTokens": 895,
+      "id": "parity-adjustment-callbacks-recovery",
+      "sourceCluster": "component:fc95c781a8db6b73ae6c2b364e9a9899ecfef0e22a4ef68b5232be1e11fb2ba6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:34fca1ce0f9ad0523da9efe3670d8b0d4384d40b17251f50dc86fb78b3b2f125",
+      "generatedTokens": 932,
+      "id": "parity-adjustment-repeated",
+      "sourceCluster": "component:fc95c781a8db6b73ae6c2b364e9a9899ecfef0e22a4ef68b5232be1e11fb2ba6",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:7bd9d7c5e0b7771143ca975ace04ded542359d961593640cc5b53d84436d5f90",
+      "generatedTokens": 348,
+      "id": "rectangle-perimeter-child",
+      "sourceCluster": "component:080454a79068cf56288f751b447e9ed260d3f72c6a1275a6d95876e645292f16",
+      "split": "train"
+    },
+    {
+      "episodeId": "semantic:harness:04b25d2207e329f9c12a1a8058d51e1b38140e30016ae2073e083ed8de18adfd",
+      "generatedTokens": 380,
+      "id": "inventory-shortfall-child",
+      "sourceCluster": "component:f6b1003276dafd2946473bc7ff1540e65324b727d6a018e00b27f56393c4ffe4",
+      "split": "validation"
+    }
+  ],
+  "components": [
+    {
+      "generatedTokens": 1932,
+      "sourceCluster": "component:080454a79068cf56288f751b447e9ed260d3f72c6a1275a6d95876e645292f16",
+      "tokenShare": 0.08028256804487846
+    },
+    {
+      "generatedTokens": 1301,
+      "sourceCluster": "component:09875bb9e11053c27436acf6a1e1576e57c51984908be23967536cfe430976e9",
+      "tokenShare": 0.05406191564512778
+    },
+    {
+      "generatedTokens": 1863,
+      "sourceCluster": "component:106f9ee70d334ae990bbff58b91c339b3362b98ae0acbacd14c1e3900dbaebf3",
+      "tokenShare": 0.07741533347184708
+    },
+    {
+      "generatedTokens": 1504,
+      "sourceCluster": "component:33caeae7ca931ac696eb5f275ba5009ee68a6b59c3e730fbed3f4a4a60a490a6",
+      "tokenShare": 0.062497402867234576
+    },
+    {
+      "generatedTokens": 1679,
+      "sourceCluster": "component:6303712fdfcd482742bc13c6d1e6109b6bb8153f0603d252565afc199d1ea22f",
+      "tokenShare": 0.06976937461043009
+    },
+    {
+      "generatedTokens": 1769,
+      "sourceCluster": "component:a736c179c5d8cd0af33999cad5919ab763f4b3963c941f7e121deaa36c1bfab4",
+      "tokenShare": 0.07350924579264492
+    },
+    {
+      "generatedTokens": 1769,
+      "sourceCluster": "component:ac8ef5823fc273122acb2fabb68c86604e1aee56e408cd41459099fda0eea2c9",
+      "tokenShare": 0.07350924579264492
+    },
+    {
+      "generatedTokens": 1759,
+      "sourceCluster": "component:b260fdc736ef9b4a08e74ffc196402dc235c454e5910b784f92b6c983fdd0093",
+      "tokenShare": 0.07309370455017661
+    },
+    {
+      "generatedTokens": 2016,
+      "sourceCluster": "component:b2c1fea4c059f2aefcfdafc304a3cdb953788ddce66edb8b12d96593e8de32a1",
+      "tokenShare": 0.0837731144816123
+    },
+    {
+      "generatedTokens": 1314,
+      "sourceCluster": "component:d0e516e1f60b02dbbceab3e53444a1002ca0b0d1eff8946500e841428a6b0aea",
+      "tokenShare": 0.05460211926033659
+    },
+    {
+      "generatedTokens": 1828,
+      "sourceCluster": "component:e4380665faad6b650dbf7c6e96ef7f5400ad9b6bbf9373378eac5e6d5ba68544",
+      "tokenShare": 0.07596093912320798
+    },
+    {
+      "generatedTokens": 1586,
+      "sourceCluster": "component:e9c677fe55677a0881b3aacb2f162dc282e0c72245b9adca5d59bfa87ca62b7d",
+      "tokenShare": 0.06590484105547476
+    },
+    {
+      "generatedTokens": 1686,
+      "sourceCluster": "component:fb2d044c0e59c89c33a9262602ff563214e85a24873e50974301a65a97b36015",
+      "tokenShare": 0.0700602534801579
+    },
+    {
+      "generatedTokens": 2059,
+      "sourceCluster": "component:fc95c781a8db6b73ae6c2b364e9a9899ecfef0e22a4ef68b5232be1e11fb2ba6",
+      "tokenShare": 0.08555994182422605
+    }
+  ],
+  "generatedTrainTokens": 24065,
+  "heldOutInputIds": [
+    "squared-distance-pure",
+    "squared-distance-callbacks-recovery",
+    "squared-distance-repeated",
+    "inventory-shortfall-pure",
+    "inventory-shortfall-callbacks-recovery",
+    "inventory-shortfall-repeated",
+    "inventory-shortfall-child"
+  ],
+  "learnedSuccess": null,
+  "nativeAccepted": 50,
+  "nativeDispositions": [
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:fba62319ed1f42485126196acd7eb700d0b1ad7f4f6dc8f356bf0d4ab63b3ff1",
+      "id": "rectangle-perimeter-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:44c694c0148fb3c0934d142840d30a52575d8165ece633b5d463776902fb48ca",
+      "id": "rectangle-perimeter-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9966e07ff587344ecfb447b11f50c6558ea1411f04bd5aae71dd5b87fb53a7c1",
+      "id": "rectangle-perimeter-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:113ecd2227c4c6be01f8cb8c9a3de9da4e15f58eb2cfc90f584e88b0e464e788",
+      "id": "rectangular-capacity-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:75a84bacf56903d0f714f564117e1b5157c2ee555dee7f5c1f077a2cc141800f",
+      "id": "rectangular-capacity-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:ddcea9b4baf79046859f22a4d24a4ee72c49052067fb11efa15ec2c351750341",
+      "id": "rectangular-capacity-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c84d1ffd4cd4f97955b6b671e8f06cf785eb344de524a5a7574291b20535e6db",
+      "id": "squared-distance-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:e7de9edd56573ea617e8ea8af95143b43fc1c052210f61f772e460c106b43a9a",
+      "id": "squared-distance-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:7ed191e45f27e5f173c55a16451ec6f977532ccd089a7030d5b452c554006708",
+      "id": "squared-distance-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:88e2ace520a39841addf994f4eba36d2a1e35b87db95743e44af7efc9456f761",
+      "id": "absolute-distance-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:e5757df53ed1d1468171fd4cdff59c5ee88137991a19be9d7632a2985571dc43",
+      "id": "absolute-distance-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:ee0232ab2782e82a0004d5878465d091d3bd420a605a40716fb57ab07ad6724f",
+      "id": "absolute-distance-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:09220a31bd6254e3663e85898d711e089b5a36331497562f80fc35611e90f7a7",
+      "id": "weighted-average-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:a37c7355111a2256090cad55e7745af423f463538a42a95ce2f25d0a50a0bb81",
+      "id": "weighted-average-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:61bb16d1e7825f88d44344c8ca8dad91277160b9e401623014f887c86601aebf",
+      "id": "weighted-average-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:038307c234aa339ec924107b68302d075a59b657a9230eb9c94ec1749c06197c",
+      "id": "unit-conversion-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9bc714d4ddf6ad6f7ebc44a98d7707baa6ee1d61b22c8424f5ac1eb2cbaa0345",
+      "id": "unit-conversion-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:7b3c6856dadce83429ecd174f8ef9e7911963e2115d7960a73f6630a978a7c09",
+      "id": "unit-conversion-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:36ccb12c8f9695bdf25815c9750e5a0a2b4820abe2afd8aa71717713771578ab",
+      "id": "triangular-series-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:a57eb351e4700b2223d02962fd1574027ea983b0c38d7be570720c3f0786eb45",
+      "id": "triangular-series-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:cf76284a34ef90b412463cd8b644769759693ab453cf130916768ddc018fa0ac",
+      "id": "triangular-series-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:54c0851f7588cc49e4e27b32a708fd76aa1df1face7b4c33aa27aa45ed15fe75",
+      "id": "modular-clock-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:28985e6946e08127945acd26897ac3b465467ebf6643aa0749cf781bf513d75b",
+      "id": "modular-clock-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:db8211bfc1c4897b41cadd8fe13064ab805aee4ccf99a3084a79f1b51ec12a00",
+      "id": "modular-clock-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:30021e1c97f818e91bbec48258fcb3cbf35622d1405453996acdc7ed4f5576c3",
+      "id": "flag-intersection-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:97ae934a989c42f8a5bacded21ab6810a60ac2b8be875c796b8c3bf2f25ad4fb",
+      "id": "flag-intersection-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c2ac66e97f4ba72891d890f6a301a6aaeb483ab3719969d178307f018d49bb07",
+      "id": "flag-intersection-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:fecfd138837bb62fda7fd09312517b3bea1f84c4a3d8138c26b598b30aef9c1b",
+      "id": "flag-union-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:3e94176b1783ee8adcb4e160849083e9ad291adfafb287caa936356a2efb51d9",
+      "id": "flag-union-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:252ca67f127744aae26303affc63514938108c4246f4473ce0036a335b1a7f8b",
+      "id": "flag-union-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:4f759fb5f5487fdf794d117d8ffe13a6e8bddbcd0f6aff3914803a5d7c52c8ba",
+      "id": "inventory-shortfall-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:677e86d4e532f8973a8b9a92647a39bc928ebc197839f120fbfcd2d214a901cd",
+      "id": "inventory-shortfall-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:20d8de5c3896cbcc000af066e96691da26da0863addc797e5f29e69cce54f132",
+      "id": "inventory-shortfall-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:408430d565020c885e651c6c2167971728db4834d3b461c0a1464f7883da2e56",
+      "id": "capped-budget-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:e8a40e4e0718a8977fccab4fcadc5ec51220e890ad49e5489074a696fa75076d",
+      "id": "capped-budget-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:4446c19f06c1374147cef92017d52671cdfb2265fc561e5125db825b9896e875",
+      "id": "capped-budget-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:4122959a0bc61fd14f49c6b72d69262b4ee77efc8fee1ccb34c011fd327ef882",
+      "id": "overtime-rate-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:935a33220f2238301ede39f4a193ac16d9e1303b20759234c28e29ec60724d3d",
+      "id": "overtime-rate-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9ab031f0b5cbc75c6fcb0710b2b625e31e7afe04486f9b6120c71864e4ec775e",
+      "id": "overtime-rate-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:491e73833ce7eca2a1a01373fcf5bba524f30171d3c280d3527a0b8c343a5d8e",
+      "id": "midpoint-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:3caa8af2550c31c9da7663ca4165c8354d7904543db8a9aa489dfb617f8f01f3",
+      "id": "midpoint-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:9ea9dac831242fde16c7e398790568c46e2472b7a5ea41e406b81f3387c52f57",
+      "id": "midpoint-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:c892d38cddcc9ddf0d953458dae5287eaa041dce5cf83d5eb041d536ea227e1a",
+      "id": "relative-growth-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:2e62e577bd9f5946029ee629a82a42860f54a60286add0f49ed3cfd1c3f52a5a",
+      "id": "relative-growth-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:ef06649fa63b63061bede5e8af5418692f313d59a2cebedbde01e081e2ec34ff",
+      "id": "relative-growth-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:2cd2f27b748a13a21409bfec04d973ae4d58f035cfaed799a7a5464212187f68",
+      "id": "parity-adjustment-pure",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:3a4f3314b98a9130bfcf29ae8a6c457662e766d4b14239f276db518cdf48b9a0",
+      "id": "parity-adjustment-callbacks-recovery",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:34fca1ce0f9ad0523da9efe3670d8b0d4384d40b17251f50dc86fb78b3b2f125",
+      "id": "parity-adjustment-repeated",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:7bd9d7c5e0b7771143ca975ace04ded542359d961593640cc5b53d84436d5f90",
+      "id": "rectangle-perimeter-child",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    },
+    {
+      "duplicateOf": null,
+      "episodeId": "semantic:harness:04b25d2207e329f9c12a1a8058d51e1b38140e30016ae2073e083ed8de18adfd",
+      "id": "inventory-shortfall-child",
+      "quarantineReason": null,
+      "status": "native_prepared"
+    }
+  ],
+  "optimizerSteps": 0,
+  "policy": {
+    "componentIdentity": "authenticated-frozen-source-components",
+    "enabled": false,
+    "maxFamilyShare": null,
+    "maxFamilyTokens": null,
+    "scope": "training-only",
+    "tokenMeasurement": "fresh-native-generatedTokens"
+  },
+  "schema": "semantic-prepared-training-selection/1",
+  "status": "verified",
+  "violations": []
+}

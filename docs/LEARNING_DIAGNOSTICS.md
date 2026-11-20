@@ -167,9 +167,20 @@ scalar objective against explicitly enumerated native parameter owners using
 never steps an optimizer. Lexical, structural/terminal, shared embedding and
 context encoder ownership must come from the companion model, not substring
 heuristics. Its graph and PyTorch runtime are required; absent hooks are not
-reported as zero gradients or a successful diagnosis. Update norms and real
-native conditional capture still require integration with the chosen immutable
-companion checkout.
+reported as zero gradients or a successful diagnosis. Per-objective native
+gradient attribution and update norms still require measured integration with
+the chosen immutable companion checkout.
+
+The [actual native conditional probe](NATIVE_CONDITIONAL_PROBE.md) now captures
+the Gaussian mean and log-scale through both real model paths at one authenticated
+physical checkpoint. The [completed measurement at `cb67ed1…` / `2725842…`](evidence/native-conditionals-cb67ed1/README.md)
+**failed parity**: the maximum absolute difference across 256 compared
+coordinates was 2.4304623. Encoded request controls agree, but metadata, track
+ownership and lifecycle history differ. Capture stops before the Gaussian facet
+draw and downstream rendering;
+serving has already evaluated its singleton text-modality categorical. This
+measurement localizes a conditioning blocker. It does not establish downstream
+categorical parity, per-objective gradients or successful learned execution.
 
 ## Verification and remaining learning gates
 
@@ -177,9 +188,15 @@ Run `python test/test_learning_diagnostics.py` and
 `python tools/native-consumer/test_optimization_measurement.py` for the local
 accounting, mismatch and retained-evidence regressions. These use synthetic
 codec/conditional fixtures and original retained JSON; they are infrastructure
-evidence. Current-source native qualification, an actual paired conditional
-capture, and the L1 ten-restart/L2 held-in convergence experiments remain separate
-gates requiring their pinned assets and a frozen compute budget.
+evidence. The completed actual Gaussian comparison has its own exact source,
+consumer and checkpoint identities. The
+[hosted qualification at `53daa93…` / `9a9dd35…`](evidence/roadmap-hosted-53daa93/README.md)
+completed all five source/native corpus jobs and repeated the failed Gaussian
+measurement. Downstream categorical comparisons and the L1 ten-restart/L2
+held-in convergence experiments remain separate gates requiring their own
+pinned assets and, for optimization, a frozen compute budget. Resolve the
+measured conditioning differences before interpreting a later run as a
+convergence-only experiment.
 
 ## Reproduced native input mismatch before neural execution
 
