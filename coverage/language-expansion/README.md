@@ -14,16 +14,18 @@ unmeasured later implementation changes.
 | --- | --- | --- |
 | [Complete source/native populations and exact costs](native-v8-b66c19b-all/README.md) | 665/665 expansion, 23/23 interoperability and 11/11 gallery cases passed source/native admission and exact token metering | All source/admitted artifacts, native receipts, exact inputs, serializer/token records, reference evidence and paired historical comparison retained |
 | [Frozen producer regression](producer-regression-9d4f6b3/README.md) | 1,834 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `9d4f6b3`; full logs and clean identities retained. A subsequent 24/24 targeted run at `562f6f2` has separate coordinator-reported identity and original logs. |
+| [Expanded-contract targeted checks](producer-contract-012c9fe/README.md) | Original six-file run: 42 passes, one timing failure, one timeout cancellation; all 5 contract checks passed. Separate two-file timing follow-up: 24/24 passed. | Original clean `012c9fe` failure retained. Follow-up identity is coordinator-reported patch subsequently published as `c0524b4`, not an instrumented clean-commit run. |
 | [Latest production dataset](dataset-v8-492328f/README.md) | 34 freshly admitted episodes and 898 complete examples, with actual tokenizer re-encoding, masks, EOS and frozen component splits checked | Producer `492328f`, consumer `cb311db`; fresh 23-case interoperability and 11-case gallery admission; zero optimizer steps |
 
-Focused Number populations have separate exact receipts and do not change
-those corpus denominators. The current abrupt pair has been freshly readmitted
-under the final expanded contract:
+Focused protocol populations have separate exact receipts and do not change
+those corpus denominators. The current rows below were freshly measured under
+the final expanded contract:
 
 | Supplementary evidence | Measured result | Scope |
 | --- | --- | --- |
 | [Direct and nested Number callback throws](number-abrupt-012c9fe/README.md) | 2/2 fresh source/native/token admissions | Producer `012c9fe`, consumer `39c4036`; final contract, exact abrupt completions and suppressed fallback. The earlier [3a1992b pair](number-abrupt-3a1992b/README.md) retains its own historical receipts. |
 | [Number callback catch/finally](number-completion-012c9fe/README.md) | 13 declared: 12 fresh source/native/token admissions and one explicit Symbol cleanup refusal | Producer `012c9fe`, consumer `39c4036`; the current suite removes the former loop-target refusal. The earlier [14-case ddaac82 population](number-completion-ddaac82/README.md) remains historical. |
+| [Flat iterable bindings](iterable-binding-012c9fe/README.md) | 17 declared: 14 fresh source/native/token admissions and three explicit source refusals | Producer `012c9fe`, consumer `39c4036`; flat initialized variable ArrayPatterns, elision, defaults, rest, cached next and cleanup behavior |
 
 All eight former enumeration refusals and the previous generator continuation
 failure pass in this new full run. The independent consumer passed 214 focused
