@@ -71,7 +71,10 @@ export {CONSTRUCTION_STATE_V8_SCHEMA,CONSTRUCTION_RECORD_FIELDS,CONSTRUCTION_STA
   CALLABLE_STATE_V8_FIELDS,CONSTRUCTION_FRAME_V8_FIELDS} from './protocol-construction-v8.js';
 export {CONSTRUCTION_SOURCE_PROFILE_V8} from './protocol-construction-source-v8.js';
 export {NUMBER_STATE_V8_SCHEMA,NUMBER_RECORD_FIELDS,NUMBER_OPERATION_FIELDS} from './protocol-number-v8.js';
+export {NUMBER_SOURCE_PROFILE_V8} from './protocol-number-source-v8.js';
 export {GENERATOR_PROFILE_V8,GENERATOR_RECORD_FIELDS,GENERATOR_HEAP_FIELDS} from './protocol-generator-v8.js';
+export {GENERATOR_SOURCE_PROFILE_V8} from './protocol-generator-source-v8.js';
 export {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_STATE_V8,PROMISE_JOIN_RECORD_FIELDS} from './protocol-promise-join-v8.js';
 export {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8,PROMISE_EXECUTOR_RECORD_FIELDS} from './protocol-promise-executor-v8.js';
 export {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_RECORD_FIELDS,PROXY_HEAP_FIELDS} from './protocol-proxy-v8.js';
+export {PROXY_SOURCE_PROFILE_V8} from './protocol-proxy-source-v8.js';
