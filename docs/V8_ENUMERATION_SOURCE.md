@@ -79,3 +79,9 @@ inputs, descriptor/prototype shadowing, lexical shadowing, abrupt exits,
 checkpoint continuation, false-key rejection and explicit mutation refusals.
 The paired native consumer must independently replay these new records before
 an expanded source artifact can be admitted for production training.
+
+The [final paired qualification](../coverage/language-expansion/native-v8-b66c19b-all/README.md)
+at producer `b66c19b` / consumer `6adf99f` admits all eight previously refused
+frozen own-key inputs and the separate `source-for-in-own-keys` interoperability
+fixture. Source/native receipts, exact token counts, checkpoint checks and the
+new split-bound training artifact are retained at those exact revisions.

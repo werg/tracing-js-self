@@ -2,8 +2,34 @@
 
 ## Current v8 qualification
 
-Evidence directories describe their exact measured revisions; a later commit
-containing a report does not change its source or consumer identity.
+Evidence directories name their exact measured revisions. The final implemented
+candidate was measured at producer `b66c19be960f114b69787746b2487e6f23a73577`
+and consumer `6adf99f1301557ee5b95269581a3acd4162496b4`. Later evidence and
+documentation commits preserve those identities.
+
+| Evidence | Measured result | Scope |
+| --- | --- | --- |
+| [Complete source/native populations and exact costs](native-v8-b66c19b-all/README.md) | 665/665 expansion, 23/23 interoperability and 11/11 gallery cases passed source/native admission and exact token metering | All source/admitted artifacts, native receipts, exact inputs, serializer/token records, reference evidence and paired historical comparison retained |
+| [Final producer regression](producer-regression-b66c19b/README.md) | 1,778 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `b66c19b`; full logs and code/test identities retained |
+| [Fresh production dataset](dataset-v8-b66c19b/README.md) | 34 freshly admitted episodes and 898 complete examples, with actual tokenizer re-encoding, masks, EOS and frozen component splits checked | Same producer/consumer; zero optimizer steps |
+
+All eight former enumeration refusals and the previous generator continuation
+failure pass in this new full run. The independent consumer passed 214 focused
+tests without skips. Expansion coverage contains 458 compact-containing episodes
+and 207 wholly detailed episodes; detailed targets remain 86.58% of generated
+tokens. On 42 exactly matched historical cases, total flat tokens decrease
+90.21% and generated tokens decrease 4.12%. Eight individual cases cost more;
+the full comparison preserves them. The population denominators are separate
+and may contain overlapping source cases.
+
+External-model comprehension and execution, model optimization, native serving
+latency/cache behavior and default promotion remain unqualified. These source,
+native, tokenizer and dataset results do not establish learned-execution gains.
+
+## Historical qualifications
+
+The original reports below are unchanged. Their failures, refusals, skips and
+measured pins describe those runs; the newer qualification does not rewrite them.
 
 | Evidence | Measured result | Scope |
 | --- | --- | --- |
@@ -14,14 +40,11 @@ containing a report does not change its source or consumer identity.
 | [Production gallery dataset](dataset-v8-9d76176/README.md) | 11 admitted episodes, 97 complete examples; independently re-encoded prompts/targets, masks, EOS and split bindings | Exact producer `9d76176`, consumer `5a22bc8`; zero optimizer steps |
 | [Interrupted native run](native-v8-2f9bca8-interrupted/README.md) | 153 recorded attempts: 16 admitted, 137 failed; 512 untested | Historical producer `2f9bca8`, consumer `5a22bc8`; failures and exact transport bytes preserved |
 
-The full population and paired historical cost comparison are retained. The
-native continuation failure and eight bounded enumeration refusals remain
-visible; a later repair requires fresh qualification. Of the 657 source passes,
-458 have compact regions, while detailed targets still contribute 86.03% of
-generated tokens. The paired total reduction is mainly reduced submitted
-context, and eight individual matched cases cost more. External-model
-comprehension, completed model execution,
-native serving latency/cache behavior and default promotion remain unqualified.
+The `8d1f7b5` expansion run retains its 657 source passes, 656 native admissions,
+eight source refusals and one native failure. Its 458 compact-containing episodes
+and 86.03% detailed token share remain historical measurements. The interrupted
+`ea4ccff` prefix is separately retained in the new qualification's history archive
+with all 102 committed expansion attempts and 563 untested or uncommitted cases.
 
 ## Baseline before expansion
 

@@ -251,11 +251,22 @@ fixture; that fixture is not an independent native-consumer execution and
 does not produce a retained admission artifact. Actual native qualification
 and model execution require their own pinned run evidence.
 
-The [fresh interoperability and gallery qualification](../coverage/language-expansion/native-v8-8d1f7b5/README.md)
-retains actual production-tokenizer receipts for all 22 interoperability and 11
-gallery cases at producer `8d1f7b5` / consumer `be3a8d7`. The independently
-verified [production gallery dataset](../coverage/language-expansion/dataset-v8-9d76176/README.md)
-contains 11 episodes and 97 complete causal examples, with fresh native admission
-after split binding at producer `9d76176` / consumer `5a22bc8`. Its exact earlier
-pins are intentional and do not qualify later code. Neither run performs model
-optimization or establishes learned execution.
+The [final source/native qualification](../coverage/language-expansion/native-v8-b66c19b-all/README.md)
+retains actual production-tokenizer and native-packing receipts for all 665
+expansion cases, 23 interoperability cases and 11 original-gallery cases at
+producer `b66c19b` / consumer `6adf99f`.
+
+The independently verified
+[current production dataset](../coverage/language-expansion/dataset-v8-b66c19b/README.md)
+contains 34 episodes and 898 complete causal examples, with fresh source/native
+admission after split binding. Its 31 components do not cross train, validation
+or test splits. All 898 prompts and targets were re-encoded and byte-round-tripped
+with the pinned actual tokenizer; generated tokens and EOS are supervised, while
+prompt labels remain `-100`. It contains 29,374 generated tokens including 898
+EOS tokens. No optimizer steps were performed and learned success remains
+untested.
+
+Earlier [33-episode](../coverage/language-expansion/dataset-v8-8d1f7b5/README.md)
+and [11-episode](../coverage/language-expansion/dataset-v8-9d76176/README.md)
+exports retain their own exact pins and evidence. Their receipts are not reused
+to admit the changed dataset or later producer/consumer revisions.

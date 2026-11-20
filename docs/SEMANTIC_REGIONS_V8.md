@@ -14,20 +14,27 @@ work proposed in [the language coverage plan](LANGUAGE_COVERAGE_PLAN.md).
 against independent source observations and validates its public projection.
 Recognition by a parser or pure lowerer alone does not satisfy that gate.
 
-Fresh [native qualification](../coverage/language-expansion/native-v8-8d1f7b5/README.md)
-at producer `8d1f7b5` and consumer `be3a8d7` passed all **22 interoperability
-cases and 11 retained-gallery cases**, including live source authority, public
-replay, contexts, continuation, physical masks and the pinned production
-tokenizer. Exact flat costs and native packing are retained for every case.
-The separate [665-case expansion run](../coverage/language-expansion/native-v8-8d1f7b5-all/README.md)
-retains 657 source passes, 656 native admissions, eight explicit enumeration
-refusals and one native continuation failure. Its exact costs and paired
-historical comparison are complete; the failure still needs fresh qualification
-after repair. These receipts qualify only their recorded revisions and inputs.
-**External model
-comprehension and execution remain unmeasured**, and the production default
-remains unchanged. Exact receipt requirements are in
-[the training contract](SEMANTIC_V8_TRAINING.md#native-admission).
+The final [source/native qualification and exact costs](../coverage/language-expansion/native-v8-b66c19b-all/README.md)
+measure producer `b66c19b` and consumer `6adf99f`. All **665 expansion cases,
+23 interoperability cases and 11 original-gallery cases** passed source and
+independent native admission. Every case also has exact production-tokenizer
+costs and native packing receipts. The expanded enumeration profile closes the
+eight previously refused cases; the repaired consumer admits the previously
+failing generator-delegation continuation. Earlier receipts retain their own
+original failures and pins.
+
+The [frozen producer regression](../coverage/language-expansion/producer-regression-b66c19b/README.md)
+passed **1,778 tests**, with six conditional native-environment skips and zero
+failures, plus all five contract generators and eight reference fixtures. The
+independent consumer passed **214 tests without skips** at the same paired
+revisions. The [production dataset](../coverage/language-expansion/dataset-v8-b66c19b/README.md)
+freshly admitted all **34 episodes and 898 complete examples** after binding
+component splits, with independently re-encoded tokens and generated-only masks.
+
+These finite engineering and data-admission gates are complete for the declared
+bounded candidate. **External model comprehension and execution remain
+unmeasured**, and v6 remains the production default. Exact receipt requirements
+are in [the training contract](SEMANTIC_V8_TRAINING.md#native-admission).
 
 | Profile / plan area | Producer and source status | Explicit boundary |
 | --- | --- | --- |
@@ -178,20 +185,27 @@ universal equivalence or a measured model-comprehension improvement.
 
 ## Remaining promotion gates
 
-The complete 22-case interoperability and 11-case gallery runs have retained
-source/native admission, exact tokenizer costs and native packing. The
-665-case expansion run and its 42-pair historical comparison are also retained,
-including one native failure and eight explicit source refusals. Detailed
-targets account for 86.03% of generated expansion tokens. The frozen populations
-and reproduction commands are documented in
-[the evaluation protocol](LANGUAGE_EXPANSION_EVALUATION.md). The combined
-[production dataset export](../coverage/language-expansion/dataset-v8-8d1f7b5/README.md)
-retains all 33 gallery/interoperability episodes and 858 complete examples,
-exact masks and fresh admission after split binding at its recorded revisions.
+The complete expansion, interoperability and gallery populations have retained
+source/native admission, exact tokenizer costs and native packing at producer
+`b66c19b` and consumer `6adf99f`. In the 665-case expansion population,
+**458 episodes contain compact regions** and
+**207 remain wholly detailed**; detailed targets still
+account for **86.58% of generated tokens**. The 42 matched historical cases
+use **90.21% fewer total flat tokens** and **4.12% fewer
+generated tokens**, with all eight individual flat-cost regressions retained.
+The total reduction is chiefly reduced submitted context. These comparisons
+cover the matched source/entry/input cases, not unmeasured historical populations.
 
-External model comprehension, next-step accuracy, completed execution and cost
-per successful model execution remain **unmeasured**. Default promotion remains
-**unqualified** until the declared correctness, native, dataset, tokenizer and
-model gates pass with exact pins and retained denominators. The existing v7
-candidate and historical v6/v7 evidence keep their original identities while
-these gates are evaluated.
+The [evaluation protocol](LANGUAGE_EXPANSION_EVALUATION.md) defines the frozen
+populations and reproduction commands. The combined
+[production dataset](../coverage/language-expansion/dataset-v8-b66c19b/README.md)
+contains all 34 gallery/interoperability episodes and 898 complete examples,
+with fresh source/native admission after split binding and zero optimizer steps.
+
+External model comprehension, next-step accuracy, completed execution, cost per
+successful model execution, native serving latency and cache reuse remain
+**unmeasured**. Default promotion remains **unqualified** until those declared
+gates pass. The plan's [candidate-shipping rule](LANGUAGE_COVERAGE_PLAN.md#104-default-promotion-should-be-coordinated)
+permits this implemented, qualified candidate while those measurements remain
+unavailable. V6 stays the production default; historical v6/v7 and earlier v8
+receipts keep their original identities.

@@ -21,6 +21,15 @@ the candidate does not claim unrestricted ECMAScript coverage. The
 [Promise scheduling profile](docs/V8_PROMISE_SCHEDULER.md) documents the resolution
 and cleanup jobs that require separate checked protocols.
 
+The [final engineering qualification](coverage/language-expansion/native-v8-b66c19b-all/README.md)
+passes all 665 expansion cases, 23 interoperability cases and 11 original-gallery
+cases through source/native admission and exact token metering at producer
+`b66c19b` / consumer `6adf99f`. The
+[verified dataset](coverage/language-expansion/dataset-v8-b66c19b/README.md)
+contains 34 freshly admitted episodes and 898 complete examples. Full producer
+regression and independent consumer validation are retained with their exact
+revisions. Model-learning and default-promotion gates remain separate.
+
 ```js
 import {verifyRegionTrainingCase} from 'tracing-js-self/semantic';
 
@@ -42,8 +51,9 @@ node tools/qualify-semantic-v8.mjs --out ../v8-source-check \
 ```
 
 The interoperability command includes every declared protocol source example.
-The full benchmark retains all 665 attempts, including refusals; the original
-11-case gallery is a separate population. [Evaluation instructions](docs/LANGUAGE_EXPANSION_EVALUATION.md)
+The full benchmark retains all 665 declared attempts and their actual
+dispositions; the original 11-case gallery is a separate population.
+[Evaluation instructions](docs/LANGUAGE_EXPANSION_EVALUATION.md)
 cover exact token measurements and independent native admission. Source checks,
 native replay and token accounting do not establish model comprehension or
 learned execution; those measurements remain separate. The existing default

@@ -5,9 +5,16 @@
 `selected-harness/2`.
 
 The explicitly selected [v8 candidate](SEMANTIC_REGIONS_V8.md) adds checked
-compositional regions and bounded protocol source profiles. Its qualification
-and dataset tools are available separately; external model results and the
-default-promotion decision remain independent gates.
+compositional regions and bounded protocol source profiles. Its
+[final engineering qualification](../coverage/language-expansion/native-v8-b66c19b-all/README.md)
+at producer `b66c19b` / consumer `6adf99f` passes all 665 expansion, 23
+interoperability and 11 gallery cases, with exact tokens and native packing.
+The [producer regression](../coverage/language-expansion/producer-regression-b66c19b/README.md)
+passes 1,778 tests with six conditional skips; the consumer passes 214 tests
+without skips. The [verified dataset](../coverage/language-expansion/dataset-v8-b66c19b/README.md)
+contains 34 freshly admitted episodes and 898 complete examples. External model
+results, native serving performance and default promotion remain independent,
+unqualified gates; zero optimizer steps were performed for this dataset.
 
 The canonical target is a **source-grounded semantic account**: calculations
 are checked expressions paired with the value computed at that point;
