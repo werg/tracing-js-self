@@ -233,10 +233,43 @@ measured script interactions out of 12 declared. The eight missing interaction
 serializers stay unmeasured. The 624 family executions and two module cases
 have no retained baseline serializer costs and receive no inferred token counts.
 Paired comparisons must name their matched subset. The report records the exact
-source, entry and initial graph embedded in each first prompt for pairing;
-it does not independently reconstruct the complete historical host schedule.
+source, entry and initial graph embedded in each first prompt. Pairing validates
+the rooted graph, renames object IDs consistently, and preserves reachable
+values, aliases, cycles, property order and null prototypes. It also retains
+the exact original graph digest and the count of unreachable internal objects,
+such as an allocated rest-parameter array. It does not independently reconstruct
+the complete historical host schedule.
 Retrospective tokenization does not upgrade historical source/native admission
 or measure model comprehension, execution, latency or cache reuse.
+
+For a paired comparison, create a JSON manifest of current cost/qualification
+directory pairs. Paths resolve relative to the manifest file:
+
+```json
+{
+  "schema": "semantic-cost-comparison-inputs/1",
+  "populations": [
+    {"id": "all", "costs": "v8-costs-all", "qualification": "v8-native-all"},
+    {"id": "gallery", "costs": "v8-costs-gallery", "qualification": "v8-native-gallery"},
+    {"id": "interoperability", "costs": "v8-costs-interop", "qualification": "v8-native-interop"}
+  ]
+}
+```
+
+```sh
+node tools/compare-serving-costs.mjs --before ../expansion-baseline-token-costs \
+  --after-manifest ../cost-comparison-inputs.json --out ../paired-serving-costs.json
+```
+
+The comparator verifies current qualification inventories, source artifacts,
+cost file hashes, tokenizer identity and EOS, then pairs matching case IDs only
+when source, entry and rooted initial input agree. It keeps the separate
+declared denominators for all, gallery and interoperability; missing baseline
+cases, changed inputs and unmeasured current cases never become zero-cost rows.
+Ratios cover the explicitly listed measured pairs only. Both per-population
+and aggregate results include any increases in flat token cost. Historical
+families/modules and the interoperability population have no baseline cost
+unless an actual retained baseline is supplied.
 
 The actual v7 selector also records submitted prompt tokens, peak context,
 generation/verification time, failed attempts and retries. A runtime failure
