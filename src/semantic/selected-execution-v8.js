@@ -41,7 +41,7 @@ function driverFacade(bridge,contexts,predictions){
  * transitions; a separate private scorer checks correspondence after rollout. */
 export class RegionSelectedModelDriver extends SelectedModelDriver {
   constructor({select,harness=new RegionExecutionHarness(),maxSelections=4096,maxOutstanding=64,
-      maxStaleRetries=8,origin='model',checkpointIdentity=null,tokenizerIdentity=null}={}){
+      maxStaleRetries=8,origin='model',checkpointIdentity=null,tokenizerIdentity=null,signal=null}={}){
     demand(typeof select==='function'&&['model','engineering'].includes(origin),'selector and explicit origin required');
     if(origin==='model')demand(typeof select.commit==='function'&&HASH.test(checkpointIdentity??'')&&HASH.test(tokenizerIdentity??''),
       'model selections require pinned identities and native commit acknowledgments');
@@ -89,12 +89,14 @@ export class RegionSelectedModelDriver extends SelectedModelDriver {
     };
     const onCommitted=async({invocationId,record,selection})=>{
       const attempt=attempts.at(-1),start=performance.now();
+      attempt.status='acknowledging';
       try{
         if(typeof select.commit==='function'){
           const receipt=await select.commit({...packet(invocationId),record,selection:copy(selection)});
           demand(receipt?.committed===true,'native model did not acknowledge the selected record');
           attempt.commitReceipt=copy(receipt);
         }else demand(origin==='engineering'&&!selection?.modelSelected,'model selection lacks a native acknowledgement');
+        if(fatal)throw fatal;
         acknowledged.set(invocationId,{record,selection:copy(selection)});
         attempt.status='accepted';
       }catch(error){attempt.status='commit-failed';attempt.failure=String(error.message);fatal=error;throw error;}
@@ -121,8 +123,8 @@ export class RegionSelectedModelDriver extends SelectedModelDriver {
       const invocationId=previous.context.invocationId,
         reason=driver.rejections.at(-1)?.error??'selected execution cancelled';
       fatal??=new Error(reason);
-      const attempt=attempts.findLast(row=>row.invocationId===invocationId&&row.status==='decoded');
-      if(attempt){attempt.status='semantic-rejected';attempt.failure=reason;}
+      const attempt=attempts.findLast(row=>row.invocationId===invocationId&&['decoded','acknowledging'].includes(row.status));
+      if(attempt){attempt.status=attempt.status==='acknowledging'?'commit-failed':'semantic-rejected';attempt.failure=reason;}
       predictions.delete(invocationId);release();
       return select.cancel?.({...packet(invocationId),reason});
     };
@@ -138,7 +140,10 @@ export class RegionSelectedModelDriver extends SelectedModelDriver {
         return null; // The v8 acknowledgement already checked original native bytes.
       }});
     driver=this;this.bridge=harness;this.contexts=contexts;this.attempts=attempts;
-    this.originalSelect=select;this.origin=origin;
+    this.originalSelect=select;this.origin=origin;this.executionSignal=signal;
+  }
+  runInvocation(invocationId,{signal=this.executionSignal??null}={}){
+    return super.runInvocation(invocationId,{signal});
   }
   prefix(invocationId){
     return {session:this.bridge.inner.sessionId,public:this.bridge.exportEpisode(),
@@ -189,14 +194,14 @@ export async function runSelectedRegionExecution({initialPublic,fixture={calls:[
       .then(value=>{meta.closeSubscription(args[0]);return value;});
     return result;
   };
-  const driver=new RegionSelectedModelDriver({select,harness,maxSelections:maxPredictions,maxStaleRetries,maxOutstanding,
-    origin,checkpointIdentity,tokenizerIdentity}),
+  const abort=new AbortController(),driver=new RegionSelectedModelDriver({select,harness,
+    maxSelections:maxPredictions,maxStaleRetries,maxOutstanding,origin,checkpointIdentity,tokenizerIdentity,signal:abort.signal}),
     invocationId=initialPublic.timeline.find(row=>row.kind==='invocation').fields.invocationId,
-    abort=new AbortController(),started=performance.now();
-  let inferenceIdentity=null,failure=null,cleanupFailure=null,outcome=null;
+    started=performance.now();
+  let inferenceIdentity=null,failure=null,cleanupFailure=null,outcome=null,deadlineExceeded=false;
   let rejectAbort;const aborted=new Promise((_,reject)=>{rejectAbort=reject;});void aborted.catch(()=>{});
   const onAbort=()=>rejectAbort(abort.signal.reason);abort.signal.addEventListener('abort',onAbort,{once:true});
-  const timer=setTimeout(()=>abort.abort(new Error('Selected v8 execution deadline exceeded')),timeoutMs);
+  const timer=setTimeout(()=>{deadlineExceeded=true;abort.abort(new Error('Selected v8 execution deadline exceeded'));},timeoutMs);
   try{
     inferenceIdentity=await Promise.race([select.initialize({seed,checkpointIdentity,tokenizerIdentity}),aborted]);
     demand(inferenceIdentity?.checkpointIdentity===checkpointIdentity&&inferenceIdentity.tokenizerIdentity===tokenizerIdentity&&
@@ -207,19 +212,24 @@ export async function runSelectedRegionExecution({initialPublic,fixture={calls:[
     broker.finish();
   }catch(error){failure={category:error.category??error.name,message:String(error.message),evidence:copy(error.evidence??null)};}
   finally{
+    if(driver.running.size&&!abort.signal.aborted)abort.abort(new Error('Selected v8 execution closed'));
     clearTimeout(timer);abort.signal.removeEventListener('abort',onAbort);driver.close();broker.abort();
     await Promise.allSettled([...driver.running.values()].map(row=>row.task));
-    try{await select.cancel?.({session:harness.inner.sessionId,public:harness.exportEpisode(),
-      contexts:copy(driver.contexts),invocationId,reason:failure?'failed':'completed'});}
+    let cleanupTimer;
+    try{await Promise.race([select.cancel?.({session:harness.inner.sessionId,public:harness.exportEpisode(),
+      contexts:copy(driver.contexts),invocationId,reason:failure?'failed':'completed'}),new Promise((_,reject)=>{
+        cleanupTimer=setTimeout(()=>reject(new Error('Selected v8 cleanup deadline exceeded')),Math.min(timeoutMs,1000));
+      })]);}
     catch(error){cleanupFailure={category:error.category??error.name,message:String(error.message)};
       failure??=cleanupFailure;}
+    finally{clearTimeout(cleanupTimer);}
   }
   const publicData=harness.exportEpisode(),controllers=[...harness.invocations.values()],
     publicCompleted=!failure&&controllers.every(row=>row.status==='completed'),
     firstViolation=controllers.map(row=>row.controller.firstWitnessViolation).find(Boolean)??null;
   if(publicCompleted)RegionExecutionHarness.replay(publicData);
   const result={schema:'semantic-selected-execution-result/8',origin,checkpointIdentity,tokenizerIdentity,seed,
-    inferenceIdentity,status:failure?(failure.message.includes('budget')||abort.signal.aborted?'resource_limited':'failed'):
+    inferenceIdentity,status:failure?(failure.message.includes('budget')||deadlineExceeded?'resource_limited':'failed'):
       publicCompleted?'completed':'incomplete',publicAccepted:!firstViolation&&!failure,publicCompleted,
     sourceValidated:false,sourceStatus:'unmeasured',completedExecution:false,
     public:publicData,contexts:copy(driver.contexts),attempts:copy(driver.attempts),

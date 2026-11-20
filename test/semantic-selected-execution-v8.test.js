@@ -127,3 +127,38 @@ test('model mode cannot silently run an engineering selector or mismatched check
   const refused=await runSelectedRegionExecution({initialPublic:input(artifact),select:changed.select,...pin,origin:'model'});
   assert.equal(refused.status,'failed');assert.equal(refused.attempts.length,0);
 });
+
+test('frozen execution deadlines bound initialization, native acknowledgement and final cleanup',async()=>{
+  const artifact=golden.examples.find(row=>row.id==='ordered-map'),never=()=>new Promise(()=>{}),
+    initializing=async()=>{throw new Error('must not select before initialization');};
+  initializing.initialize=never;initializing.cancel=never;
+  const started=performance.now(),refused=await runSelectedRegionExecution({initialPublic:input(artifact),
+    select:initializing,...pin,origin:'engineering',timeoutMs:50});
+  assert.equal(refused.status,'resource_limited');assert.equal(refused.attempts.length,0);
+  assert.match(refused.cleanupFailure.message,/cleanup deadline/);assert(performance.now()-started<2000);
+  const fixture=SEMANTIC_GALLERY_FIXTURES.find(row=>row.id==='counter-0'),verified=await verifyRegionTrainingCase(fixture),
+    adapter=fixtureSelector(verified.exported,{commit:request=>
+      request.record.includes('"kind":"request"')?never():{committed:true}});
+  const result=await runSelectedRegionExecution({initialPublic:input(verified.exported),fixture:fixture.fixture,
+    select:adapter.select,...pin,origin:'engineering',timeoutMs:300});
+  assert.equal(result.status,'resource_limited');assert.equal(result.publicCompleted,false);
+  assert.equal(result.attempts.at(-1).status,'commit-failed');assert.equal(result.costs.hostDispatches,0);
+  assert.equal(adapter.requests.length,adapter.commits.length);
+});
+
+test('automatically started callbacks share the execution deadline while awaiting completion acknowledgement',
+  {timeout:5000},async()=>{
+    const fixture=SEMANTIC_GALLERY_FIXTURES.find(row=>row.id==='callback-captured-write'),
+      verified=await verifyRegionTrainingCase(fixture),adapter=fixtureSelector(verified.exported),
+      rootId=verified.exported.public.timeline.find(row=>row.kind==='invocation').fields.invocationId;
+    let callbackCompletions=0;
+    adapter.select.complete=async request=>{
+      if(request.invocationId!==rootId){callbackCompletions++;return new Promise(()=>{});}
+      return {completed:true};
+    };
+    const result=await runSelectedRegionExecution({initialPublic:input(verified.exported),fixture:fixture.fixture,
+      select:adapter.select,...pin,origin:'engineering',timeoutMs:1000});
+    assert(callbackCompletions>0);assert.equal(result.status,'resource_limited');
+    assert.equal(result.publicCompleted,false);assert.equal(result.completedExecution,false);
+    assert.match(result.failure.message,/deadline/);
+  });

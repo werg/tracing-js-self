@@ -131,7 +131,9 @@ export class SelectedModelDriver {
           callReturnReported=true;onCallReturn?.(a.controller.callReturn);
         }
         if(a.status==='completed'){
-          if(typeof this.select.complete==='function')await this.select.complete(this.prefix(invocationId));
+          if(typeof this.select.complete==='function')await Promise.race([
+            this.select.complete(this.prefix(invocationId)),aborted]);
+          check();
           let observableGraph=null;
           try{observableGraph=a.controller.observedGraph();}
           catch(error){if(error.category!=='unsupported-boundary')throw error;}
@@ -202,15 +204,20 @@ export class SelectedModelDriver {
           ({kind,fields}=this.decodeSelection(decision));
           if(kind==='request'&&pending.size>=this.maxOutstanding)fail('Outstanding native effect budget exhausted');
           const result=this.harness.selected(invocationId,decision);selections++;
-          if(this.onCommitted)await this.onCommitted({invocationId,record:decision,selection:copy(selection),result});
+          if(this.onCommitted)await Promise.race([
+            this.onCommitted({invocationId,record:decision,selection:copy(selection),result}),aborted]);
+          check();
         }catch(error){this.rejections.push({invocationId,record:decision,selection:copy(selection),
           error:String(error),phase:'semantic-validation'});
-          if(this.onRejected&&await this.onRejected({invocationId,record:decision,selection:copy(selection),error}))continue;
+          if(this.onRejected&&await Promise.race([
+            this.onRejected({invocationId,record:decision,selection:copy(selection),error}),aborted]))continue;
           throw error;}
         if(kind==='request'){
           let beforeDispatch=null;
           if(this.prepareRequestDispatch){
-            beforeDispatch=await this.prepareRequestDispatch({invocationId,record:decision,selection:copy(selection),fields});
+            beforeDispatch=await Promise.race([
+              this.prepareRequestDispatch({invocationId,record:decision,selection:copy(selection),fields}),aborted]);
+            check();
             if(beforeDispatch!==null&&typeof beforeDispatch!=='function')fail('Native dispatch hook must return a commitment callback or null');
           }else if(selection?.modelSelected===true||this.select.nativeCommitRequired===true){
             if(!selection||typeof selection.selectedEventId!=='string'||
@@ -239,7 +246,8 @@ export class SelectedModelDriver {
       if(error.evidence)this.rejections.push({invocationId,error:String(error),
         evidence:copy(error.evidence),phase:'inference-selection'});
       this.harness.cancelInvocation(invocationId,{reason:String(error.message??error)});
-      if(typeof this.select.cancel==='function')try{await this.select.cancel(this.prefix(invocationId));}catch{/* Preserve original failure. */}
+      if(typeof this.select.cancel==='function')try{await Promise.race([
+        this.select.cancel(this.prefix(invocationId)),aborted]);}catch{/* Preserve original failure. */}
       throw error;
     }finally{
       if(timer!==null)clearTimeout(timer);signal?.removeEventListener('abort',cancel);
