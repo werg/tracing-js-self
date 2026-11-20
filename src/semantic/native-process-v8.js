@@ -17,6 +17,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   demand(bounded(timeoutMs,1,300000)&&bounded(maxMessageBytes,1024,64*1024*1024),'invalid transport bounds');
   const child=spawn(command,args,{cwd,env,stdio:['pipe','pipe','pipe'],shell:false,windowsHide:true});
   const utf8=new TextDecoder('utf-8',{fatal:true}),pending=new Map(),sessions=new Map(),attempts=[];
+  const runtimeMetrics={rpcCalls:0,computeSeconds:0,peakMemoryBytes:0};
   let nextId=0,buffer=Buffer.alloc(0),stderr='',closed=false,identity=null,epoch=0,shutdownPromise=null;
   const stop=error=>{
     if(closed)return;
@@ -41,6 +42,15 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       buffer=buffer.subarray(end+1);
       const item=pending.get(response?.id);
       if(!item){stop(new Error('Native v8 response has no matching request'));return;}
+      if(response.runtimeMetrics!==undefined){
+        const metrics=response.runtimeMetrics;
+        if(metrics?.schema!=='semantic-inference-metrics/8'||
+          ![metrics.computeSeconds,metrics.peakMemoryBytes].every(value=>Number.isFinite(value)&&value>=0)){
+          stop(new Error('Native v8 response contains invalid measured costs'));return;
+        }
+        runtimeMetrics.rpcCalls++;runtimeMetrics.computeSeconds+=metrics.computeSeconds;
+        runtimeMetrics.peakMemoryBytes=Math.max(runtimeMetrics.peakMemoryBytes,metrics.peakMemoryBytes);
+      }
       clearTimeout(item.timer);pending.delete(response.id);
       if(response.ok===false){
         const error=new Error('Native v8 inference refused: '+String(response.error?.message??'unknown failure'));
@@ -92,6 +102,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       const selection=output.selection;
       evidence.selection=copy(selection??null);
       demand(selection?.modelSelected===true&&selection.origin==='actual-model-selected'&&
+        typeof selection.selectionId==='string'&&selection.selectionId.length>0&&
         selection.checkpointIdentity===identity.checkpointIdentity&&selection.tokenizerIdentity===identity.tokenizerIdentity&&
         selection.prefixDigest===input.context.prefixDigest&&selection.contextDigest===contextDigest,
         'model selection is not bound to the frozen checkpoint and current prefix');
@@ -128,22 +139,35 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     demand(selected&&input.record===selected.record&&
       hashAlgorithmData(input.selection)===hashAlgorithmData(selected.selection),'commit changed original model selection');
     try{
-      const result=await request({...input,op:'commit'});
+      const result=await request({op:'commit',session:input.session,public:input.public,contexts:input.contexts,
+        invocationId:input.invocationId,record:input.record,selection:input.selection});
       demand(result?.committed===true,'native model did not acknowledge semantic commit');
       session.evidence.status='accepted';session.pending=null;return result;
     }catch(error){session.evidence.status='commit-failed';session.evidence.failure=String(error.message);throw error;}
   };
-  select.complete=input=>request({...input,op:'complete'});
+  select.complete=input=>request({op:'complete',session:input.session,public:input.public,
+    contexts:input.contexts,invocationId:input.invocationId});
+  select.reject=async input=>{
+    const session=sessions.get(input?.session),selected=session?.pending;
+    demand(selected&&input.selectionId===selected.selection.selectionId,
+      'rejection must name the original pending native selection');
+    const result=await request({op:'reject',session:input.session,selectionId:input.selectionId,reason:input.reason});
+    demand(result?.rejected===true,'native model did not acknowledge candidate rejection');
+    session.evidence.status='rejected';session.evidence.failure=input.reason??'stale prediction';
+    session.pending=null;return result;
+  };
   select.cancel=async input=>{
     const session=sessions.get(input?.session);
     if(session?.pending){session.evidence.status='rejected';session.evidence.failure=input.reason??'semantic rejection';}
-    try{return await request({...input,op:'cancel'});}finally{sessions.delete(input?.session);}
+    try{return await request({op:'cancel',session:input.session,reason:input.reason});}
+    finally{sessions.delete(input?.session);}
   };
   select.metrics=()=>({schema:'semantic-native-model-metrics/8',attempts:copy(attempts),
     predictionAttempts:attempts.length,semanticallyAccepted:attempts.filter(row=>row.status==='accepted').length,
     failedAttempts:attempts.filter(row=>['failed','rejected','commit-failed'].includes(row.status)).length,
     unknownGenerationCostAttempts:attempts.filter(row=>row.selection===null).length,
     elapsedMs:attempts.reduce((sum,row)=>sum+(row.elapsedMs??0),0),
+    runtime:copy(runtimeMetrics),
     nativeAdmissionClaim:false,sourceAdmissionClaim:false});
   select.status=()=>({closed,pending:pending.size,stderr:stderr.slice(-1000)});
   select.close=()=>stop(new Error('Native v8 model process closed'));
@@ -168,7 +192,7 @@ export function createNativeV8PythonSelector({python='python3',megatokenReposito
     device='cpu',maxTokens=1024,maxFragments=32,...options}={}){
   demand(typeof megatokenRepository==='string'&&megatokenRepository.length>0,'consumer checkout required');
   demand(typeof servedBundle==='string'&&servedBundle.length>0,'existing serving bundle required');
-  demand(bounded(maxTokens,1,65536)&&bounded(maxFragments,1,1024),'invalid generation bounds');
+  demand(bounded(maxTokens,1,8192)&&bounded(maxFragments,1,64),'invalid generation bounds');
   return createNativeV8ProcessSelector({...options,command:python,cwd:megatokenRepository,
     args:['scripts/serve_semantic_v8.py','--served',servedBundle,'--device',device,
       '--max-tokens',String(maxTokens),'--max-fragments',String(maxFragments)]});

@@ -22,12 +22,13 @@ function fakeServer({alter='',initializeAlter='',commitAlter='',raw=false,hang=f
       }else if(request.op==='select'){
         ${hang?'continue;':''}
         const payloadHex=Buffer.from(record).toString('hex');
-        result={schema:'semantic-model-output/8',record,selection:{modelSelected:true,
+        result={schema:'semantic-model-output/8',record,selection:{modelSelected:true,selectionId:'selection:'+request.id,
           origin:'actual-model-selected',checkpointIdentity:${JSON.stringify(identity.checkpointIdentity)},
           tokenizerIdentity:${JSON.stringify(identity.tokenizerIdentity)},prefixDigest:request.context.prefixDigest,
           contextDigest:hashAlgorithmData(request.context),payloadHex,
           fragments:[{tokenIds:[...Buffer.from(record)],payloadHex}]}};${alter}
       }else if(request.op==='commit'){result={committed:true};${commitAlter}}
+      else if(request.op==='reject')result={rejected:true};
       else result={closed:true};
       ${raw?"process.stdout.write(Buffer.from([0xff,10]));":`
         const output=JSON.stringify({id:request.id,ok:true,result})+'\\n';
@@ -128,5 +129,19 @@ test('native acknowledgement failure does not count an execution as accepted',as
     await select.initialize(identity);const output=await select(input);
     await assert.rejects(select.commit({session:input.session,...output}),/acknowledge/);
     assert.equal(select.metrics().semanticallyAccepted,0);
+    assert.equal(select.metrics().failedAttempts,1);
+  }finally{select.close();}
+});
+
+test('stale native candidates can be rejected without closing the session or losing their costs',async()=>{
+  const select=selector(),{input}=boundary();
+  try{
+    await select.initialize(identity);const first=await select(input);
+    await assert.rejects(select.reject({session:input.session,selectionId:'wrong',reason:'stale'}),/original/);
+    await select.reject({session:input.session,selectionId:first.selection.selectionId,reason:'stale'});
+    const second=await select(input);
+    assert.notEqual(first.selection.selectionId,second.selection.selectionId);
+    assert.equal(select.metrics().predictionAttempts,2);assert.equal(select.metrics().failedAttempts,1);
+    assert.deepEqual(select.metrics().attempts[0].selection.fragments,first.selection.fragments);
   }finally{select.close();}
 });
