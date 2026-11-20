@@ -182,25 +182,14 @@ is retained under the exported artifact's `sidecar.nativeAdmission`. Native
 admission is rerun for subsequent production exports; a stored receipt does
 not replace that check.
 
-A native adapter module can use the existing pinned-client helpers:
-
-```js
-import {
-  loadNativeV8Settings,
-  createNativeV8Consumer,
-} from '../src/corpus/native-admission-v8.mjs';
-
-const settings = loadNativeV8Settings({
-  megatoken: process.env.MEGATOKEN_ROOT,
-  tokenizer: process.env.MEGATOKEN_TOKENIZER_JSON,
-  python: process.env.MEGATOKEN_PYTHON ?? 'python3',
-  policyFile: process.env.SEMANTIC_V8_NATIVE_POLICY,
-  temporaryDirectory: process.env.SEMANTIC_NATIVE_TEMP,
-});
-
-export const nativePolicy = settings.policy;
-export const nativeConsumer = createNativeV8Consumer(settings);
-```
+The supplied `tools/semantic-v8-native-adapter.mjs` connects the exporter to
+these pinned-client helpers. Set `MEGATOKEN_ROOT`, `MEGATOKEN_TOKENIZER_JSON`
+and `MEGATOKEN_PYTHON` to the same verified checkout, tokenizer and Python used
+for qualification. The adapter defaults to the repository's v8 native policy;
+`SEMANTIC_V8_NATIVE_POLICY` selects an explicit alternative policy. It creates
+and removes its own temporary subdirectory under `SEMANTIC_NATIVE_TEMP` or the
+system temporary directory, keeping the producer checkout clean for live source
+verification. Pass it as `--native-module tools/semantic-v8-native-adapter.mjs`.
 
 The module's checkout, installed Python package, tokenizer file, and policy
 must identify the same pinned consumer. The generic tokenizer meter accepts
