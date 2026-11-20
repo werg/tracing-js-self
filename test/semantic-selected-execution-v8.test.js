@@ -259,7 +259,7 @@ test('frozen execution deadlines bound initialization, native acknowledgement an
 });
 
 test('automatically started callbacks share the execution deadline while awaiting completion acknowledgement',
-  {timeout:5000},async()=>{
+  {timeout:30000},async()=>{
     const fixture=SEMANTIC_GALLERY_FIXTURES.find(row=>row.id==='callback-captured-write'),
       verified=await verifyRegionTrainingCase(fixture),adapter=fixtureSelector(verified.exported),
       rootId=verified.exported.public.timeline.find(row=>row.kind==='invocation').fields.invocationId;

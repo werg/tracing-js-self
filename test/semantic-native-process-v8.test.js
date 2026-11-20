@@ -151,17 +151,21 @@ test('native v8 failed initialization cannot leave an earlier checkpoint active'
   }finally{select.close();}
 });
 
-test('native v8 malformed UTF-8 and deadlines terminate the transport',async()=>{
+test('native v8 malformed UTF-8 and deadlines terminate the transport',async t=>{
   const malformed=selector({raw:true});
   try{await assert.rejects(malformed.initialize(identity),/UTF-8/);assert.equal(malformed.status().closed,true);}
   finally{malformed.close();}
-  const stalled=selector({hang:true,timeoutMs:500});
+  const stalled=selector({hang:true});
   try{
     await stalled.initialize(identity);
-    await assert.rejects(stalled(boundary().input),/deadline/);
+    // Expire the stalled request after initialization, independent of startup load.
+    t.mock.timers.enable({apis:['setTimeout']});
+    const rejection=assert.rejects(stalled(boundary().input),/deadline/);
+    t.mock.timers.tick(5000);
+    await rejection;
     assert.equal(stalled.status().closed,true);
     assert.equal(stalled.metrics().failedAttempts,1);
-  }finally{stalled.close();}
+  }finally{t.mock.timers.reset();stalled.close();}
 });
 
 test('native acknowledgement failure does not count an execution as accepted',async()=>{
