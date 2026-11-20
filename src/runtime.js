@@ -3166,17 +3166,35 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               const d=descriptor.properties;
               if(![null,'Object.prototype','Array.prototype'].includes(objectPrototype(descriptor)))
                 throw new TypeError('Inherited descriptor fields are outside the bounded profile');
-              const previous=obj.accessors?.[name];
+              const previous=Object.hasOwn(obj.accessors??{},name)?obj.accessors[name]:null;
               if(obj.extensible===false&&!Object.hasOwn(obj.properties,name)&&!previous)
                 guestFault('TypeError','Cannot define property on non-extensible object');
-              if(obj.dataAttributes?.[name]?.configurable===false&&(Object.hasOwn(d,'get')||Object.hasOwn(d,'set')))
+              const accessorDescriptor=Object.hasOwn(d,'get')||Object.hasOwn(d,'set'),
+                dataDescriptor=Object.hasOwn(d,'value')||Object.hasOwn(d,'writable');
+              if(accessorDescriptor&&dataDescriptor)guestFault('TypeError','Invalid mixed data/accessor descriptor');
+              if(!accessorDescriptor&&(!previous||dataDescriptor)){
+                // ArraySetLength and indexed descriptor deletion need their
+                // own ordered continuation. Ordinary data definitions retain
+                // exactly the supplied fields and preserve omitted metadata.
+                if(obj.kind==='array'&&(name==='length'||arrayIndex(name)))
+                  throw new TypeError('Array data descriptors require their explicit length profile');
+                const present=Object.hasOwn(obj.properties,name),attributes=present?
+                  {writable:true,enumerable:true,configurable:true,...obj.dataAttributes?.[name]}:null,
+                  value=d.value??(present?obj.properties[name]:token(U)),
+                  writable=Object.hasOwn(d,'writable')?truthy(d.writable.value):attributes?.writable??false,
+                  enumerable=Object.hasOwn(d,'enumerable')?truthy(d.enumerable.value):previous?.enumerable??attributes?.enumerable??false,
+                  configurable=Object.hasOwn(d,'configurable')?truthy(d.configurable.value):previous?.configurable??attributes?.configurable??false;
+                const current=previous??attributes;
+                if(current?.configurable===false&&(configurable||enumerable!==current.enumerable||previous||
+                  attributes.writable===false&&(writable||!ownedSameValue(value.value,obj.properties[name].value))))
+                  guestFault('TypeError','Cannot redefine a non-configurable property');
+                putOwn(obj,name,value.value,eventId,{literal:true});
+                if(previous)delete obj.accessors[name];
+                obj.dataAttributes??={};obj.dataAttributes[name]={writable,enumerable,configurable};
+                return {...operands(fn,...args),...result(v)};
+              }
+              if(obj.dataAttributes?.[name]?.configurable===false&&accessorDescriptor)
                 guestFault('TypeError','Cannot redefine frozen data property');
-              if(!Object.hasOwn(d,'get')&&!Object.hasOwn(d,'set')&&!previous)
-                throw new TypeError('Only accessor descriptors are modeled');
-              if(Object.hasOwn(d,'value')||Object.hasOwn(d,'writable'))
-                if(Object.hasOwn(d,'get')||Object.hasOwn(d,'set'))
-                  guestFault('TypeError','Invalid mixed data/accessor descriptor');
-                else throw new TypeError('Data descriptor conversion is outside the bounded profile');
               // ValidateAndApplyPropertyDescriptor preserves absent fields
               // when changing an existing property. New accessors alone get
               // the false/undefined defaults; replacing ordinary own data
@@ -3195,9 +3213,9 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 guestFault('TypeError','Cannot redefine a non-configurable or reserved property');
               const existingData=Object.hasOwn(obj.properties,name),
                 enumerable=Object.hasOwn(d,'enumerable')?truthy(d.enumerable.value):
-                  previous?.enumerable??existingData,
+                  previous?.enumerable??obj.dataAttributes?.[name]?.enumerable??existingData,
                 configurable=Object.hasOwn(d,'configurable')?truthy(d.configurable.value):
-                  previous?.configurable??existingData;
+                  previous?.configurable??obj.dataAttributes?.[name]?.configurable??existingData;
               if(previous&&!previous.configurable&&
                  (configurable||enumerable!==previous.enumerable||
                   !ownedSameValue(getter.value,previous.get.value)||
@@ -3207,6 +3225,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               obj.accessors??={};
               obj.accessors[name]={get:getter,set:setter,enumerable,configurable};
               delete obj.properties[name];
+              if(obj.dataAttributes)delete obj.dataAttributes[name];
               obj.propertyVersions[name]=(Object.hasOwn(obj.propertyVersions,name)?obj.propertyVersions[name]:0)+1;
               obj.shapeVersion++;
               return {...operands(fn,...args),...result(v)};
