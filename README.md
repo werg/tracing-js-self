@@ -21,12 +21,13 @@ the candidate does not claim unrestricted ECMAScript coverage. The
 [Promise scheduling profile](docs/V8_PROMISE_SCHEDULER.md) documents the resolution
 and cleanup jobs that require separate checked protocols.
 
-The [final engineering qualification](coverage/language-expansion/native-v8-b66c19b-all/README.md)
+The [complete-population engineering qualification](coverage/language-expansion/native-v8-b66c19b-all/README.md)
 passes all 665 expansion cases, 23 interoperability cases and 11 original-gallery
 cases through source/native admission and exact token metering at producer
 `b66c19b` / consumer `6adf99f`. The
-[verified dataset](coverage/language-expansion/dataset-v8-b66c19b/README.md)
-contains 34 freshly admitted episodes and 898 complete examples. Full producer
+[latest verified dataset](coverage/language-expansion/dataset-v8-492328f/README.md)
+contains 34 freshly admitted episodes and 898 complete examples at producer
+`492328f` / consumer `cb311db`. Full producer
 regression and independent consumer validation are retained with their exact
 revisions. Model-learning and default-promotion gates remain separate.
 

@@ -2,16 +2,19 @@
 
 ## Current v8 qualification
 
-Evidence directories name their exact measured revisions. The final implemented
-candidate was measured at producer `b66c19be960f114b69787746b2487e6f23a73577`
-and consumer `6adf99f1301557ee5b95269581a3acd4162496b4`. Later evidence and
-documentation commits preserve those identities.
+Evidence directories name their exact measured revisions. The latest retained
+complete-population run measured producer `b66c19be960f114b69787746b2487e6f23a73577`
+and consumer `6adf99f1301557ee5b95269581a3acd4162496b4`. The later production
+dataset independently readmits its complete inventory at producer
+`492328fe387e99487285984b782cd3b402990e2c` and consumer
+`cb311dba6af44ef241450a87ef530a66aa55c7a3`. Neither evidence set qualifies
+unmeasured later implementation changes.
 
 | Evidence | Measured result | Scope |
 | --- | --- | --- |
 | [Complete source/native populations and exact costs](native-v8-b66c19b-all/README.md) | 665/665 expansion, 23/23 interoperability and 11/11 gallery cases passed source/native admission and exact token metering | All source/admitted artifacts, native receipts, exact inputs, serializer/token records, reference evidence and paired historical comparison retained |
-| [Final producer regression](producer-regression-b66c19b/README.md) | 1,778 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `b66c19b`; full logs and code/test identities retained |
-| [Fresh production dataset](dataset-v8-b66c19b/README.md) | 34 freshly admitted episodes and 898 complete examples, with actual tokenizer re-encoding, masks, EOS and frozen component splits checked | Same producer/consumer; zero optimizer steps |
+| [Frozen producer regression](producer-regression-b66c19b/README.md) | 1,778 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `b66c19b`; full logs and code/test identities retained |
+| [Latest production dataset](dataset-v8-492328f/README.md) | 34 freshly admitted episodes and 898 complete examples, with actual tokenizer re-encoding, masks, EOS and frozen component splits checked | Producer `492328f`, consumer `cb311db`; fresh 23-case interoperability and 11-case gallery admission; zero optimizer steps |
 
 All eight former enumeration refusals and the previous generator continuation
 failure pass in this new full run. The independent consumer passed 214 focused
@@ -33,6 +36,7 @@ measured pins describe those runs; the newer qualification does not rewrite them
 
 | Evidence | Measured result | Scope |
 | --- | --- | --- |
+| [Earlier 34-episode production dataset](dataset-v8-b66c19b/README.md) | 34 freshly admitted episodes and 898 complete examples | Producer `b66c19b`, consumer `6adf99f`; its receipts are not reused to admit the later dataset |
 | [Native interoperability and gallery](native-v8-8d1f7b5/README.md) | 22/22 interoperability and 11/11 gallery cases passed source/native admission and exact token metering | Producer `8d1f7b5`, consumer `be3a8d7`; all receipts, inputs, masks and costs retained |
 | [Full expansion and paired costs](native-v8-8d1f7b5-all/README.md) | 665 attempts: 657 source passes, 656 native admissions, eight source refusals and one native continuation failure; exact tokens for all source passes | Same producer/consumer; 42 matched historical rows have 90.21% lower flat total cost and 4.12% fewer generated tokens |
 | [Producer regression](producer-regression-2f9bca8/README.md) | 1,740 passed, six optional skips, zero failures; all eight reference checks passed | Exact producer `2f9bca8`; later policy, adapter, CI and evidence changes have separate checks |

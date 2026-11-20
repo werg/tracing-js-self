@@ -14,7 +14,7 @@ work proposed in [the language coverage plan](LANGUAGE_COVERAGE_PLAN.md).
 against independent source observations and validates its public projection.
 Recognition by a parser or pure lowerer alone does not satisfy that gate.
 
-The final [source/native qualification and exact costs](../coverage/language-expansion/native-v8-b66c19b-all/README.md)
+The complete-population [source/native qualification and exact costs](../coverage/language-expansion/native-v8-b66c19b-all/README.md)
 measure producer `b66c19b` and consumer `6adf99f`. All **665 expansion cases,
 23 interoperability cases and 11 original-gallery cases** passed source and
 independent native admission. Every case also has exact production-tokenizer
@@ -27,12 +27,16 @@ The [frozen producer regression](../coverage/language-expansion/producer-regress
 passed **1,778 tests**, with six conditional native-environment skips and zero
 failures, plus all five contract generators and eight reference fixtures. The
 independent consumer passed **214 tests without skips** at the same paired
-revisions. The [production dataset](../coverage/language-expansion/dataset-v8-b66c19b/README.md)
-freshly admitted all **34 episodes and 898 complete examples** after binding
-component splits, with independently re-encoded tokens and generated-only masks.
+revisions. The later [production dataset](../coverage/language-expansion/dataset-v8-492328f/README.md)
+freshly admitted all **34 episodes and 898 complete examples** at producer
+`492328f` and consumer `cb311db` after binding component splits, with
+independently re-encoded tokens and generated-only masks. Its receipts come
+from fresh 23-case interoperability and 11-case gallery qualifications; the
+older complete-population results are not assigned to those later pins.
 
-These finite engineering and data-admission gates are complete for the declared
-bounded candidate. **External model comprehension and execution remain
+These finite engineering and data-admission gates passed for the declared
+bounded candidate at the listed revisions. Later implementation changes require
+their own checks. **External model comprehension and execution remain
 unmeasured**, and v6 remains the production default. Exact receipt requirements
 are in [the training contract](SEMANTIC_V8_TRAINING.md#native-admission).
 
@@ -198,9 +202,10 @@ cover the matched source/entry/input cases, not unmeasured historical population
 
 The [evaluation protocol](LANGUAGE_EXPANSION_EVALUATION.md) defines the frozen
 populations and reproduction commands. The combined
-[production dataset](../coverage/language-expansion/dataset-v8-b66c19b/README.md)
+[production dataset](../coverage/language-expansion/dataset-v8-492328f/README.md)
 contains all 34 gallery/interoperability episodes and 898 complete examples,
-with fresh source/native admission after split binding and zero optimizer steps.
+with fresh source/native admission after split binding at producer `492328f`
+and consumer `cb311db`, and zero optimizer steps.
 
 External model comprehension, next-step accuracy, completed execution, cost per
 successful model execution, native serving latency and cache reuse remain

@@ -251,22 +251,25 @@ fixture; that fixture is not an independent native-consumer execution and
 does not produce a retained admission artifact. Actual native qualification
 and model execution require their own pinned run evidence.
 
-The [final source/native qualification](../coverage/language-expansion/native-v8-b66c19b-all/README.md)
+The [complete-population source/native qualification](../coverage/language-expansion/native-v8-b66c19b-all/README.md)
 retains actual production-tokenizer and native-packing receipts for all 665
 expansion cases, 23 interoperability cases and 11 original-gallery cases at
 producer `b66c19b` / consumer `6adf99f`.
 
 The independently verified
-[current production dataset](../coverage/language-expansion/dataset-v8-b66c19b/README.md)
-contains 34 episodes and 898 complete causal examples, with fresh source/native
-admission after split binding. Its 31 components do not cross train, validation
+[current production dataset](../coverage/language-expansion/dataset-v8-492328f/README.md)
+contains 34 episodes and 898 complete causal examples at producer `492328f` and
+consumer `cb311db`, with fresh source/native admission after split binding.
+These are later pins than the complete-population cost run above; its receipts
+were not reused for this export. Its 31 components do not cross train, validation
 or test splits. All 898 prompts and targets were re-encoded and byte-round-tripped
 with the pinned actual tokenizer; generated tokens and EOS are supervised, while
 prompt labels remain `-100`. It contains 29,374 generated tokens including 898
 EOS tokens. No optimizer steps were performed and learned success remains
 untested.
 
-Earlier [33-episode](../coverage/language-expansion/dataset-v8-8d1f7b5/README.md)
+Earlier [34-episode](../coverage/language-expansion/dataset-v8-b66c19b/README.md),
+[33-episode](../coverage/language-expansion/dataset-v8-8d1f7b5/README.md)
 and [11-episode](../coverage/language-expansion/dataset-v8-9d76176/README.md)
 exports retain their own exact pins and evidence. Their receipts are not reused
 to admit the changed dataset or later producer/consumer revisions.
