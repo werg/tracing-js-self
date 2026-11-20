@@ -74,9 +74,8 @@ test('malformed handler scopes are refused before changing selected state',async
   }
 });
 
-test('loop-target and Symbol cleanup remain explicit source refusals',async()=>{
+test('unrepresented Symbol cleanup remains an explicit source refusal',async()=>{
   for(const body of [
-    'for(let i=0;i<2;i++){try{break;}finally{const n=1+2;}}return 3;',
     'try{throw Symbol("x");}catch(e){return 3;}'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert.equal(result.status,'unsupported');assert(!result.exported);

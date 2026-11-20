@@ -103,7 +103,7 @@ test('unrepresented iterator behavior remains an explicit source refusal',async(
   for(const source of [
     '"use strict";function run(){return [1].values();}',
     '"use strict";function run(){const it=[1].values();const next=it.next;return next();}',
-    '"use strict";function run(){const it={[Symbol.iterator]:function(){return this;},next:function(){return {done:true};}};for(const value of it){}return 3;}'
+    '"use strict";function run(){const it={[Symbol.iterator]:function(){return this;},next:function(){return 3;}};for(const value of it){}return 3;}'
   ]){
     const result=await verifyProtocolRegionTrainingCase({source,entry:'run',family:'iterator-refusal'});
     assert.equal(result.status,'unsupported');assert.equal(result.regionDisposition,'source-unqualified');assert(!result.exported);

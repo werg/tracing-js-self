@@ -7,18 +7,40 @@ const staticFields=['catchPc','finallyPc','afterPc','envId','stackDepth','loopDe
 const handlerFields=[...staticFields,'phase','pending','caught'];
 export function createCompletionSourceAdapterV8({bundle}){
   if(!Object.values(bundle.programs).some(program=>!program.generator&&program.instructions.some(row=>row.op==='TRY_ENTER')))return null;
-  const tracked=new Set(),scopes=new Map();let sequence=0;
+  const tracked=new Set(),scopes=new Map(),targets=new Map();let sequence=0,targetSequence=0;
   const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('ordinary completion: '+message);};
   const instruction=(ctx,event)=>{
     const frame=ctx.getOwnedFrame(event.invocationId),inst=bundle.programs[frame?.codeId]?.instructions[frame?.pc];
     return inst?.siteId===event.siteId?inst:null;
   };
-  function completion(ctx,pending,event){
+  function completion(ctx,node,pending,event){
     if(pending===null)return null;
-    require(ctx,pending&&['normal','return','throw'].includes(pending.type),'loop-target cleanup requires its declared target profile');
+    if(pending?.type==='jump'){
+      const entries=targets.get(node.id)??[],entry=entries[pending.loopDepth-1],loop=node.loops[pending.loopDepth-1];
+      require(ctx,entry&&loop&&['break','continue'].includes(pending.kind)&&
+        pending.targetPc===loop[pending.kind==='break'?'breakPc':'continuePc']&&
+        ['envId','stackDepth','handlerDepth'].every(key=>pending[key]===loop[key]),'cleanup lost its exact active loop target');
+      return {kind:pending.kind,value:U,target:entry.id};
+    }
+    require(ctx,pending&&['normal','return','throw'].includes(pending.type),'unsupported cleanup completion');
     const value=pending.type==='normal'?U:pending.value?.value;
     require(ctx,Array.isArray(value)&&value[0]!=='symbol','completion must have an ordinary public value');
     return {kind:pending.type,value:ctx.tag(value,event)};
+  }
+  function updateTargets(ctx,node,event){
+    if(node.generatorId)return;
+    const entries=targets.get(node.id)??[];
+    require(ctx,node.loops.length<=entries.length&&node.loops.length<=64,'loop appeared without its source entry');
+    for(let index=0;index<node.loops.length;index++){
+      const loop=node.loops[index],entry=entries[index];
+      require(ctx,['breakPc','continuePc','stackDepth','handlerDepth'].every(key=>loop[key]===entry.definition[key])&&
+        ctx.eq(loop.labels??[],entry.definition.labels??[]),'active loop target changed');
+      if(loop.envId!==entry.definition.envId){
+        require(ctx,instruction(ctx,event)?.op==='CLONE_LOOP_ENV','loop environment changed without its source iteration');
+        entry.definition.envId=loop.envId;
+      }
+    }
+    targets.set(node.id,entries.slice(0,node.loops.length));
   }
   function update(ctx,node,event){
     if(!tracked.has(node.id))return;
@@ -33,7 +55,7 @@ export function createCompletionSourceAdapterV8({bundle}){
       require(ctx,['try','catch','finally'].includes(handler.phase)&&
         (handler.phase!=='catch'||handler.catchPc!==null)&&(handler.phase!=='finally'||handler.finallyPc!==null),
         'handler phase lacks its source capability');
-      const caught=handler.caught?.value??null,pending=completion(ctx,handler.pending,event);
+      const caught=handler.caught?.value??null,pending=completion(ctx,node,handler.pending,event);
       require(ctx,(caught===null||handler.phase==='catch')&&(handler.phase==='finally'?pending!==null:pending===null),
         'pending completion or caught value has the wrong handler phase');
       if(caught!==null)require(ctx,caught[0]!=='symbol','Symbol catch requires a protocol transfer');
@@ -45,7 +67,11 @@ export function createCompletionSourceAdapterV8({bundle}){
   function publicScopes(ctx){
     const rows=[];
     for(const invocation of ctx.controller.stack)for(const [owned,entries]of scopes){
-      if(ctx.frame(owned)===invocation&&entries.length)rows.push({invocation,handlers:entries.map(entry=>ctx.copy(entry.public))});
+      if(ctx.frame(owned)===invocation&&entries.length){
+        const loops=targets.get(owned)??[];
+        rows.push({invocation,handlers:entries.map(entry=>ctx.copy(entry.public)),
+          ...(loops.length?{targets:loops.map(entry=>({id:entry.id,continue:entry.definition.continuePc!==null}))}:{})});
+      }
     }
     return {schema,frames:rows};
   }
@@ -60,6 +86,16 @@ export function createCompletionSourceAdapterV8({bundle}){
       const current=ctx.getOwnedFrame(event.invocationId);
       if(!current||current.generatorId)return false;
       const inst=instruction(ctx,event);
+      if(inst?.op==='LOOP_ENTER'){
+        const after=event.stateChanges.find(row=>row.table==='frames'&&row.id===current.id)?.after,
+          loop=after?.loops?.at(-1),entries=targets.get(current.id)??[];
+        require(ctx,loop&&after.loops.length===current.loops.length+1&&entries.length===current.loops.length&&
+          loop.breakPc===inst.arg.breakPc&&loop.continuePc===inst.arg.continuePc&&ctx.eq(loop.labels??[],inst.arg.labels??[]),
+          'loop entry differs from its exact source declaration');
+        targets.set(current.id,[...entries,{id:'target'+(++targetSequence),definition:ctx.copy(loop)}]);
+        // This remains private correspondence until a live cleanup needs it.
+        return false;
+      }
       if(inst?.op==='TRY_ENTER'){
         const after=event.stateChanges.find(row=>row.table==='frames'&&row.id===current.id)?.after,
           handler=after?.handlers?.at(-1),entries=scopes.get(current.id)??[];
@@ -93,6 +129,7 @@ export function createCompletionSourceAdapterV8({bundle}){
       return false;
     },
     afterEvent(ctx,event){
+      for(const change of event.stateChanges)if(change.table==='frames'&&change.after)updateTargets(ctx,change.after,event);
       for(const change of event.stateChanges)if(change.table==='frames'&&change.after)update(ctx,change.after,event);
       if(!ctx.controller.stack.length)return;
       const next=publicScopes(ctx),previous=ctx.controller.pending?.handler;

@@ -473,9 +473,19 @@ export function allowsProtocolCompletionDetailV8(controller,record){
   const ids=new Set();let previous=-1;
   const value=tag=>{known(controller,tag);require(tag[0]!=='symbol','Symbol cleanup needs protocol transfer');};
   for(const frame of scope.frames){
-    assertAlgorithmFields(frame,['invocation','handlers'],'ordinary handler frame');
+    assertAlgorithmFields(frame,['invocation','handlers',...(Object.hasOwn(frame,'targets')?['targets']:[])],'ordinary handler frame');
     const index=controller.stack.indexOf(frame.invocation);
     require(index>previous&&controller.frameFunctions.has(frame.invocation),'ordinary handler frame is not active in stack order');previous=index;
+    const targets=new Map();
+    if(Object.hasOwn(frame,'targets')){
+      assertAlgorithmDataArray(frame.targets,'ordinary loop targets');require(frame.targets.length>0&&frame.targets.length<=64,'ordinary loop target bound');
+      for(const target of frame.targets){
+        assertAlgorithmFields(target,['id','continue'],'ordinary loop target');
+        require(typeof target.id==='string'&&target.id.length>0&&target.id.length<=256&&!ids.has(target.id)&&
+          typeof target.continue==='boolean','ordinary loop target identity/capability');
+        ids.add(target.id);targets.set(target.id,target);
+      }
+    }
     assertAlgorithmDataArray(frame.handlers,'ordinary handlers');
     require(frame.handlers.length>0&&frame.handlers.length<=64,'ordinary handler bound');
     for(const handler of frame.handlers){
@@ -488,9 +498,12 @@ export function allowsProtocolCompletionDetailV8(controller,record){
       if(handler.caught!==null){require(handler.phase==='catch','caught value outside catch');value(handler.caught);}
       require(handler.phase==='finally'?handler.pending!==null:handler.pending===null,'ordinary cleanup pending completion');
       if(handler.pending!==null){
-        assertAlgorithmFields(handler.pending,['kind','value'],'ordinary pending completion');
-        require(['normal','return','throw'].includes(handler.pending.kind),'ordinary completion kind');value(handler.pending.value);
-        require(handler.pending.kind!=='normal'||eq(handler.pending.value,['undefined']),'normal cleanup has no return value');
+        const jump=['break','continue'].includes(handler.pending.kind);
+        assertAlgorithmFields(handler.pending,['kind','value',...(jump?['target']:[])],'ordinary pending completion');
+        require(['normal','return','throw','break','continue'].includes(handler.pending.kind),'ordinary completion kind');value(handler.pending.value);
+        require(!['normal','break','continue'].includes(handler.pending.kind)||eq(handler.pending.value,['undefined']),'normal or loop cleanup has no return value');
+        if(jump){const target=targets.get(handler.pending.target);
+          require(target&&(handler.pending.kind!=='continue'||target.continue),'ordinary completion target is absent or cannot continue');}
       }
     }
   }

@@ -65,6 +65,18 @@ test('method selection and standard-array guards reject overrides without invoki
   assert.throws(()=>apply(c,{kind:'iterator.lookup',receiver:['ref','array'],key:['str','keys'],method:'Array.prototype.values'}),/selection/);
 });
 
+test('an array with null prototype cannot claim inherited builtin iteration',()=>{
+  const c=controller();array(c,'array',0);
+  applyProtocolRecordV8(c,{kind:'property.prototype',object:'array',prototype:null,success:true});
+  apply(c,{kind:'iterator.arrayGuard',iterated:['ref','array'],result:false});
+  const before=structuredClone(c);
+  for(const record of [
+    {kind:'iterator.arrayGuard',iterated:['ref','array'],result:true},
+    {kind:'iterator.lookup',receiver:['ref','array'],key:['symbol','well-known:iterator'],method:'Array.prototype.values'},
+    {kind:'iterator.lookup',receiver:['ref','array'],key:['str','values'],method:'Array.prototype.values'}
+  ]){assert.throws(()=>applyProtocolRecordV8(c,record));assert.deepEqual(c,before);}
+});
+
 test('failed iterator claims commit no cursor or allocation changes and restore rejects hidden state',()=>{
   const c=controller();array(c,'array',1,[{key:['str','0'],value:['num',7]}]);
   apply(c,{kind:'iterator.create',name:'iterator',iterated:['ref','array'],iterationKind:'values'});
