@@ -1,0 +1,34 @@
+{
+  "archive": {
+    "path": "native-orchestration.tar.xz",
+    "bytes": 48324,
+    "sha256": "b2b2bd05d4c142ca30c4ce6d4bd19c7e264b9befefbaf5d1935d3c5458432cee"
+  },
+  "members": [
+    {
+      "path": "native-orchestration/native-budget.json",
+      "bytes": 71638,
+      "sha256": "8a8cfcded9b8f89f4b079a08e844cd4a766b609a1512b874457e9229c8f8ea25"
+    },
+    {
+      "path": "native-orchestration/native-invalid-child.json",
+      "bytes": 93272,
+      "sha256": "f69191f2effd0aa40ad925860bac40b2f9b8116b072348039392b449d0d48eeb"
+    },
+    {
+      "path": "native-orchestration/native-model-rejection.json",
+      "bytes": 40433,
+      "sha256": "0631d9b2c49dee36ada022b789d6fb168f84dba2aa9f951c18ab8c0337fdeb44"
+    },
+    {
+      "path": "native-orchestration/native-retained-tail-compact.json",
+      "bytes": 1082709,
+      "sha256": "7c07cbe785f0bad41ce1636c84f520105bf5291a5bcb7762a8d1315bd7490b48"
+    },
+    {
+      "path": "native-orchestration/native-services-compact.json",
+      "bytes": 784718,
+      "sha256": "0e2be209b0f02d80a21cd8a55acb55c9465bc9174f854b36b2c195632937e5b1"
+    }
+  ]
+}
