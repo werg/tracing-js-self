@@ -129,8 +129,7 @@ export class RegionExecutionHarness {
     if(staged.firstWitnessViolation)fail('compact transition conflicts with earlier selected claims');
     // Check post-region shared state size before mutating any live cell.
     sharedRegionState(staged);
-    this.active={...cursor,entry:copy(entry)};
-    for(const witness of records)this.inner.selected(invocationId,witness);
+    this.commitCompactRecords(invocationId,records,{...cursor,entry:copy(entry)});
     // Preserve any host lifecycle receipts emitted on the return boundary.
     const created=this.inner.timeline.slice(this.innerCursor);
     this.innerCursor=this.inner.timeline.length;
@@ -141,6 +140,18 @@ export class RegionExecutionHarness {
     this.consumed.push(cursor);this.active=null;
     return {status:'committed',region:region.id,completion:copy(controller.completion),
       state:sharedRegionState(controller)};
+  }
+  commitCompactRecords(invocationId,records,active=null){
+    const inner=this.inner,activation=this.activation(invocationId),now=inner.now;
+    // One bounded public selection has one deadline decision. Rechecking the
+    // clock for its hidden witnesses can reject halfway through an otherwise
+    // preflighted region, leaving unpublished bindings or allocations behind.
+    const committedAt=activation.deadline===null?null:inner.now();
+    if(activation.deadline!==null&&!(activation.deadline>committedAt))fail('invocation deadline expired');
+    if(activation.deadline!==null)inner.now=()=>committedAt;
+    this.active=active;
+    try{for(const witness of records)inner.selected(invocationId,witness);}
+    finally{inner.now=now;this.active=null;}
   }
   selectProtocol(invocationId,line){
     this.sync();const record=typeof line==='string'?decodeProtocolRecordV8(line):line;
@@ -178,7 +189,7 @@ export class RegionExecutionHarness {
     // Check the complete post-region continuation size before committing any
     // allocations or completion. Oversized traces must fail atomically.
     sharedRegionState(staged);
-    for(const witness of evaluated.records)this.inner.selected(invocationId,witness);
+    this.commitCompactRecords(invocationId,evaluated.records);
     const created=this.inner.timeline.slice(this.innerCursor);
     this.innerCursor=this.inner.timeline.length;
     this.consumed.push({invocationId,frame:controller.rootInvocation,region:'whole'});

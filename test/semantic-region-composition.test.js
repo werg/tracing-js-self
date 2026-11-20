@@ -92,3 +92,38 @@ test('oversized compact blocks refuse before changing live cells or publishing a
   assert.deepEqual(sharedRegionState(h.controller),state);
   assert.deepEqual(h.exportEpisode(),before);
 });
+
+test('a local region samples its deadline once and commits every hidden binding together',()=>{
+  const h=new RegionExecutionHarness({sessionId:'local-deadline',now:()=>0});
+  h.publishProgram({programId:'p',source:'"use strict";function run(x){let a=x+1;let b=a*2;return b;}',entry:'run'});
+  h.admitInvocation({programId:'p',invocationId:'i',trackId:'t',realmId:'r',triggerId:'entry',args:[3],deadline:1});
+  const candidate=h.preview('i','r0');let clockReads=0;
+  const advancingClock=()=>clockReads++;h.inner.now=advancingClock;
+  h.select('i',candidate);
+  assert.equal(clockReads,1);
+  assert.equal(h.inner.now,advancingClock);
+  assert.equal(h.active,null);
+  assert.equal(h.controller.generated,3);
+  assert.deepEqual(h.controller.visibleLocals().get('a'),['num',4]);
+  assert.deepEqual(h.controller.visibleLocals().get('b'),['num',8]);
+  assert.equal(h.timeline.at(-1).kind,'region');
+  assert.equal(h.timeline.filter(row=>row.mode==='generated').length,1);
+  assert.deepEqual(RegionExecutionHarness.restore(h.checkpoint()).modelContext('i'),h.modelContext('i'));
+  const before=h.exportEpisode(),state=sharedRegionState(h.controller);
+  assert.throws(()=>h.select('i',{kind:'end',fields:{kind:'return'}}),/deadline expired/);
+  assert.deepEqual(h.exportEpisode(),before);
+  assert.deepEqual(sharedRegionState(h.controller),state);
+});
+
+test('an expired local region leaves no partial bindings or active checkpoint cursor',()=>{
+  const h=new RegionExecutionHarness({sessionId:'expired-local',now:()=>0});
+  h.publishProgram({programId:'p',source:'"use strict";function run(x){let a=x+1;let b=a*2;return b;}',entry:'run'});
+  h.admitInvocation({programId:'p',invocationId:'i',trackId:'t',realmId:'r',triggerId:'entry',args:[3],deadline:1});
+  const candidate=h.preview('i','r0'),before=h.checkpoint();
+  h.inner.now=()=>1;
+  assert.throws(()=>h.select('i',candidate),/deadline expired/);
+  assert.equal(h.active,null);
+  assert.equal(h.controller.generated,0);
+  assert.deepEqual(h.checkpoint(),before);
+  assert.deepEqual(RegionExecutionHarness.restore(h.checkpoint()).modelContext('i'),h.modelContext('i'));
+});
