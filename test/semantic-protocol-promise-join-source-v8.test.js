@@ -51,7 +51,7 @@ test('join checkpoint resumes the exact suspended FIFO state and rejects false s
   assert.deepEqual(sharedRegionState(resumed.controller),before);
   assert.throws(()=>resumed.select('invocation1',encodeDetailedRecord({kind:'job',fields:{action:'dispatch',job:record.job,owner:'invocation1'}},{role:'generated'})),/guard/);
   assert.deepEqual(sharedRegionState(resumed.controller),before);
-  assert.throws(()=>resumed.importObserved({mode:'observed',kind:'result',fields:{}}),/observations after protocol/);
+  assert.throws(()=>resumed.importObserved({mode:'observed',kind:'result',fields:{}}),/canonical detail record/);
   for(const row of timeline.slice(cut))resumed.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
   const complete=RegionExecutionHarness.replay(result.exported);
   assert.deepEqual(sharedRegionState(resumed.controller),sharedRegionState(complete.controller));

@@ -78,7 +78,7 @@ export function applyPromiseJoinRecordV8(controller,record,api){
     if(record.output!==null)api.fresh(controller,record.output);
     if(record.error!==null)api.fresh(controller,record.error);
     if(record.output!==null&&record.error!==null&&record.output===record.error)fail('duplicate result allocation identity');
-    result.join={schema:PROMISE_JOIN_STATE_V8,mode:record.mode,inputs:copy(record.inputs),jobs:copy(record.jobs),
+    result.join={schema:PROMISE_JOIN_STATE_V8,owner:controller.rootInvocation,mode:record.mode,inputs:copy(record.inputs),jobs:copy(record.jobs),
       observed:record.inputs.map(()=>false),values:record.inputs.map(()=>null),output:record.output,error:record.error,
       settled:false};
     if(record.inputs.length===0){
@@ -93,9 +93,10 @@ export function applyPromiseJoinRecordV8(controller,record,api){
   if(record.entry!==null||record.error!==null)fail('unused entry/error allocation identity');
   const result=promise(controller,record.result),join=result.join;
   if(!join||join.schema!==PROMISE_JOIN_STATE_V8||!modes.has(join.mode))fail('unknown join result');
+  if(join.owner!==controller.rootInvocation)fail('join belongs to another invocation');
   const index=join.jobs.indexOf(record.job);if(index<0)fail('job is not registered with result Promise');
   const job=controller.jobs.get(record.job);
-  if(!job||job.reaction!=='join'||job.joinResult!==record.result||job.joinIndex!==index||job.promise!==join.inputs[index])fail('join scheduler job linkage');
+  if(!job||job.owner!==join.owner||job.reaction!=='join'||job.joinResult!==record.result||job.joinIndex!==index||job.promise!==join.inputs[index])fail('join scheduler job linkage');
   if(controller.stack.length||controller.activeJob||[...controller.jobs.values()].some(row=>row.status==='running')||
     controller.ready[0]!==record.job||job.status!=='queued')fail('join step violates FIFO or stack turn');
   const input=promise(controller,join.inputs[index]);if(input.state==='pending')fail('join step before input settlement');
@@ -138,7 +139,7 @@ export function allowsPromiseJoinInternalSchedulerV8(controller,record){
 export function allowsPromiseJoinWithoutStackV8(controller,record){
   if(record?.kind!=='promise.join.step'||controller.stack?.length!==0)return false;
   const result=controller.heap?.get(record.result),join=result?.join;
-  return result?.kind==='promise'&&join?.schema===PROMISE_JOIN_STATE_V8&&join.jobs?.includes(record.job)===true&&
+  return result?.kind==='promise'&&join?.schema===PROMISE_JOIN_STATE_V8&&join.owner===controller.rootInvocation&&join.jobs?.includes(record.job)===true&&
     controller.ready?.[0]===record.job;
 }
 export function allowsPromiseJoinDetailedCallV8(controller,record){
@@ -170,7 +171,7 @@ export function restorePromiseJoinStateV8(controller,api){
     const join=node.join;
     if(join===undefined||join===null)continue;
     if(node.external!==null||node.adopted!==null)fail('restored join must own its internal settlement');
-    if(!join||join.schema!==PROMISE_JOIN_STATE_V8||!modes.has(join.mode)||!Array.isArray(join.inputs)||!Array.isArray(join.jobs)||
+    if(!join||join.schema!==PROMISE_JOIN_STATE_V8||!isId(join.owner)||!modes.has(join.mode)||!Array.isArray(join.inputs)||!Array.isArray(join.jobs)||
       !Array.isArray(join.observed)||!Array.isArray(join.values)||join.inputs.length!==join.jobs.length||
       join.inputs.length!==join.observed.length||join.inputs.length!==join.values.length||typeof join.settled!=='boolean')fail('restored join metadata');
     if(join.settled!==(node.state!=='pending'))fail('join settled flag differs from result Promise');
@@ -179,7 +180,13 @@ export function restorePromiseJoinStateV8(controller,api){
       ident(join.inputs[i]);ident(join.jobs[i]);if(jobs.has(join.jobs[i]))fail('restored duplicate join job');jobs.add(join.jobs[i]);
       if(typeof join.observed[i]!=='boolean')fail('restored join observation flag');
       const value=join.values[i];if(join.observed[i])api.known(controller,value,id);else if(value!==null)fail('unobserved join input has value');
-      const job=controller.jobs.get(join.jobs[i]);if(!job||job.reaction!=='join'||job.joinResult!==id||job.joinIndex!==i||job.promise!==join.inputs[i])fail('restored join scheduler linkage');
+      const job=controller.jobs.get(join.jobs[i]);if(join.owner!==controller.rootInvocation){
+        if(job)fail('foreign join job in invocation scheduler');
+        const input=promise(controller,join.inputs[i]);
+        if(join.observed[i]&&(input.state==='pending'||!api.eq(value,input.result)))fail('foreign join observed value differs from input');
+        continue;
+      }
+      if(!job||job.owner!==join.owner||job.reaction!=='join'||job.joinResult!==id||job.joinIndex!==i||job.promise!==join.inputs[i])fail('restored join scheduler linkage');
       if((job.status==='completed')!==join.observed[i])fail('restored join observation/job lifecycle');
       const input=promise(controller,join.inputs[i]);
       if(join.observed[i]&&(input.state==='pending'||!api.eq(value,input.result)))fail('restored join observed value differs from input settlement');
@@ -193,7 +200,7 @@ export function restorePromiseJoinStateV8(controller,api){
     if(join.error!==null&&join.error!==undefined)fail('unsupported join error storage');
   }
   for(const [id,job]of controller.jobs)if(job.reaction==='join'){
-    const result=controller.heap.get(job.joinResult);if(result?.kind!=='promise'||!result.join?.jobs.includes(id))fail('orphan join job');
+    const result=controller.heap.get(job.joinResult);if(result?.kind!=='promise'||!result.join?.jobs.includes(id)||result.join.owner!==controller.rootInvocation||job.owner!==controller.rootInvocation)fail('orphan join job');
     if(!['waiting','queued','completed'].includes(job.status))fail('join job lifecycle');
     if(job.status==='queued'&&!controller.ready.includes(id))fail('queued join job missing from ready queue');
   }

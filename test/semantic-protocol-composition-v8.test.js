@@ -80,13 +80,15 @@ test('a JSON checkpoint preserves a pending property call and rejects rehashed d
   }
 });
 
-test('detailed transitions and host lifecycle cannot bypass an active protocol boundary',()=>{
+test('scoped protocol transitions and host lifecycle reject incomplete authority atomically',()=>{
   const h=fresh();begin(h);const before=h.checkpoint();
   assert.throws(()=>h.select('i',{kind:'read',fields:{object:'o2',key:'amount',value:['num',7],invocation:'get1'}}),/bypass|field/);
   assert.throws(()=>h.select('i',{kind:'return',fields:{value:['num',7],invocation:'get1'}}),/scoped/);
   assert.throws(()=>h.select('i',encodeProtocolRecordV8({kind:'return',value:['num',7],invocation:'wrong'})),/active invocation/);
-  assert.throws(()=>h.admitInvocation({}),/host lifecycle/);
-  assert.throws(()=>h.registerEventHandler({}),/host lifecycle/);
+  assert.throws(()=>h.admitInvocation({}),/Invalid .*ID/);
+  assert.throws(()=>h.admitInvocation({programId:'p',invocationId:'later',trackId:'t',realmId:'r',
+    triggerId:'later',realmPolicy:'retained',args:[3]}),/active guest turn/);
+  assert.throws(()=>h.registerEventHandler({}),/Invalid .*ID/);
   assert.deepEqual(h.checkpoint(),before);
 });
 

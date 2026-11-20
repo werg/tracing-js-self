@@ -149,6 +149,12 @@ const projectionAttempt=(profile,result)=>({profile,status:result.status,phase:r
   category:result.category??null,reason:result.reason??null,
   failureDigest:result.failure?.failureDigest??null});
 async function tryDirectProtocolSource(fixture,prior){
+  if(fixture.fixture?.calls?.length){
+    const {verifyProtocolHostTrainingCaseV8}=await import('./protocol-host-source-v8.js');
+    const mixed=await verifyProtocolHostTrainingCaseV8(fixture);
+    return {...mixed,regionAttempts:[projectionAttempt('selected-detailed/1',prior),
+      projectionAttempt('protocol-host-source/1',mixed)]};
+  }
   const {verifyProtocolRegionTrainingCase}=await import('./protocol-source-v8.js');
   const protocol=await verifyProtocolRegionTrainingCase(fixture),regionAttempts=[
     projectionAttempt('selected-detailed/1',prior),projectionAttempt('direct-protocol-source/1',protocol)];
@@ -181,6 +187,10 @@ export async function verifyRegionTrainingCase(fixture){
 
 export async function recheckRegionEvidence(exported,{nativeConsumer=null,nativePolicy=null,requireNative=false}={}){
   const side=exported?.sidecar;
+  if(side?.schema==='semantic-protocol-host-region-evidence/1'){
+    const {recheckProtocolHostEvidenceV8}=await import('./protocol-host-source-v8.js');
+    return recheckProtocolHostEvidenceV8(exported,{nativeConsumer,nativePolicy,requireNative});
+  }
   if(side?.schema==='semantic-protocol-region-evidence/1'){
     const {recheckProtocolRegionEvidence}=await import('./protocol-source-v8.js');
     return recheckProtocolRegionEvidence(exported,{nativeConsumer,nativePolicy,requireNative});

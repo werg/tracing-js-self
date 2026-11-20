@@ -50,6 +50,21 @@ function canonicalResultGraph(graph){
     properties:node.properties.map(property=>({key:property.key,value:clone(property.value)})),
     ...(Object.hasOwn(node,'prototype')?{prototype:node.prototype}:{})})),roots:clone(graph.roots)};
 }
+function observedResultDigest(status,result,graph=null){
+  assertValue(result);
+  const captured=graph===null?{objects:[],roots:[result]}:canonicalResultGraph(graph);
+  demand(captured.roots.length===1&&isDeepStrictEqual(captured.roots[0],result),
+    'Observed result graph root mismatch');
+  // Incoming object IDs are renamed when introduced into an existing realm.
+  // Hash their local identities and ordered topology, not those transport
+  // names. References without an introduced graph retain their realm identity.
+  const aliases=new Map(captured.objects.map((node,index)=>[node.id,index])),
+    value=tag=>tag[0]==='ref'&&aliases.has(tag[1])?['introduced',aliases.get(tag[1])]:clone(tag),
+    identity={status,graph:{objects:captured.objects.map((node,index)=>({id:index,kind:node.kind,
+      properties:node.properties.map(property=>({key:property.key,value:value(property.value)})),
+      ...(Object.hasOwn(node,'prototype')?{prototype:node.prototype}:{})})),roots:captured.roots.map(value)}};
+  return createHash('sha256').update(JSON.stringify(identity)).digest('hex');
+}
 function remapGraph(graph,reserved){
   const aliases=new Map();let ordinal=0;
   for(const node of graph.objects){
@@ -286,6 +301,14 @@ export class SelectedExecutionCore {
    * subscription request; JS-selected listener registration has a separate
    * effect/callback ABI. One event activates a selected handler only after
    * a real host delivery has been admitted. */
+  commitCallbackEvent(subscriptionId,eventId){
+    const suffix=/^callbackevent([1-9][0-9]*)$/.exec(eventId);
+    if(!suffix)return;
+    const sequence=Number(suffix[1]);
+    demand(Number.isSafeInteger(sequence),'Invalid native callback event sequence');
+    for(const callback of this.callbacks.values())if(callback.subscriptionId===subscriptionId)
+      callback.sequence=Math.max(callback.sequence,sequence);
+  }
   registerEventHandler({subscriptionId,programId,realmId,trackId,entry=null,
       realmPolicy='retained',queueLimit=64,closureId=null,lifetime='subscription',
       ownerInvocationId=null}){
@@ -293,6 +316,7 @@ export class SelectedExecutionCore {
       [programId,'program ID'],[realmId,'realm ID'],[trackId,'track ID']])
       id(value,name);
     demand(this.programs.has(programId),'Handler requires an observed program');
+    demand(!this.realms.get(realmId)?.closed,'Cannot register a handler in a closed realm');
     demand(!this.handlers.has(subscriptionId),'Subscription identity already exists');
     demand(realmPolicy==='retained'||realmPolicy==='fresh','Invalid handler realm policy');
     demand(Number.isSafeInteger(queueLimit)&&queueLimit>=1&&queueLimit<=4096,
@@ -318,6 +342,7 @@ export class SelectedExecutionCore {
   postEvent({subscriptionId,eventId,args=[],completionPolicy='call-return',deliver=true}){
     id(subscriptionId,'subscription ID');id(eventId,'event ID');
     const handler=this.handlers.get(subscriptionId);
+    demand(!this.realms.get(handler?.realmId)?.closed,'Cannot deliver an event to a closed realm');
     if(!handler||handler.state!=='active'){
       this.deliveries.push({subscriptionId,eventId,status:'quarantined',reason:'closed-or-unregistered'});
       throw new Error('Subscription is closed or unregistered');
@@ -341,6 +366,7 @@ export class SelectedExecutionCore {
   deliverReadyEvents(subscriptionId){
     const handler=this.handlers.get(subscriptionId);
     demand(handler,'Unknown subscription');
+    demand(!this.realms.get(handler.realmId)?.closed,'Cannot deliver an event to a closed realm');
     if(!['active','closing'].includes(handler.state)||!handler.queue.length||
        (handler.realmPolicy==='retained'&&this.realms.get(handler.realmId)?.running))
       return null;
@@ -353,6 +379,7 @@ export class SelectedExecutionCore {
     this.record('observed','event',handler.trackId,
       {subscriptionId,eventId:next.eventId,invocationId,triggerId,
         programId:handler.programId,realmId});
+    this.commitCallbackEvent(subscriptionId,next.eventId);
     return this.admitInvocation({programId:handler.programId,invocationId,
       realmId,trackId:handler.trackId,triggerId,
       realmPolicy:handler.realmPolicy,entry:handler.entry,args:next.args,
@@ -401,6 +428,7 @@ export class SelectedExecutionCore {
     demand(kind==='end'||!realm.running||realm.running===invocationId,
       'Shared realm has another active guest turn');
     if(kind==='resume'||kind==='job'&&fields.action==='dispatch'){
+      this.assertNoOtherActiveJob(invocationId);
       const selectedReady=activation.controller.continuations.get(fields.continuation)??
         activation.controller.jobs.get(fields.job);
       const earlier=[...this.invocations.values()].filter(other=>other.realmId===activation.realmId)
@@ -522,11 +550,23 @@ export class SelectedExecutionCore {
     }
     return selected;
   }
+  assertNoOtherActiveJob(invocationId){
+    const activation=this.invocations.get(invocationId);
+    demand(activation,'Unknown invocation');
+    demand(![...this.invocations].some(([otherId,other])=>otherId!==invocationId&&
+      other.realmId===activation.realmId&&other.controller.activeJob),
+      'Shared realm has an unfinished Promise job owned by another invocation');
+  }
+  refreshRealmReady(realmId){
+    for(const other of this.invocations.values())if(other.realmId===realmId)
+      other.controller.refreshReady();
+  }
   wake(){for(const resolve of this.wakeWaiters)resolve();this.wakeWaiters.clear();}
   waitForActivity(){return new Promise(resolve=>this.wakeWaiters.add(resolve));}
   enqueueClosure({ownerInvocationId,closureId,args=[],receiver=undefined}){
     const owner=this.invocations.get(ownerInvocationId);
     demand(owner&&!['cancelled','failed'].includes(owner.status),'Callback owner is closed');
+    demand(!this.realms.get(owner.realmId)?.closed,'Cannot enqueue a callback in a closed realm');
     const closure=this.realms.get(owner.realmId)?.heap.get(closureId);
     demand(closure?.kind==='closure','Callback requires an owned closure');
     const prepared=this.prepareCallbackInput?.({ownerInvocationId,closureId,args,receiver,
@@ -600,7 +640,15 @@ export class SelectedExecutionCore {
           throw new Error('Owned callback was revoked or lost');
         if(args.length>32)throw new TypeError('Native callback argument limit');
         graphOf(args);
-        const eventId='callbackevent'+(++registration.sequence);
+        // Only a delivered event advances the durable counter. Buffered native
+        // arrivals remain outside the model's causal prefix, while seen/queued
+        // IDs still prevent two pending arrivals from receiving the same ID.
+        const handler=this.handlers.get(registration.subscriptionId);
+        let sequence=registration.sequence,eventId;
+        do{
+          sequence++;demand(Number.isSafeInteger(sequence),'Native callback event sequence exhausted');
+          eventId='callbackevent'+sequence;
+        }while(handler?.seen.has(eventId)||registration.queued.some(event=>event.eventId===eventId));
         if(registration.state==='pending'){
           if(registration.queued.length>=64)throw new Error('Callback event queue overflow');
           registration.queued.push({eventId,args});
@@ -704,8 +752,8 @@ export class SelectedExecutionCore {
     const activation=this.invocations.get(invocationId);
     const captured=explicitResult===null?canonicalResultGraph(graphOf([value])):null,
       declared=explicitGraph===null?null:canonicalResultGraph(explicitGraph);
-    const resultDigest=createHash('sha256').update(JSON.stringify({status,
-      graph:explicitResult===null?captured:{result:explicitResult,graph:declared}})).digest('hex');
+    const resultDigest=observedResultDigest(status,
+      explicitResult===null?captured.roots[0]:explicitResult,explicitResult===null?captured:declared);
     if(intent.status==='settled'){
       demand(intent.resultDigest===resultDigest,'Conflicting duplicate result');
       this.deliveries.push({invocationId,effectId,status:'duplicate'});
@@ -718,7 +766,8 @@ export class SelectedExecutionCore {
         result=graph.roots[0];
       }else result=tag(value);
     }
-    const line=this.encodeRecord('observe',{effect:effectId,status,result,...(graph?{graph}:{})});
+    const line=this.encodeRecord('observe',{effect:effectId,status,result,...(graph?{graph}:{})}),
+      readyCutoff=activation.controller.scheduler.ready;
     activation.controller.commitRecord(this.decodeRecord(line),{mode:'observed',track:activation.trackId});
     intent.status='settled';
     const receipt=this.record('observed','result',activation.trackId,
@@ -727,8 +776,7 @@ export class SelectedExecutionCore {
     intent.resultDigest=resultDigest;
     // Keep abort ownership for retained listeners/resources after registration
     // returns. Cancellation and realm close can still close their native work.
-    for(const other of this.invocations.values())if(other.realmId===activation.realmId)
-      other.controller.refreshReady();
+    this.refreshRealmReady(activation.realmId,readyCutoff);
     if(!this.replaying){
       const ready=this.nextReadyInvocation(activation.realmId);
       if(ready)for(const listener of this.runnableListeners)listener(ready);
@@ -860,11 +908,21 @@ export class SelectedExecutionCore {
   }
   closeRealm(realmId,{reason='realm closed'}={}){
     demand(this.realms.has(realmId),'Unknown realm');
+    demand(typeof reason==='string'&&reason.length>0,'Realm closure requires a reason');
+    const realm=this.realms.get(realmId);
+    if(realm.closed){
+      const receipt=this.timeline.findLast(item=>item.kind==='realm-close'&&item.realmId===realmId);
+      demand(receipt,'Closed realm lacks its committed closure receipt');return receipt;
+    }
     for(const [invocationId,activation] of this.invocations)if(activation.realmId===realmId&&
       activation.status!=='cancelled')this.cancelInvocation(invocationId,{reason});
     for(const [subscriptionId,handler] of this.handlers)if(handler.realmId===realmId&&
       ['active','closing','lost'].includes(handler.state))this.closeEventHandler(subscriptionId);
-    this.realms.get(realmId).closed=true;
+    for(const callback of this.callbacks.values())if(callback.realmId===realmId){
+      callback.state='revoked';callback.queued.length=0;
+    }
+    realm.closed=true;
+    return this.record('observed','realm-close','host',{realmId,reason});
   }
   reconcile(invocationId,effectId,{disposition,evidenceId,value,result=null,graph=null,errorOrigin=null}={}){
     const intent=this.intents.get(invocationId+'/'+effectId);
@@ -882,6 +940,7 @@ export class SelectedExecutionCore {
   reattachSubscription(subscriptionId,{evidenceId,attach}={}){
     const handler=this.handlers.get(subscriptionId);
     demand(handler?.state==='lost','Subscription does not require reattachment');
+    demand(!this.realms.get(handler.realmId)?.closed,'Cannot reattach a callback in a closed realm');
     demand(typeof evidenceId==='string'&&evidenceId&&typeof attach==='function',
       'Reattachment requires a host-authorized resource adapter and evidence');
     // The adapter reattaches the existing native registration, never reruns
@@ -961,19 +1020,13 @@ export class SelectedExecutionCore {
    * that the original external operation really happened: that needs broker
    * receipts and an independent reference oracle.
    */
-  static replay(exported,{requireTerminal=true}={}){
-    const publicData=exported?.public;
-    demand(publicData?.schema===this.contract.executionVersion&&
-      publicData.traceFormat===this.contract.traceVersion&&
-      publicData.contextFormat===this.contract.contextVersion&&
-      publicData.profile===this.contract.profile,'Unsupported public replay contract');
-    const records=publicData.timeline;
-    demand(Array.isArray(records)&&records.length>1&&records.length<=50000,
-      'Replay requires a bounded public causal timeline');
-    const h=new this({sessionId:records[0]?.session,now:()=>-Infinity});
-    h.replaying=true;
-    for(const [index,item] of records.entries()){
-      demand(item&&typeof item==='object','Malformed replay record');
+  /** Replay one receipt against the existing machine without executing adapters.
+   * Mixed representations stage this operation against their complete history
+   * before applying it to the live lifecycle, preserving native service handles. */
+  replayRecord(item){
+    const h=this,previous=this.replaying,index=this.timeline.length;
+    this.validateRecord(item);this.replaying=true;
+    try{
       if(item.kind==='program'){
         h.publishProgram({programId:item.programId,source:item.source,
           entry:item.entry,capabilities:item.capabilities,dependencies:item.dependencies,
@@ -998,7 +1051,7 @@ export class SelectedExecutionCore {
         demand(['active','closing'].includes(handler?.state)&&!handler.seen.has(item.eventId),
           'Replay event has no live unique subscription');
         const realm=h.realms.get(item.realmId);
-        demand(!realm?.running,'Replay event delivered during active guest turn');
+        demand(!realm?.closed&&!realm?.running,'Replay event delivered during active or closed guest turn');
         handler.seen.add(item.eventId);
         const n=Number(String(item.invocationId).replace(/^event/,''));
         demand(Number.isSafeInteger(n)&&n>h.nextEventDelivery,
@@ -1008,6 +1061,7 @@ export class SelectedExecutionCore {
           subscriptionId:item.subscriptionId,eventId:item.eventId,
           invocationId:item.invocationId,triggerId:item.triggerId,
           programId:item.programId,realmId:item.realmId});
+        h.commitCallbackEvent(item.subscriptionId,item.eventId);
       }else if(item.kind==='handler-close'){
         const handler=h.handlers.get(item.subscriptionId);
         demand(['active','closing','lost'].includes(handler?.state),'Replay closes nonexistent subscription');
@@ -1038,19 +1092,32 @@ export class SelectedExecutionCore {
           decoded.fields.status===item.status&&
           isDeepStrictEqual(decoded.fields.result,item.result),
           'Recorded result and observed witness disagree');
+        const readyCutoff=activation.controller.scheduler.ready;
         activation.controller.commitRecord(decoded,{mode:'observed',track:activation.trackId});
         intent.status='settled';
         intent.result=h.record('observed','result',activation.trackId,
           {invocationId:item.invocationId,effectId:item.effectId,
             status:item.status,result:item.result,line:item.line,errorOrigin:item.errorOrigin});
+        intent.resultDigest=observedResultDigest(item.status,decoded.fields.result,decoded.fields.graph??null);
         h.settleCallbackCapabilities(key,item.status);
-        for(const other of h.invocations.values())if(other.realmId===activation.realmId)
-          other.controller.refreshReady();
+        h.refreshRealmReady(activation.realmId,readyCutoff);
       }else if(item.kind==='source-evict')h.evictSource(item.track,item.programId);
       else if(item.kind==='source-read')h.restoreSource(item.track,item.programId,{digest:item.digest});
       else if(item.kind==='model-context')h.recordModelContext(item.invocationId,item.sourceReads,
         {includeState:Object.hasOwn(item,'selectedState')});
       else if(item.kind==='cancel')h.cancelInvocation(item.invocationId,{reason:item.reason});
+      else if(item.kind==='realm-close'){
+        const realm=h.realms.get(item.realmId);
+        demand(realm&&!realm.closed&&realm.running===null,'Replay closes unknown, closed or active realm');
+        demand([...h.invocations.values()].filter(invocation=>invocation.realmId===item.realmId)
+          .every(invocation=>invocation.status==='cancelled'),'Realm closure lacks invocation cancellation receipts');
+        demand([...h.handlers.values()].filter(handler=>handler.realmId===item.realmId)
+          .every(handler=>handler.state==='closed'),'Realm closure lacks handler retirement receipts');
+        for(const callback of h.callbacks.values())if(callback.realmId===item.realmId){
+          callback.state='revoked';callback.queued.length=0;
+        }
+        realm.closed=true;h.record('observed','realm-close','host',{realmId:item.realmId,reason:item.reason});
+      }
       else if(item.kind==='reconcile'){
         const intent=h.intents.get(item.invocationId+'/'+item.effectId);
         demand(intent&&['dispatched','uncertain'].includes(intent.status),'Reconciliation lacks an uncertain intent');
@@ -1063,7 +1130,8 @@ export class SelectedExecutionCore {
           effectId:item.effectId,disposition:item.disposition,evidenceId:item.evidenceId});
       }else if(item.kind==='callback-reattach'){
         const handler=h.handlers.get(item.subscriptionId);
-        demand(handler&&handler.realmId===item.realmId,'Unknown reattached callback');
+        demand(handler&&handler.realmId===item.realmId&&handler.state!=='closed'&&
+          !h.realms.get(item.realmId)?.closed,'Unknown or closed reattached callback');
         handler.state='active';
         for(const callback of h.callbacks.values())if(callback.subscriptionId===item.subscriptionId)
           callback.state='active';
@@ -1072,6 +1140,25 @@ export class SelectedExecutionCore {
       }else{
         fail('Unregistered public replay record family');
       }
+      demand(isDeepStrictEqual(h.timeline[index],item),
+        'Replay sequence, identity, authority or fields disagree at '+index);
+      return h.timeline[index];
+    }finally{this.replaying=previous;}
+  }
+  static replay(exported,{requireTerminal=true}={}){
+    const publicData=exported?.public;
+    demand(publicData?.schema===this.contract.executionVersion&&
+      publicData.traceFormat===this.contract.traceVersion&&
+      publicData.contextFormat===this.contract.contextVersion&&
+      publicData.profile===this.contract.profile,'Unsupported public replay contract');
+    const records=publicData.timeline;
+    demand(Array.isArray(records)&&records.length>1&&records.length<=50000,
+      'Replay requires a bounded public causal timeline');
+    const h=new this({sessionId:records[0]?.session,now:()=>-Infinity});
+    h.replaying=true;
+    for(const [index,item] of records.entries()){
+      demand(item&&typeof item==='object','Malformed replay record');
+      h.replayRecord(item);
       demand(isDeepStrictEqual(h.timeline[index],item),
         'Replay sequence, identity, authority or fields disagree at '+index);
     }
@@ -1135,9 +1222,15 @@ export class SelectedExecutionCore {
       demand(isDeepStrictEqual(heap,realm.heap)&&isDeepStrictEqual([...expected.locals],realm.locals),
         'Checkpoint realm state contradicts committed public history');
       for(const field of ['digest','programId','policy','revision','taskRevision','initialized',
-        'initializationStarted','running','scheduler','randomState'])
+        'initializationStarted','running','scheduler','randomState','closed'])
         demand(isDeepStrictEqual(expected[field],realm[field]),'Checkpoint realm ownership mismatch: '+field);
     }
+    for(const [key,callback]of packet.callbacks??[])
+      demand(verified.callbacks.get(key)?.sequence===callback.sequence,
+        'Checkpoint callback counter contradicts committed event receipts');
+    for(const [key,intent]of packet.intents)if(intent.status==='settled')
+      demand(verified.intents.get(key)?.resultDigest===intent.resultDigest,
+        'Checkpoint result identity contradicts committed observation');
     const harness=new this({
       sessionId:packet.sessionId,services,maxGenerated:packet.maxGenerated,
       maxOutstanding:packet.maxOutstanding,journal,grants,now,automaticDelivery:packet.automaticDelivery,

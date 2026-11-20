@@ -491,14 +491,41 @@ serving, and measured learned success.
   injects source/tokenizer verification; this selector repair is not new
   actual-asset or learned-quality evidence.
 
-- Callback replay retirement repair: result receipts now apply the same
+- Callback replay retirement repair (`b190abf387ac5ebdb4b369545d91b4ddf3f77d1f`): result receipts now apply the same
   capability retirement as live execution. Call callbacks and failed
   subscriptions become revoked/closing; successful subscriptions stay active.
   Replay does not invent queued arrivals, handler-close receipts or native
   registration. Seven direct V8/callback checks and 29 historical lifecycle
   checks pass, zero failed/skipped in both suites. The callback interoperability
   fixture is freshly rebuilt from the original source and independently replayed.
-  Paired native fixture verification is being completed.
+  Paired native callback/serving controls pass; final protocol fixture pairing remains open.
+
+- Mixed protocol/host recovery checkpoint (current implementation):
+  four independently checked source cases preserve root results 12, 7, 0 and 6;
+  31 focused producer tests pass with no failures or skips. Exact shared maps,
+  invocation-owned joins and globally ordered dependencies survive JSON restore.
+  Host policy and live service bindings are retained, uncertain effects never
+  redispatch, and unjournaled native arrivals explicitly refuse checkpointing.
+  Actual receipt mapping handles result-triggered retirement and reconciliation.
+  Settled result identity, terminal realm closure and delivered callback counters
+  now reconstruct from acknowledged public evidence; queued callback values and
+  counters stay outside model context. Native replay independently matches every
+  record/context of all four cases and a separate controlled 24-row/10-context
+  automatic callback recovery fixture. Real tokenizer masks pass all four source
+  examples, but clean exact-pair source admission is still the next gate.
+  The broader V8 run found one obsolete blanket host-refusal assertion; it now
+  tests malformed authority and an active-realm conflict, and all four controls
+  in that file pass. Broad-run completion remains separately reported.
+  Details: [mixed host/protocol design](docs/SEMANTIC_V8_MIXED_HOST_PROTOCOL.md).
+  Unique declarative event ownership, broader adoption/module promotion,
+  durable ingress, general reentrancy and final deployment recovery remain open.
+
+- Existing-consumer closure parity:
+  `63b1c6215682bd149233d62e03b98add202e441a` validates explicit
+  terminal realm closure in both V6 and detailed V7 paths and rejects reopening,
+  unretired handlers, missing cancellations and forged authority. Fifty focused
+  tests pass, including six new cross-version closure controls. The V6/V7 shared
+  declarations are regenerated together with V8's new lifecycle record.
 
 ## Paired consumer PR
 
@@ -506,8 +533,8 @@ https://github.com/werg/megatoken/pull/38
 
 ## Latest published branch heads
 
-- Producer: `892932b56c806a532bba66aaae2a616b0e569ad1`.
-- Consumer: `e84027df26943f045fd771831add6cf5f6b9b155`.
+- Producer: `b190abf387ac5ebdb4b369545d91b4ddf3f77d1f`.
+- Consumer: `63b1c6215682bd149233d62e03b98add202e441a`.
 
 These are incremental checkpoints, not a final qualified release pair. Both PRs
 remain drafts. Historical local-only composition results are not current evidence.

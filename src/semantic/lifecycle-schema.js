@@ -12,6 +12,7 @@ export const LIFECYCLE_RECORD_SCHEMAS=Object.freeze(Object.fromEntries(Object.en
   handler:['subscriptionId','programId','realmId','trackId','realmPolicy','entry','queueLimit','closureId','lifetime','ownerInvocationId'],
   event:['subscriptionId','eventId','invocationId','triggerId','programId','realmId'],
   'handler-close':['subscriptionId','discarded'],
+  'realm-close':['realmId','reason'],
   dispatch:['invocationId','effectId','key','attempt'],
   result:['invocationId','effectId','status','result','line','errorOrigin'],
   'source-evict':['programId','digest'],'source-read':['programId','digest','source'],
@@ -39,6 +40,8 @@ export function validateLifecycleRecord(record,{executionVersion,traceVersion,co
      (!Number.isInteger(record.randomSeed)||Object.is(record.randomSeed,-0)||
       record.randomSeed<0||record.randomSeed>0xffffffff))
     throw new TypeError('Invalid program deterministic seed');
+  if(record.kind==='realm-close'&&(record.track!=='host'||typeof record.reason!=='string'||!record.reason))
+    throw new TypeError('Invalid observed realm closure');
   if(record.kind==='model-context'){
     const stateFields=['selectedState','realmPrefixDigest','visibleThrough'];
     if(stateFields.some(field=>Object.hasOwn(record,field))){

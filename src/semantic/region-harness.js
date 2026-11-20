@@ -18,7 +18,7 @@ const copy=structuredClone,eq=isDeepStrictEqual;
 const clean=value=>JSON.parse(JSON.stringify(value));
 const fail=message=>{const error=new TypeError('Region execution: '+message);error.category='region-authority';throw error;};
 const protocolCheckpointSchema='semantic-protocol-continuation/1';
-const protocolDetailKinds=new Set(['allocate','bind','compute','choose','read','write','call','return','throw','end']);
+const protocolDetailKinds=new Set(['allocate','bind','compute','choose','read','write','call','return','throw','end','request']);
 const internalSchedulerDetailKinds=new Set(['promise','await','resume','job','transfer']);
 function assertSchedulerDetail(controller,{kind,fields}){
   if(kind==='promise'){
@@ -37,23 +37,46 @@ function assertSchedulerDetail(controller,{kind,fields}){
       assertPlainPromiseResolutionV8(controller,job.originalResult);
   }
 }
-function lifecycleEpisode(inner,timeline){return {public:{schema:inner.contract.executionVersion,
-  traceFormat:inner.contract.traceVersion,contextFormat:inner.contract.contextVersion,profile:inner.contract.profile,timeline}};}
-
 export class RegionExecutionHarness {
   constructor(options={}){
     this.inner=new SelectedExecutionLifecycleV8(options);
+    this.bindRealmReadiness();
     this.programs=new Map();this.timeline=[];this.innerCursor=0;this.consumed=[];this.active=null;
   }
+  bindRealmReadiness(){this.inner.refreshRealmReady=(realmId,cutoff)=>this.refreshRealmReady(realmId,cutoff);}
   get invocations(){return this.inner.invocations;}
   get intents(){return this.inner.intents;}
   get handlers(){return this.inner.handlers;}
   get realms(){return this.inner.realms;}
   get controller(){return this.inner.invocations.values().next().value?.controller??null;}
   hasProtocol(){return [...this.invocations.values()].some(item=>item.controller.protocol!==undefined&&item.controller.protocol!==null);}
-  assertBaseLifecycle(){if(this.hasProtocol())fail('host lifecycle after protocol work requires an extended asynchronous profile');}
-  publishProgram(options){this.assertBaseLifecycle();this.inner.publishProgram(options);this.sync();return this.timeline.at(-1);}
-  admitInvocation(options){this.assertBaseLifecycle();this.inner.admitInvocation(options);this.sync();return this.timeline.at(-1);}
+  refreshRealmReady(realmId,cutoff){
+    const controllers=[...this.invocations.values()].filter(item=>item.realmId===realmId)
+      .map(item=>item.controller),scheduler=this.realms.get(realmId).scheduler;
+    // One settlement may wake waiters owned by several retained invocations.
+    // Local refresh discovers eligibility; publish that single wave in global
+    // registration order without changing any previously queued work.
+    for(const controller of controllers)controller.refreshReady();
+    const fresh=[];
+    for(const controller of controllers)for(const identity of controller.ready){
+      const item=controller.continuations.get(identity)??controller.jobs.get(identity);
+      if(item.readySequence>cutoff)fresh.push({controller,identity,item});
+    }
+    const dependency=fresh.filter(row=>Number.isSafeInteger(row.item.sequence));
+    // Explicit queueMicrotask jobs have no dependency registration. A record
+    // enqueues one such job or settles a dependency; it cannot perform both.
+    if(dependency.length&&dependency.length!==fresh.length)fail('mixed explicit and dependency readiness wave');
+    if(!dependency.length)return;
+    dependency.sort((a,b)=>a.item.sequence-b.item.sequence);
+    for(const controller of controllers)controller.ready=controller.ready.filter(identity=>{
+      const item=controller.continuations.get(identity)??controller.jobs.get(identity);
+      return item.readySequence<=cutoff;
+    });
+    scheduler.ready=cutoff;
+    for(const {controller,identity,item}of dependency){item.readySequence=++scheduler.ready;controller.ready.push(identity);}
+  }
+  publishProgram(options){this.inner.publishProgram(options);this.sync();return this.timeline.at(-1);}
+  admitInvocation(options){this.inner.admitInvocation(options);this.sync();return this.timeline.at(-1);}
   append(mode,kind,fields){
     const row=clean({sequence:this.timeline.length+1,mode,kind,fields});this.timeline.push(row);return copy(row);
   }
@@ -104,7 +127,9 @@ export class RegionExecutionHarness {
         assertProtocolDetailCompatible(controller,record);
       }
       assertSchedulerDetail(controller,record);
+      const realmId=this.activation(invocationId).realmId,readyCutoff=controller.scheduler.ready;
       const result=this.inner.selected(invocationId,line);
+      this.refreshRealmReady(realmId,readyCutoff);
       this.sync();return result;
     }
     if(line.startsWith('protocol '))return this.selectProtocol(invocationId,line);
@@ -158,22 +183,34 @@ export class RegionExecutionHarness {
     if(!(['running','returned'].includes(activation.status)||activation.status==='suspended'&&
       allowsProtocolInternalSchedulerV8(controller,record))||controller.completion)fail('protocol invocation is not runnable');
     if(activation.deadline!==null&&activation.deadline<=this.inner.now())fail('protocol invocation deadline expired');
-    if(this.invocations.size!==1||activation.realmPolicy!=='fresh'||controller.effects.size||this.intents.size||
-      this.handlers.size||this.inner.callbacks.size||this.inner.closureQueue.length)
-      fail('protocol profile requires one fresh invocation without external host work');
+    if(realm.running!==null&&realm.running!==invocationId)
+      fail('another invocation owns the active realm turn');
+    if(record.kind==='promise.join.step'){
+      this.inner.assertNoOtherActiveJob(invocationId);
+      if(this.inner.nextReadyInvocation(activation.realmId)!==invocationId)
+        fail('join step violates shared realm global ready order');
+    }
     if((controller.jobs.size||controller.continuations.size||controller.activeJob)&&
       !allowsProtocolInternalSchedulerV8(controller,record))fail('protocol profile requires a declared internal scheduler');
     if(!this.inner.sourceAvailability.get(activation.trackId)?.has(activation.programId))fail('protocol source is unavailable');
     if(controller.generated>=controller.maxGenerated)fail('protocol generated record bound');
+    const readyCutoff=controller.scheduler.ready;
     const staged=cloneRegionController(controller),result=applyProtocolRecordV8(staged,record);staged.generated++;
     const state=sharedRegionState(staged); // Full descriptor/Symbol size is checked before mutation.
-    Object.assign(controller,staged);
-    realm.heap=controller.heap;realm.locals=controller.locals;realm.scheduler=controller.scheduler;
+    // Retained callbacks share these exact objects. Replacing one controller's
+    // maps would silently split the realm when a callback creates a join.
+    const {heap,locals,scheduler}=controller;
+    heap.clear();for(const [key,value]of staged.heap)heap.set(key,value);
+    locals.clear();for(const [key,value]of staged.locals)locals.set(key,value);
+    Object.assign(scheduler,staged.scheduler);
+    Object.assign(controller,staged,{heap,locals,scheduler});
+    realm.heap=heap;realm.locals=locals;realm.scheduler=scheduler;
+    this.refreshRealmReady(activation.realmId,readyCutoff);
     if(controller.completion){activation.status='completed';realm.running=null;}
     else if(!controller.stack.length){activation.status=controller.pending?'returned':'suspended';realm.running=null;}
     else {activation.status='running';realm.running=invocationId;}
     this.append('generated','protocol',{session:this.inner.sessionId,track:activation.trackId,invocationId,line});
-    return {...result,state};
+    return {...result,state:sharedRegionState(controller)};
   }
   selectAlgorithm(invocationId,line,providedEntry){
     const record=decodePureRegionRecord(line),activation=this.activation(invocationId),controller=activation.controller;
@@ -202,12 +239,22 @@ export class RegionExecutionHarness {
   modelContext(invocationId){
     this.sync();const activation=this.activation(invocationId),controller=activation.controller;
     const state=sharedRegionState(controller);
+    const publicResult=intent=>{
+      if(!intent.result)return intent;
+      const row=this.timeline.findLast(row=>row.kind==='result'&&
+        row.fields.invocationId===intent.invocationId&&row.fields.effectId===intent.effectId);
+      if(!row)fail('intent result lacks a public observation');
+      return {...intent,result:{...intent.result,sequence:row.sequence,
+        ownerSequence:this.timeline.filter(item=>item.sequence<=row.sequence&&item.fields.track===row.fields.track).length}};
+    };
     return clean({schema:REGION_CONTEXT_VERSION,representation:'mixed',profile:REGION_PROFILE,
       invocationId,programs:[...this.programs].map(([id,program])=>({id,program})),
       input:controller.input,state,regionCursor:{active:this.active,consumed:this.consumed},
-      obligations:{intents:[...this.inner.intents].map(([key,{args,resultDigest,...intent}])=>[key,intent]),
-        handlers:[...this.inner.handlers].map(([key,handler])=>[key,{...handler,seen:[...handler.seen],queue:[]}]),
-        callbacks:[...this.inner.callbacks],closureQueue:this.inner.closureQueue.map(({args,...row})=>row)},
+      obligations:{intents:[...this.inner.intents].map(([key,{args,resultDigest,...intent}])=>[key,publicResult(intent)]),
+        handlers:[...this.inner.handlers].map(([key,handler])=>[key,{...handler,
+          seen:[...handler.seen].filter(id=>!handler.queue.some(event=>event.eventId===id)),queue:[]}]),
+        callbacks:[...this.inner.callbacks].map(([key,callback])=>[key,{...callback,queued:[]}]),
+        closureQueue:this.inner.closureQueue.map(({args,...row})=>row)},
       visibleThrough:this.timeline.length,prefixDigest:hashAlgorithmData(this.timeline)});
   }
   exportEpisode(){this.sync();return {schema:REGION_EXECUTION_VERSION,traceFormat:REGION_TRACE_VERSION,
@@ -215,7 +262,6 @@ export class RegionExecutionHarness {
   /** Import an observed receipt only. No model record can create observations. */
   importObserved(row){
     if(row?.mode!=='observed'||['semantic','region','algorithm','protocol'].includes(row.kind))fail('host receipt authority');
-    if(this.hasProtocol())fail('observations after protocol work require an extended asynchronous profile');
     this.sync();const fields=copy(row.fields),kind=row.kind;
     if(kind==='program'){
       validateRegionProgram(fields.regionProgram);
@@ -229,25 +275,27 @@ export class RegionExecutionHarness {
     const raw={schema:this.inner.contract.executionVersion,session:this.inner.sessionId,
       sequence:this.inner.globalSequence+1,ownerSequence:(this.inner.ownerSequences.get(fields.track)??0)+1,
       mode:'observed',kind,...fields};
-    // Replay the direct V8 client of the neutral host lifecycle machine. This
-    // read-only replay never dispatches a service or calls a retained handler.
-    this.inner=SelectedExecutionLifecycleV8.replay(lifecycleEpisode(this.inner,[...this.inner.timeline,raw]),{requireTerminal:false});
+    // Validate against the entire mixed machine before changing the live host.
+    // The replay flag prevents recursive staging while checking an exact prefix.
+    if(!this.replayingPublic)RegionExecutionHarness.replay({...this.exportEpisode(),
+      timeline:[...this.timeline,{sequence:this.timeline.length+1,...copy(row)}]},
+      {requireTerminal:false});
+    this.inner.replayRecord(raw);
     this.sync();
   }
   async dispatch(invocationId,effectId,options){
-    if(this.hasProtocol())fail('protocol profile does not dispatch host work');
     const result=await this.inner.dispatch(invocationId,effectId,options);this.sync();return result;
   }
   deliverResult(invocationId,effectId,options){
-    this.assertBaseLifecycle();
     assertObservedPromiseResolutionV8(this.activation(invocationId).controller,{...options,effect:effectId});
-    const result=this.inner.deliverResult(invocationId,effectId,options);this.sync();return result;
+    const result=this.inner.deliverResult(invocationId,effectId,options);
+    this.sync();return result;
   }
-  registerEventHandler(options){this.assertBaseLifecycle();const result=this.inner.registerEventHandler(options);this.sync();return result;}
-  postEvent(options){this.assertBaseLifecycle();const result=this.inner.postEvent(options);this.sync();return result;}
-  closeEventHandler(id){this.assertBaseLifecycle();const result=this.inner.closeEventHandler(id);this.sync();return result;}
+  registerEventHandler(options){const result=this.inner.registerEventHandler(options);this.sync();return result;}
+  postEvent(options){const result=this.inner.postEvent(options);this.sync();return result;}
+  closeEventHandler(id){const result=this.inner.closeEventHandler(id);this.sync();return result;}
+  closeRealm(id,options){const result=this.inner.closeRealm(id,options);this.sync();return result;}
   reconcile(invocationId,effectId,options){
-    this.assertBaseLifecycle();
     assertObservedPromiseResolutionV8(this.activation(invocationId).controller,
       {...options,effect:effectId,status:options?.disposition});
     const result=this.inner.reconcile(invocationId,effectId,options);this.sync();return result;
@@ -259,17 +307,23 @@ export class RegionExecutionHarness {
     return {...body,integrity:hashAlgorithmData(clean(body))};
   }
   protocolCheckpoint(){
+    if([...this.inner.handlers.values()].some(handler=>handler.queue.length)||
+      [...this.inner.callbacks.values()].some(callback=>callback.queued.length)||this.inner.closureQueue.length)
+      fail('unjournaled native arrivals require an explicit durable ingress receipt');
     return clean({schema:protocolCheckpointSchema,invocations:[...this.invocations].map(([id,activation])=>[
-      id,{status:activation.status,state:sharedRegionState(activation.controller)}])});
+      id,{status:activation.status,state:sharedRegionState(activation.controller)}]),
+      policy:{maxGenerated:this.inner.maxGenerated,maxOutstanding:this.inner.maxOutstanding,
+        automaticDelivery:this.inner.automaticDelivery}});
   }
-  static replay(exported,{requireTerminal=true}={}){
+  static replay(exported,{requireTerminal=true,...options}={}){
     const publicData=exported?.public??exported;
     assertAlgorithmFields(publicData,['schema','traceFormat','contextFormat','representation','profile','timeline'],'region episode');
     if(publicData.schema!==REGION_EXECUTION_VERSION||publicData.traceFormat!==REGION_TRACE_VERSION||
       publicData.contextFormat!==REGION_CONTEXT_VERSION||publicData.representation!=='mixed'||publicData.profile!==REGION_PROFILE)
       fail('incompatible execution contract');
     if(!Array.isArray(publicData.timeline)||publicData.timeline.length>50000)fail('timeline bound');
-    const harness=new RegionExecutionHarness({sessionId:publicData.timeline[0]?.fields?.session??'regions',automaticDelivery:false,now:()=>-Infinity});
+    const harness=new RegionExecutionHarness({...options,sessionId:publicData.timeline[0]?.fields?.session??'regions',automaticDelivery:false,now:()=>-Infinity});
+    harness.replayingPublic=true;harness.inner.replaying=true;
     for(const row of publicData.timeline){
       assertAlgorithmFields(row,['sequence','mode','kind','fields'],'region timeline row');
       if(row.sequence!==harness.timeline.length+1)fail('noncontiguous public cutoff');
@@ -281,25 +335,44 @@ export class RegionExecutionHarness {
       if([...harness.inner.invocations.values()].some(item=>!['completed','cancelled','failed'].includes(item.status)))fail('unfinished invocation');
       if([...harness.inner.intents.values()].some(item=>!['settled','cancelled'].includes(item.status)))fail('pending request');
     }
-    return harness;
+    harness.replayingPublic=false;harness.inner.replaying=false;return harness;
   }
   static restore(packet,options={}){
     assertAlgorithmFields(packet,['schema','profile','public','regionCursor','selected','integrity'],'region checkpoint');
     const {integrity,...body}=packet;
     if(body.schema!==REGION_CONTINUATION_VERSION||body.profile!==REGION_PROFILE||hashAlgorithmData(clean(body))!==integrity)
       fail('checkpoint version or integrity');
-    const replayed=RegionExecutionHarness.replay(body.public,{requireTerminal:false});
+    const policy=body.selected?.schema===protocolCheckpointSchema?body.selected.policy:null;
+    if(body.selected?.schema===protocolCheckpointSchema&&!policy)fail('missing protocol host policy');
+    if(policy){
+      assertAlgorithmFields(policy,['maxGenerated','maxOutstanding','automaticDelivery'],'protocol host policy');
+      if(!Number.isSafeInteger(policy.maxGenerated)||policy.maxGenerated<1||
+        !Number.isSafeInteger(policy.maxOutstanding)||policy.maxOutstanding<1||typeof policy.automaticDelivery!=='boolean')
+        fail('invalid protocol host policy');
+    }
+    const replayed=RegionExecutionHarness.replay(body.public,{...policy,requireTerminal:false});
     if(!eq(body.regionCursor,{active:null,consumed:replayed.consumed}))fail('checkpoint region cursor differs from public history');
     if(replayed.hasProtocol()){
+      replayed.inner.automaticDelivery=policy.automaticDelivery;
       if(!eq(body.selected,replayed.protocolCheckpoint()))fail('protocol checkpoint differs from exact public shared state');
       for(const {controller} of replayed.invocations.values())if(controller.protocol)
         restoreProtocolStateV8(controller,controller.protocol);
-      if(typeof options.now==='function')replayed.inner.now=options.now;
+      // Reattach only the embedding's explicitly supplied live services. Never
+      // dispatch acknowledged requests or recreate native subscriptions here.
+      const bindings=new SelectedExecutionLifecycleV8({...policy,...options});
+      for(const field of ['services','journal','grants','now','materializeCallbackResult','prepareCallbackInput'])
+        replayed.inner[field]=bindings[field];
+      for(const intent of replayed.inner.intents.values())
+        if(['dispatching','dispatched'].includes(intent.status))intent.status='uncertain';
+      for(const handler of replayed.inner.handlers.values())
+        if(['active','closing'].includes(handler.state))handler.state='lost';
+      for(const callback of replayed.inner.callbacks.values())if(callback.state==='active')callback.state='lost';
       return replayed;
     }
     if(
       !eq(body.selected.timeline,replayed.inner.timeline))fail('checkpoint differs from public region history');
     replayed.inner=SelectedExecutionLifecycleV8.restore(body.selected,options);
+    replayed.bindRealmReadiness();
     replayed.innerCursor=replayed.inner.timeline.length;return replayed;
   }
 }

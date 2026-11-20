@@ -44,7 +44,9 @@ export function createPromiseJoinTeacherV8(){return {id,
     const allocated=changes.filter(change=>change.table==='heap'&&change.before===null);
     const output=allocated.length===1&&allocated[0].after.kind==='array'?allocated[0].id:null;
     if(allocated.length!==(output===null?0:1))ctx.refuse('join step has an undeclared allocation');
-    ctx.emitProtocol(ctx.rootInvocation,{kind:'promise.join.step',result,job:jobId(result,queued.index),
+    const joinOwner=ctx.controller(ctx.rootInvocation).heap.get(result)?.join?.owner;
+    if(!joinOwner)ctx.refuse('join step lacks a retained owning invocation');
+    ctx.emitProtocol(joinOwner,{kind:'promise.join.step',result,job:jobId(result,queued.index),
       entry:null,output:output===null?null:ctx.identity(output),error:null,status:node.status,
       value:node.status==='pending'?null:ctx.tag(node.value.value)},event,'source-promise-join-step/1');
     if(output!==null)ctx.claimDataIdentity(output);
@@ -66,7 +68,9 @@ export function createPromiseJoinTeacherV8(){return {id,
         if(!eq(selected.properties,properties))ctx.refuse('join output differs from current owned allocation');
       }
       if(change.table==='control'&&controller.protocol){
-        const actual=controller.ready.filter(job=>controller.jobs.get(job)?.reaction==='join'),
+        const actual=[...ctx.harness.invocations.values()].flatMap(({controller:c})=>c.ready
+          .filter(job=>c.jobs.get(job)?.reaction==='join').map(id=>({id,sequence:c.jobs.get(id).readySequence})))
+          .sort((a,b)=>a.sequence-b.sequence).map(row=>row.id),
           expected=(change.after.queue??[]).filter(job=>job.kind==='combinator').map(job=>jobId(job.resultId,job.index));
         if(!eq(actual,expected))ctx.refuse('join readiness differs from the current owned FIFO queue');
       }
