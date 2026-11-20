@@ -1,0 +1,27 @@
+{"id":"ordered-map","status":"measured"}
+{"id":"shared-getter","status":"measured"}
+{"id":"causal-counter","status":"measured"}
+{"id":"number-callback-cleanup","status":"measured"}
+{"id":"custom-iterator-close","status":"measured"}
+{"id":"iterable-binding-close","status":"measured"}
+{"id":"source-symbol-getter-arithmetic","status":"measured"}
+{"id":"typed-views-shared-backing","status":"measured"}
+{"id":"source-derived-private-arithmetic","status":"measured"}
+{"id":"builtin-iterator-mixed-arithmetic","status":"measured"}
+{"id":"source-promise-all-reaction-arithmetic","status":"measured"}
+{"id":"source-promise-join-rejection-finally","status":"measured"}
+{"id":"source-number-private-arithmetic","status":"measured"}
+{"id":"source-generator-cleanup-suspension","status":"measured"}
+{"id":"source-generator-delegated-cleanup","status":"measured"}
+{"id":"source-proxy-traps-arithmetic","status":"measured"}
+{"id":"source-base-initializer-throw","status":"measured"}
+{"id":"source-derived-initializer-throw","status":"measured"}
+{"id":"source-promise-executor-first-call","status":"measured"}
+{"id":"source-promise-executor-retained-resolution","status":"measured"}
+{"id":"source-promise-executor-abrupt","status":"measured"}
+{"id":"source-ordinary-constructor-prototype","status":"measured"}
+{"id":"source-enumeration-map-callback","status":"measured"}
+{"id":"generator-own-symbol-alias","status":"measured"}
+{"id":"source-logical-left-operands","status":"measured"}
+{"id":"source-for-in-own-keys","status":"measured"}
+{"output":"/workspace/scratch/754a49249d01/native-current-qualification-012c9fe-39c4036/interoperability-costs","producerRevision":"012c9fe49a082319bf98ac0c571596da925741a4","summary":{"declared":26,"sourceQualified":26,"sourceDispositions":{"passed":26},"compactEpisodes":15,"whollyDetailedEpisodes":11,"regionCoverage":{"measuredEpisodes":26,"unmeasuredEpisodes":0,"compact":27,"detailed":48,"compactRecords":27,"detailedRecords":897},"flat":{"sourceQualified":26,"measured":26,"unmeasured":0,"dispositions":{"passed":26},"bytes":{"generated":100145,"detailed":97073,"detailedShare":0.9693244795047181,"cumulativeContext":4568659,"peakContext":9168},"tokenMeasurement":"passed","tokenMeasuredEpisodes":26,"tokens":{"generated":29451,"detailed":28472,"detailedShare":0.9667583443686123,"terminal":924,"observedAndContext":1470900,"total":1501275,"peakContext":2933},"scope":"Sums cover measured episodes only; source refusals and measurement limits remain in the declared denominator."},"nativePacking":{"status":"measured","measuredEpisodes":26,"unmeasuredEpisodes":0,"generatedTokens":29451,"observedTokens":1500471,"terminalTokens":0,"physicalRecords":3430,"logicalRecords":980,"scope":"Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."},"model":{"status":"unmeasured","nextStep":null,"completedExecution":null,"latencyMs":null},"nativeServing":{"status":"unmeasured","latencyMs":null,"cacheSavings":null},"defaultPromotion":"not-qualified"}}

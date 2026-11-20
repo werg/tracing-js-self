@@ -1,0 +1,3527 @@
+{
+  "schema": "semantic-v8-population-results/1",
+  "populations": [
+    {
+      "id": "all",
+      "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "nativePolicy": {
+        "schema": "semantic-native-policy/8",
+        "consumerRepository": "werg/megatoken",
+        "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+        "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7"
+      },
+      "populationDigest": "c738cf8677bc2e1c6d660da11ba94b8b484c15a0d712752368c5ed82391eda60",
+      "declared": 665,
+      "sourceQualified": 665,
+      "nativeAdmitted": 665,
+      "sourceDispositions": {
+        "passed": 665
+      },
+      "nativeDispositions": {
+        "passed": 665
+      },
+      "costs": {
+        "declared": 665,
+        "sourceQualified": 665,
+        "sourceDispositions": {
+          "passed": 665
+        },
+        "compactEpisodes": 458,
+        "whollyDetailedEpisodes": 207,
+        "regionCoverage": {
+          "measuredEpisodes": 665,
+          "unmeasuredEpisodes": 0,
+          "compact": 471,
+          "detailed": 790,
+          "compactRecords": 471,
+          "detailedRecords": 7159
+        },
+        "flat": {
+          "sourceQualified": 665,
+          "measured": 665,
+          "unmeasured": 0,
+          "dispositions": {
+            "passed": 665
+          },
+          "bytes": {
+            "generated": 812279,
+            "detailed": 712709,
+            "detailedShare": 0.8774189656509648,
+            "cumulativeContext": 25726563,
+            "peakContext": 6685
+          },
+          "tokenMeasurement": "passed",
+          "tokenMeasuredEpisodes": 665,
+          "tokens": {
+            "generated": 247403,
+            "detailed": 214211,
+            "detailedShare": 0.8658383285570507,
+            "terminal": 7630,
+            "observedAndContext": 8663223,
+            "total": 8918256,
+            "peakContext": 2162
+          },
+          "scope": "Sums cover measured episodes only; source refusals and measurement limits remain in the declared denominator."
+        },
+        "nativePacking": {
+          "status": "measured",
+          "measuredEpisodes": 665,
+          "unmeasuredEpisodes": 0,
+          "generatedTokens": 247403,
+          "observedTokens": 9433879,
+          "terminalTokens": 0,
+          "physicalRecords": 23571,
+          "logicalRecords": 8980,
+          "scope": "Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."
+        },
+        "model": {
+          "status": "unmeasured",
+          "nextStep": null,
+          "completedExecution": null,
+          "latencyMs": null
+        },
+        "nativeServing": {
+          "status": "unmeasured",
+          "latencyMs": null,
+          "cacheSavings": null
+        },
+        "defaultPromotion": "not-qualified"
+      },
+      "families": {
+        "expansion:all-positive": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:any-positive": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:array-filter-positive": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:array-map-affine": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:class-instance-state": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:cleanup-pending-return": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:count-positive": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:enumeration-own-keys": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:first-positive-index": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:first-positive-value": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:generator-yield-versus-return": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:getter-captured-write": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:inclusive-scan": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:logical-conjunction": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:logical-disjunction": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:method-receiver": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:multiple-accumulators": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:nullish-default": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:object-binding-default": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:optional-data-property": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:ordered-product": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:shared-postfix-capture": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:symbol-identity": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:typed-bigint-increment": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:undefined-default": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "expansion:visible-object-write": {
+          "declared": 24,
+          "sourceQualified": 24,
+          "nativeAdmitted": 24,
+          "sourceDispositions": {
+            "passed": 24
+          },
+          "nativeDispositions": {
+            "passed": 24
+          }
+        },
+        "interaction:capture-async-callback": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:class-private-coercion": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:closure-alias-mutation": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:destructure-getter-computed-key": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:generator-delegation-close": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:getter-throw-cleanup": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:iteration-break-finally": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:live-module-synchronous-cycle": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:live-module-top-level-await": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:optional-receiver-lazy-arguments": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:parameter-default-closure-tdz": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:promise-join-rejection-finally": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:regexp-last-index-replacement-callback": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:typed-views-shared-backing": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:lodash/_arrayEach.js/arrayEach": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:lodash/_arrayIncludesWith.js/arrayIncludesWith": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:lodash/_arrayReduceRight.js/arrayReduceRight": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:lodash/_baseFindIndex.js/baseFindIndex": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:lodash/_baseGt.js/baseGt": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:lodash/_baseSum.js/baseSum": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:lodash/_baseTimes.js/baseTimes": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:lodash/_strictLastIndexOf.js/strictLastIndexOf": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/arrays.ts/binarySearch": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/arrays.ts/coalesce": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/arrays.ts/concatArrays": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/arrays.ts/move": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/arrays.ts/pushToStart": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/arrays.ts/quickSelect": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/arrays.ts/removeFastWithoutKeepingOrder": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/arrays.ts/sumBy": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/numbers.ts/clamp": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/numbers.ts/formatTokenCount": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/numbers.ts/rot": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/strings.ts/containsUppercaseCharacter": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/strings.ts/escape": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/strings.ts/format": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/strings.ts/getLeadingWhitespace": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/strings.ts/isBasicASCII": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/strings.ts/isFalsyOrWhitespace": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/strings.ts/joinStrings": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "utility:vscode/strings.ts/ltrim": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        }
+      },
+      "unqualified": []
+    },
+    {
+      "id": "gallery",
+      "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "nativePolicy": {
+        "schema": "semantic-native-policy/8",
+        "consumerRepository": "werg/megatoken",
+        "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+        "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7"
+      },
+      "populationDigest": "f30dbb5ee22582ef77e9e24f925964c47cea5db5947eb63d7a19649f5c65fbd4",
+      "declared": 11,
+      "sourceQualified": 11,
+      "nativeAdmitted": 11,
+      "sourceDispositions": {
+        "passed": 11
+      },
+      "nativeDispositions": {
+        "passed": 11
+      },
+      "costs": {
+        "declared": 11,
+        "sourceQualified": 11,
+        "sourceDispositions": {
+          "passed": 11
+        },
+        "compactEpisodes": 9,
+        "whollyDetailedEpisodes": 2,
+        "regionCoverage": {
+          "measuredEpisodes": 11,
+          "unmeasuredEpisodes": 0,
+          "compact": 10,
+          "detailed": 15,
+          "compactRecords": 10,
+          "detailedRecords": 87
+        },
+        "flat": {
+          "sourceQualified": 11,
+          "measured": 11,
+          "unmeasured": 0,
+          "dispositions": {
+            "passed": 11
+          },
+          "bytes": {
+            "generated": 11618,
+            "detailed": 10163,
+            "detailedShare": 0.8747632983301773,
+            "cumulativeContext": 402808,
+            "peakContext": 8454
+          },
+          "tokenMeasurement": "passed",
+          "tokenMeasuredEpisodes": 11,
+          "tokens": {
+            "generated": 3378,
+            "detailed": 2915,
+            "detailedShare": 0.8629366489046774,
+            "terminal": 97,
+            "observedAndContext": 139863,
+            "total": 143338,
+            "peakContext": 2875
+          },
+          "scope": "Sums cover measured episodes only; source refusals and measurement limits remain in the declared denominator."
+        },
+        "nativePacking": {
+          "status": "measured",
+          "measuredEpisodes": 11,
+          "unmeasuredEpisodes": 0,
+          "generatedTokens": 3378,
+          "observedTokens": 158551,
+          "terminalTokens": 0,
+          "physicalRecords": 407,
+          "logicalRecords": 169,
+          "scope": "Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."
+        },
+        "model": {
+          "status": "unmeasured",
+          "nextStep": null,
+          "completedExecution": null,
+          "latencyMs": null
+        },
+        "nativeServing": {
+          "status": "unmeasured",
+          "latencyMs": null,
+          "cacheSavings": null
+        },
+        "defaultPromotion": "not-qualified"
+      },
+      "families": {
+        "async-cleanup": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "async-counter": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "compound-pure": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "observed-branch": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "owned-callback": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "persistent-external-trigger": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "trace-gallery-dense-loop": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "trace-gallery-object-alias": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "trace-gallery-pure-helper": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "trace-gallery-redundant-cell-write": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "trace-gallery-throw-finally": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        }
+      },
+      "unqualified": []
+    },
+    {
+      "id": "interoperability",
+      "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "nativePolicy": {
+        "schema": "semantic-native-policy/8",
+        "consumerRepository": "werg/megatoken",
+        "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+        "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7"
+      },
+      "populationDigest": "5483980d920420a327a7d131d60b871f9e226d334f234a7af3e47e298db1893f",
+      "declared": 26,
+      "sourceQualified": 26,
+      "nativeAdmitted": 26,
+      "sourceDispositions": {
+        "passed": 26
+      },
+      "nativeDispositions": {
+        "passed": 26
+      },
+      "costs": {
+        "declared": 26,
+        "sourceQualified": 26,
+        "sourceDispositions": {
+          "passed": 26
+        },
+        "compactEpisodes": 15,
+        "whollyDetailedEpisodes": 11,
+        "regionCoverage": {
+          "measuredEpisodes": 26,
+          "unmeasuredEpisodes": 0,
+          "compact": 27,
+          "detailed": 48,
+          "compactRecords": 27,
+          "detailedRecords": 897
+        },
+        "flat": {
+          "sourceQualified": 26,
+          "measured": 26,
+          "unmeasured": 0,
+          "dispositions": {
+            "passed": 26
+          },
+          "bytes": {
+            "generated": 100145,
+            "detailed": 97073,
+            "detailedShare": 0.9693244795047181,
+            "cumulativeContext": 4568659,
+            "peakContext": 9168
+          },
+          "tokenMeasurement": "passed",
+          "tokenMeasuredEpisodes": 26,
+          "tokens": {
+            "generated": 29451,
+            "detailed": 28472,
+            "detailedShare": 0.9667583443686123,
+            "terminal": 924,
+            "observedAndContext": 1470900,
+            "total": 1501275,
+            "peakContext": 2933
+          },
+          "scope": "Sums cover measured episodes only; source refusals and measurement limits remain in the declared denominator."
+        },
+        "nativePacking": {
+          "status": "measured",
+          "measuredEpisodes": 26,
+          "unmeasuredEpisodes": 0,
+          "generatedTokens": 29451,
+          "observedTokens": 1500471,
+          "terminalTokens": 0,
+          "physicalRecords": 3430,
+          "logicalRecords": 980,
+          "scope": "Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."
+        },
+        "model": {
+          "status": "unmeasured",
+          "nextStep": null,
+          "completedExecution": null,
+          "latencyMs": null
+        },
+        "nativeServing": {
+          "status": "unmeasured",
+          "latencyMs": null,
+          "cacheSavings": null
+        },
+        "defaultPromotion": "not-qualified"
+      },
+      "families": {
+        "async-counter": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "builtin-iterator-mixed-arithmetic": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "class-construction-source": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "enumeration-own-keys": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "expansion:class-instance-state": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "expansion:enumeration-own-keys": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "generator-cleanup-suspension": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:class-private-coercion": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:generator-delegation-cleanup": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:promise-join-rejection-finally": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:proxy-traps-arithmetic": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "interaction:typed-views-shared-backing": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "logical-source-choices": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "promise-executor-source": {
+          "declared": 3,
+          "sourceQualified": 3,
+          "nativeAdmitted": 3,
+          "sourceDispositions": {
+            "passed": 3
+          },
+          "nativeDispositions": {
+            "passed": 3
+          }
+        },
+        "protocol-source-promise-all-reaction": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "protocol-symbol-getter": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "source-base-initializer-throw": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "source-derived-initializer-throw": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "synchronous-generator-source": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "v8-contract-custom-iterator": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "v8-contract-getter": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "v8-contract-iterable-binding": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "v8-contract-map": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        },
+        "v8-contract-number-cleanup": {
+          "declared": 1,
+          "sourceQualified": 1,
+          "nativeAdmitted": 1,
+          "sourceDispositions": {
+            "passed": 1
+          },
+          "nativeDispositions": {
+            "passed": 1
+          }
+        }
+      },
+      "unqualified": []
+    }
+  ],
+  "model": {
+    "status": "unmeasured",
+    "reason": "This fixed source/native/data population run performs no model optimization or model execution. Separately retained model studies have their own inputs, pins and outcomes."
+  },
+  "nativeServing": {
+    "status": "unmeasured"
+  },
+  "defaultPromotion": "not-qualified",
+  "comparison": {
+    "inputs": {
+      "before": {
+        "reportSha256": "eca34beb034423aaf7ce55c98367f8b1a7488f425689c91fa58670c5cf865010",
+        "baseline": {
+          "producerRevision": "e88219121d1a09a6f93d161038f162e6b0f6ef54",
+          "summarySha256": "ff42161af509d3e818c982c552bf5023d703e70a5d583e6652ec3710bb1c3d40",
+          "manifestDigest": "b0f0f2b9df84309dcfb96357043517ecf69001453cd0370a9993782ec9395fa8",
+          "registryDigest": "a3bf8703f31dbfe294db41b07c0ec05cf7e3325adcf4dd28aab0cee8286adcd2",
+          "populations": [
+            {
+              "id": "real",
+              "populationDigest": "57101cb80e1114253a3d598c1efc5ff285d9718e2b6b7d912db3b971b05c4a47",
+              "contracts": {
+                "execution": "semantic-execution/7",
+                "trace": "semantic-trace/7",
+                "context": "semantic-context/7",
+                "continuation": "semantic-continuation/7"
+              },
+              "archive": {
+                "file": "real.tar.xz",
+                "sha256": "d97ce6f4db4ae346a385e6c1fe93ac4c9d5c0f1b61bd98eeea1bba2d5574c6bb"
+              }
+            },
+            {
+              "id": "gallery",
+              "populationDigest": "9db75b13c080debd7f984e9b5c9e05378ecd70e6dcb3a721720e5e156297a18e",
+              "contracts": {
+                "execution": "semantic-execution/7",
+                "trace": "semantic-trace/7",
+                "context": "semantic-context/7",
+                "continuation": "semantic-continuation/7"
+              },
+              "archive": {
+                "file": "gallery.tar.xz",
+                "sha256": "a94d5eb144ca4fbce988cac0c67fd4b1342ac8dc19bffb8646db12f866d8be99"
+              }
+            },
+            {
+              "id": "interactions",
+              "populationDigest": "6890ab783849b069122b924a30ae3c237a543875dd749c57e3e36b0fca5a0feb",
+              "contracts": {
+                "execution": "semantic-execution/7",
+                "trace": "semantic-trace/7",
+                "context": "semantic-context/7",
+                "continuation": "semantic-continuation/7"
+              },
+              "archive": {
+                "file": "interactions.tar.xz",
+                "sha256": "4939b8835a94044cb798390176f7deaa2f1d19a3c400b2256042e12097d67762"
+              }
+            }
+          ]
+        }
+      },
+      "afterManifestSha256": "988ada710a9b0be6959594e8611966e68ece97c7ae559bdde2178cb3c40e6d73",
+      "after": [
+        {
+          "id": "all",
+          "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+          "costReportSha256": "65595ead93c6e44583a0423da54e9f7c213c8830111c00b0df7158766e20ef23",
+          "qualificationReportSha256": "42d6edffb8bfe1b514829988ce8961c5412c557cf25ef49683e0f5f7ea8c8cbb",
+          "populationDigest": "c738cf8677bc2e1c6d660da11ba94b8b484c15a0d712752368c5ed82391eda60",
+          "nativePolicy": {
+            "schema": "semantic-native-policy/8",
+            "consumerRepository": "werg/megatoken",
+            "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+            "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+            "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+            "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+            "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+            "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7"
+          }
+        },
+        {
+          "id": "gallery",
+          "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+          "costReportSha256": "3bc6cfce21f829b431d36c623929c4366717f5bab81cfffe3737dc8da7414fd0",
+          "qualificationReportSha256": "f70d5ae9d4154c129fe0e885389ca6f0ccafab64e77eefc59fdeb2377d750a63",
+          "populationDigest": "f30dbb5ee22582ef77e9e24f925964c47cea5db5947eb63d7a19649f5c65fbd4",
+          "nativePolicy": {
+            "schema": "semantic-native-policy/8",
+            "consumerRepository": "werg/megatoken",
+            "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+            "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+            "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+            "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+            "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+            "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7"
+          }
+        },
+        {
+          "id": "interoperability",
+          "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+          "costReportSha256": "9f2c2200fe25d6c1fcdfb621fe5db20a9fdaf4dd33e2f1e5d894519e1c3ed70f",
+          "qualificationReportSha256": "e85bb884c22f8e8195581adf0f7409a6f9bb045e62155d76770f123b52b21878",
+          "populationDigest": "5483980d920420a327a7d131d60b871f9e226d334f234a7af3e47e298db1893f",
+          "nativePolicy": {
+            "schema": "semantic-native-policy/8",
+            "consumerRepository": "werg/megatoken",
+            "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+            "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+            "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+            "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+            "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+            "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7"
+          }
+        }
+      ]
+    },
+    "denominators": {
+      "baselineRetainedDeclared": 50,
+      "baselineSerializerRetained": 42,
+      "baselineTokenMeasured": 42,
+      "baselineUnavailable": [
+        {
+          "population": "families",
+          "declared": 624,
+          "tokenMeasured": 0,
+          "reason": "The frozen family reference executions did not retain source-qualified serializer costs."
+        },
+        {
+          "population": "modules",
+          "declared": 2,
+          "tokenMeasured": 0,
+          "reason": "The historical strict-script serializer run excluded the separately declared module interactions."
+        }
+      ],
+      "currentPopulations": [
+        {
+          "id": "all",
+          "declared": 665,
+          "sourceQualified": 665,
+          "tokenMeasured": 665
+        },
+        {
+          "id": "gallery",
+          "declared": 11,
+          "sourceQualified": 11,
+          "tokenMeasured": 11
+        },
+        {
+          "id": "interoperability",
+          "declared": 26,
+          "sourceQualified": 26,
+          "tokenMeasured": 26
+        }
+      ]
+    },
+    "summary": {
+      "declaredRows": 703,
+      "paired": 42,
+      "dispositions": {
+        "paired": 42,
+        "baseline-unmeasured": 7,
+        "current-case-ambiguous": 1,
+        "baseline-not-retained": 653
+      },
+      "before": {
+        "predictions": 1075,
+        "generatedBytes": 114536,
+        "promptBytes": 40671530,
+        "peakPromptBytes": 174112,
+        "generatedTokens": 34554,
+        "detailedTokens": 34375,
+        "promptTokens": 13104241,
+        "terminalTokens": 1075,
+        "flatTotalTokens": 13139870,
+        "peakPromptTokens": 54944
+      },
+      "after": {
+        "predictions": 1010,
+        "generatedBytes": 109883,
+        "promptBytes": 3532872,
+        "peakPromptBytes": 8454,
+        "generatedTokens": 33132,
+        "detailedTokens": 31831,
+        "promptTokens": 1252510,
+        "terminalTokens": 1010,
+        "flatTotalTokens": 1286652,
+        "peakPromptTokens": 2875
+      },
+      "afterOverBefore": {
+        "predictions": 0.9395348837209302,
+        "generatedBytes": 0.9593752182719844,
+        "promptBytes": 0.08686351361751082,
+        "peakPromptBytes": 0.048554953133615145,
+        "generatedTokens": 0.9588470220524397,
+        "detailedTokens": 0.9259927272727273,
+        "promptTokens": 0.09558050710453203,
+        "terminalTokens": 0.9395348837209302,
+        "flatTotalTokens": 0.09791969022524576,
+        "peakPromptTokens": 0.05232600465928946
+      },
+      "delta": {
+        "predictions": -65,
+        "generatedBytes": -4653,
+        "promptBytes": -37138658,
+        "peakPromptBytes": -165658,
+        "generatedTokens": -1422,
+        "detailedTokens": -2544,
+        "promptTokens": -11851731,
+        "terminalTokens": -65,
+        "flatTotalTokens": -11853218,
+        "peakPromptTokens": -52069
+      },
+      "detailedTokenShare": {
+        "before": 0.994819702494646,
+        "after": 0.9607328262706749
+      },
+      "flatTokenRegressions": [
+        "real-utilities-61b4b4c012b0705b0a6b660a",
+        "real-utilities-4dd52bb7e01ee8083fe45cd2",
+        "compound-pure",
+        "object-alias",
+        "pure-helper",
+        "dense-loop",
+        "counter-0",
+        "redundant-cell-write"
+      ]
+    },
+    "baselinePopulations": {
+      "real": {
+        "declaredRows": 27,
+        "paired": 27,
+        "dispositions": {
+          "paired": 27
+        },
+        "before": {
+          "predictions": 916,
+          "generatedBytes": 98666,
+          "promptBytes": 38363937,
+          "peakPromptBytes": 174112,
+          "generatedTokens": 29870,
+          "detailedTokens": 29826,
+          "promptTokens": 12358809,
+          "terminalTokens": 916,
+          "flatTotalTokens": 12389595,
+          "peakPromptTokens": 54944
+        },
+        "after": {
+          "predictions": 843,
+          "generatedBytes": 91739,
+          "promptBytes": 2960955,
+          "peakPromptBytes": 5913,
+          "generatedTokens": 27815,
+          "detailedTokens": 27008,
+          "promptTokens": 1051927,
+          "terminalTokens": 843,
+          "flatTotalTokens": 1080585,
+          "peakPromptTokens": 2162
+        },
+        "afterOverBefore": {
+          "predictions": 0.9203056768558951,
+          "generatedBytes": 0.929793444550301,
+          "promptBytes": 0.07718068664329211,
+          "peakPromptBytes": 0.033960898731850764,
+          "generatedTokens": 0.93120187479076,
+          "detailedTokens": 0.9055186749815597,
+          "promptTokens": 0.08511556412919724,
+          "terminalTokens": 0.9203056768558951,
+          "flatTotalTokens": 0.08721713663763828,
+          "peakPromptTokens": 0.03934915550378567
+        },
+        "delta": {
+          "predictions": -73,
+          "generatedBytes": -6927,
+          "promptBytes": -35402982,
+          "peakPromptBytes": -168199,
+          "generatedTokens": -2055,
+          "detailedTokens": -2818,
+          "promptTokens": -11306882,
+          "terminalTokens": -73,
+          "flatTotalTokens": -11309010,
+          "peakPromptTokens": -52782
+        },
+        "detailedTokenShare": {
+          "before": 0.9985269501171744,
+          "after": 0.9709868775840373
+        },
+        "flatTokenRegressions": [
+          "real-utilities-61b4b4c012b0705b0a6b660a",
+          "real-utilities-4dd52bb7e01ee8083fe45cd2"
+        ]
+      },
+      "gallery": {
+        "declaredRows": 11,
+        "paired": 11,
+        "dispositions": {
+          "paired": 11
+        },
+        "before": {
+          "predictions": 89,
+          "generatedBytes": 9379,
+          "promptBytes": 1388651,
+          "peakPromptBytes": 40220,
+          "generatedTokens": 2756,
+          "detailedTokens": 2621,
+          "promptTokens": 451622,
+          "terminalTokens": 89,
+          "flatTotalTokens": 454467,
+          "peakPromptTokens": 12442
+        },
+        "after": {
+          "predictions": 97,
+          "generatedBytes": 11618,
+          "promptBytes": 402808,
+          "peakPromptBytes": 8454,
+          "generatedTokens": 3378,
+          "detailedTokens": 2915,
+          "promptTokens": 139863,
+          "terminalTokens": 97,
+          "flatTotalTokens": 143338,
+          "peakPromptTokens": 2875
+        },
+        "afterOverBefore": {
+          "predictions": 1.0898876404494382,
+          "generatedBytes": 1.2387248107474145,
+          "promptBytes": 0.29007144343683183,
+          "peakPromptBytes": 0.21019393336648434,
+          "generatedTokens": 1.225689404934688,
+          "detailedTokens": 1.1121709271270508,
+          "promptTokens": 0.3096904048075603,
+          "terminalTokens": 1.0898876404494382,
+          "flatTotalTokens": 0.31539803770130725,
+          "peakPromptTokens": 0.23107217489149653
+        },
+        "delta": {
+          "predictions": 8,
+          "generatedBytes": 2239,
+          "promptBytes": -985843,
+          "peakPromptBytes": -31766,
+          "generatedTokens": 622,
+          "detailedTokens": 294,
+          "promptTokens": -311759,
+          "terminalTokens": 8,
+          "flatTotalTokens": -311129,
+          "peakPromptTokens": -9567
+        },
+        "detailedTokenShare": {
+          "before": 0.9510159651669086,
+          "after": 0.8629366489046774
+        },
+        "flatTokenRegressions": [
+          "compound-pure",
+          "object-alias",
+          "pure-helper",
+          "dense-loop",
+          "counter-0",
+          "redundant-cell-write"
+        ]
+      },
+      "interactions": {
+        "declaredRows": 12,
+        "paired": 4,
+        "dispositions": {
+          "baseline-unmeasured": 7,
+          "paired": 4,
+          "current-case-ambiguous": 1
+        },
+        "before": {
+          "predictions": 70,
+          "generatedBytes": 6491,
+          "promptBytes": 918942,
+          "peakPromptBytes": 23698,
+          "generatedTokens": 1928,
+          "detailedTokens": 1928,
+          "promptTokens": 293810,
+          "terminalTokens": 70,
+          "flatTotalTokens": 295808,
+          "peakPromptTokens": 7275
+        },
+        "after": {
+          "predictions": 70,
+          "generatedBytes": 6526,
+          "promptBytes": 169109,
+          "peakPromptBytes": 3200,
+          "generatedTokens": 1939,
+          "detailedTokens": 1908,
+          "promptTokens": 60720,
+          "terminalTokens": 70,
+          "flatTotalTokens": 62729,
+          "peakPromptTokens": 1108
+        },
+        "afterOverBefore": {
+          "predictions": 1,
+          "generatedBytes": 1.0053920813433985,
+          "promptBytes": 0.1840257600588503,
+          "peakPromptBytes": 0.13503249219343405,
+          "generatedTokens": 1.0057053941908713,
+          "detailedTokens": 0.9896265560165975,
+          "promptTokens": 0.2066641707225758,
+          "terminalTokens": 1,
+          "flatTotalTokens": 0.21205984963219385,
+          "peakPromptTokens": 0.15230240549828178
+        },
+        "delta": {
+          "predictions": 0,
+          "generatedBytes": 35,
+          "promptBytes": -749833,
+          "peakPromptBytes": -20498,
+          "generatedTokens": 11,
+          "detailedTokens": -20,
+          "promptTokens": -233090,
+          "terminalTokens": 0,
+          "flatTotalTokens": -233079,
+          "peakPromptTokens": -6167
+        },
+        "detailedTokenShare": {
+          "before": 1,
+          "after": 0.9840123775141826
+        },
+        "flatTokenRegressions": []
+      }
+    },
+    "currentPopulations": {
+      "all": {
+        "declaredRows": 665,
+        "paired": 31,
+        "dispositions": {
+          "paired": 31,
+          "baseline-unmeasured": 7,
+          "baseline-not-retained": 627
+        },
+        "before": {
+          "predictions": 986,
+          "generatedBytes": 105157,
+          "promptBytes": 39282879,
+          "peakPromptBytes": 174112,
+          "generatedTokens": 31798,
+          "detailedTokens": 31754,
+          "promptTokens": 12652619,
+          "terminalTokens": 986,
+          "flatTotalTokens": 12685403,
+          "peakPromptTokens": 54944
+        },
+        "after": {
+          "predictions": 913,
+          "generatedBytes": 98265,
+          "promptBytes": 3130064,
+          "peakPromptBytes": 5913,
+          "generatedTokens": 29754,
+          "detailedTokens": 28916,
+          "promptTokens": 1112647,
+          "terminalTokens": 913,
+          "flatTotalTokens": 1143314,
+          "peakPromptTokens": 2162
+        },
+        "afterOverBefore": {
+          "predictions": 0.9259634888438134,
+          "generatedBytes": 0.9344599028119859,
+          "promptBytes": 0.07968010694939136,
+          "peakPromptBytes": 0.033960898731850764,
+          "generatedTokens": 0.9357192276243789,
+          "detailedTokens": 0.9106254330163129,
+          "promptTokens": 0.08793807827454538,
+          "terminalTokens": 0.9259634888438134,
+          "flatTotalTokens": 0.09012831519818487,
+          "peakPromptTokens": 0.03934915550378567
+        },
+        "delta": {
+          "predictions": -73,
+          "generatedBytes": -6892,
+          "promptBytes": -36152815,
+          "peakPromptBytes": -168199,
+          "generatedTokens": -2044,
+          "detailedTokens": -2838,
+          "promptTokens": -11539972,
+          "terminalTokens": -73,
+          "flatTotalTokens": -11542089,
+          "peakPromptTokens": -52782
+        },
+        "detailedTokenShare": {
+          "before": 0.9986162651739103,
+          "after": 0.971835719567117
+        },
+        "flatTokenRegressions": [
+          "real-utilities-61b4b4c012b0705b0a6b660a",
+          "real-utilities-4dd52bb7e01ee8083fe45cd2"
+        ]
+      },
+      "gallery": {
+        "declaredRows": 11,
+        "paired": 11,
+        "dispositions": {
+          "paired": 11
+        },
+        "before": {
+          "predictions": 89,
+          "generatedBytes": 9379,
+          "promptBytes": 1388651,
+          "peakPromptBytes": 40220,
+          "generatedTokens": 2756,
+          "detailedTokens": 2621,
+          "promptTokens": 451622,
+          "terminalTokens": 89,
+          "flatTotalTokens": 454467,
+          "peakPromptTokens": 12442
+        },
+        "after": {
+          "predictions": 97,
+          "generatedBytes": 11618,
+          "promptBytes": 402808,
+          "peakPromptBytes": 8454,
+          "generatedTokens": 3378,
+          "detailedTokens": 2915,
+          "promptTokens": 139863,
+          "terminalTokens": 97,
+          "flatTotalTokens": 143338,
+          "peakPromptTokens": 2875
+        },
+        "afterOverBefore": {
+          "predictions": 1.0898876404494382,
+          "generatedBytes": 1.2387248107474145,
+          "promptBytes": 0.29007144343683183,
+          "peakPromptBytes": 0.21019393336648434,
+          "generatedTokens": 1.225689404934688,
+          "detailedTokens": 1.1121709271270508,
+          "promptTokens": 0.3096904048075603,
+          "terminalTokens": 1.0898876404494382,
+          "flatTotalTokens": 0.31539803770130725,
+          "peakPromptTokens": 0.23107217489149653
+        },
+        "delta": {
+          "predictions": 8,
+          "generatedBytes": 2239,
+          "promptBytes": -985843,
+          "peakPromptBytes": -31766,
+          "generatedTokens": 622,
+          "detailedTokens": 294,
+          "promptTokens": -311759,
+          "terminalTokens": 8,
+          "flatTotalTokens": -311129,
+          "peakPromptTokens": -9567
+        },
+        "detailedTokenShare": {
+          "before": 0.9510159651669086,
+          "after": 0.8629366489046774
+        },
+        "flatTokenRegressions": [
+          "compound-pure",
+          "object-alias",
+          "pure-helper",
+          "dense-loop",
+          "counter-0",
+          "redundant-cell-write"
+        ]
+      },
+      "interoperability": {
+        "declaredRows": 26,
+        "paired": 0,
+        "dispositions": {
+          "baseline-not-retained": 26
+        },
+        "before": {
+          "predictions": 0,
+          "generatedBytes": 0,
+          "promptBytes": 0,
+          "peakPromptBytes": 0,
+          "generatedTokens": 0,
+          "detailedTokens": 0,
+          "promptTokens": 0,
+          "terminalTokens": 0,
+          "flatTotalTokens": 0,
+          "peakPromptTokens": 0
+        },
+        "after": {
+          "predictions": 0,
+          "generatedBytes": 0,
+          "promptBytes": 0,
+          "peakPromptBytes": 0,
+          "generatedTokens": 0,
+          "detailedTokens": 0,
+          "promptTokens": 0,
+          "terminalTokens": 0,
+          "flatTotalTokens": 0,
+          "peakPromptTokens": 0
+        },
+        "afterOverBefore": {
+          "predictions": null,
+          "generatedBytes": null,
+          "promptBytes": null,
+          "peakPromptBytes": null,
+          "generatedTokens": null,
+          "detailedTokens": null,
+          "promptTokens": null,
+          "terminalTokens": null,
+          "flatTotalTokens": null,
+          "peakPromptTokens": null
+        },
+        "delta": {
+          "predictions": 0,
+          "generatedBytes": 0,
+          "promptBytes": 0,
+          "peakPromptBytes": 0,
+          "generatedTokens": 0,
+          "detailedTokens": 0,
+          "promptTokens": 0,
+          "terminalTokens": 0,
+          "flatTotalTokens": 0,
+          "peakPromptTokens": 0
+        },
+        "detailedTokenShare": {
+          "before": null,
+          "after": null
+        },
+        "flatTokenRegressions": []
+      }
+    }
+  },
+  "reference": {
+    "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+    "manifestDigest": "b0f0f2b9df84309dcfb96357043517ecf69001453cd0370a9993782ec9395fa8",
+    "registryDigest": "a3bf8703f31dbfe294db41b07c0ec05cf7e3325adcf4dd28aab0cee8286adcd2",
+    "reference": {
+      "families": 26,
+      "positiveInputs": 208,
+      "positiveExecutions": 624,
+      "positivePassed": 208,
+      "distinguishingPairs": 52,
+      "distinguishingPassed": 52
+    },
+    "families": 26,
+    "interactionGroups": 14,
+    "realSource": {
+      "population": "pinned-utilities-stratified-v1",
+      "inventoryDenominator": 78,
+      "selectedDenominator": 27,
+      "strata": [
+        {
+          "id": "lodash-arrays-and-primitives",
+          "available": 20,
+          "selected": 8
+        },
+        {
+          "id": "vscode-arrays",
+          "available": 27,
+          "selected": 8
+        },
+        {
+          "id": "vscode-numbers",
+          "available": 3,
+          "selected": 3
+        },
+        {
+          "id": "vscode-strings",
+          "available": 28,
+          "selected": 8
+        }
+      ],
+      "selection": "First eight immutable source IDs per declared project/file stratum; no result-dependent filtering",
+      "sources": [
+        {
+          "id": "real-utilities-0a18881f5c9c4d6e9d1e9dff",
+          "family": "utility:lodash/_arrayIncludesWith.js/arrayIncludesWith",
+          "stratum": "lodash-arrays-and-primitives",
+          "sourceDigest": "bc16d995fbb73e23e17789c2cc5dde48215b6a941ed44963c80714db84415192",
+          "originalSourceDigest": "bc16d995fbb73e23e17789c2cc5dde48215b6a941ed44963c80714db84415192",
+          "upstream": {
+            "repository": "lodash/lodash",
+            "revision": "c6e281b878b315c7a10d90f9c2af4cdb112d9625",
+            "path": "_arrayIncludesWith.js",
+            "sha256": "a1310b2b3abe1a6733791f803bad85ea25147bf84512cfe4380ef8afc738b81b"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": null,
+            "lowering": null,
+            "ownedCallbackWrapper": true
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-10fca60f6d553840f613a93b",
+          "family": "utility:lodash/_baseTimes.js/baseTimes",
+          "stratum": "lodash-arrays-and-primitives",
+          "sourceDigest": "b923c213b5ed0e78e4f9f4bd5b1f4b267fc815a451918eb18572da3074bab52b",
+          "originalSourceDigest": "b923c213b5ed0e78e4f9f4bd5b1f4b267fc815a451918eb18572da3074bab52b",
+          "upstream": {
+            "repository": "lodash/lodash",
+            "revision": "c6e281b878b315c7a10d90f9c2af4cdb112d9625",
+            "path": "_baseTimes.js",
+            "sha256": "bd054701039e1090817e5d8f6fb4871966cd3abdc2c283efd98a0c1683707886"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": null,
+            "lowering": null,
+            "ownedCallbackWrapper": true
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-11cc4d45e70ba5a4388194d4",
+          "family": "utility:lodash/_baseSum.js/baseSum",
+          "stratum": "lodash-arrays-and-primitives",
+          "sourceDigest": "f0cb8fe3bfbbf8b4624d1eb83f93d8bc9b16959747bd364f53990df2c88a6b26",
+          "originalSourceDigest": "f0cb8fe3bfbbf8b4624d1eb83f93d8bc9b16959747bd364f53990df2c88a6b26",
+          "upstream": {
+            "repository": "lodash/lodash",
+            "revision": "c6e281b878b315c7a10d90f9c2af4cdb112d9625",
+            "path": "_baseSum.js",
+            "sha256": "7f39b622a6b544cc9619752799b2db854d67c0b77a3f34a9162fa69ffc9228b8"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": null,
+            "lowering": null,
+            "ownedCallbackWrapper": true
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-2524a4e6a9e9c2eb06f0eea0",
+          "family": "utility:lodash/_strictLastIndexOf.js/strictLastIndexOf",
+          "stratum": "lodash-arrays-and-primitives",
+          "sourceDigest": "8310ff9a63823c813716d18bb694289e8c3c49d4d803b5dd4b88361d9b0430c7",
+          "originalSourceDigest": "8310ff9a63823c813716d18bb694289e8c3c49d4d803b5dd4b88361d9b0430c7",
+          "upstream": {
+            "repository": "lodash/lodash",
+            "revision": "c6e281b878b315c7a10d90f9c2af4cdb112d9625",
+            "path": "_strictLastIndexOf.js",
+            "sha256": "5b153f6bcf9bdfce038bbab5253ff345a1383386d8aa296a96f4dfe1edb52f77"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": null,
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "ref",
+                "o0"
+              ],
+              [
+                "num",
+                13
+              ],
+              [
+                "num",
+                4
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "array",
+                "properties": [
+                  {
+                    "key": "0",
+                    "value": [
+                      "num",
+                      -8
+                    ]
+                  },
+                  {
+                    "key": "1",
+                    "value": [
+                      "num",
+                      1
+                    ]
+                  },
+                  {
+                    "key": "2",
+                    "value": [
+                      "num",
+                      1
+                    ]
+                  },
+                  {
+                    "key": "3",
+                    "value": [
+                      "num",
+                      -2
+                    ]
+                  },
+                  {
+                    "key": "4",
+                    "value": [
+                      "num",
+                      7
+                    ]
+                  },
+                  {
+                    "key": "length",
+                    "value": [
+                      "num",
+                      5
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "real-utilities-39eef9fe582680bd1e1b8352",
+          "family": "utility:lodash/_arrayReduceRight.js/arrayReduceRight",
+          "stratum": "lodash-arrays-and-primitives",
+          "sourceDigest": "7bf705c03701becc04fef3d37f9a38c33193940def14c8d85eadbb07f7280d65",
+          "originalSourceDigest": "7bf705c03701becc04fef3d37f9a38c33193940def14c8d85eadbb07f7280d65",
+          "upstream": {
+            "repository": "lodash/lodash",
+            "revision": "c6e281b878b315c7a10d90f9c2af4cdb112d9625",
+            "path": "_arrayReduceRight.js",
+            "sha256": "0978dabc488477a5a3e79624d403c85308df229c688048d5b440483f08e9b019"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": null,
+            "lowering": null,
+            "ownedCallbackWrapper": true
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-569ea1cbaec5b1f42726e8d4",
+          "family": "utility:lodash/_arrayEach.js/arrayEach",
+          "stratum": "lodash-arrays-and-primitives",
+          "sourceDigest": "4e956d9da149fb7d7e4a8fb3af32b6dabd1f7181db0191de43441078143a5f4b",
+          "originalSourceDigest": "4e956d9da149fb7d7e4a8fb3af32b6dabd1f7181db0191de43441078143a5f4b",
+          "upstream": {
+            "repository": "lodash/lodash",
+            "revision": "c6e281b878b315c7a10d90f9c2af4cdb112d9625",
+            "path": "_arrayEach.js",
+            "sha256": "6fd506ed7d2e0a3b216ec2969f391e7b8d2c7c123a0bb49bbeccea55da740cb5"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": null,
+            "lowering": null,
+            "ownedCallbackWrapper": true
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-61b4b4c012b0705b0a6b660a",
+          "family": "utility:lodash/_baseGt.js/baseGt",
+          "stratum": "lodash-arrays-and-primitives",
+          "sourceDigest": "b745ddb0b0895f17c5b92ff54f0558d9c83baff5501289c2df21c1daa4a44245",
+          "originalSourceDigest": "b745ddb0b0895f17c5b92ff54f0558d9c83baff5501289c2df21c1daa4a44245",
+          "upstream": {
+            "repository": "lodash/lodash",
+            "revision": "c6e281b878b315c7a10d90f9c2af4cdb112d9625",
+            "path": "_baseGt.js",
+            "sha256": "99beb83e23bf1aff5a1bbbf8fd03f5b3cb4a9be6c21b8b659d601c0af364ea5b"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": null,
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "num",
+                -8
+              ],
+              [
+                "num",
+                5
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-6b6813110e64309ff106a57e",
+          "family": "utility:lodash/_baseFindIndex.js/baseFindIndex",
+          "stratum": "lodash-arrays-and-primitives",
+          "sourceDigest": "205fccb4085f4cf5f7919b57c0a4ef5aea5a23a4b7f5a18a257b29cd1d2ac6d0",
+          "originalSourceDigest": "205fccb4085f4cf5f7919b57c0a4ef5aea5a23a4b7f5a18a257b29cd1d2ac6d0",
+          "upstream": {
+            "repository": "lodash/lodash",
+            "revision": "c6e281b878b315c7a10d90f9c2af4cdb112d9625",
+            "path": "_baseFindIndex.js",
+            "sha256": "07e9942a47eeb723eb9fa1bc0f7240f93ad9f52d702c0f37d7163670000350c1"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": null,
+            "lowering": null,
+            "ownedCallbackWrapper": true
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-036334389a54870249465f96",
+          "family": "utility:vscode/arrays.ts/concatArrays",
+          "stratum": "vscode-arrays",
+          "sourceDigest": "9c73fe0be8551faa377cec0343c1062d55971c4f4906359b99a9fd070b6cbe91",
+          "originalSourceDigest": "9c73fe0be8551faa377cec0343c1062d55971c4f4906359b99a9fd070b6cbe91",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/arrays.ts",
+            "sha256": "e9a08190d445f28485a24c8b2701b5d91fda0702f3999f96d53f0cfebc032c0a"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "ref",
+                "o0"
+              ],
+              [
+                "ref",
+                "o1"
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "array",
+                "properties": [
+                  {
+                    "key": "0",
+                    "value": [
+                      "num",
+                      -8
+                    ]
+                  },
+                  {
+                    "key": "1",
+                    "value": [
+                      "num",
+                      1
+                    ]
+                  },
+                  {
+                    "key": "2",
+                    "value": [
+                      "num",
+                      1
+                    ]
+                  },
+                  {
+                    "key": "3",
+                    "value": [
+                      "num",
+                      -2
+                    ]
+                  },
+                  {
+                    "key": "4",
+                    "value": [
+                      "num",
+                      7
+                    ]
+                  },
+                  {
+                    "key": "length",
+                    "value": [
+                      "num",
+                      5
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "o1",
+                "kind": "array",
+                "properties": [
+                  {
+                    "key": "0",
+                    "value": [
+                      "num",
+                      5
+                    ]
+                  },
+                  {
+                    "key": "1",
+                    "value": [
+                      "num",
+                      2
+                    ]
+                  },
+                  {
+                    "key": "2",
+                    "value": [
+                      "num",
+                      1
+                    ]
+                  },
+                  {
+                    "key": "3",
+                    "value": [
+                      "num",
+                      -2
+                    ]
+                  },
+                  {
+                    "key": "4",
+                    "value": [
+                      "num",
+                      7
+                    ]
+                  },
+                  {
+                    "key": "length",
+                    "value": [
+                      "num",
+                      5
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "real-utilities-03ac2c8d71309d4f4f5d75e6",
+          "family": "utility:vscode/arrays.ts/binarySearch",
+          "stratum": "vscode-arrays",
+          "sourceDigest": "cb277b0fe1d9d98ba76f1368692d23960ce3d2e6c6849a2b794f9bcb4051da16",
+          "originalSourceDigest": "cb277b0fe1d9d98ba76f1368692d23960ce3d2e6c6849a2b794f9bcb4051da16",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/arrays.ts",
+            "sha256": "e9a08190d445f28485a24c8b2701b5d91fda0702f3999f96d53f0cfebc032c0a"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": true
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-17ba66e8b77d3fc81afa2003",
+          "family": "utility:vscode/arrays.ts/move",
+          "stratum": "vscode-arrays",
+          "sourceDigest": "e598e139ff91aca466c588fe3855ffa18bd74cee891d812b425b6ce11e9bc435",
+          "originalSourceDigest": "e598e139ff91aca466c588fe3855ffa18bd74cee891d812b425b6ce11e9bc435",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/arrays.ts",
+            "sha256": "e9a08190d445f28485a24c8b2701b5d91fda0702f3999f96d53f0cfebc032c0a"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "ref",
+                "o0"
+              ],
+              [
+                "num",
+                0
+              ],
+              [
+                "num",
+                2
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "array",
+                "properties": [
+                  {
+                    "key": "0",
+                    "value": [
+                      "num",
+                      -8
+                    ]
+                  },
+                  {
+                    "key": "1",
+                    "value": [
+                      "num",
+                      1
+                    ]
+                  },
+                  {
+                    "key": "2",
+                    "value": [
+                      "num",
+                      1
+                    ]
+                  },
+                  {
+                    "key": "3",
+                    "value": [
+                      "num",
+                      -2
+                    ]
+                  },
+                  {
+                    "key": "4",
+                    "value": [
+                      "num",
+                      7
+                    ]
+                  },
+                  {
+                    "key": "length",
+                    "value": [
+                      "num",
+                      5
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "real-utilities-251d8065d13ccb8209c13ce0",
+          "family": "utility:vscode/arrays.ts/removeFastWithoutKeepingOrder",
+          "stratum": "vscode-arrays",
+          "sourceDigest": "063dcaebb5d6c65715edd5e20955d44b1871874dfbd476150ce868a5a04367ec",
+          "originalSourceDigest": "063dcaebb5d6c65715edd5e20955d44b1871874dfbd476150ce868a5a04367ec",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/arrays.ts",
+            "sha256": "e9a08190d445f28485a24c8b2701b5d91fda0702f3999f96d53f0cfebc032c0a"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "ref",
+                "o0"
+              ],
+              [
+                "num",
+                0
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "array",
+                "properties": [
+                  {
+                    "key": "0",
+                    "value": [
+                      "num",
+                      -8
+                    ]
+                  },
+                  {
+                    "key": "1",
+                    "value": [
+                      "num",
+                      1
+                    ]
+                  },
+                  {
+                    "key": "2",
+                    "value": [
+                      "num",
+                      1
+                    ]
+                  },
+                  {
+                    "key": "3",
+                    "value": [
+                      "num",
+                      -2
+                    ]
+                  },
+                  {
+                    "key": "4",
+                    "value": [
+                      "num",
+                      7
+                    ]
+                  },
+                  {
+                    "key": "length",
+                    "value": [
+                      "num",
+                      5
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "real-utilities-3e3ec4689f0edf83a468e053",
+          "family": "utility:vscode/arrays.ts/sumBy",
+          "stratum": "vscode-arrays",
+          "sourceDigest": "fe8b2c23f2039e230956df76b289603beeed0c504cc648b6b840e38735563640",
+          "originalSourceDigest": "fe8b2c23f2039e230956df76b289603beeed0c504cc648b6b840e38735563640",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/arrays.ts",
+            "sha256": "e9a08190d445f28485a24c8b2701b5d91fda0702f3999f96d53f0cfebc032c0a"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": true
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-3f04b2d4c368e84083ceabb6",
+          "family": "utility:vscode/arrays.ts/pushToStart",
+          "stratum": "vscode-arrays",
+          "sourceDigest": "c4ae4872514a804b5bfd75f9d41d2fc6af2ba98d8106bb0f98c09c7452310500",
+          "originalSourceDigest": "c4ae4872514a804b5bfd75f9d41d2fc6af2ba98d8106bb0f98c09c7452310500",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/arrays.ts",
+            "sha256": "e9a08190d445f28485a24c8b2701b5d91fda0702f3999f96d53f0cfebc032c0a"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "ref",
+                "o0"
+              ],
+              [
+                "num",
+                -8
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "array",
+                "properties": [
+                  {
+                    "key": "0",
+                    "value": [
+                      "num",
+                      -8
+                    ]
+                  },
+                  {
+                    "key": "1",
+                    "value": [
+                      "num",
+                      1
+                    ]
+                  },
+                  {
+                    "key": "2",
+                    "value": [
+                      "num",
+                      1
+                    ]
+                  },
+                  {
+                    "key": "3",
+                    "value": [
+                      "num",
+                      -2
+                    ]
+                  },
+                  {
+                    "key": "4",
+                    "value": [
+                      "num",
+                      7
+                    ]
+                  },
+                  {
+                    "key": "length",
+                    "value": [
+                      "num",
+                      5
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "real-utilities-430eeb263b08d3f2e60122eb",
+          "family": "utility:vscode/arrays.ts/quickSelect",
+          "stratum": "vscode-arrays",
+          "sourceDigest": "e2cc3489384d38a75ca34cf3aa0dc61fe88807c00f6b470bd6b477be4230311e",
+          "originalSourceDigest": "e2cc3489384d38a75ca34cf3aa0dc61fe88807c00f6b470bd6b477be4230311e",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/arrays.ts",
+            "sha256": "e9a08190d445f28485a24c8b2701b5d91fda0702f3999f96d53f0cfebc032c0a"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": true
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-55e4dbe87b6dc0eb755ac75d",
+          "family": "utility:vscode/arrays.ts/coalesce",
+          "stratum": "vscode-arrays",
+          "sourceDigest": "8b52efe70fb096f309445f9d814aa7fccaef457515969cdfb3921f97725c16bb",
+          "originalSourceDigest": "8b52efe70fb096f309445f9d814aa7fccaef457515969cdfb3921f97725c16bb",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/arrays.ts",
+            "sha256": "e9a08190d445f28485a24c8b2701b5d91fda0702f3999f96d53f0cfebc032c0a"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "ref",
+                "o0"
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "array",
+                "properties": [
+                  {
+                    "key": "0",
+                    "value": [
+                      "num",
+                      -8
+                    ]
+                  },
+                  {
+                    "key": "1",
+                    "value": [
+                      "num",
+                      0
+                    ]
+                  },
+                  {
+                    "key": "2",
+                    "value": [
+                      "num",
+                      1
+                    ]
+                  },
+                  {
+                    "key": "3",
+                    "value": [
+                      "num",
+                      5
+                    ]
+                  },
+                  {
+                    "key": "4",
+                    "value": [
+                      "null"
+                    ]
+                  },
+                  {
+                    "key": "5",
+                    "value": [
+                      "num",
+                      4
+                    ]
+                  },
+                  {
+                    "key": "length",
+                    "value": [
+                      "num",
+                      6
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "real-utilities-4dd52bb7e01ee8083fe45cd2",
+          "family": "utility:vscode/numbers.ts/rot",
+          "stratum": "vscode-numbers",
+          "sourceDigest": "8a76a4556a0130ac9f33f9ed1c4f71ea1f742c011fbd6b246912c72c7746984d",
+          "originalSourceDigest": "8a76a4556a0130ac9f33f9ed1c4f71ea1f742c011fbd6b246912c72c7746984d",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/numbers.ts",
+            "sha256": "2598d701b60fe02af4e6c9b44c2d71cd084ebcf3a2097b4ce7e30b56daef7fe7"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "num",
+                -8
+              ],
+              [
+                "num",
+                2
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-9f613b92f1e790e1aa06e539",
+          "family": "utility:vscode/numbers.ts/clamp",
+          "stratum": "vscode-numbers",
+          "sourceDigest": "84762f7169353f210d71174e0acc5360e33fbac2622923f268de1b2dc2b9c91c",
+          "originalSourceDigest": "84762f7169353f210d71174e0acc5360e33fbac2622923f268de1b2dc2b9c91c",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/numbers.ts",
+            "sha256": "2598d701b60fe02af4e6c9b44c2d71cd084ebcf3a2097b4ce7e30b56daef7fe7"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "num",
+                -8
+              ],
+              [
+                "num",
+                -5
+              ],
+              [
+                "num",
+                5
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-d605fbaad806fafb91925464",
+          "family": "utility:vscode/numbers.ts/formatTokenCount",
+          "stratum": "vscode-numbers",
+          "sourceDigest": "0fd9ec7b06b0504d8ee4e094a91ad814a6f02aea613dcfef23af321b769b896e",
+          "originalSourceDigest": "0fd9ec7b06b0504d8ee4e094a91ad814a6f02aea613dcfef23af321b769b896e",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/numbers.ts",
+            "sha256": "2598d701b60fe02af4e6c9b44c2d71cd084ebcf3a2097b4ce7e30b56daef7fe7"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "num",
+                8000
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-0aec5da2aa029b12a97bb351",
+          "family": "utility:vscode/strings.ts/escape",
+          "stratum": "vscode-strings",
+          "sourceDigest": "dfe787dff500b3d37c9a20631e8002d7714f89589660b3ad6f5e9ca21db04fdb",
+          "originalSourceDigest": "dfe787dff500b3d37c9a20631e8002d7714f89589660b3ad6f5e9ca21db04fdb",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/strings.ts",
+            "sha256": "8419f80b407c97e88e5c7ebd73732737c364b360050740bb0ab4cab52680f811"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "<a href=\"x&y\">  Hello world  0</a>"
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-11d6a55ddb8203a51b11872f",
+          "family": "utility:vscode/strings.ts/isFalsyOrWhitespace",
+          "stratum": "vscode-strings",
+          "sourceDigest": "61d83746c3a2d4a888f9a0e7f8b939ac814a3e8059462fc06fb9311589950a09",
+          "originalSourceDigest": "61d83746c3a2d4a888f9a0e7f8b939ac814a3e8059462fc06fb9311589950a09",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/strings.ts",
+            "sha256": "8419f80b407c97e88e5c7ebd73732737c364b360050740bb0ab4cab52680f811"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "  Hello world  0"
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-1c3531f58c6a7e329aebc86a",
+          "family": "utility:vscode/strings.ts/containsUppercaseCharacter",
+          "stratum": "vscode-strings",
+          "sourceDigest": "d387b887ebd7c15947b4ab15f39a6c7921e0f8044c93c910a9d8856598d52018",
+          "originalSourceDigest": "d387b887ebd7c15947b4ab15f39a6c7921e0f8044c93c910a9d8856598d52018",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/strings.ts",
+            "sha256": "8419f80b407c97e88e5c7ebd73732737c364b360050740bb0ab4cab52680f811"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "  Hello world  0"
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-1fe0fd391f70f55805fa7d2c",
+          "family": "utility:vscode/strings.ts/joinStrings",
+          "stratum": "vscode-strings",
+          "sourceDigest": "89ab437c9025f49289d4bafb269be8a83cb46b8b4bf34f0eebe173aec082a202",
+          "originalSourceDigest": "89ab437c9025f49289d4bafb269be8a83cb46b8b4bf34f0eebe173aec082a202",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/strings.ts",
+            "sha256": "8419f80b407c97e88e5c7ebd73732737c364b360050740bb0ab4cab52680f811"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "ref",
+                "o0"
+              ],
+              [
+                "str",
+                "a"
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "array",
+                "properties": [
+                  {
+                    "key": "0",
+                    "value": [
+                      "str",
+                      "  Hello world  0"
+                    ]
+                  },
+                  {
+                    "key": "1",
+                    "value": [
+                      "null"
+                    ]
+                  },
+                  {
+                    "key": "2",
+                    "value": [
+                      "bool",
+                      false
+                    ]
+                  },
+                  {
+                    "key": "3",
+                    "value": [
+                      "str",
+                      "x"
+                    ]
+                  },
+                  {
+                    "key": "4",
+                    "value": [
+                      "undefined"
+                    ]
+                  },
+                  {
+                    "key": "5",
+                    "value": [
+                      "str",
+                      "y"
+                    ]
+                  },
+                  {
+                    "key": "length",
+                    "value": [
+                      "num",
+                      6
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "real-utilities-23e0725d570bf58d7e916a0b",
+          "family": "utility:vscode/strings.ts/isBasicASCII",
+          "stratum": "vscode-strings",
+          "sourceDigest": "cf7b4f19b7addd888525c136db3ccc2e367b74c28a8bfb292580385c5f772ec1",
+          "originalSourceDigest": "cf7b4f19b7addd888525c136db3ccc2e367b74c28a8bfb292580385c5f772ec1",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/strings.ts",
+            "sha256": "8419f80b407c97e88e5c7ebd73732737c364b360050740bb0ab4cab52680f811"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "  Hello world  0"
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-2a4b41e8af90ac929ed89a8b",
+          "family": "utility:vscode/strings.ts/format",
+          "stratum": "vscode-strings",
+          "sourceDigest": "4b3da96680764e44d9e99abac8c70f74bc6d0c2f4f4c39b5c9cbf49544762242",
+          "originalSourceDigest": "4b3da96680764e44d9e99abac8c70f74bc6d0c2f4f4c39b5c9cbf49544762242",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/strings.ts",
+            "sha256": "8419f80b407c97e88e5c7ebd73732737c364b360050740bb0ab4cab52680f811"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "value={0}, more={1}"
+              ],
+              [
+                "num",
+                -8
+              ],
+              [
+                "num",
+                5
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-2f6c1482ea2016ced3fa31f1",
+          "family": "utility:vscode/strings.ts/getLeadingWhitespace",
+          "stratum": "vscode-strings",
+          "sourceDigest": "78fa636f5d7bc0d2b0cdd451e1e29d5146d89ffcb00d948a6e8f56f4a3e6f760",
+          "originalSourceDigest": "192fa4d7635c1db7ebcdf47b1c010ac9d216bc5c3b77f7ea76cb25683130a3b1",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/strings.ts",
+            "sha256": "8419f80b407c97e88e5c7ebd73732737c364b360050740bb0ab4cab52680f811"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": {
+              "kind": "pinned-typescript-const-enum-inlining/1",
+              "sourceMember": "CharCode",
+              "pinnedDependencySha256": "ddb45e08c0f66a253a52ca5eaafc705687ceda45229ce5c9a1aa64d0fb34e510",
+              "constants": {
+                "Space": 32,
+                "Tab": 9
+              }
+            },
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                " \t    Hello world  0"
+              ]
+            ],
+            "objects": []
+          }
+        },
+        {
+          "id": "real-utilities-3c5ff52adf4a4d14385bdaea",
+          "family": "utility:vscode/strings.ts/ltrim",
+          "stratum": "vscode-strings",
+          "sourceDigest": "e801b38d5121f2f2d341b90f4ae918c13d0ce846b60d05f3db34a7890a23d1a6",
+          "originalSourceDigest": "e801b38d5121f2f2d341b90f4ae918c13d0ce846b60d05f3db34a7890a23d1a6",
+          "upstream": {
+            "repository": "microsoft/vscode",
+            "revision": "2bc7d5ab6919c62e60379e5e1f840bd80846dbdb",
+            "path": "src/vs/base/common/strings.ts",
+            "sha256": "8419f80b407c97e88e5c7ebd73732737c364b360050740bb0ab4cab52680f811"
+          },
+          "transform": {
+            "schema": "pinned-utility-projection/1",
+            "packaging": "remove-export-and-commonjs-assignment",
+            "typescript": "5.9.3",
+            "lowering": null,
+            "ownedCallbackWrapper": false
+          },
+          "inputs": {
+            "schema": "owned-graph/1",
+            "roots": [
+              [
+                "str",
+                "--  Hello world  0"
+              ],
+              [
+                "str",
+                "--"
+              ]
+            ],
+            "objects": []
+          }
+        }
+      ]
+    },
+    "comprehension": {
+      "tasks": 228,
+      "status": "unmeasured"
+    },
+    "native": "untested",
+    "modelExecution": "untested",
+    "standardPromotion": "not-qualified"
+  },
+  "consumerValidation": {
+    "schema": "consumer-validation/1",
+    "startedAt": "2026-11-20T17:26:04.862194+00:00",
+    "pins": {
+      "consumer": {
+        "path": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+        "revision": "39c4036564428e44cc89caf261f517d856482695",
+        "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+        "status": ""
+      },
+      "producer": {
+        "path": "/workspace/scratch/754a49249d01/native-producer-current-012c9fe",
+        "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+        "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+        "status": ""
+      }
+    },
+    "environment": {
+      "PYTHONPATH": "/workspace/scratch/754a49249d01/native-consumer-39c4036/src",
+      "MEGATOKEN_NATIVE_SOURCE_PRODUCER": "/workspace/scratch/754a49249d01/native-producer-current-012c9fe",
+      "TMPDIR": "/workspace/scratch/754a49249d01/native-v8-tmp",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1"
+    },
+    "runtime": {
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "pythonExecutable": "/workspace/scratch/754a49249d01/native-v8-venv/bin/python",
+      "tokenizers": "0.23.3",
+      "torch": "2.10.0+cpu",
+      "node": "v24.22.3",
+      "ruff": "ruff 0.17.6"
+    },
+    "tokenizer": {
+      "path": "/workspace/scratch/754a49249d01/native-v8-tokenizer.json",
+      "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+      "bytes": 12205732
+    },
+    "testFiles": [
+      "tests/test_admit_semantic_v8.py",
+      "tests/test_algorithm_v7.py",
+      "tests/test_algorithm_v8.py",
+      "tests/test_construction_v8.py",
+      "tests/test_custom_iterator_v8.py",
+      "tests/test_enumeration_v8.py",
+      "tests/test_generator_boundaries_v8.py",
+      "tests/test_memory_v8.py",
+      "tests/test_native_array_boundaries_v8.py",
+      "tests/test_native_callback_boundaries_v8.py",
+      "tests/test_native_detail_regressions_v8.py",
+      "tests/test_native_generator_close_v8.py",
+      "tests/test_native_observation_boundaries_v8.py",
+      "tests/test_native_primitives_v8.py",
+      "tests/test_native_v8.py",
+      "tests/test_number_v8.py",
+      "tests/test_prediction_prefix_v8.py",
+      "tests/test_promise_executor_boundaries_v8.py",
+      "tests/test_promise_executor_v8.py",
+      "tests/test_promise_join_v8.py",
+      "tests/test_promise_scheduler_v8.py",
+      "tests/test_protocol_boundaries_v8.py",
+      "tests/test_protocol_properties.py",
+      "tests/test_protocol_v8.py",
+      "tests/test_proxy_v8.py",
+      "tests/test_semantic_model_v8.py",
+      "tests/test_serve_semantic_v8.py"
+    ],
+    "checks": [
+      {
+        "name": "unit",
+        "command": [
+          "/workspace/scratch/754a49249d01/native-v8-venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_admit_semantic_v8.py",
+          "tests/test_algorithm_v7.py",
+          "tests/test_algorithm_v8.py",
+          "tests/test_construction_v8.py",
+          "tests/test_custom_iterator_v8.py",
+          "tests/test_enumeration_v8.py",
+          "tests/test_generator_boundaries_v8.py",
+          "tests/test_memory_v8.py",
+          "tests/test_native_array_boundaries_v8.py",
+          "tests/test_native_callback_boundaries_v8.py",
+          "tests/test_native_detail_regressions_v8.py",
+          "tests/test_native_generator_close_v8.py",
+          "tests/test_native_observation_boundaries_v8.py",
+          "tests/test_native_primitives_v8.py",
+          "tests/test_native_v8.py",
+          "tests/test_number_v8.py",
+          "tests/test_prediction_prefix_v8.py",
+          "tests/test_promise_executor_boundaries_v8.py",
+          "tests/test_promise_executor_v8.py",
+          "tests/test_promise_join_v8.py",
+          "tests/test_promise_scheduler_v8.py",
+          "tests/test_protocol_boundaries_v8.py",
+          "tests/test_protocol_properties.py",
+          "tests/test_protocol_v8.py",
+          "tests/test_proxy_v8.py",
+          "tests/test_semantic_model_v8.py",
+          "tests/test_serve_semantic_v8.py",
+          "--junitxml=/workspace/scratch/754a49249d01/native-final-validation-39c4036-source012/tests.xml"
+        ],
+        "cwd": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+        "startedAt": "2026-11-20T17:26:05.446207+00:00",
+        "finishedAt": "2026-11-20T17:35:59.341772+00:00",
+        "durationSeconds": 593.8959399239975,
+        "exitCode": 0,
+        "log": "/workspace/scratch/754a49249d01/native-final-validation-39c4036-source012/unit.log",
+        "logSha256": "2b5dd012c18ad1c5f14807d7e34933d52edb067ee94d32c87b2074e86874b3b2",
+        "testsRun": 244,
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "reportedDurationSeconds": 568.21
+      },
+      {
+        "name": "ruff-check",
+        "command": [
+          "/workspace/scratch/754a49249d01/native-v8-venv/bin/ruff",
+          "check",
+          "src",
+          "tests",
+          "scripts"
+        ],
+        "cwd": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+        "startedAt": "2026-11-20T17:35:59.413753+00:00",
+        "finishedAt": "2026-11-20T17:35:59.984691+00:00",
+        "durationSeconds": 0.5709235739996075,
+        "exitCode": 0,
+        "log": "/workspace/scratch/754a49249d01/native-final-validation-39c4036-source012/ruff-check.log",
+        "logSha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+      },
+      {
+        "name": "ruff-format",
+        "command": [
+          "/workspace/scratch/754a49249d01/native-v8-venv/bin/ruff",
+          "format",
+          "--check",
+          "src",
+          "tests",
+          "scripts"
+        ],
+        "cwd": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+        "startedAt": "2026-11-20T17:35:59.986056+00:00",
+        "finishedAt": "2026-11-20T17:36:00.636758+00:00",
+        "durationSeconds": 0.6507093950058334,
+        "exitCode": 0,
+        "log": "/workspace/scratch/754a49249d01/native-final-validation-39c4036-source012/ruff-format.log",
+        "logSha256": "9f340d78f35fe3c2c7a79b5697ba83485b7665002db15ff7ddf9b045cc8fb207"
+      },
+      {
+        "name": "diff-check",
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "cwd": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+        "startedAt": "2026-11-20T17:36:00.637420+00:00",
+        "finishedAt": "2026-11-20T17:36:00.653861+00:00",
+        "durationSeconds": 0.016441521998785902,
+        "exitCode": 0,
+        "log": "/workspace/scratch/754a49249d01/native-final-validation-39c4036-source012/diff-check.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "workflow",
+        "command": [
+          "/workspace/scratch/754a49249d01/native-v8-tools/actionlint",
+          ".github/workflows/semantic-v8.yml"
+        ],
+        "cwd": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+        "startedAt": "2026-11-20T17:36:00.654629+00:00",
+        "finishedAt": "2026-11-20T17:36:00.686574+00:00",
+        "durationSeconds": 0.03194656100095017,
+        "exitCode": 0,
+        "log": "/workspace/scratch/754a49249d01/native-final-validation-39c4036-source012/workflow.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "paired-contract",
+        "command": [
+          "cmp",
+          "/workspace/scratch/754a49249d01/native-producer-current-012c9fe/contracts/semantic-execution-v8.json",
+          "/workspace/scratch/754a49249d01/native-consumer-39c4036/src/megatoken/data/contracts/semantic-execution-v8.json"
+        ],
+        "cwd": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+        "startedAt": "2026-11-20T17:36:00.687112+00:00",
+        "finishedAt": "2026-11-20T17:36:00.694593+00:00",
+        "durationSeconds": 0.007504465997044463,
+        "exitCode": 0,
+        "log": "/workspace/scratch/754a49249d01/native-final-validation-39c4036-source012/paired-contract.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "finalPins": {
+      "consumer": {
+        "path": "/workspace/scratch/754a49249d01/native-consumer-39c4036",
+        "revision": "39c4036564428e44cc89caf261f517d856482695",
+        "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+        "status": ""
+      },
+      "producer": {
+        "path": "/workspace/scratch/754a49249d01/native-producer-current-012c9fe",
+        "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+        "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+        "status": ""
+      }
+    },
+    "finishedAt": "2026-11-20T17:36:00.949150+00:00",
+    "passed": true
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "semantic-v8-stream-cli-equivalence/1",
+  "passed": true,
+  "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "qualifiedCases": 665,
+  "everyPhysicalArtifactByteIdentical": true,
+  "allSummariesExactlyEqual": true,
+  "rowsEqualExceptMeasuredDuration": true,
+  "ordinaryCliRunReceipt": "qualification-012c9fe-39c4036/run.json",
+  "ordinaryCliRunReceiptSha256": "511c71fc62aeb71c450f5e149cfb51088d8b4b665aecb9e13bba9b574b29ebaa",
+  "ordinaryReportSha256": "65595ead93c6e44583a0423da54e9f7c213c8830111c00b0df7158766e20ef23",
+  "streamReportSha256": "c4af76b531d31bbc1ecba13a0c54b9aa54a49a67184405385e4fce9546296c56",
+  "sourceAdmissionsPerformed": 0,
+  "nativeAdmissionsPerformed": 0,
+  "scope": "Read-only equality check of two completed exact-token measurements. Every artifact byte and all report fields except measured row duration agree across the ordinary CLI and independent streaming meter."
+}
