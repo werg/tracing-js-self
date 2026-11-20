@@ -612,7 +612,8 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
           refuse('deferred parameter capture depends on an unpublished identity');
       const emitDeferred=(kind,fields)=>{
         flushComputations();
-        return commitEmission(pending.owner,kind,fields,{
+        const record=kind==='allocate'?regionAdapter?.allocation?.(extensionContext,pending.event,fields):null;
+        return commitEmission(pending.owner,record?'protocol':kind,record??fields,{
           rule:pending.patternProof?'owned-deferred-parameter-initialization/1':'owned-deferred-parameter-closure/4',journalEvents:[...pending.events],
           allocationEvent:pending.event.eventId,initializationBoundary:event.eventId,
           capturedCells:copy(pending.captureBindings),

@@ -97,8 +97,12 @@ function teacher(){const executors=new Map(),calls=new Map(),constructorSites=ne
   },
   checkEvent(ctx,event){
     const controller=ctx.controller(ctx.rootInvocation),data=controller.protocol?.promiseExecutors;
-    if(!data)return true;
     for(const change of event.stateChanges){
+      if(change.table==='frames'&&change.after?.status==='running'&&
+        ctx.frameId(change.id)===controller.stack.at(-1)&&
+        !eq(controller.receiver??['undefined'],ctx.tag(change.after.thisValue)))
+        ctx.refuse('public source call receiver differs from current owned frame');
+      if(!data)continue;
       if(change.table==='promises'&&change.after){
         const cap=data.capabilities.find(row=>row.promise===change.id);if(!cap)continue;
         const selected=controller.heap.get(change.id),owned=change.after;

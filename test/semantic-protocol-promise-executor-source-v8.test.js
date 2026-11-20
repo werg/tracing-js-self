@@ -80,6 +80,37 @@ test('checkpoint inside a reaction executor helper restores the same job and nes
   for(const row of timeline.slice(cut))resumed.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
   assert.deepEqual(sharedRegionState(resumed.controller),sharedRegionState(RegionExecutionHarness.replay(result.exported).controller));
 });
+test('reaction and ordinary executor receivers remain distinct across a nested checkpoint',async()=>{
+  const body='const o={x:5,m(){return Promise.resolve(1).then(()=>{const p=new Promise(function(resolve){resolve(this===undefined?5:9);});return this.x;});}};return await o.m();',
+    result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
+  const timeline=result.exported.public.timeline,
+    cut=timeline.findIndex(row=>row.kind==='protocol'&&decodeProtocolRecordV8(row.fields.line).kind==='promise.executor.enter')+1;
+  assert(cut>0);
+  const prefix=RegionExecutionHarness.replay({...result.exported.public,timeline:timeline.slice(0,cut)},{requireTerminal:false}),
+    resumed=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(prefix.checkpoint()))),controller=resumed.controller,
+    job=controller.jobs.get(controller.activeJob),lexical=controller.heap.get(job.closure).lexicalReceiver;
+  assert.equal(lexical[0],'ref');assert.deepEqual(job.priorReceiver,['undefined']);
+  assert.deepEqual(controller.receiver,['undefined']);
+  assert.deepEqual(controller.protocol.callFrames.at(-1).priorReceiver,lexical);
+  for(const row of timeline.slice(cut)){
+    resumed.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+    if(row.kind==='protocol'&&decodeProtocolRecordV8(row.fields.line).kind==='promise.executor.finish')
+      assert.deepEqual(resumed.controller.receiver,lexical);
+  }
+  assert.deepEqual(resumed.controller.receiver,['undefined']);assert.deepEqual(resumed.controller.completion.value,['num',5]);
+  assert.deepEqual(sharedRegionState(resumed.controller),sharedRegionState(RegionExecutionHarness.replay(result.exported).controller));
+});
+test('a deferred parameter arrow retains its lexical receiver and forward capture when used by an executor',async()=>{
+  const body='const o={x:5,m(f=()=>this.x+later,later=3){return new Promise(resolve=>resolve(f()));}};return await o.m();',
+    result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
+  const replay=RegionExecutionHarness.replay(result.exported),closures=[...replay.controller.heap.values()].filter(node=>node.kind==='closure'),
+    arrow=closures.find(node=>node.captures.some(row=>row.binding==='later'));
+  assert(arrow);assert.equal(arrow.functionKind,'arrow');assert.equal(arrow.lexicalReceiver[0],'ref');
+  assert.deepEqual(replay.controller.heap.get(arrow.lexicalReceiver[1]).properties.get('x'),['num',5]);
+  assert.deepEqual(replay.controller.locals.get(arrow.captures.find(row=>row.binding==='later').cell),['num',3]);
+  assert.deepEqual(replay.controller.completion.value,['num',8]);
+  assert.deepEqual(sharedRegionState(RegionExecutionHarness.restore(JSON.parse(JSON.stringify(replay.checkpoint()))).controller),sharedRegionState(replay.controller));
+});
 test('common v8 admission routes executors and rechecks each source/context authority',async()=>{
   const result=await verifyRegionTrainingCase(fixture(first));assert(result.exported,result.reason);
   assert.equal(result.profile,'promise-executors-source/1');
