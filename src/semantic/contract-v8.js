@@ -10,6 +10,7 @@ import {MEMORY_PROFILE_V8,MEMORY_HEAP_FIELDS_V8} from './protocol-memory-v8.js';
 import {CONSTRUCTION_STATE_V8_SCHEMA,CONSTRUCTION_STATE_V8_FIELDS,CALLABLE_STATE_V8_FIELDS,
   CONSTRUCTION_FRAME_V8_FIELDS} from './protocol-construction-v8.js';
 import {ITERATOR_PROFILE_V8,ITERATOR_HEAP_FIELDS} from './protocol-iterator-v8.js';
+import {ENUMERATION_PROFILE_V8,ENUMERATION_HEAP_FIELDS,ENUMERATION_LIMITS_V8} from './protocol-enumeration-v8.js';
 import {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_STATE_V8} from './protocol-promise-join-v8.js';
 import {NUMBER_STATE_V8_SCHEMA,NUMBER_OPERATION_FIELDS} from './protocol-number-v8.js';
 import {GENERATOR_PROFILE_V8,GENERATOR_HEAP_FIELDS,GENERATOR_INTRINSICS_V8} from './protocol-generator-v8.js';
@@ -39,7 +40,7 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
         decision:'Boolean derived only from the current operand: && tests falsiness, || tests truthiness, ?? tests non-nullishness. No future right operand is included.',
         logicalPaths:{true:'use-left',false:'evaluate-right'},optionalGuardPaths:{true:'then',false:'else'}},
       profile:'symbols-ordinary-properties/1',extensions:PROTOCOL_MACHINE_ADAPTERS_V8.map(adapter=>adapter.id),limits:PROTOCOL_V8_LIMITS,
-      meaning:'Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, generators, Number conversion, Promise joins and executors, Proxy traps and binary memory in the same authoritative heap.'}
+      meaning:'Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, ordinary enumeration, generators, Number conversion, Promise joins and executors, Proxy traps and binary memory in the same authoritative heap.'}
   },
   algorithm:{schema:ALGORITHM_V8_SCHEMA,profile:ALGORITHM_V8_PROFILE,limits:ALGORITHM_V8_LIMITS,
     inputTypes:ALGORITHM_V8_INPUT_TYPES,traversalModes:TRAVERSAL_MODES,operations:ALGORITHM_V8_OPERATION_METADATA},
@@ -55,6 +56,9 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       continuations:'Owned base/derived constructor receivers, newTarget, field initializers and captured superclass selection; private fields and methods retain declaring-class identities.'},
     iterators:{profile:ITERATOR_PROFILE_V8,heapFields:ITERATOR_HEAP_FIELDS,
       capabilities:'Builtin array keys/values/entries and Unicode string iteration, live array length, sticky exhaustion and explicit result/pair allocation identities.'},
+    enumeration:{profile:ENUMERATION_PROFILE_V8,heapFields:ENUMERATION_HEAP_FIELDS,limits:ENUMERATION_LIMITS_V8,
+      chainFields:['id','prototype','keys'],
+      capabilities:'Stable ordinary for-in snapshots preserve own-key order, prototype walks, nonenumerable shadowing and fresh per-step result identities. Value writes are live; changed key/prototype structure is refused on the next step.'},
     promiseJoins:{profile:PROMISE_JOIN_PROFILE_V8,schema:PROMISE_JOIN_STATE_V8,modes:['all','race'],
       fields:['schema','mode','inputs','jobs','observed','values','settled','output','error'],
       jobFields:['status','owner','promise','reaction','closure','rejectionClosure','target','sequence','joinResult','joinIndex','readySequence'],

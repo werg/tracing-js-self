@@ -249,6 +249,10 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       if(name==='Symbol.prototype.valueOf')compute(lit(symbol),row.result,event);
       else emit({kind:'symbol.read',symbol,operation:name==='Symbol.keyFor'?'keyFor':'toString',result:tag(row.result,event),bind:null},event);return;
     }
+    if(name==='Object.hasOwn'){
+      if(args[0]?.[0]!=='ref'||changes.length)refuse('own-property check requires ordinary storage without heap effects');
+      emit({kind:'property.hasOwn',object:tag(args[0],event)[1],key:key(args[1]??['undefined']),result:tag(row.result,event)},event,'owned-source-own-property/1');return;
+    }
     if(['Reflect.ownKeys','Object.keys','Object.getOwnPropertyNames','Object.getOwnPropertySymbols'].includes(name)){
       if(args[0]?.[0]!=='ref'||row.result?.[0]!=='ref')refuse('key enumeration requires an ordinary object');
       const allocation=changes.find(change=>change.before===null&&change.id===row.result[1]);if(!allocation)refuse('key list allocation missing');

@@ -320,6 +320,8 @@ function apply(controller,record){
       known(controller,record.receiver);const {descriptor}=resolveProperty(controller,record.object,record.key);
       require(!descriptor||descriptor.kind==='data'||descriptor.get[0]==='undefined','getter requires a checked call boundary');
       const expected=descriptor?.kind==='data'?descriptor.value:['undefined'];require(eq(expected,record.result),'false property read');known(controller,record.result);
+    }else if(record.kind==='property.hasOwn'){
+      require(eq(record.result,['bool',ownDescriptor(node,record.key)!==null]),'false own-property result');
     }else if(record.kind==='property.set'){
       const success=directSet(controller,record);require(record.success===success,'false property write result');
     }else if(record.kind==='property.delete'){

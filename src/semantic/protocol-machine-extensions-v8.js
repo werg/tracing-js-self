@@ -7,6 +7,8 @@ import {CONSTRUCTION_RECORD_FIELDS,validateConstructionRecordV8,applyConstructio
 import {hasConstructionSourceCallableV8} from './protocol-construction-source-inventory-v8.js';
 import {ITERATOR_PROFILE_V8,ITERATOR_RECORD_FIELDS,validateIteratorRecordV8,applyIteratorRecordV8,
   restoreIteratorStateV8,hasIteratorStateV8} from './protocol-iterator-v8.js';
+import {ENUMERATION_PROFILE_V8,ENUMERATION_RECORD_FIELDS,validateEnumerationRecordV8,applyEnumerationRecordV8,
+  restoreEnumerationStateV8,hasEnumerationStateV8} from './protocol-enumeration-v8.js';
 import {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_RECORD_FIELDS,validatePromiseJoinRecordV8,
   applyPromiseJoinRecordV8,restorePromiseJoinStateV8,assertPromiseJoinNextV8,
   allowsPromiseJoinInternalSchedulerV8,allowsPromiseJoinWithoutStackV8,allowsPromiseJoinDetailedCallV8} from './protocol-promise-join-v8.js';
@@ -31,6 +33,10 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:ITERATOR_PROFILE_V8,recordFields:ITERATOR_RECORD_FIELDS,validateRecord:validateIteratorRecordV8,
   applyRecord:applyIteratorRecordV8,hasRichState:hasIteratorStateV8,
   restoreState:(controller,_snapshot,api)=>restoreIteratorStateV8(controller,api)
+}),Object.freeze({
+  id:ENUMERATION_PROFILE_V8,recordFields:ENUMERATION_RECORD_FIELDS,validateRecord:validateEnumerationRecordV8,
+  applyRecord:applyEnumerationRecordV8,hasRichState:hasEnumerationStateV8,
+  restoreState:(controller,_snapshot,api)=>restoreEnumerationStateV8(controller,api)
 }),Object.freeze({
   id:PROMISE_JOIN_PROFILE_V8,recordFields:PROMISE_JOIN_RECORD_FIELDS,
   validateRecord:record=>validatePromiseJoinRecordV8(record),applyRecord:applyPromiseJoinRecordV8,

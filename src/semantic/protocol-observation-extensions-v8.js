@@ -9,4 +9,5 @@ import {createNumberObservationAdapterV8} from './protocol-number-observations-v
 import {createProxyObservationAdapterV8} from './protocol-proxy-observations-v8.js';
 import {createGeneratorObservationAdapterV8} from './protocol-generator-observations-v8.js';
 import {createPromiseExecutorObservationAdapterV8} from './protocol-promise-executor-observations-v8.js';
-export const PROTOCOL_OBSERVATION_ADAPTERS_V8=Object.freeze([createMemoryObservationAdapterV8,createPromiseExecutorObservationAdapterV8,createNumberObservationAdapterV8,createIteratorObservationAdapterV8,createGeneratorObservationAdapterV8,createConstructionObservationAdapterV8,createPromiseObservationAdapterV8,createProxyObservationAdapterV8]);
+import {createEnumerationObservationAdapterV8} from './protocol-enumeration-observations-v8.js';
+export const PROTOCOL_OBSERVATION_ADAPTERS_V8=Object.freeze([createMemoryObservationAdapterV8,createPromiseExecutorObservationAdapterV8,createNumberObservationAdapterV8,createIteratorObservationAdapterV8,createGeneratorObservationAdapterV8,createConstructionObservationAdapterV8,createPromiseObservationAdapterV8,createProxyObservationAdapterV8,createEnumerationObservationAdapterV8]);
