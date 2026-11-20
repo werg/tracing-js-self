@@ -1,0 +1,14 @@
+{"id":"caller-catch","source":"passed","native":"passed","cost":"passed"}
+{"id":"caller-finally-override","source":"passed","native":"passed","cost":"passed"}
+{"id":"callback-finally-override","source":"passed","native":"passed","cost":"passed"}
+{"id":"callback-finally-throws","source":"passed","native":"passed","cost":"passed"}
+{"id":"nested-conversion-cleanup","source":"passed","native":"passed","cost":"passed"}
+{"id":"nested-catch-preserves-outer-return","source":"passed","native":"passed","cost":"passed"}
+{"id":"callback-catches-helper","source":"passed","native":"passed","cost":"passed"}
+{"id":"no-fallback-after-throw","source":"passed","native":"passed","cost":"passed"}
+{"id":"normal-cleanup","source":"passed","native":"passed","cost":"passed"}
+{"id":"later-conversion","source":"passed","native":"passed","cost":"passed"}
+{"id":"retained-cleanup-boundaries","source":"passed","native":"passed","cost":"passed"}
+{"id":"handler-scope-control","source":"passed","native":"passed","cost":"passed"}
+{"id":"loop-target-refusal","source":"unsupported","expectedRefusal":true}
+{"id":"symbol-cleanup-refusal","source":"unsupported","expectedRefusal":true}

@@ -13,8 +13,16 @@ unmeasured later implementation changes.
 | Evidence | Measured result | Scope |
 | --- | --- | --- |
 | [Complete source/native populations and exact costs](native-v8-b66c19b-all/README.md) | 665/665 expansion, 23/23 interoperability and 11/11 gallery cases passed source/native admission and exact token metering | All source/admitted artifacts, native receipts, exact inputs, serializer/token records, reference evidence and paired historical comparison retained |
-| [Frozen producer regression](producer-regression-b66c19b/README.md) | 1,778 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `b66c19b`; full logs and code/test identities retained |
+| [Frozen producer regression](producer-regression-3a1992b/README.md) | 1,794 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `3a1992b`; full logs, code/test identities and interrupted predecessor retained |
 | [Latest production dataset](dataset-v8-492328f/README.md) | 34 freshly admitted episodes and 898 complete examples, with actual tokenizer re-encoding, masks, EOS and frozen component splits checked | Producer `492328f`, consumer `cb311db`; fresh 23-case interoperability and 11-case gallery admission; zero optimizer steps |
+
+Two later focused Number populations have separate exact receipts and do not
+change those corpus denominators:
+
+| Supplementary evidence | Measured result | Scope |
+| --- | --- | --- |
+| [Direct and nested Number callback throws](number-abrupt-3a1992b/README.md) | 2/2 source/native/token admissions | Producer `3a1992b`, consumer `418385b`; exact abrupt completions and suppressed fallback |
+| [Number callback catch/finally](number-completion-ddaac82/README.md) | 14 declared: 12 source/native/token admissions and two explicit source refusals | Producer `ddaac82`, consumer `91aea0d`; preserves the failed admission attempt at consumer `1967695` separately |
 
 All eight former enumeration refusals and the previous generator continuation
 failure pass in this new full run. The independent consumer passed 214 focused
@@ -36,6 +44,7 @@ measured pins describe those runs; the newer qualification does not rewrite them
 
 | Evidence | Measured result | Scope |
 | --- | --- | --- |
+| [Earlier producer regression](producer-regression-b66c19b/README.md) | 1,778 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `b66c19b`; original logs and identities retained |
 | [Earlier 34-episode production dataset](dataset-v8-b66c19b/README.md) | 34 freshly admitted episodes and 898 complete examples | Producer `b66c19b`, consumer `6adf99f`; its receipts are not reused to admit the later dataset |
 | [Native interoperability and gallery](native-v8-8d1f7b5/README.md) | 22/22 interoperability and 11/11 gallery cases passed source/native admission and exact token metering | Producer `8d1f7b5`, consumer `be3a8d7`; all receipts, inputs, masks and costs retained |
 | [Full expansion and paired costs](native-v8-8d1f7b5-all/README.md) | 665 attempts: 657 source passes, 656 native admissions, eight source refusals and one native continuation failure; exact tokens for all source passes | Same producer/consumer; 42 matched historical rows have 90.21% lower flat total cost and 4.12% fewer generated tokens |
