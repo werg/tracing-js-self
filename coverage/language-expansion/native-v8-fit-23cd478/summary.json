@@ -1,0 +1,1408 @@
+{
+  "schema": "semantic-v8-bounded-native-execution-evidence/1",
+  "scope": "Bounded actual native decoder learning and frozen model-selected execution of one two-record source program. In-sample feasibility only.",
+  "measuredRevisions": {
+    "trainingSourceProducer": "c65a905cd01ea7b9e8f211b19c02414b1a5dbb0d",
+    "trainingNativeConsumer": "be453ab44847ea0b84f262909f31ba5c247851fa",
+    "frozenStudySourceProducer": "9d4f6b3fcff97e7f915ae9c7228f7fd75aaaec3c",
+    "frozenStudyNativeConsumer": "23cd47816f9b99bbdb2ec9a32dd455daf68b732b"
+  },
+  "training": {
+    "source": "\"use strict\";function run(x){return x+1;}",
+    "entry": "run",
+    "trainingArguments": [
+      6
+    ],
+    "trainingExpectedReturn": 7,
+    "heldoutArguments": [
+      8
+    ],
+    "heldoutExpectedReturn": 9,
+    "heldoutIncludedInObjective": false,
+    "heldoutUsedForEarlyStopping": false,
+    "seed": 17,
+    "optimizer": "MasterAdamW",
+    "learningRate": 0.02,
+    "weightDecay": 0,
+    "optimizerSteps": 256,
+    "changedDecoderOwners": 33,
+    "frozenComponents": [
+      "encoder",
+      "recurrence",
+      "prior",
+      "native memory bank"
+    ],
+    "generatedTrainingTokensPerStep": 74,
+    "firstLoss": 12.96456527709961,
+    "lastLoss": 0.07884156703948975,
+    "preparation": {
+      "nativeTrainingDigest": "f0f8a4c3be4305528ea6fcfed083fd3c17a3c471ade6b3643eca1197bca402e1",
+      "generatedTokens": 74,
+      "observedTokens": 2581,
+      "physicalRecords": 9,
+      "logicalRecords": 6,
+      "contexts": 2,
+      "generatedRecords": 2,
+      "eosTokenId": null,
+      "terminalTokens": 0,
+      "maskValidation": true,
+      "framing": "native-physical-record-boundaries/1"
+    },
+    "runtime": {
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "torch": "2.10.0+cpu",
+      "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+      "device": "cpu",
+      "threads": 1
+    },
+    "optimizerSeconds": 285.3928568228948,
+    "fitAndEvaluationSeconds": 321.92739702900144,
+    "originalReportedInSampleSuccess": false,
+    "originalEvaluationConfound": "The host used entry=\"run\" instead of the canonical algorithm entry descriptor, changing the second prediction prefix. Original evaluations are retained unchanged.",
+    "additionalOptimizerStepsAfterEnvelopeCorrection": 0
+  },
+  "identities": {
+    "baseline": {
+      "servedModelSha256": "2a7eefffb21e8901150e6932ccd3d7f048fa2efb0ed4d9ebc9072feab43f0452",
+      "fullCheckpointSha256": "5a221c7debde04a73168e0f0c0abe5fa6e51ff114e0ef73b2b647b403d81bccf",
+      "transducerSha256": "f355a3f3e4b8fabb84c5f97b2d9b596052b8ebfd12985105f2c0c7dd54ff8ba5"
+    },
+    "fitted": {
+      "servedModelSha256": "fce915db7e521f905bea44cb559c05b3fa1cce25403621e3019b1351cf7ce2a3",
+      "fullCheckpointSha256": "3bb46a876f1bf2a4fa3b744f251385bbebdc97c7af9bca4c9c74e9074543846c",
+      "transducerSha256": "f355a3f3e4b8fabb84c5f97b2d9b596052b8ebfd12985105f2c0c7dd54ff8ba5"
+    }
+  },
+  "tokenizer": {
+    "assetSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2"
+  },
+  "correctedInProcessDevelopment": {
+    "qualification": "Unchanged-weight development reevaluation; distinct from exact-checkout frozen process study.",
+    "optimizerSteps": 256,
+    "results": [
+      {
+        "case": "fit-increment",
+        "status": "completed",
+        "completed": true,
+        "seconds": 3.4280229569994844,
+        "exactReferenceRecords": true
+      },
+      {
+        "case": "heldout-increment",
+        "status": "failed",
+        "completed": false,
+        "seconds": 1.9890853790057008,
+        "exactReferenceRecords": false
+      }
+    ]
+  },
+  "currentSourceFrozenStudy": {
+    "declaredInputs": 2,
+    "declaredSeeds": [
+      17,
+      29,
+      43
+    ],
+    "declaredExecutionsPerModel": 6,
+    "settings": {
+      "device": "cpu",
+      "maxTokens": 128,
+      "maxFragments": 1,
+      "effort": 1
+    },
+    "limits": {
+      "maxPredictions": 4,
+      "maxGenerated": 8,
+      "maxOutstanding": 1,
+      "maxStaleRetries": 0,
+      "timeoutMs": 30000
+    },
+    "models": {
+      "baseline": {
+        "fullReportArchive": "studies.tar.xz",
+        "fullReportMember": "current-source/baseline-run/report.json",
+        "studyDigest": "50afba8eae61c174ec22b364cf95a0dd704036c09cd2c2ed1feaae8304c86197",
+        "model": {
+          "id": "megatoken-v8-bounded-decoder-baseline",
+          "revision": "2a7eefffb21e8901150e6932ccd3d7f048fa2efb0ed4d9ebc9072feab43f0452"
+        },
+        "settings": {
+          "device": "cpu",
+          "maxTokens": 128,
+          "maxFragments": 1,
+          "effort": 1
+        },
+        "checkpointIdentity": "2a7eefffb21e8901150e6932ccd3d7f048fa2efb0ed4d9ebc9072feab43f0452",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "originalSummary": {
+          "attempted": 6,
+          "untested": 0,
+          "publicCompleted": 0,
+          "sourceValidated": 0,
+          "completedExecution": 0,
+          "completedExecutionRate": 0,
+          "rateDenominator": 6,
+          "predictionAttempts": 6,
+          "rejectedPredictions": 6,
+          "staleRetries": 0,
+          "stalePredictions": 0,
+          "generatedBytes": 2451,
+          "generatedTokens": 344,
+          "unverifiedClaimedTokens": 0,
+          "unknownGenerationCostAttempts": 2,
+          "elapsedMs": 28860.980202,
+          "nativeComputeSeconds": 19.01970254704065,
+          "nativePeakMemoryBytes": 532385792,
+          "nativeCostExecutions": 6
+        },
+        "cleanup": {
+          "status": "completed",
+          "receipt": {
+            "graceful": true,
+            "exitCode": 0
+          }
+        },
+        "derivedAccounting": {
+          "verifiedGeneratedTokens": 344,
+          "unknownGenerationCostAttempts": 2,
+          "nativeReportedGeneratedTokens": 564,
+          "nativeReportedTokensOnUnverifiedAttempts": 220,
+          "originalFragmentPayloadBytes": 3981,
+          "nativeReportedFraming": {
+            "observedTokens": 6066,
+            "contextTokens": 4632,
+            "instructionTokens": 450,
+            "observedBytes": 16086,
+            "contextBytes": 12420,
+            "instructionBytes": 2244,
+            "textInputTokensExcludingSessionMetadata": 11148
+          },
+          "notes": [
+            "Native-reported tokens on unverified attempts are retained evidence, not added to the verified token total.",
+            "Unknown baseline generation-cost rows contain invalid UTF-8. Production codec decoding still matches the original fragment bytes.",
+            "Text-input categories exclude session metadata, nontext native controls, retrieval and learned tensor work; elapsed time and memory retain those runtime costs."
+          ]
+        },
+        "splitResults": {
+          "fit-increment": {
+            "declared": 3,
+            "completedExecution": 0,
+            "sourceValidated": 0
+          },
+          "heldout-increment": {
+            "declared": 3,
+            "completedExecution": 0,
+            "sourceValidated": 0
+          }
+        },
+        "rows": [
+          {
+            "caseId": "fit-increment",
+            "seed": 17,
+            "status": "resource_limited",
+            "sourceValidated": false,
+            "completedExecution": false,
+            "publicCompleted": false,
+            "sourceStatus": "incomplete",
+            "rowFailure": null,
+            "originalCosts": {
+              "predictionAttempts": 1,
+              "accepted": 0,
+              "rejected": 1,
+              "staleRetries": 0,
+              "stalePredictions": 0,
+              "generatedBytes": 812,
+              "generatedTokens": 114,
+              "unverifiedClaimedTokens": 0,
+              "unknownGenerationCostAttempts": 0,
+              "generationMs": 4030.59368,
+              "commitMs": 0,
+              "nativeAdmissionClaim": false,
+              "sourceAdmissionClaim": false,
+              "elapsedMs": 13733.15272,
+              "hostDispatches": 0
+            },
+            "attempts": [
+              {
+                "attempt": 0,
+                "status": "rejected",
+                "selectionId": "v8:0",
+                "failure": "Native v8 inference refused: Native v8 record exhausted its fragment budget without termination",
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 114,
+                "originalEmittedTokenCount": 114,
+                "originalFragmentPayloadBytes": 812,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  false
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 1011,
+                  "contextTokens": 772,
+                  "instructionTokens": 75,
+                  "observedBytes": 2681,
+                  "contextBytes": 2070,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 3,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 0.6578070319956169,
+                  "preparationSeconds": 2.4078590540011646,
+                  "totalSeconds": 3.065670367999701
+                },
+                "nativeCacheAfter": {
+                  "resident_events": null,
+                  "cache_bytes": null,
+                  "cache_storage_bytes_including_snapshots": null,
+                  "archived_events": null,
+                  "host_payload_bytes": null
+                }
+              }
+            ]
+          },
+          {
+            "caseId": "fit-increment",
+            "seed": 29,
+            "status": "failed",
+            "sourceValidated": false,
+            "completedExecution": false,
+            "publicCompleted": false,
+            "sourceStatus": "incomplete",
+            "rowFailure": null,
+            "originalCosts": {
+              "predictionAttempts": 1,
+              "accepted": 0,
+              "rejected": 1,
+              "staleRetries": 0,
+              "stalePredictions": 0,
+              "generatedBytes": 45,
+              "generatedTokens": 6,
+              "unverifiedClaimedTokens": 0,
+              "unknownGenerationCostAttempts": 0,
+              "generationMs": 4333.181479000003,
+              "commitMs": 0,
+              "nativeAdmissionClaim": false,
+              "sourceAdmissionClaim": false,
+              "elapsedMs": 4376.632032999998,
+              "hostDispatches": 0
+            },
+            "attempts": [
+              {
+                "attempt": 0,
+                "status": "rejected",
+                "selectionId": "v8:1",
+                "failure": "Causal LM v8: unknown generated record or observation in loss",
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 6,
+                "originalEmittedTokenCount": 6,
+                "originalFragmentPayloadBytes": 45,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 1011,
+                  "contextTokens": 772,
+                  "instructionTokens": 75,
+                  "observedBytes": 2681,
+                  "contextBytes": 2070,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 3,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 0.6524310460008564,
+                  "preparationSeconds": 3.0562816449964885,
+                  "totalSeconds": 3.716801933995157
+                },
+                "nativeCacheAfter": {
+                  "resident_events": 15,
+                  "cache_bytes": 7680,
+                  "cache_storage_bytes_including_snapshots": 7680,
+                  "archived_events": 6,
+                  "host_payload_bytes": 4796
+                }
+              }
+            ]
+          },
+          {
+            "caseId": "fit-increment",
+            "seed": 43,
+            "status": "resource_limited",
+            "sourceValidated": false,
+            "completedExecution": false,
+            "publicCompleted": false,
+            "sourceStatus": "incomplete",
+            "rowFailure": null,
+            "originalCosts": {
+              "predictionAttempts": 1,
+              "accepted": 0,
+              "rejected": 1,
+              "staleRetries": 0,
+              "stalePredictions": 0,
+              "generatedBytes": 812,
+              "generatedTokens": 114,
+              "unverifiedClaimedTokens": 0,
+              "unknownGenerationCostAttempts": 0,
+              "generationMs": 2716.419122000003,
+              "commitMs": 0,
+              "nativeAdmissionClaim": false,
+              "sourceAdmissionClaim": false,
+              "elapsedMs": 2728.2310309999993,
+              "hostDispatches": 0
+            },
+            "attempts": [
+              {
+                "attempt": 0,
+                "status": "rejected",
+                "selectionId": "v8:2",
+                "failure": "Native v8 inference refused: Native v8 record exhausted its fragment budget without termination",
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 114,
+                "originalEmittedTokenCount": 114,
+                "originalFragmentPayloadBytes": 812,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  false
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 1011,
+                  "contextTokens": 772,
+                  "instructionTokens": 75,
+                  "observedBytes": 2681,
+                  "contextBytes": 2070,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 3,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 0.47309052699711174,
+                  "preparationSeconds": 1.8061113570001908,
+                  "totalSeconds": 2.2792056589969434
+                },
+                "nativeCacheAfter": {
+                  "resident_events": null,
+                  "cache_bytes": null,
+                  "cache_storage_bytes_including_snapshots": null,
+                  "archived_events": null,
+                  "host_payload_bytes": null
+                }
+              }
+            ]
+          },
+          {
+            "caseId": "heldout-increment",
+            "seed": 17,
+            "status": "failed",
+            "sourceValidated": false,
+            "completedExecution": false,
+            "publicCompleted": false,
+            "sourceStatus": "incomplete",
+            "rowFailure": null,
+            "originalCosts": {
+              "predictionAttempts": 1,
+              "accepted": 0,
+              "rejected": 1,
+              "staleRetries": 0,
+              "stalePredictions": 0,
+              "generatedBytes": 0,
+              "generatedTokens": 0,
+              "unverifiedClaimedTokens": 0,
+              "unknownGenerationCostAttempts": 1,
+              "generationMs": 2117.3386530000025,
+              "commitMs": 0,
+              "nativeAdmissionClaim": false,
+              "sourceAdmissionClaim": false,
+              "elapsedMs": 2128.305645999997,
+              "hostDispatches": 0
+            },
+            "attempts": [
+              {
+                "attempt": 0,
+                "status": "rejected",
+                "selectionId": "v8:3",
+                "failure": "Native v8 inference refused: Native model emitted an invalid v8 text fragment",
+                "provenanceValidated": false,
+                "nativeReportedGeneratedTokens": 110,
+                "originalEmittedTokenCount": 110,
+                "originalFragmentPayloadBytes": 787,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 1011,
+                  "contextTokens": 772,
+                  "instructionTokens": 75,
+                  "observedBytes": 2681,
+                  "contextBytes": 2070,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 3,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 0.6532372040019254,
+                  "preparationSeconds": 1.0411758280024515,
+                  "totalSeconds": 1.6944156820027274
+                },
+                "nativeCacheAfter": {
+                  "resident_events": null,
+                  "cache_bytes": null,
+                  "cache_storage_bytes_including_snapshots": null,
+                  "archived_events": null,
+                  "host_payload_bytes": null
+                }
+              }
+            ]
+          },
+          {
+            "caseId": "heldout-increment",
+            "seed": 29,
+            "status": "failed",
+            "sourceValidated": false,
+            "completedExecution": false,
+            "publicCompleted": false,
+            "sourceStatus": "incomplete",
+            "rowFailure": null,
+            "originalCosts": {
+              "predictionAttempts": 1,
+              "accepted": 0,
+              "rejected": 1,
+              "staleRetries": 0,
+              "stalePredictions": 0,
+              "generatedBytes": 0,
+              "generatedTokens": 0,
+              "unverifiedClaimedTokens": 0,
+              "unknownGenerationCostAttempts": 1,
+              "generationMs": 2555.1543820000006,
+              "commitMs": 0,
+              "nativeAdmissionClaim": false,
+              "sourceAdmissionClaim": false,
+              "elapsedMs": 2568.819423000001,
+              "hostDispatches": 0
+            },
+            "attempts": [
+              {
+                "attempt": 0,
+                "status": "rejected",
+                "selectionId": "v8:4",
+                "failure": "Native v8 inference refused: Native model emitted an invalid v8 text fragment",
+                "provenanceValidated": false,
+                "nativeReportedGeneratedTokens": 110,
+                "originalEmittedTokenCount": 110,
+                "originalFragmentPayloadBytes": 743,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 1011,
+                  "contextTokens": 772,
+                  "instructionTokens": 75,
+                  "observedBytes": 2681,
+                  "contextBytes": 2070,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 3,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 1.0466639520018362,
+                  "preparationSeconds": 1.192851623003662,
+                  "totalSeconds": 2.2395186360008665
+                },
+                "nativeCacheAfter": {
+                  "resident_events": null,
+                  "cache_bytes": null,
+                  "cache_storage_bytes_including_snapshots": null,
+                  "archived_events": null,
+                  "host_payload_bytes": null
+                }
+              }
+            ]
+          },
+          {
+            "caseId": "heldout-increment",
+            "seed": 43,
+            "status": "failed",
+            "sourceValidated": false,
+            "completedExecution": false,
+            "publicCompleted": false,
+            "sourceStatus": "incomplete",
+            "rowFailure": null,
+            "originalCosts": {
+              "predictionAttempts": 1,
+              "accepted": 0,
+              "rejected": 1,
+              "staleRetries": 0,
+              "stalePredictions": 0,
+              "generatedBytes": 782,
+              "generatedTokens": 110,
+              "unverifiedClaimedTokens": 0,
+              "unknownGenerationCostAttempts": 0,
+              "generationMs": 3298.1944399999993,
+              "commitMs": 0,
+              "nativeAdmissionClaim": false,
+              "sourceAdmissionClaim": false,
+              "elapsedMs": 3325.8393490000017,
+              "hostDispatches": 0
+            },
+            "attempts": [
+              {
+                "attempt": 0,
+                "status": "rejected",
+                "selectionId": "v8:5",
+                "failure": "Causal LM v8: unknown generated record or observation in loss",
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 110,
+                "originalEmittedTokenCount": 110,
+                "originalFragmentPayloadBytes": 782,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 1011,
+                  "contextTokens": 772,
+                  "instructionTokens": 75,
+                  "observedBytes": 2681,
+                  "contextBytes": 2070,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 3,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 0.7248177420042339,
+                  "preparationSeconds": 2.077536536999105,
+                  "totalSeconds": 2.8147708289980073
+                },
+                "nativeCacheAfter": {
+                  "resident_events": 15,
+                  "cache_bytes": 7680,
+                  "cache_storage_bytes_including_snapshots": 7680,
+                  "archived_events": 6,
+                  "host_payload_bytes": 5533
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "fitted": {
+        "fullReportArchive": "studies.tar.xz",
+        "fullReportMember": "current-source/fitted-run/report.json",
+        "studyDigest": "7cd9fdc00a5f6124884482229d0964030aa3eb1a9e8d6ea1e17bb694382b5f1d",
+        "model": {
+          "id": "megatoken-v8-bounded-decoder-fitted",
+          "revision": "fce915db7e521f905bea44cb559c05b3fa1cce25403621e3019b1351cf7ce2a3"
+        },
+        "settings": {
+          "device": "cpu",
+          "maxTokens": 128,
+          "maxFragments": 1,
+          "effort": 1
+        },
+        "checkpointIdentity": "fce915db7e521f905bea44cb559c05b3fa1cce25403621e3019b1351cf7ce2a3",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "originalSummary": {
+          "attempted": 6,
+          "untested": 0,
+          "publicCompleted": 3,
+          "sourceValidated": 3,
+          "completedExecution": 3,
+          "completedExecutionRate": 0.5,
+          "rateDenominator": 6,
+          "predictionAttempts": 9,
+          "rejectedPredictions": 3,
+          "staleRetries": 0,
+          "stalePredictions": 0,
+          "generatedBytes": 1289,
+          "generatedTokens": 405,
+          "unverifiedClaimedTokens": 0,
+          "unknownGenerationCostAttempts": 0,
+          "elapsedMs": 32810.502739999996,
+          "nativeComputeSeconds": 23.41303052897274,
+          "nativePeakMemoryBytes": 524713984,
+          "nativeCostExecutions": 6
+        },
+        "cleanup": {
+          "status": "completed",
+          "receipt": {
+            "graceful": true,
+            "exitCode": 0
+          }
+        },
+        "derivedAccounting": {
+          "verifiedGeneratedTokens": 405,
+          "unknownGenerationCostAttempts": 0,
+          "nativeReportedGeneratedTokens": 405,
+          "nativeReportedTokensOnUnverifiedAttempts": 0,
+          "originalFragmentPayloadBytes": 1289,
+          "nativeReportedFraming": {
+            "observedTokens": 6066,
+            "contextTokens": 7026,
+            "instructionTokens": 675,
+            "observedBytes": 16086,
+            "contextBytes": 18891,
+            "instructionBytes": 3366,
+            "textInputTokensExcludingSessionMetadata": 13767
+          },
+          "notes": [
+            "Native-reported tokens on unverified attempts are retained evidence, not added to the verified token total.",
+            "Unknown baseline generation-cost rows contain invalid UTF-8. Production codec decoding still matches the original fragment bytes.",
+            "Text-input categories exclude session metadata, nontext native controls, retrieval and learned tensor work; elapsed time and memory retain those runtime costs."
+          ]
+        },
+        "splitResults": {
+          "fit-increment": {
+            "declared": 3,
+            "completedExecution": 3,
+            "sourceValidated": 3
+          },
+          "heldout-increment": {
+            "declared": 3,
+            "completedExecution": 0,
+            "sourceValidated": 0
+          }
+        },
+        "rows": [
+          {
+            "caseId": "fit-increment",
+            "seed": 17,
+            "status": "completed",
+            "sourceValidated": true,
+            "completedExecution": true,
+            "publicCompleted": true,
+            "sourceStatus": "passed-exact-projection",
+            "rowFailure": null,
+            "originalCosts": {
+              "predictionAttempts": 2,
+              "accepted": 2,
+              "rejected": 0,
+              "staleRetries": 0,
+              "stalePredictions": 0,
+              "generatedBytes": 238,
+              "generatedTokens": 74,
+              "unverifiedClaimedTokens": 0,
+              "unknownGenerationCostAttempts": 0,
+              "generationMs": 4350.764542000001,
+              "commitMs": 258.2834129999992,
+              "nativeAdmissionClaim": false,
+              "sourceAdmissionClaim": false,
+              "elapsedMs": 13716.746703,
+              "hostDispatches": 0
+            },
+            "attempts": [
+              {
+                "attempt": 0,
+                "status": "accepted",
+                "selectionId": "v8:0",
+                "failure": null,
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 61,
+                "originalEmittedTokenCount": 61,
+                "originalFragmentPayloadBytes": 190,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 1011,
+                  "contextTokens": 772,
+                  "instructionTokens": 75,
+                  "observedBytes": 2681,
+                  "contextBytes": 2070,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 3,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 0.6659781510024914,
+                  "preparationSeconds": 1.7180249119992368,
+                  "totalSeconds": 2.38423836799484
+                },
+                "nativeCacheAfter": {
+                  "resident_events": 15,
+                  "cache_bytes": 7680,
+                  "cache_storage_bytes_including_snapshots": 7680,
+                  "archived_events": 6,
+                  "host_payload_bytes": 4941
+                }
+              },
+              {
+                "attempt": 1,
+                "status": "accepted",
+                "selectionId": "v8:1",
+                "failure": null,
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 13,
+                "originalEmittedTokenCount": 13,
+                "originalFragmentPayloadBytes": 48,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 0,
+                  "contextTokens": 798,
+                  "instructionTokens": 75,
+                  "observedBytes": 0,
+                  "contextBytes": 2157,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 0,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 0.7915824140000041,
+                  "preparationSeconds": 0.6012950860022102,
+                  "totalSeconds": 1.393126843002392
+                },
+                "nativeCacheAfter": {
+                  "resident_events": 20,
+                  "cache_bytes": 10240,
+                  "cache_storage_bytes_including_snapshots": 10240,
+                  "archived_events": 9,
+                  "host_payload_bytes": 7146
+                }
+              }
+            ]
+          },
+          {
+            "caseId": "fit-increment",
+            "seed": 29,
+            "status": "completed",
+            "sourceValidated": true,
+            "completedExecution": true,
+            "publicCompleted": true,
+            "sourceStatus": "passed-exact-projection",
+            "rowFailure": null,
+            "originalCosts": {
+              "predictionAttempts": 2,
+              "accepted": 2,
+              "rejected": 0,
+              "staleRetries": 0,
+              "stalePredictions": 0,
+              "generatedBytes": 238,
+              "generatedTokens": 74,
+              "unverifiedClaimedTokens": 0,
+              "unknownGenerationCostAttempts": 0,
+              "generationMs": 4734.413762,
+              "commitMs": 126.23980599999777,
+              "nativeAdmissionClaim": false,
+              "sourceAdmissionClaim": false,
+              "elapsedMs": 5064.530753000001,
+              "hostDispatches": 0
+            },
+            "attempts": [
+              {
+                "attempt": 0,
+                "status": "accepted",
+                "selectionId": "v8:2",
+                "failure": null,
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 61,
+                "originalEmittedTokenCount": 61,
+                "originalFragmentPayloadBytes": 190,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 1011,
+                  "contextTokens": 772,
+                  "instructionTokens": 75,
+                  "observedBytes": 2681,
+                  "contextBytes": 2070,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 3,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 1.4483931509967078,
+                  "preparationSeconds": 1.4092364280004404,
+                  "totalSeconds": 2.8578959860024042
+                },
+                "nativeCacheAfter": {
+                  "resident_events": 15,
+                  "cache_bytes": 7680,
+                  "cache_storage_bytes_including_snapshots": 7680,
+                  "archived_events": 6,
+                  "host_payload_bytes": 4941
+                }
+              },
+              {
+                "attempt": 1,
+                "status": "accepted",
+                "selectionId": "v8:3",
+                "failure": null,
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 13,
+                "originalEmittedTokenCount": 13,
+                "originalFragmentPayloadBytes": 48,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 0,
+                  "contextTokens": 798,
+                  "instructionTokens": 75,
+                  "observedBytes": 0,
+                  "contextBytes": 2157,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 0,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 0.7477484530027141,
+                  "preparationSeconds": 0.327567436004756,
+                  "totalSeconds": 1.0755783320055343
+                },
+                "nativeCacheAfter": {
+                  "resident_events": 20,
+                  "cache_bytes": 10240,
+                  "cache_storage_bytes_including_snapshots": 10240,
+                  "archived_events": 9,
+                  "host_payload_bytes": 7146
+                }
+              }
+            ]
+          },
+          {
+            "caseId": "fit-increment",
+            "seed": 43,
+            "status": "completed",
+            "sourceValidated": true,
+            "completedExecution": true,
+            "publicCompleted": true,
+            "sourceStatus": "passed-exact-projection",
+            "rowFailure": null,
+            "originalCosts": {
+              "predictionAttempts": 2,
+              "accepted": 2,
+              "rejected": 0,
+              "staleRetries": 0,
+              "stalePredictions": 0,
+              "generatedBytes": 238,
+              "generatedTokens": 74,
+              "unverifiedClaimedTokens": 0,
+              "unknownGenerationCostAttempts": 0,
+              "generationMs": 4063.8418089999977,
+              "commitMs": 83.69985199999792,
+              "nativeAdmissionClaim": false,
+              "sourceAdmissionClaim": false,
+              "elapsedMs": 4226.5081549999995,
+              "hostDispatches": 0
+            },
+            "attempts": [
+              {
+                "attempt": 0,
+                "status": "accepted",
+                "selectionId": "v8:4",
+                "failure": null,
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 61,
+                "originalEmittedTokenCount": 61,
+                "originalFragmentPayloadBytes": 190,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 1011,
+                  "contextTokens": 772,
+                  "instructionTokens": 75,
+                  "observedBytes": 2681,
+                  "contextBytes": 2070,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 3,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 0.6066994339998928,
+                  "preparationSeconds": 2.0181186869958765,
+                  "totalSeconds": 2.625040180995711
+                },
+                "nativeCacheAfter": {
+                  "resident_events": 15,
+                  "cache_bytes": 7680,
+                  "cache_storage_bytes_including_snapshots": 7680,
+                  "archived_events": 6,
+                  "host_payload_bytes": 4941
+                }
+              },
+              {
+                "attempt": 1,
+                "status": "accepted",
+                "selectionId": "v8:5",
+                "failure": null,
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 13,
+                "originalEmittedTokenCount": 13,
+                "originalFragmentPayloadBytes": 48,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 0,
+                  "contextTokens": 798,
+                  "instructionTokens": 75,
+                  "observedBytes": 0,
+                  "contextBytes": 2157,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 0,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 0.8482564419973642,
+                  "preparationSeconds": 0.3370968359959079,
+                  "totalSeconds": 1.185605984996073
+                },
+                "nativeCacheAfter": {
+                  "resident_events": 20,
+                  "cache_bytes": 10240,
+                  "cache_storage_bytes_including_snapshots": 10240,
+                  "archived_events": 9,
+                  "host_payload_bytes": 7146
+                }
+              }
+            ]
+          },
+          {
+            "caseId": "heldout-increment",
+            "seed": 17,
+            "status": "failed",
+            "sourceValidated": false,
+            "completedExecution": false,
+            "publicCompleted": false,
+            "sourceStatus": "incomplete",
+            "rowFailure": null,
+            "originalCosts": {
+              "predictionAttempts": 1,
+              "accepted": 0,
+              "rejected": 1,
+              "staleRetries": 0,
+              "stalePredictions": 0,
+              "generatedBytes": 194,
+              "generatedTokens": 61,
+              "unverifiedClaimedTokens": 0,
+              "unknownGenerationCostAttempts": 0,
+              "generationMs": 3290.2843909999974,
+              "commitMs": 0,
+              "nativeAdmissionClaim": false,
+              "sourceAdmissionClaim": false,
+              "elapsedMs": 3312.9988080000003,
+              "hostDispatches": 0
+            },
+            "attempts": [
+              {
+                "attempt": 0,
+                "status": "rejected",
+                "selectionId": "v8:6",
+                "failure": "Pure region: algorithm record JSON",
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 61,
+                "originalEmittedTokenCount": 61,
+                "originalFragmentPayloadBytes": 194,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 1011,
+                  "contextTokens": 772,
+                  "instructionTokens": 75,
+                  "observedBytes": 2681,
+                  "contextBytes": 2070,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 3,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 0.6670690719984123,
+                  "preparationSeconds": 2.183558349002851,
+                  "totalSeconds": 2.850994807005918
+                },
+                "nativeCacheAfter": {
+                  "resident_events": 15,
+                  "cache_bytes": 7680,
+                  "cache_storage_bytes_including_snapshots": 7680,
+                  "archived_events": 6,
+                  "host_payload_bytes": 4945
+                }
+              }
+            ]
+          },
+          {
+            "caseId": "heldout-increment",
+            "seed": 29,
+            "status": "failed",
+            "sourceValidated": false,
+            "completedExecution": false,
+            "publicCompleted": false,
+            "sourceStatus": "incomplete",
+            "rowFailure": null,
+            "originalCosts": {
+              "predictionAttempts": 1,
+              "accepted": 0,
+              "rejected": 1,
+              "staleRetries": 0,
+              "stalePredictions": 0,
+              "generatedBytes": 189,
+              "generatedTokens": 61,
+              "unverifiedClaimedTokens": 0,
+              "unknownGenerationCostAttempts": 0,
+              "generationMs": 3460.7739650000003,
+              "commitMs": 0,
+              "nativeAdmissionClaim": false,
+              "sourceAdmissionClaim": false,
+              "elapsedMs": 3476.0391339999987,
+              "hostDispatches": 0
+            },
+            "attempts": [
+              {
+                "attempt": 0,
+                "status": "rejected",
+                "selectionId": "v8:7",
+                "failure": "Pure region: algorithm record JSON",
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 61,
+                "originalEmittedTokenCount": 61,
+                "originalFragmentPayloadBytes": 189,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 1011,
+                  "contextTokens": 772,
+                  "instructionTokens": 75,
+                  "observedBytes": 2681,
+                  "contextBytes": 2070,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 3,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 1.4328763599987724,
+                  "preparationSeconds": 1.6142362279933877,
+                  "totalSeconds": 3.0474292619983316
+                },
+                "nativeCacheAfter": {
+                  "resident_events": 15,
+                  "cache_bytes": 7680,
+                  "cache_storage_bytes_including_snapshots": 7680,
+                  "archived_events": 6,
+                  "host_payload_bytes": 4940
+                }
+              }
+            ]
+          },
+          {
+            "caseId": "heldout-increment",
+            "seed": 43,
+            "status": "failed",
+            "sourceValidated": false,
+            "completedExecution": false,
+            "publicCompleted": false,
+            "sourceStatus": "incomplete",
+            "rowFailure": null,
+            "originalCosts": {
+              "predictionAttempts": 1,
+              "accepted": 0,
+              "rejected": 1,
+              "staleRetries": 0,
+              "stalePredictions": 0,
+              "generatedBytes": 192,
+              "generatedTokens": 61,
+              "unverifiedClaimedTokens": 0,
+              "unknownGenerationCostAttempts": 0,
+              "generationMs": 2984.5560419999965,
+              "commitMs": 0,
+              "nativeAdmissionClaim": false,
+              "sourceAdmissionClaim": false,
+              "elapsedMs": 3013.6791869999943,
+              "hostDispatches": 0
+            },
+            "attempts": [
+              {
+                "attempt": 0,
+                "status": "rejected",
+                "selectionId": "v8:8",
+                "failure": "Pure region: algorithm record JSON",
+                "provenanceValidated": true,
+                "nativeReportedGeneratedTokens": 61,
+                "originalEmittedTokenCount": 61,
+                "originalFragmentPayloadBytes": 192,
+                "fragmentCount": 1,
+                "fragmentsTerminal": [
+                  true
+                ],
+                "nativeReportedFraming": {
+                  "observedTokens": 1011,
+                  "contextTokens": 772,
+                  "instructionTokens": 75,
+                  "observedBytes": 2681,
+                  "contextBytes": 2070,
+                  "instructionBytes": 374,
+                  "observedPhysicalRecords": 3,
+                  "contextPhysicalRecords": 2
+                },
+                "nativeTimings": {
+                  "generationSeconds": 0.5997438890044577,
+                  "preparationSeconds": 1.9625115250019007,
+                  "totalSeconds": 2.562544483000238
+                },
+                "nativeCacheAfter": {
+                  "resident_events": 15,
+                  "cache_bytes": 7680,
+                  "cache_storage_bytes_including_snapshots": 7680,
+                  "archived_events": 6,
+                  "host_payload_bytes": 4943
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "firstSourceAuthorityStudy": {
+    "qualification": "Historical failed source authority recheck. Old private source evidence was not valid for the executing producer environment. Public completions are not qualified executions.",
+    "models": {
+      "baseline": {
+        "fullReportArchive": "studies.tar.xz",
+        "fullReportMember": "stale-source-authority/baseline-run/report.json",
+        "studyDigest": "4a7b899a2ec99ab2ab5a5ee44dd9ae1c4a66dda9221cdeff34d2cbd2c4df8aca",
+        "model": {
+          "id": "megatoken-v8-bounded-decoder-baseline",
+          "revision": "2a7eefffb21e8901150e6932ccd3d7f048fa2efb0ed4d9ebc9072feab43f0452"
+        },
+        "settings": {
+          "device": "cpu",
+          "maxTokens": 128,
+          "maxFragments": 1,
+          "effort": 1
+        },
+        "checkpointIdentity": "2a7eefffb21e8901150e6932ccd3d7f048fa2efb0ed4d9ebc9072feab43f0452",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "originalSummary": {
+          "attempted": 6,
+          "untested": 0,
+          "publicCompleted": 0,
+          "sourceValidated": 0,
+          "completedExecution": 0,
+          "completedExecutionRate": 0,
+          "rateDenominator": 6,
+          "predictionAttempts": 6,
+          "rejectedPredictions": 6,
+          "staleRetries": 0,
+          "stalePredictions": 0,
+          "generatedBytes": 2451,
+          "generatedTokens": 344,
+          "unverifiedClaimedTokens": 0,
+          "unknownGenerationCostAttempts": 2,
+          "elapsedMs": 34206.091619000006,
+          "nativeComputeSeconds": 21.693850150993967,
+          "nativePeakMemoryBytes": 534835200,
+          "nativeCostExecutions": 6
+        },
+        "cleanup": {
+          "status": "completed",
+          "receipt": {
+            "graceful": true,
+            "exitCode": 0
+          }
+        },
+        "derivedAccounting": {
+          "verifiedGeneratedTokens": 344,
+          "unknownGenerationCostAttempts": 2,
+          "nativeReportedGeneratedTokens": 564,
+          "nativeReportedTokensOnUnverifiedAttempts": 220,
+          "originalFragmentPayloadBytes": 3981,
+          "nativeReportedFraming": {
+            "observedTokens": 6066,
+            "contextTokens": 4632,
+            "instructionTokens": 450,
+            "observedBytes": 16086,
+            "contextBytes": 12420,
+            "instructionBytes": 2244,
+            "textInputTokensExcludingSessionMetadata": 11148
+          },
+          "notes": [
+            "Native-reported tokens on unverified attempts are retained evidence, not added to the verified token total.",
+            "Unknown baseline generation-cost rows contain invalid UTF-8. Production codec decoding still matches the original fragment bytes.",
+            "Text-input categories exclude session metadata, nontext native controls, retrieval and learned tensor work; elapsed time and memory retain those runtime costs."
+          ]
+        },
+        "splitResults": {
+          "fit-increment": {
+            "declared": 3,
+            "completedExecution": 0,
+            "sourceValidated": 0
+          },
+          "heldout-increment": {
+            "declared": 3,
+            "completedExecution": 0,
+            "sourceValidated": 0
+          }
+        }
+      },
+      "fitted": {
+        "fullReportArchive": "studies.tar.xz",
+        "fullReportMember": "stale-source-authority/fitted-run/report.json",
+        "studyDigest": "036caffaa50aad69e250dd485ce6f5fbaa610d05026ba242c56c36fa98946d44",
+        "model": {
+          "id": "megatoken-v8-bounded-decoder-fitted",
+          "revision": "fce915db7e521f905bea44cb559c05b3fa1cce25403621e3019b1351cf7ce2a3"
+        },
+        "settings": {
+          "device": "cpu",
+          "maxTokens": 128,
+          "maxFragments": 1,
+          "effort": 1
+        },
+        "checkpointIdentity": "fce915db7e521f905bea44cb559c05b3fa1cce25403621e3019b1351cf7ce2a3",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "originalSummary": {
+          "attempted": 6,
+          "untested": 0,
+          "publicCompleted": 3,
+          "sourceValidated": 0,
+          "completedExecution": 0,
+          "completedExecutionRate": 0,
+          "rateDenominator": 6,
+          "predictionAttempts": 9,
+          "rejectedPredictions": 3,
+          "staleRetries": 0,
+          "stalePredictions": 0,
+          "generatedBytes": 1289,
+          "generatedTokens": 405,
+          "unverifiedClaimedTokens": 0,
+          "unknownGenerationCostAttempts": 0,
+          "elapsedMs": 41320.139704000016,
+          "nativeComputeSeconds": 27.69694727197202,
+          "nativePeakMemoryBytes": 533135360,
+          "nativeCostExecutions": 6
+        },
+        "cleanup": {
+          "status": "completed",
+          "receipt": {
+            "graceful": true,
+            "exitCode": 0
+          }
+        },
+        "derivedAccounting": {
+          "verifiedGeneratedTokens": 405,
+          "unknownGenerationCostAttempts": 0,
+          "nativeReportedGeneratedTokens": 405,
+          "nativeReportedTokensOnUnverifiedAttempts": 0,
+          "originalFragmentPayloadBytes": 1289,
+          "nativeReportedFraming": {
+            "observedTokens": 6066,
+            "contextTokens": 7026,
+            "instructionTokens": 675,
+            "observedBytes": 16086,
+            "contextBytes": 18891,
+            "instructionBytes": 3366,
+            "textInputTokensExcludingSessionMetadata": 13767
+          },
+          "notes": [
+            "Native-reported tokens on unverified attempts are retained evidence, not added to the verified token total.",
+            "Unknown baseline generation-cost rows contain invalid UTF-8. Production codec decoding still matches the original fragment bytes.",
+            "Text-input categories exclude session metadata, nontext native controls, retrieval and learned tensor work; elapsed time and memory retain those runtime costs."
+          ]
+        },
+        "splitResults": {
+          "fit-increment": {
+            "declared": 3,
+            "completedExecution": 0,
+            "sourceValidated": 0
+          },
+          "heldout-increment": {
+            "declared": 3,
+            "completedExecution": 0,
+            "sourceValidated": 0
+          }
+        }
+      }
+    }
+  },
+  "sourceRegeneration": {
+    "reason": "Fresh source authority under the exact frozen-study producer; no changes to public observations or contexts and no retraining.",
+    "cases": [
+      {
+        "caseId": "fit-increment",
+        "publicEqual": true,
+        "contextsEqual": true,
+        "publicDigest": "6b15c0efad4378057cf2cb4f2fc73798b1b147dcd60cab5e6714d77925a9e3c4",
+        "contextsDigest": "9594996ef1ce606782f086f2327d155ea89a4c36218c48037a5241a233d412af",
+        "trainingSourceArtifactDigest": "ca1ab6dbca78fa88880ec20fe8f6eb0bfab53e2adc82168e7a99f93ffb6e76b5",
+        "currentSourceArtifactDigest": "3c0c357fcc97db705f250fb72f06dec5a4348c73ec706572784164e6d5684dc1",
+        "trainingNativeChecks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "currentNativeChecks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        }
+      },
+      {
+        "caseId": "heldout-increment",
+        "publicEqual": true,
+        "contextsEqual": true,
+        "publicDigest": "da549113fb7bc61aa22596c6322d9fd206778d52436e92326b75c5c9f84c4338",
+        "contextsDigest": "f13aa23d895bf2b509feb70ee1ef9343a5d7ad75e743c4120f264b59401c432b",
+        "trainingSourceArtifactDigest": "6e75b95489b12726036a96a4c29b4a76e349781506c4684aa42d313942e6a3d4",
+        "currentSourceArtifactDigest": "834339ddbe0fde21e7c60c9cead7c5f9a3aa6b1e10496e05625b3ea0ea86970d",
+        "trainingNativeChecks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        },
+        "currentNativeChecks": {
+          "replay": "passed",
+          "contexts": "passed",
+          "continuation": "passed",
+          "masks": "passed",
+          "sourceBinding": "passed",
+          "tokenizer": "passed"
+        }
+      }
+    ]
+  },
+  "retainedModelArchive": {
+    "path": "native-v8-fit-be453ab-fce915db.tar.zst",
+    "bytes": 43360285,
+    "sha256": "56bfb096255f810729ec46c0e0d4c050ef035bb1c0d3bfa89a9350eebbd5d5c8",
+    "repositoryPayloadIncluded": false,
+    "retention": "Separately retained immutable archive; no public download location is published here.",
+    "contents": "Both served bundles and full checkpoints, optimizer state, transducers, production tokenizer, training reports, parity evidence and source/native training inputs."
+  },
+  "claims": {
+    "actualModelSelected": true,
+    "teacherCandidateInjectedDuringServing": false,
+    "inSampleExecutionFeasibility": true,
+    "heldoutSuccesses": 0,
+    "generalizationEstablished": false,
+    "externalComprehensionEstablished": false,
+    "broadLanguageCoverageEstablishedByThisRun": false,
+    "v6VersusV8ServingAdvantageEstablished": false,
+    "productionTrainingClaim": false,
+    "defaultPromotion": false
+  }
+}
