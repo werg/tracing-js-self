@@ -1,0 +1,243 @@
+{
+  "schema": "semantic-v8-diagnostic-pilot-evidence/1",
+  "scope": "Two independent four-step decoder diagnostics; complete original failures retained; no learned execution, generalization, production training, or default promotion claim",
+  "trainingAdmissionProducerRevision": "653fd1ba0313d29c70bfa36ec004553d146de343",
+  "evaluationProducerRevision": "62eb9436fee07d604a3017f5a8846a1fc786f7dd",
+  "consumerRevision": "23cd47816f9b99bbdb2ec9a32dd455daf68b732b",
+  "publicAndContextInputsIdenticalAcrossProducerRevisions": true,
+  "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+  "settings": {
+    "device": "cpu",
+    "maxTokens": 64,
+    "maxFragments": 1,
+    "effort": 1
+  },
+  "runs": [
+    {
+      "id": "preliminary",
+      "optimizerCase": "compound-pure",
+      "optimizerCorpusSplit": "test",
+      "evaluationOnlyCase": "pure-helper",
+      "evaluationOnlyCorpusSplit": "train",
+      "formalSplitClaim": false,
+      "freshInitialization": true,
+      "seed": 17,
+      "optimizerSteps": 4,
+      "learningRate": 0.02,
+      "generatedTrainingTokensPerStep": 77,
+      "scoredTargetTokenExposures": 308,
+      "optimizerSeconds": 9.096008101994812,
+      "decoderLossByStep": [
+        13.075722694396973,
+        12.725708961486816,
+        12.3610200881958,
+        11.99344253540039
+      ],
+      "changedParameterTensors": 33,
+      "onlyDecoderChanged": true,
+      "baselineCheckpointIdentity": "2a7eefffb21e8901150e6932ccd3d7f048fa2efb0ed4d9ebc9072feab43f0452",
+      "fittedCheckpointIdentity": "7a978ce26b40ffcf999758651c0aa0a4e252c0af515fdf0a445513a04cdbb483",
+      "fittingEvaluations": [
+        {
+          "optimizerSteps": 0,
+          "caseRole": "optimizer-case",
+          "completed": false,
+          "predictionAttempts": 1,
+          "generatedTokens": 37,
+          "status": "failed"
+        },
+        {
+          "optimizerSteps": 0,
+          "caseRole": "evaluation-only-0",
+          "completed": false,
+          "predictionAttempts": 1,
+          "generatedTokens": 44,
+          "status": "failed"
+        },
+        {
+          "optimizerSteps": 4,
+          "caseRole": "optimizer-case",
+          "completed": false,
+          "predictionAttempts": 1,
+          "generatedTokens": 64,
+          "status": "failed"
+        },
+        {
+          "optimizerSteps": 4,
+          "caseRole": "optimizer-case",
+          "stage": "reloaded-final",
+          "completed": false,
+          "predictionAttempts": 1,
+          "generatedTokens": 64,
+          "status": "failed"
+        },
+        {
+          "optimizerSteps": 4,
+          "caseRole": "evaluation-only-0",
+          "stage": "reloaded-final",
+          "completed": false,
+          "predictionAttempts": 1,
+          "generatedTokens": 44,
+          "status": "failed"
+        }
+      ],
+      "studyDigest": "c4622f9e80e852307d326c6298db31b8f12beb7d326a4ecdcf2f50c754e15d7e",
+      "frozenStudy": {
+        "attempted": 2,
+        "untested": 0,
+        "publicCompleted": 0,
+        "sourceValidated": 0,
+        "completedExecution": 0,
+        "completedExecutionRate": 0,
+        "rateDenominator": 2,
+        "predictionAttempts": 2,
+        "rejectedPredictions": 2,
+        "staleRetries": 0,
+        "stalePredictions": 0,
+        "generatedBytes": 613,
+        "generatedTokens": 108,
+        "unverifiedClaimedTokens": 0,
+        "unknownGenerationCostAttempts": 0,
+        "elapsedMs": 26132.197991,
+        "nativeComputeSeconds": 11.49391838000156,
+        "nativePeakMemoryBytes": 520450048,
+        "nativeCostExecutions": 2
+      },
+      "cleanup": {
+        "status": "completed",
+        "receipt": {
+          "graceful": true,
+          "exitCode": 0
+        }
+      },
+      "inSampleExactSuccess": false,
+      "evaluationOnlyCompleted": [
+        false
+      ]
+    },
+    {
+      "id": "family-split",
+      "optimizerCase": "pure-helper",
+      "optimizerCorpusSplit": "train",
+      "evaluationOnlyCase": "compound-pure",
+      "evaluationOnlyCorpusSplit": "test",
+      "formalSplitClaim": false,
+      "freshInitialization": true,
+      "seed": 17,
+      "optimizerSteps": 4,
+      "learningRate": 0.02,
+      "generatedTrainingTokensPerStep": 74,
+      "scoredTargetTokenExposures": 296,
+      "optimizerSeconds": 8.692108200993971,
+      "decoderLossByStep": [
+        13.04855728149414,
+        12.624385833740234,
+        12.147665977478027,
+        11.756125450134277
+      ],
+      "changedParameterTensors": 33,
+      "onlyDecoderChanged": true,
+      "baselineCheckpointIdentity": "2a7eefffb21e8901150e6932ccd3d7f048fa2efb0ed4d9ebc9072feab43f0452",
+      "fittedCheckpointIdentity": "7756e4fb9e2bbec54d5e77dfa4da35e1a8b1287447c6d8b58fce7fae4b4ab580",
+      "fittingEvaluations": [
+        {
+          "optimizerSteps": 0,
+          "caseRole": "optimizer-case",
+          "completed": false,
+          "predictionAttempts": 1,
+          "generatedTokens": 44,
+          "status": "failed"
+        },
+        {
+          "optimizerSteps": 0,
+          "caseRole": "evaluation-only-0",
+          "completed": false,
+          "predictionAttempts": 1,
+          "generatedTokens": 37,
+          "status": "failed"
+        },
+        {
+          "optimizerSteps": 4,
+          "caseRole": "optimizer-case",
+          "completed": false,
+          "predictionAttempts": 1,
+          "generatedTokens": 44,
+          "status": "failed"
+        },
+        {
+          "optimizerSteps": 4,
+          "caseRole": "optimizer-case",
+          "stage": "reloaded-final",
+          "completed": false,
+          "predictionAttempts": 1,
+          "generatedTokens": 44,
+          "status": "failed"
+        },
+        {
+          "optimizerSteps": 4,
+          "caseRole": "evaluation-only-0",
+          "stage": "reloaded-final",
+          "completed": false,
+          "predictionAttempts": 1,
+          "generatedTokens": 23,
+          "status": "failed"
+        }
+      ],
+      "studyDigest": "fc16dd90547eb33f873d88713f3039b212beacd8b5094dcb291dd22efcc77ea5",
+      "frozenStudy": {
+        "attempted": 2,
+        "untested": 0,
+        "publicCompleted": 0,
+        "sourceValidated": 0,
+        "completedExecution": 0,
+        "completedExecutionRate": 0,
+        "rateDenominator": 2,
+        "predictionAttempts": 2,
+        "rejectedPredictions": 2,
+        "staleRetries": 0,
+        "stalePredictions": 0,
+        "generatedBytes": 341,
+        "generatedTokens": 67,
+        "unverifiedClaimedTokens": 0,
+        "unknownGenerationCostAttempts": 0,
+        "elapsedMs": 18020.280122999997,
+        "nativeComputeSeconds": 8.264225863997126,
+        "nativePeakMemoryBytes": 520593408,
+        "nativeCostExecutions": 2
+      },
+      "cleanup": {
+        "status": "completed",
+        "receipt": {
+          "graceful": true,
+          "exitCode": 0
+        }
+      },
+      "inSampleExactSuccess": false,
+      "evaluationOnlyCompleted": [
+        false
+      ]
+    }
+  ],
+  "allFrozenStudies": {
+    "declared": 4,
+    "attempted": 4,
+    "completedExecution": 0,
+    "generatedTokens": 175,
+    "generatedBytes": 954,
+    "unknownGenerationCostAttempts": 0,
+    "aggregationMeaning": "Accounting across two different checkpoints; not an independent held-out benchmark estimate"
+  },
+  "fittedWeightsArchived": true,
+  "baselineWeightsArchived": false,
+  "learningBenefitEstablished": false,
+  "generalizationEstablished": false,
+  "defaultPromotion": false,
+  "runtime": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "torch": "2.10.0+cpu",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "device": "cpu",
+    "threads": 1
+  }
+}
