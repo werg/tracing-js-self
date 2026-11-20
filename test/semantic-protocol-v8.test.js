@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {applyProtocolRecordV8,createProtocolStateV8,snapshotProtocolStateV8,
   restoreProtocolStateV8,assertProtocolDetailCompatible,protocolOrdinaryHeapViewV8,
-  protocolReservedIdentitiesV8} from '../src/semantic/protocol-state-v8.js';
+  protocolReservedIdentitiesV8,PROTOCOL_V8_LIMITS} from '../src/semantic/protocol-state-v8.js';
 import {encodeProtocolRecordV8,decodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
 
 const clone=structuredClone,lit=value=>({op:'literal',value}),local=name=>({op:'local',name});
@@ -182,6 +182,35 @@ test('canonical protocol records refuse unknown fields, noncanonical JSON and ob
   assert.throws(()=>encodeProtocolRecordV8(getter));
   // A malicious discriminator is rejected before any getter is invoked.
   assert.equal(observed,0);
+  for(const kind of [null,0,['return'],{toString(){observed++;return 'return';}},'toString','__proto__'])
+    assert.throws(()=>encodeProtocolRecordV8({kind,value:['num',1],invocation:'invocation1'}),/record kind/);
+  assert.equal(observed,0,'record dispatch must not coerce a supplied discriminator');
+});
+
+test('property capacity counts data, accessors and array length while allowing existing writes',()=>{
+  const count=PROTOCOL_V8_LIMITS.properties,c=controller(),properties=Array.from({length:count-1},(_,i)=>({key:['str','p'+i],value:['num',i]}));
+  apply(c,allocation('object',properties),
+    define('object',['str','accessor'],{kind:'accessor',get:['undefined'],set:['undefined'],enumerable:true,configurable:true}));
+  apply(c,set('object',['str','p0'],['num',7]),
+    define('object',['str','accessor'],data(['num',8])));
+  assert.equal(c.heap.get('object').properties.size,count);
+  const before=wire(c);
+  for(const record of [set('object',['str','extra'],['num',9]),define('object',['str','extra'],data(['num',9]))]){
+    assert.throws(()=>apply(c,record),/property count bound/);assert.deepEqual(wire(c),before);
+  }
+  apply(c,{kind:'property.delete',object:'object',key:['str','p0'],success:true},set('object',['str','extra'],['num',9]));
+  assert.equal(restore(wire(c)).heap.get('object').properties.size,count);
+  const oversized=wire(c);oversized.heap[0][1].properties.push(['forged',['num',1]]);
+  assert.throws(()=>restore(oversized),/property count bound/);
+
+  const array=controller(),items=Array.from({length:count-1},(_,i)=>({key:['str',String(i)],value:['num',i]}));
+  apply(array,allocation('array',items,{objectKind:'array',length:count-1}));
+  const arrayBefore=wire(array);
+  assert.throws(()=>apply(array,set('array',['str',String(count-1)],['num',9])),/property count bound/);
+  assert.deepEqual(wire(array),arrayBefore,'failed array growth preserves its length');
+  assert.throws(()=>apply(array,allocation('too-large',[...items,{key:['str',String(count-1)],value:['num',9]}],
+    {objectKind:'array',length:count})),/property count bound/);
+  assert.deepEqual(wire(array),arrayBefore);
 });
 
 test('versioned protocol fixtures replay through canonical bytes and retain checkpoint identity',()=>{

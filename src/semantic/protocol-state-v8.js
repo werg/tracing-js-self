@@ -50,9 +50,12 @@ function heapNode(controller,id){const node=controller.heap.get(id);
   require(node.properties instanceof Map,'ordinary property map required');return node;}
 function mapKey(map,key){
   if(!map)return undefined;
+  if(map.has(key))return key;
   for(const stored of map.keys())if(keyEqual(stored,key))return stored;
   return undefined;
 }
+function propertyCount(node){return node.properties.size+
+  [...(node.descriptors?.keys()??[])].filter(key=>mapKey(node.properties,key)===undefined).length;}
 function storedKey(node,key){
   const wanted=internalKey(key);
   return mapKey(node.properties,wanted)??mapKey(node.descriptors,wanted)??wanted;
@@ -75,6 +78,7 @@ function order(node){
 }
 function installDescriptor(node,key,descriptor){
   const stored=storedKey(node,key),present=ownDescriptor(node,key)!==null;
+  if(!present)require(propertyCount(node)<PROTOCOL_V8_LIMITS.properties,'ordinary property count bound');
   node.keyOrder??=order(node);node.descriptors??=new Map();node.extensible??=true;
   if(!present)node.keyOrder.push(stored);
   const priorProperty=mapKey(node.properties,stored),priorDescriptor=mapKey(node.descriptors,stored);
@@ -200,6 +204,7 @@ function complete(controller,record){
   }else{controller.stack.pop();controller.pending={kind:record.kind,value:copy(record.value)};}
 }
 function allocate(controller,record){
+  require(record.properties.length+(record.objectKind==='array'?1:0)<=PROTOCOL_V8_LIMITS.properties,'ordinary property count bound');
   fresh(controller,record.name);const node={kind:record.objectKind,code:record.code,
     captures:record.captures.map(row=>({...row,cell:controller.captureAliases?.get(row.cell)??row.cell})),
     ...(record.objectKind==='closure'?{functionKind:record.functionKind,lexicalReceiver:copy(record.lexicalReceiver)}:{}),
@@ -402,6 +407,8 @@ export function restoreProtocolStateV8(controller,snapshot){
       require(PROTOCOL_MACHINE_ADAPTERS_V8.some(adapter=>adapter.hasRichState?.(node)),'undeclared protocol heap kind');continue;
     }
     heapNode(temporary,id);const keys=[];
+    require(node.descriptors===undefined||node.descriptors instanceof Map,'descriptor map');
+    require(propertyCount(node)<=PROTOCOL_V8_LIMITS.properties,'ordinary property count bound');
     for(const [key,value]of node.properties){knownKey(temporary,publicKey(key));known(temporary,value);
       require(!keys.some(other=>keyEqual(other,key)),'duplicate semantic property key');keys.push(key);}
     const described=[];

@@ -94,7 +94,8 @@ function completion(value){
 }
 export function validateProtocolRecordV8(record){
   if(!isAlgorithmDataRecord(record))fail('record must be ordinary data');
-  const fields=PROTOCOL_RECORD_V8_FIELDS[record?.kind];if(!fields)fail('record kind');
+  if(typeof record.kind!=='string'||!Object.hasOwn(PROTOCOL_RECORD_V8_FIELDS,record.kind))fail('record kind');
+  const fields=PROTOCOL_RECORD_V8_FIELDS[record.kind];
   assertAlgorithmFields(record,fields,'protocol record');
   const adapter=extensionRecords.get(record.kind);
   if(adapter){if(adapter.validateRecord(record,{value:validateProtocolValueV8})!==true)fail('extension record validation');return true;}
