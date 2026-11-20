@@ -51,8 +51,8 @@ serving, and measured learned success.
 | 3 | Neutral JS execution state | In progress | Extract typed values and transitions; preserve all current state and lifecycle behavior; equivalence tests. |
 | 4 | Direct V8 detail and source certification | In progress | Own detail/context/checkpoint schema and direct compilation; no V6 witness artifact or old episode replay. |
 | 5 | Independent native V8 semantics | In progress | Remove V8-to-V6 envelope/receipt conversion and V7 detail-wire calls; retain neutral independent semantic primitives; malformed-state controls. |
-| 6 | Composable source projections | Not started | Event-level adapters with complete, unique transition ownership; no exclusive whole-episode projector limitation. |
-| 7 | Protocol/effect/lifecycle composition | Not started | Protocol → effect → callback → protocol, reentrancy, guest errors, cancellation and restore with independent source/native checks. |
+| 6 | Composable source projections | In progress | Event-level adapters with complete, unique transition ownership; no exclusive whole-episode projector limitation. Mixed Promise/host source certification is under qualification. |
+| 7 | Protocol/effect/lifecycle composition | In progress | Protocol → effect → callback → protocol, reentrancy, guest errors, cancellation and restore with independent source/native checks. Coordinated driver/model/host recovery now preserves acknowledged history and budgets. |
 | 8 | Ordinary V8 training admission | In progress | Strict preparation policy and normal recipe/loader/config/stage/resume checks; no verification-flag or unverified-data bypass; source eligibility distinct from learned outcomes. |
 | 9 | Canonical selected serving and live restore | In progress | Standard serving route, training/serving byte parity, acknowledged-state restore, random/budget state, callbacks/child work, no redispatch. |
 | 10 | References, coercion and abrupt operations | In progress | General references, property keys, guest error objects, partial effects, nested binding and cleanup; source/public/native/restore cases. |
@@ -285,3 +285,35 @@ serving, and measured learned success.
   interruption test exposed nondeterministic ordering between independent workers;
   its deterministic one-worker control now checks exact recovery without assuming
   a cross-worker completion order. No full-suite execution claim is made here.
+
+- Direct V8 source certification: compilation, private admission and fresh
+  rechecking now use direct V8 lifecycle/detail artifacts and neutral source
+  projection. No V6 intermediate witness or legacy admission call is needed.
+  Five new direct-source identity, effect/restore, wrong-schema, authority-isolation
+  and resolved-import absence controls pass, alongside 37 existing focused
+  projection/routing checks. Contract regeneration was byte-identical for this
+  increment. Published producer: `9039d715a43f0b7ecd64b10eed9b5548d92d9915`.
+  Historical receipts remain historical; affected source evidence must be freshly
+  regenerated. Full source-projector composition and default cutover remain open.
+
+- Shared primitive conversion foundation: Number and future PropertyKey conversion
+  share an owned resumable ToPrimitive kernel. Getter lookup retains its waiting
+  and returned phases; independent validation checks hints, fallback order and
+  result binding. Four new getter/nested-call/throw/restore/tamper tests, five
+  existing Number tests and 13 arithmetic tests pass. Published producer:
+  `220470b19f6e3cbd31a0daf3cdfd112c9f492816`. Cached PropertyKey references and
+  their runtime/frontend integration are the next increment; general
+  source/public/native promotion is not claimed.
+
+- Coordinated selected-driver recovery: a dedicated native model session and
+  host lifecycle checkpoint are bound to the original causal contexts, selected
+  bytes/tokens, complete initialization identity and consumed prediction/retry
+  budgets. Recovery verifies the external policy and replays public history
+  before native restoration; uncertain effects never redispatch and lost
+  subscriptions reattach without registering again. Four new supplied-decoder
+  orchestration controls pass; the combined driver, transport and lifecycle
+  population has 35 passing tests, zero failed/skipped. The identity-binding
+  extension was rerun against all four recovery controls. These controls are
+  distinct from actual CPU model reconstruction in the consumer and do not
+  establish learned quality. Multi-driver atomic recovery, application storage,
+  arbitrary external handles and final deployment qualification remain open.
