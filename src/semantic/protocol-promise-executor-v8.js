@@ -48,7 +48,8 @@ export function applyPromiseExecutorRecordV8(controller,record,api){
     api.require((existing?.capabilities.length??0)<bound,'capability count bound');
     api.fresh(controller,record.resolve);api.fresh(controller,record.reject);api.known(controller,record.executor);
     const executor=controller.heap.get(record.executor[1]);
-    api.require(executor?.kind==='closure'&&!executor.promiseResolver,'executor must be a source closure');
+    api.require(executor?.kind==='closure'&&!executor.promiseResolver&&!executor.generatorFunction,
+      'executor must be a synchronous source closure');
     controller.heap.set(record.resolve,resolverNode(record.promise,'resolve'));
     controller.heap.set(record.reject,resolverNode(record.promise,'reject'));
     const data=state(controller,api),parent=controller.stack.at(-1);
@@ -98,6 +99,7 @@ export function assertPromiseExecutorNextV8(controller,record,api){
   if(active&&['return','throw'].includes(record.kind))return false;
   if(record.kind==='end'&&data.executors.some(row=>row.phase==='running'))return false;
   if(record.kind==='promise'&&['resolve','reject','adopt'].includes(fields.action)&&data.capabilities.some(row=>row.promise===fields.promise))return false;
+  if(record.kind==='promise.join'&&data.capabilities.some(row=>row.promise===fields.result))return false;
   if(record.kind.startsWith('property.')&&[fields.object,fields.receiver?.[0]==='ref'?fields.receiver[1]:null]
     .some(identity=>controller.heap.get(identity)?.promiseResolver))return false;
   return true;
@@ -126,6 +128,7 @@ export function restorePromiseExecutorStateV8(controller,data,api){
     for(const key of ['promise','resolve','reject'])id(row[key]);
     api.require(!promises.has(row.promise)&&row.resolve!==row.reject,'duplicate Promise capability');promises.add(row.promise);
     const target=promise(controller,row.promise,api);
+    api.require(!target.join,'executor capability cannot own a join result');
     for(const mode of ['resolve','reject']){
       api.require(!identities.has(row[mode])&&api.eq(controller.heap.get(row[mode]),resolverNode(row.promise,mode)),
         'resolver identity, immutable metadata or first-call link differs');identities.add(row[mode]);

@@ -69,7 +69,8 @@ export function applyPromiseJoinRecordV8(controller,record,api){
   }}))return false;
   if(record.kind==='promise.join'){
     const result=promise(controller,record.result);
-    if(result.state!=='pending'||result.join)fail('result must be a fresh pending join Promise');
+    if(result.state!=='pending'||result.join||result.adopted!==null||result.external!==null)
+      fail('result must be a fresh pending internal join Promise');
     if(record.inputs.includes(record.result))fail('result Promise cannot be an input');
     const occupied=new Set([...controller.heap.keys(),...controller.jobs.keys(),...controller.continuations.keys()]);
     for(const job of record.jobs)if(occupied.has(job))fail('join job identity is not fresh');
@@ -118,6 +119,8 @@ export function applyPromiseJoinRecordV8(controller,record,api){
 
 export function assertPromiseJoinNextV8(controller,record){
   const fields=record.fields??record,selected=controller.jobs?.get(fields.job);
+  if(record.kind==='promise'&&['resolve','reject','adopt'].includes(fields.action)&&
+    controller.heap.get(fields.promise)?.join)return false;
   // The callback's return empties its JS stack before the existing scheduler
   // commits its result Promise. Completing that turn precedes the next job.
   if(record.kind==='job'&&fields.action==='complete'&&selected?.status==='running'&&selected.reaction!=='join')return true;
@@ -145,7 +148,7 @@ export function allowsPromiseJoinDetailedCallV8(controller,record){
   if(typeof identity!=='string'||!identity||identity.length>256)return false;
   const callee=controller.heap?.get(identity);
   if(callee)return callee.kind==='closure'&&(callee.functionKind===undefined||callee.functionKind==='ordinary')&&
-    callee.callable==null&&callee.constructorKind==null;
+    callee.callable==null&&callee.constructorKind==null&&!callee.generatorFunction&&!callee.promiseResolver;
   // Detailed-source lifecycle carries immutable source callable names. Match
   // them against this invocation's analyzed source rather than accepting
   // arbitrary names or any class constructor.
@@ -166,6 +169,7 @@ export function restorePromiseJoinStateV8(controller,api){
     if(node.result!==null)api.known(controller,node.result,id);
     const join=node.join;
     if(join===undefined||join===null)continue;
+    if(node.external!==null||node.adopted!==null)fail('restored join must own its internal settlement');
     if(!join||join.schema!==PROMISE_JOIN_STATE_V8||!modes.has(join.mode)||!Array.isArray(join.inputs)||!Array.isArray(join.jobs)||
       !Array.isArray(join.observed)||!Array.isArray(join.values)||join.inputs.length!==join.jobs.length||
       join.inputs.length!==join.observed.length||join.inputs.length!==join.values.length||typeof join.settled!=='boolean')fail('restored join metadata');

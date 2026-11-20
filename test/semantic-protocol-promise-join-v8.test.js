@@ -67,6 +67,26 @@ test('empty all allocates and fulfills immediately while empty race remains pend
   assert.deepEqual(all.heap.get('oEmpty').properties,new Map([['length',['num',0]]]));restore(all);
   const race=controller();promise(race,'race');join(race,'race','race',[],[]);
   assert.equal(race.heap.get('race').state,'pending');assert.equal(race.heap.has('oEmpty'),false);restore(race);
+  const impossible=restore(all);Object.assign(impossible.heap.get('all'),{state:'pending',result:null});
+  impossible.heap.get('all').join.settled=false;
+  assert.throws(()=>restorePromiseJoinStateV8(impossible,api),/restored empty all/);
+});
+
+test('join results have exclusive internal settlement ownership',()=>{
+  for(const attributes of [{adopted:'input'},{external:'effect1'}]){
+    const c=controller();promise(c,'input');promise(c,'result');Object.assign(c.heap.get('result'),attributes);
+    const before=snapshot(c);
+    assert.throws(()=>join(c,'race','result',['input'],['j']),/fresh pending internal/);
+    assert.deepEqual(snapshot(c),before);
+  }
+  const c=controller();promise(c,'input');promise(c,'result');join(c,'race','result',['input'],['j']);
+  for(const action of ['resolve','reject','adopt'])
+    assert.equal(assertPromiseJoinNextV8(c,{kind:'promise',fields:{action,promise:'result'}}),false);
+  assert.equal(assertPromiseJoinNextV8(c,{kind:'promise',fields:{action:'resolve',promise:'input'}}),true);
+  for(const attributes of [{adopted:'input'},{external:'effect1'}]){
+    const forged=restore(c);Object.assign(forged.heap.get('result'),attributes);
+    assert.throws(()=>restorePromiseJoinStateV8(forged,api),/own its internal settlement/);
+  }
 });
 
 test('false join claims, wrong IDs, bypass dispatches and unsupported modes are transactional',()=>{
@@ -90,6 +110,10 @@ test('scheduler capabilities are narrow and consume the outer lifecycle field sh
   c.source={source:'function helper() { return 1; }'};
   assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'helper'}}),true);
   assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'oProtocol'}}),false);
+  for(const metadata of [{generatorFunction:true},{promiseResolver:{promise:'pending',mode:'resolve'}}]){
+    c.heap.set('special',{kind:'closure',functionKind:'ordinary',...metadata});
+    assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'special'}}),false);
+  }
   c.protocol.callFrames.push({});
   assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'helper'}}),false);
 });

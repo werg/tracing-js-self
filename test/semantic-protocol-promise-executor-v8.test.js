@@ -67,6 +67,32 @@ test('executor protocol rejects bypasses, stale calls, bad identities and unavai
   }
   finish(h);const before=sharedRegionState(h.controller);assert.throws(()=>finish(h),/active call/);assert.deepEqual(sharedRegionState(h.controller),before);
 });
+
+test('an executor capability cannot be reused as a join result or a generic detailed call',()=>{
+  const h=setup();enter(h);finish(h);
+  for(const record of [
+    {kind:'promise.join',mode:'all',result:'p1',inputs:[],jobs:[],output:'empty',error:null},
+    {kind:'promise.join',mode:'race',result:'p1',inputs:['p2'],jobs:['join1'],output:null,error:null}
+  ]){const before=sharedRegionState(h.controller);assert.throws(()=>select(h,record),/guard/);
+    assert.deepEqual(sharedRegionState(h.controller),before);}
+  const before=sharedRegionState(h.controller);
+  assert.throws(()=>h.select('invocation1',encodeDetailedRecord({kind:'call',fields:{
+    callee:'p1resolve',child:'bypass',arguments:[['num',8]],receiver:['undefined']}},{role:'generated'})),/scoped call/);
+  assert.deepEqual(sharedRegionState(h.controller),before);
+  // A capability remains a valid join input; only ownership of its settlement
+  // is reserved for the resolving functions.
+  select(h,{kind:'promise.join',mode:'race',result:'p2',inputs:['p1'],jobs:['join2'],output:null,error:null});
+  call(h,'resolve',['num',7]);assert.deepEqual(h.controller.ready,['join2']);
+});
+
+test('generator executors refuse before allocating a resolving pair or entering the body',()=>{
+  const h=setup();h.controller.heap.get('o1').generatorFunction=true;
+  const before=sharedRegionState(h.controller);
+  assert.throws(()=>enter(h),/synchronous source closure/);
+  assert.deepEqual(sharedRegionState(h.controller),before);
+  assert.equal(h.controller.heap.has('p1resolve'),false);
+  assert.equal(h.controller.stack.length,1);
+});
 test('restoration rejects dangling executor frames, altered resolver metadata and contradictory first-call state',()=>{
   const h=setup();enter(h);call(h,'resolve',['num',2]);
   for(const mutate of [
@@ -74,12 +100,22 @@ test('restoration rejects dangling executor frames, altered resolver metadata an
     c=>{c.protocol.promiseExecutors.capabilities[0].called=false;c.protocol.promiseExecutors.capabilities[0].resolution=null;},
     c=>c.heap.get('p1resolve').promiseResolver.promise='p2',
     c=>c.protocol.promiseExecutors.executors[0].parent='missing',
+    c=>c.protocol.promiseExecutors.executors[0].promise=[],
     c=>c.protocol.callFrames[0].arguments.reverse(),
     c=>c.stack.pop(),
     c=>c.protocol.promiseExecutors.capabilities.push(structuredClone(c.protocol.promiseExecutors.capabilities[0]))
   ]){const c=Object.assign(Object.create(Object.getPrototypeOf(h.controller)),h.controller);
     for(const key of ['heap','protocol','stack'])c[key]=structuredClone(c[key]);mutate(c);
     assert.throws(()=>restoreProtocolStateV8(c,c.protocol));}
+});
+
+test('restoration rejects an executor capability claiming independent join ownership',()=>{
+  const h=setup();enter(h);finish(h);
+  const c=Object.assign(Object.create(Object.getPrototypeOf(h.controller)),h.controller);
+  for(const key of ['heap','protocol','stack'])c[key]=structuredClone(c[key]);
+  c.heap.get('p1').join={schema:'semantic-promise-join-state/1',mode:'race',inputs:[],jobs:[],
+    observed:[],values:[],output:null,error:null,settled:false};
+  assert.throws(()=>restoreProtocolStateV8(c,c.protocol),/capability cannot own a join/);
 });
 
 test('restoration cannot invent adopted or object-valued executor resolution',()=>{
