@@ -93,3 +93,20 @@ test('scheduler capabilities are narrow and consume the outer lifecycle field sh
   c.protocol.callFrames.push({});
   assert.equal(allowsPromiseJoinDetailedCallV8(c,{kind:'call',fields:{callee:'helper'}}),false);
 });
+
+test('restored join observations agree with completed jobs and the original input settlement',()=>{
+  const c=controller();promise(c,'p','fulfilled',['num',7]);promise(c,'pending');promise(c,'joined');
+  join(c,'all','joined',['p','pending'],['j','waiting']);
+  assert.equal(restorePromiseJoinStateV8(c,api).valid,true);
+  const observedBeforeDelivery=restore(c),early=observedBeforeDelivery.heap.get('joined').join;
+  early.observed[0]=true;early.values[0]=['num',7];
+  assert.throws(()=>restorePromiseJoinStateV8(observedBeforeDelivery,api),/observation\/job lifecycle/);
+
+  step(c,{result:'joined',job:'j',status:'pending',value:null});
+  assert.equal(restorePromiseJoinStateV8(c,api).valid,true);
+  const unobservedAfterDelivery=restore(c),forgotten=unobservedAfterDelivery.heap.get('joined').join;
+  forgotten.observed[0]=false;forgotten.values[0]=null;
+  assert.throws(()=>restorePromiseJoinStateV8(unobservedAfterDelivery,api),/observation\/job lifecycle/);
+  const falseValue=restore(c);falseValue.heap.get('joined').join.values[0]=['num',99];
+  assert.throws(()=>restorePromiseJoinStateV8(falseValue,api),/observed value differs/);
+});

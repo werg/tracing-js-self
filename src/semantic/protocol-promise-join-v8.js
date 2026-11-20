@@ -176,6 +176,9 @@ export function restorePromiseJoinStateV8(controller,api){
       if(typeof join.observed[i]!=='boolean')fail('restored join observation flag');
       const value=join.values[i];if(join.observed[i])api.known(controller,value,id);else if(value!==null)fail('unobserved join input has value');
       const job=controller.jobs.get(join.jobs[i]);if(!job||job.reaction!=='join'||job.joinResult!==id||job.joinIndex!==i||job.promise!==join.inputs[i])fail('restored join scheduler linkage');
+      if((job.status==='completed')!==join.observed[i])fail('restored join observation/job lifecycle');
+      const input=promise(controller,join.inputs[i]);
+      if(join.observed[i]&&(input.state==='pending'||!api.eq(value,input.result)))fail('restored join observed value differs from input settlement');
     }
     if(join.mode==='all'&&join.inputs.length===0){
       if(node.state!=='fulfilled'||!isId(join.output)||join.error!==null||node.result[0]!=='ref'||node.result[1]!==join.output)fail('restored empty all');
