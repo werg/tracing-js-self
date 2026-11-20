@@ -13,7 +13,7 @@ unmeasured later implementation changes.
 | Evidence | Measured result | Scope |
 | --- | --- | --- |
 | [Complete source/native populations and exact costs](native-v8-b66c19b-all/README.md) | 665/665 expansion, 23/23 interoperability and 11/11 gallery cases passed source/native admission and exact token metering | All source/admitted artifacts, native receipts, exact inputs, serializer/token records, reference evidence and paired historical comparison retained |
-| [Frozen producer regression](producer-regression-9d4f6b3/README.md) | 1,834 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `9d4f6b3`; full logs and clean identities retained. A subsequent 24/24 targeted run at `562f6f2` has separate coordinator-reported identity and original logs. |
+| [Current complete Node 24 producer CI](ci-node24-7855394/README.md) | 1,836 passes, eight explicit skips, zero failures/cancellations out of 1,844 tests; all subsequent contract/fixture/demo checks passed | PR head `7855394` and actual merge checkout `e461fab` have identical complete trees; source tree equals qualification producer `012c9fe`. Includes both timing fixes and the expanded 26-case inventory test. |
 | [Expanded-contract targeted checks](producer-contract-012c9fe/README.md) | Original six-file run: 42 passes, one timing failure, one timeout cancellation; all 5 contract checks passed. Separate two-file timing follow-up: 24/24 passed. | Original clean `012c9fe` failure retained. Follow-up identity is coordinator-reported patch subsequently published as `c0524b4`, not an instrumented clean-commit run. |
 | [Latest production dataset](dataset-v8-492328f/README.md) | 34 freshly admitted episodes and 898 complete examples, with actual tokenizer re-encoding, masks, EOS and frozen component splits checked | Producer `492328f`, consumer `cb311db`; fresh 23-case interoperability and 11-case gallery admission; zero optimizer steps |
 
@@ -26,6 +26,7 @@ the final expanded contract:
 | [Direct and nested Number callback throws](number-abrupt-012c9fe/README.md) | 2/2 fresh source/native/token admissions | Producer `012c9fe`, consumer `39c4036`; final contract, exact abrupt completions and suppressed fallback. The earlier [3a1992b pair](number-abrupt-3a1992b/README.md) retains its own historical receipts. |
 | [Number callback catch/finally](number-completion-012c9fe/README.md) | 13 declared: 12 fresh source/native/token admissions and one explicit Symbol cleanup refusal | Producer `012c9fe`, consumer `39c4036`; the current suite removes the former loop-target refusal. The earlier [14-case ddaac82 population](number-completion-ddaac82/README.md) remains historical. |
 | [Flat iterable bindings](iterable-binding-012c9fe/README.md) | 17 declared: 14 fresh source/native/token admissions and three explicit source refusals | Producer `012c9fe`, consumer `39c4036`; flat initialized variable ArrayPatterns, elision, defaults, rest, cached next and cleanup behavior |
+| [Synchronous custom iterators](custom-iterator-012c9fe/README.md) | 20 declared: 16 fresh source/native/token admissions and four explicit source refusals | Producer `012c9fe`, consumer `39c4036`; exact acquisition/cached-next/close behavior, nested labeled cleanup and completion precedence; explicit 300-second native bound |
 
 All eight former enumeration refusals and the previous generator continuation
 failure pass in this new full run. The independent consumer passed 214 focused
@@ -36,15 +37,37 @@ tokens. On 42 exactly matched historical cases, total flat tokens decrease
 the full comparison preserves them. The population denominators are separate
 and may contain overlapping source cases.
 
-External-model comprehension, generalization, controlled model-execution
-comparisons, serving efficiency and default promotion remain unqualified by
-these source/native/data receipts. A separate [native fitting and frozen-serving
-diagnostic](../../docs/evidence/semantic-v8-diagnostic-pilot/2026-11-20/README.md)
-performed four optimizer updates for each of two independently initialized
-models. Each frozen two-case study completed zero of two executions; actual
-weights, malformed outputs and all measured costs are retained. Performing
-those bounded diagnostics does not establish learned-execution or generalization
-gains.
+These source/native/data receipts do not establish learned generalization,
+broader accuracy, serving efficiency or default promotion. Model experiments
+have separate declared inputs, runs and limits.
+
+## Measured native model experiments
+
+| Experiment | Retained result | Scope and cost evidence |
+| --- | --- | --- |
+| [Four-step fitting and serving diagnostics](../../docs/evidence/semantic-v8-diagnostic-pilot/2026-11-20/README.md) | Two independently initialized models, four optimizer updates each; each frozen study completed 0/2 executions | Full weights and malformed outputs retained. Corrected split-role study: 67 verified generated tokens and 341 bytes, zero unknown-cost attempts; exploratory, with no success or generalization gain. |
+| [Audited current-contract study](native-v8-fit-39c4036/independent-audit/README.md) | Reported 256-step model: 3/3 source-qualified optimized-input executions, 0/3 excluded-input executions; zero-update baseline 0/6 | Producer `012c9fe`, consumer `39c4036`. Fitted 405 verified tokens; baseline 344 verified tokens plus two unknown-cost attempts. All twelve result digests/private-source scores and fifteen emitted fragments independently rechecked. |
+
+The latter study uses one increment program and two inputs. Both artifacts have
+the same family-hash **train** identity; “held-out input” means exclusion from
+optimization and early stopping, not an unseen program or family. Original
+native-compute and rollout timing measurements are retained, but their runtime
+conditions do not establish a controlled serving-efficiency comparison or cache
+benefit. The two baseline invalid-UTF8 attempts preserve 220 additional
+native-reported token IDs; they are not added to the 344 verified-token count.
+
+The independent audit verifies preserved output bytes, identities and private
+source validity without repeating training or inference. Its named 43,360,285-byte
+historical checkpoint archive is unavailable in the repository and has no
+retrieval URL, so that audit cannot independently hash/reload those weights,
+inspect tensor changes or establish that those absent weights generated the
+outputs. The [earlier 256-step audit](native-v8-fit-23cd478/independent-audit/README.md)
+retains the original training evidence and stale-source failures separately.
+Neither audit merges its denominators with the four-step diagnostics.
+
+External-model comprehension remains unmeasured; generalized learned execution,
+controlled serving benefits and default promotion remain unqualified. v6 stays
+the production default.
 
 ## Historical qualifications
 
@@ -55,6 +78,7 @@ measured pins describe those runs; the newer qualification does not rewrite them
 | --- | --- | --- |
 | [Previous-contract qualification and components](native-v8-562f6f2-superseded/README.md) | Producer `562f6f2` / consumer `d26afd9`: 168/665 expansion admissions before interruption, complete original 23+11 populations/costs; partial supplements and earlier 220/221/242/244-test native runs retained | Four verified archives preserve all original scopes; the final expanded contract requires new 26+11 qualification |
 | [Superseded qualification attempts](native-v8-3a1992b-interrupted/README.md) | Producer `3a1992b` / consumer `418385b`: complete 23-case interoperability and 11-case gallery admissions/costs; 594/665 expansion admissions before interruption, with 71 untested or uncommitted | Retains exact artifacts/inputs, original failures and supersession receipts; the custom-iterator timeout and other earlier prefixes are separate historical scopes |
+| [Complete earlier local producer regression](producer-regression-9d4f6b3/README.md) | 1,834 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact `9d4f6b3`; separate targeted 24/24 checks at `562f6f2` and interrupted 800 history retained |
 | [Earlier producer regression](producer-regression-3a1992b/README.md) | 1,794 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `3a1992b`; original logs, identities and interrupted predecessor retained |
 | [Earlier producer regression](producer-regression-b66c19b/README.md) | 1,778 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `b66c19b`; original logs and identities retained |
 | [Earlier 34-episode production dataset](dataset-v8-b66c19b/README.md) | 34 freshly admitted episodes and 898 complete examples | Producer `b66c19b`, consumer `6adf99f`; its receipts are not reused to admit the later dataset |

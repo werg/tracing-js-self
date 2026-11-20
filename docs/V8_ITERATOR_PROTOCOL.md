@@ -148,6 +148,16 @@ continuation, masks, source binding and production-tokenizer checks. The report
 retains the actual transport bytes, native packing and flat serialization costs;
 it is a separate 17-case population, not growth of the frozen expansion corpus.
 
+The separate [current custom-for-of supplement](../coverage/language-expansion/custom-iterator-012c9fe/README.md)
+freshly measured all **16 positive source/native/token cases** and **four
+explicit source refusals** at the same pair. Nested labeled break and outer-loop
+continue preserve their exact frame-owned pending targets; continuing the outer
+loop closes only the inner iterator. Original throws take precedence over close
+failures, while a close failure can replace a normal break. The completed run
+retains its explicit 300-second native admission bound with no retries or
+timeouts. The earlier 120-second timeout remains historical evidence in the
+[superseded qualification archive](../coverage/language-expansion/native-v8-3a1992b-interrupted/README.md).
+
 Nested bindings, assignment destructuring and captured String builtin bindings
 remain the three measured flat-binding refusals. Object/parameter patterns and
 other source positions are not admitted by this flat declaration recognizer.
