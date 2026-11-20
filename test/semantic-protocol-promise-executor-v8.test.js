@@ -32,11 +32,32 @@ test('executor resolving functions share one first-call cell across exact checkp
   call(h,'resolve',['num',99]);assert.deepEqual(h.controller.heap.get('p1').result,['num',3]);
 });
 test('executor throw rejects only before settlement and retained resolving functions remain no-ops afterward',()=>{
-  const first=setup();enter(first);finish(first,'throw',['num',7]);call(first,'resolve',['num',11]);
+  const first=setup();enter(first);finish(first,'throw',['num',7]);
+  const capability=structuredClone(first.controller.protocol.promiseExecutors.capabilities[0]);
+  assert.equal(capability.called,true);assert.deepEqual(capability.resolution,{mode:'reject',value:['num',7]});
+  const restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(first.checkpoint())));
+  for(const current of [first,restored]){
+    call(current,'resolve',['num',11]);call(current,'reject',['num',12]);
+    assert.deepEqual(current.controller.protocol.promiseExecutors.capabilities[0],capability);
+  }
+  assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(first.controller));
   assert.equal(first.controller.heap.get('p1').state,'rejected');assert.deepEqual(first.controller.heap.get('p1').result,['num',7]);
   assert.equal(RegionExecutionHarness.restore(first.checkpoint()).controller.heap.get('p1').state,'rejected');
   const settled=setup();enter(settled);call(settled,'resolve',['num',4]);finish(settled,'throw',['num',12]);
   assert.equal(settled.controller.heap.get('p1').state,'fulfilled');assert.deepEqual(settled.controller.heap.get('p1').result,['num',4]);
+});
+test('restoration rejects invented first-call state after an executor throws',()=>{
+  const h=setup();enter(h);finish(h,'throw',['num',7]);
+  for(const mutate of [
+    c=>{const cap=c.protocol.promiseExecutors.capabilities[0];cap.called=false;cap.resolution=null;},
+    c=>{c.protocol.promiseExecutors.capabilities[0].resolution={mode:'resolve',value:['num',11]};},
+    c=>{const cap=c.protocol.promiseExecutors.capabilities[0];cap.called=false;cap.resolution=null;
+      Object.assign(c.heap.get('p1'),{state:'pending',result:null});}
+  ]){
+    const c=Object.assign(Object.create(Object.getPrototypeOf(h.controller)),h.controller);
+    for(const key of ['heap','protocol','stack'])c[key]=structuredClone(c[key]);mutate(c);
+    assert.throws(()=>restoreProtocolStateV8(c,c.protocol),/first-call state contradicts|must consume its resolving pair/);
+  }
 });
 test('executor adoption refuses missing assimilation jobs without consuming the first-call cell',()=>{
   const h=setup();enter(h);

@@ -22,6 +22,19 @@ test('executor throw causes owned rejection',()=>{
    new Promise(function(resolve){throw 9;}).catch(function(e){out+=e;});`);
  assert.deepEqual(read(r,'out'),['num',9]);
 });
+test('executor throw consumes its resolving pair before retained resolver calls',()=>{
+ const r=check(`let resolveLater;let rejectLater;let out=0;
+   const p=new Promise(function(resolve,reject){resolveLater=resolve;rejectLater=reject;throw 9;});
+   resolveLater(3);rejectLater(7);p.catch(function(e){out=e;});`);
+ assert.deepEqual(read(r,'out'),['num',9]);
+ const id=read(r,'p')[1],bundle=r.exportRun();
+ const rejected=bundle.events.flatMap(event=>event.stateChanges)
+   .find(change=>change.table==='promises'&&change.id===id&&change.before?.status==='pending'&&change.after?.status==='rejected');
+ assert(rejected);assert.equal(rejected.after.resolverCalled,true);
+ for(const event of bundle.events.filter(event=>event.operation==='call.enter'&&
+   event.operands[0]?.[0]==='builtinfn'&&event.operands[0][1].includes('Promise.executor.')))
+   assert.equal(event.stateChanges.some(change=>change.table==='promises'&&change.id===id),false);
+});
 test('executor throw after resolve does not supersede earlier completion',()=>{
  const r=check(`let out=0;
    new Promise(function(resolve){resolve(4);throw 9;}).then(function(x){out+=x;});`);

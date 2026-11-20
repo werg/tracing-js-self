@@ -79,8 +79,10 @@ export function applyPromiseExecutorRecordV8(controller,record,api){
       controller.stack.at(-2)===entry.parent,'executor completion lacks its active call');
     api.known(controller,record.completion.value);
     api.complete(controller,{kind:record.completion.kind,invocation:record.invocation,value:record.completion.value});
-    if(record.completion.kind==='throw'&&!cap.called&&target.state==='pending')
+    if(record.completion.kind==='throw'&&!cap.called&&target.state==='pending'){
+      cap.called=true;cap.resolution={mode:'reject',value:copy(record.completion.value)};
       controller.settlePromise(record.promise,'rejected',record.completion.value);
+    }
     entry.phase='complete';entry.completion=copy(record.completion);
     controller.lastReturn={kind:'return',value:['ref',record.promise]};
   }
@@ -136,14 +138,12 @@ export function restorePromiseExecutorStateV8(controller,data,api){
     api.require(typeof row.called==='boolean'&&row.called===(row.resolution!==null),'resolving function first-call cell');
     if(row.resolution!==null){assertAlgorithmFields(row.resolution,['mode','value'],'resolution');
       api.require(['resolve','reject'].includes(row.resolution.mode),'resolution mode');api.known(controller,row.resolution.value);}
-    const entry=data.executors.find(entry=>entry.promise===row.promise),thrown=entry?.phase==='complete'&&entry.completion?.kind==='throw'&&
-      target.state==='rejected'&&target.adopted===null&&api.eq(target.result,entry.completion.value);
     let resolved=false;
     if(row.resolution){const {mode,value}=row.resolution;
       resolved=(mode==='reject'||value[0]!=='ref')&&target.adopted===null&&
         target.state===(mode==='resolve'?'fulfilled':'rejected')&&api.eq(target.result,value);
     }
-    api.require(row.called?(resolved||thrown):(target.state==='pending'&&target.adopted===null||thrown),
+    api.require(row.called?resolved:target.state==='pending'&&target.adopted===null,
       'capability first-call state contradicts Promise settlement');
   }
   const children=new Set(),executed=new Set();
@@ -163,6 +163,8 @@ export function restorePromiseExecutorStateV8(controller,data,api){
     }else{
       completion(entry.completion,value=>api.known(controller,value));
       api.require(!controller.stack.includes(entry.child),'completed executor remains active');
+      api.require(entry.completion.kind!=='throw'||data.capabilities.find(row=>row.promise===entry.promise).called,
+        'throwing executor must consume its resolving pair');
     }
   }
   api.require(executed.size===promises.size,'capability lacks its executor');
