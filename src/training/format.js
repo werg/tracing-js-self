@@ -4,9 +4,9 @@ import {encodeTraceText,decodeTraceText} from './trace-text.js';
 import {COMPLETION_POLICIES,canonicalCompletionPolicy,
   SEMANTIC_RECORD_KINDS as WITNESS_KINDS,SEMANTIC_RECORD_SCHEMA as WITNESS_SCHEMA,
   SEMANTIC_RECORD_REQUIRED as WITNESS_REQUIRED,assertValue,validateExpression,validateGraph,
-  validateSemanticRecord as validateWitness} from '../semantic/record-schema.js';
+  validateSemanticRecord} from '../semantic/record-schema.js';
 export {COMPLETION_POLICIES,canonicalCompletionPolicy,WITNESS_KINDS,WITNESS_SCHEMA,
-  WITNESS_REQUIRED,assertValue,validateExpression,validateGraph,validateWitness};
+  WITNESS_REQUIRED,assertValue,validateExpression,validateGraph};
 function fail(message){throw new TypeError('Invalid '+WITNESS_VERSION+': '+message);}
 
 export const WITNESS_VERSION='semantic-trace/6';
@@ -82,6 +82,10 @@ export function validateHarnessRecord(record){
        record.kind==='result'&&decoded.kind!=='observe')throw new TypeError('Invalid harness witness authority');
   }
   return true;
+}
+export function validateWitness(kind,fields){
+  try{return validateSemanticRecord(kind,fields);}
+  catch(error){fail(error.message.replace(/^Invalid semantic record: /,''));}
 }
 export function encodeWitness(kind,fields){
   validateWitness(kind,fields);

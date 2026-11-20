@@ -128,3 +128,15 @@ serving, and measured learned success.
   specification bytes are not yet pinned. Catalog digest:
   `2e1c7727c58d41822edaac2294761baa550a8ad7be8f5dcfedbfc7b779457299`.
   Acquisition/catalog controls: 12 passed, zero failed/skipped.
+
+- Typed selected-state increment: the transactional controller now consumes
+  version-neutral typed records. Historical V6 and direct V8 wire clients share
+  those transitions without translating V8 records through V6. Continuation
+  reconstruction preserves each client's own packet schema and history. Typed
+  input rejects accessors/proxies without invoking them, snapshots caller data,
+  and preserves shared realm map identity on rollback. Five new parity,
+  broker/await, rollback, restore and legacy-import-absence checks plus existing
+  controller/lifecycle/wire checks pass: 129 tests, zero failed/skipped.
+  The first broad check found a legacy error-label regression from the schema
+  extraction; the wire adapter now restores its own diagnostic prefix and that
+  check passes. V8 lifecycle/source routing still needs migration to this core.

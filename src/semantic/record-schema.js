@@ -1,5 +1,7 @@
 // Version-neutral typed semantic records. This module has no wire codec,
 // harness, source interpreter, or representation-version dependency.
+import {isProxy} from '#owned-proxy-check';
+
 export const COMPLETION_POLICIES=Object.freeze([
   'call-return','await-returned-promise','owned-quiescence'
 ]);
@@ -328,4 +330,36 @@ export function validateSemanticRecord(kind,fields){
     if(has(fields,key)&&(typeof fields[key]!=='string'||
        !/^[a-z][a-z0-9:_-]*$/.test(fields[key])))fail('malformed invocation identity');
   return true;
+}
+
+// Typed entry points reject observable objects before inspecting their fields.
+// The wire validators receive parsed JSON; native typed callers need this guard.
+export function assertSemanticData(value,ancestors=new Set(),depth=0){
+  if(value===null||typeof value==='string'||typeof value==='boolean')return;
+  if(typeof value==='number'&&Number.isFinite(value)&&!Object.is(value,-0))return;
+  if(!value||typeof value!=='object'||isProxy(value)||ancestors.has(value)||depth>256)
+    fail('canonical own data required');
+  if(!Array.isArray(value)&&![Object.prototype,null].includes(Object.getPrototypeOf(value)))
+    fail('plain record required');
+  ancestors.add(value);
+  const descriptors=Object.getOwnPropertyDescriptors(value);
+  for(const key of Reflect.ownKeys(descriptors)){
+    if(Array.isArray(value)&&key==='length')continue;
+    const descriptor=descriptors[key];
+    if(typeof key!=='string'||!Object.hasOwn(descriptor,'value')||!descriptor.enumerable)
+      fail('accessors and hidden fields are not public data');
+    assertSemanticData(descriptor.value,ancestors,depth+1);
+  }
+  if(Array.isArray(value)&&(Object.keys(value).length!==value.length||
+      Object.keys(value).some((key,index)=>key!==String(index))))
+    fail('dense canonical array required');
+  ancestors.delete(value);
+}
+export function validateTypedSemanticRecord(record){
+  assertSemanticData(record);
+  if(!record||Array.isArray(record)||Object.keys(record).length!==2||
+      !Object.hasOwn(record,'kind')||!Object.hasOwn(record,'fields'))
+    fail('exact kind and fields wrapper required');
+  validateSemanticRecord(record.kind,record.fields);
+  return record;
 }
