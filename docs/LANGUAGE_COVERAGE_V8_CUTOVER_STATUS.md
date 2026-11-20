@@ -419,6 +419,14 @@ serving, and measured learned success.
   and seventeen campaign/catalog checks pass, zero failed/skipped in each suite.
   These are runner qualification controls, not a full Test262 campaign result.
 
+- Source-fixture repair: freshly regenerated all twenty protocol source cases,
+  the separately retained iterator case, six base region examples and their
+  contract/interoperability manifest. The original validators are unchanged.
+  Source and iterator regression suites: 24 passed, zero failed/skipped;
+  protocol-source generation and V8 contract checks both pass. This repairs
+  stale source-evidence failures; paired native fixtures and policy pins still
+  require their own fresh checks before this is an admitted release pair.
+
 ## Paired consumer PR
 
 https://github.com/werg/megatoken/pull/38

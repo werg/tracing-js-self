@@ -2280,7 +2280,7 @@
       "reason": "old artifacts require their original contract"
     }
   ],
-  "interoperabilityDigest": "0ec1798afb729c3c877c7f2f08311730e9f0dae9bd303b500e90198633567b76",
+  "interoperabilityDigest": "1ccfe1cb4d6d78f7000c99a5feadf0b13eab4a35af6ceba3cc4d0a7194a7fdd5",
   "interoperability": [
     {
       "id": "ordered-map",
@@ -2304,13 +2304,13 @@
     },
     {
       "id": "custom-iterator-close",
-      "publicDigest": "b7f126ce1de9b0596f74502afd5f7a81883f30a73a885b97f97d14c3a02c5bca",
-      "contextDigest": "01a5ecb69f45c8500d54940d3aa413d5241669f54de98cda34fc4ba110674634"
+      "publicDigest": "076abdbae2d743436e5012c6aa63f5e2094935de58208b28c399b034497dcc67",
+      "contextDigest": "33c2dba95751985cb58e67dc17e841ae348a35ff7e075fb0a3d12907c9893f7f"
     },
     {
       "id": "iterable-binding-close",
-      "publicDigest": "379ce9087733a01ed47718cee54723bdf3804af5b77d52d10fc7cc0d8b4b78b2",
-      "contextDigest": "f47756b3e317b5fe201543a5e8faf21d5d78e255382eba4dce4a9cb675069eb3"
+      "publicDigest": "97bc56f1979c7389fa4f52cb035369d1b6ca97c4e503976581eb4324cb4d1be5",
+      "contextDigest": "9a3c3c3c75f8d647a0ef76af3f1c0f73af3d8da53706fd2584bd0e75bebb69f7"
     },
     {
       "id": "protocol-machine",
