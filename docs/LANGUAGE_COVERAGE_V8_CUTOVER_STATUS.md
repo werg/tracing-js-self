@@ -19,48 +19,47 @@ must name executable evidence; historical receipts retain their original pins.
 ## Current checkpoint and active implementation
 
 The work remains incomplete and both PRs remain drafts. The current user
-instruction is **small fixes, cleanup and edge cases first, then harder work**.
+instruction is to tackle **the hardest and least well-defined tasks first**.
 The 17 full acceptance packages remain open; increments below do not narrow them.
 
-- The obsolete Number-conversion assertion and conformance resource/scope edge
-  cases are repaired. Twenty protocol source cases, the iterator case and six
-  base region examples were freshly regenerated with the original validators.
-- Pairing the regenerated artifacts exposed two additional small mismatches:
-  result replay omitted callback retirement, and producer Promise joins lacked
-  the invocation ownership already required by the native consumer. These are
-  being repaired with state/forgery controls before final fixture/policy pairing.
-- Concurrent published changes are retained, including cyclic async-module
-  recovery, global native readiness, normal training/serving chunk parity and
-  corrected native microtask boundaries. These are separate bounded results.
-- The actual pinned-tokenizer ordinary lifecycle has retained evidence for exact
-  producer `a4d0a56` / consumer `7da2150`: admission, optimizer update,
-  fresh-process resume, export/reload and selection recovery. Its generated
-  semantic output failed; learned quality remains unqualified. The new combined
-  contract still requires fresh exact-pair qualification.
-- Mixed source/native composition, complete edition coverage, production parity,
-  held-out model studies and final default cutover remain unfinished.
-- Every increment is committed and published promptly. The
-  [recovery handoff](docs/IMPLEMENTATION_RECOVERY_2026_11_20.md) and the detailed
-  ledger distinguish published evidence from historical local-only work.
+- Mixed Promise, host-call and retained-callback source execution, shared readiness,
+  replay-derived recovery and terminal realm closure are implemented and pushed.
+  The full producer V8/region regression run on `a13760d` passed **377 tests,
+  zero failures, zero skips**. Exact paired consumer/source admission is next.
+- Event-level source ownership is being integrated transactionally: every part
+  of an event must have one owner before the live public trace can change.
+  An isolated planner alone does not close the composition package.
+- Ordinary training-window reconstruction now preserves generated request controls.
+  The published consumer fix `821f6b0` has six focused controls and exact state
+  comparisons across 35 target positions. Supplied decoder bytes are engineering
+  controls, not evidence of learned execution.
+- Normal production readiness/recipe admission and distributed checkpoint/export
+  lineage remain active work. They must retain strict source, tokenizer and
+  preparation identities rather than permit an unverified-data bypass.
+- The actual pinned-tokenizer lifecycle has historical evidence for exact producer
+  `a4d0a56` / consumer `7da2150`: admission, optimizer update, fresh-process resume,
+  export/reload and selection recovery. Its generated output failed; learned
+  quality remains unqualified. New combined revisions require fresh qualification.
+- Complete edition coverage, production parity, held-out model studies and final
+  default cutover remain unfinished. Completed increments are committed and
+  published promptly; historical receipts retain their original identities.
 
 ## Overall progress
 
 ### Execution order and active priorities
 
-The ordering below follows the latest user instruction, from smaller bounded
-repairs to harder semantic and end-to-end work. Dependencies still apply. This
-is an execution order, not a completion percentage or schedule estimate.
+This order follows the user's hardest-first instruction. Dependencies determine
+which difficult work can be made concrete now; these priorities are not a
+completion percentage or schedule estimate.
 
-| Priority | Size / difficulty | Work | Next acceptance evidence |
+| Priority | Difficulty | Work | Next acceptance evidence |
 | --- | --- | --- | --- |
-| 1 | Small | Repair failing regression assertions, formatting, stale generated fixtures and obvious validation gaps. | Reproduce each failure, fix it without weakening admission, rerun the affected checks, commit and push. |
-| 2 | Small to medium | Inventory, runner and recovery edge cases: exact inputs, unsupported/resource/error classification, partial resume, tamper checks and complete denominators. | Focused fault controls, retained original failures, exact identities and reviewable inventories. |
-| 3 | Medium | Training/serving history and restored-policy parity, including acknowledged history, budgets and expected bundle identity. | Identical causal events and bytes on normal training/serving paths; reject altered state before external work. |
-| 4 | Medium to high | Direct V8 semantics and paired source/native checks; remove remaining old-wire dependencies where replacements exist. | Fresh matched contracts/fixtures, independent native checks and import-absence controls. |
-| 5 | High | Protocol → host → callback → protocol composition, retained references and unique transition ownership. | Mixed shared-state cases, errors/cancellation, boundary restores and no duplicate external work; independently paired native admission. |
-| 6 | High | General Promise and async-module scheduling, including adoption, shared readiness, cyclic dependencies and abrupt completion. | Native differentials and restore controls first; source/public/native promotion only after its separate checks. |
-| 7 | High to very high | Collections, construction, Proxy, iteration, binary/text intrinsics, dynamic code/realms, weak references and agents. | General mechanisms followed by method and cross-feature slices; explicit profile/observation rules; all mandatory edition obligations retained. |
-| 8 | Dependency-gated | Real pinned-asset training and model studies, complete production parity, final defaults/legacy removal, installed absence and release recovery. | Complete exact-pair qualification, ordinary optimizer/resume/export/reload, honest held-out quality/cost measurements, effect-safe release restore and rollback. |
+| 1 | High to very high | Shared execution state, unique source-event ownership, protocol → host → callback → protocol and effect-safe recovery. | Transactional ownership, mixed shared-state and failure cases, exact independent source/native admission and restore with no duplicate external work. |
+| 2 | High to very high | General Promise/async/module scheduling and retained environments, realms, dynamic code, Proxy/internal methods and advanced profiles. | Native differentials and retained-state controls, followed separately by public/source/native promotion; explicit host and observation rules. |
+| 3 | High | Ordinary training/serving parity, production admission and distributed checkpoint/export lineage. | Normal recipes and lifecycle commands with real pinned assets, exact causal records and restored state, strict identity refusal controls. |
+| 4 | High | Complete edition scope, conformance runner and full-denominator language campaigns. | Retained annual specification bytes, exact suite and execution modes, reconciled applicability and failure inventories, no unsupported rows hidden. |
+| 5 | High | Collections, construction, iteration, binary/text intrinsics and remaining edition families. | General mechanisms and cross-feature cases, original-source checks, independently admitted continuations and declared resource boundaries. |
+| 6 | Dependency-gated | Regenerated corpus, held-out model studies, default cutover, legacy removal and operational release proof. | Final exact pair, ordinary optimizer/resume/export/reload, measured learned quality/cost, installed absence, deployment/restore and rollback qualification. |
 
 The 17-package tally below remains the acceptance ledger. A delivered increment
 does not close an entire ranked item or work package.
@@ -500,7 +499,8 @@ serving, and measured learned success.
   fixture is freshly rebuilt from the original source and independently replayed.
   Paired native callback/serving controls pass; final protocol fixture pairing remains open.
 
-- Mixed protocol/host recovery checkpoint (current implementation):
+- Mixed protocol/host recovery checkpoint: producer
+  `a13760d03e084600f6e8875dcae557cd98501bf6`
   four independently checked source cases preserve root results 12, 7, 0 and 6;
   31 focused producer tests pass with no failures or skips. Exact shared maps,
   invocation-owned joins and globally ordered dependencies survive JSON restore.
@@ -527,14 +527,28 @@ serving, and measured learned success.
   tests pass, including six new cross-version closure controls. The V6/V7 shared
   declarations are regenerated together with V8's new lifecycle record.
 
+- Complete continuation-history parity: consumer
+  `821f6b0ba61299e65ddfcb4da23c4cb11d4886bc` restores each earlier
+  generated record's original request controls while reconstructing an ordinary
+  training-window prefix. The new comparison exposed a real callback mismatch
+  at prediction 14, the first target of a new training window; the fix makes all
+  20 callback predictions agree with live recurrent state. The bounded evidence
+  spans 35 physical targets (4 split-record, 11 host-result, 20 callback), rejected
+  UTF-8 candidates, acknowledged-cache reconstruction, history eviction and
+  window boundaries. The explicitly controlled decoder tests six distinct cases,
+  all verified passing after correcting one test-only window-size guard; original
+  failure logs and exact before/after scopes are committed. Learned correctness
+  is a separate gate. Ordinary V8 production readiness, recipe registration and
+  distributed export lineage are the next training implementation tasks.
+
 ## Paired consumer PR
 
 https://github.com/werg/megatoken/pull/38
 
 ## Latest published branch heads
 
-- Producer: `b190abf387ac5ebdb4b369545d91b4ddf3f77d1f`.
-- Consumer: `63b1c6215682bd149233d62e03b98add202e441a`.
+- Producer: `a13760d03e084600f6e8875dcae557cd98501bf6`.
+- Consumer: `821f6b0ba61299e65ddfcb4da23c4cb11d4886bc`.
 
 These are incremental checkpoints, not a final qualified release pair. Both PRs
 remain drafts. Historical local-only composition results are not current evidence.
