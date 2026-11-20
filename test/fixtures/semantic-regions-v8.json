@@ -1,7 +1,7 @@
 {
   "schema": "semantic-v8-interoperability/1",
-  "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
-  "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7",
+  "contractDigest": "54d9769c22452263005bc9e6a5818ec5a1642325f91ef8d5661a45d71b56d298",
+  "interoperabilityDigest": "0ec1798afb729c3c877c7f2f08311730e9f0dae9bd303b500e90198633567b76",
   "examples": [
     {
       "id": "ordered-map",
@@ -378,12 +378,6 @@
           ],
           "input": {
             "graph": {
-              "roots": [
-                [
-                  "ref",
-                  "o2"
-                ]
-              ],
               "objects": [
                 {
                   "id": "o2",
@@ -419,6 +413,12 @@
                     }
                   ]
                 }
+              ],
+              "roots": [
+                [
+                  "ref",
+                  "o2"
+                ]
               ]
             }
           },
@@ -597,12 +597,6 @@
           ],
           "input": {
             "graph": {
-              "roots": [
-                [
-                  "ref",
-                  "o2"
-                ]
-              ],
               "objects": [
                 {
                   "id": "o2",
@@ -638,6 +632,12 @@
                     }
                   ]
                 }
+              ],
+              "roots": [
+                [
+                  "ref",
+                  "o2"
+                ]
               ]
             }
           },
@@ -1692,13 +1692,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -1960,13 +1960,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -2228,13 +2228,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -2523,13 +2523,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -2829,13 +2829,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -3142,13 +3142,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -3465,13 +3465,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -3803,13 +3803,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -4149,13 +4149,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -4500,13 +4500,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -4851,13 +4851,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -5207,13 +5207,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -5570,13 +5570,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "num",
                   3
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -6388,13 +6388,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "str",
                   "counter"
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -6568,13 +6568,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "str",
                   "counter"
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -6761,13 +6761,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "str",
                   "counter"
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -6954,13 +6954,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "str",
                   "counter"
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -7009,8 +7009,8 @@
                   "operation": "demo.readAsync",
                   "invocation": "invocation1",
                   "site": {
-                    "start": 57,
-                    "end": 76
+                    "end": 76,
+                    "start": 57
                   },
                   "payload": "[\"counter\"]",
                   "arguments": [
@@ -7073,7 +7073,7 @@
                   "attempts": 1,
                   "taskRevision": 1,
                   "payloadDigest": "9b54c98313fcb683c1fcdb04f015904e090f296e027db21b91563b89c53e7d60",
-                  "witness": "request @e1 demo.readAsync(\"counter\") payload [\"counter\"] promise @p2 in @invocation1 at 57..76",
+                  "witness": "detail {\"fields\":{\"arguments\":[[\"str\",\"counter\"]],\"effect\":\"e1\",\"invocation\":\"invocation1\",\"operation\":\"demo.readAsync\",\"payload\":\"[\\\"counter\\\"]\",\"promise\":\"p2\",\"site\":{\"end\":76,\"start\":57}},\"kind\":\"request\"}",
                   "result": null
                 }
               ]
@@ -7195,13 +7195,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "str",
                   "counter"
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -7251,8 +7251,8 @@
                   "operation": "demo.readAsync",
                   "invocation": "invocation1",
                   "site": {
-                    "start": 57,
-                    "end": 76
+                    "end": 76,
+                    "start": 57
                   },
                   "payload": "[\"counter\"]",
                   "arguments": [
@@ -7345,9 +7345,9 @@
                   "attempts": 1,
                   "taskRevision": 1,
                   "payloadDigest": "9b54c98313fcb683c1fcdb04f015904e090f296e027db21b91563b89c53e7d60",
-                  "witness": "request @e1 demo.readAsync(\"counter\") payload [\"counter\"] promise @p2 in @invocation1 at 57..76",
+                  "witness": "detail {\"fields\":{\"arguments\":[[\"str\",\"counter\"]],\"effect\":\"e1\",\"invocation\":\"invocation1\",\"operation\":\"demo.readAsync\",\"payload\":\"[\\\"counter\\\"]\",\"promise\":\"p2\",\"site\":{\"end\":76,\"start\":57}},\"kind\":\"request\"}",
                   "result": {
-                    "schema": "semantic-execution/6",
+                    "schema": "semantic-lifecycle/8",
                     "session": "teacher1",
                     "sequence": 8,
                     "ownerSequence": 7,
@@ -7361,7 +7361,7 @@
                       "num",
                       7
                     ],
-                    "line": "observe @e1 fulfilled 7",
+                    "line": "detail {\"fields\":{\"effect\":\"e1\",\"result\":[\"num\",7],\"status\":\"fulfilled\"},\"kind\":\"observe\"}",
                     "errorOrigin": null
                   }
                 }
@@ -7484,13 +7484,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "str",
                   "counter"
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -7542,8 +7542,8 @@
                   "operation": "demo.readAsync",
                   "invocation": "invocation1",
                   "site": {
-                    "start": 57,
-                    "end": 76
+                    "end": 76,
+                    "start": 57
                   },
                   "payload": "[\"counter\"]",
                   "arguments": [
@@ -7634,9 +7634,9 @@
                   "attempts": 1,
                   "taskRevision": 1,
                   "payloadDigest": "9b54c98313fcb683c1fcdb04f015904e090f296e027db21b91563b89c53e7d60",
-                  "witness": "request @e1 demo.readAsync(\"counter\") payload [\"counter\"] promise @p2 in @invocation1 at 57..76",
+                  "witness": "detail {\"fields\":{\"arguments\":[[\"str\",\"counter\"]],\"effect\":\"e1\",\"invocation\":\"invocation1\",\"operation\":\"demo.readAsync\",\"payload\":\"[\\\"counter\\\"]\",\"promise\":\"p2\",\"site\":{\"end\":76,\"start\":57}},\"kind\":\"request\"}",
                   "result": {
-                    "schema": "semantic-execution/6",
+                    "schema": "semantic-lifecycle/8",
                     "session": "teacher1",
                     "sequence": 8,
                     "ownerSequence": 7,
@@ -7650,7 +7650,7 @@
                       "num",
                       7
                     ],
-                    "line": "observe @e1 fulfilled 7",
+                    "line": "detail {\"fields\":{\"effect\":\"e1\",\"result\":[\"num\",7],\"status\":\"fulfilled\"},\"kind\":\"observe\"}",
                     "errorOrigin": null
                   }
                 }
@@ -7773,13 +7773,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "str",
                   "counter"
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -7838,8 +7838,8 @@
                   "operation": "demo.readAsync",
                   "invocation": "invocation1",
                   "site": {
-                    "start": 57,
-                    "end": 76
+                    "end": 76,
+                    "start": 57
                   },
                   "payload": "[\"counter\"]",
                   "arguments": [
@@ -7930,9 +7930,9 @@
                   "attempts": 1,
                   "taskRevision": 1,
                   "payloadDigest": "9b54c98313fcb683c1fcdb04f015904e090f296e027db21b91563b89c53e7d60",
-                  "witness": "request @e1 demo.readAsync(\"counter\") payload [\"counter\"] promise @p2 in @invocation1 at 57..76",
+                  "witness": "detail {\"fields\":{\"arguments\":[[\"str\",\"counter\"]],\"effect\":\"e1\",\"invocation\":\"invocation1\",\"operation\":\"demo.readAsync\",\"payload\":\"[\\\"counter\\\"]\",\"promise\":\"p2\",\"site\":{\"end\":76,\"start\":57}},\"kind\":\"request\"}",
                   "result": {
-                    "schema": "semantic-execution/6",
+                    "schema": "semantic-lifecycle/8",
                     "session": "teacher1",
                     "sequence": 8,
                     "ownerSequence": 7,
@@ -7946,7 +7946,7 @@
                       "num",
                       7
                     ],
-                    "line": "observe @e1 fulfilled 7",
+                    "line": "detail {\"fields\":{\"effect\":\"e1\",\"result\":[\"num\",7],\"status\":\"fulfilled\"},\"kind\":\"observe\"}",
                     "errorOrigin": null
                   }
                 }
@@ -8069,13 +8069,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "str",
                   "counter"
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -8141,8 +8141,8 @@
                   "operation": "demo.readAsync",
                   "invocation": "invocation1",
                   "site": {
-                    "start": 57,
-                    "end": 76
+                    "end": 76,
+                    "start": 57
                   },
                   "payload": "[\"counter\"]",
                   "arguments": [
@@ -8239,9 +8239,9 @@
                   "attempts": 1,
                   "taskRevision": 1,
                   "payloadDigest": "9b54c98313fcb683c1fcdb04f015904e090f296e027db21b91563b89c53e7d60",
-                  "witness": "request @e1 demo.readAsync(\"counter\") payload [\"counter\"] promise @p2 in @invocation1 at 57..76",
+                  "witness": "detail {\"fields\":{\"arguments\":[[\"str\",\"counter\"]],\"effect\":\"e1\",\"invocation\":\"invocation1\",\"operation\":\"demo.readAsync\",\"payload\":\"[\\\"counter\\\"]\",\"promise\":\"p2\",\"site\":{\"end\":76,\"start\":57}},\"kind\":\"request\"}",
                   "result": {
-                    "schema": "semantic-execution/6",
+                    "schema": "semantic-lifecycle/8",
                     "session": "teacher1",
                     "sequence": 8,
                     "ownerSequence": 7,
@@ -8255,7 +8255,7 @@
                       "num",
                       7
                     ],
-                    "line": "observe @e1 fulfilled 7",
+                    "line": "detail {\"fields\":{\"effect\":\"e1\",\"result\":[\"num\",7],\"status\":\"fulfilled\"},\"kind\":\"observe\"}",
                     "errorOrigin": null
                   }
                 }
@@ -8378,13 +8378,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "str",
                   "counter"
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -8450,8 +8450,8 @@
                   "operation": "demo.readAsync",
                   "invocation": "invocation1",
                   "site": {
-                    "start": 57,
-                    "end": 76
+                    "end": 76,
+                    "start": 57
                   },
                   "payload": "[\"counter\"]",
                   "arguments": [
@@ -8473,8 +8473,8 @@
                   "operation": "demo.store",
                   "invocation": "invocation1",
                   "site": {
-                    "start": 98,
-                    "end": 118
+                    "end": 118,
+                    "start": 98
                   },
                   "payload": "[\"counter\",8]",
                   "arguments": [
@@ -8571,9 +8571,9 @@
                   "attempts": 1,
                   "taskRevision": 1,
                   "payloadDigest": "9b54c98313fcb683c1fcdb04f015904e090f296e027db21b91563b89c53e7d60",
-                  "witness": "request @e1 demo.readAsync(\"counter\") payload [\"counter\"] promise @p2 in @invocation1 at 57..76",
+                  "witness": "detail {\"fields\":{\"arguments\":[[\"str\",\"counter\"]],\"effect\":\"e1\",\"invocation\":\"invocation1\",\"operation\":\"demo.readAsync\",\"payload\":\"[\\\"counter\\\"]\",\"promise\":\"p2\",\"site\":{\"end\":76,\"start\":57}},\"kind\":\"request\"}",
                   "result": {
-                    "schema": "semantic-execution/6",
+                    "schema": "semantic-lifecycle/8",
                     "session": "teacher1",
                     "sequence": 8,
                     "ownerSequence": 7,
@@ -8587,7 +8587,7 @@
                       "num",
                       7
                     ],
-                    "line": "observe @e1 fulfilled 7",
+                    "line": "detail {\"fields\":{\"effect\":\"e1\",\"result\":[\"num\",7],\"status\":\"fulfilled\"},\"kind\":\"observe\"}",
                     "errorOrigin": null
                   }
                 }
@@ -8603,9 +8603,9 @@
                   "attempts": 1,
                   "taskRevision": 1,
                   "payloadDigest": "748328adf4a3449bb05301a61c1c35577aee8e9a591a65c660497478e7bbc967",
-                  "witness": "request @e2 demo.store(\"counter\", 8) payload [\"counter\",8] in @invocation1 at 98..118",
+                  "witness": "detail {\"fields\":{\"arguments\":[[\"str\",\"counter\"],[\"num\",8]],\"effect\":\"e2\",\"invocation\":\"invocation1\",\"operation\":\"demo.store\",\"payload\":\"[\\\"counter\\\",8]\",\"site\":{\"end\":118,\"start\":98}},\"kind\":\"request\"}",
                   "result": {
-                    "schema": "semantic-execution/6",
+                    "schema": "semantic-lifecycle/8",
                     "session": "teacher1",
                     "sequence": 14,
                     "ownerSequence": 13,
@@ -8618,7 +8618,7 @@
                     "result": [
                       "undefined"
                     ],
-                    "line": "observe @e2 fulfilled undefined",
+                    "line": "detail {\"fields\":{\"effect\":\"e2\",\"result\":[\"undefined\"],\"status\":\"fulfilled\"},\"kind\":\"observe\"}",
                     "errorOrigin": null
                   }
                 }
@@ -8741,13 +8741,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "str",
                   "counter"
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -8816,8 +8816,8 @@
                   "operation": "demo.readAsync",
                   "invocation": "invocation1",
                   "site": {
-                    "start": 57,
-                    "end": 76
+                    "end": 76,
+                    "start": 57
                   },
                   "payload": "[\"counter\"]",
                   "arguments": [
@@ -8839,8 +8839,8 @@
                   "operation": "demo.store",
                   "invocation": "invocation1",
                   "site": {
-                    "start": 98,
-                    "end": 118
+                    "end": 118,
+                    "start": 98
                   },
                   "payload": "[\"counter\",8]",
                   "arguments": [
@@ -8937,9 +8937,9 @@
                   "attempts": 1,
                   "taskRevision": 1,
                   "payloadDigest": "9b54c98313fcb683c1fcdb04f015904e090f296e027db21b91563b89c53e7d60",
-                  "witness": "request @e1 demo.readAsync(\"counter\") payload [\"counter\"] promise @p2 in @invocation1 at 57..76",
+                  "witness": "detail {\"fields\":{\"arguments\":[[\"str\",\"counter\"]],\"effect\":\"e1\",\"invocation\":\"invocation1\",\"operation\":\"demo.readAsync\",\"payload\":\"[\\\"counter\\\"]\",\"promise\":\"p2\",\"site\":{\"end\":76,\"start\":57}},\"kind\":\"request\"}",
                   "result": {
-                    "schema": "semantic-execution/6",
+                    "schema": "semantic-lifecycle/8",
                     "session": "teacher1",
                     "sequence": 8,
                     "ownerSequence": 7,
@@ -8953,7 +8953,7 @@
                       "num",
                       7
                     ],
-                    "line": "observe @e1 fulfilled 7",
+                    "line": "detail {\"fields\":{\"effect\":\"e1\",\"result\":[\"num\",7],\"status\":\"fulfilled\"},\"kind\":\"observe\"}",
                     "errorOrigin": null
                   }
                 }
@@ -8969,9 +8969,9 @@
                   "attempts": 1,
                   "taskRevision": 1,
                   "payloadDigest": "748328adf4a3449bb05301a61c1c35577aee8e9a591a65c660497478e7bbc967",
-                  "witness": "request @e2 demo.store(\"counter\", 8) payload [\"counter\",8] in @invocation1 at 98..118",
+                  "witness": "detail {\"fields\":{\"arguments\":[[\"str\",\"counter\"],[\"num\",8]],\"effect\":\"e2\",\"invocation\":\"invocation1\",\"operation\":\"demo.store\",\"payload\":\"[\\\"counter\\\",8]\",\"site\":{\"end\":118,\"start\":98}},\"kind\":\"request\"}",
                   "result": {
-                    "schema": "semantic-execution/6",
+                    "schema": "semantic-lifecycle/8",
                     "session": "teacher1",
                     "sequence": 14,
                     "ownerSequence": 13,
@@ -8984,7 +8984,7 @@
                     "result": [
                       "undefined"
                     ],
-                    "line": "observe @e2 fulfilled undefined",
+                    "line": "detail {\"fields\":{\"effect\":\"e2\",\"result\":[\"undefined\"],\"status\":\"fulfilled\"},\"kind\":\"observe\"}",
                     "errorOrigin": null
                   }
                 }
@@ -9107,13 +9107,13 @@
           ],
           "input": {
             "graph": {
+              "objects": [],
               "roots": [
                 [
                   "str",
                   "counter"
                 ]
-              ],
-              "objects": []
+              ]
             }
           },
           "state": {
@@ -9180,8 +9180,8 @@
                   "operation": "demo.readAsync",
                   "invocation": "invocation1",
                   "site": {
-                    "start": 57,
-                    "end": 76
+                    "end": 76,
+                    "start": 57
                   },
                   "payload": "[\"counter\"]",
                   "arguments": [
@@ -9203,8 +9203,8 @@
                   "operation": "demo.store",
                   "invocation": "invocation1",
                   "site": {
-                    "start": 98,
-                    "end": 118
+                    "end": 118,
+                    "start": 98
                   },
                   "payload": "[\"counter\",8]",
                   "arguments": [
@@ -9307,9 +9307,9 @@
                   "attempts": 1,
                   "taskRevision": 1,
                   "payloadDigest": "9b54c98313fcb683c1fcdb04f015904e090f296e027db21b91563b89c53e7d60",
-                  "witness": "request @e1 demo.readAsync(\"counter\") payload [\"counter\"] promise @p2 in @invocation1 at 57..76",
+                  "witness": "detail {\"fields\":{\"arguments\":[[\"str\",\"counter\"]],\"effect\":\"e1\",\"invocation\":\"invocation1\",\"operation\":\"demo.readAsync\",\"payload\":\"[\\\"counter\\\"]\",\"promise\":\"p2\",\"site\":{\"end\":76,\"start\":57}},\"kind\":\"request\"}",
                   "result": {
-                    "schema": "semantic-execution/6",
+                    "schema": "semantic-lifecycle/8",
                     "session": "teacher1",
                     "sequence": 8,
                     "ownerSequence": 7,
@@ -9323,7 +9323,7 @@
                       "num",
                       7
                     ],
-                    "line": "observe @e1 fulfilled 7",
+                    "line": "detail {\"fields\":{\"effect\":\"e1\",\"result\":[\"num\",7],\"status\":\"fulfilled\"},\"kind\":\"observe\"}",
                     "errorOrigin": null
                   }
                 }
@@ -9339,9 +9339,9 @@
                   "attempts": 1,
                   "taskRevision": 1,
                   "payloadDigest": "748328adf4a3449bb05301a61c1c35577aee8e9a591a65c660497478e7bbc967",
-                  "witness": "request @e2 demo.store(\"counter\", 8) payload [\"counter\",8] in @invocation1 at 98..118",
+                  "witness": "detail {\"fields\":{\"arguments\":[[\"str\",\"counter\"],[\"num\",8]],\"effect\":\"e2\",\"invocation\":\"invocation1\",\"operation\":\"demo.store\",\"payload\":\"[\\\"counter\\\",8]\",\"site\":{\"end\":118,\"start\":98}},\"kind\":\"request\"}",
                   "result": {
-                    "schema": "semantic-execution/6",
+                    "schema": "semantic-lifecycle/8",
                     "session": "teacher1",
                     "sequence": 14,
                     "ownerSequence": 13,
@@ -9354,7 +9354,7 @@
                     "result": [
                       "undefined"
                     ],
-                    "line": "observe @e2 fulfilled undefined",
+                    "line": "detail {\"fields\":{\"effect\":\"e2\",\"result\":[\"undefined\"],\"status\":\"fulfilled\"},\"kind\":\"observe\"}",
                     "errorOrigin": null
                   }
                 }
@@ -9759,8 +9759,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -9834,8 +9834,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -9996,8 +9996,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -10170,8 +10170,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -10356,8 +10356,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -10565,8 +10565,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -10782,8 +10782,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -11022,8 +11022,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -11281,8 +11281,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -11540,8 +11540,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -11802,8 +11802,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -12087,8 +12087,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -12366,8 +12366,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -12648,8 +12648,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -12936,8 +12936,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -14266,8 +14266,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -14416,8 +14416,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -14580,8 +14580,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -14831,8 +14831,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -15094,8 +15094,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -15369,8 +15369,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -15676,8 +15676,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -15995,8 +15995,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -16321,8 +16321,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -16664,8 +16664,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -17024,8 +17024,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -17391,8 +17391,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -17775,8 +17775,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -18166,8 +18166,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -18564,8 +18564,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -18962,8 +18962,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -19360,8 +19360,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -19758,8 +19758,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -20179,8 +20179,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -20600,8 +20600,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -21015,8 +21015,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -21437,8 +21437,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -21859,8 +21859,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -22288,8 +22288,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -22724,8 +22724,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -23166,8 +23166,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -23615,8 +23615,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -24087,8 +24087,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -24565,8 +24565,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -25043,8 +25043,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -25544,8 +25544,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -26055,8 +26055,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -26589,8 +26589,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -27140,8 +27140,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -27679,8 +27679,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -28219,8 +28219,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -28759,8 +28759,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -29299,8 +29299,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -29839,8 +29839,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -30379,8 +30379,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -30926,8 +30926,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -31467,8 +31467,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -32013,8 +32013,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -32559,8 +32559,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -33105,8 +33105,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -33651,8 +33651,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -34197,8 +34197,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -34771,8 +34771,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -35345,8 +35345,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -35919,8 +35919,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -36503,8 +36503,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -37070,8 +37070,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -37618,8 +37618,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -39206,8 +39206,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -39366,8 +39366,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -39540,8 +39540,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -39801,8 +39801,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -40074,8 +40074,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -40359,8 +40359,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -40676,8 +40676,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -41005,8 +41005,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -41341,8 +41341,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -41694,8 +41694,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -42064,8 +42064,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -42441,8 +42441,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -42835,8 +42835,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -43236,8 +43236,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -43644,8 +43644,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -44052,8 +44052,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -44460,8 +44460,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -44875,8 +44875,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -45290,8 +45290,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -45728,8 +45728,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -46166,8 +46166,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -46598,8 +46598,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -47037,8 +47037,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -47476,8 +47476,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -47922,8 +47922,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -48375,8 +48375,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -48834,8 +48834,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -49300,8 +49300,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -49789,8 +49789,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -50284,8 +50284,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -50779,8 +50779,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -51274,8 +51274,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -51792,8 +51792,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -52320,8 +52320,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -52871,8 +52871,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -53439,8 +53439,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -53995,8 +53995,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -54552,8 +54552,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -55109,8 +55109,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -55666,8 +55666,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -56223,8 +56223,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -56781,8 +56781,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -57339,8 +57339,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -57904,8 +57904,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -58474,8 +58474,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -59044,8 +59044,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -59614,8 +59614,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -60184,8 +60184,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -60754,8 +60754,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -61352,8 +61352,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -61950,8 +61950,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -62548,8 +62548,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -63156,8 +63156,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -63747,8 +63747,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {
@@ -64319,8 +64319,8 @@
           ],
           "input": {
             "graph": {
-              "roots": [],
-              "objects": []
+              "objects": [],
+              "roots": []
             }
           },
           "state": {

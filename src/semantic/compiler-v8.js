@@ -3,10 +3,9 @@
 import {isDeepStrictEqual} from 'node:util';
 import {verifyEffectfulTrainingCase,recheckEffectfulAdmission} from '../training/effectful-admit.js';
 import {decodeWitness} from '../training/format.js';
-import {SemanticController} from '../training/controller.js';
 import {encodeDetailedRecord} from './detail-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
-import {defineRegionProgram,sharedRegionState,evaluateLocalRegion,REGION_TRACE_VERSION} from './regions.js';
+import {defineRegionProgram,sharedRegionState,cloneRegionController,evaluateLocalRegion,REGION_TRACE_VERSION} from './regions.js';
 import {hashAlgorithmData} from './program.js';
 import {evaluatePureRegion} from './pure-region-v8.js';
 import {compareObservableGraphs} from './observables.js';
@@ -109,10 +108,10 @@ export function projectRegionWitness(sourceArtifact){
       if(!consumed.length)continue;
       try{
         const candidate=harness.preview(row.invocationId,region.id);
-        const expected=SemanticController.fromPacket(controller.segmentPacket());
-        for(const item of consumed)expected.commit(item.line,{mode:'generated',track:activation.trackId});
-        const actual=SemanticController.fromPacket(controller.segmentPacket());
-        for(const witness of evaluateLocalRegion(region,controller).records)actual.commit(witness,{mode:'generated',track:activation.trackId});
+        const expected=cloneRegionController(controller);
+        for(const item of consumed)expected.commitRecord(decodeWitness(item.line),{mode:'generated',track:activation.trackId});
+        const actual=cloneRegionController(controller);
+        for(const witness of evaluateLocalRegion(region,controller).records)actual.commitRecord(witness,{mode:'generated',track:activation.trackId});
         if(expected.firstWitnessViolation||!sameState(actual,expected))throw new TypeError('shared locals, aliases, heap, completion or obligations differ');
         const context=harness.modelContext(row.invocationId);
         harness.select(row.invocationId,candidate);contexts.push(context);

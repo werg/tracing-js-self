@@ -4,7 +4,6 @@
 import {isDeepStrictEqual} from 'node:util';
 import {createRuntime} from '../runtime.js';
 import {encodeNativeGraph,decodeOwnedGraph} from '../host/graph-codec.js';
-import {encodeWitness} from '../training/format.js';
 import {compileProtocolSourceV8} from './protocol-source-compiler-v8.js';
 import {auditProtocolSourceV8} from './protocol-source-reference-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
@@ -96,8 +95,8 @@ export function projectProtocolRegionWitness(sourceArtifact){
       try{
         const candidate=harness.preview('invocation1',region.id),expected=cloneRegionController(controller),actual=cloneRegionController(controller);
         for(const row of consumed){if(expected.protocol)assertProtocolDetailCompatible(expected,row.record);
-          expected.commit(encodeWitness(row.record.kind,row.record.fields),{mode:'generated',track:'worker1'});}
-        for(const line of evaluateLocalRegion(region,controller).records)actual.commit(line,{mode:'generated',track:'worker1'});
+          expected.commitRecord(row.record,{mode:'generated',track:'worker1'});}
+        for(const line of evaluateLocalRegion(region,controller).records)actual.commitRecord(line,{mode:'generated',track:'worker1'});
         if(expected.firstWitnessViolation||actual.firstWitnessViolation||!eq(sharedRegionState(expected),sharedRegionState(actual)))
           fail('compact replacement changed complete shared state');
         const context=harness.modelContext('invocation1');harness.select('invocation1',candidate);contexts.push(context);

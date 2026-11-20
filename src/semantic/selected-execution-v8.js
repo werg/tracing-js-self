@@ -1,7 +1,7 @@
 // Live v8 inference reuses the established host/callback lifecycle. Only the
 // selected public prefix crosses the model boundary; no teacher or oracle does.
 import {isDeepStrictEqual} from 'node:util';
-import {SelectedModelDriver} from '../training/model-driver.js';
+import {SelectedExecutionDriver} from './execution-driver.js';
 import {createFixtureBroker} from '../training/fixture-broker.js';
 import {hostOperation} from '../host/operations.js';
 import {RegionExecutionHarness} from './region-harness.js';
@@ -55,7 +55,7 @@ function driverFacade(bridge,contexts,predictions){
 
 /** No source-success claim is made here: the public machine checks values and
  * transitions; a separate private scorer checks correspondence after rollout. */
-export class RegionSelectedModelDriver extends SelectedModelDriver {
+export class RegionSelectedModelDriver extends SelectedExecutionDriver {
   constructor({select,harness=new RegionExecutionHarness(),maxSelections=4096,maxOutstanding=64,
       maxStaleRetries=8,origin='model',checkpointIdentity=null,tokenizerIdentity=null,signal=null}={}){
     demand(typeof select==='function'&&['model','engineering'].includes(origin),'selector and explicit origin required');

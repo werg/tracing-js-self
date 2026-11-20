@@ -2,8 +2,7 @@
 // No guest interpreter, teacher archive, service replay, or parallel heap lives
 // here. Compact blocks are staged before any shared mutation is committed.
 import {isDeepStrictEqual} from 'node:util';
-import {SelectedExecutionHarness,HARNESS_ENVELOPE_VERSION,HARNESS_SELECTED_TRACE_VERSION} from '../training/harness-v4.js';
-import {encodeWitness,decodeWitness,CONTEXT_VERSION,HARNESS_PROFILE} from '../training/format.js';
+import {SelectedExecutionLifecycleV8} from './lifecycle-v8.js';
 import {encodeDetailedRecord,decodeDetailedRecord} from './detail-v8.js';
 import {hashAlgorithmData} from './program.js';
 import {stableAlgorithmJSON,assertAlgorithmFields} from './ir.js';
@@ -38,12 +37,12 @@ function assertSchedulerDetail(controller,{kind,fields}){
       assertPlainPromiseResolutionV8(controller,job.originalResult);
   }
 }
-function oldEpisode(inner,timeline){return {public:{schema:HARNESS_ENVELOPE_VERSION,
-  traceFormat:HARNESS_SELECTED_TRACE_VERSION,contextFormat:CONTEXT_VERSION,profile:HARNESS_PROFILE,timeline}};}
+function lifecycleEpisode(inner,timeline){return {public:{schema:inner.contract.executionVersion,
+  traceFormat:inner.contract.traceVersion,contextFormat:inner.contract.contextVersion,profile:inner.contract.profile,timeline}};}
 
 export class RegionExecutionHarness {
   constructor(options={}){
-    this.inner=new SelectedExecutionHarness(options);
+    this.inner=new SelectedExecutionLifecycleV8(options);
     this.programs=new Map();this.timeline=[];this.innerCursor=0;this.consumed=[];this.active=null;
   }
   get invocations(){return this.inner.invocations;}
@@ -67,8 +66,7 @@ export class RegionExecutionHarness {
         this.programs.set(fields.programId,program);fields.regionProgram=program;
       }
       if(kind==='semantic'||kind==='result'){
-        const record=decodeWitness(fields.line);
-        fields.line=encodeDetailedRecord(record,{role:kind==='result'?'observed':'generated'});
+        decodeDetailedRecord(fields.line,{role:kind==='result'?'observed':'generated'});
       }
       this.append(mode,kind,fields);
     }
@@ -106,7 +104,7 @@ export class RegionExecutionHarness {
         assertProtocolDetailCompatible(controller,record);
       }
       assertSchedulerDetail(controller,record);
-      const result=this.inner.selected(invocationId,encodeWitness(record.kind,record.fields));
+      const result=this.inner.selected(invocationId,line);
       this.sync();return result;
     }
     if(line.startsWith('protocol '))return this.selectProtocol(invocationId,line);
@@ -123,8 +121,8 @@ export class RegionExecutionHarness {
     // precondition before the first real binding is changed.
     const staged=cloneRegionController(controller);
     for(const witness of records){
-      if(staged.protocol)assertProtocolDetailCompatible(staged,decodeWitness(witness));
-      staged.commit(witness,{mode:'generated',track:activation.trackId});
+      if(staged.protocol)assertProtocolDetailCompatible(staged,witness);
+      staged.commitRecord(witness,{mode:'generated',track:activation.trackId});
     }
     if(staged.firstWitnessViolation)fail('compact transition conflicts with earlier selected claims');
     // Check post-region shared state size before mutating any live cell.
@@ -150,7 +148,7 @@ export class RegionExecutionHarness {
     if(activation.deadline!==null&&!(activation.deadline>committedAt))fail('invocation deadline expired');
     if(activation.deadline!==null)inner.now=()=>committedAt;
     this.active=active;
-    try{for(const witness of records)inner.selected(invocationId,witness);}
+    try{for(const witness of records)inner.selected(invocationId,encodeDetailedRecord(witness,{role:'generated'}));}
     finally{inner.now=now;this.active=null;}
   }
   selectProtocol(invocationId,line){
@@ -184,7 +182,7 @@ export class RegionExecutionHarness {
     const evaluated=evaluatePureRegion(program,controller);
     if(!eq(record,evaluated.record))fail('false algorithm value, allocation identity or completion');
     const staged=cloneRegionController(controller);
-    for(const witness of evaluated.records)staged.commit(witness,{mode:'generated',track:activation.trackId});
+    for(const witness of evaluated.records)staged.commitRecord(witness,{mode:'generated',track:activation.trackId});
     if(staged.firstWitnessViolation)fail('pure region conflicts with earlier selected claims');
     // Check the complete post-region continuation size before committing any
     // allocations or completion. Oversized traces must fail atomically.
@@ -227,13 +225,13 @@ export class RegionExecutionHarness {
     }
     if(kind==='result'){const record=decodeDetailedRecord(fields.line,{role:'observed'});
       assertObservedPromiseResolutionV8(this.activation(fields.invocationId).controller,record.fields);
-      fields.line=encodeWitness(record.kind,record.fields);}
-    const raw={schema:HARNESS_ENVELOPE_VERSION,session:this.inner.sessionId,
+}
+    const raw={schema:this.inner.contract.executionVersion,session:this.inner.sessionId,
       sequence:this.inner.globalSequence+1,ownerSequence:(this.inner.ownerSequences.get(fields.track)??0)+1,
       mode:'observed',kind,...fields};
-    // Use the existing independently specified host lifecycle machine. This
+    // Replay the direct V8 client of the neutral host lifecycle machine. This
     // read-only replay never dispatches a service or calls a retained handler.
-    this.inner=SelectedExecutionHarness.replay(oldEpisode(this.inner,[...this.inner.timeline,raw]),{requireTerminal:false});
+    this.inner=SelectedExecutionLifecycleV8.replay(lifecycleEpisode(this.inner,[...this.inner.timeline,raw]),{requireTerminal:false});
     this.sync();
   }
   async dispatch(invocationId,effectId,options){
@@ -301,7 +299,7 @@ export class RegionExecutionHarness {
     }
     if(
       !eq(body.selected.timeline,replayed.inner.timeline))fail('checkpoint differs from public region history');
-    replayed.inner=SelectedExecutionHarness.restore(body.selected,options);
+    replayed.inner=SelectedExecutionLifecycleV8.restore(body.selected,options);
     replayed.innerCursor=replayed.inner.timeline.length;return replayed;
   }
 }

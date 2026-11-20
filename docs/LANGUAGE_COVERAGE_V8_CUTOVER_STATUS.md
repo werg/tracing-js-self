@@ -33,14 +33,14 @@ serving, and measured learned success.
 | 6 | Composable source projections | Not started | Event-level adapters with complete, unique transition ownership; no exclusive whole-episode projector limitation. |
 | 7 | Protocol/effect/lifecycle composition | Not started | Protocol → effect → callback → protocol, reentrancy, guest errors, cancellation and restore with independent source/native checks. |
 | 8 | Ordinary V8 training admission | In progress | Strict preparation policy and normal recipe/loader/config/stage/resume checks; no verification-flag or unverified-data bypass; source eligibility distinct from learned outcomes. |
-| 9 | Canonical selected serving and live restore | Not started | Standard serving route, training/serving byte parity, acknowledged-state restore, random/budget state, callbacks/child work, no redispatch. |
+| 9 | Canonical selected serving and live restore | In progress | Standard serving route, training/serving byte parity, acknowledged-state restore, random/budget state, callbacks/child work, no redispatch. |
 | 10 | References, coercion and abrupt operations | In progress | General references, property keys, guest error objects, partial effects, nested binding and cleanup; source/public/native/restore cases. |
 | 11 | Promises, async and scheduler | In progress | Adoption order, repeated thenables, getter/throw/first-call/finally behavior; public/native transitions; combinators, async functions/generators and module interactions. |
 | 12 | Collections, construction, Proxy and iteration | Not started | Sparse/effectful arrays, collections, internal methods, private accessors, iterator consumers/delegation and checkpoint behavior. |
 | 13 | Modules, persistent sessions, TS and host graphs | In progress | Per-module evaluation and sibling TLA scheduling, cycles/live bindings/namespaces/imports, persistent restore, emitted-JS provenance and host graph/lifecycle parity. |
 | 14 | Binary memory, RegExp and remaining intrinsics | Not started | Resizing/detachment/transfer/species/coercion, complete selected text/numeric families and iterator helpers, declared resource boundaries. |
 | 15 | Edition long tail and separate profiles | Not started | Dynamic eval and realms, applicable Annex B/Intl, weak references/finalization, shared agents and memory constraints; separately pinned later additions. |
-| 16 | Data, ordinary model lifecycle and studies | Not started | Regenerate and independently readmit corpus; optimizer/update/resume/export/reload; complete retained bundles; frozen held-out and comprehension studies; honest quality/cost gates. |
+| 16 | Data, ordinary model lifecycle and studies | In progress | Regenerate and independently readmit corpus; optimizer/update/resume/export/reload; complete retained bundles; frozen held-out and comprehension studies; honest quality/cost gates. |
 | 17 | Coordinated default cutover and operational proof | Not started | Complete parity first; change defaults/remove legacy; freeze final pair; actual-head CI, installed absence tests, release restore, effect-safe rollback/deployment qualification. |
 
 ## Initial regression targets
@@ -180,3 +180,21 @@ serving, and measured learned success.
   Public/native promotion of the new async scheduler is explicitly refused, even
   if saved metadata lies about the strategy. Async SCC cycles, namespace exotics,
   dynamic imports, host loaders and the durable session API remain open.
+
+- Direct V8 lifecycle and serving increment: selected lifecycle, record rendering
+  and model orchestration now share neutral cores. V8 owns its detail, lifecycle,
+  continuation and checkpoint clients; compact regions produce typed transitions.
+  V8 effect intents preserve original V8 bytes, and result obligations use the
+  direct V8 lifecycle envelope. Legacy clients retain their existing behavior.
+  Five new tests cover callback reattachment without registration replay, durable
+  acknowledgment before effects, uncertain-action restore without redispatch,
+  rehashed forged-state rejection, and mixed/live V8 selection with the entire
+  old wire stack blocked. Ninety-two combined core/source/lifecycle checks, five
+  historical model-driver checks and one callback-boundary check pass (some
+  populations overlap). Current six-example and twenty-source interoperability
+  fixtures are freshly regenerated; a reproducible callback fixture generator
+  reruns source checking without relabeling historical code-pinned receipts.
+  Contract digest: `54d9769c22452263005bc9e6a5818ec5a1642325f91ef8d5661a45d71b56d298`.
+  Remaining: direct source certification still depends on the historical compiler;
+  protocol/effect composition and acknowledged live model-session restoration
+  need their own implementation. No default cutover or full parity claim yet.

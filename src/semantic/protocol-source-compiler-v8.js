@@ -10,7 +10,6 @@ import {propertyKeyValue,symbolPropertyKey,stringPropertyKey} from '../property-
 import {decode,encode,truthy} from '../values.js';
 import {describeOwnedGraph} from '../training/graph.js';
 import {ownedEffectfulOutcome} from '../training/effectful-compiler.js';
-import {encodeWitness} from '../training/format.js';
 import {encodeDetailedRecord} from './detail-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
 import {encodeProtocolRecordV8,validateProtocolValueV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
@@ -130,7 +129,7 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   const codeFor=node=>functionCodes.get(node.codeId)??refuse('owned function has no exact source definition');
   function emit(record,event=null,rule='owned-protocol-transition/1',{detail=false}={}){
     if(claims.length>=maxGenerated)throw new RangeError('Protocol source record bound');
-    if(detail){assertProtocolDetailCompatible(controller,record);controller.commit(encodeWitness(record.kind,record.fields),{mode:'generated',track:'worker1'});
+    if(detail){assertProtocolDetailCompatible(controller,record);controller.commitRecord(record,{mode:'generated',track:'worker1'});
       if(controller.firstWitnessViolation)refuse('incorrect selected primitive claim');}
     else applyProtocolRecordV8(controller,record);
     const source=event?bundle.sites.find(site=>site.siteId===event.siteId):null;
