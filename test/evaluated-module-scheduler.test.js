@@ -492,6 +492,87 @@ test('an unresolved cyclic evaluation stays pending across JSON restore without 
     .every(record=>record.status[1]==='evaluating-async'&&!record.failed[1]));
 });
 
+test('open DFS components, closed cycles and ancestor release restore exact retained execution',()=>{
+  const modules={
+    'state.js':stateSource,
+    'a.js':`import './b.js';import {add} from './state.js';add('a');await 0;add('A');`,
+    'b.js':`import './a.js';import {add} from './state.js';add('b');await 0;add('B');`,
+    'main.js':`import './a.js';import {log} from './state.js';export function run(){return log;}`
+  };
+  const run=startOwned(modules),runtime=run.runtime;
+  const aIndex=run.linked.metadata.evaluationOrder.indexOf('a.js');
+  const bIndex=run.linked.metadata.evaluationOrder.indexOf('b.js');
+  const checkpoints=new Map();
+  for(let steps=0;steps<20000;steps++){
+    const entries=records(runtime),a=entries[aIndex],b=entries[bIndex];
+    if(a?.status&&b?.status){
+      const phases={
+        'open-dfs':b.status[1]==='evaluating'&&b.started?.[1]===true&&b.cycleRoot?.[1]===-1,
+        'closed-scc':a.status[1]==='evaluating-async'&&b.status[1]==='evaluating-async'&&
+          a.cycleRoot?.[1]===aIndex&&b.cycleRoot?.[1]===aIndex,
+        'ancestor-release':b.status[1]==='evaluated'&&a.status[1]==='evaluating-async'&&
+          a.started?.[1]===false
+      };
+      for(const [phase,active] of Object.entries(phases))if(active&&!checkpoints.has(phase)){
+        checkpoints.set(phase,wire(Object.fromEntries(Object.entries(runtime)
+          .filter(([key])=>key!=='adapters'))));
+      }
+    }
+    const control=runtime.state.control.a0,frame=runtime.state.frames[control.activeFrameId];
+    if(frame?.status==='running')runtime.step();
+    else if(control.queue.length)runtime.enterQueuedJob();
+    else break;
+  }
+  assert.deepEqual([...checkpoints.keys()],['open-dfs','closed-scc','ancestor-release']);
+  const completed=finishOwned(run);
+  assert.equal(completed.outcome.value,'bBaA');
+  for(const [phase,snapshot] of checkpoints){
+    const restored=Object.assign(createRuntime(),snapshot);
+    assert.equal(restored.drive().kind,'terminated',phase);
+    assert.deepEqual(wire(restored.exportRun()),completed.bundle,phase);
+    assert.equal(validateBundle(restored.exportRun()).valid,true,phase);
+    assert.equal(replayExact(restored.exportRun()).valid,true,phase);
+  }
+});
+
+test('two pending host reads inside one SCC restore in both result orders without redispatch',()=>{
+  const modules={
+    'state.js':stateSource,
+    'a.js':`import './b.js';import './c.js';import {add} from './state.js';add('a');`,
+    'b.js':`import './a.js';import {add} from './state.js';add('b');add(await host.readAsync('b'));`,
+    'c.js':`import './a.js';import {add} from './state.js';add('c');add(await host.readAsync('c'));`,
+    'main.js':`import './a.js';import {log} from './state.js';export function run(){return log;}`
+  };
+  const linked=linkEvaluatedModules({modules,entryModule:'main.js',exportName:'run'});
+  let dispatches=0,restoredDispatches=0;
+  const runtime=createRuntime({adapters:{'demo.readAsync':()=>{
+    dispatches++;return {kind:'pending'};
+  }}}).startEntry({text:linked.source,functionName:linked.entryFunction,
+    args:[linked.entryInput],allowAsync:true,allowHost:true});
+  assert.equal(runtime.drive().kind,'waiting');
+  const effects=Object.values(runtime.state.effects).filter(effect=>effect.operation==='demo.readAsync');
+  assert.equal(effects.length,2);
+  assert.equal(dispatches,2);
+  const saved=wire(Object.fromEntries(Object.entries(runtime).filter(([key])=>key!=='adapters')));
+  for(const order of [[0,1],[1,0]]){
+    const make=()=>Object.assign(createRuntime({adapters:{'demo.readAsync':()=>{
+      restoredDispatches++;throw new Error('SCC continuation redispatched a committed read');
+    }}}),wire(saved));
+    const first=make(),second=make();
+    for(const machine of [first,second])for(const index of order){
+      const input=machine.recordInputArrival({effectId:effects[index].id,kind:'completion',
+        value:index===0?'B':'C'});
+      machine.deliverInput(input.inputId);
+      machine.drive();
+    }
+    const completed=finishOwned({runtime:first,linked});
+    assert.equal(completed.outcome.value,order[0]===0?'bcBCa':'bcCBa');
+    assert.deepEqual(finishOwned({runtime:second,linked}).bundle,completed.bundle);
+  }
+  assert.equal(dispatches,2);
+  assert.equal(restoredDispatches,0);
+});
+
 test('for-await iteration and generated scheduler identifiers remain explicit boundaries',()=>{
   assert.throws(()=>linkEvaluatedModules({modules:siblings(`{for await(const item of []){add(item);}}`,
     `add('b');`),entryModule:'main.js',exportName:'run'}),/for-await module iteration/);

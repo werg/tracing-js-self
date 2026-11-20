@@ -127,11 +127,29 @@ A pending-host-input test restores two suspended sibling reads, delivers their
 results in reverse order, and proves that neither initialization nor native
 dispatch runs again.
 
+Cyclic controls also restore during open DFS traversal, after a component has
+closed, and between an async member's completion and its ancestor's start.
+Two suspended host reads within one component resume in both arrival orders;
+each continuation retains live cells, pending counts, job order, and the exact
+final archive without dispatching the saved reads again. An unresolved cyclic
+await retains a pending evaluation capability across restore, in agreement
+with independently linked original ESM in a native VM.
+
+These snapshots are internal serialized VM state. Generated scheduler field
+assignments consist of individual bytecode steps, so a snapshot can retain a
+partially completed scheduler action. Final archive validation and exact replay
+check its execution history; this is not a public arbitrary-snapshot admission
+API or an independent native module-state validator.
+
 The native differentials execute the original ESM files with Node's loader.
 They cover siblings, shared diamonds, DFS ancestor ordering, untaken awaits,
 then getters and competing microtasks, nested awaits, caught rejection,
 finally, live imports, namespace reads, lexical TDZ, hoisted functions,
 initial/async throws, and continued independent work after failure.
+The cyclic population additionally covers self-import, one and two async
+members, an outside import of a completed non-root member, cyclic live cells
+and TDZ, untaken awaits, root-error gating of waiting members, and synchronous
+failure while an SCC is still on the DFS stack.
 
 These are owned-runtime and original-source differential results. The new
 scheduler is not promoted to the public/native source-qualified trace lane.
