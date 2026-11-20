@@ -1,6 +1,6 @@
 {
   "schema": "semantic-native-policy/7",
-  "consumerRevision": "328a0c4de271bf473c0567c9ed410fdd1fb23ef1",
+  "consumerRevision": "3a0eb90e3e7282e9b3cb2ca0da27454451b50e21",
   "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
   "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
   "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",

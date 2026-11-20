@@ -7,6 +7,10 @@ import {sharedRegionState} from '../src/semantic/regions.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 import {prepareRegionFamilyRegistry,bindRegionFamilySplit} from '../src/semantic/dataset-v8.js';
 import {verifyRegionDatasetBinding} from '../src/semantic/family-registry-v8.js';
+import {mkdtemp,readFile,rm,writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join,resolve} from 'node:path';
+import {execFileSync} from 'node:child_process';
 
 const fixtures=HOST_PROTOCOL_FIXTURES_V8,artifacts=new Map();
 async function artifact(index){
@@ -111,4 +115,27 @@ test('direct mixed source identity survives ordinary family binding and rejects 
   await assert.rejects(recheckRegionEvidence(forged),/identity|split/);
   const changed=structuredClone(bound);changed.sidecar.identityDigest='0'.repeat(64);
   assert.throws(()=>verifyRegionDatasetBinding(changed),/binding/);
+});
+test('clean producer recheck binds direct host identity and rejects missing or altered identity',async()=>{
+  const data=await artifact(0),folder=await mkdtemp(join(tmpdir(),'native-host-recheck-')),
+    input=join(folder,'source.json'),root=resolve('.'),revision=execFileSync('git',['rev-parse','HEAD'],
+      {cwd:root,encoding:'utf8'}).trim(),tool=resolve('tools/recheck-semantic-native-source.mjs');
+  const check=()=>JSON.parse(execFileSync('node',[tool,'--producer-root',root,'--producer-revision',revision,
+    '--input',input],{cwd:root,encoding:'utf8'}));
+  try{
+    await writeFile(input,JSON.stringify(data));
+    const receipt=check();
+    assert.equal(receipt.sourceValidated,true);
+    assert.equal(receipt.sourceArtifactDigest,null);
+    assert.equal(receipt.sourceIdentityDigest,data.sidecar.identityDigest);
+    assert.equal(receipt.identityValidated,true);
+    for(const mutation of ['missing','changed']){
+      const forged=structuredClone(data);
+      if(mutation==='missing'){
+        delete forged.sidecar.identity;delete forged.sidecar.identityDigest;
+      }else forged.sidecar.identityDigest='0'.repeat(64);
+      await writeFile(input,JSON.stringify(forged));
+      assert.throws(check,/Native source recheck|Candidate identity evidence changed/);
+    }
+  }finally{await rm(folder,{recursive:true,force:true});}
 });

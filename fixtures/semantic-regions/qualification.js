@@ -1,6 +1,7 @@
 import {SEMANTIC_GALLERY_FIXTURES} from '../../src/training/semantic-trace-gallery.js';
 import {readFileSync} from 'node:fs';
 import {expansionCoveragePopulation} from '../../src/semantic/expansion-benchmark.js';
+import {HOST_PROTOCOL_FIXTURES_V8} from './host-protocol.js';
 
 export function regionQualificationFixtures(){return [
   {id:'ordered-map',source:'"use strict";function run(xs){return xs.map(x=>x*2);}',
@@ -26,5 +27,5 @@ export function regionQualificationPopulation({population='interoperability',all
   return {scripts:[...regionQualificationFixtures(),...declared.cases.map(row=>{
     if(row.id!==row.fixture?.id)throw new TypeError('Invalid protocol fixture identity');
     return structuredClone(row.fixture);
-  })],modules:[]};
+  }),...structuredClone(HOST_PROTOCOL_FIXTURES_V8)],modules:[]};
 }
