@@ -11,7 +11,7 @@ import {decode,encode,truthy} from '../values.js';
 import {describeOwnedGraph} from '../training/graph.js';
 import {ownedEffectfulOutcome} from '../training/effectful-compiler.js';
 import {encodeWitness} from '../training/format.js';
-import {encodeDetailedRecord} from './detailed-v7.js';
+import {encodeDetailedRecord} from './detail-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
 import {encodeProtocolRecordV8,validateProtocolValueV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
 import {PROTOCOL_SOURCE_ADAPTERS_V8} from './protocol-source-extensions-v8.js';

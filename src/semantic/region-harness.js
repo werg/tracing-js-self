@@ -4,7 +4,7 @@
 import {isDeepStrictEqual} from 'node:util';
 import {SelectedExecutionHarness,HARNESS_ENVELOPE_VERSION,HARNESS_SELECTED_TRACE_VERSION} from '../training/harness-v4.js';
 import {encodeWitness,decodeWitness,CONTEXT_VERSION,HARNESS_PROFILE} from '../training/format.js';
-import {encodeDetailedRecord,decodeDetailedRecord} from './detailed-v7.js';
+import {encodeDetailedRecord,decodeDetailedRecord} from './detail-v8.js';
 import {hashAlgorithmData} from './program.js';
 import {stableAlgorithmJSON,assertAlgorithmFields} from './ir.js';
 import {defineRegionProgram,validateRegionProgram,sharedRegionState,cloneRegionController,regionEntry,evaluateLocalRegion,

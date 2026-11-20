@@ -4,7 +4,7 @@
 import {RegionExecutionHarness} from './region-harness.js';
 import {compileEffectfulWitness} from '../training/effectful-compiler.js';
 import {decodeWitness,encodeWitness} from '../training/format.js';
-import {encodeDetailedRecord,decodeDetailedRecord} from './detailed-v7.js';
+import {encodeDetailedRecord,decodeDetailedRecord} from './detail-v8.js';
 import {encodeProtocolRecordV8} from './protocol-codec-v8.js';
 
 export const EFFECTFUL_REGION_TEACHER_SCHEMA_V8='semantic-region-teacher-adapter/1';

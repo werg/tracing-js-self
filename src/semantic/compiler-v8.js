@@ -4,7 +4,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {verifyEffectfulTrainingCase,recheckEffectfulAdmission} from '../training/effectful-admit.js';
 import {decodeWitness} from '../training/format.js';
 import {SemanticController} from '../training/controller.js';
-import {encodeDetailedRecord} from './detailed-v7.js';
+import {encodeDetailedRecord} from './detail-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
 import {defineRegionProgram,sharedRegionState,evaluateLocalRegion,REGION_TRACE_VERSION} from './regions.js';
 import {hashAlgorithmData} from './program.js';

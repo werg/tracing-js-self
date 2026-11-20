@@ -2,7 +2,7 @@
 // its `then` property cannot invoke guest code or schedule assimilation work.
 // The shared legacy controller does not implement those observable jobs.
 import {PROTOCOL_MACHINE_API_V8} from './protocol-state-v8.js';
-import {validateWitness} from '../training/format.js';
+import {validateSemanticRecord as validateWitness} from './record-schema.js';
 
 const fail=message=>{const error=new TypeError('Region execution: '+message);error.category='region-authority';throw error;};
 const primitiveKinds=new Set(['undefined','null','bool','num','str','bigint','symbol']);

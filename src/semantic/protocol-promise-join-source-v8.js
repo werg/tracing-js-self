@@ -2,7 +2,7 @@
 // operations. No later event can choose an earlier allocation identity.
 import {isDeepStrictEqual as eq} from 'node:util';
 import {compileEffectfulRegionWitnessV8} from './effectful-teacher-v8.js';
-import {decodeDetailedRecord} from './detailed-v7.js';
+import {decodeDetailedRecord} from './detail-v8.js';
 import {decodeProtocolRecordV8} from './protocol-codec-v8.js';
 
 const id='promise-join/1',copy=structuredClone;

@@ -27,9 +27,9 @@ serving, and measured learned success.
 | --- | --- | --- | --- |
 | 1 | Frozen scope, denominator, parity inventory | In progress | Pin specification bytes, suite/variant and real-source inventories, parser/host/resource identities; preserve unselected rows; map every production V6 route to a replacement test. |
 | 2 | Qualified Test262 runner | In progress | Fresh realms, official includes, strict/sloppy/raw/module variants, early/runtime errors, async and agent handling; runner fault controls; reconciled full applicable catalog. |
-| 3 | Neutral JS execution state | Not started | Extract typed values and transitions; preserve all current state and lifecycle behavior; equivalence tests. |
-| 4 | Direct V8 detail and source certification | Not started | Own detail/context/checkpoint schema and direct compilation; no V6 witness artifact or old episode replay. |
-| 5 | Independent native V8 semantics | Not started | Remove V8-to-V6 envelope/receipt conversion and V7 detail-wire calls; retain neutral independent semantic primitives; malformed-state controls. |
+| 3 | Neutral JS execution state | In progress | Extract typed values and transitions; preserve all current state and lifecycle behavior; equivalence tests. |
+| 4 | Direct V8 detail and source certification | In progress | Own detail/context/checkpoint schema and direct compilation; no V6 witness artifact or old episode replay. |
+| 5 | Independent native V8 semantics | In progress | Remove V8-to-V6 envelope/receipt conversion and V7 detail-wire calls; retain neutral independent semantic primitives; malformed-state controls. |
 | 6 | Composable source projections | Not started | Event-level adapters with complete, unique transition ownership; no exclusive whole-episode projector limitation. |
 | 7 | Protocol/effect/lifecycle composition | Not started | Protocol → effect → callback → protocol, reentrancy, guest errors, cancellation and restore with independent source/native checks. |
 | 8 | Ordinary V8 training admission | In progress | Strict preparation policy and normal recipe/loader/config/stage/resume checks; no verification-flag or unverified-data bypass; source eligibility distinct from learned outcomes. |
@@ -92,3 +92,15 @@ serving, and measured learned success.
   invalidate downstream evidence on retries, and reject incompatible resumes or
   forged stage histories. `node --test test/test262-catalog.test.js`: 10 passed,
   zero failed/skipped. The retained 42-file snapshot is not the full upstream suite.
+
+- Direct detail foundation: V8 JS encoding/decoding now owns its canonical wire
+  client and uses a version-neutral typed operation schema. Legacy JS detail and
+  witness clients consume that shared schema without changing their bytes.
+  Paired Python extraction separates canonical JSON and typed semantics from old
+  wire modules; native V8 detail and observation envelopes validate directly.
+  Dedicated absence controls block legacy wire imports in each new codec.
+  JS: 27 region/scheduler, 14 detail/causal, 10 historical detail-training checks
+  pass; V8 contract regeneration is byte-identical. Python: 39 existing focused
+  checks and 12 direct-detail/prefix checks pass (overlapping populations).
+  Remaining: selected execution, source certification and effect receipts still
+  contain legacy dependencies; this is not a completed representation cutover.

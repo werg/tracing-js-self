@@ -7,7 +7,7 @@ import {validateRegionProgram,decodeRegionRecord,cloneRegionController,REGION_CO
   REGION_TRACE_VERSION,REGION_PROFILE} from './regions.js';
 import {encodeWitness} from '../training/format.js';
 import {decodePureRegionRecord,pureRegionEntry} from './pure-region-v8.js';
-import {decodeDetailedRecord} from './detailed-v7.js';
+import {decodeDetailedRecord} from './detail-v8.js';
 import {decodeProtocolRecordV8} from './protocol-codec-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
 import {recheckRegionEvidence} from './compiler-v8.js';
