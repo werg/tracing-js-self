@@ -112,6 +112,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     typeof regionAdapter.createHarness!=='function'||typeof regionAdapter.replay!=='function'||
     typeof regionAdapter.encodeProtocol!=='function'||semanticRegions))
     refuse('region adapter requires a checked harness and explicit detailed source projection');
+  const sourceValue=value=>graphValue(value)||regionAdapter?.isValue?.(value)===true;
   if(representation!=='compact')refuse('Only the canonical semantic trace is supported');
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
     refuse('compact expressions require an operator bound from 1 through 8');
@@ -244,6 +245,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   const frameId=frame=>{if(!frames.has(frame))frames.set(frame,'guest'+(++frameOrdinal));return frames.get(frame);};
   const identity=id=>publicIdentities.get(id)??id;
   const tag=value=>{
+    const extended=regionAdapter?.tag?.(value);if(extended!==undefined&&extended!==null)return copy(extended);
     if(!graphValue(value))refuse('unrepresentable value '+JSON.stringify(value));
     return value[0]==='promise'?['ref',value[1]]:value[0]==='ref'?['ref',identity(value[1])]:copy(value);
   };
@@ -327,7 +329,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     if(!last||last.fields.bind||last.owner!==rootFor(row.invocation)||
        last.fields.invocation!==frameId(row.invocation)||
        !row.dependsOn.includes(rows.get(last.producer)?.id)||
-       !graphValue(write.value)||!isDeepStrictEqual(tag(write.value),last.fields.result))
+       !sourceValue(write.value)||!isDeepStrictEqual(tag(write.value),last.fields.result))
       return null;
     return {last,write};
   }
@@ -423,7 +425,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   }
   function seedBindings(frame,owner,event=null){
     const actual=state.frames[frame],env=state.envs[actual?.envId];
-    for(const [name,binding] of Object.entries(env?.bindings??{}))if(binding.initialized&&graphValue(binding.token?.value)){
+    for(const [name,binding] of Object.entries(env?.bindings??{}))if(binding.initialized&&sourceValue(binding.token?.value)){
       const value=tag(binding.token.value),nameId=cell(actual.envId,name);
       if(!controller(owner).locals.has(nameId))emit(owner,'bind',{name:nameId,value},event,'parameter-binding');
     }
@@ -431,7 +433,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   function writes(row,owner,event){
     for(const change of row.writes??[]){
       if(change.kind==='cell'){
-        if(!graphValue(change.value))refuse('unrepresentable captured cell');
+        if(!sourceValue(change.value))refuse('unrepresentable captured cell');
         const deferred=change.value[0]==='ref'&&deferredClosures.get(change.value[1]);
         if(deferred){
           const binding=state.envs[change.env]?.bindings?.[change.key];
@@ -479,7 +481,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
               // The nearest declaration shadows all outer namesakes, even
               // before initialization. Never substitute an outer/final value.
               if(!binding.initialized&&binding.kind!=='parameter'){unresolvedLexical=true;continue;}
-              if(binding.initialized&&!graphValue(binding.token?.value))continue;
+              if(binding.initialized&&!sourceValue(binding.token?.value))continue;
               captureBindings.push({environment:env,name,cell:cell(env,name)});
             }
         const unresolved=captureBindings.filter(relation=>
@@ -559,7 +561,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
           if(additions.length!==1||!temporary(additions[0])||after[additions[0]].initialized)reject();
         }else if(['binding.initialize','binding.write'].includes(event.operation)){
           const write=row?.writes?.[0],binding=write&&state.envs[write.env]?.bindings?.[write.key];
-          if(row?.writes?.length!==1||write.kind!=='cell'||write.env!==change.id||!binding||!graphValue(write.value))reject();
+          if(row?.writes?.length!==1||write.kind!=='cell'||write.env!==change.id||!binding||!sourceValue(write.value))reject();
           if(change.id===pending.parameterEnv){
             if(event.operation!=='binding.initialize'||binding.kind!=='parameter'||binding.initialized)reject();
           }else if(!temporary(write.key))reject();
@@ -576,20 +578,20 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         if(event.operation!=='property.write'||!pending.patternObjects.has(change.id))reject();
         try{inspectOwnedDataEntity(change.before);inspectOwnedDataEntity(change.after);}catch{reject();}
         if(!row?.writes?.length||row.writes.some(write=>write.kind!=='property'||write.object!==change.id||
-          !write.present||!graphValue(write.value)||unpublished(write.value)))reject();
+          !write.present||!sourceValue(write.value)||unpublished(write.value)))reject();
         continue;
       }
       reject();
     }
     for(const read of event.readObservations??[]){
       if(read.kind==='binding'){
-        if(!pending.patternEnvironments.has(read.envId)||!graphValue(read.value))reject();
+        if(!pending.patternEnvironments.has(read.envId)||!sourceValue(read.value))reject();
       }else if(read.kind==='property'){
         try{inspectOwnedDataEntity(state.heap[read.objectId]);}catch{reject();}
-        if(!graphValue(read.value))reject();
+        if(!sourceValue(read.value))reject();
       }else reject();
     }
-    if(event.operation==='primitive.binary'&&(event.operands??[]).some(value=>!graphValue(value)||['ref','promise'].includes(value[0])))reject();
+    if(event.operation==='primitive.binary'&&(event.operands??[]).some(value=>!sourceValue(value)||['ref','promise'].includes(value[0])))reject();
     for(const id of newEnvironments)pending.patternEnvironments.add(id);
     for(const id of newObjects)pending.patternObjects.add(id);
     pending.patternProof=true;
@@ -601,7 +603,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       if(captures.some(({binding})=>!binding?.initialized))continue;
       if(!pending.writes.length)refuse('deferred parameter closure lacks its initializing write');
       for(const {binding} of captures)
-        if(!graphValue(binding.token?.value)||binding.token.value[0]==='ref'&&
+        if(!sourceValue(binding.token?.value)||binding.token.value[0]==='ref'&&
            (deferredClosures.has(binding.token.value[1])||!controller(pending.owner).heap.has(tag(binding.token.value)[1])))
           refuse('deferred parameter capture depends on an unpublished identity');
       const emitDeferred=(kind,fields)=>{
@@ -629,6 +631,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
   }
   const extensionContext={bundle,source,semantic,state,controller,identity,tag,frameId,rootFor,cell,
     emit,emitProtocol,allocations,writes,refuse,copy,
+    registerFrame(frame,owner){roots.set(frame,owner);return frameId(frame);},
     get harness(){return harness;},
     claimDataIdentity(id){certifiedDataIdentities.add(identity(id));},
     get rootInvocation(){return invocationId;}};
@@ -913,7 +916,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
     }else if(row?.op==='read'){
       for(const read of row.reads??[])if(read.kind==='property'&&controller(owner).heap.has(identity(read.objectId??read.object))){
         const object=identity(read.objectId??read.object),key=read.key??read.property;
-        if(typeof key==='string'&&graphValue(read.value))emit(owner,'read',{object,key,
+        if(typeof key==='string'&&sourceValue(read.value))emit(owner,'read',{object,key,
           present:read.present??true,value:tag(read.value)},event,'read');
       }
       handled=true;
@@ -925,6 +928,8 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       }
       handled=true;
     }
+    const handledCompletion=regionAdapter?.completion?.(extensionContext,event,row,fact)===true;
+    if(handledCompletion)handled=true;
     // Promise resolution is generated exactly where the journal changes it;
     // externally caused settlements have already entered as observations.
     for(const change of promiseChanges){
@@ -937,7 +942,7 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       const publicPromise=controller(owner).heap.get(change.id);
       if(['fulfilled','rejected'].includes(change.after?.status)&&publicPromise?.state===change.after.status&&
         isDeepStrictEqual(publicPromise.result,tag(change.after.value.value))){settledPromises.add(change.id);continue;}
-      if(change.after?.adopting&&change.before?.adopting!==change.after.adopting){
+      if(change.after?.adopting&&change.before?.adopting!==change.after.adopting&&publicPromise?.adopted!==change.after.adopting){
         emit(owner,'promise',{action:'adopt',promise:change.id,target:change.after.adopting},event,'promise-adoption');
       }else if(['fulfilled','rejected'].includes(change.after?.status)&&
           change.before?.status!==change.after.status&&!settledPromises.has(change.id)){
@@ -946,13 +951,13 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
         settledPromises.add(change.id);
       }
     }
-    if(fact?.operation==='catch-bind'){
+    if(!handledCompletion&&fact?.operation==='catch-bind'){
       const env=event.stateChanges.find(change=>change.table==='envs'&&change.before===null)?.id;
       emit(owner,'bind',{name:cell(env,fact.name),value:tag(fact.value)},event,'catch-binding');handled=true;
-    }else if(fact?.operation==='transfer'){
+    }else if(!handledCompletion&&fact?.operation==='transfer'){
       emit(owner,'transfer',{kind:fact.kind,value:tag(fact.value),handler:fact.handler,
         invocation:frameId(fact.invocation)},event,'completion-transfer');handled=true;
-    }else if(['return','throw','unhandled-throw'].includes(fact?.operation)){
+    }else if(!handledCompletion&&['return','throw','unhandled-throw'].includes(fact?.operation)){
       if(row)writes(row,owner,event);
       for(const exit of [fact,...(fact.unwound??[])]){
         const frame=state.frames[exit.invocation],asyncResult=frame?.asyncPromiseId;

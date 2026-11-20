@@ -15,6 +15,7 @@ import {NUMBER_STATE_V8_SCHEMA,NUMBER_OPERATION_FIELDS} from './protocol-number-
 import {GENERATOR_PROFILE_V8,GENERATOR_HEAP_FIELDS,GENERATOR_INTRINSICS_V8} from './protocol-generator-v8.js';
 import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIELDS} from './protocol-proxy-v8.js';
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
+import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8} from './protocol-promise-executor-v8.js';
 
 export const SEMANTIC_V8_DEFINITION=Object.freeze({
   execution:REGION_EXECUTION_VERSION,trace:REGION_TRACE_VERSION,context:REGION_CONTEXT_VERSION,
@@ -34,7 +35,7 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       meaning:'Existing checked selected-detailed/1 transitions, committed into the same shared machine.'},
     protocol:{schema:PROTOCOL_RECORD_V8_SCHEMA,prefix:'protocol ',fieldsByKind:PROTOCOL_RECORD_V8_FIELDS,
       profile:'symbols-ordinary-properties/1',extensions:PROTOCOL_MACHINE_ADAPTERS_V8.map(adapter=>adapter.id),limits:PROTOCOL_V8_LIMITS,
-      meaning:'Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, generators, Number conversion, Promise joins, Proxy traps and binary memory in the same authoritative heap.'}
+      meaning:'Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, generators, Number conversion, Promise joins and executors, Proxy traps and binary memory in the same authoritative heap.'}
   },
   algorithm:{schema:ALGORITHM_V8_SCHEMA,profile:ALGORITHM_V8_PROFILE,limits:ALGORITHM_V8_LIMITS,
     inputTypes:ALGORITHM_V8_INPUT_TYPES,traversalModes:TRAVERSAL_MODES,operations:ALGORITHM_V8_OPERATION_METADATA},
@@ -65,10 +66,15 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
     proxyCalls:{profile:PROXY_PROFILE_V8,schema:PROXY_STATE_V8_SCHEMA,fields:['schema','pending'],initial:null,
       heapFields:PROXY_HEAP_FIELDS,callFields:PROXY_CALL_FIELDS,
       capabilities:'Distinct Proxy, target and handler identities; ordinary data forwarding and synchronous owned get/set traps with live target invariants and exact pending callback completion. Callable or revoked proxies and other traps require explicit profiles.'},
+    promiseExecutors:{profile:PROMISE_EXECUTOR_PROFILE_V8,schema:PROMISE_EXECUTOR_STATE_V8,
+      fields:['schema','capabilities','executors'],capabilityFields:['promise','resolve','reject','called','resolution'],
+      executorFields:['promise','parent','child','phase','completion'],
+      resolverFields:['promise','mode'],
+      capabilities:'Synchronous source executor calls, stable resolving function identities, a shared first-call cell, retained resolvers, primitive or owned Promise resolution, and executor throw rejection. Thenables, self resolution and async executor bodies require separate profiles.'},
     binaryMemory:{profile:MEMORY_PROFILE_V8,heapFields:MEMORY_HEAP_FIELDS_V8,maxBufferBytes:1024,
       typedArrayByteOrder:'little-endian',dataViewByteOrder:'explicit per operation',
       capabilities:'Fixed ordinary buffers and fixed/growable shared buffers; scalar conversions; shared view identities; bounded single-agent atomic operations. No detach, transfer, host buffers or cross-agent scheduling.'},
-    lifecycle:'One fresh invocation without external host work. Declared Promise joins may use internal Promise, await, resume, job and transfer detail; join steps require an empty stack and the FIFO ready head. External observations remain outside protocol profiles.'},
+    lifecycle:'One fresh invocation without external host work. Declared Promise joins and executors may use internal Promise, await, resume, job and transfer detail; join steps require an empty stack and the FIFO ready head. External observations remain outside protocol profiles.'},
   checkpoint:{fields:['schema','profile','public','regionCursor','selected','integrity'],
     protocolSelected:{schema:'semantic-protocol-continuation/1',fields:['schema','invocations'],
       meaning:'Exact shared states and activation statuses independently reconstructed from the complete public v8 history.'},

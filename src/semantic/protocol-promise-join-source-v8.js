@@ -7,7 +7,7 @@ import {decodeProtocolRecordV8} from './protocol-codec-v8.js';
 
 const id='promise-join/1',copy=structuredClone;
 const jobId=(result,index)=>'join'+result+'x'+index;
-function teacher(){return {id,
+export function createPromiseJoinTeacherV8(){return {id,
   event(ctx,event,row){
     const changes=event.stateChanges,owner=ctx.rootFor(event.invocationId),
       callee=row?.operands?.[0],method=callee?.[0]==='method'?callee[1]:callee,
@@ -76,10 +76,14 @@ function teacher(){return {id,
 };}
 
 export function createPromiseJoinSourceAdapterV8({bundle}={}){
+  if(bundle?.events?.some(event=>event.operation==='object.construct'&&event.operands?.[0]?.[0]==='intrinsic'&&event.operands[0][1]==='Promise'))return null;
   if(!bundle?.events?.some(event=>event.operation==='call.enter'&&['Promise.all','Promise.race'].includes(
     event.operands?.[0]?.[0]==='method'?event.operands[0][1]?.[1]:event.operands?.[0]?.[1])))return null;
-  return {id,compile({maxGenerated}){
-    const compiled=compileEffectfulRegionWitnessV8(bundle,{maxGenerated,extensions:[teacher()]}),
+  return {id,compile({maxGenerated}){return compilePromiseSourceProjectionV8(bundle,{maxGenerated,extensions:[createPromiseJoinTeacherV8()],
+    sourceProfile:'promise-joins-source/1',extensionIds:[id]});}};
+}
+export function compilePromiseSourceProjectionV8(bundle,{maxGenerated,extensions,sourceProfile,extensionIds}){
+    const compiled=compileEffectfulRegionWitnessV8(bundle,{maxGenerated,extensions}),
       certificates=new Map(compiled.certificates.map(row=>[row.sequence,row])),
       sites=new Map(bundle.sites.map(site=>[site.siteId,site])),timeline=compiled.exported.public.timeline,
       publication=timeline.find(row=>row.kind==='program').fields,entry=timeline.find(row=>row.kind==='invocation').fields;
@@ -94,8 +98,7 @@ export function createPromiseJoinSourceAdapterV8({bundle}={}){
           source:source?{start:source.start,end:source.end}:null}};
     });
     return {schema:'semantic-protocol-source-projection/1',source:publication.source,entry:publication.entry,
-      inputGraph:copy(entry.inputGraph),claims,outcome:compiled.outcome,sourceProfile:'promise-joins-source/1',extensions:[id],
+      inputGraph:copy(entry.inputGraph),claims,outcome:compiled.outcome,sourceProfile,extensions:extensionIds,
       completionPolicy:'await-returned-promise',protocolRecords:claims.filter(row=>row.kind==='protocol').length,
       detailedRecords:claims.filter(row=>row.kind==='detail').length};
-  }};
 }

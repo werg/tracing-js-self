@@ -7,4 +7,5 @@ import {createPromiseJoinSourceAdapterV8} from './protocol-promise-join-source-v
 import {createNumberSourceAdapterV8} from './protocol-number-source-v8.js';
 import {createProxySourceAdapterV8} from './protocol-proxy-source-v8.js';
 import {createGeneratorSourceAdapterV8} from './protocol-generator-source-v8.js';
-export const PROTOCOL_SOURCE_ADAPTERS_V8=Object.freeze([memorySourceAdapterV8,createGeneratorSourceAdapterV8,createConstructionSourceAdapterV8,createIteratorSourceAdapterV8,createPromiseJoinSourceAdapterV8,createNumberSourceAdapterV8,createProxySourceAdapterV8]);
+import {createPromiseExecutorSourceAdapterV8} from './protocol-promise-executor-source-v8.js';
+export const PROTOCOL_SOURCE_ADAPTERS_V8=Object.freeze([memorySourceAdapterV8,createGeneratorSourceAdapterV8,createConstructionSourceAdapterV8,createIteratorSourceAdapterV8,createPromiseJoinSourceAdapterV8,createPromiseExecutorSourceAdapterV8,createNumberSourceAdapterV8,createProxySourceAdapterV8]);

@@ -15,6 +15,9 @@ import {GENERATOR_PROFILE_V8,GENERATOR_RECORD_FIELDS,GENERATOR_INTRINSICS_V8,val
   applyGeneratorRecordV8,restoreGeneratorStateV8,hasGeneratorStateV8,assertGeneratorCallV8,
   assertGeneratorNextV8,resolveGeneratorIntrinsicV8} from './protocol-generator-v8.js';
 import {PROXY_PROFILE_V8,PROXY_RECORD_FIELDS,validateProxyRecordV8,applyProxyRecordV8,restoreProxyStateV8,hasProxyStateV8,assertProxyNextV8} from './protocol-proxy-v8.js';
+import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_RECORD_FIELDS,validatePromiseExecutorRecordV8,applyPromiseExecutorRecordV8,
+  restorePromiseExecutorStateV8,assertPromiseExecutorNextV8,assertPromiseExecutorCallV8,
+  allowsPromiseExecutorInternalSchedulerV8,allowsPromiseExecutorDetailedCallV8} from './protocol-promise-executor-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:MEMORY_PROFILE_V8,recordFields:MEMORY_RECORD_FIELDS,validateRecord:validateMemoryRecordV8,applyRecord:applyMemoryRecordV8,
   hasRichState:node=>isBinaryMemoryKind(node.kind),
@@ -48,4 +51,10 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:PROXY_PROFILE_V8,recordFields:PROXY_RECORD_FIELDS,validateRecord:validateProxyRecordV8,
   applyRecord:applyProxyRecordV8,hasRichState:hasProxyStateV8,stateField:'proxyCalls',
   restoreState:restoreProxyStateV8,assertNext:assertProxyNextV8
+}),Object.freeze({
+  id:PROMISE_EXECUTOR_PROFILE_V8,recordFields:PROMISE_EXECUTOR_RECORD_FIELDS,validateRecord:validatePromiseExecutorRecordV8,
+  applyRecord:applyPromiseExecutorRecordV8,stateField:'promiseExecutors',restoreState:restorePromiseExecutorStateV8,
+  assertNext:assertPromiseExecutorNextV8,assertCall:assertPromiseExecutorCallV8,
+  hasRichState:node=>node.promiseResolver!==undefined,
+  allowsInternalScheduler:allowsPromiseExecutorInternalSchedulerV8,allowsDetailedCall:allowsPromiseExecutorDetailedCallV8
 })]);

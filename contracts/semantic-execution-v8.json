@@ -760,6 +760,25 @@
             "kind",
             "id",
             "completion"
+          ],
+          "promise.executor.enter": [
+            "kind",
+            "promise",
+            "executor",
+            "child",
+            "resolve",
+            "reject"
+          ],
+          "promise.resolver.call": [
+            "kind",
+            "resolver",
+            "value"
+          ],
+          "promise.executor.finish": [
+            "kind",
+            "promise",
+            "invocation",
+            "completion"
           ]
         },
         "profile": "symbols-ordinary-properties/1",
@@ -770,7 +789,8 @@
           "promise-join/1",
           "number-conversion/1",
           "synchronous-generator/1",
-          "ordinary-data-proxy/1"
+          "ordinary-data-proxy/1",
+          "promise-executor/1"
         ],
         "limits": {
           "symbols": 4096,
@@ -778,7 +798,7 @@
           "calls": 64,
           "steps": 32768
         },
-        "meaning": "Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, generators, Number conversion, Promise joins, Proxy traps and binary memory in the same authoritative heap."
+        "meaning": "Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, generators, Number conversion, Promise joins and executors, Proxy traps and binary memory in the same authoritative heap."
       }
     },
     "algorithm": {
@@ -1597,7 +1617,8 @@
         "sequence",
         "construction",
         "numberConversions",
-        "proxyCalls"
+        "proxyCalls",
+        "promiseExecutors"
       ],
       "initial": null,
       "heap": "Existing heap nodes with property, descriptor and private-element Maps serialized as entry arrays; Symbol keys remain tagged pairs.",
@@ -1793,6 +1814,34 @@
         ],
         "capabilities": "Distinct Proxy, target and handler identities; ordinary data forwarding and synchronous owned get/set traps with live target invariants and exact pending callback completion. Callable or revoked proxies and other traps require explicit profiles."
       },
+      "promiseExecutors": {
+        "profile": "promise-executor/1",
+        "schema": "semantic-promise-executor-state/1",
+        "fields": [
+          "schema",
+          "capabilities",
+          "executors"
+        ],
+        "capabilityFields": [
+          "promise",
+          "resolve",
+          "reject",
+          "called",
+          "resolution"
+        ],
+        "executorFields": [
+          "promise",
+          "parent",
+          "child",
+          "phase",
+          "completion"
+        ],
+        "resolverFields": [
+          "promise",
+          "mode"
+        ],
+        "capabilities": "Synchronous source executor calls, stable resolving function identities, a shared first-call cell, retained resolvers, primitive or owned Promise resolution, and executor throw rejection. Thenables, self resolution and async executor bodies require separate profiles."
+      },
       "binaryMemory": {
         "profile": "owned-binary-memory/1",
         "heapFields": {
@@ -1853,7 +1902,7 @@
         "dataViewByteOrder": "explicit per operation",
         "capabilities": "Fixed ordinary buffers and fixed/growable shared buffers; scalar conversions; shared view identities; bounded single-agent atomic operations. No detach, transfer, host buffers or cross-agent scheduling."
       },
-      "lifecycle": "One fresh invocation without external host work. Declared Promise joins may use internal Promise, await, resume, job and transfer detail; join steps require an empty stack and the FIFO ready head. External observations remain outside protocol profiles."
+      "lifecycle": "One fresh invocation without external host work. Declared Promise joins and executors may use internal Promise, await, resume, job and transfer detail; join steps require an empty stack and the FIFO ready head. External observations remain outside protocol profiles."
     },
     "checkpoint": {
       "fields": [
@@ -1888,7 +1937,7 @@
       "default": "not promoted by engineering receipts alone"
     }
   },
-  "digest": "5cf992a16a3de77edb3c7b732673950b9afc037458f51b316d8b2801c43f29ae",
+  "digest": "9ba0d4794c364736db3c3725dbe2381f815770f3c326d86810081cd6420fbfec",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
   "fixtures": [
     {

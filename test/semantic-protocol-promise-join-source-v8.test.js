@@ -56,9 +56,9 @@ test('join checkpoint resumes the exact suspended FIFO state and rejects false s
   const complete=RegionExecutionHarness.replay(result.exported);
   assert.deepEqual(sharedRegionState(resumed.controller),sharedRegionState(complete.controller));
 });
-test('Promise source extension keeps external effects and unsupported resolving-function state unqualified',async()=>{
+test('Promise source extension keeps external effects and unsupported thenable resolving state unqualified',async()=>{
   for(const source of [
-    '"use strict";async function run(){const p=new Promise(resolve=>resolve(1));return await Promise.all([p]);}',
+    '"use strict";async function run(){const p=new Promise(resolve=>resolve({then(done){done(1);}}));return await Promise.all([p]);}',
     '"use strict";async function run(){await Promise.all([Promise.resolve(1)]);return await host.readAsync("counter");}'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(source));assert.equal(result.exported,undefined);

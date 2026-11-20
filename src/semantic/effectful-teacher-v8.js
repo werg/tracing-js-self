@@ -57,8 +57,14 @@ export function createEffectfulRegionAdapterV8({extensions=[]}={}){
     restore:packet=>facade(RegionExecutionHarness.restore(packet)),
     encodeProtocol:encodeProtocolRecordV8,
     setup(context){for(const extension of extensions)extension.setup?.(context);},
+    isValue(value){return extensions.some(extension=>extension.isValue?.(value)===true);},
+    tag(value){for(const extension of extensions){const result=extension.tag?.(value);if(result!==undefined&&result!==null)return result;}return null;},
     event(context,event,row){
       for(const extension of extensions)if(extension.event?.(context,event,row)===true)return true;
+      return false;
+    },
+    completion(context,event,row,fact){
+      for(const extension of extensions)if(extension.completion?.(context,event,row,fact)===true)return true;
       return false;
     },
     checkEvent(context,event,row){for(const extension of extensions)

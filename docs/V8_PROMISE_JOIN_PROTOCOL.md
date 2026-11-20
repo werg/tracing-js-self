@@ -75,5 +75,6 @@ checkpoints retain the shared heap, jobs, ready queue, completion and scheduler.
 
 The source tests include the frozen rejection/finally interaction, compact
 arithmetic around a join, repeated dependencies, scalar inputs, empty all and
-reaction ordering. AllSettled/any, executor resolving functions and matching
-native admission remain separate qualification work.
+reaction ordering. [Synchronous executors and resolving functions](V8_PROMISE_EXECUTOR_PROTOCOL.md)
+compose with these joins. AllSettled/any and matching native admission remain
+separate qualification work.
