@@ -256,6 +256,37 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       const keys=Array.from({length:allocation.after.properties.length.value[1]},(_,index)=>allocation.after.properties[index].value);
       emit({kind:'property.keys',object:args[0][1],mode,name:row.result[1],keys},event,'owned-source-key-enumeration/1');published.add(row.result[1]);return;
     }
+    if(['Object.entries','Object.values'].includes(name)){
+      const input=args[0]?.[0]==='ref'?state.heap[args[0][1]]:null,
+        output=row.result?.[0]==='ref'?changes.find(change=>change.id===row.result[1]&&change.before===null)?.after:null;
+      if(!['object','array'].includes(input?.kind)||Object.keys(input.accessors??{}).length||output?.kind!=='array')
+        refuse('value enumeration requires an ordinary object with own data properties');
+      const keys=orderedKeys(input).filter(storage=>{
+        const described=descriptor(input,storage);return propertyKeyValue(storage)[0]==='str'&&described?.kind==='data'&&described.enumerable;
+      }).map(propertyKeyValue),allocated=new Set([output.id]);
+      // The result array temporarily holds the checked key list, then each
+      // slot is replaced by its value or freshly allocated entry pair.
+      emit({kind:'property.keys',object:input.id,mode:'enumerable-strings',name:output.id,keys},event,'owned-source-value-enumeration-keys/1');
+      published.add(output.id);
+      for(const [index,property]of keys.entries()){
+        const value=descriptor(input,stringPropertyKey(property[1])).value;
+        emit({kind:'property.get',object:input.id,key:property,receiver:args[0],result:tag(value,event)},event,'owned-source-value-enumeration-read/1');
+        let replacement=value;
+        if(name==='Object.entries'){
+          const pairValue=output.properties[String(index)]?.value,pair=pairValue?.[0]==='ref'?
+            changes.find(change=>change.id===pairValue[1]&&change.before===null)?.after:null;
+          if(pair?.kind!=='array'||!eq(pair.properties.length?.value,['num',2])||
+            !eq(pair.properties['0']?.value,property)||!eq(pair.properties['1']?.value,value))
+            refuse('entry pair differs from its enumerated key and current data value');
+          publish(pair,event);allocated.add(pair.id);replacement=pairValue;
+        }
+        emit({kind:'property.set',object:output.id,key:['str',String(index)],receiver:['ref',output.id],
+          value:tag(replacement,event),success:true},event,'owned-source-value-enumeration-slot/1');
+      }
+      if(changes.length!==allocated.size||changes.some(change=>change.before!==null||!allocated.has(change.id)))
+        refuse('value enumeration has an undeclared heap effect');
+      return;
+    }
     if(name==='Object.defineProperty'){
       if(args[0]?.[0]!=='ref'||args[2]?.[0]!=='ref')refuse('ordinary descriptor arguments required');
       const object=args[0][1],encoded=key(args[1]),storage=encoded[0]==='str'?stringPropertyKey(encoded[1]):symbolPropertyKey(encoded[1]);
