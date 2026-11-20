@@ -1,0 +1,20 @@
+{
+  "TMPDIR": "/workspace/scratch/d11743e0247b/final-validation/producer-012c9fe-tmp",
+  "PYTHONPATH": "/workspace/scratch/d11743e0247b/v8-final-native/src",
+  "PYTHONNOUSERSITE": "1",
+  "PYTHONDONTWRITEBYTECODE": "1",
+  "OMP_NUM_THREADS": "1",
+  "MKL_NUM_THREADS": "1",
+  "MEGATOKEN_ROOT": "/workspace/scratch/d11743e0247b/v8-final-native",
+  "MEGATOKEN_REPOSITORY": "/workspace/scratch/d11743e0247b/v8-final-native",
+  "MEGATOKEN_PYTHON": "/workspace/scratch/d11743e0247b/native-venv/bin/python",
+  "MEGATOKEN_TOKENIZER_JSON": "/workspace/scratch/d11743e0247b/tokenizer.json",
+  "MEGATOKEN_NATIVE_SOURCE_PRODUCER": "/workspace/scratch/d11743e0247b/producer-regression-012c9fe",
+  "TRACING_JS_SELF_ROOT": "/workspace/scratch/d11743e0247b/producer-regression-012c9fe",
+  "SEMANTIC_V8_NATIVE_POLICY": "/workspace/scratch/d11743e0247b/producer-regression-012c9fe/contracts/semantic-native-policy-v8.json",
+  "SEMANTIC_TOKENIZER_PYTHON": "/workspace/scratch/d11743e0247b/native-venv/bin/python",
+  "SEMANTIC_TOKENIZER_CONSUMER_ROOT": "/workspace/scratch/d11743e0247b/producer-tokenizer-7b36617",
+  "SEMANTIC_TOKENIZER_JSON": "/workspace/scratch/d11743e0247b/tokenizer.json",
+  "MEGATOKEN_ORCHESTRATION_SERVED": "/workspace/scratch/d11743e0247b/v8-native-bounded-fit/baseline",
+  "MEGATOKEN_ORCHESTRATION_EVIDENCE_DIR": "/workspace/scratch/d11743e0247b/final-validation/producer-012c9fe/native-orchestration"
+}

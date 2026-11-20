@@ -1,0 +1,18 @@
+{
+  "consumerAfter": {
+    "root": "/workspace/scratch/d11743e0247b/v8-final-native",
+    "revision": "39c4036564428e44cc89caf261f517d856482695",
+    "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+    "trackedChanges": ""
+  },
+  "legacyTokenizerConsumerAfter": {
+    "root": "/workspace/scratch/d11743e0247b/producer-tokenizer-7b36617",
+    "revision": "7b36617a446fafe21b5f28ae5ec73956e246f7bf",
+    "tree": "4ea5361e8d8b7fb84a2f44e4796568e9bd0e6f22",
+    "trackedChanges": ""
+  },
+  "consumerIdentityUnchanged": true,
+  "legacyTokenizerIdentityUnchanged": true,
+  "servedManifestUnchanged": true,
+  "servedConfigUnchanged": true
+}
