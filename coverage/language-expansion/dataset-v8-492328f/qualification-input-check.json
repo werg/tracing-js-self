@@ -1,0 +1,233 @@
+{
+  "schema": "v8-dataset-qualification-input-check/1",
+  "passed": true,
+  "producerRevision": "492328fe387e99487285984b782cd3b402990e2c",
+  "consumerRevision": "cb311dba6af44ef241450a87ef530a66aa55c7a3",
+  "inputCandidates": 34,
+  "qualificationReportsChecked": 2,
+  "sourceArtifactsChecked": 34,
+  "sources": [
+    {
+      "population": "interoperability",
+      "declared": 23,
+      "reportSha256": "fa6eb6c79e6fa31df657d4f0f7c547f6f714937d262c710a70a01fec578881d6",
+      "populationDigest": "4f01d08fcc2b020734f8f5c0f4ec96cd46f0393c292f96170c857c0aeb4bd243"
+    },
+    {
+      "population": "gallery",
+      "declared": 11,
+      "reportSha256": "fd5fb052dfdd3189d33cab67aeaac499b996f00c9c7f9a553611951ed9f01a06",
+      "populationDigest": "75cb63e0e558d4351454ba2656e918674e54b292ec4a6242420c6cb78830e4e8"
+    }
+  ],
+  "sourceArtifacts": [
+    {
+      "population": "interoperability",
+      "id": "ordered-map",
+      "artifact": "ordered-map.source.json",
+      "sha256": "fef6c62ba47ef37019bcf91cbad2f5ee0adcc3d35bb27adc7e633f2d0808794d"
+    },
+    {
+      "population": "interoperability",
+      "id": "shared-getter",
+      "artifact": "shared-getter.source.json",
+      "sha256": "391a2a629e8e7df732a11f7198c34177f1ce5d01f395e74d3ad50a7d181abb95"
+    },
+    {
+      "population": "interoperability",
+      "id": "causal-counter",
+      "artifact": "causal-counter.source.json",
+      "sha256": "9965b4fd4a67d32df0b3a43d52269b48b81db2a395744155b4f75087ab476faf"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-symbol-getter-arithmetic",
+      "artifact": "source-symbol-getter-arithmetic.source.json",
+      "sha256": "20597578e506e5e8cc435dae0d5c73c2081b86d8247c461f5321b256a10beee2"
+    },
+    {
+      "population": "interoperability",
+      "id": "typed-views-shared-backing",
+      "artifact": "typed-views-shared-backing.source.json",
+      "sha256": "4a4482ac59c48bc5052fa3bb31923545fa9e30dca8ae9237756d943fc12fb973"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-derived-private-arithmetic",
+      "artifact": "source-derived-private-arithmetic.source.json",
+      "sha256": "31040ac2e0825534a41e2dd97643cca31a1cc01b7e3c5850d3cfba579106eaf5"
+    },
+    {
+      "population": "interoperability",
+      "id": "builtin-iterator-mixed-arithmetic",
+      "artifact": "builtin-iterator-mixed-arithmetic.source.json",
+      "sha256": "04103b9aff053e5ebb57e9428789d8e7f534dbf740e287889bdf9add98c1d632"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-promise-all-reaction-arithmetic",
+      "artifact": "source-promise-all-reaction-arithmetic.source.json",
+      "sha256": "2e8591b0c055474ef55a955de0ab0cee2b4e62d30674c72e8d9a78682eecf70e"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-promise-join-rejection-finally",
+      "artifact": "source-promise-join-rejection-finally.source.json",
+      "sha256": "30d77c8f39342ab3bed7afdabc90e0902c448fea596c73b2a16fce4391621206"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-number-private-arithmetic",
+      "artifact": "source-number-private-arithmetic.source.json",
+      "sha256": "92a898899bc20bf62c138f81011001a5bbc8304d4018496f22990e22175bf9a2"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-generator-cleanup-suspension",
+      "artifact": "source-generator-cleanup-suspension.source.json",
+      "sha256": "1ae22fd5e67b787a4eb1525f4cc35a06dc51dd08e9b49d3905ec86e982413d1c"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-generator-delegated-cleanup",
+      "artifact": "source-generator-delegated-cleanup.source.json",
+      "sha256": "ac3f2f36e3a3cbec79e30ddafae05a500159e62b00bc03983a5bd3b3693b91aa"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-proxy-traps-arithmetic",
+      "artifact": "source-proxy-traps-arithmetic.source.json",
+      "sha256": "f52fac45b4b2aa7760d139410b191168d33fd1a5a79d52bba418e36444489dea"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-base-initializer-throw",
+      "artifact": "source-base-initializer-throw.source.json",
+      "sha256": "c46bc71a63322d0ff5cd9135fb3e2ed2004bccc5e0d429d3d1fced4cb44f836f"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-derived-initializer-throw",
+      "artifact": "source-derived-initializer-throw.source.json",
+      "sha256": "cfb625f179f721fcd3589468798922b69bffa7198a2b53a6a020b328ab7b3902"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-promise-executor-first-call",
+      "artifact": "source-promise-executor-first-call.source.json",
+      "sha256": "8e4b2b93d5e777aea9d0455a8c55864c6630573dbcad30a510194c7d4acc9db4"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-promise-executor-retained-resolution",
+      "artifact": "source-promise-executor-retained-resolution.source.json",
+      "sha256": "cf6bf6f721aae9eec2c5fa04f2cb0c64440d0e24f24edba959157111de6d3739"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-promise-executor-abrupt",
+      "artifact": "source-promise-executor-abrupt.source.json",
+      "sha256": "a966d241a24954ea272f7409621aad8ea834eab19ff81df1b117777c61b4a38b"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-ordinary-constructor-prototype",
+      "artifact": "source-ordinary-constructor-prototype.source.json",
+      "sha256": "cad6309d33a406d62638149bb9bc62a84aba1baff6245e6cbfbf9264bae3d575"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-enumeration-map-callback",
+      "artifact": "source-enumeration-map-callback.source.json",
+      "sha256": "fa86e3115990ba4d53f5df5c8325aa7d911c9aa67527908a1cb0f9aefc35a483"
+    },
+    {
+      "population": "interoperability",
+      "id": "generator-own-symbol-alias",
+      "artifact": "generator-own-symbol-alias.source.json",
+      "sha256": "97f2477f1b8a3242d8f3e93b572ddefe7da93c3d633396b32e28fda63fcea953"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-logical-left-operands",
+      "artifact": "source-logical-left-operands.source.json",
+      "sha256": "d9652d890282c4110fc5e5777fbe18379f72eabb72bf7107ddf9113f50badb7b"
+    },
+    {
+      "population": "interoperability",
+      "id": "source-for-in-own-keys",
+      "artifact": "source-for-in-own-keys.source.json",
+      "sha256": "d3a87aab564777d1c43c193d8248cf3ddba1abf353fcb86001d344715052a12e"
+    },
+    {
+      "population": "gallery",
+      "id": "compound-pure",
+      "artifact": "compound-pure.source.json",
+      "sha256": "398c4be88a735e5076b02f43b507a8aae353594570f8464e0584d6e8f12c90e6"
+    },
+    {
+      "population": "gallery",
+      "id": "branch-1",
+      "artifact": "branch-1.source.json",
+      "sha256": "eb3c9efecc9d433e68d9778581ae1d3b61881abee2d7752e3a6400b616d29ac4"
+    },
+    {
+      "population": "gallery",
+      "id": "object-alias",
+      "artifact": "object-alias.source.json",
+      "sha256": "db01ab648d4d0556f1bc7ab33317acf93de2afba108a141fbba7790daaa4bb49"
+    },
+    {
+      "population": "gallery",
+      "id": "pure-helper",
+      "artifact": "pure-helper.source.json",
+      "sha256": "7ae1f32e545435b94b1c449581ce7cbb1af2a8fd0480bbfa25d1df46e1716512"
+    },
+    {
+      "population": "gallery",
+      "id": "dense-loop",
+      "artifact": "dense-loop.source.json",
+      "sha256": "9d2c18eddf0fe77bf541c71e3ca7972e63e28d2f5bb5b51601faa8efa6a9e39f"
+    },
+    {
+      "population": "gallery",
+      "id": "throw-finally",
+      "artifact": "throw-finally.source.json",
+      "sha256": "9a1799396388474905acd43bcb6356524026fe30e2bc1aab593b146cbb2c3458"
+    },
+    {
+      "population": "gallery",
+      "id": "counter-0",
+      "artifact": "counter-0.source.json",
+      "sha256": "a2458a183a6f3f52fcea81ae2d564980f9035fab15a922e56e7096f029f9f1a1"
+    },
+    {
+      "population": "gallery",
+      "id": "rejection-finally",
+      "artifact": "rejection-finally.source.json",
+      "sha256": "4610ec0903cfbb61485f8516e25f5df9557850d5d981e84adf2bed3757062f9b"
+    },
+    {
+      "population": "gallery",
+      "id": "callback-captured-write",
+      "artifact": "callback-captured-write.source.json",
+      "sha256": "55272ee26871dbb817bae80845254d14500246c3c367f28b56c11075aa51e5f9"
+    },
+    {
+      "population": "gallery",
+      "id": "persistent-external-trigger",
+      "artifact": "persistent-external-trigger.source.json",
+      "sha256": "f82f86bd6634528e3472250f2dc6f63011f7a8397438af98869bee7143b9e41c"
+    },
+    {
+      "population": "gallery",
+      "id": "redundant-cell-write",
+      "artifact": "redundant-cell-write.source.json",
+      "sha256": "75dfb436f6ab7103aa09d7b20afd30b26e588ea6bc8a282c3716cbc8ddfb2ba4"
+    }
+  ],
+  "exactCandidateEquality": true,
+  "freshNativeExecution": false,
+  "optimizerSteps": 0,
+  "learningClaim": null
+}
