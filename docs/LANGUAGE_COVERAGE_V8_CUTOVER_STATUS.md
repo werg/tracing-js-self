@@ -16,51 +16,47 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
-## Current checkpoint and execution blocker
+## Current checkpoint and active implementation
 
-The priority order below is active. The work remains incomplete and both PRs
-remain drafts. Delivered increments do not close the full 17-package scope.
+The work remains incomplete and both PRs remain drafts. The user's current
+instruction is **small fixes, cleanup and edge cases first, then harder work**;
+this supersedes the historical hardest-first ordering in the design documents.
 
-- PropertyKey/reference continuation work is published at
-  `0b8e43ea3a55184258bc05bdadbc9508e333bddb`.
-- Ordinary training lineage through export/reload is published in the consumer
-  at `9c83827a269965c76e341ae2afd8e53fdbe66680`; native initialization binding and
-  real pinned-asset lifecycle qualification remain open.
-- The producer's mixed Promise/host/callback increment was committed locally as
-  `d9a3ce4`, with 31 focused controls and fresh contract generation passing.
-  The executor disconnected during publication, so this commit is **not yet
-  pushed**. Its native callback validation is also unfinished. Do not count these
-  three mixed fixtures as native-admitted.
-- The executor and its native-desktop fallback both report
-  `exec-server transport disconnected`. GitHub remains accessible. Tested
-  recovery-policy and training-lineage changes were recovered from their exact
-  patches and published through the connector; fresh hosted checks are required.
-- The detailed continuation instructions, exact unfinished native failures,
-  unpublished composition scope and next hard designs are retained in
-  [the recovery handoff](IMPLEMENTATION_RECOVERY_2026_11_20.md).
-- Hosted producer checks at `0b8e43e` still refuse stale protocol source fixtures;
-  the unpublished composition increment regenerates them. Current branch/policy
-  pairing is not a completed or all-green release qualification.
+- Both published branches are available in working checkouts. New remote commits
+  are preserved before integrating local changes; publication is working.
+- Initial hosted failures were reproduced: stale source-bound protocol fixtures,
+  an obsolete Number-accessor refusal assertion, and consumer formatting.
+  Fixture regeneration must retain the independent source/replay checks.
+- The Number regression now distinguishes supported owned getter execution from
+  still-unqualified training projection, and keeps exotic-object refusals.
+  Nine focused conversion checks pass; broader qualification remains separate.
+- The published training-to-serving identity binding is retained. Training/serving
+  history parity, callback/host composition, and cyclic async modules are next
+  after the small regression repairs.
+- Every implementation increment is committed and pushed promptly. Current
+  results below are separate from historical local-only `d9a3ce4` evidence.
+- The [recovery handoff](docs/IMPLEMENTATION_RECOVERY_2026_11_20.md) records the
+  earlier interruption and unfinished designs. All 17 full acceptance packages
+  remain open until their complete exit gates have executable evidence.
 
 ## Overall progress
 
-### Difficulty order and active priorities
+### Execution order and active priorities
 
-Per the requested hardest/least-defined-first order, work follows this ranking.
-Dependencies and regression repairs are completed within the affected increment;
-easy cleanup does not displace the difficult semantic work. The ranking is an
-engineering assessment, not a completion percentage or a schedule estimate.
+The ordering below follows the latest user instruction, from smaller bounded
+repairs to harder semantic and end-to-end work. Dependencies still apply. This
+is an execution order, not a completion percentage or schedule estimate.
 
-| Priority | Difficulty | Work and uncertainty to resolve | Active next slice |
+| Priority | Size / difficulty | Work | Next acceptance evidence |
 | --- | --- | --- | --- |
-| 1 | Very high | Protocol, host-effect, callback and crash-recovery composition: shared state, unique transition ownership and no repeated external work. | Publish the locally verified mixed host/callback increment, finish native callback obligations, then resolve shared-Promise readiness and unique source-event ownership. |
-| 2 | Very high | Complete continuation semantics: retained references, partially evaluated calls/conversions, cleanup, pending jobs and permitted next actions. | Retained Number/PropertyKey conversion and cached references delivered; next are wider references/calls/cleanup and independent source/public/native promotion. |
-| 3 | Very high | General Promise resolution and asynchronous module public/native semantics, including adoption, thenables, sibling ordering and async cycles. | Implement the designed cyclic async-module scheduler; general Promise adoption and scheduler public/native promotion remain separate gates. |
-| 4 | Very high; separate profiles | Dynamic code/realms, shared-memory agents, weak references and finalization; permitted outcomes and host obligations need explicit definitions. | Retain all obligations in the full target; define a bounded executable slice and observation rules for each before implementation. |
-| 5 | High | Direct V8 source certification and neutral execution core: remove old wire/episode dependencies across compilation, replay and lifecycle. | Direct V8 compilation and absence controls delivered; finish broader composable source ownership, corpus regeneration and production-route absence proof. |
-| 6 | High | Real training and live model lifecycle: source/tokenizer/model/optimizer/policy identities and recovery must agree end to end. | Actual-policy preparation, normal optimizer/export/reload and serving provenance; source admission must never imply learned success. |
-| 7 | High | Objects, Proxy, construction, coercion, iteration, collections, binary memory and RegExp interact through observable hooks and partial failure. | General mechanisms first, then method-level and cross-feature slices with native counterparts. |
-| 8 | Medium to high; dependency-gated | Full qualification, V6 production parity, default routing, installed legacy absence and coordinated release/rollback. | Repair current regressions; retain exact fresh evidence and every unfinished population. Final default/removal changes must precede final qualification. |
+| 1 | Small | Repair failing regression assertions, formatting, stale generated fixtures and obvious validation gaps. | Reproduce each failure, fix it without weakening admission, rerun the affected checks, commit and push. |
+| 2 | Small to medium | Inventory, runner and recovery edge cases: exact inputs, unsupported/resource/error classification, partial resume, tamper checks and complete denominators. | Focused fault controls, retained original failures, exact identities and reviewable inventories. |
+| 3 | Medium | Training/serving history and restored-policy parity, including acknowledged history, budgets and expected bundle identity. | Identical causal events and bytes on normal training/serving paths; reject altered state before external work. |
+| 4 | Medium to high | Direct V8 semantics and paired source/native checks; remove remaining old-wire dependencies where replacements exist. | Fresh matched contracts/fixtures, independent native checks and import-absence controls. |
+| 5 | High | Protocol → host → callback → protocol composition, retained references and unique transition ownership. | Mixed shared-state cases, errors/cancellation, boundary restores and no duplicate external work; independently paired native admission. |
+| 6 | High | General Promise and async-module scheduling, including adoption, shared readiness, cyclic dependencies and abrupt completion. | Native differentials and restore controls first; source/public/native promotion only after its separate checks. |
+| 7 | High to very high | Collections, construction, Proxy, iteration, binary/text intrinsics, dynamic code/realms, weak references and agents. | General mechanisms followed by method and cross-feature slices; explicit profile/observation rules; all mandatory edition obligations retained. |
+| 8 | Dependency-gated | Real pinned-asset training and model studies, complete production parity, final defaults/legacy removal, installed absence and release recovery. | Complete exact-pair qualification, ordinary optimizer/resume/export/reload, honest held-out quality/cost measurements, effect-safe release restore and rollback. |
 
 The 17-package tally below remains the acceptance ledger. A delivered increment
 does not close an entire ranked item or work package.
@@ -388,3 +384,44 @@ serving, and measured learned success.
   three host cases. Native root join/host replay passes; callback obligations
   and callback-owned dispatch pairing still fail. General shared pending-Promise
   readiness and declarative unique-ownership source composition remain open.
+
+- Invocation-owned native joins: join metadata now binds its owning invocation;
+  native validation rejects foreign jobs and cross-owner execution while retaining
+  shared-heap joins after a callback returns. Nine focused join tests pass,
+  including new owner-forgery controls. Published consumer:
+  `9a98149372fe494e7ad84fc712fa62dcf69f4c79`. Mixed fixture regeneration and full
+  callback/host replay remain under active qualification.
+
+- Training-to-serving identity binding: normal exported V8 bundles now provide a
+  validated training-lineage identity to native initialization, selection and
+  staged restoration. The producer requires the externally expected identity and
+  retains it in the frozen experiment and recovery policy. Missing, wrong and
+  rehashed identities are refused; declared diagnostic bundles retain explicit
+  null. Fourteen focused consumer checks and 26 producer transport/study/recovery
+  checks pass; these counts describe the separate affected suites. Published
+  producer `a4d0a56ef5b5b0ab1c1768ed16b15194630a0e89`, consumer
+  `c4900205dd625bef8ba21e36ff21e1f48e832688`. Actual pinned-asset lifecycle and
+  training/serving history equivalence remain open.
+
+- Conversion regression maintenance: replaces the obsolete runtime refusal for
+  getter-selected Number conversion with independent native-result and archive
+  replay checks, while retaining the separate training-projection refusal and
+  unsupported Proxy conversion boundary. `node --test
+  test/training-number-conversion.test.js test/owned-primitive-conversion.test.js`:
+  9 passed, zero failed/skipped. This does not widen public/native admission.
+
+## Paired consumer PR
+
+https://github.com/werg/megatoken/pull/38
+
+## Latest published branch heads
+
+- Producer: `a4d0a56ef5b5b0ab1c1768ed16b15194630a0e89`.
+- Consumer: `c4900205dd625bef8ba21e36ff21e1f48e832688`.
+
+These are incremental checkpoints, not a final qualified release pair. Both PRs
+remain drafts. Historical local-only composition results are not current evidence.
+
+## Latest hosted-check observation
+
+At consumer `9c83827a269965c76e341ae2afd8e53fdbe66680`, lint/format/shell checks and distribution build/install passed on Python 3.11 and 3.12. The complete CPU suites are still running. The selected-harness bridge and locale tests passed. This does not close the known mixed-callback admission, training/serving history, fresh data, or final paired-qualification gates.
