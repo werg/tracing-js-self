@@ -343,6 +343,21 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
             emit({kind:'property.define',object,key:property,descriptor:descriptor(node,storage),success:true},event,'owned-source-literal-definition/1');
           }
         }else emit({kind:'property.set',object:row.operands[0][1],key:key(row.operands[1]),receiver:tag(row.operands[0],event),value:tag(row.operands[2],event),success:true},event,'owned-source-property-write/1');
+      }else if(event.operation==='property.update'){
+        const [base,property,old]=row.operands,encoded=key(property);
+        if(base?.[0]!=='ref'||!['undefined','null','bool','str','num','bigint'].includes(old?.[0]))
+          refuse('property update requires an ordinary receiver and primitive numeric conversion');
+        const storage=encoded[0]==='str'?stringPropertyKey(encoded[1]):symbolPropertyKey(encoded[1]),
+          node=heapChanges.find(change=>change.id===base[1])?.after,next=node?.properties?.[storage]?.value;
+        if(!next||!row.update)refuse('property update lacks its committed data value');
+        const numeric=old[0]==='bigint'?old:encode(Number(decode(old))),
+          converted=old[0]==='bigint'?lit(old):{op:'unary',operator:'+',arg:lit(old)};
+        emit({kind:'property.get',object:base[1],key:encoded,receiver:tag(base,event),result:tag(old,event)},event,'owned-source-property-update-read/1');
+        compute(converted,numeric,event);
+        compute({op:'binary',operator:row.update.operator==='++'?'+':'-',left:lit(numeric),
+          right:lit(old[0]==='bigint'?['bigint','1']:['num',1])},next,event);
+        emit({kind:'property.set',object:base[1],key:encoded,receiver:tag(base,event),value:tag(next,event),success:true},event,'owned-source-property-update-write/1');
+        if(!eq(row.result,row.update.prefix?next:numeric))refuse('property update completion differs from its prefix/postfix mode');
       }else if(row.arithmetic){
         const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);
         compute({op:'binary',operator:row.arithmetic.operator,left:operand(row.operands[0],node?.left,event),right:operand(row.operands[1],node?.right,event)},row.result,event);
