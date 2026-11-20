@@ -22,7 +22,8 @@ Input cases have {id, artifact} or {id, artifactPath}; artifact paths resolve fr
 the input file. Each artifact must contain source-qualified v8 public, contexts,
 and sidecar evidence. An explicit fixture override may supply the environment.
 Freeze writes study.json plus private-cases.json. Keep private-cases.json away
-from model prompts. Native settings are exactly {device,maxTokens,maxFragments}.
+from model prompts. Native settings are exactly {device,maxTokens,maxFragments,effort};
+effort is explicitly bounded from 1 through 6. The runtime must attest frozen settings.
 A selector module exports createSelector(configuration), which receives only
 model/settings/identities/limits, never cases, expected records or future replies.
 Engineering fixture injections must declare --origin engineering. Reports never
@@ -81,8 +82,10 @@ if(command==='freeze'){
         origin:study.origin,limits:study.limits}));
     }else{
       const settings=study.settings;
-      if(Object.keys(settings).sort().join(',')!=='device,maxFragments,maxTokens'||
-        typeof settings.device!=='string'||!settings.device)throw new Error('Native settings must explicitly freeze device, maxTokens and maxFragments');
+      if(Object.keys(settings).sort().join(',')!=='device,effort,maxFragments,maxTokens'||
+        typeof settings.device!=='string'||!settings.device||!Number.isSafeInteger(settings.effort)||
+        settings.effort<1||settings.effort>6)
+        throw new Error('Native settings must explicitly freeze device, maxTokens, maxFragments and effort 1..6');
       select=createNativeV8PythonSelector({python:options.get('--python')??'python3',
         megatokenRepository:resolve(repository),servedBundle:resolve(bundle),...settings,
         timeoutMs:study.limits.timeoutMs});

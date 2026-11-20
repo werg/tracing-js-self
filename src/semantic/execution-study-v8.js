@@ -146,6 +146,7 @@ export async function runFrozenRegionExecutionStudy(study,{cases,select,caseIds=
       staleRetries:rows.reduce((sum,row)=>sum+(row.result?.costs.staleRetries??0),0),
       generatedBytes:rows.reduce((sum,row)=>sum+(row.result?.costs.generatedBytes??0),0),
       generatedTokens:rows.reduce((sum,row)=>sum+(row.result?.costs.generatedTokens??0),0),
+      unverifiedClaimedTokens:rows.reduce((sum,row)=>sum+(row.result?.costs.unverifiedClaimedTokens??0),0),
       unknownGenerationCostAttempts:rows.reduce((sum,row)=>sum+(row.result?.costs.unknownGenerationCostAttempts??0),0),
       elapsedMs:rows.reduce((sum,row)=>sum+(row.result?.costs.elapsedMs??0),0),
       nativeComputeSeconds:rows.reduce((sum,row)=>sum+Math.max(0,
@@ -156,7 +157,7 @@ export async function runFrozenRegionExecutionStudy(study,{cases,select,caseIds=
       nativeCostExecutions:rows.filter(row=>row.result?.nativeMetricsAfter?.runtime).length},
     qualification:{modelMeasurement:study.origin==='engineering'?'engineering-only':rows.some(row=>
       row.result?.qualification.modelMeasurement==='actual-model-selected')?'actual-model-selected':'unmeasured',
-      settings:'frozen configuration; runtime attestation covers checkpoint, tokenizer and seed',
+      settings:study.origin==='model'?'frozen configuration must match runtime attestation before selection':'engineering-only configuration',
       defaultPromotion:false,nativeAdmissionClaim:false,optimizerSteps:0}});
   if(onResult)await onResult(report());
   for(const row of rows){
@@ -165,7 +166,7 @@ export async function runFrozenRegionExecutionStudy(study,{cases,select,caseIds=
     try{
       const raw=await runSelectedRegionExecution({...copy(item.request),...study.limits,select,
         checkpointIdentity:study.checkpointIdentity,tokenizerIdentity:study.tokenizerIdentity,
-        seed:row.seed,origin:study.origin});
+        seed:row.seed,origin:study.origin,generationSettings:study.origin==='model'?copy(study.settings):null});
       row.result=raw;row.status=raw.status;
       row.result=await scoreSelectedRegionExecution(raw,privateCase.expectedArtifact);
       row.sourceValidated=row.result.sourceValidated;row.completedExecution=row.result.completedExecution;
