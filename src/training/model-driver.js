@@ -31,12 +31,17 @@ export function selectedWitnessFromGroup(group,trackId){
 }
 
 export class SelectedModelDriver {
-  constructor({select,harness=new SelectedExecutionHarness(),maxSelections=4096,maxOutstanding=64}={}){
+  constructor({select,harness=new SelectedExecutionHarness(),maxSelections=4096,maxOutstanding=64,
+      decodeSelection=decodeWitness,onCommitted=null,onRejected=null,prepareRequestDispatch=null}={}){
     if(typeof select!=='function')throw new TypeError('An actual selected-model adapter is required');
     if(!Number.isSafeInteger(maxSelections)||maxSelections<1||
        !Number.isSafeInteger(maxOutstanding)||maxOutstanding<1)
       throw new RangeError('Selected inference limits require positive integers');
-    Object.assign(this,{select,harness,maxSelections,maxOutstanding});
+    if(typeof decodeSelection!=='function'||onCommitted!==null&&typeof onCommitted!=='function'||
+       onRejected!==null&&typeof onRejected!=='function'||
+       prepareRequestDispatch!==null&&typeof prepareRequestDispatch!=='function')
+      throw new TypeError('Selected record and commitment hooks must be functions');
+    Object.assign(this,{select,harness,maxSelections,maxOutstanding,decodeSelection,onCommitted,onRejected,prepareRequestDispatch});
     this.rejections=[];this.running=new Map();
     this.detachRunnable=this.harness.onRunnable(invocationId=>queueMicrotask(()=>{
       if(this.running.has(invocationId))return;
@@ -194,14 +199,20 @@ export class SelectedModelDriver {
           fail('The model did not produce a bounded complete semantic record');
         let kind,fields;
         try{
-          ({kind,fields}=decodeWitness(decision));
+          ({kind,fields}=this.decodeSelection(decision));
           if(kind==='request'&&pending.size>=this.maxOutstanding)fail('Outstanding native effect budget exhausted');
-          this.harness.selected(invocationId,decision);selections++;
+          const result=this.harness.selected(invocationId,decision);selections++;
+          if(this.onCommitted)await this.onCommitted({invocationId,record:decision,selection:copy(selection),result});
         }catch(error){this.rejections.push({invocationId,record:decision,selection:copy(selection),
-          error:String(error),phase:'semantic-validation'});throw error;}
+          error:String(error),phase:'semantic-validation'});
+          if(this.onRejected&&await this.onRejected({invocationId,record:decision,selection:copy(selection),error}))continue;
+          throw error;}
         if(kind==='request'){
           let beforeDispatch=null;
-          if(selection?.modelSelected===true||this.select.nativeCommitRequired===true){
+          if(this.prepareRequestDispatch){
+            beforeDispatch=await this.prepareRequestDispatch({invocationId,record:decision,selection:copy(selection),fields});
+            if(beforeDispatch!==null&&typeof beforeDispatch!=='function')fail('Native dispatch hook must return a commitment callback or null');
+          }else if(selection?.modelSelected===true||this.select.nativeCommitRequired===true){
             if(!selection||typeof selection.selectedEventId!=='string'||
                 typeof selection.modelTrack!=='string'||selection.ownerTrack!==a.trackId)
               fail('Native request needs its original committed selection receipt');

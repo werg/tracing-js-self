@@ -162,8 +162,10 @@ export async function buildCausalLmV8Examples(exported,{tokenizer,eosTokenId,max
  * Detailed/protocol consistency does not establish correspondence to the source;
  * that remains an independent qualification, never a serving receipt claim. */
 export function commitCausalLmV8Selection(harness,invocationId,record,{context=null}={}){
-  if(context!==null)require(isDeepStrictEqual(context,harness.modelContext(invocationId)),
-    'public context changed during generation');
+  if(context!==null&&!isDeepStrictEqual(context,harness.modelContext(invocationId))){
+    const error=new TypeError('Causal LM v8: public context changed during generation');
+    error.category='causal-lm-stale-context';throw error;
+  }
   const decoded=decodeCausalLmV8Target(record),activation=harness.activation(invocationId),
     controller=activation.controller;
   require(!controller.firstWitnessViolation,'selected prefix contains a false witness claim');
