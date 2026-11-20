@@ -84,6 +84,7 @@ try{
     summary:summarizeQualificationCosts(rows,{tokenizer:Boolean(tokenModule)}),rows,artifacts};
   progress.save('report.json',report);
   console.log(JSON.stringify({output,producerRevision,summary:report.summary}));
+  if(rows.some(row=>row.cost?.status==='measurement-failed'))process.exitCode=1;
 }finally{
   progress?.close();const meter=tokenModule?.tokenizer;if(meter?.close)await meter.close();
 }
