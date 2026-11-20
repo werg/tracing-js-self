@@ -2,9 +2,8 @@
 // selected transition executes in the public v8 shared machine. No private
 // archive or extension hook is available to the serving harness.
 import {RegionExecutionHarness} from './region-harness.js';
-import {compileEffectfulWitness} from '../training/effectful-compiler.js';
-import {decodeWitness,encodeWitness} from '../training/format.js';
-import {encodeDetailedRecord,decodeDetailedRecord} from './detail-v8.js';
+import {compileSourceProjection} from './source-projection.js';
+import {SOURCE_PROJECTION_CLIENT_V8} from './source-compiler-v8.js';
 import {encodeProtocolRecordV8} from './protocol-codec-v8.js';
 
 export const EFFECTFUL_REGION_TEACHER_SCHEMA_V8='semantic-region-teacher-adapter/1';
@@ -24,15 +23,13 @@ function facade(bridge,contexts=[]){
     },
     prepareModelContext(owner){const context=bridge.modelContext(owner);contexts.push(copy(context));return context;},
     selected(owner,line){
-      return bridge.select(owner,line.startsWith('protocol ')?line:encodeDetailedRecord(decodeWitness(line),{role:'generated'}));
+      return bridge.select(owner,line);
     },
     checkpoint(){return bridge.checkpoint();},
     exportEpisode({sourceLineage=null}={}){return {public:bridge.exportEpisode(),contexts:copy(contexts),sidecar:{sourceLineage}};},
     get timeline(){
       bridge.sync();return bridge.timeline.map(({sequence,mode,kind,fields})=>({sequence,mode,
-        kind:kind==='protocol'?'semantic':kind,...copy(fields),
-        ...(fields.line?.startsWith('detail ')?{line:encodeWitness(...((record)=>[record.kind,record.fields])(
-          decodeDetailedRecord(fields.line,{role:mode==='observed'?'observed':'generated'})))}:{})}));
+        kind:kind==='protocol'?'semantic':kind,...copy(fields)}));
     }
   };
   for(const name of ['invocations','intents','handlers','realms','callbacks','programs','sourceAvailability'])
@@ -79,6 +76,7 @@ export function createEffectfulRegionAdapterV8({extensions=[]}={}){
 
 export function compileEffectfulRegionWitnessV8(bundle,{maxGenerated=16384,extensions=[]}={}){
   const regionAdapter=createEffectfulRegionAdapterV8({extensions});
-  return compileEffectfulWitness(bundle,{realmPolicy:'fresh',sessionId:'protocol-source',sourceLineage:null,
-    maxGenerated,semanticRegions:false,localStateCompaction:false,regionAdapter});
+  return compileSourceProjection(bundle,{realmPolicy:'fresh',sessionId:'protocol-source',sourceLineage:null,
+    maxGenerated,semanticRegions:false,localStateCompaction:false,regionAdapter,
+    projectionClient:SOURCE_PROJECTION_CLIENT_V8});
 }

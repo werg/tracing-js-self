@@ -1,9 +1,8 @@
 // Teacher-only projection into the compositional contract. Every accepted local
 // replacement agrees on the entire shared continuation, not just its result.
 import {isDeepStrictEqual} from 'node:util';
-import {verifyEffectfulTrainingCase,recheckEffectfulAdmission} from '../training/effectful-admit.js';
-import {decodeWitness} from '../training/format.js';
-import {encodeDetailedRecord} from './detail-v8.js';
+import {verifySourceTrainingCaseV8,recheckSourceAdmissionV8} from './source-admission-v8.js';
+import {encodeDetailedRecord,decodeDetailedRecord} from './detail-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
 import {defineRegionProgram,sharedRegionState,cloneRegionController,evaluateLocalRegion,REGION_TRACE_VERSION} from './regions.js';
 import {hashAlgorithmData} from './program.js';
@@ -20,7 +19,7 @@ const localKinds=new Set(['compute','choose','bind','return']);
 function observedRow(row){
   const {schema,sequence,ownerSequence,mode,kind,traceFormat,...fields}=copy(row);
   if(kind==='program')fields.regionProgram=defineRegionProgram({source:fields.source,entry:fields.entry}).program;
-  if(kind==='result')fields.line=encodeDetailedRecord(decodeWitness(fields.line),{role:'observed'});
+  if(kind==='result')decodeDetailedRecord(fields.line,{role:'observed'});
   return clean({mode,kind,fields});
 }
 function sourceLocations(sourceArtifact){
@@ -69,6 +68,9 @@ function projectWholePureWitness(sourceArtifact){
 
 export function projectRegionWitness(sourceArtifact){
   if(!sourceArtifact?.sidecar?.archive||!sourceArtifact?.public?.timeline)fail('owned source evidence missing');
+  if(sourceArtifact.public.schema!=='semantic-lifecycle/8'||sourceArtifact.public.traceFormat!=='semantic-trace/8'||
+    sourceArtifact.public.contextFormat!=='semantic-context/8'||sourceArtifact.sidecar.compiler?.schema!=='semantic-source-compiler/8')
+    fail('direct V8 source detail required; legacy source episodes are not accepted');
   if(sourceArtifact.sidecar.referenceStatus!=='agreed'||!['locally_verified','admitted'].includes(sourceArtifact.sidecar.admission))
     fail('independently checked source evidence is required');
   const pure=projectWholePureWitness(sourceArtifact);if(pure)return pure;
@@ -101,7 +103,7 @@ export function projectRegionWitness(sourceArtifact){
         if(item.kind==='model-context'){end++;continue;}
         const itemPoints=locate(item);
         if(item.kind!=='semantic'||item.invocationId!==row.invocationId||
-          !localKinds.has(decodeWitness(item.line).kind)||!itemPoints.length||
+          !localKinds.has(decodeDetailedRecord(item.line,{role:'generated'}).kind)||!itemPoints.length||
           !itemPoints.every(point=>point.start>=location.start&&point.end<=location.end))break;
         consumed.push(item);end++;
       }
@@ -109,7 +111,7 @@ export function projectRegionWitness(sourceArtifact){
       try{
         const candidate=harness.preview(row.invocationId,region.id);
         const expected=cloneRegionController(controller);
-        for(const item of consumed)expected.commitRecord(decodeWitness(item.line),{mode:'generated',track:activation.trackId});
+        for(const item of consumed)expected.commitRecord(decodeDetailedRecord(item.line,{role:'generated'}),{mode:'generated',track:activation.trackId});
         const actual=cloneRegionController(controller);
         for(const witness of evaluateLocalRegion(region,controller).records)actual.commitRecord(witness,{mode:'generated',track:activation.trackId});
         if(expected.firstWitnessViolation||!sameState(actual,expected))throw new TypeError('shared locals, aliases, heap, completion or obligations differ');
@@ -125,7 +127,7 @@ export function projectRegionWitness(sourceArtifact){
     }
     if(compact)continue;
     contexts.push(harness.modelContext(row.invocationId));
-    const record=decodeWitness(row.line),line=encodeDetailedRecord(record,{role:'generated'});
+    const record=decodeDetailedRecord(row.line,{role:'generated'}),line=encodeDetailedRecord(record,{role:'generated'});
     harness.select(row.invocationId,line);detailedRecords++;detailedBytes+=Buffer.byteLength(line);
     receipts.push({sequence:harness.timeline.at(-1).sequence,rule:'checked-detailed-boundary/1',sourceSequences:[row.sequence]});index++;
   }
@@ -156,7 +158,7 @@ async function tryDirectProtocolSource(fixture,prior){
 export async function verifyRegionTrainingCase(fixture){
   const identity=Object.fromEntries(['id','family','source','entry','ancestorIds','ancestors']
     .filter(key=>Object.hasOwn(fixture,key)).map(key=>[key,copy(fixture[key])]));
-  const source=await verifyEffectfulTrainingCase({...fixture,nativeConsumer:null,nativePolicy:null,
+  const source=await verifySourceTrainingCaseV8({...fixture,nativeConsumer:null,nativePolicy:null,
     projectionOptions:{...fixture.projectionOptions,semanticRegions:false,localStateCompaction:false}});
   if(!['locally_verified','admitted'].includes(source.status)){
     const refused={...identity,...source,regionDisposition:'source-unqualified',exported:undefined};
@@ -186,7 +188,7 @@ export async function recheckRegionEvidence(exported,{nativeConsumer=null,native
   if(side?.schema!=='semantic-region-evidence/1'||side.representation!==REGION_TRACE_VERSION||
     side.referenceStatus!=='agreed'||side.sourceArtifactDigest!==digest(side.sourceArtifact)||
     side.optimizerSteps!==0||side.learningClaim!==null)fail('incompatible or altered source evidence');
-  const source=await recheckEffectfulAdmission(side.sourceArtifact,{requireAdmitted:false});
+  const source=await recheckSourceAdmissionV8(side.sourceArtifact,{requireAdmitted:false});
   let moduleReference={status:'untested',applicable:false};
   if(side.sourceArtifact.sidecar?.sourceProvenance?.upstream?.moduleEvidence){
     const {recheckModuleRegionEvidence}=await import('./module-v8.js');

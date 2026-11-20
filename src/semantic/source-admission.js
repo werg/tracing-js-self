@@ -18,11 +18,9 @@ const noNative=()=>{throw new TypeError('Native admission belongs to the final r
 
 export function createSourceAdmissionClient({compileProjection,verifyProjection,bindIdentity,verifyIdentity,
     validateNativePolicy=noNative,validateNativeProducer=noNative,bindNativeAdmission=noNative,
-    verifyNativeBinding=noNative,recheckSession=null}={}){
+    verifyNativeBinding=noNative,recheckSession=null,receiptSchema='semantic-source-admission/1'}={}){
   if([compileProjection,verifyProjection,bindIdentity,verifyIdentity].some(fn=>typeof fn!=='function'))
     throw new TypeError('A source admission client requires a static projection and identity authority');
-  const compileEffectfulWitness=compileProjection,verifyEffectfulProjection=verifyProjection,
-    bindAdmissionIdentity=bindIdentity,verifyAdmissionIdentity=verifyIdentity;
 async function verifyTrainingCase({source,entry,args=[],fixture,
     family,license='repository-fixture',trustTier='repository-fixture',maxSteps=100000,
     timeoutMs=10000,nativeConsumer=null,seed=17,projectionOptions={},producerRevision=null,
@@ -51,7 +49,7 @@ async function verifyTrainingCase({source,entry,args=[],fixture,
     const run=await executeWithNativeServices({entry:{text:source,functionName:entry,args},
       services:broker.services,maxSteps,randomSeed,signal:abort.signal});bundle=run.bundle;
     const effects=broker.finish();phase='projection';
-    const compiled=compileEffectfulWitness(bundle,{sourceLineage:family,...projectionOptions});
+    const compiled=compileProjection(bundle,{sourceLineage:family,...projectionOptions});
     observations.owned={outcome:compiled.outcome,effects};
     phase='reference';
     const input={source,entry,inputGraph:encodeNativeGraph(args),fixture,randomSeed};
@@ -86,10 +84,10 @@ async function verifyTrainingCase({source,entry,args=[],fixture,
       archive:bundle,projectionOptions:{sourceLineage:family,...projectionOptions},
       referenceInput:input,
       reference:{...reference,sourceChecks},effects,
-      replay:verifyEffectfulProjection(bundle,exported,{sourceLineage:family,...projectionOptions}),
+      replay:verifyProjection(bundle,exported,{sourceLineage:family,...projectionOptions}),
       catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),
       evidenceKind:'deterministic-engineering',optimizerSteps:0});
-    bindAdmissionIdentity(exported);
+    bindIdentity(exported);
     if(nativeConsumer){
       phase='native-consumer';
       const receipt=await nativeConsumer(exported);bindNativeAdmission(exported,receipt,nativePolicy);
@@ -111,7 +109,7 @@ async function recheckAdmission(exported,{requireAdmitted=true,timeoutMs=10000,e
   if(!side?.archive||!side.referenceInput||side.referenceStatus!=='agreed'||
     requireAdmitted&&(side.admission!=='admitted'||side.selectionOrigin!=='certified_teacher'))
     throw new Error('Missing complete independent effectful admission evidence');
-  const projection=verifyEffectfulProjection(side.archive,exported,side.projectionOptions);
+  const projection=verifyProjection(side.archive,exported,side.projectionOptions);
   const {sourceId,functionName,arguments:args}=side.archive.entrySpec;
   const source=side.archive.sources.find(s=>s.sourceId===sourceId)?.text;
   const inputGraph=encodeNativeGraph(realizeGraph(side.archive.initialState.heap,args));
@@ -120,7 +118,7 @@ async function recheckAdmission(exported,{requireAdmitted=true,timeoutMs=10000,e
   if(!isDeepStrictEqual(input,side.referenceInput)||hash(source)!==side.sourceProvenance?.sourceDigest||
     hash(input.fixture)!==side.sourceProvenance?.fixtureDigest)
     throw new Error('Source/reference inputs differ from the owned initial context');
-  verifyAdmissionIdentity(exported,{expectedIdentityDigest});
+  verifyIdentity(exported,{expectedIdentityDigest});
   const references=[];
   for(const mode of [null,'operations','branches','completions'])references.push(await independentEffectfulReference(
     mode?{...input,mode}:input,{timeoutMs}));
@@ -154,7 +152,7 @@ async function recheckAdmission(exported,{requireAdmitted=true,timeoutMs=10000,e
       throw new Error('Native settlement receipt differs from owned delivery');
   }
   if(requireAdmitted)verifyNativeBinding(exported,nativePolicy);
-  return {schema:'semantic-source-admission/4',episodeDigest:projection.publicDigest,
+  return {schema:receiptSchema,episodeDigest:projection.publicDigest,
     identityDigest:side.identityDigest,identityValidated:true,
     producerRevision:side.producerRevision,catalogDigest:hash(JSON.stringify(hostOperationContract(),null,2)+'\n'),
     referenceStatus:'agreed',journalValidated:true,replayValidated:true,sourceValidated:true,

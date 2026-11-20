@@ -73,7 +73,7 @@ export function verifyNativeBinding(exported,policy=null){
 const sourceAdmission=createSourceAdmissionClient({compileProjection:compileEffectfulWitness,
   verifyProjection:verifyEffectfulProjection,bindIdentity:bindAdmissionIdentity,verifyIdentity:verifyAdmissionIdentity,
   validateNativePolicy,validateNativeProducer,bindNativeAdmission,verifyNativeBinding,
-  recheckSession:recheckEffectfulSession});
+  recheckSession:recheckEffectfulSession,receiptSchema:'semantic-source-admission/4'});
 export const verifyEffectfulTrainingCase=sourceAdmission.verifyTrainingCase;
 export const recheckEffectfulAdmission=sourceAdmission.recheckAdmission;
 

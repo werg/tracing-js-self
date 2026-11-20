@@ -9,7 +9,7 @@ import {normalizeJournal} from './normalize.js';
 import {propertyKeyValue,symbolPropertyKey,stringPropertyKey} from '../property-keys.js';
 import {decode,encode,truthy} from '../values.js';
 import {describeOwnedGraph} from '../training/graph.js';
-import {ownedEffectfulOutcome} from '../training/effectful-compiler.js';
+import {ownedEffectfulOutcome} from './source-projection.js';
 import {encodeDetailedRecord} from './detail-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
 import {encodeProtocolRecordV8,validateProtocolValueV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
