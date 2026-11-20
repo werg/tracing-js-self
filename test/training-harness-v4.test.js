@@ -144,7 +144,9 @@ test('exact replay verifies public causal selected records without invoking any 
   assert.equal(replay.exportEpisode().sidecar.admission,'locally_verified');
   const forbidden=structuredClone(exported);
   forbidden.public.timeline.find(x=>x.kind==='semantic').mode='observed';
-  assert.throws(()=>SelectedExecutionHarness.replay(forbidden),/Replay|observed|sequence/i);
+  assert.throws(()=>SelectedExecutionHarness.replay(forbidden),{
+    name:'TypeError',message:'Invalid semantic-execution/6 record schema, authority or fields'
+  });
   const reorder=structuredClone(exported);
   const index=reorder.public.timeline.findIndex(x=>x.kind==='result');
   [reorder.public.timeline[index],reorder.public.timeline[index-1]]=[
