@@ -1,8 +1,13 @@
 # Current execution tracing status
 
-**Only model-facing execution representation:** `semantic-execution/6`,
+**Default model-facing execution representation:** `semantic-execution/6`,
 `semantic-trace/6`, `semantic-context/6`, `semantic-continuation/6`,
 `selected-harness/2`.
+
+The explicitly selected [v8 candidate](SEMANTIC_REGIONS_V8.md) adds checked
+compositional regions and bounded protocol source profiles. Its qualification
+and dataset tools are available separately; external model results and the
+default-promotion decision remain independent gates.
 
 The canonical target is a **source-grounded semantic account**: calculations
 are checked expressions paired with the value computed at that point;

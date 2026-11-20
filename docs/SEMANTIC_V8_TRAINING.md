@@ -203,8 +203,8 @@ The [CLI](../tools/export-semantic-v8.mjs) accepts nonblank JSONL candidate rows
 ```sh
 node tools/export-semantic-v8.mjs \
   --input candidates.jsonl \
-  --tokenizer-module /absolute/path/v8-tokenizer.mjs \
-  --native-module /absolute/path/v8-native.mjs \
+  --tokenizer-module tools/semantic-v8-tokenizer-adapter.mjs \
+  --native-module tools/semantic-v8-native-adapter.mjs \
   --max-context 32768 \
   --seed 17 \
   --out /absolute/path/new-v8-dataset
