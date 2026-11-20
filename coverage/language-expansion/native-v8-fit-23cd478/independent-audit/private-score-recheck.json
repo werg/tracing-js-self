@@ -1,0 +1,245 @@
+{
+  "scope": "Historical exact-producer replay of retained private scoring; no inference, optimization, or model-weight verification",
+  "producerRevision": "9d4f6b3fcff97e7f915ae9c7228f7fd75aaaec3c",
+  "node": "24.22.3",
+  "v8": "13.6.233.17-node.63",
+  "timezone": "Europe/Berlin",
+  "studies": [
+    {
+      "phase": "current-source",
+      "model": "baseline",
+      "studyDigest": "50afba8eae61c174ec22b364cf95a0dd704036c09cd2c2ed1feaae8304c86197",
+      "declared": 6,
+      "rows": [
+        {
+          "case": "fit-increment",
+          "seed": 17,
+          "sourceStatus": "incomplete",
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "fit-increment",
+          "seed": 29,
+          "sourceStatus": "incomplete",
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "fit-increment",
+          "seed": 43,
+          "sourceStatus": "incomplete",
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "heldout-increment",
+          "seed": 17,
+          "sourceStatus": "incomplete",
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "heldout-increment",
+          "seed": 29,
+          "sourceStatus": "incomplete",
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "heldout-increment",
+          "seed": 43,
+          "sourceStatus": "incomplete",
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        }
+      ]
+    },
+    {
+      "phase": "current-source",
+      "model": "fitted",
+      "studyDigest": "7cd9fdc00a5f6124884482229d0964030aa3eb1a9e8d6ea1e17bb694382b5f1d",
+      "declared": 6,
+      "rows": [
+        {
+          "case": "fit-increment",
+          "seed": 17,
+          "sourceStatus": "passed-exact-projection",
+          "sourceValidated": true,
+          "completedExecution": true,
+          "originalDigestValid": true
+        },
+        {
+          "case": "fit-increment",
+          "seed": 29,
+          "sourceStatus": "passed-exact-projection",
+          "sourceValidated": true,
+          "completedExecution": true,
+          "originalDigestValid": true
+        },
+        {
+          "case": "fit-increment",
+          "seed": 43,
+          "sourceStatus": "passed-exact-projection",
+          "sourceValidated": true,
+          "completedExecution": true,
+          "originalDigestValid": true
+        },
+        {
+          "case": "heldout-increment",
+          "seed": 17,
+          "sourceStatus": "incomplete",
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "heldout-increment",
+          "seed": 29,
+          "sourceStatus": "incomplete",
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "heldout-increment",
+          "seed": 43,
+          "sourceStatus": "incomplete",
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        }
+      ]
+    },
+    {
+      "phase": "stale-source-authority",
+      "model": "baseline",
+      "studyDigest": "4a7b899a2ec99ab2ab5a5ee44dd9ae1c4a66dda9221cdeff34d2cbd2c4df8aca",
+      "declared": 6,
+      "rows": [
+        {
+          "case": "fit-increment",
+          "seed": 17,
+          "sourceError": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+          "publicCompleted": false,
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "fit-increment",
+          "seed": 29,
+          "sourceError": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+          "publicCompleted": false,
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "fit-increment",
+          "seed": 43,
+          "sourceError": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+          "publicCompleted": false,
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "heldout-increment",
+          "seed": 17,
+          "sourceError": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+          "publicCompleted": false,
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "heldout-increment",
+          "seed": 29,
+          "sourceError": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+          "publicCompleted": false,
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "heldout-increment",
+          "seed": 43,
+          "sourceError": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+          "publicCompleted": false,
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        }
+      ]
+    },
+    {
+      "phase": "stale-source-authority",
+      "model": "fitted",
+      "studyDigest": "036caffaa50aad69e250dd485ce6f5fbaa610d05026ba242c56c36fa98946d44",
+      "declared": 6,
+      "rows": [
+        {
+          "case": "fit-increment",
+          "seed": 17,
+          "sourceError": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+          "publicCompleted": true,
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "fit-increment",
+          "seed": 29,
+          "sourceError": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+          "publicCompleted": true,
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "fit-increment",
+          "seed": 43,
+          "sourceError": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+          "publicCompleted": true,
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "heldout-increment",
+          "seed": 17,
+          "sourceError": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+          "publicCompleted": false,
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "heldout-increment",
+          "seed": 29,
+          "sourceError": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+          "publicCompleted": false,
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        },
+        {
+          "case": "heldout-increment",
+          "seed": 43,
+          "sourceError": "Candidate identity evidence changed: runtime, dependency or verifier environment",
+          "publicCompleted": false,
+          "sourceValidated": false,
+          "completedExecution": false,
+          "originalDigestValid": true
+        }
+      ]
+    }
+  ]
+}
