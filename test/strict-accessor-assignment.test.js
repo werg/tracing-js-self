@@ -198,6 +198,23 @@ test('own and inherited readonly data follow strictness without changing descrip
   }
 });
 
+test('iterator inherited readonly tags follow assignment strictness and preserve expression order',()=>{
+  for(const strictMode of [false,true])for(const receiver of ['[1].values()','"a😀"[Symbol.iterator]()'])
+    for(const expression of ['base()[key()]=rhs()','base()[key()]+=rhs()']){
+      const source=(strictMode?'"use strict";':'')+'const it='+receiver+';let order="";'+
+        'function base(){order+="b";return it;}function key(){order+="k";return Symbol.toStringTag;}'+
+        'function rhs(){order+="r";return "!";}let assigned=0;let error="";'+
+        'try{assigned=('+expression+');}catch(e){order+="c";error=e.name;}'+
+        'let out=[order,assigned,error,it[Symbol.toStringTag],it.next().value];';
+      const runtime=compareScript(source,{returnRuntime:true}),write=runtime.events.find(event=>event.operation==='property.write'&&
+        (event.operands[1]?.[1]==='well-known:toStringTag'||event.completion?.errorType==='TypeError'));
+      assert(write);assert.equal(write.completion?.errorType,strictMode?'TypeError':undefined);
+      assert.equal(write.result===null,strictMode);
+      assert(!write.stateChanges.some(change=>change.table==='heap'&&change.before!==null),
+        'failed iterator assignment must preserve own properties and the iteration cursor');
+    }
+});
+
 test('readonly simple and compound assignments retain evaluation order and their sloppy expression values',()=>{
   for(const strictMode of [false,true])for(const inherited of [false,true])for(const expression of [
     'base()[key()]=rhs()','base()[key()]+=rhs()'

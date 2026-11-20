@@ -2207,8 +2207,10 @@ if(obj.kind==='set'){
            if(base.value[0]!=='ref'||!s.heap[base.value[1]])throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
           if(object.kind==='iterator'&&property===symbolPropertyKey('well-known:toStringTag')&&
-             !Object.hasOwn(object.properties,property))
-            guestFault('TypeError','Cannot assign inherited readonly iterator property');
+             !Object.hasOwn(object.properties,property)){
+            if(this.programs[f.codeId].strict)guestFault('TypeError','Cannot assign inherited readonly iterator property');
+            return {...operands(base,key,v),...result(v.value)};
+          }
           if(object.kind==='function'||object.kind==='generator'){
             if(object.kind==='function'){
               if(['arguments','caller'].includes(property)||['name','length'].includes(property)&&!Object.hasOwn(object.properties??{},property))throw new TypeError('Function descriptor assignment outside profile');
