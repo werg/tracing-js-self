@@ -16,6 +16,14 @@ unmeasured later implementation changes.
 | [Frozen producer regression](producer-regression-3a1992b/README.md) | 1,794 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `3a1992b`; full logs, code/test identities and interrupted predecessor retained |
 | [Latest production dataset](dataset-v8-492328f/README.md) | 34 freshly admitted episodes and 898 complete examples, with actual tokenizer re-encoding, masks, EOS and frozen component splits checked | Producer `492328f`, consumer `cb311db`; fresh 23-case interoperability and 11-case gallery admission; zero optimizer steps |
 
+Two later focused Number populations have separate exact receipts and do not
+change those corpus denominators:
+
+| Supplementary evidence | Measured result | Scope |
+| --- | --- | --- |
+| [Direct and nested Number callback throws](number-abrupt-3a1992b/README.md) | 2/2 source/native/token admissions | Producer `3a1992b`, consumer `418385b`; exact abrupt completions and suppressed fallback |
+| [Number callback catch/finally](number-completion-ddaac82/README.md) | 14 declared: 12 source/native/token admissions and two explicit source refusals | Producer `ddaac82`, consumer `91aea0d`; preserves the failed admission attempt at consumer `1967695` separately |
+
 All eight former enumeration refusals and the previous generator continuation
 failure pass in this new full run. The independent consumer passed 214 focused
 tests without skips. Expansion coverage contains 458 compact-containing episodes
