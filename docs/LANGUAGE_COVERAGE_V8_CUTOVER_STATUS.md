@@ -45,8 +45,8 @@ serving, and measured learned success.
 
 ## Initial regression targets
 
-- [ ] Pending Promise adoption preserves competing microtask order (`dqa`).
-- [ ] A distinct thenable resolving to itself once is called again and can fulfill.
+- [x] Owned-runtime Promise adoption preserves competing microtask order (`dqa`); public/native expansion remains open.
+- [x] Owned-runtime repeated thenable identity can fulfill; public/native expansion remains open.
 - [ ] Sibling top-level-await modules begin independently (`abAB`).
 - [x] A selected capability shard retains every catalog row and marks other rows not selected.
 - [ ] Ordinary training rejects unadmitted or policy-mismatched V8 data even when
@@ -77,3 +77,10 @@ serving, and measured learned success.
   and mark all unselected stages explicitly. `node --test
   test/capability-ledger.test.js`: 11 passed, zero failed/skipped, including the CLI.
   This closes the selected-shard defect, not the full edition inventory or runner.
+
+- Promise runtime increment: actual adoption/reaction jobs, per-assimilation
+  resolver ownership, repeated finite thenables, callable finally cleanup jobs,
+  and async callback return ordering. 27 existing Promise tests and 11 new
+  differential/restoration/malformed-state tests pass. A nonterminating chain
+  remains a resource outcome and mutual adoption remains pending. Public/source
+  and native admission guards are unchanged; this is owned execution evidence.

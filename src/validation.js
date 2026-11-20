@@ -104,6 +104,12 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
            e.causes.filter(c=>c.kind==='invocation').length!==1||
            e.causes.some(c=>c.kind==='promise'))
           fail('Microtask entry lacks an owned queued callback',e.eventId);
+      }else if(job?.kind==='promise-adopt'){
+        const adopter=state.promises[job.promiseId],target=state.promises[job.targetId];
+        if(adopter?.status!=='pending'||!target||adopter.adopting!==target.id||adopter===target||
+           e.causes.length!==1||e.causes[0].kind!=='promise'||e.causes[0].promiseId!==adopter.id||
+           !eq(e.result,['promise',adopter.id]))
+          fail('Queued Promise adoption lacks its target and resolving owner',e.eventId);
       }else if(job?.kind==='thenable'){
          const p=state.promises[job.promiseId];
          if(!p||p.status!=='pending'||p.thenableSerial!==job.serial||
@@ -116,6 +122,11 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
          e.causes.filter(c=>c.kind==='promise').length!==1 ||
          e.causes.find(c=>c.kind==='promise').promiseId!==job.promiseId)
         fail('Job entry does not consume the next settled promise observer',e.eventId);
+      if(job?.kind==='adoption'){
+        const adopter=state.promises[job.resultId];
+        if(adopter?.status!=='pending'||adopter.adopting!==job.promiseId)
+          fail('Promise adoption reaction has no matching pending owner',e.eventId);
+      }
     }
     if(e.operation==='host.task.enter'){
       const control=state.control.a0;
@@ -218,7 +229,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
           const rejection=Object.values(state.frames).some(f=>f.status==='thrown'&&f.asyncPromiseId&&
             eq(f.completion,c)&&state.promises[f.asyncPromiseId]?.status==='rejected');
           const reactionRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
-            f.reactionPromiseId&&eq(f.completion,c)&&state.promises[f.reactionPromiseId]?.status==='rejected');
+            (f.reactionPromiseId||f.finallyReaction?.resultId)&&eq(f.completion,c)&&
+            state.promises[f.reactionPromiseId??f.finallyReaction.resultId]?.status==='rejected');
           const pendingCoercion=Object.values(state.frames).some(f=>{
             const pending=f.pendingCoercionThrow, operation=state.operations[f.operationId];
             const methodId=operation?.coercion?.waitingFrameId;
@@ -232,7 +244,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
               state.promises[f.promiseExecutorTarget]?.resolverCalled));
            const thenableRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
              f.thenableJob&&eq(f.completion,c)&&
-             state.promises[f.thenableJob.promiseId]?.thenableLocked===true);
+             (state.promises[f.thenableJob.promiseId]?.thenableLocked===true||
+              state.promises[f.thenableJob.promiseId]?.thenableSerial>f.thenableJob.serial));
            // A thenable that calls resolve() and then throws ignores the throw.
            // It remains an executed guest abrupt completion, not a second
            // promise rejection, and is validated against the locked capability.

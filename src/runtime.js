@@ -744,7 +744,7 @@ export class Runtime {
   }
   deliverFrameValue(draft,frame,value,origin){
     if(frame.asyncPromiseId){this.resolvePromise(draft,frame.asyncPromiseId,value,origin);value=['promise',frame.asyncPromiseId];}
-    if(frame.reactionPromiseId)this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
+    this.deliverReactionValue(draft,frame,value,origin);
     if(frame.callerFrameId){
       const caller=draft.frames[frame.callerFrameId];
       if(caller.pendingNumberConversion?.waitingFrameId===frame.id){
@@ -966,13 +966,6 @@ export class Runtime {
     p.status=status;p.value=token(value,origin);
     for(const observer of p.observers)draft.control.a0.queue.push({promiseId:id,...observer});
     p.observers=[];
-    const adopters=p.adopters??[];p.adopters=[];
-    for(const adoptedId of adopters) {
-      const adopted=draft.promises[adoptedId];
-      if(adopted.adopting!==id)throw new Error('Broken promise adoption link');
-      adopted.adopting=null;
-      this.settlePromise(draft,adoptedId,status,value,origin);
-    }
   }
   rejectPromise(draft,id,reason,origin) {
     // Rejection reasons are opaque guest values, including promise identities.
@@ -989,14 +982,11 @@ export class Runtime {
         if(!found)throw new TypeError('Accessor/exotic thenable needs an owned get continuation');
         const method=found.method.value;
         if(this.callableGuest(draft,method)){
-          if(p.thenableSeen.includes(value[1])){
-            const reason=this.caughtError(draft,
-              {errorType:'TypeError',message:'Thenable resolution cycle'},origin);
-            this.rejectPromise(draft,id,reason.value,reason.origin);return;
-          }
-          if(p.thenableSeen.length>=64||draft.control.a0.queue.length>=256)
+          // Repeated thenable identity is legal. Each job owns a new resolving
+          // pair; only resolving a Promise with itself is a language error.
+          // Nonterminating chains are stopped by the driver's execution budget.
+          if(draft.control.a0.queue.length>=256)
             throw new RangeError('Owned thenable assimilation budget');
-          p.thenableSeen.push(value[1]);
           const serial=++p.thenableSerial;
           p.thenableLocked=false;
           draft.control.a0.queue.push({kind:'thenable',promiseId:id,thenableId:value[1],
@@ -1010,28 +1000,44 @@ export class Runtime {
     if(value[0]==='promise'){
       const target=draft.promises[value[1]];
       if(!target)throw new Error('Unknown guest promise');
-      let cycle=target===p;
-      const seen=new Set();
-      for(let current=target;!cycle&&current?.adopting;current=draft.promises[current.adopting]){
-        if(seen.has(current.id)||current.adopting===id)cycle=true;
-        seen.add(current.id);
-      }
-      if(cycle){
+      if(target===p){
         const reason=this.caughtError(draft,{errorType:'TypeError',
           message:'Chaining cycle detected for promise'},origin);
         this.rejectPromise(draft,id,reason.value,reason.origin);
         return;
       }
-      if(target.status==='pending'){
-        p.adopting=target.id;target.adopters??=[];target.adopters.push(id);return;
-      }
-      this.settlePromise(draft,id,target.status,target.value.value,target.value.origin);
+      // Promise resolution performs the intrinsic then call in an assimilation
+      // job, even when the target is already settled. Its reaction is another
+      // job. Cascading settlement here would overtake competing microtasks.
+      p.adopting=target.id;
+      draft.control.a0.queue.push({kind:'promise-adopt',promiseId:id,targetId:target.id});
       return;
     }
     this.settlePromise(draft,id,'fulfilled',value,origin);
   }
+  deliverReactionValue(draft,frame,value,origin){
+    if(frame.finallyReaction){
+      const reaction=frame.finallyReaction;delete frame.finallyReaction;
+      // finally returns PromiseResolve(callback()).then(valueThunk/thrower).
+      // The outer reaction then adopts that distinct promise. All three
+      // scheduling boundaries remain visible even for a primitive callback
+      // result, and an existing Promise is used directly by PromiseResolve.
+      const cleanup=value[0]==='promise'?value[1]:this.newPromise(draft);
+      if(value[0]!=='promise')this.resolvePromise(draft,cleanup,value,origin);
+      const passed=this.newPromise(draft);
+      this.observePromise(draft,cleanup,{kind:'finally-pass',resultId:passed,
+        originalStatus:reaction.originalStatus,original:reaction.original});
+      this.resolvePromise(draft,reaction.resultId,['promise',passed],origin);
+    }else if(frame.reactionPromiseId){
+      this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
+      // An async callback publishes its returned promise at its first await
+      // or completion. Its later resumption must not resolve the reaction again.
+      if(frame.asyncPromiseId)delete frame.reactionPromiseId;
+    }
+  }
   suspendAsync(draft,frame) {
     frame.status='suspended';
+    this.deliverReactionValue(draft,frame,['promise',frame.asyncPromiseId],null);
     if(frame.callerFrameId) {
       const caller=draft.frames[frame.callerFrameId];
       const pending=caller.pendingPromiseExecutor;
@@ -1097,7 +1103,7 @@ export class Runtime {
       if(frame.generatorId)draft.heap[frame.generatorId].state='completed';
       if(frame.thenableJob&&!frame.asyncPromiseId){
          const p=draft.promises[frame.thenableJob.promiseId];
-         if(p?.status==='pending'&&!p.thenableLocked){
+         if(p?.status==='pending'&&p.thenableSerial===frame.thenableJob.serial&&!p.thenableLocked){
            p.thenableLocked=true;
            const reason=this.caughtError(draft,completion,eventId);
            this.rejectPromise(draft,p.id,reason.value,reason.origin);
@@ -1107,6 +1113,7 @@ export class Runtime {
          // Async throws reject a guest promise, never the whole agent.
         const reason=this.caughtError(draft,completion,eventId);
         this.rejectPromise(draft,frame.asyncPromiseId,reason.value,reason.origin);
+        this.deliverReactionValue(draft,frame,['promise',frame.asyncPromiseId],eventId);
         if(frame.callerFrameId){
           const caller=draft.frames[frame.callerFrameId];
           const pending=caller.pendingPromiseExecutor;
@@ -1116,6 +1123,10 @@ export class Runtime {
           }else this.stackPush(caller,['promise',frame.asyncPromiseId],eventId);
           draft.control.a0.activeFrameId=caller.id;
         }else draft.control.a0.activeFrameId=null;
+      }else if(frame.finallyReaction){
+        const reason=this.caughtError(draft,completion,eventId);
+        this.rejectPromise(draft,frame.finallyReaction.resultId,reason.value,reason.origin);
+        draft.control.a0.activeFrameId=null;
       }else if(frame.reactionPromiseId){
         const reason=this.caughtError(draft,completion,eventId);
         this.rejectPromise(draft,frame.reactionPromiseId,reason.value,reason.origin);
@@ -3634,6 +3645,13 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
     if(!item)return;
     this.commit('job.enter',(s,eventId)=>{
       const job=s.control.a0.queue.shift();
+      if(job.kind==='promise-adopt'){
+        const adopter=s.promises[job.promiseId],target=s.promises[job.targetId];
+        if(adopter?.status!=='pending'||!target||adopter.adopting!==target.id||adopter===target)
+          throw new Error('Invalid queued Promise adoption');
+        this.observePromise(s,target.id,{kind:'adoption',resultId:adopter.id});
+        return {causes:[{kind:'promise',promiseId:adopter.id}],result:['promise',adopter.id]};
+      }
       if(job.kind==='thenable'){
          const p=s.promises[job.promiseId],fn=s.heap[job.thenId];
          if(p?.status!=='pending'||p.thenableSerial!==job.serial||
@@ -3675,6 +3693,15 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
         return {causes:[{kind:'invocation',frameId:id}],result:U};
       }
       const p=s.promises[job.promiseId];
+      if(job.kind==='adoption'){
+        const adopter=s.promises[job.resultId];
+        if(!p||!['fulfilled','rejected'].includes(p.status)||adopter?.status!=='pending'||adopter.adopting!==p.id)
+          throw new Error('Invalid Promise adoption reaction');
+        adopter.adopting=null;
+        if(p.status==='rejected')this.rejectPromise(s,adopter.id,p.value.value,p.value.origin);
+        else this.resolvePromise(s,adopter.id,p.value.value,p.value.origin);
+        return {causes:[{kind:'promise',promiseId:p.id}],result:p.value.value};
+      }
       if(job.kind==='combinator'){
         if(!p||!['fulfilled','rejected'].includes(p.status))
           throw new Error('Combinator job on unsettled promise');
@@ -3736,21 +3763,15 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
           else this.resolvePromise(s,reaction.resultId,original.value,original.origin);
           return {causes:[{kind:'promise',promiseId:job.promiseId}],result:original.value};
         }
-        let targetPromiseId=reaction.resultId;
-        if(isFinally){
-          // Adopt returned guest promises before preserving original outcome.
-          targetPromiseId=this.newPromise(s);
-          this.observePromise(s,targetPromiseId,{kind:'finally-pass',
-            resultId:reaction.resultId,originalStatus:p.status,original});
-        }
         const fn=s.heap[callback[1]];
         const args=isFinally?[]:[original];
         const inner=fn.async?this.newPromise(s):null;
         const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,args,this.functionThis(fn),fn.id);
         const child=s.frames[id];
         child.reactionJob=true;
-        if(inner)this.resolvePromise(s,targetPromiseId,['promise',inner],eventId);
-        else child.reactionPromiseId=targetPromiseId;
+        if(isFinally)child.finallyReaction={resultId:reaction.resultId,
+          originalStatus:p.status,original:copy(original)};
+        else child.reactionPromiseId=reaction.resultId;
         s.control.a0.activeFrameId=id;
         return {causes:[{kind:'promise',promiseId:job.promiseId},
           {kind:'invocation',frameId:id}],result:['promise',reaction.resultId]};
