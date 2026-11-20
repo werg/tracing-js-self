@@ -23,11 +23,11 @@ eight previously refused cases; the repaired consumer admits the previously
 failing generator-delegation continuation. Earlier receipts retain their own
 original failures and pins.
 
-The [frozen producer regression](../coverage/language-expansion/producer-regression-b66c19b/README.md)
-passed **1,778 tests**, with six conditional native-environment skips and zero
-failures, plus all five contract generators and eight reference fixtures. The
-independent consumer passed **214 tests without skips** at the same paired
-revisions. The later [production dataset](../coverage/language-expansion/dataset-v8-492328f/README.md)
+The later [frozen producer regression](../coverage/language-expansion/producer-regression-3a1992b/README.md)
+passed **1,794 tests** at producer `3a1992b`, with six conditional
+native-environment skips and zero failures, plus all five contract generators
+and eight reference fixtures. The independent consumer passed **214 tests
+without skips** at the earlier `b66c19b` / `6adf99f` pair. The later [production dataset](../coverage/language-expansion/dataset-v8-492328f/README.md)
 freshly admitted all **34 episodes and 898 complete examples** at producer
 `492328f` and consumer `cb311db` after binding component splits, with
 independently re-encoded tokens and generated-only masks. Its receipts come
