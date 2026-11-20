@@ -86,8 +86,19 @@ jobs:
       - name: Check independent v8 semantics and malformed boundaries
         working-directory: megatoken
         run: |
-          python -m pytest -q tests/test_*v8.py tests/test_protocol_properties.py \
+          python -m pytest -q tests/test_*v8.py tests/test_algorithm_v7.py tests/test_protocol_properties.py \
             --junitxml="$RUNNER_TEMP/semantic-v8-tests.xml" 2>&1 | tee "$RUNNER_TEMP/semantic-v8-tests.log"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          suites = ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-tests.xml').getroot().iter('testsuite')
+          counts = {key: 0 for key in ('tests', 'failures', 'errors', 'skipped')}
+          for suite in suites:
+              for key in counts:
+                  counts[key] += int(suite.get(key, 0))
+          if counts['tests'] == 0 or any(counts[key] for key in ('failures', 'errors', 'skipped')):
+              raise ValueError(f'Native v8 tests, including live source checks, must all run and pass: {counts}')
+          PY
       - id: qualification
         name: Recollect exact source and native admission receipts
         working-directory: tracing-js-self
