@@ -151,9 +151,10 @@ Local source validation is not the same as native data admission. A
 production training sample must additionally pass complete selected
 record replay, strict observable reference agreement, pinned native
 tokenizer, native action/visibility/loss checks, and family/split
-provenance. Schema changes require coordinated version changes, fresh collection and
-preparation with the separately versioned Megatoken consumer; old artifacts
-are rejected rather than migrated. No model-learning improvement
+provenance. During pre-release development, schema changes update the producer,
+Megatoken consumer, fixtures and examples together in place, with fresh
+qualification at exact revisions. Historical artifacts retain their original
+identity and do not qualify changed code. No model-learning improvement
 is claimed from compactness alone; learned quality must be measured
 with genuine held-out model runs.
 

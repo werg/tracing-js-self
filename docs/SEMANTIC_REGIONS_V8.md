@@ -19,8 +19,12 @@ at producer `8d1f7b5` and consumer `be3a8d7` passed all **22 interoperability
 cases and 11 retained-gallery cases**, including live source authority, public
 replay, contexts, continuation, physical masks and the pinned production
 tokenizer. Exact flat costs and native packing are retained for every case.
-These complete populations qualify their declared examples; the separate
-665-case expansion population is still being measured. **External model
+The separate [665-case expansion run](../coverage/language-expansion/native-v8-8d1f7b5-all/README.md)
+retains 657 source passes, 656 native admissions, eight explicit enumeration
+refusals and one native continuation failure. Its exact costs and paired
+historical comparison are complete; the failure still needs fresh qualification
+after repair. These receipts qualify only their recorded revisions and inputs.
+**External model
 comprehension and execution remain unmeasured**, and the production default
 remains unchanged. Exact receipt requirements are in
 [the training contract](SEMANTIC_V8_TRAINING.md#native-admission).
@@ -168,13 +172,15 @@ universal equivalence or a measured model-comprehension improvement.
 ## Remaining promotion gates
 
 The complete 22-case interoperability and 11-case gallery runs have retained
-source/native admission, exact tokenizer costs and native packing. The separate
-665-case expansion population and its matched historical cost comparison remain
-**pending**. The frozen populations and reproduction commands are documented in
-[the evaluation protocol](LANGUAGE_EXPANSION_EVALUATION.md). A production
-[gallery dataset export](../coverage/language-expansion/dataset-v8-9d76176/README.md)
-also retains all 97 generated examples, exact masks and fresh admission after
-split binding at its explicitly recorded earlier producer/consumer revisions.
+source/native admission, exact tokenizer costs and native packing. The
+665-case expansion run and its 42-pair historical comparison are also retained,
+including one native failure and eight explicit source refusals. Detailed
+targets account for 86.03% of generated expansion tokens. The frozen populations
+and reproduction commands are documented in
+[the evaluation protocol](LANGUAGE_EXPANSION_EVALUATION.md). The combined
+[production dataset export](../coverage/language-expansion/dataset-v8-8d1f7b5/README.md)
+retains all 33 gallery/interoperability episodes and 858 complete examples,
+exact masks and fresh admission after split binding at its recorded revisions.
 
 External model comprehension, next-step accuracy, completed execution and cost
 per successful model execution remain **unmeasured**. Default promotion remains

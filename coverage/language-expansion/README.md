@@ -8,12 +8,19 @@ containing a report does not change its source or consumer identity.
 | Evidence | Measured result | Scope |
 | --- | --- | --- |
 | [Native interoperability and gallery](native-v8-8d1f7b5/README.md) | 22/22 interoperability and 11/11 gallery cases passed source/native admission and exact token metering | Producer `8d1f7b5`, consumer `be3a8d7`; all receipts, inputs, masks and costs retained |
+| [Full expansion and paired costs](native-v8-8d1f7b5-all/README.md) | 665 attempts: 657 source passes, 656 native admissions, eight source refusals and one native continuation failure; exact tokens for all source passes | Same producer/consumer; 42 matched historical rows have 90.21% lower flat total cost and 4.12% fewer generated tokens |
 | [Producer regression](producer-regression-2f9bca8/README.md) | 1,740 passed, six optional skips, zero failures; all eight reference checks passed | Exact producer `2f9bca8`; later policy, adapter, CI and evidence changes have separate checks |
+| [Combined production dataset](dataset-v8-8d1f7b5/README.md) | 33 admitted gallery/interoperability episodes, 858 complete examples; independently verified prompts, masks, EOS and frozen splits | Producer `8d1f7b5`, consumer `be3a8d7`; zero optimizer steps |
 | [Production gallery dataset](dataset-v8-9d76176/README.md) | 11 admitted episodes, 97 complete examples; independently re-encoded prompts/targets, masks, EOS and split bindings | Exact producer `9d76176`, consumer `5a22bc8`; zero optimizer steps |
 | [Interrupted native run](native-v8-2f9bca8-interrupted/README.md) | 153 recorded attempts: 16 admitted, 137 failed; 512 untested | Historical producer `2f9bca8`, consumer `5a22bc8`; failures and exact transport bytes preserved |
 
-The separate 665-case expansion population and paired historical cost comparison
-are being completed. External-model comprehension, completed model execution,
+The full population and paired historical cost comparison are retained. The
+native continuation failure and eight bounded enumeration refusals remain
+visible; a later repair requires fresh qualification. Of the 657 source passes,
+458 have compact regions, while detailed targets still contribute 86.03% of
+generated tokens. The paired total reduction is mainly reduced submitted
+context, and eight individual matched cases cost more. External-model
+comprehension, completed model execution,
 native serving latency/cache behavior and default promotion remain unqualified.
 
 ## Baseline before expansion
