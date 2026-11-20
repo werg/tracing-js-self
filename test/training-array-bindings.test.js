@@ -92,7 +92,6 @@ test('nested binding failures never publish successful traces',()=>{
   try{
     for(const [code,scope] of [
       ['const {a:{b}}=self;return b;', {a:null}],
-      ['const {a:[x]}=self;return x;', {a:'string'}],
       ['const {x:a,y:a}=self;return a;',{}],
       ['const {a:{b:{c:{d:{e}}}}}=self;return e;',{}],
       ['const {Array: Array, a:[x]}=self;return x;',{}]
@@ -112,16 +111,13 @@ test('var array destructuring hoists and reuses function-scoped names',()=>{
     {items:[1],more:[8]}),8);
 });
 
-test('unsupported array patterns and non-array iterators fail before trace publication',()=>{
+test('invalid array patterns and non-iterables fail before trace publication',()=>{
   const traces=[];
   const env=createBoundedNatlangEnvironment({EvalFailure,
     onTrace:bundle=>traces.push(bundle)});
   try{
     for(const [code,scope] of [
       ['const [a,a]=self.items;return a;',{items:[2,3]}],
-      ['const [a]=self.items;return a;',{items:'a'}],
-      ['const Array={isArray:()=>true};const [a]=self.items;return a;',{items:[1]}],
-      ['function f(Array){const [a]=self.items;return a;}return f({isArray:()=>true});',{items:[1]}],
       ['const [a]=self.items;return a;',{items:{0:2,length:1}}]
     ]){
       assert.throws(()=>env.execute({code,scope,body:true,path:'natlang://unsupported-array.ts'}),
@@ -129,6 +125,13 @@ test('unsupported array patterns and non-array iterators fail before trace publi
     }
     assert.equal(traces.length,0);
   }finally{env.close();}
+});
+
+test('binding iteration accepts strings and is independent of a shadowed Array binding',()=>{
+  assert.deepEqual(differential('const [first,...tail]=self.items;return [first,tail];',{items:'a😀b'}),['a',['😀','b']]);
+  assert.equal(differential('const {a:[first]}=self;return first;',{a:'string'}),'s');
+  assert.equal(differential('const Array={isArray:()=>false};const [a]=self.items;return a;',{items:[1]}),1);
+  assert.equal(differential('function f(Array){const [a]=self.items;return a;}return f({isArray:()=>false});',{items:[1]}),1);
 });
 
 test('TS rest elisions and mixed pattern declarations are owned',()=>{

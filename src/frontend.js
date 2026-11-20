@@ -591,6 +591,25 @@ export function compile(ast) {
       }
       emit('GET',klass,n);emit('CLASS_FINISH',{name:n.name},n);emit('LEAVE_SCOPE',null,n);
     }
+    function iteratorClose(iterator,node){
+      const performClose=()=>{
+        emit('GET',iterator,node);emit('CONST',{value:['str','return']},node);emit('GET_METHOD',null,node);
+        const present=emit('LOGICAL_JUMP',{operator:'??',to:null},node);
+        emit('POP',null,node);const absent=emit('JUMP',null,node);
+        instructions[present].arg.to=instructions.length;
+        emit('CALL',0,node);emit('REQUIRE_OBJECT',null,node);emit('POP',null,node);
+        instructions[absent].arg=instructions.length;
+      };
+      emit('PENDING_THROW',null,node);const normal=emit('JUMP_IF_FALSE',null,node);
+      // The incoming throw survives a return getter/call failure. A normal
+      // completion, including early binding completion, is replaced by it.
+      const suppress=emit('TRY_ENTER',null,node);performClose();emit('TRY_NORMAL',null,node);
+      const catchPc=instructions.length;emit('BIND_CATCH',null,node);emit('TRY_NORMAL',null,node);
+      instructions[suppress].arg={catchPc,finallyPc:null,afterPc:instructions.length};
+      const closed=emit('JUMP',null,node);
+      instructions[normal].arg=instructions.length;performClose();
+      instructions[closed].arg=instructions.length;
+    }
     function emitPattern(n,result=false){
           // Every nested initializer/get/default remains an owned bytecode
           // effect. Hidden generated names are inaccessible to guest syntax.
@@ -601,6 +620,17 @@ export function compile(ast) {
             emit('DECLARE',{name,kind:'let'},node);
             return name;
           };
+          const preparedTargets=new Map();
+          function prepareTarget(pattern){
+            while(pattern.type==='PatternDefault')pattern=pattern.target;
+            if(pattern.type!=='PatternMember')return;
+            const object=temporary(pattern),key=temporary(pattern);
+            expr(pattern.target.object);emit('INIT',object,pattern);
+            expr(pattern.target.property);emit('INIT',key,pattern);
+            // Destructuring evaluates the assignment reference before the
+            // iterator is advanced; PutValue itself still follows the value.
+            preparedTargets.set(pattern,{object,key});
+          }
           function bindPattern(pattern,variable){
             if(pattern.type==='PatternName'){
               emit('GET',variable,pattern);
@@ -610,7 +640,10 @@ export function compile(ast) {
             }
             if(pattern.type==='PatternSkip')return;
             if(pattern.type==='PatternMember'){
-              expr(pattern.target.object);expr(pattern.target.property);emit('GET',variable,pattern);
+              const prepared=preparedTargets.get(pattern);
+              if(prepared){emit('GET',prepared.object,pattern);emit('GET',prepared.key,pattern);}
+              else{expr(pattern.target.object);expr(pattern.target.property);}
+              emit('GET',variable,pattern);
               emit('PUT_PROP',null,pattern);emit('POP',null,pattern);return;
             }
             if(pattern.type==='PatternDefault'){
@@ -626,36 +659,72 @@ export function compile(ast) {
               return;
             }
             if(pattern.type==='PatternArray'){
-              emit('GET','Array',pattern);
-              emit('CONST',{value:['str','isArray']},pattern);
-              emit('GET_METHOD',null,pattern);
-              emit('GET',variable,pattern);
-              emit('CALL',1,pattern);
-              const invalid=emit('JUMP_IF_FALSE',null,pattern);
-              const accepted=emit('JUMP',null,pattern);
-              instructions[invalid].arg=instructions.length;
-              emit('UNSUPPORTED_EXPRESSION',
-                'Array binding requires an owned standard array',pattern);
-              instructions[accepted].arg=instructions.length;
-              for(const entry of pattern.elements){
-                const child=temporary(entry);
-                if(entry.rest){
-                  emit('NEW_ARRAY',null,entry);emit('INIT',child,entry);
-                  const index=temporary(entry);emit('CONST',{value:['num',entry.index]},entry);emit('INIT',index,entry);
-                  const top=instructions.length;
-                  emit('GET',variable,entry);emit('CONST',{value:['str','length']},entry);emit('GET_PROP',null,entry);
-                  emit('GET',index,entry);emit('BINARY','>',entry);const end=emit('JUMP_IF_FALSE',null,entry);
-                  emit('GET',child,entry);emit('GET',variable,entry);emit('GET',index,entry);emit('GET_PROP',null,entry);
-                  emit('APPEND_ARRAY',{spread:false},entry);emit('POP',null,entry);
-                  emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},entry);emit('POP',null,entry);emit('JUMP',top,entry);
-                  instructions[end].arg=instructions.length;bindPattern(entry.target,child);continue;
+              emit('GET',variable,pattern);emit('ITERATOR_ARRAY_GUARD',null,pattern);
+              const general=emit('JUMP_IF_FALSE',null,pattern);
+              function elements(fast){
+                const done=temporary(pattern),index=fast?temporary(pattern):null,
+                  iterator=fast?null:temporary(pattern),next=fast?null:temporary(pattern),
+                  step=fast?null:temporary(pattern),close=fast?null:temporary(pattern);
+                emit('CONST',{value:['bool',false]},pattern);emit('INIT',done,pattern);
+                if(fast){emit('CONST',{value:['num',0]},pattern);emit('INIT',index,pattern);}
+                else{
+                  emit('GET',variable,pattern);emit('CONST',{value:['symbol','well-known:iterator']},pattern);
+                  emit('GET_METHOD',null,pattern);emit('CALL',0,pattern);emit('REQUIRE_OBJECT',null,pattern);emit('INIT',iterator,pattern);
+                  emit('GET',iterator,pattern);emit('CONST',{value:['str','next']},pattern);emit('GET_METHOD',null,pattern);emit('INIT',next,pattern);
+                  emit('CONST',{value:['undefined']},pattern);emit('INIT',step,pattern);
+                  emit('CONST',{value:['bool',true]},pattern);emit('INIT',close,pattern);
                 }
-                emit('GET',variable,entry);
-                emit('CONST',{value:['num',entry.index]},entry);
-                emit('GET_PROP',null,entry);
-                emit('INIT',child,entry);
-                bindPattern(entry.target,child);
+                const handler=fast?null:emit('TRY_ENTER',null,pattern);
+                const advance=(child,skip=false)=>{
+                  emit('GET',done,pattern);const active=emit('JUMP_IF_FALSE',null,pattern),alreadyDone=emit('JUMP',null,pattern);
+                  instructions[active].arg=instructions.length;
+                  if(fast){
+                    emit('GET',variable,pattern);emit('CONST',{value:['str','length']},pattern);emit('GET_PROP',null,pattern);
+                    emit('GET',index,pattern);emit('BINARY','>',pattern);const exhausted=emit('JUMP_IF_FALSE',null,pattern);
+                    if(!skip){emit('GET',variable,pattern);emit('GET',index,pattern);emit('GET_PROP',null,pattern);emit('SET',child,pattern);emit('POP',null,pattern);}
+                    emit('UPDATE_BINDING',{name:index,operator:'++',prefix:true},pattern);emit('POP',null,pattern);
+                    const advanced=emit('JUMP',null,pattern);instructions[exhausted].arg=instructions.length;
+                    emit('CONST',{value:['bool',true]},pattern);emit('SET',done,pattern);emit('POP',null,pattern);
+                    instructions[advanced].arg=instructions.length;
+                  }else{
+                    // A next/done/value failure completes the iterator record
+                    // without IteratorClose; a later binding failure closes.
+                    emit('CONST',{value:['bool',false]},pattern);emit('SET',close,pattern);emit('POP',null,pattern);
+                    emit('GET',next,pattern);emit('CALL',0,pattern);emit('REQUIRE_OBJECT',null,pattern);emit('SET',step,pattern);emit('POP',null,pattern);
+                    emit('GET',step,pattern);emit('CONST',{value:['str','done']},pattern);emit('GET_PROP',null,pattern);
+                    const available=emit('JUMP_IF_FALSE',null,pattern);
+                    emit('CONST',{value:['bool',true]},pattern);emit('SET',done,pattern);emit('POP',null,pattern);
+                    const exhausted=emit('JUMP',null,pattern);instructions[available].arg=instructions.length;
+                    if(!skip){emit('GET',step,pattern);emit('CONST',{value:['str','value']},pattern);emit('GET_PROP',null,pattern);emit('SET',child,pattern);emit('POP',null,pattern);}
+                    emit('CONST',{value:['bool',true]},pattern);emit('SET',close,pattern);emit('POP',null,pattern);
+                    instructions[exhausted].arg=instructions.length;
+                  }
+                  instructions[alreadyDone].arg=instructions.length;
+                };
+                for(const entry of pattern.elements){
+                  const child=temporary(entry);prepareTarget(entry.target);
+                  if(entry.rest){
+                    emit('NEW_ARRAY',null,entry);emit('INIT',child,entry);
+                    const value=temporary(entry);emit('CONST',{value:['undefined']},entry);emit('INIT',value,entry);
+                    const top=instructions.length;advance(value);
+                    emit('GET',done,pattern);const available=emit('JUMP_IF_FALSE',null,pattern),end=emit('JUMP',null,pattern);
+                    instructions[available].arg=instructions.length;
+                    emit('GET',child,entry);emit('GET',value,entry);emit('APPEND_ARRAY',{spread:false},entry);emit('POP',null,entry);
+                    emit('JUMP',top,entry);instructions[end].arg=instructions.length;bindPattern(entry.target,child);
+                  }else{
+                    emit('CONST',{value:['undefined']},entry);emit('INIT',child,entry);
+                    advance(child,entry.target.type==='PatternSkip');bindPattern(entry.target,child);
+                  }
+                }
+                if(!fast){
+                  emit('TRY_NORMAL',null,pattern);const finallyPc=instructions.length;
+                  emit('GET',close,pattern);const skipClose=emit('JUMP_IF_FALSE',null,pattern);
+                  iteratorClose(iterator,pattern);instructions[skipClose].arg=instructions.length;emit('END_FINALLY',null,pattern);
+                  instructions[handler].arg={catchPc:null,finallyPc,afterPc:instructions.length};
+                }
               }
+              elements(true);const end=emit('JUMP',null,pattern);instructions[general].arg=instructions.length;
+              elements(false);instructions[end].arg=instructions.length;
               return;
             }
             if(pattern.type==='PatternObject'){
@@ -867,23 +936,7 @@ export function compile(ast) {
           instructions[finish].arg=exit;
           const finallyPc=instructions.length;
           emit('GET',close,n);const skipClose=emit('JUMP_IF_FALSE',null,n);
-          const performClose=()=>{
-            emit('GET',iterator,n);emit('CONST',{value:['str','return']},n);emit('GET_METHOD',null,n);
-            const present=emit('LOGICAL_JUMP',{operator:'??',to:null},n);
-            emit('POP',null,n);const absent=emit('JUMP',null,n);
-            instructions[present].arg.to=instructions.length;
-            emit('CALL',0,n);emit('REQUIRE_OBJECT',null,n);emit('POP',null,n);
-            instructions[absent].arg=instructions.length;
-          };
-          emit('PENDING_THROW',null,n);const normal=emit('JUMP_IF_FALSE',null,n);
-          // IteratorClose preserves an existing throw over return getter/call
-          // failures; a normal break/return is replaced by a close failure.
-          const suppress=emit('TRY_ENTER',null,n);performClose();emit('TRY_NORMAL',null,n);
-          const catchPc=instructions.length;emit('BIND_CATCH',null,n);emit('TRY_NORMAL',null,n);
-          instructions[suppress].arg={catchPc,finallyPc:null,afterPc:instructions.length};
-          const closed=emit('JUMP',null,n);
-          instructions[normal].arg=instructions.length;performClose();
-          instructions[closed].arg=instructions.length;
+          iteratorClose(iterator,n);
           instructions[skipClose].arg=instructions.length;
           emit('END_FINALLY',null,n);
           instructions[handler].arg={catchPc:null,finallyPc,afterPc:instructions.length};

@@ -436,19 +436,6 @@ export function parseTraining(source) {
         case 'Variable':if(n.init)value(n.init,e);break;
         case 'ClassBinding':value(n.value,e);break;
         case 'PatternBinding':case 'PatternAssignment':{
-          // Guard the modeled Array.isArray intrinsic against lexical
-          // shadowing even when the array occurs under an object pattern.
-          function hasArray(node){
-            if(node.type==='PatternArray')return true;
-            if(node.type==='PatternDefault')return hasArray(node.target);
-            if(node.type==='PatternObject')
-              return node.entries.some(item=>hasArray(item.target));
-            return false;
-          }
-          if(hasArray(n.pattern))
-            for(let cursor=e;cursor?.parent;cursor=cursor.parent)
-              if(cursor.names.has('Array'))
-                reject(n,'array pattern requires unshadowed owned Array intrinsic');
           function defaults(node){
             if(node.type==='PatternName'&&n.kind==='assignment'){if(!has(node.name,e))reject(node,'unbound assignment '+node.name);}
             else if(node.type==='PatternMember')value(node.target,e);
