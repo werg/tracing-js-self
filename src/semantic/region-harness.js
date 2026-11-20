@@ -196,7 +196,7 @@ export class RegionExecutionHarness {
     return clean({schema:REGION_CONTEXT_VERSION,representation:'mixed',profile:REGION_PROFILE,
       invocationId,programs:[...this.programs].map(([id,program])=>({id,program})),
       input:controller.input,state,regionCursor:{active:this.active,consumed:this.consumed},
-      obligations:{intents:[...this.inner.intents].map(([key,{args,...intent}])=>[key,intent]),
+      obligations:{intents:[...this.inner.intents].map(([key,{args,resultDigest,...intent}])=>[key,intent]),
         handlers:[...this.inner.handlers].map(([key,handler])=>[key,{...handler,seen:[...handler.seen],queue:[]}]),
         callbacks:[...this.inner.callbacks],closureQueue:this.inner.closureQueue.map(({args,...row})=>row)},
       visibleThrough:this.timeline.length,prefixDigest:hashAlgorithmData(this.timeline)});

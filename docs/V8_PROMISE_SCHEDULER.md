@@ -40,13 +40,22 @@ pretending that the missing work is an instantaneous settlement.
 
 The same checks apply to model-selected detail, reaction forwarding and
 observed-result import or explicit delivery. An observed result cannot smuggle
-an existing Promise identity into an ordinary fulfillment. Failed checks leave
-the prior execution state and public receipt prefix unchanged.
+an existing Promise identity into an ordinary fulfillment. These resolution
+preflights refuse unsupported values and malformed explicit result graphs before
+changing the execution state or appending a reconciliation receipt.
 
 The bounded source executor profile remains narrower: its first resolver call
 accepts primitive resolution and explicitly declared rejection, while general
 object/thenable resolution requires a separate source profile. Runtime support,
 public replay and source/native admission remain distinct qualifications.
+
+Fresh data-graph observations have matching producer live, replay and checkpoint
+contexts. Their record field order is canonical; property-array order, aliases,
+cycles and tagged values retain their meanings. The independent consumer checks
+the corresponding graph observation transition. This does not qualify a complete
+graph-returning host request: the current native request payload profile still
+refuses the required `owned-graph/1` argument envelope. No end-to-end native
+admission for that host request is claimed.
 
 Tests: [scheduler boundaries](../test/semantic-scheduler-boundaries-v8.test.js),
 [observed resolution](../test/semantic-scheduler-resolution-v8.test.js),
