@@ -111,3 +111,10 @@ serving, and measured learned success.
   getter and finally-result interactions. Thirteen new differential and restore
   tests pass; the broader 76-test Promise/runtime/source suite also passed.
   Public/native promotion and arbitrary iterable/species support remain open.
+
+- Owned Test262 runner increment: strict and sloppy scalar variants run without
+  wrapping the original test body; directive prologues remain intact. Parse
+  negatives cannot pass on compiler refusal; runtime negatives require verified
+  guest error completions. Resources and host defects are separate dispositions.
+  Combined runner/catalog controls: 32 passed, zero failed/skipped. The official
+  harness and broad original-script execution remain a subsequent gate.

@@ -130,7 +130,8 @@ test('selected Test262 pass, XFAIL, XPASS and reference regressions are distinct
   const path='language/statements/let/example.js';
   const testCase={path,gitBlobSha:'0'.repeat(40),baseline:'pass'};
   const source='/*---\nnegative:\n  phase: runtime\n  type: ReferenceError\n---*/\nlet x = x + 1;';
-  const runtimeError = {phase:'runtime',errorName:'ReferenceError'};
+  const runtimeError = {phase:'runtime',errorName:'ReferenceError',evidence:'owned-terminal-completion',
+    completion:{type:'throw',errorType:'ReferenceError'},verification:{validated:true,replayed:true}};
   const pass = classifyExecutionCase(testCase,source,()=>runtimeError,()=>runtimeError);
   assert.equal(pass.status,'pass');
   assert.equal(pass.unexpected,undefined);
@@ -148,6 +149,15 @@ test('selected Test262 pass, XFAIL, XPASS and reference regressions are distinct
   assert.equal(matchesTest262Expectation({phase:'compile',errorName:'SyntaxError'},{
     phase:'parse',type:'SyntaxError'
   }),false);
+});
+
+test('host interpreter failures cannot satisfy Test262 runtime-negative expectations',t=>{
+  t.mock.method(Runtime.prototype,'drive',()=>{throw new TypeError('Interpreter defect');});
+  const actual=runOwnedScript('let value=1;');
+  assert.equal(actual.evidence,'host-interpreter-diagnostic');
+  assert.equal(matchesTest262Expectation(actual,{phase:'runtime',type:'TypeError'}),false);
+  assert.equal(matchesTest262Expectation({phase:'runtime',errorName:'TypeError'},
+    {phase:'runtime',type:'TypeError'},{requireOwnedEvidence:true}),false);
 });
 
 test('unavailable harness coverage is never silently credited as passing',()=>{
