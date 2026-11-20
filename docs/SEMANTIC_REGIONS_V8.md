@@ -23,14 +23,16 @@ eight previously refused cases; the repaired consumer admits the previously
 failing generator-delegation continuation. Earlier receipts retain their own
 original failures and pins.
 
-The later [frozen producer regression](../coverage/language-expansion/producer-regression-9d4f6b3/README.md)
-passed **1,834 tests** at producer `9d4f6b3`, with six conditional
-native-environment skips and zero failures, plus all five contract generators
-and eight reference fixtures. Its subsequent targeted run passed **24/24**
-iterator/binding tests at `562f6f2`, with original logs and separately identified
-coordinator-reported source identity. The full regression is not relabeled as
-that later run. The independent consumer passed **214 tests
-without skips** at the earlier `b66c19b` / `6adf99f` pair. The later [production dataset](../coverage/language-expansion/dataset-v8-492328f/README.md)
+The [current complete Node 24 producer CI](../coverage/language-expansion/ci-node24-7855394/README.md)
+passed **1,836 of 1,844 tests**, with eight explicit skips and zero failures or
+cancellations; all later contract/fixture/demo checks passed. PR head `7855394`
+and actual merge checkout `e461fab` have identical complete trees, and their
+source tree equals qualification producer `012c9fe`. The eight skips comprise
+two unavailable OS-namespace checks, one unconfigured external codec check and
+five optional native-coordinator checks. The separate
+[local 9d regression](../coverage/language-expansion/producer-regression-9d4f6b3/README.md)
+retains 1,834 passes and six conditional skips at its original revision.
+The independent consumer passed **214 tests without skips** at the earlier `b66c19b` / `6adf99f` pair. The later [production dataset](../coverage/language-expansion/dataset-v8-492328f/README.md)
 freshly admitted all **34 episodes and 898 complete examples** at producer
 `492328f` and consumer `cb311db` after binding component splits, with
 independently re-encoded tokens and generated-only masks. Its receipts come
@@ -54,6 +56,7 @@ are in [the training contract](SEMANTIC_V8_TRAINING.md#native-admission).
 | Classes and private state (`class-private-source/1`) | Implemented and source-qualified: base/derived classes, ordinary function constructors and prototype replacement, fields, methods, private brands/updates, actual newTarget, object substitution and normal/throwing initializers. [Source tests](../test/protocol-construction-source.test.js) | Private accessors, constructor arrows/handlers, super-property references, exotic constructors and invalid derived-return guest errors need further public continuations. |
 | Number conversion (`number-conversion-source/1`) and ordinary cleanup (`ordinary-completions-source/1`) | Implemented and source-qualified: direct synchronous `Number` calls, data conversion methods, live fallback selection, nested callbacks and primitive conversion. Direct and nested callback throws retain exact abrupt continuations and suppress fallback. Caller/callback `catch` and `finally` retain pending completions, overrides, helper throws and nested cleanup. [Number source tests](../test/semantic-protocol-number-source-v8.test.js), [cleanup source tests](../test/semantic-protocol-completion-source-v8.test.js); [two abrupt source/native admissions](../coverage/language-expansion/number-abrupt-012c9fe/README.md) and [12 cleanup admissions plus one explicit Symbol refusal](../coverage/language-expansion/number-completion-012c9fe/README.md), freshly measured at producer `012c9fe` and consumer `39c4036`. Earlier loop-target refusals retain their historical scope. | Symbol catch remains an explicit source refusal. Intrinsic conversion TypeErrors, accessor selection, array stringification and async/exotic callbacks remain unqualified. |
 | Builtin iteration (`builtin-iterator/1`) | Implemented and source-qualified: explicit array values/keys/entries, Unicode string iteration and standard-array `for…of`, with live length and retained cursor/identity. [Source tests](../test/semantic-protocol-iterator-source-v8.test.js). Custom methods use the separate `custom-iterator-source/1` path. | Builtin index getters, optional iterator calls, captured builtin callable values and unmodeled intrinsic errors remain outside this component. |
+| Synchronous custom `for…of` (`custom-iterator-source/1`) | Implemented and source-qualified: exact iterator acquisition/receiver, cached next, live done/value reads, close lookup/call and pending completion precedence. Nested labeled breaks and continuing the outer loop close only the required iterator. [Source tests](../test/semantic-protocol-custom-iterator-source-v8.test.js); [16 source/native/token admissions plus four explicit refusals](../coverage/language-expansion/custom-iterator-012c9fe/README.md) at `012c9fe` / `39c4036`. | Malformed step/close results, noncallable return, cleanup inside generators and async iteration remain outside this bounded source profile. Pending targets belong to their frame; continue requires a loop target. Each frame is bounded to 64 handlers/targets. |
 | Flat iterable declarations (`custom-iterator-source/1`) | Implemented and source-qualified: initialized variable ArrayPatterns with holes, identifiers, identifier defaults and identifier rest. Cases retain original iterator acquisition/receiver, cached next, done/value order, elision, early close, exhaustion, step failures and Number-default throws. [Source tests](../test/semantic-protocol-iterable-binding-source-v8.test.js); [14 source/native/token admissions plus three explicit refusals](../coverage/language-expansion/iterable-binding-012c9fe/README.md) at `012c9fe` / `39c4036`. | Nested patterns, assignment destructuring and captured String builtin bindings remain explicit source refusals. Object and parameter patterns, asynchronous/generator iterator methods and arbitrary intrinsic guest errors are not qualified by this flat-declaration profile. |
 | Synchronous generators (`synchronous-generator-source/1`) | Implemented and source-qualified: sent values, return/throw, catch/finally suspension and `yield*` through builtin iterators or qualified generators; own String/Symbol data properties retain descriptors and aliases across suspension. [Source tests](../test/semantic-protocol-generator-source-v8.test.js) | Async generators, parameter expressions, custom delegation/accessors, absent-delegate-throw TypeErrors and loop-target cleanup remain unqualified. |
 | Promise joins (`promise-join/1`, source `promise-joins-source/1`) | Implemented and source-qualified: `all`/`race`, ordered dependencies, rejection, empty inputs and FIFO late no-op reactions. [Source tests](../test/semantic-protocol-promise-join-source-v8.test.js) | `allSettled`/`any`, external effects and unrestricted thenable behavior are outside this slice. |
@@ -213,10 +216,31 @@ contains all 34 gallery/interoperability episodes and 898 complete examples,
 with fresh source/native admission after split binding at producer `492328f`
 and consumer `cb311db`, and zero optimizer steps.
 
-External model comprehension, next-step accuracy, completed execution, cost per
-successful model execution, native serving latency and cache reuse remain
-**unmeasured**. Default promotion remains **unqualified** until those declared
-gates pass. The plan's [candidate-shipping rule](LANGUAGE_COVERAGE_PLAN.md#104-default-promotion-should-be-coordinated)
-permits this implemented, qualified candidate while those measurements remain
-unavailable. V6 stays the production default; historical v6/v7 and earlier v8
-receipts keep their original identities.
+Separate model experiments now have measured outcomes. The
+[four-step native fitting diagnostics](evidence/semantic-v8-diagnostic-pilot/2026-11-20/README.md)
+completed zero of two frozen executions in each study and retain their actual
+weights, malformed outputs and costs. The
+[audited current-contract study](../coverage/language-expansion/native-v8-fit-39c4036/independent-audit/README.md)
+retains three of three source-qualified completions on the optimized input of
+one increment program, zero of three on an input excluded from optimization,
+and zero of six for the zero-update baseline. Both inputs carry the same
+family-hash train split, so the excluded input is not an unseen program/family.
+
+That study retains 405 verified generated tokens for the fitted model and 344
+verified tokens plus two unknown-cost attempts for the baseline. The additional
+220 original emitted IDs in the two invalid-UTF8 attempts stay separately
+reported. Original native-compute and rollout timings are measured and retained;
+they do not establish a controlled latency improvement, cache saving or reliable
+cost per successful execution across a broader workload. The independent audit
+rechecked preserved bytes and private source scoring without inference or
+training. Its named 43MB historical checkpoint archive remains unavailable,
+so checkpoint hashes/tensor changes and regeneration from those weights were
+not independently verified.
+
+External-model comprehension remains **unmeasured**. Generalized learned
+execution, broader next-step accuracy, controlled serving-efficiency benefits,
+cache reuse and default promotion remain **unqualified**. The plan's
+[candidate-shipping rule](LANGUAGE_COVERAGE_PLAN.md#104-default-promotion-should-be-coordinated)
+permits the bounded candidate with these limitations recorded. v6 stays the
+production default; historical v6/v7 and earlier v8 receipts retain their own
+identities and original failures.

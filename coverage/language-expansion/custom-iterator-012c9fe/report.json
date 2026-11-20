@@ -1,0 +1,1545 @@
+{
+  "schema": "semantic-v8-supplementary-custom-iterator-regression/1",
+  "status": "passed",
+  "startedAt": "2026-11-20T17:37:59.188Z",
+  "producerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+  "pinsBefore": {
+    "producer": {
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "status": ""
+    },
+    "consumer": {
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "status": ""
+    }
+  },
+  "sourceSuite": {
+    "path": "test/semantic-protocol-custom-iterator-source-v8.test.js",
+    "sha256": "42a177f4b52d6a6554e72cf62fe0078a3273b9f661d28c408096e2840709b044"
+  },
+  "sourcePolicy": {
+    "schema": "semantic-native-policy/8",
+    "consumerRepository": "werg/megatoken",
+    "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+    "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7"
+  },
+  "nativePolicy": {
+    "schema": "semantic-native-policy/8",
+    "consumerRepository": "werg/megatoken",
+    "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+    "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7"
+  },
+  "externalPolicy": {
+    "file": "native-policy.json",
+    "sha256": "481d763ac583aee751f9826f1f5aa0f2b9ff583dd442a99b5bcc1a367cfbcccc",
+    "reason": "Exact unchanged copy of the committed matching policy; no contract, tokenizer or consumer fields are replaced."
+  },
+  "contractBytesSha256": "4e8242c443fff11011e71539bbe5279aa81c62e53db3c0d88335ac9e2032d273",
+  "tokenizerEvidence": {
+    "identity": {
+      "name": "inclusionAI/Ling-3.0-tiny",
+      "revision": "9a98e35fe1c9ee255f78dd64771c7ae15a799481",
+      "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+      "fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "codecVersion": "raw-byte-bpe-v2;binary=single-byte-v1;special-merges=masked",
+      "vocabSize": 157184
+    },
+    "qualification": {
+      "schema": "semantic-codec-meter/1",
+      "status": "qualified",
+      "scope": "byte-exact-token-meter-only",
+      "consumerRevision": "39c4036564428e44cc89caf261f517d856482695",
+      "consumerClean": true,
+      "codecSourceSha256": "98de7394ae3c4f47fe86d2767aaa103b8569de446913135a89de914af7182200",
+      "pythonVersion": "3.12.14",
+      "tokenizersVersion": "0.23.3",
+      "nativeAdmission": false
+    }
+  },
+  "declared": 20,
+  "cases": [
+    {
+      "id": "cached-next",
+      "body": "let gets=0;let calls=0;let next=function(){calls++;this.next=()=>{throw 99;};return {done:calls>2,value:this.marker+calls};};const it={marker:10,get next(){gets++;return next;},set next(v){next=v;}};const xs={[Symbol.iterator](){return it;}};let out=\"\";for(const n of xs)out+=n;return out+\":\"+gets;",
+      "expected": [
+        "str",
+        "1112:1"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "cached-next",
+        "family": "custom-iterator-source:cached-next",
+        "source": "\"use strict\";function run(){let gets=0;let calls=0;let next=function(){calls++;this.next=()=>{throw 99;};return {done:calls>2,value:this.marker+calls};};const it={marker:10,get next(){gets++;return next;},set next(v){next=v;}};const xs={[Symbol.iterator](){return it;}};let out=\"\";for(const n of xs)out+=n;return out+\":\"+gets;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "acquisition-receiver",
+      "body": "const it={i:0,next(){return {done:this.i++>0,value:8};}};const xs={selected:it,[Symbol.iterator](){return this.selected;}};let out=0;for(const n of xs)out+=n;return out;",
+      "expected": [
+        "num",
+        8
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "acquisition-receiver",
+        "family": "custom-iterator-source:acquisition-receiver",
+        "source": "\"use strict\";function run(){const it={i:0,next(){return {done:this.i++>0,value:8};}};const xs={selected:it,[Symbol.iterator](){return this.selected;}};let out=0;for(const n of xs)out+=n;return out;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "break-closes",
+      "body": "let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){log+=\"c\";return {};}};for(const n of it){log+=n;break;}return log;",
+      "expected": [
+        "str",
+        "1c"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "break-closes",
+        "family": "custom-iterator-source:break-closes",
+        "source": "\"use strict\";function run(){let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){log+=\"c\";return {};}};for(const n of it){log+=n;break;}return log;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "body-finally-before-close",
+      "body": "let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){log+=\"c\";return {};}};function f(){for(const n of it){try{return 3;}finally{log+=\"f\";}}}return f()+log;",
+      "expected": [
+        "str",
+        "3fc"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "body-finally-before-close",
+        "family": "custom-iterator-source:body-finally-before-close",
+        "source": "\"use strict\";function run(){let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){log+=\"c\";return {};}};function f(){for(const n of it){try{return 3;}finally{log+=\"f\";}}}return f()+log;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "throw-precedes-close-failure",
+      "body": "let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){log+=\"c\";throw 9;}};try{for(const n of it){throw 7;}}catch(e){return log+e;}",
+      "expected": [
+        "str",
+        "c7"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "throw-precedes-close-failure",
+        "family": "custom-iterator-source:throw-precedes-close-failure",
+        "source": "\"use strict\";function run(){let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){log+=\"c\";throw 9;}};try{for(const n of it){throw 7;}}catch(e){return log+e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "break-replaced-by-close-failure",
+      "body": "const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){throw 9;}};try{for(const n of it){break;}}catch(e){return e;}",
+      "expected": [
+        "num",
+        9
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "break-replaced-by-close-failure",
+        "family": "custom-iterator-source:break-replaced-by-close-failure",
+        "source": "\"use strict\";function run(){const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){throw 9;}};try{for(const n of it){break;}}catch(e){return e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "throw-precedes-return-getter-failure",
+      "body": "let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},get return(){log+=\"g\";throw 9;}};try{for(const n of it){throw 7;}}catch(e){return log+e;}",
+      "expected": [
+        "str",
+        "g7"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "throw-precedes-return-getter-failure",
+        "family": "custom-iterator-source:throw-precedes-return-getter-failure",
+        "source": "\"use strict\";function run(){let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},get return(){log+=\"g\";throw 9;}};try{for(const n of it){throw 7;}}catch(e){return log+e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "next-failure-does-not-close",
+      "body": "let closed=0;const it={[Symbol.iterator](){return this;},next(){throw 7;},return(){closed++;return {};}};try{for(const n of it){}}catch(e){return closed+\":\"+e;}",
+      "expected": [
+        "str",
+        "0:7"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "next-failure-does-not-close",
+        "family": "custom-iterator-source:next-failure-does-not-close",
+        "source": "\"use strict\";function run(){let closed=0;const it={[Symbol.iterator](){return this;},next(){throw 7;},return(){closed++;return {};}};try{for(const n of it){}}catch(e){return closed+\":\"+e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "done-failure-does-not-close",
+      "body": "let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {get done(){log+=\"d\";throw 7;},get value(){log+=\"wrong\";return 1;}};},return(){log+=\"wrong\";return {};}};try{for(const n of it){}}catch(e){return log+e;}",
+      "expected": [
+        "str",
+        "d7"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "done-failure-does-not-close",
+        "family": "custom-iterator-source:done-failure-does-not-close",
+        "source": "\"use strict\";function run(){let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {get done(){log+=\"d\";throw 7;},get value(){log+=\"wrong\";return 1;}};},return(){log+=\"wrong\";return {};}};try{for(const n of it){}}catch(e){return log+e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "value-failure-does-not-close",
+      "body": "let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {done:false,get value(){log+=\"v\";throw 7;}};},return(){log+=\"wrong\";return {};}};try{for(const n of it){}}catch(e){return log+e;}",
+      "expected": [
+        "str",
+        "v7"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "value-failure-does-not-close",
+        "family": "custom-iterator-source:value-failure-does-not-close",
+        "source": "\"use strict\";function run(){let log=\"\";const it={[Symbol.iterator](){return this;},next(){return {done:false,get value(){log+=\"v\";throw 7;}};},return(){log+=\"wrong\";return {};}};try{for(const n of it){}}catch(e){return log+e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "close-getter-and-receiver",
+      "body": "let log=\"\";const it={mark:5,[Symbol.iterator](){return this;},next(){return {done:false,value:1};},get return(){log+=\"g\";return function(){log+=this.mark;return {};};}};for(const n of it){break;}return log;",
+      "expected": [
+        "str",
+        "g5"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "close-getter-and-receiver",
+        "family": "custom-iterator-source:close-getter-and-receiver",
+        "source": "\"use strict\";function run(){let log=\"\";const it={mark:5,[Symbol.iterator](){return this;},next(){return {done:false,value:1};},get return(){log+=\"g\";return function(){log+=this.mark;return {};};}};for(const n of it){break;}return log;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "null-return-is-absent",
+      "body": "const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return:null};for(const n of it){break;}return 3;",
+      "expected": [
+        "num",
+        3
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "null-return-is-absent",
+        "family": "custom-iterator-source:null-return-is-absent",
+        "source": "\"use strict\";function run(){const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return:null};for(const n of it){break;}return 3;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "continue-and-exhaustion-do-not-close",
+      "body": "let log=\"\";const it={i:0,[Symbol.iterator](){return this;},next(){return {done:this.i===3,value:this.i++};},return(){log+=\"wrong\";return {};}};for(const n of it){if(n<2)continue;log+=n;}return log;",
+      "expected": [
+        "str",
+        "2"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "continue-and-exhaustion-do-not-close",
+        "family": "custom-iterator-source:continue-and-exhaustion-do-not-close",
+        "source": "\"use strict\";function run(){let log=\"\";const it={i:0,[Symbol.iterator](){return this;},next(){return {done:this.i===3,value:this.i++};},return(){log+=\"wrong\";return {};}};for(const n of it){if(n<2)continue;log+=n;}return log;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "nested-labeled-break",
+      "body": "let log=\"\";function make(name){return {[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){log+=name;return {};}};}outer:for(const a of make(\"o\")){for(const b of make(\"i\")){break outer;}}return log;",
+      "expected": [
+        "str",
+        "io"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "nested-labeled-break",
+        "family": "custom-iterator-source:nested-labeled-break",
+        "source": "\"use strict\";function run(){let log=\"\";function make(name){return {[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){log+=name;return {};}};}outer:for(const a of make(\"o\")){for(const b of make(\"i\")){break outer;}}return log;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "continue-outer-closes-inner-only",
+      "body": "let log=\"\";function make(name){let i=0;return {[Symbol.iterator](){return this;},next(){return {done:i++===2,value:1};},return(){log+=name;return {};}};}outer:for(const a of make(\"o\")){for(const b of make(\"i\")){continue outer;}}return log;",
+      "expected": [
+        "str",
+        "ii"
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "continue-outer-closes-inner-only",
+        "family": "custom-iterator-source:continue-outer-closes-inner-only",
+        "source": "\"use strict\";function run(){let log=\"\";function make(name){let i=0;return {[Symbol.iterator](){return this;},next(){return {done:i++===2,value:1};},return(){log+=name;return {};}};}outer:for(const a of make(\"o\")){for(const b of make(\"i\")){continue outer;}}return log;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "number-throw-during-close",
+      "body": "const o={valueOf(){throw 9;}};const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){Number(o);return {};}};try{for(const n of it){throw 7;}}catch(e){return e;}",
+      "expected": [
+        "num",
+        7
+      ],
+      "expectedSource": "passed",
+      "fixture": {
+        "id": "number-throw-during-close",
+        "family": "custom-iterator-source:number-throw-during-close",
+        "source": "\"use strict\";function run(){const o={valueOf(){throw 9;}};const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){Number(o);return {};}};try{for(const n of it){throw 7;}}catch(e){return e;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "iterator-next-nonobject-refusal",
+      "body": "const it={[Symbol.iterator](){return this;},next(){return 1;}};for(const n of it){}",
+      "expectedSource": "unsupported",
+      "fixture": {
+        "id": "iterator-next-nonobject-refusal",
+        "family": "custom-iterator-source:iterator-next-nonobject-refusal",
+        "source": "\"use strict\";function run(){const it={[Symbol.iterator](){return this;},next(){return 1;}};for(const n of it){}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "iterator-return-nonobject-refusal",
+      "body": "const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){return 3;}};for(const n of it){break;}",
+      "expectedSource": "unsupported",
+      "fixture": {
+        "id": "iterator-return-nonobject-refusal",
+        "family": "custom-iterator-source:iterator-return-nonobject-refusal",
+        "source": "\"use strict\";function run(){const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){return 3;}};for(const n of it){break;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "iterator-return-noncallable-refusal",
+      "body": "const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return:3};for(const n of it){break;}",
+      "expectedSource": "unsupported",
+      "fixture": {
+        "id": "iterator-return-noncallable-refusal",
+        "family": "custom-iterator-source:iterator-return-noncallable-refusal",
+        "source": "\"use strict\";function run(){const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return:3};for(const n of it){break;}}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    },
+    {
+      "id": "generator-custom-for-of-refusal",
+      "body": "function* g(){const it={[Symbol.iterator](){return this;},next(){return {done:true};}};for(const n of it){yield n;}}return g().next().done;",
+      "expectedSource": "unsupported",
+      "fixture": {
+        "id": "generator-custom-for-of-refusal",
+        "family": "custom-iterator-source:generator-custom-for-of-refusal",
+        "source": "\"use strict\";function run(){function* g(){const it={[Symbol.iterator](){return this;},next(){return {done:true};}};for(const n of it){yield n;}}return g().next().done;}",
+        "entry": "run",
+        "args": [],
+        "fixture": {
+          "calls": []
+        },
+        "timeoutMs": 30000
+      }
+    }
+  ],
+  "scope": "Sixteen positive custom-iterator cases and four explicit source refusals from the declared focused suite. Supplementary only; frozen broad-population results retain their original producer/consumer pins and denominators.",
+  "nativeDeadlineMs": 300000,
+  "optimizerSteps": 0,
+  "modelExecution": "unmeasured",
+  "nativeServing": "unmeasured",
+  "defaultPromotion": "not-qualified",
+  "rows": [
+    {
+      "id": "cached-next",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:37:59.190Z",
+      "sourceResult": "cached-next.result.json",
+      "sourceArtifact": "cached-next.source.json",
+      "observationRows": 23,
+      "nativeReceipt": "cached-next.native.json",
+      "admittedArtifact": "cached-next.admitted.json",
+      "nativeInput": "cached-next.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 124,
+        "contexts": 122,
+        "generatedRecords": 122,
+        "algorithmRecords": 0,
+        "regionRecords": 3,
+        "detailedRecords": 53,
+        "protocolRecords": 66,
+        "generatedTokens": 4384,
+        "observedTokens": 351887
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 718
+      },
+      "costArtifact": "cached-next.costs.json",
+      "flatTokens": {
+        "generated": 4384,
+        "terminal": 122,
+        "observedAndContext": 350989,
+        "peakContext": 3491,
+        "cumulativeContext": 350989,
+        "total": 355495,
+        "detailedShare": 0.9755930656934306
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "1112:1"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:41:09.437Z"
+    },
+    {
+      "id": "acquisition-receiver",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:41:09.438Z",
+      "sourceResult": "acquisition-receiver.result.json",
+      "sourceArtifact": "acquisition-receiver.source.json",
+      "observationRows": 17,
+      "nativeReceipt": "acquisition-receiver.native.json",
+      "admittedArtifact": "acquisition-receiver.admitted.json",
+      "nativeInput": "acquisition-receiver.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 72,
+        "contexts": 70,
+        "generatedRecords": 70,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 31,
+        "protocolRecords": 37,
+        "generatedTokens": 2625,
+        "observedTokens": 124800
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 274
+      },
+      "costArtifact": "acquisition-receiver.costs.json",
+      "flatTokens": {
+        "generated": 2625,
+        "terminal": 70,
+        "observedAndContext": 124262,
+        "peakContext": 2088,
+        "cumulativeContext": 124262,
+        "total": 126957,
+        "detailedShare": 0.9763809523809523
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          8
+        ]
+      },
+      "finishedAt": "2026-11-20T17:41:59.625Z"
+    },
+    {
+      "id": "break-closes",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:41:59.634Z",
+      "sourceResult": "break-closes.result.json",
+      "sourceArtifact": "break-closes.source.json",
+      "observationRows": 17,
+      "nativeReceipt": "break-closes.native.json",
+      "admittedArtifact": "break-closes.admitted.json",
+      "nativeInput": "break-closes.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 57,
+        "contexts": 55,
+        "generatedRecords": 55,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 24,
+        "protocolRecords": 29,
+        "generatedTokens": 2023,
+        "observedTokens": 95322
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 213
+      },
+      "costArtifact": "break-closes.costs.json",
+      "flatTokens": {
+        "generated": 2023,
+        "terminal": 55,
+        "observedAndContext": 94570,
+        "peakContext": 2004,
+        "cumulativeContext": 94570,
+        "total": 96648,
+        "detailedShare": 0.9683638161146811
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "1c"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:42:44.887Z"
+    },
+    {
+      "id": "body-finally-before-close",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:42:44.894Z",
+      "sourceResult": "body-finally-before-close.result.json",
+      "sourceArtifact": "body-finally-before-close.source.json",
+      "observationRows": 17,
+      "nativeReceipt": "body-finally-before-close.native.json",
+      "admittedArtifact": "body-finally-before-close.admitted.json",
+      "nativeInput": "body-finally-before-close.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 64,
+        "contexts": 62,
+        "generatedRecords": 62,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 28,
+        "protocolRecords": 33,
+        "generatedTokens": 2378,
+        "observedTokens": 104830
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 237
+      },
+      "costArtifact": "body-finally-before-close.costs.json",
+      "flatTokens": {
+        "generated": 2378,
+        "terminal": 62,
+        "observedAndContext": 104168,
+        "peakContext": 1997,
+        "cumulativeContext": 104168,
+        "total": 106608,
+        "detailedShare": 0.9869638351555929
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "3fc"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:43:51.897Z"
+    },
+    {
+      "id": "throw-precedes-close-failure",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:43:51.918Z",
+      "sourceResult": "throw-precedes-close-failure.result.json",
+      "sourceArtifact": "throw-precedes-close-failure.source.json",
+      "observationRows": 17,
+      "nativeReceipt": "throw-precedes-close-failure.native.json",
+      "admittedArtifact": "throw-precedes-close-failure.admitted.json",
+      "nativeInput": "throw-precedes-close-failure.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 61,
+        "contexts": 59,
+        "generatedRecords": 59,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 30,
+        "protocolRecords": 28,
+        "generatedTokens": 2679,
+        "observedTokens": 94602
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 220
+      },
+      "costArtifact": "throw-precedes-close-failure.costs.json",
+      "flatTokens": {
+        "generated": 2679,
+        "terminal": 59,
+        "observedAndContext": 94001,
+        "peakContext": 1871,
+        "cumulativeContext": 94001,
+        "total": 96739,
+        "detailedShare": 0.9884285181037701
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "c7"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:45:10.252Z"
+    },
+    {
+      "id": "break-replaced-by-close-failure",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:45:10.266Z",
+      "sourceResult": "break-replaced-by-close-failure.result.json",
+      "sourceArtifact": "break-replaced-by-close-failure.source.json",
+      "observationRows": 17,
+      "nativeReceipt": "break-replaced-by-close-failure.native.json",
+      "admittedArtifact": "break-replaced-by-close-failure.admitted.json",
+      "nativeInput": "break-replaced-by-close-failure.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 54,
+        "contexts": 52,
+        "generatedRecords": 52,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 24,
+        "protocolRecords": 28,
+        "generatedTokens": 2089,
+        "observedTokens": 70864
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 175
+      },
+      "costArtifact": "break-replaced-by-close-failure.costs.json",
+      "flatTokens": {
+        "generated": 2089,
+        "terminal": 52,
+        "observedAndContext": 70555,
+        "peakContext": 1611,
+        "cumulativeContext": 70555,
+        "total": 72696,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          9
+        ]
+      },
+      "finishedAt": "2026-11-20T17:46:17.482Z"
+    },
+    {
+      "id": "throw-precedes-return-getter-failure",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:46:17.484Z",
+      "sourceResult": "throw-precedes-return-getter-failure.result.json",
+      "sourceArtifact": "throw-precedes-return-getter-failure.source.json",
+      "observationRows": 15,
+      "nativeReceipt": "throw-precedes-return-getter-failure.native.json",
+      "admittedArtifact": "throw-precedes-return-getter-failure.admitted.json",
+      "nativeInput": "throw-precedes-return-getter-failure.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 60,
+        "contexts": 58,
+        "generatedRecords": 58,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 30,
+        "protocolRecords": 27,
+        "generatedTokens": 2628,
+        "observedTokens": 93178
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 216
+      },
+      "costArtifact": "throw-precedes-return-getter-failure.costs.json",
+      "flatTokens": {
+        "generated": 2628,
+        "terminal": 58,
+        "observedAndContext": 92556,
+        "peakContext": 1930,
+        "cumulativeContext": 92556,
+        "total": 95242,
+        "detailedShare": 0.9882039573820396
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "g7"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:47:27.930Z"
+    },
+    {
+      "id": "next-failure-does-not-close",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:47:27.940Z",
+      "sourceResult": "next-failure-does-not-close.result.json",
+      "sourceArtifact": "next-failure-does-not-close.source.json",
+      "observationRows": 9,
+      "nativeReceipt": "next-failure-does-not-close.native.json",
+      "admittedArtifact": "next-failure-does-not-close.admitted.json",
+      "nativeInput": "next-failure-does-not-close.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 42,
+        "contexts": 40,
+        "generatedRecords": 40,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 20,
+        "protocolRecords": 19,
+        "generatedTokens": 1646,
+        "observedTokens": 58950
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 144
+      },
+      "costArtifact": "next-failure-does-not-close.costs.json",
+      "flatTokens": {
+        "generated": 1646,
+        "terminal": 40,
+        "observedAndContext": 58088,
+        "peakContext": 1686,
+        "cumulativeContext": 58088,
+        "total": 59774,
+        "detailedShare": 0.9811664641555286
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "0:7"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:48:22.688Z"
+    },
+    {
+      "id": "done-failure-does-not-close",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:48:22.699Z",
+      "sourceResult": "done-failure-does-not-close.result.json",
+      "sourceArtifact": "done-failure-does-not-close.source.json",
+      "observationRows": 11,
+      "nativeReceipt": "done-failure-does-not-close.native.json",
+      "admittedArtifact": "done-failure-does-not-close.admitted.json",
+      "nativeInput": "done-failure-does-not-close.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 54,
+        "contexts": 52,
+        "generatedRecords": 52,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 22,
+        "protocolRecords": 29,
+        "generatedTokens": 2094,
+        "observedTokens": 96052
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 221
+      },
+      "costArtifact": "done-failure-does-not-close.costs.json",
+      "flatTokens": {
+        "generated": 2094,
+        "terminal": 52,
+        "observedAndContext": 94846,
+        "peakContext": 2264,
+        "cumulativeContext": 94846,
+        "total": 96992,
+        "detailedShare": 0.9851957975167144
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "d7"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:49:05.817Z"
+    },
+    {
+      "id": "value-failure-does-not-close",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:49:05.818Z",
+      "sourceResult": "value-failure-does-not-close.result.json",
+      "sourceArtifact": "value-failure-does-not-close.source.json",
+      "observationRows": 13,
+      "nativeReceipt": "value-failure-does-not-close.native.json",
+      "admittedArtifact": "value-failure-does-not-close.admitted.json",
+      "nativeInput": "value-failure-does-not-close.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 54,
+        "contexts": 52,
+        "generatedRecords": 52,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 23,
+        "protocolRecords": 28,
+        "generatedTokens": 2081,
+        "observedTokens": 84609
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 197
+      },
+      "costArtifact": "value-failure-does-not-close.costs.json",
+      "flatTokens": {
+        "generated": 2081,
+        "terminal": 52,
+        "observedAndContext": 83755,
+        "peakContext": 1993,
+        "cumulativeContext": 83755,
+        "total": 85888,
+        "detailedShare": 0.9851033157135992
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "v7"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:50:05.336Z"
+    },
+    {
+      "id": "close-getter-and-receiver",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:50:05.345Z",
+      "sourceResult": "close-getter-and-receiver.result.json",
+      "sourceArtifact": "close-getter-and-receiver.source.json",
+      "observationRows": 17,
+      "nativeReceipt": "close-getter-and-receiver.native.json",
+      "admittedArtifact": "close-getter-and-receiver.admitted.json",
+      "nativeInput": "close-getter-and-receiver.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 64,
+        "contexts": 62,
+        "generatedRecords": 62,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 24,
+        "protocolRecords": 36,
+        "generatedTokens": 2270,
+        "observedTokens": 112489
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 251
+      },
+      "costArtifact": "close-getter-and-receiver.costs.json",
+      "flatTokens": {
+        "generated": 2270,
+        "terminal": 62,
+        "observedAndContext": 111742,
+        "peakContext": 2153,
+        "cumulativeContext": 111742,
+        "total": 114074,
+        "detailedShare": 0.9718061674008811
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "g5"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:51:15.141Z"
+    },
+    {
+      "id": "null-return-is-absent",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:51:15.152Z",
+      "sourceResult": "null-return-is-absent.result.json",
+      "sourceArtifact": "null-return-is-absent.source.json",
+      "observationRows": 15,
+      "nativeReceipt": "null-return-is-absent.native.json",
+      "admittedArtifact": "null-return-is-absent.admitted.json",
+      "nativeInput": "null-return-is-absent.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 47,
+        "contexts": 45,
+        "generatedRecords": 45,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 20,
+        "protocolRecords": 24,
+        "generatedTokens": 1657,
+        "observedTokens": 64347
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 156
+      },
+      "costArtifact": "null-return-is-absent.costs.json",
+      "flatTokens": {
+        "generated": 1657,
+        "terminal": 45,
+        "observedAndContext": 63868,
+        "peakContext": 1649,
+        "cumulativeContext": 63868,
+        "total": 65570,
+        "detailedShare": 0.9812914906457453
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          3
+        ]
+      },
+      "finishedAt": "2026-11-20T17:51:47.881Z"
+    },
+    {
+      "id": "continue-and-exhaustion-do-not-close",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:51:47.882Z",
+      "sourceResult": "continue-and-exhaustion-do-not-close.result.json",
+      "sourceArtifact": "continue-and-exhaustion-do-not-close.source.json",
+      "observationRows": 29,
+      "nativeReceipt": "continue-and-exhaustion-do-not-close.native.json",
+      "admittedArtifact": "continue-and-exhaustion-do-not-close.admitted.json",
+      "nativeInput": "continue-and-exhaustion-do-not-close.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 121,
+        "contexts": 119,
+        "generatedRecords": 119,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 52,
+        "protocolRecords": 65,
+        "generatedTokens": 4404,
+        "observedTokens": 238301
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 531
+      },
+      "costArtifact": "continue-and-exhaustion-do-not-close.costs.json",
+      "flatTokens": {
+        "generated": 4404,
+        "terminal": 119,
+        "observedAndContext": 238622,
+        "peakContext": 2407,
+        "cumulativeContext": 238622,
+        "total": 243145,
+        "detailedShare": 0.9856948228882834
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "2"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:54:25.739Z"
+    },
+    {
+      "id": "nested-labeled-break",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:54:25.740Z",
+      "sourceResult": "nested-labeled-break.result.json",
+      "sourceArtifact": "nested-labeled-break.source.json",
+      "observationRows": 34,
+      "nativeReceipt": "nested-labeled-break.native.json",
+      "admittedArtifact": "nested-labeled-break.admitted.json",
+      "nativeInput": "nested-labeled-break.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 111,
+        "contexts": 109,
+        "generatedRecords": 109,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 44,
+        "protocolRecords": 63,
+        "generatedTokens": 4184,
+        "observedTokens": 247800
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 529
+      },
+      "costArtifact": "nested-labeled-break.costs.json",
+      "flatTokens": {
+        "generated": 4184,
+        "terminal": 109,
+        "observedAndContext": 247909,
+        "peakContext": 2888,
+        "cumulativeContext": 247909,
+        "total": 252202,
+        "detailedShare": 0.984942638623327
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "io"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:56:44.112Z"
+    },
+    {
+      "id": "continue-outer-closes-inner-only",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:56:44.114Z",
+      "sourceResult": "continue-outer-closes-inner-only.result.json",
+      "sourceArtifact": "continue-outer-closes-inner-only.source.json",
+      "observationRows": 57,
+      "nativeReceipt": "continue-outer-closes-inner-only.native.json",
+      "admittedArtifact": "continue-outer-closes-inner-only.admitted.json",
+      "nativeInput": "continue-outer-closes-inner-only.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 193,
+        "contexts": 191,
+        "generatedRecords": 191,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 88,
+        "protocolRecords": 101,
+        "generatedTokens": 7495,
+        "observedTokens": 568750
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 1160
+      },
+      "costArtifact": "continue-outer-closes-inner-only.costs.json",
+      "flatTokens": {
+        "generated": 7495,
+        "terminal": 191,
+        "observedAndContext": 570273,
+        "peakContext": 4104,
+        "cumulativeContext": 570273,
+        "total": 577959,
+        "detailedShare": 0.9915943962641761
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "str",
+          "ii"
+        ]
+      },
+      "finishedAt": "2026-11-20T17:59:58.110Z"
+    },
+    {
+      "id": "number-throw-during-close",
+      "expectedSource": "passed",
+      "source": "passed",
+      "native": "passed",
+      "cost": "passed",
+      "startedAt": "2026-11-20T17:59:58.119Z",
+      "sourceResult": "number-throw-during-close.result.json",
+      "sourceArtifact": "number-throw-during-close.source.json",
+      "observationRows": 17,
+      "nativeReceipt": "number-throw-during-close.native.json",
+      "admittedArtifact": "number-throw-during-close.admitted.json",
+      "nativeInput": "number-throw-during-close.native-input.json",
+      "nativeChecks": {
+        "replay": "passed",
+        "contexts": "passed",
+        "continuation": "passed",
+        "masks": "passed",
+        "sourceBinding": "passed",
+        "tokenizer": "passed"
+      },
+      "nativeCounts": {
+        "records": 68,
+        "contexts": 66,
+        "generatedRecords": 66,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 28,
+        "protocolRecords": 38,
+        "generatedTokens": 2860,
+        "observedTokens": 102833
+      },
+      "nativeFraming": {
+        "kind": "native-physical-record-boundaries/1",
+        "eosTokenId": null,
+        "terminalTokens": 0,
+        "physicalRecords": 243
+      },
+      "costArtifact": "number-throw-during-close.costs.json",
+      "flatTokens": {
+        "generated": 2860,
+        "terminal": 66,
+        "observedAndContext": 102475,
+        "peakContext": 1953,
+        "cumulativeContext": 102475,
+        "total": 105401,
+        "detailedShare": 1
+      },
+      "completion": {
+        "kind": "return",
+        "value": [
+          "num",
+          7
+        ]
+      },
+      "finishedAt": "2026-11-20T18:00:43.971Z"
+    },
+    {
+      "id": "iterator-next-nonobject-refusal",
+      "expectedSource": "unsupported",
+      "source": "unsupported",
+      "native": "untested",
+      "cost": "untested",
+      "startedAt": "2026-11-20T18:00:43.978Z",
+      "sourceResult": "iterator-next-nonobject-refusal.result.json",
+      "reason": "Protocol source projection: heap kind or metadata needs a declared protocol: object",
+      "expectedRefusal": true,
+      "finishedAt": "2026-11-20T18:00:44.449Z"
+    },
+    {
+      "id": "iterator-return-nonobject-refusal",
+      "expectedSource": "unsupported",
+      "source": "unsupported",
+      "native": "untested",
+      "cost": "untested",
+      "startedAt": "2026-11-20T18:00:44.459Z",
+      "sourceResult": "iterator-return-nonobject-refusal.result.json",
+      "reason": "Protocol source projection: heap kind or metadata needs a declared protocol: object",
+      "expectedRefusal": true,
+      "finishedAt": "2026-11-20T18:00:45.141Z"
+    },
+    {
+      "id": "iterator-return-noncallable-refusal",
+      "expectedSource": "unsupported",
+      "source": "unsupported",
+      "native": "untested",
+      "cost": "untested",
+      "startedAt": "2026-11-20T18:00:45.142Z",
+      "sourceResult": "iterator-return-noncallable-refusal.result.json",
+      "reason": "Protocol source projection: heap kind or metadata needs a declared protocol: object",
+      "expectedRefusal": true,
+      "finishedAt": "2026-11-20T18:00:45.616Z"
+    },
+    {
+      "id": "generator-custom-for-of-refusal",
+      "expectedSource": "unsupported",
+      "source": "unsupported",
+      "native": "untested",
+      "cost": "untested",
+      "startedAt": "2026-11-20T18:00:45.617Z",
+      "sourceResult": "generator-custom-for-of-refusal.result.json",
+      "reason": "Protocol source projection: construction: callable capability, home or initializer state differs",
+      "expectedRefusal": true,
+      "finishedAt": "2026-11-20T18:00:46.018Z"
+    }
+  ],
+  "artifacts": {
+    "cached-next.result.json": "2fcfcfc3b76a617c2654e3dafc2b14f26212fe3c369b85364fddefd8961d43af",
+    "cached-next.source.json": "d486c702ff519cabdad50de0cc7a835b32f552581570bf9dd7be6281279e3365",
+    "cached-next.native.json": "e55c25b58bb88e01b2300a4dbe581a72d7bc7eb5a1906cc2375f1c18a7c309ad",
+    "cached-next.admitted.json": "76a77f001f168c4b8decb3bbc012830a94500acfe8c0a098e8613dd1d6f1598b",
+    "cached-next.native-input.json": "8868c169766424849367a974b20bfadd901604ecd0ab41a54fb023f4c0af62c2",
+    "cached-next.costs.json": "b4c73395b77ac87dd0c791856ee233553fdd692dc74c29b619f22f023d17985e",
+    "acquisition-receiver.result.json": "2ad4c05fc5c37d1f4af5825327f5cac93e06c14ea40267e1486ae4baca8799c5",
+    "acquisition-receiver.source.json": "9c6fe7f491e91cba2d5f14b34f2d34d9f2426c214a0216401ede4f259049ff2b",
+    "acquisition-receiver.native.json": "773e08a08beceeb8b18e0a07cfe15604ba8e198b5a8247f6fb3b517f90837752",
+    "acquisition-receiver.admitted.json": "23fa03bd5ed7d54eeb209bb29138866a9355919d222d86f7d444b8bfed31f409",
+    "acquisition-receiver.native-input.json": "a1078f5d967948dc4f87e6b357af0f195d2e470b99bea8bd47e0beb44356cee8",
+    "acquisition-receiver.costs.json": "796085c17e8646f5318801cfa50c4f783d3a3f63ad2e3b68487a148091f02303",
+    "break-closes.result.json": "461f01bec13d1822cb80244192f2c7ec6732b0e48e9b76a5120e4c5cc3999425",
+    "break-closes.source.json": "fc8ad4ef83cca225f64851a90e8d9f80fb476424b7db02ce555d299759a69d60",
+    "break-closes.native.json": "7d32bf38363256c57c37c3fa80b26ca2f29720c665e780768169128d9b662b95",
+    "break-closes.admitted.json": "27eccc6d8e051774db2d0b9b2020bd06409b98aa8cd9c2de40cb1b7f8d1d48b1",
+    "break-closes.native-input.json": "5f75114d277c112330b412a5eef658f6b9b89359588bb51f6ace6ea4f893ea5b",
+    "break-closes.costs.json": "536c01235f22ebb436861e7d97f462b7abb994411a78dfc218880552a75ead80",
+    "body-finally-before-close.result.json": "eb36a0594a76ad9d2e72bb747a913bf40611a56c58b7b697d2efa287fae05057",
+    "body-finally-before-close.source.json": "e938593456cefb6090e0b0b795e3a02ee394497974a408af3b870c93bcb7781b",
+    "body-finally-before-close.native.json": "ac5ecc4e47a8f5eebfe68ab26576bc1ee362a94ae3da5efcad672c95cda2bb76",
+    "body-finally-before-close.admitted.json": "5d854325653015abf44ac5cb1ce476e863812f785a2d967dc8ccf62c4dfaa3fa",
+    "body-finally-before-close.native-input.json": "4a575d0852e3fbc9f88442f8aa042991d6a03e292c1ef126a722c0fee2056c88",
+    "body-finally-before-close.costs.json": "a0f29dca8b7cc700c314aa191e1c835fd2c550f004ac88b650caea38ec87e2be",
+    "throw-precedes-close-failure.result.json": "e716f04417142cbb0ed443ced8226a13b2866ea2a5430ac7bdf1b529b1334602",
+    "throw-precedes-close-failure.source.json": "c50ab2507da6e6ba9ce8b0f2efb1b59d08c04555fcccc08b1aee6d016452590f",
+    "throw-precedes-close-failure.native.json": "d2903571d68b52c9912f95593235bf01efe4ac3024ac912bf8e221ab1b99f959",
+    "throw-precedes-close-failure.admitted.json": "54d235d78663d58b31ce85243a7b6b96e7e6cc3a4fbd4eda72687b1837f40087",
+    "throw-precedes-close-failure.native-input.json": "59cf45ed851fdecf7a07618426400b24d045b3cc698e31c47a18fea354bda613",
+    "throw-precedes-close-failure.costs.json": "d081b342a9afe6e84f8a1d4cb6353eb02c0ad49f9c12eb3dc5bb22eeb55ff1d6",
+    "break-replaced-by-close-failure.result.json": "e7cf9c4eb3ecbb37cb5dae2822749eb572f3be8c81a8cd1e88e3ce43a533ac2b",
+    "break-replaced-by-close-failure.source.json": "a3da38cd28018600438a3ff30eb627867d449c193574886b0957c7685f440b27",
+    "break-replaced-by-close-failure.native.json": "d70c2b46f7449a225ce9c4f83ffa3e59d4421261b7ae2a1120d58b8cd569a220",
+    "break-replaced-by-close-failure.admitted.json": "cbb2506303abdd6b9d1f60334e29ee54abac7957b52fdeaf08f752492e950df7",
+    "break-replaced-by-close-failure.native-input.json": "57ba164477dea316c5b52b0a873c3109a8dfc7a4f0675f326d40cd96190d25d1",
+    "break-replaced-by-close-failure.costs.json": "bf10201412744f71ec40d5ac8a557930b908c95d7506a54a7817786395bd8584",
+    "throw-precedes-return-getter-failure.result.json": "bf2be69584cc9246293a427e8cea75838c4a97fa409757a334d7e49283f9b994",
+    "throw-precedes-return-getter-failure.source.json": "4eda6cf635a2a98fc3d55b16203dfc1362f85a61d70e9c64bd0078bc53e5e740",
+    "throw-precedes-return-getter-failure.native.json": "1f0d908de9855d4df41df715594a1a44946cab93fa638de0cf38afb5ccc09020",
+    "throw-precedes-return-getter-failure.admitted.json": "abaea4b8984c7f34b0a020752ef3e2c58cb7dcadf247750f9e5e69c8802df544",
+    "throw-precedes-return-getter-failure.native-input.json": "cb13416ceea6a42649c0a4d7ff69df0f52e2be031828c27b9c85395edcec7033",
+    "throw-precedes-return-getter-failure.costs.json": "f7408a2af364946278b70e4235da35c72d178a552349684562ceadeb130da622",
+    "next-failure-does-not-close.result.json": "88b161c3c0619f16c20baf00e6dee5a6a3435c61ae317e9b5d70686ddfe4865c",
+    "next-failure-does-not-close.source.json": "6e69bc929dbd4497f5ccf9e2da3cfce12f2e26498953387484bce07aff0f440f",
+    "next-failure-does-not-close.native.json": "518f3422cda6b35a9f06d90c9ce446b5397e88af69cc82eda7cd662889cd7625",
+    "next-failure-does-not-close.admitted.json": "ad56552de3f926541571a9149819811b3f582f47c7f8b3e6debbf12b9ae00790",
+    "next-failure-does-not-close.native-input.json": "75701cf38992f0241ef91932ad17e26ee3de36aab66843ca1ad57642c51877b2",
+    "next-failure-does-not-close.costs.json": "447571e2aac8ed64c6007d195a3f7cdb0a28d14e920650bc92652ea2a5f5861a",
+    "done-failure-does-not-close.result.json": "2d9ac14010823260d5492f39a2291b12e66d5ab98d2c0f5957453f1647a1c6be",
+    "done-failure-does-not-close.source.json": "2380b4d1a62316fb14eb84bdc0af50ad77e67539ae090b95526c3c3b29e6addf",
+    "done-failure-does-not-close.native.json": "9e3b1e762d60b86373cbdfab0ae321073ab7059318110a6b220cfaf0c1a48c78",
+    "done-failure-does-not-close.admitted.json": "8e2176de5fb1904701bfbb52fef4ec487a955efd8b5a5c28f6993dfe551f4550",
+    "done-failure-does-not-close.native-input.json": "2d4a0fd98e06da42625190120ec8204d19014793b558ff2b61dd7440cc90bf56",
+    "done-failure-does-not-close.costs.json": "2da366b8bb49c0b61f7a39cc43fdee9239c9b19b0ee023015952553a87d01b06",
+    "value-failure-does-not-close.result.json": "b2877df629dbf6ea2060e3bc2c9619f259c62d230be0d788e490364502ca78f3",
+    "value-failure-does-not-close.source.json": "24c176dd30dc02fd28666863c29f41679027d35ab54bba14c4541366ada2a749",
+    "value-failure-does-not-close.native.json": "571277e7cfe92db90931079ffa1a704323367219981f20ff29da93b2a12c0590",
+    "value-failure-does-not-close.admitted.json": "48c84549c5de94644549441ce510f6f7d06c1dc95aa7721f0e5232694626846b",
+    "value-failure-does-not-close.native-input.json": "279f6bc72ea4b618752140ce4a224fb498d028d17fb0b951112e5778d4123d7a",
+    "value-failure-does-not-close.costs.json": "14d65ef31dbe1b54a031c37cb6f761603c1c1a210a7d87af6e6430474ff4a0d6",
+    "close-getter-and-receiver.result.json": "3b36f3224257eb968e4ea03614cca57f6bae5e2a049ffda28be99d6ab3a30ae6",
+    "close-getter-and-receiver.source.json": "a272533dcdc9e640c4a975fdf3cbece590eaa3ebdecea22f103a15174ec72292",
+    "close-getter-and-receiver.native.json": "494dd776954901217e77ff8bde7e44d2308e6f169dc8b8466c505839e9373666",
+    "close-getter-and-receiver.admitted.json": "1d2642dfd847afb6635d7cb3ffb4fc8f7c9284a826afa267171b151b878e8981",
+    "close-getter-and-receiver.native-input.json": "4b8573445176f64df56320f6f60bbd236112e4e0cec88332159a78911f286cee",
+    "close-getter-and-receiver.costs.json": "81c9842d0341f763a0400351f987a8d1a9a1b65f3386e1cc98a160f7a26e40f7",
+    "null-return-is-absent.result.json": "21dc1a96da90aa0ac073cd0e83f8c3f6141f45b22336e1d2d8198139ddd6eec4",
+    "null-return-is-absent.source.json": "6bbd278fabc478c1a50bcc995aa57eb25cd2e8456ac48d4cbb95b849042aefc2",
+    "null-return-is-absent.native.json": "1472cb644f8a804a39edfbeb416422e2da8bba79dbb1b19c91965023959fa023",
+    "null-return-is-absent.admitted.json": "a2ab4ca792e0baccb382922260a555813952d7dee58b30b91123b047b258c4c3",
+    "null-return-is-absent.native-input.json": "e2f819fc5a761ec622800a4eabd46bb9688c89f8a6164d66e9695916e2b562dd",
+    "null-return-is-absent.costs.json": "0dac488820f80519170eddf9e2f1e2b09fb453d536278a3320126ced4c50e7ae",
+    "continue-and-exhaustion-do-not-close.result.json": "9d9d7f26776ecc17218ba8b73bb0d72cab8e2f5630912e37516a0135fa91bfa7",
+    "continue-and-exhaustion-do-not-close.source.json": "b047d1fa28dd7b916d318c4b9aa67882b1b1fde01639a8300c52c020001e2f4e",
+    "continue-and-exhaustion-do-not-close.native.json": "79c86e861b2e5cb0b1de7048e23f39b9fa8aae9097b3ea8aee759d5e05a98127",
+    "continue-and-exhaustion-do-not-close.admitted.json": "97ce231457235639d3699f2e73b4d2a8c9363106e2de57b0c758d516dbdf06ae",
+    "continue-and-exhaustion-do-not-close.native-input.json": "3b0772f65548deb3a533e8eadfd4fee15c4bc8f4c8ea4fc48df84751a6f29e45",
+    "continue-and-exhaustion-do-not-close.costs.json": "1e679333d2591c979c0e9cd7c9e09734e454b65547c6a465e120bd3282d64bce",
+    "nested-labeled-break.result.json": "753a8c4ec9d6417885ec27ab5f70cd6333358b7163f8b060a6bf227cca06c0de",
+    "nested-labeled-break.source.json": "2ddfafb14de966fd3a4ee9bd09c13943049aa4437bc86ad8578658a67e813809",
+    "nested-labeled-break.native.json": "2564ff92c2be42ef375caed78e96eadd2cb63ff46174e57e30c81e91fe008753",
+    "nested-labeled-break.admitted.json": "89bb35aaf759cd222ae08db19000a089a983f44b4c5b9cb80959154cb9b10d49",
+    "nested-labeled-break.native-input.json": "4d1143e0df4e358b5fcba715a4713cc12df39c2564bb93c23bb6c6b180604e27",
+    "nested-labeled-break.costs.json": "760970c26c674e85da1f034dbeeb9b7d86d04b87dd45b479decd01d35ffc1a1d",
+    "continue-outer-closes-inner-only.result.json": "ca4186ee55750e1096af75c5b9330d4c58c89f806bb13c8542f49ee65706bcae",
+    "continue-outer-closes-inner-only.source.json": "63d812df3be539df3808cf6d9b7afb55e9583a08c4611bb01c62542b40c6c038",
+    "continue-outer-closes-inner-only.native.json": "d9fb0a97b6c8c27b34bb109400b49347f780607b80989ab771a6935bca27c8a2",
+    "continue-outer-closes-inner-only.admitted.json": "06ca39c36d6f1d5f139e2cf11de8197222233c02641ef1c9bf5ecfea4d21b20f",
+    "continue-outer-closes-inner-only.native-input.json": "43dc26c4cef86f58dd85f38bc492dd1d7079447843ff4286978a80480562a8d7",
+    "continue-outer-closes-inner-only.costs.json": "a11a3b9ef71c82357ca934a84f0ab1d20c4a736bf7a604174a743463cdc5b3db",
+    "number-throw-during-close.result.json": "43e017d26d08f9455ba8f036bb27a86c15b0024a49e8ebc0f9dc388fa9941774",
+    "number-throw-during-close.source.json": "019f1f36d9f75127640fccd95c51c827af581a1d3922e7a7eca4995a595dfd50",
+    "number-throw-during-close.native.json": "730df11e0b09958ca578009d94962336b9dc1e7e5c22519fd2941b9a15fa92f9",
+    "number-throw-during-close.admitted.json": "a42cc600e7229a6e35a846bc88f0011ee596b9d7e096f27ca63e23da59df878c",
+    "number-throw-during-close.native-input.json": "93527d5077d557e38c9f59c94883a6941794ea85dfa673f59e03f8451fcac540",
+    "number-throw-during-close.costs.json": "65299ec93b1f35b3431229d63a766f32d72a89e38f1ed7bc8287de4578701010",
+    "iterator-next-nonobject-refusal.result.json": "628fbdf4758ae43a36ea0cd5bbee5b1f65ece547d199fbe7ac8ec1e12f8a9193",
+    "iterator-return-nonobject-refusal.result.json": "9d47d5ccd7c283ac71189776ad0cc19ddc1fab87f55e3769c83fc7bcb9c14f5f",
+    "iterator-return-noncallable-refusal.result.json": "e6a275e3a05cb7f20cc59c395a316168dacafc708cd60eb8731d342f890501d5",
+    "generator-custom-for-of-refusal.result.json": "65a1b63f2cd20518ed8bf4459302663f4593a1bb9abc1992d69afa95ff0363ff"
+  },
+  "finishedAt": "2026-11-20T18:00:47.027Z",
+  "pinsAfter": {
+    "producer": {
+      "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+      "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+      "status": ""
+    },
+    "consumer": {
+      "revision": "39c4036564428e44cc89caf261f517d856482695",
+      "tree": "ca55473db0ed3343ad930833a4ee09ad48bf7caf",
+      "status": ""
+    }
+  },
+  "sourceQualified": 16,
+  "nativeAdmitted": 16,
+  "expectedSourceRefusals": 4,
+  "tokenMeasured": 16,
+  "identityUnchanged": true
+}
