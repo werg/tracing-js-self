@@ -90,11 +90,14 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     const evidence={attempt:attempts.length,session:input.session,invocationId:input.context.invocationId,
       prefixDigest:input.context.prefixDigest,contextDigest,checkpointIdentity:identity.checkpointIdentity,
       tokenizerIdentity:identity.tokenizerIdentity,status:'submitted',elapsedMs:null,selection:null,
-      failure:null,failureEvidence:null};
+      record:null,failure:null,failureEvidence:null};
     attempts.push(evidence);const started=performance.now();
+    let output=null,provenanceValidated=false;
     try{
-      const output=await request({op:'select',session:input.session,public:input.public,
+      output=await request({op:'select',session:input.session,public:input.public,
         contexts:input.contexts,context:input.context});
+      evidence.record=typeof output?.record==='string'?output.record:null;
+      evidence.selection=copy(output?.selection??null);
       demand(capturedEpoch===epoch&&identity===capturedIdentity,'checkpoint changed during selection');
       demand(output?.schema==='semantic-model-output/8'&&typeof output.record==='string',
         'model did not return a complete v8 selection');
@@ -115,11 +118,15 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
         /^(?:[0-9a-f]{2})*$/.test(fragment.payloadHex)),'original native fragment evidence required');
       demand(Buffer.concat(selection.fragments.map(fragment=>Buffer.from(fragment.payloadHex,'hex')))
         .equals(Buffer.from(output.record,'utf8')),'native fragments changed selected bytes');
+      provenanceValidated=true;
       decodeCausalLmV8Target(output.record);
       evidence.status='decoded';
       sessions.set(input.session,{pending:{record:output.record,selection:copy(selection),contextDigest},evidence});
       return copy(output);
     }catch(error){evidence.status='failed';evidence.failure=String(error.message);
+      if(output!==null)error.evidence={schema:'semantic-native-selection-failure/1',
+        record:evidence.record,selection:copy(evidence.selection),provenanceValidated,
+        nativeFailure:copy(error.evidence??null)};
       evidence.failureEvidence=copy(error.evidence??null);throw error;}
     finally{evidence.elapsedMs=performance.now()-started;}
   };
@@ -189,11 +196,11 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
 }
 
 export function createNativeV8PythonSelector({python='python3',megatokenRepository,servedBundle,
-    device='cpu',maxTokens=1024,maxFragments=32,...options}={}){
+    device='cpu',maxTokens=1024,maxFragments=32,effort=1,...options}={}){
   demand(typeof megatokenRepository==='string'&&megatokenRepository.length>0,'consumer checkout required');
   demand(typeof servedBundle==='string'&&servedBundle.length>0,'existing serving bundle required');
-  demand(bounded(maxTokens,1,8192)&&bounded(maxFragments,1,64),'invalid generation bounds');
+  demand(bounded(maxTokens,1,8192)&&bounded(maxFragments,1,64)&&bounded(effort,1,6),'invalid generation bounds');
   return createNativeV8ProcessSelector({...options,command:python,cwd:megatokenRepository,
     args:['scripts/serve_semantic_v8.py','--served',servedBundle,'--device',device,
-      '--max-tokens',String(maxTokens),'--max-fragments',String(maxFragments)]});
+      '--max-tokens',String(maxTokens),'--max-fragments',String(maxFragments),'--effort',String(effort)]});
 }

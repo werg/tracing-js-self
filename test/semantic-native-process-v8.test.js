@@ -82,8 +82,29 @@ test('native v8 output cannot change checkpoint, causal boundary or original byt
       const metrics=select.metrics();
       assert.equal(metrics.predictionAttempts,1);assert.equal(metrics.failedAttempts,1);
       assert(metrics.attempts[0].selection,'failed original response is retained');
+      assert.equal(metrics.attempts[0].record,row.fields.line);
+      assert.equal(metrics.attempts[0].failureEvidence.provenanceValidated,false);
     }finally{select.close();}
   }
+});
+
+test('native malformed semantic output retains original bytes and token evidence as failed cost',async()=>{
+  const emitted='algorithm {"broken":true}';
+  const select=selector({alter:`result.record=${JSON.stringify(emitted)};
+    result.selection.payloadHex=Buffer.from(result.record).toString('hex');
+    result.selection.fragments=[{tokenIds:[17,23,29],payloadHex:result.selection.payloadHex}];`});
+  try{
+    await select.initialize(identity);
+    await assert.rejects(select(boundary().input),error=>{
+      assert.equal(error.evidence.record,emitted);
+      assert.equal(error.evidence.provenanceValidated,true);
+      assert.deepEqual(error.evidence.selection.fragments[0].tokenIds,[17,23,29]);return true;
+    });
+    const metrics=select.metrics();
+    assert.equal(metrics.semanticallyAccepted,0);assert.equal(metrics.failedAttempts,1);
+    assert.equal(metrics.unknownGenerationCostAttempts,0);
+    assert.equal(metrics.attempts[0].record,emitted);
+  }finally{select.close();}
 });
 
 test('native v8 transport rejects current-context leakage, stale prefixes and changed commit bytes',async()=>{
