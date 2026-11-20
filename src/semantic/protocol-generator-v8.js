@@ -319,7 +319,7 @@ export function restoreGeneratorStateV8(controller,api){let count=0;const invoca
   for(const [id,object]of controller.heap){
     if(object.generatorFunction!==undefined){
       api.require(object.kind==='closure'&&object.generatorFunction===true&&object.functionKind==='ordinary'&&!object.callable,'generator function capability');
-      const descriptor=api.ownDescriptor(object,['str','prototype']);api.require(descriptor?.kind==='data'&&descriptor.writable&&!descriptor.enumerable&&!descriptor.configurable,'generator prototype descriptor');
+      const descriptor=api.ownDescriptor(object,['str','prototype']);api.require(descriptor?.kind==='data'&&!descriptor.enumerable&&!descriptor.configurable,'generator prototype descriptor');
     }
     if(object.kind!=='generator')continue;count++;
     // Additional ordinary property metadata is checked by the common heap

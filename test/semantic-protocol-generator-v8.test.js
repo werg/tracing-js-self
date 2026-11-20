@@ -78,6 +78,12 @@ test('generator function metadata and current prototype replacement stay distinc
   f.detail({kind:'property.set',object:'g',key:['str','prototype'],receiver:ref('g'),value:['null'],success:true});f.create('third');f.start('third');
   assert.equal(f.controller.heap.get('third').prototype,'Generator.prototype');f.apply({kind:'generator.lookup',receiver:ref('third'),key:['str','next'],method:'Generator.next'});
 });
+test('generator prototype may become non-writable and still restore',()=>{
+  const f=fixture();f.define();
+  f.detail({kind:'property.define',object:'g',key:['str','prototype'],
+    descriptor:{kind:'data',value:ref('g-prototype'),writable:false,enumerable:false,configurable:false},success:true});
+  assert.equal(restoreGeneratorStateV8(structuredClone(f.controller),api).valid,true);
+});
 test('generator transitions reject reentry duplicate identities and continuation bypass atomically',()=>{
   const f=fixture();f.define();f.create();f.start();f.resume();const before=structuredClone(f.controller);
   for(const record of [
