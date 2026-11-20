@@ -132,12 +132,15 @@ test('delegated builtin steps preserve exact result identity and require the pen
   f.apply({kind:'generator.delegate.result',object:'it',result:ref('r0'),done:false});
   f.apply({kind:'generator.delegate.yield',object:'it',result:ref('r0')});
   assert.deepEqual(f.controller.lastReturn,{kind:'return',value:ref('r0')});
+  f.detail({kind:'property.set',object:'r0',key:['str','done'],receiver:ref('r0'),value:['str','changed after yield'],success:true});
+  assert.equal(restoreGeneratorStateV8(structuredClone(f.controller),api).valid,true);
   f.apply({kind:'generator.resume',object:'it',method:'next',argument:num(8)});
   assert.throws(()=>f.apply({kind:'generator.receive',object:'it',bind:null}),/exact input/);
   f.apply({kind:'generator.delegate.receive',object:'it'});
   f.apply({kind:'generator.delegate.call',object:'it',method:'next',call:{...step,name:'r1',result:U,done:true}});
   f.apply({kind:'generator.delegate.result',object:'it',result:ref('r1'),done:true});
   f.apply({kind:'generator.delegate.end',object:'it'});f.finish(U);
+  assert.deepEqual(f.controller.heap.get('r0').properties.get('done'),['str','changed after yield']);
 });
 
 test('delegation retains the cached generator next and rejects changed receivers or sent values atomically',()=>{

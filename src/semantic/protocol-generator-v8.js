@@ -358,8 +358,15 @@ export function restoreGeneratorStateV8(controller,api){let count=0;const invoca
       if(delegate.phase==='yielded')api.require(object.phase==='suspendedYield'&&object.resume===null||
         object.phase==='executing'&&object.resume?.from==='suspendedYield','generator suspended delegate state');
       else api.require(object.phase==='executing'&&object.resume===null,'generator active delegate state');
-      if(delegate.result!==null){const result=delegatedResult(controller,delegate.result,api);
-        if(['result','yielded','complete'].includes(delegate.phase))api.require(result.done===(delegate.phase==='complete'),'generator saved delegate completion');}
+      if(delegate.result!==null){
+        if(delegate.phase==='yielded'){
+          // The caller owns the published result object now. Its done value
+          // was already consumed, so later writes cannot change that decision.
+          api.known(controller,delegate.result);
+          api.require(delegate.result[0]==='ref'&&controller.heap.get(delegate.result[1])?.kind==='object',
+            'generator retained delegate result object');
+        }else{const result=delegatedResult(controller,delegate.result,api);
+          if(['result','complete'].includes(delegate.phase))api.require(result.done===(delegate.phase==='complete'),'generator saved delegate completion');}}
       else api.require(['ready','calling'].includes(delegate.phase),'generator delegate lacks its result identity');
     }
     api.require(!['suspendedStart','completed'].includes(object.phase)||object.handlers.length===0,'inactive generator has entered handler obligations');

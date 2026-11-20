@@ -135,6 +135,20 @@ methods are selected when their corresponding input arrives. Each delegated
 call contains one existing checked iterator-step or generator-resume record;
 it cannot substitute a different receiver, input or result object.
 
+Once a delegated result is yielded, the caller can mutate that ordinary result
+object. Restoration retains its identity without rereading `done`: the generator
+already consumed that value before suspension. The next delegated call consumes
+its own fresh result and completion decision.
+
+For normal delegation completion, the source projection includes a checked
+ordinary read of the final result's `value` before `generator.delegate.end`.
+The enclosing body can return that value, compute with it, or discard it and
+return a different value. Component replay therefore does not force every outer
+completion to equal the delegate's completion. Independent source rechecking
+rebuilds the full body projection and rejects a changed outer completion even
+when its self-reported public digest is updated. Public component replay remains
+a separate gate from source correspondence.
+
 The independent V8 observer intercepts only the calls selected by the source;
 it neither advances a generator to inspect it nor substitutes an owned result.
 It records actual creation, resume, suspension and completion state together

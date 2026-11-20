@@ -8,6 +8,7 @@ import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {instrumentCompletionSource,COMPLETION_HOOK} from '../src/training/completion-reference.js';
 import {createProtocolCompletionCapture,ownedProtocolSourceObservations,prepareProtocolObservationExtensionsV8} from '../src/semantic/protocol-source-observations-v8.js';
 import {compareProtocolMetadata} from '../src/semantic/protocol-metadata-v8.js';
+import {hashAlgorithmData} from '../src/semantic/program.js';
 
 const source=body=>'"use strict";function run(x){'+body+'}';
 function archive(text,args=[2]){const runtime=createRuntime().startEntry({text,functionName:'run',args});runtime.drive();return runtime.exportRun();}
@@ -44,6 +45,24 @@ test('source generator values and sent inputs recheck every causal context and c
   for(const kind of ['generator.create','generator.start','generator.resume','generator.receive','generator.yield','generator.finish'])assert(lines.includes(kind));
   assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
   assert(artifact.contexts.some(row=>row.state.heap.some(([,node])=>node.kind==='generator'&&node.phase==='suspendedYield')));
+});
+
+test('normal yield delegation checks its value read while the enclosing source determines the final return',async()=>{
+  for(const [body,expected] of [['return yield* inner();',7],['yield* inner();return 99;',99]]){
+    const artifact=await qualified('function* inner(){yield 2;return 7;}function* outer(){'+body+
+      '}const it=outer();it.next();return it.next().value;',{expected:{kind:'return',value:['num',expected]}});
+    const lines=artifact.public.timeline.map(row=>row.fields?.line??''),
+      end=lines.findIndex(line=>line.includes('"kind":"generator.delegate.end"'));
+    assert(end>0);
+    assert(lines.slice(0,end).some(line=>line.includes('"kind":"property.get"')&&
+      line.includes('"key":["str","value"]')&&line.includes('"result":["num",7]')));
+    const forged=structuredClone(artifact),row=forged.public.timeline.find((row,index)=>index>0&&
+      row.fields?.line===lines[end+1]);
+    assert(row?.fields.line.includes('"kind":"generator.finish"'));
+    row.fields.line=row.fields.line.replace('"value":["num",'+expected+']','"value":["num",123]');
+    forged.sidecar.publicDigest=hashAlgorithmData(forged.public);
+    await assert.rejects(recheckProtocolRegionEvidence(forged),/public differs|source-certified/);
+  }
 });
 
 test('generator return and throw preserve exact abrupt inputs before and after initial execution',async()=>{
