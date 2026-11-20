@@ -88,7 +88,7 @@ node tools/qualify-semantic-v8.mjs --out ../v8-native-interoperability \
   --population interoperability --megatoken CONSUMER --tokenizer TOKENIZER_JSON \
   --python PYTHON --native-policy POLICY_JSON
 node tools/qualify-semantic-v8.mjs --out ../v8-native-all \
-  --population all --inputs all --megatoken CONSUMER --tokenizer TOKENIZER_JSON \
+  --population all --inputs all --workers 4 --megatoken CONSUMER --tokenizer TOKENIZER_JSON \
   --python PYTHON --native-policy POLICY_JSON
 ```
 
@@ -98,6 +98,24 @@ for three examples. The runner saves exact graph-encoded input tasks before
 execution and appends completed attempts, including refusals. Native admission
 rechecks source correspondence in the exact clean producer checkout and checks
 that the returned receipt binds that source, public execution and every context.
+
+The native runner also accepts `--prepare-only` for source diagnostics and
+`--resume` to finish an interrupted run at the same revision and settings.
+`--workers` bounds independent jobs (default one, maximum sixteen); each job
+keeps its own source process memory/time limits and native admission deadline.
+`--native-timeout-ms` sets that deadline, separately from
+`--worker-timeout-ms` and `--worker-memory-mb`. Use an immutable checkout and
+keep output outside it while measuring.
+
+Resume verifies the frozen population, producer/runtime identity, native
+policy, worker settings and exact bytes of every completed artifact. Changed
+settings or code require a new output directory. Completed refusals stay in
+the denominator and are not silently retried. A locked, hash-linked journal
+commits each case only after its artifacts are durable; interrupted cases can
+run again without dropping finished cases. The final rows remain in declared
+population order even when jobs complete out of order. Artifact digests in
+new native reports are SHA-256 over exact UTF-8 file bytes, explicitly labeled
+in the report; historical reports retain their original digest conventions.
 
 ## Notation and comprehension
 
