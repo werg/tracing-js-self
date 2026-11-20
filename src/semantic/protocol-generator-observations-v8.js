@@ -11,11 +11,36 @@ const directHook='__tracingProtocolGeneratorCallee',memberHook='__tracingProtoco
 const intrinsicNames=['GeneratorFunction.prototype','Generator.prototype','Iterator.prototype'];
 const apply=Reflect.apply,getPrototype=Object.getPrototypeOf;
 const fail=message=>{throw new TypeError('Independent generator observation: '+message);};
-function instrument(source){
-  const edits=[];
+function generatorInventory(source){
+  const generators=[];
+  function visit(node,parent=null){
+    if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(child=>visit(child,parent));return;}
+    if(node.generator&&!node.async){
+      const binding=parent?.type==='VariableDeclarator'&&parent.init===node?parent.id:
+        parent?.type==='AssignmentExpression'&&parent.operator==='='&&parent.right===node?parent.left:null;
+      generators.push({name:node.type==='FunctionExpression'&&!node.id&&binding?.type==='Identifier'?binding.name:null});
+    }
+    for(const [key,value]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(value,node);
+  }
+  visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));return generators;
+}
+function instrument(source,generators){
+  const edits=[];let generatorIndex=0;
   function visit(node,inChain=false){
     if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(child=>visit(child,inChain));return;}
     inChain||=node.type==='ChainExpression';
+    if(node.generator&&!node.async){
+      const declared=generators[generatorIndex++];if(!declared)fail('instrumentation changed the generator inventory');
+      if(declared.name!==null){
+        if(node.type!=='FunctionExpression'||node.id)fail('instrumentation changed an inferred generator name');
+        const key=JSON.stringify(declared.name);
+        // The completion hook wraps the initializer and otherwise suppresses
+        // NamedEvaluation. A private computed own property preserves its name
+        // at creation, including "__proto__", without mutating the function.
+        edits.push({start:node.start,end:node.start,text:'({['+key+']:'});
+        edits.push({start:node.end,end:node.end,text:'})['+key+']'});
+      }
+    }
     if(!inChain&&node.type==='CallExpression'&&!node.optional){
       const callee=node.callee,generated=callee.type==='Identifier'&&(/^__tracing/.test(callee.name)||callee.name==='Number')||
         callee.type==='CallExpression'&&callee.callee.type==='Identifier'&&/^__tracing/.test(callee.callee.name);
@@ -35,7 +60,9 @@ function instrument(source){
       edits.push({start:node.argument.end,end:node.argument.end,text:'))'});
     }
   }
-  visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));edits.sort((a,b)=>b.start-a.start||b.end-a.end);
+  visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));
+  if(generatorIndex!==generators.length)fail('instrumentation changed the generator inventory');
+  edits.sort((a,b)=>b.start-a.start||b.end-a.end);
   let end=source.length;
   for(const edit of edits){if(edit.end>end)fail('overlapping call observation edits');
     source=source.slice(0,edit.start)+edit.text+source.slice(edit.end);end=edit.start;}
@@ -53,10 +80,7 @@ function ownedProperties(node){
 }
 export function createGeneratorObservationAdapterV8({source,side='native',bundle=null,initialValues=[]}={}){
   if(typeof source!=='string')return null;
-  const ast=parse(source,{ecmaVersion:'latest',sourceType:'script'});let hasGenerator=false;
-  function scan(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(scan);return;}
-    if(node.generator&&!node.async)hasGenerator=true;for(const [key,value]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))scan(value);}
-  scan(ast);if(!hasGenerator)return null;
+  const generators=generatorInventory(source);if(!generators.length)return null;
   const cursors=new WeakMap(),intrinsics=new Map(),resumers=new Map(),ownedCreations=new Map(),ownedYields=new Map(),rows=[],identities=new Map();let lookup=null;
   function observedValue(value){
     if(side==='owned'){
@@ -141,7 +165,7 @@ export function createGeneratorObservationAdapterV8({source,side='native',bundle
     return {[Symbol.iterator](){return this;},next:(...args)=>invoke({callee:next,receiver:iterator,arguments:args}),
       get return(){return abrupt('return');},get throw(){return abrupt('throw');}};
   }
-  const adapter={id:GENERATOR_OBSERVATION_PROFILE_V8,instrument,observeCall,observations:()=>structuredClone(rows),setCallObserver(value){invoke=value;},
+  const adapter={id:GENERATOR_OBSERVATION_PROFILE_V8,instrument:text=>instrument(text,generators),observeCall,observations:()=>structuredClone(rows),setCallObserver(value){invoke=value;},
     globals:{[delegateHook]:delegated,[directHook]:callee=>selected(callee,undefined),[memberHook]:(receiver,key)=>{
       if(!lookup)fail('guest-realm lookup is unavailable');return selected(apply(lookup,undefined,[receiver,key]),receiver);
     }},initializeRealm(evaluate){

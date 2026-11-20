@@ -60,6 +60,30 @@ test('retained generators observe live capture cells and preserve the original m
     {expected:{kind:'return',value:['num',10]}});
 });
 
+test('anonymous generator initializers retain independently observed inferred names',async()=>{
+  for(const name of ['values','stream']){
+    const body='const '+name+'=function*(){yield x;return x+1;};const it='+name+'();'+
+      'const first=it.next(),last=it.next();return [first.value,first.done,last.value,last.done];';
+    const text=source(body),bundle=archive(text),observed=native(text),owned=ownedProtocolSourceObservations(bundle,text);
+    assert.equal(compareProtocolMetadata(owned.metadata,observed.capture.metadata).status,'agreed');
+    const definition=observed.capture.metadata.flatMap(row=>row.objects).find(node=>node.kind==='function'&&
+      node.prototype==='GeneratorFunction.prototype');
+    assert.equal(definition.properties.find(row=>row.key[1]==='name').descriptor.value[1],name);
+    const artifact=await qualified(body),controller=RegionExecutionHarness.replay(artifact).controller;
+    assert.deepEqual(controller.materialize(controller.completion.value),[2,false,3,true]);
+    const changed=structuredClone(bundle);
+    function rename(value){if(!value||typeof value!=='object')return;
+      if(value.generatorFunction&&value.properties?.name)value.properties.name.value=['str','wrong'];
+      for(const child of Object.values(value))rename(child);}
+    rename(changed);
+    assert.equal(compareProtocolMetadata(ownedProtocolSourceObservations(changed,text).metadata,observed.capture.metadata).status,'mismatch');
+  }
+  const observed=native(source('const __proto__=function*(){yield x;};const it=__proto__();return it.next().value;'));
+  assert.equal(observed.result,2);
+  assert(observed.capture.metadata.some(row=>row.objects.some(node=>node.kind==='function'&&
+    node.properties?.some(property=>property.key[1]==='name'&&property.descriptor.value[1]==='__proto__'))));
+});
+
 test('compact work surrounds generator suspension without replacing its shared identity',async()=>{
   const artifact=await qualified('function* g(){yield 1;}const before=x+2;const it=g();const first=it.next();const after=before*3;return first.value+after;',
     {expected:{kind:'return',value:['num',13]}});
