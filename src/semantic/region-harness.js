@@ -13,6 +13,7 @@ import {defineRegionProgram,validateRegionProgram,sharedRegionState,cloneRegionC
 import {pureRegionEntry,evaluatePureRegion,encodePureRegionRecord,decodePureRegionRecord} from './pure-region-v8.js';
 import {encodeProtocolRecordV8,decodeProtocolRecordV8} from './protocol-codec-v8.js';
 import {applyProtocolRecordV8,assertProtocolDetailCompatible,restoreProtocolStateV8,allowsProtocolInternalSchedulerV8} from './protocol-state-v8.js';
+import {assertPlainPromiseResolutionV8,assertObservedPromiseResolutionV8} from './scheduler-boundaries-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual;
 const clean=value=>JSON.parse(JSON.stringify(value));
@@ -20,6 +21,23 @@ const fail=message=>{const error=new TypeError('Region execution: '+message);err
 const protocolCheckpointSchema='semantic-protocol-continuation/1';
 const protocolDetailKinds=new Set(['allocate','bind','compute','choose','read','write','call','return','throw','end']);
 const internalSchedulerDetailKinds=new Set(['promise','await','resume','job','transfer']);
+function assertSchedulerDetail(controller,{kind,fields}){
+  if(kind==='promise'){
+    if(fields.action==='adopt'){
+      controller.promise(fields.target);
+      fail('Promise adoption requires explicit assimilation jobs');
+    }
+    if(fields.action==='resolve')assertPlainPromiseResolutionV8(controller,fields.value);
+  }
+  if(kind==='job'&&fields.action==='complete'){
+    const job=controller.jobs.get(fields.job),returned=job?.returned;
+    if(job?.target&&job.reaction==='finally'&&returned?.kind==='return')
+      fail('Normal Promise finally completion requires explicit cleanup jobs');
+    if(job?.target&&returned?.kind==='return')assertPlainPromiseResolutionV8(controller,returned.value);
+    if(job?.target&&!returned&&job.originalStatus==='fulfilled')
+      assertPlainPromiseResolutionV8(controller,job.originalResult);
+  }
+}
 function oldEpisode(inner,timeline){return {public:{schema:HARNESS_ENVELOPE_VERSION,
   traceFormat:HARNESS_SELECTED_TRACE_VERSION,contextFormat:CONTEXT_VERSION,profile:HARNESS_PROFILE,timeline}};}
 
@@ -87,6 +105,7 @@ export class RegionExecutionHarness {
           allowsProtocolInternalSchedulerV8(controller,record)))fail('asynchronous or external work requires an extended protocol profile');
         assertProtocolDetailCompatible(controller,record);
       }
+      assertSchedulerDetail(controller,record);
       const result=this.inner.selected(invocationId,encodeWitness(record.kind,record.fields));
       this.sync();return result;
     }
@@ -196,6 +215,7 @@ export class RegionExecutionHarness {
       this.inner.publishProgram(fields);this.sync();return;
     }
     if(kind==='result'){const record=decodeDetailedRecord(fields.line,{role:'observed'});
+      assertObservedPromiseResolutionV8(this.activation(fields.invocationId).controller,record.fields);
       fields.line=encodeWitness(record.kind,record.fields);}
     const raw={schema:HARNESS_ENVELOPE_VERSION,session:this.inner.sessionId,
       sequence:this.inner.globalSequence+1,ownerSequence:(this.inner.ownerSequences.get(fields.track)??0)+1,
@@ -209,11 +229,20 @@ export class RegionExecutionHarness {
     if(this.hasProtocol())fail('protocol profile does not dispatch host work');
     const result=await this.inner.dispatch(invocationId,effectId,options);this.sync();return result;
   }
-  deliverResult(invocationId,effectId,options){this.assertBaseLifecycle();const result=this.inner.deliverResult(invocationId,effectId,options);this.sync();return result;}
+  deliverResult(invocationId,effectId,options){
+    this.assertBaseLifecycle();
+    assertObservedPromiseResolutionV8(this.activation(invocationId).controller,{...options,effect:effectId});
+    const result=this.inner.deliverResult(invocationId,effectId,options);this.sync();return result;
+  }
   registerEventHandler(options){this.assertBaseLifecycle();const result=this.inner.registerEventHandler(options);this.sync();return result;}
   postEvent(options){this.assertBaseLifecycle();const result=this.inner.postEvent(options);this.sync();return result;}
   closeEventHandler(id){this.assertBaseLifecycle();const result=this.inner.closeEventHandler(id);this.sync();return result;}
-  reconcile(invocationId,effectId,options){this.assertBaseLifecycle();const result=this.inner.reconcile(invocationId,effectId,options);this.sync();return result;}
+  reconcile(invocationId,effectId,options){
+    this.assertBaseLifecycle();
+    assertObservedPromiseResolutionV8(this.activation(invocationId).controller,
+      {...options,effect:effectId,status:options?.disposition});
+    const result=this.inner.reconcile(invocationId,effectId,options);this.sync();return result;
+  }
   checkpoint(){
     this.sync();if(this.active)fail('cannot checkpoint an uncommitted local transition');
     const body={schema:REGION_CONTINUATION_VERSION,profile:REGION_PROFILE,public:this.exportEpisode(),

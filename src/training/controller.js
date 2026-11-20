@@ -98,7 +98,7 @@ export class SemanticController {
   }
   settlePromise(identity,status,value,{external=false}={}){
     const promise=this.promise(identity);
-    if(promise.state!=='pending')fail('promise','Promise already settled');
+    if(promise.state!=='pending'||promise.adopted)fail('promise','Promise already settled or adopting');
     if(promise.external&&!external)fail('authority','Only a broker observation settles an external Promise');
     if(status==='fulfilled'&&value[0]==='ref'&&this.heap.get(value[1])?.kind==='promise'){
       const target=value[1];let cursor=target;
@@ -112,6 +112,13 @@ export class SemanticController {
     }
     promise.state=status;promise.result=structuredClone(value);
     this.refreshReady();
+  }
+  schedulerClosure(identity){
+    const closure=this.heap.get(identity);
+    if(closure?.kind!=='closure')fail('capture','Scheduler requires an owned closure');
+    if(closure.generatorFunction||closure.promiseResolver)
+      fail('capture','Generator and resolving functions require their explicit call protocol');
+    return closure;
   }
   refreshReady(){
     // Adoption and reaction readiness are deterministic consequences of a
@@ -419,14 +426,14 @@ export class SemanticController {
         if(f.action==='create')this.createPromise(f.promise);
         else if(f.action==='resolve'||f.action==='reject')
           this.settlePromise(f.promise,f.action==='resolve'?'fulfilled':'rejected',f.value);
-        else if(f.action==='adopt')
+        else if(f.action==='adopt'){
+          this.promise(f.target);
           this.settlePromise(f.promise,'fulfilled',['ref',f.target]);
+        }
         else {
           this.promise(f.promise);
           if(this.jobs.has(f.job)||this.continuations.has(f.job))fail('job','Duplicate reaction identity');
-          if(f.closure&&this.heap.get(f.closure)?.kind!=='closure')fail('capture','Reaction requires owned closure');
-          if(f.rejectionClosure&&this.heap.get(f.rejectionClosure)?.kind!=='closure')
-            fail('capture','Rejected reaction requires owned closure');
+          for(const identity of [f.closure,f.rejectionClosure])if(identity)this.schedulerClosure(identity);
           if(f.target)this.createPromise(f.target);
           this.jobs.set(f.job,{status:'waiting',owner:this.rootInvocation,promise:f.promise,
             reaction:f.reaction,closure:f.closure??null,rejectionClosure:f.rejectionClosure??null,target:f.target??null,
@@ -471,7 +478,7 @@ export class SemanticController {
         if(f.action==='enqueue'){
           if(this.jobs.has(f.job)||this.continuations.has(f.job))fail('job','Duplicate scheduled job');
           if(f.owner!==this.rootInvocation)fail('job','Job owner must match its invocation domain');
-          if(f.closure&&this.heap.get(f.closure)?.kind!=='closure')fail('capture','Job requires an owned closure');
+          if(f.closure)this.schedulerClosure(f.closure);
           this.jobs.set(f.job,{status:'queued',owner:f.owner,closure:f.closure??null,
             readySequence:++this.scheduler.ready});
           this.ready.push(f.job);
@@ -492,7 +499,7 @@ export class SemanticController {
             if(job.reaction!=='finally')argument=promise.result;
           }
           if(callback){
-              const closure=this.heap.get(callback);
+              const closure=this.schedulerClosure(callback);
               job.priorAliases=[...this.captureAliases];
               if(this.protocol){
                 job.priorReceiver=structuredClone(this.receiver);
