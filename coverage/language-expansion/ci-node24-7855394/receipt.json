@@ -1,0 +1,296 @@
+{
+  "schema": "semantic-language-ci-evidence/1",
+  "scope": "One complete Node 24 producer job; other matrix and native jobs have independent statuses",
+  "status": "passed",
+  "retrievedAt": "2026-11-20T17:58:53.364Z",
+  "repository": "werg/tracing-js-self",
+  "pr": 46,
+  "prHeadSha": "785539497a7e9cc2c39e0b789814c49ab1e501e8",
+  "testedMergeSha": "e461fab55d58db727bf488993ac1585b88c0ed24",
+  "testedMergeParents": [
+    "9fcfc5b753ee880e37e22403f673c1aa77218768",
+    "785539497a7e9cc2c39e0b789814c49ab1e501e8"
+  ],
+  "headTree": "96a368e5166976ff9743d42fbe0f6fc7af0bd0a7",
+  "testedTree": "96a368e5166976ff9743d42fbe0f6fc7af0bd0a7",
+  "entireHeadAndTestedTreesIdentical": true,
+  "includedFixAncestors": [
+    "c0524b444e8ab8db2a3c1d6b06e5f64327bf77ca",
+    "fb1b672e8e4022deb21858f3e347e24389e25794"
+  ],
+  "semanticQualificationSourceRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
+  "sourceTreeIdenticalToQualificationRevision": true,
+  "pathIdentities": {
+    "src": {
+      "head": "b2a3ea67a33d7b205afad954535e1c62cf8031ef",
+      "testedMerge": "b2a3ea67a33d7b205afad954535e1c62cf8031ef"
+    },
+    "bin": {
+      "head": "213c84a7906e4136d01f5a886e9bbbb89091f752",
+      "testedMerge": "213c84a7906e4136d01f5a886e9bbbb89091f752"
+    },
+    "test": {
+      "head": "63db2e6a84352ec198690a2b40385e393b385432",
+      "testedMerge": "63db2e6a84352ec198690a2b40385e393b385432"
+    },
+    "fixtures": {
+      "head": "9cef74093fce1a804f7a9196df2d6331b01dfbe4",
+      "testedMerge": "9cef74093fce1a804f7a9196df2d6331b01dfbe4"
+    },
+    "tools": {
+      "head": "a1dab445a2570359fc1eeac60ac528a34d452600",
+      "testedMerge": "a1dab445a2570359fc1eeac60ac528a34d452600"
+    },
+    "contracts": {
+      "head": "07755963457ffe7c31982693d4d4cfd0babaaf5b",
+      "testedMerge": "07755963457ffe7c31982693d4d4cfd0babaaf5b"
+    },
+    ".github/workflows": {
+      "head": "e1e26c036e4eb49328c1ddfbc99212840d046e50",
+      "testedMerge": "e1e26c036e4eb49328c1ddfbc99212840d046e50"
+    },
+    "package.json": {
+      "head": "f917861c6ca9133ebfb5ebdc703de236d03654d1",
+      "testedMerge": "f917861c6ca9133ebfb5ebdc703de236d03654d1"
+    },
+    "package-lock.json": {
+      "head": "265bf893d149c3cd70a6b3156c1a557dd6eda6a2",
+      "testedMerge": "265bf893d149c3cd70a6b3156c1a557dd6eda6a2"
+    }
+  },
+  "workflowRunId": 44787055093,
+  "workflowRunNumber": 1354,
+  "workflowRunStatusAtCollection": "in_progress",
+  "jobId": 136464735150,
+  "jobName": "test (24)",
+  "jobConclusion": "success",
+  "runUrl": "https://github.com/werg/tracing-js-self/actions/runs/44787055093",
+  "jobUrl": "https://github.com/werg/tracing-js-self/actions/runs/44787055093/job/136464735150",
+  "runtime": {
+    "node": "24.22.3",
+    "npm": "11.19.1"
+  },
+  "npmTest": {
+    "tests": 1844,
+    "suites": 0,
+    "pass": 1836,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 8,
+    "todo": 0,
+    "duration_ms": 374765.573046
+  },
+  "skips": [
+    {
+      "test": "OS confinement survives direct access to Node filesystem, networking and process APIs",
+      "reason": "Unprivileged namespaces unavailable: unshare: write failed /proc/self/uid_map: Operation not permitted"
+    },
+    {
+      "test": "isolated original and instrumented references pass the source gate and bind the executed policy",
+      "reason": "Unprivileged namespaces unavailable: unshare: write failed /proc/self/uid_map: Operation not permitted"
+    },
+    {
+      "test": "actual pinned ByteCodec reproduces the frozen gallery and meters exact v7/context bytes",
+      "reason": "Exact external consumer/tokenizer paths were not supplied"
+    },
+    {
+      "test": "native compact coordinator runs async, callback and throwing children in one process with exact whole-task receipts",
+      "reason": "Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates"
+    },
+    {
+      "test": "native bounded context resumes the exact captured cell despite compact callback history",
+      "reason": "Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates"
+    },
+    {
+      "test": "native coordinator budget cancellation leaves no selected guest, effect, or live track",
+      "reason": "Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates"
+    },
+    {
+      "test": "native rejected semantic child preserves its committed bytes and cancels its waiting parent",
+      "reason": "Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates"
+    },
+    {
+      "test": "actual initialized-weight native coordinator preserves rejected bytes and token costs with no fixture fallback",
+      "reason": "Set MEGATOKEN_ORCHESTRATION_SERVED, MEGATOKEN_PYTHON and MEGATOKEN_REPOSITORY for native runtime gates"
+    }
+  ],
+  "successfulJobSteps": [
+    {
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 1
+    },
+    {
+      "name": "Run actions/checkout@v4",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 2
+    },
+    {
+      "name": "Run actions/setup-node@v4",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 3
+    },
+    {
+      "name": "Run npm ci",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 4
+    },
+    {
+      "name": "Run npm test",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 5
+    },
+    {
+      "name": "Verify typed algorithm contract and decoder fixtures",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 6
+    },
+    {
+      "name": "Recheck v8 source-bound interoperability and contract snapshot",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 7
+    },
+    {
+      "name": "Verify canonical semantic reasoning fixtures",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 8
+    },
+    {
+      "name": "Run node bin/tracing.js demo --output \"${RUNNER_TEMP}/demo.trace.json\"",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 9
+    },
+    {
+      "name": "Run node bin/tracing.js replay \"${RUNNER_TEMP}/demo.trace.json\"",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 10
+    }
+  ],
+  "v8ContractCheck": {
+    "valid": true,
+    "contractDigest": "344f7e99aeed605a1965c70f0e0d8829707d6891437ba43dd743fa304cd777dc",
+    "interoperabilityDigest": "ef962002482fbf7adb6698fc435535dfa202b12848907a29ee0e5fbb5683a7c7",
+    "examples": [
+      {
+        "id": "ordered-map",
+        "compactRegions": 1,
+        "detailedRegions": 1,
+        "compactRecords": 1,
+        "detailedRecords": 1,
+        "compactBytes": 365,
+        "detailedBytes": 48,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      {
+        "id": "shared-getter",
+        "compactRegions": 2,
+        "detailedRegions": 3,
+        "compactRecords": 2,
+        "detailedRecords": 11,
+        "compactBytes": 234,
+        "detailedBytes": 908,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      {
+        "id": "causal-counter",
+        "compactRegions": 1,
+        "detailedRegions": 2,
+        "compactRecords": 1,
+        "detailedRecords": 10,
+        "compactBytes": 100,
+        "detailedBytes": 1099,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      {
+        "id": "number-callback-cleanup",
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 15,
+        "protocolRecords": 11,
+        "compactBytes": 0,
+        "detailedBytes": 1858,
+        "protocolBytes": 1170,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      {
+        "id": "custom-iterator-close",
+        "compactRegions": 2,
+        "detailedRegions": 2,
+        "compactRecords": 2,
+        "detailedRecords": 51,
+        "protocolRecords": 29,
+        "compactBytes": 197,
+        "detailedBytes": 6535,
+        "protocolBytes": 3754,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      {
+        "id": "iterable-binding-close",
+        "compactRegions": 2,
+        "detailedRegions": 2,
+        "compactRecords": 2,
+        "detailedRecords": 53,
+        "protocolRecords": 29,
+        "compactBytes": 197,
+        "detailedBytes": 6288,
+        "protocolBytes": 3754,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      }
+    ],
+    "protocolSources": [
+      "source-symbol-getter-arithmetic",
+      "typed-views-shared-backing",
+      "source-derived-private-arithmetic",
+      "builtin-iterator-mixed-arithmetic",
+      "source-promise-all-reaction-arithmetic",
+      "source-promise-join-rejection-finally",
+      "source-number-private-arithmetic",
+      "source-generator-cleanup-suspension",
+      "source-generator-delegated-cleanup",
+      "source-proxy-traps-arithmetic",
+      "source-base-initializer-throw",
+      "source-derived-initializer-throw",
+      "source-promise-executor-first-call",
+      "source-promise-executor-retained-resolution",
+      "source-promise-executor-abrupt",
+      "source-ordinary-constructor-prototype",
+      "source-enumeration-map-callback",
+      "generator-own-symbol-alias",
+      "source-logical-left-operands",
+      "source-for-in-own-keys"
+    ],
+    "mode": "checked"
+  },
+  "interoperabilityCasesRechecked": 26,
+  "log": {
+    "path": "node24.log",
+    "encoding": "UTF-8 encoding of the complete decoded GitHub Actions job log",
+    "bytes": 267599,
+    "sha256": "c3b51275ffb57b0cb10fa9e3776dfa972009de4be2cdc996e575c46d53480ed7"
+  },
+  "qualifications": [
+    "Eight explicit skips are not credited as passing.",
+    "Two OS confinement cases cannot run because unprivileged namespaces are unavailable in this runner.",
+    "One pinned codec and five optional native coordinator gates require external assets or environment variables and are skipped in this generic Node job.",
+    "Dedicated paired native qualification is reported separately.",
+    "This successful run includes both the fixed interoperability inventory and the isolated request-deadline tests.",
+    "Later documentation-only commits require identity comparison rather than relabeling this historical run."
+  ]
+}
