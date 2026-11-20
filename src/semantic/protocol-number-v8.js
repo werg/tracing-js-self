@@ -10,6 +10,7 @@ export const NUMBER_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.entrie
   'number.call':['kind','id','child'],
   'number.builtin':['kind','id','result'],
   'number.return':['kind','id','value'],
+  'number.throw':['kind','id','value'],
   'number.finish':['kind','id','result']
 }).map(([kind,fields])=>[kind,Object.freeze(fields)])));
 export const NUMBER_OPERATION_FIELDS=Object.freeze(['id','parent','input','index','method','builtin','child','phase','primitive','result']);
@@ -53,15 +54,15 @@ export function validateNumberRecordV8(record,{value}){
   else if(record.kind==='number.select'){
     value(record.key);if(!['str','symbol'].includes(record.key[0]))throw new TypeError('Number conversion property key');value(record.method);
     if(![null,'Object.valueOf','Object.toString'].includes(record.builtin))throw new TypeError('Number conversion builtin identity');
-  }else value(record.kind==='number.begin'||record.kind==='number.return'?record.value:record.result);
+  }else value(['number.begin','number.return','number.throw'].includes(record.kind)?record.value:record.result);
   return true;
 }
 export function assertNumberNextV8(controller,record,api){
-  const pending=controller.protocol?.numberConversions?.operations.findLast(row=>row.phase!=='complete');
+  const pending=controller.protocol?.numberConversions?.operations.findLast(row=>!['complete','abrupt'].includes(row.phase));
   if(!pending)return true;
   if(pending.phase==='waiting'&&controller.stack.includes(pending.child))return true;
   api.require(controller.stack.at(-1)===pending.parent,'Number conversion continuation owner');
-  const expected={select:'number.select',call:'number.call',builtin:'number.builtin',waiting:'number.return',convert:'number.finish'}[pending.phase];
+  const expected={select:'number.select',call:'number.call',builtin:'number.builtin',waiting:controller.lastReturn?.kind==='throw'?'number.throw':'number.return',convert:'number.finish'}[pending.phase];
   api.require(record.kind===expected&&record.id===pending.id,'pending Number conversion requires '+expected);return true;
 }
 export function applyNumberRecordV8(controller,record,api){
@@ -113,6 +114,10 @@ export function applyNumberRecordV8(controller,record,api){
     require(row.phase==='waiting'&&!controller.stack.includes(row.child)&&controller.lastReturn?.kind==='return'&&
       eq(controller.lastReturn.value,record.value),'Number callback completion differs');
     known(controller,record.value);acceptPrimitive(row,record.value,api);
+  }else if(record.kind==='number.throw'){
+    require(row.phase==='waiting'&&!controller.stack.includes(row.child)&&controller.lastReturn?.kind==='throw'&&
+      eq(controller.lastReturn.value,record.value),'Number callback abrupt completion differs');
+    known(controller,record.value);row.primitive=null;row.result=copy(record.value);row.phase='abrupt';
   }else{
     require(row.phase==='convert'&&numeric(row.primitive),'Number conversion abrupt result requires its own protocol');
     scalarBound(row.primitive,api);
@@ -132,8 +137,8 @@ export function restoreNumberStateV8(controller,snapshot,api){
     assertAlgorithmFields(row,NUMBER_OPERATION_FIELDS,'Number conversion continuation');id(row.id);id(row.parent);
     api.require(!seen.has(row.id),'duplicate Number operation');seen.add(row.id);
     api.require(controller.frameFunctions.has(row.parent)&&[-1,0,1].includes(row.index)&&
-      ['select','call','builtin','waiting','convert','complete'].includes(row.phase),'Number continuation phase/owner');
-    if(row.phase!=='complete')api.require(controller.stack.includes(row.parent),'unfinished Number conversion requires a live parent');
+      ['select','call','builtin','waiting','convert','complete','abrupt'].includes(row.phase),'Number continuation phase/owner');
+    if(!['complete','abrupt'].includes(row.phase))api.require(controller.stack.includes(row.parent),'unfinished Number conversion requires a live parent');
     api.known(controller,row.input);
     for(const value of [row.method,row.primitive,row.result])if(value!==null)api.known(controller,value);
     if(['str','bigint'].includes(row.primitive?.[0]))api.require(row.primitive[1].length<=10000,'Number retained scalar bound');
@@ -144,15 +149,17 @@ export function restoreNumberStateV8(controller,snapshot,api){
     if(row.phase==='select')api.require(row.method===null&&row.builtin===null&&row.child===null,'Number pending selection state');
     if(['call','builtin'].includes(row.phase))api.require(row.child===null,'unentered Number callback identity');
     if(['select','call','builtin','waiting'].includes(row.phase))api.require(row.input[0]==='ref'&&row.primitive===null&&row.result===null,'object conversion phase values');
-    if(['call','waiting'].includes(row.phase))api.require(row.method?.[0]==='ref'&&api.heapNode(controller,row.method[1]).kind==='closure'&&row.builtin===null,'captured Number callback');
-    if(row.phase==='waiting'){
+    if(['call','waiting','abrupt'].includes(row.phase))api.require(row.method?.[0]==='ref'&&api.heapNode(controller,row.method[1]).kind==='closure'&&row.builtin===null,'captured Number callback');
+    if(['waiting','abrupt'].includes(row.phase)){
       api.require(row.child!==null&&controller.frameFunctions.get(row.child)===api.heapNode(controller,row.method[1]).code,'Number callback source identity');
+      if(row.phase==='abrupt')api.require(!controller.stack.includes(row.child)&&row.input[0]==='ref'&&row.primitive===null&&row.result!==null,
+        'Number abrupt callback state');
       if(controller.stack.includes(row.child))api.require(controller.stack.indexOf(row.child)===controller.stack.indexOf(row.parent)+1,'Number callback stack');
     }
     if(row.phase==='builtin')api.require(row.builtin!==null&&row.method?.[0]==='undefined','Number intrinsic state');
     if(['convert','complete'].includes(row.phase))api.require(primitive(row.primitive),'Number primitive is absent');
     if(row.phase==='complete')api.require(numeric(row.primitive)&&api.eq(row.result,encode(Number(decode(row.primitive)))),'Number completed scalar is false');
-    else api.require(row.result===null,'unfinished Number conversion has a result');
+    else if(row.phase!=='abrupt')api.require(row.result===null,'unfinished Number conversion has a result');
   }
   return {valid:true,operations:seen.size};
 }

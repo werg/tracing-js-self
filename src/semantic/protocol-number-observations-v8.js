@@ -47,7 +47,7 @@ function ownedObservations(bundle,calls){
     const callee=event.operands[0]?.[0]==='method'?event.operands[0][1]:event.operands[0],site=siteById.get(event.siteId);
     const start=event.operation==='call.enter'&&callee?.[0]==='intrinsic'&&callee[1]==='Number';
     if(start){if(!sites.has(site))fail('indirect Number source call');
-      const input=event.operands[1]??['num',0];active.set(event.invocationId,{site,input});add(site,'begin',{value:value(input)});
+      const input=event.operands[1]??['num',0];active.set(event.invocationId,{site,input,owner:event.invocationId});add(site,'begin',{value:value(input)});
     }
     if(start||event.operation==='intrinsic.number.resume'){
       const entry=active.get(event.invocationId);if(!entry)fail('missing Number invocation');
@@ -76,10 +76,16 @@ function ownedObservations(bundle,calls){
         add(entry.site,'finish',{value:value(event.result)});active.delete(event.invocationId);
       }
     }
-    for(const change of event.stateChanges)if(change.table==='frames'&&children.has(change.id)&&
-      !['completed','thrown'].includes(change.before?.status)&&['completed','thrown'].includes(change.after?.status)){
-      const entry=children.get(change.id);if(change.after.completion?.type!=='return')fail('abrupt conversion callback');
-      add(entry.site,'return',{method:value(entry.method),value:value(change.after.completion.value.value)});children.delete(change.id);
+    const finished=event.stateChanges.filter(change=>change.table==='frames'&&children.has(change.id)&&
+      !['completed','thrown'].includes(change.before?.status)&&['completed','thrown'].includes(change.after?.status));
+    const depth=id=>{let result=0;const seen=new Set();while(id){if(seen.has(id))fail('cyclic callback chain');seen.add(id);
+      result++;id=state.frames[id]?.callerFrameId;}return result;};
+    finished.sort((a,b)=>depth(b.id)-depth(a.id));
+    for(const change of finished){
+      const entry=children.get(change.id),kind=change.after.completion?.type,thrown=kind==='throw',result=change.after.completion?.value?.value;
+      if(!['return','throw'].includes(kind)||!Array.isArray(result))fail('missing callback completion');
+      add(entry.site,kind,{method:value(entry.method),value:value(result)});children.delete(change.id);
+      if(thrown){add(entry.site,'abrupt',{value:value(result)});active.delete(entry.owner);}
     }
     for(const change of event.stateChanges)if(state[change.table]){
       if(change.after===null)delete state[change.table][change.id];else if(change.after!==undefined)state[change.table][change.id]=change.after;
@@ -135,6 +141,7 @@ export function createNumberObservationAdapterV8({source,side='native',bundle=nu
       const site=call.site;if(typeof site!=='string')fail('unanchored Number source call');
       const input=call.arguments.length?call.arguments[0]:0;add(site,'begin',{value:value(input)});
       let result;
+      try{
       if(!reference(input))result=nextCall();
       else{
         if(types.isProxy(input))fail('guest Proxy is outside the conversion profile');
@@ -154,11 +161,13 @@ export function createNumberObservationAdapterV8({source,side='native',bundle=nu
               const returned=apply(method,input,args);add(site,'builtin',{method:builtin,receiver:value(input),value:value(returned)});return returned;
             }
             add(site,'call',{method:value(method),receiver:value(input),arguments:args.map(value)});
-            const returned=apply(method,input,args);add(site,'return',{method:value(method),value:value(returned)});return returned;
+            try{const returned=apply(method,input,args);add(site,'return',{method:value(method),value:value(returned)});return returned;}
+            catch(error){add(site,'throw',{method:value(method),value:value(error)});throw error;}
           };
         }});
         result=apply(call.callee,call.receiver,[observed,...call.arguments.slice(1)]);
       }
+      }catch(error){add(site,'abrupt',{value:value(error)});throw error;}
       add(site,'finish',{value:value(result)});return result;
     },
     observations(){if(failures.length)fail(failures[0]);return rows;}

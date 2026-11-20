@@ -81,10 +81,12 @@ export function createNumberSourceAdapterV8(){
     completeFrame(ctx,change,event){
       const entry=callbacks.get(change.id);if(!entry)return false;
       const value=change.after.completion?.value?.value,invocation=ctx.frame(change.id);
-      require(ctx,change.after.completion?.type==='return'&&scalar(value)&&ctx.publicInvocation===invocation,
-        'abrupt callback or mismatched conversion completion');
-      emit(ctx,{kind:'return',invocation,value:ctx.tag(value,event)},event);
-      emit(ctx,{kind:'number.return',id:entry.id,value:ctx.tag(value,event)},event);
+      const kind=change.after.completion?.type;
+      require(ctx,['return','throw'].includes(kind)&&scalar(value)&&ctx.publicInvocation===invocation,
+        'mismatched conversion callback completion');
+      emit(ctx,{kind,invocation,value:ctx.tag(value,event)},event);
+      emit(ctx,{kind:'number.'+kind,id:entry.id,value:ctx.tag(value,event)},event);
+      if(kind==='throw')active.delete(entry.owner);
       callbacks.delete(change.id);return true;
     },
     checkFrame(ctx,node){

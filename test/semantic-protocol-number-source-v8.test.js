@@ -101,9 +101,8 @@ test('false Number method order, receiver, result and source-observer evidence r
   assert.deepEqual(controller.protocol,before);
 });
 
-test('unqualified abrupt, accessor, exotic and extra-argument Number behavior has explicit source dispositions',async()=>{
+test('unqualified intrinsic abrupt, accessor, exotic and extra-argument Number behavior has explicit source dispositions',async()=>{
   for(const body of [
-    'return Number({valueOf:function(){throw 7;}});',
     'return Number({[Symbol.toPrimitive]:function(){return {};}});',
     'return Number({get valueOf(){return function(){return 2;};}});',
     'return Number([3]);',
@@ -111,5 +110,31 @@ test('unqualified abrupt, accessor, exotic and extra-argument Number behavior ha
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert.equal(result.status,'unsupported',result.reason);
     assert.equal(result.regionDisposition,'source-unqualified');assert(!result.exported);
+  }
+});
+
+
+test('throwing Number callbacks retain their exact completion and never select a fallback',async()=>{
+  for(const [body,value,operations]of [
+    ['const o={valueOf:function(){throw 7;},toString:function(){throw 99;}};return Number(o);',7,1],
+    ['const inner={valueOf:function(){throw 5;}};const outer={valueOf:function(){return Number(inner);}};return Number(outer);',5,2]
+  ]){
+    const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
+    const artifact=result.exported,replay=RegionExecutionHarness.replay(artifact);
+    assert.deepEqual(replay.controller.completion,{kind:'throw',value:['num',value]});
+    assert.equal(replay.controller.protocol.numberConversions.operations.length,operations);
+    assert(replay.controller.protocol.numberConversions.operations.every(row=>row.phase==='abrupt'&&row.primitive===null&&row.result[1]===value));
+    const records=artifact.public.timeline.filter(row=>row.fields?.line?.startsWith('protocol ')).map(row=>JSON.parse(row.fields.line.slice(9)));
+    assert.equal(records.filter(row=>row.kind==='number.throw').length,operations);
+    assert(!records.some(row=>row.kind==='number.select'&&row.key[1]==='toString'));
+    assert.equal(artifact.sidecar.sourceArtifact.sidecar.reference.extensionAudit.status,'agreed');
+    assert.equal((await recheckProtocolRegionEvidence(artifact)).sourceValidated,true);
+    for(const index of artifact.public.timeline.flatMap((row,index)=>row.fields?.line?.includes('"kind":"number.throw"')?[index]:[])){
+      const prefix=structuredClone(artifact);prefix.public.timeline=prefix.public.timeline.slice(0,index+1);
+      const partial=RegionExecutionHarness.replay(prefix,{requireTerminal:false});
+      const restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(partial.checkpoint())));
+      for(const row of artifact.public.timeline.slice(index+1))restored.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+      assert.deepEqual(restored.exportEpisode(),artifact.public);
+    }
   }
 });

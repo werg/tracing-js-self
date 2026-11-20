@@ -145,3 +145,32 @@ test('Number restore requires a live parent until conversion completes',()=>{
   f.controller.stack=[];
   assert.equal(restoreNumberStateV8(f.controller,f.controller.protocol.numberConversions,f.api).valid,true);
 });
+
+
+test('Number abrupt callback completion is exact, terminal and cannot fall through to toString',()=>{
+  const f=fixture();f.object('object');f.object('method','closure');
+  f.define('object',['symbol','well-known:toPrimitive'],['ref','method']);
+  f.apply({kind:'number.begin',id:'conversion',value:['ref','object']});
+  f.apply({kind:'number.select',id:'conversion',key:['symbol','well-known:toPrimitive'],method:['ref','method'],builtin:null});
+  f.apply({kind:'number.call',id:'conversion',child:'callback'});
+  let before=structuredClone(f.controller);
+  assert.throws(()=>f.apply({kind:'number.throw',id:'conversion',value:['num',7]}),/outside its caller/);
+  assert.deepEqual(f.controller,before);
+  applyProtocolRecordV8(f.controller,{kind:'throw',invocation:'callback',value:['num',7]});
+  before=structuredClone(f.controller);
+  assert.throws(()=>f.apply({kind:'number.return',id:'conversion',value:['num',7]}),/number.throw/);
+  assert.throws(()=>f.apply({kind:'number.throw',id:'conversion',value:['num',99]}),/abrupt completion differs/);
+  assert.deepEqual(f.controller,before);
+  f.apply({kind:'number.throw',id:'conversion',value:['num',7]});
+  assert.deepEqual(f.controller.lastReturn,{kind:'throw',value:['num',7]});
+  assert.equal(f.controller.protocol.numberConversions.operations[0].phase,'abrupt');
+  assert.equal(restoreNumberStateV8(f.controller,f.controller.protocol.numberConversions,f.api).valid,true);
+  before=structuredClone(f.controller);
+  assert.throws(()=>f.apply({kind:'number.finish',id:'conversion',result:['num',7]}),/abrupt result/);
+  assert.throws(()=>f.apply({kind:'number.select',id:'conversion',key:['str','toString'],method:['undefined'],builtin:'Object.toString'}),/method order/);
+  assert.deepEqual(f.controller,before);
+  for(const mutate of [row=>row.primitive=['num',7],row=>row.child=null,row=>row.result=null]){
+    const bad=structuredClone(f.controller.protocol.numberConversions);mutate(bad.operations[0]);
+    assert.throws(()=>restoreNumberStateV8(f.controller,bad,f.api),/abrupt callback state|callback source identity/);
+  }
+});
