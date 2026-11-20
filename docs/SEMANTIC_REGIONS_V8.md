@@ -14,11 +14,14 @@ work proposed in [the language coverage plan](LANGUAGE_COVERAGE_PLAN.md).
 against independent source observations and validates its public projection.
 Recognition by a parser or pure lowerer alone does not satisfy that gate.
 
-For every row, **current native requalification is pending** for the final
-producer/consumer/contract pins, and **external model comprehension and execution
-are unmeasured**. Those statuses apply even where component tests already agree
-with native JavaScript. The retained three-case native base run covers its own
-older contract; later extensions require fresh admission. The production default
+Fresh [native qualification](../coverage/language-expansion/native-v8-8d1f7b5/README.md)
+at producer `8d1f7b5` and consumer `be3a8d7` passed all **22 interoperability
+cases and 11 retained-gallery cases**, including live source authority, public
+replay, contexts, continuation, physical masks and the pinned production
+tokenizer. Exact flat costs and native packing are retained for every case.
+These complete populations qualify their declared examples; the separate
+665-case expansion population is still being measured. **External model
+comprehension and execution remain unmeasured**, and the production default
 remains unchanged. Exact receipt requirements are in
 [the training contract](SEMANTIC_V8_TRAINING.md#native-admission).
 
@@ -164,12 +167,14 @@ universal equivalence or a measured model-comprehension improvement.
 
 ## Remaining promotion gates
 
-Current-branch native admission and full-population coverage/cost totals are
-**pending** final retained receipts. The source/qualification runners, exact
-tokenizer meter, family-bound dataset export and causal masks are implemented;
-their existence does not supply a completed release measurement. The frozen
-populations and reproduction commands are documented in
-[the evaluation protocol](LANGUAGE_EXPANSION_EVALUATION.md).
+The complete 22-case interoperability and 11-case gallery runs have retained
+source/native admission, exact tokenizer costs and native packing. The separate
+665-case expansion population and its matched historical cost comparison remain
+**pending**. The frozen populations and reproduction commands are documented in
+[the evaluation protocol](LANGUAGE_EXPANSION_EVALUATION.md). A production
+[gallery dataset export](../coverage/language-expansion/dataset-v8-9d76176/README.md)
+also retains all 97 generated examples, exact masks and fresh admission after
+split binding at its explicitly recorded earlier producer/consumer revisions.
 
 External model comprehension, next-step accuracy, completed execution and cost
 per successful model execution remain **unmeasured**. Default promotion remains

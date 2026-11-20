@@ -1,5 +1,21 @@
 # Language-expansion evidence
 
+## Current v8 qualification
+
+Evidence directories describe their exact measured revisions; a later commit
+containing a report does not change its source or consumer identity.
+
+| Evidence | Measured result | Scope |
+| --- | --- | --- |
+| [Native interoperability and gallery](native-v8-8d1f7b5/README.md) | 22/22 interoperability and 11/11 gallery cases passed source/native admission and exact token metering | Producer `8d1f7b5`, consumer `be3a8d7`; all receipts, inputs, masks and costs retained |
+| [Producer regression](producer-regression-2f9bca8/README.md) | 1,740 passed, six optional skips, zero failures; all eight reference checks passed | Exact producer `2f9bca8`; later policy, adapter, CI and evidence changes have separate checks |
+| [Production gallery dataset](dataset-v8-9d76176/README.md) | 11 admitted episodes, 97 complete examples; independently re-encoded prompts/targets, masks, EOS and split bindings | Exact producer `9d76176`, consumer `5a22bc8`; zero optimizer steps |
+| [Interrupted native run](native-v8-2f9bca8-interrupted/README.md) | 153 recorded attempts: 16 admitted, 137 failed; 512 untested | Historical producer `2f9bca8`, consumer `5a22bc8`; failures and exact transport bytes preserved |
+
+The separate 665-case expansion population and paired historical cost comparison
+are being completed. External-model comprehension, completed model execution,
+native serving latency/cache behavior and default promotion remain unqualified.
+
 ## Baseline before expansion
 
 `baseline-585caf5-v7.json` and `gallery-585caf5-v7.json` were produced by

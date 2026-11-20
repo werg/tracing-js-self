@@ -250,3 +250,12 @@ episode refusal. Native receipt transport has an explicitly labeled unit
 fixture; that fixture is not an independent native-consumer execution and
 does not produce a retained admission artifact. Actual native qualification
 and model execution require their own pinned run evidence.
+
+The [fresh interoperability and gallery qualification](../coverage/language-expansion/native-v8-8d1f7b5/README.md)
+retains actual production-tokenizer receipts for all 22 interoperability and 11
+gallery cases at producer `8d1f7b5` / consumer `be3a8d7`. The independently
+verified [production gallery dataset](../coverage/language-expansion/dataset-v8-9d76176/README.md)
+contains 11 episodes and 97 complete causal examples, with fresh native admission
+after split binding at producer `9d76176` / consumer `5a22bc8`. Its exact earlier
+pins are intentional and do not qualify later code. Neither run performs model
+optimization or establishes learned execution.
