@@ -147,6 +147,18 @@ qualification still requires the source adapter and registered public machine.
 
 ## Qualified source adapter
 
+Ordinary object methods and accessor functions also activate the explicit
+callable-capability records, including inherited getters without a class.
+The source inventory binds each method to its actual Function node and requires
+its nonconstructible flag. Independent metadata captures that capability even
+when ordinary function descriptors remain opaque in this bounded profile.
+A private native Proxy construction probe determines whether a callable has
+`[[Construct]]`; its trap returns an inert object, so neither the guest function
+nor its `.prototype` getter runs. The probe never escapes into guest state.
+Class methods retain their separate full descriptor, home-object and private
+state observations. Consistently changing an ordinary helper's capability in
+the teacher and public replay is still rejected by this independent check.
+
 `createConstructionSourceAdapterV8` lowers class declarations, actual function
 name/length descriptors, method home objects, initializer ownership and private
 identities to the shared public component. Its constructor operations retain

@@ -1,13 +1,16 @@
-// Source-only class inventory, shared with independent observers. This module
+// Source-only class and object-method inventory, shared with independent observers. This module
 // never imports the owned compiler, journal, protocol machine or evaluator.
 import {parse} from 'acorn';
 
 export const CONSTRUCTION_SOURCE_CALLABLE_PREFIX_V8='class:';
 export function constructionSourceInventoryV8(source){
-  const classes=[],methods=new Map(),synthetic=new Map();
+  const classes=[],methods=new Map(),objectMethods=new Map(),synthetic=new Map();
   function visit(node){
     if(!node||typeof node!=='object')return;
     if(Array.isArray(node)){node.forEach(visit);return;}
+    if(node.type==='ObjectExpression')for(const element of node.properties)
+      if(element.type==='Property'&&(element.method||['get','set'].includes(element.kind)))
+        objectMethods.set(element.value.start,{objectNode:node,element});
     if(node.type==='ClassDeclaration'||node.type==='ClassExpression'){
       const elements=node.body.body,privateNames=[];
       for(const element of elements){
@@ -36,7 +39,7 @@ export function constructionSourceInventoryV8(source){
     for(const [key,child]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(child);
   }
   visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));
-  return {classes,methods,synthetic};
+  return {classes,methods,objectMethods,synthetic};
 }
 
 /** Exact source membership only; construction capabilities remain separate. */

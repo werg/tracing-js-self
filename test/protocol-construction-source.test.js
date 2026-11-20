@@ -1,12 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRuntime} from '../src/runtime.js';
+import {createRuntime,Runtime} from '../src/runtime.js';
 import {encodeNativeGraph} from '../src/host/graph-codec.js';
 import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-v8.js';
 import {createConstructionSourceAdapterV8} from '../src/semantic/protocol-construction-source-v8.js';
 import {auditProtocolSourceV8} from '../src/semantic/protocol-source-reference-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {sharedRegionState} from '../src/semantic/regions.js';
+import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
+import {decodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
+import {LANGUAGE_EXPANSION_FAMILIES} from '../fixtures/language-expansion/benchmark.js';
 
 function build(source,args=[]){
   const runtime=createRuntime({maxSteps:10000}).startEntry({text:source,functionName:'run',args});runtime.drive();
@@ -121,4 +124,35 @@ test('unmodeled class continuations remain explicit source refusals even with a 
     ['"use strict";function run(){class C{constructor(){this.f=()=>new.target;}}const o=new C();return 3;}',/heap kind or metadata|lexical constructor/],
     ['"use strict";function run(){class A{m(){return 1;}}class B extends A{m(){return super.m();}}const o=new B();return o.m();}',/super property references/],
   ])assert.throws(()=>build(source),reason,source);
+});
+
+test('every inherited-getter benchmark input preserves callable capability and one live captured write',async()=>{
+  const family=LANGUAGE_EXPANSION_FAMILIES.find(row=>row.id==='getter-captured-write'),source=family.variants[2].source;
+  for(const args of family.inputs){
+    const result=await verifyRegionTrainingCase({source,entry:family.entry,args,family:family.family});
+    assert(result.exported,result.reason);const artifact=result.exported,controller=RegionExecutionHarness.replay(artifact).controller;
+    assert.deepEqual(controller.materialize(controller.completion.value),[args[0],1]);
+    assert(artifact.sidecar.protocolExtensions.includes('class-private-source/1'));
+    const records=artifact.public.timeline.filter(row=>row.kind==='protocol').map(row=>decodeProtocolRecordV8(row.fields.line));
+    assert(records.some(row=>row.kind==='callable.define'&&row.constructorKind===null&&!row.classConstructor));
+    assert.equal(records.filter(row=>row.kind==='property.get.call').length,1);
+    assert(artifact.contexts.some(context=>context.state.protocol?.pendingCalls.length));
+  }
+});
+
+test('independent callable observations reject a consistently nonconstructible teacher and public replay',async()=>{
+  const source='"use strict";function run(){function helper(){return 99;}const kept={helper};const proto={get n(){return 3;}};const o=Object.create(proto);return o.n;}',
+    original=Runtime.prototype.commit;let mutant;
+  try{
+    Runtime.prototype.commit=function(operation,callback,options){return original.call(this,operation,(draft,eventId)=>{
+      const result=callback(draft,eventId),code=Object.values(this.programs).flatMap(program=>program.instructions)
+        .find(instruction=>instruction.op==='DEF_FN'&&instruction.arg.name==='helper')?.arg.codeId;
+      if(code)for(const node of Object.values(draft.heap))if(node.kind==='function'&&node.codeId===code)node.nonConstructible=true;
+      return result;
+    },options);};
+    mutant=build(source); // The archive and its public replay agree on the same incorrect capability.
+  }finally{Runtime.prototype.commit=original;}
+  assert.deepEqual(mutant.compiled.outcome.graph.roots.at(-1),['num',3]);replay(mutant.compiled);
+  await assert.rejects(()=>auditProtocolSourceV8({bundle:mutant.bundle,
+    referenceInput:{source,entry:'run',inputGraph:encodeNativeGraph([])},outcome:mutant.compiled.outcome}),/metadataAudit.*mismatch/);
 });

@@ -10,6 +10,16 @@ const registerName='__tracingProtocolConstructionRegister';
 const fail=message=>{throw new TypeError('Construction metadata observation: '+message);};
 const ref=id=>['ref',id];
 const sourceClasses=source=>constructionSourceInventoryV8(source).classes;
+const construct=Reflect.construct,PrivateProxy=Proxy;
+const constructionProbe=Object.freeze({construct:()=>({})});
+const nonconstructibleAnnotation=()=>({name:'ordinary-nonconstructible/1',values:[],data:{}});
+function isConstructor(value){
+  // A Proxy has [[Construct]] exactly when its target does. The private trap
+  // returns an inert object without invoking the target or getting .prototype.
+  // This probe never escapes into source execution or observable metadata.
+  try{construct(new PrivateProxy(value,constructionProbe),[]);return true;}
+  catch(error){if(error instanceof TypeError)return false;throw error;}
+}
 function instructionFor(bundle,event){
   const patch=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId);
   return bundle.programs[event.codeId]?.instructions[patch?.before?.pc];
@@ -35,7 +45,9 @@ function ownedInventory(bundle,classes){
 }
 
 export function createConstructionObservationAdapterV8({source,side='native',bundle=null}={}){
-  const classes=sourceClasses(source);if(!classes.length)return null;
+  const inventory=constructionSourceInventoryV8(source),classes=inventory.classes,
+    observeOrdinaryCapabilities=inventory.objectMethods.size>0;
+  if(!classes.length&&!observeOrdinaryCapabilities)return null;
   for(const item of classes)for(const entry of item.privateNames)
     if(!['field','method'].includes(entry.kind))fail('private accessor metadata requires an accessor protocol');
   const inferredNames=new Map();
@@ -98,7 +110,11 @@ export function createConstructionObservationAdapterV8({source,side='native',bun
       annotations.push({name:'private-element/1',values:[row.constructor,privateValue],
         data:{name:entry.name,kind:entry.kind,static:entry.static}});
     }
-    if(!annotations.length&&typeof value==='function')return null;
+    if(!annotations.length&&typeof value==='function'){
+      if(observeOrdinaryCapabilities&&!isConstructor(value))
+        return {...ctx.defaultNode(value),annotations:[nonconstructibleAnnotation()]};
+      return null;
+    }
     return {...ctx.defaultNode(value,{includeFunctions:true}),annotations};
   }
   function ownedNode(value,ctx){
@@ -119,7 +135,11 @@ export function createConstructionObservationAdapterV8({source,side='native',bun
         data:{name:entry.name,kind:node.privateKinds[key],static:entry.static}});
     }
     if(Object.keys(node.privateSlots??{}).some(key=>!accounted.has(key)))ctx.fail('unregistered private element identity');
-    if(!annotations.length&&node.kind==='function')return null;
+    if(!annotations.length&&node.kind==='function'){
+      if(observeOrdinaryCapabilities&&(node.arrow||node.nonConstructible))
+        return {...ctx.defaultNode(value),annotations:[nonconstructibleAnnotation()]};
+      return null;
+    }
     return {...ctx.defaultNode(value,{includeFunctions:true}),annotations};
   }
   // Reject direct use of the reserved observer namespace even when this

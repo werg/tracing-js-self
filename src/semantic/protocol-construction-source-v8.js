@@ -16,11 +16,13 @@ const scalar=value=>Array.isArray(value)&&['undefined','null','bool','str','num'
 const finished=frame=>['completed','thrown'].includes(frame.status);
 
 export function createConstructionSourceAdapterV8({bundle,source}){
-  const inventory=constructionSourceInventoryV8(source);if(!inventory.classes.length)return null;
+  const inventory=constructionSourceInventoryV8(source);if(!inventory.classes.length&&!inventory.objectMethods.size)return null;
   const classes=new Map(inventory.classes.map(item=>[item.node.start,item])),definitions=new Map(),roles=new Map();
   for(const program of Object.values(bundle.programs))for(let index=0;index<program.instructions.length;index++){
     const instruction=program.instructions[index];if(instruction.op!=='MAKE_FUNCTION')continue;
-    const code=instruction.arg.codeId,method=inventory.methods.get(instruction.start),item=classes.get(instruction.start);
+    const code=instruction.arg.codeId,method=inventory.methods.get(instruction.start),item=classes.get(instruction.start),
+      objectMethod=inventory.objectMethods.get(instruction.start);
+    if(objectMethod){definitions.set(code,{placement:'object-method',node:objectMethod.element.value});continue;}
     if(method){definitions.set(code,{classNode:method.classNode,placement:method.element.kind==='constructor'?'constructor':'method',node:method.element.value});continue;}
     if(!item)continue;
     const target=bundle.programs[code],isConstructor=target.instructions.some(row=>row.op==='CLASS_CONSTRUCTOR_GUARD'),
@@ -60,7 +62,7 @@ export function createConstructionSourceAdapterV8({bundle,source}){
   }
   function capability(node){const definition=definitions.get(node.codeId),isClass=definition?.placement==='constructor';
     return {constructorKind:isClass?(definition.classNode.superClass?'derived':'base'):
-      node.arrow||node.nonConstructible?null:'base',classConstructor:isClass};
+      definition?.placement==='object-method'||node.arrow||node.nonConstructible?null:'base',classConstructor:isClass};
   }
   function enter(ctx,event,{mode='ordinary',owner=null}={}){
     const child=addedFrame(event),callee=event.operands[0];
@@ -243,6 +245,8 @@ export function createConstructionSourceAdapterV8({bundle,source}){
       const publicNode=ctx.controller.heap.get(node.id);require(ctx,publicNode,'missing shared construction heap node');
       const described=describeConstructionObjectV8(publicNode);
       if(node.kind==='function'){
+        if(definitions.get(node.codeId)?.placement==='object-method')
+          require(ctx,node.nonConstructible===true&&!node.arrow,'object method construction capability differs from source');
         const expected={...capability(node),homeObject:node.homeObject??null,instanceInitializer:node.instanceInitializer??null,staticInitializer:node.staticInitializer??null};
         require(ctx,ctx.eq(described.callable,expected),'callable capability, home or initializer state differs');
         if(Object.hasOwn(node,'classConstructor'))require(ctx,node.classConstructor===expected.classConstructor,'owned class capability differs from source');

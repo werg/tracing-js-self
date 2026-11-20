@@ -26,23 +26,29 @@ function tracker(adapter){
     }
     return adapter.scalar(raw);
   }
+  function annotationRows(node){
+    if(node.annotations===undefined)return null;
+    assertAlgorithmDataArray(node.annotations,'metadata annotations');
+    if(node.annotations.length>cap)throw new RangeError('Metadata annotation bound');
+    return node.annotations.map(annotation=>{
+      assertAlgorithmFields(annotation,['name','values','data'],'metadata annotation');
+      if(typeof annotation.name!=='string'||!annotation.name||annotation.name.length>128)fail('annotation name');
+      assertAlgorithmDataArray(annotation.values,'annotation references');
+      if(annotation.values.length>cap)throw new RangeError('Metadata annotation bound');
+      return {name:annotation.name,values:annotation.values.map(value),data:JSON.parse(stableAlgorithmJSON(annotation.data))};
+    });
+  }
   function snapshot(){const rows=[];
     for(let index=0;index<objects.length;index++){
       const {id,raw}=objects[index],node=adapter.object(raw);
-      if(node.kind==='function'&&!Array.isArray(node.properties)){rows.push({id,kind:'function'});continue;}
+      if(node.kind==='function'&&!Array.isArray(node.properties)){
+        const annotations=annotationRows(node);rows.push({id,kind:'function',...(annotations?{annotations}:{})});continue;
+      }
       const prototype=node.prototype===null||typeof node.prototype==='string'?node.prototype:value(node.prototype);
       const properties=node.properties.map(({key,descriptor:d})=>({key:value(key),descriptor:d.kind==='data'?
         {kind:'data',value:value(d.value),writable:d.writable,enumerable:d.enumerable,configurable:d.configurable}:
         {kind:'accessor',get:value(d.get),set:value(d.set),enumerable:d.enumerable,configurable:d.configurable}}));
-      if(node.annotations!==undefined){assertAlgorithmDataArray(node.annotations,'metadata annotations');
-        if(node.annotations.length>cap)throw new RangeError('Metadata annotation bound');}
-      const annotations=node.annotations===undefined?null:node.annotations.map(annotation=>{
-        assertAlgorithmFields(annotation,['name','values','data'],'metadata annotation');
-        if(typeof annotation.name!=='string'||!annotation.name||annotation.name.length>128)fail('annotation name');
-        assertAlgorithmDataArray(annotation.values,'annotation references');
-        if(annotation.values.length>cap)throw new RangeError('Metadata annotation bound');
-        return {name:annotation.name,values:annotation.values.map(value),data:JSON.parse(stableAlgorithmJSON(annotation.data))};
-      });
+      const annotations=annotationRows(node);
       rows.push({id,kind:node.kind,prototype,extensible:node.extensible,properties,...(annotations?{annotations}:{})});
     }
     return {objects:rows,symbols:copy(symbolRows)};

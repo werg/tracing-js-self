@@ -20,3 +20,11 @@ test('private accessors cannot masquerade as supported private initializer defin
   assert.equal(hasConstructionSourceCallableV8(source,'class:0:constructor'),false);
   assert.equal(hasConstructionSourceCallableV8(source,'class:0:instance'),false);
 });
+
+test('ordinary object methods and accessors have exact source callable membership',()=>{
+  const source='const object={m(x){return x;},get n(){return 1;},set n(v){},data:function(){}};',
+    inventory=constructionSourceInventoryV8(source);
+  assert.equal(inventory.classes.length,0);assert.equal(inventory.synthetic.size,0);
+  assert.deepEqual([...inventory.objectMethods.values()].map(row=>row.element.kind),['init','get','set']);
+  for(const [start,row]of inventory.objectMethods)assert.equal(source.slice(start,row.element.value.end).startsWith('('),true);
+});

@@ -85,3 +85,31 @@ test('metadata readers do not call ordinary getters and reject private accessors
   assert.throws(()=>createConstructionObservationAdapterV8({source:'class C{get #x(){throw 1;}}'}),/private accessor metadata/);
   assert.throws(()=>createConstructionObservationAdapterV8({source:'class C{};__tracingProtocolConstructionRegister(C,0,[])'}),/reserved observer/);
 });
+
+test('ordinary getter capabilities remain visible without inventing function descriptors',()=>{
+  const checked=observe('"use strict";function run(){let reads=0;const proto={get n(){reads++;return 3;}};const o=Object.create(proto);const value=o.n;return [value,reads];}');
+  assert.deepEqual(Array.from(checked.result),[3,1]);assert.equal(checked.audit.status,'agreed',JSON.stringify(checked.audit));
+  const method=checked.native.at(-1).objects.find(node=>node.annotations?.some(row=>row.name==='ordinary-nonconstructible/1'));
+  assert.equal(method.kind,'function');assert.equal(Object.hasOwn(method,'properties'),false);
+  const changed=structuredClone(checked.bundle);
+  function mutate(node){if(!node||typeof node!=='object')return;
+    if(node.kind==='function'&&node.nonConstructible)node.nonConstructible=false;
+    for(const child of Object.values(node))mutate(child);}
+  mutate(changed);
+  const observed=ownedProtocolSourceObservations(changed,checked.source,{adapters:[createConstructionObservationAdapterV8]});
+  assert.deepEqual(observed.completions,checked.owned.completions);
+  assert.equal(compareProtocolMetadata(observed.metadata,checked.native).status,'mismatch');
+});
+
+test('independent construction capability probes neither invoke functions nor read their prototypes',()=>{
+  const adapter=createConstructionObservationAdapterV8({source:'const object={m(){}};'}),
+    metadata=createNativeProtocolMetadata({adapters:[adapter.metadataAdapter]});
+  let calls=0,reads=0;
+  const constructor=(function(){calls++;}).bind(null),method=({m(){calls++;}}).m;
+  for(const fn of [constructor,method])Object.defineProperty(fn,'prototype',{get(){reads++;throw new Error('must not read');}});
+  const constructed=metadata.observe('constructor','initialize',constructor);
+  assert.equal(constructed.objects[0].annotations,undefined);
+  const nonconstructor=metadata.observe('method','initialize',method);
+  assert(nonconstructor.objects.some(node=>node.annotations?.some(row=>row.name==='ordinary-nonconstructible/1')));
+  assert.equal(calls,0);assert.equal(reads,0);
+});
