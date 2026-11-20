@@ -257,18 +257,33 @@ expansion cases, 23 interoperability cases and 11 original-gallery cases at
 producer `b66c19b` / consumer `6adf99f`.
 
 The independently verified
-[current production dataset](../coverage/language-expansion/dataset-v8-492328f/README.md)
-contains 34 episodes and 898 complete causal examples at producer `492328f` and
-consumer `cb311db`, with fresh source/native admission after split binding.
-These are later pins than the complete-population cost run above; its receipts
-were not reused for this export. Its 31 components do not cross train, validation
-or test splits. All 898 prompts and targets were re-encoded and byte-round-tripped
-with the pinned actual tokenizer; generated tokens and EOS are supervised, while
-prompt labels remain `-100`. It contains 29,374 generated tokens including 898
-EOS tokens. No optimizer steps were performed and learned success remains
-untested.
+[current production dataset](../coverage/language-expansion/dataset-v8-012c9fe/README.md)
+contains **37 episodes and 1,021 complete causal examples** at producer `012c9fe`
+and consumer `39c4036`. All 26 interoperability and 11 gallery cases were freshly
+source/native-qualified at those exact revisions, then independently readmitted
+after the global split registry was frozen. Historical receipts were not reused
+for this export. Its 34 components do not cross train, validation or test splits.
 
-Earlier [34-episode](../coverage/language-expansion/dataset-v8-b66c19b/README.md),
+| Split | Episodes | Complete examples | Generated tokens, including EOS |
+| --- | ---: | ---: | ---: |
+| Train | 26 | 646 | 21,555 |
+| Validation | 7 | 239 | 8,056 |
+| Test | 4 | 136 | 4,239 |
+| Total | 37 | 1,021 | 33,850 |
+
+All 1,021 prompts and targets were re-encoded and byte-round-tripped with the
+pinned actual tokenizer. Generated tokens and EOS are supervised, while prompt
+labels remain `-100`; the 33,850 generated tokens include exactly 1,021 EOS tokens.
+The retained verifier also checks every causal context, complete target, native
+input and receipt binding, attention mask, and component assignment. The complete
+archive was built twice with identical bytes and checked after decompression.
+No optimizer steps were performed on this dataset, so this export makes no
+learned-success claim. The separately retained
+[bounded native model experiment](../coverage/language-expansion/native-v8-fit-39c4036/README.md)
+used its own declared one-input training slice and separate evaluation input.
+
+Earlier [34-episode export at `492328f`](../coverage/language-expansion/dataset-v8-492328f/README.md),
+[34-episode export at `b66c19b`](../coverage/language-expansion/dataset-v8-b66c19b/README.md),
 [33-episode](../coverage/language-expansion/dataset-v8-8d1f7b5/README.md)
 and [11-episode](../coverage/language-expansion/dataset-v8-9d76176/README.md)
 exports retain their own exact pins and evidence. Their receipts are not reused
