@@ -1,0 +1,355 @@
+{
+  "schema": "semantic-v8-final-qualification-run/1",
+  "status": "running",
+  "startedAt": "2026-11-20T16:35:34.104786+00:00",
+  "pinsBefore": {
+    "producer": {
+      "path": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+      "revision": "3a1992b4462e8e2affa6baa04e9075ba3b01d04a",
+      "tree": "903da3860401f5f1a174a933ac03a8c5ae558b1a",
+      "trackedChanges": "",
+      "untrackedChanges": ""
+    },
+    "consumer": {
+      "path": "/workspace/scratch/754a49249d01/qualification-consumer-418385b",
+      "revision": "418385b6880077b58bb5ae8f7ffeb7353a108d5d",
+      "tree": "972b39365c70a63db938c08780ddd82be29ab860",
+      "trackedChanges": "",
+      "untrackedChanges": ""
+    }
+  },
+  "environmentOverrides": {
+    "TRACING_JS_SELF_ROOT": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+    "MEGATOKEN_NATIVE_SOURCE_PRODUCER": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+    "MEGATOKEN_ROOT": "/workspace/scratch/754a49249d01/qualification-consumer-418385b",
+    "MEGATOKEN_PYTHON": "/workspace/scratch/754a49249d01/native-v8-venv/bin/python",
+    "PYTHONPATH": "/workspace/scratch/754a49249d01/qualification-consumer-418385b/src",
+    "MEGATOKEN_TOKENIZER_JSON": "/workspace/scratch/754a49249d01/native-v8-tokenizer.json",
+    "SEMANTIC_V8_NATIVE_POLICY": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b/contracts/semantic-native-policy-v8.json",
+    "V8_DATASET_CAPTURE": "/workspace/scratch/754a49249d01/qualification-3a1992b/v8-dataset-3a1992b/native-inputs",
+    "TMPDIR": "/workspace/scratch/754a49249d01/qualification-3a1992b/tmp",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "runtime": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "tokenizers": "0.23.3",
+    "megatoken": "/workspace/scratch/754a49249d01/qualification-consumer-418385b/src/megatoken/__init__.py",
+    "node": "v24.22.3"
+  },
+  "tokenizer": {
+    "path": "/workspace/scratch/754a49249d01/native-v8-tokenizer.json",
+    "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "bytes": 12205732
+  },
+  "workers": 3,
+  "commands": [
+    {
+      "name": "native-interoperability",
+      "command": [
+        "node",
+        "tools/qualify-semantic-v8.mjs",
+        "--out",
+        "/workspace/scratch/754a49249d01/qualification-3a1992b/native-interoperability",
+        "--population",
+        "interoperability",
+        "--inputs",
+        "all",
+        "--workers",
+        "3",
+        "--megatoken",
+        "/workspace/scratch/754a49249d01/qualification-consumer-418385b",
+        "--tokenizer",
+        "/workspace/scratch/754a49249d01/native-v8-tokenizer.json",
+        "--python",
+        "/workspace/scratch/754a49249d01/native-v8-venv/bin/python",
+        "--native-policy",
+        "contracts/semantic-native-policy-v8.json"
+      ],
+      "cwd": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+      "startedAt": "2026-11-20T16:35:34.137056+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T16:37:46.250757+00:00",
+      "durationSeconds": 132.11359424600232,
+      "exitCode": 0,
+      "pinsAfter": {
+        "producer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+          "revision": "3a1992b4462e8e2affa6baa04e9075ba3b01d04a",
+          "tree": "903da3860401f5f1a174a933ac03a8c5ae558b1a",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        },
+        "consumer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-consumer-418385b",
+          "revision": "418385b6880077b58bb5ae8f7ffeb7353a108d5d",
+          "tree": "972b39365c70a63db938c08780ddd82be29ab860",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        }
+      },
+      "stdout": {
+        "path": "native-interoperability.stdout.log",
+        "sha256": "756151f8a14e373636943ea2b70d24d6c0bf72c828739f20b05133b17739e2f3",
+        "bytes": 208
+      },
+      "stderr": {
+        "path": "native-interoperability.stderr.log",
+        "sha256": "97d218a6608d8711f0dfa61e091459631d96f6bc3611d428c228b0c67a824c59",
+        "bytes": 1782
+      }
+    },
+    {
+      "name": "costs-interoperability",
+      "command": [
+        "node",
+        "tools/measure-semantic-v8.mjs",
+        "--qualification",
+        "/workspace/scratch/754a49249d01/qualification-3a1992b/native-interoperability",
+        "--out",
+        "/workspace/scratch/754a49249d01/qualification-3a1992b/costs-interoperability",
+        "--tokenizer-module",
+        "tools/semantic-v8-tokenizer-adapter.mjs"
+      ],
+      "cwd": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+      "startedAt": "2026-11-20T16:37:46.327363+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T16:38:15.386941+00:00",
+      "durationSeconds": 29.05893263100006,
+      "exitCode": 0,
+      "pinsAfter": {
+        "producer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+          "revision": "3a1992b4462e8e2affa6baa04e9075ba3b01d04a",
+          "tree": "903da3860401f5f1a174a933ac03a8c5ae558b1a",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        },
+        "consumer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-consumer-418385b",
+          "revision": "418385b6880077b58bb5ae8f7ffeb7353a108d5d",
+          "tree": "972b39365c70a63db938c08780ddd82be29ab860",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        }
+      },
+      "stdout": {
+        "path": "costs-interoperability.stdout.log",
+        "sha256": "4684a1df4deba4092cf15d81898fe7a04a75ad9480d81e52ae98e4d6b37e0403",
+        "bytes": 1541
+      },
+      "stderr": {
+        "path": "costs-interoperability.stderr.log",
+        "sha256": "b11592c1c52f4fd682d51141ec797949a21a2820a180dcfbd2bb88890c619281",
+        "bytes": 1368
+      }
+    },
+    {
+      "name": "retain-inputs-interoperability",
+      "command": [
+        "node",
+        "/workspace/scratch/754a49249d01/qualification-tools/retain-native-inputs.mjs",
+        "/workspace/scratch/754a49249d01/qualification-3a1992b/native-interoperability"
+      ],
+      "cwd": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+      "startedAt": "2026-11-20T16:38:15.451158+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T16:38:16.111343+00:00",
+      "durationSeconds": 0.6595507899983204,
+      "exitCode": 0,
+      "pinsAfter": {
+        "producer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+          "revision": "3a1992b4462e8e2affa6baa04e9075ba3b01d04a",
+          "tree": "903da3860401f5f1a174a933ac03a8c5ae558b1a",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        },
+        "consumer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-consumer-418385b",
+          "revision": "418385b6880077b58bb5ae8f7ffeb7353a108d5d",
+          "tree": "972b39365c70a63db938c08780ddd82be29ab860",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        }
+      },
+      "stdout": {
+        "path": "retain-inputs-interoperability.stdout.log",
+        "sha256": "17e241746fba80c92da824d847c6bccbf6235f8166de9e0f06ad3be882c8d815",
+        "bytes": 170
+      },
+      "stderr": {
+        "path": "retain-inputs-interoperability.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "name": "native-gallery",
+      "command": [
+        "node",
+        "tools/qualify-semantic-v8.mjs",
+        "--out",
+        "/workspace/scratch/754a49249d01/qualification-3a1992b/native-gallery",
+        "--population",
+        "gallery",
+        "--inputs",
+        "all",
+        "--workers",
+        "3",
+        "--megatoken",
+        "/workspace/scratch/754a49249d01/qualification-consumer-418385b",
+        "--tokenizer",
+        "/workspace/scratch/754a49249d01/native-v8-tokenizer.json",
+        "--python",
+        "/workspace/scratch/754a49249d01/native-v8-venv/bin/python",
+        "--native-policy",
+        "contracts/semantic-native-policy-v8.json"
+      ],
+      "cwd": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+      "startedAt": "2026-11-20T16:38:16.155982+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T16:39:05.465641+00:00",
+      "durationSeconds": 49.30921765300445,
+      "exitCode": 0,
+      "pinsAfter": {
+        "producer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+          "revision": "3a1992b4462e8e2affa6baa04e9075ba3b01d04a",
+          "tree": "903da3860401f5f1a174a933ac03a8c5ae558b1a",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        },
+        "consumer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-consumer-418385b",
+          "revision": "418385b6880077b58bb5ae8f7ffeb7353a108d5d",
+          "tree": "972b39365c70a63db938c08780ddd82be29ab860",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        }
+      },
+      "stdout": {
+        "path": "native-gallery.stdout.log",
+        "sha256": "419e53a133a25b943bf0a6f3d5632d668fc30288118e6689079adb8baff00e64",
+        "bytes": 199
+      },
+      "stderr": {
+        "path": "native-gallery.stderr.log",
+        "sha256": "366d8ba463d90c9f8073cc92079aa6c12dbc2575ff2e6e944af4c7ba40f6b07a",
+        "bytes": 691
+      }
+    },
+    {
+      "name": "costs-gallery",
+      "command": [
+        "node",
+        "tools/measure-semantic-v8.mjs",
+        "--qualification",
+        "/workspace/scratch/754a49249d01/qualification-3a1992b/native-gallery",
+        "--out",
+        "/workspace/scratch/754a49249d01/qualification-3a1992b/costs-gallery",
+        "--tokenizer-module",
+        "tools/semantic-v8-tokenizer-adapter.mjs"
+      ],
+      "cwd": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+      "startedAt": "2026-11-20T16:39:05.530413+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T16:39:13.351192+00:00",
+      "durationSeconds": 7.820146486003068,
+      "exitCode": 0,
+      "pinsAfter": {
+        "producer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+          "revision": "3a1992b4462e8e2affa6baa04e9075ba3b01d04a",
+          "tree": "903da3860401f5f1a174a933ac03a8c5ae558b1a",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        },
+        "consumer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-consumer-418385b",
+          "revision": "418385b6880077b58bb5ae8f7ffeb7353a108d5d",
+          "tree": "972b39365c70a63db938c08780ddd82be29ab860",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        }
+      },
+      "stdout": {
+        "path": "costs-gallery.stdout.log",
+        "sha256": "4a65b55326313c69a4e0508cf47e2927d453050d9e90f1bda7ea117f6301c93f",
+        "bytes": 1521
+      },
+      "stderr": {
+        "path": "costs-gallery.stderr.log",
+        "sha256": "d4963bf7283010b20d80889a123a56eddc0d7a1a2721db866d57ddb241e0f56f",
+        "bytes": 493
+      }
+    },
+    {
+      "name": "retain-inputs-gallery",
+      "command": [
+        "node",
+        "/workspace/scratch/754a49249d01/qualification-tools/retain-native-inputs.mjs",
+        "/workspace/scratch/754a49249d01/qualification-3a1992b/native-gallery"
+      ],
+      "cwd": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+      "startedAt": "2026-11-20T16:39:13.413582+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T16:39:13.846641+00:00",
+      "durationSeconds": 0.4321455879980931,
+      "exitCode": 0,
+      "pinsAfter": {
+        "producer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+          "revision": "3a1992b4462e8e2affa6baa04e9075ba3b01d04a",
+          "tree": "903da3860401f5f1a174a933ac03a8c5ae558b1a",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        },
+        "consumer": {
+          "path": "/workspace/scratch/754a49249d01/qualification-consumer-418385b",
+          "revision": "418385b6880077b58bb5ae8f7ffeb7353a108d5d",
+          "tree": "972b39365c70a63db938c08780ddd82be29ab860",
+          "trackedChanges": "",
+          "untrackedChanges": ""
+        }
+      },
+      "stdout": {
+        "path": "retain-inputs-gallery.stdout.log",
+        "sha256": "97a072c163105a3309263422c14b64c64889f70a81e3c3661acf27b61ce7ec91",
+        "bytes": 161
+      },
+      "stderr": {
+        "path": "retain-inputs-gallery.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "name": "native-all",
+      "command": [
+        "node",
+        "tools/qualify-semantic-v8.mjs",
+        "--out",
+        "/workspace/scratch/754a49249d01/qualification-3a1992b/native-all",
+        "--population",
+        "all",
+        "--inputs",
+        "all",
+        "--workers",
+        "3",
+        "--megatoken",
+        "/workspace/scratch/754a49249d01/qualification-consumer-418385b",
+        "--tokenizer",
+        "/workspace/scratch/754a49249d01/native-v8-tokenizer.json",
+        "--python",
+        "/workspace/scratch/754a49249d01/native-v8-venv/bin/python",
+        "--native-policy",
+        "contracts/semantic-native-policy-v8.json"
+      ],
+      "cwd": "/workspace/scratch/754a49249d01/qualification-producer-3a1992b",
+      "startedAt": "2026-11-20T16:39:13.964721+00:00",
+      "status": "running"
+    }
+  ],
+  "scope": "Fresh source/native admission, physical token costs and split-bound dataset; zero optimizer steps, no model or serving claim."
+}

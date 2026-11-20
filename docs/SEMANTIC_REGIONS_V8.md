@@ -23,10 +23,13 @@ eight previously refused cases; the repaired consumer admits the previously
 failing generator-delegation continuation. Earlier receipts retain their own
 original failures and pins.
 
-The later [frozen producer regression](../coverage/language-expansion/producer-regression-3a1992b/README.md)
-passed **1,794 tests** at producer `3a1992b`, with six conditional
+The later [frozen producer regression](../coverage/language-expansion/producer-regression-9d4f6b3/README.md)
+passed **1,834 tests** at producer `9d4f6b3`, with six conditional
 native-environment skips and zero failures, plus all five contract generators
-and eight reference fixtures. The independent consumer passed **214 tests
+and eight reference fixtures. Its subsequent targeted run passed **24/24**
+iterator/binding tests at `562f6f2`, with original logs and separately identified
+coordinator-reported source identity. The full regression is not relabeled as
+that later run. The independent consumer passed **214 tests
 without skips** at the earlier `b66c19b` / `6adf99f` pair. The later [production dataset](../coverage/language-expansion/dataset-v8-492328f/README.md)
 freshly admitted all **34 episodes and 898 complete examples** at producer
 `492328f` and consumer `cb311db` after binding component splits, with
@@ -36,8 +39,10 @@ older complete-population results are not assigned to those later pins.
 
 These finite engineering and data-admission gates passed for the declared
 bounded candidate at the listed revisions. Later implementation changes require
-their own checks. **External model comprehension and execution remain
-unmeasured**, and v6 remains the production default. Exact receipt requirements
+their own checks. External-model comprehension, generalization and default
+promotion remain unqualified. Separate native fitting and serving diagnostics
+have their own retained evidence; these source/native/data receipts do not
+establish learned-execution gains. v6 remains the production default. Exact receipt requirements
 are in [the training contract](SEMANTIC_V8_TRAINING.md#native-admission).
 
 | Profile / plan area | Producer and source status | Explicit boundary |
