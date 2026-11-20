@@ -3241,7 +3241,9 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                   guestFault('TypeError','Cannot redefine a non-configurable property');
                 putOwn(obj,name,value.value,eventId,{literal:true});
                 if(previous)delete obj.accessors[name];
-                obj.dataAttributes??={};obj.dataAttributes[name]={writable,enumerable,configurable};
+                obj.dataAttributes??={};
+                Object.defineProperty(obj.dataAttributes,name,{value:{writable,enumerable,configurable},
+                  enumerable:true,configurable:true,writable:true});
                 return {...operands(fn,...args),...result(v)};
               }
               if(obj.dataAttributes?.[name]?.configurable===false&&accessorDescriptor)
