@@ -122,6 +122,28 @@ test('v8 equal-branch simplification retains total predicates and refuses unrepr
   }
 });
 
+test('v8 helper return totality includes retained throwing work before the return',()=>{
+  const helper='function fail(){null.x;return 1;}';
+  for(const body of [
+    'function run(){return fail()?1:1;}',
+    'function run(){if(fail()){}return 1;}',
+    'function run(){const unused=fail();return 2;}',
+    'function run(){return fail(),2;}',
+    'function run(){fail()+1;return 2;}',
+    'function outer(){return fail();}function run(){return outer()?1:1;}'
+  ]){
+    const text=source(helper+body);
+    assert.throws(()=>vm.runInNewContext(text+';run()',{}, {timeout:1000}),error=>error.name==='TypeError');
+    const lowered=lowerJavaScriptV8({source:text,entry:'run'});
+    assert.throws(()=>evaluateAlgorithmV8(lowered.core,[]),/ordinary object projection requires identity/,body);
+  }
+  const body=helper+'function run(p){return p?(fail()?1:1):2;}';
+  assert.equal(vm.runInNewContext(source(body)+';run(false)',{}, {timeout:1000}),2);
+  assert.throws(()=>vm.runInNewContext(source(body)+';run(true)',{}, {timeout:1000}),error=>error.name==='TypeError');
+  assert.equal(tryLowerJavaScriptV8({source:source(body),entry:'run'}).status,'refused');
+  check('function value(o){o.x;return 1;}function run(o){if(value(o)){}return 2;}',[{x:3}]);
+});
+
 test('v8 defaults, bindings, ordinary properties, aliases and optional reads retain their distinctions',()=>{
   for(const [body,args] of [
     ['function run(x=5){return x;}',[[undefined],[null],[0],[7]]],

@@ -345,7 +345,11 @@ export function lowerJavaScriptV8({source,entry,inputTypes=null,maxOperations=10
         ensure(arg.type!=='SpreadElement','spread helper arguments require a call profile',arg);return pin(expression(arg,scope,ctx),ctx,arg);});
       const result=executeFunction(target,args,ctx,node);
       rule('immutable-pure-helper',node,['Source-known function, bounded acyclic expansion.','Captured cells are read only; receiver-free call.']);
-      return {...result.value,term:wrap(result.ctx,result.value.term)};
+      // A total return value does not make its helper total: retained bindings
+      // can throw before the return. Keep that work when a caller discards the
+      // value or simplifies equal branches selected by it.
+      return {...result.value,term:wrap(result.ctx,result.value.term),
+        total:result.ctx.bindings.length?false:result.value.total};
     }
     fail('unsupported pure expression '+node.type,node);
   }
