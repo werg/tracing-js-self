@@ -230,13 +230,36 @@ export function validateTest262Catalog(catalog){
   return true;
 }
 
+/** Derive a new execution profile over the exact same frozen file population.
+ * The original inventory remains immutable; every variant receives a new
+ * profile-bound identity and no campaign stages are copied. */
+export function bindTest262CatalogProfile(catalog,profile){
+  validateTest262Catalog(catalog);
+  if(!profile||typeof profile.name!=='string'||!profile.name||typeof profile.edition!=='string'||
+    !profile.parser||!profile.hostProfile||!profile.resourcePolicy||
+    !['maxSteps','maxSourceBytes'].every(key=>Number.isSafeInteger(profile.resourcePolicy[key])&&profile.resourcePolicy[key]>0)||
+    profile.specification!==null&&(!profile.specification||!hex64.test(profile.specification.sha256??'')||typeof profile.specification.uri!=='string'))
+    throw new TypeError('Invalid derived Test262 execution profile');
+  const boundProfile=JSON.parse(canonical(profile));
+  const variants=catalog.variants.map(variant=>{
+    const {id,...row}=variant;
+    if(conformanceDigest({suiteRevision:catalog.suiteRevision,profile:catalog.profile,...row})!==id)
+      throw new TypeError('Frozen Test262 variant profile identity mismatch');
+    return {id:conformanceDigest({suiteRevision:catalog.suiteRevision,profile:boundProfile,...row}),...row};
+  });
+  const {digest,...population}=catalog;
+  const derived={...population,profile:boundProfile,variants,
+    summary:{...catalog.summary,specificationPinned:boundProfile.specification!==null}};
+  return freeze({...derived,digest:conformanceDigest(derived)});
+}
+
 export function createTest262Campaign({catalog,selectedIds=null,implementation}={}){
   validateTest262Catalog(catalog);
   if(!implementation||!hex40.test(implementation.producerRevision??'')||
     !hex64.test(implementation.codeDigest??'')||!hex64.test(implementation.runnerDigest??''))
     throw new TypeError('Campaign requires exact producer revision, code and runner digests');
-  const allIds=catalog.variants.map(row=>row.id),ids=selectedIds??allIds;
-  if(!Array.isArray(ids)||new Set(ids).size!==ids.length||ids.some(id=>!allIds.includes(id)))
+  const allIds=catalog.variants.map(row=>row.id),ids=selectedIds??allIds,available=new Set(allIds);
+  if(!Array.isArray(ids)||new Set(ids).size!==ids.length||ids.some(id=>!available.has(id)))
     throw new TypeError('Campaign selection must contain unique catalog IDs');
   const selected=new Set(ids);
   const identity={catalogDigest:catalog.digest,implementation:JSON.parse(canonical(implementation)),
@@ -268,15 +291,25 @@ export function validateTest262Campaign(campaign,{catalog,implementation}={}){
 /** Append an attempt, retaining prior failures. Evidence must already exist;
  * ledger integrity alone never certifies its semantic claim. */
 export function recordTest262Stage(campaign,{caseId,stage,status,reason=null,evidence}={}){
-  if(!CONFORMANCE_STAGES.includes(stage)||!CONFORMANCE_DISPOSITIONS.includes(status)||
-    ['not_selected','not_run','blocked_by_prior_stage'].includes(status)||evidence===undefined)
-    throw new TypeError('Invalid executed Test262 stage result');
-  const next=structuredClone(campaign),row=next.rows.find(row=>row.id===caseId);
-  if(!row?.selected)throw new TypeError('Cannot execute an unselected Test262 variant');
-  validateRecordedRow(row);
-  const attempt={sequence:row.attempts.length+1,stage,status,reason,evidence:JSON.parse(canonical(evidence)),
-    evidenceDigest:conformanceDigest(evidence)};
-  applyAttempt(row,attempt);
+  return recordTest262Stages(campaign,[{caseId,stage,status,reason,evidence}]);
+}
+
+/** One copy for a bounded batch, so full-population campaigns do not clone
+ * 102,994 rows once for every stage of every selected variant. */
+export function recordTest262Stages(campaign,results){
+  if(!Array.isArray(results))throw new TypeError('Test262 stage batch must be an array');
+  const next=structuredClone(campaign),rows=new Map(next.rows.map(row=>[row.id,row])),checked=new Set();
+  for(const {caseId,stage,status,reason=null,evidence} of results){
+    if(!CONFORMANCE_STAGES.includes(stage)||!CONFORMANCE_DISPOSITIONS.includes(status)||
+      ['not_selected','not_run','blocked_by_prior_stage'].includes(status)||evidence===undefined)
+      throw new TypeError('Invalid executed Test262 stage result');
+    const row=rows.get(caseId);
+    if(!row?.selected)throw new TypeError('Cannot execute an unselected Test262 variant');
+    if(!checked.has(caseId)){validateRecordedRow(row);checked.add(caseId);}
+    const attempt={sequence:row.attempts.length+1,stage,status,reason,evidence:JSON.parse(canonical(evidence)),
+      evidenceDigest:conformanceDigest(evidence)};
+    applyAttempt(row,attempt);
+  }
   return next;
 }
 

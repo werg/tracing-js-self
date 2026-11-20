@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
 import {gitBlobSha} from '../src/test262-baseline.js';
 import {buildTest262Catalog,parseTest262Header,test262VariantModes,createTest262Campaign,
-  recordTest262Stage,summarizeTest262Campaign,validateTest262Campaign,validateTest262Catalog,
+  recordTest262Stage,recordTest262Stages,bindTest262CatalogProfile,summarizeTest262Campaign,validateTest262Campaign,validateTest262Catalog,
   conformanceDigest,CONFORMANCE_STAGES} from '../src/conformance/test262-catalog.js';
 
 const fixture=(body='',metadata='')=>`/*---\ndescription: synthetic runner control\n${metadata}---*/\n${body}`;
@@ -178,4 +178,33 @@ test('retained snapshot catalog can be generated without claiming missing harnes
     assert.equal(result.catalog.digest,conformanceDigest(Object.fromEntries(
       Object.entries(result.catalog).filter(([key])=>key!=='digest'))));
   }finally{rmSync(directory,{recursive:true,force:true});}
+});
+
+test('binding an execution profile preserves the whole inventory and never copies qualifications',()=>{
+  const catalog=make({'test/first.js':fixture(),'test/second.js':fixture('','flags: [raw]\n')});
+  const bound=bindTest262CatalogProfile(catalog,{...profile,name:'new-owned-runner',parser:{name:'acorn',version:'8.15.0'}});
+  assert.equal(validateTest262Catalog(bound),true);
+  assert.deepEqual(bound.files,catalog.files);assert.deepEqual(bound.summary,catalog.summary);
+  assert.deepEqual(bound.variants.map(row=>row.path),catalog.variants.map(row=>row.path));
+  assert(bound.variants.every((row,index)=>row.id!==catalog.variants[index].id));
+  const campaign=createTest262Campaign({catalog:bound,implementation});
+  assert(campaign.rows.every(row=>Object.values(row.stages).every(stage=>stage.status==='not_run')));
+  assert.equal(catalog.profile.name,'synthetic-runner-controls');
+  assert.throws(()=>bindTest262CatalogProfile(catalog,{...profile,resourcePolicy:{maxSteps:0,maxSourceBytes:5}}),/Invalid derived/);
+});
+
+test('batch stage recording is atomic and preserves unselected rows and prior attempts',()=>{
+  const catalog=make({'test/first.js':fixture(),'test/second.js':fixture()});
+  const first=catalog.variants[0].id;
+  const campaign=createTest262Campaign({catalog,implementation,selectedIds:[first]});
+  const attempts=[{caseId:first,stage:'parseStatic',status:'passed',evidence:{parser:'checked'}},
+    {caseId:first,stage:'ownedExecution',status:'failed',evidence:{assertion:'failed'}}];
+  const next=recordTest262Stages(campaign,attempts);
+  assert.equal(validateTest262Campaign(next,{catalog,implementation}),true);
+  assert.equal(next.rows.length,catalog.variants.length);assert.equal(next.rows[0].attempts.length,2);
+  assert.equal(campaign.rows[0].attempts.length,0);
+  assert(next.rows.slice(1).every(row=>Object.values(row.stages).every(stage=>stage.status==='not_selected')));
+  assert.throws(()=>recordTest262Stages(campaign,[...attempts,
+    {caseId:catalog.variants[1].id,stage:'parseStatic',status:'passed',evidence:{}}]),/unselected/);
+  assert.equal(campaign.rows[0].attempts.length,0);
 });

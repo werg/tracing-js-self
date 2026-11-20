@@ -49,7 +49,7 @@ serving, and measured learned success.
 - [x] Owned-runtime repeated thenable identity can fulfill; public/native expansion remains open.
 - [x] Bounded acyclic owned top-level-await modules begin independently (`abAB`); public/native scheduler projection remains explicitly unqualified.
 - [x] A selected capability shard retains every catalog row and marks other rows not selected.
-- [ ] Ordinary training rejects unadmitted or policy-mismatched V8 data even when
+- [x] Ordinary training rejects unadmitted or policy-mismatched V8 data even when
   the generic unverified-data option is enabled.
 
 ## Acceptance and reporting rules
@@ -198,3 +198,23 @@ serving, and measured learned success.
   Remaining: direct source certification still depends on the historical compiler;
   protocol/effect composition and acknowledged live model-session restoration
   need their own implementation. No default cutover or full parity claim yet.
+
+- Original Test262 runner/campaign increment: original official harness scripts,
+  raw bytes, strict/sloppy variants, exact error identity and async completion
+  run in fresh owned realms. Independent reference workers use disposable native
+  processes with explicit time/heap limits. Missing hosts, unsupported operations,
+  wrong assertions, infrastructure faults and resource limits remain separate
+  non-pass results. Execution-profile rebinding preserves the full frozen catalog
+  and never copies prior qualifications. Batched stage updates retain attempt
+  history; campaign resume/check binds source, runner, parser, policy and code
+  bytes. Root verification: all 27 original-runner, campaign, catalog and acquisition
+  tests pass. The measured full-catalog campaign follows this durable checkpoint;
+  this increment alone claims no edition conformance or public/native admission.
+
+- Paired native lifecycle/training increment: direct V8 request and observation
+  receipts replace the remaining V6 effect-witness calls. Fresh producer contract
+  and region/protocol/callback fixtures are paired with 53 passing consumer tests.
+  A bounded normal-loader CPU run saves actual optimizer moments and resumes in
+  a fresh process from step one to step two. The test explicitly injects the
+  source/tokenizer verification boundary: actual pinned-asset preparation, export,
+  reload and learned quality remain unqualified.
