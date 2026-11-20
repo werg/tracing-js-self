@@ -180,3 +180,39 @@ These reports do not promote v8 to a default format, assert native corpus
 admission, or establish a training benefit. The associated source/corpus native
 admission checks, frozen model comparisons, and held-out learning measurements
 remain separate evidence.
+
+## Retained native experiments
+
+The [current-contract native study](../coverage/language-expansion/native-v8-fit-39c4036/README.md)
+evaluates a model fitted for 256 optimizer steps on one input of
+`"use strict";function run(x){return x+1;}`. At producer `012c9fe` and consumer
+`39c4036`, the fitted model completed and passed private source scoring on
+input `6` for **3/3 declared seeds**, and on input `8`, excluded from the
+optimizer and early stopping, for **0/3**. The zero-update baseline completed
+**0/6**. Both inputs share the same source family and train-component identity;
+this is a same-program input check, with no demonstrated held-out success.
+The current-contract evaluation performed no additional optimizer updates.
+
+An [independent retained-output audit](../coverage/language-expansion/native-v8-fit-39c4036/independent-audit/README.md)
+replays private source scoring for all twelve results and decodes all fifteen
+original prediction fragments using the pinned production codec. It reproduces
+405 verified generated tokens for the fitted study and 344 for the baseline,
+plus two baseline attempts whose costs remain unverified. Their original
+invalid UTF-8 bytes and emitted token IDs remain in the evidence. Reported
+compute and rollout durations describe those particular executions; they are
+not a controlled efficiency comparison.
+
+The original 43,360,285-byte fitted/checkpoint archive is named and hashed in
+the study, but its bytes and a retrieval URL are absent from the repository.
+The independent audit could verify retained output bytes and source outcomes;
+it could not inspect or reload those weights, repeat inference, or resume that
+optimizer checkpoint. The earlier training and stale-source attempts remain
+in the [historical packet](../coverage/language-expansion/native-v8-fit-23cd478/README.md).
+
+Two separate [four-step native fitting diagnostics](evidence/semantic-v8-diagnostic-pilot/2026-11-20/README.md)
+each completed **0/2** frozen executions. Those packages include their full
+fitted bundles, original rejected output, costs, settings and corpus roles.
+The preliminary and corrected split experiments retain separate denominators.
+These bounded results exercise actual fitting and selected execution while
+leaving external comprehension, general learned reliability, matched-usefulness
+cost/latency, and coordinated default promotion unqualified.
