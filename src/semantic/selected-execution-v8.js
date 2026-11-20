@@ -43,7 +43,9 @@ function verifyDriverCheckpoint(packet,policy){
     policy.nativeIdentity?.schema==='semantic-inference-identity/8'&&
     Number.isSafeInteger(policy.nativeIdentity.seed)&&policy.nativeIdentity.seed>=0&&
     policy.nativeIdentity.generationSettings&&typeof policy.nativeIdentity.generationSettings==='object'&&
-    !Array.isArray(policy.nativeIdentity.generationSettings),
+    !Array.isArray(policy.nativeIdentity.generationSettings)&&
+    positive(policy.hostLimits?.maxGenerated,1000000)&&positive(policy.hostLimits?.maxOutstanding,1024)&&
+    typeof policy.automaticDelivery==='boolean',
     'recovery requires the externally expected model identities and execution budgets');
   demand(Array.isArray(packet.contexts)&&Array.isArray(packet.attempts)&&
     packet.attempts.length<=policy.maxSelections&&Number.isSafeInteger(packet.staleRetries)&&
@@ -94,7 +96,8 @@ function verifyDriverCheckpoint(packet,policy){
   }
   // Rebuild the causal boundaries from the public machine. Saved contexts or
   // locally rehashed state never substitute for the state before each record.
-  const replay=new RegionExecutionHarness({sessionId:session,automaticDelivery:false,now:()=>-Infinity});
+  const replay=new RegionExecutionHarness({sessionId:session,automaticDelivery:false,now:()=>-Infinity,
+    ...policy.hostLimits});
   let generated=0;
   for(const row of publicData.timeline){
     if(row.mode==='generated'){
@@ -141,11 +144,17 @@ function driverFacade(bridge,contexts,predictions){
 export class RegionSelectedModelDriver extends SelectedExecutionDriver {
   constructor({select,harness=new RegionExecutionHarness(),maxSelections=4096,maxOutstanding=64,
       maxStaleRetries=8,origin='model',checkpointIdentity=null,tokenizerIdentity=null,nativeIdentity=null,
-      signal=null,recovery=null}={}){
+      hostLimits=null,automaticDelivery=null,signal=null,recovery=null}={}){
     demand(typeof select==='function'&&['model','engineering'].includes(origin),'selector and explicit origin required');
     if(origin==='model')demand(typeof select.commit==='function'&&HASH.test(checkpointIdentity??'')&&HASH.test(tokenizerIdentity??''),
       'model selections require pinned identities and native commit acknowledgments');
     demand(recovery===null||recoveryTickets.has(recovery),'driver recovery must pass verified restoration');
+    const retainedHostLimits={maxGenerated:harness.inner.maxGenerated,maxOutstanding:harness.inner.maxOutstanding};
+    demand(hostLimits===null||isDeepStrictEqual(hostLimits,retainedHostLimits),
+      'host continuation limits differ from the externally expected execution policy');
+    const retainedAutomaticDelivery=harness.inner.automaticDelivery;
+    demand(automaticDelivery===null||automaticDelivery===retainedAutomaticDelivery,
+      'host callback delivery differs from the externally expected execution policy');
     const contexts=copy(recovery?.contexts??[]),predictions=new Map(),attempts=copy(recovery?.attempts??[]),acknowledged=new Map();
     for(const attempt of attempts)if(attempt.status==='accepted')
       acknowledged.set(attempt.invocationId,{record:attempt.record,selection:copy(attempt.selection)});
@@ -265,6 +274,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     driver=this;this.bridge=harness;this.contexts=contexts;this.attempts=attempts;
     this.originalSelect=select;this.origin=origin;this.executionSignal=signal;
     const policy=Object.freeze({checkpointIdentity,tokenizerIdentity,nativeIdentity:copy(nativeIdentity),
+      hostLimits:copy(retainedHostLimits),automaticDelivery:retainedAutomaticDelivery,
       maxSelections,maxOutstanding,maxStaleRetries});
     this.checkpoint=async()=>{
       demand(origin==='model'&&typeof select.checkpoint==='function',
@@ -276,6 +286,11 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
         // observations may arrive while the model snapshot is collected; only
         // an observed suffix beyond its acknowledged prefix is permitted.
         demand(predictions.size===0,'cannot checkpoint an uncommitted prediction');
+        demand(harness.inner.maxGenerated===retainedHostLimits.maxGenerated&&
+          harness.inner.maxOutstanding===retainedHostLimits.maxOutstanding&&
+          harness.inner.automaticDelivery===retainedAutomaticDelivery&&
+          [...harness.invocations.values()].every(row=>row.controller.maxGenerated===retainedHostLimits.maxGenerated),
+          'host continuation limits changed after the driver policy was frozen');
         const native=await select.checkpoint();
         const body={schema:'semantic-selected-driver-checkpoint/8',policy:copy(policy),
           bridge:harness.checkpoint(),contexts:copy(contexts),attempts:copy(attempts),staleRetries,native:copy(native)};
@@ -292,6 +307,11 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     // dispatches a request or re-registers an existing callback. Unknown host
     // outcomes remain uncertain and require an explicit broker receipt.
     const harness=RegionExecutionHarness.restore(saved.bridge,harnessOptions);
+    demand(harness.inner.maxGenerated===policy.hostLimits.maxGenerated&&
+      harness.inner.maxOutstanding===policy.hostLimits.maxOutstanding&&
+      harness.inner.automaticDelivery===policy.automaticDelivery&&
+      [...harness.invocations.values()].every(row=>row.controller.maxGenerated===policy.hostLimits.maxGenerated),
+      'restored host continuation changed its externally expected resource limits');
     try{
       const receipt=await select.restore({checkpoint:saved.native});
       demand(receipt?.restored===true&&receipt.transportCheckpointDigest===saved.native.digest&&

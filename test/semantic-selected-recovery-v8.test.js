@@ -3,6 +3,7 @@
 // made by these deterministic records.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {RegionSelectedModelDriver} from '../src/semantic/selected-execution-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {encodeDetailedRecord} from '../src/semantic/detail-v8.js';
@@ -14,7 +15,8 @@ const identity={schema:'semantic-inference-identity/8',checkpointIdentity:'c'.re
   tokenizerIdentity:'e'.repeat(64),seed:17,
   generationSettings:{device:'cpu',maxTokens:128,maxFragments:8,effort:1}};
 const policy={checkpointIdentity:identity.checkpointIdentity,tokenizerIdentity:identity.tokenizerIdentity,
-  nativeIdentity:identity,maxSelections:16,maxOutstanding:4,maxStaleRetries:2};
+  nativeIdentity:identity,hostLimits:{maxGenerated:4096,maxOutstanding:64},
+  automaticDelivery:true,maxSelections:16,maxOutstanding:4,maxStaleRetries:2};
 const seal=body=>({...body,digest:hashAlgorithmData(body)});
 const line=(kind,fields)=>encodeDetailedRecord({kind,fields});
 const site=(source,operation)=>{
@@ -69,8 +71,8 @@ function suppliedSelector(choose){
   select.controls=()=>({restoreCalls,closed,attempts:copy(attempts)});
   return select;
 }
-function begin(source,services={},realmPolicy='fresh'){
-  const harness=new RegionExecutionHarness({services,automaticDelivery:true});
+function begin(source,services={},realmPolicy='fresh',limits={}){
+  const harness=new RegionExecutionHarness({services,automaticDelivery:true,...limits});
   harness.publishProgram({programId:'p',source,entry:'run',capabilities:[...new Set(
     analyzeSemanticProgram(source).sites.map(row=>row.operation).filter(value=>value?.startsWith('demo.')))]});
   harness.admitInvocation({programId:'p',invocationId:'call',trackId:'t',realmId:'r',triggerId:'outside',realmPolicy});
@@ -92,8 +94,10 @@ test('driver recovery joins acknowledged model state to uncertain host work with
   line('return',{value:['num',7]}),line('end',{kind:'return'})];
   const choose=request=>records[request.public.timeline.filter(row=>row.mode==='generated').length];
   let calls=0,resolveHost;
-  const bridge=begin(source,{'demo.readNumber':()=>{calls++;return new Promise(resolve=>{resolveHost=resolve;});}});
-  const select=suppliedSelector(choose),driver=new RegionSelectedModelDriver({select,harness:bridge,...policy});
+  const limits={...policy,hostLimits:{maxGenerated:8,maxOutstanding:1}};
+  const bridge=begin(source,{'demo.readNumber':()=>{calls++;return new Promise(resolve=>{resolveHost=resolve;});}},
+    'fresh',limits.hostLimits);
+  const select=suppliedSelector(choose),driver=new RegionSelectedModelDriver({select,harness:bridge,...limits});
   const abort=new AbortController(),running=driver.runInvocation('call',{signal:abort.signal});
   void running.catch(()=>{});
   await until(()=>calls===1);
@@ -104,7 +108,7 @@ test('driver recovery joins acknowledged model state to uncertain host work with
   assert.equal(packet.bridge.public.timeline.at(-1).kind,'dispatch');
   abort.abort(new Error('simulated process loss'));await assert.rejects(running,/simulated process loss/);
   const next=suppliedSelector(choose);
-  const restored=await RegionSelectedModelDriver.restore(packet,{select:next,policy,
+  const restored=await RegionSelectedModelDriver.restore(packet,{select:next,policy:limits,
     harnessOptions:{services:{'demo.readNumber':()=>{calls++;return 99;}}}});
   try{
     assert.equal(restored.bridge.inner.intents.get('call/e').status,'uncertain');
@@ -127,7 +131,8 @@ test('driver restore rejects rehashed cross-layer history and budget changes bef
   await finish(driver,'call');const packet=await driver.checkpoint();driver.close();
   const session=packet.bridge.public.timeline[0].fields.session;
   const mutations=[
-    p=>{p.policy.maxSelections++;},p=>{p.staleRetries++;},p=>{p.attempts[0].status='decoded';},
+    p=>{p.policy.maxSelections++;},p=>{p.policy.hostLimits.maxGenerated++;},
+    p=>{p.staleRetries++;},p=>{p.attempts[0].status='decoded';},
     p=>{p.attempts[0].record=line('return',{value:['num',99]});},
     p=>{p.contexts[0].visibleThrough++;},
     p=>{p.native.native.sessions[session].contexts=[];
@@ -138,7 +143,15 @@ test('driver restore rejects rehashed cross-layer history and budget changes bef
       const {digest:outer,...transport}=p.native;p.native=seal(transport);},
     p=>{p.native.identity.seed++;p.native.native.initialization=copy(p.native.identity);
       const {digest,...body}=p.native.native;p.native.native=seal(body);
-      const {digest:outer,...transport}=p.native;p.native=seal(transport);}
+      const {digest:outer,...transport}=p.native;p.native=seal(transport);},
+    p=>{p.bridge.selected.maxOutstanding++;
+      const {integrity,...body}=p.bridge.selected;
+      p.bridge.selected={...body,integrity:createHash('sha256').update(JSON.stringify(body)).digest('hex')};
+      const {integrity:outer,...bridge}=p.bridge;p.bridge={...bridge,integrity:hashAlgorithmData(bridge)};},
+    p=>{p.bridge.selected.automaticDelivery=false;
+      const {integrity,...body}=p.bridge.selected;
+      p.bridge.selected={...body,integrity:createHash('sha256').update(JSON.stringify(body)).digest('hex')};
+      const {integrity:outer,...bridge}=p.bridge;p.bridge={...bridge,integrity:hashAlgorithmData(bridge)};}
   ];
   for(const mutate of mutations){
     const changed=copy(packet);mutate(changed);const {digest,...body}=changed;

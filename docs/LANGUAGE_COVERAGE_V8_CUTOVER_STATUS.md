@@ -16,6 +16,32 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Current checkpoint and execution blocker
+
+The priority order below is active. The work remains incomplete and both PRs
+remain drafts. Delivered increments do not close the full 17-package scope.
+
+- PropertyKey/reference continuation work is published at
+  `0b8e43ea3a55184258bc05bdadbc9508e333bddb`.
+- Ordinary training lineage through export/reload is published in the consumer
+  at `9c83827a269965c76e341ae2afd8e53fdbe66680`; native initialization binding and
+  real pinned-asset lifecycle qualification remain open.
+- The producer's mixed Promise/host/callback increment was committed locally as
+  `d9a3ce4`, with 31 focused controls and fresh contract generation passing.
+  The executor disconnected during publication, so this commit is **not yet
+  pushed**. Its native callback validation is also unfinished. Do not count these
+  three mixed fixtures as native-admitted.
+- The executor and its native-desktop fallback both report
+  `exec-server transport disconnected`. GitHub remains accessible. Tested
+  recovery-policy and training-lineage changes were recovered from their exact
+  patches and published through the connector; fresh hosted checks are required.
+- The detailed continuation instructions, exact unfinished native failures,
+  unpublished composition scope and next hard designs are retained in
+  [the recovery handoff](IMPLEMENTATION_RECOVERY_2026_11_20.md).
+- Hosted producer checks at `0b8e43e` still refuse stale protocol source fixtures;
+  the unpublished composition increment regenerates them. Current branch/policy
+  pairing is not a completed or all-green release qualification.
+
 ## Overall progress
 
 ### Difficulty order and active priorities
@@ -27,11 +53,11 @@ engineering assessment, not a completion percentage or a schedule estimate.
 
 | Priority | Difficulty | Work and uncertainty to resolve | Active next slice |
 | --- | --- | --- | --- |
-| 1 | Very high | Protocol, host-effect, callback and crash-recovery composition: shared state, unique transition ownership and no repeated external work. | Mixed Promise protocol and authorized host effect; independent native replay and complete restoration before callback expansion. |
-| 2 | Very high | Complete continuation semantics: retained references, partially evaluated calls/conversions, cleanup, pending jobs and permitted next actions. | Shared resumable conversion state and cached property keys, with JSON restore and tampered-state rejection. |
-| 3 | Very high | General Promise resolution and asynchronous module public/native semantics, including adoption, thenables, sibling ordering and async cycles. | Preserve corrected owned behavior; qualify each newly represented job independently before widening admission. |
+| 1 | Very high | Protocol, host-effect, callback and crash-recovery composition: shared state, unique transition ownership and no repeated external work. | Publish the locally verified mixed host/callback increment, finish native callback obligations, then resolve shared-Promise readiness and unique source-event ownership. |
+| 2 | Very high | Complete continuation semantics: retained references, partially evaluated calls/conversions, cleanup, pending jobs and permitted next actions. | Retained Number/PropertyKey conversion and cached references delivered; next are wider references/calls/cleanup and independent source/public/native promotion. |
+| 3 | Very high | General Promise resolution and asynchronous module public/native semantics, including adoption, thenables, sibling ordering and async cycles. | Implement the designed cyclic async-module scheduler; general Promise adoption and scheduler public/native promotion remain separate gates. |
 | 4 | Very high; separate profiles | Dynamic code/realms, shared-memory agents, weak references and finalization; permitted outcomes and host obligations need explicit definitions. | Retain all obligations in the full target; define a bounded executable slice and observation rules for each before implementation. |
-| 5 | High | Direct V8 source certification and neutral execution core: remove old wire/episode dependencies across compilation, replay and lifecycle. | Direct V8 source artifact and recheck, independent source observers and runtime import-absence controls. |
+| 5 | High | Direct V8 source certification and neutral execution core: remove old wire/episode dependencies across compilation, replay and lifecycle. | Direct V8 compilation and absence controls delivered; finish broader composable source ownership, corpus regeneration and production-route absence proof. |
 | 6 | High | Real training and live model lifecycle: source/tokenizer/model/optimizer/policy identities and recovery must agree end to end. | Actual-policy preparation, normal optimizer/export/reload and serving provenance; source admission must never imply learned success. |
 | 7 | High | Objects, Proxy, construction, coercion, iteration, collections, binary memory and RegExp interact through observable hooks and partial failure. | General mechanisms first, then method-level and cross-feature slices with native counterparts. |
 | 8 | Medium to high; dependency-gated | Full qualification, V6 production parity, default routing, installed legacy absence and coordinated release/rollback. | Repair current regressions; retain exact fresh evidence and every unfinished population. Final default/removal changes must precede final qualification. |
@@ -317,3 +343,48 @@ serving, and measured learned success.
   distinct from actual CPU model reconstruction in the consumer and do not
   establish learned quality. Multi-driver atomic recovery, application storage,
   arbitrary external handles and final deployment qualification remain open.
+
+- Retained property references: reads, method calls, simple assignments, compound
+  and logical assignments, updates, computed literals and destructuring use the
+  shared conversion kernel. Continuations preserve the original base/key/RHS,
+  callback receiver, conversion hint and cached primitive key. Independent checks
+  cover nested calls, throws/finally, host blocking, JSON restore and forged
+  state. Final focused conversion run: 22 passed, zero failed/skipped. A broader
+  run's source-refusal failure identified an admission hole, which was fixed and
+  rechecked. Published producer: `0b8e43ea3a55184258bc05bdadbc9508e333bddb`.
+  Node 24's repeat-conversion discrepancy is recorded separately from pinned
+  ES2026 semantics; new PropertyKey source/public/native promotion stays refused.
+
+- Recovery policy review: host generated-record/outstanding-effect limits and
+  callback auto-delivery now belong to the externally expected policy. Snapshot
+  creation refuses policy mutation; restoration checks retained host limits before
+  opening the native model. All four focused recovery controls passed again,
+  including custom limits and rehashed host-policy mutations. These exact edits
+  were recovered through GitHub after the executor outage. The locally committed
+  mixed-protocol changes additionally preserve pure-protocol limits/delivery and
+  live service bindings, but those changes remain unpublished.
+
+- Ordinary training lineage: normal V8 checkpoints retain exact preparation
+  policy, prepared manifests, corpus/stream, tokenizer, chunking and contract
+  identities. Exported serving bundles bind those identities to the training
+  checkpoint, weights, configuration, memory bank and step. Reload rejects missing
+  or inconsistent proof and generic byte-codec substitution. Four new controls
+  plus 27 ordinary-training/resume/serving checks passed before the outage.
+  Tokenizer verification is explicitly injected in the metadata unit fixture;
+  this is not real-asset or learned-quality qualification. The exact production
+  tokenizer was acquired with its expected SHA, but the complete real-asset run
+  has not happened. Published consumer:
+  `9c83827a269965c76e341ae2afd8e53fdbe66680`. Hosted formatter feedback was applied.
+  Native serving identity binding and the known train/serve history mismatch
+  remain open.
+
+- Mixed composition checkpoint (local only): three source/public-checked cases
+  combine Promise joins, asynchronous host work, retained callbacks and
+  callback-owned jobs. Shared heap identity, job ownership, result obligations,
+  original live service bindings, callback policies and custom limits survive
+  verified replay/restore. Rehashed ownership/history changes and uncertain
+  redispatch are refused. Local `d9a3ce4` passed 31 focused controls across the
+  final relevant runs and fresh generation of six base, twenty protocol and
+  three host cases. Native root join/host replay passes; callback obligations
+  and callback-owned dispatch pairing still fail. General shared pending-Promise
+  readiness and declarative unique-ownership source composition remain open.

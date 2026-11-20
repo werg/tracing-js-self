@@ -18,6 +18,8 @@ const nativeIdentity = await select.initialize({
 });
 const policy = {
   checkpointIdentity, tokenizerIdentity, nativeIdentity,
+  hostLimits: {maxGenerated: 4096, maxOutstanding: 64},
+  automaticDelivery: true,
   maxSelections: 4096, maxOutstanding: 64, maxStaleRetries: 8
 };
 const driver = new RegionSelectedModelDriver({select, harness, ...policy});
@@ -36,7 +38,9 @@ const restored = await RegionSelectedModelDriver.restore(checkpoint, {
 
 The application owns durable storage and the expected policy. Rehashing a packet
 does not authorize a different model identity, seed, generation setting or
-budget. `checkpoint()` and `restore()` refuse engineering selectors that lack
+budget. `hostLimits` and `automaticDelivery` must also match the harness's
+configured generated-record limit, outstanding-effect limit and callback delivery
+policy. `checkpoint()` and `restore()` refuse engineering selectors that lack
 the native acknowledgment and recovery interfaces. Deterministic supplied
 decoders remain useful explicit orchestration controls, not evidence of learned
 execution.
