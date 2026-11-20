@@ -218,3 +218,28 @@ serving, and measured learned success.
   a fresh process from step one to step two. The test explicitly injects the
   source/tokenizer verification boundary: actual pinned-asset preparation, export,
   reload and learned quality remain unqualified.
+
+- Live native restoration increment: the consumer service can checkpoint all
+  acknowledged sessions and reconstruct them in a fresh runtime by rerunning
+  the actual model under saved per-selection RNG state. Original fragment tokens,
+  bytes, causal identities and a complete committed cache/retrieval/track-state
+  fingerprint must match; ordinary native replay checks every accepted commit.
+  Consumed attempts and pending/failed output evidence survive, while speculative
+  candidates never become accepted restored history. Producer process transport
+  now exposes checkpoint/restore, preserves its cost history and rejects false
+  recovery receipts (12 transport tests pass). An actual tiny CPU model emits
+  identical next tokens after fresh-process recovery; accepted-record and callback
+  controls use a declared supplied decoder. Full host-resource recovery through
+  the producer driver, actual trained-model/asset qualification and final default
+  routing remain open. All six final native recovery controls pass, including
+  failure cleanup, tamper refusal, fresh-process recovery and retained callbacks.
+
+- Hosted CI follow-up at producer `ff7d1337d203544c102c053f4f270aa0ae58bd1b`
+  and consumer `1a38fe50a7fb4e05a01240794eb6b6209fb0fb49`: 250 of 252 V8 tests
+  passed; failures identified a stale V6 receipt reader in a test and a synthetic
+  training fixture lacking the now-required family admission. These are being
+  migrated without weakening ordinary admission. Selected-source CI also exposes
+  the Promise-finally projection regression after owned scheduling was corrected;
+  an explicit public-job mapping is required before that existing capability is
+  qualified again. Pinned-oracle, real-source, inspection, and V7 CI lanes passed;
+  this is not an all-green final-head result.
