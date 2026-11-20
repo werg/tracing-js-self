@@ -1,11 +1,11 @@
 {
   "schema": "native-orchestration-evidence-files/1",
-  "bundlePartsPublished": false,
+  "bundlePartsPublished": true,
   "files": [
     {
       "path": "README.md",
-      "bytes": 7667,
-      "sha256": "6fd26cb7de7b0236b3ca07598d95d82d67ac2e8c28aaa9d6ab7e71c4e63eedbc"
+      "bytes": 7633,
+      "sha256": "b4d9d76462ba056252e4dcd483b105a10b900a40b7294d532cb8f65aaf4bb091"
     },
     {
       "path": "native-orchestration-index.json",
@@ -63,6 +63,26 @@
       "sha256": "e2ee93ef637f649821f886c6d47d9688f509fb5a46828971cde180a8698a7161"
     },
     {
+      "path": "served-bundle.tar.gz.part-00",
+      "bytes": 4194304,
+      "sha256": "e801a4d58be36c14b750226fa01dc603a6dcc67228ad7a6f64acd707aa3f0030"
+    },
+    {
+      "path": "served-bundle.tar.gz.part-01",
+      "bytes": 4194304,
+      "sha256": "6b6adcc5b37019520c6869ca4eee04934dad6010f982ce1996eb33ce5e63ab07"
+    },
+    {
+      "path": "served-bundle.tar.gz.part-02",
+      "bytes": 4194304,
+      "sha256": "2d5276cc20ebedcb961230837aa998567492a107d9f4313e1127ed5ded520595"
+    },
+    {
+      "path": "served-bundle.tar.gz.part-03",
+      "bytes": 2679581,
+      "sha256": "83907825fd9f4ea05cfb357688eb60f0a3c332a629e242b32e987f4e6353c6b3"
+    },
+    {
       "path": "unit.stderr.log",
       "bytes": 0,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
@@ -71,6 +91,11 @@
       "path": "unit.stdout.log",
       "bytes": 1471,
       "sha256": "5add90340b447e90aba7e4ad218d8e14012d93e5665ea9adcd694dba658de1f1"
+    },
+    {
+      "path": "verify.py",
+      "bytes": 2830,
+      "sha256": "e113b960c265337ce3f60fa15bc73f0a79553a2ff721b596b978eb605e38f80b"
     }
   ]
 }

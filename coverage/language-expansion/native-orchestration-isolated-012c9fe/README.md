@@ -1,7 +1,5 @@
 # Isolated native coordinator follow-up
 
-**Bundle publication in progress:** the complete five-gate evidence is retained in this increment. The four exact served-bundle archive parts will follow in the next commit; their verified identities are already recorded.
-
 **Passed: all five existing optional native coordinator tests; zero failures,
 cancellations, or skips.** The tests ran serially after all six broad native
 admission workers had exited. No producer/native source or test was changed,
@@ -66,9 +64,8 @@ scope differ from the complete original run.
 
 ## Exact available bundle and substitution
 
-The local zero-update bundle identities are retained in this increment; the
-verified `served-bundle.tar.gz.part-*` files follow in the next commit. Its
-actual model weights exactly match the original reported baseline:
+The local zero-update bundle is fully retained in `served-bundle.tar.gz.part-*`.
+Its actual model weights exactly match the original reported baseline:
 
 `2a7eefffb21e8901150e6932ccd3d7f048fa2efb0ed4d9ebc9072feab43f0452`.
 
@@ -91,6 +88,11 @@ member was re-read and checked after compression. The original checkpoint
 archive is not required to load this retained serving bundle.
 
 ## Inspect or repeat
+
+Run `python3 verify.py` from this directory to verify every retained file, all
+five native evidence members, the joined bundle archive, and each served-bundle
+member against the recorded hashes. This integrity check does not rerun the
+model or the tests.
 
 The raw original command, relevant environment, clean identities, test-file
 hash, unchanged bounds, and original failure-package hashes are in `plan.json`.
