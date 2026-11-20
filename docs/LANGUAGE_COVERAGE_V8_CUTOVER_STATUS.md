@@ -84,3 +84,11 @@ serving, and measured learned success.
   differential/restoration/malformed-state tests pass. A nonterminating chain
   remains a resource outcome and mutual adoption remains pending. Public/source
   and native admission guards are unchanged; this is owned execution evidence.
+
+- Frozen conformance catalog increment: verifies exact acquisition bytes, expands
+  strict/sloppy/module/raw variants before selection, excludes fixture files from
+  standalone counts, binds harness/module/resource identities, and retains missing
+  assets and malformed metadata. Campaigns retain original failure attempts,
+  invalidate downstream evidence on retries, and reject incompatible resumes or
+  forged stage histories. `node --test test/test262-catalog.test.js`: 10 passed,
+  zero failed/skipped. The retained 42-file snapshot is not the full upstream suite.
