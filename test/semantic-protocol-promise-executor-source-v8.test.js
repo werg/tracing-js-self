@@ -46,6 +46,7 @@ test('executor helpers retain receiver and captures across synchronous returns, 
   for(const body of [
     'let total=1;const p=new Promise(resolve=>{function f(){total+=2;return total;}resolve(f());});total+=4;return [await p,total];',
     'const o={x:3,m(){const read=()=>this.x;return new Promise(resolve=>resolve(read()));}};return await o.m();',
+    'const o={m(){let done;const p=new Promise(resolve=>{done=resolve;});done(3);return p;}};return await o.m();',
     'const p=new Promise(resolve=>{function fail(){throw 7;}fail();});try{return await p;}catch(e){return e;}',
     'const p=new Promise(resolve=>{function fail(){throw 7;}try{fail();}catch(e){resolve(e);}});return await p;',
     'const p=new Promise(resolve=>{function fail(){throw 7;}resolve(3);fail();});return await p;',

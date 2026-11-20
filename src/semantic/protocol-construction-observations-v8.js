@@ -123,6 +123,10 @@ export function createConstructionObservationAdapterV8({source,side='native',bun
   }
   function nativeNode(value,ctx){
     if(types.isProxy(value))ctx.fail('Proxy metadata is outside the construction profile');
+    // Promise brands belong to the independent Promise adapter. Claiming an
+    // ordinary fallback here would expose its intrinsic prototype as guest
+    // data and disagree with the owned Promise tag in mixed method sources.
+    if(types.isPromise(value))return null;
     const annotations=[],owner=nativeClass.get(value),home=nativeHome.get(value);
     if(owner)annotations.push({name:'class/1',values:[],data:{sourceStart:owner.item.node.start,derived:!!owner.item.node.superClass}});
     if(home)annotations.push({name:'home-object/1',values:[home],data:{}});
@@ -149,6 +153,13 @@ export function createConstructionObservationAdapterV8({source,side='native',bun
     return {...ctx.defaultNode(value,{includeFunctions:true}),annotations};
   }
   function ownedNode(value,ctx){
+    if(observeOrdinaryCapabilities&&value[0]==='builtinfn'){
+      const resolver=/^Promise\.executor\.(resolve|reject):(p[0-9]+)$/.exec(value[1]);
+      if(resolver){
+        if(!ctx.state.promises[resolver[2]])ctx.fail('resolving function lacks its owned Promise');
+        return {kind:'function',annotations:[nonconstructibleAnnotation()]};
+      }
+    }
     if(value[0]!=='ref')return null;
     const node=ctx.state.heap[value[1]];if(!node||!['function','object','array'].includes(node.kind))return null;
     const annotations=[];

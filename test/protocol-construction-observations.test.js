@@ -129,3 +129,21 @@ test('ordinary constructor observations retain lazy prototype descriptors backli
   const receivers=objects.filter(node=>node.properties?.some(row=>row.key[1]==='n'));
   assert.equal(receivers.length,2);for(const receiver of receivers)assert.deepEqual(receiver.prototype,descriptor.value);
 });
+
+test('construction metadata defers actual Promise brands and preserves resolving-function capabilities',()=>{
+  const source='const object={m(){}};',native=createConstructionObservationAdapterV8({source}),
+    promise=vm.runInNewContext('Promise.resolve(3)');
+  let fallbacks=0;
+  const ctx={fail:assert.fail,defaultNode(){fallbacks++;return {kind:'object',properties:[]};}};
+  assert.equal(native.metadataAdapter.nativeNode(promise,ctx),null);assert.equal(fallbacks,0);
+  const fake={[Symbol.toStringTag]:'Promise'};
+  assert.equal(native.metadataAdapter.nativeNode(fake,ctx).kind,'object');assert.equal(fallbacks,1);
+  const bundle={programs:{},events:[]},owned=createConstructionObservationAdapterV8({source,side:'owned',bundle}),
+    state={promises:{p1:{}}};
+  for(const mode of ['resolve','reject']){
+    const node=owned.metadataAdapter.ownedNode(['builtinfn','Promise.executor.'+mode+':p1'],{state,fail:assert.fail});
+    assert.deepEqual(node,{kind:'function',annotations:[{name:'ordinary-nonconstructible/1',values:[],data:{}}]});
+  }
+  assert.throws(()=>owned.metadataAdapter.ownedNode(['builtinfn','Promise.executor.resolve:p2'],
+    {state,fail(message){throw new TypeError(message);}}),/lacks its owned Promise/);
+});
