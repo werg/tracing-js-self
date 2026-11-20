@@ -11,19 +11,22 @@ import {hashAlgorithmData} from './program.js';
 const copy=structuredClone,HASH=/^[a-f0-9]{64}$/;
 const demand=(value,message)=>{if(!value)throw new TypeError('Selected v8: '+message);};
 const positive=(value,maximum)=>Number.isSafeInteger(value)&&value>0&&value<=maximum;
-const originalFragments=(record,selection)=>typeof record==='string'&&Array.isArray(selection?.fragments)&&
+const isPayloadHex=value=>typeof value==='string'&&/^(?:[0-9a-f]{2})*$/.test(value);
+const originalFragments=(payloadHex,selection)=>isPayloadHex(payloadHex)&&Array.isArray(selection?.fragments)&&
   selection.fragments.length>0&&selection.fragments.every(fragment=>Array.isArray(fragment?.tokenIds)&&fragment.tokenIds.length>0&&
-    fragment.tokenIds.every(id=>Number.isSafeInteger(id)&&id>=0)&&typeof fragment.payloadHex==='string'&&
-    /^(?:[0-9a-f]{2})*$/.test(fragment.payloadHex))&&
+    fragment.tokenIds.every(id=>Number.isSafeInteger(id)&&id>=0)&&isPayloadHex(fragment.payloadHex))&&
   Buffer.concat(selection.fragments.map(fragment=>Buffer.from(fragment.payloadHex,'hex')))
-    .equals(Buffer.from(record,'utf8'));
-const boundSelection=(record,selection,context,checkpointIdentity,tokenizerIdentity)=>
+    .equals(Buffer.from(payloadHex,'hex'));
+const boundPayload=(payloadHex,selection,context,checkpointIdentity,tokenizerIdentity)=>
   selection?.modelSelected===true&&selection.origin==='actual-model-selected'&&
   typeof selection.selectionId==='string'&&selection.selectionId.length>0&&
   selection.checkpointIdentity===checkpointIdentity&&selection.tokenizerIdentity===tokenizerIdentity&&
   selection.prefixDigest===context.prefixDigest&&selection.contextDigest===hashAlgorithmData(context)&&
-  typeof record==='string'&&typeof selection.payloadHex==='string'&&/^(?:[0-9a-f]{2})+$/.test(selection.payloadHex)&&
-  Buffer.from(selection.payloadHex,'hex').equals(Buffer.from(record,'utf8'))&&originalFragments(record,selection);
+  selection.payloadHex===payloadHex&&originalFragments(payloadHex,selection);
+const boundSelection=(record,selection,context,checkpointIdentity,tokenizerIdentity)=>typeof record==='string'&&
+  boundPayload(Buffer.from(record,'utf8').toString('hex'),selection,context,checkpointIdentity,tokenizerIdentity);
+const attemptPayload=row=>typeof row.record==='string'?Buffer.from(row.record,'utf8').toString('hex'):
+  isPayloadHex(row.rawPayloadHex)?row.rawPayloadHex:null;
 
 function driverFacade(bridge,contexts,predictions){
   const host={
@@ -76,30 +79,37 @@ export class RegionSelectedModelDriver extends SelectedModelDriver {
         predictions.set(invocationId,copy(current.context));
         attempt={attempt:attempts.length,invocationId,context:copy(current.context),
           prefixDigest:current.context.prefixDigest,status:'submitted',record:null,selection:null,
-          generationMs:null,commitMs:null,failure:null};
+          rawPayloadHex:null,completeRecord:false,generationMs:null,commitMs:null,failure:null};
         attempts.push(attempt);const start=performance.now();let output;
         try{output=await select({...current,attempt:attempt.attempt});}
         finally{attempt.generationMs=performance.now()-start;}
         const record=typeof output==='string'?output:output?.record,selection=output?.selection??null;
         attempt.record=typeof record==='string'?record:null;attempt.selection=copy(selection);
+        if(attempt.record!==null)attempt.rawPayloadHex=Buffer.from(attempt.record,'utf8').toString('hex');
         if(origin==='model')demand(selection?.modelSelected===true&&selection.origin==='actual-model-selected',
           'model experiment requires original model selection provenance');
         demand(typeof record==='string','one original canonical v8 record required');
         if(origin==='model')demand(boundSelection(record,selection,current.context,checkpointIdentity,tokenizerIdentity),
           'selected bytes, model identity or causal provenance differ from the frozen invocation');
         attempt.provenanceValidated=origin==='model';
-        decodeCausalLmV8Target(record);attempt.status='decoded';
+        decodeCausalLmV8Target(record);attempt.completeRecord=true;attempt.status='decoded';
         return {record,selection};
       }catch(error){
         if(attempt){attempt.status='rejected';attempt.failure=String(error.message);
           if(error.evidence){attempt.evidence=copy(error.evidence);
             // A transport can reject malformed output before returning it. Keep
             // those original bytes and token costs as failures, never repairs.
-            if(attempt.record===null&&typeof error.evidence.record==='string'){
-              attempt.record=error.evidence.record;attempt.selection=copy(error.evidence.selection??null);
-              attempt.provenanceValidated=origin==='model'&&error.evidence.provenanceValidated===true&&
-                boundSelection(attempt.record,attempt.selection,
-                attempt.context,checkpointIdentity,tokenizerIdentity);
+            if(attempt.record===null&&(typeof error.evidence.record==='string'||typeof error.evidence.rawPayloadHex==='string')){
+              attempt.record=typeof error.evidence.record==='string'?error.evidence.record:null;
+              attempt.selection=copy(error.evidence.selection??null);
+              attempt.rawPayloadHex=typeof error.evidence.rawPayloadHex==='string'?error.evidence.rawPayloadHex:
+                Buffer.from(attempt.record,'utf8').toString('hex');
+              const bound=attempt.record!==null?boundSelection(attempt.record,attempt.selection,
+                attempt.context,checkpointIdentity,tokenizerIdentity):
+                boundPayload(attempt.rawPayloadHex,attempt.selection,attempt.context,checkpointIdentity,tokenizerIdentity)&&
+                  attempt.selection.session===harness.inner.sessionId&&attempt.selection.invocationId===attempt.invocationId;
+              attempt.provenanceValidated=origin==='model'&&error.evidence.schema==='semantic-native-selection-failure/1'&&
+                error.evidence.provenanceValidated===true&&bound;
             }
           }}
         predictions.delete(previous.context.invocationId);fatal=error;release();throw error;
@@ -176,16 +186,16 @@ export class RegionSelectedModelDriver extends SelectedModelDriver {
       contexts:copy(this.contexts),context:this.bridge.modelContext(invocationId)};
   }
   metrics(){
-    const rows=this.attempts,knownTokens=row=>originalFragments(row.record,row.selection)&&
+    const rows=this.attempts,knownTokens=row=>originalFragments(attemptPayload(row),row.selection)&&
       (this.origin==='engineering'||row.provenanceValidated),
       tokenCount=row=>row.selection.fragments.reduce((total,fragment)=>total+fragment.tokenIds.length,0);
     return {predictionAttempts:rows.length,accepted:rows.filter(row=>row.status==='accepted').length,
       rejected:rows.filter(row=>!['accepted','submitted','decoded'].includes(row.status)).length,
       staleRetries:rows.filter(row=>row.status==='stale').length,
       stalePredictions:rows.filter(row=>['stale','stale-limit'].includes(row.status)).length,
-      generatedBytes:rows.reduce((sum,row)=>sum+(typeof row.record==='string'?Buffer.byteLength(row.record):0),0),
+      generatedBytes:rows.reduce((sum,row)=>sum+(attemptPayload(row)?.length??0)/2,0),
       generatedTokens:rows.filter(knownTokens).reduce((sum,row)=>sum+tokenCount(row),0),
-      unverifiedClaimedTokens:rows.filter(row=>originalFragments(row.record,row.selection)&&!knownTokens(row))
+      unverifiedClaimedTokens:rows.filter(row=>originalFragments(attemptPayload(row),row.selection)&&!knownTokens(row))
         .reduce((sum,row)=>sum+tokenCount(row),0),
       unknownGenerationCostAttempts:rows.filter(row=>!knownTokens(row)).length,
       generationMs:rows.reduce((sum,row)=>sum+(row.generationMs??0),0),

@@ -207,6 +207,39 @@ test('malformed native fragment evidence cannot erase the original failed attemp
   }
 });
 
+test('authenticated partial native bytes retain measured failure cost without inventing a complete UTF-8 record',async()=>{
+  const artifact=golden.examples.find(row=>row.id==='ordered-map'),rawPayloadHex='f09f',
+    fragments=[{tokenIds:[7],payloadHex:'f0'},{tokenIds:[8,9],payloadHex:'9f'}];
+  for(const invalid of [null,'unverified','wrong-invocation','wrong-origin']){
+    let commits=0;
+    const select=async request=>{
+      const selection={modelSelected:true,origin:'actual-model-selected',selectionId:'partial-selection',
+        session:request.session,invocationId:request.context.invocationId,...pin,
+        prefixDigest:request.context.prefixDigest,contextDigest:hashAlgorithmData(request.context),
+        payloadHex:rawPayloadHex,fragments,generatedTokens:3};
+      if(invalid==='wrong-invocation')selection.invocationId='other-invocation';
+      if(invalid==='wrong-origin')selection.origin='engineering-injected';
+      const error=new Error('native generation ended in incomplete UTF-8');
+      error.evidence={schema:'semantic-native-selection-failure/1',record:null,rawPayloadHex,
+        selection,provenanceValidated:invalid!=='unverified'};throw error;
+    };
+    select.initialize=async identity=>({...identity,generationSettings});
+    select.commit=async()=>{commits++;return {committed:true};};
+    const result=await runSelectedRegionExecution({initialPublic:input(artifact),select,...pin,
+      generationSettings,origin:'model'}),authenticated=invalid===null;
+    assert.equal(result.status,'failed');assert.equal(result.publicCompleted,false);assert.equal(commits,0);
+    assert.equal(result.attempts[0].record,null);assert.equal(result.attempts[0].completeRecord,false);
+    assert.equal(result.attempts[0].rawPayloadHex,rawPayloadHex);
+    assert.deepEqual(result.attempts[0].selection.fragments,fragments);
+    assert.equal(result.costs.generatedBytes,2);assert.equal(result.costs.predictionAttempts,1);
+    assert.equal(result.costs.generatedTokens,authenticated?3:0);
+    assert.equal(result.costs.unverifiedClaimedTokens,authenticated?0:3);
+    assert.equal(result.costs.unknownGenerationCostAttempts,authenticated?0:1);
+    assert.equal(result.qualification.modelMeasurement,authenticated?'actual-model-selected':'unmeasured');
+    assert.equal(result.public.timeline.filter(row=>row.mode==='generated').length,0);
+  }
+});
+
 test('frozen execution deadlines bound initialization, native acknowledgement and final cleanup',async()=>{
   const artifact=golden.examples.find(row=>row.id==='ordered-map'),never=()=>new Promise(()=>{}),
     initializing=async()=>{throw new Error('must not select before initialization');};
