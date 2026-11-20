@@ -92,12 +92,20 @@ test('private prefix and postfix updates convert scalar values and verify the ac
   ]){const {compiled}=await checked(source);replay(compiled);assert.equal(compiled.claims.filter(row=>row.record.kind==='private.set').length,2);}
 });
 
+test('class methods retain their initialized class-name capture through construction checkpoints',async()=>{
+  const source='"use strict";function run(){class C{m(){return C;}}const original=C;const o=new C();C=3;return o.m()===original;}',
+    {compiled}=await checked(source);
+  assert.deepEqual(compiled.outcome.graph.roots.at(-1),['bool',true]);
+  const method=compiled.claims.find(row=>row.record.kind==='allocate'&&row.record.captures?.some(capture=>capture.binding==='C'));
+  assert(method,'the method must retain its inner class-name cell');
+  replay(compiled,{checkpoints:true});
+});
+
 test('unmodeled class continuations remain explicit source refusals even with a scalar result',()=>{
   for(const [source,reason]of [
     ['"use strict";function run(){class C{get #x(){return 1;}}return 3;}',/private accessor/i],
     ['"use strict";function run(){class C{constructor(){this.f=()=>new.target;}}const o=new C();return 3;}',/heap kind or metadata|lexical constructor/],
     ['"use strict";function run(){class A{m(){return 1;}}class B extends A{m(){return super.m();}}const o=new B();return o.m();}',/super property references/],
-    ['"use strict";function run(){class C{static{throw 1;}}return 3;}',/abrupt initializer/],
-    ['"use strict";function run(){class C{m(){return C;}}return 3;}',/closure capture requires an initialized/]
+    ['"use strict";function run(){class C{static{throw 1;}}return 3;}',/abrupt initializer/]
   ])assert.throws(()=>build(source),reason,source);
 });
