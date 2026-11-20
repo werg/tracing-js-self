@@ -30,7 +30,7 @@ jobs:
         with:
           repository: werg/megatoken
           # Exact paired consumer; old checkpoint and prepared formats are rejected.
-          ref: cb311dba6af44ef241450a87ef530a66aa55c7a3
+          ref: f031b85702d6982c859291fd62ce92f89290dd27
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
