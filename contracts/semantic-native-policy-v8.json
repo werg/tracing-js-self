@@ -1,7 +1,7 @@
 {
   "schema": "semantic-native-policy/8",
   "consumerRepository": "werg/megatoken",
-  "consumerRevision": "e52a13518906cadd970e7f717245a9deae401034",
+  "consumerRevision": "d26afd9d7a901e740cf29d4bce610be755cac640",
   "contractDigest": "ed3eb82c994823e2adf49c3bfdb463f22d7c8ed0a5184af1564015c345f0b7ab",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
   "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
