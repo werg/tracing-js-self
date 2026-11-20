@@ -160,10 +160,56 @@ test('derived super binding runs fields before completing the call and retains t
   assert.throws(()=>apply({kind:'construct.target',invocation:'derived-body',result:['ref','D']}),/super result/);
   apply({kind:'super.bind',owner:'derived',receiver:['ref','base-receiver'],child:'d-field-init'});
   assert.equal(restoreConstructionStateV8(controller,structuredClone(controller.protocol.construction),api).valid,true);
-  returned(['undefined']);apply({kind:'super.finish',owner:'derived',result:['ref','base-receiver']});
+  returned(['undefined']);apply({kind:'super.finish',owner:'derived',completion:{kind:'normal',value:['ref','base-receiver']}});
   apply({kind:'construct.this',invocation:'derived-body',result:['ref','base-receiver']});
   returned(['undefined']);apply({kind:'construct.finish',id:'derived',completion:{kind:'normal',value:['ref','base-receiver']}});
   assert.equal(restoreConstructionStateV8(controller,controller.protocol.construction,api).valid,true);
+});
+test('a throwing base initializer completes construction without entering its body',()=>{
+  const {controller,api,klass,object,apply,enter,returned}=fixture();klass('C');object('init','closure');
+  apply({kind:'callable.define',object:'init',constructorKind:null,classConstructor:false});
+  apply({kind:'callable.home',object:'init',home:['ref','C-prototype']});
+  apply({kind:'class.initializer',object:'C',placement:'instance',initializer:['ref','init']});
+  enter('new-c','C',{child:'field-init'});
+  const failure=['str','field failed'];returned(failure,'throw');
+  assert.equal(restoreConstructionStateV8(controller,structuredClone(controller.protocol.construction),api).valid,true);
+  const before=structuredClone(controller);
+  assert.throws(()=>apply({kind:'construct.body',id:'new-c',child:'c-body'}),/construct.finish/);
+  assert.deepEqual(controller,before);
+  assert.throws(()=>apply({kind:'construct.finish',id:'new-c',completion:{kind:'normal',value:['ref','new-c-receiver']}}),/false constructor completion/);
+  assert.deepEqual(controller,before);
+  apply({kind:'construct.finish',id:'new-c',completion:{kind:'throw',value:failure}});
+  assert.equal(controller.protocol.construction.frames[0].bodyInvocation,null);
+  assert.deepEqual(controller.lastReturn,{kind:'throw',value:failure});
+  assert.equal(restoreConstructionStateV8(controller,controller.protocol.construction,api).valid,true);
+});
+test('a throwing derived initializer retains initialized this before body propagation or recovery',()=>{
+  for(const propagate of [true,false]){
+    const {controller,api,klass,object,apply,enter,returned}=fixture();klass('B');klass('D',['ref','B']);object('init','closure');
+    apply({kind:'callable.define',object:'init',constructorKind:null,classConstructor:false});
+    apply({kind:'callable.home',object:'init',home:['ref','D-prototype']});
+    apply({kind:'class.initializer',object:'D',placement:'instance',initializer:['ref','init']});
+    enter('d','D',{receiver:['undefined']});apply({kind:'super.select',owner:'d',callee:['ref','B']});
+    enter('b','B',{mode:'super',owner:'d',newTarget:'D'});returned(['undefined']);
+    apply({kind:'construct.finish',id:'b',completion:{kind:'normal',value:['ref','b-receiver']}});
+    apply({kind:'super.bind',owner:'d',receiver:['ref','b-receiver'],child:'field-init'});
+    const failure=['str','derived field failed'];returned(failure,'throw');
+    assert.equal(restoreConstructionStateV8(controller,structuredClone(controller.protocol.construction),api).valid,true);
+    const before=structuredClone(controller);
+    assert.throws(()=>apply({kind:'construct.this',invocation:'d-body',result:['ref','b-receiver']}),/super.finish/);
+    assert.deepEqual(controller,before);
+    for(const completion of [{kind:'normal',value:['ref','b-receiver']},{kind:'throw',value:['str','different']}]){
+      assert.throws(()=>apply({kind:'super.finish',owner:'d',completion}),/false derived initializer/);
+      assert.deepEqual(controller,before);
+    }
+    apply({kind:'super.finish',owner:'d',completion:{kind:'throw',value:failure}});
+    assert.deepEqual(controller.lastReturn,{kind:'throw',value:failure});
+    assert.equal(restoreConstructionStateV8(controller,controller.protocol.construction,api).valid,true);
+    apply({kind:'construct.this',invocation:'d-body',result:['ref','b-receiver']});
+    returned(propagate?failure:['undefined'],propagate?'throw':'return');
+    apply({kind:'construct.finish',id:'d',completion:{kind:propagate?'throw':'normal',value:propagate?failure:['ref','b-receiver']}});
+    assert.equal(restoreConstructionStateV8(controller,controller.protocol.construction,api).valid,true);
+  }
 });
 test('constructor continuations reject false receivers results order and duplicate super bindings atomically',()=>{
   const {controller,klass,apply,enter,returned}=fixture();klass('B');klass('D',['ref','B']);

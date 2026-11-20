@@ -221,13 +221,17 @@ export function createConstructionSourceAdapterV8({bundle,source}){
       const completion=change.after.completion,invocation=ctx.frame(change.id),value=completion?.value?.value,
         kind=completion?.type==='throw'?'throw':'return';
       require(ctx,scalar(value)&&ctx.publicInvocation===invocation,'constructor completion invocation/value');
-      if(role.kind!=='body')require(ctx,kind==='return'&&value[0]==='undefined','abrupt initializer needs its own public continuation');
+      if(role.kind!=='body')require(ctx,kind==='throw'||value[0]==='undefined','initializer must return undefined or throw');
       emit(ctx,{kind,invocation,value:ctx.tag(value,event)},event);
       if(role.kind==='base-initializer'){
-        const child=addedFrame(event);require(ctx,child?.constructorId===construction(ctx,role.id).callee[1],'base initializer must enter its retained constructor body');
-        emit(ctx,{kind:'construct.body',id:role.id,child:ctx.frame(child.id)},event);
-        roles.set(child.id,{kind:'body',id:role.id});bindFrame(ctx,event,child);
-      }else if(role.kind==='derived-initializer')emit(ctx,{kind:'super.finish',owner:role.id,result:ctx.tag(change.after.superInitializedResult,event)},event);
+        if(kind==='throw')emit(ctx,{kind:'construct.finish',id:role.id,completion:{kind:'throw',value:ctx.tag(value,event)}},event);
+        else{
+          const child=addedFrame(event);require(ctx,child?.constructorId===construction(ctx,role.id).callee[1],'base initializer must enter its retained constructor body');
+          emit(ctx,{kind:'construct.body',id:role.id,child:ctx.frame(child.id)},event);
+          roles.set(child.id,{kind:'body',id:role.id});bindFrame(ctx,event,child);
+        }
+      }else if(role.kind==='derived-initializer')emit(ctx,{kind:'super.finish',owner:role.id,
+        completion:{kind:kind==='throw'?'throw':'normal',value:ctx.tag(kind==='throw'?value:change.after.superInitializedResult,event)}},event);
       else if(role.kind==='body'){
         const parent=after(ctx,event,'frames',change.after.callerFrameId),delivered=kind==='throw'?value:parent?.stack.at(-1)?.value;
         require(ctx,scalar(delivered),'constructor completion delivered no owned result');

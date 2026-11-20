@@ -20,7 +20,7 @@ export const CONSTRUCTION_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.
   'construct.this':['kind','invocation','result'],
   'super.select':['kind','owner','callee'],
   'super.bind':['kind','owner','receiver','child'],
-  'super.finish':['kind','owner','result']
+  'super.finish':['kind','owner','completion']
 }).map(([kind,fields])=>[kind,Object.freeze(fields)])));
 export const CONSTRUCTION_STATE_V8_FIELDS=Object.freeze(['schema','privateNames','frames','lastCompletion']);
 export const CALLABLE_STATE_V8_FIELDS=Object.freeze(['constructorKind','classConstructor','homeObject','instanceInitializer','staticInitializer']);
@@ -54,7 +54,7 @@ export function validateConstructionRecordV8(record,{value:validateValue}){
     if(!['ref','undefined'].includes(record.receiver[0])||!['ordinary','super'].includes(record.mode)||
        (record.mode==='super')!==(record.owner!==null))throw new TypeError('Invalid constructor entry linkage');
     assertAlgorithmDataArray(record.arguments,'constructor arguments');if(record.arguments.length>4096)throw new TypeError('Constructor argument bound');record.arguments.forEach(validateValue);
-  }else if(record.kind==='construct.finish'){
+  }else if(record.kind==='construct.finish'||record.kind==='super.finish'){
     assertAlgorithmFields(record.completion,['kind','value'],'constructor completion');
     if(!['normal','throw'].includes(record.completion.kind))throw new TypeError('Constructor completion kind');validateValue(record.completion.value);
   }else if(record.kind==='super.select')validateValue(record.callee);
@@ -84,7 +84,7 @@ export function assertConstructionNextV8(controller,record,api){
   const construction=controller.protocol?.construction;if(!construction)return true;
   const pending=construction.frames.findLast(row=>row.phase!=='complete'&&!controller.stack.includes(row.activeChild));
   if(pending){
-    const expected=pending.phase==='initialize-base'?'construct.body':pending.phase==='initialize-derived'?'super.finish':'construct.finish';
+    const expected=pending.phase==='initialize-base'&&controller.lastReturn?.kind!=='throw'?'construct.body':pending.phase==='initialize-derived'?'super.finish':'construct.finish';
     api.require(record.kind===expected&&(record.id??record.owner)===pending.id,'pending constructor continuation requires '+expected);
   }
   const completed=construction.lastCompletion;
@@ -137,7 +137,8 @@ function applyContinuation(controller,record,api){
     invokeConstructorBody(controller,entry,record.child,api);
   }else if(record.kind==='construct.finish'){
     const entry=frame(controller,record.id,api),returned=returnedToParent(controller,entry,api);
-    require(entry.phase==='body','constructor body is not complete');known(controller,record.completion.value);
+    require(entry.phase==='body'||entry.phase==='initialize-base'&&returned.kind==='throw',
+      'constructor body or abrupt base initializer is not complete');known(controller,record.completion.value);
     let expected;
     if(returned.kind==='throw')expected={kind:'throw',value:returned.value};
     else{
@@ -177,9 +178,12 @@ function applyContinuation(controller,record,api){
     }else require(record.child===null,'class without derived fields cannot invent an initializer');
   }else if(record.kind==='super.finish'){
     const owner=frame(controller,record.owner,api);
-    require(owner.phase==='initialize-derived'&&controller.stack.at(-1)===owner.bodyInvocation&&!controller.stack.includes(owner.activeChild)&&controller.lastReturn?.kind==='return',
-      'derived initializer has not normally completed');
-    require(eq(record.result,owner.receiver)&&eq(controller.receiver,owner.receiver),'derived initialization lost its receiver');
+    const returned=controller.lastReturn;
+    require(owner.phase==='initialize-derived'&&controller.stack.at(-1)===owner.bodyInvocation&&!controller.stack.includes(owner.activeChild)&&
+      ['return','throw'].includes(returned?.kind),'derived initializer has not completed');
+    const expected={kind:returned.kind==='throw'?'throw':'normal',value:returned.kind==='throw'?returned.value:owner.receiver};
+    known(controller,record.completion.value);
+    require(eq(record.completion,expected)&&eq(controller.receiver,owner.receiver),'false derived initializer completion or receiver');
     owner.phase='body';owner.activeChild=owner.bodyInvocation;
   }else return false;
   return true;

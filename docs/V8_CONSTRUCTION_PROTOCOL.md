@@ -57,15 +57,19 @@ newTarget, and receiver identity. A base constructor allocates its receiver from
 the actual newTarget's own prototype. A derived constructor starts with an
 uninitialized receiver. The operation enters either the base field initializer
 or the constructor body through the shared call scope. `construct.body` advances
-only after a base initializer has returned to its caller.
+only after a base initializer has returned normally to its caller. A throwing
+base initializer instead completes through `construct.finish`, preserving its
+thrown value without entering the constructor body.
 
 `super.select` captures the live parent before argument effects.
 `construct.enter` in super mode must use that captured parent and the derived
 owner's newTarget. `super.bind` accepts only that completed superclass result,
 initializes the lexical receiver once, and runs the derived field initializer
-if present. `super.finish` proves that initialization returned with the same
-receiver before the super call can complete. These operations retain frame and
-call identities, never VM stack snapshots.
+if present. `super.finish` carries `completion: {kind, value}`: normal completion
+must return the same receiver, and abrupt completion must retain the exact
+initializer throw. Both resume the derived body with its initialized receiver,
+so the body can propagate the failure or handle it before finishing construction.
+These operations retain frame and call identities, never VM stack snapshots.
 
 `construct.finish` checks the raw body completion against the constructor kind.
 Base primitive returns select the allocated receiver; explicit object returns
@@ -89,8 +93,8 @@ This option is never a generated public record field.
 
 The component tests cover actual-newTarget prototype selection, primitive return
 substitution, base and derived initializer ordering, retained arguments,
-checkpoint validation and rollback of false claims. Arrow lexical constructor
-contexts, abrupt initializer propagation, derived invalid-return guest errors
+checkpoint validation and rollback of false claims, including abrupt base and
+derived field initialization. Arrow lexical constructor contexts, derived invalid-return guest errors
 and repeated-super guest errors remain explicit unsupported continuation
 profiles here; the owned runtime supports them separately. Until their public
 records exist, the source adapter must refuse those executions.
@@ -157,7 +161,10 @@ records and restore checkpoints during constructor continuations. Qualified
 cases cover base and derived fields, explicit and default constructors,
 primitive-return receiver substitution, newTarget inheritance, private methods,
 same-spelled distinct private brands, static private fields, Symbol method keys,
-class getter/setter calls, and scalar private prefix/postfix updates. Update
+class getter/setter calls, and scalar private prefix/postfix updates. Uncaught
+base, derived and static initializer throws retain their original values and
+skip the remaining initializer and constructor work; constructor checkpoints
+preserve these abrupt boundaries. Update
 lowering explicitly reads the private slot, checks scalar ToNumeric and typed
 increment/decrement, writes the new value and verifies expression completion.
 Unused class declarations still receive metadata
@@ -165,8 +172,8 @@ evidence. This is local source/public qualification; native consumer admission
 is a separate required gate.
 
 The initial adapter explicitly refuses private accessors and object-valued
-private update conversion, constructor arrows, abrupt initializers, ordinary/exotic
-constructors, uninitialized closure captures and super-property references.
+private update conversion, constructor arrows, constructor exception handlers,
+ordinary/exotic constructors, uninitialized closure captures and super-property references.
 These refusals do not remove the corresponding owned runtime support. They
 identify the additional public continuation or source proof required before
 the cases can receive full source/native admission.

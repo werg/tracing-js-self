@@ -101,11 +101,24 @@ test('class methods retain their initialized class-name capture through construc
   replay(compiled,{checkpoints:true});
 });
 
+test('abrupt field initialization preserves thrown values and skips the remaining constructor work',async()=>{
+  for(const source of [
+    '"use strict";function run(){function fail(){throw 7;}class C{x=fail();constructor(){throw 9;}}return new C();}',
+    '"use strict";function run(){function fail(){throw 7;}class B{}class D extends B{x=fail();constructor(){super();throw 9;}}return new D();}',
+    '"use strict";function run(){function fail(){throw 7;}class B{x=fail();constructor(){throw 9;}}class D extends B{y=9;constructor(){super();throw 11;}}return new D();}',
+    '"use strict";function run(){class C{static{throw 7;}}return 9;}'
+  ]){
+    const {compiled}=await checked(source),records=compiled.claims.map(row=>row.record);
+    assert.equal(compiled.outcome.kind,'throw');assert.deepEqual(compiled.outcome.graph.roots.at(-1),['num',7]);
+    if(!source.includes('static{'))assert(records.some(row=>row.kind==='construct.finish'&&row.completion.kind==='throw'));
+    replay(compiled,{checkpoints:true});
+  }
+});
+
 test('unmodeled class continuations remain explicit source refusals even with a scalar result',()=>{
   for(const [source,reason]of [
     ['"use strict";function run(){class C{get #x(){return 1;}}return 3;}',/private accessor/i],
     ['"use strict";function run(){class C{constructor(){this.f=()=>new.target;}}const o=new C();return 3;}',/heap kind or metadata|lexical constructor/],
     ['"use strict";function run(){class A{m(){return 1;}}class B extends A{m(){return super.m();}}const o=new B();return o.m();}',/super property references/],
-    ['"use strict";function run(){class C{static{throw 1;}}return 3;}',/abrupt initializer/]
   ])assert.throws(()=>build(source),reason,source);
 });
