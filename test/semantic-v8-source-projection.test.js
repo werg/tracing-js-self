@@ -17,19 +17,31 @@ test('forward parameter closure uses checked detailed execution when a pure core
   assert.equal((await recheckRegionEvidence(result.exported)).sourceValidated,true);
 });
 
-test('a matching scalar cannot qualify erased custom prototype or Proxy state',async()=>{
-  for(const body of [
-    'const p={x:4};const o=Object.create(p);return o.x;',
-    'const o={__proto__:null,x:3};return o.x;',
-    'const o={};const p={x:4};Object.setPrototypeOf(o,p);return Object.getPrototypeOf(o)===p;',
-    'return new Proxy({x:3},{get:function(t,k,r){return t[k]+1;}}).x;'
+test('supported prototype and Proxy state route through independently checked protocol evidence',async()=>{
+  for(const [body,value] of [
+    ['const p={x:4};const o=Object.create(p);return o.x;',4],
+    ['const o={__proto__:null,x:3};return o.x;',3],
+    ['return new Proxy({x:3},{get:function(t,k,r){return t[k]+1;}}).x;',4]
   ]){
     const result=await verifyRegionTrainingCase({source:'"use strict";function run(){'+body+'}',
-      entry:'run',family:'unsupported-behavioral-state',fixture:{calls:[]}});
-    assert.equal(result.status,'projection_refused',result.reason);
-    assert.match(result.reason,/explicit v8 (behavioral-state|protocol) profile/);
-    assert.equal(result.exported,undefined);
+      entry:'run',family:'qualified-behavioral-state',fixture:{calls:[]}});
+    assert(result.exported,result.reason);
+    const artifact=result.exported,replayed=RegionExecutionHarness.replay(artifact);
+    assert.equal(artifact.sidecar.schema,'semantic-protocol-region-evidence/1');
+    assert.equal(artifact.sidecar.sourceArtifact.sidecar.reference.metadataAudit.status,'agreed');
+    assert.deepEqual(replayed.controller.completion,{kind:'return',value:['num',value]});
+    const restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(replayed.checkpoint())));
+    assert.deepEqual(restored.exportEpisode(),artifact.public);
+    assert.equal((await recheckRegionEvidence(artifact)).sourceValidated,true);
   }
+});
+
+test('unqualified live prototype replacement is not flattened into a scalar-only trace',async()=>{
+  const source='"use strict";function run(){const o={};const p={x:4};Object.setPrototypeOf(o,p);return Object.getPrototypeOf(o)===p;}',
+    result=await verifyRegionTrainingCase({source,entry:'run',family:'unsupported-prototype-replacement',fixture:{calls:[]}});
+  assert.equal(result.status,'projection_refused',result.reason);
+  assert.match(result.reason,/explicit v8 (behavioral-state|protocol) profile/);
+  assert.equal(result.exported,undefined);
 });
 
 test('class, private slots and constructor completion cannot be flattened by the historical detailed state profile',()=>{

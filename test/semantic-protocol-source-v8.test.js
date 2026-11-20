@@ -51,9 +51,18 @@ test('new source observation identity protocol does not widen historical public 
   assert.throws(()=>encodeDetailedRecord({kind:'bind',fields:{name:'s',value:['symbol','o1']}},{role:'generated'}),/value|scalar|Symbol|tag/i);
 });
 
+test('source projection retains unused Proxy target and handler identities behind a scalar result',async()=>{
+  const source='"use strict";function run(){const s=Symbol("x");const o=new Proxy({x:3},{});return 3;}',
+    {compiled,audit}=await checked(source),allocation=compiled.claims.find(row=>row.record.kind==='proxy.create');
+  assert(allocation);
+  assert.notDeepEqual(allocation.record.target,allocation.record.handler);
+  assert.deepEqual(compiled.outcome.graph.roots.at(-1),['num',3]);
+  assert.equal(audit.extensionAudit.status,'agreed');
+  assert(audit.observations.metadata.some(row=>row.objects.some(node=>node.kind==='proxy')));
+});
+
 test('source projection refuses unmodeled hidden state even when the final scalar would match',()=>{
   for(const source of [
-    '"use strict";function run(){const s=Symbol("x");const o=new Proxy({x:3},{});return 3;}',
     '"use strict";function run(){const s=Symbol("x");return s;}',
     '"use strict";async function run(){const s=Symbol("x");return 3;}',
     '"use strict";function run(){const s=Symbol("x");const o={};o[s]=3;return o;}'
