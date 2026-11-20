@@ -412,7 +412,23 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
           const decision=tag(row.test,event),expr=operand(decision,inventory.nodes.get(row.source?.start+':'+row.source?.end),event);
           if(decision[0]==='symbol')emit({kind:'choose',expr,decision,path:row.path},event,'owned-source-choice/1');
           else emit({kind:'choose',fields:{expr,decision,path:row.path}},event,'owned-source-choice/1',{detail:true});
-        }else emit({kind:'choose',expr:lit(row.result),decision:row.result,path:row.path},event,'owned-source-logical-choice/1');
+        }else{
+          const node=inventory.nodes.get(row.source?.start+':'+row.source?.end),
+            optional=['MemberExpression','CallExpression'].includes(node?.type)&&node.optional===true,
+            instruction=bundle.programs[event.codeId]?.instructions.find(item=>item.siteId===event.siteId&&item.op==='LOGICAL_JUMP'),
+            operator=optional?'??':node?.type==='LogicalExpression'?node.operator:
+              node?.type==='AssignmentExpression'?node.operator.slice(0,-1):null;
+          if(!['&&','||','??'].includes(operator))refuse('logical choice lacks its exact source operator');
+          if(instruction?.arg.operator!==operator)refuse('logical choice differs from its immutable instruction');
+          // This record commits before the right operand executes. Publish the
+          // actual left operand and its operator, never a teacher-only decision
+          // literal or a value from the future right-hand computation.
+          const value=optional&&row.test[0]==='method'?row.test[1]:row.test,
+            left=optional?(node.type==='MemberExpression'?node.object:node.callee):node.left;
+          emit({kind:'choose',expr:{op:'logical-test',operator,arg:operand(tag(value,event),left,event)},
+            decision:row.result,path:optional?(row.result[1]?'then':'else'):row.path},event,
+            optional?'owned-source-optional-choice/1':'owned-source-logical-choice/1');
+        }
       }else if(!['binding.read','binding.initialize','binding.write','call.return','completion.throw','control.jump','environment.iteration','binding.default.guard'].includes(event.operation))
         refuse('source operation needs its declared protocol: '+event.operation);
       if(event.operation!=='binding.update')for(const write of row.writes.filter(write=>write.kind==='cell'))bind(cell(write.env,write.key),write.value,event);

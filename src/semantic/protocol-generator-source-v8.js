@@ -79,6 +79,22 @@ export function createGeneratorSourceAdapterV8({bundle}){
       const inst=instruction(ctx,event),current=ctx.getOwnedFrame(event.invocationId);
       if(current?.generatorId&&delegateSite(inst)){
         const object=ctx.controller.heap.get(current.generatorId),delegate=object.delegation;
+        if(inst.op==='LOGICAL_JUMP'){
+          const raw=event.operands[0],selected=raw?.[0]==='method'?raw[1]:null,
+            prior=ctx.claims.at(-1)?.record,present=selected&&!['undefined','null'].includes(selected[0]);
+          require(ctx,inst.arg.operator==='??'&&delegate?.phase==='ready'&&['return','throw'].includes(delegate.request.kind)&&
+            raw?.length===3&&ctx.eq(raw[2],delegate.iterator)&&event.operands.length===1&&
+            ctx.eq(event.result,['bool',!!present]),'delegated method guard changed its receiver or nullish decision');
+          require(ctx,ctx.eq(prior?.key,['str',delegate.request.kind])&&
+            (present?prior.kind==='generator.lookup'&&ctx.eq(prior.receiver,delegate.iterator)&&
+              prior.method==='Generator.'+delegate.request.kind&&ctx.eq(selected,['builtinfn',prior.method]):
+              ['generator.read','iterator.read'].includes(prior.kind)&&prior.object===delegate.iterator[1]&&ctx.eq(prior.result,selected)),
+            'delegated method guard lacks its checked current method selection');
+          // This is the frontend's internal GetMethod nullish guard, not a
+          // source logical expression. The preceding lookup and the following
+          // delegated call/absent-return record check the same selected method.
+          return true;
+        }
         if(inst.op==='INIT'&&/^\[\[delegate next /.test(inst.arg)){
           const method=event.result;require(ctx,method?.[0]==='method'&&method[1]?.[0]==='builtinfn'&&
             ['Iterator.next','Generator.next'].includes(method[1][1]),'delegation requires a qualified builtin iterator or generator next method');

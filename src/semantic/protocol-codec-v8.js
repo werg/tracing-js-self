@@ -86,6 +86,10 @@ function expression(term,depth=0,budget={remaining:128}){
     assertAlgorithmFields(term,['op','operator','left','right'],'protocol binary');
     if(!['+','-','*','/','%','**','<','<=','>','>=','===','!==','==','!=','&','|','^','<<','>>','>>>'].includes(term.operator))fail('binary operator');
     expression(term.left,depth+1,budget);expression(term.right,depth+1,budget);
+  }else if(term?.op==='logical-test'){
+    assertAlgorithmFields(term,['op','operator','arg'],'protocol logical test');
+    if(!['&&','||','??'].includes(term.operator))fail('logical operator');
+    expression(term.arg,depth+1,budget);
   }else fail('expression requires a separate property/call boundary');
 }
 function completion(value){
@@ -131,6 +135,8 @@ export function validateProtocolRecordV8(record){
     if(record.callee[0]!=='ref')fail('callable identity');list(record.arguments,'call arguments');record.arguments.forEach(validateProtocolValueV8);
   }
   if(record.kind==='choose'&&!['then','else','evaluate-right','use-left'].includes(record.path))fail('choice path');
+  if(record.kind==='choose'&&['evaluate-right','use-left'].includes(record.path)&&
+    (record.expr.op!=='logical-test'||record.decision[0]!=='bool'))fail('logical choice requires its left-operand test');
   if(record.kind==='property.define')validateProtocolDescriptorV8(record.descriptor);
   if(record.kind==='property.keys'){
     if(!['own','strings','symbols','enumerable-strings'].includes(record.mode))fail('own-key mode');

@@ -197,6 +197,19 @@ test('delegated throw is consumed by the inner catch outer catch or exact termin
     {expected:{kind:'throw',value:['num',7]}});
 });
 
+test('delegated return and throw guards reuse checked method selection without inventing source logical choices',()=>{
+  for(const body of [
+    'function* g(){yield* [1,2];}const it=g();it.next();return it.return(7).value;',
+    'function* inner(){try{yield 2;}finally{yield 3;}}function* g(){return yield* inner();}const it=g();it.next();it.return(7);return it.next().value;',
+    'function* inner(){try{yield 1;}catch(e){return e;}}function* g(){return yield* inner();}const it=g();it.next();return it.throw(7).value;'
+  ]){
+    const {claims,outcome}=compileProtocolSourceV8(archive(source(body)));
+    assert.deepEqual(outcome.graph.roots.at(-1),['num',7]);
+    assert(!claims.some(row=>row.certificate.rule==='owned-source-logical-choice/1'));
+    assert(claims.some(row=>['generator.delegate.call','generator.delegate.absent'].includes(row.record.kind)));
+  }
+});
+
 test('generator own data preserves Symbol keys aliases and mutations across suspended checkpoints',async()=>{
   const artifact=await qualified('function* g(n){yield n;return n+1;}const it=g(x),alias=it,key=Symbol("state"),shared={value:4};'+
     'it.extra=1;it[key]=shared;it.extra+=it.next().value;shared.value=7;return alias.extra+it[key].value+it.next().value;',

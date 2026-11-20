@@ -34,6 +34,10 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
     detail:{prefix:'detail ',fields:['kind','fields'],witnessSchema:WITNESS_SCHEMA,
       meaning:'Existing checked selected-detailed/1 transitions, committed into the same shared machine.'},
     protocol:{schema:PROTOCOL_RECORD_V8_SCHEMA,prefix:'protocol ',fieldsByKind:PROTOCOL_RECORD_V8_FIELDS,
+      expressionKinds:['literal','local','unary','binary','logical-test'],
+      logicalTest:{fields:['op','operator','arg'],operators:['&&','||','??'],
+        decision:'Boolean derived only from the current operand: && tests falsiness, || tests truthiness, ?? tests non-nullishness. No future right operand is included.',
+        logicalPaths:{true:'use-left',false:'evaluate-right'},optionalGuardPaths:{true:'then',false:'else'}},
       profile:'symbols-ordinary-properties/1',extensions:PROTOCOL_MACHINE_ADAPTERS_V8.map(adapter=>adapter.id),limits:PROTOCOL_V8_LIMITS,
       meaning:'Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, generators, Number conversion, Promise joins and executors, Proxy traps and binary memory in the same authoritative heap.'}
   },

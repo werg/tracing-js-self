@@ -146,6 +146,10 @@ function truthy(value){if(['ref','symbol'].includes(value[0]))return true;
 function evaluate(controller,expr){
   if(expr.op==='literal')return copy(known(controller,expr.value));
   if(expr.op==='local'){const scope=locals(controller);require(scope.has(expr.name),'unknown protocol local '+expr.name);return copy(known(controller,scope.get(expr.name)));}
+  if(expr.op==='logical-test'){
+    const left=evaluate(controller,expr.arg);
+    return ['bool',expr.operator==='&&'?!truthy(left):expr.operator==='||'?truthy(left):!['null','undefined'].includes(left[0])];
+  }
   const left=evaluate(controller,expr.op==='unary'?expr.arg:expr.left),right=expr.op==='binary'?evaluate(controller,expr.right):null;
   if(expr.op==='unary'&&['symbol','ref'].includes(left[0])){
     if(expr.operator==='!')return ['bool',false];if(expr.operator==='void')return ['undefined'];
@@ -282,7 +286,11 @@ function apply(controller,record){
     const expected=evaluate(controller,record.expr),claimed=record.kind==='compute'?record.result:record.decision;
     require(eq(expected,claimed),'false protocol computation');
     if(record.kind==='compute'&&record.bind!==null)setLocal(controller,record.bind,record.result);
-    if(record.kind==='choose')require(['then','use-left'].includes(record.path)===truthy(record.decision),'false protocol choice');
+    if(record.kind==='choose'){
+      const selected=record.expr.op==='logical-test'&&['use-left','evaluate-right'].includes(record.path)?
+        record.decision[1]:truthy(record.decision);
+      require(['then','use-left'].includes(record.path)===selected,'false protocol choice');
+    }
   }else if(record.kind==='call')call(controller,record);
   else if(record.kind==='return'||record.kind==='throw'){
     complete(controller,record);

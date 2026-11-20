@@ -11,6 +11,23 @@ The controller implementation is `src/semantic/protocol-state-v8.js`; the exact
 record field table is exported as `PROTOCOL_RECORD_V8_FIELDS` from the codec.
 The first profile is `symbols-ordinary-properties/1`.
 
+## Logical and optional decisions
+
+`choose` records for `&&`, `||`, `??` and their assignment forms contain
+`{op: "logical-test", operator, arg}`. The argument is the current left operand,
+usually a committed local cell. The result is a Boolean: `&&` tests falsiness,
+`||` tests truthiness, and `??` tests non-nullishness. A true result selects
+`use-left`; false selects `evaluate-right`. The right operand has not run at
+this boundary and cannot supply either the decision or a future value.
+
+Optional member/call guards use the same non-nullish test with `then` and `else`
+paths. Computed keys, arguments and callbacks follow the guard only when the
+base or callable is present. Synthetic delegation guards reuse the already
+checked generator/iterator method lookup and continuation instead of publishing
+a literal Boolean as an independent claim. Both producer and native consumer
+reject logical paths with a literal decision expression, contradictory paths,
+or references to uncommitted locals.
+
 ## One heap and one call stack
 
 The protocol uses the selected controller's existing `heap`, `locals`,

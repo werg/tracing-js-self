@@ -65,6 +65,31 @@ test('fresh Symbols, registry identity, descriptions and binary64 computations a
   ]){const before=wire(c);assert.throws(()=>apply(c,record));assert.deepEqual(wire(c),before);}
 });
 
+test('logical choices check the current left operand and operator before right-hand work',()=>{
+  const c=controller();apply(c,allocation('o1'));
+  const cases=[
+    [['undefined'],false,true],[['null'],false,true],[['bool',false],false,false],
+    [['num',0],false,false],[['num','-0'],false,false],[['num','NaN'],false,false],
+    [['str',''],false,false],[['bigint','0'],false,false],
+    [['num',1],true,false],[['str','yes'],true,false],[['bigint','1'],true,false],
+    [['ref','o1'],true,false],[['symbol','well-known:iterator'],true,false]
+  ];
+  for(const [value,truthy,nullish]of cases)for(const operator of ['&&','||','??']){
+    const skip=operator==='&&'?!truthy:operator==='||'?truthy:!nullish;
+    apply(c,{kind:'bind',name:'left',value});
+    const record={kind:'choose',expr:{op:'logical-test',operator,arg:local('left')},
+      decision:['bool',skip],path:skip?'use-left':'evaluate-right'};
+    assert.deepEqual(decodeProtocolRecordV8(encodeProtocolRecordV8(record)),record);
+    apply(c,record);
+    for(const changed of [
+      {...record,path:skip?'evaluate-right':'use-left'},
+      {...record,decision:['bool',!skip]},
+      {...record,expr:lit(['bool',skip])},
+      {...record,expr:{...record.expr,arg:local('futureRight')}}
+    ]){const before=wire(c);assert.throws(()=>apply(c,changed));assert.deepEqual(wire(c),before);}
+  }
+});
+
 test('tagged keys keep NUL strings disjoint and preserve ECMAScript own-key order and filtering',()=>{
   const c=controller();apply(c,
     {kind:'symbol.create',id:'o1',description:['str','s']},allocation('o2'),

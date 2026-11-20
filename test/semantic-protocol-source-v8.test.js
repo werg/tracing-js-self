@@ -14,6 +14,38 @@ async function checked(source,args=[]){const {bundle,compiled}=build(source,args
   const audit=await auditProtocolSourceV8({bundle,referenceInput:{source,entry:'run',inputGraph:encodeNativeGraph(args)},outcome:compiled.outcome});
   assert.equal(audit.status,'agreed');return {bundle,compiled,audit};}
 
+test('source logical choices expose the left operand before callbacks and preserve assignment laziness',async()=>{
+  for(const operator of ['&&','||','??'])for(const assignment of [false,true]){
+    const expression=assignment?`value ${operator}= right()`:`value ${operator} right()`,
+      source=`"use strict";function run(value){const s=Symbol("key");const o={};o[s]=1;let calls=0;function right(){calls++;return 7;}const result=(${expression});return [result,calls,o[s]];}`;
+    for(const input of [0,1,null]){
+      const {compiled}=await checked(source,[input]);
+      const index=compiled.claims.findIndex(row=>row.record.kind==='choose'),choice=compiled.claims[index].record;
+      assert.equal(choice.expr.op,'logical-test');assert.equal(choice.expr.operator,operator);
+      assert.deepEqual(choice.expr.arg,{op:'local',name:'value'});
+      const skip=operator==='&&'?!input:operator==='||'?!!input:input!==null;
+      assert.deepEqual(choice.decision,['bool',skip]);assert.equal(choice.path,skip?'use-left':'evaluate-right');
+      const callback=compiled.claims.findIndex(row=>row.record.kind==='call');
+      if(skip)assert.equal(callback,-1);else assert(callback>index,'callback follows the committed left-operand decision');
+    }
+  }
+});
+
+test('optional member and callable guards check nullishness before computed keys or arguments',async()=>{
+  for(const present of [false,true]){
+    for(const expression of ['value?.[right()]','value?.(right())','value.method?.(right())']){
+      const target=expression.startsWith('value?.[')?(present?'{key:7}':'null'):
+        expression.startsWith('value.method')?(present?'{method:function(){return 7;}}':'{}'):
+        (present?'function(){return 7;}':'undefined'),
+        source=`"use strict";function run(){const s=Symbol("key");const object={};object[s]=1;let calls=0;const value=${target};function right(){calls++;return "key";}const result=${expression};return [result,calls,object[s]];}`;
+      const {compiled}=await checked(source),choice=compiled.claims.find(row=>row.record.kind==='choose').record;
+      assert.equal(choice.expr.op,'logical-test');assert.equal(choice.expr.operator,'??');
+      assert.deepEqual(choice.decision,['bool',present]);assert.equal(choice.path,present?'then':'else');
+      assert.equal(compiled.claims.some(row=>row.record.kind==='call'),present);
+    }
+  }
+});
+
 test('source Symbol getter retains rich state, live captures and independently checked arithmetic on both sides',async()=>{
   const {compiled,audit}=await checked(getter,[4]);
   assert.deepEqual(compiled.outcome.graph.roots.at(-1),['num',14]);
