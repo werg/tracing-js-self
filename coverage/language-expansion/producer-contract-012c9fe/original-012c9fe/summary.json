@@ -1,0 +1,630 @@
+{
+  "schema": "producer-regression-receipt/1",
+  "scope": "Targeted regression for all consumers of the expanded v8 interoperability fixtures and current protocol source profiles, plus all five generated-contract checks; not source/native consumer admission.",
+  "status": "failed",
+  "startedAt": "2026-11-20T17:25:56.257770+00:00",
+  "worktree": "/workspace/scratch/754a49249d01/producer-contract-regression-012c9fe",
+  "producerBefore": {
+    "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+    "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+    "trackedChanges": "",
+    "topLevelTreesAndBlobs": [
+      {
+        "path": ".github",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "9df292435c5468c88f1c38cfb29f435302ec1319"
+      },
+      {
+        "path": ".gitignore",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8b769c44100cd871e4cdc042c105364e4ddb6dbd"
+      },
+      {
+        "path": ".nvmrc",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "229b3ce85a631ccd5991b25f75f414171ccc7942"
+      },
+      {
+        "path": "AGENTS.md",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ab3b1c31536a7ec1fc463b39599826aff7c47e71"
+      },
+      {
+        "path": "README.md",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "699f95eac02be6f0ed2972c6ef445d21e4810899"
+      },
+      {
+        "path": "bin",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "213c84a7906e4136d01f5a886e9bbbb89091f752"
+      },
+      {
+        "path": "catalog",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "6107c116137573920017517fa14539e7896c1469"
+      },
+      {
+        "path": "conformance",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "e938df75ddbd7d8e16ecc46a54d07b1fea413ab7"
+      },
+      {
+        "path": "contracts",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "07755963457ffe7c31982693d4d4cfd0babaaf5b"
+      },
+      {
+        "path": "corpus",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "b827151248fcd1a19a69c0de44dbeeec0fac9d9b"
+      },
+      {
+        "path": "coverage",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "e67e5055c9f013e863044333970283ed8bb01f4a"
+      },
+      {
+        "path": "docs",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "ee8f24e7d06f7341dcce1272e764c8e3dcb608ed"
+      },
+      {
+        "path": "examples",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "d5679f713d533c4bdaaf5c17962e474273a3024c"
+      },
+      {
+        "path": "fixtures",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "9cef74093fce1a804f7a9196df2d6331b01dfbe4"
+      },
+      {
+        "path": "package-lock.json",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "265bf893d149c3cd70a6b3156c1a557dd6eda6a2"
+      },
+      {
+        "path": "package.json",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f917861c6ca9133ebfb5ebdc703de236d03654d1"
+      },
+      {
+        "path": "profiles",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "5f125aaece4df3484e72ec62024e5f979a744aef"
+      },
+      {
+        "path": "scripts",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "373bbddbd25c2ff25e2b9c47b75fdc047324551d"
+      },
+      {
+        "path": "src",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "b2a3ea67a33d7b205afad954535e1c62cf8031ef"
+      },
+      {
+        "path": "test",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "3267f63f5027ca75c009fd9c847156fe91aceb07"
+      },
+      {
+        "path": "tools",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "a1dab445a2570359fc1eeac60ac528a34d452600"
+      }
+    ]
+  },
+  "node": {
+    "version": "v24.22.3",
+    "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node"
+  },
+  "npmVersion": "11.19.1",
+  "environmentOverrides": {
+    "TMPDIR": "/workspace/scratch/754a49249d01/producer-validation-tmp"
+  },
+  "codeManifest": {
+    "path": "code-manifest.json",
+    "sha256": "5a9f68b8d2beca83c43fd3653f04bb908715abc9717b047713a79c136c3a4588",
+    "files": 734
+  },
+  "testInventory": {
+    "path": "test-files.json",
+    "sha256": "748b3d69276f177551d148fe56220245b28e211fb3b336699e870f9ae59375c4",
+    "files": 6
+  },
+  "commands": [
+    {
+      "name": "unit",
+      "command": "node --test --test-concurrency=2 test/semantic-causal-lm-v8.test.js test/semantic-native-process-v8.test.js test/semantic-protocol-completion-source-v8.test.js test/semantic-protocol-custom-iterator-source-v8.test.js test/semantic-protocol-iterable-binding-source-v8.test.js test/semantic-selected-execution-v8.test.js",
+      "cwd": "/workspace/scratch/754a49249d01/producer-contract-regression-012c9fe",
+      "startedAt": "2026-11-20T17:25:56.775943+00:00",
+      "status": "failed",
+      "finishedAt": "2026-11-20T17:28:48.685318+00:00",
+      "durationSeconds": 171.908864,
+      "exitCode": 1,
+      "stdout": {
+        "path": "unit.stdout.log",
+        "sha256": "9861f2225a6b581e19700e427b29753c19ab89c4a751a6dfcda0663b635d55ed",
+        "bytes": 5577
+      },
+      "stderr": {
+        "path": "unit.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "counts": {
+        "tests": 44,
+        "suites": 0,
+        "pass": 42,
+        "fail": 1,
+        "cancelled": 1,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failureLines": [
+        "✖ native v8 malformed UTF-8 and deadlines terminate the transport (947.390999ms)",
+        "✖ automatically started callbacks share the execution deadline while awaiting completion acknowledgement (6865.549681ms)",
+        "✖ failing tests:",
+        "✖ native v8 malformed UTF-8 and deadlines terminate the transport (947.390999ms)",
+        "✖ automatically started callbacks share the execution deadline while awaiting completion acknowledgement (6865.549681ms)"
+      ],
+      "skipLines": [],
+      "producerAfter": {
+        "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+        "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+        "trackedChanges": "",
+        "topLevelTreesAndBlobs": [
+          {
+            "path": ".github",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "9df292435c5468c88f1c38cfb29f435302ec1319"
+          },
+          {
+            "path": ".gitignore",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "8b769c44100cd871e4cdc042c105364e4ddb6dbd"
+          },
+          {
+            "path": ".nvmrc",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "229b3ce85a631ccd5991b25f75f414171ccc7942"
+          },
+          {
+            "path": "AGENTS.md",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "ab3b1c31536a7ec1fc463b39599826aff7c47e71"
+          },
+          {
+            "path": "README.md",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "699f95eac02be6f0ed2972c6ef445d21e4810899"
+          },
+          {
+            "path": "bin",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "213c84a7906e4136d01f5a886e9bbbb89091f752"
+          },
+          {
+            "path": "catalog",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "6107c116137573920017517fa14539e7896c1469"
+          },
+          {
+            "path": "conformance",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "e938df75ddbd7d8e16ecc46a54d07b1fea413ab7"
+          },
+          {
+            "path": "contracts",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "07755963457ffe7c31982693d4d4cfd0babaaf5b"
+          },
+          {
+            "path": "corpus",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "b827151248fcd1a19a69c0de44dbeeec0fac9d9b"
+          },
+          {
+            "path": "coverage",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "e67e5055c9f013e863044333970283ed8bb01f4a"
+          },
+          {
+            "path": "docs",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "ee8f24e7d06f7341dcce1272e764c8e3dcb608ed"
+          },
+          {
+            "path": "examples",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "d5679f713d533c4bdaaf5c17962e474273a3024c"
+          },
+          {
+            "path": "fixtures",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "9cef74093fce1a804f7a9196df2d6331b01dfbe4"
+          },
+          {
+            "path": "package-lock.json",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "265bf893d149c3cd70a6b3156c1a557dd6eda6a2"
+          },
+          {
+            "path": "package.json",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "f917861c6ca9133ebfb5ebdc703de236d03654d1"
+          },
+          {
+            "path": "profiles",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "5f125aaece4df3484e72ec62024e5f979a744aef"
+          },
+          {
+            "path": "scripts",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "373bbddbd25c2ff25e2b9c47b75fdc047324551d"
+          },
+          {
+            "path": "src",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "b2a3ea67a33d7b205afad954535e1c62cf8031ef"
+          },
+          {
+            "path": "test",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "3267f63f5027ca75c009fd9c847156fe91aceb07"
+          },
+          {
+            "path": "tools",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "a1dab445a2570359fc1eeac60ac528a34d452600"
+          }
+        ]
+      }
+    },
+    {
+      "name": "contracts",
+      "command": "npm run contracts:check",
+      "cwd": "/workspace/scratch/754a49249d01/producer-contract-regression-012c9fe",
+      "startedAt": "2026-11-20T17:28:48.840750+00:00",
+      "status": "passed",
+      "finishedAt": "2026-11-20T17:30:57.869758+00:00",
+      "durationSeconds": 129.023512,
+      "exitCode": 0,
+      "stdout": {
+        "path": "contracts.stdout.log",
+        "sha256": "e6490973a57de15f9acf9332256a599d22ca24c98b5687a3286f8be92f41f142",
+        "bytes": 3196
+      },
+      "stderr": {
+        "path": "contracts.stderr.log",
+        "sha256": "25d89fcefd423c031268e765c73e08af43281ee3564531e22106ed57c2db948f",
+        "bytes": 359
+      },
+      "checks": [
+        "tools/generate-host-contract.mjs --check",
+        "tools/generate-semantic-contract.mjs --check",
+        "tools/generate-semantic-algorithm-contract.mjs --check",
+        "tools/generate-semantic-execution-contract.mjs --check",
+        "tools/generate-semantic-region-contract.mjs --check"
+      ],
+      "counts": {
+        "checks": 5,
+        "passed": 5
+      },
+      "producerAfter": {
+        "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+        "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+        "trackedChanges": "",
+        "topLevelTreesAndBlobs": [
+          {
+            "path": ".github",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "9df292435c5468c88f1c38cfb29f435302ec1319"
+          },
+          {
+            "path": ".gitignore",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "8b769c44100cd871e4cdc042c105364e4ddb6dbd"
+          },
+          {
+            "path": ".nvmrc",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "229b3ce85a631ccd5991b25f75f414171ccc7942"
+          },
+          {
+            "path": "AGENTS.md",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "ab3b1c31536a7ec1fc463b39599826aff7c47e71"
+          },
+          {
+            "path": "README.md",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "699f95eac02be6f0ed2972c6ef445d21e4810899"
+          },
+          {
+            "path": "bin",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "213c84a7906e4136d01f5a886e9bbbb89091f752"
+          },
+          {
+            "path": "catalog",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "6107c116137573920017517fa14539e7896c1469"
+          },
+          {
+            "path": "conformance",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "e938df75ddbd7d8e16ecc46a54d07b1fea413ab7"
+          },
+          {
+            "path": "contracts",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "07755963457ffe7c31982693d4d4cfd0babaaf5b"
+          },
+          {
+            "path": "corpus",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "b827151248fcd1a19a69c0de44dbeeec0fac9d9b"
+          },
+          {
+            "path": "coverage",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "e67e5055c9f013e863044333970283ed8bb01f4a"
+          },
+          {
+            "path": "docs",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "ee8f24e7d06f7341dcce1272e764c8e3dcb608ed"
+          },
+          {
+            "path": "examples",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "d5679f713d533c4bdaaf5c17962e474273a3024c"
+          },
+          {
+            "path": "fixtures",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "9cef74093fce1a804f7a9196df2d6331b01dfbe4"
+          },
+          {
+            "path": "package-lock.json",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "265bf893d149c3cd70a6b3156c1a557dd6eda6a2"
+          },
+          {
+            "path": "package.json",
+            "mode": "100644",
+            "kind": "blob",
+            "oid": "f917861c6ca9133ebfb5ebdc703de236d03654d1"
+          },
+          {
+            "path": "profiles",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "5f125aaece4df3484e72ec62024e5f979a744aef"
+          },
+          {
+            "path": "scripts",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "373bbddbd25c2ff25e2b9c47b75fdc047324551d"
+          },
+          {
+            "path": "src",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "b2a3ea67a33d7b205afad954535e1c62cf8031ef"
+          },
+          {
+            "path": "test",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "3267f63f5027ca75c009fd9c847156fe91aceb07"
+          },
+          {
+            "path": "tools",
+            "mode": "040000",
+            "kind": "tree",
+            "oid": "a1dab445a2570359fc1eeac60ac528a34d452600"
+          }
+        ]
+      }
+    }
+  ],
+  "finishedAt": "2026-11-20T17:30:57.993875+00:00",
+  "durationSeconds": 301.217973,
+  "producerAfter": {
+    "revision": "012c9fe49a082319bf98ac0c571596da925741a4",
+    "tree": "26454c685a6136ab6d6d18636e6073216ee9d195",
+    "trackedChanges": "",
+    "topLevelTreesAndBlobs": [
+      {
+        "path": ".github",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "9df292435c5468c88f1c38cfb29f435302ec1319"
+      },
+      {
+        "path": ".gitignore",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "8b769c44100cd871e4cdc042c105364e4ddb6dbd"
+      },
+      {
+        "path": ".nvmrc",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "229b3ce85a631ccd5991b25f75f414171ccc7942"
+      },
+      {
+        "path": "AGENTS.md",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "ab3b1c31536a7ec1fc463b39599826aff7c47e71"
+      },
+      {
+        "path": "README.md",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "699f95eac02be6f0ed2972c6ef445d21e4810899"
+      },
+      {
+        "path": "bin",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "213c84a7906e4136d01f5a886e9bbbb89091f752"
+      },
+      {
+        "path": "catalog",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "6107c116137573920017517fa14539e7896c1469"
+      },
+      {
+        "path": "conformance",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "e938df75ddbd7d8e16ecc46a54d07b1fea413ab7"
+      },
+      {
+        "path": "contracts",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "07755963457ffe7c31982693d4d4cfd0babaaf5b"
+      },
+      {
+        "path": "corpus",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "b827151248fcd1a19a69c0de44dbeeec0fac9d9b"
+      },
+      {
+        "path": "coverage",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "e67e5055c9f013e863044333970283ed8bb01f4a"
+      },
+      {
+        "path": "docs",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "ee8f24e7d06f7341dcce1272e764c8e3dcb608ed"
+      },
+      {
+        "path": "examples",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "d5679f713d533c4bdaaf5c17962e474273a3024c"
+      },
+      {
+        "path": "fixtures",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "9cef74093fce1a804f7a9196df2d6331b01dfbe4"
+      },
+      {
+        "path": "package-lock.json",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "265bf893d149c3cd70a6b3156c1a557dd6eda6a2"
+      },
+      {
+        "path": "package.json",
+        "mode": "100644",
+        "kind": "blob",
+        "oid": "f917861c6ca9133ebfb5ebdc703de236d03654d1"
+      },
+      {
+        "path": "profiles",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "5f125aaece4df3484e72ec62024e5f979a744aef"
+      },
+      {
+        "path": "scripts",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "373bbddbd25c2ff25e2b9c47b75fdc047324551d"
+      },
+      {
+        "path": "src",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "b2a3ea67a33d7b205afad954535e1c62cf8031ef"
+      },
+      {
+        "path": "test",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "3267f63f5027ca75c009fd9c847156fe91aceb07"
+      },
+      {
+        "path": "tools",
+        "mode": "040000",
+        "kind": "tree",
+        "oid": "a1dab445a2570359fc1eeac60ac528a34d452600"
+      }
+    ]
+  },
+  "identityUnchanged": true
+}

@@ -1,0 +1,17 @@
+{"id":"early-close","source":"passed","native":"passed","cost":"passed"}
+{"id":"empty-pattern","source":"passed","native":"passed","cost":"passed"}
+{"id":"array-override","source":"passed","native":"passed","cost":"passed"}
+{"id":"cached-next","source":"passed","native":"passed","cost":"passed"}
+{"id":"elision","source":"passed","native":"passed","cost":"passed"}
+{"id":"rest-exhaustion","source":"passed","native":"passed","cost":"passed"}
+{"id":"throwing-default","source":"passed","native":"passed","cost":"passed"}
+{"id":"next-failure","source":"passed","native":"passed","cost":"passed"}
+{"id":"done-failure","source":"passed","native":"passed","cost":"passed"}
+{"id":"value-failure","source":"passed","native":"passed","cost":"passed"}
+{"id":"completed-array-stays-done","source":"passed","native":"passed","cost":"passed"}
+{"id":"active-array-observes-growth","source":"passed","native":"passed","cost":"passed"}
+{"id":"done-skips-further-next","source":"passed","native":"passed","cost":"passed"}
+{"id":"default-number-throw","source":"passed","native":"passed","cost":"passed"}
+{"id":"nested-binding-refusal","source":"unsupported","expectedRefusal":true}
+{"id":"assignment-binding-refusal","source":"unsupported","expectedRefusal":true}
+{"id":"string-builtin-binding-refusal","source":"unsupported","expectedRefusal":true}

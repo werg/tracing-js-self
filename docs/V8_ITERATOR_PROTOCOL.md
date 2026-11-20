@@ -1,4 +1,4 @@
-# Shared builtin iterator protocol
+# Shared iterator protocols
 
 The first iterator component defines profile `builtin-iterator/1`. It operates
 on the same public heap as compact expressions, detailed records, Symbols,
@@ -56,7 +56,7 @@ Array index reads follow explicit ordinary prototype links. A nonempty getter
 requires a separate scoped continuation and is refused by this first component.
 Builtin method lookup rejects overridden properties and custom array prototypes
 rather than guessing the selected method. Custom iterator functions use the
-ordinary call/property model in a subsequent source/continuation slice.
+ordinary call/property model in the separate bounded source profile below.
 
 Restoration verifies exact fields, source identity, cursor bounds, empty own
 properties and valid string code-point boundaries. Public application stages
@@ -111,7 +111,48 @@ it with `node tools/generate-protocol-iterator-source-fixtures.mjs`; `--check`
 requires exact stored bytes. Its local evidence is distinct from production
 native admission, which still requires the separately pinned native consumer.
 
-Captured builtin callable values, iterator objects escaping the ordinary data
-boundary, general custom-iterator cleanup, optional iterator calls, and builtin
-index getters remain explicit source refusals. The profile does not silently
-label those cases as supported.
+Within `builtin-iterator/1`, captured builtin callable values, iterator objects
+escaping the ordinary data boundary, optional iterator calls and builtin index
+getters remain outside the source profile. Custom method execution and cleanup
+belong to the distinct source profile below; builtin component support does not
+by itself qualify those callbacks.
+
+## Bounded custom iterator source profile
+
+`custom-iterator-source/1` adds checked ordinary synchronous `for…of` and flat
+iterable variable declarations through the existing property/call machine.
+Acquisition preserves the original receiver, `next` is read once and called
+through its cached identity, `done` is read before `value`, and early cleanup
+looks up and calls `return` at its actual boundary. Pending ordinary completions
+retain their frame-owned targets and the precedence of original throws over
+close failures. Exhaustion and failed `next`, `done` or `value` operations do not
+invent an iterator-close call. The source observer checks these events against
+independent execution of the original JavaScript; a matching final scalar alone
+is insufficient. The custom method cache rejects asynchronous and generator
+frames.
+
+The flat-binding source recognizer accepts initialized `VariableDeclarator`
+`ArrayPattern` nodes containing holes, identifiers, defaults whose left side is
+an identifier, or rest whose argument is an identifier. The checked cases cover
+empty-pattern close without a `next` call, elision without a value read, cached
+`next`, identifier defaults and rest, permanent exhaustion, active Array growth,
+own Array iterator overrides, throwing defaults and Number callback throws.
+The [source suite](../test/semantic-protocol-iterable-binding-source-v8.test.js)
+declares those cases explicitly.
+
+The [final-contract flat-binding supplement](../coverage/language-expansion/iterable-binding-012c9fe/README.md)
+freshly measured all **14 positive source/native/token cases** and **three
+explicit source refusals** at producer `012c9fe` and consumer `39c4036`.
+Every positive passes native replay, published-context restoration, checkpoint
+continuation, masks, source binding and production-tokenizer checks. The report
+retains the actual transport bytes, native packing and flat serialization costs;
+it is a separate 17-case population, not growth of the frozen expansion corpus.
+
+Nested bindings, assignment destructuring and captured String builtin bindings
+remain the three measured flat-binding refusals. Object/parameter patterns and
+other source positions are not admitted by this flat declaration recognizer.
+The custom `for…of` [source suite](../test/semantic-protocol-custom-iterator-source-v8.test.js)
+separately declares its 16 positives and four refusals: malformed step/close
+results, noncallable close methods, and cleanup inside generators remain outside
+the bounded source path. Async iteration, arbitrary intrinsic guest TypeErrors
+and unrestricted iterator behavior are not qualified by either profile.
