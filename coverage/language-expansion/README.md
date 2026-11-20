@@ -33,9 +33,15 @@ tokens. On 42 exactly matched historical cases, total flat tokens decrease
 the full comparison preserves them. The population denominators are separate
 and may contain overlapping source cases.
 
-External-model comprehension and execution, model optimization, native serving
-latency/cache behavior and default promotion remain unqualified. These source,
-native, tokenizer and dataset results do not establish learned-execution gains.
+External-model comprehension, generalization, controlled model-execution
+comparisons, serving efficiency and default promotion remain unqualified by
+these source/native/data receipts. A separate [native fitting and frozen-serving
+diagnostic](../../docs/evidence/semantic-v8-diagnostic-pilot/2026-11-20/README.md)
+performed four optimizer updates for each of two independently initialized
+models. Each frozen two-case study completed zero of two executions; actual
+weights, malformed outputs and all measured costs are retained. Performing
+those bounded diagnostics does not establish learned-execution or generalization
+gains.
 
 ## Historical qualifications
 
@@ -44,6 +50,7 @@ measured pins describe those runs; the newer qualification does not rewrite them
 
 | Evidence | Measured result | Scope |
 | --- | --- | --- |
+| [Superseded qualification attempts](native-v8-3a1992b-interrupted/README.md) | Producer `3a1992b` / consumer `418385b`: complete 23-case interoperability and 11-case gallery admissions/costs; 594/665 expansion admissions before interruption, with 71 untested or uncommitted | Retains exact artifacts/inputs, original failures and supersession receipts; the custom-iterator timeout and other earlier prefixes are separate historical scopes |
 | [Earlier producer regression](producer-regression-b66c19b/README.md) | 1,778 passed, six conditional skips, zero failures; 5/5 contracts and 8/8 references passed | Exact producer `b66c19b`; original logs and identities retained |
 | [Earlier 34-episode production dataset](dataset-v8-b66c19b/README.md) | 34 freshly admitted episodes and 898 complete examples | Producer `b66c19b`, consumer `6adf99f`; its receipts are not reused to admit the later dataset |
 | [Native interoperability and gallery](native-v8-8d1f7b5/README.md) | 22/22 interoperability and 11/11 gallery cases passed source/native admission and exact token metering | Producer `8d1f7b5`, consumer `be3a8d7`; all receipts, inputs, masks and costs retained |
