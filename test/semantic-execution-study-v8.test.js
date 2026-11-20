@@ -7,6 +7,7 @@ import {join,resolve} from 'node:path';
 import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
 import {encodeDetailedRecord} from '../src/semantic/detailed-v7.js';
 import {runSelectedRegionExecution} from '../src/semantic/selected-execution-v8.js';
+import {SEMANTIC_GALLERY_FIXTURES} from '../src/training/semantic-trace-gallery.js';
 import {prepareRegionExecutionCase,freezeRegionExecutionStudy,validateRegionExecutionStudy,
   scoreSelectedRegionExecution,runFrozenRegionExecutionStudy} from '../src/semantic/execution-study-v8.js';
 
@@ -75,6 +76,37 @@ test('private source scoring follows emissions and distinguishes exact source su
   const invalidSource=structuredClone(cases[0].expectedArtifact);
   invalidSource.sidecar.sourceArtifact.sidecar.referenceStatus='not-checked';
   await assert.rejects(scoreSelectedRegionExecution(raw,invalidSource),/evidence|source/);
+});
+
+test('private scorer independently rechecks selected protocol-source projections through their own authority',async()=>{
+  const protocols=JSON.parse(await readFile(new URL('./fixtures/semantic-protocol-source-v8.json',import.meta.url))),
+    fixture=protocols.cases.find(row=>row.id==='source-symbol-getter-arithmetic'),
+    verified=await verifyRegionTrainingCase({...fixture,family:'v8-study-protocol-source',fixture:{calls:[]}});
+  assert(verified.exported,verified.reason);
+  assert.equal(verified.exported.sidecar.schema,'semantic-protocol-region-evidence/1');
+  const item=prepareRegionExecutionCase({id:fixture.id,artifact:verified.exported}),adapter=engineeringSelector([item]),
+    study=freezeRegionExecutionStudy([item],configuration),
+    report=await runFrozenRegionExecutionStudy(study,{cases:[item],select:adapter.select});
+  assert.equal(report.summary.completedExecution,1);assert.equal(report.summary.sourceValidated,1);
+  assert.equal(report.rows[0].result.sourceEvidence.sourceValidated,true);
+  assert.equal(report.rows[0].result.sourceStatus,'passed-exact-projection');
+  assert.equal(report.qualification.modelMeasurement,'engineering-only');
+});
+
+test('a causal callback completion with a different public schedule remains source-unqualified',async()=>{
+  const fixture=SEMANTIC_GALLERY_FIXTURES.find(row=>row.id==='callback-captured-write'),
+    verified=await verifyRegionTrainingCase(fixture),
+    item=prepareRegionExecutionCase({id:fixture.id,artifact:verified.exported}),adapter=engineeringSelector([item]);
+  delete adapter.select.commit;delete adapter.select.complete;delete adapter.select.cancel;
+  const raw=await runSelectedRegionExecution({...item.request,select:adapter.select,...pins,origin:'engineering'});
+  assert.equal(raw.publicCompleted,true);assert.deepEqual(raw.completion,{kind:'return',value:['num',7]});
+  assert.equal(raw.effects.filter(row=>row.kind==='callback').length,2);
+  assert(raw.costs.staleRetries>0);assert.equal(raw.costs.predictionAttempts,raw.attempts.length);
+  assert.equal(raw.costs.accepted+raw.costs.rejected,raw.costs.predictionAttempts);
+  const scored=await scoreSelectedRegionExecution(raw,item.expectedArtifact);
+  assert.equal(scored.sourceStatus,'unqualified-projection');assert.equal(scored.sourceValidated,false);
+  assert.equal(scored.completedExecution,false);assert.equal(scored.sourceEvidence.sourceValidated,true);
+  assert.deepEqual(scored.attempts,raw.attempts);assert.deepEqual(scored.costs,raw.costs);
 });
 
 test('equal final values and alternative public decompositions remain source-unqualified',async()=>{
@@ -152,7 +184,9 @@ export function createSelector(config){
       '--cases',join(frozen,'private-cases.json'),'--out',output,'--selector-module',modulePath,
       '--case',cases[0].id],{timeout:30000});
     const report=JSON.parse(await readFile(join(output,'report.json'),'utf8'));
-    assert.equal(report.summary.completedExecution,2);assert.equal(report.summary.untested,2);
+    assert.equal(report.summary.completedExecution,2,JSON.stringify(report.rows.map(row=>({
+      status:row.status,failure:row.failure,runFailure:row.result?.failure,sourceStatus:row.result?.sourceStatus}))));
+    assert.equal(report.summary.untested,2);
     assert.equal(report.summary.completedExecutionRate,0.5);
     assert.equal(report.qualification.modelMeasurement,'engineering-only');
     const broken=join(directory,'broken.mjs'),failed=join(directory,'failed');
