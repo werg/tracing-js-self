@@ -104,3 +104,10 @@ serving, and measured learned success.
   checks and 12 direct-detail/prefix checks pass (overlapping populations).
   Remaining: selected execution, source certification and effect receipts still
   contain legacy dependencies; this is not a completed representation cutover.
+
+- Promise getter increment: synchronous and reentrant `then` lookup now retains
+  the caller, receiver, pending return/await, resolver capability and combinator
+  position. Getter/Proxy exceptions become guest rejection, including async
+  getter and finally-result interactions. Thirteen new differential and restore
+  tests pass; the broader 76-test Promise/runtime/source suite also passed.
+  Public/native promotion and arbitrary iterable/species support remain open.
