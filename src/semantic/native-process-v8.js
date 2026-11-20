@@ -148,25 +148,39 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     try{
       const result=await request({op:'commit',session:input.session,public:input.public,contexts:input.contexts,
         invocationId:input.invocationId,record:input.record,selection:input.selection});
-      demand(result?.committed===true,'native model did not acknowledge semantic commit');
+      demand(result?.schema==='semantic-native-commit/8'&&result.committed===true&&
+        result.selectionId===selected.selection.selectionId&&result.publicDigest===hashAlgorithmData(input.public),
+        'native model did not acknowledge this exact semantic commit');
       session.evidence.status='accepted';session.pending=null;return result;
     }catch(error){session.evidence.status='commit-failed';session.evidence.failure=String(error.message);throw error;}
   };
-  select.complete=input=>request({op:'complete',session:input.session,public:input.public,
-    contexts:input.contexts,invocationId:input.invocationId});
+  select.complete=async input=>{
+    const result=await request({op:'complete',session:input.session,public:input.public,
+      contexts:input.contexts,invocationId:input.invocationId});
+    demand(result?.schema==='semantic-native-completion/8'&&result.completed===true&&
+      result.session===input.session&&result.invocationId===input.invocationId&&result.sessionRetained===true&&
+      result.publicDigest===hashAlgorithmData(input.public),'native model did not acknowledge this completed invocation');
+    return result;
+  };
   select.reject=async input=>{
     const session=sessions.get(input?.session),selected=session?.pending;
     demand(selected&&input.selectionId===selected.selection.selectionId,
       'rejection must name the original pending native selection');
     const result=await request({op:'reject',session:input.session,selectionId:input.selectionId,reason:input.reason});
-    demand(result?.rejected===true,'native model did not acknowledge candidate rejection');
+    demand(result?.schema==='semantic-native-rejection/8'&&result.rejected===true&&
+      result.selectionId===selected.selection.selectionId,'native model did not acknowledge this candidate rejection');
     session.evidence.status='rejected';session.evidence.failure=input.reason??'stale prediction';
     session.pending=null;return result;
   };
   select.cancel=async input=>{
     const session=sessions.get(input?.session);
     if(session?.pending){session.evidence.status='rejected';session.evidence.failure=input.reason??'semantic rejection';}
-    try{return await request({op:'cancel',session:input.session,reason:input.reason});}
+    try{
+      const result=await request({op:'cancel',session:input.session,reason:input.reason});
+      demand(result?.schema==='semantic-native-close/8'&&result.closed===true&&result.session===input.session,
+        'native model did not acknowledge closing this session');
+      return result;
+    }
     finally{sessions.delete(input?.session);}
   };
   select.metrics=()=>({schema:'semantic-native-model-metrics/8',attempts:copy(attempts),

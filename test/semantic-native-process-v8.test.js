@@ -10,7 +10,7 @@ const artifact=JSON.parse(readFileSync(new URL('./fixtures/semantic-regions-v8.j
 const row=artifact.public.timeline.find(row=>row.mode==='generated');
 const identity={checkpointIdentity:'c'.repeat(64),tokenizerIdentity:'e'.repeat(64),seed:17};
 const programModule=new URL('../src/semantic/program.js',import.meta.url).href;
-function fakeServer({alter='',initializeAlter='',commitAlter='',raw=false,hang=false}={}){
+function fakeServer({alter='',initializeAlter='',commitAlter='',completeAlter='',cancelAlter='',raw=false,hang=false}={}){
   return `import {createInterface} from 'node:readline';
     import {hashAlgorithmData} from ${JSON.stringify(programModule)};
     const record=${JSON.stringify(row.fields.line)};
@@ -27,9 +27,13 @@ function fakeServer({alter='',initializeAlter='',commitAlter='',raw=false,hang=f
           tokenizerIdentity:${JSON.stringify(identity.tokenizerIdentity)},prefixDigest:request.context.prefixDigest,
           contextDigest:hashAlgorithmData(request.context),payloadHex,
           fragments:[{tokenIds:[...Buffer.from(record)],payloadHex}]}};${alter}
-      }else if(request.op==='commit'){result={committed:true};${commitAlter}}
-      else if(request.op==='reject')result={rejected:true};
-      else result={closed:true};
+      }else if(request.op==='commit'){result={schema:'semantic-native-commit/8',committed:true,
+        selectionId:request.selection.selectionId,publicDigest:hashAlgorithmData(request.public)};${commitAlter}}
+      else if(request.op==='reject')result={schema:'semantic-native-rejection/8',rejected:true,selectionId:request.selectionId};
+      else if(request.op==='complete'){result={schema:'semantic-native-completion/8',completed:true,
+        session:request.session,invocationId:request.invocationId,sessionRetained:true,
+        publicDigest:hashAlgorithmData(request.public)};${completeAlter}}
+      else {result={schema:'semantic-native-close/8',closed:true,session:request.session};${cancelAlter}}
       ${raw?"process.stdout.write(Buffer.from([0xff,10]));":`
         const output=JSON.stringify({id:request.id,ok:true,result})+'\\n';
         process.stdout.write(output.slice(0,7));
@@ -148,7 +152,7 @@ test('native acknowledgement failure does not count an execution as accepted',as
   const select=selector({commitAlter:'result.committed=false;'}),{input}=boundary();
   try{
     await select.initialize(identity);const output=await select(input);
-    await assert.rejects(select.commit({session:input.session,...output}),/acknowledge/);
+    await assert.rejects(select.commit({session:input.session,public:input.public,...output}),/acknowledge/);
     assert.equal(select.metrics().semanticallyAccepted,0);
     assert.equal(select.metrics().failedAttempts,1);
   }finally{select.close();}
@@ -164,5 +168,29 @@ test('stale native candidates can be rejected without closing the session or los
     assert.notEqual(first.selection.selectionId,second.selection.selectionId);
     assert.equal(select.metrics().predictionAttempts,2);assert.equal(select.metrics().failedAttempts,1);
     assert.deepEqual(select.metrics().attempts[0].selection.fragments,first.selection.fragments);
+  }finally{select.close();}
+});
+
+test('native completion and close acknowledgments bind the exact invocation and public history',async()=>{
+  for(const commitAlter of ["result.selectionId='another';","result.publicDigest='f'.repeat(64);"]){
+    const select=selector({commitAlter}),{input}=boundary();
+    try{
+      await select.initialize(identity);const output=await select(input);
+      await assert.rejects(select.commit({session:input.session,public:input.public,...output}),/exact semantic commit/);
+      assert.equal(select.metrics().semanticallyAccepted,0);
+    }finally{select.close();}
+  }
+  for(const completeAlter of ['result.completed=false;',"result.invocationId='another';",
+    "result.publicDigest='f'.repeat(64);",'result.sessionRetained=false;']){
+    const select=selector({completeAlter}),{input}=boundary();
+    try{
+      await select.initialize(identity);
+      await assert.rejects(select.complete({...input,invocationId:input.context.invocationId}),/acknowledge/);
+    }finally{select.close();}
+  }
+  const select=selector({cancelAlter:"result.session='another';"}),{input}=boundary();
+  try{
+    await select.initialize(identity);
+    await assert.rejects(select.cancel({session:input.session,reason:'completed'}),/closing this session/);
   }finally{select.close();}
 });
