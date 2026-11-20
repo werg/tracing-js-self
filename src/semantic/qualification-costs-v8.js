@@ -32,6 +32,15 @@ export function readQualificationCostInputs(directory){
   const ids=population.tasks.map(task=>task.fixture.id);
   require(new Set(ids).size===ids.length&&report.rows.every((row,index)=>row.id===ids[index]),
     'qualification rows differ from declared source order');
+  if(population.selectedCaseIds!==undefined||report.selectedCaseIds!==undefined){
+    const selected=population.selectedCaseIds;
+    require(Array.isArray(selected)&&selected.length>0&&new Set(selected).size===selected.length&&
+      JSON.stringify(selected)===JSON.stringify(ids.filter(id=>selected.includes(id)))&&
+      JSON.stringify(selected)===JSON.stringify(report.selectedCaseIds),'diagnostic selection differs from frozen population');
+    const selectedIds=new Set(selected);
+    require(report.rows.every(row=>selectedIds.has(row.id)||row.source==='untested'&&row.native==='untested'),
+      'unselected qualification case claims an execution');
+  }
   require(report.sourceQualified===report.rows.filter(row=>row.source==='passed').length&&
     report.nativeAdmitted===report.rows.filter(row=>row.native==='passed').length,'qualification totals changed');
   return {directory,report,population,reportSha256:sha(reportBytes),readArtifact};

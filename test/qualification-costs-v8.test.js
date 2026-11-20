@@ -45,6 +45,22 @@ test('cost reports reject changed frozen task bytes even after an outer checksum
   assert.throws(()=>readQualificationCostInputs(directory),/population digest changed/);
 });
 
+test('cost reuse verifies a diagnostic selection and cannot upgrade unselected cases',t=>{
+  const {directory,report,save}=fixture(t),{digest:oldDigest,...population}=JSON.parse(readFileSync(join(directory,'population.json')));
+  population.selectedCaseIds=['passed'];const digest=hashAlgorithmData(population);
+  save('population.json',{...population,digest});
+  const selected={...report,populationDigest:digest,selectedCaseIds:['passed'],
+    rows:[report.rows[0],{...report.rows[1],source:'untested'}]};
+  save('report.json',selected);
+  assert.equal(readQualificationCostInputs(directory).report.declared,2);
+  save('report.json',{...selected,selectedCaseIds:['refused']});
+  assert.throws(()=>readQualificationCostInputs(directory),/selection differs/);
+  save('report.json',{...selected,sourceQualified:2,rows:[report.rows[0],{...report.rows[1],source:'passed'}]});
+  assert.throws(()=>readQualificationCostInputs(directory),/unselected qualification case/);
+  save('report.json',{...selected,nativeAdmitted:1,rows:[report.rows[0],{...selected.rows[1],native:'passed'}]});
+  assert.throws(()=>readQualificationCostInputs(directory),/unselected qualification case/);
+});
+
 test('summary weights detail by measured tokens and keeps source and cost failures in denominators',()=>{
   const coverage={compactRegions:1,detailedRegions:2,compactRecords:1,detailedRecords:3};
   const cost=(generated,detailed)=>({status:'passed',bytes:{generated,detailed,cumulativeContext:100,peakContext:50},
