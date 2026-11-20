@@ -38,12 +38,17 @@ test('executor throw rejects only before settlement and retained resolving funct
   const settled=setup();enter(settled);call(settled,'resolve',['num',4]);finish(settled,'throw',['num',12]);
   assert.equal(settled.controller.heap.get('p1').state,'fulfilled');assert.deepEqual(settled.controller.heap.get('p1').result,['num',4]);
 });
-test('executor adoption retains the first-call lock while an owned Promise is pending',()=>{
-  const h=setup();enter(h);call(h,'resolve',['ref','p2']);call(h,'reject',['num',9]);finish(h);
-  const resumed=RegionExecutionHarness.restore(h.checkpoint());
-  assert.equal(resumed.controller.heap.get('p1').adopted,'p2');assert.equal(resumed.controller.heap.get('p1').state,'pending');
-  resumed.select('invocation1',encodeDetailedRecord({kind:'promise',fields:{action:'resolve',promise:'p2',value:['num',8]}},{role:'generated'}));
-  assert.deepEqual(resumed.controller.heap.get('p1').result,['num',8]);
+test('executor adoption refuses missing assimilation jobs without consuming the first-call cell',()=>{
+  const h=setup();enter(h);
+  for(const settled of [false,true]){
+    if(settled)h.select('invocation1',encodeDetailedRecord({kind:'promise',fields:{action:'resolve',promise:'p2',value:['num',8]}},{role:'generated'}));
+    const before=sharedRegionState(h.controller);
+    assert.throws(()=>call(h,'resolve',['ref','p2']),/adoption.*job protocol/);
+    assert.deepEqual(sharedRegionState(h.controller),before);
+  }
+  call(h,'resolve',['num',4]);call(h,'resolve',['ref','p2']);finish(h);
+  assert.deepEqual(h.controller.heap.get('p1').result,['num',4]);
+  assert.deepEqual(RegionExecutionHarness.restore(h.checkpoint()).controller.heap.get('p1').result,['num',4]);
 });
 test('executor protocol rejects bypasses, stale calls, bad identities and unavailable resolution profiles without mutation',()=>{
   const h=setup();enter(h);
@@ -69,9 +74,22 @@ test('restoration rejects dangling executor frames, altered resolver metadata an
     c=>{c.protocol.promiseExecutors.capabilities[0].called=false;c.protocol.promiseExecutors.capabilities[0].resolution=null;},
     c=>c.heap.get('p1resolve').promiseResolver.promise='p2',
     c=>c.protocol.promiseExecutors.executors[0].parent='missing',
+    c=>c.protocol.callFrames[0].arguments.reverse(),
     c=>c.stack.pop(),
     c=>c.protocol.promiseExecutors.capabilities.push(structuredClone(c.protocol.promiseExecutors.capabilities[0]))
   ]){const c=Object.assign(Object.create(Object.getPrototypeOf(h.controller)),h.controller);
     for(const key of ['heap','protocol','stack'])c[key]=structuredClone(c[key]);mutate(c);
     assert.throws(()=>restoreProtocolStateV8(c,c.protocol));}
+});
+
+test('restoration cannot invent adopted or object-valued executor resolution',()=>{
+  for(const value of [['ref','p2'],['ref','o1']]){
+    const h=setup();enter(h);call(h,'resolve',['num',2]);finish(h);
+    const c=Object.assign(Object.create(Object.getPrototypeOf(h.controller)),h.controller);
+    for(const key of ['heap','protocol','stack'])c[key]=structuredClone(c[key]);
+    c.protocol.promiseExecutors.capabilities[0].resolution.value=value;
+    if(value[1]==='p2')Object.assign(c.heap.get('p1'),{adopted:'p2',state:'pending',result:null});
+    else c.heap.get('p1').result=value;
+    assert.throws(()=>restoreProtocolStateV8(c,c.protocol),/first-call state contradicts/);
+  }
 });

@@ -27,8 +27,9 @@ The public protocol state gains `promiseExecutors`, initially `null`. Once
 active it has the `semantic-promise-executor-state/1` schema and two arrays:
 
 - `capabilities`: `promise, resolve, reject, called, resolution`. `resolution`
-  is `null` before the first call, then `{mode, value}`. This lock remains set
-  when resolution adopts another pending owned Promise.
+  is `null` before the first call, then `{mode, value}`. Once set, this lock
+  makes all subsequent resolving calls no-ops, including calls with an owned
+  Promise or thenable as their unused argument.
 - `executors`: `promise, parent, child, phase, completion`. The running child
   must remain in the live shared call stack. Completed entries retain their
   return or throw so restoration can check settled state and historical frame
@@ -58,7 +59,7 @@ is detectable even when the final result is unchanged.
 
 The source tests cover synchronous execution order, scalar resolution and
 rejection, pre-resolution throws, throws after resolution, retained resolving
-functions, closure cells, adoption of settled and pending owned Promises,
+functions, closure cells, ignored later calls with owned Promise arguments,
 composition with `Promise.all`, and compact arithmetic around executor work.
 JSON checkpoint tests resume before resolution and reject altered capability,
 resolver and continuation state.
@@ -66,8 +67,15 @@ resolver and continuation state.
 The currently declared source profile uses direct `new Promise` constructors,
 synchronous source executors and direct identifier calls of resolving functions.
 Async executor bodies, executor calls inside active Promise reaction callbacks,
-thenable/object resolution, Promise self resolution, modified resolver
+thenable/object resolution, owned Promise adoption, Promise self resolution, modified resolver
 properties, and external effects are explicit refusals. They do not become
 successful guest behavior or implicit host execution. Independent native
 consumer qualification remains an additional gate after the matching consumer
 and regenerated interoperability artifacts are pinned.
+
+Resolving with another Promise requires native assimilation jobs even when
+that Promise is already settled. The existing controller's direct adoption
+transition omits those jobs, so this profile rejects adoption before consuming
+the first-call cell. A regression with competing reaction chains distinguishes
+the native FIFO order from direct synchronous adoption. Supporting adoption
+requires the same explicit jobs in the owned runtime and both public consumers.

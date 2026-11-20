@@ -9,14 +9,14 @@ import {ownedProtocolSourceObservations} from '../src/semantic/protocol-source-o
 const fixture=body=>({source:'"use strict";async function run(){'+body+'}',entry:'run',args:[],family:'promise-executor-source'});
 const first='const a=2+3;const p=new Promise((resolve,reject)=>{resolve(3);reject(9);});const values=[await p];const b=a*2;return values[0]+b;';
 
-test('source executors independently qualify first resolution, throws, captures, retained capabilities, adoption and joins',async()=>{
+test('source executors independently qualify first resolution, throws, captures, retained capabilities and joins',async()=>{
   for(const body of [first,
     'const p=new Promise((resolve,reject)=>{throw 9;});try{return await p;}catch(e){return e;}',
     'const p=new Promise(resolve=>{resolve(3);throw 9;});return await p;',
     'let done;const p=new Promise(resolve=>{done=resolve;});done(4);done(7);return await p;',
     'const p=new Promise(resolve=>resolve());return await p;',
-    'const p=new Promise(resolve=>resolve(Promise.resolve(5)));return await Promise.all([p,p]);',
-    'let done;const a=new Promise(resolve=>{done=resolve;});const b=new Promise(resolve=>resolve(a));done(7);return await b;',
+    'const p=new Promise(resolve=>resolve(5));return await Promise.all([p,p]);',
+    'const p=new Promise(resolve=>{resolve(3);resolve(Promise.resolve(5));});return await p;',
     'let order="";const p=new Promise(resolve=>{order+="a";resolve(4);order+="b";});order+="c";return [await p,order];',
     'const p=new Promise(resolve=>resolve(Number("3")));return await p;'
   ]){
@@ -27,6 +27,16 @@ test('source executors independently qualify first resolution, throws, captures,
     const replay=RegionExecutionHarness.replay(result.exported),restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(replay.checkpoint())));
     assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(replay.controller));
     if(body===first){assert.equal(replay.controller.completion.value[1],13);assert(result.regionCoverage.compactRegions>=2);}
+  }
+});
+test('executor Promise adoption is refused before an incorrect FIFO schedule can qualify',async()=>{
+  for(const body of [
+    'const p=new Promise(resolve=>resolve(Promise.resolve(5)));return await p;',
+    'let done;const a=new Promise(resolve=>{done=resolve;});const b=new Promise(resolve=>resolve(a));done(7);return await b;',
+    'let order="";const p=new Promise(resolve=>resolve(Promise.resolve(1)));p.then(()=>{order+="p";});Promise.resolve().then(()=>{order+="q";}).then(()=>{order+="r";});await p;return order;'
+  ]){
+    const result=await verifyProtocolRegionTrainingCase(fixture(body));
+    assert.equal(result.exported,undefined);assert.match(result.reason,/adoption.*job protocol/);
   }
 });
 test('common v8 admission routes executors and rechecks each source/context authority',async()=>{

@@ -64,8 +64,11 @@ export function applyPromiseExecutorRecordV8(controller,record,api){
       mode=row.resolve===record.resolver[1]?'resolve':'reject';
     if(row.called)return true;
     if(target.state==='pending'&&mode==='resolve'&&record.value[0]==='ref'){
-      api.require(controller.heap.get(record.value[1])?.kind==='promise','thenable/object resolution requires its separate protocol');
-      api.require(record.value[1]!==row.promise,'self resolution requires its explicit TypeError allocation');
+      // Native resolving functions enqueue assimilation even for an owned
+      // Promise. Direct controller adoption omits those observable FIFO jobs.
+      api.require(false,controller.heap.get(record.value[1])?.kind==='promise'?
+        'Promise adoption requires its resolving-function job protocol':
+        'thenable/object resolution requires its separate protocol');
     }
     row.called=true;row.resolution={mode,value:copy(record.value)};
     if(target.state==='pending')controller.settlePromise(row.promise,mode==='resolve'?'fulfilled':'rejected',record.value);
@@ -123,9 +126,9 @@ export function restorePromiseExecutorStateV8(controller,data,api){
     const entry=data.executors.find(entry=>entry.promise===row.promise),thrown=entry?.phase==='complete'&&entry.completion?.kind==='throw'&&
       target.state==='rejected'&&target.adopted===null&&api.eq(target.result,entry.completion.value);
     let resolved=false;
-    if(row.resolution){const {mode,value}=row.resolution,adopted=mode==='resolve'&&value[0]==='ref'?controller.heap.get(value[1]):null;
-      if(adopted?.kind==='promise')resolved=value[1]!==row.promise&&target.adopted===value[1]&&target.state===adopted.state&&api.eq(target.result,adopted.result);
-      else resolved=target.adopted===null&&target.state===(mode==='resolve'?'fulfilled':'rejected')&&api.eq(target.result,value);
+    if(row.resolution){const {mode,value}=row.resolution;
+      resolved=(mode==='reject'||value[0]!=='ref')&&target.adopted===null&&
+        target.state===(mode==='resolve'?'fulfilled':'rejected')&&api.eq(target.result,value);
     }
     api.require(row.called?(resolved||thrown):(target.state==='pending'&&target.adopted===null||thrown),
       'capability first-call state contradicts Promise settlement');
@@ -140,8 +143,10 @@ export function restorePromiseExecutorStateV8(controller,data,api){
     api.require(['running','complete'].includes(entry.phase),'executor phase');
     if(entry.phase==='running'){
       const call=controller.protocol.callFrames.find(row=>row.child===entry.child);
+      const cap=data.capabilities.find(row=>row.promise===entry.promise);
       api.require(entry.completion===null&&controller.stack.includes(entry.parent)&&controller.stack.includes(entry.child)&&
-        call?.parent===entry.parent,'unfinished executor must retain its live call frame');
+        call?.parent===entry.parent&&api.eq(call.arguments,[['ref',cap.resolve],['ref',cap.reject]]),
+        'unfinished executor must retain its live call frame and resolving pair');
     }else{
       completion(entry.completion,value=>api.known(controller,value));
       api.require(!controller.stack.includes(entry.child),'completed executor remains active');
