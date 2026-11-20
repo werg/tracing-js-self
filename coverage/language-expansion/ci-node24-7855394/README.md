@@ -65,7 +65,7 @@ hosted job has eight skips where a local environment may report six.
 
 | File | Contents |
 | --- | --- |
-| [node24.log](node24.log) | Complete decoded UTF-8 job log, including checkout identity, test names/results and later contract/demo steps |
+| [node24.log.gz](node24.log.gz) | Losslessly compressed complete decoded UTF-8 job log, including checkout identity, test names/results and later contract/demo steps |
 | [source-metadata.json](source-metadata.json) | Original connector run/job metadata and retrieval identity |
 | [receipt.json](receipt.json) | Parsed counts and skips, exact commit/tree identities, job steps and expanded contract results |
 | [verify.py](verify.py) | Read-only file/hash/log validation, with optional Git-object comparison |
@@ -77,7 +77,7 @@ python coverage/language-expansion/ci-node24-7855394/verify.py
 
 To repeat the Git comparison, fetch the two recorded commits into a checkout
 and add `--repository /path/to/tracing-js-self`. The verifier does not fetch or
-modify repository state. The retained log contains 267,599 UTF-8 bytes with
+modify repository state. The decompressed log contains 267,599 UTF-8 bytes with
 SHA-256 `c3b51275ffb57b0cb10fa9e3776dfa972009de4be2cdc996e575c46d53480ed7`.
 
 This receipt covers one complete Node 24 job. The Node 20/22 matrix and native

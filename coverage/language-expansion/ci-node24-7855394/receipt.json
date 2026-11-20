@@ -280,10 +280,13 @@
   },
   "interoperabilityCasesRechecked": 26,
   "log": {
-    "path": "node24.log",
+    "path": "node24.log.gz",
     "encoding": "UTF-8 encoding of the complete decoded GitHub Actions job log",
     "bytes": 267599,
-    "sha256": "c3b51275ffb57b0cb10fa9e3776dfa972009de4be2cdc996e575c46d53480ed7"
+    "sha256": "c3b51275ffb57b0cb10fa9e3776dfa972009de4be2cdc996e575c46d53480ed7",
+    "compression": "gzip",
+    "compressedBytes": 80205,
+    "compressedSha256": "89bd1855f205191e0576451a60c59e043ecb99e8afd3445ed29da651c0ddc06c"
   },
   "qualifications": [
     "Eight explicit skips are not credited as passing.",

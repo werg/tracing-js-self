@@ -1,6 +1,7 @@
 """Verify the retained complete Node 24 job without starting tests or CI."""
 
 import argparse
+import gzip
 import hashlib
 import json
 import re
@@ -17,7 +18,10 @@ for line in (root / 'SHA256SUMS').read_text().splitlines():
     assert hashlib.sha256((root / name).read_bytes()).hexdigest() == expected, name
 receipt = json.loads((root / 'receipt.json').read_text())
 source = json.loads((root / 'source-metadata.json').read_text())
-raw = (root / receipt['log']['path']).read_bytes()
+compressed = (root / receipt['log']['path']).read_bytes()
+assert len(compressed) == receipt['log']['compressedBytes']
+assert hashlib.sha256(compressed).hexdigest() == receipt['log']['compressedSha256']
+raw = gzip.decompress(compressed)
 assert len(raw) == receipt['log']['bytes']
 assert hashlib.sha256(raw).hexdigest() == receipt['log']['sha256']
 lines = [re.sub(r'^\d{4}-\d{2}-\d{2}T\S+Z ', '', line) for line in raw.decode('utf-8').splitlines()]
