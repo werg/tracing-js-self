@@ -118,3 +118,13 @@ serving, and measured learned success.
   guest error completions. Resources and host defects are separate dispositions.
   Combined runner/catalog controls: 32 passed, zero failed/skipped. The official
   harness and broad original-script execution remain a subsequent gate.
+
+- Complete Test262 acquisition increment: exact Git tree/blob checks cover the
+  pinned upstream revision `d53ebc8b1931d9f1541e43d59650776e4b766248`.
+  The inventory contains 53,616 tests, 294 fixtures, 43 harness files and 21 other
+  resources; 102,994 execution variants are frozen before selection, with zero
+  unresolved metadata records and no missing official harness assets. Every
+  variant is still unrun and edition classification remains unclassified; the
+  specification bytes are not yet pinned. Catalog digest:
+  `2e1c7727c58d41822edaac2294761baa550a8ad7be8f5dcfedbfc7b779457299`.
+  Acquisition/catalog controls: 12 passed, zero failed/skipped.

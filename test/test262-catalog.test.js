@@ -26,11 +26,14 @@ test('metadata interprets both list spellings and preserves negative phase/type'
   assert.deepEqual(test262VariantModes(parseTest262Header(fixture())),['sloppy','strict']);
   assert.deepEqual(test262VariantModes(parseTest262Header(fixture('','flags: [raw]\n'))),['raw']);
   assert.deepEqual(test262VariantModes(parseTest262Header(fixture('','flags: [module]\n'))),['module']);
+  assert.deepEqual(test262VariantModes(parseTest262Header(fixture('','flags: [module, raw]\n'))),['module']);
+  assert.deepEqual(parseTest262Header(fixture('','includes: [sm/helper.js]\n')).includes,['sm/helper.js']);
+  assert.equal(parseTest262Header(fixture('',' description: indented\n').replace(/\n/g,'\r')).flags.length,0);
 });
 
 test('ambiguous metadata cannot silently change mode or error expectations',()=>{
   for(const metadata of [
-    'flags: [onlyStrict, noStrict]\n','flags: [module, raw]\n',
+    'flags: [onlyStrict, noStrict]\n','flags: [module, noStrict]\n',
     'flags: [async, async]\n','flags: [unknown]\n','flags: []\nflags: []\n',
     'flags: [noStrict]\n  - async\n','flags: [raw]\nincludes: [assert.js]\n',
     'includes: [../unsafe.js]\n','negative:\n  phase: runtime\n',

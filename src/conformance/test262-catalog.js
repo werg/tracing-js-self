@@ -36,9 +36,10 @@ const freeze=value=>{
   if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}
   return value;
 };
-const safePath=path=>typeof path==='string'&&/^(?:test|harness)\/[A-Za-z0-9_./+@-]+\.js$/.test(path)&&
-  !path.split('/').some(part=>part==='.'||part==='..'||part==='');
-const safeInclude=name=>typeof name==='string'&&/^[A-Za-z0-9_-][A-Za-z0-9_.-]*\.js$/.test(name)&&!name.includes('..');
+export const safeTest262Path=path=>typeof path==='string'&&/^(?:test|harness)\//.test(path)&&
+  !/[\\\x00-\x1f\x7f]/.test(path)&&!path.split('/').some(part=>part==='.'||part==='..'||part==='');
+const safeInclude=name=>typeof name==='string'&&/^[A-Za-z0-9_-][A-Za-z0-9_./-]*\.js$/.test(name)&&
+  !name.split('/').some(part=>part==='..'||part==='.'||part==='');
 const decode=source=>{
   if(typeof source==='string')return source;
   if(source instanceof Uint8Array)return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(source);
@@ -55,10 +56,16 @@ const atom=text=>{
  * Descriptive YAML is retained by source digest; executable fields are strict. */
 export function parseTest262Header(source){
   if(typeof source!=='string')throw new TypeError('Test262 source must be text');
-  const matches=[...source.matchAll(/\/\*---[ \t]*\r?\n([\s\S]*?)\r?\n---\*\//g)];
+  // Some upstream lexical tests deliberately use CR-only line endings. Decode
+  // metadata on a copy; original source bytes remain the execution authority.
+  const metadataSource=source.replace(/\r\n?/g,'\n');
+  const matches=[...metadataSource.matchAll(/\/\*---[ \t]*\n([\s\S]*?)\n---\*\//g)];
   if(matches.length!==1)throw new TypeError('Test262 requires exactly one metadata header');
   const fields=new Map();let current=null;
-  for(const line of matches[0][1].split(/\r?\n/)){
+  const lines=matches[0][1].split('\n');
+  const indent=Math.min(...lines.filter(line=>line.trim()&&!/^\s*#/.test(line)).map(line=>/^ */.exec(line)[0].length));
+  for(const original of lines){
+    const line=original.slice(Number.isFinite(indent)?indent:0);
     if(!line.trim()||/^\s*#/.test(line))continue;
     const top=/^([A-Za-z][\w-]*):[ \t]*(.*)$/.exec(line);
     if(top){
@@ -87,8 +94,8 @@ export function parseTest262Header(source){
     'CanBlockIsFalse','CanBlockIsTrue'];
   if(flags.some(flag=>!validFlags.includes(flag))||
     flags.includes('onlyStrict')&&flags.includes('noStrict')||
-    flags.includes('module')&&(flags.includes('noStrict')||flags.includes('onlyStrict')||flags.includes('raw'))||
-    flags.includes('raw')&&flags.some(flag=>!['raw','generated'].includes(flag))||
+    flags.includes('module')&&(flags.includes('noStrict')||flags.includes('onlyStrict'))||
+    flags.includes('raw')&&flags.some(flag=>!['raw','generated','module'].includes(flag))||
     flags.includes('CanBlockIsFalse')&&flags.includes('CanBlockIsTrue'))
     throw new TypeError('Conflicting or unknown Test262 flags');
   if(includes.some(name=>!safeInclude(name))||flags.includes('raw')&&includes.length)
@@ -107,12 +114,12 @@ export function parseTest262Header(source){
     if(parts.phase==='resolution'&&!flags.includes('module'))throw new TypeError('Resolution negative requires module goal');
     negative={phase:parts.phase,type:parts.type};
   }
-  return {flags,includes,features,negative};
+  return {flags,includes,features,negative,...(fields.has('locale')?{locale:list('locale')}:{})};
 }
 
 export function test262VariantModes(metadata){
   const flags=metadata.flags;
-  return flags.includes('raw')?['raw']:flags.includes('module')?['module']:
+  return flags.includes('module')?['module']:flags.includes('raw')?['raw']:
     flags.includes('onlyStrict')?['strict']:flags.includes('noStrict')?['sloppy']:['sloppy','strict'];
 }
 
@@ -133,13 +140,17 @@ export function buildTest262Catalog({snapshot,sources,profile,moduleDependencies
   const boundProfile=JSON.parse(canonical(profile));
   const files=[];const texts=new Map();
   for(const path of Object.keys(snapshot.files).sort()){
-    if(!safePath(path)||!hex40.test(snapshot.files[path]))throw new TypeError('Invalid pinned Test262 path or blob');
+    if(!safeTest262Path(path)||!hex40.test(snapshot.files[path]))throw new TypeError('Invalid pinned Test262 path or blob');
     if(!own(sources,path))throw new TypeError('Missing pinned source bytes: '+path);
-    const source=decode(sources[path]);
-    if(gitBlobSha(source)!==snapshot.files[path])throw new TypeError('Test262 blob mismatch: '+path);
+    const bytes=typeof sources[path]==='string'?Buffer.from(sources[path]):sources[path];
+    if(!(bytes instanceof Uint8Array))throw new TypeError('Test262 source bytes required');
+    if(gitBlobSha(Buffer.from(bytes))!==snapshot.files[path])throw new TypeError('Test262 blob mismatch: '+path);
+    const kind=!path.endsWith('.js')?'resource':path.startsWith('harness/')?'harness':path.split('/').at(-1).includes('_FIXTURE')?'fixture':'test';
+    let source=null,sourceError=null;
+    if(kind!=='resource')try{source=decode(bytes);}catch(error){sourceError=error.message;}
     texts.set(path,source);
-    files.push({path,gitBlobSha:snapshot.files[path],sha256:sha(source),bytes:Buffer.byteLength(source),
-      kind:path.startsWith('harness/')?'harness':/_FIXTURE\.js$/.test(path)?'fixture':'test'});
+    files.push({path,gitBlobSha:snapshot.files[path],sha256:sha(bytes),bytes:bytes.length,kind,
+      ...(sourceError?{sourceError}:{})});
   }
   if(!files.some(file=>file.kind==='test'))throw new TypeError('Test262 catalog has no test files');
   for(const map of [moduleDependencies,classifications])
@@ -150,10 +161,14 @@ export function buildTest262Catalog({snapshot,sources,profile,moduleDependencies
     while(pending.length){
       const current=pending.pop();if(seen.has(current))continue;seen.add(current);
       if(!own(moduleDependencies,current)){missing.add(current);continue;}
-      if(!Array.isArray(moduleDependencies[current])||new Set(moduleDependencies[current]).size!==moduleDependencies[current].length)
+      const declared=moduleDependencies[current],paths=Array.isArray(declared)?declared:declared.paths;
+      const unresolved=Array.isArray(declared)?[]:declared.unresolved;
+      if(!Array.isArray(paths)||new Set(paths).size!==paths.length||!Array.isArray(unresolved)||
+        unresolved.some(item=>typeof item!=='string'))
         throw new TypeError('Module dependency list must be unique');
-      for(const dependency of moduleDependencies[current]){
-        if(!safePath(dependency)||!dependency.startsWith('test/')||!byPath.has(dependency))
+      for(const reason of unresolved)missing.add(current+': '+reason);
+      for(const dependency of paths){
+        if(!safeTest262Path(dependency)||!dependency.startsWith('test/')||!byPath.has(dependency))
           throw new TypeError('Unpinned module dependency: '+dependency);
         pending.push(dependency);
       }
@@ -164,7 +179,10 @@ export function buildTest262Catalog({snapshot,sources,profile,moduleDependencies
   const variants=[];
   for(const file of files.filter(file=>file.kind==='test')){
     let metadata=null,metadataError=null;
-    try{metadata=parseTest262Header(texts.get(file.path));}catch(error){metadataError=error.message;}
+    try{
+      if(file.sourceError)throw new TypeError(file.sourceError);
+      metadata=parseTest262Header(texts.get(file.path));
+    }catch(error){metadataError=error.message;}
     const classification=classifications[file.path]??{membership:'unclassified',requiredForThisRelease:false};
     if(!['edition','extension','outside_profile','unclassified'].includes(classification.membership)||
       typeof classification.requiredForThisRelease!=='boolean'||
@@ -173,7 +191,7 @@ export function buildTest262Catalog({snapshot,sources,profile,moduleDependencies
       throw new TypeError('Invalid Test262 edition/release classification');
     const modes=metadata?test262VariantModes(metadata):['unclassified'];
     for(const mode of modes){
-      const harness=metadata&&mode!=='raw'?[...new Set(['sta.js','assert.js',
+      const harness=metadata&&!metadata.flags.includes('raw')?[...new Set(['assert.js','sta.js',
         ...(metadata.flags.includes('async')?['doneprintHandle.js']:[]),...metadata.includes])]:[];
       const row={path:file.path,sourceDigest:file.sha256,gitBlobSha:file.gitBlobSha,mode,
         metadata,metadataError,classification:JSON.parse(canonical(classification)),
@@ -188,15 +206,17 @@ export function buildTest262Catalog({snapshot,sources,profile,moduleDependencies
     }
   }
   const catalog={schema:'test262-frozen-catalog/1',repository:snapshot.repository,suiteRevision:snapshot.revision,
+    acquisition:snapshot.acquisition??{kind:'retained-snapshot',fullUpstreamTree:false},
     profile:boundProfile,files,variants,
     summary:{discoveredFiles:files.length,testFiles:files.filter(file=>file.kind==='test').length,
       fixtureFiles:files.filter(file=>file.kind==='fixture').length,harnessFiles:files.filter(file=>file.kind==='harness').length,
+      resourceFiles:files.filter(file=>file.kind==='resource').length,
       knownVariants:variants.filter(row=>row.mode!=='unclassified').length,
       unresolvedMetadataFiles:variants.filter(row=>row.mode==='unclassified').length,
       variantPopulationComplete:variants.every(row=>row.mode!=='unclassified'),
       missingHarnessFiles:[...new Set(variants.flatMap(row=>row.harness.filter(file=>file.sha256===null).map(file=>file.path)))].sort(),
       specificationPinned:boundProfile.specification!==null},
-    claims:{fullSuiteAcquired:false,fullEditionInventory:false,ownedConformance:false}};
+    claims:{fullSuiteAcquired:snapshot.acquisition?.fullUpstreamTree===true,fullEditionInventory:false,ownedConformance:false}};
   return freeze({...catalog,digest:conformanceDigest(catalog)});
 }
 
