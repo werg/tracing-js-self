@@ -14,10 +14,12 @@ do not promise compatibility. See the [development instructions](AGENTS.md).
 The [compositional v8 candidate](docs/SEMANTIC_REGIONS_V8.md) combines compact
 calculations with checked property access, calls, cleanup and suspension in one
 shared state. Its bounded source profiles cover Symbols and ordinary properties,
-shared binary views, construction and private fields, Number conversion,
-builtin iterators, synchronous generators and delegation, Promise joins/executors, and
-ordinary Proxy get/set traps. Each profile documents its supported boundaries;
-the candidate does not claim unrestricted ECMAScript coverage.
+ordinary `for…in` enumeration, shared binary views, construction and private fields,
+Number conversion, builtin iterators, synchronous generators and delegation,
+Promise joins/executors, and ordinary Proxy get/set traps. Each profile documents its supported boundaries;
+the candidate does not claim unrestricted ECMAScript coverage. The
+[Promise scheduling profile](docs/V8_PROMISE_SCHEDULER.md) documents the resolution
+and cleanup jobs that require separate checked protocols.
 
 ```js
 import {verifyRegionTrainingCase} from 'tracing-js-self/semantic';
