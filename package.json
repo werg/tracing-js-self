@@ -110,7 +110,8 @@
     "semantic:v8:export": "node tools/export-semantic-v8.mjs",
     "coverage:v8": "node tools/generate-capability-ledger.mjs --version 8",
     "semantic:v8:admit": "node tools/qualify-semantic-v8.mjs",
-    "semantic:v8:costs": "node tools/measure-semantic-v8.mjs"
+    "semantic:v8:costs": "node tools/measure-semantic-v8.mjs",
+    "semantic:retained-costs": "node tools/measure-retained-serving.mjs"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"

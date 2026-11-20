@@ -209,6 +209,35 @@ include inserted contexts and framing and must not be interpreted as latency,
 cache savings, or successful model execution. Those serving/model measurements
 remain unmeasured until their own actual runs are supplied.
 
+For an exact token baseline, the pre-expansion run retained the actual expanded
+v7 prompt/target strings even though its original token fields were unmeasured.
+Retokenize those immutable bytes with the same pinned codec used for the final
+v8 population:
+
+```sh
+node tools/measure-retained-serving.mjs \
+  --baseline coverage/language-expansion/expansion-e882191 \
+  --out ../expansion-baseline-token-costs \
+  --tokenizer-module tools/semantic-v8-tokenizer-adapter.mjs
+```
+
+This command checks the archive/member hashes, original producer and manifest,
+case inventory, original serializer byte totals, and exact byte round trips.
+It retains prompt/target/EOS token segments with an explicit generated-only
+loss mask. Original prompt strings remain in the hash-bound historical archive;
+no current serializer or source evaluation is substituted. `--resume` requires
+the same meter implementation, baseline, tokenizer and context budget.
+
+The retained baseline has 11 gallery cases, 27 real-source cases and four
+measured script interactions out of 12 declared. The eight missing interaction
+serializers stay unmeasured. The 624 family executions and two module cases
+have no retained baseline serializer costs and receive no inferred token counts.
+Paired comparisons must name their matched subset. The report records the exact
+source, entry and initial graph embedded in each first prompt for pairing;
+it does not independently reconstruct the complete historical host schedule.
+Retrospective tokenization does not upgrade historical source/native admission
+or measure model comprehension, execution, latency or cache reuse.
+
 The actual v7 selector also records submitted prompt tokens, peak context,
 generation/verification time, failed attempts and retries. A runtime failure
 with no returned token sequence records unknown generation cost instead of
