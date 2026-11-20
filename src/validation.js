@@ -3,6 +3,7 @@ import {validatePrivateEvent} from './private-validation.js';
 import {validateTemplateEvent} from './template-validation.js';
 import {validateEnumerationEvent} from './enumeration-validation.js';
 import {validateReceiverEvent} from './receiver-validation.js';
+import {validateCallAdapterEvent} from './call-adapter-validation.js';
 import {validateConstructionEvent} from './construction-validation.js';
 import {validateSuperEvent} from './super-validation.js';
 import {isBinaryMemoryKind,validateBinaryMemoryState,validateBinaryMemoryEvent} from './binary-memory-validation.js';
@@ -144,6 +145,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     validateTemplateEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateEnumerationEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateReceiverEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateCallAdapterEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateConstructionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateSuperEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateBinaryMemoryEvent(e,message=>fail(message,e.eventId));

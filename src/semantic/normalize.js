@@ -3,6 +3,7 @@
 // replacement. Every record retains an audit pointer to the committed event.
 import {isDeepStrictEqual} from 'node:util';
 import {validateBundle} from '../validation.js';
+import {callAdapterInvocation} from '../call-adapter-validation.js';
 import {isSymbolPropertyKey,stringPropertyName} from '../property-keys.js';
 const visibleKey=key=>isSymbolPropertyKey(key)?key:stringPropertyName(key);
 
@@ -153,7 +154,9 @@ export function normalizeJournal(bundle) {
         r.captures=createdEnv?.after?.parent??null;
         r.receiver=created?.after?.thisValue??['undefined'];
         const params=bundle.programs[r.code]?.params??[];
-        r.arguments=(bundle.programs[r.code]?.restIndex??-1)>=0 ?
+        const adapter=callAdapterInvocation(e);
+        if(adapter){r.callAdapter=adapter.name;r.callee=adapter.callee;}
+        r.arguments=adapter?adapter.arguments:(bundle.programs[r.code]?.restIndex??-1)>=0 ?
           (e.operands??[]).slice(1) :
           params.map(name=>createdEnv?.after?.bindings?.[name]?.token?.value??['undefined']);
       } else if(effect) {

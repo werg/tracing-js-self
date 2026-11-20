@@ -844,6 +844,14 @@ export function compileEffectfulWitness(bundle,{sessionId='teacher1',programId='
       handled=true;
     }else if(row?.op==='call'){
       roots.set(row.child,owner);
+      // Apply's arguments come from ordered array-like reads committed in
+      // this CALL, rather than from separately evaluated source expressions.
+      if(row.callAdapter)for(const read of row.reads??[]){
+        const object=identity(read.objectId??read.object),key=read.key??read.property;
+        if(read.kind!=='property'||typeof key!=='string'||!sourceValue(read.value)||!controller(owner).heap.has(object))
+          refuse('call adapter argument read requires published ordinary data');
+        emit(owner,'read',{object,key,present:read.present??true,value:tag(read.value)},event,'call-adapter-read');
+      }
       allocations(row,owner,event);
       emit(owner,'call',{child:frameId(row.child),callee:functionNames.get(row.code)??row.code,
         receiver:tag(row.receiver),arguments:row.arguments.map(tag)},event,'call');writes(row,owner,event);handled=true;

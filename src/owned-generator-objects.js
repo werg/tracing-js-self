@@ -30,7 +30,8 @@ export function generatorIntrinsicProperty(name,key){
   }
   if(name==='Function.prototype'){
     if(key===symbolPropertyKey('well-known:hasInstance'))return data(['builtinfn','Function.prototype.hasInstance'],false);
-    if(['call','apply','bind','caller','arguments','constructor','toString'].includes(key))
+    if(['call','apply'].includes(key))return data(['builtinfn','Function.prototype.'+key]);
+    if(['bind','caller','arguments','constructor','toString'].includes(key))
       throw new TypeError('Inherited function adapter requires its owned profile');
   }
   if(key==='valueOf'||key==='toString')return data(['builtinfn',key==='valueOf'?'Object.valueOf':'Object.toString']);

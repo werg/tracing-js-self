@@ -126,6 +126,34 @@ function spreadSnapshot(heap,source) {
   }
   return {values,reads};
 }
+// CreateListFromArrayLike is a read of length followed by indexed [[Get]]s,
+// not iteration. Holes become undefined and inherited data remains visible.
+// Getter, proxy and object-length coercion continuations need their own slice.
+function callArgumentList(heap,value,{nullable=false}={}) {
+  if(nullable&&['undefined','null'].includes(value[0]))return {values:[],reads:[]};
+  if(value[0]!=='ref'){
+    if(['undefined','null','bool','num','str','bigint','symbol'].includes(value[0]))
+      guestFault('TypeError','Apply argument list must be an object');
+    throw new TypeError('Apply argument list requires owned ordinary storage');
+  }
+  if(!['object','array'].includes(heap[value[1]]?.kind))
+    throw new TypeError('Apply argument list requires owned ordinary storage');
+  const length=ordinaryGet(heap,value,'length');
+  if(!length)throw new TypeError('Apply argument length requires an owned data property');
+  const raw=length.method.value;
+  if(['symbol','bigint'].includes(raw[0]))guestFault('TypeError','Apply length cannot convert to a Number');
+  if(!['undefined','null','bool','num','str'].includes(raw[0]))
+    throw new TypeError('Apply argument length coercion requires its owned continuation');
+  const numeric=Number(decode(raw)),size=Number.isNaN(numeric)||numeric<=0?0:Math.floor(numeric);
+  if(!Number.isSafeInteger(size)||size>10000)throw new RangeError('Owned apply argument budget exceeded');
+  const values=[],reads=[length.observation];
+  for(let index=0;index<size;index++){
+    const read=ordinaryGet(heap,value,String(index));
+    if(!read)throw new TypeError('Apply indexed access requires an owned data property');
+    values.push(copy(read.method));reads.push(read.observation);
+  }
+  return {values,reads};
+}
 // ES SameValue/SameValueZero over the owned value codec. Never use JS object
 // equality for guest reference identities; they live in the serializable heap.
 const comparableTags=new Set(['undefined','null','bool','str','num','bigint',
@@ -225,8 +253,13 @@ function functionProperty(heap,object,key){
     if(GENERATOR_INTRINSIC_PROTOTYPES.includes(proto)){
       const found=generatorIntrinsicProperty(proto,key);return {slot:token(found.value),attributes:found.attributes};
     }
-    if(proto==='Function.prototype')return key===symbolPropertyKey('well-known:hasInstance')?
-      {slot:token(['builtinfn','Function.prototype.hasInstance']),attributes:{writable:false}}:{};
+    if(proto==='Function.prototype'){
+      if(key===symbolPropertyKey('well-known:hasInstance'))
+        return {slot:token(['builtinfn','Function.prototype.hasInstance']),attributes:{writable:false}};
+      if(['call','apply'].includes(key))return {slot:token(['builtinfn','Function.prototype.'+key]),
+        attributes:{writable:true,enumerable:false,configurable:true}};
+      return {};
+    }
     if(proto===null||['Object.prototype','Array.prototype'].includes(proto))return {};
     object=heap[proto];if(!object)throw new Error('Function prototype identity missing');
   }
@@ -1698,7 +1731,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             else if(['for','keyFor'].includes(property))v=['builtinfn','Symbol.'+property];
             else throw new TypeError('Unmodeled Symbol static property');
           }
-          else if(base.value[0]==='intrinsic'&&base.value[1]==='Reflect'&&property==='ownKeys')v=['builtinfn','Reflect.ownKeys'];
+          else if(base.value[0]==='intrinsic'&&base.value[1]==='Reflect'&&['ownKeys','apply'].includes(property))v=['builtinfn','Reflect.'+property];
           else if(base.value[0]==='symbol'){
             if(property==='description')v=this.symbolDescription(s,base.value);
             else if(['toString','valueOf'].includes(property))v=['builtinfn','Symbol.prototype.'+property];
@@ -2265,6 +2298,24 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn'&&['Function.prototype.call','Function.prototype.apply','Reflect.apply'].includes(callable[1])){
+            const reflect=callable[1]==='Reflect.apply',targetValue=reflect?args[0]?.value??U:receiver,
+              thisValue=args[reflect?1:0]?.value??U,
+              target=targetValue[0]==='ref'?s.heap[targetValue[1]]:null;
+            // Check callability before touching the array-like argument list.
+            if(target?.kind!=='function'){
+              if(['intrinsic','builtinfn','hostfn'].includes(targetValue[0])||target?.kind==='proxy')
+                throw new TypeError('Call adapter requires an owned function target');
+              guestFault('TypeError','Call adapter target is not callable');
+            }
+            const list=callable[1]==='Function.prototype.call'?{values:args.slice(1),reads:[]}:
+              callArgumentList(s.heap,args[reflect?2:1]?.value??U,{nullable:!reflect});
+            const promiseId=target.async?this.newPromise(s):null,
+              id=this.newFrame(s,target.codeId,target.closureEnvId,f.id,promiseId,list.values,
+                this.functionThis(target,thisValue),target.id);
+            s.control.a0.activeFrameId=id;
+            return {...operands(fn,...args),result:targetValue,reads:list.reads,causes:[{kind:'invocation',frameId:id}]};
+          }
           if(callable[0]==='builtinfn'&&callable[1]==='Function.prototype.hasInstance')
             return {...operands(fn,...args),...result(['bool',this.ordinaryHasInstance(s,receiver,args[0]?.value??U,eventId)])};
           if(callable[0]==='builtinfn'&&receiver[0]==='ref'&&s.heap[receiver[1]]?.extensible===false&&
