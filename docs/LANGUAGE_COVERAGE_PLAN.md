@@ -5,6 +5,13 @@
 **Reviewed main revision:** [c165dad8e8226167ec1649cbe6d654cf8662aaf8](https://github.com/werg/tracing-js-self/commit/c165dad8e8226167ec1649cbe6d654cf8662aaf8)  
 **Status:** Proposed implementation plan, grounded in source, tests, contracts, and retained measurement reports. The repository test suite and model experiments were not rerun for this review.
 
+**Implementation update, 20 November 2026:** This document retains its original
+review baseline and proposed work. See the [current bounded profile/status
+matrix](SEMANTIC_REGIONS_V8.md#current-bounded-coverage-and-qualification) for the
+implemented v8 paths, source qualification, explicit refusals and remaining
+native/model promotion gates. The implementation does not mark every wave or
+the production-default decision complete.
+
 ## Recommendation
 
 Make the standard trace a **small, compositional language of algorithmic operations**, rendered with familiar code and mathematical notation plus short natural-language verbs where they clarify behavior. Expand its coverage first across features the owned runtime already executes, then extend the runtime and frontend together for missing features.
