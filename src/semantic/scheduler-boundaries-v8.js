@@ -2,6 +2,7 @@
 // its `then` property cannot invoke guest code or schedule assimilation work.
 // The shared legacy controller does not implement those observable jobs.
 import {PROTOCOL_MACHINE_API_V8} from './protocol-state-v8.js';
+import {validateWitness} from '../training/format.js';
 
 const fail=message=>{const error=new TypeError('Region execution: '+message);error.category='region-authority';throw error;};
 const primitiveKinds=new Set(['undefined','null','bool','num','str','bigint','symbol']);
@@ -24,6 +25,11 @@ export function assertPlainPromiseResolutionV8(controller,value){
 }
 
 export function assertObservedPromiseResolutionV8(controller,{effect,status,result,graph}){
+  // Reconciliation records its receipt before the legacy delivery path runs.
+  // Validate explicit observations here, including rejected data graphs, so
+  // malformed graph data cannot leave a receipt for a refused delivery.
+  if(['fulfilled','rejected'].includes(status)&&result!==null&&result!==undefined)
+    validateWitness('observe',{effect,status,result,...(graph?{graph}:{})});
   if(status!=='fulfilled'||!controller.effects.get(effect)?.promise||result?.[0]!=='ref')return;
   // A validated fresh result graph contains only data objects and arrays,
   // with data properties and no references into the existing owned heap.

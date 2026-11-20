@@ -124,10 +124,11 @@ test('fresh observed data graphs and opaque Promise rejection reasons remain sup
 });
 
 test('fresh-graph exemption still validates graph identities and property values before mutation',()=>{
-  for(const route of ['import','deliver']){
-    const h=external(),before=h.checkpoint();
+  for(const route of ['import','deliver','reconcile'])for(const status of ['fulfilled','rejected']){
+    let h=external();if(route==='reconcile')h=RegionExecutionHarness.restore(h.checkpoint());
+    const before=h.checkpoint();
     const graph={roots:[ref('fresh')],objects:[{id:'fresh',kind:'object',properties:[{key:'then',value:ref('callback')}]}]};
-    assert.throws(()=>observation(h,route,{result:ref('fresh'),graph}),/dangling graph reference/);
+    assert.throws(()=>observation(h,route,{status,result:ref('fresh'),graph}),/dangling graph reference/);
     assert.deepEqual(h.checkpoint(),before);
   }
 });
