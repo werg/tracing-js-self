@@ -196,5 +196,15 @@ export function createSelector(config){
     const failure=JSON.parse(await readFile(join(failed,'report.json'),'utf8'));
     assert.equal(failure.declared,4);assert.equal(failure.summary.untested,4);
     assert.match(failure.executionFailure.message,/startup unavailable/);
+    const nativeStudy=join(directory,'native-study.json'),nativeOutput=join(directory,'native-settings-failed');
+    await writeFile(nativeStudy,JSON.stringify(freezeRegionExecutionStudy(cases,{...configuration,origin:'model',
+      settings:{device:'cpu',maxTokens:3,maxFragments:1}})));
+    await assert.rejects(invoke(process.execPath,[cli,'run','--study',nativeStudy,
+      '--cases',join(frozen,'private-cases.json'),'--out',nativeOutput,
+      '--megatoken',directory,'--served',join(directory,'unused-bundle')],{timeout:30000}));
+    const missingEffort=JSON.parse(await readFile(join(nativeOutput,'report.json'),'utf8'));
+    assert.match(missingEffort.executionFailure.message,/explicitly freeze.*effort/);
+    assert.equal(missingEffort.summary.untested,missingEffort.declared);
+    assert.equal(missingEffort.summary.predictionAttempts,0,'an omitted effort must fail before native startup');
   }finally{await rm(directory,{recursive:true,force:true});}
 });
