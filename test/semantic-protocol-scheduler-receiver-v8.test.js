@@ -38,10 +38,16 @@ test('suspended protocol reactions preserve their receiver across a serialized c
   c.commit(record('await',{invocation:'job:reaction',promise:'later',continuation:'c1'}));
   assert.deepEqual(c.receiver,['ref','parent']);
   assert.deepEqual(c.continuations.get('c1').receiver,['ref','captured']);
+  const suspended=c.segmentPacket();
+  assert.throws(()=>c.commit(record('job',{action:'complete',job:'reaction',owner:'i1'})),/suspended callback/);
+  assert.deepEqual(c.segmentPacket(),suspended);
   const restored=SemanticController.fromPacket(JSON.parse(JSON.stringify(c.segmentPacket())));
   restored.protocol=structuredClone(c.protocol);
   for(const current of [c,restored]){
     current.commit(record('promise',{action:'resolve',promise:'later',value:['num',5]}));
+    const ready=current.segmentPacket();
+    assert.throws(()=>current.commit(record('job',{action:'complete',job:'reaction',owner:'i1'})),/suspended callback/);
+    assert.deepEqual(current.segmentPacket(),ready);
     current.commit(record('resume',{invocation:'job:reaction',continuation:'c1',status:'fulfilled',result:['num',5]}));
     assert.deepEqual(current.receiver,['ref','captured']);
     finish(current);assert.deepEqual(current.receiver,['ref','parent']);

@@ -515,6 +515,9 @@ export class SemanticController {
           const job=this.jobs.get(f.job);
           if(this.stack.length||this.activeJob&&this.activeJob!==f.job)
             fail('job','Cannot complete a running callback frame');
+          if([...this.continuations.values()].some(continuation=>
+            continuation.activeJob===f.job&&continuation.state!=='resumed'))
+            fail('job','Cannot complete a suspended callback frame');
           job.status='completed';
           if(this.activeJob===f.job){
             this.captureAliases=new Map(job.priorAliases);
