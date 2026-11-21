@@ -1,12 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {mkdtempSync,readFileSync,writeFileSync,readdirSync,rmSync} from 'node:fs';
+import {join} from 'node:path';
 import {conformanceDigest,bindTest262CatalogProfile,createTest262Campaign,recordTest262Stage} from '../src/conformance/test262-catalog.js';
 import {createTest262CampaignReport} from '../src/conformance/test262-campaign.js';
 import {gitBlobSha} from '../src/test262-baseline.js';
 import {readPinnedEcma262Specification} from '../src/conformance/test262-specification.js';
 import {assertNewScopeOutput,buildTest262ScopeAnnotations,classifyImportDeferParseFailure,
-  extractImportDeferGrammarEvidence} from '../src/conformance/test262-scope-annotations.js';
+  extractImportDeferGrammarEvidence,writeNewScopeReport} from '../src/conformance/test262-scope-annotations.js';
 
 const {bytes}=readPinnedEcma262Specification();
 const grammar=extractImportDeferGrammarEvidence(bytes);
@@ -121,4 +123,16 @@ test('full annotation refuses a campaign-declared specification mismatch and exi
   assert.throws(()=>buildTest262ScopeAnnotations({...altered,bytes,specification:fixture.specification}),/Campaign-declared ECMA-262/);
   assert.equal(assertNewScopeOutput('/this/path/does/not/exist/scope-report.json'),true);
   assert.throws(()=>assertNewScopeOutput(new URL(import.meta.url).pathname),/must be new/);
+});
+
+test('scope report publication does not replace a destination created after preflight',()=>{
+  const directory=mkdtempSync(join(process.cwd(),'scope-output-race-')),output=join(directory,'report.json'),
+    original=Buffer.from('concurrent immutable report');
+  try{
+    assert.throws(()=>writeNewScopeReport(output,Buffer.from('new report'),{
+      beforePublish:()=>writeFileSync(output,original)
+    }),error=>error.code==='EEXIST');
+    assert.deepEqual(readFileSync(output),original);
+    assert.deepEqual(readdirSync(directory),['report.json']);
+  }finally{rmSync(directory,{recursive:true,force:true});}
 });

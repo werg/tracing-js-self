@@ -1,7 +1,8 @@
 // Narrow source/grammar annotations for selected Test262 parse failures.
 // These annotations describe relation to one pinned grammar, not conformance.
-import {createHash} from 'node:crypto';
-import {existsSync} from 'node:fs';
+import {createHash,randomUUID} from 'node:crypto';
+import {closeSync,existsSync,fsyncSync,linkSync,mkdirSync,openSync,unlinkSync,writeFileSync} from 'node:fs';
+import {dirname} from 'node:path';
 import {tokenizer} from 'acorn';
 import {validateTest262Catalog,conformanceDigest} from './test262-catalog.js';
 import {verifyEcma262SpecificationBytes} from './test262-specification.js';
@@ -75,6 +76,24 @@ export function assertNewScopeOutput(path){
   if(typeof path!=='string'||!path)throw new TypeError('Scope annotation output path is required');
   if(existsSync(path))throw new TypeError('Scope annotation output must be new');
   return true;
+}
+
+/** Publish immutable evidence with an atomic no-replace hard link. */
+export function writeNewScopeReport(path,bytes,{beforePublish=()=>{}}={}){
+  assertNewScopeOutput(path);
+  if(!(bytes instanceof Uint8Array))throw new TypeError('Scope report bytes are required');
+  mkdirSync(dirname(path),{recursive:true});
+  const temporary=path+'.tmp-'+randomUUID();let descriptor;
+  try{
+    descriptor=openSync(temporary,'wx',0o600);
+    writeFileSync(descriptor,bytes);fsyncSync(descriptor);closeSync(descriptor);descriptor=undefined;
+    beforePublish();
+    linkSync(temporary,path);
+  }finally{
+    if(descriptor!==undefined)closeSync(descriptor);
+    unlinkSync(temporary);
+  }
+  return path;
 }
 
 export function buildTest262ScopeAnnotations({catalog,campaign,triage,specification,bytes,sources,toolIdentity}={}){

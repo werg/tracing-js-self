@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // Attach narrow pinned-grammar notes to existing Test262 campaign rows.
 // No rows are filtered and no parser result is changed.
-import {readFileSync,writeFileSync,renameSync,mkdirSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {dirname,resolve} from 'node:path';
+import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {acquireTest262GitSnapshot} from '../src/conformance/test262-acquisition.js';
 import {readPinnedEcma262Specification} from '../src/conformance/test262-specification.js';
-import {assertNewScopeOutput,buildTest262ScopeAnnotations} from '../src/conformance/test262-scope-annotations.js';
+import {assertNewScopeOutput,buildTest262ScopeAnnotations,writeNewScopeReport} from '../src/conformance/test262-scope-annotations.js';
 import {conformanceDigest} from '../src/conformance/test262-catalog.js';
 
 const options=new Map();
@@ -66,8 +66,7 @@ const implementation={producerRevision:execFileSync('git',['-C',root,'rev-parse'
   tree:scopeProducerTree,dirty:false,node:process.version,files:toolFiles};
 const body={schema:'test262-scope-annotation-run/1',implementation,annotations};
 const document=Buffer.from(JSON.stringify({...body,digest:conformanceDigest(body)})+'\n');
-mkdirSync(dirname(output),{recursive:true});
 const encoded=output.endsWith('.xz')?execFileSync('xz',['--compress','--stdout','-6'],{input:document,maxBuffer:document.length+1024*1024}):document;
-writeFileSync(output+'.tmp',encoded);renameSync(output+'.tmp',output);
+writeNewScopeReport(output,encoded);
 console.log(JSON.stringify({output,digest:annotations.digest,implementation,
   ...annotations.summary,grammarEvidence:annotations.productions}));
