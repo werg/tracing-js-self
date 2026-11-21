@@ -34,6 +34,17 @@ function moduleFixture(body,{metadata='',dependencies={},profile=ownedTest262Pro
     moduleDependencies:moduleDependencies??discoverTest262ModuleDependencies(sources)});
   return catalog.variants.map(variant=>({variant,profile,suiteRevision:revision,sources}));
 }
+function rawHashbangModule(){
+  const path='test/hashbang-module.js',text='#!\n/*---\nflags: [module, raw]\n---*/\n';
+  const sources={[path]:text};
+  const profile=ownedTest262Profile();
+  const snapshot={repository:'tc39/test262',revision,
+    files:{[path]:gitBlobSha(text)}};
+  const catalog=buildTest262Catalog({snapshot,sources,profile,
+    moduleDependencies:discoverTest262ModuleDependencies(sources)});
+  const variant=catalog.variants[0];
+  return {variant,profile,suiteRevision:revision,sources};
+}
 const statuses=(rows,status)=>{for(const row of rows){assert.equal(row.owned.status,status,row.owned.reason);assert.equal(row.reference.status,status,row.reference.reason);}};
 
 test('original scripts run both required variants with original assert/sta/includes and source suffix',()=>{
@@ -132,18 +143,27 @@ test('missing original includes, changed bytes, hosts and modules keep distinct 
   assert.equal(executeOfficialTest262Reference(missing).status,'environment_unavailable');
   const [changed]=fixture('assert.sameValue(1,1);');changed.sources['harness/assert.js']+='\n';
   assert.equal(executeOfficialTest262Variant(changed).status,'infrastructure_error');
-  for(const body of ['$262.createRealm();','export const value=1;']){
-    const rows=both(body,{metadata:body.startsWith('export')?'flags: [module]\n':''});
-    statuses(rows,'environment_unavailable');
+  statuses(both('$262.createRealm();'),'environment_unavailable');
+  const [module]=moduleFixture('export const value=1;');
+  assert.equal(executeOfficialTest262Variant(module).status,'passed');
+  const [shadowRealm]=fixture('new ShadowRealm();');
+  for(const result of [executeOfficialTest262Variant(shadowRealm),executeOfficialTest262Reference(shadowRealm)]){
+    assert.equal(result.status,'environment_unavailable',result.reason);
+    assert.deepEqual(result.missingCapabilities,['standard-global:ShadowRealm']);
   }
 });
 
-test('module reference links only the complete pinned fixture graph and keeps owned execution blocked',()=>{
+test('owned and native module runners bind the complete pinned fixture graph',()=>{
+  const runnerProfile=ownedTest262Profile();
+  assert.equal(runnerProfile.hostProfile.moduleResolver,'frozen-static-relative-graph/1');
+  assert.equal(runnerProfile.hostProfile.moduleExecution.profile,'evaluated-module/1');
+  assert.equal(runnerProfile.hostProfile.moduleExecution.sourceCorrespondence,false);
+  assert.equal(runnerProfile.hostProfile.moduleExecution.dynamicImport,'unsupported');
   const [options]=moduleFixture('import {value} from "./value_FIXTURE.js";assert.sameValue(value,42);',{
     dependencies:{'test/value_FIXTURE.js':'export const value=42;'}
   });
   assert.equal(options.variant.dependencies.status,'complete');
-  assert.equal(executeOfficialTest262Variant(options).status,'environment_unavailable');
+  assert.equal(executeOfficialTest262Variant(options).status,'passed');
   const reference=executeOfficialTest262Reference(options);
   assert.equal(reference.status,'passed',reference.reason);
   assert.equal(reference.executionPerformed,true);
@@ -155,7 +175,7 @@ test('module reference links only the complete pinned fixture graph and keeps ow
   assert.equal(executeOfficialTest262Reference(changed).status,'infrastructure_error');
 });
 
-test('module linking negatives require the declared realm error and TLA timeout is not a pass',()=>{
+test('module references and owned module preflight keep parse, link, and evaluation phases distinct',()=>{
   const [parseNegative]=moduleFixture('let = ;',{
     metadata:'negative:\n  phase: parse\n  type: SyntaxError\n'
   });
@@ -163,6 +183,9 @@ test('module linking negatives require the declared realm error and TLA timeout 
   assert.equal(parsed.status,'passed',parsed.reason);
   assert.equal(parsed.phase,'parse');
   assert.equal(parsed.executionPerformed,false);
+  const ownedParsed=executeOfficialTest262Variant(parseNegative);
+  assert.equal(ownedParsed.status,'passed',ownedParsed.reason);
+  assert.equal(ownedParsed.phase,'parse');
   const [wrongPhase]=moduleFixture('let = ;',{
     metadata:'negative:\n  phase: runtime\n  type: TypeError\n'
   });
@@ -172,11 +195,65 @@ test('module linking negatives require the declared realm error and TLA timeout 
     dependencies:{'test/value_FIXTURE.js':'export const value=42;'}
   });
   assert.equal(executeOfficialTest262Reference(resolution).status,'passed');
+  const ownedResolution=executeOfficialTest262Variant(resolution);
+  assert.equal(ownedResolution.status,'passed',ownedResolution.reason);
+  assert.equal(ownedResolution.phase,'resolution');
   const [wrongResolution]=moduleFixture('import {missing} from "./value_FIXTURE.js";void missing;',{
     metadata:'negative:\n  phase: resolution\n  type: TypeError\n',
     dependencies:{'test/value_FIXTURE.js':'export const value=42;'}
   });
   assert.equal(executeOfficialTest262Reference(wrongResolution).status,'failed');
+  const ownedWrongResolution=executeOfficialTest262Variant(wrongResolution);
+  assert.equal(ownedWrongResolution.status,'failed',ownedWrongResolution.reason);
+  assert.equal(ownedWrongResolution.phase,'resolution');
+  const [linked]=moduleFixture('import {value} from "./value_FIXTURE.js";void value;',{
+    dependencies:{'test/value_FIXTURE.js':'export const value=42;'}
+  });
+  const ownedLinked=executeOfficialTest262Variant(linked);
+  assert.equal(ownedLinked.status,'passed',ownedLinked.reason);
+  assert.equal(ownedLinked.phase,'runtime');
+  assert.equal(ownedLinked.moduleGraphComplete,true);
+  assert.equal(ownedLinked.trace.moduleLoweringProfile,'evaluated-module/1');
+  assert.equal(ownedLinked.trace.generatedExecutionSource.url,'owned-test262-module://test/control.js');
+  assert.deepEqual(ownedLinked.trace.originalModuleSourceDigests,linked.variant.dependencies.files);
+  const missingOwned={...linked,sources:{...linked.sources}};
+  delete missingOwned.sources['test/value_FIXTURE.js'];
+  assert.equal(executeOfficialTest262Variant(missingOwned).status,'environment_unavailable');
+  const changedOwned={...linked,sources:{...linked.sources,
+    'test/value_FIXTURE.js':'export const value=43;'}};
+  assert.equal(executeOfficialTest262Variant(changedOwned).status,'infrastructure_error');
+  const [tla]=moduleFixture('await Promise.resolve();assert.sameValue(40+2,42);');
+  assert.equal(executeOfficialTest262Variant(tla).status,'passed');
+  const [tlaSiblings]=moduleFixture('import "./a_FIXTURE.js";import "./b_FIXTURE.js";',{
+    dependencies:{'test/a_FIXTURE.js':'print("a");await Promise.resolve();print("A");',
+      'test/b_FIXTURE.js':'print("b");await Promise.resolve();print("B");'}
+  });
+  const siblings=executeOfficialTest262Variant({...tlaSiblings,includeBundle:true});
+  assert.equal(siblings.status,'passed',siblings.reason);
+  assert.deepEqual(siblings.bundle.finalState.control.a0.test262Output.map(item=>item.value[1]),
+    ['a','b','A','B']);
+  const [moduleThis]=moduleFixture('assert.sameValue(this,undefined);');
+  assert.equal(executeOfficialTest262Variant(moduleThis).status,'passed');
+  const hashbang=executeOfficialTest262Variant(rawHashbangModule());
+  assert.equal(hashbang.status,'passed',hashbang.reason);
+  const [runtimeNegative]=moduleFixture('throw new TypeError("expected");',{
+    metadata:'negative:\n  phase: runtime\n  type: TypeError\n'
+  });
+  const ownedNegative=executeOfficialTest262Variant(runtimeNegative);
+  assert.equal(ownedNegative.status,'passed',ownedNegative.reason);
+  assert.equal(ownedNegative.errorType,'TypeError');
+  const [ownedHarnessNegative]=moduleFixture('throw new Test262Error("expected");',{
+    metadata:'negative:\n  phase: runtime\n  type: Test262Error\n'
+  });
+  const ownedHarnessError=executeOfficialTest262Variant(ownedHarnessNegative);
+  assert.equal(ownedHarnessError.status,'passed',ownedHarnessError.reason);
+  assert.equal(ownedHarnessError.errorType,'Test262Error');
+  const [asyncModule]=moduleFixture('await Promise.resolve();$DONE();',{
+    flags:'module, async'
+  });
+  const asyncOwned=executeOfficialTest262Variant({...asyncModule,includeBundle:true});
+  assert.equal(asyncOwned.status,'passed',asyncOwned.reason);
+  assert.equal(asyncOwned.completionCalls,1);
   const [runtime]=moduleFixture('throw new TypeError("expected");',{
     metadata:'negative:\n  phase: runtime\n  type: TypeError\n'
   });
@@ -185,15 +262,60 @@ test('module linking negatives require the declared realm error and TLA timeout 
     metadata:'negative:\n  phase: runtime\n  type: TypeError\n'
   });
   assert.equal(executeOfficialTest262Reference(wrongRuntime).status,'failed');
+  const [harnessNegative]=moduleFixture('throw new Test262Error("expected");',{
+    metadata:'negative:\n  phase: runtime\n  type: Test262Error\n'
+  });
+  const harnessFailure=executeOfficialTest262Reference(harnessNegative);
+  assert.equal(harnessFailure.status,'passed',harnessFailure.reason);
+  assert.equal(harnessFailure.errorType,'Test262Error');
+  const [forgedHarnessError]=moduleFixture('throw {constructor:Test262Error};',{
+    metadata:'negative:\n  phase: runtime\n  type: Test262Error\n'
+  });
+  assert.equal(executeOfficialTest262Reference(forgedHarnessError).status,'failed');
+  const [rejectedTLA]=moduleFixture('await Promise.reject(new TypeError("expected"));',{
+    metadata:'negative:\n  phase: runtime\n  type: TypeError\n'
+  });
+  const rejected=executeOfficialTest262Reference(rejectedTLA);
+  assert.equal(rejected.status,'passed',rejected.reason);
+  assert.equal(rejected.phase,'runtime');
   const [unresolved]=moduleFixture('import "./missing_FIXTURE.js";');
   assert.equal(unresolved.variant.dependencies.status,'unresolved');
   assert.equal(executeOfficialTest262Reference(unresolved).status,'environment_unavailable');
+  const [expectedUnresolved]=moduleFixture('import "./missing_FIXTURE.js";',{
+    metadata:'negative:\n  phase: resolution\n  type: SyntaxError\n'
+  });
+  const ownedUnresolved=executeOfficialTest262Variant(expectedUnresolved);
+  assert.equal(ownedUnresolved.status,'passed',ownedUnresolved.reason);
+  assert.equal(ownedUnresolved.phase,'resolution');
+  const [quotedImport]=moduleFixture('import {"not-an-identifier" as value} from "./value_FIXTURE.js";void value;',{
+    metadata:'negative:\n  phase: resolution\n  type: SyntaxError\n',
+    dependencies:{'test/value_FIXTURE.js':'export {value as "not-an-identifier"};const value=1;'}
+  });
+  const quoted=executeOfficialTest262Variant(quotedImport);
+  assert.equal(quoted.status,'unsupported',quoted.reason);
+  assert.equal(quoted.phase,'link');
+  for(const body of [
+    'import value from "./value_FIXTURE.js" with {type:"json"};void value;',
+    'using resource = null;'
+  ]){
+    const [boundedEdition]=moduleFixture(body,{dependencies:{'test/value_FIXTURE.js':'export default 1;'}});
+    const result=executeOfficialTest262Variant(boundedEdition);
+    assert.equal(result.status,'unsupported',result.reason);
+    assert.equal(result.stages.parseStatic.status,'passed');
+    assert.equal(result.stages.ownedExecution.phase,'owned-link');
+  }
   const [pendingAwait]=moduleFixture('await new Promise(function(){});',{
     profile:ownedTest262Profile({referenceTimeoutMs:50})
   });
   const limited=executeOfficialTest262Reference(pendingAwait);
   assert.equal(limited.status,'resource_limited',limited.reason);
   assert.equal(limited.phase,'runtime');
+  const [pendingNegative]=moduleFixture('await new Promise(function(){});throw new TypeError("late");',{
+    metadata:'negative:\n  phase: runtime\n  type: TypeError\n'
+  });
+  const pendingOwned=executeOfficialTest262Variant(pendingNegative);
+  assert.equal(pendingOwned.status,'resource_limited',pendingOwned.reason);
+  assert.equal(pendingOwned.phase,'runtime');
 });
 
 test('literal dynamic module requests execute only from their frozen dependency closure',()=>{

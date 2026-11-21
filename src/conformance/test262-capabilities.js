@@ -3,7 +3,8 @@
 // requirement for an unimplemented global Map intrinsic.
 const missingGlobals=new Set(['eval','Function','Date','RegExp','Map','WeakMap','WeakSet','JSON','Intl','globalThis',
   'isFinite','parseFloat','decodeURI','decodeURIComponent','encodeURI','encodeURIComponent','escape','unescape',
-  'AggregateError','WeakRef','FinalizationRegistry','Uint8ClampedArray','Float16Array','Iterator','AsyncIterator']);
+  'AggregateError','WeakRef','FinalizationRegistry','Uint8ClampedArray','Float16Array','Iterator','AsyncIterator',
+  'ShadowRealm']);
 export const unavailableOwnedStandardGlobal=name=>missingGlobals.has(name);
 
 export function freeTest262Identifiers(ast){
@@ -86,6 +87,7 @@ export function unsupportedOwnedGlobals(ast){
  * shadowed globalThis remains an ordinary guest value. */
 export function test262HostCapabilities(ast){
   const free=new Set(freeTest262Identifiers(ast)),required=new Set(),agentAliases=new Set();
+  if(free.has('ShadowRealm'))required.add('standard-global:ShadowRealm');
   const propertyName=node=>node?.computed?
     node.property?.type==='Literal'&&typeof node.property.value==='string'?node.property.value:null:
     node?.property?.type==='Identifier'?node.property.name:null;

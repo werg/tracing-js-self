@@ -18,6 +18,14 @@ const syntaxError=error=>error instanceof SyntaxError||error?.name==='SyntaxErro
 
 function guestErrorType(error,context){
   if(!error||typeof error!=='object')return null;
+  // Test262Error is supplied by the original sta.js harness, not an intrinsic
+  // realm Error subclass. Check its genuine prototype chain so a forged own
+  // `constructor` property cannot satisfy a negative test.
+  try{
+    const test262Error=runInContext('typeof Test262Error === "function" ? Test262Error : null',context);
+    if(test262Error&&Object.getPrototypeOf(error)===test262Error.prototype&&error instanceof test262Error)
+      return 'Test262Error';
+  }catch{}
   for(const name of ['AggregateError','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError','Error']){
     try{
       const constructor=runInContext(name,context);

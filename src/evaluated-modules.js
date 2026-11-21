@@ -8,7 +8,7 @@ import path from 'node:path';
 import {types} from 'node:util';
 import {compileBoundedTypeScript} from './typescript.js';
 import {createRuntime} from './runtime.js';
-import {parseTraining} from './training/profile.js';
+import {parseTraining,parseOwnedScript} from './training/profile.js';
 import {executeWithNativeServices} from './host/native-driver.js';
 import {validateBundle} from './validation.js';
 import {replayExact} from './replay.js';
@@ -78,7 +78,7 @@ function ownDataArray(value,label,max){
 }
 function parseModule(file,text,sources){
   const lowering=compileBoundedTypeScript(text,{path:file});
-  const ast=parseAcorn(lowering.javascript,{ecmaVersion:2022,sourceType:'module'});
+  const ast=parseAcorn(lowering.javascript,{ecmaVersion:2022,sourceType:'module',allowHashBang:true});
   const symbols=new Map(),imports=new Map(),namespaceImports=new Map(),exports=new Map(),forwards=new Map();
   const stars=[],deps=new Set(),functions=[],initializers=[];
   const addDependency=from=>deps.add(from);
@@ -361,7 +361,9 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
   return source;
 }
 export function linkEvaluatedModules({modules,entryModule,exportName='default',
-  args=[],calls=null}={}){
+  args=[],calls=null,evaluateOnly=false}={}){
+  if(typeof evaluateOnly!=='boolean'||evaluateOnly&&(calls!==null||args.length))
+    throw new TypeError('Module evaluate-only mode cannot carry export calls or arguments');
   const sources=sourcesOf(modules);
   if(typeof entryModule!=='string'||!sources.has(entryModule))
     reject('entry module is not part of the supplied graph');
@@ -479,9 +481,9 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       if(get(file).imports.has(local))
         required(file,exported);
   }
-  const selected=sequence?required(entryModule,sequence[0].exportName):
+  const selected=evaluateOnly?null:sequence?required(entryModule,sequence[0].exportName):
     required(entryModule,exportName);
-  if(!sequence&&selected.kind!=='function'&&checkedArgs.length)
+  if(!evaluateOnly&&!sequence&&selected.kind!=='function'&&checkedArgs.length)
     reject('cannot call a non-function exported module binding');
   const requested=sequence?sequence.map(call=>{
     const binding=required(entryModule,call.exportName);
@@ -516,7 +518,8 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     }
     bound.set(file,names);
   }
-  let source='"use strict";\nasync function __traced_evaluated_entry(self) {\n';
+  const entryFunction=evaluateOnly?'__traced_eval_entry':'__traced_evaluated_entry';
+  let source='"use strict";\nasync function '+entryFunction+'(self) {\n';
   const spans=[];
   const append=(file,kind,fragment)=>{
     const start=source.length;
@@ -604,7 +607,8 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     });
     source+='  return ['+requested.map((_,i)=>
       '__traced_eval_result_'+i).join(',')+'];\n';
-  }else if(selected.kind==='function'){
+  }else if(evaluateOnly)source+='  return undefined;\n';
+  else if(selected.kind==='function'){
     const argumentsText=checkedArgs.map((_,i)=>'self.args['+i+']').join(',');
     source+='  return await '+linkedAccess(selected)+'('+argumentsText+');\n';
   }else source+='  return await '+linkedAccess(selected)+';\n';
@@ -614,12 +618,12 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   // Linking must never hand off unowned guest syntax to an assumed Node or
   // browser module loader. Validate the actual concatenated guest program,
   // including its identifier resolution, before an entry can be executed.
-  try {parseTraining(source);}
+  try {evaluateOnly?parseOwnedScript(source):parseTraining(source);}
   catch(error){reject('unowned generated guest syntax: '+error.message);}
   const metadata={
-    profile:'evaluated-module/1',entryModule,exportName,
+    profile:'evaluated-module/1',entryModule,exportName:evaluateOnly?null:exportName,
     evaluationStrategy:scheduled?'async-dependency-scheduler':'dependency-concatenation',
-    evaluationOrder:order.slice(),cycles,linkedBinding:selected.linked,
+    evaluationOrder:order.slice(),cycles,linkedBinding:selected?.linked??null,
     ...(scheduled?{asyncDependencies:order.map(file=>({file,index:indices.get(file),
       hasTLA:get(file).hasTLA,dependencies:get(file).deps.slice()}))}:{}),
     ...(requested?{calls:requested.map(({exportName,binding})=>({
@@ -631,7 +635,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     }))
   };
   return {profile:'evaluated-module/1',source,
-    entryFunction:'__traced_evaluated_entry',metadata,
+    entryFunction,metadata,
     entryInput:sequence?{calls:sequence.map(({args})=>({args}))}:{args:checkedArgs}};
 }
 export async function executeEvaluatedModules({modules,entryModule,

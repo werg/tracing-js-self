@@ -27,6 +27,14 @@ test('evaluated modules run dependency initialization once and share mutable liv
   assert.match(run.bundle.sources[0].text,/__traced_eval_m1_count/);
 });
 
+test('evaluate-only mode has a private entry name while exported calls preserve their entry name',()=>{
+  const modules={'main.js':'export function main(){return 1;}'};
+  assert.equal(linkEvaluatedModules({modules,entryModule:'main.js',exportName:'main'}).entryFunction,
+    '__traced_evaluated_entry');
+  assert.equal(linkEvaluatedModules({modules,entryModule:'main.js',evaluateOnly:true}).entryFunction,
+    '__traced_eval_entry');
+});
+
 test('module side effects use dependency ordering even with import elision',async()=>{
   const modules={
     'a.ts':'export let result = 2;',
