@@ -67,6 +67,26 @@ const input={schema:'semantic-model-checkpoint-history-run/1',producer,consumer,
   optimizationPerformed:false,scope:'One actual model selection; explicit checkpoint-cut recovery and next-output equality. No complete-program or generalization claim.'};
 save('run-input.json',input);save('original-source.json',source);save('serving-manifest.json',manifest);
 const services=[],serviceCommands=[];
+const volatileSelectionFields=['generationSeconds','preparationSeconds','totalSeconds'],
+  exactSelection=selection=>Object.fromEntries(Object.entries(selection).filter(([key])=>!volatileSelectionFields.includes(key)));
+async function probeNext(select,request,name){
+  try{
+    const output=await select(request),probe={disposition:'selected',output};
+    save(name,probe);return probe;
+  }catch(error){
+    // A malformed actual model continuation is still original evidence. Only a
+    // provenance-checked model output can qualify this comparison; timeouts or
+    // unbound infrastructure failures remain failures of the diagnostic.
+    if(error.evidence?.provenanceValidated!==true||error.evidence.selection?.modelSelected!==true)throw error;
+    const probe={disposition:'refused',category:error.category??null,message:String(error.message),
+      evidence:error.evidence};
+    save(name,probe);return probe;
+  }
+}
+function deterministicProbe(probe){
+  if(probe.disposition==='selected')return {...probe,output:{...probe.output,selection:exactSelection(probe.output.selection)}};
+  return {...probe,evidence:{...probe.evidence,selection:exactSelection(probe.evidence.selection)}};
+}
 const openService=name=>{
   const args=['scripts/serve_semantic_v8.py','--served',served,'--device','cpu','--threads','1',
     '--effort','1','--max-tokens',String(maxTokens),'--max-fragments',String(maxFragments),
@@ -101,7 +121,7 @@ try{
   assert.equal(earlier.checkpoint.attempts.length,0);assert.equal(later.checkpoint.attempts.length,1);
   assert.equal(later.checkpoint.attempts[0].status,'accepted');assert.equal(later.checkpoint.contexts.length,1);
   const nextRequest=originalDriver.prefix(invocationId);save('next-selection-request.json',nextRequest);
-  const originalNext=await original(nextRequest);save('original-next-selection.json',originalNext);
+  const originalNext=await probeNext(original,nextRequest,'original-next-selection.json');
   const originalTransportMetrics=original.metrics();save('original-transport-metrics.json',originalTransportMetrics);
   save('original-shutdown.json',await original.shutdown());originalDriver.close();
 
@@ -121,12 +141,9 @@ try{
   for(const key of ['rpcCalls','computeSeconds','peakMemoryBytes'])
     assert(restored.native.runtimeMetrics[key]>=later.checkpoint.native.runtimeMetrics[key],'Retained cost rolled back: '+key);
   assert.deepEqual(restoredDriver.prefix(invocationId),nextRequest,'Restored prediction context changed');
-  const restoredNext=await fresh(restoredDriver.prefix(invocationId));save('restored-next-selection.json',restoredNext);
-  assert.equal(restoredNext.record,originalNext.record,'Next original model bytes changed');
-  const volatileSelectionFields=['generationSeconds','preparationSeconds','totalSeconds'],
-    exactSelection=selection=>Object.fromEntries(Object.entries(selection).filter(([key])=>!volatileSelectionFields.includes(key)));
-  assert.deepEqual(exactSelection(restoredNext.selection),exactSelection(originalNext.selection),
-    'Next complete deterministic selection evidence changed');
+  const restoredNext=await probeNext(fresh,restoredDriver.prefix(invocationId),'restored-next-selection.json');
+  assert.deepEqual(deterministicProbe(restoredNext),deterministicProbe(originalNext),
+    'Next original output, refusal or complete deterministic selection evidence changed');
   const restoredTransportMetrics=fresh.metrics();save('restored-transport-metrics.json',restoredTransportMetrics);
   save('restored-shutdown.json',await fresh.shutdown());restoredDriver.close();
 
@@ -151,7 +168,8 @@ try{
   const report={...input,status:'passed',explicitCuts:2,restoredFromPosition:earlier.receipt.position,
     independentlyRetainedHead:later.receipt,acknowledgedModelRecords:1,
     completeHostCheckpointExact:true,completeNativeCheckpointExact:true,allConsumedAttemptsExact:true,
-    runtimeCostsMonotonic:true,nextSelectionExact:true,nextSelectionAcknowledged:false,
+    runtimeCostsMonotonic:true,nextOutputExact:true,nextOutputDisposition:restoredNext.disposition,
+    nextSelectionExact:restoredNext.disposition==='selected',nextSelectionAcknowledged:false,
     sourceValidated:true,projectionValidated:true,replayValidated:true,exactOriginalSourcePrefix:true,
     originalModelPayloadExact:true,hostDispatches:dispatches,completeSourceExecution:false,
     heldoutTested:false,generalizationEstablished:false,automaticTransitionDurability:false,
@@ -164,7 +182,8 @@ try{
     volatileSelectionFields,serviceCommands};
   save('report.json',report);
   console.log(JSON.stringify({status:report.status,producer:producer.revision,consumer:consumer.revision,
-    acknowledgedModelRecords:1,explicitCuts:2,completeNativeCheckpointExact:true,nextSelectionExact:true,
+    acknowledgedModelRecords:1,explicitCuts:2,completeNativeCheckpointExact:true,nextOutputExact:true,
+    nextOutputDisposition:restoredNext.disposition,
     hostDispatches:0,completeSourceExecution:false,output}));
 }catch(error){
   const failure={...input,status:'failed',message:String(error.message),stack:error.stack,

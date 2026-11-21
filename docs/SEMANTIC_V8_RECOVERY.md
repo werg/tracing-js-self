@@ -285,7 +285,11 @@ through the normal driver methods, and saves a later cut. A fresh native
 service restores the older packet through the independently retained later
 receipt. Complete native/host checkpoint state, consumed attempts, and the next
 actual output are compared; only measured timing fields are excluded from
-next-selection equality. Both next-output probes remain unacknowledged. The
+deterministic evidence equality. A provenance-checked malformed model output
+is retained and compared as a refusal, with its original bytes and metadata;
+the report distinguishes it from a valid next selection. Timeouts and unbound
+infrastructure failures cannot qualify that comparison. Both next-output probes
+remain unacknowledged. The
 report separates retained driver accounting from both native service lifetimes,
 including reconstruction and probes, without counting copied historical costs
 twice. Original outputs, checkpoints, profiles, source inputs and failed native
