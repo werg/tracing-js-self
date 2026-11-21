@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {executeWithNativeServices} from '../src/host/native-driver.js';
 import {createRuntime} from '../src/runtime.js';
-import {validateBundle} from '../src/validation.js';
+import {validateBundle,reconstruct} from '../src/validation.js';
+import {validateExternalCallbackEntry} from '../src/external-callback-validation.js';
 import {replayExact} from '../src/replay.js';
 import {encodeNativeGraph} from '../src/host/graph-codec.js';
 import {ownedEffectfulOutcome} from '../src/semantic/source-projection.js';
@@ -133,4 +134,31 @@ test('read-only validation refuses a changed callback graph and receiver mapping
   ]){
     const changed=structuredClone(bundle);mutate(changed);assert.throws(()=>validateBundle(changed));
   }
+});
+
+test('callback rest parameters cannot alias a same-shaped imported argument array',async()=>{
+  const {bundle}=await executeWithNativeServices({
+    entry:entry('function run(){return host.natlangCall("rest",null,function(...items){return items.length;});}'),
+    services:{'natlang.call':({args})=>{
+      const value=[];value.push(value);
+      return Reflect.apply(args[2],undefined,[value]);
+    }}
+  });
+  const index=bundle.events.findIndex(event=>event.operation==='job.enter'&&
+    event.causes.some(cause=>cause.kind==='effect'));
+  const event=bundle.events[index],state=reconstruct(bundle,{throughEventId:bundle.events[index-1].eventId});
+  const job=state.control.a0.queue[0];
+  assert.doesNotThrow(()=>validateExternalCallbackEntry(state,event,job,bundle.programs));
+  const forged=structuredClone(event),frame=forged.stateChanges.find(p=>p.table==='frames').after;
+  const imported=frame.externalCallbackReturn.graphIdentities[0];
+  assert.notEqual(imported.source,imported.target);
+  const environment=forged.stateChanges.find(p=>p.table==='envs'&&p.id===frame.envId).after;
+  assert.notEqual(environment.bindings.items.token.value[1],imported.target);
+  // Both arrays contain the same imported object and have length one. Only
+  // owned identity distinguishes the fresh rest array from that input cycle.
+  environment.bindings.items.token.value=['ref',imported.target];
+  const before=structuredClone(state);
+  assert.throws(()=>validateExternalCallbackEntry(state,forged,job,bundle.programs),
+    /Callback rest arguments changed at entry/);
+  assert.deepEqual(state,before);
 });

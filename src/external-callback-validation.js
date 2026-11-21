@@ -70,6 +70,7 @@ export function validateExternalCallbackEntry(state,event,job,programs){
       typeof item.target==='string'&&!Object.hasOwn(state.heap,item.target)),
   'Callback entry lost its exact input graph identity map');
   const mapping=new Map(identities.map(item=>[item.source,item.target]));
+  const importedIds=new Set(mapping.values());
   const value=tag=>tag[0]==='ref'?['ref',mapping.get(tag[1])]:tag;
   const imported=event.stateChanges.filter(p=>p.table==='heap'&&p.before===null);
   const program=programs[fn.codeId],restIndex=program.restIndex??-1;
@@ -91,7 +92,7 @@ export function validateExternalCallbackEntry(state,event,job,programs){
     if(index===restIndex){
       const rest=imported.find(p=>p.id===actual?.[1])?.after;
       const args=job.args.slice(index).map(value);
-      requireValue(actual?.[0]==='ref'&&!mapping.has(actual[1])&&rest?.kind==='array'&&
+      requireValue(actual?.[0]==='ref'&&!importedIds.has(actual[1])&&rest?.kind==='array'&&
         isDeepStrictEqual(rest.properties.length?.value,['num',args.length])&&
         args.every((item,i)=>isDeepStrictEqual(rest.properties[String(i)]?.value,item)),
       'Callback rest arguments changed at entry');
