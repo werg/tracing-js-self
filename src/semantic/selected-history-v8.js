@@ -3,6 +3,7 @@
 import {isDeepStrictEqual} from 'node:util';
 import {assertAlgorithmFields,stableAlgorithmJSON} from './ir.js';
 import {hashAlgorithmData} from './program.js';
+import {validateServiceAdmissionPolicy,validateServiceAdmissionFence} from './service-admission-v8.js';
 
 const eq=isDeepStrictEqual,ID=/^[a-z][a-z0-9:_-]*$/,HASH=/^[a-f0-9]{64}$/;
 const fail=message=>{throw new TypeError('Selected checkpoint history: '+message);};
@@ -163,10 +164,16 @@ function validateTerminalEvent(event,checkpoint,previous=null){
       event.phase==='unknown'?['schema','terminalId','phase','session','invocationId','reason',
         'baseCheckpointDigest','snapshot','snapshotDigest','failure']:[];
   demand(fields.length>0,'invalid terminal phase');
+  const admissionPolicy=checkpoint.policy.serviceAdmission??null;
+  if(admissionPolicy!==null)fields.push('serviceAdmission');
   assertAlgorithmFields(event,fields,'selected terminal event');
   const expectedSession=checkpoint.bridge.public.timeline[0]?.fields?.session,
     identity={schema:'semantic-selected-terminal/1',session:event.session,
       invocationId:event.invocationId,reason:event.reason,baseCheckpointDigest:event.baseCheckpointDigest};
+  if(admissionPolicy!==null){
+    validateServiceAdmissionPolicy(admissionPolicy,expectedSession);
+    validateServiceAdmissionFence(event.serviceAdmission,admissionPolicy,event.reason);
+  }
   demand(event.schema==='semantic-selected-terminal-event/1'&&HASH.test(event.terminalId??'')&&
     typeof event.session==='string'&&event.session===expectedSession&&
     typeof event.invocationId==='string'&&event.invocationId.length>0&&event.invocationId.length<=512&&
@@ -188,6 +195,7 @@ function validateTerminalEvent(event,checkpoint,previous=null){
     demand(previous.phase==='requested'&&previous.terminalId===event.terminalId&&
       previous.session===event.session&&previous.invocationId===event.invocationId&&
       previous.reason===event.reason&&previous.baseCheckpointDigest===event.baseCheckpointDigest&&
+      eq(previous.serviceAdmission,event.serviceAdmission)&&
       isDeepStrictEqual(checkpoint.digest,previous.baseCheckpointDigest),
       'terminal final event differs from the independently acknowledged request');
     validateTerminalSnapshotExtension(previous.snapshot,event.snapshot);

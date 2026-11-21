@@ -11,6 +11,7 @@ import {stableAlgorithmJSON} from './ir.js';
 import {validateSelectedHistoryReceipt,validateSelectedHistoryChain,validateSelectedHistoryExtension}
   from './selected-history-v8.js';
 import {validateHostIngressLogChain} from './host-ingress-journal-v8.js';
+import {validateServiceAdmissionPolicy,validateServiceAdmissionFence} from './service-admission-v8.js';
 
 const copy=structuredClone,HASH=/^[a-f0-9]{64}$/;
 const demand=(value,message)=>{if(!value)throw new TypeError('Selected v8: '+message);};
@@ -33,6 +34,25 @@ const boundSelection=(record,selection,context,checkpointIdentity,tokenizerIdent
 const attemptPayload=row=>typeof row.record==='string'?Buffer.from(row.record,'utf8').toString('hex'):
   isPayloadHex(row.rawPayloadHex)?row.rawPayloadHex:null;
 const recoveryTickets=new WeakSet();
+
+function admissionCoordinatorPolicy(coordinator,sessionId,expected=null){
+  demand(coordinator&&typeof coordinator.terminate==='function'&&typeof coordinator.verify==='function'&&
+    typeof coordinator.assertActive==='function',
+    'configured service admission requires its independently owned coordinator');
+  const policy=copy(coordinator.policy);validateServiceAdmissionPolicy(policy,sessionId);
+  demand(expected===null||isDeepStrictEqual(policy,expected),'service admission policy changed');
+  return policy;
+}
+async function verifyTerminalServiceAdmission(terminal,policy,coordinator){
+  if(!policy.serviceAdmission){
+    demand(coordinator===null,'unfenced history cannot acquire a service admission claim on restore');return;
+  }
+  admissionCoordinatorPolicy(coordinator,terminal.session,policy.serviceAdmission);
+  validateServiceAdmissionFence(terminal.serviceAdmission,policy.serviceAdmission,terminal.reason);
+  const receipt=await coordinator.verify(copy(terminal.serviceAdmission));
+  demand(isDeepStrictEqual(receipt,terminal.serviceAdmission),
+    'service admission recovery acknowledged a different terminal fence');
+}
 
 function verifyDriverCheckpoint(packet,policy){
   stableAlgorithmJSON(packet);
@@ -74,6 +94,7 @@ function verifyDriverCheckpoint(packet,policy){
     Array.isArray(native.attempts)&&native.attempts.length===packet.attempts.length,
     'native checkpoint does not preserve the same acknowledged attempts');
   const publicData=packet.bridge?.public,session=publicData?.timeline?.[0]?.fields?.session;
+  if(Object.hasOwn(policy,'serviceAdmission'))validateServiceAdmissionPolicy(policy.serviceAdmission,session);
   demand(typeof session==='string'&&native.sessions&&typeof native.sessions==='object'&&!Array.isArray(native.sessions)&&
     Object.keys(native.sessions).every(key=>key===session),
     'driver recovery requires a dedicated native transport for this session');
@@ -196,7 +217,8 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
   constructor({select,harness=new RegionExecutionHarness(),maxSelections=4096,maxOutstanding=64,
       maxStaleRetries=8,origin='model',checkpointIdentity=null,tokenizerIdentity=null,nativeIdentity=null,
       trainingIdentity=nativeIdentity?.trainingIdentity??null,
-      hostLimits=null,automaticDelivery=null,signal=null,recovery=null}={}){
+      hostLimits=null,automaticDelivery=null,signal=null,recovery=null,
+      serviceAdmission=null,serviceAdmissionCoordinator=null}={}){
     demand(typeof select==='function'&&['model','engineering'].includes(origin),'selector and explicit origin required');
     if(origin==='model')demand(typeof select.commit==='function'&&HASH.test(checkpointIdentity??'')&&HASH.test(tokenizerIdentity??''),
       'model selections require pinned identities and native commit acknowledgments');
@@ -204,6 +226,10 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     demand(nativeIdentity===null||(nativeIdentity.trainingIdentity??null)===trainingIdentity,
       'native identity differs from the expected training lineage');
     demand(recovery===null||recoveryTickets.has(recovery),'driver recovery must pass verified restoration');
+    const admissionPolicy=serviceAdmissionCoordinator===null?null:
+      admissionCoordinatorPolicy(serviceAdmissionCoordinator,harness.inner.sessionId,serviceAdmission);
+    demand(serviceAdmission===null||isDeepStrictEqual(serviceAdmission,admissionPolicy),
+      'configured service admission requires its independently owned coordinator');
     const retainedHostLimits={maxGenerated:harness.inner.maxGenerated,maxOutstanding:harness.inner.maxOutstanding};
     demand(hostLimits===null||isDeepStrictEqual(hostLimits,retainedHostLimits),
       'host continuation limits differ from the externally expected execution policy');
@@ -216,6 +242,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     let driver,queue=Promise.resolve(),releaseActive=null,fatal=null,automaticHistory=null,
       activeSelection=null,activeAcknowledgement=null,
       cancellationPromise=null,
+      serviceFenceFailure=null,terminalCancellationRequest=null,
       terminalCancel=null,terminalCancellationError=null,
       staleRetries=recovery?.staleRetries??0;
     const acquire=async()=>{
@@ -346,6 +373,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
         reason=String(suppliedReason?.message??suppliedReason).slice(0,4096)||'selected execution cancelled',
         settlement=activeAcknowledgement??activeSelection;
       fatal??=suppliedReason instanceof Error?suppliedReason:new Error(reason);
+      terminalCancellationRequest={context:{invocationId},reason};
       if(automaticHistory===null){
         const acknowledging=attempts.findLast(row=>row.invocationId===invocationId&&row.status==='acknowledging');
         if(acknowledging)acknowledging.status='acknowledgement-unknown';
@@ -380,7 +408,8 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     this.originalSelect=select;this.origin=origin;this.executionSignal=signal;
     const policy=Object.freeze({checkpointIdentity,tokenizerIdentity,nativeIdentity:copy(nativeIdentity),
       hostLimits:copy(retainedHostLimits),automaticDelivery:retainedAutomaticDelivery,
-      maxSelections,maxOutstanding,maxStaleRetries});
+      maxSelections,maxOutstanding,maxStaleRetries,
+      ...(admissionPolicy===null?{}:{serviceAdmission:copy(admissionPolicy)})});
     const checkpointUnlocked=async({ingressStore=null}={})=>{
       demand(origin==='model'&&typeof select.checkpoint==='function',
         'durable recovery requires a checkpoint-capable native model selector');
@@ -452,7 +481,8 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
         throw error;
       }
     }
-    const appendTerminalHistory=async({phase,invocationId,reason,requested=null,closeReceipt=null,failure=null}={})=>{
+    const appendTerminalHistory=async({phase,invocationId,reason,requested=null,closeReceipt=null,failure=null,
+        serviceFence=null}={})=>{
       const state=automaticHistory;
       demand(state!==null,'durable terminal cancellation requires automatic history');
       demand(state.headStatus==='acknowledged','cannot extend an unacknowledged or uncertain history head');
@@ -466,6 +496,10 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
             baseCheckpointDigest:checkpoint.digest}),
           terminal={schema:'semantic-selected-terminal-event/1',terminalId,phase,session,invocationId,reason,
             baseCheckpointDigest:checkpoint.digest,snapshot,snapshotDigest:hashAlgorithmData(snapshot)};
+        if(admissionPolicy!==null){
+          validateServiceAdmissionFence(serviceFence,admissionPolicy,reason);
+          terminal.serviceAdmission=copy(serviceFence);
+        }
         if(phase==='closed')terminal.closeReceipt=copy(closeReceipt);
         else if(phase==='unknown')terminal.failure=
           String(failure?.message??failure??'Native close outcome unavailable').slice(0,4096)||
@@ -498,10 +532,23 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
       phase:terminal.phase,status:terminal.phase,terminalId:terminal.terminalId,session:terminal.session,
       invocationId:terminal.invocationId,reason:terminal.reason,historyReceipt:copy(receipt),
       snapshotDigest:terminal.snapshotDigest,
+      ...(terminal.serviceAdmission?{serviceAdmission:copy(terminal.serviceAdmission)}:{}),
       ...(terminal.phase==='closed'?{closeReceipt:copy(terminal.closeReceipt)}:{}),
       ...(terminal.phase==='unknown'?{failure:terminal.failure}:{})});
     terminalCancel=async({invocationId,reason,settlement})=>{
       const state=automaticHistory;
+      // Fatal selection admission is already closed synchronously by cancel().
+      // Fence every declared service before publishing even a requested terminal
+      // cut. Partial service failure cannot become an acknowledged history fence.
+      let serviceFence=null;
+      if(admissionPolicy!==null){
+        try{
+          serviceFence=copy(await serviceAdmissionCoordinator.terminate({sessionId:harness.inner.sessionId,reason}));
+          validateServiceAdmissionFence(serviceFence,admissionPolicy,reason);
+          const verified=await serviceAdmissionCoordinator.verify(copy(serviceFence));
+          demand(isDeepStrictEqual(verified,serviceFence),'service admission acknowledged a different fence');
+        }catch(error){serviceFenceFailure=error;throw error;}
+      }
       if(!state){
         await settlement;
         const attempt=attempts.findLast(row=>row.invocationId===invocationId&&row.status==='decoded');
@@ -517,7 +564,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
         settlement=activeAcknowledgement??activeSelection;
       }
       demand(state.headStatus==='acknowledged','previous automatic history acknowledgement is uncertain');
-      const requestedCut=await appendTerminalHistory({phase:'requested',invocationId,reason});
+      const requestedCut=await appendTerminalHistory({phase:'requested',invocationId,reason,serviceFence});
       await settlement;
       predictions.delete(invocationId);release();
       const attempt=attempts.findLast(row=>row.invocationId===invocationId&&row.status==='decoded');
@@ -530,7 +577,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
       }catch(error){
         try{
           const final=await appendTerminalHistory({phase:'unknown',invocationId,reason,requested:requestedCut.terminal,
-            failure:String(error?.message??error)});
+            failure:String(error?.message??error),serviceFence});
           return terminalDisposition(final.terminal,final.receipt);
         }catch(persistError){
           if(error&&typeof error==='object')error.terminalPersistenceError=String(persistError?.message??persistError);
@@ -539,12 +586,20 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
       }
       if(attempt){attempt.status='cancelled';attempt.failure=reason;}
       const final=await appendTerminalHistory({phase:'closed',invocationId,reason,requested:requestedCut.terminal,
-        closeReceipt});
+        closeReceipt,serviceFence});
       return terminalDisposition(final.terminal,final.receipt);
     };
     Object.defineProperty(this,'historyReceipt',{enumerable:true,get:()=>copy(automaticHistory?.previous??null)});
     Object.defineProperty(this,'terminalCancellation',{enumerable:true,get:()=>cancellationPromise});
     Object.defineProperty(this,'terminalCancellationError',{enumerable:true,get:()=>terminalCancellationError});
+    this.retryServiceAdmissionCancellation=()=>{
+      demand(serviceFenceFailure!==null&&terminalCancellationError!==null&&terminalCancellationRequest!==null,
+        'only an unacknowledged service fence can retry its original cancellation');
+      // This failure occurred before any terminal history append or native
+      // close. Reuse its exact original reason; never retry a lost history head.
+      serviceFenceFailure=null;terminalCancellationError=null;cancellationPromise=null;
+      return selected.cancel(copy(terminalCancellationRequest));
+    };
     this.enableDurableHistory=async({acknowledge,journal,previous=null,ingressStore=null,
         ingressJournal=harness.inner.hostIngressBroker?.journal??null}={})=>{
       demand(typeof acknowledge==='function','automatic history requires independent durable head acknowledgement');
@@ -553,6 +608,8 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
       try{
         demand(automaticHistory===null,'automatic history is already enabled');
         demand(!driver.running.size&&predictions.size===0,'enable automatic history before execution starts');
+        if(admissionPolicy!==null)demand(isDeepStrictEqual(await serviceAdmissionCoordinator.assertActive(),admissionPolicy),
+          'service admission did not acknowledge the active policy');
         const state={acknowledge,journal,previous:copy(previous),ingressStore,ingressJournal,
           headStatus:'idle',headFailure:null};
         try{
@@ -568,7 +625,8 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
       }finally{unlock();}
     };
   }
-  static async restoreLatest(packet,{historyJournal,historyReceipt,select,policy,harnessOptions={},signal=null}={}){
+  static async restoreLatest(packet,{historyJournal,historyReceipt,select,policy,harnessOptions={},signal=null,
+      serviceAdmissionCoordinator=null}={}){
     demand(typeof historyJournal?.readAll==='function','independently read checkpoint history is required');
     stableAlgorithmJSON(packet);
     const saved=copy(packet),retainedHead=copy(historyReceipt);
@@ -578,11 +636,15 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
       'supplied checkpoint is absent from the independently retained history');
     await verifyRecordedHistoryCuts(entries,policy,harnessOptions);
     const terminal=entries.at(-1).terminal;
-    if(terminal)return {schema:'semantic-selected-terminal-disposition/1',phase:terminal.phase,status:terminal.phase,
+    if(terminal){
+      await verifyTerminalServiceAdmission(terminal,policy,serviceAdmissionCoordinator);
+      return {schema:'semantic-selected-terminal-disposition/1',phase:terminal.phase,status:terminal.phase,
       terminalId:terminal.terminalId,session:terminal.session,invocationId:terminal.invocationId,
       reason:terminal.reason,historyReceipt:copy(retainedHead),snapshotDigest:terminal.snapshotDigest,
+      ...(terminal.serviceAdmission?{serviceAdmission:copy(terminal.serviceAdmission)}:{}),
       ...(terminal.phase==='closed'?{closeReceipt:copy(terminal.closeReceipt)}:{}),
       ...(terminal.phase==='unknown'?{failure:terminal.failure}:{})};
+    }
     const latest=entries.at(-1).checkpoint,options={...harnessOptions};
     // A history receipt independently binds its recorded ingress receipts.
     // An explicitly supplied newer ingress head still undergoes the existing
@@ -590,13 +652,20 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     if(!Object.hasOwn(options,'ingressReceipt'))options.ingressReceipt=latest.bridge.ingress??null;
     if(!Object.hasOwn(options,'ingressLogReceipt'))options.ingressLogReceipt=latest.bridge.ingressLog??null;
     if(!latest.bridge.ingressLog&&!options.ingressLogReceipt)delete options.ingressJournal;
-    return this.restore(latest,{select,policy,harnessOptions:options,signal});
+    return this.restore(latest,{select,policy,harnessOptions:options,signal,serviceAdmissionCoordinator});
   }
-  static async restore(packet,{select,policy,harnessOptions={},signal=null}={}){
+  static async restore(packet,{select,policy,harnessOptions={},signal=null,serviceAdmissionCoordinator=null}={}){
     demand(typeof select==='function'&&typeof select.restore==='function'&&typeof select.checkpoint==='function',
       'fresh native model transport with checkpoint/restore is required');
     stableAlgorithmJSON(packet);
     const saved=copy(packet);verifyDriverCheckpoint(saved,policy);
+    if(saved.policy.serviceAdmission){
+      admissionCoordinatorPolicy(serviceAdmissionCoordinator,saved.bridge.public.timeline[0].fields.session,
+        saved.policy.serviceAdmission);
+      demand(isDeepStrictEqual(await serviceAdmissionCoordinator.assertActive(),saved.policy.serviceAdmission),
+        'service admission did not acknowledge the active recovery policy');
+    }
+    else demand(serviceAdmissionCoordinator===null,'unfenced checkpoint cannot acquire a service admission claim on restore');
     // Restore host ownership before opening native model state. Neither step
     // dispatches a request or re-registers an existing callback. Unknown host
     // outcomes remain uncertain and require an explicit broker receipt.
@@ -610,7 +679,8 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
         receipt.hostDispatches===0,'native restoration did not attest this checkpoint without host dispatch');
       const recovery={contexts:saved.contexts,attempts:saved.attempts,staleRetries:saved.staleRetries};
       recoveryTickets.add(recovery);
-      const driver=new RegionSelectedModelDriver({select,harness,...saved.policy,origin:'model',signal,recovery});
+      const driver=new RegionSelectedModelDriver({select,harness,...saved.policy,origin:'model',signal,recovery,
+        serviceAdmissionCoordinator});
       recoveryTickets.delete(recovery);return driver;
     }catch(error){select.close?.();throw error;}
   }

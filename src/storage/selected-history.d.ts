@@ -1,3 +1,5 @@
+import type {SelectedServiceAdmissionFence} from './selected-service-coordinator.js';
+
 export interface SelectedHistoryReceipt {
   readonly schema: 'semantic-selected-history-receipt/8';
   readonly streamId: string;
@@ -30,7 +32,7 @@ export interface SelectedTerminalCloseReceipt {
   session: string;
   reason: string;
 }
-export type SelectedHistoryTerminalEvent =
+export type SelectedHistoryTerminalEvent = {serviceAdmission?: SelectedServiceAdmissionFence} & (
   | {schema: 'semantic-selected-terminal-event/1'; terminalId: string; phase: 'requested';
       session: string; invocationId: string; reason: string; baseCheckpointDigest: string;
       snapshot: SelectedTerminalSnapshot; snapshotDigest: string}
@@ -39,8 +41,8 @@ export type SelectedHistoryTerminalEvent =
       snapshot: SelectedTerminalSnapshot; snapshotDigest: string; closeReceipt: SelectedTerminalCloseReceipt}
   | {schema: 'semantic-selected-terminal-event/1'; terminalId: string; phase: 'unknown';
       session: string; invocationId: string; reason: string; baseCheckpointDigest: string;
-      snapshot: SelectedTerminalSnapshot; snapshotDigest: string; failure: string};
-export type SelectedTerminalDisposition =
+      snapshot: SelectedTerminalSnapshot; snapshotDigest: string; failure: string});
+export type SelectedTerminalDisposition = {serviceAdmission?: SelectedServiceAdmissionFence} & (
   | {schema: 'semantic-selected-terminal-disposition/1'; phase: 'requested'; status: 'requested';
       terminalId: string; session: string; invocationId: string; reason: string;
       historyReceipt: SelectedHistoryReceipt; snapshotDigest: string}
@@ -49,7 +51,7 @@ export type SelectedTerminalDisposition =
       historyReceipt: SelectedHistoryReceipt; snapshotDigest: string; closeReceipt: SelectedTerminalCloseReceipt}
   | {schema: 'semantic-selected-terminal-disposition/1'; phase: 'unknown'; status: 'unknown';
       terminalId: string; session: string; invocationId: string; reason: string;
-      historyReceipt: SelectedHistoryReceipt; snapshotDigest: string; failure: string};
+      historyReceipt: SelectedHistoryReceipt; snapshotDigest: string; failure: string});
 /** Explicit complete checkpoint cuts; the embedding independently retains the head. */
 export declare class DurableSelectedHistoryJournal {
   constructor(options: DurableSelectedHistoryJournalOptions);

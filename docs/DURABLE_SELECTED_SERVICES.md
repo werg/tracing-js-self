@@ -220,8 +220,9 @@ later result recovery without another service call.
 ### Required supervisor and selected-history ordering
 
 The service admission log and `DurableSelectedHistoryJournal` are separate
-authorities. This API does not atomically join their writes or automatically
-insert a service fence into the selected driver's cancellation path.
+authorities. `SelectedServiceAdmissionCoordinator` can order their terminal
+boundaries through the selected driver, as described below. It does not
+atomically join writes across services or history storage.
 
 For a successor, first verify the selected checkpoint and public history through
 the ordinary recovery path. Then durably advance each participating service's
@@ -238,6 +239,80 @@ does not establish the order. If service fencing fails or its acknowledgement
 is unavailable, inspect or retry the exact control command; do not report a
 successful admission fence. A native selector's close receipt alone supplies
 no service admission authority.
+
+### Coordinate selected-driver cancellation and recovery
+
+Use an explicit supervisor-owned coordinator for the complete service set whose
+admissions must stop when this driver session is cancelled:
+
+```js
+import {SelectedServiceAdmissionCoordinator} from 'tracing-js-self/storage/node';
+import {RegionSelectedModelDriver} from 'tracing-js-self/semantic/v8';
+
+const serviceAdmissionCoordinator=new SelectedServiceAdmissionCoordinator({
+  sessionId:'session1',
+  services:[{journal:supervisor,owner:nextOwner}]
+});
+const driver=new RegionSelectedModelDriver({
+  select,harness,...driverPolicy,serviceAdmissionCoordinator
+});
+const first=await driver.enableDurableHistory({
+  journal:historyJournal,
+  acknowledge:retainIndependentHistoryHead
+});
+```
+
+The coordinator captures the declared service IDs and owner receipts. The driver
+binds that sorted service set and session into its checkpoint policy. Retain the
+complete expected policy independently, including its `serviceAdmission` field;
+recovery cannot silently omit or replace that field. This is an opt-in contract
+for the declared registry, not discovery or enforcement of unrelated services.
+Keep the coordinator and the underlying supervisor methods outside guest/model
+authority, and give service workers only their `forOwner()` interfaces.
+
+Cancellation immediately stops new local model selection, then terminates each
+declared service session and independently inspects its durable terminal state.
+Only after **every** service acknowledges the exact reason and owner does the
+driver append and independently acknowledge its `requested` terminal history
+entry. The subsequent `closed` or `unknown` entry retains the same complete
+service-fence proof. A positive native close still describes native closure;
+the separate service receipts describe admission fencing. Work admitted before
+a fence may finish, and an uncertain external result stays uncertain.
+
+If a service write, directory sync or verification fails, no terminal history
+entry or native close is initiated by that cancellation attempt. Services already
+fenced remain fenced. While the same driver is retained,
+`await driver.retryServiceAdmissionCancellation()` retries only this pre-history
+failure using the original reason and owner receipts. It cannot retry a lost
+history-head acknowledgement or invent a new head. The ordinary service journal
+retry path synchronizes any already-visible transition again before acknowledging
+it. A history write/acknowledgement failure requires the independently retained
+history head and normal recovery instead.
+
+For fresh recovery, pass an independently constructed coordinator over the same
+service journals as `serviceAdmissionCoordinator` to `restoreLatest()` or
+`restore()`. A terminal history result is returned only after the coordinator
+independently replays and syncs each exact service terminal receipt. Rehashing a
+forged history and receipt does not replace service authority. Active restoration
+checks that every declared service is still active under its supplied owner
+before opening native model state. A terminal or partially terminal service set
+with only an older active history cut refuses active restoration. It does not
+infer a successful native close or erase unknown work. A crash in that interval
+still needs supervisor reconciliation; completing cancellation from a different
+process without a retained terminal history cut is not claimed here.
+
+These checks establish an ordered boundary, not a cross-store transaction or a
+lease. Another supervisor can advance ownership after an active-state read; each
+new actual service admission still rechecks ownership atomically in its own log.
+Successor ownership coordination, callback/resource completion, incoming-input
+atomicity, journal rotation and deployment rollback remain separate obligations.
+
+The service-coordinator and selected-history tests cover partial I/O failure,
+same-request retry, owner changes, complete receipt binding, withheld terminal
+history/native close, lost history acknowledgements, forged/rehashed receipts,
+fresh service-journal reads and refusal before native restoration. Their supplied
+model-shaped snapshots are explicit test fixtures; they do not establish learned
+execution or production-model recovery.
 
 If service fencing succeeds but selected-history recording later fails, the
 service remains fenced and the selected-history result is separately uncertain.

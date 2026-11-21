@@ -16,6 +16,42 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Coordinated terminal service/history authority — 22 November 2026
+
+The coordinator published at `d1e3045` now participates in the selected-driver
+cancellation and recovery path. The exact declared service set is retained in
+checkpoint policy. All service sessions must durably acknowledge and independently
+verify their terminal fence before the driver acknowledges requested terminal
+history. Closed/unknown terminal phases retain the same proof; fresh recovery
+checks the service-owned logs independently rather than trusting rehashed history.
+An older active cut cannot reopen native state after partial/full fencing or under
+a stale service owner. An explicit live retry exists only for service failures
+before terminal history; uncertain history acknowledgements cannot use it.
+
+The complete local service/history selection passes **115/115**, zero skips.
+Original temporary-directory, immutable-test-input and sparse-catalog failures,
+the final log, exact historical hosted logs and gallery reports are retained at
+`docs/evidence/service-history-coordination-2026-11-22/`. The initial 28-check and
+50-check selections overlap the final selection. These controls use supplied
+model snapshots and do not claim learned execution or current-pair native/data
+qualification. Documentation states the bounded contract and supervisor API.
+
+Historical producer `a494f00` / consumer `776519e` has now been inspected:
+selected66 and gallery11 each pass source/native/token/packing; the selected66
+ordinary optimizer/resume/export/service-restore cycle passes at exactly two
+optimizer updates. Its 77,765 generated tokens include 76,153 detailed tokens;
+packing retains 9,286 physical / 2,603 logical records. All665 original source and
+native checks pass, but that job was cancelled during token measurement. Its
+later gates remain incomplete; no aggregate full-suite success is claimed.
+
+**Remaining:** cross-process supervisor reconciliation if services were fenced
+before terminal history survived, coordinated successor/history ownership,
+callback/resource completion, incoming-input atomicity, safe rotation and
+rollback/deployment proof. Production child orchestration, truthful behavior
+census, normal V8 launch qualification, installed full-population verification,
+namespace/native source authority, remaining language families and held-out model
+quality remain active. **0/17 complete packages are closed.**
+
 ## Fenced service authority, namespace corrections and production admission gaps — 21 November 2026
 
 Producer `8dcf4b3` publishes the reviewed service-session fence. New claims,
