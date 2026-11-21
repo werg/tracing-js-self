@@ -149,13 +149,24 @@ test('imports are read-only and unknown named exports fail at link time',()=>{
     assert.throws(()=>linkEvaluatedModules(request),/Unsupported evaluated-module/);
 });
 
-test('module namespace objects and exotic syntax do not silently delegate to Node',()=>{
-  const invalid=[
-    {modules:{'a.js':"export class C {}"},entryModule:'a.js',exportName:'C'},
-    {modules:{'a.js':"export function * f(){yield 1;}"},entryModule:'a.js',exportName:'f'}
-  ];
-  for(const request of invalid)
-    assert.throws(()=>linkEvaluatedModules(request),/Unsupported evaluated-module/);
+test('exported classes and synchronous generators execute owned declarations with original ESM semantics',async()=>{
+  for(const source of [
+    'export class C{static observed=this.name;value(){return 7;}}'+
+      'export function run(){return [C.name,C.observed,new C().value()];}',
+    'export function* values(){yield 1;yield 2;}'+
+      'export function run(){const iterator=values();return [values.name,iterator.next().value,'+
+        'iterator.next().value,iterator.next().done];}'
+  ]){
+    const native=await import('data:text/javascript,'+encodeURIComponent(source)),expected=native.run(),
+      run=await verified({modules:{'main.js':source},entryModule:'main.js',exportName:'run'});
+    assert.deepEqual(run.result,expected);
+  }
+});
+
+test('module async-generator declarations retain their explicit owned frontend boundary',()=>{
+  assert.throws(()=>linkEvaluatedModules({modules:{
+    'main.js':'export async function* values(){yield 1;}export function run(){return 0;}'
+  },entryModule:'main.js',exportName:'run'}),/Unsupported evaluated-module.*async generator/);
 });
 
 test('diamond dependencies initialize once, with two distinct module side effects',async()=>{
