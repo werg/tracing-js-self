@@ -184,3 +184,5 @@ export function createDurableTraceStore(options) {
 
 export {DurableRetainedModuleStore,DurableRetainedModuleStorageError,
   createDurableRetainedModuleStore} from './retained-session.js';
+
+export {DurableHostIngressStore,createDurableHostIngressStore} from './host-ingress.js';

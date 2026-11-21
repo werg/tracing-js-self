@@ -282,7 +282,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     const policy=Object.freeze({checkpointIdentity,tokenizerIdentity,nativeIdentity:copy(nativeIdentity),
       hostLimits:copy(retainedHostLimits),automaticDelivery:retainedAutomaticDelivery,
       maxSelections,maxOutstanding,maxStaleRetries});
-    this.checkpoint=async()=>{
+    this.checkpoint=async({ingressStore=null}={})=>{
       demand(origin==='model'&&typeof select.checkpoint==='function',
         'durable recovery requires a checkpoint-capable native model selector');
       const unlock=await acquire();
@@ -298,8 +298,9 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
           [...harness.invocations.values()].every(row=>row.controller.maxGenerated===retainedHostLimits.maxGenerated),
           'host continuation limits changed after the driver policy was frozen');
         const native=await select.checkpoint();
+        const bridge=ingressStore?await harness.checkpointDurable({ingressStore}):harness.checkpoint();
         const body={schema:'semantic-selected-driver-checkpoint/8',policy:copy(policy),
-          bridge:harness.checkpoint(),contexts:copy(contexts),attempts:copy(attempts),staleRetries,native:copy(native)};
+          bridge,contexts:copy(contexts),attempts:copy(attempts),staleRetries,native:copy(native)};
         const packet={...body,digest:hashAlgorithmData(body)};
         verifyDriverCheckpoint(packet,policy);return packet;
       }finally{unlock();}
@@ -312,7 +313,8 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     // Restore host ownership before opening native model state. Neither step
     // dispatches a request or re-registers an existing callback. Unknown host
     // outcomes remain uncertain and require an explicit broker receipt.
-    const harness=RegionExecutionHarness.restore(saved.bridge,harnessOptions);
+    const harness=saved.bridge.ingress||harnessOptions.ingressReceipt?await RegionExecutionHarness.restoreDurable(saved.bridge,harnessOptions):
+      RegionExecutionHarness.restore(saved.bridge,harnessOptions);
     demand(harness.inner.maxGenerated===policy.hostLimits.maxGenerated&&
       harness.inner.maxOutstanding===policy.hostLimits.maxOutstanding&&
       harness.inner.automaticDelivery===policy.automaticDelivery&&

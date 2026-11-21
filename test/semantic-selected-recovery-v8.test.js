@@ -4,6 +4,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {DurableHostIngressStore} from '../src/storage/host-ingress.js';
 import {RegionSelectedModelDriver} from '../src/semantic/selected-execution-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {encodeDetailedRecord} from '../src/semantic/detail-v8.js';
@@ -216,5 +220,42 @@ test('recovery retains stale attempts and cannot reset their independent retry b
     await assert.rejects(restored.runInvocation('again'),/stale prediction retry budget exhausted/);
     assert.equal(restored.attempts.length,4);assert.equal(restored.attempts.at(-1).status,'stale-limit');
     assert.equal(restored.metrics().staleRetries,1);
+  }finally{restored.close();}
+});
+
+test('coordinated driver recovery verifies private ingress before native restore and resumes queued callbacks',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'v8-driver-ingress-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const store=new DurableHostIngressStore({directory});
+  const source='"use strict";function run(){host.listen("tick",handler);return 1;}function handler(value){return value;}';
+  const root=[line('allocate',{name:'fn',kind:'closure',code:'handler',captures:[],properties:[]}),
+    line('request',{effect:'registration',operation:'demo.listen',invocation:'call',arguments:[['str','tick'],['ref','fn']],
+      site:site(source,'demo.listen'),payload:'["tick",{"$ownedCallback":"fn"}]',promise:'registration'}),
+    line('return',{value:['num',1]}),line('end',{kind:'return'})];
+  const choose=request=>{
+    const id=request.context.invocationId,index=request.public.timeline.filter(row=>row.mode==='generated'&&row.fields.invocationId===id).length;
+    return id==='call'?root[index]:index===0?line('return',{value:['num',5]}):line('end',{kind:'return'});
+  };
+  let registrations=0;const limits={...policy,maxSelections:6};
+  const driver=new RegionSelectedModelDriver({select:suppliedSelector(choose),...limits,
+    harness:begin(source,{'demo.listen':(_,meta)=>{registrations++;return meta.subscriptionId(1);}},'retained')});
+  await finish(driver,'call');
+  driver.bridge.postEvent({subscriptionId:'callback1',eventId:'saved-arrival',args:[5],deliver:false});
+  await assert.rejects(driver.checkpoint(),/unjournaled native arrivals/);
+  const packet=await driver.checkpoint({ingressStore:store});driver.close();
+  const denied=suppliedSelector(choose);
+  await assert.rejects(RegionSelectedModelDriver.restore(packet,{select:denied,policy:limits}),/externally retained ingress receipt/);
+  assert.equal(denied.controls().restoreCalls,0,'host recovery must validate before model state opens');
+  const next=suppliedSelector(choose),restored=await RegionSelectedModelDriver.restore(packet,{select:next,policy:limits,
+    harnessOptions:{ingressStore:store,ingressReceipt:copy(packet.bridge.ingress)}});
+  try{
+    assert.equal(restored.metrics().predictionAttempts,4);
+    restored.bridge.deliverReadyEvents('callback1');
+    await until(()=>restored.bridge.invocations.get('event1')?.status==='completed');
+    await until(()=>!restored.running.size);
+    assert.equal(restored.metrics().predictionAttempts,6);assert.equal(registrations,1);
+    const again=await restored.checkpoint();assert.equal(again.attempts.length,6);
+    assert.equal(restored.bridge.handlers.get('callback1').state,'lost');
+    assert.equal(again.bridge.ingress,undefined,'the consumed private arrival is now public history');
   }finally{restored.close();}
 });

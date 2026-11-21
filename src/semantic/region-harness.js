@@ -13,11 +13,13 @@ import {pureRegionEntry,evaluatePureRegion,encodePureRegionRecord,decodePureRegi
 import {encodeProtocolRecordV8,decodeProtocolRecordV8} from './protocol-codec-v8.js';
 import {applyProtocolRecordV8,assertProtocolDetailCompatible,restoreProtocolStateV8,allowsProtocolInternalSchedulerV8,allowsProtocolCompletionDetailV8} from './protocol-state-v8.js';
 import {assertPlainPromiseResolutionV8,assertObservedPromiseResolutionV8} from './scheduler-boundaries-v8.js';
+import {capturePendingIngress,restorePendingIngress} from './pending-ingress-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual;
 const clean=value=>JSON.parse(JSON.stringify(value));
 const fail=message=>{const error=new TypeError('Region execution: '+message);error.category='region-authority';throw error;};
 const protocolCheckpointSchema='semantic-protocol-continuation/1';
+const ingressTickets=new WeakSet();
 const protocolDetailKinds=new Set(['allocate','bind','compute','choose','read','write','call','return','throw','end','request']);
 const internalSchedulerDetailKinds=new Set(['promise','await','resume','job','transfer']);
 function assertSchedulerDetail(controller,{kind,fields}){
@@ -239,6 +241,19 @@ export class RegionExecutionHarness {
   modelContext(invocationId){
     this.sync();const activation=this.activation(invocationId),controller=activation.controller;
     const state=sharedRegionState(controller);
+    // Lost process-local handles and uncertain transports do not change the
+    // acknowledged model history. Recover their public obligations by checked
+    // replay; live dispatch/reattachment still consults the stricter host state.
+    let host=this.inner;
+    if([...host.intents.values()].some(item=>['dispatching','uncertain'].includes(item.status))||
+       [...host.handlers.values()].some(item=>item.state==='lost')||
+       [...host.callbacks.values()].some(item=>item.state==='lost')){
+      const digest=hashAlgorithmData(this.timeline);
+      if(this.obligationReplay?.digest!==digest)this.obligationReplay={digest,
+        host:RegionExecutionHarness.replay(this.exportEpisode(),{requireTerminal:false,
+          maxGenerated:host.maxGenerated,maxOutstanding:host.maxOutstanding}).inner};
+      host=this.obligationReplay.host;
+    }
     const publicResult=intent=>{
       if(!intent.result)return intent;
       const row=this.timeline.findLast(row=>row.kind==='result'&&
@@ -250,11 +265,11 @@ export class RegionExecutionHarness {
     return clean({schema:REGION_CONTEXT_VERSION,representation:'mixed',profile:REGION_PROFILE,
       invocationId,programs:[...this.programs].map(([id,program])=>({id,program})),
       input:controller.input,state,regionCursor:{active:this.active,consumed:this.consumed},
-      obligations:{intents:[...this.inner.intents].map(([key,{args,resultDigest,...intent}])=>[key,publicResult(intent)]),
-        handlers:[...this.inner.handlers].map(([key,handler])=>[key,{...handler,
+      obligations:{intents:[...host.intents].map(([key,{args,resultDigest,...intent}])=>[key,publicResult(intent)]),
+        handlers:[...host.handlers].map(([key,handler])=>[key,{...handler,
           seen:[...handler.seen].filter(id=>!handler.queue.some(event=>event.eventId===id)),queue:[]}]),
-        callbacks:[...this.inner.callbacks].map(([key,callback])=>[key,{...callback,queued:[]}]),
-        closureQueue:this.inner.closureQueue.map(({args,...row})=>row)},
+        callbacks:[...host.callbacks].map(([key,callback])=>[key,{...callback,queued:[]}]),
+        closureQueue:[]},
       visibleThrough:this.timeline.length,prefixDigest:hashAlgorithmData(this.timeline)});
   }
   exportEpisode(){this.sync();return {schema:REGION_EXECUTION_VERSION,traceFormat:REGION_TRACE_VERSION,
@@ -293,6 +308,7 @@ export class RegionExecutionHarness {
   }
   registerEventHandler(options){const result=this.inner.registerEventHandler(options);this.sync();return result;}
   postEvent(options){const result=this.inner.postEvent(options);this.sync();return result;}
+  deliverReadyEvents(id){const result=this.inner.deliverReadyEvents(id);this.sync();return result;}
   closeEventHandler(id){const result=this.inner.closeEventHandler(id);this.sync();return result;}
   closeRealm(id,options){const result=this.inner.closeRealm(id,options);this.sync();return result;}
   reconcile(invocationId,effectId,options){
@@ -300,14 +316,32 @@ export class RegionExecutionHarness {
       {...options,effect:effectId,status:options?.disposition});
     const result=this.inner.reconcile(invocationId,effectId,options);this.sync();return result;
   }
-  checkpoint(){
+  checkpoint({ingress=null}={}){
     this.sync();if(this.active)fail('cannot checkpoint an uncommitted local transition');
+    if(ingress!==null){
+      if(!ingressTickets.has(ingress)||!eq(ingress.snapshot,capturePendingIngress(this)))
+        fail('durable ingress snapshot differs from the current callback boundary');
+    }else if([...this.inner.handlers.values()].some(handler=>handler.queue.length)||
+      [...this.inner.callbacks.values()].some(callback=>callback.queued.length)||this.inner.closureQueue.length)
+      fail('unjournaled native arrivals require an explicit durable ingress receipt');
     const body={schema:REGION_CONTINUATION_VERSION,profile:REGION_PROFILE,public:this.exportEpisode(),
-      regionCursor:{active:null,consumed:copy(this.consumed)},selected:this.hasProtocol()?this.protocolCheckpoint():this.inner.checkpoint()};
+      regionCursor:{active:null,consumed:copy(this.consumed)},selected:this.hasProtocol()||ingress?
+        this.protocolCheckpoint({ingress}):this.inner.checkpoint(),...(ingress?{ingress:copy(ingress.receipt)}:{})};
     return {...body,integrity:hashAlgorithmData(clean(body))};
   }
-  protocolCheckpoint(){
-    if([...this.inner.handlers.values()].some(handler=>handler.queue.length)||
+  async checkpointDurable({ingressStore}={}){
+    if(!ingressStore||typeof ingressStore.put!=='function'||typeof ingressStore.get!=='function')
+      fail('durable ingress storage is required');
+    const snapshot=capturePendingIngress(this);
+    if(!snapshot.queues.length)return this.checkpoint();
+    const receipt=await ingressStore.put(snapshot),retained=await ingressStore.get(receipt);
+    if(!eq(snapshot,retained)||receipt.id!==hashAlgorithmData(snapshot))
+      fail('durable ingress storage did not acknowledge the exact snapshot');
+    const ticket={snapshot,receipt};ingressTickets.add(ticket);
+    try{return this.checkpoint({ingress:ticket});}finally{ingressTickets.delete(ticket);}
+  }
+  protocolCheckpoint({ingress=null}={}){
+    if(!ingress&&[...this.inner.handlers.values()].some(handler=>handler.queue.length)||
       [...this.inner.callbacks.values()].some(callback=>callback.queued.length)||this.inner.closureQueue.length)
       fail('unjournaled native arrivals require an explicit durable ingress receipt');
     return clean({schema:protocolCheckpointSchema,invocations:[...this.invocations].map(([id,activation])=>[
@@ -337,8 +371,20 @@ export class RegionExecutionHarness {
     }
     harness.replayingPublic=false;harness.inner.replaying=false;return harness;
   }
+  static async restoreDurable(packet,{ingressStore,ingressReceipt=null,...options}={}){
+    stableAlgorithmJSON(packet);const saved=copy(packet);
+    if(!eq(saved?.ingress??null,ingressReceipt))
+      fail('restore requires the externally retained ingress receipt');
+    if(!saved?.ingress)return this.restore(saved,options);
+    if(!ingressStore||typeof ingressStore.get!=='function')fail('durable ingress storage is required');
+    const snapshot=await ingressStore.get(saved.ingress);
+    if(hashAlgorithmData(snapshot)!==saved.ingress.id)fail('durable ingress receipt differs from stored snapshot');
+    const ticket={snapshot,receipt:saved.ingress};ingressTickets.add(ticket);
+    try{return this.restore(saved,{...options,ingress:ticket});}finally{ingressTickets.delete(ticket);}
+  }
   static restore(packet,options={}){
-    assertAlgorithmFields(packet,['schema','profile','public','regionCursor','selected','integrity'],'region checkpoint');
+    assertAlgorithmFields(packet,['schema','profile','public','regionCursor','selected','integrity',
+      ...(Object.hasOwn(packet??{},'ingress')?['ingress']:[])],'region checkpoint');
     const {integrity,...body}=packet;
     if(body.schema!==REGION_CONTINUATION_VERSION||body.profile!==REGION_PROFILE||hashAlgorithmData(clean(body))!==integrity)
       fail('checkpoint version or integrity');
@@ -352,9 +398,15 @@ export class RegionExecutionHarness {
     }
     const replayed=RegionExecutionHarness.replay(body.public,{...policy,requireTerminal:false});
     if(!eq(body.regionCursor,{active:null,consumed:replayed.consumed}))fail('checkpoint region cursor differs from public history');
-    if(replayed.hasProtocol()){
+    if(body.selected?.schema===protocolCheckpointSchema){
       replayed.inner.automaticDelivery=policy.automaticDelivery;
       if(!eq(body.selected,replayed.protocolCheckpoint()))fail('protocol checkpoint differs from exact public shared state');
+      if(body.ingress){
+        const ticket=options.ingress;
+        if(!ticket||!ingressTickets.has(ticket)||!eq(ticket.receipt,body.ingress))
+          fail('pending callbacks require independently read durable ingress');
+        restorePendingIngress(replayed,ticket.snapshot);
+      }
       for(const {controller} of replayed.invocations.values())if(controller.protocol)
         restoreProtocolStateV8(controller,controller.protocol);
       // Reattach only the embedding's explicitly supplied live services. Never
@@ -365,10 +417,11 @@ export class RegionExecutionHarness {
       for(const intent of replayed.inner.intents.values())
         if(['dispatching','dispatched'].includes(intent.status))intent.status='uncertain';
       for(const handler of replayed.inner.handlers.values())
-        if(['active','closing'].includes(handler.state))handler.state='lost';
+        if(handler.state==='active'||handler.state==='closing'&&!handler.queue.length)handler.state='lost';
       for(const callback of replayed.inner.callbacks.values())if(callback.state==='active')callback.state='lost';
       return replayed;
     }
+    if(body.ingress)fail('durable ingress requires the checked shared-state checkpoint');
     if(
       !eq(body.selected.timeline,replayed.inner.timeline))fail('checkpoint differs from public region history');
     replayed.inner=SelectedExecutionLifecycleV8.restore(body.selected,options);

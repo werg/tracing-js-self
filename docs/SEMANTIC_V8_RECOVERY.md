@@ -91,6 +91,60 @@ subscription through `restored.bridge.inner.reattachSubscription(...)`, then cal
 shared realm; it does not repeat the original registration request. Callback
 predictions consume the same retained global budget as the initial invocation.
 
+## Queued callback inputs at the checkpoint boundary
+
+Registered event callbacks can now be saved before the realm is ready to deliver
+them. Use `DurableHostIngressStore` from `tracing-js-self/storage/node` with a
+private POSIX directory. Its immutable snapshots use canonical graph bytes,
+content digests, atomic publication and file/directory synchronization.
+
+```js
+const ingressStore = new DurableHostIngressStore({directory: privateDirectory});
+const checkpoint = await driver.checkpoint({ingressStore});
+// Retain this expected receipt with the application's trusted checkpoint handle.
+// Do not derive the expected value from a packet presented for restoration.
+const ingressReceipt = checkpoint.bridge.ingress ?? null;
+
+const restored = await RegionSelectedModelDriver.restore(checkpoint, {
+  select: freshSelect, policy,
+  harnessOptions: {services, ingressStore, ingressReceipt}
+});
+restored.bridge.deliverReadyEvents(subscriptionId);
+```
+
+The standalone harness has corresponding `checkpointDurable({ingressStore})` and
+`RegionExecutionHarness.restoreDurable(packet, {ingressStore, ingressReceipt})`
+methods. The receipt is private host recovery evidence; it is never a model
+observation. Restoration checks its externally expected identity, reads the
+immutable snapshot again, and binds every queue to the exact session, public
+prefix, source-owned handler and queue limit before changing any queue. Removing
+or substituting the receipt in a rehashed checkpoint is refused when checked
+against the externally retained receipt. A changed public boundary, already
+delivered event, mismatched owner, corrupt object or oversized graph is refused.
+
+Queued values and their identities remain absent from model context until actual
+delivery. Graph encoding preserves aliases, cycles, BigInts, signed zero and
+other special numbers. A saved event can be delivered once while its native
+listener handle remains lost; admitting future arrivals still requires explicit
+reattachment. Restored transport uncertainty and lost handles remain private
+host restrictions. Model obligations come from the acknowledged public history,
+so a process loss alone cannot change the native model's causal input.
+
+Saving refuses a stale snapshot if another arrival or public transition occurs
+during the storage write. Neither write failure nor stale-snapshot refusal drops
+queued input. Callers may retry at a stable boundary. This saves the arrivals at
+the acknowledged checkpoint boundary; it is not a per-arrival durable broker
+log and does not acknowledge arrivals received after that snapshot. Pending
+unregistered callbacks and callbacks whose return value is awaited by native
+code still require a separate durable continuation and are explicitly refused.
+
+`test/semantic-durable-ingress-v8.test.js` covers fresh-process reconstruction,
+private-input isolation, graph preservation, receipt/source tampering, failed
+and concurrent writes, mixed Promise state and storage bounds. The coordinated
+driver control also verifies host validation before model restoration and the
+same consumed global prediction budget after callback delivery. These controls
+use explicit engineering records, not learned model selections.
+
 ## Current boundary and evidence
 
 This API requires one driver and a dedicated native transport for its session.

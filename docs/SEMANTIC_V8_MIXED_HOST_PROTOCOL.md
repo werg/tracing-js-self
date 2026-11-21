@@ -76,6 +76,12 @@ owner-track count. Native arrivals still waiting in unjournaled queues are absen
 from causal model context. A protocol checkpoint refuses such arrivals until an
 explicit durable ingress receipt exists; it does not silently discard them.
 
+Registered queued event callbacks can now be sealed at the checkpoint boundary
+with an independently read durable ingress receipt; see the
+[queued callback recovery API](SEMANTIC_V8_RECOVERY.md#queued-callback-inputs-at-the-checkpoint-boundary).
+Their values stay private until delivery. Unsealed input, return-value callbacks
+and arrivals outside the saved boundary still require further recovery work.
+
 Protocol checkpoints bind exact invocation state and the generated-record,
 outstanding-effect and automatic-delivery policies. Replay retains supplied live
 service bindings without invoking them. Restored acknowledged outstanding work

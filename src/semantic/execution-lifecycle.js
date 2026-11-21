@@ -367,7 +367,7 @@ export class SelectedExecutionCore {
     const handler=this.handlers.get(subscriptionId);
     demand(handler,'Unknown subscription');
     demand(!this.realms.get(handler.realmId)?.closed,'Cannot deliver an event to a closed realm');
-    if(!['active','closing'].includes(handler.state)||!handler.queue.length||
+    if(!(['active','closing'].includes(handler.state)||handler.state==='lost'&&handler.queue[0]?.durableIngress===true)||!handler.queue.length||
        (handler.realmPolicy==='retained'&&this.realms.get(handler.realmId)?.running))
       return null;
     const next=handler.queue.shift();
