@@ -18,31 +18,64 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Current checkpoint and active implementation
 
-The work remains incomplete and both PRs remain drafts. The current user
-instruction is to tackle **the hardest and least well-defined tasks first**.
-The 17 full acceptance packages remain open; increments below do not narrow them.
+Continuation on **21 November 2026**. Both PRs remain drafts; all 17 acceptance
+packages remain open. Work follows the user's hardest-first instruction.
 
-- Mixed Promise, host-call and retained-callback source execution, shared readiness,
-  replay-derived recovery and terminal realm closure are implemented and pushed.
-  The full producer V8/region regression run on `a13760d` passed **377 tests,
-  zero failures, zero skips**. Exact paired consumer/source admission is next.
-- Event-level source ownership is being integrated transactionally: every part
-  of an event must have one owner before the live public trace can change.
-  An isolated planner alone does not close the composition package.
-- Ordinary training-window reconstruction now preserves generated request controls.
-  The published consumer fix `821f6b0` has six focused controls and exact state
-  comparisons across 35 target positions. Supplied decoder bytes are engineering
-  controls, not evidence of learned execution.
-- Normal production readiness/recipe admission and distributed checkpoint/export
-  lineage remain active work. They must retain strict source, tokenizer and
-  preparation identities rather than permit an unverified-data bypass.
-- The actual pinned-tokenizer lifecycle has historical evidence for exact producer
-  `a4d0a56` / consumer `7da2150`: admission, optimizer update, fresh-process resume,
-  export/reload and selection recovery. Its generated output failed; learned
-  quality remains unqualified. New combined revisions require fresh qualification.
-- Complete edition coverage, production parity, held-out model studies and final
-  default cutover remain unfinished. Completed increments are committed and
-  published promptly; historical receipts retain their original identities.
+- Producer `444e6027d6c9ad6c9159e5083abe0dbfa82d528b`: all ten direct protocol source
+  adapters stage public and private state atomically. Rejected events preserve
+  the committed prefix and every pre/post observer runs. The 70 related source
+  controls passed with zero failures/skips, including mixed Number, Proxy,
+  binary memory, map callbacks and iterators. Producer `6888ca122460d3456f275dee4add9b61ba56b6f9`
+  then replaced first-match runtime dispatch with complete, unique ownership of
+  allocations, events and exiting frames. Eight final ownership/rollback controls,
+  28 routing/certification controls and 47 broader composition controls passed
+  without failures/skips (overlapping populations). The shared Promise/protocol
+  compiler bridge remains in active implementation.
+- Producer `39009dd2dbd3c34a01a97e834472a75cf7eca40f`: ownership registries and claim
+  requests are copied and frozen without executing caller accessors or Proxy
+  traps. The 13 coordinator/composition controls passed without failures/skips.
+- Fresh clean-pair qualification at producer `13070721a02b8e052112d2b259eb8de8a5400c4f`
+  / consumer `3a0eb90e3e7282e9b3cb2ca0da27454451b50e21` retained all **30 declared cases**:
+  **30 source-qualified, 26 native-admitted, four rejected**. The four direct
+  Promise/host/callback cases reached native replay but the producer receipt
+  validator still required a nested source artifact. The complete failed run is
+  retained; this is not an all-pass result.
+- Producer `1227eb88e0ed72efa6eb9c62136dc498ecaed2bd` corrects that receipt boundary:
+  direct evidence requires its exact source identity, fresh independent identity
+  verification and matching tokenizer/consumer/contract pins; mixed or forged
+  authorities are refused. Sixteen focused controls passed, zero failures/skips.
+  Fresh qualification at producer `6888ca122460d3456f275dee4add9b61ba56b6f9`
+  / consumer `c0ac528a5db70de51fb77f38ead88974c0fa386c` now passes **30 of 30 source checks
+  and 30 of 30 native admissions**, with the actual pinned tokenizer. This is a
+  bounded engineering population: zero optimizer work and no model-learning claim.
+- Consumer `721748f6c7867bd6eabea81b6b6b5a90a6ed9964` extracts neutral JS primitive
+  and heap semantics from the legacy V7 wire client. Seventy-six core regressions
+  pass. A fresh process blocks the legacy modules before V8 imports, then replays
+  **32 fixture examples / 1,181 contexts**, including prefix/checkpoint restore
+  and malformed-state refusal. This bounds native replay; ordinary lifecycle
+  transitive dependencies and installed-package absence remain under review.
+- Consumer `c0ac528a5db70de51fb77f38ead88974c0fa386c` adds strict V8 preflight to
+  ordinary readiness and an explicit V8 producer/production launch example.
+  The 57 affected tests passed, zero failures/skips, including actual pinned
+  tokenizer loading and missing-policy, altered-registry, orphaned-data and
+  old/unknown-schema refusal controls. Source audit boundaries in these unit
+  fixtures remain explicitly injected; this does not qualify a production run.
+- Distributed initialization, worker identity, checkpoint and export lineage are
+  under final review, with real-tokenizer local HTTP handshake/export/reload
+  controls passing. Ordinary full-source preparation/train/resume/export/reload
+  for the new implementation is next. A fresh-process trainer check exposed and
+  is removing a remaining unconditional legacy experiment import without
+  discarding the original checkpoint-state refusal rules.
+- The separate 30-case cost run measured 28 cases and retained two failed callback
+  reconstructions. Native packing was measured for all 30. Producer
+  `9a9c270ec835e77a5f5b8576f1d4d1f40d0c308f` fixes replay synthesizing a host closure
+  ahead of its recorded observation. Eleven focused controls pass; a fresh
+  full-pair cost run remains required. Complete original admission and cost
+  artifacts are retained in `docs/evidence/semantic-v8-admission-20261121/`.
+- Complete edition coverage, production parity, held-out model studies, durable
+  host ingress and deployment/rollback gates remain unfinished. Historical
+  receipts retain their original identities. No learned quality, release
+  readiness or default cutover is claimed.
 
 ## Overall progress
 
@@ -82,9 +115,9 @@ serving, and measured learned success.
 | 9 | Canonical selected serving and live restore | In progress | Standard serving route, training/serving byte parity, acknowledged-state restore, random/budget state, callbacks/child work, no redispatch. |
 | 10 | References, coercion and abrupt operations | In progress | General references, property keys, guest error objects, partial effects, nested binding and cleanup; source/public/native/restore cases. |
 | 11 | Promises, async and scheduler | In progress | Adoption order, repeated thenables, getter/throw/first-call/finally behavior; public/native transitions; combinators, async functions/generators and module interactions. |
-| 12 | Collections, construction, Proxy and iteration | Not started | Sparse/effectful arrays, collections, internal methods, private accessors, iterator consumers/delegation and checkpoint behavior. |
+| 12 | Collections, construction, Proxy and iteration | In progress (bounded families) | Sparse/effectful arrays, collections, internal methods, private accessors, iterator consumers/delegation and checkpoint behavior. |
 | 13 | Modules, persistent sessions, TS and host graphs | In progress | Per-module evaluation and sibling TLA scheduling, cycles/live bindings/namespaces/imports, persistent restore, emitted-JS provenance and host graph/lifecycle parity. |
-| 14 | Binary memory, RegExp and remaining intrinsics | Not started | Resizing/detachment/transfer/species/coercion, complete selected text/numeric families and iterator helpers, declared resource boundaries. |
+| 14 | Binary memory, RegExp and remaining intrinsics | In progress (bounded families) | Resizing/detachment/transfer/species/coercion, complete selected text/numeric families and iterator helpers, declared resource boundaries. |
 | 15 | Edition long tail and separate profiles | Not started | Dynamic eval and realms, applicable Annex B/Intl, weak references/finalization, shared agents and memory constraints; separately pinned later additions. |
 | 16 | Data, ordinary model lifecycle and studies | In progress | Regenerate and independently readmit corpus; optimizer/update/resume/export/reload; complete retained bundles; frozen held-out and comprehension studies; honest quality/cost gates. |
 | 17 | Coordinated default cutover and operational proof | Not started | Complete parity first; change defaults/remove legacy; freeze final pair; actual-head CI, installed absence tests, release restore, effect-safe rollback/deployment qualification. |
@@ -547,18 +580,84 @@ https://github.com/werg/megatoken/pull/38
 
 ## Latest published branch heads
 
-- Producer: `a13760d03e084600f6e8875dcae557cd98501bf6`.
-- Consumer: `821f6b0ba61299e65ddfcb4da23c4cb11d4886bc`.
-
-These are incremental checkpoints, not a final qualified release pair. Both PRs
-remain drafts. Historical local-only composition results are not current evidence.
+- Producer: `9a9c270ec835e77a5f5b8576f1d4d1f40d0c308f`.
+- Consumer: `c0ac528a5db70de51fb77f38ead88974c0fa386c`.
+- Latest complete source/native admission pair: producer
+  `6888ca122460d3456f275dee4add9b61ba56b6f9` / consumer
+  `c0ac528a5db70de51fb77f38ead88974c0fa386c`: **30 declared, 30 source-qualified,
+  30 native-admitted**, actual pinned tokenizer. Executable changes after this
+  pair require fresh qualification; this is not a release/default-cutover gate.
 
 ## Latest hosted-check observation
 
-At producer `892932b`, pinned spec/oracle, trace inspection and selected runtime/
-browser lanes passed. The paired V8 lane correctly refused unequal producer/
-pinned-consumer contract snapshots; the ongoing mixed-contract publication will
-refresh the exact consumer pin. Other lanes were still running at inspection.
-At consumer `e84027d`, the controlled selected-harness bridge passed and the
-remaining runs were in progress. These are partial observations, not an all-green
-final-head or release qualification.
+Observed hosted checks for producer `6888ca122460d3456f275dee4add9b61ba56b6f9`
+on 21 November 2026: owned-corpus audits, semantic inspection, selected harness
+and specification-reference checks passed; paired V8/V7 and Node suites were
+still running. Five older native-import jobs and input parity refused a
+consumer revision different from the admission policy; release restore then
+had no completed archive to restore. Producer
+`fe1eae67cb1c91295582dc1e40afdaa38dd2c103` corrects the two checkout workflows
+to read the exact policy revision directly. Extracted workflow steps and all
+three release-selection controls pass locally. Hosted requalification remains
+required. No all-green final-head or release result is claimed.
+
+## Current paired admission checkpoint — 20 November 2026
+
+- Consumer `328a0c4` retains the regenerated V8 contract and complete source interoperability snapshots. Producer `b16bb26` pins that consumer for V6/V7/V8; corresponding schema, fixture and interoperability digests now agree. Consumer `3a0eb90` updates its three source-check workflows to that producer. These are paired-input fixes, not completed qualification.
+- Full producer V8/region regression on `a13760d`: **377 passed, zero failures, zero skips**. Existing selected-runtime CI also exposed one assertion expecting the old validation error; the malformed authority is correctly rejected earlier by the strict schema check, and the assertion is being aligned with that exact refusal.
+- Actual mixed-source admission exposed a real entrypoint gap: the new `semantic-protocol-host-region-evidence/1` schema is not yet handled by the native-source CLI and consumer source-binding path. The original refusal is retained; no admission success is claimed. Both paths are being corrected with source-identity and tamper controls before regenerating fresh exact-pair receipts.
+- All **17 packages remain open**, including full edition scope, event-level projection integration, production training/export lineage, model quality and final release gates.
+
+## Delivered continuation — 21 November 2026
+
+- Producer `444e6027d6c9ad6c9159e5083abe0dbfa82d528b` — atomic direct-protocol source publication.
+  Ten adapters declare and restore their private retained state; Number callback
+  frames, array-map aliases, iterator/generator plans, construction, completion,
+  Proxy and binary-memory state participate in event staging. Every pre/post
+  observer runs even if another rejects. The array-map mutation guard now runs
+  before dispatch so an earlier adapter cannot bypass it. Four new controls and
+  70 existing source controls passed with zero failures/skips. Original public
+  records and source/native admission requirements are preserved. Remaining:
+  declarative ownership in this projector, exact-pair native admission and the
+  full composition package. Details: [source ownership](docs/SEMANTIC_V8_SOURCE_OWNERSHIP.md).
+
+- Producer `39009dd2dbd3c34a01a97e834472a75cf7eca40f` — immutable ownership declarations,
+  safe descriptor-only copying and refusal before caller accessors or Proxy traps.
+  Thirteen focused coordinator/composition checks passed.
+- Consumer `721748f6c7867bd6eabea81b6b6b5a90a6ed9964` — independent V8 primitive replay:
+  neutral helpers, 76 core regressions and a fresh-process import blocker covering
+  32 fixture examples / 1,181 contexts with prefix and checkpoint recovery.
+- Producer `1227eb88e0ed72efa6eb9c62136dc498ecaed2bd` — accept direct host evidence only
+  with exact fresh source-identity verification, rejecting missing, altered or
+  dual source authority. Sixteen focused receipt/process controls passed. The
+  earlier clean 30-source / 26-native result remains a failed attempt; requalification
+  is still required.
+- Consumer `c0ac528a5db70de51fb77f38ead88974c0fa386c` — ordinary readiness uses the
+  same strict V8 prepared-data policy as training; explicit V8 recipe selection
+  and a production launch example retain teaching, evaluation, checkpoint and
+  distributed-worker requirements. Fifty-seven affected tests passed with no
+  skips; pinned tokenizer checks executed. Complete production parity remains open.
+
+- Producer `6888ca122460d3456f275dee4add9b61ba56b6f9` — direct protocol source
+  ownership resolves every current allocation, event and exiting frame before
+  preparation or mutation. Missing/ambiguous/declined owners roll back; reversed
+  adapter registration produces identical records and certificates. Normalization
+  no longer inherits host prototype names as property-version counters. Final
+  controls: 8 ownership/transaction, 28 routing/certification, 47 composition,
+  all passing with no skips; these populations overlap.
+- Exact clean pair `6888ca122460d3456f275dee4add9b61ba56b6f9` /
+  `c0ac528a5db70de51fb77f38ead88974c0fa386c` — **30 declared source cases, 30
+  source-certified, 30 independently native-admitted** with pinned tokenizer
+  bytes. This includes all four direct mixed Promise/host/callback cases that
+  failed in the earlier 30/26 attempt. Costs and ordinary lifecycle are separate
+  gates; no model generation or optimizer updates occurred in this run.
+- Producer `fe1eae67cb1c91295582dc1e40afdaa38dd2c103` — older native CI and input
+  parity read their consumer commit from the existing admission policy, removing
+  a duplicated stale literal. Exact-revision verification remains enforced.
+
+- Producer `9a9c270ec835e77a5f5b8576f1d4d1f40d0c308f` — reconstruct causal training
+  contexts in recorded replay mode, preventing duplicate live handler-close
+  observations when callback-owned Promise jobs finish. Eleven causal
+  serialization/selection checks pass, including both previously failing real
+  sources and forged-host/context refusals. The original 28/30 cost failure is
+  preserved; the patch does not relabel it as a pass.
