@@ -57,7 +57,7 @@ if(catalog.acquisition.fullUpstreamTree!==snapshot.acquisition.fullUpstreamTree|
 const {specification,bytes}=readPinnedEcma262Specification({declared:campaign.profile?.specification});
 const toolFiles=['src/conformance/test262-scope-annotations.js','src/conformance/test262-catalog.js',
   'src/conformance/test262-acquisition.js','src/conformance/test262-specification.js','src/conformance/test262-campaign.js',
-  'src/test262-baseline.js','package-lock.json','tools/annotate-test262-scope.mjs'].map(path=>({path,
+  'src/test262-baseline.js','npm-shrinkwrap.json','tools/annotate-test262-scope.mjs'].map(path=>({path,
     sha256:createHash('sha256').update(readFileSync(new URL('../'+path,import.meta.url))).digest('hex')}));
 const toolIdentity={producerRevision:scopeProducerRevision,tree:scopeProducerTree,dirty:false,node:process.version,
   files:toolFiles,digest:conformanceDigest(toolFiles)};

@@ -157,7 +157,7 @@ class ReleaseRestoreTests(unittest.TestCase):
                     path.parent.mkdir(parents=True, exist_ok=True)
                     path.write_text("same lock")
             self.assertEqual(len(restore.verify_locks(restored, producer)), len(restore.LOCKS))
-            (producer / "package-lock.json").write_text("changed dependency")
+            (producer / "npm-shrinkwrap.json").write_text("changed dependency")
             with self.assertRaisesRegex(ValueError, "lock differs"):
                 restore.verify_locks(restored, producer)
 

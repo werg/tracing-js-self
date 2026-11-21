@@ -748,7 +748,7 @@ def package_release(args) -> dict:
              "locks/environment.json": tracer / "profiles/release-environment.lock.json",
              "locks/native-policy.json": tracer / "contracts/native-admission-policy-v6.json",
              "locks/requirements.lock": tracer / "tools/native-consumer/requirements.lock",
-             "locks/producer-package-lock.json": tracer / "package-lock.json",
+             "locks/producer-npm-shrinkwrap.json": tracer / "npm-shrinkwrap.json",
              "locks/oracle-package-lock.json": tracer / "tools/spec-oracle/package-lock.json"}
     if materialization:
         roots["materialized"] = document_root

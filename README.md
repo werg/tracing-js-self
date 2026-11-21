@@ -11,6 +11,11 @@ saved formats change in place; affected producers, consumers and fixtures are
 updated together. Existing numeric labels identify implementation paths and
 do not promise compatibility. See the [development instructions](AGENTS.md).
 
+The root `npm-shrinkwrap.json` is the single dependency lock for both `npm ci`
+and packed installations. It preserves exact dependency versions and integrity
+pins and ships the dependency evidence needed by original-source certification.
+The optional specification oracle keeps its separate lock in `tools/spec-oracle`.
+
 The [compositional v8 candidate](docs/SEMANTIC_REGIONS_V8.md) combines compact
 calculations with checked property access, calls, cleanup and suspension in one
 shared state. Its bounded source profiles cover Symbols and ordinary properties,

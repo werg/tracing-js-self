@@ -36,7 +36,7 @@ const implementation={producerRevision:execFileSync('git',['-C',root,'rev-parse'
   node:process.version,files:['src/conformance/test262-edition.js','src/conformance/ecma262-html-inventory.py',
     'src/conformance/test262-catalog.js','src/conformance/test262-acquisition.js',
     'src/conformance/test262-specification.js','src/test262-baseline.js',
-    'package-lock.json','tools/audit-test262-edition.mjs'].map(path=>({path,
+    'npm-shrinkwrap.json','tools/audit-test262-edition.mjs'].map(path=>({path,
       sha256:createHash('sha256').update(readFileSync(new URL('../'+path,import.meta.url))).digest('hex')}))};
 const body={schema:'test262-edition-audit-run/1',implementation,report};
 const output=resolve(options.get('--out')),document=Buffer.from(JSON.stringify({...body,digest:conformanceDigest(body)})+'\n');

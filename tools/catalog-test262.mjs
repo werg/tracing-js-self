@@ -53,7 +53,7 @@ function collect(directory){
   }
 }
 collect(join(root,'src'));
-sourceFiles.push(['package-lock.json',digest(readFileSync(join(root,'package-lock.json')))]);
+sourceFiles.push(['npm-shrinkwrap.json',digest(readFileSync(join(root,'npm-shrinkwrap.json')))]);
 const profile={name:'frozen-test262-acquisition',edition:'ECMAScript 2026',specification,
   parser:{name:'bounded-pratt',version:'2',implementationDigest:digest(readFileSync(join(root,'src/frontend.js')))},
   hostProfile:{name:'single-agent-owned-script',moduleResolver:'not-qualified',

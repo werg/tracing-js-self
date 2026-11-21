@@ -220,19 +220,27 @@ separate work.
 `test/semantic-public-entry-v8.test.js` installs a packed copy of the runtime
 assets with the exact package metadata and then removes historical wire,
 harness and source-compiler clients. Through the installed public V8 entry it
-checks direct source detail, a host effect, replay and mixed checkpoint
-continuation. A separate process checks complete pure, host-effect and protocol
-source examples and refuses a forged native receipt through the same public
-entry in a source checkout, with historical imports blocked by their resolved
-paths.
+checks direct source detail, a host effect, replay, mixed checkpoint continuation,
+and complete original-source checks and rechecks for pure, host-effect and
+protocol examples. A separate process repeats the source checks in a checkout
+with historical imports blocked by their resolved paths. Both reject a forged
+native receipt.
 
-Complete source admission currently requires the checkout's `package-lock.json`
-as environment evidence; npm omits that file from package archives. The installed
-gate retains that missing-evidence refusal rather than inventing provenance.
-Shipping the required dependency evidence remains a packaging boundary. These
-bounded engineering gates establish dependency separation for the exercised
-paths, not complete language coverage, whole-population parity, native admission
-or learned execution.
+Source identity binds the exact bytes of the publishable root
+`npm-shrinkwrap.json`. Its receipt field keeps the historical name
+`packageLockDigest`; this name now refers to the root shrinkwrap's SHA-256.
+The initial rename preserved every lock byte, dependency version and integrity
+pin. npm had omitted the previous root `package-lock.json` from archives, leaving
+installed source admission without its required evidence. The package now ships
+one authoritative root lock. The installed gate checks its exact bytes and
+refuses changed or missing lock evidence before native admission. Nested oracle
+locks and historical receipts retain their original inputs and meaning; changing
+the implementation or environment requires fresh source checks, never resigning
+an old artifact.
+
+These bounded engineering gates establish dependency separation for the exercised
+paths. Complete language coverage, whole-population parity, native admission and
+learned execution remain separate gates.
 
 ## Restore and effects
 

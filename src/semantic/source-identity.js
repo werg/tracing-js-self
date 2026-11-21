@@ -77,7 +77,9 @@ export function admissionEnvironment(){
       node:process.versions.node,v8:process.versions.v8,platform:process.platform,arch:process.arch,
       timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,
       parser:require('acorn/package.json').version,typescript:require('typescript/package.json').version,
-      packageLockDigest:sha256(readFileSync(new URL('package-lock.json',root))),
+      // Keep the existing receipt field name; hash the exact publishable root
+      // dependency lock. A package without this evidence cannot be admitted.
+      packageLockDigest:sha256(readFileSync(new URL('npm-shrinkwrap.json',root))),
       implementationDigest:identityDigest(files)};
   }
   return {...structuredClone(cachedEnvironment),

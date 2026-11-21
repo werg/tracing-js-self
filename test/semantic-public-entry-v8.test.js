@@ -70,7 +70,7 @@ test('public V8 source certification and protocol admission checks run with lega
   t.diagnostic(JSON.stringify(receipt));
 });
 
-test('packed public V8 installation executes direct source detail, effects and recovery with legacy clients absent',async t=>{
+test('packed public V8 installation certifies source and restores execution with legacy clients absent',async t=>{
   const directory=await mkdtemp(join(tmpdir(),'public-v8-install-'));
   t.after(()=>rm(directory,{recursive:true,force:true}));
   const staging=join(directory,'staging'),application=join(directory,'application'),
@@ -79,13 +79,15 @@ test('packed public V8 installation executes direct source detail, effects and r
   // Package the runtime assets used by this gate with the repository's exact
   // package metadata. Large historical reports are not runtime dependencies;
   // full release-archive restoration remains a separate qualification.
-  for(const name of ['src','tools','contracts','catalog','bin','package.json','README.md'])
+  for(const name of ['src','tools','contracts','catalog','bin','package.json','npm-shrinkwrap.json','README.md'])
     await cp(join(root,name),join(staging,name),{recursive:true});
   const env={...process.env,npm_config_cache:cache,npm_config_update_notifier:'false'};
   const packed=spawnSync('npm',['pack','--ignore-scripts','--json','--pack-destination',directory],
     {cwd:staging,env,encoding:'utf8',timeout:30000,maxBuffer:4*1024*1024});
   assert.equal(packed.status,0,packed.stderr||packed.error?.message);
-  const filename=JSON.parse(packed.stdout)[0].filename;
+  const manifest=JSON.parse(packed.stdout)[0],filename=manifest.filename;
+  assert(manifest.files.some(file=>file.path==='npm-shrinkwrap.json'));
+  assert(!manifest.files.some(file=>file.path==='package-lock.json'));
   await writeFile(join(application,'package.json'),JSON.stringify({name:'public-v8-consumer',private:true,type:'module'}));
   // Pack the exact already-available dependencies and provide all three local
   // archives to npm. Merely copying dependencies into node_modules lets npm
@@ -104,6 +106,10 @@ test('packed public V8 installation executes direct source detail, effects and r
   assert.equal(install.status,0,install.stderr||install.error?.message);
   assert.deepEqual(JSON.parse(await readFile(join(installed,'package.json'),'utf8')).exports,
     JSON.parse(await readFile(join(root,'package.json'),'utf8')).exports);
+  const lock=await readFile(join(root,'npm-shrinkwrap.json'));
+  await assert.rejects(readFile(join(root,'package-lock.json')),error=>error.code==='ENOENT');
+  assert.deepEqual(await readFile(join(installed,'npm-shrinkwrap.json')),lock);
+  await assert.rejects(readFile(join(installed,'package-lock.json')),error=>error.code==='ENOENT');
   for(const path of legacyFiles){
     await rm(join(installed,path));
     await assert.rejects(readFile(join(installed,path)),error=>error.code==='ENOENT');
@@ -114,7 +120,39 @@ test('packed public V8 installation executes direct source detail, effects and r
   assert.equal(run.status,0,run.stderr||run.error?.message);
   const receipt=JSON.parse(run.stdout.trim());
   assert.equal(receipt.valid,true);assert.deepEqual(receipt.results.map(row=>row.id),['pure','effect']);
-  assert.equal(receipt.sourceAdmission,'refused-missing-packaged-lock-evidence');
   assert.equal(receipt.nativeCalls,1);
   t.diagnostic(JSON.stringify(receipt));
+
+  await cp(new URL('./fixtures/semantic-v8-public-source-client.mjs',import.meta.url),join(application,'source.mjs'));
+  const sourceRun=spawnSync(process.execPath,['source.mjs','--installed','--write-evidence','source-evidence.json'],
+    {cwd:application,env,encoding:'utf8',timeout:90000,maxBuffer:2*1024*1024});
+  assert.equal(sourceRun.status,0,sourceRun.stderr||sourceRun.error?.message);
+  const sourceReceipt=JSON.parse(sourceRun.stdout.trim());
+  assert.equal(sourceReceipt.sourceAdmission,'verified-exact-lock-evidence');
+  assert.deepEqual(sourceReceipt.results.map(row=>row.id),['pure','effect','protocol']);
+  t.diagnostic(JSON.stringify(sourceReceipt));
+
+  // Rechecking previously admitted bytes must reject changed dependency
+  // evidence before consulting a native consumer, even when JSON stays valid.
+  await writeFile(join(installed,'npm-shrinkwrap.json'),Buffer.concat([lock,Buffer.from('\n')]));
+  const tamper=`import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+    import {recheckRegionEvidence,loadV8NativePolicy} from 'tracing-js-self/semantic/v8';
+    const candidate=JSON.parse(readFileSync('source-evidence.json','utf8'));let nativeCalls=0;
+    await assert.rejects(recheckRegionEvidence(candidate,{nativePolicy:loadV8NativePolicy(),
+      nativeConsumer:async()=>{nativeCalls++;return {admitted:true};}}),/runtime, dependency or verifier environment/);
+    assert.equal(nativeCalls,0);`;
+  const tampered=spawnSync(process.execPath,['--input-type=module','--eval',tamper],
+    {cwd:application,env,encoding:'utf8',timeout:30000,maxBuffer:1024*1024});
+  assert.equal(tampered.status,0,tampered.stderr||tampered.error?.message);
+
+  await rm(join(installed,'npm-shrinkwrap.json'));
+  const missing=`import assert from 'node:assert/strict';
+    import {verifyRegionTrainingCase} from 'tracing-js-self/semantic/v8';
+    await assert.rejects(verifyRegionTrainingCase({source:'"use strict";function run(){return 7;}',
+      entry:'run',family:'missing-lock',fixture:{calls:[]}}),
+      error=>error.code==='ENOENT'&&error.path.endsWith('/npm-shrinkwrap.json'));`;
+  const omitted=spawnSync(process.execPath,['--input-type=module','--eval',missing],
+    {cwd:application,env,encoding:'utf8',timeout:30000,maxBuffer:1024*1024});
+  assert.equal(omitted.status,0,omitted.stderr||omitted.error?.message);
+  t.diagnostic('Changed and omitted packaged lock evidence refused; zero native admission calls.');
 });

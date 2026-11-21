@@ -12,7 +12,7 @@ test('receipt cache identity binds Python verifier code, operation catalog, lock
   for(const folder of ['src','tools','contracts','profiles','corpus','catalog'])mkdirSync(join(root,folder));
   const write=(path,bytes)=>{mkdirSync(dirname(join(root,path)),{recursive:true});writeFileSync(join(root,path),bytes);};
   for(const packageName of ['acorn','typescript'])write('node_modules/'+packageName+'/package.json','{"version":"1.0.0"}');
-  write('package-lock.json','{}');write('catalog/operations.json','{"operation":"one"}');
+  write('npm-shrinkwrap.json','{}');write('catalog/operations.json','{"operation":"one"}');
   write('tools/verifier.py','original_verifier = True');write('tools/native-consumer/requirements.lock','pinned-lock');
   const options={producerRevision:'a'.repeat(40),recipe:'engineering'};
   let previous=generationIdentity(root,options);
@@ -24,6 +24,9 @@ test('receipt cache identity binds Python verifier code, operation catalog, lock
     assert.notEqual(current.producerSourceTreeDigest,previous.producerSourceTreeDigest,path);
     previous=current;
   }
+  write('npm-shrinkwrap.json','{"changed":"dependency"}');
+  const changedLock=generationIdentity(root,options);
+  assert.notEqual(changedLock.dependencyLockSha256,previous.dependencyLockSha256);
   const original=process.env.TRACING_REFERENCE_ISOLATION;
   try{
     process.env.TRACING_REFERENCE_ISOLATION='trusted-process';

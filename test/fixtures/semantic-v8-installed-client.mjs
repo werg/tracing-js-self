@@ -1,6 +1,6 @@
 // Run from a separate packed installation with historical clients absent.
-// This tests direct source projection and runtime execution. Complete source
-// admission currently also requires the repository's dependency-lock evidence.
+// This tests direct source projection and runtime execution. The companion
+// public source client checks complete admission from this same installation.
 import assert from 'node:assert/strict';
 import * as v8 from 'tracing-js-self/semantic/v8';
 import {executeWithNativeServices} from 'tracing-js-self/native';
@@ -40,13 +40,8 @@ mixed.select('call',{kind:'end',fields:{kind:'return'}});
 assert.deepEqual(mixed.controller.completion.value,['num',8]);
 assert.deepEqual(v8.RegionExecutionHarness.replay(mixed.exportEpisode()).exportEpisode(),mixed.exportEpisode());
 
-// npm excludes package-lock.json from archives. Keep that existing admission
-// boundary explicit; do not inject or manufacture provenance to make it pass.
-await assert.rejects(v8.verifyRegionTrainingCase({...cases[0],entry:'run',
-  family:'installed-source-provenance-boundary',fixture:{calls:[]}}),
-  error=>error.code==='ENOENT'&&error.path.endsWith('/package-lock.json'));
 await assert.rejects(import('tracing-js-self/semantic'),error=>error.code==='ERR_MODULE_NOT_FOUND');
 await assert.rejects(import('tracing-js-self/training'),error=>error.code==='ERR_MODULE_NOT_FOUND');
 console.log(JSON.stringify({valid:true,entry:'tracing-js-self/semantic/v8',results,
   nativeCalls:calls,mixedContinuation:'restored-between-selected-records',
-  sourceAdmission:'refused-missing-packaged-lock-evidence',model:'engineering-only',defaultCutover:'not-claimed'}));
+  model:'engineering-only',defaultCutover:'not-claimed'}));

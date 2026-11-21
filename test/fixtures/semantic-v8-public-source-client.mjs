@@ -1,8 +1,14 @@
-// Run in a lock-bearing source checkout with historical wire clients blocked.
+// Run in a source checkout or installed package with its exact lock evidence.
 // All producer APIs below resolve through the supported public V8 subpath.
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {readFileSync,writeFileSync} from 'node:fs';
 import * as v8 from 'tracing-js-self/semantic/v8';
 
+const installed=process.argv.includes('--installed');
+const entry=import.meta.resolve('tracing-js-self/semantic/v8');
+if(installed)assert.match(entry,/\/node_modules\/tracing-js-self\/src\/semantic\/index-v8\.js$/);
+const lockDigest=createHash('sha256').update(readFileSync(new URL('../../npm-shrinkwrap.json',entry))).digest('hex');
 assert.equal(v8.REGION_EXECUTION_VERSION,'semantic-execution/8');
 assert.equal(v8.V8_LIFECYCLE_CONTRACT.checkpointVersion,'semantic-checkpoint/8');
 assert.equal(v8.SOURCE_ADMISSION_CONTRACT_V8.execution,'semantic-lifecycle/8');
@@ -21,6 +27,7 @@ let pure;
 for(const fixture of cases){
   const result=await v8.verifyRegionTrainingCase({...fixture,entry:'run',family:'installed-v8:'+fixture.id});
   assert(result.exported,result.reason);
+  if(fixture.id!=='protocol')assert.equal(result.exported.sidecar.sourceArtifact.sidecar.environment.packageLockDigest,lockDigest);
   const checked=await v8.recheckRegionEvidence(result.exported);
   assert.equal(checked.sourceValidated,true);assert.equal(checked.projectionValidated,true);
   assert.equal(checked.replayValidated,true);assert.equal(checked.native.admitted,false);
@@ -58,8 +65,10 @@ detailed.selected('call',v8.encodeDetailedRecord({kind:'end',fields:{kind:'retur
 assert.deepEqual(v8.SelectedExecutionLifecycleV8.restore(detailed.checkpoint()).timeline,detailed.timeline);
 
 // The historical aggregate still eagerly loads its historical clients.
-await assert.rejects(import('tracing-js-self/semantic'),/legacy dependency:/);
-await assert.rejects(import('tracing-js-self/training'),/legacy dependency:/);
+for(const path of ['tracing-js-self/semantic','tracing-js-self/training'])
+  await assert.rejects(import(path),error=>installed?error.code==='ERR_MODULE_NOT_FOUND':/legacy dependency:/.test(error.message));
+const destination=process.argv.indexOf('--write-evidence');
+if(destination!==-1)writeFileSync(process.argv[destination+1],JSON.stringify(pure));
 console.log(JSON.stringify({valid:true,entry:'tracing-js-self/semantic/v8',results,
   continuation:'restored-between-selected-records',nativeAdmission:'forged-receipt-refused',
-  model:'engineering-only',defaultCutover:'not-claimed'}));
+  lockDigest,sourceAdmission:'verified-exact-lock-evidence',model:'engineering-only',defaultCutover:'not-claimed'}));

@@ -27,7 +27,7 @@ DEFAULT_LIMITS = {"archiveBytes": 2 * 1024**3, "unpackedBytes": 8 * 1024**3,
 LOCKS = {"locks/environment.json": "profiles/release-environment.lock.json",
          "locks/native-policy.json": "contracts/native-admission-policy-v6.json",
          "locks/requirements.lock": "tools/native-consumer/requirements.lock",
-         "locks/producer-package-lock.json": "package-lock.json",
+         "locks/producer-npm-shrinkwrap.json": "npm-shrinkwrap.json",
          "locks/oracle-package-lock.json": "tools/spec-oracle/package-lock.json"}
 
 

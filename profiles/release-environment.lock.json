@@ -8,7 +8,7 @@
   "arch": "x64",
   "timezone": "UTC",
   "locale": "C.UTF-8",
-  "producerDependencies": "package-lock.json",
+  "producerDependencies": "npm-shrinkwrap.json",
   "oracleDependencies": "tools/spec-oracle/package-lock.json",
   "consumerDependencies": "tools/native-consumer/requirements.lock",
   "consumerPolicy": "contracts/native-admission-policy-v6.json",
