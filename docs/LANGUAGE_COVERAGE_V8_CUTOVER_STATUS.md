@@ -50,6 +50,62 @@ ownership, full module exotics/public admission, production parity, learned
 quality and final release/default cutover remain open. **0 of 17 complete
 acceptance packages are closed.**
 
+## Completed P19/C9 gates and public package isolation — 21 November 2026
+
+Producer `455b44d06e3b6fddb5f3ed39b5a3f3be0a1c91a9` publishes the explicit
+`tracing-js-self/semantic/v8` entry, preserving concurrent automatic-history and
+cancelled-sibling work through `dc7595e`. The V8 entry avoids the eager legacy
+aggregate, and the unchanged typed-value renderer is now neutral shared code.
+The tested API patch `3c5a1b6` passes **34/34** bounded controls, including an
+actual installed direct projection/replay/continuation with legacy clients
+physically absent. Installed full-source admission exposed the omitted root
+dependency lock. A separate canonical shrinkwrap repair is being verified;
+the missing-lock failure is retained, and the API-only commit does not claim
+that installed full-source acceptance is already complete.
+
+All measurements below bind exact clean producer
+`19eba4f4ef273e15c126d6a35cb38db05156e2d1` and consumer
+`9c557a7f1f509656ac231a0a08b17d2369763f96`, unless another pin is explicit.
+They are not relabeled as measurements of the later package entry or consumer
+numeric repair. **0 of 17 complete acceptance packages are closed.**
+
+| Completed gate | Result and boundary |
+| --- | --- |
+| Full recurring population | **47/47 source, 47/47 independent native, 47/47 exact-token and 47/47 packing checks pass**, covering 44 scripts and three original module graphs. Both source trees remain clean. There are 34 compact and 1,755 detailed records; detailed work consumes 55,388 of 56,597 generated tokens (97.86%). Flat observed/context cost is 2,951,658, terminal cost 1,789 and total cost 3,010,044. Native packing contains 6,920 physical chunks and 1,948 logical records, with 3,013,123 observed/context tokens. Model quality and serving latency are unmeasured. |
+| Fresh ordinary lifecycle | All 47 source/input candidates are frozen before execution. Prepare, train, fresh-process resume, export and real service restoration pass with **exactly two normal optimizer updates**. All 315 moment owners persist; 311 advance and 300 master tensors change. Omitted/null/substituted lineage is refused. Seven next-selection fields match after restoration; one consumed attempt is restored with zero reselections and host dispatches. The original one-token output is an unterminated fragment and is **refused**, with zero acknowledged model records and `learnedSuccess:null`. The complete fresh assets comprise 46 files / 157,778,439 bytes. |
+| Actual explicit and automatic histories | Both runs retain one acknowledged original model record and two complete cuts, close the original service, then restore from packet position 1 using independently retained head position 2 in a fresh ordinary service. Complete host/native state, attempts and output evidence match; costs remain monotonic and independent source/projection/public-prefix checks pass. The next output is identical but malformed and **refused**, with no acknowledgement or host dispatch. Only the automatic run exercises automatic acknowledged-boundary durability. Neither establishes arbitrary mutation/cancellation durability, complete-program execution or generalization. |
+| Binding and numeric regression integration | Published producer `29e802f` passes **106/106** controls plus fixture/contract checks. The consumer binding patch on prior `7ecda66` passes **125/125** focused controls. Combined published C9 then yields **34 passed / one failed**, exposing valid `1.0` opening-count rejection. Published `1ddcc6110d70703f6b08244d53ec461047677bec` passes our **45/45** combined binding, closed-session, authority and actual-model restore controls with zero skips. Original failure and superseded parallel patch receipts remain retained. These overlapping selections are not additive. |
+| Hosted historical verification | Producer PR head `f652fb2`, actual merge `cacb32263d164a483fef60277710e984521e719e`, passes **94/94 selected controls and 1/1 real Chromium test**. Consumer `7ecda66` / producer `18e9ebf` passes **604/604**, all47 interoperability and separate11 gallery gates, and the ordinary five-stage/two-update lifecycle. Two general CPU jobs each pass **3,546 tests with 82 retained skips** on their recorded merge revision. These are exact historical CI results. |
+
+The original full expansion inventory is also preserved exactly. Archived
+producer `012c9fe49a082319bf98ac0c571596da925741a4` / consumer
+`39c4036564428e44cc89caf261f517d856482695` evidence is unchanged in baseline
+`f32c6fc` and P19. Historical and current inventories have identical ordered
+**665 cases: 663 scripts and two original module graphs**. Exact source bytes,
+lossless input graphs, entries, host plans and fixture metadata match after
+excluding only each task's producer revision: zero additions, removals or
+changed fixtures. Common content digest:
+`7713717c1d4e7df92adc30db90dfeef4c561d7864a2c901abd8673d3a2c5ef94`.
+The complete utility inventory remains separate: 78 functions, of which 27 are
+selected and 51 unselected. This audit proves preservation, not fresh admission.
+The full665 source/native/token/packing gate follows the installed package repair.
+
+Next hard work: complete installed original-source verification with exact
+dependency evidence, rerun the complete preserved population, and implement
+remaining source ownership across conversion/callback/abrupt operations. A
+retained object-property-key counterexample still refuses public projection
+although ordinary Node returns 8; removing the guard alone would not establish
+correct ownership or native semantics. Automatic terminal durability,
+distributed ownership/rotation, complete module semantics, edition
+applicability, expanded production recipes and held-out studies remain open.
+
+Lessons: a source checkout and a published package expose different dependency
+evidence; installed absence must exercise original-source checks, not just an
+import. Canonical storage must preserve derived binding identities and numeric
+equivalence as well as hashes. Exact restoration of a malformed model output is
+recovery evidence and remains a model failure. Full assets and original failed
+attempts are part of the qualification record.
+
 ## Automatic-history integration and numeric recovery repair — 21 November 2026
 
 The actual automatic-history run at exact producer `19eba4f` / consumer `39d5212`
@@ -807,8 +863,8 @@ serving, and measured learned success.
 | --- | --- | --- | --- |
 | 1 | Frozen scope, denominator, parity inventory | In progress | Annual HTML and full Test262 catalog are pinned; a source-reference audit preserves every variant and maps exact anchors/feature tags for review. Edition membership/applicability still require explicit decisions. Reconcile real-source inventories and runtime identities; preserve unselected rows; map every production V6 route to a replacement test. |
 | 2 | Qualified Test262 runner | In progress | Original scripts, isolated native references and a bounded original-module owned-lowering path now retain pinned harness/dependency bytes and negative/async/TLA controls. Remaining: complete module semantics and source correspondence, fresh realms/agents, separate early-error qualification and complete upstream applicability/failure reconciliation. |
-| 3 | Neutral JS execution state | In progress | Extract typed values and transitions; preserve all current state and lifecycle behavior; equivalence tests. |
-| 4 | Direct V8 detail and source certification | In progress | Own detail/context/checkpoint schema and direct compilation; no V6 witness artifact or old episode replay. |
+| 3 | Neutral JS execution state | Internal implementation delivered; acceptance pending | Neutral typed values/controller/lifecycle and V8-only public entry are implemented. Original665 fixtures are preserved exactly. Remaining: fresh complete population and lifecycle behavior, installed absence, and all production-route parity; client equivalence alone is insufficient. |
+| 4 | Direct V8 detail and source certification | Internal implementation delivered; acceptance pending | Direct detail/context/checkpoint schemas and source compilation are implemented without legacy episode replay. Remaining: full665 original-source/native qualification, complete installed package with exact dependency evidence, and remaining source-family ownership. |
 | 5 | Independent native V8 semantics | In progress | Direct detail, observation, effect and primitive paths plus installed import controls are delivered. Remaining: complete contract ownership and paired language-family semantics, broader malformed-state controls, final current-pair absence/replay proof. |
 | 6 | Composable source projections | In progress | Unique event ownership and atomic private/public rollback are implemented for current adapters; map callbacks now compose finally/throw and generator creation/yield. Remaining: general IteratorClose/abrupt cleanup, cross-family ownership and exact source/native qualification of the expanded population. |
 | 7 | Protocol/effect/lifecycle composition | In progress | Protocol → effect → callback → protocol, reentrancy, guest errors, cancellation and restore with independent source/native checks. Coordinated driver/model/host recovery now preserves acknowledged history and budgets. |
