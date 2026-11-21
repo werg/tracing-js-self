@@ -89,21 +89,31 @@ test('packed public V8 installation certifies source and restores execution with
   assert(manifest.files.some(file=>file.path==='npm-shrinkwrap.json'));
   assert(!manifest.files.some(file=>file.path==='package-lock.json'));
   await writeFile(join(application,'package.json'),JSON.stringify({name:'public-v8-consumer',private:true,type:'module'}));
-  // Pack the exact already-available dependencies and provide all three local
-  // archives to npm. Merely copying dependencies into node_modules lets npm
-  // consult registry metadata; explicit archives keep this installation offline.
+  // Archive the already-installed dependency bytes without invoking their build
+  // lifecycles. npm 10's pack runs prepare even with --ignore-scripts; published
+  // Acorn's prepare expects its absent monorepo. Keep package metadata and code
+  // unchanged, and give npm explicit local archives so installation stays offline.
   const archives=[join(directory,filename)];
   for(const name of ['acorn','typescript']){
-    const dependency=spawnSync('npm',['pack',dirname(require.resolve(name+'/package.json')),
-      '--ignore-scripts','--json','--pack-destination',directory],
+    const dependencyRoot=dirname(require.resolve(name+'/package.json')),
+      dependencyStage=join(directory,'dependency-'+name),archive=join(directory,name+'.tgz');
+    await mkdir(dependencyStage);
+    await cp(dependencyRoot,join(dependencyStage,'package'),{recursive:true});
+    const dependency=spawnSync('tar',['-czf',archive,'-C',dependencyStage,'package'],
       {cwd:application,env,encoding:'utf8',timeout:30000,maxBuffer:4*1024*1024});
     assert.equal(dependency.status,0,dependency.stderr||dependency.error?.message);
-    archives.push(join(directory,JSON.parse(dependency.stdout)[0].filename));
+    archives.push(archive);
   }
   const install=spawnSync('npm',['install','--offline','--ignore-scripts','--no-audit','--no-fund',
     '--package-lock=false','--omit=dev',...archives],
     {cwd:application,env,encoding:'utf8',timeout:30000,maxBuffer:1024*1024});
   assert.equal(install.status,0,install.stderr||install.error?.message);
+  for(const name of ['acorn','typescript']){
+    const source=dirname(require.resolve(name+'/package.json')),
+      target=join(application,'node_modules',name);
+    assert.deepEqual(await readFile(join(target,'package.json')),await readFile(join(source,'package.json')),
+      name+' package metadata must remain byte-identical');
+  }
   assert.deepEqual(JSON.parse(await readFile(join(installed,'package.json'),'utf8')).exports,
     JSON.parse(await readFile(join(root,'package.json'),'utf8')).exports);
   const lock=await readFile(join(root,'npm-shrinkwrap.json'));

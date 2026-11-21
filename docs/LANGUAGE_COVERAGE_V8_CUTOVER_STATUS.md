@@ -16,6 +16,26 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Offline installed-package gate correction — 21 November 2026
+
+The Node22 hosted failure at producer `973400f` was in test dependency packing:
+npm10 still ran Acorn's published `prepare` hook under `--ignore-scripts`, which
+expects its unavailable monorepo build. The installed-entry test now archives the
+already-installed dependency directory under the npm package prefix directly,
+without running lifecycle hooks. It preserves all package metadata and runtime
+bytes and still gives npm explicit local archives for a fully offline install.
+Additional assertions compare the installed dependency package metadata bytes.
+The producer package itself is still built with the normal npm pack path.
+
+The complete four-test public-entry selection passes **4/4**, zero failures or
+skips, in 15.576 seconds on Node24/npm11 with the patch committed as local
+`7569b2fd907b53b8f9221833b15f8139f01340f5` (tested working tree based on `3d63090`).
+This retains the actual installed pure/effect/protocol source checks, restored
+continuation, missing/altered lock refusals and absent legacy clients. The native
+Node22/npm10 hosted rerun remains pending. Its original **2,456 pass / one fail /
+eight skips** at the recorded PR merge remains failed evidence; hosted Node24
+passed independently. This test correction makes no new runtime or language claim.
+
 ## Real native close-receipt contract correction — 21 November 2026
 
 The real consumer close response contains exactly `schema`, `session`, `closed`
