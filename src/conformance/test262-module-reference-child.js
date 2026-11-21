@@ -59,6 +59,7 @@ async function main(){
   }
   const modules=new Map();
   const dynamicPending=new Set(),unavailableModuleRequests=[];
+  let executionPerformed=false;
   const refuseModuleRequest=reason=>{
     unavailableModuleRequests.push(reason);
     const error=new Error(reason);error.name='Test262ReferenceEnvironmentError';
@@ -66,8 +67,10 @@ async function main(){
   };
   const moduleRequestUnavailable=()=>({status:'environment_unavailable',
     reason:[...new Set(unavailableModuleRequests)].join('; '),phase:'environment',
-    unresolved:[...new Set(unavailableModuleRequests)]});
-  const resolveRequest=(specifier,referrer)=>{
+    unresolved:[...new Set(unavailableModuleRequests)],executionPerformed});
+  const resolveRequest=(specifier,referrer,attributes)=>{
+    if(attributes&&Object.keys(attributes).length)
+      throw refuseModuleRequest('Import attributes require a declared host module loader');
     if(typeof specifier!=='string'||!specifier.startsWith('./')&&!specifier.startsWith('../'))
       throw refuseModuleRequest('Module request is outside the pinned relative graph');
     const parent=referrer.identifier.slice('test262://'.length);
@@ -76,11 +79,11 @@ async function main(){
       !modules.has(target))throw refuseModuleRequest('Module request is absent from the pinned dependency graph');
     return modules.get(target);
   };
-  const linker=(specifier,referrer)=>resolveRequest(specifier,referrer);
+  const linker=(specifier,referrer,extra)=>resolveRequest(specifier,referrer,extra?.attributes);
   const coordinator=createModuleEvaluationCoordinator({linker,timeout,refuse:refuseModuleRequest});
-  const importModuleDynamically=(specifier,referrer)=>{
+  const importModuleDynamically=(specifier,referrer,attributes)=>{
     const pending=(async()=>{
-      const target=resolveRequest(specifier,referrer);
+      const target=resolveRequest(specifier,referrer,attributes);
       return coordinator.evaluateOnce(target);
     })();
     dynamicPending.add(pending);
@@ -159,7 +162,7 @@ async function main(){
 
   let evaluation;
   const deadline=Date.now()+timeout;
-  try{evaluation=entry.evaluate({timeout});}
+  try{executionPerformed=true;evaluation=entry.evaluate({timeout});}
   catch(error){
     if(['ERR_SCRIPT_EXECUTION_TIMEOUT','ERR_TEST262_PRINT_LIMIT'].includes(error?.code))return {status:'resource_limited',
       reason:'Synchronous module evaluation exceeded the reference time budget',phase:'runtime',harness};

@@ -169,6 +169,9 @@ export function checkOfficialTest262ModuleGraph({variant,profile,sources}={}){
         path===variant.path?'Unexpected original module parse error':'Pinned dependency module did not parse',
         {phase:'parse',errorType:'SyntaxError',sourcePath:path}),ast:null,parseOnly:true};
     }
+    if(path===variant.path&&variant.metadata.negative?.phase==='parse')
+      return {stage:outcome('failed','Expected a module parse-time error but original source parsed successfully',
+        {phase:'parse'}),ast,parseOnly:true};
     // Only static imports/re-exports instantiate module records. A literal
     // dynamic-import target in the catalog may intentionally be script-invalid
     // as a module; its own import evaluation decides that at runtime.
@@ -181,13 +184,19 @@ export function checkOfficialTest262ModuleGraph({variant,profile,sources}={}){
         missing.push({from:path,target:specifier,kind:'module'});continue;
       }
       const target=posix.normalize(posix.join(posix.dirname(path),specifier));
+      // These bytes are not necessarily ECMAScript source. Without the
+      // declared host loader, interpreting JSON/text as JS could fabricate
+      // a missing export or dependency SyntaxError and pass a negative test.
+      const capability=node.attributes?.length?'module-import-attributes':
+        !target.endsWith('.js')?'non-javascript-module-loader':null;
+      if(capability)return {stage:outcome('environment_unavailable',
+        'Owned module profile has no declared loader for this request: '+target,
+        {phase:'environment',sourcePath:path,targetPath:target,missingCapabilities:[capability]}),
+        ast:parsed.get(variant.path),parseOnly:true};
       if(!graph.has(target))missing.push({from:path,target,kind:'module'});
       else if(!queued.has(target)){queued.add(target);pending.push(target);}
     }
   }
-  if(variant.metadata.negative?.phase==='parse')
-    return {stage:outcome('failed','Expected a module parse-time error but original source parsed successfully',
-      {phase:'parse'}),ast:parsed.get(variant.path),parseOnly:true};
   missing.push(...unresolvedOriginalModuleBindings(parsed));
   if(unresolvedClosure&&variant.metadata.negative?.phase==='resolution'&&
      variant.metadata.negative.type==='SyntaxError'){

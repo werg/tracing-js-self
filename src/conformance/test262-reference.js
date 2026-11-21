@@ -64,7 +64,8 @@ function runModuleReference(options,prepared,answer){
   if(result?.schema!=='test262-module-reference-child/1'||
     !['passed','failed','unsupported','resource_limited','environment_unavailable','infrastructure_error'].includes(result.status))
     return answer('infrastructure_error','Isolated module reference worker returned an unknown disposition',{phase:'worker'});
-  return answer(result.status,result.reason,{...result,executionPerformed:result.phase==='runtime'});
+  return answer(result.status,result.reason,{...result,
+    executionPerformed:result.executionPerformed??result.phase==='runtime'});
 }
 
 export function executeOfficialTest262Reference(options={}){

@@ -370,10 +370,7 @@ test('module references and owned module preflight keep parse, link, and evaluat
   assert.equal(quoted.status,'failed',quoted.reason);
   assert.equal(quoted.phase,'resolution');
   assert.equal(quoted.executionPerformed,false,'a valid quoted import cannot satisfy a negative test');
-  for(const body of [
-    'import value from "./value_FIXTURE.js" with {type:"json"};void value;',
-    'using resource = null;'
-  ]){
+  for(const body of ['using resource = null;']){
     const [boundedEdition]=moduleFixture(body,{dependencies:{'test/value_FIXTURE.js':'export default 1;'}});
     const result=executeOfficialTest262Variant(boundedEdition);
     assert.equal(result.status,'unsupported',result.reason);
@@ -392,6 +389,66 @@ test('module references and owned module preflight keep parse, link, and evaluat
   const pendingOwned=executeOfficialTest262Variant(pendingNegative);
   assert.equal(pendingOwned.status,'resource_limited',pendingOwned.reason);
   assert.equal(pendingOwned.phase,'runtime');
+});
+
+test('typed module bytes cannot fabricate owned parse or resolution-negative successes',()=>{
+  for(const [path,text,attribute] of [
+    ['test/value_FIXTURE.json','[]',' with {type:"json"}'],
+    ['test/value_FIXTURE.json','{"answer":42}',' with {type:"json"}'],
+    ['test/value_FIXTURE.txt','not JavaScript',''],
+    ['test/value_FIXTURE.js','export default 42;',' with {type:"json"}']
+  ]){
+    const request='./'+path.slice('test/'.length);
+    for(const negative of [false,true]){
+      const [options]=moduleFixture('import {absent} from '+JSON.stringify(request)+attribute+';$DONOTEVALUATE();',{
+        dependencies:{[path]:text},
+        metadata:negative?'negative:\n  phase: resolution\n  type: SyntaxError\n':''
+      });
+      const owned=executeOfficialTest262Variant(options),reference=executeOfficialTest262Reference(options);
+      for(const result of [owned,reference]){
+        assert.equal(result.status,'environment_unavailable',result.reason);
+        assert.equal(result.phase,'environment');
+        assert.equal(result.executionPerformed,false);
+      }
+      assert(owned.stages.parseStatic.missingCapabilities.some(capability=>
+        ['module-import-attributes','non-javascript-module-loader'].includes(capability)));
+      assert.equal(owned.stages.ownedExecution,undefined);
+    }
+  }
+});
+
+test('original entry parse expectations precede unsupported module-loader capabilities',()=>{
+  const dependencies={'test/value_FIXTURE.json':'this is not JavaScript'};
+  const metadata='negative:\n  phase: parse\n  type: SyntaxError\n';
+  for(const [body,expected] of [
+    ['import value from "./value_FIXTURE.json" with {type:"json"};','failed'],
+    ['import {value from "./value_FIXTURE.json" with {type:"json"};','passed']
+  ]){
+    const [options]=moduleFixture(body,{dependencies,metadata});
+    for(const result of [executeOfficialTest262Variant(options),executeOfficialTest262Reference(options)]){
+      assert.equal(result.status,expected,result.reason);
+      assert.equal(result.phase,'parse');
+      assert.equal(result.executionPerformed,false);
+    }
+  }
+});
+
+test('static and dynamic native module callbacks cannot discard import attributes',()=>{
+  for(const body of [
+    'import value from "./value_FIXTURE.js" with {type:"json"};assert.sameValue(value,42);',
+    'export {default as value} from "./value_FIXTURE.js" with {type:"json"};'
+  ]){
+    const [options]=moduleFixture(body,{dependencies:{'test/value_FIXTURE.js':'export default 42;'}});
+    const result=executeOfficialTest262Reference(options);
+    assert.equal(result.status,'environment_unavailable',result.reason);
+    assert.equal(result.executionPerformed,false);
+  }
+  const [dynamic]=moduleFixture('try{await import("./value_FIXTURE.js",{with:{type:"json"}});}catch(error){}',{
+    dependencies:{'test/value_FIXTURE.js':'export default 42;'}
+  });
+  const result=executeOfficialTest262Reference(dynamic);
+  assert.equal(result.status,'environment_unavailable',result.reason);
+  assert.equal(result.executionPerformed,true,'the original body entered before the unavailable dynamic request');
 });
 
 test('literal dynamic module requests execute only from their frozen dependency closure',()=>{

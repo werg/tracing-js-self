@@ -97,6 +97,31 @@ archive without rebinding the actual module import.
 Original-source controls also distinguish identically named block/loop vars
 in independent modules and cyclic reads before a var export's evaluation.
 
+## Host module loader boundary
+
+Original static module requests carrying import attributes, or targeting source
+types outside the declared JavaScript profile, are `environment_unavailable`
+until their host loader is implemented. The owned preflight must not parse
+JSON, text or binary module bytes as ECMAScript and then call a missing export
+or parser error a successful resolution-negative test. Entry parse expectations
+are checked first, before dependent loader capabilities.
+
+The native reference also checks attributes supplied to Node's static-link
+and dynamic-import callbacks. A VM `SourceTextModule` callback is the host
+loader boundary; ignoring those attributes can silently reinterpret a typed
+request as ordinary JavaScript even when every source byte is pinned. See the
+[Node VM callback contract](https://nodejs.org/download/release/v24.22.1/docs/api/vm.html#modulelinklinker).
+Dynamic refusals retain `executionPerformed: true` when the original module
+body already started, including when guest code catches the request error.
+They remain unavailable-host outcomes, not successful reference executions.
+
+This guard was identified during the full module campaign at producer
+`4c1a4a42ca21fb1a958b2ed9305372c04833fe3a`. That earlier campaign is retained
+unchanged; its typed-module failures are evidence of the missing guard, not
+results for the later correction. Focused original-harness controls exercise
+JSON/text bytes, attributed requests for `.js` files, resolution negatives,
+parse-negative ordering, static re-exports and caught dynamic imports.
+
 ## Remaining work
 
 Namespace exotic identity/internal methods,
