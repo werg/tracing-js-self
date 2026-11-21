@@ -1,10 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {createRuntime} from '../src/runtime.js';
 import {createPrimitiveConversionObservationAdapterV8,PRIMITIVE_CONVERSION_OBSERVATION_PROFILE_V8}
   from '../src/semantic/protocol-primitive-conversion-observations-v8.js';
-import {prepareProtocolObservationExtensionsV8} from '../src/semantic/protocol-source-observations-v8.js';
+import {prepareProtocolObservationExtensionsV8,ownedProtocolSourceObservations}
+  from '../src/semantic/protocol-source-observations-v8.js';
+import {PROTOCOL_OBSERVATION_ADAPTERS_V8} from '../src/semantic/protocol-observation-extensions-v8.js';
 import {instrumentCompletionSource,createCompletionCapture,ownedCompletionObservations,COMPLETION_HOOK}
   from '../src/training/completion-reference.js';
 
@@ -217,4 +221,63 @@ test('reserved hook names and altered instrumentation inventories are rejected',
   assert.throws(()=>factory({source:'function run(){return __tracingProtocolConversionKey(0,{});}'}),/reserved observer/);
   const text=source('const key={toString(){return "x";}};return {x:1}[key];'),adapter=factory({source:text});
   assert.throws(()=>adapter.instrument(text+';({})[{}];'),/inventory changed/);
+});
+
+// Exercise the component with the full observer registry before source/public
+// admission is promoted. Once registered, the same test uses that registration
+// directly. Neither branch supplies an owned result to the native execution.
+const mixedAdapters=PROTOCOL_OBSERVATION_ADAPTERS_V8.map(adapter=>
+  adapter.name==='createNumberObservationAdapterV8'?factory:adapter);
+const mixedNativeRunner=String.raw`
+  import assert from 'node:assert/strict';
+  import vm from 'node:vm';
+  import {readFileSync} from 'node:fs';
+  import {createPrimitiveConversionObservationAdapterV8 as factory}
+    from './src/semantic/protocol-primitive-conversion-observations-v8.js';
+  import {PROTOCOL_OBSERVATION_ADAPTERS_V8} from './src/semantic/protocol-observation-extensions-v8.js';
+  import {prepareProtocolObservationExtensionsV8,createProtocolCompletionCapture}
+    from './src/semantic/protocol-source-observations-v8.js';
+  import {instrumentCompletionSource,COMPLETION_HOOK} from './src/training/completion-reference.js';
+  const {source}=JSON.parse(readFileSync(0,'utf8')),
+    adapters=PROTOCOL_OBSERVATION_ADAPTERS_V8.map(adapter=>adapter.name==='createNumberObservationAdapterV8'?factory:adapter),
+    extensions=prepareProtocolObservationExtensionsV8({source,adapters}),
+    capture=createProtocolCompletionCapture({initialValues:[],adapters:extensions.metadataAdapters}),
+    context=vm.createContext({...extensions.globals,[COMPLETION_HOOK]:capture.capture});
+  capture.setIntrinsicPrototypes(vm.runInContext('[Object.prototype,Array.prototype,Function.prototype]',context));
+  extensions.initializeRealm(expression=>vm.runInContext(expression,context));
+  const result=vm.runInContext(extensions.instrument(instrumentCompletionSource(source))+';run()',context),
+    original=vm.runInNewContext(source+';run()');
+  assert.deepEqual(structuredClone(result),structuredClone(original));
+  process.stdout.write(JSON.stringify({result,completions:capture.observations,metadata:capture.metadata,
+    extensionObservations:extensions.observations()}));
+`;
+for(const [label,body,expected]of [
+  ['getter descriptor replacement',
+    'let log="";const key={get [Symbol.toPrimitive](){log+="g";Object.defineProperty(this,Symbol.toPrimitive,{value(){log+="wrong";return "y";}});return function(h){log+=h;return "x";};}};return [{x:3,y:9}[key],log];',
+    [3,'gstring']],
+  ['private getter and lexical arrow',
+    'class Key{#name="x";get toString(){return ()=>this.#name;}}const key=new Key();return {x:3}[key];',3],
+  ['nested Number inside key getter',
+    'const inner={get valueOf(){return ()=>3;}};const key={get toString(){const n=Number(inner);return ()=>"x"+n;}};return {x3:9}[key];',9],
+  ['Promise and conversion observations',
+    'const promise=Promise.resolve(3);const key={toString(){return "x";}};return {x:7}[key]+Number({valueOf(){return 2;}});',9],
+  ['computed method declaration and invocation',
+    'const key={toString(){return "m";}};const object={[key](){return 3;}};return object[key]();',3]
+])test('all observers preserve full native evidence: '+label,()=>{
+  const text=source(body);
+  assert.equal(mixedAdapters.filter(adapter=>adapter===factory).length,1);
+  // node:test's async hooks attach observable symbols to native Promises.
+  // Use a fresh reference process, as production does, and compare its entire
+  // observation output. Do not strip those symbols or relax the Promise guard.
+  const processResult=spawnSync(process.execPath,['--input-type=module','--eval',mixedNativeRunner],{
+    cwd:fileURLToPath(new URL('../',import.meta.url)),input:JSON.stringify({source:text}),encoding:'utf8',
+    timeout:20000,maxBuffer:4194304});
+  assert.equal(processResult.status,0,processResult.stderr||String(processResult.error??''));
+  const native=JSON.parse(processResult.stdout),owned=ownedProtocolSourceObservations(archive(text),text,{adapters:mixedAdapters});
+  assert.deepEqual(native.result,expected);
+  assert(native.completions.length>0&&native.metadata.length>0);
+  assert.deepEqual(native.completions,owned.completions,'compare every independently captured completion');
+  assert.deepEqual(native.metadata,owned.metadata,'compare complete descriptor, prototype, identity and extension metadata');
+  assert.deepEqual(native.extensionObservations,owned.extensionObservations,'compare every registered extension observation');
+  assert(owned.extensionObservations.some(row=>row.profile===PRIMITIVE_CONVERSION_OBSERVATION_PROFILE_V8));
 });

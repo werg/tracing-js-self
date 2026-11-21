@@ -83,7 +83,7 @@ No guest callback is evaluated as a host scalar leaf.
 ### Retained state and sequencing
 
 The state is `{schema:'semantic-primitive-conversion-state/1',operations:[...]}`.
-Each operation has exactly these fields:
+Each operation has exactly these 13 fields:
 
 `id`, `parent`, `goal`, `input`, `index`, `phase`, `lookupKind`, `method`,
 `builtin`, `child`, `candidate`, `result`, `fault`.
@@ -99,6 +99,13 @@ and the existing narrowly checked cleanup-scope transfer. Every callback uses
 a fresh child identity. A return or throw must consume the designated completed
 child exactly once. Getter return clears that child before entering the captured
 method. Nested Number/key conversions retain distinct parent and child owners.
+
+A consumed ordinary method return also clears its child. Moving to the next
+lookup clears the prior lookup kind, method, builtin, child, candidate and fault.
+An original callback throw instead retains the inactive child and captured
+method, with no candidate or derived fault. A derived fault retains its candidate
+and cause with no child. These canonical shapes are part of the checkpoint
+contract, not optional serialization choices.
 
 `candidate` retains the primitive awaiting scalar finish, or an offending
 nonprimitive used to derive a fault. `result` is present only after completion
