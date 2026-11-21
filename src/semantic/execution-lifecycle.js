@@ -10,6 +10,8 @@ import {analyzeSemanticProgram} from '../training/semantic-program.js';
 import {describeGraph} from '../training/graph.js';
 import {hostOperation} from '../host/operations.js';
 import {decodeHostPayload,ownedCallbackId} from '../host/materialize.js';
+import {canonicalInvocationIngressDigest,validateCheckpointAuthority,
+  validateNativeActionBinding} from './checkpoint-authority.js';
 
 const ID=/^[a-z][a-z0-9:_-]*$/;
 const clone=x=>structuredClone(x);
@@ -48,6 +50,18 @@ function nextEventOrdinal(h){
     ordinal++;demand(Number.isSafeInteger(ordinal),'Event delivery counter exhausted');
   }while(h.invocations.has('event'+ordinal));
   return ordinal;
+}
+function registeredResultCallbacks(h,key){
+  const callbacks=[...h.callbacks].filter(([callbackKey])=>callbackKey.startsWith(key+'/'))
+    .map(([,callback])=>callback);
+  for(const callback of callbacks){
+    const handler=h.handlers.get(callback.subscriptionId);
+    demand(handler&&callback.state!=='pending'&&
+      ['programId','realmId','trackId','entry','closureId','lifetime','ownerInvocationId']
+        .every(field=>handler[field]===callback[field]),
+      'Callback result requires its exact observed handler registration');
+  }
+  return callbacks;
 }
 function validateIngressQueueOrder(rows,nextSequence){
   demand(Number.isSafeInteger(nextSequence)&&nextSequence>=1,
@@ -248,10 +262,22 @@ export class SelectedExecutionCore {
     completionPolicy=canonicalCompletionPolicy(completionPolicy);
     assertEventInvocation(this,{programId,invocationId,trackId,realmId,triggerId,ingressKey,
       activation,realmPolicy,entry,closureId,parentInvocationId,taskRevision,deadline,receiver,receiverValue,bindings});
-    const ingressDigest=createHash('sha256').update(JSON.stringify({programId,invocationId,
-      trackId,realmId,triggerId,completionPolicy,realmPolicy,entry,closureId,activation,
-      parentInvocationId,taskRevision,deadline,bindings,receiverValue,
-      graph:inputGraph===null?graphOf([receiver,...args]):inputGraph})).digest('hex');
+    const program=this.programs.get(programId);
+    demand(program,'Program must be observed before an invocation');
+    const previous=this.realms.get(realmId);
+    const closure=closureId===null?null:previous?.heap.get(closureId);
+    const selectedEntry=entry??closure?.code??program.entry;
+    demand(Array.isArray(args),'Invocation arguments must be a graph');
+    demand(inputGraph===null||args.length===0,
+      'Cannot mix observed input graph with new JavaScript arguments');
+    const graph=inputGraph===null?graphOf([receiver,...args]):clone(inputGraph);
+    const ingressReceiver=inputGraph===null?graph.roots[0]:(receiverValue??['undefined']),
+      ingressGraph=inputGraph===null?{...graph,roots:graph.roots.slice(1)}:graph;
+    validateGraph(ingressGraph,{externalReferences:previous?[...previous.heap.keys()]:[]});
+    assertValue(ingressReceiver);
+    const ingressDigest=canonicalInvocationIngressDigest({programId,invocationId,
+      trackId,realmId,triggerId,completionPolicy,realmPolicy,entry:selectedEntry,closureId,activation,
+      parentInvocationId,taskRevision,deadline,bindings,ingressKey},ingressGraph,ingressReceiver);
     if(this.invocations.has(invocationId)){
       const prior=this.invocations.get(invocationId);
       demand(prior.ingressKey===ingressKey&&prior.programId===programId&&
@@ -261,12 +287,7 @@ export class SelectedExecutionCore {
       return this.timeline.find(item=>item.kind==='invocation'&&item.invocationId===invocationId);
     }
     demand(!this.ingress.has(ingressKey),'Ingress key already owns another invocation');
-    const program=this.programs.get(programId);
-    demand(program,'Program must be observed before an invocation');
-    const previous=this.realms.get(realmId);
-    const closure=closureId===null?null:previous?.heap.get(closureId);
     demand(closureId===null||closure?.kind==='closure','Invocation closure belongs to another or unknown realm');
-    const selectedEntry=entry??closure?.code??program.entry;
     // A host may select an unambiguous spelling of the retained function, but
     // cannot pair another function's parameters/code with this closure's cells.
     // Check before importing input or publishing any realm/ingress mutation.
@@ -274,7 +295,6 @@ export class SelectedExecutionCore {
       program.functions.find(f=>f.name===selectedEntry||'function:'+f.start===selectedEntry);
     demand(selectedEntry===program.entry||declared,
       'Invoked closure must have a declared static function site');
-    demand(Array.isArray(args),'Invocation arguments must be a graph');
     demand(realmPolicy==='fresh'||realmPolicy==='retained','Invalid realm policy');
     demand(!previous||!previous.running,'Shared realm already has an active guest turn');
     demand(!previous?.closed,'Closed realm cannot be resurrected');
@@ -293,9 +313,6 @@ export class SelectedExecutionCore {
     }
     // A fresh selected state domain is an explicit policy, not an implicit
     // mutation of a previous invocation or native module initialization.
-    demand(inputGraph===null||args.length===0,
-      'Cannot mix observed input graph with new JavaScript arguments');
-    const graph=inputGraph===null?graphOf([receiver,...args]):clone(inputGraph);
     // New argument objects must not reuse identities held by live captured
     // closures or old input graphs. Preserve aliases, sparse entries and cycles.
     if(inputGraph===null&&previous)remapGraph(graph,new Set(previous.heap.keys()));
@@ -388,6 +405,15 @@ export class SelectedExecutionCore {
       'Handler requires an owned closure in its realm');
     const realm=this.realms.get(realmId),closure=closureId===null?null:realm.heap.get(closureId),
       selectedEntry=entry??closure?.code??program.entry;
+    for(const [key,callback] of this.callbacks)if(callback.subscriptionId===subscriptionId){
+      const effectKey=key.slice(0,key.lastIndexOf('/'));
+      demand(['dispatched','uncertain'].includes(this.intents.get(effectKey)?.status)&&
+        callback.state==='pending'&&realmPolicy==='retained'&&queueLimit===64&&
+        callback.programId===programId&&callback.realmId===realmId&&callback.trackId===trackId&&
+        callback.entry===selectedEntry&&callback.closureId===closureId&&
+        callback.lifetime===lifetime&&callback.ownerInvocationId===ownerInvocationId,
+        'Handler registration differs from its dispatched callback capability');
+    }
     demand(closureId===null||realmPolicy==='retained','A retained handler closure requires its retained realm');
     if(ownerInvocationId!==null){
       const owner=this.invocations.get(ownerInvocationId);
@@ -689,7 +715,15 @@ export class SelectedExecutionCore {
     if(this.hostIngressBroker)return this.hostIngressBroker.invokeClosure(options);
     const request=this.prepareClosureInput(options),owner=this.invocations.get(request.ownerInvocationId);
     demand(this.closureQueue.length<64,'Owned callback queue overflow');
-    const invocationId='callbackinvoke'+(++this.nextCallback);
+    // Callback invocation names are identities, not notification registration
+    // ordinals. Pending private input must not advance a public allocator that
+    // replay can reconstruct only from selected registration requests.
+    let ordinal=1;
+    while(this.invocations.has('callbackinvoke'+ordinal)||
+      this.closureQueue.some(request=>request.invocationId==='callbackinvoke'+ordinal)){
+      ordinal++;demand(Number.isSafeInteger(ordinal),'Owned callback identity counter exhausted');
+    }
+    const invocationId='callbackinvoke'+ordinal;
     this.closureQueue.push({...request,invocationId});
     const completion=new Promise((resolve,reject)=>this.completionWaiters.set(invocationId,{resolve,reject}));
     // Prevent a host that abandons a callback on cancellation from causing an
@@ -752,6 +786,10 @@ export class SelectedExecutionCore {
     if(this.inflight.has(key))return this.inflight.get(key);
     demand(intent.status==='committed',
       'Cannot redispatch settled or uncertain external intent');
+    for(const [callbackKey,callback] of this.callbacks)if(callbackKey.startsWith(key+'/'))
+      demand(callback.state==='pending'||['active','lost'].includes(callback.state)&&
+        ['active','lost'].includes(this.handlers.get(callback.subscriptionId)?.state),
+        'Cannot retry a retired callback registration');
     const adapter=this.services[intent.operation];
     demand(typeof adapter==='function','No granted native adapter for '+intent.operation);
     const activation=this.invocations.get(invocationId);
@@ -800,13 +838,8 @@ export class SelectedExecutionCore {
         const {nativeAction,...identity}=record??{};
         demand(isDeepStrictEqual(identity,durable),
           'Durable intent contradicts the committed selected request');
-        if(nativeAction!==undefined)demand(nativeAction?.schema==='semantic-native-action/4'&&
-          typeof nativeAction.actionKey==='string'&&nativeAction.actionKey&&
-          nativeAction.invocationId===invocationId&&nativeAction.effectId===effectId&&
-          nativeAction.operation===intent.operation&&nativeAction.payload===intent.payload&&
-          nativeAction.ownerTrack===activation.trackId&&
-          nativeAction.recordDigest===createHash('sha256').update(intent.witness).digest('hex'),
-          'Durable native selected-action commitment receipt is invalid');
+        if(nativeAction!==undefined)validateNativeActionBinding(nativeAction,
+          {...intent,ownerTrack:activation.trackId});
         if(abort.signal.aborted)throw abort.signal.reason;
         // The independently retained intent proves only that this attempt
         // may have crossed the external boundary. It does not prove a result,
@@ -829,13 +862,7 @@ export class SelectedExecutionCore {
       let nativeAction=intent.nativeAction;
       if(beforeDispatch){
         nativeAction=await beforeDispatch();
-        demand(nativeAction?.schema==='semantic-native-action/4'&&
-          typeof nativeAction.actionKey==='string'&&nativeAction.actionKey&&
-          nativeAction.invocationId===invocationId&&nativeAction.effectId===effectId&&
-          nativeAction.operation===intent.operation&&nativeAction.payload===intent.payload&&
-          nativeAction.ownerTrack===activation.trackId&&
-          nativeAction.recordDigest===createHash('sha256').update(intent.witness).digest('hex'),
-          'Native selected-action commitment receipt is required');
+        validateNativeActionBinding(nativeAction,{...intent,ownerTrack:activation.trackId});
         nativeAction=clone(nativeAction);
       }
       // The durable embedding acknowledges the intent before any adapter can
@@ -852,12 +879,19 @@ export class SelectedExecutionCore {
       intent.attempts=attempt;intent.status='dispatched';
       if(nativeAction)intent.nativeAction=nativeAction;
       for(const registration of this.callbacks.values())if(registration.ownerInvocationId===invocationId&&
-          registration.state==='pending'&&this.callbacks.get(key+'/'+registration.slot)===registration){
-        this.registerEventHandler({subscriptionId:registration.subscriptionId,
-          programId:registration.programId,realmId:registration.realmId,
-          trackId:registration.trackId,entry:registration.entry,
-          closureId:registration.closureId,lifetime:registration.lifetime,
-          ownerInvocationId:invocationId,realmPolicy:'retained'});
+          this.callbacks.get(key+'/'+registration.slot)===registration){
+        if(registration.state==='pending')this.registerEventHandler({subscriptionId:registration.subscriptionId,
+            programId:registration.programId,realmId:registration.realmId,
+            trackId:registration.trackId,entry:registration.entry,
+            closureId:registration.closureId,lifetime:registration.lifetime,
+            ownerInvocationId:invocationId,realmPolicy:'retained'});
+        else{
+          // Only a new authorized dispatch can create a fresh native handle
+          // after a not-dispatched reconciliation. Its existing logical
+          // registration is retained; neither a lost result nor JSON restore
+          // alone reattaches the previous resource.
+          registration.state='active';this.handlers.get(registration.subscriptionId).state='active';
+        }
       }
       let returned;
       const descriptor=hostOperation(intent.operation);
@@ -922,6 +956,7 @@ export class SelectedExecutionCore {
     demand(intent&&['dispatched','uncertain','settled'].includes(intent.status),
       'Unknown, duplicate or uncommitted result');
     demand(status==='fulfilled'||status==='rejected','Invalid result status');
+    registeredResultCallbacks(this,key);
     const activation=this.invocations.get(invocationId);
     const captured=explicitResult===null?canonicalResultGraph(graphOf([value])):null,
       declared=explicitGraph===null?null:canonicalResultGraph(explicitGraph);
@@ -986,14 +1021,18 @@ export class SelectedExecutionCore {
   // Retirement is part of the result transition itself. Public replay applies
   // it too, but consumes queued arrivals and handler closure only as receipts.
   settleCallbackCapabilities(key,status){
-    const callbacks=[...this.callbacks].filter(([callbackKey])=>callbackKey.startsWith(key+'/'))
-      .map(([,callback])=>callback);
+    const callbacks=registeredResultCallbacks(this,key);
     for(const callback of callbacks){
       const handler=this.handlers.get(callback.subscriptionId);
+      if(handler.state==='closed'||callback.state==='revoked'){
+        callback.state='revoked';continue;
+      }
       if(status!=='fulfilled'||callback.lifetime!=='subscription'){
         callback.state='revoked';
         if(handler)handler.state='closing';
-      }else callback.state='active';
+      }
+      // A successful subscription result preserves any lost process-local
+      // handle. Reconciliation alone cannot perform resource reattachment.
     }
     return callbacks;
   }
@@ -1294,7 +1333,10 @@ export class SelectedExecutionCore {
           item.key===key,'Replay dispatch has no valid committed action');
         const activation=h.invocations.get(item.invocationId);
         demand(activation?.trackId===item.track,'Replay dispatch ownership mismatch');
+        if(Object.hasOwn(item,'nativeAction'))validateNativeActionBinding(item.nativeAction,
+          {...intent,ownerTrack:activation.trackId});
         intent.status='dispatched';intent.attempts=item.attempt;
+        if(Object.hasOwn(item,'nativeAction'))intent.nativeAction=clone(item.nativeAction);
         h.record('observed','dispatch',activation.trackId,
           {invocationId:item.invocationId,effectId:item.effectId,key,attempt:item.attempt,
             ...(item.nativeAction?{nativeAction:item.nativeAction}:{})});
@@ -1302,6 +1344,7 @@ export class SelectedExecutionCore {
         const key=item.invocationId+'/'+item.effectId;
         const intent=h.intents.get(key);
         demand(['dispatched','uncertain'].includes(intent?.status),'Replay result lacks dispatched cause');
+        registeredResultCallbacks(h,key);
         const activation=h.invocations.get(item.invocationId);
         demand(activation?.trackId===item.track,'Replay result owner mismatch');
         const decoded=this.decodeRecord(item.line);
@@ -1429,6 +1472,7 @@ export class SelectedExecutionCore {
     const verified=this.replay({public:{schema:this.contract.executionVersion,
       traceFormat:this.contract.traceVersion,contextFormat:this.contract.contextVersion,
       profile:this.contract.profile,timeline:packet.timeline}},{requireTerminal:false});
+    validateCheckpointAuthority(packet,verified);
     demand(packet.nextEventDelivery===verified.nextEventDelivery,
       'Checkpoint event delivery counter contradicts committed events');
     for(const [key,activation] of packet.invocations){

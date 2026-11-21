@@ -55,6 +55,31 @@ adapter call and leaves the public attempt count unchanged.
 
 ## Executed controls and limits
 
+Direct checkpoint restoration independently replays the complete public history
+and checks exact map membership and metadata for invocations, realms, effects,
+handlers and callback capabilities. Operation, payload, witness, attempts,
+result, source revision, parent, track, deadlines, routing and counters cannot
+be replaced by changing private fields and recomputing the checkpoint hash.
+Only conservative process loss is allowed: dispatched effects may be uncertain
+and active native handles may be lost. Closed or revoked capabilities stay
+retired. The direct snapshot API refuses additional private queued work; the
+Region durable-ingress API restores it against independently read original
+bytes and receipts.
+
+Admission fingerprints use resolved entries and canonical graph identities.
+The same raw receiver/argument graph and its observed serialization therefore
+identify the same delivery after JSON restoration. Invocation names, including
+names that look like callback IDs, do not advance notification registration
+counters. Returning callback invocation IDs avoid existing invocation and
+pending queue identities without changing that public registration counter.
+
+Callback results require the exact observed handler registration. A late result
+cannot reopen a closed handler, revive a revoked callback, or reattach a lost
+subscription. An explicitly authorized new dispatch after a not-dispatched
+reconciliation may create a fresh native registration while retaining the
+existing logical handler identity. Reconciliation of a result alone does not
+grant that permission.
+
 `test/semantic-durable-action-recovery-v8.test.js` exercises real synchronized
 files and a fresh Node process restoring an older checkpoint. Its external
 marker is written exactly once, and the restored process reconciles from that
@@ -62,6 +87,10 @@ retained service result. Additional controls race two independent restorations,
 lose the acknowledgment after immutable publication, fail before publication,
 alter the retained request, cancel a pending claim and reject append-only
 storage. The integrated direct lifecycle and journal run passes 14 tests.
+The expanded checkpoint, callback, action, driver and durable-ingress run passes
+156 tests, including 97 checkpoint-authority controls and restored duplicate
+delivery, missing-registration, late-result and allocator regressions. These
+counts overlap the earlier focused runs.
 
 These controls establish bounded claim exclusion for the same private journal
 directory. They do not establish distributed resource ownership or general

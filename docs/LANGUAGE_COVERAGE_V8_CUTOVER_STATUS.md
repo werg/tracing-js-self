@@ -80,9 +80,18 @@ work ledger. **0 of 17 complete acceptance packages are closed.**
   numbers. Checkpoints wait for unfinished dispatch acknowledgment. **14
   integrated tests pass**, including real fsync files, a fresh-process stale
   checkpoint, racing restorations, lost acknowledgments, invalid retained
-  requests and cancellation. See `SEMANTIC_V8_ACTION_RECOVERY.md`. Full private
-  checkpoint authority validation is being implemented separately; general
-  later-public-history and distributed resource ownership remain open.
+  requests and cancellation. See `SEMANTIC_V8_ACTION_RECOVERY.md`.
+- Direct checkpoint restoration now derives authority from exact public replay:
+  identities, map membership, source/owner metadata, dispatch attempts, results,
+  callback/handler descriptors, and native-action bindings must agree. A
+  recomputed hash cannot revive retired resources or reset dispatched intents.
+  Canonical input fingerprints preserve identical duplicate delivery after
+  restore. Pending private input requires the checked durable-ingress route.
+  Callback results require their observed registration and preserve closed,
+  revoked and lost resources; fresh authorized retries reuse logical handlers.
+  Returning callback IDs no longer consume notification-registration counters.
+  **156 integrated tests pass**, including 97 checkpoint-authority controls.
+  General later-public-history and distributed resource ownership remain open.
 
 Current priorities remain retained host-handler/native composition, module
 declaration and live-binding semantics, missing later acknowledged public

@@ -156,3 +156,110 @@ test('reattachment replay requires exact resource ownership and nonempty externa
   assert.equal(Lifecycle.replay(restored.exportEpisode(),{requireTerminal:false})
     .handlers.get('callback1').state,'active');
 });
+
+test('late subscription results preserve cancellation and private resource loss',async t=>{
+  for(const H of [Lifecycle,Region])for(const cancelled of [false,true]){
+    const source='"use strict";function run(){return host.listen("tick",handler);}function handler(value){return value;}';
+    let release;
+    const h=new H({services:{'demo.listen':()=>new Promise(resolve=>{release=resolve;})}});
+    begin(h,source,['demo.listen']);
+    select(h,'call','allocate',{name:'fn',kind:'closure',code:'handler',captures:[],properties:[]});
+    select(h,'call','request',{effect:'registration',operation:'demo.listen',invocation:'call',
+      arguments:[['str','tick'],['ref','fn']],site:site(source,'demo.listen'),
+      payload:'["tick",{"$ownedCallback":"fn"}]',promise:'registration'});
+    const pending=h.dispatch('call','registration');
+    for(let index=0;index<20&&!release;index++)await Promise.resolve();
+    assert.equal(typeof release,'function');
+    if(cancelled){
+      core(h).cancelInvocation('call');release('callback1');await pending;
+      assert.equal(core(h).handlers.get('callback1').state,'closed');
+      assert.equal(core(h).callbacks.get('call/registration/1').state,'revoked');
+      assert.deepEqual(H.replay(h.exportEpisode()).exportEpisode(),h.exportEpisode());
+      assert.equal(core(H.restore(copy(h.checkpoint()))).handlers.get('callback1').state,'closed');
+    }else{
+      t.after(async()=>{release('callback1');await pending;});
+      const restored=H.restore(copy(h.checkpoint()));
+      restored.reconcile('call','registration',{disposition:'fulfilled',value:'callback1',evidenceId:'service-result'});
+      assert.equal(core(restored).handlers.get('callback1').state,'lost');
+      assert.equal(core(restored).callbacks.get('call/registration/1').state,'lost');
+      const again=H.restore(copy(restored.checkpoint()));
+      assert.equal(core(again).callbacks.get('call/registration/1').state,'lost');
+      core(again).reattachSubscription('callback1',{evidenceId:'reattach-existing',attach(){}});
+      assert.equal(core(again).handlers.get('callback1').state,'active');
+    }
+  }
+});
+
+test('a callback result cannot omit or substitute its observed registration',async()=>{
+  const h=await retiredBoundary(Lifecycle,'demo.listen','fulfilled'),
+    handler=h.timeline.find(row=>row.kind==='handler'),result=h.timeline.find(row=>row.kind==='result');
+  const waiting=rawPrefix(h,handler.sequence-1),before=copy(waiting.checkpoint());
+  assert.throws(()=>waiting.deliverResult('call','registration',{status:'fulfilled',value:'callback1'}),/handler registration/);
+  assert.deepEqual(copy(waiting.checkpoint()),before);
+  for(const changes of [{entry:'run'},{ownerInvocationId:null},{closureId:null},{lifetime:'call'},{queueLimit:1}]){
+    assert.throws(()=>waiting.replayRecord({...copy(handler),...changes}),/callback capability/);
+    assert.deepEqual(copy(waiting.checkpoint()),before);
+  }
+  assert.throws(()=>waiting.replayRecord({...copy(result),sequence:handler.sequence}),/handler registration/);
+  assert.deepEqual(copy(waiting.checkpoint()),before);
+  const recovered=Lifecycle.restore(copy(waiting.checkpoint())),recoveredBefore=copy(recovered.checkpoint());
+  assert.throws(()=>recovered.reconcile('call','registration',{
+    disposition:'fulfilled',value:'callback1',evidenceId:'result-without-registration'
+  }),/handler registration/);
+  assert.deepEqual(copy(recovered.checkpoint()),recoveredBefore);
+  recovered.reconcile('call','registration',{disposition:'not-dispatched',evidenceId:'no-registration'});
+  recovered.services={'demo.listen':(_,meta)=>meta.subscriptionId(1)};
+  await recovered.dispatch('call','registration');
+  assert.equal(recovered.handlers.get('callback1').state,'active');
+  assert.equal(recovered.timeline.filter(row=>row.kind==='handler').length,1);
+  assert.deepEqual(Lifecycle.replay(recovered.exportEpisode(),{requireTerminal:false}).timeline,recovered.timeline);
+});
+
+test('ordinary and returning callback names do not consume notification registration identities',async()=>{
+  for(const rootId of ['call','callbackinvoke1','callbackinvoke9']){
+    const source='"use strict";function run(){return;}function handler(value){return host.listen("tick",handler);}';
+    const h=new Lifecycle({services:{'demo.listen':(_,meta)=>meta.subscriptionId(1)}});
+    h.publishProgram({programId:'p',source,entry:'run',capabilities:['demo.listen']});
+    h.admitInvocation({programId:'p',invocationId:rootId,trackId:'worker',realmId:'realm',
+      triggerId:'outside',realmPolicy:'retained'});
+    select(h,rootId,'allocate',{name:'fn',kind:'closure',code:'handler',captures:[],properties:[]});
+    select(h,rootId,'return',{value:['undefined']});select(h,rootId,'end',{kind:'return'});
+    const outcome=h.enqueueClosure({ownerInvocationId:rootId,closureId:'fn',args:[7]}),
+      child=[...h.invocations.keys()].find(id=>id!==rootId);
+    assert.equal(child,rootId==='callbackinvoke1'?'callbackinvoke2':'callbackinvoke1');
+    assert.equal(h.nextCallback,0);
+    select(h,child,'request',{effect:'registration',operation:'demo.listen',invocation:child,
+      arguments:[['str','tick'],['ref','fn']],site:site(source,'demo.listen'),
+      payload:'["tick",{"$ownedCallback":"fn"}]',promise:'registration'});
+    await h.dispatch(child,'registration');
+    select(h,child,'return',{value:['undefined']});select(h,child,'end',{kind:'return'});await outcome;
+    assert.equal(h.nextCallback,1);assert(h.handlers.has('callback1'));
+    const replayed=Lifecycle.replay(h.exportEpisode()),restored=Lifecycle.restore(copy(h.checkpoint()));
+    assert.equal(replayed.nextCallback,1);assert.equal(restored.nextCallback,1);
+    assert.deepEqual(replayed.timeline,h.timeline);
+  }
+});
+
+test('a reconciled non-dispatch can register a new native handle without duplicating its logical handler',async t=>{
+  const source='"use strict";function run(){return host.listen("tick",handler);}function handler(value){return value;}';
+  let release;
+  const h=new Lifecycle({services:{'demo.listen':()=>new Promise(resolve=>{release=resolve;})}});
+  begin(h,source,['demo.listen']);
+  select(h,'call','allocate',{name:'fn',kind:'closure',code:'handler',captures:[],properties:[]});
+  select(h,'call','request',{effect:'registration',operation:'demo.listen',invocation:'call',
+    arguments:[['str','tick'],['ref','fn']],site:site(source,'demo.listen'),
+    payload:'["tick",{"$ownedCallback":"fn"}]',promise:'registration'});
+  const pending=h.dispatch('call','registration');
+  for(let index=0;index<20&&!release;index++)await Promise.resolve();
+  t.after(async()=>{release('callback1');await pending;});
+  const restored=Lifecycle.restore(copy(h.checkpoint()));
+  restored.reconcile('call','registration',{disposition:'not-dispatched',evidenceId:'registration-not-created'});
+  let fire,registrations=0;
+  restored.services={'demo.listen':(_,meta)=>{registrations++;fire=meta.callback(1);return meta.subscriptionId(1);}};
+  await restored.dispatch('call','registration');
+  select(restored,'call','return',{value:['undefined']});select(restored,'call','end',{kind:'return'});
+  fire(17);select(restored,'event1','return',{value:['num',17]});select(restored,'event1','end',{kind:'return'});
+  assert.equal(registrations,1);assert.equal(restored.timeline.filter(row=>row.kind==='handler').length,1);
+  assert.deepEqual(restored.timeline.filter(row=>row.kind==='dispatch').map(row=>row.attempt),[1,2]);
+  assert.deepEqual(Lifecycle.replay(restored.exportEpisode()).timeline,restored.timeline);
+});

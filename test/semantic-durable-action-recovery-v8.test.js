@@ -117,7 +117,7 @@ test('failures before durable publication do not spend a public dispatch attempt
   const h=fixture({journal:wrap(journal,{claim:record=>{
     if(failOnce){failOnce=false;throw Error('disk unavailable');}return journal.claim(record);
   }}),services:{'demo.store':()=>{calls++;return 7;}}});
-  await assert.rejects(h.dispatch('call','e',{beforeDispatch:async()=>({})}),/commitment receipt/);
+  await assert.rejects(h.dispatch('call','e',{beforeDispatch:async()=>({})}),/receipt.*binding/);
   assert.equal(h.intents.get('call/e').attempts,0);
   await assert.rejects(h.dispatch('call','e'),/disk unavailable/);
   assert.equal(h.intents.get('call/e').attempts,0);assert.equal(calls,0);
