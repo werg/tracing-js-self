@@ -59,9 +59,16 @@ aggregate, and the unchanged typed-value renderer is now neutral shared code.
 The tested API patch `3c5a1b6` passes **34/34** bounded controls, including an
 actual installed direct projection/replay/continuation with legacy clients
 physically absent. Installed full-source admission exposed the omitted root
-dependency lock. A separate canonical shrinkwrap repair is being verified;
-the missing-lock failure is retained, and the API-only commit does not claim
-that installed full-source acceptance is already complete.
+dependency lock. Published `9d85e301e6674b97a1ac960d5efb87e572e4137e`
+repairs this with a byte-identical canonical root `npm-shrinkwrap.json`, updated
+identity readers and release mappings. The tested packaging patch `ce8118d`
+passes **57/57 Node and 33/33 Python release controls**, plus fresh normal and
+warm-cache offline npm installation with unchanged registry integrity. Actual
+installed original-source checks/rechecks pass for pure/effect/protocol cases
+with 18 legacy clients absent; changed or missing lock evidence refuses before
+native admission. Earlier missing-lock/cache-miss failures remain retained.
+The native policy now pins published consumer `1ddcc61`; historical measurements
+retain their original consumer identities.
 
 All measurements below bind exact clean producer
 `19eba4f4ef273e15c126d6a35cb38db05156e2d1` and consumer
