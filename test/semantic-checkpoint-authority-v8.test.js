@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {SelectedExecutionLifecycleV8 as Lifecycle} from '../src/semantic/lifecycle-v8.js';
 import {analyzeSemanticProgram} from '../src/training/semantic-program.js';
 import {encodeDetailedRecord} from '../src/semantic/detail-v8.js';
+import {hashAlgorithmData} from '../src/semantic/program.js';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const digest=value=>createHash('sha256').update(value).digest('hex');
@@ -13,7 +14,7 @@ const handler=packet=>packet.handlers[0][1];
 const callback=packet=>packet.callbacks[0][1];
 function reseal(packet){
   const {integrity,...body}=packet;
-  return {...body,integrity:digest(JSON.stringify(body))};
+  return {...body,integrity:hashAlgorithmData(body)};
 }
 function begin(source,capabilities,options={}){
   const host=new Lifecycle({sessionId:'restore-authority',automaticDelivery:false,...options});

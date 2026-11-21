@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {hashAlgorithmData} from '../src/semantic/program.js';
 import {EFFECTFUL_ENGINEERING_FIXTURES} from '../src/training/engineering-fixtures.js';
 import {verifyEffectfulTrainingCase,recheckEffectfulAdmission} from '../src/training/effectful-admit.js';
 import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
@@ -79,7 +80,7 @@ test('forged selected snapshots and future cutoffs fail exact public replay and 
   }
   const packet=SelectedExecutionHarness.replay(exported).checkpoint();
   packet.timeline.find(isState).selectedState.locals[0][1]=['num',999];
-  const {integrity,...body}=packet;packet.integrity=digest(body);
+  const {integrity,...body}=packet;packet.integrity=hashAlgorithmData(body);
   assert.throws(()=>SelectedExecutionHarness.restore(packet),/Replay|context|fields/);
 });
 

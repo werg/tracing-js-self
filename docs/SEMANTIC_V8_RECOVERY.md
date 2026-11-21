@@ -66,6 +66,14 @@ prefix of the host history. Additional observed host rows are allowed: a host
 result can arrive while the native snapshot is being collected. Additional
 generated rows are refused.
 
+Checkpoint integrity uses canonical JSON object-key order at both the Region
+and embedded lifecycle layers. Reordering object keys during durable storage
+does not change the acknowledged checkpoint; array and execution order remain
+part of its identity. This pre-release definition replaces the lifecycle's
+earlier insertion-order checksum. Historical checkpoints with that earlier
+checksum require regeneration from a current validated execution; there is no
+compatibility decoder or automatic resigning of supplied state.
+
 Host checkpoint validation finishes before native restoration starts. The native
 transport must attest the exact restored transport digest and zero host
 dispatches. Its independent model restoration retains the random state and

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
+import {hashAlgorithmData} from '../src/semantic/program.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {SelectedExecutionLifecycleV8} from '../src/semantic/lifecycle-v8.js';
 import {analyzeSemanticProgram} from '../src/training/semantic-program.js';
@@ -172,7 +172,7 @@ test('direct lifecycle recovery rejects rehashed closure, callback counter and r
     packet=>{packet.intents[0][1].resultDigest='0'.repeat(64);}
   ]){
     const forged=structuredClone(original);change(forged);
-    const {integrity,...body}=forged;forged.integrity=createHash('sha256').update(JSON.stringify(body)).digest('hex');
+    const {integrity,...body}=forged;forged.integrity=hashAlgorithmData(body);
     assert.throws(()=>SelectedExecutionLifecycleV8.restore(forged),/realm ownership|callback counter|result identity/);
   }
 });

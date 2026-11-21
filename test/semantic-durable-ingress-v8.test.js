@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
 import {mkdtemp,rm,writeFile,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -19,7 +18,7 @@ const record=(kind,fields)=>({kind,fields});
 const seal=packet=>{const {integrity,...body}=packet;return {...body,integrity:hashAlgorithmData(body)};};
 const resealCore=packet=>{
   const {integrity,...body}=packet;
-  return {...body,integrity:createHash('sha256').update(JSON.stringify(body)).digest('hex')};
+  return {...body,integrity:hashAlgorithmData(body)};
 };
 async function fixture(t){
   const directory=await mkdtemp(join(tmpdir(),'v8-private-ingress-'));

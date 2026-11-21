@@ -3,7 +3,6 @@
 // made by these deterministic records.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -151,11 +150,11 @@ test('driver restore rejects rehashed cross-layer history and budget changes bef
       const {digest:outer,...transport}=p.native;p.native=seal(transport);},
     p=>{p.bridge.selected.maxOutstanding++;
       const {integrity,...body}=p.bridge.selected;
-      p.bridge.selected={...body,integrity:createHash('sha256').update(JSON.stringify(body)).digest('hex')};
+      p.bridge.selected={...body,integrity:hashAlgorithmData(body)};
       const {integrity:outer,...bridge}=p.bridge;p.bridge={...bridge,integrity:hashAlgorithmData(bridge)};},
     p=>{p.bridge.selected.automaticDelivery=false;
       const {integrity,...body}=p.bridge.selected;
-      p.bridge.selected={...body,integrity:createHash('sha256').update(JSON.stringify(body)).digest('hex')};
+      p.bridge.selected={...body,integrity:hashAlgorithmData(body)};
       const {integrity:outer,...bridge}=p.bridge;p.bridge={...bridge,integrity:hashAlgorithmData(bridge)};}
   ];
   for(const mutate of mutations){

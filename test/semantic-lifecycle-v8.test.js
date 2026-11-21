@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
-import {createHash} from 'node:crypto';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 import {SelectedExecutionLifecycleV8} from '../src/semantic/lifecycle-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
@@ -119,7 +118,7 @@ test('mixed V8 checkpoints contain direct lifecycle state and reject altered sel
   const forged=structuredClone(packet);
   forged.selected.invocations[0][1].controller.pending.value[1]=99;
   const {integrity:innerIntegrity,...innerBody}=forged.selected;
-  forged.selected.integrity=createHash('sha256').update(JSON.stringify(innerBody)).digest('hex');
+  forged.selected.integrity=hashAlgorithmData(innerBody);
   const {integrity,...body}=forged;forged.integrity=hashAlgorithmData(body);
   assert.throws(()=>RegionExecutionHarness.restore(forged),/contradicts committed public history/);
   const restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(packet)));

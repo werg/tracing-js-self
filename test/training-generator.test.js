@@ -4,7 +4,7 @@ import {encodeWitness,decodeWitness} from '../src/training/format.js';
 import {verifyOwnedSourceCase,recheckOwnedSourceEvidence} from '../src/training/source-check.js';
 import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 import {SelectedModelDriver} from '../src/training/model-driver.js';
-import {createHash} from 'node:crypto';
+import {hashAlgorithmData} from '../src/semantic/program.js';
 
 test('canonical witness seed is exact, bounded, and cannot alias another seed',()=>{
   const fields={entry:'run',source:'function run(){return Math.random();}',sites:[]};
@@ -73,7 +73,7 @@ test('seeded retained invocations and checkpoint restoration keep one realm stre
     const forged=structuredClone(checkpoint);
     forged.realms[0][1].randomState++;
     const {integrity,...body}=forged;
-    forged.integrity=createHash('sha256').update(JSON.stringify(body)).digest('hex');
+    forged.integrity=hashAlgorithmData(body);
     assert.throws(()=>SelectedExecutionHarness.restore(forged),/realm ownership or state|randomState/);
   }
   assert.equal(SelectedExecutionHarness.replay(h.exportEpisode()).realms.get('realm').randomState,state);

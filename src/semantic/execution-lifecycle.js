@@ -12,6 +12,7 @@ import {hostOperation} from '../host/operations.js';
 import {decodeHostPayload,ownedCallbackId} from '../host/materialize.js';
 import {canonicalInvocationIngressDigest,validateCheckpointAuthority,
   validateNativeActionBinding} from './checkpoint-authority.js';
+import {hashAlgorithmData} from './program.js';
 
 const ID=/^[a-z][a-z0-9:_-]*$/;
 const clone=x=>structuredClone(x);
@@ -1460,13 +1461,13 @@ export class SelectedExecutionCore {
       ingress:[...this.ingress],deliveries:this.deliveries,rejections:this.rejections,
       closureQueue:this.closureQueue.map(({args,receiver,...request})=>request.inputGraph?
         request:({...request,argsGraph:graphOf([receiver,...args])}))};
-    return clone({...packet,integrity:createHash('sha256').update(JSON.stringify(packet)).digest('hex')});
+    return clone({...packet,integrity:hashAlgorithmData(packet)});
   }
   static restore(packet,{services={},journal=null,grants=null,now=Date.now,
       materializeCallbackResult=null,prepareCallbackInput=null}={}){
     demand(packet?.schema===this.contract.checkpointVersion&&packet.profile===this.contract.profile,'Wrong checkpoint version');
     const {integrity,...body}=packet;
-    demand(integrity===createHash('sha256').update(JSON.stringify(body)).digest('hex'),
+    demand(integrity===hashAlgorithmData(body),
       'Checkpoint integrity mismatch');
     validateIngressQueueOrder(packet.handlers,packet.nextIngressSequence);
     const verified=this.replay({public:{schema:this.contract.executionVersion,
