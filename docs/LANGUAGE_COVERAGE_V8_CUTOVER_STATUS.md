@@ -92,6 +92,29 @@ work ledger. **0 of 17 complete acceptance packages are closed.**
   Returning callback IDs no longer consume notification-registration counters.
   **156 integrated tests pass**, including 97 checkpoint-authority controls.
   General later-public-history and distributed resource ownership remain open.
+- Consumer `a76ba088c64d9bbbfe14fd5a370ac25b3f80b881`,
+  `e7713984308e5e68df21e0080ec694c204f2d729` and
+  `9a1d9159349b9edab7add29df818b3ecdf5263d1` pair explicit reconciliation,
+  resource reattachment, exact registration authority, retirement and allocation
+  identities. The latest fixtures contain 11 recovery/registration episodes
+  (51 selected records) and eight retained-handler episodes (58 records),
+  pinned to producer `9fc193538c4e5c2e512f9fef767d30ed9e437c5a`.
+  **172 focused controls pass** on the latest consumer; earlier overlapping
+  integrated runs passed 178 and 109. These controls leave original-source
+  admission and learned success unclaimed. The exact current consumer is now
+  pinned in the producer's native policy, and consumer CI checks producer
+  `9fc1935` rather than stale `f04f1be`; the earlier failed contract-comparison
+  CI run remains a failure.
+- The full module campaign at producer `28261b8` is retained in published
+  `5ae71ba805fdaa50888235b1564a912b0eb591a3`, with 1,064 checked archive members
+  including all 102,994 catalog rows, original selected inputs, resources,
+  logs and failed setup attempts. Of 843 selected variants, parse has 750
+  passes / 93 failures; owned execution has 275 passes / 16 failures / 212
+  unsupported / 42 environment-unavailable / 205 not-run / 93 blocked; native
+  reference has 664 passes / 102 failures / 77 environment-unavailable.
+  No infrastructure errors or resource limits occurred. These stages do not
+  establish public/source/native admission. Namespace identity gaps exposed by
+  the campaign are being repaired with pinned-specification controls.
 
 Current priorities remain retained host-handler/native composition, module
 declaration and live-binding semantics, missing later acknowledged public
