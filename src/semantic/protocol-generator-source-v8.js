@@ -11,7 +11,7 @@ const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('generator: '+m
 
 export function createGeneratorSourceAdapterV8({bundle}){
   if(!Object.values(bundle.programs).some(program=>program.generator))return null;
-  const creations=new Map(),yields=new Map(),completed=new Set(),handlerDefinitions=new Map(),delegations=new Map(),delegateSites=new Set();let handlerCounter=0;
+  let creations=new Map(),yields=new Map(),completed=new Set(),handlerDefinitions=new Map(),delegations=new Map(),delegateSites=new Set(),handlerCounter=0;
   const emit=(ctx,record,event)=>ctx.emit(record,event,'owned-generator-protocol/1');
   const instruction=(ctx,event)=>{const frame=ctx.getOwnedFrame(event.invocationId),candidate=bundle.programs[event.codeId]?.instructions[frame?.pc];
     return candidate?.siteId===event.siteId?candidate:null;};
@@ -57,6 +57,11 @@ export function createGeneratorSourceAdapterV8({bundle}){
     if(result)ctx.markPublished(result.id);completed.add(event.eventId+':'+change.id);settleDelegatedThrow(ctx,event);return true;
   }
   return {id:GENERATOR_SOURCE_PROFILE_V8,
+    captureState:()=>({creations:[...creations],yields:[...yields],completed:[...completed],
+      handlerDefinitions:[...handlerDefinitions],delegations:[...delegations],delegateSites:[...delegateSites],handlerCounter}),
+    restoreState(state){creations=new Map(state.creations);yields=new Map(state.yields);completed=new Set(state.completed);
+      handlerDefinitions=new Map(state.handlerDefinitions);delegations=new Map(state.delegations);
+      delegateSites=new Set(state.delegateSites);handlerCounter=state.handlerCounter;},
     syntax(node){if(node.type!=='YieldExpression')return false;
       if(node.delegate)delegateSites.add(node.start+':'+node.end);return true;},
     program(program){return program.generator===true&&program.strict&&!program.async&&!program.parameterExpressions&&program.restIndex<0;},

@@ -7,7 +7,7 @@ const staticFields=['catchPc','finallyPc','afterPc','envId','stackDepth','loopDe
 const handlerFields=[...staticFields,'phase','pending','caught'];
 export function createCompletionSourceAdapterV8({bundle}){
   if(!Object.values(bundle.programs).some(program=>!program.generator&&program.instructions.some(row=>row.op==='TRY_ENTER')))return null;
-  const tracked=new Set(),scopes=new Map(),targets=new Map();let sequence=0,targetSequence=0;
+  let tracked=new Set(),scopes=new Map(),targets=new Map(),sequence=0,targetSequence=0;
   const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('ordinary completion: '+message);};
   const instruction=(ctx,event)=>{
     const frame=ctx.getOwnedFrame(event.invocationId),inst=bundle.programs[frame?.codeId]?.instructions[frame?.pc];
@@ -76,6 +76,9 @@ export function createCompletionSourceAdapterV8({bundle}){
     return {schema,frames:rows};
   }
   return {id:COMPLETION_SOURCE_PROFILE_V8,
+    captureState:()=>({tracked:[...tracked],scopes:[...scopes],targets:[...targets],sequence,targetSequence}),
+    restoreState(state){tracked=new Set(state.tracked);scopes=new Map(state.scopes);targets=new Map(state.targets);
+      sequence=state.sequence;targetSequence=state.targetSequence;},
     setup(ctx){ctx.extensionState.set(COMPLETION_SOURCE_PROFILE_V8,true);},
     frameFields(node){
       if(node.generatorId)return null;

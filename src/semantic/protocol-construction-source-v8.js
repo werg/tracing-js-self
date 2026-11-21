@@ -18,7 +18,7 @@ const finished=frame=>['completed','thrown'].includes(frame.status);
 export function createConstructionSourceAdapterV8({bundle,source}){
   const inventory=constructionSourceInventoryV8(source);
   if(!inventory.classes.length&&!inventory.objectMethods.size&&!inventory.ordinaryConstruction)return null;
-  const classes=new Map(inventory.classes.map(item=>[item.node.start,item])),definitions=new Map(),roles=new Map();
+  const classes=new Map(inventory.classes.map(item=>[item.node.start,item])),definitions=new Map();let roles=new Map();
   for(const program of Object.values(bundle.programs))for(let index=0;index<program.instructions.length;index++){
     const instruction=program.instructions[index];if(!['DEF_FN','MAKE_FUNCTION'].includes(instruction.op))continue;
     const code=instruction.arg.codeId,method=inventory.methods.get(instruction.start),item=classes.get(instruction.start),
@@ -139,6 +139,8 @@ export function createConstructionSourceAdapterV8({bundle,source}){
     require(ctx,ctx.eq(node.thisValue,entry.receiver),'retained receiver differs from shared construction state');return true;
   }
   return {id:CONSTRUCTION_SOURCE_PROFILE_V8,
+    captureState:()=>({roles:[...roles]}),
+    restoreState(state){roles=new Map(state.roles);},
     syntax(node){
       if(['ClassDeclaration','ClassExpression'].includes(node.type)){
         for(const element of node.body.body)if(element.key?.type==='PrivateIdentifier'&&['get','set'].includes(element.kind))

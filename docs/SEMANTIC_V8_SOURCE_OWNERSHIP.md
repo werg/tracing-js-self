@@ -4,7 +4,9 @@ The Promise executor, Promise join and ordinary detailed source components now
 share one teacher projection. They no longer choose a single whole-episode
 compiler or install one another as an incidental dependency. This is a bounded
 composition increment: the separate source projector for the other protocol
-families still has its own admission and extension path.
+families still has its own admission and extension path. That path now stages
+each source event and all private adapter state as described below; migrating
+its remaining first-match dispatch to declarative ownership is a separate gate.
 
 ## Ownership before execution
 
@@ -57,6 +59,36 @@ guest operation is not made transactional, and a later guest exception cannot
 undo earlier valid source events. Source staging refuses a harness with live
 native transports, pending native dispatches or wake listeners; it never calls
 or duplicates host services.
+
+## Remaining protocol families: atomic event publication
+
+The direct protocol source compiler also stages complete owned events. Number
+conversion, Proxy traps, synchronous generators, construction, iterator cursors,
+ordinary cleanup, enumeration, binary memory and array-map expansion share one
+detached public controller during an event. The source-prefix state, emitted
+claims, lexical and frame identities, pending accessors, publication sets, and
+private adapter state move together only after all event checks pass.
+
+Stateful adapters declare capture and restore operations. The snapshot preserves
+aliases between their retained records, including an array-map plan shared by
+the parent and callback indexes. An explicitly stateless adapter can omit them;
+an imperative adapter with undeclared state is refused. All precondition and
+postcondition observers run in stable identity order, including after another
+observer rejects. Rejection discards the entire event, its emitted claims and
+its reserved identities. Earlier committed source events remain intact.
+
+The source-array mutation guard now runs as an unconditional event precondition.
+It can no longer be skipped because another protocol adapter handles the event.
+The combined qualification source nests a Proxy trap and typed-memory write
+inside Number conversion, then invokes builtin iterators from map callbacks.
+Original-source checks, public replay and terminal checkpoint restoration agree.
+Fault controls reject Number entry and map callback completion after staged
+records were emitted, then compare the complete previous public/private prefix.
+
+This adds transactional publication to that compiler. Its allocation, event and
+completion dispatch still uses the existing adapter routing. It does not claim
+that all protocol families have joined the declarative ownership registry or
+that Promise/protocol-family mixed source programs are admitted.
 
 ## Qualification and limits
 

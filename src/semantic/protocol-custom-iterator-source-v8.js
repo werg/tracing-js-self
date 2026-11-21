@@ -17,9 +17,11 @@ export function createCustomIteratorSourceAdapterV8({bundle,source}){
     }
     for(const [key,value]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(value);
   }visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));
-  const methods=new Map();
+  let methods=new Map();
   const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('custom iterator: '+message);};
   return {id:CUSTOM_ITERATOR_SOURCE_PROFILE_V8,
+    captureState:()=>({methods:[...methods],patterns:[...patterns],defaults:[...defaults],rests:[...rests]}),
+    restoreState(state){methods=new Map(state.methods);},
     setup(ctx){ctx.extensionState.set(CUSTOM_ITERATOR_SOURCE_PROFILE_V8,{patterns,defaults,rests});},
     event(ctx,event){
       const frame=ctx.getOwnedFrame(event.invocationId),inst=bundle.programs[frame?.codeId]?.instructions[frame?.pc];

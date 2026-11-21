@@ -8,7 +8,7 @@ const checked=(ctx,condition,message)=>{if(!condition)ctx.refuse('array map: '+m
 const patched=(ctx,event,table,id)=>event.stateChanges.find(change=>change.table===table&&change.id===id)?.after??ctx.state[table][id];
 
 export function createArrayMapSourceAdapterV8(){
-  const plans=new Map(),callbacks=new Map();
+  let plans=new Map(),callbacks=new Map();
   function input(ctx,value){
     const node=value?.[0]==='ref'?ctx.state.heap[value[1]]:null;
     checked(ctx,node?.kind==='array'&&[undefined,'Array.prototype'].includes(node.prototype)&&
@@ -50,11 +50,15 @@ export function createArrayMapSourceAdapterV8(){
     return true;
   }
   return {id:ARRAY_MAP_SOURCE_PROFILE_V8,
+    captureState:()=>({plans:[...plans],callbacks:[...callbacks]}),
+    restoreState(state){plans=new Map(state.plans);callbacks=new Map(state.callbacks);},
     frameFields(node){return node.pendingArrayMethod?['pendingArrayMethod']:null;},checkFrame,
-    event(ctx,event,row){
+    beforeEvent(ctx,event){
       for(const plan of plans.values())for(const change of event.stateChanges)
         if(change.table==='heap'&&change.id===plan.arrayId&&!ctx.eq(change.before,change.after))
           ctx.refuse('array map: mutation of the source array during a callback needs its broader iteration profile');
+    },
+    event(ctx,event,row){
       if(callbacks.has(event.invocationId)&&event.stateChanges.some(change=>change.table==='frames'&&change.id===event.invocationId&&
         ['completed','thrown'].includes(change.after?.status)))return true;
       const plan=plans.get(event.invocationId);

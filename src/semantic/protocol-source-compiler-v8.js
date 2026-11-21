@@ -13,6 +13,7 @@ import {ownedEffectfulOutcome} from './source-projection.js';
 import {compilePromiseSourceProjectionV8} from './protocol-promise-join-source-v8.js';
 import {encodeDetailedRecord} from './detail-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
+import {cloneRegionController} from './regions.js';
 import {encodeProtocolRecordV8,validateProtocolValueV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
 import {PROTOCOL_SOURCE_ADAPTERS_V8} from './protocol-source-extensions-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
@@ -97,7 +98,14 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     extensions:components.map(adapter=>adapter.sourceComponent),extensionIds:components.map(adapter=>adapter.id),
     sourceProfile:components.some(adapter=>adapter.id==='promise-executor/1')?
       'promise-executors-source/1':'promise-joins-source/1'});
-  const usedAdapters=new Set(),heapOwners=new Map(),frameOwners=new Map();
+  for(const adapter of adapters){
+    const stateful=typeof adapter.captureState==='function'&&typeof adapter.restoreState==='function';
+    if((adapter.captureState!==undefined||adapter.restoreState!==undefined)&&!stateful)
+      refuse('source adapter state requires both capture and restore: '+adapter.id);
+    if(['event','allocate','completeFrame','beforeEvent','afterEvent'].some(name=>typeof adapter[name]==='function')&&
+      adapter.stateless!==true&&!stateful)refuse('source adapter must declare retained state or be stateless: '+adapter.id);
+  }
+  let usedAdapters=new Set(),heapOwners=new Map(),frameOwners=new Map();
   const use=adapter=>{if(typeof adapter.id!=='string'||!adapter.id)refuse('extension requires a stable profile identity');usedAdapters.add(adapter.id);};
   function extension(method,...args){for(const adapter of adapters){const result=adapter[method]?.(...args);
     if(result!==undefined&&result!==null&&result!==false){use(adapter);return result;}}return null;}
@@ -119,8 +127,9 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   harness.publishProgram({programId:'program1',source,entry:entry.functionName,capabilities:[]});
   harness.admitInvocation({programId:'program1',invocationId:'invocation1',trackId:'worker1',realmId:'realm1',
     triggerId:'protocol-entry',inputGraph,realmPolicy:'fresh',completionPolicy:'call-return'});
-  const controller=harness.controller,claims=[],state=copy(bundle.initialState),names=new Map(),used=new Set(),frames=new Map([[semantic.rootInvocation,'invocation1']]),
-    functionCodes=new Map(),functionNodes=new Map(),pendingAccessors=new Map(),published=new Set(controller.heap.keys()),publishing=new Set();
+  let controller=harness.controller,claims=[],state=copy(bundle.initialState),names=new Map(),used=new Set(),frames=new Map([[semantic.rootInvocation,'invocation1']]),
+    pendingAccessors=new Map(),published=new Set(controller.heap.keys()),publishing=new Set(),extensionState=new Map();
+  const functionCodes=new Map(),functionNodes=new Map();
   let cellCounter=0,frameCounter=0,accessorCounter=0;
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
     if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op)){
@@ -315,19 +324,49 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     }
     refuse('builtin call needs a declared protocol operation: '+name);
   }
-  const context={bundle,source,inventory,state,beforeState:state,controller,claims,
+  const context={bundle,source,inventory,
+    get state(){return state;},get beforeState(){return state;},get controller(){return controller;},get claims(){return claims;},
     emit,bind,tag,cell,frame,codeFor,publish,baseAllocate,baseCheckHeap,
-    functionCodes,functionNodes,published,pendingAccessors,
+    functionCodes,functionNodes,get published(){return published;},get pendingAccessors(){return pendingAccessors;},
     key,descriptor,prototype,orderedKeys,refuse,copy,eq,
     markPublished(id){published.add(id);},
     get publicInvocation(){return controller.stack.at(-1);},
     getOwnedFrame(id){return state.frames[id];},
-    extensionState:new Map()};
+    get extensionState(){return extensionState;}};
   for(const adapter of adapters)adapter.setup?.(context);
+  function observe(method,event,row){
+    let failure;
+    for(const adapter of [...adapters].sort((a,b)=>a.id.localeCompare(b.id))){
+      try{if(adapter[method]?.(context,event,row)===false)refuse('source observer rejected '+method+': '+adapter.id);}
+      catch(error){failure??=error;}
+    }
+    if(failure)throw failure;
+  }
+  const projectionState=()=>({controller,claims,state,names,used,frames,pendingAccessors,published,publishing,
+    extensionState,usedAdapters,heapOwners,frameOwners,cellCounter,frameCounter,accessorCounter});
+  function selectProjectionState(selected){
+    ({controller,claims,state,names,used,frames,pendingAccessors,published,publishing,
+      extensionState,usedAdapters,heapOwners,frameOwners,cellCounter,frameCounter,accessorCounter}=selected);
+  }
+  function transaction(run){
+    const live=projectionState(),adapterStates=adapters.map(adapter=>adapter.captureState?.()),
+      detached=copy({state,names,used,frames,pendingAccessors,published,publishing,extensionState});
+    selectProjectionState({...live,...detached,controller:cloneRegionController(controller),claims:[...claims],
+      usedAdapters:new Set(usedAdapters),heapOwners:new Map(heapOwners),frameOwners:new Map(frameOwners)});
+    for(const [index,adapter]of adapters.entries())if(adapter.captureState)adapter.restoreState(copy(adapterStates[index]));
+    try{return run();}
+    catch(error){
+      selectProjectionState(live);
+      for(const [index,adapter]of adapters.entries())if(adapter.captureState)adapter.restoreState(adapterStates[index]);
+      throw error;
+    }
+  }
   const entryEnv=state.frames[semantic.rootInvocation].envId;
-  for(const [name,binding]of Object.entries(state.envs[entryEnv]?.bindings??{}))if(binding.initialized)bind(cell(entryEnv,name),binding.token.value);
-  for(const event of bundle.events){
+  transaction(()=>{for(const [name,binding]of Object.entries(state.envs[entryEnv]?.bindings??{}))
+    if(binding.initialized)bind(cell(entryEnv,name),binding.token.value);});
+  function projectEvent(event){
     const row=rows.get(event.eventId),heapChanges=event.stateChanges.filter(change=>change.table==='heap');
+    observe('beforeEvent',event,row);
     for(const change of heapChanges)if(change.after)guardedHeap(change.after);else refuse('heap deletion needs a protocol');
     for(const change of event.stateChanges)if(change.table==='frames'&&change.after){
       const owners=adapters.filter(adapter=>adapter.frameFields?.(change.after)!=null),allowed=new Set(frameFields);
@@ -470,7 +509,7 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
         emit({kind:'property.finish',id:pending.id,completion:{kind:kind==='throw'?'throw':'normal',value:kind==='throw'||pending.operation==='get'?value:pending.value}},event,'owned-source-accessor-completion/1');pendingAccessors.delete(invocation);
       }
     }
-    for(const adapter of adapters)if(adapter.afterEvent)adapter.afterEvent(context,event,row);
+    observe('afterEvent',event,row);
     for(const change of heapChanges)if(published.has(change.id))checkNode(change.after);
     for(const change of event.stateChanges.filter(change=>change.table==='frames'&&change.after))
       for(const adapter of frameOwners.get(change.id)??[])if(adapter.checkFrame(context,change.after,event)!==true)refuse('extension failed its complete frame comparison: '+adapter.id);
@@ -478,6 +517,7 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       if(change.after===null)delete state[change.table][change.id];else if(change.after!==undefined)state[change.table][change.id]=copy(change.after);
     }
   }
+  for(const event of bundle.events)transaction(()=>projectEvent(event));
   if(pendingAccessors.size||controller.stack.length)refuse('incomplete source protocol execution');
   emit({kind:'end',completion:controller.pending.kind},null,'owned-source-terminal/1');
   const outcome=ownedEffectfulOutcome(bundle);

@@ -20,6 +20,7 @@ function method(node,key){
 }
 export const memorySourceAdapterV8={
   id:MEMORY_PROFILE_V8,
+  stateless:true,
   syntax(node){return node.type==='NewExpression'&&node.callee.type==='Identifier'&&constructors.has(node.callee.name);},
   heapFields(node){return fields[node.kind]??null;},
   checkHeap(ctx,owned){

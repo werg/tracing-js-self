@@ -11,7 +11,7 @@ function archive(source){const runtime=createRuntime().startEntry({text:source,f
 
 test('producer adapters declare their exact profile and preserve ordinary state checking',()=>{
   const bundle=archive('"use strict";function run(){const o={n:3};return o.n+1;}');
-  const adapter={id:'test-arithmetic/1',event(ctx,event,row){
+  const adapter={id:'test-arithmetic/1',stateless:true,event(ctx,event,row){
     if(!row||!['primitive.binary','spec.operation.complete'].includes(event.operation))return false;
     ctx.emit({kind:'compute',expr:{op:'binary',operator:'+',left:{op:'literal',value:row.operands[0]},
       right:{op:'literal',value:row.operands[1]}},result:row.result,bind:null},event,'source-test-adapter/1');return true;

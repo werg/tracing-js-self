@@ -5,7 +5,7 @@ import {propertyKeyValue,symbolPropertyKey} from '../property-keys.js';
 export const NUMBER_SOURCE_PROFILE_V8='number-conversion-source/1';
 const scalar=value=>Array.isArray(value)&&['undefined','null','bool','str','num','bigint','symbol','ref'].includes(value[0]);
 export function createNumberSourceAdapterV8(){
-  const active=new Map(),callbacks=new Map();let next=0;
+  let active=new Map(),callbacks=new Map(),next=0;
   const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('Number conversion: '+message);};
   const operation=(ctx,id)=>ctx.controller.protocol.numberConversions.operations.find(row=>row.id===id);
   const emit=(ctx,record,event)=>ctx.emit(record,event,'owned-number-conversion/1');
@@ -59,6 +59,8 @@ export function createNumberSourceAdapterV8(){
     }
   }
   return {id:NUMBER_SOURCE_PROFILE_V8,
+    captureState:()=>({active:[...active],callbacks:[...callbacks],next}),
+    restoreState(state){active=new Map(state.active);callbacks=new Map(state.callbacks);next=state.next;},
     frameFields(node){return Object.hasOwn(node,'pendingNumberConversion')?['pendingNumberConversion']:null;},
     event(ctx,event){
       const raw=event.operands[0],callee=raw?.[0]==='method'?raw[1]:raw;
