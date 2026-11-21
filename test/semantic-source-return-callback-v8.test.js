@@ -131,3 +131,73 @@ test('a source-derived callback resumes in a fresh process with no native waiter
   const child=spawnSync(process.execPath,['--input-type=module','--eval',script,packet,directory],{encoding:'utf8'});
   assert.equal(child.status,0,child.stderr);assert.match(child.stdout,/source callback restored/);
 });
+
+test('fresh-process source recovery preserves nested callback host waits without inferring either parent result',async t=>{
+  const artifact=certified[3],rows=artifact.public.timeline;
+  const childRows=rows.filter(row=>row.kind==='invocation'&&row.fields.activation==='callback');
+  assert.equal(childRows.length,2);
+  const firstCut=rows.indexOf(childRows[0]),grandchildCut=rows.indexOf(childRows[1]);
+  const source=artifact.sidecar.sourceArtifact.sidecar.archive;
+  const arrivals=new Map(source.events.filter(e=>e.operation==='external.callback.enqueue').map(event=>{
+    const job=event.stateChanges.find(p=>p.table==='control').after.queue.at(-1);return [job.returnId,job];
+  }));
+  const directory=await mkdtemp(join(tmpdir(),'v8-source-nested-process-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableHostIngressJournal({directory,streamId:'nested'});
+  const h=RegionExecutionHarness.replay({...artifact.public,timeline:rows.slice(0,firstCut)},{requireTerminal:false});
+  const broker=new DurableHostIngressBroker({harness:h,journal});
+  const enqueue=async row=>{
+    const fields=row.fields,arrival=arrivals.get(fields.invocationId);
+    const [receiver,...args]=decodeOwnedGraph(JSON.stringify(arrival.inputGraph));
+    await broker.receiveCallback({ownerInvocationId:fields.parentInvocationId,parentEffectId:arrival.effectId,
+      closureId:fields.closureId,invocationId:fields.invocationId,receiver,args,deliver:false});
+    await broker.flush();
+  };
+  await enqueue(childRows[0]);
+  h.inner.activateQueuedClosures(childRows[0].fields.realmId);h.sync();
+  assert.deepEqual(h.timeline.at(-1),childRows[0]);
+  for(const row of rows.slice(firstCut+1,grandchildCut)){
+    if(row.mode==='observed')h.importObserved(row);
+    else h.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+  }
+  assert.equal(h.invocations.get(childRows[0].fields.invocationId).status,'suspended');
+  const checkpoint=h.checkpoint(); // The later grandchild arrival is journal-only.
+  await enqueue(childRows[1]);
+  const parentKeys=childRows.map(row=>row.fields.parentInvocationId+'/'+arrivals.get(row.fields.invocationId).effectId);
+  const packet=join(directory,'nested-source-prefix.json');
+  await writeFile(packet,JSON.stringify({checkpoint,receipt:broker.receipt,suffix:rows.slice(grandchildCut),
+    expected:RETURN_CALLBACK_FIXTURES[3].expected,parentKeys,first:childRows[0].fields.invocationId,
+    grandchild:childRows[1].fields.invocationId,public:artifact.public}));
+  const script=`import {readFile} from 'node:fs/promises';
+    import assert from 'node:assert/strict';
+    import {RegionExecutionHarness as H} from ${JSON.stringify(new URL('../src/semantic/region-harness.js',import.meta.url).href)};
+    import {DurableHostIngressJournal as J} from ${JSON.stringify(new URL('../src/storage/host-ingress-journal.js',import.meta.url).href)};
+    const p=JSON.parse(await readFile(process.argv[1],'utf8'));let calls=0,receipts=0;
+    const h=await H.restoreDurable(p.checkpoint,{ingressJournal:new J({directory:process.argv[2],streamId:'nested'}),
+      ingressLogReceipt:p.receipt,services:{'natlang.call':()=>{calls++;}}});
+    assert.deepEqual(h.exportEpisode(),p.checkpoint.public);
+    assert.equal(h.invocations.get(p.first).status,'suspended');assert.equal(h.inner.completionWaiters.size,0);
+    assert.deepEqual(h.inner.closureQueue.map(row=>row.invocationId),[p.grandchild]);
+    for(const key of p.parentKeys){
+      const intent=h.intents.get(key);assert.equal(intent.status,'uncertain');
+      await assert.rejects(h.dispatch(intent.invocationId,intent.effectId),/uncertain/);
+    }
+    for(const row of p.suffix){
+      if(row.kind==='invocation'&&row.fields.activation==='callback'){
+        h.inner.activateQueuedClosures(row.fields.realmId);h.sync();assert.deepEqual(h.timeline.at(-1),row);
+      }else if(row.mode==='observed'){
+        if(row.kind==='result'){
+          assert.equal(h.intents.get(p.parentKeys[0]).status,'uncertain');
+          assert.equal(h.inner.callbackOutcome(receipts===0?p.grandchild:p.first).status,'fulfilled');
+          if(receipts===0)assert.equal(h.intents.get(p.parentKeys[1]).status,'uncertain');
+          receipts++;
+        }
+        h.importObserved(row); // Recorded external evidence, not an inferred guest result.
+      }else h.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+    }
+    assert.equal(receipts,2);assert.equal(h.invocations.size,3);assert.equal(calls,0);
+    assert.deepEqual(h.controller.completion,p.expected);assert.deepEqual(h.exportEpisode(),p.public);
+    process.stdout.write('nested source callbacks restored once with both parents reconciled by recorded receipts');`;
+  const child=spawnSync(process.execPath,['--input-type=module','--eval',script,packet,directory],{encoding:'utf8'});
+  assert.equal(child.status,0,child.stderr);assert.match(child.stdout,/nested source callbacks restored once/);
+});

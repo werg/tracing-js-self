@@ -77,7 +77,7 @@ alone. This preserves throw/return ordering without duplicating external work.
 
 ## Executed controls and remaining gates
 
-`test/semantic-durable-return-callback-v8.test.js` executes ten controls:
+`test/semantic-durable-return-callback-v8.test.js` executes eleven controls:
 
 - A gated journal write keeps callback inputs outside both the live queue and
   public context; caller mutation after capture cannot change the stored graph.
@@ -88,6 +88,9 @@ alone. This preserves throw/return ordering without duplicating external work.
 - Prepared callback inputs and results preserve retained owned-object identity.
 - Registered events and return callbacks retain their shared FIFO order through
   journal plus private snapshot recovery.
+- The whole saved callback queue must match the journal. Extra, duplicate and
+  reversed rows refuse atomically; an earlier journal-only arrival is merged
+  ahead of an already saved later callback.
 - Changed parent effect, closure, retained-ID authority, prefix, order and
   receiver refuse before any recovered child is staged. A changed delivered
   graph also refuses when compared with the public child invocation.
@@ -165,9 +168,14 @@ durable arrival from an earlier source-produced checkpoint, restores the active
 child again, and consumes only the remaining source-produced selections. Its
 public timeline exactly matches uninterrupted source execution, including the
 second callback and captured-cell update. A fresh Node process separately
-restores the source-derived throwing child. Both controls keep the native
-parent uncertain until its independently retained external result is imported;
-they recreate no native waiter and make no native dispatch.
+restores the source-derived throwing child. A further fresh-process control
+checkpoints the first callback while it waits for its own host request, then
+recovers the later grandchild arrival from the journal. It admits that grandchild
+once and resumes both child and root using only the remaining source selections
+and independently retained external result receipts. Both parent intents stay
+uncertain until their respective receipt is imported; neither native waiter is
+recreated and neither external operation is dispatched again. The final public
+timeline matches the independently checked uninterrupted source run exactly.
 
 These source and durable-recovery controls still do not establish actual-model
 selection, callback-capable deployment qualification, or an adapter-owned

@@ -114,9 +114,14 @@ export class DurableHostIngressBroker {
   }
   async flush(){await this.tail;this.assertIdle();return this.receipt;}
   assertCallbackQueue(){
+    let previous=0;
+    const identities=new Set();
     for(const request of this.harness.inner.closureQueue){
       const arrival=this.acceptedCallbacks.get(request.invocationId);
       if(!arrival||!eq(request,callbackRequest(arrival)))fail('queued callback has no matching durable arrival');
+      if(identities.has(request.invocationId)||request.arrivalSequence<=previous)
+        fail('queued callbacks duplicate or reverse durable arrival order');
+      identities.add(request.invocationId);previous=request.arrivalSequence;
     }
   }
   /** Acknowledgement and completion are distinct. The receipt is available as
@@ -256,7 +261,7 @@ export class DurableHostIngressBroker {
     if(!harness?.inner||harness.inner.hostIngressBroker||typeof journal?.append!=='function'||
       typeof journal?.readAll!=='function')fail('recovery requires a fresh intake owner and journal');
     const entries=validateHostIngressLogChain(await journal.readAll(receipt),receipt),
-      staged=[],callbacks=[],identities=new Set(),sequences=new Set();
+      staged=[],callbacks=[],callbackClaims=new Map(),identities=new Set(),sequences=new Set();
     let next=harness.inner.nextIngressSequence,previousSequence=0;
     const counts=new Map();
     for(const entry of entries){
@@ -271,8 +276,9 @@ export class DurableHostIngressBroker {
         const {owner,timeline}=verifyCallbackArrival(harness,arrival),request=callbackRequest(arrival),
           queued=harness.inner.closureQueue.find(row=>row.invocationId===event.invocationId),
           invoked=timeline.find(row=>row.kind==='invocation'&&row.fields.invocationId===event.invocationId);
+        callbackClaims.set(event.invocationId,request);
         if(queued){
-          if(event.arrivalSequence>=harness.inner.nextIngressSequence||!eq(queued,request))
+          if(invoked||event.arrivalSequence>=harness.inner.nextIngressSequence||!eq(queued,request))
             fail('saved callback queue differs from durable arrival');
           continue;
         }
@@ -331,9 +337,20 @@ export class DurableHostIngressBroker {
         completionPolicy:event.completionPolicy,args:argsOf(event.inputGraph),durableIngress:true}});next++;
     }
     if(previousSequence+1!==next)fail('saved arrival cursor does not match the durable head');
+    const queuedIds=new Set();let queuedSequence=0;
+    for(const request of harness.inner.closureQueue){
+      if(queuedIds.has(request.invocationId)||request.arrivalSequence<=queuedSequence||
+        !eq(request,callbackClaims.get(request.invocationId)))
+        fail('saved callback queue contains unauthenticated, duplicate or reversed work');
+      queuedIds.add(request.invocationId);queuedSequence=request.arrivalSequence;
+    }
+    // A saved subset can contain a later acknowledged arrival while an older
+    // one exists only in the journal. Rebuild their authenticated FIFO together.
+    const callbackQueue=[...harness.inner.closureQueue,...callbacks]
+      .sort((left,right)=>left.arrivalSequence-right.arrivalSequence);
     // Every source, prefix, order and graph was checked before any live mutation.
     for(const {handler,event}of staged){handler.seen.add(event.eventId);handler.queue.push(event);}
-    harness.inner.closureQueue.push(...callbacks);
+    harness.inner.closureQueue.splice(0,harness.inner.closureQueue.length,...callbackQueue);
     harness.inner.nextIngressSequence=next;
     const broker=new DurableHostIngressBroker({harness,journal,receipt});
     for(const {arrival}of entries){

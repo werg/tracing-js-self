@@ -160,6 +160,29 @@ test('callback and registered event queues share arrival order through private s
     ['root','first','event1','third']);
 });
 
+test('callback recovery authenticates the whole saved queue before merging journal-only arrivals',async t=>{
+  const {h,journal}=await fixture(t),checkpoint=copy(h.checkpoint()),
+    broker=new DurableHostIngressBroker({harness:h,journal});
+  await broker.receiveCallback({...request,invocationId:'first',args:[1],deliver:false});
+  await broker.receiveCallback({...request,invocationId:'second',args:[2],deliver:false});await broker.flush();
+  const queue=copy(h.inner.closureQueue);
+  for(const rows of [[queue[1],queue[0]],[queue[0],queue[0]],
+    [...queue,{...queue[1],invocationId:'unlogged',arrivalSequence:3}]]){
+    const restored=RegionExecutionHarness.restore(checkpoint);
+    restored.inner.closureQueue=copy(rows);restored.inner.nextIngressSequence=3;
+    const before=copy(restored.inner.closureQueue),publicBefore=restored.exportEpisode();
+    await assert.rejects(DurableHostIngressBroker.recover({harness:restored,journal,receipt:broker.receipt}),
+      /unauthenticated|duplicate|reversed/);
+    assert.deepEqual(restored.inner.closureQueue,before);assert.equal(restored.inner.nextIngressSequence,3);
+    assert.deepEqual(restored.exportEpisode(),publicBefore);assert.equal(restored.inner.hostIngressBroker,undefined);
+  }
+  const partial=RegionExecutionHarness.restore(checkpoint);
+  partial.inner.closureQueue=[copy(queue[1])];partial.inner.nextIngressSequence=3;
+  await DurableHostIngressBroker.recover({harness:partial,journal,receipt:broker.receipt});
+  assert.deepEqual(partial.inner.closureQueue,queue,'journal-only earlier arrival must precede saved later work');
+  h.inner.closureQueue.reverse();assert.throws(()=>h.checkpoint(),/reverse durable arrival order/);
+});
+
 test('callback journal validates every owner and input before applying any recovered child',async t=>{
   const {h,journal}=await fixture(t),checkpoint=h.checkpoint(),broker=new DurableHostIngressBroker({harness:h,journal});
   await broker.receiveCallback({...request,invocationId:'first',args:[1],deliver:false});
