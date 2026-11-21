@@ -7,6 +7,10 @@ import {hostOperation} from '../host/operations.js';
 import {RegionExecutionHarness} from './region-harness.js';
 import {commitCausalLmV8Selection,decodeCausalLmV8Target} from './causal-lm-v8.js';
 import {hashAlgorithmData} from './program.js';
+import {stableAlgorithmJSON} from './ir.js';
+import {validateSelectedHistoryReceipt,validateSelectedHistoryChain,validateSelectedHistoryExtension}
+  from './selected-history-v8.js';
+import {validateHostIngressLogChain} from './host-ingress-journal-v8.js';
 
 const copy=structuredClone,HASH=/^[a-f0-9]{64}$/;
 const demand=(value,message)=>{if(!value)throw new TypeError('Selected v8: '+message);};
@@ -114,6 +118,43 @@ function verifyDriverCheckpoint(packet,policy){
   }
   demand(generated===accepted.length,'checkpoint omitted acknowledged generated records');
   return true;
+}
+
+function verifyRestoredHostLimits(harness,policy){
+  demand(harness.inner.maxGenerated===policy.hostLimits.maxGenerated&&
+    harness.inner.maxOutstanding===policy.hostLimits.maxOutstanding&&
+    harness.inner.automaticDelivery===policy.automaticDelivery&&
+    [...harness.invocations.values()].every(row=>row.controller.maxGenerated===policy.hostLimits.maxGenerated),
+    'restored host continuation changed its externally expected resource limits');
+}
+
+// The externally retained history head anchors every recorded cut, including
+// its private-ingress references. Validate all cuts without opening native
+// model state or attaching any live services. Later, separately acknowledged
+// ingress is applied only to the final cut by the ordinary restore path.
+async function verifyRecordedHistoryCuts(entries,policy,{ingressStore=null,ingressJournal=null}={}){
+  let previous=null,ingressHead=null;
+  for(const {checkpoint}of entries){
+    verifyDriverCheckpoint(checkpoint,policy);
+    if(previous)validateSelectedHistoryExtension(previous,checkpoint);
+    const bridge=checkpoint.bridge,head=bridge.ingressLog??null;
+    if(head){
+      demand(typeof ingressJournal?.readAll==='function','recorded ingress requires its independently read journal');
+      const arrivals=validateHostIngressLogChain(copy(await ingressJournal.readAll(copy(head))),head);
+      if(ingressHead){
+        const earlier=arrivals[ingressHead.position-1];
+        demand(earlier&&head.streamId===ingressHead.streamId&&hashAlgorithmData(earlier)===ingressHead.id&&
+          Buffer.byteLength(stableAlgorithmJSON(earlier))===ingressHead.bytes,
+          'recorded ingress head does not extend its earlier acknowledgement');
+      }
+      ingressHead=head;
+    }
+    const harness=bridge.ingress||head?
+      await RegionExecutionHarness.restoreDurable(bridge,{ingressStore,ingressReceipt:bridge.ingress??null,
+        ...(head?{ingressJournal,ingressLogReceipt:copy(head)}:{}),now:()=>-Infinity}):
+      RegionExecutionHarness.restore(bridge,{now:()=>-Infinity});
+    verifyRestoredHostLimits(harness,policy);previous=checkpoint;
+  }
 }
 
 function driverFacade(bridge,contexts,predictions){
@@ -305,6 +346,41 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
         verifyDriverCheckpoint(packet,policy);return packet;
       }finally{unlock();}
     };
+    this.checkpointDurableHistory=async({journal,previous=null,ingressStore=null,
+        ingressJournal=harness.inner.hostIngressBroker?.journal??null}={})=>{
+      demand(typeof journal?.append==='function'&&typeof journal?.readAll==='function',
+        'durable checkpoint history requires append and independent reads');
+      const retainedHead=copy(previous);
+      if(retainedHead!==null)validateSelectedHistoryReceipt(retainedHead);
+      const earlier=retainedHead===null?[]:
+        validateSelectedHistoryChain(copy(await journal.readAll(copy(retainedHead))),retainedHead);
+      const checkpoint=await this.checkpoint({ingressStore});
+      await verifyRecordedHistoryCuts([...earlier,{checkpoint}],policy,{ingressStore,ingressJournal});
+      const receipt=copy(await journal.append(copy(checkpoint),{previous:copy(retainedHead)}));
+      validateSelectedHistoryReceipt(receipt);
+      const recorded=validateSelectedHistoryChain(copy(await journal.readAll(copy(receipt))),receipt),last=recorded.at(-1);
+      demand(recorded.length===earlier.length+1&&isDeepStrictEqual(recorded.slice(0,-1),earlier)&&
+        isDeepStrictEqual(last.previous,retainedHead)&&isDeepStrictEqual(last.checkpoint,checkpoint),
+        'history journal acknowledged a different complete checkpoint');
+      return {checkpoint:copy(checkpoint),receipt:copy(receipt)};
+    };
+  }
+  static async restoreLatest(packet,{historyJournal,historyReceipt,select,policy,harnessOptions={},signal=null}={}){
+    demand(typeof historyJournal?.readAll==='function','independently read checkpoint history is required');
+    const saved=copy(packet),retainedHead=copy(historyReceipt);
+    validateSelectedHistoryReceipt(retainedHead);
+    const entries=validateSelectedHistoryChain(copy(await historyJournal.readAll(copy(retainedHead))),retainedHead);
+    demand(entries.some(entry=>isDeepStrictEqual(entry.checkpoint,saved)),
+      'supplied checkpoint is absent from the independently retained history');
+    await verifyRecordedHistoryCuts(entries,policy,harnessOptions);
+    const latest=entries.at(-1).checkpoint,options={...harnessOptions};
+    // A history receipt independently binds its recorded ingress receipts.
+    // An explicitly supplied newer ingress head still undergoes the existing
+    // prefix/owner checks and may refuse an unsaved later public boundary.
+    if(!Object.hasOwn(options,'ingressReceipt'))options.ingressReceipt=latest.bridge.ingress??null;
+    if(!Object.hasOwn(options,'ingressLogReceipt'))options.ingressLogReceipt=latest.bridge.ingressLog??null;
+    if(!latest.bridge.ingressLog&&!options.ingressLogReceipt)delete options.ingressJournal;
+    return this.restore(latest,{select,policy,harnessOptions:options,signal});
   }
   static async restore(packet,{select,policy,harnessOptions={},signal=null}={}){
     demand(typeof select==='function'&&typeof select.restore==='function'&&typeof select.checkpoint==='function',
@@ -316,11 +392,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     const harness=saved.bridge.ingress||saved.bridge.ingressLog||harnessOptions.ingressReceipt||harnessOptions.ingressJournal||harnessOptions.ingressLogReceipt?
       await RegionExecutionHarness.restoreDurable(saved.bridge,harnessOptions):
       RegionExecutionHarness.restore(saved.bridge,harnessOptions);
-    demand(harness.inner.maxGenerated===policy.hostLimits.maxGenerated&&
-      harness.inner.maxOutstanding===policy.hostLimits.maxOutstanding&&
-      harness.inner.automaticDelivery===policy.automaticDelivery&&
-      [...harness.invocations.values()].every(row=>row.controller.maxGenerated===policy.hostLimits.maxGenerated),
-      'restored host continuation changed its externally expected resource limits');
+    verifyRestoredHostLimits(harness,policy);
     try{
       const receipt=await select.restore({checkpoint:saved.native});
       demand(receipt?.restored===true&&receipt.transportCheckpointDigest===saved.native.digest&&

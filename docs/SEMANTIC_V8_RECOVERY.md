@@ -166,6 +166,102 @@ use explicit engineering records, not learned model selections.
 
 ## Current boundary and evidence
 
+### Explicit durable checkpoint history
+
+`DurableSelectedHistoryJournal` from `tracing-js-self/storage/node` stores complete
+driver checkpoints at boundaries explicitly chosen by the application. Each
+immutable position includes the exact previous receipt and the complete native
+transport checkpoint returned by `select.checkpoint()`. The writer synchronizes
+the file and its directory before returning, refuses to replace an existing
+position with different bytes, and bounds the complete chain by bytes and entry
+count. Defaults are 64 MiB and 1,024 cuts. The producer never fabricates native
+model state from public rows or private counters.
+
+```js
+import {RegionSelectedModelDriver} from 'tracing-js-self/semantic';
+import {DurableSelectedHistoryJournal} from 'tracing-js-self/storage/node';
+
+const historyJournal = new DurableSelectedHistoryJournal({
+  directory: privateDirectory, streamId: 'execution-history'
+});
+const first = await driver.checkpointDurableHistory({
+  journal: historyJournal, ingressStore
+});
+// Retain first.receipt through the application's trusted durable handle.
+// After further successfully acknowledged execution, save another explicit cut.
+const later = await driver.checkpointDurableHistory({
+  journal: historyJournal, previous: first.receipt, ingressStore
+});
+// Retain later.receipt independently before treating this newer cut as durable.
+
+// A stale local packet can now advance to the separately acknowledged head.
+const restored = await RegionSelectedModelDriver.restoreLatest(first.checkpoint, {
+  select: freshSelect, policy,
+  historyJournal,
+  historyReceipt: later.receipt, // The application's independently retained head.
+  harnessOptions: {services, ingressStore, ingressJournal}
+});
+```
+
+The supplied older checkpoint must exactly match a recorded cut. The selected
+head must include that cut; a shortened, reordered, substituted or different
+branch cannot authorize restoration. Before opening native model state, the
+producer checks every recorded checkpoint's public replay, host continuation,
+causal contexts, policy, identities and budgets. Public rows and contexts must
+extend their earlier values exactly. **All** consumed driver, transport and native
+attempts must remain exact prefixes, including rejected stale candidates and
+their original evidence. Runtime cost totals, native session/reconstruction
+history, completion acknowledgements and ingress sequence counters cannot roll
+back. Every recorded ingress head must extend the earlier recorded ingress chain;
+an increased position alone is insufficient.
+
+Private ingress snapshots and arrival journals are independently read at their
+recorded receipts before native restoration. The externally retained history
+receipt anchors those recorded ingress references. Supply their stores when any
+cut uses them. A separately retained newer `harnessOptions.ingressLogReceipt`
+can additionally recover arrivals beyond the latest cut, using the existing
+owner and public-prefix checks. Dispatched effects still restore as `uncertain`,
+and live subscriptions still restore as lost handles. Recovery itself makes no
+host call or new model selection. The ordinary native restore verifies and
+reexecutes the latest saved model continuation; it does not synthesize results
+or reissue effects.
+
+These are distinct validation boundaries: every cut receives host/public
+authority checks and cross-cut attempt-prefix checks; the native service
+independently reexecutes the latest complete native checkpoint. Earlier private
+native RNG/cache state is retained as journaled data and is not individually
+reexecuted before that final native restore. A content hash alone does not
+authenticate private model state.
+
+This is an **explicit checkpoint-cut journal**. It does not automatically save
+every selection, stale rejection, host result, event delivery, completion or
+cancellation. If a durable arrival references a later public boundary absent
+from the latest recorded cut, recovery still refuses it. Checkpointing also
+requires acknowledged selection and dispatch boundaries and idle durable
+ingress. No automatic checkpoint hook holds the selection or
+ingress lock while waiting for its own work. The application chooses stable
+cuts and owns retention of their receipts; files beyond the supplied head are
+never adopted automatically. Rewriting or rolling back that independently
+trusted head is outside the receipt's integrity guarantee.
+
+Cancellation tombstones, distributed ownership, journal rotation/compaction,
+atomic coordination with application transactions, and durability of unsaved
+transitions remain separate work. Complete snapshots repeat earlier evidence,
+so their storage cost grows faster than an incremental event log and is bounded
+explicitly. Earlier insertion-order lifecycle checkpoints must be regenerated
+before using this canonical journal.
+
+`test/semantic-selected-history-storage-v8.test.js` exercises actual fsynced
+files, fresh-process reads, immutable writer conflicts, missing/reordered data,
+corruption and resource limits. `test/semantic-selected-history-v8.test.js` checks
+old-cut recovery across later accepted/stale attempts and dispatched work,
+fresh-process recovery without redispatch, every intermediate host cut, native
+and transport evidence mutation, policy/branch/ingress rollback, and the retained
+unsaved-public-tail refusal. Its decoder and model-shaped test snapshots are
+explicitly supplied orchestration controls, not learned execution evidence.
+
+### Remaining general boundary
+
 This API requires one driver and a dedicated native transport for its session.
 It refuses a transport containing unrelated sessions, in-flight selections,
 failed acknowledgments or fatal attempts. Take durable checkpoints at successful
