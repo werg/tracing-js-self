@@ -16,6 +16,55 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Complete regression and receipt integration checkpoint — 21 November 2026
+
+Frozen clean producer `973400ff5085848d7b61fb7cbb711294ea29f32c` passes the complete
+suite: **2,459 passed, zero failed, six asset-dependent skips (2,465 total)** in
+538.422 seconds, followed by **8/8 reference fixtures**. The skipped cases were
+then exercised in the full tokenizer **3/3** and coordinator **13/13** selections,
+with zero failures or skips. The tokenizer keeps its historical policy pin;
+coordinator consumer is `1ddcc6110d70703f6b08244d53ec461047677bec`. Four coordinator
+cases use disclosed supplied selections and the actual initialized-weight case
+retains a refused output. The original full suite still records its six skips.
+
+The [terminal/runner regression supplement](evidence/terminal-runner-973400f-c9977b2/README.md)
+retains full failed `76a06f8` and passed `973400f` logs, terminal accounting probes,
+89/93 control results, final and unpinned intermediate runner attempts, exact
+unpublished source histories, external-asset receipts and hosted consumer logs.
+Source identities and dirty-versus-clean test states are explicit. Its original
+actual-model terminal attempt at clean `3b1bb25` / consumer `1ddcc61` **failed**:
+one model record was accepted and the requested marker persisted, but the final
+positive-close response failed receipt-field validation. The consumer emits
+`reason`, while the producer only allowed schema/session/closed. The original
+qualifier did not retain raw close-response bytes; request, stack, original model
+bytes and the trusted chain remain. The qualifier now captures future responses,
+and the contract correction plus actual rerun are in progress.
+
+Consumer `c9977b240a26c897299f07043a82cd5f26920f31` passes all four hosted workflows.
+Actual merge `effa466938e15012b3172dad556415e02c7fd608` completes each general CPU
+job with **3,567 passed, 82 skipped, 20 warnings**: Python 3.11 in 1,083.30 seconds
+and Python 3.12 in 1,049.76 seconds. Installed-package and CLI checks pass; the
+optional hardware job stays skipped. Original `1ddcc61` cancellation remains
+incomplete. These are exact-revision results, not later-tree qualification.
+
+A separate two-process ownership probe also reproduces two controlled adapter
+calls with the same logical idempotency key when a successor asserts
+`not-dispatched` while an old owner is paused after its durable claim. The action
+files at the probe's `7df599b` source are byte-identical to `973400f`. This exposes
+the missing ownership enforcement if reconciliation does not establish that the
+old owner cannot resume; ordinary restore does not itself authorize the retry.
+A service-boundary fencing/deduplication contract is being designed. A local
+pre-dispatch head check alone cannot close the race; generic unknown outcomes
+and rotation remain open. Original probe source, output and metadata are retained.
+
+The full 843-module campaign at `973400f` is running with all 102,994 catalog rows
+retained. Its first missing-TypeScript child startup produced no case attempts;
+that setup log is separate. Actual host-object capability refusals are not
+reclassified as dependency failures. Remaining work includes the real terminal
+rerun, full module disposition/comparison, namespace reflection/native projection,
+distributed ownership and the complete 17-package acceptance conditions.
+**0 of 17 complete acceptance packages are closed.**
+
 ## Original-module namespace runner bridge — 21 November 2026
 
 The Test262 module-initialization route now runs the owned namespace machinery
@@ -35,8 +84,8 @@ valid JSON replay. On the integrated patch at local
 `d08c26c`, all three runner/script files pass **38/38**, zero failures or skips,
 in 29.272 seconds. Counts overlap. This restores both original-source namespace
 expectations that failed in the earlier complete `76a06f8` suite; that original
-2,434/2/6 run remains failed evidence. Full-suite and full 843-module campaign
-requalification remain pending on the newly frozen published bridge.
+2,434/2/6 run remains failed evidence. The complete suite and external-asset selections now pass as recorded above;
+the full 843-module campaign remains in progress on the published bridge.
 
 The exact catalog remains **102,994 rows / 843 module variants**. Native Node24
 resolution disagreements remain explicit failures with `admitted:false`; owned
@@ -74,7 +123,8 @@ the earlier isolated reported tests had only tool-stream output and do not repla
 these retained runs. Its stopped broader semantic suite remains incomplete.
 
 These controls use explicitly supplied decoders and do not measure learned
-quality. An actual-model terminal-history qualifier is being added. The driver's
+quality. The first actual-model terminal-history attempt exposed the close-receipt field
+contract gap recorded above; its correction and rerun remain in progress. The driver's
 existing dedicated single-session transport requirement remains; native sibling
 recovery does not imply coordinated multi-session driver ownership. Arbitrary
 application mutations, external-action/input atomicity, multi-process fencing,
@@ -102,7 +152,7 @@ The complete frozen producer `76a06f88b744e121f0ce406bcc4a5496929f0da4` suite
 then finished **2,434 passed, two failed, six asset-dependent skips**, out of
 2,442 tests, in 532.469 seconds. Both failures are original-module namespace tests
 blocked by the new explicit evaluate-only refusal; their pass expectations remain
-required and the runner bridge is in progress. This full run remains failed.
+required and the runner bridge is now published as `973400f`. This original full run remains failed.
 Its separate reference fixture passes **8/8**. Original logs are retained, and
 later focused repairs will not relabel this failed full run.
 
@@ -128,8 +178,8 @@ compressed part verifies; archive SHA-256 is
 This is an **owned-runtime increment only**. Public/source/native admission and
 host namespace outputs remain explicitly refused. The internal linker capability
 is trusted plumbing, not unforgeable source authority. The original Test262
-module-initialization route still refuses observable namespaces; connecting this
-route and rerunning the complete 843-variant module campaign remain open. Plural
+module-initialization route refused observable namespaces at `76a06f8`; the
+`973400f` bridge now executes them, while the full 843-variant campaign is running. Plural
 descriptor/value/entry/assignment reflection, Proxy combinations, dynamic import
 and complete namespace observation remain unfinished. The observed Node 24
 integer-like namespace-key ordering discrepancy is retained separately from the
@@ -141,7 +191,7 @@ logs. Exact consumer `1ddcc61` / PR merge `a19c6afa4875ad4274d346338b4b970bc5ec8
 passed 3,567 tests with 82 skips on Python 3.11; Python 3.12 reached 88% and was
 cancelled at approximately 25 minutes. The timing is consistent with the former
 limit, but the log does not identify the initiator. The incomplete run remains
-incomplete; fresh hosted results are pending.
+incomplete; the fresh hosted `c9977b2` jobs now pass as recorded above.
 
 ## Actual cancelled-sibling recovery and complete consumer tests — 21 November 2026
 
