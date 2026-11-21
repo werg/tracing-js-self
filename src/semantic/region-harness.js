@@ -325,7 +325,8 @@ export class RegionExecutionHarness {
       [...this.inner.callbacks.values()].some(callback=>callback.queued.length)||this.inner.closureQueue.length)
       fail('unjournaled native arrivals require an explicit durable ingress receipt');
     const body={schema:REGION_CONTINUATION_VERSION,profile:REGION_PROFILE,public:this.exportEpisode(),
-      regionCursor:{active:null,consumed:copy(this.consumed)},selected:this.hasProtocol()||ingress?
+      regionCursor:{active:null,consumed:copy(this.consumed)},ingressCursor:this.inner.nextIngressSequence,
+      selected:this.hasProtocol()||ingress?
         this.protocolCheckpoint({ingress}):this.inner.checkpoint(),...(ingress?{ingress:copy(ingress.receipt)}:{})};
     return {...body,integrity:hashAlgorithmData(clean(body))};
   }
@@ -383,11 +384,13 @@ export class RegionExecutionHarness {
     try{return this.restore(saved,{...options,ingress:ticket});}finally{ingressTickets.delete(ticket);}
   }
   static restore(packet,options={}){
-    assertAlgorithmFields(packet,['schema','profile','public','regionCursor','selected','integrity',
+    assertAlgorithmFields(packet,['schema','profile','public','regionCursor','ingressCursor','selected','integrity',
       ...(Object.hasOwn(packet??{},'ingress')?['ingress']:[])],'region checkpoint');
     const {integrity,...body}=packet;
     if(body.schema!==REGION_CONTINUATION_VERSION||body.profile!==REGION_PROFILE||hashAlgorithmData(clean(body))!==integrity)
       fail('checkpoint version or integrity');
+    if(!Number.isSafeInteger(body.ingressCursor)||body.ingressCursor<1)
+      fail('invalid private ingress sequence cursor');
     const policy=body.selected?.schema===protocolCheckpointSchema?body.selected.policy:null;
     if(body.selected?.schema===protocolCheckpointSchema&&!policy)fail('missing protocol host policy');
     if(policy){
@@ -405,8 +408,10 @@ export class RegionExecutionHarness {
         const ticket=options.ingress;
         if(!ticket||!ingressTickets.has(ticket)||!eq(ticket.receipt,body.ingress))
           fail('pending callbacks require independently read durable ingress');
+        if(ticket.snapshot.nextIngressSequence!==body.ingressCursor)
+          fail('durable ingress sequence cursor differs from its checkpoint');
         restorePendingIngress(replayed,ticket.snapshot);
-      }
+      }else replayed.inner.nextIngressSequence=body.ingressCursor;
       for(const {controller} of replayed.invocations.values())if(controller.protocol)
         restoreProtocolStateV8(controller,controller.protocol);
       // Reattach only the embedding's explicitly supplied live services. Never
@@ -425,6 +430,8 @@ export class RegionExecutionHarness {
     if(
       !eq(body.selected.timeline,replayed.inner.timeline))fail('checkpoint differs from public region history');
     replayed.inner=SelectedExecutionLifecycleV8.restore(body.selected,options);
+    if(replayed.inner.nextIngressSequence!==body.ingressCursor)
+      fail('generic host ingress sequence cursor differs from the checkpoint');
     replayed.bindRealmReadiness();
     replayed.innerCursor=replayed.inner.timeline.length;return replayed;
   }

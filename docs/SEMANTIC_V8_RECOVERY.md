@@ -115,7 +115,11 @@ restored.bridge.deliverReadyEvents(subscriptionId);
 The standalone harness has corresponding `checkpointDurable({ingressStore})` and
 `RegionExecutionHarness.restoreDurable(packet, {ingressStore, ingressReceipt})`
 methods. The receipt is private host recovery evidence; it is never a model
-observation. Restoration checks its externally expected identity, reads the
+observation. Its content digest detects changes against the expected receipt;
+it is not broker authentication. The embedding must retain that expected receipt
+through a trusted checkpoint handle independent of a packet presented for
+restoration. A caller able to rewrite both the snapshot and that trust anchor is
+outside this check's boundary. Restoration reads the
 immutable snapshot again, and binds every queue to the exact session, public
 prefix, source-owned handler and queue limit before changing any queue. Removing
 or substituting the receipt in a rehashed checkpoint is refused when checked
@@ -124,7 +128,14 @@ delivered event, mismatched owner, corrupt object or oversized graph is refused.
 
 Queued values and their identities remain absent from model context until actual
 delivery. Graph encoding preserves aliases, cycles, BigInts, signed zero and
-other special numbers. A saved event can be delivered once while its native
+other special numbers. Each accepted event has a private arrival sequence.
+Events queued for one retained realm are delivered in that order even when
+listeners were registered in a different order, and an explicit delivery request
+cannot bypass an earlier eligible listener. Different realms remain independent;
+closing a listener discards its pending events and allows the next eligible event
+in the realm to proceed. The sequence and its next-value cursor are saved with
+pending ingress and in generic lifecycle checkpoints, never in model context. A
+saved event can be delivered once while its native
 listener handle remains lost; admitting future arrivals still requires explicit
 reattachment. Restored transport uncertainty and lost handles remain private
 host restrictions. Model obligations come from the acknowledged public history,

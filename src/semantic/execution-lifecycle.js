@@ -15,6 +15,24 @@ const ID=/^[a-z][a-z0-9:_-]*$/;
 const clone=x=>structuredClone(x);
 function demand(value,message){if(!value)throw new TypeError(message);}
 function id(value,name){demand(typeof value==='string'&&ID.test(value), 'Invalid '+name);}
+function validateIngressQueueOrder(rows,nextSequence){
+  demand(Number.isSafeInteger(nextSequence)&&nextSequence>=1,
+    'Invalid next host ingress sequence');
+  demand(Array.isArray(rows),'Invalid host ingress queues');
+  const subscriptions=new Set(),sequences=new Set();
+  for(const row of rows){
+    demand(Array.isArray(row)&&row.length===2&&typeof row[0]==='string'&&row[1]&&
+      Array.isArray(row[1].queue)&&!subscriptions.has(row[0]),'Invalid host ingress queue owner');
+    subscriptions.add(row[0]);let previous=0;
+    for(const event of row[1].queue){
+      const sequence=event?.arrivalSequence;
+      demand(Number.isSafeInteger(sequence)&&sequence>=1&&sequence<nextSequence&&
+        sequence>previous&&!sequences.has(sequence),
+        'Host ingress arrival order is invalid, duplicated or reversed');
+      previous=sequence;sequences.add(sequence);
+    }
+  }
+}
 function tag(value){
   if(value===undefined)return ['undefined'];
   if(value===null)return ['null'];
@@ -139,7 +157,7 @@ export class SelectedExecutionCore {
     this.programs=new Map();this.invocations=new Map();
     this.intents=new Map();this.inflight=new Map();this.timeline=[];
     this.ownerSequences=new Map();this.globalSequence=0;
-    this.realms=new Map();this.handlers=new Map();this.nextEventDelivery=0;
+    this.realms=new Map();this.handlers=new Map();this.nextEventDelivery=0;this.nextIngressSequence=1;
     this.callbacks=new Map();this.nextCallback=0;
     this.ingress=new Map();this.deliveries=[];this.rejections=[];
     this.sourceAvailability=new Map();this.abortControllers=new Map();
@@ -337,6 +355,23 @@ export class SelectedExecutionCore {
       {subscriptionId,programId,realmId,trackId,realmPolicy,
         entry:entry??program.entry,queueLimit,closureId,lifetime,ownerInvocationId});
   }
+  queuedEventCanBeDelivered(handler){
+    const head=handler?.queue?.[0],realm=this.realms.get(handler?.realmId);
+    return Boolean(head&&Number.isSafeInteger(head.arrivalSequence)&&
+      (['active','closing'].includes(handler.state)||
+        handler.state==='lost'&&head.durableIngress===true)&&
+      !realm?.closed&&!(handler.realmPolicy==='retained'&&realm?.running));
+  }
+  nextQueuedEventSubscription(realmId,{retainedOnly=false}={}){
+    let selected=null,sequence=Infinity;
+    for(const [subscriptionId,handler]of this.handlers){
+      if(handler.realmId!==realmId||retainedOnly&&handler.realmPolicy!=='retained'||
+         !this.queuedEventCanBeDelivered(handler))continue;
+      const next=handler.queue[0].arrivalSequence;
+      if(next<sequence){selected=subscriptionId;sequence=next;}
+    }
+    return selected;
+  }
   /** Queue each accepted outside arrival once. Delivery is separate, and
    * model-visible only when its realm can legally accept another turn. */
   postEvent({subscriptionId,eventId,args=[],completionPolicy='call-return',deliver=true}){
@@ -358,8 +393,12 @@ export class SelectedExecutionCore {
       this.deliveries.push({subscriptionId,eventId,status:'refused',reason:'overflow'});
       throw new Error('Event queue overflow');
     }
+    const ownedArgs=clone(args),arrivalSequence=this.nextIngressSequence;
+    demand(Number.isSafeInteger(arrivalSequence)&&arrivalSequence>=1&&
+      arrivalSequence<Number.MAX_SAFE_INTEGER,'Host ingress sequence exhausted');
     handler.seen.add(eventId);
-    handler.queue.push({eventId,args:clone(args),completionPolicy});
+    handler.queue.push({eventId,arrivalSequence,args:ownedArgs,completionPolicy});
+    this.nextIngressSequence=arrivalSequence+1;
     this.deliveries.push({subscriptionId,eventId,status:'buffered'});
     return deliver?this.deliverReadyEvents(subscriptionId):{status:'buffered',subscriptionId,eventId};
   }
@@ -367,9 +406,9 @@ export class SelectedExecutionCore {
     const handler=this.handlers.get(subscriptionId);
     demand(handler,'Unknown subscription');
     demand(!this.realms.get(handler.realmId)?.closed,'Cannot deliver an event to a closed realm');
-    if(!(['active','closing'].includes(handler.state)||handler.state==='lost'&&handler.queue[0]?.durableIngress===true)||!handler.queue.length||
-       (handler.realmPolicy==='retained'&&this.realms.get(handler.realmId)?.running))
-      return null;
+    if(!this.queuedEventCanBeDelivered(handler))return null;
+    if(handler.realmPolicy==='retained'&&
+       this.nextQueuedEventSubscription(handler.realmId,{retainedOnly:true})!==subscriptionId)return null;
     const next=handler.queue.shift();
     let invocationId;
     do{invocationId='event'+(++this.nextEventDelivery);}while(this.invocations.has(invocationId));
@@ -527,12 +566,10 @@ export class SelectedExecutionCore {
           this.closeEventHandler(subscriptionId);
     }
     if(!realm.running&&!this.replaying&&this.automaticDelivery)this.activateQueuedClosures(activation.realmId);
-    if(!realm.running&&!this.replaying&&this.automaticDelivery)
-      for(const [subscriptionId,handler] of this.handlers)
-        if(handler.realmId===activation.realmId&&handler.queue.length){
-          this.deliverReadyEvents(subscriptionId);
-          break; // One guest turn at a time within an authoritative realm.
-        }
+    if(!realm.running&&!this.replaying&&this.automaticDelivery){
+      const subscriptionId=this.nextQueuedEventSubscription(activation.realmId);
+      if(subscriptionId)this.deliverReadyEvents(subscriptionId);
+    }
     this.wake();
     return answer;
   }
@@ -1174,6 +1211,7 @@ export class SelectedExecutionCore {
   }
   /** No service code executes during state restoration or trace inspection. */
   checkpoint(){
+    validateIngressQueueOrder([...this.handlers],this.nextIngressSequence);
     const packet={schema:this.contract.checkpointVersion,profile:this.contract.profile,sessionId:this.sessionId,
       callbacks:[...this.callbacks],nextCallback:this.nextCallback,
       programs:[...this.programs],realms:[...this.realms].map(([key,realm])=>[key,{
@@ -1181,7 +1219,7 @@ export class SelectedExecutionCore {
         locals:[...realm.locals]}]),
       handlers:[...this.handlers].map(([key,v])=>[key,{...v,seen:[...v.seen],
         queue:v.queue.map(({args,...event})=>({...event,argsGraph:graphOf(args)}))}]),
-      nextEventDelivery:this.nextEventDelivery,
+      nextEventDelivery:this.nextEventDelivery,nextIngressSequence:this.nextIngressSequence,
       invocations:[...this.invocations].map(([key,v])=>[
         key,{...v,controller:v.controller.segmentPacket()}]),
       intents:[...this.intents].map(([key,{args,...intent}])=>[key,intent]),timeline:this.timeline,
@@ -1200,6 +1238,7 @@ export class SelectedExecutionCore {
     const {integrity,...body}=packet;
     demand(integrity===createHash('sha256').update(JSON.stringify(body)).digest('hex'),
       'Checkpoint integrity mismatch');
+    validateIngressQueueOrder(packet.handlers,packet.nextIngressSequence);
     const verified=this.replay({public:{schema:this.contract.executionVersion,
       traceFormat:this.contract.traceVersion,contextFormat:this.contract.contextVersion,
       profile:this.contract.profile,timeline:packet.timeline}},{requireTerminal:false});
@@ -1247,6 +1286,7 @@ export class SelectedExecutionCore {
         queue:v.queue.map(({argsGraph,...event})=>({...event,
           args:decodeHostPayload(JSON.stringify({schema:'owned-graph/1',...argsGraph}),'owned-graph/1')}))}]));
     harness.nextEventDelivery=packet.nextEventDelivery??0;
+    harness.nextIngressSequence=packet.nextIngressSequence;
     harness.invocations=new Map(clone(packet.invocations).map(([id,v])=>{
       const controller=this.Controller.fromPacket(v.controller);
       const realm=harness.realms.get(v.realmId);

@@ -20,13 +20,15 @@ const graphOf=args=>{
 
 export function validatePendingIngressSnapshot(snapshot){
   stableAlgorithmJSON(snapshot);
-  assertAlgorithmFields(snapshot,['schema','sessionId','visibleThrough','prefixDigest','queues'],
+  assertAlgorithmFields(snapshot,['schema','sessionId','visibleThrough','prefixDigest',
+    'nextIngressSequence','queues'],
     'pending ingress snapshot');
   if(snapshot.schema!=='semantic-pending-host-ingress/8'||!ID.test(snapshot.sessionId??'')||
      !Number.isSafeInteger(snapshot.visibleThrough)||snapshot.visibleThrough<0||
-     !HASH.test(snapshot.prefixDigest??'')||!Array.isArray(snapshot.queues)||snapshot.queues.length>4096)
+     !HASH.test(snapshot.prefixDigest??'')||!Number.isSafeInteger(snapshot.nextIngressSequence)||
+     snapshot.nextIngressSequence<1||!Array.isArray(snapshot.queues)||snapshot.queues.length>4096)
     fail('invalid snapshot identity or bounds');
-  const subscriptions=new Set();
+  const subscriptions=new Set(),arrivalSequences=new Set();
   for(const row of snapshot.queues){
     assertAlgorithmFields(row,['subscriptionId','binding','events'],'pending ingress queue');
     assertAlgorithmFields(row.binding,fields,'pending ingress owner');
@@ -34,11 +36,17 @@ export function validatePendingIngressSnapshot(snapshot){
        !Array.isArray(row.events)||row.events.length<1||row.events.length>4096)
       fail('invalid or duplicate subscription queue');
     subscriptions.add(row.subscriptionId);
-    const seen=new Set();
+    const seen=new Set();let previousSequence=0;
     for(const event of row.events){
-      assertAlgorithmFields(event,['eventId','completionPolicy','inputGraph'],'pending ingress event');
-      if(!ID.test(event.eventId??'')||seen.has(event.eventId))fail('invalid or duplicate event identity');
+      assertAlgorithmFields(event,['eventId','arrivalSequence','completionPolicy','inputGraph'],
+        'pending ingress event');
+      if(!ID.test(event.eventId??'')||seen.has(event.eventId)||
+         !Number.isSafeInteger(event.arrivalSequence)||event.arrivalSequence<1||
+         event.arrivalSequence>=snapshot.nextIngressSequence||event.arrivalSequence<=previousSequence||
+         arrivalSequences.has(event.arrivalSequence))
+        fail('invalid, duplicate or reversed event identity/order');
       seen.add(event.eventId);
+      arrivalSequences.add(event.arrivalSequence);previousSequence=event.arrivalSequence;
       if(canonicalCompletionPolicy(event.completionPolicy)!==event.completionPolicy)
         fail('noncanonical completion policy');
       validateGraph(event.inputGraph);
@@ -59,13 +67,15 @@ export function capturePendingIngress(harness){
     if(!['active','closing','lost'].includes(handler.state))fail('queued event belongs to a closed handler');
     const events=handler.queue.map(event=>{
       if(!handler.seen.has(event.eventId))fail('queued event lacks accepted ingress ownership');
-      return {eventId:event.eventId,completionPolicy:event.completionPolicy,inputGraph:graphOf(event.args)};
+      return {eventId:event.eventId,arrivalSequence:event.arrivalSequence,
+        completionPolicy:event.completionPolicy,inputGraph:graphOf(event.args)};
     });
     queues.push({subscriptionId,binding:binding(handler),events});
   }
   return validatePendingIngressSnapshot({schema:'semantic-pending-host-ingress/8',
     sessionId:harness.inner.sessionId,visibleThrough:publicData.timeline.length,
-    prefixDigest:hashAlgorithmData(publicData.timeline),queues});
+    prefixDigest:hashAlgorithmData(publicData.timeline),
+    nextIngressSequence:harness.inner.nextIngressSequence,queues});
 }
 
 export function restorePendingIngress(harness,snapshot){
@@ -82,7 +92,8 @@ export function restorePendingIngress(harness,snapshot){
     const events=row.events.map(event=>{
       if(handler.seen.has(event.eventId))fail('saved event was already delivered');
       const args=decodeHostPayload(JSON.stringify({schema:'owned-graph/1',...event.inputGraph}),'owned-graph/1');
-      return {eventId:event.eventId,completionPolicy:event.completionPolicy,args,durableIngress:true};
+      return {eventId:event.eventId,arrivalSequence:event.arrivalSequence,
+        completionPolicy:event.completionPolicy,args,durableIngress:true};
     });
     staged.push({handler,events});
   }
@@ -91,4 +102,5 @@ export function restorePendingIngress(harness,snapshot){
     for(const event of events)handler.seen.add(event.eventId);
     handler.queue.push(...events);
   }
+  harness.inner.nextIngressSequence=snapshot.nextIngressSequence;
 }

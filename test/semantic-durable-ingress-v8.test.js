@@ -1,12 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {mkdtemp,rm,writeFile,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
+import {SelectedExecutionLifecycleV8} from '../src/semantic/lifecycle-v8.js';
 import {DurableHostIngressStore} from '../src/storage/host-ingress.js';
-import {capturePendingIngress} from '../src/semantic/pending-ingress-v8.js';
+import {capturePendingIngress,validatePendingIngressSnapshot} from '../src/semantic/pending-ingress-v8.js';
 import {analyzeSemanticProgram} from '../src/training/semantic-program.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
@@ -15,6 +17,10 @@ import {HOST_PROTOCOL_FIXTURES_V8} from '../fixtures/semantic-regions/host-proto
 const source='"use strict";function run(){return host.listen("tick",handler);}function handler(value){return value;}';
 const record=(kind,fields)=>({kind,fields});
 const seal=packet=>{const {integrity,...body}=packet;return {...body,integrity:hashAlgorithmData(body)};};
+const resealCore=packet=>{
+  const {integrity,...body}=packet;
+  return {...body,integrity:createHash('sha256').update(JSON.stringify(body)).digest('hex')};
+};
 async function fixture(t){
   const directory=await mkdtemp(join(tmpdir(),'v8-private-ingress-'));
   t.after(()=>rm(directory,{recursive:true,force:true}));
@@ -34,6 +40,126 @@ async function fixture(t){
 function finish(h,id,value){
   h.select(id,record('return',{value:['num',value]}));h.select(id,record('end',{kind:'return'}));
 }
+
+const orderedSource='"use strict";function run(){return;}function handler(value){return;}';
+function orderedRegionHarness({sessionId='ingress-order',automaticDelivery=true}={}){
+  const h=new RegionExecutionHarness({sessionId,automaticDelivery});
+  h.publishProgram({programId:'ordered',source:orderedSource,entry:'run'});
+  h.admitInvocation({programId:'ordered',invocationId:'root',trackId:'order-track',realmId:'order-realm',
+    triggerId:'outside',realmPolicy:'retained'});
+  // Deliberately register the later-arriving listener first.
+  h.registerEventHandler({subscriptionId:'callback2',programId:'ordered',realmId:'order-realm',
+    trackId:'order-track',entry:'handler'});
+  h.registerEventHandler({subscriptionId:'callback1',programId:'ordered',realmId:'order-realm',
+    trackId:'order-track',entry:'handler'});
+  return h;
+}
+function beginOrderedArrivals(h){
+  h.select('root',record('return',{value:['undefined']}));
+  const before=h.modelContext('root');
+  h.postEvent({subscriptionId:'callback1',eventId:'first-arrival',args:['private-first'],deliver:false});
+  h.postEvent({subscriptionId:'callback2',eventId:'second-arrival',args:['private-second'],deliver:false});
+  assert.deepEqual(h.modelContext('root'),before,'queued private arrivals must not affect model context');
+  return before;
+}
+function finishOrderedCallbacks(h){
+  h.select('root',record('end',{kind:'return'}));
+  h.select('event1',record('return',{value:['undefined']}));
+  h.select('event1',record('end',{kind:'return'}));
+  h.select('event2',record('return',{value:['undefined']}));
+  h.select('event2',record('end',{kind:'return'}));
+  return h.exportEpisode().timeline.filter(row=>row.kind==='event').map(row=>row.fields.eventId);
+}
+
+test('retained realm delivery follows global arrival order before and after durable restore',async t=>{
+  const h=orderedRegionHarness(),before=beginOrderedArrivals(h);
+  const directory=await mkdtemp(join(tmpdir(),'v8-ingress-order-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const store=new DurableHostIngressStore({directory});
+  const packet=JSON.parse(JSON.stringify(await h.checkpointDurable({ingressStore:store})));
+  const snapshot=await store.get(packet.ingress);
+  assert.deepEqual(snapshot.queues.map(row=>row.events.map(event=>event.arrivalSequence)),[[2],[1]]);
+  assert.equal(snapshot.nextIngressSequence,3);
+  const duplicateOrder=structuredClone(snapshot);
+  duplicateOrder.queues[0].events[0].arrivalSequence=duplicateOrder.queues[1].events[0].arrivalSequence;
+  assert.throws(()=>validatePendingIngressSnapshot(duplicateOrder),/order/);
+  const malformedOrder=structuredClone(snapshot);
+  malformedOrder.queues[0].events[0].arrivalSequence=0;
+  assert.throws(()=>validatePendingIngressSnapshot(malformedOrder),/order/);
+  assert(!JSON.stringify(h.modelContext('root')).includes('private-first'));
+  const restored=await RegionExecutionHarness.restoreDurable(packet,{
+    ingressStore:new DurableHostIngressStore({directory}),ingressReceipt:packet.ingress
+  });
+  assert.deepEqual(restored.modelContext('root'),before);
+  assert(!JSON.stringify(restored.modelContext('root')).includes('private-second'));
+  assert.deepEqual(finishOrderedCallbacks(restored),['first-arrival','second-arrival']);
+  // The same queue rule applies in the process that accepted the arrivals.
+  assert.deepEqual(finishOrderedCallbacks(h),['first-arrival','second-arrival']);
+});
+
+test('explicit delivery cannot bypass an earlier listener and core checkpoints validate order',()=>{
+  const core=new SelectedExecutionLifecycleV8({sessionId:'core-ingress-order',automaticDelivery:false});
+  core.publishProgram({programId:'ordered',source:orderedSource,entry:'run'});
+  core.admitInvocation({programId:'ordered',invocationId:'root',trackId:'t',realmId:'r',triggerId:'outside',
+    realmPolicy:'retained'});
+  core.registerEventHandler({subscriptionId:'callback2',programId:'ordered',realmId:'r',trackId:'t',entry:'handler'});
+  core.registerEventHandler({subscriptionId:'callback1',programId:'ordered',realmId:'r',trackId:'t',entry:'handler',queueLimit:1});
+  core.selected('root',core.encodeRecord('return',{value:['undefined']}));
+  core.selected('root',core.encodeRecord('end',{kind:'return'}));
+  core.postEvent({subscriptionId:'callback1',eventId:'first',args:[1],deliver:false});
+  core.postEvent({subscriptionId:'callback1',eventId:'first',args:[99],deliver:false});
+  assert.equal(core.nextIngressSequence,2,'a duplicate does not consume an arrival sequence');
+  assert.throws(()=>core.postEvent({subscriptionId:'callback1',eventId:'overflow',args:[3],deliver:false}),/overflow/);
+  assert.equal(core.nextIngressSequence,2,'an overflow does not consume an arrival sequence');
+  core.postEvent({subscriptionId:'callback2',eventId:'second',args:[2],deliver:false});
+  assert.equal(core.deliverReadyEvents('callback2'),null,'later listener cannot bypass the earlier one');
+  const checkpoint=core.checkpoint();
+  assert.equal(core.deliverReadyEvents('callback1').triggerId,'event:callback1:first');
+  core.selected('event1',core.encodeRecord('return',{value:['undefined']}));
+  core.selected('event1',core.encodeRecord('end',{kind:'return'}));
+  assert.equal(core.deliverReadyEvents('callback2').triggerId,'event:callback2:second');
+  const restored=SelectedExecutionLifecycleV8.restore(checkpoint);
+  assert.equal(restored.nextIngressSequence,3);
+  assert.equal(restored.deliverReadyEvents('callback1'),null,
+    'generic restore retains the lost-handler durable-only gate');
+  const duplicate=structuredClone(checkpoint);
+  duplicate.handlers.find(row=>row[0]==='callback1')[1].queue[0].arrivalSequence=2;
+  assert.throws(()=>SelectedExecutionLifecycleV8.restore(resealCore(duplicate)),/arrival order/);
+  const malformed=structuredClone(checkpoint);
+  malformed.handlers.find(row=>row[0]==='callback1')[1].queue[0].arrivalSequence=0;
+  assert.throws(()=>SelectedExecutionLifecycleV8.restore(resealCore(malformed)),/arrival order/);
+});
+
+test('closing an earlier queued listener releases the next arrival',()=>{
+  const h=orderedRegionHarness();
+  h.select('root',record('return',{value:['undefined']}));
+  h.postEvent({subscriptionId:'callback1',eventId:'discarded-first',args:[1],deliver:false});
+  h.postEvent({subscriptionId:'callback2',eventId:'eligible-second',args:[2],deliver:false});
+  h.closeEventHandler('callback1');
+  h.select('root',record('end',{kind:'return'}));
+  assert.deepEqual(h.exportEpisode().timeline.filter(row=>row.kind==='event').map(row=>row.fields.eventId),
+    ['eligible-second']);
+});
+
+test('a pending retained listener does not block an independent realm',()=>{
+  const core=new SelectedExecutionLifecycleV8({sessionId:'independent-ingress',automaticDelivery:false});
+  core.publishProgram({programId:'ordered',source:orderedSource,entry:'run'});
+  for(const [invocationId,realmId,trackId] of [['root-a','realm-a','track-a'],['root-b','realm-b','track-b']])
+    core.admitInvocation({programId:'ordered',invocationId,trackId,realmId,triggerId:invocationId,
+      realmPolicy:'retained'});
+  core.registerEventHandler({subscriptionId:'callback-a',programId:'ordered',realmId:'realm-a',
+    trackId:'track-a',entry:'handler'});
+  core.registerEventHandler({subscriptionId:'callback-b',programId:'ordered',realmId:'realm-b',
+    trackId:'track-b',entry:'handler'});
+  for(const invocationId of ['root-a','root-b']){
+    core.selected(invocationId,core.encodeRecord('return',{value:['undefined']}));
+    core.selected(invocationId,core.encodeRecord('end',{kind:'return'}));
+  }
+  core.postEvent({subscriptionId:'callback-a',eventId:'earlier-other-realm',args:[1],deliver:false});
+  core.postEvent({subscriptionId:'callback-b',eventId:'later-this-realm',args:[2],deliver:false});
+  const delivered=core.deliverReadyEvents('callback-b');
+  assert.equal(delivered.triggerId,'event:callback-b:later-this-realm');
+});
 
 test('durable queued callbacks stay private, restore once, and never register their host again',async t=>{
   const {h,store,directory,calls}=await fixture(t),before=h.modelContext('root');
