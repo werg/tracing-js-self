@@ -26,3 +26,5 @@ export {DurableRetainedModuleStore,DurableRetainedModuleStorageError,
 
 export {DurableHostIngressStore,createDurableHostIngressStore} from './host-ingress.js';
 export type {HostIngressReceipt,DurableHostIngressStoreOptions} from './host-ingress.js';
+export {DurableHostIngressJournal,DurableHostIngressBroker} from './host-ingress-journal.js';
+export type {HostIngressLogReceipt,DurableHostIngressJournalOptions} from './host-ingress-journal.js';

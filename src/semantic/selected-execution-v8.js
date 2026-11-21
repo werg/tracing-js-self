@@ -313,7 +313,8 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     // Restore host ownership before opening native model state. Neither step
     // dispatches a request or re-registers an existing callback. Unknown host
     // outcomes remain uncertain and require an explicit broker receipt.
-    const harness=saved.bridge.ingress||harnessOptions.ingressReceipt?await RegionExecutionHarness.restoreDurable(saved.bridge,harnessOptions):
+    const harness=saved.bridge.ingress||saved.bridge.ingressLog||harnessOptions.ingressReceipt||harnessOptions.ingressJournal||harnessOptions.ingressLogReceipt?
+      await RegionExecutionHarness.restoreDurable(saved.bridge,harnessOptions):
       RegionExecutionHarness.restore(saved.bridge,harnessOptions);
     demand(harness.inner.maxGenerated===policy.hostLimits.maxGenerated&&
       harness.inner.maxOutstanding===policy.hostLimits.maxOutstanding&&

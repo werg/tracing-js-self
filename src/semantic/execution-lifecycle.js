@@ -375,6 +375,7 @@ export class SelectedExecutionCore {
   /** Queue each accepted outside arrival once. Delivery is separate, and
    * model-visible only when its realm can legally accept another turn. */
   postEvent({subscriptionId,eventId,args=[],completionPolicy='call-return',deliver=true}){
+    if(this.hostIngressBroker)return this.hostIngressBroker.receive({subscriptionId,eventId,args,completionPolicy,deliver});
     id(subscriptionId,'subscription ID');id(eventId,'event ID');
     const handler=this.handlers.get(subscriptionId);
     demand(!this.realms.get(handler?.realmId)?.closed,'Cannot deliver an event to a closed realm');
@@ -428,6 +429,7 @@ export class SelectedExecutionCore {
   }
   closeEventHandler(subscriptionId){
     id(subscriptionId,'subscription ID');
+    this.hostIngressBroker?.assertCanRetire(subscriptionId);
     const handler=this.handlers.get(subscriptionId);
     if(handler?.state==='closed')return this.timeline.findLast(item=>
       item.kind==='handler-close'&&item.subscriptionId===subscriptionId);
@@ -560,6 +562,7 @@ export class SelectedExecutionCore {
       }
       if(!this.replaying)for(const [subscriptionId,handler] of this.handlers)
         if(handler.realmId===activation.realmId&&handler.state==='closing'&&!handler.queue.length&&
+          !this.hostIngressBroker?.hasPendingSubscription(subscriptionId)&&
            ![...this.invocations.values()].some(other=>
              other.triggerId.startsWith('event:'+subscriptionId+':')&&
              !['completed','cancelled','failed'].includes(other.status)))
@@ -685,11 +688,17 @@ export class SelectedExecutionCore {
         do{
           sequence++;demand(Number.isSafeInteger(sequence),'Native callback event sequence exhausted');
           eventId='callbackevent'+sequence;
-        }while(handler?.seen.has(eventId)||registration.queued.some(event=>event.eventId===eventId));
+        }while(handler?.seen.has(eventId)||registration.queued.some(event=>event.eventId===eventId)||
+          this.hostIngressBroker?.hasPending(registration.subscriptionId,eventId));
         if(registration.state==='pending'){
           if(registration.queued.length>=64)throw new Error('Callback event queue overflow');
           registration.queued.push({eventId,args});
-        }else this.postEvent({subscriptionId:registration.subscriptionId,eventId,args});
+        }else {
+          // Notification callbacks retain their void host ABI. The broker
+          // owns asynchronous failures and exposes acknowledgement via flush
+          // and explicit postEvent/receive calls.
+          this.postEvent({subscriptionId:registration.subscriptionId,eventId,args});
+        }
         return undefined;
       };
       return Object.freeze(fn);
@@ -825,6 +834,7 @@ export class SelectedExecutionCore {
         subscriptionId:callback.subscriptionId,eventId:event.eventId,args:event.args});
       callback.queued.length=0;
       if(handler?.state==='closing'&&!handler.queue.length&&
+         !this.hostIngressBroker?.hasPendingSubscription(callback.subscriptionId)&&
          ![...this.invocations.values()].some(invocation=>
            invocation.triggerId.startsWith('event:'+callback.subscriptionId+':')&&
            !['completed','cancelled','failed'].includes(invocation.status)))
@@ -916,6 +926,7 @@ export class SelectedExecutionCore {
     return this.record('observed','model-context',activation.trackId,{invocationId,sourceReads,...context});
   }
   cancelInvocation(invocationId,{reason='cancelled'}={}){
+    this.hostIngressBroker?.assertCanRetire();
     const activation=this.invocations.get(invocationId);demand(activation,'Unknown invocation');
     if(activation.status==='cancelled')return this.timeline.find(item=>
       item.kind==='cancel'&&item.invocationId===invocationId);
@@ -944,6 +955,7 @@ export class SelectedExecutionCore {
     this.completionWaiters.delete(invocationId);this.wake();return receipt;
   }
   closeRealm(realmId,{reason='realm closed'}={}){
+    this.hostIngressBroker?.assertCanRetire();
     demand(this.realms.has(realmId),'Unknown realm');
     demand(typeof reason==='string'&&reason.length>0,'Realm closure requires a reason');
     const realm=this.realms.get(realmId);

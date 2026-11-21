@@ -14,12 +14,14 @@ import {encodeProtocolRecordV8,decodeProtocolRecordV8} from './protocol-codec-v8
 import {applyProtocolRecordV8,assertProtocolDetailCompatible,restoreProtocolStateV8,allowsProtocolInternalSchedulerV8,allowsProtocolCompletionDetailV8} from './protocol-state-v8.js';
 import {assertPlainPromiseResolutionV8,assertObservedPromiseResolutionV8} from './scheduler-boundaries-v8.js';
 import {capturePendingIngress,restorePendingIngress} from './pending-ingress-v8.js';
+import {DurableHostIngressBroker,validateHostIngressLogChain,validateHostIngressLogReceipt} from './host-ingress-journal-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual;
 const clean=value=>JSON.parse(JSON.stringify(value));
 const fail=message=>{const error=new TypeError('Region execution: '+message);error.category='region-authority';throw error;};
 const protocolCheckpointSchema='semantic-protocol-continuation/1';
 const ingressTickets=new WeakSet();
+const ingressLogTickets=new WeakSet();
 const protocolDetailKinds=new Set(['allocate','bind','compute','choose','read','write','call','return','throw','end','request']);
 const internalSchedulerDetailKinds=new Set(['promise','await','resume','job','transfer']);
 function assertSchedulerDetail(controller,{kind,fields}){
@@ -317,6 +319,7 @@ export class RegionExecutionHarness {
     const result=this.inner.reconcile(invocationId,effectId,options);this.sync();return result;
   }
   checkpoint({ingress=null}={}){
+    this.inner.hostIngressBroker?.assertIdle();
     this.sync();if(this.active)fail('cannot checkpoint an uncommitted local transition');
     if(ingress!==null){
       if(!ingressTickets.has(ingress)||!eq(ingress.snapshot,capturePendingIngress(this)))
@@ -327,10 +330,12 @@ export class RegionExecutionHarness {
     const body={schema:REGION_CONTINUATION_VERSION,profile:REGION_PROFILE,public:this.exportEpisode(),
       regionCursor:{active:null,consumed:copy(this.consumed)},ingressCursor:this.inner.nextIngressSequence,
       selected:this.hasProtocol()||ingress?
-        this.protocolCheckpoint({ingress}):this.inner.checkpoint(),...(ingress?{ingress:copy(ingress.receipt)}:{})};
+        this.protocolCheckpoint({ingress}):this.inner.checkpoint(),...(ingress?{ingress:copy(ingress.receipt)}:{}),
+      ...(this.inner.hostIngressBroker?.receipt?{ingressLog:this.inner.hostIngressBroker.receipt}:{})};
     return {...body,integrity:hashAlgorithmData(clean(body))};
   }
   async checkpointDurable({ingressStore}={}){
+    await this.inner.hostIngressBroker?.flush();
     if(!ingressStore||typeof ingressStore.put!=='function'||typeof ingressStore.get!=='function')
       fail('durable ingress storage is required');
     const snapshot=capturePendingIngress(this);
@@ -372,25 +377,53 @@ export class RegionExecutionHarness {
     }
     harness.replayingPublic=false;harness.inner.replaying=false;return harness;
   }
-  static async restoreDurable(packet,{ingressStore,ingressReceipt=null,...options}={}){
+  static async restoreDurable(packet,{ingressStore,ingressReceipt=null,
+      ingressJournal=null,ingressLogReceipt=null,...options}={}){
     stableAlgorithmJSON(packet);const saved=copy(packet);
+    let logTicket=null;
+    if(saved?.ingressLog||ingressJournal!==null||ingressLogReceipt!==null){
+      if(!ingressJournal||typeof ingressJournal.readAll!=='function')fail('independently retained ingress journal is required');
+      const entries=validateHostIngressLogChain(await ingressJournal.readAll(ingressLogReceipt),ingressLogReceipt);
+      if(saved?.ingressLog){
+        validateHostIngressLogReceipt(saved.ingressLog);
+        const prior=entries[saved.ingressLog.position-1],wire=prior&&stableAlgorithmJSON(prior);
+        if(!prior||saved.ingressLog.streamId!==ingressLogReceipt.streamId||saved.ingressLog.id!==hashAlgorithmData(prior)||
+          saved.ingressLog.bytes!==Buffer.byteLength(wire))fail('external journal head predates or substitutes the saved acknowledgement');
+      }
+      logTicket={receipt:saved?.ingressLog??null};
+    }
+    const finish=async harness=>{
+      if(ingressJournal!==null||ingressLogReceipt!==null)
+        await DurableHostIngressBroker.recover({harness,journal:ingressJournal,receipt:ingressLogReceipt});
+      return harness;
+    };
     if(!eq(saved?.ingress??null,ingressReceipt))
       fail('restore requires the externally retained ingress receipt');
-    if(!saved?.ingress)return this.restore(saved,options);
+    const restore=restoreOptions=>{
+      if(logTicket)ingressLogTickets.add(logTicket);
+      try{return this.restore(saved,{...restoreOptions,ingressLog:logTicket});}
+      finally{if(logTicket)ingressLogTickets.delete(logTicket);}
+    };
+    if(!saved?.ingress)return finish(restore(options));
     if(!ingressStore||typeof ingressStore.get!=='function')fail('durable ingress storage is required');
     const snapshot=await ingressStore.get(saved.ingress);
     if(hashAlgorithmData(snapshot)!==saved.ingress.id)fail('durable ingress receipt differs from stored snapshot');
     const ticket={snapshot,receipt:saved.ingress};ingressTickets.add(ticket);
-    try{return this.restore(saved,{...options,ingress:ticket});}finally{ingressTickets.delete(ticket);}
+    let restored;
+    try{restored=restore({...options,ingress:ticket});}finally{ingressTickets.delete(ticket);}
+    return finish(restored);
   }
   static restore(packet,options={}){
     assertAlgorithmFields(packet,['schema','profile','public','regionCursor','ingressCursor','selected','integrity',
-      ...(Object.hasOwn(packet??{},'ingress')?['ingress']:[])],'region checkpoint');
+      ...(Object.hasOwn(packet??{},'ingress')?['ingress']:[]),
+      ...(Object.hasOwn(packet??{},'ingressLog')?['ingressLog']:[])],'region checkpoint');
     const {integrity,...body}=packet;
     if(body.schema!==REGION_CONTINUATION_VERSION||body.profile!==REGION_PROFILE||hashAlgorithmData(clean(body))!==integrity)
       fail('checkpoint version or integrity');
     if(!Number.isSafeInteger(body.ingressCursor)||body.ingressCursor<1)
       fail('invalid private ingress sequence cursor');
+    if(body.ingressLog&&(!ingressLogTickets.has(options.ingressLog)||!eq(options.ingressLog.receipt,body.ingressLog)))
+      fail('checkpoint requires the independently read durable ingress journal');
     const policy=body.selected?.schema===protocolCheckpointSchema?body.selected.policy:null;
     if(body.selected?.schema===protocolCheckpointSchema&&!policy)fail('missing protocol host policy');
     if(policy){

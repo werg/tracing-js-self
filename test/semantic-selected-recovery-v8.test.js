@@ -8,6 +8,7 @@ import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {DurableHostIngressStore} from '../src/storage/host-ingress.js';
+import {DurableHostIngressJournal,DurableHostIngressBroker} from '../src/storage/host-ingress-journal.js';
 import {RegionSelectedModelDriver} from '../src/semantic/selected-execution-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {encodeDetailedRecord} from '../src/semantic/detail-v8.js';
@@ -257,5 +258,39 @@ test('coordinated driver recovery verifies private ingress before native restore
     const again=await restored.checkpoint();assert.equal(again.attempts.length,6);
     assert.equal(restored.bridge.handlers.get('callback1').state,'lost');
     assert.equal(again.bridge.ingress,undefined,'the consumed private arrival is now public history');
+  }finally{restored.close();}
+});
+
+test('driver validates journal arrivals beyond its checkpoint before restoring model state',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'v8-driver-journal-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableHostIngressJournal({directory,streamId:'driver-events'});
+  const source='"use strict";function run(){return 1;}function handler(value){return value;}';
+  const choose=request=>{
+    const id=request.context.invocationId,index=request.public.timeline.filter(row=>row.mode==='generated'&&row.fields.invocationId===id).length;
+    return index===0?line('return',{value:['num',id==='call'?1:5]}):line('end',{kind:'return'});
+  };
+  const bridge=begin(source,{},'retained');
+  bridge.registerEventHandler({subscriptionId:'listener',programId:'p',realmId:'r',trackId:'t',entry:'handler'});
+  const limits={...policy,maxSelections:4};
+  const driver=new RegionSelectedModelDriver({select:suppliedSelector(choose),harness:bridge,...limits});
+  await finish(driver,'call');
+  const packet=await driver.checkpoint(),broker=new DurableHostIngressBroker({harness:bridge,journal});
+  await bridge.postEvent({subscriptionId:'listener',eventId:'after-checkpoint',args:[5],deliver:false});
+  await broker.flush();driver.close();
+  const denied=suppliedSelector(choose),forged={...broker.receipt,id:'0'.repeat(64)};
+  await assert.rejects(RegionSelectedModelDriver.restore(packet,{select:denied,policy:limits,
+    harnessOptions:{ingressJournal:journal,ingressLogReceipt:forged}}),/digest/);
+  assert.equal(denied.controls().restoreCalls,0);
+  const next=suppliedSelector(choose),restored=await RegionSelectedModelDriver.restore(packet,{select:next,policy:limits,
+    harnessOptions:{ingressJournal:journal,ingressLogReceipt:broker.receipt}});
+  try{
+    assert.deepEqual(restored.bridge.exportEpisode(),packet.bridge.public);
+    assert(!JSON.stringify(restored.bridge.modelContext('call')).includes('after-checkpoint'));
+    restored.bridge.deliverReadyEvents('listener');
+    await until(()=>restored.bridge.invocations.get('event1')?.status==='completed');
+    await until(()=>!restored.running.size);
+    assert.equal(restored.metrics().predictionAttempts,4);
+    const saved=await restored.checkpoint();assert.deepEqual(saved.bridge.ingressLog,broker.receipt);
   }finally{restored.close();}
 });
