@@ -1,0 +1,28 @@
+{
+  "schema": "semantic-v8-bounded-archive/1",
+  "status": "selected-cases-admitted-and-measured",
+  "archive": "conversion-real-tokenizer-a494f00-776519e-selected4.tar.gz",
+  "bytes": 1091283,
+  "sha256": "65b3408c0e02c9d23438a7dd4db07e6d5b413ac37751b24067b695087317d637",
+  "attemptManifest": "conversion-real-tokenizer-smoke-attempt-2/attempt-manifest.json",
+  "attemptManifestSha256": "a0908ae87355c94b5c826905b81947132d3aac364b5f5892d4032ad28cc3929b",
+  "retainedFiles": 355,
+  "payloadBytes": 15742589,
+  "deterministicRebuild": "verified twice: sorted paths; tar uid/gid/mtime=0, normalized modes; gzip filename empty and mtime=0",
+  "producerRevision": "a494f007f7373fa4d96b76be88c5610fb815d6e8",
+  "consumerRevision": "776519e69b32b11927edd60eab84c77cebfe2a9c",
+  "declared": 66,
+  "selectedCaseIds": [
+    "getter-replacement",
+    "nested-goals",
+    "promise-key",
+    "mapped-key"
+  ],
+  "sourceQualified": 4,
+  "nativeAdmitted": 4,
+  "flatTokenMeasuredEpisodes": 4,
+  "nativePackingMeasuredEpisodes": 4,
+  "nativeLogicalRecords": 159,
+  "nativePhysicalRecords": 566,
+  "scope": "Four selected source inputs passed genuine source/native admission and exact tokenizer/native packing measurement. All 66 original declared inputs retained; 62 remain untested. No full-population, serving, optimizer or model-learning success claim."
+}

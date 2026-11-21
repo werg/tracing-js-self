@@ -1,0 +1,153 @@
+{
+  "schema": "paired-production-admission-evidence/1",
+  "date": "2026-11-22",
+  "producerRevision": "a494f007f7373fa4d96b76be88c5610fb815d6e8",
+  "consumerRevision": "776519e69b32b11927edd60eab84c77cebfe2a9c",
+  "consumerCiFollowup": "0f572ebb76c67df28195aa46c5e8558f5b0a09ae",
+  "inventory": {
+    "declared": 66,
+    "selected": 4,
+    "untested": 62,
+    "selectedSourcePass": 4,
+    "selectedNativeAdmitted": 4,
+    "tokenMeasured": 4,
+    "packingMeasured": 4,
+    "qualificationExit": 1,
+    "qualificationExitReason": "62 declared rows intentionally unselected; zero selected failures",
+    "measurementExit": 0
+  },
+  "admissionSuite": {
+    "tests": 15,
+    "passed": 15,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 59.07
+  },
+  "tokens": {
+    "predictionTargets": 151,
+    "generated": 4871,
+    "eos": 151,
+    "observed": 243801,
+    "total": 248823,
+    "peakContext": 2156
+  },
+  "nativePacking": {
+    "episodes": 4,
+    "logicalRecords": 159,
+    "physicalRecords": 566,
+    "generatedTokens": 4871,
+    "observedTokens": 247577,
+    "terminalTokens": 0
+  },
+  "selectedRecords": {
+    "compact": 1,
+    "detailed": 150
+  },
+  "generationWorker": {
+    "publishedCheckpointRevision": "fdba93171947800b1bbc9f98e7e7e9f91e5abd4a",
+    "tests": 26,
+    "passed": 26,
+    "skipped": 0,
+    "physicalAbsenceControls": 7
+  },
+  "routeInventory": {
+    "groups": 47,
+    "producerExports": 22,
+    "producerSemanticScripts": 21,
+    "consumerSemanticScripts": 20,
+    "sourceHashes": 298
+  },
+  "optimizerSteps": 0,
+  "learnedSuccess": null,
+  "completePopulationQualification": "pending hosted runs; this packet does not qualify all66 or original665",
+  "files": [
+    {
+      "source": "conversion-real-tokenizer-a494f00-776519e-selected4.tar.gz",
+      "path": "conversion-real-tokenizer-a494f00-776519e-selected4.tar.gz",
+      "bytes": 1091283,
+      "sha256": "65b3408c0e02c9d23438a7dd4db07e6d5b413ac37751b24067b695087317d637",
+      "storedBytes": 1091283,
+      "storedSha256": "65b3408c0e02c9d23438a7dd4db07e6d5b413ac37751b24067b695087317d637"
+    },
+    {
+      "source": "conversion-real-tokenizer-a494f00-776519e-selected4.manifest.json",
+      "path": "conversion-real-tokenizer-a494f00-776519e-selected4.manifest.json",
+      "bytes": 1345,
+      "sha256": "b3012ea5b2f6e615e264dc94ce160809f18a2233d168af6c78e6262b91253098",
+      "storedBytes": 1345,
+      "storedSha256": "b3012ea5b2f6e615e264dc94ce160809f18a2233d168af6c78e6262b91253098"
+    },
+    {
+      "source": "admission-live-a494-7765/metadata.json",
+      "path": "admission-live-a494-7765-metadata.json.xz",
+      "bytes": 1951,
+      "sha256": "53a78e6dab0b5474dff4c56fb7b78967bf9e9c73d49406e0ddcaff12d56288fe",
+      "storedBytes": 884,
+      "storedSha256": "cb0787deca1f86fa574164d8bccd605d3c691bcdcfd6f993cfda27993597d2ed"
+    },
+    {
+      "source": "admission-live-a494-7765/tests.log",
+      "path": "admission-live-a494-7765-tests.log.xz",
+      "bytes": 2646,
+      "sha256": "c4c6fbd9da257fde08419e0888f7425db4d6dfe71f47680dad4cf7385185ee71",
+      "storedBytes": 932,
+      "storedSha256": "ba3482e61a10584393e4c60b719235fc03b6c2e85582f858317f853434a56ea9"
+    },
+    {
+      "source": "admission-live-a494-7765/tests.xml",
+      "path": "admission-live-a494-7765-tests.xml.xz",
+      "bytes": 2748,
+      "sha256": "97e4a47fbe6408b113f685da1264a3609ea47df7354da41d681305ce4a5d993f",
+      "storedBytes": 844,
+      "storedSha256": "7e78352915fcee981ac181ec4d50ca7f97bff398ae3ff1cf44e8c3891f6f06cb"
+    },
+    {
+      "source": "generation-worker-routing-regression.log",
+      "path": "generation-worker-routing-regression.log.xz",
+      "bytes": 3072,
+      "sha256": "06d64968224627c300795cf7e3cfb70136d713e17b9f16e2c9eb0bc557388e54",
+      "storedBytes": 1500,
+      "storedSha256": "68936ed12a6ad3000d6e9b0ec23535f29a23234156b55a2a6acbdc24ae92e712"
+    },
+    {
+      "source": "cutover-route-audit/route-inventory.json",
+      "path": "cutover-route-audit-route-inventory.json.xz",
+      "bytes": 149836,
+      "sha256": "e6ab63b233c70da030ce6ee329b72d9db15c7f00c1484533ef746174b6f195fb",
+      "storedBytes": 29328,
+      "storedSha256": "56d048467ed0ad370c6e0d952cefb2e4fdb6696c1381bf2326e0841887c7daa9"
+    },
+    {
+      "source": "cutover-route-audit/route-inventory.md",
+      "path": "cutover-route-audit-route-inventory.md.xz",
+      "bytes": 41140,
+      "sha256": "11d23020c55c49c679fe619631e43f93f4bd5302c6ae87485ee43788a8ad9bea",
+      "storedBytes": 12268,
+      "storedSha256": "f7da941c17df75d7eb537161f76a4236c8802bd1d65a5cdc0a1df9ade86e1d17"
+    },
+    {
+      "source": "cutover-route-audit/build-inventory.py",
+      "path": "cutover-route-audit-build-inventory.py.xz",
+      "bytes": 67099,
+      "sha256": "ddcc0348bbe373f4437c380a79651ecb9aefea68f998fdd72ce2941c5d9bd185",
+      "storedBytes": 17448,
+      "storedSha256": "e035c626709ee9d817d0d69ec3af05dfb392df853b970bdc92d50d7dd45c43e8"
+    },
+    {
+      "source": "cutover-route-audit/producer-entries-final.json",
+      "path": "cutover-route-audit-producer-entries-final.json.xz",
+      "bytes": 4479,
+      "sha256": "e149f7d34309e5094194db4d664dabba414d164b52f045d984e07ea2b36d0a0a",
+      "storedBytes": 1312,
+      "storedSha256": "cb031d8ee5ee0b394a45939860f19e4a414d2a04f09cd971d31a87932dd14c28"
+    },
+    {
+      "source": "cutover-route-audit/consumer-routes-final.json",
+      "path": "cutover-route-audit-consumer-routes-final.json.xz",
+      "bytes": 6452,
+      "sha256": "ed55ef5156d7f903a9a3b6391b5e32a95825c33b00c716d1872ea2f12a3eb532",
+      "storedBytes": 2264,
+      "storedSha256": "72b8327030782bb0c1ca09b3ba6232adb8ec83ae87950adae0480a8a41e5d80d"
+    }
+  ]
+}

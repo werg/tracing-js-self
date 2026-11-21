@@ -1,3 +1,42 @@
+## Fresh production admission and complete route inventory — 22 November 2026
+
+The exact same four conversion cases now pass original-source checking,
+independent native admission, exact production-tokenizer accounting and actual
+native packing at published producer `a494f007` / consumer `776519e6`.
+All66 declared rows remain: four selected passes per gate and62 explicitly
+untested. The intentionally partial qualification exits1 with no selected
+failures; measurement exits0. Flat measurement has151 prediction targets,
+4,871 generated tokens,151 EOS tokens and243,801 observed tokens. Native framing
+has159 logical/566 physical records and247,577 observed tokens; the different
+framing totals are not interchangeable. Zero optimizer steps were run.
+
+The entire independent live admission file passes15/15 with zero skips at the
+same clean pair, including source tampering, checkout identity and extension
+rejection. Both before/after trees and clean revisions are retained. The complete
+failed and successful attempts are separate archives. The fresh success packet,
+commands, receipts, hashes and test logs are in
+[`evidence/v8-production-admission-2026-11-22/`](evidence/v8-production-admission-2026-11-22/).
+Consumer `0f572ebb` is a workflow-only follow-up pinning this producer.
+
+A47-route inventory now covers all22 producer package exports,21 producer
+semantic scripts and20 native semantic scripts, with298 source hashes.
+It found the ordinary V8 generation worker eagerly importing old clients;
+checkpoint commit `fdba9317` fixes that dispatch, keeps original source and
+canonical expectation authority, and rejects falsely versioned sessions.
+All26 focused checks pass, including seven physical-absence controls. New work
+is pushed to a temporary checkpoint branch while the complete a494/776 hosted
+runs finish, then will be fast-forwarded onto the PR branch. This avoids
+continually cancelling the full original665 and installed665+66 gates.
+
+The inventory's hardest remaining production blockers are actual typed child
+orchestration and restoration; genuine SE repeated-invocation/child/source-reread
+supply; the V8 production launch path; Natlang lifecycle wrappers; and default,
+release and operational parity. Namespace original-ESM authority is being built
+before public/native namespace admission is widened. No missing behavior is
+manufactured as a curriculum label. **Zero of17 complete work packages are
+closed.** Full source/native/token/packing, full installed absence, model quality
+and deployment proof retain their separate acceptance gates.
+
 # Language expansion and V8 cutover: implementation status
 
 This is the durable work ledger for the two design plans supplied on 20 November
