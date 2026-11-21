@@ -337,19 +337,24 @@ export class SelectedExecutionCore {
       this.encodeRecord('code',{entry:selectedEntry,source:program.source,
         sites:analyzeSemanticProgram(program.source).sites,
         ...(program.randomSeed===undefined?{}:{randomSeed:program.randomSeed})});
-    const initialBindings={};
+    const initialBindings=new Map();
     for(const [index,name] of (declared?.params??[]).entries())
-      if(name)initialBindings[name]=graph.roots[index]??['undefined'];
+      if(name)initialBindings.set(name,graph.roots[index]??['undefined']);
     demand(bindings&&typeof bindings==='object'&&!Array.isArray(bindings),'Invalid source bindings');
-    for(const [name,index] of Object.entries(bindings)){
+    // Parameter order comes from source. This mapping is host metadata, not a
+    // guest object: overrides preserve parameter positions and additional names
+    // use deterministic ECMAScript UTF-16 order, independent of JSON key order.
+    for(const name of Object.keys(bindings).sort()){
+      const index=bindings[name];
+      demand(name.length>0,'Invalid source binding name');
       demand(Number.isSafeInteger(index)&&index>=0&&index<graph.roots.length,'Binding has no observed argument');
-      initialBindings[name]=graph.roots[index];
+      initialBindings.set(name,graph.roots[index]);
     }
-    const captureAliases=Object.fromEntries((closure?.captures??[]).map(c=>[c.binding,c.cell]));
+    const captureAliases=new Map((closure?.captures??[]).map(c=>[c.binding,c.cell]));
     let bindingOrdinal=0;
-    for(const name of Object.keys(initialBindings)){
+    for(const name of initialBindings.keys()){
       let cell;do{cell='a'+this.invocations.size+'b'+bindingOrdinal++;}while(previous?.locals.has(cell));
-      captureAliases[name]=cell;
+      captureAliases.set(name,cell);
     }
     const controller=new this.constructor.Controller([sourceCode,input],{
       capabilities:program.capabilities,maxGenerated:this.maxGenerated,

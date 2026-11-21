@@ -52,7 +52,8 @@ export class SemanticExecutionController {
       fail('policy','Broker observations cannot be combined with teacher fixtures');
     this.observationAuthority=observationAuthority;
     this.rootInvocation=rootInvocation;this.trackId=trackId;this.receiver=structuredClone(receiver);
-    this.strictRequests=strictRequests;this.captureAliases=new Map(Object.entries(captureAliases));
+    this.strictRequests=strictRequests;
+    this.captureAliases=new Map(captureAliases instanceof Map?captureAliases:Object.entries(captureAliases));
     this.source=code.fields;this.input=input.fields;this.completionPolicy=completionPolicy;
     this.callSites=new Map(analyzeSemanticProgram(this.source.source).sites
       .filter(site=>site.role==='CallExpression'&&site.operation)
@@ -71,7 +72,7 @@ export class SemanticExecutionController {
       properties:new Map(node.properties.map(p=>[p.key,structuredClone(p.value)]))
       });
     }
-    for(const [name,value] of Object.entries(initialBindings)){
+    for(const [name,value] of initialBindings instanceof Map?initialBindings:Object.entries(initialBindings)){
       assertValue(value);this.locals.set(this.captureAliases.get(name)??name,structuredClone(value));
     }
     for(const cell of this.captureAliases.values())

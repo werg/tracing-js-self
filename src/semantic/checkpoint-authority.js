@@ -2,6 +2,7 @@
 // but cannot authorize a new owner, request, result, resource or native action.
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual as equal} from 'node:util';
+import {stableAlgorithmJSON} from './ir.js';
 
 const digest=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Checkpoint authority: '+message);};
@@ -51,7 +52,7 @@ export function validateNativeActionBinding(nativeAction,
 export function canonicalInvocationIngressDigest(fields,graph,receiver){
   const aliases=new Map(graph.objects.map((node,index)=>[node.id,index])),
     value=tag=>tag[0]==='ref'&&aliases.has(tag[1])?['introduced',aliases.get(tag[1])]:tag;
-  return digest(JSON.stringify({...fields,receiver:value(receiver),graph:{
+  return digest(stableAlgorithmJSON({...fields,receiver:value(receiver),graph:{
     objects:graph.objects.map((node,index)=>({id:index,kind:node.kind,
       properties:node.properties.map(property=>({key:property.key,value:value(property.value)})),
       ...(Object.hasOwn(node,'prototype')?{prototype:node.prototype}:{})})),

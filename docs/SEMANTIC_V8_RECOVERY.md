@@ -74,6 +74,24 @@ earlier insertion-order checksum. Historical checkpoints with that earlier
 checksum require regeneration from a current validated execution; there is no
 compatibility decoder or automatic resigning of supplied state.
 
+Invocation delivery fingerprints also use canonical object-key order. The
+`bindings` field is a host metadata map from binding names to argument indexes,
+so its JSON key order does not assign lexical cell identities. Source-declared
+parameters keep their declaration order; an explicit override keeps that
+parameter's position. Additional names append in ECMAScript UTF-16 code-unit
+lexical order. This applies to both the V6 and V8 lifecycle boundaries and is
+independent of guest object property order. The graph's root, object, and property
+arrays retain their existing order and identity. Historical checkpoints with
+insertion-order delivery fingerprints or differently allocated extra binding
+cells require regeneration rather than private-state resigning.
+
+`node tools/generate-semantic-binding-fixtures.mjs --check` freshly rechecks the
+original source detail for three binding-order interoperability controls and
+verifies the adapted public contexts, replay, and canonical checkpoint recovery.
+Its adaptation is deliberately limited to redundant positional mappings and
+extra names absent from the original source. These controls do not admit
+arbitrary changes to source bindings or establish native or learned execution.
+
 Host checkpoint validation finishes before native restoration starts. The native
 transport must attest the exact restored transport digest and zero host
 dispatches. Its independent model restoration retains the random state and
