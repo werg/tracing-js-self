@@ -16,6 +16,84 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Completed paired measurements and durable evidence — 21 November 2026
+
+Implementation is published through producer `b074e0ecb17782605352764821614764401c2e55`
+and consumer `7ecda6666d64c536fd36bc8fde463bab38238215`; the latter changes only
+the CI producer pin above runtime `0351fe9607735898da441458fdf7182e20a9ace5`.
+Evidence publication continues through producer `5ec5e61d6a8f46a4d8b852fc54567acec6c6bb2c`.
+**0 of 17 complete acceptance packages are closed.** Historical measurements
+qualify their exact trees, not every later executable change.
+
+| Completed gate | Exact revision(s) | Result and practical boundary |
+| --- | --- | --- |
+| Complete installed consumer semantic selection | Consumer `0351fe9`, clean fixture producer `9fc1935` | **604 passed, zero failed/errors/skips**, 853.79 seconds, using actual CPU dependencies and the production tokenizer. The earlier `84dee6a` run remains **579/579 passed**; these are separate populations, not additive totals. |
+| All recurring source/native/token/packing cases | Producer `090e634`, consumer `0351fe9` | **47/47 passed in each of the four gates**, covering 44 scripts and three original module graphs. Both checkouts remained clean. Training, learned execution and serving latency were unmeasured by this gate. |
+| Actual-model recovery from an older recorded packet | Producer `070bad4`, consumer `0351fe9` | **One acknowledged model record, two explicit saved cuts**. A fresh ordinary service restored the later cut using the older packet and independently retained later head; complete host/native checkpoints and consumed attempts matched, costs stayed monotonic, and independent producer source/projection/public replay passed. The next output matched exactly but was malformed and **refused**, with no acknowledgement or host dispatch. |
+| Complete producer suite and reference fixture | Producer `090e634` | **2,353 passed, one failed, six skipped** from 2,360 tests; reference fixture **8/8 passed**. The one failure was the legacy intent journal's stale insertion-order checksum. The failed run is retained and is not relabeled after repair. |
+| Legacy journal regression repair | Producer `b074e0e` (tested patch `559193c` on `090e634`) | The exact hosted selected-harness test list passes **94/94**, with zero failures/skips; **25 additional canonical/history controls pass**. Inner checksums now use canonical data, while validated input graphs regain their established wire field order. Full current-head hosted results remain a separate gate. |
+
+The new 47-case measurement contains **34 compact and 1,755 detailed records**
+across 34 compact and 294 detailed regions. Detailed records use **55,388 of
+56,597 generated tokens (97.86%)**. Flat observed/context cost is 2,951,658
+tokens, plus 1,789 terminal tokens, for 3,010,044 total tokens. Native packing
+contains 6,920 physical chunks and 1,948 logical records, with 3,013,123
+observed/context tokens and no terminal tokens. Twenty-two cases contain compact
+records and 25 are wholly detailed. These are representation measurements;
+they do not show model usefulness or default-cutover readiness.
+
+The actual-history diagnostic reuses the separately retained fitted model
+`65c6dc55068bcb103180ed2f38c3115bb15d3740cd7416d864d58c7c5910c3a9`;
+it performs no new training. The independently retained head is at position 2,
+and the supplied older packet is at position 1. The original service is shut
+down before the fresh restoration. Nine measured RPCs consumed 5.676596421006252
+seconds of reported compute and reached a 530,223,104-byte process memory peak.
+The first attempt at `18e9ebf` stopped on malformed next-output bytes before
+restoration and remains a failed attempt. The corrected qualifier at `070bad4`
+retains and compares that original refusal instead of repairing the output or
+calling it a successful next selection. Full source execution, generalization,
+automatic transition durability and learned quality remain unproven.
+
+### Published evidence packages
+
+- Producer `5eeddef`: [515-file paired/ordinary/model evidence bundle](evidence/semantic-v8-final47-pair-934a111-f25fa32/README.md),
+  including actual model, tokenizer and optimizer bytes, failed preflights,
+  historical complete suites and separate external-asset gates. Archive SHA-256:
+  `7dd052a8dd72bc90760360aa3de02fcbf62d716cf47a6c10623e9ac44ce4884a`.
+- Producer `4aa63fb`: [full 843-variant module campaign and scope evidence](evidence/module-campaign-35be3b7/README.md),
+  with 1,067 archived members, selected original inputs and all outcomes.
+  Archive SHA-256: `024cd19713bcc299355a3c6a0ae228b2c628689a25dc7ba796131dfbb992e604`.
+- Producer `5ec5e61`: [474-file final-pair supplement](evidence/semantic-v8-final47-pair-090e634-0351fe9-supplement/README.md),
+  including the fresh 47-case gates, both actual-history attempts, the passing
+  579/604 consumer runs and failed producer suite. Exact model/tokenizer
+  dependencies refer to the first archive by member path and hash. Archive
+  SHA-256: `80fb19696228401257976d95ff7b2610cb500004ea0bff540525261fd808f7bf`.
+
+All three packages have complete member inventories and have been restored
+and verified against them. Counts describe archived members, not distinct tests.
+
+### Hardest remaining work and lessons
+
+The next paired repair addresses a demonstrated checkpoint-ordering defect:
+canonical JSON can reorder an invocation binding map, changing its ingress
+digest and the identities assigned to extra captured variables. Source-declared
+parameter order must remain intact; additional names need the same deterministic
+UTF-16 ordering in producer and native replay. This repair and a fresh ordinary
+two-update lifecycle on the resulting exact pair are in progress.
+
+Concurrent work on automatic checkpoint durability, cancellation with surviving
+sessions, module namespaces and ordinary imports named `defer` is preserved.
+Those increments still need their own bounded evidence, then exact-pair
+qualification. Distributed ownership, bounded rotation, production parity,
+held-out model studies and coordinated default/release cutover remain open.
+
+Lessons: canonical storage must preserve every derived identity as well as
+outer checksums; wire strings with meaningful byte identity need explicit schema
+order after decoding. An actual restored malformed output is valid evidence of
+recovery equality, but it is still a model failure. Passing a targeted repair
+does not change the status of a previously failed full suite. Complete evidence
+includes original failed attempts and actual assets, not only successful logs.
+
 ## Continued recovery hardening and concurrent integration — 21 November 2026
 
 This continuation started from producer `4fda1a49b7449199d83435bc7bac936142a728d1`
@@ -88,7 +166,7 @@ their exact producer/consumer pins; later fixes require fresh qualification.
 | Separate bounded decoder diagnostic | Producer `35be3b7`, consumer `f25fa32` | **32 decoder-only updates**, 18 target tokens/update; actual fitted weights emit and acknowledge **one** original Promise-create record. Fresh unchanged service restores the acknowledged checkpoint and emits identical next output; zero host dispatch, next probe unacknowledged. Independent producer source/projection/public replay confirms the exact accepted prefix and context. Full program incomplete, no held-out or generalization claim. |
 | Historical complete consumer selection | Producer `9fc193538c4e5c2e512f9fef767d30ed9e437c5a`, consumer `f25fa32` | **553/555 passed, two failed, zero skipped**. Both failures were stale callback test setups, corrected separately in `a2734bba6f23f2af29f3bc698d538e75d0d52223`; its 22 affected controls passed. The historical failed run is retained unchanged. |
 | Canonical JSON authority repair | Consumer `84dee6ab3da55f164001d6d127ce4bc6f8eaa661` | **170 focused controls passed**, including 16 boolean/number substitutions that reproduced bypasses before correction and eight ECMAScript number-equivalence positives. The complete **579/579-test** installed-dependency selection then passed against clean producer `9fc1935`, with zero failures, errors or skips. |
-| Model and request JSON authority | Consumer `0351fe9607735898da441458fdf7182e20a9ace5` | **114 focused controls passed**, including 14 reproduced bypass refusals and 11 positive controls. Actual model cache/random-state restoration is included; supplied-decoder tamper controls remain engineering evidence. Complete **604-test** final selection is running against producer `9fc1935`. |
+| Model and request JSON authority | Consumer `0351fe9607735898da441458fdf7182e20a9ace5` | **114 focused controls passed**, including 14 reproduced bypass refusals and 11 positive controls. Actual model cache/random-state restoration is included; supplied-decoder tamper controls remain engineering evidence. Complete **604/604-test** final selection passed against producer `9fc1935`, with zero failures, errors or skips. |
 
 The 47-case measurement contains 34 compact and 1,755 detailed records across
 34 compact and 294 detailed regions. Detailed records account for **55,388 of
@@ -98,7 +176,8 @@ tokens; native packing contains 6,920 physical chunks, 1,948 logical records,
 contain some compact records and 25 are wholly detailed. These are exact
 representation costs, not model-quality results. Complete inputs, reports,
 tokenizer, ordinary/fitted model and optimizer assets, transcripts and failed
-preflights are being packaged with hashes and separate revision identities.
+preflights are now published in the evidence packages above with hashes and
+separate revision identities.
 
 Producer `35be3b7` fixes a real ordinary-runner failure before training: the
 frozen full population includes cyclic/shared callback graphs and cannot be
@@ -147,10 +226,11 @@ state unreadable. Canonical hashing now preserves object-key reordering while
 array order, values and public authority remain checked. **142 affected controls
 pass**, including four new reorder/tamper controls. Earlier pre-release
 insertion-order checkpoint bytes require regeneration; there is no compatibility
-decoder or automatic resigning of supplied state. A fresh full suite at
-`090e634` is running because this shared lifecycle change also reaches legacy
-paths. New 47-case source/native/cost/packing qualification is running at exact
-producer `090e634` and consumer `0351fe9` in a separate clean checkout.
+decoder or automatic resigning of supplied state. The fresh full suite at
+`090e634` finished with 2,353 passes, one legacy-journal failure and six skips;
+the bounded repair and retained failed evidence are described above. New
+47-case source/native/cost/packing qualification passed all four gates at exact
+producer `090e634` and consumer `0351fe9` in separate clean checkouts.
 
 The complete **843-module campaign at producer `35be3b7`** passed report
 validation with the same pinned annual specification, Test262 revision,
@@ -591,14 +671,14 @@ serving, and measured learned success.
 | 6 | Composable source projections | In progress | Unique event ownership and atomic private/public rollback are implemented for current adapters; map callbacks now compose finally/throw and generator creation/yield. Remaining: general IteratorClose/abrupt cleanup, cross-family ownership and exact source/native qualification of the expanded population. |
 | 7 | Protocol/effect/lifecycle composition | In progress | Protocol → effect → callback → protocol, reentrancy, guest errors, cancellation and restore with independent source/native checks. Coordinated driver/model/host recovery now preserves acknowledged history and budgets. |
 | 8 | Ordinary V8 training admission | In progress | Strict preparation, ordinary readiness, recipe/loader/config/stage/resume gates are implemented. Remaining: fresh command-level qualification of the expanded source population and production recipes with the exact final assets; source eligibility remains distinct from learned outcomes. |
-| 9 | Canonical selected serving and live restore | In progress | Acknowledged state, random/budget state, registered private snapshots and per-arrival durable intake with later-tail recovery are implemented. Remaining: accepted-model-record end-to-end recovery, return-value callback continuations, child/reentrant work, missing later public history, bounded log rotation/distributed ownership, and final source/native/no-redispatch operational proof. |
+| 9 | Canonical selected serving and live restore | In progress | Acknowledged state, random/budget state, registered private snapshots, durable intake and explicit later-history cuts are implemented. Actual fitted weights recover one acknowledged record from an older saved packet and reproduce the same refused next output. Remaining: general accepted-record/complete-program recovery, automatic transition durability, return-value callbacks, child/reentrant work, cancellation after the trusted head, bounded rotation/distributed ownership and final source/native/no-redispatch operational proof. |
 | 10 | References, coercion and abrupt operations | In progress | General references, property keys, guest error objects, partial effects, nested binding and cleanup; source/public/native/restore cases. |
 | 11 | Promises, async and scheduler | In progress | Adoption order, repeated thenables, getter/throw/first-call/finally behavior; public/native transitions; combinators, async functions/generators and module interactions. |
 | 12 | Collections, construction, Proxy and iteration | In progress (bounded families) | Sparse/effectful arrays, collections, internal methods, private accessors, iterator consumers/delegation and checkpoint behavior. |
 | 13 | Modules, persistent sessions, TS and host graphs | In progress | Per-module evaluation and sibling TLA scheduling, cycles/live bindings/namespaces/imports, persistent restore, emitted-JS provenance and host graph/lifecycle parity. |
 | 14 | Binary memory, RegExp and remaining intrinsics | In progress (bounded families) | Resizing/detachment/transfer/species/coercion, complete selected text/numeric families and iterator helpers, declared resource boundaries. |
 | 15 | Edition long tail and separate profiles | Not started | Dynamic eval and realms, applicable Annex B/Intl, weak references/finalization, shared agents and memory constraints; separately pinned later additions. |
-| 16 | Data, ordinary model lifecycle and studies | In progress | Regenerate and independently readmit corpus; optimizer/update/resume/export/reload; complete retained bundles; frozen held-out and comprehension studies; honest quality/cost gates. |
+| 16 | Data, ordinary model lifecycle and studies | In progress | All 47 recurring sources are independently readmitted on exact measured pairs; an ordinary two-update lifecycle and separate one-record fitted diagnostic have complete retained assets. Remaining: expanded production corpus and recipes, final-pair optimizer/resume/export/reload, frozen held-out and comprehension studies, and honest learned-quality/cost gates. |
 | 17 | Coordinated default cutover and operational proof | Not started | Complete parity first; change defaults/remove legacy; freeze final pair; actual-head CI, installed absence tests, release restore, effect-safe rollback/deployment qualification. |
 
 ## Initial regression targets
