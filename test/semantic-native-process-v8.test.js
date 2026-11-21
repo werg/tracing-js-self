@@ -50,7 +50,8 @@ function fakeServer({alter='',initializeAlter='',commitAlter='',completeAlter=''
         result={schema:'semantic-model-restore/8',checkpointDigest:request.checkpoint.digest,
           equivalence:'verified-model-reexecution',restored:true,restoredSessions:Object.keys(nativeSessions).length,
           consumedAttempts:nativeAttempts.length,reexecutedSelections:0,hostDispatches:0};${restoreAlter}
-      }else {result={schema:'semantic-native-close/8',closed:true,session:request.session};${cancelAlter}}
+      }else {result={schema:'semantic-native-close/8',closed:true,session:request.session,
+        reason:request.reason};${cancelAlter}}
       ${raw?"process.stdout.write(Buffer.from([0xff,10]));":`
         const output=JSON.stringify({id:request.id,ok:true,result})+'\\n';
         process.stdout.write(output.slice(0,7));
@@ -270,6 +271,39 @@ test('native completion and close acknowledgments bind the exact invocation and 
     await select.initialize(identity);
     await assert.rejects(select.cancel({session:input.session,reason:'completed'}),/closing this session/);
   }finally{select.close();}
+});
+
+test('native close receipt preserves the consumer reason and rejects altered or extended fields',async()=>{
+  const reason='application cancelled the selected session',
+    select=selector();
+  try{
+    await select.initialize(identity);
+    const receipt=await select.cancel({session:'consumer-session',reason});
+    assert.deepEqual(receipt,{schema:'semantic-native-close/8',session:'consumer-session',
+      closed:true,reason});
+    await select.shutdown();
+  }finally{select.close();}
+  for(const cancelAlter of [
+    'delete result.reason;',
+    'result.reason=17;',
+    "result.reason='different reason';",
+    'result.closed=1;',
+    'result.session=17;',
+    "result.schema='semantic-native-close/7';",
+    "result.extra='unbound';"
+  ]){
+    const altered=selector({cancelAlter});
+    try{
+      await altered.initialize(identity);
+      await assert.rejects(altered.cancel({session:'consumer-session',reason}),/exact close receipt/);
+    }finally{altered.close();}
+  }
+  const malformed=selector();
+  try{
+    await malformed.initialize(identity);
+    await assert.rejects(malformed.cancel({session:'consumer-session',reason:17}),/invalid native close request/);
+    assert.equal(malformed.metrics().predictionAttempts,0);
+  }finally{malformed.close();}
 });
 
 test('native checkpoint transport retains attempts and restores with pending candidates excluded',async()=>{

@@ -334,8 +334,12 @@ append. Against that trusted head, the driver appends and acknowledges a
 `requested` event before waiting for an in-flight selection, native commit or
 stale rejection. Only after that request is acknowledged and the native work
 settles does it ask the native selector to close the session. A returned
-`semantic-native-close/8` receipt produces a final `closed` event; an absent or
-failed close reply produces `unknown` with the original failure. A lost or
+`semantic-native-close/8` receipt has exactly `schema`, `session`, `closed` and
+`reason` fields. Its session and close status must match the request, and its
+reason must equal the acknowledged terminal reason. The producer preserves that
+native reason in the final `closed` event; missing, altered or extended close
+receipts are refused. An absent or failed close reply produces `unknown` with
+the original failure. A lost or
 failed initial/request-head acknowledgement stops before native close. If the
 final event loses its acknowledgement after a close, the locally confirmed head
 remains `requested`; recovery uses the application's independently retained head.

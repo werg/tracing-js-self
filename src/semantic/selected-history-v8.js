@@ -176,9 +176,11 @@ function validateTerminalEvent(event,checkpoint,previous=null){
     'terminal identity or snapshot digest differs');
   validateTerminalSnapshot(event.snapshot,checkpoint);
   if(event.phase==='closed'){
-    assertAlgorithmFields(event.closeReceipt,['schema','closed','session'],'native close receipt');
+    assertAlgorithmFields(event.closeReceipt,['schema','closed','session','reason'],'native close receipt');
     demand(event.closeReceipt.schema==='semantic-native-close/8'&&event.closeReceipt.closed===true&&
-      event.closeReceipt.session===event.session,'native close receipt is not positive for this session');
+      event.closeReceipt.session===event.session&&typeof event.closeReceipt.reason==='string'&&
+      event.closeReceipt.reason.length<=4096&&event.closeReceipt.reason===event.reason,
+      'native close receipt is not positive for this session and terminal reason');
   }else if(event.phase==='unknown')
     demand(typeof event.failure==='string'&&event.failure.length>0&&event.failure.length<=4096,
       'terminal uncertainty requires a bounded failure');

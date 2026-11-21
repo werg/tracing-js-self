@@ -28,6 +28,7 @@ export interface SelectedTerminalCloseReceipt {
   schema: 'semantic-native-close/8';
   closed: true;
   session: string;
+  reason: string;
 }
 export type SelectedHistoryTerminalEvent =
   | {schema: 'semantic-selected-terminal-event/1'; terminalId: string; phase: 'requested';

@@ -525,7 +525,8 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
       try{
         closeReceipt=await select.cancel?.({...packet(invocationId),reason});
         demand(closeReceipt?.schema==='semantic-native-close/8'&&closeReceipt.closed===true&&
-          closeReceipt.session===harness.inner.sessionId,'native selector did not return a positive close receipt');
+          closeReceipt.session===harness.inner.sessionId&&closeReceipt.reason===reason,
+          'native selector did not return a positive close receipt for this terminal reason');
       }catch(error){
         try{
           const final=await appendTerminalHistory({phase:'unknown',invocationId,reason,requested:requestedCut.terminal,

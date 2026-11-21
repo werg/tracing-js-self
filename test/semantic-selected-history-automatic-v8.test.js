@@ -5,6 +5,7 @@ import {mkdtemp,rm,readFile,writeFile,open,rename} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {DurableSelectedHistoryJournal} from '../src/storage/selected-history.js';
 import {RegionSelectedModelDriver as Driver} from '../src/semantic/selected-execution-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
@@ -186,7 +187,8 @@ test('cancellation waits for an in-flight native commit and preserves a late pos
   const f=await fixture(t),reached=deferred(),resume=deferred(),closed=deferred();let calls=0,cancellations=0;
   const select=suppliedHistorySelector(choice(host)),commit=select.commit;
   select.commit=async request=>{reached.resolve();await resume.promise;return commit(request);};
-  select.cancel=async input=>{cancellations++;closed.resolve();return {schema:'semantic-native-close/8',closed:true,session:input.session};};
+  select.cancel=async input=>{cancellations++;closed.resolve();return {schema:'semantic-native-close/8',
+    closed:true,session:input.session,reason:input.reason};};
   const driver=new Driver({select,harness:begin(host,{'demo.store':()=>{calls++;return 7;}}),...policy});
   t.after(()=>driver.close());
   await driver.enableDurableHistory({journal:f.journal,acknowledge:f.acknowledge});
@@ -215,7 +217,8 @@ test('a late unknown native commit remains unknown in the terminal suffix and ne
   const selector=suppliedHistorySelector(choice(host));
   selector.commit=async request=>{reached.resolve();await resume.promise;const error=Error('Native commit reply lost');
     error.acknowledgementUnknown=true;throw error;};
-  selector.cancel=async input=>{closed.resolve();return {schema:'semantic-native-close/8',closed:true,session:input.session};};
+  selector.cancel=async input=>{closed.resolve();return {schema:'semantic-native-close/8',
+    closed:true,session:input.session,reason:input.reason};};
   const driver=new Driver({select:selector,harness:begin(host,{'demo.store':()=>{calls++;return 7;}}),...policy});
   t.after(()=>driver.close());await driver.enableDurableHistory({journal:f.journal,acknowledge:f.acknowledge});
   const abort=new AbortController(),running=driver.runInvocation('call',{signal:abort.signal});
@@ -240,7 +243,8 @@ test('cancellation waits for a pending original selection and retains its actual
   const regular=choice(),select=suppliedHistorySelector(async request=>{
     reached.resolve();await resume.promise;return regular(request);
   });
-  select.cancel=async input=>{cancellations++;closed.resolve();return {schema:'semantic-native-close/8',closed:true,session:input.session};};
+  select.cancel=async input=>{cancellations++;closed.resolve();return {schema:'semantic-native-close/8',
+    closed:true,session:input.session,reason:input.reason};};
   const driver=new Driver({select,harness:begin(),...policy});t.after(()=>driver.close());
   await driver.enableDurableHistory({journal:f.journal,acknowledge:f.acknowledge});
   const abort=new AbortController(),running=driver.runInvocation('call',{signal:abort.signal});
@@ -268,7 +272,8 @@ test('cancellation cannot close native state before a consumed stale attempt is 
     bridge.publishProgram({programId:'later',source:plain,entry:'run'});return regular(request);
   }),reject=select.reject;
   select.reject=async request=>{reached.resolve();await resume.promise;return reject(request);};
-  select.cancel=async input=>{cancellations++;closed.resolve();return {schema:'semantic-native-close/8',closed:true,session:input.session};};
+  select.cancel=async input=>{cancellations++;closed.resolve();return {schema:'semantic-native-close/8',
+    closed:true,session:input.session,reason:input.reason};};
   const driver=new Driver({select,harness:bridge,...policy});t.after(()=>driver.close());
   await driver.enableDurableHistory({journal:f.journal,acknowledge:f.acknowledge});
   const abort=new AbortController(),running=driver.runInvocation('call',{signal:abort.signal});
@@ -288,7 +293,8 @@ test('cancellation cannot close native state before a consumed stale attempt is 
 test('lost terminal-head acknowledgement cannot close, and a fresh process returns the retained request disposition',async t=>{
   const f=await fixture(t);let cancellations=0;
   const selector=suppliedHistorySelector(choice());
-  selector.cancel=async()=>{cancellations++;return {schema:'semantic-native-close/8',closed:true,session:'automatic-history'};};
+  selector.cancel=async input=>{cancellations++;return {schema:'semantic-native-close/8',
+    closed:true,session:input.session,reason:input.reason};};
   const driver=new Driver({select:selector,harness:begin(),...policy});t.after(()=>driver.close());
   const first=await driver.enableDurableHistory({journal:f.journal,acknowledge:async request=>{
     const receipt=await f.acknowledge(request);
@@ -305,32 +311,28 @@ test('lost terminal-head acknowledgement cannot close, and a fresh process retur
   assert.equal(restored.schema,'semantic-selected-terminal-disposition/1');
   assert.equal(restored.phase,'requested');assert.equal(next.controls().restoreCalls,0);
 
-  const input=join(f.directory,'terminal-restore.json');
-  await writeFile(input,JSON.stringify({packet:first.checkpoint,head:retainedHead,policy}));
-  const child=spawnSync(process.execPath,['--input-type=module','--eval',`
-    import assert from 'node:assert/strict';
-    import {readFile} from 'node:fs/promises';
-    import {DurableSelectedHistoryJournal} from './src/storage/selected-history.js';
-    import {RegionSelectedModelDriver as Driver} from './src/semantic/selected-execution-v8.js';
-    import {suppliedHistorySelector} from './test/helpers/supplied-native-history-v8.js';
-    const input=JSON.parse(await readFile(process.argv[1],'utf8'));
-    const select=suppliedHistorySelector(()=>{throw Error('terminal sessions cannot select again');});
-    const result=await Driver.restoreLatest(input.packet,{select,policy:input.policy,
-      historyJournal:new DurableSelectedHistoryJournal({directory:process.argv[2],streamId:'automatic'}),
-      historyReceipt:input.head});
-    assert.equal(result.schema,'semantic-selected-terminal-disposition/1');
-    assert.equal(result.phase,'requested');assert.equal(select.controls().restoreCalls,0);
-    process.stdout.write(JSON.stringify(result));
-  `,input,f.directory],{cwd:process.cwd(),encoding:'utf8'});
+  const input=join(f.directory,'terminal-restore.json'),policyPath=join(f.directory,'terminal-policy.json'),
+    childResultPath=join(f.directory,'terminal-restore-result.json');
+  await writeFile(input,JSON.stringify({checkpoint:first.checkpoint,receipt:first.receipt}));
+  await writeFile(policyPath,JSON.stringify(policy));
+  const child=spawnSync(process.execPath,[fileURLToPath(new URL('../tools/qualify-v8-terminal-history.mjs',
+    import.meta.url)),'--terminal-restore-child',input,f.path,f.directory,'automatic',policyPath,
+    'requested',childResultPath],{cwd:process.cwd(),encoding:'utf8'});
   assert.equal(child.status,0,child.stderr);
-  assert.equal(JSON.parse(child.stdout).phase,'requested');
+  const childResult=JSON.parse(await readFile(childResultPath,'utf8'));
+  assert.equal(childResult.disposition.phase,'requested');
+  assert.equal(childResult.olderPacketPosition,1);
+  assert.equal(childResult.nativeRestoreCalls,0);
+  assert.equal(childResult.nativeSamplingCalls,0);
+  assert.equal(childResult.hostServiceLookups,0);
 
   const rows=await f.journal.readAll(retainedHead),omitted=suppliedHistorySelector(choice());
   await assert.rejects(Driver.restoreLatest(first.checkpoint,{select:omitted,policy,
     historyJournal:{readAll:async()=>rows.slice(0,1)},historyReceipt:retainedHead}),/incomplete acknowledged chain/);
   assert.equal(omitted.controls().restoreCalls,0,'An omitted terminal suffix is refused before native state opens');
   const forged=suppliedHistorySelector(choice()),base=rows.at(-1),event={...base.terminal,phase:'closed',
-    closeReceipt:{schema:'forged-close/8',closed:true,session:base.terminal.session}},
+    closeReceipt:{schema:'forged-close/8',closed:true,session:base.terminal.session,
+      reason:base.terminal.reason}},
     entry={schema:'semantic-selected-history-entry/8',streamId:'automatic',position:3,previous:retainedHead,
       checkpoint:base.checkpoint,terminal:event},bytes=Buffer.byteLength(stableAlgorithmJSON(entry)),
     head={schema:'semantic-selected-history-receipt/8',streamId:'automatic',position:3,
@@ -338,6 +340,47 @@ test('lost terminal-head acknowledgement cannot close, and a fresh process retur
   await assert.rejects(Driver.restoreLatest(first.checkpoint,{select:forged,policy,
     historyJournal:{readAll:async()=>[...rows,entry]},historyReceipt:head}),/native close receipt/);
   assert.equal(forged.controls().restoreCalls,0,'A forged close receipt cannot open native state');
+});
+
+test('consumer-shaped native close reason is retained and malformed close evidence is rejected before native restore',async t=>{
+  const f=await fixture(t),driver=new Driver({select:suppliedHistorySelector(choice()),
+    harness:begin(),...policy});
+  t.after(()=>driver.close());
+  const first=await driver.enableDurableHistory({journal:f.journal,acknowledge:f.acknowledge}),
+    reason='consumer-shaped cancellation with authoritative reason';
+  const closed=await driver.select.cancel({...driver.prefix('call'),reason});
+  assert.equal(closed.phase,'closed');
+  const entries=await f.journal.readAll(f.head()),saved=entries.at(-1);
+  assert.deepEqual(saved.terminal.closeReceipt,{schema:'semantic-native-close/8',closed:true,
+    session:'automatic-history',reason});
+  assert.equal(saved.terminal.reason,reason);
+  const recovered=suppliedHistorySelector(choice()),disposition=await Driver.restoreLatest(first.checkpoint,
+    {select:recovered,policy,historyJournal:f.journal,historyReceipt:f.head()});
+  assert.equal(disposition.phase,'closed');
+  assert.equal(disposition.closeReceipt.reason,reason);
+  assert.equal(recovered.controls().restoreCalls,0);
+
+  const closeReceipt=saved.terminal.closeReceipt,
+    invalid=[
+      {...closeReceipt,extension:'unbound'},
+      {...closeReceipt,reason:17},
+      {...closeReceipt,reason:'different terminal reason'},
+      {...closeReceipt,closed:1},
+      {...closeReceipt,session:17},
+      {schema:closeReceipt.schema,closed:closeReceipt.closed,session:closeReceipt.session}
+    ];
+  for(const candidate of invalid){
+    const terminal={...saved.terminal,closeReceipt:candidate},
+      badEntry={...saved,terminal},
+      receipt={schema:'semantic-selected-history-receipt/8',streamId:saved.streamId,
+        position:saved.position,id:hashAlgorithmData(badEntry),
+        bytes:Buffer.byteLength(stableAlgorithmJSON(badEntry))},
+      selector=suppliedHistorySelector(choice());
+    await assert.rejects(Driver.restoreLatest(first.checkpoint,{select:selector,policy,
+      historyJournal:{readAll:async()=>[...entries.slice(0,-1),badEntry]},historyReceipt:receipt}),
+      /native close receipt/);
+    assert.equal(selector.controls().restoreCalls,0,'Invalid close evidence cannot open native state');
+  }
 });
 
 test('native close failure is retained as unknown without a positive close receipt',async t=>{

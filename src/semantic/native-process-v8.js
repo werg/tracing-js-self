@@ -255,14 +255,20 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     }catch(error){stop(error);throw error;}
   };
   select.cancel=async input=>{
+    demand(typeof input?.session==='string'&&input.session.length>0&&
+      typeof input.reason==='string'&&input.reason.length<=4096,'invalid native close request');
     const session=sessions.get(input?.session);
     if(session?.pending&&!['acknowledgement-unknown','commit-failed'].includes(session.evidence.status)){
       session.evidence.status='cancelled';session.evidence.failure=input.reason??'selected session cancelled';
     }
     try{
       const result=await request({op:'cancel',session:input.session,reason:input.reason});
-      demand(result?.schema==='semantic-native-close/8'&&result.closed===true&&result.session===input.session,
-        'native model did not acknowledge closing this session');
+      const fields=['schema','session','closed','reason'];
+      demand(result&&typeof result==='object'&&!Array.isArray(result)&&
+        Object.keys(result).length===fields.length&&fields.every(key=>Object.hasOwn(result,key))&&
+        result.schema==='semantic-native-close/8'&&result.closed===true&&
+        result.session===input.session&&result.reason===input.reason,
+        'native model did not acknowledge closing this session with the exact close receipt');
       return result;
     }
     finally{sessions.delete(input?.session);}

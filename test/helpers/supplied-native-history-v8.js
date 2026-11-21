@@ -63,7 +63,8 @@ export function suppliedHistorySelector(choose){
     if(attempt){attempt.status='cancelled';attempt.failure=input.reason??'selected session cancelled';}
     const native=modelAttempts[attempt?.attempt];
     if(native?.status==='awaiting-commit')native.status='cancelled';
-    return {schema:'semantic-native-close/8',closed:true,session:input.session};
+    return {schema:'semantic-native-close/8',closed:true,session:input.session,
+      reason:String(input.reason??'')};
   };
   select.checkpoint=async()=>{
     checkpointCalls++;runtimeMetrics.rpcCalls++;

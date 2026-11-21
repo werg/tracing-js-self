@@ -16,6 +16,33 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Real native close-receipt contract correction — 21 November 2026
+
+The real consumer close response contains exactly `schema`, `session`, `closed`
+and `reason`. The native transport, terminal driver and durable history validator
+now agree on those fields and bind the returned reason to the acknowledged
+terminal request. Wrong/missing/type-changed fields and extra fields refuse.
+The exact native response remains in the final terminal event; it is not stripped
+to fit an incomplete schema. The corresponding public receipt type is corrected.
+
+The actual-model qualifier is now committed with response capture, correct
+cross-phase metrics scope and a fresh-child path that passes the checkpoint
+inside the older `{checkpoint, receipt}` cut. A control executes that same child
+path with native and host tripwires. Isolated source `7a6a786` passes **38/38**
+focused controls. The clean integrated six-file selection at local
+`d2077d674808b58e25a8e93f70a1b14e73118842` passes **95/95**, zero failures or skips,
+in 14.759 seconds. The canonical actual-model rerun follows publication; no actual
+terminal pass is claimed yet. Original failed `3b1bb25` bytes remain unchanged.
+
+Hosted producer `973400f` revealed two separate remaining regressions: the
+47-case V8 population admits **46/47** because `module-namespace-shadow-live`
+now reaches the explicit namespace projection refusal; and the Node22 installed
+entry test fails while npm10 runs Acorn's prepare lifecycle. Hosted Node24's full
+suite passes. Node20 and some legacy jobs were cancelled and are incomplete.
+The existing 47-case population and installed gate remain required, with fixes
+in progress. Local complete `973400f` evidence above does not imply that all
+hosted matrix jobs pass. **0/17 complete acceptance packages are closed.**
+
 ## Complete regression and receipt integration checkpoint — 21 November 2026
 
 Frozen clean producer `973400ff5085848d7b61fb7cbb711294ea29f32c` passes the complete
