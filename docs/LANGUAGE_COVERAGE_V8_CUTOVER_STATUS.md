@@ -16,6 +16,40 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Actual cancelled-sibling recovery and complete consumer tests — 21 November 2026
+
+The published actual-model qualifier passes at clean producer
+`dc7595e9a4764a3f6fceb4218fd01aa3192222e4` / consumer
+`1ddcc6110d70703f6b08244d53ec461047677bec`. Session A retains one original
+producer/native-acknowledged model record. Session B emits 18 original model
+tokens, is refused for malformed output, and is cancelled without semantic
+acknowledgement. Fresh-process restoration preserves complete active A and closed
+B cuts, attempts, opening receipts, RNG and native continuation. A closed-B
+request samples no output and leaves native state unchanged. A's next output is
+the same provenance-bound **refusal** in both lifetimes and is never acknowledged.
+Independent original-source/projection/replay checks pass; zero host dispatches,
+no new training, no complete-program or held-out/generalization claim.
+
+The complete installed consumer semantic selection at `1ddcc61`, against clean
+producer `19eba4f`, passes **625 tests, zero failures or skips**, in 623.17 seconds.
+It includes all `test_*v8*.py` files plus algorithm-v7 and protocol-property tests.
+The earlier `39d5212` full run remains **611 passed / one failed**.
+
+The [67-file verified supplement](evidence/semantic-v8-closed-session-dc7595e-1ddcc61/README.md)
+retains the canonical run, original exploratory run at local producer `1a6f03e`,
+exact exploratory source commits as a Git bundle, complete consumer log/JUnit,
+original model bytes, profiles and shared model/tokenizer identities. Its archive
+SHA-256 is `be3e2d6d21c444b72b2b41d6da07dcbc50d92602c551defdda7f2c29b25eb384`.
+Reported canonical costs are 12 RPCs, 10.338629592995858 compute seconds and
+528,011,264 peak process bytes through the last saved metrics. Restored counters
+inherit the saved checkpoint; subtract that inherited portion before adding the
+new lifetime. Native token profiles similarly retain historical attempts.
+
+Durable terminal cancellation after the trusted history head, distributed
+ownership, full module exotics/public admission, production parity, learned
+quality and final release/default cutover remain open. **0 of 17 complete
+acceptance packages are closed.**
+
 ## Automatic-history integration and numeric recovery repair — 21 November 2026
 
 The actual automatic-history run at exact producer `19eba4f` / consumer `39d5212`
