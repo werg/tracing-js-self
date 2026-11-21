@@ -875,7 +875,10 @@ export class SelectedExecutionCore {
     return run;
   }
   /** Only host code supplies an observed result. There is no reference/teacher repair. */
-  deliverResult(invocationId,effectId,{status,value,result:explicitResult=null,
+  deliverResult(invocationId,effectId,options){
+    return this.#commitPreparedResult(this.#prepareResult(invocationId,effectId,options));
+  }
+  #prepareResult(invocationId,effectId,{status,value,result:explicitResult=null,
       graph:explicitGraph=null,errorOrigin=null}){
     const key=invocationId+'/'+effectId,intent=this.intents.get(key);
     demand(intent&&['dispatched','uncertain','settled'].includes(intent.status),
@@ -888,8 +891,7 @@ export class SelectedExecutionCore {
       explicitResult===null?captured.roots[0]:explicitResult,explicitResult===null?captured:declared);
     if(intent.status==='settled'){
       demand(intent.resultDigest===resultDigest,'Conflicting duplicate result');
-      this.deliveries.push({invocationId,effectId,status:'duplicate'});
-      return clone(intent.result);
+      return {invocationId,effectId,intent,duplicate:true};
     }
     let graph=declared,result=explicitResult;
     if(result===null){
@@ -898,8 +900,23 @@ export class SelectedExecutionCore {
         result=graph.roots[0];
       }else result=tag(value);
     }
-    const line=this.encodeRecord('observe',{effect:effectId,status,result,...(graph?{graph}:{})}),
-      readyCutoff=activation.controller.scheduler.ready;
+    const line=this.encodeRecord('observe',{effect:effectId,status,result,...(graph?{graph}:{})});
+    // Validate the complete transition on an isolated controller before a
+    // reconciliation receipt can acknowledge it. In particular, a well-typed
+    // reference may still designate no owned object, or exceed a state bound.
+    const staged=Object.assign(Object.create(Object.getPrototypeOf(activation.controller)),
+      clone(activation.controller));
+    staged.commitRecord(this.decodeRecord(line),{mode:'observed',track:activation.trackId});
+    return {invocationId,effectId,key,intent,activation,status,result:clone(result),line,
+      resultDigest,errorOrigin:clone(errorOrigin)};
+  }
+  #commitPreparedResult({invocationId,effectId,key,intent,activation,status,result,line,
+      resultDigest,errorOrigin,duplicate=false}){
+    if(duplicate){
+      this.deliveries.push({invocationId,effectId,status:'duplicate'});
+      return clone(intent.result);
+    }
+    const readyCutoff=activation.controller.scheduler.ready;
     activation.controller.commitRecord(this.decodeRecord(line),{mode:'observed',track:activation.trackId});
     intent.status='settled';
     const receipt=this.record('observed','result',activation.trackId,
@@ -1064,18 +1081,23 @@ export class SelectedExecutionCore {
     demand(intent?.status==='uncertain','Only uncertain actions require reconciliation');
     demand(['not-dispatched','lost','fulfilled','rejected'].includes(disposition)&&
       typeof evidenceId==='string'&&evidenceId.length>0,'Reconciliation requires explicit external evidence');
+    const prepared=['fulfilled','rejected'].includes(disposition)?this.#prepareResult(invocationId,effectId,
+      {status:disposition,value,result,graph,errorOrigin}):null;
     const receipt=this.record('observed','reconcile',this.invocations.get(invocationId).trackId,
       {invocationId,effectId,disposition,evidenceId});
     if(disposition==='not-dispatched'){
       intent.status='committed';this.inflight.delete(invocationId+'/'+effectId);
     }else if(disposition==='lost')intent.status='lost';
-    else this.deliverResult(invocationId,effectId,{status:disposition,value,result,graph,errorOrigin});
+    else this.#commitPreparedResult(prepared);
     return receipt;
   }
   reattachSubscription(subscriptionId,{evidenceId,attach}={}){
     const handler=this.handlers.get(subscriptionId);
     demand(handler?.state==='lost','Subscription does not require reattachment');
     demand(!this.realms.get(handler.realmId)?.closed,'Cannot reattach a callback in a closed realm');
+    demand(![...this.callbacks.values()].some(callback=>
+      callback.subscriptionId===subscriptionId&&callback.state==='revoked'),
+      'Cannot reattach a revoked callback capability');
     demand(typeof evidenceId==='string'&&evidenceId&&typeof attach==='function',
       'Reattachment requires a host-authorized resource adapter and evidence');
     // The adapter reattaches the existing native registration, never reruns
@@ -1163,6 +1185,11 @@ export class SelectedExecutionCore {
     this.validateRecord(item);
     demand(this.timeline.at(-1)?.kind!=='event'||item.kind==='invocation',
       'Registered event must be followed immediately by its callback invocation');
+    const preceding=this.timeline.at(-1);
+    if(preceding?.kind==='reconcile'&&['fulfilled','rejected'].includes(preceding.disposition))
+      demand(item.kind==='result'&&item.invocationId===preceding.invocationId&&
+        item.effectId===preceding.effectId&&item.status===preceding.disposition,
+        'Reconciliation must be followed immediately by its matching observed result');
     this.replaying=true;
     try{
       if(item.kind==='program'){
@@ -1273,6 +1300,7 @@ export class SelectedExecutionCore {
       else if(item.kind==='reconcile'){
         const intent=h.intents.get(item.invocationId+'/'+item.effectId);
         demand(intent&&['dispatched','uncertain'].includes(intent.status),'Reconciliation lacks an uncertain intent');
+        demand(h.invocations.get(item.invocationId)?.trackId===item.track,'Reconciliation owner mismatch');
         demand(typeof item.evidenceId==='string'&&item.evidenceId&&
           ['not-dispatched','lost','fulfilled','rejected'].includes(item.disposition),
           'Invalid reconciliation evidence');
@@ -1282,8 +1310,12 @@ export class SelectedExecutionCore {
           effectId:item.effectId,disposition:item.disposition,evidenceId:item.evidenceId});
       }else if(item.kind==='callback-reattach'){
         const handler=h.handlers.get(item.subscriptionId);
-        demand(handler&&handler.realmId===item.realmId&&handler.state!=='closed'&&
-          !h.realms.get(item.realmId)?.closed,'Unknown or closed reattached callback');
+        demand(handler&&handler.realmId===item.realmId&&handler.trackId===item.track&&
+          ['active','lost'].includes(handler.state)&&!h.realms.get(item.realmId)?.closed&&
+          ![...h.callbacks.values()].some(callback=>callback.subscriptionId===item.subscriptionId&&
+            callback.state==='revoked'),'Unknown, closed or revoked reattached callback');
+        demand(typeof item.evidenceId==='string'&&item.evidenceId.length>0,
+          'Callback reattachment requires explicit external evidence');
         handler.state='active';
         for(const callback of h.callbacks.values())if(callback.subscriptionId===item.subscriptionId)
           callback.state='active';
@@ -1399,7 +1431,7 @@ export class SelectedExecutionCore {
       key,{...value,state:value.state==='active'?'lost':value.state}]));
     harness.nextCallback=packet.nextCallback??0;
     harness.handlers=new Map(clone(packet.handlers).map(([key,v])=>[key,
-      {...v,state:['active','closing'].includes(v.state)?'lost':v.state,seen:new Set(v.seen),
+      {...v,state:v.state==='active'?'lost':v.state,seen:new Set(v.seen),
         queue:v.queue.map(({argsGraph,...event})=>({...event,
           args:decodeHostPayload(JSON.stringify({schema:'owned-graph/1',...argsGraph}),'owned-graph/1')}))}]));
     harness.nextEventDelivery=packet.nextEventDelivery??0;

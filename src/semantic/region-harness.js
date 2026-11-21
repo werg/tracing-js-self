@@ -459,7 +459,7 @@ export class RegionExecutionHarness {
       for(const intent of replayed.inner.intents.values())
         if(['dispatching','dispatched'].includes(intent.status))intent.status='uncertain';
       for(const handler of replayed.inner.handlers.values())
-        if(handler.state==='active'||handler.state==='closing'&&!handler.queue.length)handler.state='lost';
+        if(handler.state==='active')handler.state='lost';
       for(const callback of replayed.inner.callbacks.values())if(callback.state==='active')callback.state='lost';
       return replayed;
     }

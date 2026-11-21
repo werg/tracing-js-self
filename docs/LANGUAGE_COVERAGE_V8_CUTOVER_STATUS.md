@@ -49,7 +49,29 @@ work ledger. **0 of 17 complete acceptance packages are closed.**
   duplicate, delivered or substituted discard claims. **56 integrated controls
   pass**, including five new authority/close tests, native lifecycle, durable
   ingress and original-source nested callback recovery. The consumer's matching
-  host-handler continuation implementation is in progress.
+  host-handler continuation implementation is published as consumer
+  `1d9d62c2d72c07cfcc02809f4926880c3dec2d90`: seven producer-pinned episodes,
+  52 selected records and 103 integrated native controls cover host-owned
+  registrations, retained/fresh deliveries, callback ownership and retirement.
+- Producer `035951c3b58cdf08a64c07bc6a3a75dbab58f32a` and
+  `28261b81ee1d35ff0efbd4dd14515ddd7520ef1b` extend module declarations to
+  classes, synchronous generators, anonymous defaults and destructured live
+  cells, preserving shorthand default keys. **51 module integration controls
+  pass**. The recurring population is now **47 = 44 scripts + three module
+  graphs**; the new original-source module case passes, while full later-pair
+  qualification is still required. Class/private and generator reflection
+  public projection remain explicit limitations. A fresh pinned 843-variant
+  module campaign is running against `28261b8`.
+- Reconciled results are validated against an isolated selected controller
+  before any receipt is acknowledged. Public replay checks the owner and
+  immediately matching result; lost outcomes remain unresolved, and a truthful
+  not-dispatched receipt permits the next numbered attempt. JSON restoration
+  preserves closing handlers, and revoked callbacks cannot be reattached.
+  **29 integrated lifecycle/recovery controls pass**, including five new
+  atomicity, ownership, retry and retirement controls. Independent probes also
+  reproduced a stale pre-dispatch checkpoint repeating an operation and a
+  rehashed private intent contradicting public dispatch history; those remain
+  active recovery work until their repairs and regressions are published.
 
 Current priorities remain retained host-handler/native composition, module
 declaration and live-binding semantics, missing later acknowledged public
@@ -58,6 +80,8 @@ invocation identity spelling is not an allocation ordinal; a delivery receipt
 cannot choose a different handler destination; discarded private arrivals must
 remain accounted for after public replay; and module rewriting must preserve
 names at evaluation time rather than patching them after static initialization.
+Losing a native handle does not restore an expired callback capability, and an
+invalid reconciliation must not leave a successful receipt in public history.
 
 ## Resumed implementation checkpoints — 21 November 2026
 
