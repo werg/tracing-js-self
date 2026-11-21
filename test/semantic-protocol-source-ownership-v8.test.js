@@ -44,7 +44,7 @@ test('missing and ambiguous direct protocol owners refuse before any preparation
   const source='"use strict";function run(){const value={valueOf:function(){return 4;}};return Number(value);}',bundle=archive(source);
   for(const ambiguous of [false,true]){
     let context,before,preparations=0;
-    const adapters=adaptersFor(source,bundle),number=adapters.find(adapter=>adapter.id==='number-conversion-source/1'),
+    const adapters=adaptersFor(source,bundle),number=adapters.find(adapter=>adapter.id==='primitive-conversion-source/1'),
       claims=protocolSourceClaimsV8(number.id);
     number.prepare={event:(_view,{event})=>{if(isNumber(event))preparations++;return {kind:'number-event'};}};
     if(ambiguous)adapters.push({id:'duplicate-number/1',stateless:true,claims:{event:claims.event},
@@ -59,7 +59,7 @@ test('missing and ambiguous direct protocol owners refuse before any preparation
 
 test('a selected direct protocol handler cannot decline after writing a staged transition',()=>{
   const source='"use strict";function run(){const value={valueOf:function(){return 4;}};return Number(value);}',bundle=archive(source),
-    adapters=adaptersFor(source,bundle),number=adapters.find(adapter=>adapter.id==='number-conversion-source/1'),event=number.event;
+    adapters=adaptersFor(source,bundle),number=adapters.find(adapter=>adapter.id==='primitive-conversion-source/1'),event=number.event;
   let context,before,privateBefore,attempted=false;
   number.event=(ctx,owned,row)=>{const result=event(ctx,owned,row);if(isNumber(owned)){attempted=true;return false;}return result;};
   adapters.push({id:'decline-audit/1',stateless:true,setup(ctx){context=ctx;},beforeEvent(ctx,owned){

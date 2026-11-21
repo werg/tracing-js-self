@@ -57,6 +57,12 @@ function lookup(controller,input,key,api){
     const prototype=node.prototype??'ordinary';
     if(node.prototype===null)return {descriptor:'missing',value:['undefined'],builtin:null};
     if(prototype==='ordinary'){
+      // Function.prototype.toString is not Object.prototype.toString. Function
+      // kinds also have distinct intrinsic @@toStringTag values. Preserve
+      // own hooks above, but never invent either inherited function intrinsic.
+      api.require(node.kind!=='closure'||!(key[0]==='str'&&key[1]==='toString'||
+        key[0]==='symbol'&&key[1]==='well-known:toStringTag'),
+        'function intrinsic prototype requires its own conversion profile');
       const builtin=key[0]!=='str'?null:key[1]==='valueOf'?'Object.valueOf':
         key[1]==='toString'?(node.kind==='array'?'Array.toString':'Object.toString'):
           key[1]==='join'&&node.kind==='array'?'Array.prototype.join':null;

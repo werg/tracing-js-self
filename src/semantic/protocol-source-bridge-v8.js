@@ -41,7 +41,8 @@ function inventory(source,bundle){
 function selected(adapter,input){
   if(!SHARED_PROTOCOL_SOURCE_IDS_V8.includes(adapter.id))return false;
   return sourceHasSyntaxV8(input,node=>adapter.syntax?.(node)===true||sharedSyntax(adapter,node)||
-    adapter.id==='number-conversion-source/1'&&node.type==='CallExpression'&&node.callee.type==='Identifier'&&node.callee.name==='Number'||
+    adapter.id==='primitive-conversion-source/1'&&(node.type==='CallExpression'&&node.callee.type==='Identifier'&&node.callee.name==='Number'||
+      node.computed&&['MemberExpression','Property','MethodDefinition','PropertyDefinition'].includes(node.type))||
     adapter.id==='owned-binary-memory/1'&&node.type==='MemberExpression'&&node.object.type==='Identifier'&&
       ['Atomics','ArrayBuffer'].includes(node.object.name));
 }

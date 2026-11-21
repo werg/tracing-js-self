@@ -61,9 +61,9 @@ test('owned Number callbacks require protocol evidence and restore their origina
   assert.equal(historical.exported,undefined);
   const result=await verifyRegionTrainingCase(fixture);assert(result.exported,result.reason);
   const artifact=result.exported;
-  assert(artifact.sidecar.protocolExtensions.includes('number-conversion-source/1'));
+  assert(artifact.sidecar.protocolExtensions.includes('primitive-conversion-source/1'));
   assert.equal(artifact.sidecar.sourceArtifact.sidecar.reference.extensionAudit.status,'agreed');
-  const cut=artifact.public.timeline.findIndex(row=>row.fields?.line?.includes('"kind":"number.call"'))+1;
+  const cut=artifact.public.timeline.findIndex(row=>row.fields?.line?.includes('"kind":"conversion.call"'))+1;
   assert(cut>0);
   const partial=RegionExecutionHarness.replay({...artifact.public,timeline:artifact.public.timeline.slice(0,cut)},{requireTerminal:false}),
     restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(partial.checkpoint())));

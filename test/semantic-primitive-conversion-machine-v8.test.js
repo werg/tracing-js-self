@@ -18,8 +18,8 @@ const end=(id,result)=>({kind:'conversion.finish',id,result});
 function controller(){return {heap:new Map(),locals:new Map(),captureAliases:new Map(),receiver:undefinedValue,
   stack:['invocation1'],frameFunctions:new Map([['invocation1','run']]),pending:null,lastReturn:null,completion:null,
   protocol:{...createProtocolStateV8(),primitiveConversions:null},ready:[],effects:new Map(),jobs:new Map(),strictRequests:false};}
-// Component integration uses the real shared allocation/call/return API. The
-// public registry is switched together with source projection in the next step.
+// The same component transitions are now also registered by the public API.
+// This helper preserves atomic mutation checks for individual component probes.
 function apply(c,...records){for(const record of records){
   const staged=copy(c);assertPrimitiveConversionNextV8(staged,record,PROTOCOL_MACHINE_API_V8);
   if(Object.hasOwn(PRIMITIVE_CONVERSION_RECORD_FIELDS,record.kind)){
@@ -155,4 +155,46 @@ test('ordinary builtin leaves use live descriptors and retain explicit accessor,
       boundary==='tag-getter'?'Object.toString':'Array.toString'));
     refuse(fresh,{kind:'conversion.builtin',id:'convert',result:['str','fabricated']},/getter|join override|dense own scalar/);
   }
+});
+
+test('public registry refuses unmodeled function prototype fallback and preserves its own callable hooks',()=>{
+  const nativeInput=Object.create(function parent(){});
+  assert.throws(()=>Reflect.ownKeys({[nativeInput]:1}),TypeError);
+  assert.throws(()=>Number(nativeInput),TypeError);
+  for(const goal of ['PropertyKey','Number']){
+    const c=controller();
+    const records=[closure('parent'),allocation('input'),
+      {kind:'property.prototype',object:'input',prototype:['ref','parent'],success:true},
+      begin('convert',goal,['ref','input']),lookup('convert',exotic)];
+    if(goal==='Number')records.push(lookup('convert',['str','valueOf'],'builtin',undefinedValue,'Object.valueOf'),
+      {kind:'conversion.builtin',id:'convert',result:['ref','input']});
+    for(const record of records)applyProtocolRecordV8(c,record);
+    const before=copy(c);
+    assert.throws(()=>applyProtocolRecordV8(c,
+      lookup('convert',['str','toString'],'builtin',undefinedValue,'Object.toString')),/function intrinsic prototype/);
+    assert.deepEqual(c,before);
+  }
+  const c=controller();
+  for(const record of [closure('parent'),closure('method'),allocation('input'),
+    define('parent',['str','toString'],data(['ref','method'])),
+    {kind:'property.prototype',object:'input',prototype:['ref','parent'],success:true},
+    begin('convert','PropertyKey',['ref','input']),lookup('convert',exotic),
+    lookup('convert',['str','toString'],'data',['ref','method']),{kind:'conversion.call',id:'convert',child:'methodCall'},
+    {kind:'return',invocation:'methodCall',value:['str','key']},
+    {kind:'conversion.return',id:'convert',value:['str','key']},end('convert',['str','key'])])applyProtocolRecordV8(c,record);
+  assert.deepEqual(c.lastReturn,{kind:'return',value:['str','key']});
+});
+
+test('the separately retained Number component cannot bypass the same intrinsic prototype boundary',()=>{
+  const c=controller();
+  for(const record of [closure('parent'),allocation('input'),
+    {kind:'property.prototype',object:'input',prototype:['ref','parent'],success:true},
+    {kind:'number.begin',id:'convert',value:['ref','input']},
+    {kind:'number.select',id:'convert',key:exotic,method:undefinedValue,builtin:null},
+    {kind:'number.select',id:'convert',key:['str','valueOf'],method:undefinedValue,builtin:'Object.valueOf'},
+    {kind:'number.builtin',id:'convert',result:['ref','input']}])applyProtocolRecordV8(c,record);
+  const before=copy(c);
+  assert.throws(()=>applyProtocolRecordV8(c,{kind:'number.select',id:'convert',key:['str','toString'],
+    method:undefinedValue,builtin:'Object.toString'}),/function intrinsic prototype/);
+  assert.deepEqual(c,before);
 });

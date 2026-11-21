@@ -2,10 +2,12 @@
 
 ## Status and authority
 
-This document fixes the producer/consumer contract for a shared conversion
-machine. Implementation and paired qualification are in progress. It does not
-promote the currently refused property-key source forms merely because owned
-execution succeeds.
+The shared conversion machine, production source registration and independent
+native consumer are implemented. Original-source observation, public replay and
+native continuation checks remain separate gates. The retained fixture packet
+keeps all sixteen original sources and eight additional composition controls;
+nineteen have source-qualified public artifacts and five remain explicit source
+refusals. These engineering artifacts make no learned-quality or training claim.
 
 At producer `9d85e301e6674b97a1ac960d5efb87e572e4137e`, 16 original-source controls
 reproduce the boundary. Twelve agree between owned execution and Node 24.22.3
@@ -26,9 +28,10 @@ implement the bounded retained conversion described in
 ## One public machine
 
 The profile is `primitive-conversion/1`. Both goals use `conversion.*` records
-and the same `primitiveConversions` state. The current Number-only public
-mechanism will be replaced directly; old measurements retain their original
-producer, consumer and contract pins.
+and the same `primitiveConversions` state. Production Number source projection
+now selects this shared machine. The earlier Number-only public component
+remains registered for its separate component programs; historical source and
+native measurements retain their original producer, consumer and contract pins.
 
 | Goal | Derived hint | Ordinary method order | Scalar finish |
 | --- | --- | --- | --- |
@@ -78,7 +81,11 @@ The accepted builtin leaves are `Object.valueOf`, `Object.toString` and
 `Array.toString` within the owned data profile. A `@@toStringTag` getter,
 overridden or accessor Array `join`, sparse/inherited array elements, nested
 objects, Symbol elements, and exotic prototype walks remain explicit boundaries.
-No guest callback is evaluated as a host scalar leaf.
+An inherited function `toString` or intrinsic `@@toStringTag` is also refused:
+`Function.prototype.toString` cannot be replaced by `Object.prototype.toString`
+just because both implementations otherwise share ordinary object metadata.
+Explicit own hooks are still resolved before that intrinsic boundary. No guest
+callback is evaluated as a host scalar leaf.
 
 ### Retained state and sequencing
 
@@ -111,7 +118,7 @@ contract, not optional serialization choices.
 nonprimitive used to derive a fault. `result` is present only after completion
 or abrupt termination. Normal finish independently recomputes the scalar result.
 There are at most 4,096 retained operations; scalar string/BigInt input text is
-bounded at 10,000 characters. Existing shared heap and record bounds also apply.
+bounded at 10,000 UTF-16 code units. Existing shared heap and record bounds also apply.
 
 Snapshot validation checks exact fields, phase-dependent nullability, method,
 child, owner, goal and result consistency. Coordinated restore additionally
@@ -182,3 +189,52 @@ These source forms cannot inherit original-Node qualification from the new
 conversion machine. Their discrepancies stay visible. Delete already has an
 independent frontend refusal and is not promoted by this work. Modules and
 namespace semantics are outside this increment.
+
+## Registered production paths and retained population
+
+The ordinary V8 qualification entry can select the direct conversion source
+profile after its detailed-source route refuses. Direct and shared Promise
+projection use the same conversion owner. A property-key conversion event has
+one owner even when the suspended opcode also belongs to construction; the
+later completed primitive-key instruction remains construction work. Getter
+and method child completion uses the same transactional ownership machinery as
+other source components.
+
+The original population has eleven qualified sources, two intrinsic-error
+refusals and three Node-reference disagreements. Its membership and order are
+unchanged. The eight additional sources cover replacing a descriptor inside a
+getter, preserving a write's base and key across RHS effects, nested goals,
+computed class keys, caught getter throws through finally, a Promise executor,
+map callbacks and bounded ordinary builtin leaves. The complete packet is
+`test/fixtures/semantic-primitive-conversion-v8.json.gz.b64`; it retains each
+input, disposition and source digest and the full private/public/context
+artifact for every qualified row. Regeneration freshly rechecks each admitted
+source. The packet's `native:'untested'` field correctly describes what the
+producer generator itself measures; the consumer's separate paired tests
+perform native replay, every generated prediction prefix and continuation
+checks against those bytes.
+
+The recurring interoperability registry appends all nineteen positive inputs to
+its original forty-seven selected cases, producing sixty-six selected positives.
+A population regression retains a byte-level digest of all forty-seven original
+ordered inputs, including cyclic arguments. The five refused conversion rows
+remain in the separate twenty-four-row candidate inventory; the selected
+sixty-six-case measurement does not represent the full language population.
+
+```bash
+node tools/generate-primitive-conversion-fixtures.mjs --check
+node --test test/semantic-primitive-conversion-source-v8.test.js
+```
+
+The source tests restore every conversion record boundary in the nested getter
+case and then finish with only the remaining public records. They also reject
+rehashed changes to the captured method, goal, ordinal and phase. Original
+guest-thrown objects retain identity through public return/throw and cleanup.
+
+Remaining boundaries include intrinsic-error source authority, Proxy conversion,
+general callable/builtin identities, asynchronous conversion callbacks, broader
+reference and destructuring forms, sparse or behavioral builtin stringification,
+and module integration. The shared Promise projector still refuses accessor
+descriptor publication beyond its declared ordinary-data bridge; data-method
+key conversion in a Promise executor is qualified separately. None of these
+refusals removes a source from the frozen language denominator.

@@ -14,6 +14,7 @@ import {CONSTRUCTION_STATE_V8_SCHEMA,CONSTRUCTION_STATE_V8_FIELDS,CALLABLE_STATE
 import {ITERATOR_PROFILE_V8,ITERATOR_HEAP_FIELDS} from './protocol-iterator-v8.js';
 import {ENUMERATION_PROFILE_V8,ENUMERATION_HEAP_FIELDS,ENUMERATION_LIMITS_V8} from './protocol-enumeration-v8.js';
 import {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_STATE_V8} from './protocol-promise-join-v8.js';
+import {PRIMITIVE_CONVERSION_PROFILE_V8,PRIMITIVE_CONVERSION_STATE_V8_SCHEMA,PRIMITIVE_CONVERSION_OPERATION_FIELDS,PRIMITIVE_CONVERSION_PHASES_V8,PRIMITIVE_CONVERSION_FAULTS_V8} from './protocol-primitive-conversion-v8.js';
 import {NUMBER_STATE_V8_SCHEMA,NUMBER_OPERATION_FIELDS} from './protocol-number-v8.js';
 import {GENERATOR_PROFILE_V8,GENERATOR_HEAP_FIELDS,GENERATOR_INTRINSICS_V8} from './protocol-generator-v8.js';
 import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIELDS} from './protocol-proxy-v8.js';
@@ -42,7 +43,7 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
         decision:'Boolean derived only from the current operand: && tests falsiness, || tests truthiness, ?? tests non-nullishness. No future right operand is included.',
         logicalPaths:{true:'use-left',false:'evaluate-right'},optionalGuardPaths:{true:'then',false:'else'}},
       profile:'symbols-ordinary-properties/1',extensions:PROTOCOL_MACHINE_ADAPTERS_V8.map(adapter=>adapter.id),limits:PROTOCOL_V8_LIMITS,
-      meaning:'Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, ordinary enumeration, generators, Number conversion, Promise joins and executors, Proxy traps and binary memory in the same authoritative heap.'}
+      meaning:'Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, ordinary enumeration, generators, Number and PropertyKey conversion, Promise joins and executors, Proxy traps and binary memory in the same authoritative heap.'}
   },
   algorithm:{schema:ALGORITHM_V8_SCHEMA,profile:ALGORITHM_V8_PROFILE,limits:ALGORITHM_V8_LIMITS,
     inputTypes:ALGORITHM_V8_INPUT_TYPES,traversalModes:TRAVERSAL_MODES,operations:ALGORITHM_V8_OPERATION_METADATA},
@@ -78,6 +79,11 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       fields:['schema','owner','mode','inputs','jobs','observed','values','settled','output','error'],
       jobFields:['status','owner','promise','reaction','closure','rejectionClosure','target','sequence','joinResult','joinIndex','readySequence'],
       capabilities:'Invocation-owned Promise joins share the realm heap. A settlement publishes eligible dependencies across all retained invocations in registration order; an explicit queueMicrotask preserves enqueue order. Steps require the realm FIFO head and no competing active turn. First settlement and explicit late no-op steps preserve result identity. allSettled allocates one distinct ordinary status/value-or-reason object per input reaction, waits for every input and preserves input order and value aliases. Entries become ordinary mutable guest objects after fulfillment. Collecting joins reserve one array property for length.'},
+    primitiveConversions:{profile:PRIMITIVE_CONVERSION_PROFILE_V8,schema:PRIMITIVE_CONVERSION_STATE_V8_SCHEMA,fields:['schema','operations'],initial:null,
+      operationFields:PRIMITIVE_CONVERSION_OPERATION_FIELDS,phases:PRIMITIVE_CONVERSION_PHASES_V8,goals:['Number','PropertyKey'],
+      faults:PRIMITIVE_CONVERSION_FAULTS_V8,
+      capabilities:'Goal-derived live method order and hint, retained getter results, shared nested callback scopes, original abrupt identities, bounded ordinary builtin leaves and checked scalar conversion.',
+      boundaries:'Intrinsic fault records are independently derived by replay; original-source admission still refuses them until its complete fault observation authority is qualified. Proxy conversion, dynamic builtin callbacks, compound/logical/update object keys and unbounded stringification remain explicit refusals.'},
     numberConversions:{profile:'number-conversion/1',schema:NUMBER_STATE_V8_SCHEMA,fields:['schema','operations'],initial:null,
       operationFields:NUMBER_OPERATION_FIELDS,phases:['select','call','builtin','waiting','convert','complete','abrupt'],
       capabilities:'Live data-method selection, original receiver and number hint, shared callback scopes, ordered ordinary fallback and checked primitive conversion. Synchronous callback throws preserve their completion through catch/finally and suppress fallback. Accessor selection, intrinsic TypeErrors and exotic conversion remain separate profiles.'},

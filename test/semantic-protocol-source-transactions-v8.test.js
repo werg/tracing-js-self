@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime} from '../src/runtime.js';
 import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-v8.js';
-import {createNumberSourceAdapterV8} from '../src/semantic/protocol-number-source-v8.js';
+import {createPrimitiveConversionSourceAdapterV8} from '../src/semantic/protocol-primitive-conversion-source-v8.js';
 import {createArrayMapSourceAdapterV8} from '../src/semantic/protocol-array-map-source-v8.js';
 import {createGeneratorSourceAdapterV8} from '../src/semantic/protocol-generator-source-v8.js';
 import {sharedRegionState} from '../src/semantic/regions.js';
@@ -20,7 +20,7 @@ const numberCall=event=>event.operation==='call.enter'&&event.operands[0]?.[0]==
 
 test('a rejected Number event restores every public claim and retained adapter state after all observers run',()=>{
   const source='"use strict";function run(){let n=1;const value={valueOf:function(){return n+2;}};return Number(value);}',
-    bundle=archive(source),number=createNumberSourceAdapterV8(),seen=[];
+    bundle=archive(source),number=createPrimitiveConversionSourceAdapterV8(),seen=[];
   let context,before,numberBefore;
   const audit={id:'test-audit/1',stateless:true,
     setup(ctx){context=ctx;},
@@ -78,7 +78,7 @@ test('Number, Proxy, memory, map and iterator callbacks share one independently 
   assert.deepEqual(replayed.controller.completion,{kind:'return',value:['num',11]});
   assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(replayed.controller));
   const projected=compileProtocolSourceV8(archive(source)),kinds=new Set(projected.claims.map(claim=>claim.record.kind));
-  for(const kind of ['number.begin','proxy.get.call','memory.set','iterator.next','call'])assert(kinds.has(kind),kind);
+  for(const kind of ['conversion.begin','proxy.get.call','memory.set','iterator.next','call'])assert(kinds.has(kind),kind);
 });
 
 test('map callback finally cleanup composes with abrupt completion and survives JSON recovery',async()=>{

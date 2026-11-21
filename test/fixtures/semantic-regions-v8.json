@@ -1,7 +1,7 @@
 {
   "schema": "semantic-v8-interoperability/1",
-  "contractDigest": "5c5583fe37dd851dc6f008ee14271c66a605d79d14ce21415a9208ba9fee3b5d",
-  "interoperabilityDigest": "d74f0ad0e25093303d8b06e2a274d338fc026cc0134678c11282159a29472e30",
+  "contractDigest": "75b4b47cccd0b137e00f477e45572d9d160acbb63f70af4f506e8003359e32cc",
+  "interoperabilityDigest": "f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661",
   "examples": [
     {
       "id": "ordered-map",
@@ -9642,7 +9642,7 @@
               "session": "protocol-source",
               "track": "worker1",
               "invocationId": "invocation1",
-              "line": "protocol {\"id\":\"number1\",\"kind\":\"number.begin\",\"value\":[\"ref\",\"o2\"]}"
+              "line": "protocol {\"goal\":\"Number\",\"id\":\"conversion1\",\"kind\":\"conversion.begin\",\"value\":[\"ref\",\"o2\"]}"
             }
           },
           {
@@ -9653,7 +9653,7 @@
               "session": "protocol-source",
               "track": "worker1",
               "invocationId": "invocation1",
-              "line": "protocol {\"builtin\":null,\"id\":\"number1\",\"key\":[\"symbol\",\"well-known:toPrimitive\"],\"kind\":\"number.select\",\"method\":[\"undefined\"]}"
+              "line": "protocol {\"builtin\":null,\"descriptor\":\"missing\",\"id\":\"conversion1\",\"key\":[\"symbol\",\"well-known:toPrimitive\"],\"kind\":\"conversion.lookup\",\"value\":[\"undefined\"]}"
             }
           },
           {
@@ -9664,7 +9664,7 @@
               "session": "protocol-source",
               "track": "worker1",
               "invocationId": "invocation1",
-              "line": "protocol {\"builtin\":null,\"id\":\"number1\",\"key\":[\"str\",\"valueOf\"],\"kind\":\"number.select\",\"method\":[\"ref\",\"o3\"]}"
+              "line": "protocol {\"builtin\":null,\"descriptor\":\"data\",\"id\":\"conversion1\",\"key\":[\"str\",\"valueOf\"],\"kind\":\"conversion.lookup\",\"value\":[\"ref\",\"o3\"]}"
             }
           },
           {
@@ -9675,7 +9675,7 @@
               "session": "protocol-source",
               "track": "worker1",
               "invocationId": "invocation1",
-              "line": "protocol {\"child\":\"guest1\",\"id\":\"number1\",\"kind\":\"number.call\"}"
+              "line": "protocol {\"child\":\"guest1\",\"id\":\"conversion1\",\"kind\":\"conversion.call\"}"
             }
           },
           {
@@ -9697,7 +9697,7 @@
               "session": "protocol-source",
               "track": "worker1",
               "invocationId": "invocation1",
-              "line": "protocol {\"id\":\"number1\",\"kind\":\"number.throw\",\"value\":[\"num\",7]}"
+              "line": "protocol {\"id\":\"conversion1\",\"kind\":\"conversion.throw\",\"value\":[\"num\",7]}"
             }
           },
           {
@@ -9955,6 +9955,7 @@
               "callFrames": [],
               "sequence": 1,
               "construction": null,
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -10129,6 +10130,7 @@
               "callFrames": [],
               "sequence": 2,
               "construction": null,
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -10315,6 +10317,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -10524,6 +10527,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -10741,6 +10745,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -10981,6 +10986,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -11221,26 +11227,30 @@
                 "frames": [],
                 "lastCompletion": null
               },
-              "numberConversions": {
-                "schema": "semantic-number-conversion-state/1",
+              "primitiveConversions": {
+                "schema": "semantic-primitive-conversion-state/1",
                 "operations": [
                   {
-                    "id": "number1",
+                    "id": "conversion1",
                     "parent": "invocation1",
+                    "goal": "Number",
                     "input": [
                       "ref",
                       "o2"
                     ],
                     "index": -1,
+                    "phase": "lookup",
+                    "lookupKind": null,
                     "method": null,
                     "builtin": null,
                     "child": null,
-                    "phase": "select",
-                    "primitive": null,
-                    "result": null
+                    "candidate": null,
+                    "result": null,
+                    "fault": null
                   }
                 ]
               },
+              "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
             }
@@ -11256,7 +11266,7 @@
             "closureQueue": []
           },
           "visibleThrough": 9,
-          "prefixDigest": "fbe09394a39036c460e193f72dbecbe4619db24b1e91c8c7e8f20eab36b2af03"
+          "prefixDigest": "8746eae1a4bbfdcf26d19047dd912a62be9aee4739af08f896ee827c42d39c83"
         },
         {
           "schema": "semantic-context/8",
@@ -11480,26 +11490,30 @@
                 "frames": [],
                 "lastCompletion": null
               },
-              "numberConversions": {
-                "schema": "semantic-number-conversion-state/1",
+              "primitiveConversions": {
+                "schema": "semantic-primitive-conversion-state/1",
                 "operations": [
                   {
-                    "id": "number1",
+                    "id": "conversion1",
                     "parent": "invocation1",
+                    "goal": "Number",
                     "input": [
                       "ref",
                       "o2"
                     ],
                     "index": 0,
+                    "phase": "lookup",
+                    "lookupKind": null,
                     "method": null,
                     "builtin": null,
                     "child": null,
-                    "phase": "select",
-                    "primitive": null,
-                    "result": null
+                    "candidate": null,
+                    "result": null,
+                    "fault": null
                   }
                 ]
               },
+              "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
             }
@@ -11515,7 +11529,7 @@
             "closureQueue": []
           },
           "visibleThrough": 10,
-          "prefixDigest": "640e88c87343861f6885ebcf36a5fc54edd368dde6469ebd5030c6a9efdefe88"
+          "prefixDigest": "8868994b5497ce47721038469655b9e553de083b8a69b8b39fde51fb37cc1b6d"
         },
         {
           "schema": "semantic-context/8",
@@ -11739,29 +11753,33 @@
                 "frames": [],
                 "lastCompletion": null
               },
-              "numberConversions": {
-                "schema": "semantic-number-conversion-state/1",
+              "primitiveConversions": {
+                "schema": "semantic-primitive-conversion-state/1",
                 "operations": [
                   {
-                    "id": "number1",
+                    "id": "conversion1",
                     "parent": "invocation1",
+                    "goal": "Number",
                     "input": [
                       "ref",
                       "o2"
                     ],
                     "index": 0,
+                    "phase": "call",
+                    "lookupKind": "data",
                     "method": [
                       "ref",
                       "o3"
                     ],
                     "builtin": null,
                     "child": null,
-                    "phase": "call",
-                    "primitive": null,
-                    "result": null
+                    "candidate": null,
+                    "result": null,
+                    "fault": null
                   }
                 ]
               },
+              "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
             }
@@ -11777,7 +11795,7 @@
             "closureQueue": []
           },
           "visibleThrough": 11,
-          "prefixDigest": "935317fc079576df8e74b5ccb959d74b9c9c75dae36a5fdf916dd3ff49f01d26"
+          "prefixDigest": "f60755c5eb4df174b07902c09f8e39c87e6ca1ae23fd260c179287a54b00d699"
         },
         {
           "schema": "semantic-context/8",
@@ -12024,29 +12042,33 @@
                 "frames": [],
                 "lastCompletion": null
               },
-              "numberConversions": {
-                "schema": "semantic-number-conversion-state/1",
+              "primitiveConversions": {
+                "schema": "semantic-primitive-conversion-state/1",
                 "operations": [
                   {
-                    "id": "number1",
+                    "id": "conversion1",
                     "parent": "invocation1",
+                    "goal": "Number",
                     "input": [
                       "ref",
                       "o2"
                     ],
                     "index": 0,
+                    "phase": "waiting",
+                    "lookupKind": "data",
                     "method": [
                       "ref",
                       "o3"
                     ],
                     "builtin": null,
                     "child": "guest1",
-                    "phase": "waiting",
-                    "primitive": null,
-                    "result": null
+                    "candidate": null,
+                    "result": null,
+                    "fault": null
                   }
                 ]
               },
+              "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
             }
@@ -12062,7 +12084,7 @@
             "closureQueue": []
           },
           "visibleThrough": 12,
-          "prefixDigest": "189ac55b23c053e3d663542962edb70fd61a5f4976560982a6474d10fcf069c4"
+          "prefixDigest": "e841b90f785731c4f487151c39fabb4afcefea7e0a3ddd9327c59114e92c5f75"
         },
         {
           "schema": "semantic-context/8",
@@ -12303,29 +12325,33 @@
                 "frames": [],
                 "lastCompletion": null
               },
-              "numberConversions": {
-                "schema": "semantic-number-conversion-state/1",
+              "primitiveConversions": {
+                "schema": "semantic-primitive-conversion-state/1",
                 "operations": [
                   {
-                    "id": "number1",
+                    "id": "conversion1",
                     "parent": "invocation1",
+                    "goal": "Number",
                     "input": [
                       "ref",
                       "o2"
                     ],
                     "index": 0,
+                    "phase": "waiting",
+                    "lookupKind": "data",
                     "method": [
                       "ref",
                       "o3"
                     ],
                     "builtin": null,
                     "child": "guest1",
-                    "phase": "waiting",
-                    "primitive": null,
-                    "result": null
+                    "candidate": null,
+                    "result": null,
+                    "fault": null
                   }
                 ]
               },
+              "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
             }
@@ -12341,7 +12367,7 @@
             "closureQueue": []
           },
           "visibleThrough": 13,
-          "prefixDigest": "d9e23870eea0387c3bf95cdde8c0ed2c0e99197db7029bd3b4dea4868e0ac78a"
+          "prefixDigest": "cafe6ad06d790f43d3766a514f309ab5c767faa6c15aa0e4f97309ba6a17b80f"
         },
         {
           "schema": "semantic-context/8",
@@ -12582,32 +12608,36 @@
                 "frames": [],
                 "lastCompletion": null
               },
-              "numberConversions": {
-                "schema": "semantic-number-conversion-state/1",
+              "primitiveConversions": {
+                "schema": "semantic-primitive-conversion-state/1",
                 "operations": [
                   {
-                    "id": "number1",
+                    "id": "conversion1",
                     "parent": "invocation1",
+                    "goal": "Number",
                     "input": [
                       "ref",
                       "o2"
                     ],
                     "index": 0,
+                    "phase": "abrupt",
+                    "lookupKind": "data",
                     "method": [
                       "ref",
                       "o3"
                     ],
                     "builtin": null,
                     "child": "guest1",
-                    "phase": "abrupt",
-                    "primitive": null,
+                    "candidate": null,
                     "result": [
                       "num",
                       7
-                    ]
+                    ],
+                    "fault": null
                   }
                 ]
               },
+              "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
             }
@@ -12623,7 +12653,7 @@
             "closureQueue": []
           },
           "visibleThrough": 14,
-          "prefixDigest": "2311bfcd66c6b1f861bfb4360eb27a17d685f2668032d0232f2d6018ee0affd0"
+          "prefixDigest": "e275831edf887997a1ec9e65574b2798b54874776c0a8de0b84f0e7a29ec77b9"
         },
         {
           "schema": "semantic-context/8",
@@ -12870,32 +12900,36 @@
                 "frames": [],
                 "lastCompletion": null
               },
-              "numberConversions": {
-                "schema": "semantic-number-conversion-state/1",
+              "primitiveConversions": {
+                "schema": "semantic-primitive-conversion-state/1",
                 "operations": [
                   {
-                    "id": "number1",
+                    "id": "conversion1",
                     "parent": "invocation1",
+                    "goal": "Number",
                     "input": [
                       "ref",
                       "o2"
                     ],
                     "index": 0,
+                    "phase": "abrupt",
+                    "lookupKind": "data",
                     "method": [
                       "ref",
                       "o3"
                     ],
                     "builtin": null,
                     "child": "guest1",
-                    "phase": "abrupt",
-                    "primitive": null,
+                    "candidate": null,
                     "result": [
                       "num",
                       7
-                    ]
+                    ],
+                    "fault": null
                   }
                 ]
               },
+              "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
             }
@@ -12911,7 +12945,7 @@
             "closureQueue": []
           },
           "visibleThrough": 15,
-          "prefixDigest": "a61f7d897f6050cab64713b9cae616f2220326264e1fbf123660e8642f16d7fc"
+          "prefixDigest": "a0750afba8529626c32cf59c9dcc5ac568263b3c3c8abda78887ef824db744f5"
         },
         {
           "schema": "semantic-context/8",
@@ -13133,32 +13167,36 @@
                 "frames": [],
                 "lastCompletion": null
               },
-              "numberConversions": {
-                "schema": "semantic-number-conversion-state/1",
+              "primitiveConversions": {
+                "schema": "semantic-primitive-conversion-state/1",
                 "operations": [
                   {
-                    "id": "number1",
+                    "id": "conversion1",
                     "parent": "invocation1",
+                    "goal": "Number",
                     "input": [
                       "ref",
                       "o2"
                     ],
                     "index": 0,
+                    "phase": "abrupt",
+                    "lookupKind": "data",
                     "method": [
                       "ref",
                       "o3"
                     ],
                     "builtin": null,
                     "child": "guest1",
-                    "phase": "abrupt",
-                    "primitive": null,
+                    "candidate": null,
                     "result": [
                       "num",
                       7
-                    ]
+                    ],
+                    "fault": null
                   }
                 ]
               },
+              "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
             }
@@ -13174,7 +13212,7 @@
             "closureQueue": []
           },
           "visibleThrough": 16,
-          "prefixDigest": "1f5132a02f7b93a3d5150e6f73e762f4ccf785ac8053e8681fc87d1367f4269b"
+          "prefixDigest": "49ae63b1848c4b424806f214bee934621fa98931a24ecdd793c1736b92a83a54"
         }
       ],
       "sourceCheck": "agreed",
@@ -13185,8 +13223,8 @@
         "detailedRecords": 15,
         "protocolRecords": 11,
         "compactBytes": 0,
-        "detailedBytes": 1858,
-        "protocolBytes": 1170,
+        "detailedBytes": 1955,
+        "protocolBytes": 1267,
         "detailTokenShare": null,
         "tokenMeasurement": "untested"
       }
@@ -14160,7 +14198,7 @@
                 "region": "r1",
                 "regionDigest": "8d791fead76f581795a4dddaac5813a2b12b365a01ba3c2dc7b71ed2127d6537",
                 "visibleThrough": 54,
-                "stateDigest": "f9397e72904cdab3090502d7d6c5222902d0b5b83a0ba14bec3a2ef5a3a53a8b"
+                "stateDigest": "0f74a3886c182cba6efd9166d42eb52e7d830fd60852c2d2db05d6569e9dde84"
               },
               "line": "region {\"bindings\":[],\"completion\":{\"kind\":\"return\",\"value\":[\"num\",1]},\"decisions\":[],\"region\":\"r1\"}"
             }
@@ -14720,6 +14758,7 @@
               "callFrames": [],
               "sequence": 1,
               "construction": null,
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -14971,6 +15010,7 @@
               "callFrames": [],
               "sequence": 2,
               "construction": null,
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -15234,6 +15274,7 @@
               "callFrames": [],
               "sequence": 3,
               "construction": null,
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -15509,6 +15550,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -15816,6 +15858,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -16135,6 +16178,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -16461,6 +16505,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -16804,6 +16849,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -17164,6 +17210,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -17531,6 +17578,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -17915,6 +17963,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -18306,6 +18355,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -18704,6 +18754,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -19102,6 +19153,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -19500,6 +19552,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -19898,6 +19951,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -20319,6 +20373,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -20740,6 +20795,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -21155,6 +21211,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -21577,6 +21634,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -21999,6 +22057,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -22428,6 +22487,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -22864,6 +22924,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -23306,6 +23367,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -23755,6 +23817,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -24227,6 +24290,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -24705,6 +24769,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -25183,6 +25248,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -25684,6 +25750,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -26195,6 +26262,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -26729,6 +26797,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -27280,6 +27349,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -27819,6 +27889,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -28359,6 +28430,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -28899,6 +28971,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -29439,6 +29512,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -29979,6 +30053,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -30519,6 +30594,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -31066,6 +31142,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -31607,6 +31684,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -32153,6 +32231,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -32699,6 +32778,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -33245,6 +33325,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -33791,6 +33872,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -34337,6 +34419,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -34911,6 +34994,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -35485,6 +35569,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -36059,6 +36144,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -36643,6 +36729,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -37210,6 +37297,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -37758,6 +37846,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -38301,6 +38390,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -38328,7 +38418,7 @@
             "closureQueue": []
           },
           "visibleThrough": 55,
-          "prefixDigest": "7bc508c746f49877adf5867451018786ad63097ed33b719139fd28f537371a5a"
+          "prefixDigest": "eacbc2dc013aee38b0b8582289ff53597b7883c6c24d3f9cf1aaf4862367339e"
         }
       ],
       "sourceCheck": "agreed",
@@ -39352,7 +39442,7 @@
                 "region": "r1",
                 "regionDigest": "5d032d93ec0e28bbddc69bd2cf7ac70401a46ea478ccf335086fab0f18c3caef",
                 "visibleThrough": 56,
-                "stateDigest": "ff3d49f5f64fc278fb8f05a47e6ec4130c819068395d2dead638688cd0108341"
+                "stateDigest": "b2427d6dd7f0f89970cc07efd4c0db217a59a1b23ecf6519fb72ea8e46f59454"
               },
               "line": "region {\"bindings\":[],\"completion\":{\"kind\":\"return\",\"value\":[\"num\",2]},\"decisions\":[],\"region\":\"r1\"}"
             }
@@ -39942,6 +40032,7 @@
               "callFrames": [],
               "sequence": 1,
               "construction": null,
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -40203,6 +40294,7 @@
               "callFrames": [],
               "sequence": 2,
               "construction": null,
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -40476,6 +40568,7 @@
               "callFrames": [],
               "sequence": 3,
               "construction": null,
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -40761,6 +40854,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -41078,6 +41172,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -41407,6 +41502,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -41743,6 +41839,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -42096,6 +42193,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -42466,6 +42564,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -42843,6 +42942,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -43237,6 +43337,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -43638,6 +43739,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -44046,6 +44148,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -44454,6 +44557,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -44862,6 +44966,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -45277,6 +45382,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -45692,6 +45798,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -46130,6 +46237,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -46568,6 +46676,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -47000,6 +47109,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -47439,6 +47549,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -47878,6 +47989,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -48324,6 +48436,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -48777,6 +48890,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -49236,6 +49350,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -49702,6 +49817,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -50191,6 +50307,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -50686,6 +50803,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -51181,6 +51299,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -51676,6 +51795,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -52194,6 +52314,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -52722,6 +52843,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -53273,6 +53395,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -53841,6 +53964,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -54397,6 +54521,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -54954,6 +55079,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -55511,6 +55637,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -56068,6 +56195,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -56625,6 +56753,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -57183,6 +57312,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -57741,6 +57871,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -58306,6 +58437,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -58876,6 +59008,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -59446,6 +59579,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -60016,6 +60150,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -60586,6 +60721,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -61156,6 +61292,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -61754,6 +61891,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -62352,6 +62490,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -62950,6 +63089,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -63558,6 +63698,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -64149,6 +64290,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -64721,6 +64863,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -65288,6 +65431,7 @@
                 "frames": [],
                 "lastCompletion": null
               },
+              "primitiveConversions": null,
               "numberConversions": null,
               "proxyCalls": null,
               "promiseExecutors": null
@@ -65315,7 +65459,7 @@
             "closureQueue": []
           },
           "visibleThrough": 57,
-          "prefixDigest": "01f2df01d455f4c81f972e41f676d8b0203aa0e0559be01b1ac5b4848e0a2aef"
+          "prefixDigest": "3e664a1fd46bb03249f24eec3897457b5aa835f257b305bfe3fc7da2e5df9e29"
         }
       ],
       "sourceCheck": "agreed",

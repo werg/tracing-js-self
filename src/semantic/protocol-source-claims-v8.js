@@ -6,7 +6,7 @@ import {SHARED_TYPES} from '../owned-shared-memory.js';
 export const ORDINARY_PROTOCOL_SOURCE_V8='ordinary-protocol-source/1';
 const memory='owned-binary-memory/1',iterator='builtin-iterator/1',generator='synchronous-generator-source/1',
   construction='class-private-source/1',custom='custom-iterator-source/1',completion='ordinary-completions-source/1',
-  number='number-conversion-source/1',proxy='ordinary-data-proxy-source/1',map='ordinary-array-map-source/1',enumeration='ordinary-for-in/1';
+  number='primitive-conversion-source/1',proxy='ordinary-data-proxy-source/1',map='ordinary-array-map-source/1',enumeration='ordinary-for-in/1';
 const memoryKinds=new Set(['array-buffer','shared-int32-buffer','typed-array','shared-int32-view','data-view','shared-data-view']);
 const constructors=new Set(['ArrayBuffer','SharedArrayBuffer','DataView',...Object.keys(SHARED_TYPES)]);
 const iteratorNames=new Set(['Array.prototype.values','Array.prototype.keys','Array.prototype.entries',
@@ -54,7 +54,7 @@ const eventClaims={
         /^(DataView|TypedArray|ArrayBuffer|SharedArrayBuffer)\.prototype\./.test(name)||name.startsWith('Atomics.'));
   },
   [enumeration](view){return ['FOR_IN_CREATE','FOR_IN_NEXT'].includes(view.instruction?.op);},
-  [number](_view,{event}){return event.operation==='intrinsic.number.resume'||
+  [number](_view,{event}){return ['intrinsic.number.resume','property.key.convert','property.key.resume'].includes(event.operation)||
     event.operation==='call.enter'&&builtin(callee(event.operands[0]))==='Number';},
   [proxy](view,{event,row}){return event.operation==='proxy.allocate'||
     ['property.read','property.write'].includes(event.operation)&&heap(view,row?.operands[0])?.kind==='proxy';},
@@ -110,7 +110,7 @@ const eventClaims={
   },
   [construction](view){
     const op=view.instruction?.op;
-    if(!op)return false;
+    if(!op||['property.key.convert','property.key.resume'].includes(view.event.operation))return false;
     if(op==='CONSTRUCT')return view.event.operands[0]?.[0]==='ref';
     return constructionOps.has(op)||ordinaryPrototype(view)&&['GET_PROP','GET_METHOD'].includes(op)||op.startsWith('SUPER_');
   }

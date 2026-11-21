@@ -3,6 +3,8 @@ import {readFileSync} from 'node:fs';
 import {expansionCoveragePopulation} from '../../src/semantic/expansion-benchmark.js';
 import {HOST_PROTOCOL_FIXTURES_V8} from './host-protocol.js';
 import {RETURN_CALLBACK_FIXTURES} from './return-callbacks.js';
+import {PRIMITIVE_CONVERSION_FIXTURES} from './primitive-conversion.js';
+import {PRIMITIVE_CONVERSION_COMPOSITION_FIXTURES} from './primitive-conversion-composition.js';
 
 export function regionQualificationFixtures(){return [
   {id:'ordered-map',source:'"use strict";function run(xs){return xs.map(x=>x*2);}',
@@ -84,6 +86,15 @@ export function moduleQualificationFixtures(){return [
         'export function run(){const before=value;bump();return [before,value];}'}}
 ];}
 
+// The five original source refusals remain in the separate twenty-four-row
+// conversion inventory. These nineteen accepted sources extend the recurring
+// selected population; they do not replace any earlier family or imply that
+// the refused inputs, or the complete language population, qualify.
+export function primitiveConversionQualificationFixtures(){
+  return [...PRIMITIVE_CONVERSION_FIXTURES,...PRIMITIVE_CONVERSION_COMPOSITION_FIXTURES]
+    .filter(fixture=>!fixture.boundary).map(fixture=>structuredClone(fixture));
+}
+
 // The interoperability population includes every declared source-qualified
 // protocol golden, not just the original three shared-state examples.
 export function regionQualificationPopulation({population='interoperability',allInputs=true}={}){
@@ -96,6 +107,7 @@ export function regionQualificationPopulation({population='interoperability',all
     return structuredClone(row.fixture);
   }),...structuredClone(HOST_PROTOCOL_FIXTURES_V8),...sharedProtocolQualificationFixtures(),
   ...RETURN_CALLBACK_FIXTURES.map(({expected,callbacks,...fixture})=>({
-    ...structuredClone(fixture),id:fixture.family.replace(/-source$/,'')}))],
+    ...structuredClone(fixture),id:fixture.family.replace(/-source$/,'')})),
+  ...primitiveConversionQualificationFixtures()],
     modules:moduleQualificationFixtures()};
 }

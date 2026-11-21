@@ -1,9 +1,11 @@
 # Retained Number and property-key conversion
 
 The owned runtime shares one resumable `ToPrimitive` kernel between
-`Number(object)` and `ToPropertyKey(object)`. This is an owned-runtime slice.
-It does not qualify the new property-key or conversion-getter behavior for
-the public V8 source teacher, native consumer, or training admission.
+`Number(object)` and `ToPropertyKey(object)`. This document describes owned
+execution. The separately registered public/source/native conversion slice and
+its remaining refusals are described in
+[SEMANTIC_PRIMITIVE_CONVERSION_V8.md](SEMANTIC_PRIMITIVE_CONVERSION_V8.md).
+Owned support alone does not qualify training admission.
 
 ## Specification and reference lifetime
 

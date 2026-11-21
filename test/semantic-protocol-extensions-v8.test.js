@@ -103,6 +103,7 @@ test('the independent worker dependency graph cannot import producer protocol ex
     'protocol-source-compiler-v8.js','protocol-source-v8.js','protocol-memory-v8.js','protocol-construction-v8.js',
     'protocol-iterator-v8.js','protocol-iterator-source-v8.js',
     'protocol-enumeration-v8.js','protocol-enumeration-source-v8.js',
+    'owned-primitive-conversion.js','protocol-primitive-conversion-v8.js','protocol-primitive-conversion-source-v8.js',
     'owned-number-conversion.js','protocol-number-v8.js','protocol-number-source-v8.js',
     'protocol-proxy-v8.js','protocol-proxy-source-v8.js',
     'protocol-machine-extensions-v8.js','protocol-source-extensions-v8.js','region-harness.js','regions.js']);

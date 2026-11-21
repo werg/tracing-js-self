@@ -1,5 +1,11 @@
 # Number conversion protocol component
 
+Production source projection now uses the shared Number/PropertyKey machine in
+[SEMANTIC_PRIMITIVE_CONVERSION_V8.md](SEMANTIC_PRIMITIVE_CONVERSION_V8.md), including
+getter selection and nested conversion. The `number.*` component documented
+here remains available for its explicit public component programs and original
+historical measurements; it is no longer the registered production source owner.
+
 This public component models `Number(value)` through the shared heap and call
 scope. Its scalar leaf converts only a tagged JavaScript primitive. Object
 conversion reads the actual Symbol.toPrimitive property, calls the selected

@@ -83,3 +83,5 @@ export {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8,PROMISE_EXECUTOR_R
 export {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_RECORD_FIELDS,PROXY_HEAP_FIELDS} from './protocol-proxy-v8.js';
 export {PROXY_SOURCE_PROFILE_V8} from './protocol-proxy-source-v8.js';
 export {ARRAY_MAP_SOURCE_PROFILE_V8} from './protocol-array-map-source-v8.js';
+
+export {PRIMITIVE_CONVERSION_SOURCE_PROFILE_V8} from './protocol-primitive-conversion-source-v8.js';

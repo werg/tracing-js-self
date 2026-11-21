@@ -182,7 +182,7 @@ test('independent reference checks reject wrong pc, operands, cache, receiver, p
   }
 });
 
-test('unowned key conversion profiles fail explicitly and source/public admission remains refused',async()=>{
+test('unowned key conversion profiles refuse while registered ordinary conversions receive source/public admission',async()=>{
   for(const body of [
     'const key={toString:async()=>"x"};return {x:1}[key];',
     'const key={toString:function*(){yield "x";}};return {x:1}[key];',
@@ -200,7 +200,8 @@ test('unowned key conversion profiles fail explicitly and source/public admissio
     'return Number({get valueOf(){return ()=>1;}});'
   ]){
     const result=await verifyRegionTrainingCase({source:source(body),entry:'run',args:[],
-      family:'property-key-unqualified',fixture:{calls:[]}});
-    assert.equal(result.status,'projection_refused');
+      family:'property-key-qualified',fixture:{calls:[]}});
+    assert(result.exported,result.reason);
+    assert(result.exported.sidecar.protocolExtensions.includes('primitive-conversion-source/1'));
   }
 });

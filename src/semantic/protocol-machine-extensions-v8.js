@@ -12,6 +12,7 @@ import {ENUMERATION_PROFILE_V8,ENUMERATION_RECORD_FIELDS,validateEnumerationReco
 import {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_RECORD_FIELDS,validatePromiseJoinRecordV8,
   applyPromiseJoinRecordV8,restorePromiseJoinStateV8,assertPromiseJoinNextV8,
   allowsPromiseJoinInternalSchedulerV8,allowsPromiseJoinWithoutStackV8,allowsPromiseJoinDetailedCallV8} from './protocol-promise-join-v8.js';
+import {PRIMITIVE_CONVERSION_PROFILE_V8,PRIMITIVE_CONVERSION_RECORD_FIELDS,validatePrimitiveConversionRecordV8,applyPrimitiveConversionRecordV8,restorePrimitiveConversionStateV8,assertPrimitiveConversionNextV8} from './protocol-primitive-conversion-v8.js';
 import {NUMBER_RECORD_FIELDS,validateNumberRecordV8,applyNumberRecordV8,restoreNumberStateV8,assertNumberNextV8} from './protocol-number-v8.js';
 import {GENERATOR_PROFILE_V8,GENERATOR_RECORD_FIELDS,GENERATOR_INTRINSICS_V8,validateGeneratorRecordV8,
   applyGeneratorRecordV8,restoreGeneratorStateV8,hasGeneratorStateV8,assertGeneratorCallV8,
@@ -44,6 +45,9 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   allowsInternalScheduler:allowsPromiseJoinInternalSchedulerV8,allowsWithoutStack:allowsPromiseJoinWithoutStackV8,
   allowsDetailedCall:allowsPromiseJoinDetailedCallV8,
   restoreState:(controller,_snapshot,api)=>restorePromiseJoinStateV8(controller,api)
+}),Object.freeze({
+  id:PRIMITIVE_CONVERSION_PROFILE_V8,recordFields:PRIMITIVE_CONVERSION_RECORD_FIELDS,validateRecord:validatePrimitiveConversionRecordV8,
+  applyRecord:applyPrimitiveConversionRecordV8,stateField:'primitiveConversions',restoreState:restorePrimitiveConversionStateV8,assertNext:assertPrimitiveConversionNextV8
 }),Object.freeze({
   id:'number-conversion/1',recordFields:NUMBER_RECORD_FIELDS,validateRecord:validateNumberRecordV8,
   applyRecord:applyNumberRecordV8,stateField:'numberConversions',restoreState:restoreNumberStateV8,assertNext:assertNumberNextV8

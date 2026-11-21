@@ -50,14 +50,14 @@ test('source-qualified Number conversions share private class state and exact co
   const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
   const artifact=result.exported,reference=artifact.sidecar.sourceArtifact.sidecar.reference;
   assert.equal(reference.extensionAudit.status,'agreed');assert(reference.extensionAudit.observed>=10);
-  assert(artifact.sidecar.protocolExtensions.includes('number-conversion-source/1'));
+  assert(artifact.sidecar.protocolExtensions.includes('primitive-conversion-source/1'));
   assert(artifact.sidecar.regionCoverage.compactRegions>=2);
   assert.equal(validateRegionTrainingContexts(artifact).length,artifact.contexts.length);
   const replay=RegionExecutionHarness.replay(artifact);
   assert.deepEqual(replay.controller.completion,{kind:'return',value:['num',12]});
-  assert.equal(replay.controller.protocol.numberConversions.operations.length,2);
-  assert(replay.controller.protocol.numberConversions.operations.every(row=>row.phase==='complete'));
-  const pendingIndex=artifact.public.timeline.findIndex(row=>row.fields?.line?.includes('"kind":"number.call"'));
+  assert.equal(replay.controller.protocol.primitiveConversions.operations.length,2);
+  assert(replay.controller.protocol.primitiveConversions.operations.every(row=>row.phase==='complete'));
+  const pendingIndex=artifact.public.timeline.findIndex(row=>row.fields?.line?.includes('"kind":"conversion.call"'));
   assert(pendingIndex>=0);
   const prefix=structuredClone(artifact);prefix.public.timeline=prefix.public.timeline.slice(0,pendingIndex+1);
   const partial=RegionExecutionHarness.replay(prefix,{requireTerminal:false}),packet=JSON.parse(JSON.stringify(partial.checkpoint()));
@@ -65,7 +65,7 @@ test('source-qualified Number conversions share private class state and exact co
   for(const row of artifact.public.timeline.slice(pendingIndex+1))restored.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
   assert.deepEqual(restored.exportEpisode(),artifact.public,'resume must not invoke either conversion callback again');
   const malformed=structuredClone(packet),state=malformed.selected.invocations[0][1].state;
-  state.protocol.numberConversions.operations[0].child='missing';
+  state.protocol.primitiveConversions.operations[0].child='missing';
   const {integrity,...rest}=malformed;malformed.integrity=hashAlgorithmData(rest);
   assert.throws(()=>RegionExecutionHarness.restore(malformed),/callback identity|exact public shared state|Number/);
   assert.equal((await recheckProtocolRegionEvidence(artifact)).sourceValidated,true);
@@ -94,18 +94,16 @@ test('false Number method order, receiver, result and source-observer evidence r
   const expected=createNumberObservationAdapterV8({source:text,side:'owned',bundle:mutated}).observations();
   assert.notDeepEqual(native.observations[0].rows,expected,'an unchanged scalar cannot hide a different selected method');
   const result=await verifyProtocolRegionTrainingCase({source:text,entry:'run',family:'number-mutants',timeoutMs:30000});assert(result.exported,result.reason);
-  const timeline=result.exported.public.timeline,index=timeline.findIndex(row=>row.fields?.line?.includes('"kind":"number.begin"'));
+  const timeline=result.exported.public.timeline,index=timeline.findIndex(row=>row.fields?.line?.includes('"kind":"conversion.begin"'));
   const prefix=structuredClone(result.exported);prefix.public.timeline=timeline.slice(0,index+1);
   const controller=RegionExecutionHarness.replay(prefix,{requireTerminal:false}).controller,before=structuredClone(controller.protocol);
-  assert.throws(()=>applyProtocolRecordV8(controller,{kind:'number.finish',id:'number1',result:['num',3]}),/number.select/);
+  assert.throws(()=>applyProtocolRecordV8(controller,{kind:'conversion.finish',id:'conversion1',result:['num',3]}),/conversion.lookup/);
   assert.deepEqual(controller.protocol,before);
 });
 
-test('unqualified intrinsic abrupt, accessor, exotic and extra-argument Number behavior has explicit source dispositions',async()=>{
+test('unqualified intrinsic abrupt, exotic and extra-argument Number behavior has explicit source dispositions',async()=>{
   for(const body of [
     'return Number({[Symbol.toPrimitive]:function(){return {};}});',
-    'return Number({get valueOf(){return function(){return 2;};}});',
-    'return Number([3]);',
     'return Number(2,3);'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert.equal(result.status,'unsupported',result.reason);
@@ -122,14 +120,14 @@ test('throwing Number callbacks retain their exact completion and never select a
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
     const artifact=result.exported,replay=RegionExecutionHarness.replay(artifact);
     assert.deepEqual(replay.controller.completion,{kind:'throw',value:['num',value]});
-    assert.equal(replay.controller.protocol.numberConversions.operations.length,operations);
-    assert(replay.controller.protocol.numberConversions.operations.every(row=>row.phase==='abrupt'&&row.primitive===null&&row.result[1]===value));
+    assert.equal(replay.controller.protocol.primitiveConversions.operations.length,operations);
+    assert(replay.controller.protocol.primitiveConversions.operations.every(row=>row.phase==='abrupt'&&row.candidate===null&&row.result[1]===value));
     const records=artifact.public.timeline.filter(row=>row.fields?.line?.startsWith('protocol ')).map(row=>JSON.parse(row.fields.line.slice(9)));
-    assert.equal(records.filter(row=>row.kind==='number.throw').length,operations);
-    assert(!records.some(row=>row.kind==='number.select'&&row.key[1]==='toString'));
+    assert.equal(records.filter(row=>row.kind==='conversion.throw').length,operations);
+    assert(!records.some(row=>row.kind==='conversion.lookup'&&row.key[1]==='toString'));
     assert.equal(artifact.sidecar.sourceArtifact.sidecar.reference.extensionAudit.status,'agreed');
     assert.equal((await recheckProtocolRegionEvidence(artifact)).sourceValidated,true);
-    for(const index of artifact.public.timeline.flatMap((row,index)=>row.fields?.line?.includes('"kind":"number.throw"')?[index]:[])){
+    for(const index of artifact.public.timeline.flatMap((row,index)=>row.fields?.line?.includes('"kind":"conversion.throw"')?[index]:[])){
       const prefix=structuredClone(artifact);prefix.public.timeline=prefix.public.timeline.slice(0,index+1);
       const partial=RegionExecutionHarness.replay(prefix,{requireTerminal:false});
       const restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(partial.checkpoint())));

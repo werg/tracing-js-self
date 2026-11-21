@@ -17,7 +17,7 @@ import {sharedRegionState} from '../src/semantic/regions.js';
 import {sharedProtocolQualificationFixtures} from '../fixtures/semantic-regions/qualification.js';
 
 const fixture=()=>sharedProtocolQualificationFixtures().find(row=>row.id==='promise-number-proxy-memory-join');
-const memory='owned-binary-memory/1',number='number-conversion-source/1',proxy='ordinary-data-proxy-source/1',
+const memory='owned-binary-memory/1',number='primitive-conversion-source/1',proxy='ordinary-data-proxy-source/1',
   iterator='builtin-iterator/1',arrayMap='ordinary-array-map-source/1';
 function archive(source=fixture().source){
   const runtime=createRuntime().startEntry({text:source,functionName:'run',args:[],allowAsync:true});
@@ -47,10 +47,10 @@ test('Promise, Number, Proxy and binary events share deterministic source owners
     reverse=compileProtocolSourceV8(bundle,{adapters:[...PROTOCOL_SOURCE_ADAPTERS_V8].reverse()});
   assert.deepEqual(reverse,forward);
   assert.equal(forward.sourceProfile,'composed-protocol-source/1');
-  assert.deepEqual(forward.extensions,[number,proxy,memory,'promise-executor/1','promise-join/1']);
+  assert.deepEqual(forward.extensions,[number,proxy,memory,'promise-executor/1','promise-join/1'].sort());
   const kinds=new Set(forward.claims.filter(row=>row.kind==='protocol').map(row=>row.record.kind));
-  for(const kind of ['promise.executor.enter','number.begin','number.call','proxy.get.call',
-    'memory.construct','memory.set','memory.get','proxy.finish','number.return','promise.resolver.call','promise.join.step'])
+  for(const kind of ['promise.executor.enter','conversion.begin','conversion.call','proxy.get.call',
+    'memory.construct','memory.set','memory.get','proxy.finish','conversion.return','promise.resolver.call','promise.join.step'])
     assert(kinds.has(kind),kind);
   const result=await verifyProtocolRegionTrainingCase(fixture());assert(result.exported,result.reason);
   const checked=await recheckProtocolRegionEvidence(result.exported);
@@ -62,7 +62,7 @@ test('Promise, Number, Proxy and binary events share deterministic source owners
     cut=timeline.findIndex(row=>row.kind==='protocol'&&decodeProtocolRecordV8(row.fields.line).kind==='memory.set')+1;
   const prefix=RegionExecutionHarness.replay({...exported.public,timeline:timeline.slice(0,cut)},{requireTerminal:false}),
     resumed=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(prefix.checkpoint())));
-  assert.equal(resumed.controller.protocol.numberConversions.operations.at(-1).phase,'waiting');
+  assert.equal(resumed.controller.protocol.primitiveConversions.operations.at(-1).phase,'waiting');
   assert.equal(resumed.controller.protocol.proxyCalls.pending.length,1);
   assert.equal(resumed.controller.protocol.promiseExecutors.executors.at(-1).phase,'running');
   for(const row of timeline.slice(cut))resumed.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
@@ -86,7 +86,7 @@ test('Promise source projection composes map callbacks and iterator state throug
   assert.equal(checked.source.reference.status,'agreed');
   const claims=result.exported.sidecar.sourceArtifact.sidecar.compiler.claims,
     kinds=new Set(claims.filter(row=>row.kind==='protocol').map(row=>row.record.kind));
-  for(const kind of ['promise.executor.enter','number.begin','proxy.get.call','memory.set','iterator.create',
+  for(const kind of ['promise.executor.enter','conversion.begin','proxy.get.call','memory.set','iterator.create',
     'iterator.next','call','promise.join','promise.join.step'])assert(kinds.has(kind),kind);
   assert.deepEqual(forward.outcome.graph.roots.at(-1),['num',10]);
 
@@ -188,16 +188,16 @@ test('one thrown callback unwinds Proxy, Number and executor completions through
   for(const claim of claims)for(const event of claim.certificate.journalEvents){
     if(!group.has(event))group.set(event,[]);group.get(event).push(claim.record.kind);
   }
-  assert([...group.values()].some(kinds=>['proxy.finish','number.throw','promise.executor.finish'].every(kind=>kinds.includes(kind))));
+  assert([...group.values()].some(kinds=>['proxy.finish','conversion.throw','promise.executor.finish'].every(kind=>kinds.includes(kind))));
   assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion.value,['num',8]);
 });
 
 test('shared discovery is static and does not loosen unrelated continuation or construction gates',()=>{
   const source=fixture().source,bundle={programs:{},get events(){throw new Error('future events cannot choose components');}},
     adapters=PROTOCOL_SOURCE_ADAPTERS_V8.map(adapter=>typeof adapter==='function'?adapter({source,bundle}):adapter).filter(Boolean);
-  assert.deepEqual(createSharedProtocolSourceComponentsV8({source,bundle,adapters}).map(row=>row.id).sort(),[number,proxy,memory]);
+  assert.deepEqual(createSharedProtocolSourceComponentsV8({source,bundle,adapters}).map(row=>row.id).sort(),[number,proxy,memory].sort());
   const asynchronous='"use strict";async function run(){const values=await Promise.all([2]);return Number({valueOf:function(){return values[0];}});}';
-  assert.throws(()=>compileProtocolSourceV8(archive(asynchronous)),/async conversion needs its own profile/);
+  assert.throws(()=>compileProtocolSourceV8(archive(asynchronous)),/async conversion requires its own profile/);
   const construction='"use strict";async function run(){const p=new Promise(resolve=>{class Box{constructor(){this.x=1;}}resolve(new Box().x);});return await p;}';
   assert.throws(()=>compileProtocolSourceV8(archive(construction)),/class\/private|construction|prototype/);
 });

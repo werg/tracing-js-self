@@ -1,9 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {regionQualificationPopulation} from '../fixtures/semantic-regions/qualification.js';
 import {encodeGenerationTask,decodeGenerationTask} from '../src/corpus/generation-process.mjs';
 import {HOST_PROTOCOL_FIXTURES_V8} from '../fixtures/semantic-regions/host-protocol.js';
+import {PRIMITIVE_CONVERSION_FIXTURES} from '../fixtures/semantic-regions/primitive-conversion.js';
+import {PRIMITIVE_CONVERSION_COMPOSITION_FIXTURES} from '../fixtures/semantic-regions/primitive-conversion-composition.js';
 
 test('native qualification retains every frozen family input, script and module interaction',()=>{
   const population=regionQualificationPopulation({population:'all'});
@@ -22,9 +25,9 @@ test('native qualification retains every frozen family input, script and module 
 test('interoperability includes all source goldens and returns fresh mutable guest inputs',()=>{
   const declared=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
   const selected=regionQualificationPopulation();
-  assert.equal(selected.scripts.length,44);
+  assert.equal(selected.scripts.length,63);
   assert.equal(selected.modules.length,3);
-  assert.equal(new Set([...selected.scripts,...selected.modules].map(row=>row.id)).size,47);
+  assert.equal(new Set([...selected.scripts,...selected.modules].map(row=>row.id)).size,66);
   assert.deepEqual(selected.modules.map(row=>row.id),['module-namespace-shadow-live',
     'module-scoped-var-isolation','module-destructured-live-cells']);
   for(const fixture of selected.modules){
@@ -62,7 +65,7 @@ test('complete ordinary inventory preserves cyclic callback inputs through durab
   assert.throws(()=>JSON.stringify(fixtures),/circular/);
   const frozen=JSON.parse(JSON.stringify(fixtures.map(fixture=>encodeGenerationTask({
     kind:fixture.modules?'module':'source',traceVersion:8,fixture,producerRevision:'frozen-test'}))));
-  assert.equal(frozen.length,47);
+  assert.equal(frozen.length,66);
   assert.deepEqual(frozen.map(task=>task.fixture.id),fixtures.map(fixture=>fixture.id));
   for(const [index,task]of frozen.entries()){
     const restored=decodeGenerationTask(task).fixture,original=fixtures[index];
@@ -73,4 +76,25 @@ test('complete ordinary inventory preserves cyclic callback inputs through durab
     // contract as the worker path, including aliases, cycles and special scalars.
     assert.deepEqual(encodeGenerationTask({...task,fixture:restored}),task);
   }
+});
+
+test('conversion qualification extends the original 47 unchanged and retains five explicit candidate refusals',()=>{
+  const population=regionQualificationPopulation(),fixtures=[...population.scripts,...population.modules];
+  const original=fixtures.filter(fixture=>!fixture.family.startsWith('primitive-conversion:'));
+  assert.equal(original.length,47);
+  // A byte-level receipt covers the complete original ordered fixture inputs,
+  // including cyclic arguments, rather than just the selected case names.
+  const encoded=original.map(fixture=>encodeGenerationTask({kind:fixture.modules?'module':'source',
+    traceVersion:8,fixture,producerRevision:'frozen-test'}));
+  assert.equal(createHash('sha256').update(JSON.stringify(encoded)).digest('hex'),
+    '60fd28bdbb54bc4e144414422a8ff23caa036a573191d64857baa6cb6d6a6ae8');
+  const inventory=[...PRIMITIVE_CONVERSION_FIXTURES,...PRIMITIVE_CONVERSION_COMPOSITION_FIXTURES];
+  assert.equal(inventory.length,24);
+  const positives=inventory.filter(fixture=>!fixture.boundary),refusals=inventory.filter(fixture=>fixture.boundary);
+  assert.equal(positives.length,19);
+  assert.equal(refusals.length,5);
+  assert.deepEqual(population.scripts.slice(44),positives);
+  for(const fixture of refusals)assert.ok(!fixtures.some(row=>row.id===fixture.id),fixture.id);
+  population.scripts[44].fixture.calls.push({});
+  assert.deepEqual(regionQualificationPopulation().scripts[44].fixture.calls,[]);
 });
