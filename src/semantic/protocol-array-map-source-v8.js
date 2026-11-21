@@ -35,8 +35,12 @@ export function createArrayMapSourceAdapterV8(){
       'callback activation changed receiver or effective arguments');
     ctx.emit({kind:'property.get',object:plan.arrayId,key:['str',String(plan.index)],receiver:ref(plan.arrayId),result:ctx.tag(value,event)},event,'owned-source-map-element/1');
     ctx.emit({kind:'call',child:ctx.frame(child),callee:ctx.tag(ref(plan.callbackId),event),receiver:ctx.tag(plan.thisArg,event),
-      arguments:arguments_.map(value=>ctx.tag(value,event))},event,'owned-source-map-callback/1');
-    for(const [name,binding]of Object.entries(environment.bindings))if(binding.initialized)ctx.bind(ctx.cell(environment.id,name),binding.token.value,event);
+      arguments:arguments_.map((value,index)=>index===1?ctx.copy(value):ctx.tag(value,event))},event,'owned-source-map-callback/1');
+    for(const [name,binding]of Object.entries(environment.bindings))if(binding.initialized){
+      if(parameters.indexOf(name)===1&&typeof ctx.bindDerived==='function')
+        ctx.bindDerived(ctx.cell(environment.id,name),binding.token.value,event);
+      else ctx.bind(ctx.cell(environment.id,name),binding.token.value,event);
+    }
     plan.waitingFrameId=child;plan.currentValue=ctx.copy(value);callbacks.set(child,plan);
   }
   function checkFrame(ctx,node){
@@ -50,6 +54,7 @@ export function createArrayMapSourceAdapterV8(){
     return true;
   }
   return {id:ARRAY_MAP_SOURCE_PROFILE_V8,
+    completionWritesHandled:true,
     captureState:()=>({plans:[...plans],callbacks:[...callbacks]}),
     restoreState(state){plans=new Map(state.plans);callbacks=new Map(state.callbacks);},
     frameFields(node){return node.pendingArrayMethod?['pendingArrayMethod']:null;},checkFrame,

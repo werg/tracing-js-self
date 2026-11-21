@@ -194,7 +194,8 @@ export function createEffectfulRegionAdapterV8({extensions=[],allowHost=false}={
       if(!fact)return false;
       const invocations=[];
       for(const planned of current.completions)if(planned.owner!==BASE_SOURCE_COMPONENT_V8){
-        if(!invocations.length)context.writes(row??{},context.rootFor(planned.input.invocation),event);
+        if(!invocations.length&&byId.get(planned.owner)?.completionWritesHandled!==true)
+          context.writes(row??{},context.rootFor(planned.input.invocation),event);
         apply(planned,'completion',event,row,planned.input);invocations.push(planned.input.invocation);
       }
       return invocations.length?{invocations}:false;

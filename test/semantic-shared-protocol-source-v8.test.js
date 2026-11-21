@@ -17,7 +17,8 @@ import {sharedRegionState} from '../src/semantic/regions.js';
 import {sharedProtocolQualificationFixtures} from '../fixtures/semantic-regions/qualification.js';
 
 const fixture=()=>sharedProtocolQualificationFixtures().find(row=>row.id==='promise-number-proxy-memory-join');
-const memory='owned-binary-memory/1',number='number-conversion-source/1',proxy='ordinary-data-proxy-source/1';
+const memory='owned-binary-memory/1',number='number-conversion-source/1',proxy='ordinary-data-proxy-source/1',
+  iterator='builtin-iterator/1',arrayMap='ordinary-array-map-source/1';
 function archive(source=fixture().source){
   const runtime=createRuntime().startEntry({text:source,functionName:'run',args:[],allowAsync:true});
   runtime.drive();return runtime.exportRun();
@@ -68,6 +69,47 @@ test('Promise, Number, Proxy and binary events share deterministic source owners
   const complete=RegionExecutionHarness.replay(exported);
   assert.deepEqual(complete.controller.completion,{kind:'return',value:['num',6]});
   assert.deepEqual(sharedRegionState(resumed.controller),sharedRegionState(complete.controller));
+});
+
+test('Promise source projection composes map callbacks and iterator state through JSON checkpoint recovery',async()=>{
+  const selected=sharedProtocolQualificationFixtures().find(row=>row.id==='promise-map-iterator'),
+    source=selected.source,
+    bundle=archive(source),forward=compileProtocolSourceV8(bundle),
+    reverse=compileProtocolSourceV8(bundle,{adapters:[...PROTOCOL_SOURCE_ADAPTERS_V8].reverse()});
+  assert.deepEqual(reverse,forward);
+  assert.equal(forward.sourceProfile,'composed-protocol-source/1');
+  assert(forward.extensions.includes(arrayMap));assert(forward.extensions.includes(iterator));
+  const result=await verifyProtocolRegionTrainingCase(selected);
+  assert(result.exported,result.reason);
+  const checked=await recheckProtocolRegionEvidence(result.exported);
+  assert(checked.sourceValidated&&checked.projectionValidated&&checked.replayValidated);
+  assert.equal(checked.source.reference.status,'agreed');
+  const claims=result.exported.sidecar.sourceArtifact.sidecar.compiler.claims,
+    kinds=new Set(claims.filter(row=>row.kind==='protocol').map(row=>row.record.kind));
+  for(const kind of ['promise.executor.enter','number.begin','proxy.get.call','memory.set','iterator.create',
+    'iterator.next','call','promise.join','promise.join.step'])assert(kinds.has(kind),kind);
+  assert.deepEqual(forward.outcome.graph.roots.at(-1),['num',10]);
+
+  const timeline=result.exported.public.timeline,
+    cut=timeline.findIndex(row=>row.kind==='protocol'&&decodeProtocolRecordV8(row.fields.line).kind==='iterator.next')+1;
+  assert(cut>0,'the recovery point follows an actual iterator transition');
+  const prefix=RegionExecutionHarness.replay({...result.exported.public,timeline:timeline.slice(0,cut)},{requireTerminal:false}),
+    packet=JSON.parse(JSON.stringify(prefix.checkpoint())),resumed=RegionExecutionHarness.restore(packet);
+  assert([...resumed.controller.heap.values()].some(node=>node.kind==='iterator'));
+  assert(resumed.controller.stack.some(invocation=>invocation.startsWith('guest')),
+    'the checkpoint preserves the active map callback invocation');
+  assert.equal(resumed.controller.protocol.promiseExecutors.executors.at(-1).phase,'running');
+  assert.deepEqual(resumed.modelContext('invocation1'),prefix.modelContext('invocation1'));
+  for(const row of timeline.slice(cut))resumed.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+  assert.deepEqual(sharedRegionState(resumed.controller),sharedRegionState(RegionExecutionHarness.replay(result.exported).controller));
+});
+
+test('a Promise/map interaction that mutates its source array refuses without partial evidence',async()=>{
+  const source='"use strict";async function run(){const result=new Promise(resolve=>{const array=[1,2];'+
+    'const mapped=array.map(function(value){array[0]=9;return value;});resolve(mapped[0]);});return await result;}';
+  const result=await verifyProtocolRegionTrainingCase({source,entry:'run',family:'promise-map-unsupported-mutation'});
+  assert.equal(result.status,'unsupported');assert.equal(result.exported,undefined);
+  assert.match(result.reason,/mutation of the source array/);
 });
 
 test('missing or ambiguous shared family ownership fails before preparation or publication',()=>{

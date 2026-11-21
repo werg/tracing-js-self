@@ -25,7 +25,14 @@ export function sharedProtocolQualificationFixtures(){return [
     'const proxy=new Proxy({x:3},{get:function(object,key){bytes[0]=object[key];return bytes[0]+1;}});'+
     'resolve(Number({valueOf:function(){return proxy.x;}}));});'+
     'const values=await Promise.all([p,Promise.resolve(2)]);return values[0]+values[1];}',
-    entry:'run',args:[],family:'v8-contract-shared-protocol-source',fixture:{calls:[]}}
+    entry:'run',args:[],family:'v8-contract-shared-protocol-source',fixture:{calls:[]}},
+  {id:'promise-map-iterator',source:'"use strict";async function run(){const p=new Promise(resolve=>{'+
+    'const bytes=new Uint8Array(1);const proxy=new Proxy({x:3},{get:function(object,key){bytes[0]=object[key];return bytes[0]+1;}});'+
+    'const converted=Number({valueOf:function(){return proxy.x;}});'+
+    'const result=[converted].map(function(value,index,array){const cursor=[value,index].values();'+
+    'return cursor.next().value+1;});resolve(result[0]+bytes[0]);});'+
+    'const values=await Promise.all([p,Promise.resolve(2)]);return values[0]+values[1];}',
+    entry:'run',args:[],family:'v8-contract-shared-map-iterator',fixture:{calls:[]}}
 ];}
 
 // The interoperability population includes every declared source-qualified

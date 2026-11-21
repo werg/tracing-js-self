@@ -26,7 +26,10 @@ const ordinaryOperations=new Set(['property.read','property.write','property.upd
 // The same declarative domains are available to the shared effectful source
 // engine. Its base and Promise peers exclude only these explicit domains;
 // arbitrary extensions still have to prove unique ownership.
-export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy]);
+// These protocol families can participate in Promise source projection without
+// introducing an independent whole-episode teacher. Their events are still
+// claimed through the same prefix coordinator and retained-state transaction.
+export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy,iterator,map]);
 const callee=value=>value?.[0]==='method'?value[1]:value;
 const builtin=value=>['intrinsic','builtinfn'].includes(value?.[0])?value[1]:null;
 const selected=value=>value?.[0]==='method'?value[1]:value;
