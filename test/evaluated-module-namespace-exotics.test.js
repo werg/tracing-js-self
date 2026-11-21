@@ -136,6 +136,123 @@ test('namespace exports named __proto__, constructor and toString keep live own 
   assert.equal(replayExact(bundle).valid,true);
 });
 
+test('namespace descriptor reflection ignores inherited implementation dictionary names',async()=>{
+  const modules={
+    'base.js':'export const x=1;',
+    'main.js':`import * as ns from './base.js';export function run(){const out=[];
+      for(const key of ['__proto__','constructor','toString','valueOf','hasOwnProperty'])
+        out.push([key,Object.getOwnPropertyDescriptor(ns,key)===undefined]);return out;}`
+  };
+  const native=await originalVmRun(modules,[{exportName:'run',args:[]}]),
+    owned=await executeEvaluatedModules({modules,entryModule:'main.js',exportName:'run'});
+  assert.deepEqual(owned.result,native[0]);
+  assert.deepEqual(owned.result,[['__proto__',true],['constructor',true],
+    ['toString',true],['valueOf',true],['hasOwnProperty',true]]);
+  const bundle=JSON.parse(JSON.stringify(owned.bundle));
+  assert.equal(validateBundle(bundle).valid,true);
+  assert.equal(replayExact(bundle).valid,true);
+});
+
+test('namespace descriptor conversion validates callable and mixed fields before definition',async()=>{
+  const modules={
+    'base.js':'export const x=1;',
+    'main.js':`import * as ns from './base.js';export function run(){const out=[];
+      const attempt=fn=>{try{return fn();}catch(error){return error.name;}};
+      out.push(attempt(()=>Reflect.defineProperty(ns,'x',{get:1})));
+      out.push(attempt(()=>Reflect.defineProperty(ns,'missing',{get:1})));
+      out.push(attempt(()=>Reflect.defineProperty(ns,'x',{set:false})));
+      out.push(attempt(()=>Reflect.defineProperty(ns,'x',{get:undefined,value:1})));
+      out.push(attempt(()=>Reflect.defineProperty(ns,'missing',{get:undefined,value:1})));
+      out.push(attempt(()=>Reflect.defineProperty(ns,'x',{set:undefined,writable:true})));
+      out.push(attempt(()=>Reflect.defineProperty(ns,'x',{get:Math})));
+      out.push(attempt(()=>Reflect.defineProperty(ns,'x',{get:Object.prototype})));
+      let calls=0;
+      out.push(Reflect.defineProperty(ns,'x',{get(){calls++;return 1;}}));
+      out.push(Reflect.defineProperty(ns,'x',{get:Number}));
+      out.push(Reflect.defineProperty(ns,'x',{set:Math.floor}));
+      class Getter{}
+      out.push(Reflect.defineProperty(ns,'x',{get:Getter}));
+      out.push(Reflect.defineProperty(ns,'x',{get:function*(){yield 1;}}));
+      out.push(Reflect.defineProperty(ns,'x',{get:async function(){return 1;}}));
+      out.push(Reflect.defineProperty(ns,'x',{get:undefined}));
+      out.push(Reflect.defineProperty(ns,'x',{unrelated:1}));
+      out.push(calls,ns.x);return out;}`
+  };
+  const native=await originalVmRun(modules,[{exportName:'run',args:[]}]),
+    owned=await executeEvaluatedModules({modules,entryModule:'main.js',exportName:'run'});
+  assert.deepEqual(owned.result,native[0]);
+  assert.deepEqual(owned.result,[...Array(8).fill('TypeError'),
+    false,false,false,false,false,false,false,true,0,1]);
+  const bundle=JSON.parse(JSON.stringify(owned.bundle));
+  assert.equal(validateBundle(bundle).valid,true);
+  assert.equal(replayExact(bundle).valid,true);
+});
+
+test('namespace descriptor conversion errors precede cyclic live-cell TDZ reads',async()=>{
+  const modules={
+    'a.js':"import {results} from './b.js';export let later=1;export function run(){return results;}",
+    'b.js':`import * as ns from './a.js';export const results=[];
+      try{Reflect.defineProperty(ns,'later',{get:1});results.push('no-error');}
+      catch(error){results.push(error.name);}
+      try{Object.defineProperty(ns,'later',{get:undefined,value:1});results.push('no-error');}
+      catch(error){results.push(error.name);}
+      try{Reflect.defineProperty(ns,'later',{set:1});results.push('no-error');}
+      catch(error){results.push(error.name);}
+      try{Reflect.defineProperty(ns,'later',{get(){return 1;}});results.push('no-error');}
+      catch(error){results.push(error.name);}
+      try{Reflect.defineProperty(ns,'later',{writable:false});results.push('no-error');}
+      catch(error){results.push(error.name);}`
+  };
+  const native=await originalVmRun(modules,[{exportName:'run',args:[]}],'a.js'),
+    owned=await executeEvaluatedModules({modules,entryModule:'a.js',exportName:'run'});
+  assert.deepEqual(owned.result,native[0]);
+  assert.deepEqual(owned.result,['TypeError','TypeError','TypeError',
+    'ReferenceError','ReferenceError']);
+  const bundle=JSON.parse(JSON.stringify(owned.bundle));
+  assert.equal(validateBundle(bundle).valid,true);
+  assert.equal(replayExact(bundle).valid,true);
+});
+
+test('namespace definitions preserve SameValue and omitted descriptor fields',async()=>{
+  const modules={
+    'base.js':'export let n=NaN,z=-0,x=1;',
+    'main.js':`import * as ns from './base.js';export function run(){return [
+      Reflect.defineProperty(ns,'n',{value:NaN}),Reflect.defineProperty(ns,'z',{value:0}),
+      Reflect.defineProperty(ns,'z',{value:-0}),Reflect.defineProperty(ns,'x',{}),
+      Reflect.defineProperty(ns,'x',{enumerable:true}),
+      Reflect.defineProperty(ns,'x',{enumerable:false}),
+      Reflect.defineProperty(ns,Symbol.toStringTag,{value:'Module'}),
+      Reflect.defineProperty(ns,Symbol.toStringTag,{writable:true})];}`
+  };
+  const native=await originalVmRun(modules,[{exportName:'run',args:[]}]),
+    owned=await executeEvaluatedModules({modules,entryModule:'main.js',exportName:'run'});
+  assert.deepEqual(owned.result,native[0]);
+  assert.deepEqual(owned.result,[true,false,true,true,true,false,true,false]);
+  const bundle=JSON.parse(JSON.stringify(owned.bundle));
+  assert.equal(validateBundle(bundle).valid,true);
+  assert.equal(replayExact(bundle).valid,true);
+});
+
+test('namespace descriptor getters and inherited fields keep explicit profile refusals',async()=>{
+  for(const operation of ['Object.defineProperty','Reflect.defineProperty']){
+    for(const [descriptor,expected,message]of [
+      ['{get value(){calls++;return 1;}}',[true,1],'Accessor descriptor fields'],
+      ['Object.create({value:1})',[true,0],'Inherited descriptor fields']
+    ]){
+      const modules={
+        'base.js':'export const x=1;',
+        'main.js':`import * as ns from './base.js';export function run(){let calls=0;
+          const result=${operation}(ns,'x',${descriptor});
+          return [result===ns||result===true,calls];}`
+      };
+      const native=await originalVmRun(modules,[{exportName:'run',args:[]}]);
+      assert.deepEqual(native[0],expected);
+      await assert.rejects(()=>executeEvaluatedModules({modules,entryModule:'main.js',exportName:'run'}),
+        new RegExp(message));
+    }
+  }
+});
+
 test('observed namespace identities use live, sorted, null-prototype exotics',async()=>{
   const calls=[{exportName:'inspect',args:[]},{exportName:'inspectEmpty',args:[]}];
   const native=await originalVmRun(sourceGraph,calls);

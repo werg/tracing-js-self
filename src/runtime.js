@@ -455,7 +455,7 @@ export class Runtime {
     return ['ref',id];
   }
   startModuleNamespaceRead(draft,caller,namespace,key,kind,details,eventId){
-    const accessor=namespace.accessors?.[key];
+    const accessor=Object.hasOwn(namespace.accessors??{},key)?namespace.accessors[key]:null;
     const getter=accessor?.get?.value;
     if(!getter||getter[0]!=='ref'||draft.heap[getter[1]]?.kind!=='function')
       throw new Error('Module namespace export lacks its owned live-cell getter');
@@ -512,11 +512,24 @@ export class Runtime {
     return invalid?{error:'Cannot redefine property: '+key}:{ok:true};
   }
   moduleNamespaceDefine(draft,caller,namespace,key,descriptor,reflect,eventId){
+    // The callers have already refused descriptor getters and inherited
+    // fields. Preserve absent fields and ToPropertyDescriptor's validation
+    // order before [[DefineOwnProperty]] can read a live export (and its TDZ).
+    const fields={};
+    for(const name of ['enumerable','configurable','value','writable','get','set']){
+      if(!Object.hasOwn(descriptor.properties,name))continue;
+      const value=descriptor.properties[name].value;
+      if((name==='get'||name==='set')&&value[0]!=='undefined'&&
+         primitiveUnary('typeof',value,draft.heap)[1]!=='function')
+        guestFault('TypeError','Accessor must be a function or undefined');
+      fields[name]=value;
+    }
+    if((Object.hasOwn(fields,'get')||Object.hasOwn(fields,'set'))&&
+       (Object.hasOwn(fields,'value')||Object.hasOwn(fields,'writable')))
+      guestFault('TypeError','Invalid mixed data/accessor descriptor');
     if(!Object.hasOwn(namespace.accessors??{},key)&&!Object.hasOwn(namespace.properties,key))
       return reflect?{value:['bool',false]}:
         guestFault('TypeError','Cannot redefine property: '+key);
-    const fields=Object.fromEntries(Object.entries(descriptor.properties)
-      .map(([name,field])=>[name,field.value]));
     if(Object.hasOwn(namespace.accessors??{},key))
       return {child:this.startModuleNamespaceRead(draft,caller,namespace,key,'define',
         {descriptorFields:fields,reflect,operationEventId:eventId},eventId)};
@@ -3541,14 +3554,19 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             }
             if(!object||!['object','array','generator','module-namespace'].includes(object.kind)&&!(object.kind==='function'&&object.properties?.name&&object.properties?.length))
               throw new TypeError('Own descriptor reflection requires owned ordinary storage');
-            const key=valueKey(args[1]?.value??U),accessor=object.accessors?.[key],slot=object.properties[key];
-            if(!accessor&&!slot)return {...operands(fn,...args),...result(U)};
-            if(object.kind==='module-namespace'&&accessor){
-              const child=this.startModuleNamespaceRead(s,f,object,key,'descriptor',{},eventId);
-              return {...operands(fn,...args),causes:[{kind:'invocation',frameId:child}]};
+            const key=valueKey(args[1]?.value??U);
+            if(object.kind==='module-namespace'){
+              if(Object.hasOwn(object.accessors??{},key)){
+                const child=this.startModuleNamespaceRead(s,f,object,key,'descriptor',{},eventId);
+                return {...operands(fn,...args),causes:[{kind:'invocation',frameId:child}]};
+              }
+              if(!Object.hasOwn(object.properties,key))
+                return {...operands(fn,...args),...result(U)};
+              return {...operands(fn,...args),...result(this.moduleNamespaceDescriptor(s,object,key,
+                object.properties[key].value,eventId))};
             }
-            if(object.kind==='module-namespace')
-              return {...operands(fn,...args),...result(this.moduleNamespaceDescriptor(s,object,key,slot.value,eventId))};
+            const accessor=object.accessors?.[key],slot=object.properties[key];
+            if(!accessor&&!slot)return {...operands(fn,...args),...result(U)};
             const attributes=object.dataAttributes?.[key],arrayLength=object.kind==='array'&&key==='length';
             const fields=accessor?{get:accessor.get.value,set:accessor.set.value,enumerable:['bool',accessor.enumerable],configurable:['bool',accessor.configurable]}:
               {value:slot.value,writable:['bool',attributes?.writable??true],enumerable:['bool',attributes?.enumerable??!arrayLength],configurable:['bool',attributes?.configurable??!arrayLength]};
