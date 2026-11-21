@@ -54,11 +54,12 @@ export class DurableSelectedHistoryJournal {
     }
     return validateSelectedHistoryChain(entries.reverse(),receipt);
   }
-  async append(checkpoint,{previous=null}={}){
+  async append(checkpoint,{previous=null,terminal=undefined}={}){
     if(previous!==null)validateSelectedHistoryReceipt(previous);
     // Capture complete caller bytes before the first storage await.
     const entry={schema:'semantic-selected-history-entry/8',streamId:this.streamId,
-      position:(previous?.position??0)+1,previous:structuredClone(previous),checkpoint:structuredClone(checkpoint)};
+      position:(previous?.position??0)+1,previous:structuredClone(previous),checkpoint:structuredClone(checkpoint),
+      ...(terminal===undefined?{}:{terminal:structuredClone(terminal)})};
     validateSelectedHistoryEntry(entry);this.entryPath(entry.position);
     const bytes=Buffer.from(stableAlgorithmJSON(entry),'utf8');
     const receipt=Object.freeze({schema:'semantic-selected-history-receipt/8',streamId:this.streamId,
@@ -67,9 +68,12 @@ export class DurableSelectedHistoryJournal {
     if(entry.previous){
       const entries=await this.readAll(entry.previous);
       validateSelectedHistoryExtension(entries.at(-1).checkpoint,entry.checkpoint);
+      const receiptForValidation=Object.freeze({schema:'semantic-selected-history-receipt/8',
+        streamId:this.streamId,position:entry.position,id:digest(bytes),bytes:bytes.length});
+      validateSelectedHistoryChain([...entries,entry],receiptForValidation);
       if(entries.reduce((total,row)=>total+Buffer.byteLength(stableAlgorithmJSON(row)),bytes.length)>this.maxBytes)
         fail('complete log exceeds byte bound');
-    }
+    }else validateSelectedHistoryChain([entry],receipt);
     const base=join(this.directory,'selected-checkpoint-history'),stream=join(base,this.streamId);
     await mkdir(this.directory,{recursive:true,mode:0o700});await mkdir(base,{recursive:true,mode:0o700});
     await mkdir(stream,{recursive:true,mode:0o700});await syncDirectory(this.directory);await syncDirectory(base);

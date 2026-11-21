@@ -257,7 +257,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   select.cancel=async input=>{
     const session=sessions.get(input?.session);
     if(session?.pending&&!['acknowledgement-unknown','commit-failed'].includes(session.evidence.status)){
-      session.evidence.status='rejected';session.evidence.failure=input.reason??'semantic rejection';
+      session.evidence.status='cancelled';session.evidence.failure=input.reason??'selected session cancelled';
     }
     try{
       const result=await request({op:'cancel',session:input.session,reason:input.reason});
@@ -269,7 +269,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   };
   select.metrics=()=>({schema:'semantic-native-model-metrics/8',attempts:copy(attempts),
     predictionAttempts:attempts.length,semanticallyAccepted:attempts.filter(row=>row.status==='accepted').length,
-    failedAttempts:attempts.filter(row=>['failed','rejected','commit-failed','abandoned-on-restore'].includes(row.status)).length,
+    failedAttempts:attempts.filter(row=>['failed','rejected','cancelled','commit-failed','abandoned-on-restore'].includes(row.status)).length,
     unknownAcknowledgements:attempts.filter(row=>row.status==='acknowledgement-unknown').length,
     unknownGenerationCostAttempts:attempts.filter(row=>row.selection===null).length,
     elapsedMs:attempts.reduce((sum,row)=>sum+(row.elapsedMs??0),0),

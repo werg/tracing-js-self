@@ -17,14 +17,16 @@ export function suppliedHistorySelector(choose){
   let attempts=[],modelAttempts=[],sessions={},openings=[],restoreCalls=0,checkpointCalls=0,closed=false,
     runtimeMetrics={rpcCalls:0,computeSeconds:0,peakMemoryBytes:0};
   const select=async request=>{
-    const record=await choose(request),payloadHex=Buffer.from(record).toString('hex'),index=attempts.length;
+    const index=attempts.length,attempt={attempt:index,session:request.session,invocationId:request.context.invocationId,
+      status:'submitted',record:null,selection:null};
+    attempts.push(attempt);
+    const record=await choose(request),payloadHex=Buffer.from(record).toString('hex');
     const selection={modelSelected:true,origin:'actual-model-selected',selectionId:'v8:'+index,
       session:request.session,invocationId:request.context.invocationId,
       checkpointIdentity:historyTestIdentity.checkpointIdentity,tokenizerIdentity:historyTestIdentity.tokenizerIdentity,
       prefixDigest:request.context.prefixDigest,contextDigest:hashAlgorithmData(request.context),payloadHex,
       generatedTokens:Buffer.byteLength(record),fragments:[{tokenIds:[...Buffer.from(record)],payloadHex}]};
-    attempts.push({attempt:index,session:request.session,invocationId:request.context.invocationId,
-      record,selection:copy(selection),status:'decoded'});
+    Object.assign(attempt,{record,selection:copy(selection),status:'decoded'});
     modelAttempts.push({...copy(selection),status:'awaiting-commit'});
     if(!sessions[request.session]){
       openings.push({session:request.session});
@@ -56,7 +58,13 @@ export function suppliedHistorySelector(choose){
     attempts[index].status='rejected';modelAttempts[index].status='semantic-rejected';
     return {rejected:true};
   };
-  select.cancel=async()=>({closed:true});
+  select.cancel=async input=>{
+    const attempt=attempts.findLast(row=>row.session===input.session&&row.status==='decoded');
+    if(attempt){attempt.status='cancelled';attempt.failure=input.reason??'selected session cancelled';}
+    const native=modelAttempts[attempt?.attempt];
+    if(native?.status==='awaiting-commit')native.status='cancelled';
+    return {schema:'semantic-native-close/8',closed:true,session:input.session};
+  };
   select.checkpoint=async()=>{
     checkpointCalls++;runtimeMetrics.rpcCalls++;
     const native=seal({schema:'semantic-model-checkpoint/8',equivalence:'verified-model-reexecution',
@@ -71,6 +79,12 @@ export function suppliedHistorySelector(choose){
     openings=copy(checkpoint.native.openings);runtimeMetrics=copy(checkpoint.runtimeMetrics);
     return {restored:true,hostDispatches:0,transportCheckpointDigest:checkpoint.digest};
   };
+  select.metrics=()=>({schema:'semantic-native-model-metrics/8',attempts:copy(attempts),
+    predictionAttempts:attempts.length,semanticallyAccepted:attempts.filter(row=>row.status==='accepted').length,
+    failedAttempts:attempts.filter(row=>['failed','rejected','cancelled','commit-failed','abandoned-on-restore'].includes(row.status)).length,
+    unknownAcknowledgements:attempts.filter(row=>row.status==='acknowledgement-unknown').length,
+    unknownGenerationCostAttempts:attempts.filter(row=>row.selection===null).length,elapsedMs:0,
+    runtime:copy(runtimeMetrics),nativeAdmissionClaim:false,sourceAdmissionClaim:false});
   select.close=()=>{closed=true;};
   select.controls=()=>({restoreCalls,checkpointCalls,closed,attempts:copy(attempts)});
   return select;

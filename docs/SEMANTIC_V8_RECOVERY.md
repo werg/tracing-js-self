@@ -264,9 +264,9 @@ cuts and owns retention of their receipts; files beyond the supplied head are
 never adopted automatically. Rewriting or rolling back that independently
 trusted head is outside the receipt's integrity guarantee.
 
-Cancellation tombstones, distributed ownership, journal rotation/compaction,
+Automatic cancellation tombstones, distributed ownership, journal rotation/compaction,
 atomic coordination with application transactions, and durability of unsaved
-transitions remain separate work. Complete snapshots repeat earlier evidence,
+transitions remain separate work for this explicit-cut API. Complete snapshots repeat earlier evidence,
 so their storage cost grows faster than an incremental event log and is bounded
 explicitly. Earlier insertion-order lifecycle checkpoints must be regenerated
 before using this canonical journal.
@@ -327,11 +327,50 @@ cut; `checkpointDurableHistory()` refuses competing manual ownership of the same
 head. Ordinary `checkpoint()` remains available. A restored driver must enable
 the mode explicitly with its recovered trusted head before continuing.
 
-This mode covers acknowledged selection/stale/completion boundaries. It does
-not make failed model attempts, later cancellation, arbitrary application
-mutations, external side effects or incoming callbacks automatically durable.
-Those require their existing durable action/input mechanisms or separate terminal
-authority. Multi-process fencing, application-transaction atomicity and bounded
+Cancellation uses a terminal suffix in the same independently acknowledged
+history. An already-running regular checkpoint/head save must first finish with
+a confirmed head; a failed or uncertain acknowledgement cannot anchor another
+append. Against that trusted head, the driver appends and acknowledges a
+`requested` event before waiting for an in-flight selection, native commit or
+stale rejection. Only after that request is acknowledged and the native work
+settles does it ask the native selector to close the session. A returned
+`semantic-native-close/8` receipt produces a final `closed` event; an absent or
+failed close reply produces `unknown` with the original failure. A lost or
+failed initial/request-head acknowledgement stops before native close. If the
+final event loses its acknowledgement after a close, the locally confirmed head
+remains `requested`; recovery uses the application's independently retained head.
+The writer never infers a newer receipt from journal files or invents a positive
+native acknowledgement.
+
+Terminal entries repeat the latest validated checkpoint as an anchor and bind a
+snapshot of exact attempt, public, context, failure and native-cost evidence.
+Native metrics are mandatory: their previous attempt bytes must exactly preserve
+the anchored checkpoint, and all cumulative native costs must be at least that
+checkpoint's costs. Newly hashed terminal records cannot erase inherited work.
+The initial `requested` snapshot can contain an in-flight attempt; the final
+event records the settled result without treating unacknowledged bytes as a
+validated checkpoint. A chain may end with `requested`, or extend it once to
+`closed` or `unknown`. No active checkpoint can follow a terminal event.
+
+When `restoreLatest()` reads a terminal suffix under the application's
+independently retained head, it returns a
+`semantic-selected-terminal-disposition/1` value with phase `requested`,
+`closed`, or `unknown`. It validates the full chain and terminal evidence before
+opening native state, then returns the disposition instead of an active driver.
+An older packet cannot resume through a newer trusted terminal head. Supply the
+latest independently retained receipt; a stale receipt cannot reveal a newer
+acknowledgement. Direct active `restore()` remains strict and does not accept a
+closed native session. The `SelectedTerminalDisposition` and
+`SelectedHistoryTerminalEvent` types are exported from
+`tracing-js-self/storage/node`.
+
+This mode retains the coordinated driver's existing dedicated single-session
+transport requirement. The terminal suffix fences the entire selected session;
+it does not coordinate independently owned sibling drivers on a shared service.
+It covers acknowledged selection/stale/completion boundaries and the terminal
+cancellation suffix. Arbitrary application mutations, external side
+effects or incoming callbacks still require their durable action/input
+mechanisms. Multi-process fencing, application-transaction atomicity and bounded
 log rotation remain open. Full snapshots retain explicit storage bounds and can
 be expensive for long runs; exhausting a bound stops execution rather than
 silently dropping earlier costs or evidence. The new tests use supplied decoders

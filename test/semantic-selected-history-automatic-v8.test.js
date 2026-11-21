@@ -1,14 +1,17 @@
 // Supplied-decoder durability controls. These do not claim learned selections.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,rm,readFile,open,rename} from 'node:fs/promises';
+import {mkdtemp,rm,readFile,writeFile,open,rename} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {spawnSync} from 'node:child_process';
 import {DurableSelectedHistoryJournal} from '../src/storage/selected-history.js';
 import {RegionSelectedModelDriver as Driver} from '../src/semantic/selected-execution-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {encodeDetailedRecord} from '../src/semantic/detail-v8.js';
 import {analyzeSemanticProgram} from '../src/training/semantic-program.js';
+import {hashAlgorithmData} from '../src/semantic/program.js';
+import {stableAlgorithmJSON} from '../src/semantic/ir.js';
 import {historyTestPolicy as policy,suppliedHistorySelector} from './helpers/supplied-native-history-v8.js';
 
 const copy=structuredClone,line=(kind,fields)=>encodeDetailedRecord({kind,fields});
@@ -30,6 +33,10 @@ function choice(source=plain){
   return request=>records[request.public.timeline.filter(row=>row.mode==='generated').length];
 }
 const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done;});return {promise,resolve};};
+async function until(predicate){
+  for(let i=0;i<400;i++){if(predicate())return;await new Promise(resolve=>setTimeout(resolve,5));}
+  assert.fail('Expected automatic history boundary was not reached');
+}
 async function finish(driver){
   const result=await driver.runInvocation('call');if(result.taskCompletion)await result.taskCompletion;
   await Promise.all([...driver.running.values()].map(row=>row.task));return result;
@@ -143,19 +150,43 @@ test('cancellation during a pending durable acknowledgement cannot dispatch afte
   await reached.promise;abort.abort(new Error('Cancelled while saving'));
   await assert.rejects(running,/Cancelled while saving/);
   assert.equal(calls,0);resume.resolve();await acknowledged.promise;
-  await new Promise(resolve=>setImmediate(resolve));
+  await driver.terminalCancellation;
   assert.equal(calls,0);assert.equal(driver.attempts.length,1);
   await assert.rejects(driver.checkpoint());
-  // The separately retained head covers the accepted pre-cancellation cut.
-  // This mechanism does not invent a durable cancellation after that cut.
-  assert.equal(f.head().position,2);
+  const entries=await f.journal.readAll(f.head());
+  assert.equal(f.head().position,4);
+  assert.deepEqual(entries.slice(-2).map(row=>row.terminal.phase),['requested','closed']);
+  assert.equal(entries.at(-1).terminal.snapshot.attempts[0].status,'accepted');
+});
+
+test('a lost acknowledgement of the active checkpoint cannot be followed by guessed terminal authority',async t=>{
+  const f=await fixture(t),reached=deferred(),resume=deferred(),saved=deferred();let calls=0,cancellations=0;
+  const selector=suppliedHistorySelector(choice(host)),cancel=selector.cancel;
+  selector.cancel=async request=>{cancellations++;return cancel(request);};
+  const driver=new Driver({select:selector,harness:begin(host,{'demo.store':()=>{calls++;return 7;}}),...policy});
+  t.after(()=>driver.close());
+  await driver.enableDurableHistory({journal:f.journal,acknowledge:async request=>{
+    if(request.receipt.position===2){reached.resolve();await resume.promise;}
+    const receipt=await f.acknowledge(request);
+    if(receipt.position===2){saved.resolve();throw Error('Active cut acknowledgement was lost');}
+    return receipt;
+  }});
+  const abort=new AbortController(),running=driver.runInvocation('call',{signal:abort.signal});
+  await reached.promise;abort.abort(new Error('Cancelled during uncertain active cut'));
+  await assert.rejects(running,/Cancelled during uncertain active cut/);
+  resume.resolve();await saved.promise;
+  await assert.rejects(driver.terminalCancellation,/previous automatic history acknowledgement is uncertain/);
+  assert.equal(calls,0);assert.equal(cancellations,0);
+  assert.equal(driver.historyReceipt.position,1);assert.equal(f.head().position,2);
+  assert.equal((await f.journal.readAll(f.head())).some(row=>Object.hasOwn(row,'terminal')),false);
+  assert.equal(driver.attempts[0].status,'accepted','The returned native commit stays accepted despite lost storage ack');
 });
 
 test('cancellation waits for an in-flight native commit and preserves a late positive acknowledgement',async t=>{
   const f=await fixture(t),reached=deferred(),resume=deferred(),closed=deferred();let calls=0,cancellations=0;
   const select=suppliedHistorySelector(choice(host)),commit=select.commit;
   select.commit=async request=>{reached.resolve();await resume.promise;return commit(request);};
-  select.cancel=async()=>{cancellations++;closed.resolve();return {closed:true};};
+  select.cancel=async input=>{cancellations++;closed.resolve();return {schema:'semantic-native-close/8',closed:true,session:input.session};};
   const driver=new Driver({select,harness:begin(host,{'demo.store':()=>{calls++;return 7;}}),...policy});
   t.after(()=>driver.close());
   await driver.enableDurableHistory({journal:f.journal,acknowledge:f.acknowledge});
@@ -163,12 +194,45 @@ test('cancellation waits for an in-flight native commit and preserves a late pos
   await reached.promise;abort.abort(new Error('Cancelled during native commit'));
   await assert.rejects(running,/Cancelled during native commit/);
   assert.equal(cancellations,0,'Cancellation must not race the native commit');
-  assert.equal(driver.attempts[0].status,'acknowledgement-unknown');
+  assert.equal(driver.attempts[0].status,'acknowledging');
+  await until(()=>driver.historyReceipt?.position===2||driver.terminalCancellationError);
+  assert.equal(driver.historyReceipt?.position,2,driver.terminalCancellationError?.stack);
+  assert.equal(f.head().position,2,'The durable request revokes the older active cut before waiting for commit');
   resume.resolve();await closed.promise;
+  const disposition=await driver.terminalCancellation;
   assert.equal(cancellations,1);assert.equal(calls,0);
   assert.equal(driver.attempts[0].status,'accepted');assert.equal(driver.attempts[0].commitReceipt.committed,true);
   assert.equal(select.controls().attempts[0].status,'accepted');
-  assert.equal(f.head().position,1,'The later cancelled continuation is not falsely called durable');
+  assert.equal(disposition.phase,'closed');assert.equal(f.head().position,3);
+  const entries=await f.journal.readAll(f.head());
+  assert.deepEqual(entries.slice(-2).map(row=>row.terminal.phase),['requested','closed']);
+  assert.equal(entries.at(-2).terminal.snapshot.attempts[0].status,'acknowledging');
+  assert.equal(entries.at(-1).terminal.snapshot.attempts[0].status,'accepted');
+});
+
+test('a late unknown native commit remains unknown in the terminal suffix and never dispatches',async t=>{
+  const f=await fixture(t),reached=deferred(),resume=deferred(),closed=deferred();let calls=0;
+  const selector=suppliedHistorySelector(choice(host));
+  selector.commit=async request=>{reached.resolve();await resume.promise;const error=Error('Native commit reply lost');
+    error.acknowledgementUnknown=true;throw error;};
+  selector.cancel=async input=>{closed.resolve();return {schema:'semantic-native-close/8',closed:true,session:input.session};};
+  const driver=new Driver({select:selector,harness:begin(host,{'demo.store':()=>{calls++;return 7;}}),...policy});
+  t.after(()=>driver.close());await driver.enableDurableHistory({journal:f.journal,acknowledge:f.acknowledge});
+  const abort=new AbortController(),running=driver.runInvocation('call',{signal:abort.signal});
+  await reached.promise;abort.abort(new Error('Cancelled during unresolved native commit'));
+  await assert.rejects(running,/Cancelled during unresolved native commit/);
+  await until(()=>driver.historyReceipt?.position===2||driver.terminalCancellationError);
+  assert.equal(driver.historyReceipt.position,2);
+  resume.resolve();await closed.promise;const disposition=await driver.terminalCancellation;
+  assert.equal(disposition.phase,'closed');assert.equal(calls,0);
+  assert.equal(driver.attempts[0].status,'acknowledgement-unknown');
+  assert.equal(Object.hasOwn(driver.attempts[0],'commitReceipt'),false);
+  const entries=await f.journal.readAll(f.head()),terminal=entries.at(-1).terminal;
+  assert.deepEqual(entries.slice(-2).map(row=>row.terminal.phase),['requested','closed']);
+  assert.equal(terminal.snapshot.attempts[0].status,'acknowledgement-unknown');
+  assert.equal(terminal.snapshot.attempts[0].failure,'Native commit reply lost');
+  assert.equal(terminal.snapshot.nativeMetrics.attempts[0].status,'decoded',
+    'The selector metrics keep their own unacknowledged state instead of fabricating acceptance');
 });
 
 test('cancellation waits for a pending original selection and retains its actual bytes without committing it',async t=>{
@@ -176,17 +240,25 @@ test('cancellation waits for a pending original selection and retains its actual
   const regular=choice(),select=suppliedHistorySelector(async request=>{
     reached.resolve();await resume.promise;return regular(request);
   });
-  select.cancel=async()=>{cancellations++;closed.resolve();return {closed:true};};
+  select.cancel=async input=>{cancellations++;closed.resolve();return {schema:'semantic-native-close/8',closed:true,session:input.session};};
   const driver=new Driver({select,harness:begin(),...policy});t.after(()=>driver.close());
   await driver.enableDurableHistory({journal:f.journal,acknowledge:f.acknowledge});
   const abort=new AbortController(),running=driver.runInvocation('call',{signal:abort.signal});
   await reached.promise;abort.abort(new Error('Cancelled during original selection'));
   await assert.rejects(running,/Cancelled during original selection/);assert.equal(cancellations,0);
+  await until(()=>driver.historyReceipt?.position===2||driver.terminalCancellationError);
+  assert.equal(driver.historyReceipt?.position,2,driver.terminalCancellationError?.stack);
+  assert.equal(f.head().position,2,'The request is independently acknowledged while selection is still pending');
   resume.resolve();await closed.promise;
+  await driver.terminalCancellation;
   assert.equal(cancellations,1);assert.equal(driver.attempts[0].status,'rejected');
   assert.equal(driver.attempts[0].record,line('return',{value:['num',7]}));
   assert.equal(driver.attempts[0].provenanceValidated,true);assert.equal(driver.contexts.length,0);
-  assert.equal(f.head().position,1);
+  assert.equal(f.head().position,3);
+  const entries=await f.journal.readAll(f.head());
+  assert.deepEqual(entries.slice(-2).map(row=>row.terminal.phase),['requested','closed']);
+  assert.equal(entries.at(-2).terminal.snapshot.attempts[0].status,'submitted');
+  assert.equal(entries.at(-1).terminal.snapshot.attempts[0].status,'rejected');
 });
 
 test('cancellation cannot close native state before a consumed stale attempt is rejected',async t=>{
@@ -196,16 +268,129 @@ test('cancellation cannot close native state before a consumed stale attempt is 
     bridge.publishProgram({programId:'later',source:plain,entry:'run'});return regular(request);
   }),reject=select.reject;
   select.reject=async request=>{reached.resolve();await resume.promise;return reject(request);};
-  select.cancel=async()=>{cancellations++;closed.resolve();return {closed:true};};
+  select.cancel=async input=>{cancellations++;closed.resolve();return {schema:'semantic-native-close/8',closed:true,session:input.session};};
   const driver=new Driver({select,harness:bridge,...policy});t.after(()=>driver.close());
   await driver.enableDurableHistory({journal:f.journal,acknowledge:f.acknowledge});
   const abort=new AbortController(),running=driver.runInvocation('call',{signal:abort.signal});
   await reached.promise;abort.abort(new Error('Cancelled during stale rejection'));
   await assert.rejects(running,/Cancelled during stale rejection/);assert.equal(cancellations,0);
-  resume.resolve();await closed.promise;
+  await until(()=>driver.historyReceipt?.position===2||driver.terminalCancellationError);
+  assert.equal(driver.historyReceipt?.position,2,driver.terminalCancellationError?.stack);
+  assert.equal(f.head().position,2,'The terminal request is recorded before the native rejection settles');
+  resume.resolve();await closed.promise;await driver.terminalCancellation;
   assert.equal(cancellations,1);assert.equal(driver.attempts[0].status,'stale');
   assert.equal(select.controls().attempts[0].status,'rejected');
-  assert.equal(driver.metrics().staleRetries,1);assert.equal(f.head().position,1);
+  assert.equal(driver.metrics().staleRetries,1);assert.equal(f.head().position,3);
+  const entries=await f.journal.readAll(f.head());
+  assert.deepEqual(entries.slice(-2).map(row=>row.terminal.phase),['requested','closed']);
+});
+
+test('lost terminal-head acknowledgement cannot close, and a fresh process returns the retained request disposition',async t=>{
+  const f=await fixture(t);let cancellations=0;
+  const selector=suppliedHistorySelector(choice());
+  selector.cancel=async()=>{cancellations++;return {schema:'semantic-native-close/8',closed:true,session:'automatic-history'};};
+  const driver=new Driver({select:selector,harness:begin(),...policy});t.after(()=>driver.close());
+  const first=await driver.enableDurableHistory({journal:f.journal,acknowledge:async request=>{
+    const receipt=await f.acknowledge(request);
+    if(request.receipt.position===2)throw Error('Lost terminal head acknowledgement');
+    return receipt;
+  }});
+  await assert.rejects(driver.select.cancel(driver.prefix('call')),/Lost terminal head acknowledgement/);
+  assert.equal(cancellations,0,'An uncertain terminal request cannot authorize native close');
+  assert.equal(driver.historyReceipt.position,1,'The failed writer never adopts a guessed head');
+  const retainedHead=f.head();assert.equal(retainedHead.position,2);
+  const next=suppliedHistorySelector(choice()),restored=await Driver.restoreLatest(first.checkpoint,{select:next,policy,
+    historyJournal:new DurableSelectedHistoryJournal({directory:f.directory,streamId:'automatic'}),
+    historyReceipt:retainedHead});
+  assert.equal(restored.schema,'semantic-selected-terminal-disposition/1');
+  assert.equal(restored.phase,'requested');assert.equal(next.controls().restoreCalls,0);
+
+  const input=join(f.directory,'terminal-restore.json');
+  await writeFile(input,JSON.stringify({packet:first.checkpoint,head:retainedHead,policy}));
+  const child=spawnSync(process.execPath,['--input-type=module','--eval',`
+    import assert from 'node:assert/strict';
+    import {readFile} from 'node:fs/promises';
+    import {DurableSelectedHistoryJournal} from './src/storage/selected-history.js';
+    import {RegionSelectedModelDriver as Driver} from './src/semantic/selected-execution-v8.js';
+    import {suppliedHistorySelector} from './test/helpers/supplied-native-history-v8.js';
+    const input=JSON.parse(await readFile(process.argv[1],'utf8'));
+    const select=suppliedHistorySelector(()=>{throw Error('terminal sessions cannot select again');});
+    const result=await Driver.restoreLatest(input.packet,{select,policy:input.policy,
+      historyJournal:new DurableSelectedHistoryJournal({directory:process.argv[2],streamId:'automatic'}),
+      historyReceipt:input.head});
+    assert.equal(result.schema,'semantic-selected-terminal-disposition/1');
+    assert.equal(result.phase,'requested');assert.equal(select.controls().restoreCalls,0);
+    process.stdout.write(JSON.stringify(result));
+  `,input,f.directory],{cwd:process.cwd(),encoding:'utf8'});
+  assert.equal(child.status,0,child.stderr);
+  assert.equal(JSON.parse(child.stdout).phase,'requested');
+
+  const rows=await f.journal.readAll(retainedHead),omitted=suppliedHistorySelector(choice());
+  await assert.rejects(Driver.restoreLatest(first.checkpoint,{select:omitted,policy,
+    historyJournal:{readAll:async()=>rows.slice(0,1)},historyReceipt:retainedHead}),/incomplete acknowledged chain/);
+  assert.equal(omitted.controls().restoreCalls,0,'An omitted terminal suffix is refused before native state opens');
+  const forged=suppliedHistorySelector(choice()),base=rows.at(-1),event={...base.terminal,phase:'closed',
+    closeReceipt:{schema:'forged-close/8',closed:true,session:base.terminal.session}},
+    entry={schema:'semantic-selected-history-entry/8',streamId:'automatic',position:3,previous:retainedHead,
+      checkpoint:base.checkpoint,terminal:event},bytes=Buffer.byteLength(stableAlgorithmJSON(entry)),
+    head={schema:'semantic-selected-history-receipt/8',streamId:'automatic',position:3,
+      id:hashAlgorithmData(entry),bytes};
+  await assert.rejects(Driver.restoreLatest(first.checkpoint,{select:forged,policy,
+    historyJournal:{readAll:async()=>[...rows,entry]},historyReceipt:head}),/native close receipt/);
+  assert.equal(forged.controls().restoreCalls,0,'A forged close receipt cannot open native state');
+});
+
+test('native close failure is retained as unknown without a positive close receipt',async t=>{
+  const f=await fixture(t),selector=suppliedHistorySelector(choice());let cancellations=0;
+  selector.cancel=async()=>{cancellations++;throw Error('Native close reply was lost');};
+  const driver=new Driver({select:selector,harness:begin(),...policy});t.after(()=>driver.close());
+  const first=await driver.enableDurableHistory({journal:f.journal,acknowledge:f.acknowledge});
+  const result=await driver.select.cancel(driver.prefix('call'));
+  assert.equal(result.phase,'unknown');assert.equal(result.failure,'Native close reply was lost');
+  assert.equal(cancellations,1);assert.equal(f.head().position,3);
+  const entries=await f.journal.readAll(f.head());
+  assert.deepEqual(entries.slice(-2).map(row=>row.terminal.phase),['requested','unknown']);
+  assert.equal(Object.hasOwn(entries.at(-1).terminal,'closeReceipt'),false);
+  const next=suppliedHistorySelector(choice()),restored=await Driver.restoreLatest(first.checkpoint,{select:next,policy,
+    historyJournal:f.journal,historyReceipt:f.head()});
+  assert.equal(restored.phase,'unknown');assert.equal(next.controls().restoreCalls,0);
+});
+
+test('terminal recovery retains anchored native costs and original attempt bytes even under a rehashed head',async t=>{
+  const f=await fixture(t),selector=suppliedHistorySelector(choice()),
+    driver=new Driver({select:selector,harness:begin(),...policy});
+  t.after(()=>driver.close());
+  const first=await driver.enableDurableHistory({journal:f.journal,acknowledge:f.acknowledge});
+  const chosen=await driver.select(driver.prefix('call'));
+  driver.harness.selected('call',chosen.record);
+  await driver.onCommitted({invocationId:'call',...chosen});
+  await driver.select.cancel({context:{invocationId:'call'},reason:'retain consumed native costs'});
+  const original=await f.journal.readAll(f.head()),fresh=suppliedHistorySelector(choice());
+  const positive=await Driver.restoreLatest(first.checkpoint,{select:fresh,policy,
+    historyJournal:f.journal,historyReceipt:f.head()});
+  assert.equal(positive.phase,'closed');assert.equal(fresh.controls().restoreCalls,0);
+  assert(original.at(-1).checkpoint.native.runtimeMetrics.rpcCalls>0);
+  for(const [label,change,message]of [
+    ['missing native metrics',snapshot=>{snapshot.nativeMetrics=null;},/native metrics/],
+    ['rolled-back native costs',snapshot=>{snapshot.nativeMetrics.runtime.rpcCalls=0;},/cost accounting/],
+    ['changed original native bytes',snapshot=>{snapshot.nativeMetrics.attempts[0].record='substituted';},
+      /original native attempts/]
+  ])await t.test(label,async()=>{
+    const entries=copy(original);let head=null;
+    for(const entry of entries){
+      entry.previous=copy(head);
+      if(entry.terminal){
+        change(entry.terminal.snapshot);
+        entry.terminal.snapshotDigest=hashAlgorithmData(entry.terminal.snapshot);
+      }
+      head={schema:'semantic-selected-history-receipt/8',streamId:entry.streamId,position:entry.position,
+        id:hashAlgorithmData(entry),bytes:Buffer.byteLength(stableAlgorithmJSON(entry))};
+    }
+    const select=suppliedHistorySelector(()=>{throw Error('Invalid terminal history cannot sample');});
+    await assert.rejects(Driver.restoreLatest(first.checkpoint,{select,policy,
+      historyJournal:{readAll:async()=>entries},historyReceipt:head}),message);
+    assert.equal(select.controls().restoreCalls,0,'Invalid terminal evidence cannot open native state');
+  });
 });
 
 test('consumed stale attempts are acknowledged durably before another prediction is requested',async t=>{

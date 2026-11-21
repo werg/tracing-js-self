@@ -16,6 +16,43 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Durable terminal cancellation authority — 21 November 2026
+
+Automatic selected history now appends an independently acknowledged terminal
+request followed by one confirmed-close or unknown-close disposition. A regular
+head save already in progress must settle before a terminal append. With a known
+head, the request marker is persisted before waiting for pending selection or
+commit work, and native close cannot run before the request acknowledgement.
+Loss of that acknowledgement stops the writer; it never guesses a later head by
+scanning files. A positive late model commit remains accepted, while an unknown
+commit remains unknown and never becomes a restorable active checkpoint.
+
+Recovery validates the complete chain and returns a typed terminal disposition
+before opening native state. An older packet cannot resume through a newer
+trusted terminal head. No active checkpoint can follow a terminal event. Original
+attempt/output evidence, public/causal state and costs remain in the digest-bound
+terminal snapshots. Native metrics are required, original checkpoint attempts
+must be preserved exactly, and cumulative costs cannot precede the anchored cut.
+
+The clean integrated six-file selection at local
+`37f622435ed96cd8d20b5a2761d66c97ad7f812c` passes **89/89** in 28.187 seconds.
+Independent adversarial probes then reproduced three validation gaps under
+deliberately rehashed heads: omitted native metrics, rolled-back native RPC cost
+and changed original transport bytes. The correction committed as
+`2e209a160f6ab4efdac55ed183a36d9b52b2798f` rejects all three; the full affected
+selection passes **93/93**, zero failures or skips, in 16.036 seconds. Counts
+overlap. All original before/after probes and the integrated logs are retained;
+the earlier isolated reported tests had only tool-stream output and do not replace
+these retained runs. Its stopped broader semantic suite remains incomplete.
+
+These controls use explicitly supplied decoders and do not measure learned
+quality. An actual-model terminal-history qualifier is being added. The driver's
+existing dedicated single-session transport requirement remains; native sibling
+recovery does not imply coordinated multi-session driver ownership. Arbitrary
+application mutations, external-action/input atomicity, multi-process fencing,
+rotation, complete-program recovery and final operational qualification remain
+open. **0 of 17 complete acceptance packages are closed.**
+
 ## Owned module namespace identities and live-cell inspection — 21 November 2026
 
 The owned module runtime now represents namespace identities explicitly. Resolved
@@ -32,6 +69,14 @@ in 64.845 seconds. A follow-up uncaught-freeze control at local
 `79cd4205fa0d832a141207eec2950adc56ca9bc0` separately passes **1/1**. The focused
 TDZ correction at `a66bb6504f7a9dc6501e19556e3535305e03e8a1` passed **11/11**;
 these selections overlap and their counts are not additive.
+
+The complete frozen producer `76a06f88b744e121f0ce406bcc4a5496929f0da4` suite
+then finished **2,434 passed, two failed, six asset-dependent skips**, out of
+2,442 tests, in 532.469 seconds. Both failures are original-module namespace tests
+blocked by the new explicit evaluate-only refusal; their pass expectations remain
+required and the runner bridge is in progress. This full run remains failed.
+Its separate reference fixture passes **8/8**. Original logs are retained, and
+later focused repairs will not relabel this failed full run.
 
 The first integrated broad module run remains **134 passed / two failed** out of
 136; its failures were assertions that namespace operations must fail at link

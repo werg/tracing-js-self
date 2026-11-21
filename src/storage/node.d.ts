@@ -29,4 +29,5 @@ export type {HostIngressReceipt,DurableHostIngressStoreOptions} from './host-ing
 export {DurableHostIngressJournal,DurableHostIngressBroker} from './host-ingress-journal.js';
 export type {HostIngressLogReceipt,DurableHostIngressJournalOptions} from './host-ingress-journal.js';
 export {DurableSelectedHistoryJournal} from './selected-history.js';
-export type {SelectedHistoryReceipt,DurableSelectedHistoryJournalOptions} from './selected-history.js';
+export type {SelectedHistoryReceipt,DurableSelectedHistoryJournalOptions,SelectedTerminalSnapshot,
+  SelectedTerminalCloseReceipt,SelectedHistoryTerminalEvent,SelectedTerminalDisposition} from './selected-history.js';

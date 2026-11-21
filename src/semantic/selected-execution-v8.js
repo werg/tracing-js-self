@@ -216,6 +216,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     let driver,queue=Promise.resolve(),releaseActive=null,fatal=null,automaticHistory=null,
       activeSelection=null,activeAcknowledgement=null,
       cancellationPromise=null,
+      terminalCancel=null,terminalCancellationError=null,
       staleRetries=recovery?.staleRetries??0;
     const acquire=async()=>{
       const previous=queue;let release;queue=new Promise(resolve=>{release=resolve;});
@@ -337,20 +338,30 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     };
     selected.cancel=previous=>{
       if(cancellationPromise!==null)return cancellationPromise;
-      const invocationId=previous.context.invocationId,
-        reason=previous.reason??driver.rejections.at(-1)?.error??'selected execution cancelled';
-      fatal??=new Error(reason);
-      const acknowledging=attempts.findLast(row=>row.invocationId===invocationId&&row.status==='acknowledging');
-      if(acknowledging)acknowledging.status='acknowledgement-unknown';
-      // The outer execution loop may already have returned its abort. A late
-      // native result still owns its original accounting and acknowledgement;
-      // do not close the session concurrently or mislabel a positive receipt.
+      const hostCancellation=harness.inner.timeline.findLast?.(row=>row.kind==='cancel'&&
+        (row.fields?.invocationId??row.invocationId)===previous.context.invocationId),
+        invocationId=previous.context.invocationId,
+        suppliedReason=previous.reason??hostCancellation?.fields?.reason??hostCancellation?.reason??
+          driver.rejections.at(-1)?.error??'selected execution cancelled',
+        reason=String(suppliedReason?.message??suppliedReason).slice(0,4096)||'selected execution cancelled',
+        settlement=activeAcknowledgement??activeSelection;
+      fatal??=suppliedReason instanceof Error?suppliedReason:new Error(reason);
+      if(automaticHistory===null){
+        const acknowledging=attempts.findLast(row=>row.invocationId===invocationId&&row.status==='acknowledging');
+        if(acknowledging)acknowledging.status='acknowledgement-unknown';
+      }
+      // Keep the original selection/commit outcome intact. Automatic history
+      // records a request before waiting on a live model operation; the final
+      // event records its settled result and the returned close receipt.
       cancellationPromise=(async()=>{
-        await (activeAcknowledgement??activeSelection);
-        const attempt=attempts.findLast(row=>row.invocationId===invocationId&&['decoded','acknowledging'].includes(row.status));
-        if(attempt){attempt.status=attempt.status==='acknowledging'?'acknowledgement-unknown':'semantic-rejected';attempt.failure=reason;}
-        predictions.delete(invocationId);release();
-        return select.cancel?.({...packet(invocationId),reason});
+        try{
+          if(terminalCancel)return await terminalCancel({invocationId,reason,settlement});
+          await settlement;
+          const attempt=attempts.findLast(row=>row.invocationId===invocationId&&row.status==='decoded');
+          if(attempt){attempt.status='cancelled';attempt.failure=reason;}
+          predictions.delete(invocationId);release();
+          return await select.cancel?.({...packet(invocationId),reason});
+        }catch(error){terminalCancellationError=error;throw error;}
       })();
       return cancellationPromise;
     };
@@ -412,6 +423,9 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
         'history journal acknowledged a different complete checkpoint');
       return {checkpoint:copy(checkpoint),receipt:copy(receipt)};
     };
+    const terminalSnapshot=()=>({attempts:copy(attempts),contexts:copy(contexts),staleRetries,
+      public:copy(harness.exportEpisode()),rejections:copy(driver.rejections),
+      nativeMetrics:copy(select.metrics())});
     this.checkpointDurableHistory=async(options={})=>{
       const unlock=await acquire();
       try{
@@ -422,24 +436,124 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     async function persistAutomaticHistory(state=automaticHistory){
       if(state===null)return null;
       if(fatal)throw fatal;
-      const previous=copy(state.previous),saved=await historyUnlocked(state);
-      const acknowledgedHead=await state.acknowledge({receipt:copy(saved.receipt),previous});
-      validateSelectedHistoryReceipt(acknowledgedHead);
-      demand(isDeepStrictEqual(acknowledgedHead,saved.receipt),
-        'automatic history acknowledgement differs from the recorded cut');
-      state.previous=copy(saved.receipt);
-      if(fatal)throw fatal;
-      return saved;
+      demand(state.headStatus!=='failed','automatic history head acknowledgement is uncertain');
+      state.headStatus='saving';
+      try{
+        const previous=copy(state.previous),saved=await historyUnlocked(state);
+        const acknowledgedHead=await state.acknowledge({receipt:copy(saved.receipt),previous});
+        validateSelectedHistoryReceipt(acknowledgedHead);
+        demand(isDeepStrictEqual(acknowledgedHead,saved.receipt),
+          'automatic history acknowledgement differs from the recorded cut');
+        state.previous=copy(saved.receipt);state.headStatus='acknowledged';
+        if(fatal)throw fatal;
+        return saved;
+      }catch(error){
+        if(state.headStatus==='saving'){state.headStatus='failed';state.headFailure=error;}
+        throw error;
+      }
     }
+    const appendTerminalHistory=async({phase,invocationId,reason,requested=null,closeReceipt=null,failure=null}={})=>{
+      const state=automaticHistory;
+      demand(state!==null,'durable terminal cancellation requires automatic history');
+      demand(state.headStatus==='acknowledged','cannot extend an unacknowledged or uncertain history head');
+      state.headStatus='saving';
+      try{
+        const previous=copy(state.previous);validateSelectedHistoryReceipt(previous);
+        const earlier=validateSelectedHistoryChain(copy(await state.journal.readAll(copy(previous))),previous),
+          last=earlier.at(-1),checkpoint=copy(last.checkpoint),snapshot=terminalSnapshot(),
+          session=harness.inner.sessionId,
+          terminalId=hashAlgorithmData({schema:'semantic-selected-terminal/1',session,invocationId,reason,
+            baseCheckpointDigest:checkpoint.digest}),
+          terminal={schema:'semantic-selected-terminal-event/1',terminalId,phase,session,invocationId,reason,
+            baseCheckpointDigest:checkpoint.digest,snapshot,snapshotDigest:hashAlgorithmData(snapshot)};
+        if(phase==='closed')terminal.closeReceipt=copy(closeReceipt);
+        else if(phase==='unknown')terminal.failure=
+          String(failure?.message??failure??'Native close outcome unavailable').slice(0,4096)||
+            'Native close outcome unavailable';
+        if(requested)demand(last.terminal?.phase==='requested'&&last.terminal.terminalId===requested.terminalId,
+          'terminal outcome has no independently acknowledged request');
+        else demand(!last.terminal,'history already has a terminal disposition');
+        const receipt=copy(await state.journal.append(checkpoint,{previous,terminal}));
+        validateSelectedHistoryReceipt(receipt);
+        const recorded=validateSelectedHistoryChain(copy(await state.journal.readAll(copy(receipt))),receipt),
+          saved=recorded.at(-1);
+        demand(recorded.length===earlier.length+1&&isDeepStrictEqual(recorded.slice(0,-1),earlier)&&
+          isDeepStrictEqual(saved.previous,previous)&&isDeepStrictEqual(saved.checkpoint,checkpoint)&&
+          isDeepStrictEqual(saved.terminal,terminal),
+          'terminal history journal acknowledged a different cancellation event');
+        await verifyRecordedHistoryCuts(recorded,policy,{ingressStore:state.ingressStore,
+          ingressJournal:state.ingressJournal});
+        const acknowledgedHead=await state.acknowledge({receipt:copy(receipt),previous:copy(previous)});
+        validateSelectedHistoryReceipt(acknowledgedHead);
+        demand(isDeepStrictEqual(acknowledgedHead,receipt),
+          'terminal history acknowledgement differs from the recorded disposition');
+        state.previous=copy(receipt);state.headStatus='acknowledged';
+        return {receipt:copy(receipt),terminal:copy(terminal)};
+      }catch(error){
+        if(state.headStatus==='saving'){state.headStatus='failed';state.headFailure=error;}
+        throw error;
+      }
+    };
+    const terminalDisposition=(terminal,receipt)=>({schema:'semantic-selected-terminal-disposition/1',
+      phase:terminal.phase,status:terminal.phase,terminalId:terminal.terminalId,session:terminal.session,
+      invocationId:terminal.invocationId,reason:terminal.reason,historyReceipt:copy(receipt),
+      snapshotDigest:terminal.snapshotDigest,
+      ...(terminal.phase==='closed'?{closeReceipt:copy(terminal.closeReceipt)}:{}),
+      ...(terminal.phase==='unknown'?{failure:terminal.failure}:{})});
+    terminalCancel=async({invocationId,reason,settlement})=>{
+      const state=automaticHistory;
+      if(!state){
+        await settlement;
+        const attempt=attempts.findLast(row=>row.invocationId===invocationId&&row.status==='decoded');
+        if(attempt){attempt.status='cancelled';attempt.failure=reason;}
+        predictions.delete(invocationId);release();
+        return select.cancel?.({...packet(invocationId),reason});
+      }
+      // A concurrent regular cut must settle first. If it fails or its head
+      // acknowledgement is lost, no later terminal event may guess a head.
+      if(state.headStatus==='saving'){
+        await settlement;
+        demand(state.headStatus==='acknowledged','previous automatic history acknowledgement is uncertain');
+        settlement=activeAcknowledgement??activeSelection;
+      }
+      demand(state.headStatus==='acknowledged','previous automatic history acknowledgement is uncertain');
+      const requestedCut=await appendTerminalHistory({phase:'requested',invocationId,reason});
+      await settlement;
+      predictions.delete(invocationId);release();
+      const attempt=attempts.findLast(row=>row.invocationId===invocationId&&row.status==='decoded');
+      let closeReceipt;
+      try{
+        closeReceipt=await select.cancel?.({...packet(invocationId),reason});
+        demand(closeReceipt?.schema==='semantic-native-close/8'&&closeReceipt.closed===true&&
+          closeReceipt.session===harness.inner.sessionId,'native selector did not return a positive close receipt');
+      }catch(error){
+        try{
+          const final=await appendTerminalHistory({phase:'unknown',invocationId,reason,requested:requestedCut.terminal,
+            failure:String(error?.message??error)});
+          return terminalDisposition(final.terminal,final.receipt);
+        }catch(persistError){
+          if(error&&typeof error==='object')error.terminalPersistenceError=String(persistError?.message??persistError);
+          throw error;
+        }
+      }
+      if(attempt){attempt.status='cancelled';attempt.failure=reason;}
+      const final=await appendTerminalHistory({phase:'closed',invocationId,reason,requested:requestedCut.terminal,
+        closeReceipt});
+      return terminalDisposition(final.terminal,final.receipt);
+    };
     Object.defineProperty(this,'historyReceipt',{enumerable:true,get:()=>copy(automaticHistory?.previous??null)});
+    Object.defineProperty(this,'terminalCancellation',{enumerable:true,get:()=>cancellationPromise});
+    Object.defineProperty(this,'terminalCancellationError',{enumerable:true,get:()=>terminalCancellationError});
     this.enableDurableHistory=async({acknowledge,journal,previous=null,ingressStore=null,
         ingressJournal=harness.inner.hostIngressBroker?.journal??null}={})=>{
       demand(typeof acknowledge==='function','automatic history requires independent durable head acknowledgement');
+      demand(typeof select.metrics==='function','automatic history requires live native attempt and cost metrics');
       const unlock=await acquire();
       try{
         demand(automaticHistory===null,'automatic history is already enabled');
         demand(!driver.running.size&&predictions.size===0,'enable automatic history before execution starts');
-        const state={acknowledge,journal,previous:copy(previous),ingressStore,ingressJournal};
+        const state={acknowledge,journal,previous:copy(previous),ingressStore,ingressJournal,
+          headStatus:'idle',headFailure:null};
         try{
           const saved=await persistAutomaticHistory(state);automaticHistory=state;return saved;
         }catch(error){fatal=error;throw error;}
@@ -462,6 +576,12 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     demand(entries.some(entry=>isDeepStrictEqual(entry.checkpoint,saved)),
       'supplied checkpoint is absent from the independently retained history');
     await verifyRecordedHistoryCuts(entries,policy,harnessOptions);
+    const terminal=entries.at(-1).terminal;
+    if(terminal)return {schema:'semantic-selected-terminal-disposition/1',phase:terminal.phase,status:terminal.phase,
+      terminalId:terminal.terminalId,session:terminal.session,invocationId:terminal.invocationId,
+      reason:terminal.reason,historyReceipt:copy(retainedHead),snapshotDigest:terminal.snapshotDigest,
+      ...(terminal.phase==='closed'?{closeReceipt:copy(terminal.closeReceipt)}:{}),
+      ...(terminal.phase==='unknown'?{failure:terminal.failure}:{})};
     const latest=entries.at(-1).checkpoint,options={...harnessOptions};
     // A history receipt independently binds its recorded ingress receipts.
     // An explicitly supplied newer ingress head still undergoes the existing
