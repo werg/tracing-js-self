@@ -77,11 +77,14 @@ all exports. `Reflect.ownKeys` and `Object.getOwnPropertyNames` remain
 keys-only and do not read export cells. An empty-export namespace can be
 frozen; a namespace with a writable export cannot.
 
-The runtime's `moduleNamespaceIntrinsic` parser/start-entry option is internal
-linker plumbing for the owned continuation above. Setting the boolean does not
-establish that source came from an original module graph or qualify public,
-source, or native semantics; module-source projection continues to refuse any
-graph that materializes a namespace.
+The runtime's `moduleNamespaceIntrinsic` parser/registered-source/start-entry
+option is internal linker plumbing for the owned continuation above. The
+original Test262 module runner may enable it for its generated module-entry
+source during owned-only evaluation; ordinary scripts and harness sources do
+not receive that capability. Setting the boolean does not establish that
+source came from an original module graph or qualify public, source, or native
+semantics; module-source projection continues to refuse any graph that
+materializes a namespace.
 
 Bounded namespace re-exports (`export * as cells from './leaf.js'` and
 `import * as ns from './leaf.js'; export {ns}`) retain their namespace target

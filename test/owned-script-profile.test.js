@@ -6,6 +6,7 @@ import {createRuntime} from '../src/runtime.js';
 import {validateBundle,reconstruct} from '../src/validation.js';
 import {replayExact} from '../src/replay.js';
 import {parseTraining,parseOwnedScript} from '../src/training/profile.js';
+import {linkEvaluatedModules} from '../src/evaluated-modules.js';
 
 function execute(texts){
   const runtime=createRuntime();
@@ -93,4 +94,48 @@ test('a failed earlier script never executes later source and declaration collis
   const runtime=createRuntime();
   runtime.startScriptSequence(['let taken=1;','var taken=2;'].map(text=>runtime.registerSource({text,scriptProfile:true})));
   assert.throws(()=>runtime.drive(),/global declaration collision/);
+});
+
+test('ordinary scripts do not receive the linked module namespace constructor',()=>{
+  const runtime=createRuntime();
+  assert.throws(()=>runtime.registerSource({
+    text:'__traced_eval_create_module_namespace([]);',url:'ordinary.js',
+    scriptProfile:true,moduleNamespaceIntrinsic:true
+  }),/generated Test262 module entry/);
+  const source=runtime.registerSource({
+    text:'__traced_eval_create_module_namespace([]);',url:'ordinary.js',scriptProfile:true
+  });
+  runtime.start(source);
+  const exit=runtime.drive(),bundle=runtime.exportRun();
+  assert.equal(exit.kind,'runtime.failure');
+  assert.equal(exit.failure.completion.errorType,'ReferenceError');
+  assert.equal(validateBundle(bundle).valid,true);
+  assert.equal(replayExact(bundle).valid,true);
+});
+
+test('an ordinary script cannot call the generated module namespace constructor',()=>{
+  const linked=linkEvaluatedModules({modules:{
+    'base.js':'export let value=1;',
+    'main.js':`import * as ns from './base.js';
+      export function run(){return Object.keys(ns).length;}`
+  },entryModule:'main.js',evaluateOnly:true});
+  assert.equal(linked.metadata.requiresModuleNamespace,true);
+  const runtime=createRuntime(),harness=runtime.registerSource({
+    text:`var namespaceDenied;
+      try{__traced_eval_create_module_namespace([]);namespaceDenied='called';}
+      catch(error){namespaceDenied=error.name;}`,
+    url:'ordinary-harness.js',scriptProfile:true
+  }),module=runtime.registerSource({text:linked.source,
+    url:'owned-test262-module://test/control.js',scriptProfile:true,
+    moduleNamespaceIntrinsic:true}),invocation=runtime.registerSource({
+    text:'__traced_eval_entry({args:[]});',url:'ordinary-invocation.js',scriptProfile:true
+  });
+  runtime.startScriptSequence([harness,module,invocation]);
+  const exit=runtime.drive(),bundle=runtime.exportRun();
+  assert.equal(exit.kind,'terminated');
+  assert.deepEqual(binding(bundle,'namespaceDenied'),['str','TypeError']);
+  assert.equal(Object.values(bundle.finalState.heap)
+    .filter(entity=>entity.kind==='module-namespace').length,1);
+  assert.equal(validateBundle(bundle).valid,true);
+  assert.equal(replayExact(bundle).valid,true);
 });

@@ -16,6 +16,34 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Original-module namespace runner bridge — 21 November 2026
+
+The Test262 module-initialization route now runs the owned namespace machinery
+instead of refusing every observable namespace at link time. Only the generated
+module source receives the internal constructor option; separately registered
+harness and invocation scripts do not. Calls check their executing source, and
+JSON replay restores that source's exact option. An ordinary script is explicitly
+tested while the helper exists and still cannot call it. The URL/prologue check
+prevents accidental grant but is not unforgeable linker provenance; no source
+authority or public/native admission is inferred from it.
+
+The isolated bridge committed as `7df599b2dd3f5128b1571a6557240b89917085e8`
+passes the complete original-runner file **29/29**, pinned namespace originals
+**2/2**, owned-script controls **7/7** and evaluated modules **37/37**. The new
+original-source cycle and asynchronous sibling cases agree with Node and retain
+valid JSON replay. On the integrated patch at local
+`d08c26c`, all three runner/script files pass **38/38**, zero failures or skips,
+in 29.272 seconds. Counts overlap. This restores both original-source namespace
+expectations that failed in the earlier complete `76a06f8` suite; that original
+2,434/2/6 run remains failed evidence. Full-suite and full 843-module campaign
+requalification remain pending on the newly frozen published bridge.
+
+The exact catalog remains **102,994 rows / 843 module variants**. Native Node24
+resolution disagreements remain explicit failures with `admitted:false`; owned
+execution and replay do not qualify public/source/native semantic projection.
+Dynamic import, full namespace reflection/Proxy combinations, namespace outputs
+and the remaining acceptance gates stay open. **0 of 17 packages are closed.**
+
 ## Durable terminal cancellation authority — 21 November 2026
 
 Automatic selected history now appends an independently acknowledged terminal

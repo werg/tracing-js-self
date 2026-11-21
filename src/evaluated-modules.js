@@ -763,8 +763,6 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     reject('returning a namespace through the host result needs the namespace output profile');
   if(requested?.some(call=>call.binding.kind==='namespace'))
     reject('returning a namespace through the host result needs the namespace output profile');
-  if(evaluateOnly&&namespaceTargets.size)
-    reject('evaluate-only host has no internal module namespace object environment');
   const namespaceName=file=>'__traced_eval_namespace_'+indices.get(file);
   const linkedAccess=binding=>{
     if(binding.kind==='namespace')return namespaceName(binding.namespace);
@@ -953,7 +951,8 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   // Linking must never hand off unowned guest syntax to an assumed Node or
   // browser module loader. Validate the actual concatenated guest program,
   // including its identifier resolution, before an entry can be executed.
-  try {evaluateOnly?parseOwnedScript(source):parseTraining(source,
+  try {evaluateOnly?parseOwnedScript(source,
+    {moduleNamespaceIntrinsic:namespaceTargets.size>0}):parseTraining(source,
     {moduleNamespaceIntrinsic:namespaceTargets.size>0});}
   catch(error){reject('unowned generated guest syntax: '+error.message);}
   const metadata={

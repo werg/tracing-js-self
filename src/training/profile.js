@@ -27,8 +27,10 @@ export function parseTraining(source,{moduleNamespaceIntrinsic=false}={}) {
 /** Original global script code, lowered through the same owned operations.
  * This removes only training-entry restrictions; unsupported operations still
  * refuse and no source is wrapped in a function or delegated to a host engine. */
-export function parseOwnedScript(source){
-  return parseOwnedProfile(source,{training:false});
+export function parseOwnedScript(source,{moduleNamespaceIntrinsic=false}={}){
+  if(typeof moduleNamespaceIntrinsic!=='boolean')
+    throw new TypeError('Invalid internal module namespace parser option');
+  return parseOwnedProfile(source,{training:false,moduleNamespaceIntrinsic});
 }
 
 function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){

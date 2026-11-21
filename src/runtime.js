@@ -414,11 +414,15 @@ export class Runtime {
     if(typeof text!=='string')throw new TypeError('Source text required');
     if(trainingProfile&&scriptProfile)throw new TypeError('Select one owned source profile');
     if(typeof moduleNamespaceIntrinsic!=='boolean'||
-       moduleNamespaceIntrinsic&&!trainingProfile)
+       moduleNamespaceIntrinsic&&!trainingProfile&&!scriptProfile)
       throw new TypeError('The module namespace intrinsic is reserved for linked modules');
+    if(moduleNamespaceIntrinsic&&scriptProfile&&
+       (!url.startsWith('owned-test262-module://')||
+        !text.startsWith('"use strict";\nasync function __traced_eval_entry(self) {')))
+      throw new TypeError('Script namespace capability requires a generated Test262 module entry');
     const sourceId=`src${this.sources.length+1}`;
     const compiled=compile(trainingProfile?parseTraining(text,{moduleNamespaceIntrinsic}):
-      scriptProfile?parseOwnedScript(text):parse(text));
+      scriptProfile?parseOwnedScript(text,{moduleNamespaceIntrinsic}):parse(text));
     const rename={};
     for(const id of Object.keys(compiled.programs))rename[id]=`${sourceId}:${id}`;
     for(const [id,program] of Object.entries(compiled.programs))this.programs[rename[id]]={...program,id:rename[id],instructions:program.instructions.map(inst=>['DEF_FN','MAKE_FUNCTION'].includes(inst.op)?{...inst,arg:{...inst.arg,codeId:rename[inst.arg.codeId]},siteId:`${sourceId}:${inst.siteId}`}:{...inst,siteId:`${sourceId}:${inst.siteId}`})};
@@ -805,6 +809,10 @@ export class Runtime {
       throw new TypeError('Script sequence requires unique registered owned script sources');
     this.start(sources[0]);
     const environmentId=this.state.frames[this.state.control.a0.activeFrameId].envId;
+    if(sources.some(source=>source.moduleNamespaceIntrinsic===true))
+      this.state.envs[environmentId].bindings.__traced_eval_create_module_namespace={
+        kind:'const',initialized:true,
+        token:token(['builtinfn','__traced_eval_create_module_namespace']),version:0};
     this.state.control.a0.scriptSequence={sourceIds:sources.map(source=>source.sourceId),nextIndex:1,environmentId};
     this.entrySpec={kind:'scripts',sourceIds:sources.map(source=>source.sourceId)};
     this.initialState=copy(this.state);this.checkpoints.q0=copy(this.state);
@@ -2793,8 +2801,11 @@ if(object.kind==='regexp'){
           if(callable[0]==='method')callable=callable[1];
           if(callable[0]==='builtinfn'&&
              callable[1]==='__traced_eval_create_module_namespace'){
-            if(!this.entrySpec?.moduleNamespaceIntrinsic||args.length!==1)
-              throw new TypeError('Module namespace constructor is reserved for linked module entries');
+            const sourceId=f.codeId.slice(0,f.codeId.indexOf(':')),
+              allowed=this.sources.some(source=>source.sourceId===sourceId&&
+                source.moduleNamespaceIntrinsic===true);
+            if(!allowed||args.length!==1)
+              guestFault('TypeError','Module namespace constructor is reserved for linked module entries');
             const listValue=args[0].value,list=listValue[0]==='ref'?s.heap[listValue[1]]:null;
             if(list?.kind!=='array'||Object.keys(list.accessors??{}).length)
               throw new TypeError('Module namespace entries must be an owned dense array');

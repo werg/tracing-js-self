@@ -9,6 +9,7 @@ import {discoverTest262ModuleDependencies} from '../src/conformance/test262-acqu
 import {ownedTest262Profile,executeOfficialTest262Variant,prepareOfficialTest262Variant} from '../src/conformance/test262-runner.js';
 import {executeOfficialTest262Reference} from '../src/conformance/test262-reference.js';
 import {freeTest262Identifiers} from '../src/conformance/test262-capabilities.js';
+import {replayExact} from '../src/replay.js';
 
 const revision='1'.repeat(40);
 const official=Object.fromEntries(['assert.js','sta.js','doneprintHandle.js','compareArray.js'].map(name=>
@@ -227,6 +228,54 @@ test('original module namespace and quoted reexport graphs execute their origina
   assert.equal(owned.trace.structurallyValidated,true);
   assert.equal(owned.trace.exactlyReplayed,true);
   assert.equal(owned.claims.publicSemanticReplay,false);
+  const generated=owned.bundle.sources.find(source=>
+    source.url==='owned-test262-module://test/control.js');
+  assert.equal(generated.moduleNamespaceIntrinsic,true);
+  assert.ok(owned.bundle.sources.filter(source=>source!==generated)
+    .every(source=>source.moduleNamespaceIntrinsic!==true),
+    'only the generated module source receives its namespace constructor capability');
+  const jsonBundle=JSON.parse(JSON.stringify(owned.bundle));
+  assert.equal(replayExact(jsonBundle).valid,true);
+});
+
+test('owned original-module runner handles namespace cycles and async siblings internally',()=>{
+  const [cycle]=moduleFixture(`import {observed} from './cycleA_FIXTURE.js';
+    assert.sameValue(observed,'ReferenceError');`,{dependencies:{
+      'test/cycleA_FIXTURE.js':`import {observed} from './cycleB_FIXTURE.js';
+        export let later=1;export {observed};`,
+      'test/cycleB_FIXTURE.js':`import * as target from './cycleA_FIXTURE.js';
+        export let observed;
+        try{Object.hasOwn(target,'later');observed='no-error';}
+        catch(error){observed=error.name;}`
+    }});
+  const cycleOwned=executeOfficialTest262Variant({...cycle,includeBundle:true}),
+    cycleReference=executeOfficialTest262Reference(cycle);
+  assert.equal(cycleOwned.status,'passed',cycleOwned.reason);
+  assert.equal(cycleReference.status,'passed',cycleReference.reason);
+  assert.equal(cycleOwned.trace.exactlyReplayed,true);
+  assert.equal(cycleOwned.trace.moduleGraph.requiresModuleNamespace,true);
+  assert.equal(cycleOwned.claims.publicSemanticReplay,false);
+  assert.equal(replayExact(JSON.parse(JSON.stringify(cycleOwned.bundle))).valid,true);
+
+  const [siblings]=moduleFixture(`import * as ns from './base_FIXTURE.js';
+    import './first_FIXTURE.js';import './second_FIXTURE.js';
+    await Promise.resolve();assert.sameValue(Object.keys(ns)[0],'value');`,{
+    dependencies:{
+      'test/base_FIXTURE.js':'export const value=42;',
+      'test/first_FIXTURE.js':'await Promise.resolve();',
+      'test/second_FIXTURE.js':'await Promise.resolve();'
+    }
+  });
+  const siblingsOwned=executeOfficialTest262Variant({...siblings,includeBundle:true}),
+    siblingsReference=executeOfficialTest262Reference(siblings);
+  assert.equal(siblingsOwned.status,'passed',siblingsOwned.reason);
+  assert.equal(siblingsReference.status,'passed',siblingsReference.reason);
+  assert.equal(siblingsOwned.trace.exactlyReplayed,true);
+  assert.equal(siblingsOwned.trace.moduleGraph.requiresModuleNamespace,true);
+  assert.equal(siblingsOwned.trace.moduleGraph.evaluationStrategy,
+    'async-dependency-scheduler');
+  assert.equal(siblingsOwned.claims.publicSemanticReplay,false);
+  assert.equal(replayExact(JSON.parse(JSON.stringify(siblingsOwned.bundle))).valid,true);
 });
 
 test('source-only module resolution negatives certify ambiguous and unused exports before execution',()=>{

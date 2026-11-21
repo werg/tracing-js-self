@@ -53,14 +53,14 @@ export function ownedTest262Profile({specification=null,maxSteps=20000,maxSource
         sourceHandling:'original-bytes-bound-and-lowered-to-owned-entry',
         staticResolution:'original-module-records/1',
         generatedAndOriginalDigests:'both-recorded',sourceCorrespondence:false,
-        dynamicImport:'unsupported',moduleNamespaceObjects:'unsupported',importMeta:'unsupported',
+        dynamicImport:'unsupported',moduleNamespaceObjects:'owned-internal',importMeta:'unsupported',
         importAttributes:'unsupported',hostLoading:'unavailable',retainedSession:false},
       test262HostObject:'unavailable',
       reference:{node:process.version,v8:process.versions.v8,timeoutMs:referenceTimeoutMs}},
     resourcePolicy:{maxSteps,maxSourceBytes},
     limits:[specification?'Test262 edition membership remains unclassified although the normative specification bytes are pinned.':
       'Edition membership is unclassified until the normative specification inventory is pinned.',
-      'Owned modules use the bounded evaluated-module/1 lowering recorded in the runner profile; dynamic import, namespace exotics, import.meta, import attributes, host loading, retained sessions and source correspondence remain unqualified.',
+      'Owned modules use the bounded evaluated-module/1 lowering recorded in the runner profile; namespace exotics execute only in the owned module runner and do not qualify public/native projection; dynamic import, import.meta, import attributes, host loading, retained sessions and source correspondence remain unqualified.',
       'Owned structural validation and exact replay do not establish public or native semantic admission.']};
 }
 
@@ -284,7 +284,8 @@ function executeOwnedTest262Module({options,prepared,profile,result,includeBundl
   try{
     const entries=[...prepared.harness.map(file=>runtime.registerSource({text:file.text,url:file.path,scriptProfile:true}))];
     executionSource=runtime.registerSource({text:linked.source,
-      url:'owned-test262-module://'+variant.path,scriptProfile:true});
+      url:'owned-test262-module://'+variant.path,scriptProfile:true,
+      moduleNamespaceIntrinsic:linked.metadata.requiresModuleNamespace===true});
     invocationSource=runtime.registerSource({text:'__traced_eval_entry({args:[]});',
       url:'test262-module-invocation.js',scriptProfile:true});
     entries.push(executionSource,invocationSource);
