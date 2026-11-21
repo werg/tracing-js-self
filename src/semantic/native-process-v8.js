@@ -4,6 +4,7 @@ import {spawn} from 'node:child_process';
 import {TextDecoder} from 'node:util';
 import {hashAlgorithmData} from './program.js';
 import {decodeCausalLmV8Target,validateRegionContext} from './causal-lm-v8.js';
+import {attachNativeV8Orchestration} from './native-orchestration-process-v8.js';
 
 const HASH=/^[a-f0-9]{64}$/;
 const copy=structuredClone;
@@ -11,10 +12,11 @@ const demand=(condition,message)=>{if(!condition)throw new TypeError('Native v8:
 const bounded=(value,minimum,maximum)=>Number.isSafeInteger(value)&&value>=minimum&&value<=maximum;
 
 export function createNativeV8ProcessSelector({command,args=[],cwd,env,
-    timeoutMs=30000,maxMessageBytes=16*1024*1024}={}){
+    timeoutMs=30000,maxMessageBytes=16*1024*1024,allowControlledOrchestration=false}={}){
   demand(typeof command==='string'&&command.length>0,'model executable required');
   demand(Array.isArray(args)&&args.every(value=>typeof value==='string'),'invalid executable arguments');
   demand(bounded(timeoutMs,1,300000)&&bounded(maxMessageBytes,1024,64*1024*1024),'invalid transport bounds');
+  demand(typeof allowControlledOrchestration==='boolean','invalid engineering coordinator flag');
   const child=spawn(command,args,{cwd,env,stdio:['pipe','pipe','pipe'],shell:false,windowsHide:true});
   const utf8=new TextDecoder('utf-8',{fatal:true}),pending=new Map(),sessions=new Map(),attempts=[];
   const runtimeMetrics={rpcCalls:0,computeSeconds:0,peakMemoryBytes:0};
@@ -86,6 +88,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     demand(context.visibleThrough===publicData.timeline.length&&
       context.prefixDigest===hashAlgorithmData(publicData.timeline),'current context is not the supplied public cutoff');
     demand(!sessions.get(input.session)?.pending,'previous native output needs a commit or cancellation');
+    orchestration.assertSemanticReady(input.session);
   };
   const select=async input=>{
     validateRequest(input);
@@ -155,8 +158,10 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       evidence.failureEvidence=copy(error.evidence??null);throw error;}
     finally{evidence.elapsedMs=performance.now()-started;}
   };
+  const orchestration=attachNativeV8Orchestration(select,{request,identity:()=>identity,sessions,attempts,
+    isClosed:()=>closed,allowControlled:allowControlledOrchestration});
   select.initialize=async input=>{
-    const capturedEpoch=++epoch;identity=null;sessions.clear();
+    const capturedEpoch=++epoch;identity=null;sessions.clear();orchestration.clear();
     demand(input&&HASH.test(input.checkpointIdentity??'')&&HASH.test(input.tokenizerIdentity??'')&&
       (input.trainingIdentity==null||HASH.test(input.trainingIdentity))&&
       Number.isSafeInteger(input.seed)&&input.seed>=0,'frozen checkpoint, tokenizer, training lineage and seed required');
@@ -191,10 +196,17 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   };
   select.complete=async input=>{
     const result=await request({op:'complete',session:input.session,public:input.public,
-      contexts:input.contexts,invocationId:input.invocationId});
+      contexts:input.contexts,invocationId:input.invocationId,
+      ...(Object.hasOwn(input,'completion')?{completion:input.completion}:{})});
     demand(result?.schema==='semantic-native-completion/8'&&result.completed===true&&
       result.session===input.session&&result.invocationId===input.invocationId&&result.sessionRetained===true&&
       result.publicDigest===hashAlgorithmData(input.public),'native model did not acknowledge this completed invocation');
+    if(result.childCompletion){const child=result.childCompletion;
+      demand(child.schema==='semantic-child-completion/8'&&child.session===input.session&&
+        child.invocationId===input.invocationId&&typeof child.track==='string'&&
+        child.publicDigest===hashAlgorithmData(input.public)&&child.contextsDigest===hashAlgorithmData(input.contexts)&&
+        (!Object.hasOwn(input,'completion')||hashAlgorithmData(child.completion)===hashAlgorithmData(input.completion)),
+        'native child completion differs from its acknowledged public history');}
     return result;
   };
   select.reject=async input=>{
@@ -249,6 +261,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       attempts.push(...copy(checkpoint.attempts).map(row=>['submitted','decoded'].includes(row.status)?
         {...row,status:'abandoned-on-restore',failure:'Unacknowledged candidate excluded from restored history'}:row));
       for(const session of Object.keys(native.sessions))sessions.set(session,{pending:null,evidence:null});
+      await orchestration.restore(native);
       runtimeMetrics.rpcCalls+=costs.rpcCalls;runtimeMetrics.computeSeconds+=costs.computeSeconds;
       runtimeMetrics.peakMemoryBytes=Math.max(runtimeMetrics.peakMemoryBytes,costs.peakMemoryBytes);
       return {...copy(result),transportCheckpointDigest:digest};
@@ -271,10 +284,13 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
         'native model did not acknowledge closing this session with the exact close receipt');
       return result;
     }
-    finally{sessions.delete(input?.session);}
+    finally{sessions.delete(input?.session);orchestration.close(input?.session);}
   };
   select.metrics=()=>({schema:'semantic-native-model-metrics/8',attempts:copy(attempts),
-    predictionAttempts:attempts.length,semanticallyAccepted:attempts.filter(row=>row.status==='accepted').length,
+    predictionAttempts:attempts.length,
+    semanticallyAccepted:attempts.filter(row=>row.family!=='orchestration'&&row.status==='accepted').length,
+    coordinatorAttempts:attempts.filter(row=>row.family==='orchestration').length,
+    coordinatorAccepted:attempts.filter(row=>row.family==='orchestration'&&row.status==='accepted').length,
     failedAttempts:attempts.filter(row=>['failed','rejected','cancelled','commit-failed','abandoned-on-restore'].includes(row.status)).length,
     unknownAcknowledgements:attempts.filter(row=>row.status==='acknowledgement-unknown').length,
     unknownGenerationCostAttempts:attempts.filter(row=>row.selection===null).length,
