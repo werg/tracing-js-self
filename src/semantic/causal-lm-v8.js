@@ -111,6 +111,11 @@ export function validateRegionTrainingContexts(exported){
   require(Array.isArray(contexts),'actual prediction contexts required');
   const harness=new RegionExecutionHarness({sessionId:publicData.timeline[0]?.fields?.session,
     automaticDelivery:false,now:()=>-Infinity}),items=[];
+  // Recorded host lifecycle rows are replay authority. Finishing a callback
+  // must not synthesize a live handler-close ahead of its recorded observation.
+  // Use the same replay mode as RegionExecutionHarness.replay while collecting
+  // each context strictly before its generated record is applied.
+  harness.replayingPublic=true;harness.inner.replaying=true;
   for(const row of publicData.timeline){
     assertAlgorithmFields(row,['sequence','mode','kind','fields'],'v8 public row');
     require(row.sequence===harness.timeline.length+1,'noncontiguous public prefix');

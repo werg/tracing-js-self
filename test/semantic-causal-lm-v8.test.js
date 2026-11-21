@@ -8,6 +8,7 @@ import {encodePureRegionRecord,decodePureRegionRecord} from '../src/semantic/pur
 import {encodeDetailedRecord} from '../src/semantic/detailed-v7.js';
 import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
 import {SEMANTIC_GALLERY_FIXTURES} from '../src/training/semantic-trace-gallery.js';
+import {HOST_PROTOCOL_FIXTURES_V8} from '../fixtures/semantic-regions/host-protocol.js';
 
 const fixtures=JSON.parse(await readFile(new URL('./fixtures/semantic-regions-v8.json',import.meta.url)));
 const example=id=>fixtures.examples.find(row=>row.id===id);
@@ -73,6 +74,28 @@ test('retained callback inputs are public context identities and remain fully me
     assert.throws(()=>causalLmV8Prompt(missing),/retained input identities/);
     const future=structuredClone(context);future.input.future=['num',999];
     assert.throws(()=>causalLmV8Prompt(future),/immutable input fields/);
+  }
+});
+
+test('callback-owned Promise work meters recorded host closure exactly once without live synthesis',async()=>{
+  for(const id of ['callback-owned-join','callback-owned-join-awaited']){
+    const result=await verifyRegionTrainingCase(HOST_PROTOCOL_FIXTURES_V8.find(row=>row.id===id));
+    assert(result.exported,result.reason);
+    const artifact=result.exported,before=structuredClone(artifact),
+      close=artifact.public.timeline.find(row=>row.kind==='handler-close');
+    assert(close,'the source must retain its host closure observation');
+    const rows=validateRegionTrainingContexts(artifact),cost=await auditRegionServingCosts(artifact,options);
+    assert.equal(rows.length,artifact.contexts.length);
+    assert.equal(cost.predictions,artifact.contexts.length);
+    assert.equal(cost.tokens.terminal,artifact.contexts.length);
+    assert.deepEqual(rows.map(item=>item.row.sequence),artifact.public.timeline.filter(row=>row.mode==='generated').map(row=>row.sequence));
+    assert.deepEqual(artifact,before,'context reconstruction cannot rewrite the original source evidence');
+    const forged=structuredClone(artifact);
+    forged.public.timeline.find(row=>row.kind==='handler-close').fields.subscriptionId='unregistered-handler';
+    assert.throws(()=>validateRegionTrainingContexts(forged));
+    const future=structuredClone(artifact);
+    future.contexts.find(row=>row.invocationId!=='root').visibleThrough++;
+    assert.throws(()=>validateRegionTrainingContexts(future),/already published state/);
   }
 });
 
