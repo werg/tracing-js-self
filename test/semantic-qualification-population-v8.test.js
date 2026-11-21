@@ -22,9 +22,9 @@ test('native qualification retains every frozen family input, script and module 
 test('interoperability includes all source goldens and returns fresh mutable guest inputs',()=>{
   const declared=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
   const selected=regionQualificationPopulation();
-  assert.equal(selected.scripts.length,40);
+  assert.equal(selected.scripts.length,44);
   assert.equal(selected.modules.length,2);
-  assert.equal(new Set([...selected.scripts,...selected.modules].map(row=>row.id)).size,42);
+  assert.equal(new Set([...selected.scripts,...selected.modules].map(row=>row.id)).size,46);
   assert.deepEqual(selected.modules.map(row=>row.id),['module-namespace-shadow-live','module-scoped-var-isolation']);
   for(const fixture of selected.modules){
     const task={kind:'module',traceVersion:8,fixture,producerRevision:'frozen-test'};
@@ -33,11 +33,18 @@ test('interoperability includes all source goldens and returns fresh mutable gue
   for(const row of declared.cases)assert.deepEqual(selected.scripts.find(fixture=>fixture.id===row.id),row.fixture);
   for(const fixture of HOST_PROTOCOL_FIXTURES_V8)
     assert.deepEqual(selected.scripts.find(row=>row.id===fixture.id),fixture);
+  for(const fixture of selected.scripts.filter(row=>row.id.startsWith('return-callback-'))){
+    const task={kind:'source',traceVersion:8,fixture,producerRevision:'frozen-test'},
+      restored=decodeGenerationTask(JSON.parse(JSON.stringify(encodeGenerationTask(task))));
+    assert.equal(restored.fixture.source,fixture.source);
+    assert.equal(restored.fixture.id,fixture.id);
+  }
   assert.equal(new Set(selected.scripts.map(row=>row.id)).size,selected.scripts.length);
   for(const id of ['number-callback-cleanup','custom-iterator-close','iterable-binding-close',
     'promise-number-proxy-memory-join','promise-map-iterator','map-callback-finally-throw','map-generator-yield',
     'map-generator-iterator-close','map-sparse-live-mutation','promise-map-sparse-truncate',
-    'promise-allsettled-mixed-aliases','promise-allsettled-nested-executor','promise-allsettled-empty-mutation'])
+    'promise-allsettled-mixed-aliases','promise-allsettled-nested-executor','promise-allsettled-empty-mutation',
+    'return-callback-receiver-alias','return-callback-throw','return-callback-async','return-callback-reentrant-host'])
     assert.ok(selected.scripts.some(fixture=>fixture.id===id),id+' remains in recurring qualification');
   const first=selected.scripts.find(row=>row.id==='ordered-map');
   first.args[0].push(99);

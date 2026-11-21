@@ -15,6 +15,13 @@ const ID=/^[a-z][a-z0-9:_-]*$/;
 const clone=x=>structuredClone(x);
 function demand(value,message){if(!value)throw new TypeError(message);}
 function id(value,name){demand(typeof value==='string'&&ID.test(value), 'Invalid '+name);}
+function retainedClosureFunction(program,closure,entry){
+  const sites=name=>program.functions.filter(fn=>fn.name===name||'function:'+fn.start===name),
+    retained=sites(closure.code),selected=sites(entry);
+  demand(retained.length===1&&selected.length===1&&retained[0].start===selected[0].start,
+    'Callback entry must identify the same unique static function site as its retained closure');
+  return selected[0];
+}
 function validateIngressQueueOrder(rows,nextSequence){
   demand(Number.isSafeInteger(nextSequence)&&nextSequence>=1,
     'Invalid next host ingress sequence');
@@ -230,8 +237,11 @@ export class SelectedExecutionCore {
     const closure=closureId===null?null:previous?.heap.get(closureId);
     demand(closureId===null||closure?.kind==='closure','Invocation closure belongs to another or unknown realm');
     const selectedEntry=entry??closure?.code??program.entry;
-    const declared=program.functions.find(f=>f.name===selectedEntry||
-      'function:'+f.start===selectedEntry);
+    // A host may select an unambiguous spelling of the retained function, but
+    // cannot pair another function's parameters/code with this closure's cells.
+    // Check before importing input or publishing any realm/ingress mutation.
+    const declared=closure?retainedClosureFunction(program,closure,selectedEntry):
+      program.functions.find(f=>f.name===selectedEntry||'function:'+f.start===selectedEntry);
     demand(selectedEntry===program.entry||declared,
       'Invoked closure must have a declared static function site');
     demand(Array.isArray(args),'Invocation arguments must be a graph');
@@ -346,14 +356,20 @@ export class SelectedExecutionCore {
     demand(['subscription','call'].includes(lifetime),'Invalid callback lifetime');
     demand(closureId===null||this.realms.get(realmId)?.heap.get(closureId)?.kind==='closure',
       'Handler requires an owned closure in its realm');
+    const realm=this.realms.get(realmId),closure=closureId===null?null:realm.heap.get(closureId),
+      selectedEntry=entry??closure?.code??program.entry;
+    if(closure){
+      demand(realm.digest===program.digest,'Handler closure belongs to a different source revision');
+      retainedClosureFunction(program,closure,selectedEntry);
+    }
     this.handlers.set(subscriptionId,{programId,realmId,trackId,realmPolicy,
-      entry:entry??program.entry,queueLimit,seen:new Set(),queue:[],state:'active',
+      entry:selectedEntry,queueLimit,seen:new Set(),queue:[],state:'active',
       closureId,lifetime,ownerInvocationId});
     for(const callback of this.callbacks.values())
       if(callback.subscriptionId===subscriptionId)callback.state='active';
     return this.record('observed','handler','host',
       {subscriptionId,programId,realmId,trackId,realmPolicy,
-        entry:entry??program.entry,queueLimit,closureId,lifetime,ownerInvocationId});
+        entry:selectedEntry,queueLimit,closureId,lifetime,ownerInvocationId});
   }
   queuedEventCanBeDelivered(handler){
     const head=handler?.queue?.[0],realm=this.realms.get(handler?.realmId);
