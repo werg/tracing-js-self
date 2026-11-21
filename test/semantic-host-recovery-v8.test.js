@@ -144,6 +144,23 @@ test('restored selected callback exposes its exact return or throw without a liv
   }
 });
 
+test('callback intake preserves aliases across receiver and arguments and refuses unknown receivers atomically',async()=>{
+  const {host}=await callbacks({protocol:false});finish(host,'root');
+  const receiver={value:17};receiver.self=receiver;
+  const pending=host.inner.enqueueClosure({ownerInvocationId:'root',closureId:'fn',
+    args:[receiver,receiver],receiver});
+  void pending.catch(()=>{});host.sync();
+  const child=[...host.invocations.values()].find(row=>row.activation==='callback'),
+    controller=child.controller,identity=controller.receiver;
+  assert.deepEqual(controller.input.graph.roots,[identity,identity]);
+  assert.deepEqual(controller.heap.get(identity[1]).properties.get('self'),identity);
+  finish(host,controller.rootInvocation);
+  host.inner.prepareCallbackInput=()=>({inputGraph:{roots:[],objects:[]},receiverValue:['ref','absent']});
+  const before=host.inner.checkpoint();
+  assert.throws(()=>host.inner.enqueueClosure({ownerInvocationId:'root',closureId:'fn'}),/receiver identity/);
+  assert.deepEqual(host.inner.checkpoint(),before);
+});
+
 test('direct lifecycle recovery rejects rehashed closure, callback counter and result identity changes',async()=>{
   const {host,controls}=await callbacks({protocol:false});finish(host,'root');controls.fire(1);host.sync();
   finish(host,'event1',['num',1]);host.closeRealm('realm');

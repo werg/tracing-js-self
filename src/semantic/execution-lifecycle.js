@@ -603,28 +603,39 @@ export class SelectedExecutionCore {
   }
   wake(){for(const resolve of this.wakeWaiters)resolve();this.wakeWaiters.clear();}
   waitForActivity(){return new Promise(resolve=>this.wakeWaiters.add(resolve));}
-  enqueueClosure({ownerInvocationId,closureId,args=[],receiver=undefined}){
+  prepareClosureInput({ownerInvocationId,closureId,args=[],receiver=undefined}){
     const owner=this.invocations.get(ownerInvocationId);
     demand(owner&&!['cancelled','failed'].includes(owner.status),'Callback owner is closed');
     demand(!this.realms.get(owner.realmId)?.closed,'Cannot enqueue a callback in a closed realm');
-    const closure=this.realms.get(owner.realmId)?.heap.get(closureId);
+    demand(Array.isArray(args),'Callback arguments must be an array');
+    const realm=this.realms.get(owner.realmId),closure=realm?.heap.get(closureId);
     demand(closure?.kind==='closure','Callback requires an owned closure');
     const prepared=this.prepareCallbackInput?.({ownerInvocationId,closureId,args,receiver,
       realmId:owner.realmId,programId:owner.programId});
+    let inputGraph,receiverValue;
     if(prepared){
       demand(prepared&&typeof prepared==='object'&&prepared.inputGraph,
         'Callback input preparation requires an explicit graph');
-      validateGraph(prepared.inputGraph,{externalReferences:[...this.realms.get(owner.realmId).heap.keys()]});
-      demand(prepared.inputGraph.objects.every(node=>!this.realms.get(owner.realmId).heap.has(node.id)),
-        'Prepared callback graph cannot overwrite retained identities');
-      if(prepared.receiverValue)assertValue(prepared.receiverValue);
-    }else graphOf([receiver,...args]);
+      inputGraph=clone(prepared.inputGraph);receiverValue=clone(prepared.receiverValue??['undefined']);
+    }else {
+      // Capture receiver and arguments together. Separate structuredClone calls
+      // split cross-root aliases and can give a callback a different receiver.
+      inputGraph=remapGraph(graphOf([receiver,...args]),new Set(realm.heap.keys()));
+      receiverValue=inputGraph.roots.shift();
+    }
+    validateGraph(inputGraph,{externalReferences:[...realm.heap.keys()]});
+    demand(inputGraph.objects.every(node=>!realm.heap.has(node.id)),
+      'Prepared callback graph cannot overwrite retained identities');
+    assertValue(receiverValue);
+    demand(receiverValue[0]!=='ref'||realm.heap.has(receiverValue[1])||
+      inputGraph.objects.some(node=>node.id===receiverValue[1]),'Unknown callback receiver identity');
+    return {ownerInvocationId,closureId,inputGraph,receiverValue};
+  }
+  enqueueClosure(options){
+    const request=this.prepareClosureInput(options),owner=this.invocations.get(request.ownerInvocationId);
     demand(this.closureQueue.length<64,'Owned callback queue overflow');
     const invocationId='callbackinvoke'+(++this.nextCallback);
-    const request={ownerInvocationId,closureId,invocationId,...(prepared?
-      {inputGraph:clone(prepared.inputGraph),receiverValue:clone(prepared.receiverValue??['undefined'])}:
-      {args:clone(args),receiver:clone(receiver)})};
-    this.closureQueue.push(request);
+    this.closureQueue.push({...request,invocationId});
     const completion=new Promise((resolve,reject)=>this.completionWaiters.set(invocationId,{resolve,reject}));
     // Prevent a host that abandons a callback on cancellation from causing an
     // unhandled native rejection; the original Promise still rejects to it.
@@ -654,7 +665,7 @@ export class SelectedExecutionCore {
     const index=this.closureQueue.findIndex(request=>
       this.invocations.get(request.ownerInvocationId)?.realmId===realmId);
     if(index<0)return null;
-    const request=this.closureQueue.splice(index,1)[0];
+    const request=this.closureQueue[index];
     const owner=this.invocations.get(request.ownerInvocationId);
     let inputGraph=request.inputGraph??null,receiverValue=request.receiverValue??null;
     if(inputGraph?.objects.some(node=>realm.heap.has(node.id))){
@@ -664,12 +675,13 @@ export class SelectedExecutionCore {
       inputGraph=clone(inputGraph);inputGraph.roots.push(receiverValue??['undefined']);
       remapGraph(inputGraph,new Set(realm.heap.keys()));receiverValue=inputGraph.roots.pop();
     }
-    return this.admitInvocation({programId:owner.programId,invocationId:request.invocationId,
+    const admitted=this.admitInvocation({programId:owner.programId,invocationId:request.invocationId,
       trackId:owner.trackId,realmId,triggerId:request.invocationId,
       args:request.args??[],receiver:request.receiver,inputGraph,
       receiverValue,closureId:request.closureId,
       realmPolicy:'retained',activation:'callback',parentInvocationId:request.ownerInvocationId,
       taskRevision:owner.taskRevision,deadline:owner.deadline,completionPolicy:'await-returned-promise'});
+    this.closureQueue.splice(index,1);return admitted;
   }
   /**
    * Dispatch exactly one previously validated logical request. A retry gets
