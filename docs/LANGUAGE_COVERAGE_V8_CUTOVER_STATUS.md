@@ -16,6 +16,46 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Automatic-history integration and numeric recovery repair — 21 November 2026
+
+The actual automatic-history run at exact producer `19eba4f` / consumer `39d5212`
+acknowledges one original model record, saves two complete cuts, shuts down the
+original service, and restores the later cut in a fresh service from the older
+packet and independently retained later head. Complete host/native state,
+consumed attempts, causal contexts and independent original-source/public-prefix
+checks match. The next output is identical but malformed and **refused**, with
+no acknowledgement and zero host dispatches. This run performs no training;
+historical fitted weights remain a 32-step decoder diagnostic, not held-out or
+complete-program evidence. Automatic durability covers acknowledged selection
+boundaries; unsaved cancellation, distributed ownership and rotation remain open.
+
+The full producer suite at `19eba4f` passes **2,404 tests, zero failures**, with
+six missing-asset skips, from 2,410 tests; the reference fixture passes **8/8**.
+The tokenizer gate separately passes **3/3** using its policy-pinned consumer
+`3a0eb90`. The coordinator selection separately passes **13/13** against consumer
+`1ddcc61`, including all five previously skipped native gates, with retained
+assets and no skips. Four native controls use disclosed engineering output; the
+actual initialized-weight control retains original model refusals and costs.
+Overlapping selections are not additive, and the original full-suite skips are
+not relabeled.
+
+The complete consumer `39d5212` selection remains **611 passed / one failed**,
+805.66 seconds. Its closed-session receipt check rejected valid JSON `1.0` where
+`1` is accepted. Consumer `1ddcc6110d70703f6b08244d53ec461047677bec` preserves
+the concurrent source-binding repair in `9c557a7`, restores ECMAScript numeric
+equivalence, and rejects invalid opening counts/costs before native allocation.
+All **38** combined authority, closed-session and binding controls pass on the
+published tree. The full repaired-head selection is running separately.
+
+The [48-file verified evidence supplement](evidence/semantic-v8-automatic-19eba4f-39d5212/README.md)
+retains the actual histories and outputs, complete failed and passing logs, the
+exact correction, external coordinator receipts and runtime identities. Its
+11 shared model/tokenizer members are individually bound to the prior committed
+515-file archive. Compressed archive SHA-256:
+`02583f423743e37cf7b3f559b856159d1aa2605843eefdacfe1fae7deb8d340f`.
+**0 of 17 complete packages are closed.** Full language, final-pair production
+qualification, model quality, release and default-cutover gates remain open.
+
 ## Completed paired measurements and durable evidence — 21 November 2026
 
 Implementation is published through producer `b074e0ecb17782605352764821614764401c2e55`

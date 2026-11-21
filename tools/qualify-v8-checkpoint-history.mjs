@@ -66,7 +66,7 @@ const input={schema:'semantic-model-checkpoint-history-run/1',producer,consumer,
   sourceArtifactSha256:bytesSha(sourceBytes),modelSha256:modelSha,tokenizerSha256:tokenizerSha,
   manifestSha256:bytesSha(readFileSync(join(served,'manifest.json'))),
   trainingIdentity:manifest.semantic_v8_lineage_digest??null,seed,maxTokens,maxFragments,historyMode,
-  optimizationPerformed:false,scope:'One actual model selection; explicit checkpoint-cut recovery and next-output equality. No complete-program or generalization claim.'};
+  optimizationPerformed:false,scope:'One actual model selection; checkpoint-cut recovery and next-output equality. No complete-program or generalization claim.'};
 save('run-input.json',input);save('original-source.json',source);save('serving-manifest.json',manifest);
 const services=[],serviceCommands=[];
 const volatileSelectionFields=['generationSeconds','preparationSeconds','totalSeconds'],
