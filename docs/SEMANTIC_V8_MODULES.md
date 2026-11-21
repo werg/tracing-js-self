@@ -61,7 +61,7 @@ TypeScript semantics.
 
 ## Owned declaration and binding semantics
 
-The owned linker accepts module-level class and generator declarations, named
+The owned linker accepts module-level class and synchronous generator declarations, named
 and anonymous default declarations, and destructured `let`, `const`, and `var`
 bindings. Exported names and imported reads refer to the resulting live module
 cells. Shorthand pattern keys remain source property names even when their
@@ -87,6 +87,13 @@ state or unqualified constructor/prototype observations can still receive an
 explicit public projection refusal after passing the independent original
 module reference. The declaration tests do not grant public/native/data
 admission to those graphs.
+
+The recurring source population includes `module-destructured-live-cells`,
+which retains an object-pattern live export and an array-pattern constant across
+an imported mutation. Its original-source/public check and fresh recheck are
+explicit controls; independent consumer admission and cost qualification still
+require their own exact-revision run. Async generator declarations remain
+refused by the owned frontend.
 
 ## Boundaries
 

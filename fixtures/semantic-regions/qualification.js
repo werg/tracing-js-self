@@ -75,7 +75,13 @@ export function moduleQualificationFixtures(){return [
     moduleEntry:'main.js',exportName:'run',args:[],modules:{
       'leaf.js':'{var shared=3;}export function read(){return shared;}',
       'main.js':"import {read} from './leaf.js';const before=shared;{var shared=9;}"+
-        'export function run(){return [before,shared,read()];}'}}
+        'export function run(){return [before,shared,read()];}'}},
+  {id:'module-destructured-live-cells',family:'v8-contract-module-destructured-cells',
+    moduleEntry:'main.js',exportName:'run',args:[],modules:{
+      'state.js':'export let {value=3}={value:7};export const [step]=[2];'+
+        'export function bump(){value+=step;}',
+      'main.js':"import {value,bump} from './state.js';"+
+        'export function run(){const before=value;bump();return [before,value];}'}}
 ];}
 
 // The interoperability population includes every declared source-qualified

@@ -23,9 +23,10 @@ test('interoperability includes all source goldens and returns fresh mutable gue
   const declared=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
   const selected=regionQualificationPopulation();
   assert.equal(selected.scripts.length,44);
-  assert.equal(selected.modules.length,2);
-  assert.equal(new Set([...selected.scripts,...selected.modules].map(row=>row.id)).size,46);
-  assert.deepEqual(selected.modules.map(row=>row.id),['module-namespace-shadow-live','module-scoped-var-isolation']);
+  assert.equal(selected.modules.length,3);
+  assert.equal(new Set([...selected.scripts,...selected.modules].map(row=>row.id)).size,47);
+  assert.deepEqual(selected.modules.map(row=>row.id),['module-namespace-shadow-live',
+    'module-scoped-var-isolation','module-destructured-live-cells']);
   for(const fixture of selected.modules){
     const task={kind:'module',traceVersion:8,fixture,producerRevision:'frozen-test'};
     assert.deepEqual(decodeGenerationTask(JSON.parse(JSON.stringify(encodeGenerationTask(task)))).fixture,fixture);

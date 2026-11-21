@@ -4,7 +4,7 @@ import {mkdtemp,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {executeEvaluatedModules} from '../src/evaluated-modules.js';
+import {executeEvaluatedModules,linkEvaluatedModules} from '../src/evaluated-modules.js';
 import {createRuntime} from '../src/runtime.js';
 import {validateBundle} from '../src/validation.js';
 import {replayExact} from '../src/replay.js';
@@ -163,4 +163,28 @@ test('class and generator environments restore from JSON while a module is suspe
   assert.deepEqual(JSON.parse(JSON.stringify(restored.exportRun())),JSON.parse(JSON.stringify(runtime.exportRun())));
   assert.equal(validateBundle(restored.exportRun()).valid,true);
   assert.equal(replayExact(restored.exportRun()).valid,true);
+});
+
+test('nested callbacks, class fields and generator defaults retain their original live module cells',async()=>{
+  for(const scheduled of [false,true]){
+    const owned=await differential({
+      'defaults.js':`const value=23;
+        export default async function ({first=value}={}){var value=99;await 0;return [first,value];}`,
+      'main.js':`import defaults from './defaults.js';export let {value=1}={value:4};
+        export class C{static apply=()=>{({value}={value:value+1});};
+          step(){[value]=[value+2];return value;}}
+        export function* read({first=value}={}){yield first;({value=99}={value:value+3});return value;}
+        export async function run(){C.apply();const object=new C();
+          const callback=()=>object.step();const rows=[0].map(callback);const iterator=read();
+          return [value,rows,iterator.next().value,iterator.next().value,value,await defaults()];}`
+    },scheduled);
+    assert.deepEqual(owned.result,[7,[7],7,10,10,[23,99]]);
+  }
+});
+
+test('async generator module declarations remain an explicit owned frontend boundary',()=>{
+  for(const declaration of ['export async function* values(){yield 1;}',
+    'export default async function*(){yield 1;}'])
+    assert.throws(()=>linkEvaluatedModules({modules:{'main.js':declaration+'export function run(){return 1;}'},
+      entryModule:'main.js',exportName:'run'}),/Unsupported evaluated-module.*async generator mode/);
 });

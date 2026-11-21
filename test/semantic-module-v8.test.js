@@ -5,6 +5,7 @@ import {recheckRegionEvidence} from '../src/semantic/compiler-v8.js';
 import {LANGUAGE_EXPANSION_INTERACTIONS} from '../fixtures/language-expansion/benchmark.js';
 import {executeEvaluatedModules,linkEvaluatedModules} from '../src/evaluated-modules.js';
 import {encodeNativeGraph} from '../src/host/graph-codec.js';
+import {moduleQualificationFixtures} from '../fixtures/semantic-regions/qualification.js';
 
 const siblingSchedulerFixture={id:'parallel-tla-boundary',family:'parallel-tla-boundary',modules:{
   'state.js':'export let order="";export function add(value){order+=value;}',
@@ -37,6 +38,34 @@ test('ordered exports preserve module-cell state and input/returned aliases in o
     modules:{'main.js':'export function run(a,b){a.n++;return [a,b];}'},entryModule:'main.js',args:[object,object],fixture:{calls:[]}});
   assert.ok(aliased.exported,aliased.reason);assert.equal(aliased.moduleCorrespondence,'passed');
   assert.equal(object.n,0,'reference and owned execution import data rather than mutate caller state');
+});
+
+test('destructured live module cells pass original-source/public checks and fresh module rechecking',async()=>{
+  const fixture=moduleQualificationFixtures().find(row=>row.id==='module-destructured-live-cells');
+  const result=await verifyRegionModuleTrainingCase(fixture);
+  assert.ok(result.exported,result.reason);
+  assert.equal(result.moduleReference,'passed');
+  assert.equal(result.moduleCorrespondence,'passed');
+  const evidence=result.exported.sidecar.sourceArtifact.sidecar.sourceProvenance.upstream.moduleEvidence;
+  assert.deepEqual(evidence.request.modules,fixture.modules);
+  const check=await recheckRegionEvidence(result.exported);
+  assert.equal(check.moduleReference.status,'passed');
+  assert.equal(check.native.admitted,false,'independent consumer admission is a separate gate');
+});
+
+test('owned module declarations do not bypass public class and generator observation boundaries',async()=>{
+  for(const [source,reason] of [
+    ['export class C{static observed=this.name;}export function run(){return C.observed;}',/class\/private state/],
+    ['export function* values(){yield 7;}export function run(){return values.name;}',/constructor\/prototype descriptors/]
+  ]){
+    const result=await verifyRegionModuleTrainingCase({id:'declaration-boundary',family:'declaration-boundary',
+      modules:{'main.js':source},entryModule:'main.js',exportName:'run',fixture:{calls:[]}});
+    assert.equal(result.moduleReference,'passed');
+    assert.equal(result.status,'projection_refused');
+    assert.equal(result.phase,'projection');
+    assert.equal(result.exported,undefined);
+    assert.match(result.reason,reason);
+  }
 });
 
 test('erased TypeScript and runtime-emitting enum declarations are separately source-qualified',async()=>{
