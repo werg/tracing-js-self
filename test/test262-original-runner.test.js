@@ -5,6 +5,7 @@ import {parse} from 'acorn';
 import {Runtime} from '../src/runtime.js';
 import {gitBlobSha} from '../src/test262-baseline.js';
 import {buildTest262Catalog} from '../src/conformance/test262-catalog.js';
+import {discoverTest262ModuleDependencies} from '../src/conformance/test262-acquisition.js';
 import {ownedTest262Profile,executeOfficialTest262Variant,prepareOfficialTest262Variant} from '../src/conformance/test262-runner.js';
 import {executeOfficialTest262Reference} from '../src/conformance/test262-reference.js';
 import {freeTest262Identifiers} from '../src/conformance/test262-capabilities.js';
@@ -23,6 +24,15 @@ function fixture(body,{metadata='',extra={},profile=ownedTest262Profile()}={}){
 function both(body,settings={}){
   return fixture(body,settings).map(options=>({options,owned:executeOfficialTest262Variant(options),
     reference:executeOfficialTest262Reference(options)}));
+}
+function moduleFixture(body,{metadata='',dependencies={},profile=ownedTest262Profile(),flags='module',
+  moduleDependencies=null}={}){
+  const sources={...official,...dependencies,'test/control.js':source(body,'flags: ['+flags+']\n'+metadata)};
+  const snapshot={repository:'tc39/test262',revision,
+    files:Object.fromEntries(Object.entries(sources).map(([path,text])=>[path,gitBlobSha(text)]))};
+  const catalog=buildTest262Catalog({snapshot,sources,profile,
+    moduleDependencies:moduleDependencies??discoverTest262ModuleDependencies(sources)});
+  return catalog.variants.map(variant=>({variant,profile,suiteRevision:revision,sources}));
 }
 const statuses=(rows,status)=>{for(const row of rows){assert.equal(row.owned.status,status,row.owned.reason);assert.equal(row.reference.status,status,row.reference.reason);}};
 
@@ -128,10 +138,145 @@ test('missing original includes, changed bytes, hosts and modules keep distinct 
   }
 });
 
+test('module reference links only the complete pinned fixture graph and keeps owned execution blocked',()=>{
+  const [options]=moduleFixture('import {value} from "./value_FIXTURE.js";assert.sameValue(value,42);',{
+    dependencies:{'test/value_FIXTURE.js':'export const value=42;'}
+  });
+  assert.equal(options.variant.dependencies.status,'complete');
+  assert.equal(executeOfficialTest262Variant(options).status,'environment_unavailable');
+  const reference=executeOfficialTest262Reference(options);
+  assert.equal(reference.status,'passed',reference.reason);
+  assert.equal(reference.executionPerformed,true);
+  assert.equal(reference.authority,'native-v8-reference-only');
+  const missing={...options,sources:{...options.sources}};
+  delete missing.sources['test/value_FIXTURE.js'];
+  assert.equal(executeOfficialTest262Reference(missing).status,'environment_unavailable');
+  const changed={...options,sources:{...options.sources,'test/value_FIXTURE.js':'export const value=43;'}};
+  assert.equal(executeOfficialTest262Reference(changed).status,'infrastructure_error');
+});
+
+test('module linking negatives require the declared realm error and TLA timeout is not a pass',()=>{
+  const [parseNegative]=moduleFixture('let = ;',{
+    metadata:'negative:\n  phase: parse\n  type: SyntaxError\n'
+  });
+  const parsed=executeOfficialTest262Reference(parseNegative);
+  assert.equal(parsed.status,'passed',parsed.reason);
+  assert.equal(parsed.phase,'parse');
+  assert.equal(parsed.executionPerformed,false);
+  const [wrongPhase]=moduleFixture('let = ;',{
+    metadata:'negative:\n  phase: runtime\n  type: TypeError\n'
+  });
+  assert.equal(executeOfficialTest262Reference(wrongPhase).status,'failed');
+  const [resolution]=moduleFixture('import {missing} from "./value_FIXTURE.js";void missing;',{
+    metadata:'negative:\n  phase: resolution\n  type: SyntaxError\n',
+    dependencies:{'test/value_FIXTURE.js':'export const value=42;'}
+  });
+  assert.equal(executeOfficialTest262Reference(resolution).status,'passed');
+  const [wrongResolution]=moduleFixture('import {missing} from "./value_FIXTURE.js";void missing;',{
+    metadata:'negative:\n  phase: resolution\n  type: TypeError\n',
+    dependencies:{'test/value_FIXTURE.js':'export const value=42;'}
+  });
+  assert.equal(executeOfficialTest262Reference(wrongResolution).status,'failed');
+  const [runtime]=moduleFixture('throw new TypeError("expected");',{
+    metadata:'negative:\n  phase: runtime\n  type: TypeError\n'
+  });
+  assert.equal(executeOfficialTest262Reference(runtime).status,'passed');
+  const [wrongRuntime]=moduleFixture('throw new RangeError("wrong");',{
+    metadata:'negative:\n  phase: runtime\n  type: TypeError\n'
+  });
+  assert.equal(executeOfficialTest262Reference(wrongRuntime).status,'failed');
+  const [unresolved]=moduleFixture('import "./missing_FIXTURE.js";');
+  assert.equal(unresolved.variant.dependencies.status,'unresolved');
+  assert.equal(executeOfficialTest262Reference(unresolved).status,'environment_unavailable');
+  const [pendingAwait]=moduleFixture('await new Promise(function(){});',{
+    profile:ownedTest262Profile({referenceTimeoutMs:50})
+  });
+  const limited=executeOfficialTest262Reference(pendingAwait);
+  assert.equal(limited.status,'resource_limited',limited.reason);
+  assert.equal(limited.phase,'runtime');
+});
+
+test('literal dynamic module requests execute only from their frozen dependency closure',()=>{
+  const [options]=moduleFixture('const ns=await import("./value_FIXTURE.js");assert.sameValue(ns.value,42);',{
+    dependencies:{'test/value_FIXTURE.js':'export const value=42;'}
+  });
+  const result=executeOfficialTest262Reference(options);
+  assert.equal(result.status,'passed',result.reason);
+  const [unfrozen]=moduleFixture('const ns=await import("./value_FIXTURE.js");assert.sameValue(ns.value,42);');
+  const blocked=executeOfficialTest262Reference(unfrozen);
+  assert.equal(blocked.status,'environment_unavailable');
+  const [forgedClosure]=moduleFixture('await import("./unlisted_FIXTURE.js");',{
+    metadata:'negative:\n  phase: runtime\n  type: TypeError\n',
+    moduleDependencies:{'test/control.js':[]}
+  });
+  const refused=executeOfficialTest262Reference(forgedClosure);
+  assert.equal(refused.status,'environment_unavailable',refused.reason);
+  assert.equal(refused.phase,'environment');
+});
+
+test('module imports cannot hide unavailable host or agent hooks in a dependency',()=>{
+  const [needsAgent]=moduleFixture('import {host} from "./agent_FIXTURE.js";void host;',{
+    dependencies:{'test/agent_FIXTURE.js':'export const host=$262.agent;'}
+  });
+  const result=executeOfficialTest262Reference(needsAgent);
+  assert.equal(result.status,'environment_unavailable',result.reason);
+  assert.deepEqual(result.missingCapabilities,['agent-cluster','test262-host-object']);
+});
+
+test('concurrent dynamic imports share one in-flight module evaluation',()=>{
+  const [options]=moduleFixture('const pair=await Promise.all(['+
+    'import("./value_FIXTURE.js"),import("./value_FIXTURE.js")]);'+
+    'assert.sameValue(pair[0].count,1);assert.sameValue(pair[1].count,1);',{
+    dependencies:{'test/value_FIXTURE.js':'globalThis.loadCount=(globalThis.loadCount||0)+1;'+
+      'await Promise.resolve(0);export const count=globalThis.loadCount;'}
+  });
+  const result=executeOfficialTest262Reference(options);
+  assert.equal(result.status,'passed',result.reason);
+});
+
+test('async module references use the original doneprintHandle completion protocol',()=>{
+  const [options]=moduleFixture('import("./value_FIXTURE.js").then(function(ns){'+
+    'assert.sameValue(ns.value,42);$DONE();});',{
+    flags:'module, async',dependencies:{'test/value_FIXTURE.js':'export const value=42;'}
+  });
+  const result=executeOfficialTest262Reference(options);
+  assert.equal(result.status,'passed',result.reason);
+  assert.equal(result.harness.at(-1),'harness/doneprintHandle.js');
+  assert.equal(result.printCount,1);
+  const [missingDone]=moduleFixture('import("./value_FIXTURE.js").then(function(){assert.sameValue(1,2);});',{
+    flags:'module, async',dependencies:{'test/value_FIXTURE.js':'export const value=42;'}
+  });
+  assert.equal(executeOfficialTest262Reference(missingDone).status,'failed');
+  const [syncLoop]=moduleFixture('while(true){}',{
+    profile:ownedTest262Profile({referenceTimeoutMs:50})
+  });
+  const loopResult=executeOfficialTest262Reference(syncLoop);
+  assert.equal(loopResult.status,'resource_limited',loopResult.reason);
+});
+
+test('module dependency input bytes obey the same pre-parse source limit',()=>{
+  const harnessMaximum=Math.max(...Object.values(official).map(text=>Buffer.byteLength(text)));
+  const maximum=harnessMaximum+1;
+  const dependency='export const value=42;/*'+ 'x'.repeat(maximum)+'*/';
+  const [options]=moduleFixture('import {value} from "./value_FIXTURE.js";void value;',{
+    dependencies:{'test/value_FIXTURE.js':dependency},profile:ownedTest262Profile({maxSourceBytes:maximum})
+  });
+  const result=executeOfficialTest262Reference(options);
+  assert.equal(result.status,'resource_limited',result.reason);
+  assert.equal(result.phase,'input');
+});
+
 test('known absent global intrinsics and the global receiver cannot create false owned passes',()=>{
   for(const body of ['assert.sameValue(typeof Map,"undefined");','"use strict";assert.sameValue(this,undefined);'])
     for(const options of fixture(body))assert.equal(executeOfficialTest262Variant(options).status,'unsupported');
   statuses(both('var Map=3;assert.sameValue(Map,3);'),'passed');
+  for(const body of ['$262.agent.start("worker.js");','globalThis.$262.agent.getReport();']){
+    const [options]=fixture(body);
+    for(const result of [executeOfficialTest262Variant(options),executeOfficialTest262Reference(options)]){
+      assert.equal(result.status,'environment_unavailable',result.reason);
+      assert.deepEqual(result.missingCapabilities,['agent-cluster','test262-host-object']);
+    }
+  }
   const globals=freeTest262Identifiers(parse('let Map=1;function f(JSON){return JSON.x+missing;}if(1){let Date=2;}Date;',
     {ecmaVersion:2026}));
   assert.deepEqual(globals,['Date','missing']);

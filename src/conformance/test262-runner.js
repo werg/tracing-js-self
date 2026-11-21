@@ -7,7 +7,8 @@ import {createRuntime} from '../runtime.js';
 import {validateBundle} from '../validation.js';
 import {replayExact} from '../replay.js';
 import {conformanceDigest,parseTest262Header,test262VariantModes} from './test262-catalog.js';
-import {freeTest262Identifiers,unsupportedOwnedGlobals,unavailableOwnedStandardGlobal,requiresScriptGlobalThis} from './test262-capabilities.js';
+import {test262HostCapabilities,unsupportedOwnedGlobals,
+  unavailableOwnedStandardGlobal,requiresScriptGlobalThis} from './test262-capabilities.js';
 
 export const OWNED_TEST262_RUNNER='owned-test262-original/1';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -87,7 +88,7 @@ export function requiredOriginalHostCapabilities(ast,variant){
   if(variant.mode==='module')required.add('module-linker');
   for(const flag of variant.metadata.flags)
     if(['CanBlockIsTrue','CanBlockIsFalse','non-deterministic'].includes(flag))required.add('host-flag:'+flag);
-  if(freeTest262Identifiers(ast).includes('$262'))required.add('test262-host-object');
+  for(const capability of test262HostCapabilities(ast))required.add(capability);
   return [...required].sort();
 }
 

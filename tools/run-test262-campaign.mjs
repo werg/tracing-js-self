@@ -131,7 +131,8 @@ if(flags.has('--check')){
   const work=async()=>{
     while(cursor<tasks.length){
       const {variant,authority}=tasks[cursor++];
-      const paths=[variant.path,...variant.harness.map(file=>file.path)];
+      const paths=[variant.path,...variant.harness.map(file=>file.path),
+        ...(variant.mode==='module'?variant.dependencies.files.map(file=>file.path):[])];
       const subset={};
       for(const path of paths)if(sources[path]!==undefined){
         try{subset[path]=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(sources[path]);}

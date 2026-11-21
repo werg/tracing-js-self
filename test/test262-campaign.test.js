@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,readFileSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
 import {dirname,join} from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {acquireTest262GitSnapshot} from '../src/conformance/test262-acquisition.js';
+import {acquireTest262GitSnapshot,discoverTest262ModuleDependencies} from '../src/conformance/test262-acquisition.js';
 import {buildTest262Catalog,bindTest262CatalogProfile,createTest262Campaign,recordTest262Stages} from '../src/conformance/test262-catalog.js';
 import {ownedTest262Profile} from '../src/conformance/test262-runner.js';
 import {readTest262Json,writeTest262Json,createTest262CampaignReport,validateOriginalTest262Report,fingerprintTest262Implementation,
@@ -22,6 +22,8 @@ function syntheticSuite(){
     'test/fail.js':fixture('assert.sameValue(1,2);'),
     'test/async.js':fixture('Promise.resolve(1);','flags: [async]\n'),
     'test/raw.js':fixture('var raw=1;','flags: [raw]\n'),
+    'test/module.js':fixture('import {value} from "./value_FIXTURE.js";assert.sameValue(value,42);','flags: [module]\n'),
+    'test/value_FIXTURE.js':'export const value=42;',
     'test/negative.js':fixture('let = ;','flags: [noStrict]\nnegative:\n  phase: parse\n  type: SyntaxError\n')
   };
   for(const [path,bytes] of Object.entries(files)){
@@ -30,7 +32,8 @@ function syntheticSuite(){
   git(['add','.']);git(['-c','user.name=Campaign Control','-c','user.email=campaign@example.invalid','commit','--quiet','-m','Synthetic pinned suite']);
   const revision=git(['rev-parse','HEAD']);
   const {snapshot,sources}=acquireTest262GitSnapshot({suiteRoot,revision});
-  const catalog=buildTest262Catalog({snapshot,sources,profile:ownedTest262Profile()});
+  const catalog=buildTest262Catalog({snapshot,sources,profile:ownedTest262Profile(),
+    moduleDependencies:discoverTest262ModuleDependencies(sources)});
   const catalogPath=join(directory,'catalog.json');writeFileSync(catalogPath,JSON.stringify(catalog));
   return {directory,suiteRoot,sources,catalog,catalogPath};
 }
@@ -42,12 +45,12 @@ test('campaign CLI retains the frozen full denominator while executing an explic
     execFileSync(process.execPath,['tools/run-test262-campaign.mjs','--catalog',suite.catalogPath,
       '--suite-root',suite.suiteRoot,'--paths','test/good.js','--out',out],{encoding:'utf8',timeout:30000});
     const report=readTest262Json(out);
-    assert.equal(report.summary.catalogVariants,8);assert.equal(report.summary.selected,2);
+    assert.equal(report.summary.catalogVariants,9);assert.equal(report.summary.selected,2);
     assert.equal(report.summary.stages.parseStatic.passed,2);
     assert.equal(report.summary.stages.ownedExecution.passed,2);
     assert.equal(report.summary.stages.independentReference.passed,2);
     assert.equal(report.summary.stages.nativeReplay.passed,0);
-    assert.equal(report.summary.stages.parseStatic.not_selected,6);
+    assert.equal(report.summary.stages.parseStatic.not_selected,7);
     assert(report.campaign.rows.filter(row=>!row.selected).every(row=>Object.values(row.stages).every(stage=>stage.status==='not_selected')));
     assert.equal(validateOriginalTest262Report(report,{baseCatalog:suite.catalog,
       implementation:report.campaign.implementation}).valid,true);
@@ -56,6 +59,23 @@ test('campaign CLI retains the frozen full denominator while executing an explic
       implementation:report.campaign.implementation}),/summary or admission claims/);
     const stale=structuredClone(report.campaign.implementation);stale.runnerDigest='0'.repeat(64);
     assert.throws(()=>validateOriginalTest262Report(report,{baseCatalog:suite.catalog,implementation:stale}),/Incompatible/);
+  }finally{rmSync(suite.directory,{recursive:true,force:true});}
+});
+
+test('campaign CLI sends the complete frozen module dependency closure to its reference worker',()=>{
+  const suite=syntheticSuite();
+  try{
+    const out=join(suite.directory,'module-result.json');
+    execFileSync(process.execPath,['tools/run-test262-campaign.mjs','--catalog',suite.catalogPath,
+      '--suite-root',suite.suiteRoot,'--paths','test/module.js','--stages','parse,reference','--out',out],
+    {encoding:'utf8',timeout:30000});
+    const report=readTest262Json(out);
+    assert.equal(report.summary.catalogVariants,9);
+    assert.equal(report.summary.selected,1);
+    assert.equal(report.summary.stages.independentReference.passed,1);
+    assert.equal(report.summary.stages.independentReference.environment_unavailable,0);
+    assert.equal(report.campaign.rows.find(row=>row.path==='test/module.js').stages.ownedExecution.status,'not_run');
+    assert.equal(report.claims.fullEditionConformance,false);
   }finally{rmSync(suite.directory,{recursive:true,force:true});}
 });
 

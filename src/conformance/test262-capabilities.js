@@ -81,6 +81,48 @@ export function unsupportedOwnedGlobals(ast){
   return freeTest262Identifiers(ast).filter(name=>missingGlobals.has(name));
 }
 
+/** Resolve statically visible Test262 host-object and agent requirements.
+ * Access through the standard globalThis binding is covered too; a locally
+ * shadowed globalThis remains an ordinary guest value. */
+export function test262HostCapabilities(ast){
+  const free=new Set(freeTest262Identifiers(ast)),required=new Set(),agentAliases=new Set();
+  const propertyName=node=>node?.computed?
+    node.property?.type==='Literal'&&typeof node.property.value==='string'?node.property.value:null:
+    node?.property?.type==='Identifier'?node.property.name:null;
+  const global262=node=>node?.type==='Identifier'&&node.name==='$262'&&free.has('$262')||
+    node?.type==='MemberExpression'&&node.object?.type==='Identifier'&&node.object.name==='globalThis'&&
+    free.has('globalThis')&&propertyName(node)==='$262';
+  function collectAliases(node){
+    if(!node||typeof node!=='object')return;
+    if(node.type==='VariableDeclarator'&&global262(node.init)){
+      required.add('test262-host-object');
+      if(node.id?.type==='Identifier')agentAliases.add(node.id.name);
+      if(node.id?.type==='ObjectPattern'&&node.id.properties.some(property=>
+        property.type==='Property'&&(property.key.name==='agent'||property.key.value==='agent')))
+        required.add('agent-cluster');
+    }
+    for(const [key,value] of Object.entries(node)){
+      if(['loc','start','end'].includes(key))continue;
+      if(Array.isArray(value))value.forEach(collectAliases);else if(value&&typeof value==='object')collectAliases(value);
+    }
+  }
+  collectAliases(ast);
+  function visit(node){
+    if(!node||typeof node!=='object')return;
+    if(node.type==='Identifier'&&node.name==='$262'&&free.has('$262'))required.add('test262-host-object');
+    if(node.type==='MemberExpression'&&(global262(node.object)||
+      node.object?.type==='Identifier'&&agentAliases.has(node.object.name))){
+      required.add('test262-host-object');
+      if(propertyName(node)==='agent')required.add('agent-cluster');
+    }
+    for(const [key,value] of Object.entries(node)){
+      if(['loc','start','end'].includes(key))continue;
+      if(Array.isArray(value))value.forEach(visit);else if(value&&typeof value==='object')visit(value);
+    }
+  }
+  visit(ast);return [...required].sort();
+}
+
 export function requiresScriptGlobalThis(ast){
   let required=false;
   function visit(node,globalReceiver){
