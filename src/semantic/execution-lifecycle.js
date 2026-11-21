@@ -876,9 +876,9 @@ export class SelectedExecutionCore {
   }
   /** Only host code supplies an observed result. There is no reference/teacher repair. */
   deliverResult(invocationId,effectId,options){
-    return this.#commitPreparedResult(this.#prepareResult(invocationId,effectId,options));
+    return this.commitPreparedResult(this.prepareResult(invocationId,effectId,options));
   }
-  #prepareResult(invocationId,effectId,{status,value,result:explicitResult=null,
+  prepareResult(invocationId,effectId,{status,value,result:explicitResult=null,
       graph:explicitGraph=null,errorOrigin=null}){
     const key=invocationId+'/'+effectId,intent=this.intents.get(key);
     demand(intent&&['dispatched','uncertain','settled'].includes(intent.status),
@@ -910,7 +910,7 @@ export class SelectedExecutionCore {
     return {invocationId,effectId,key,intent,activation,status,result:clone(result),line,
       resultDigest,errorOrigin:clone(errorOrigin)};
   }
-  #commitPreparedResult({invocationId,effectId,key,intent,activation,status,result,line,
+  commitPreparedResult({invocationId,effectId,key,intent,activation,status,result,line,
       resultDigest,errorOrigin,duplicate=false}){
     if(duplicate){
       this.deliveries.push({invocationId,effectId,status:'duplicate'});
@@ -1081,14 +1081,14 @@ export class SelectedExecutionCore {
     demand(intent?.status==='uncertain','Only uncertain actions require reconciliation');
     demand(['not-dispatched','lost','fulfilled','rejected'].includes(disposition)&&
       typeof evidenceId==='string'&&evidenceId.length>0,'Reconciliation requires explicit external evidence');
-    const prepared=['fulfilled','rejected'].includes(disposition)?this.#prepareResult(invocationId,effectId,
+    const prepared=['fulfilled','rejected'].includes(disposition)?this.prepareResult(invocationId,effectId,
       {status:disposition,value,result,graph,errorOrigin}):null;
     const receipt=this.record('observed','reconcile',this.invocations.get(invocationId).trackId,
       {invocationId,effectId,disposition,evidenceId});
     if(disposition==='not-dispatched'){
       intent.status='committed';this.inflight.delete(invocationId+'/'+effectId);
     }else if(disposition==='lost')intent.status='lost';
-    else this.#commitPreparedResult(prepared);
+    else this.commitPreparedResult(prepared);
     return receipt;
   }
   reattachSubscription(subscriptionId,{evidenceId,attach}={}){
