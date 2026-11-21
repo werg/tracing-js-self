@@ -188,3 +188,4 @@ export {DurableRetainedModuleStore,DurableRetainedModuleStorageError,
 export {DurableHostIngressStore,createDurableHostIngressStore} from './host-ingress.js';
 export {DurableHostIngressJournal} from './host-ingress-journal.js';
 export {DurableHostIngressBroker} from '../semantic/host-ingress-journal-v8.js';
+export {DurableSelectedHistoryJournal} from './selected-history.js';

@@ -28,3 +28,5 @@ export {DurableHostIngressStore,createDurableHostIngressStore} from './host-ingr
 export type {HostIngressReceipt,DurableHostIngressStoreOptions} from './host-ingress.js';
 export {DurableHostIngressJournal,DurableHostIngressBroker} from './host-ingress-journal.js';
 export type {HostIngressLogReceipt,DurableHostIngressJournalOptions} from './host-ingress-journal.js';
+export {DurableSelectedHistoryJournal} from './selected-history.js';
+export type {SelectedHistoryReceipt,DurableSelectedHistoryJournalOptions} from './selected-history.js';
