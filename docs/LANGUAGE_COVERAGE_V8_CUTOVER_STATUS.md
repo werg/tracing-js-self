@@ -16,7 +16,22 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
-## Current checkpoint and active implementation
+## Active continuation — 21 November 2026
+
+- Producer `92145f14ca5669e4c21417f9e39ae85b2a1245ba` now saves registered callback queues against immutable private ingress snapshots and their externally retained receipts. Recovery verifies exact public history and source ownership before model restoration, keeps queued graphs outside model input until delivery, and resumes saved events without registration replay. Eighteen focused lifecycle/driver/ingress controls pass, including fresh-process reconstruction, graph identities, mutation/refusal and write-race controls. Per-arrival broker logging, callback-return continuations and arrivals beyond the saved boundary remain open.
+- Consumer `351c8f7aed56ac400d533156544e34a76ea3e5b5` adds an installed-wheel CI gate proving ordinary V8 entrypoints load from the installed package with eight legacy modules blocked. Twenty affected lifecycle/lineage/serving checks plus one isolated wheel check pass with actual pinned tokenizer bytes; test source-verifier injection remains explicitly bounded evidence.
+- Producer `72f00114577aff958e2ce67cb2bbe190c96268cb` reuses the validated, explicitly declared read-only V6 capture policy in the record-fitting diagnostic and retains that policy in its boundary/report metadata. The optimizer diagnostic and original saved training configuration remain separately disclosed. Fifteen affected Python controls pass. Fresh exact-pair source/native admission, Gaussian and recurrent-state parity, decoder support and supervision auditing pass. The one-record diagnostic fits the exact target in 16 updates; its first training/serving sample is bit-identical. This is not ordinary model training or learned task success.
+- Producer `24f9febbba473bbdb5f36b81cb108cc3e0c6310a` applies the same explicit read-only admission to the two-boundary capture. The initial full hosted follow-up at `72f0011` and its local reproduction refused this missing policy at the second diagnostic stage; 20 focused controls pass. The complete fresh local sequence now passes admission, initial conditional/supervision auditing, the 16-update one-record decoder fit, both native boundaries and the fitted supervision/canary audit. One actual model record passes the public controller; both recurrent-state comparisons have zero difference. The retained report archive explicitly omits model tensors and is not a complete model bundle.
+- Producer `a2a2067cc87a36f7636e6d32e603de3bf13beade` composes Promise executors and joins with map callbacks and built-in iterators, alongside Number/Proxy/memory. Sixty-eight focused regression controls and ten final shared-source/population controls pass (overlapping populations). Original-source comparison, fresh recheck, adapter-order determinism and JSON checkpoint recovery pass; unsupported array mutation returns no exported evidence. The recurring interoperability population is **32 sources** and the native policy now pins consumer `351c8f7`. Review also found registration-order delivery across buffered listeners; a global arrival-order fix is active for live and restored queues.
+- Fresh clean-checkout source identity verification passes on `92145f1`; contract regeneration also passes with unchanged wire digests. The earlier dirty-checkout refusal remains an actual failed attempt rather than being counted as source proof.
+- Resumed from actual producer `f1151a1cb65d5997ba13ba33c5d219ae7eeac19a` and consumer `262cb089b3c0cb035b2c51cdcb342a5271ad25b9`; the older checkpoint sections below remain historical.
+- Hardest-first implementation is active in shared Promise/iterator/map source composition, host callback ingress/recovery, original-module conformance execution, and installed ordinary training/serving parity. All 17 acceptance packages remain open.
+- Consumer formatting repair is published at `fe027cd429e7368fec4f144f582f71a8597a84ea`. Both Python hosted runs had stopped at formatting before CPU tests. Fresh local Ruff lint and format checks pass for all 561 selected files; new hosted checks are pending.
+- Producer hosted V8 qualification at `f1151a1` retained **31 source-qualified / 30 native-admitted** cases, with the new composed example rejected by the older pinned consumer `a237366`. Consumer `6997cae` already adds the required strict extension checks; paired pin refresh and fresh qualification remain required.
+- The producer's other hosted failure is the record-fitting diagnostic omitting the required explicit legacy admission policy. The admission guard remains intact while the diagnostic is repaired.
+- Consumer `262cb08` contains the prior exact-pair ordinary optimizer/resume/export/serving bundle; it does not qualify later source or consumer changes. New evidence will retain its exact pair and failed attempts.
+
+## Previous checkpoint and implementation record
 
 Continuation on **21 November 2026**. Both PRs remain drafts; **0 of 17 acceptance
 packages are complete**. Delivered increments below are bounded evidence. Work
@@ -131,11 +146,11 @@ serving, and measured learned success.
 | 2 | Qualified Test262 runner | In progress | Fresh realms, official includes, strict/sloppy/raw/module variants, early/runtime errors, async and agent handling; runner fault controls; reconciled full applicable catalog. |
 | 3 | Neutral JS execution state | In progress | Extract typed values and transitions; preserve all current state and lifecycle behavior; equivalence tests. |
 | 4 | Direct V8 detail and source certification | In progress | Own detail/context/checkpoint schema and direct compilation; no V6 witness artifact or old episode replay. |
-| 5 | Independent native V8 semantics | In progress | Remove V8-to-V6 envelope/receipt conversion and V7 detail-wire calls; retain neutral independent semantic primitives; malformed-state controls. |
+| 5 | Independent native V8 semantics | In progress | Direct detail, observation, effect and primitive paths plus installed import controls are delivered. Remaining: complete contract ownership and paired language-family semantics, broader malformed-state controls, final current-pair absence/replay proof. |
 | 6 | Composable source projections | In progress | Event-level adapters with complete, unique transition ownership; no exclusive whole-episode projector limitation. Mixed Promise/host source certification is under qualification. |
 | 7 | Protocol/effect/lifecycle composition | In progress | Protocol → effect → callback → protocol, reentrancy, guest errors, cancellation and restore with independent source/native checks. Coordinated driver/model/host recovery now preserves acknowledged history and budgets. |
-| 8 | Ordinary V8 training admission | In progress | Strict preparation policy and normal recipe/loader/config/stage/resume checks; no verification-flag or unverified-data bypass; source eligibility distinct from learned outcomes. |
-| 9 | Canonical selected serving and live restore | In progress | Standard serving route, training/serving byte parity, acknowledged-state restore, random/budget state, callbacks/child work, no redispatch. |
+| 8 | Ordinary V8 training admission | In progress | Strict preparation, ordinary readiness, recipe/loader/config/stage/resume gates are implemented. Remaining: fresh command-level qualification of the expanded source population and production recipes with the exact final assets; source eligibility remains distinct from learned outcomes. |
+| 9 | Canonical selected serving and live restore | In progress | Acknowledged state, random/budget state and registered private ingress checkpoints are implemented. Remaining: accepted-model-record end-to-end recovery, per-arrival durable broker input, return-value callback continuations, child/reentrant work and final source/native/no-redispatch proof. |
 | 10 | References, coercion and abrupt operations | In progress | General references, property keys, guest error objects, partial effects, nested binding and cleanup; source/public/native/restore cases. |
 | 11 | Promises, async and scheduler | In progress | Adoption order, repeated thenables, getter/throw/first-call/finally behavior; public/native transitions; combinators, async functions/generators and module interactions. |
 | 12 | Collections, construction, Proxy and iteration | In progress (bounded families) | Sparse/effectful arrays, collections, internal methods, private accessors, iterator consumers/delegation and checkpoint behavior. |
@@ -603,8 +618,8 @@ https://github.com/werg/megatoken/pull/38
 
 ## Latest published branch heads
 
-- Producer: `9a9c270ec835e77a5f5b8576f1d4d1f40d0c308f`.
-- Consumer: `c0ac528a5db70de51fb77f38ead88974c0fa386c`.
+- Producer: `a2a2067cc87a36f7636e6d32e603de3bf13beade`.
+- Consumer: `351c8f7aed56ac400d533156544e34a76ea3e5b5`.
 - Latest complete source/native admission pair: producer
   `6888ca122460d3456f275dee4add9b61ba56b6f9` / consumer
   `c0ac528a5db70de51fb77f38ead88974c0fa386c`: **30 declared, 30 source-qualified,
