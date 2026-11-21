@@ -35,11 +35,10 @@ export function moduleBindingIdentifiers(ast){
       return;
     }
     if(['ClassDeclaration','ClassExpression'].includes(node.type)){
-      // The evaluated-module parser refuses top-level class declarations
-      // before constructing this index. For the supported nested classes,
-      // both declaration and inner class name remain local, so their shared
-      // identifier keeps the inner mark. Supporting module-level classes will
-      // also require retaining the outer declaration identity separately.
+      // A class declaration creates an outer binding and a separate immutable
+      // inner name. The linker lowers its outer module cell explicitly and
+      // prints the class itself as an expression, so keep the printed name and
+      // class-internal references in the inner scope.
       if(node.type==='ClassDeclaration')declare(node.id,environment);
       environment=scope(environment);declare(node.id,environment);
     }else if(node.type==='SwitchStatement'){

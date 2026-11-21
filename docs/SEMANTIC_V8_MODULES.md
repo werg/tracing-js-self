@@ -59,6 +59,35 @@ The evidence certifies the JavaScript actually executed. It does not claim that
 successful transpilation proves ownership or that source-map anchors prove all
 TypeScript semantics.
 
+## Owned declaration and binding semantics
+
+The owned linker accepts module-level class and generator declarations, named
+and anonymous default declarations, and destructured `let`, `const`, and `var`
+bindings. Exported names and imported reads refer to the resulting live module
+cells. Shorthand pattern keys remain source property names even when their
+local cells are renamed; default initializers execute only when the original
+property value requires them.
+
+Class evaluation creates the outer mutable module binding separately from the
+immutable inner class name. The outer binding stays in its temporal dead zone
+until class initialization completes. Imported heritage, private fields, and
+static initialization use the owned runtime's existing class implementation.
+Anonymous class/generator values keep their source-inferred names during
+initialization and assignment, before class static fields execute. This does
+not introduce an inner lexical name for an anonymous class.
+
+Generator and anonymous default function declarations are instantiated before
+the graph starts evaluating, including cyclic dependencies. Generator names
+and references to mutable module bindings survive lowering. Original-ESM
+differentials and JSON suspension/replay controls cover these behaviors in
+both the shared-cell and scheduled environment paths.
+
+These are owned execution guarantees. A graph using class/private behavioral
+state or unqualified constructor/prototype observations can still receive an
+explicit public projection refusal after passing the independent original
+module reference. The declaration tests do not grant public/native/data
+admission to those graphs.
+
 ## Boundaries
 
 The owned linker supports bounded async dependency cycles through retained

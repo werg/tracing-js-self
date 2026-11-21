@@ -127,35 +127,45 @@ function parseModule(file,text,sources){
     forwards.set(exported,{module:from,name:imported});
     addDependency(from);
   };
-  const addSymbol=(name,kind,node)=>{
+  const addSymbol=(name,kind,node,synthetic=false)=>{
     if(kind==='var'&&symbols.get(name)?.kind==='var')return;
-    if(!validName(name)||name.startsWith('__traced_eval_')||
+    if(!validName(name)||!synthetic&&name.startsWith('__traced_eval_')||
        symbols.has(name)||imports.has(name)||namespaceImports.has(name))
       reject('duplicate, reserved or invalid module binding '+name+' in '+file);
     symbols.set(name,{kind,node});
   };
-  const addDeclaration=(declaration,exported=false)=>{
+  const addDeclaration=(declaration,exported=false,defaultExport=false)=>{
     if(declaration.type==='FunctionDeclaration'){
-      const local=nodeName(declaration.id);
-      if(declaration.generator)reject('generator module function not owned in '+file);
-      addSymbol(local,'function',declaration);
-      functions.push(declaration);
+      const local=declaration.id?nodeName(declaration.id):'__traced_eval_default';
+      if(!declaration.id&&!defaultExport)reject('anonymous non-default function declaration');
+      addSymbol(local,'function',declaration,!declaration.id);
+      functions.push({node:declaration,local,anonymous:!declaration.id});
+      if(exported)addExport(local,local);
+      return local;
+    }
+    if(declaration.type==='ClassDeclaration'){
+      const local=declaration.id?nodeName(declaration.id):'__traced_eval_default';
+      if(!declaration.id&&!defaultExport)reject('anonymous non-default class declaration');
+      addSymbol(local,'class',declaration,!declaration.id);
+      initializers.push({kind:'class',node:declaration,local,anonymous:!declaration.id});
       if(exported)addExport(local,local);
       return local;
     }
     if(declaration.type==='VariableDeclaration'&&
        ['const','let','var'].includes(declaration.kind)){
       for(const item of declaration.declarations){
-        const local=nodeName(item.id);
         // A const initialized by a guest function expression/arrow is a
         // callable export, but it is initialized during module evaluation,
         // not hoisted like a FunctionDeclaration. Mutable let exports remain
         // live data bindings and must not be mistaken for a stable callable.
-        const callable=declaration.kind==='const'&&
+        const callable=item.id.type==='Identifier'&&declaration.kind==='const'&&
           (item.init?.type==='ArrowFunctionExpression'||
-           item.init?.type==='FunctionExpression'&&!item.init.generator);
-        addSymbol(local,callable?'function':declaration.kind,item);
-        if(exported)addExport(local,local);
+           item.init?.type==='FunctionExpression');
+        for(const identifier of bindingIdentifiers(item.id)){
+          const local=nodeName(identifier);
+          addSymbol(local,callable?'function':declaration.kind,item);
+          if(exported)addExport(local,local);
+        }
       }
       initializers.push({kind:'node',node:declaration});
       return null;
@@ -222,7 +232,7 @@ function parseModule(file,text,sources){
         addImport(nodeName(spec.local),from,
           spec.type==='ImportDefaultSpecifier'?'default':exportNameOf(spec.imported));
       }
-    }else if(node.type==='FunctionDeclaration'||
+    }else if(node.type==='FunctionDeclaration'||node.type==='ClassDeclaration'||
              node.type==='VariableDeclaration'){
       addDeclaration(node);
     }else if(node.type==='ExportNamedDeclaration'){
@@ -245,13 +255,12 @@ function parseModule(file,text,sources){
       if(node.exported)addForward(exportNameOf(node.exported),from,namespaceExport);
       else {addDependency(from);stars.push(from);}
     }else if(node.type==='ExportDefaultDeclaration'){
-      if(node.declaration.type==='FunctionDeclaration'){
-        addExport('default',addDeclaration(node.declaration,false));
-      }else if(node.declaration.type==='ClassDeclaration'){
-        reject('default class evaluation is not owned');
+      if(['FunctionDeclaration','ClassDeclaration'].includes(node.declaration.type)){
+        addExport('default',addDeclaration(node.declaration,false,true));
       }else{
-        const local='__default_expr';
-        addSymbol(local,'const',node.declaration);
+        const local='__traced_eval_default';
+        const callable=['ArrowFunctionExpression','FunctionExpression'].includes(node.declaration.type);
+        addSymbol(local,callable?'function':'const',node.declaration,true);
         addExport('default',local);
         initializers.push({kind:'default',node:node.declaration,local});
       }
@@ -271,7 +280,9 @@ function parseModule(file,text,sources){
     if(['FunctionDeclaration','FunctionExpression','ArrowFunctionExpression',
       'ClassDeclaration','ClassExpression'].includes(node.type))return;
     if(node.type==='VariableDeclaration'&&node.kind==='var')
-      for(const declaration of node.declarations)addSymbol(nodeName(declaration.id),'var',declaration);
+      for(const declaration of node.declarations)
+        for(const identifier of bindingIdentifiers(declaration.id))
+          addSymbol(nodeName(identifier),'var',declaration);
     for(const [key,value] of Object.entries(node)){
       if(['start','end','loc','range','raw','regex'].includes(key))continue;
       if(Array.isArray(value))value.forEach(moduleVars);
@@ -308,7 +319,7 @@ function namedDefinition(source,name){
   const key=JSON.stringify(name);
   return '({['+key+']:('+source+')})['+key+']';
 }
-function rewrite(module,root,names,namespaceBindings=new Map()){
+function rewrite(module,root,names,namespaceBindings=new Map(),{preserveDeclarationName=false}={}){
   const edits=new Map();
   const staticName=node=>node.computed?
     (node.property?.type==='Literal'&&typeof node.property.value==='string'?
@@ -353,6 +364,17 @@ function rewrite(module,root,names,namespaceBindings=new Map()){
     if(node.type==='UpdateExpression')checkAssignment(node.argument);
     if((node.type==='ForOfStatement'||node.type==='ForInStatement')&&
        node.left.type!=='VariableDeclaration')checkAssignment(node.left);
+    if(node.type==='Property'&&node.shorthand&&node.value.type==='AssignmentPattern'){
+      const {left,right}=node.value;
+      // The shorthand key is source text, whereas the bound cell can be
+      // renamed. `{value=...}` must become `{value: linkedValue=...}`.
+      walk(left,node,'value');
+      if(left.type==='Identifier'&&module.bindingIdentifiers.has(left)&&anonymousDefinition(right)){
+        const expression=rewrite(module,right,names,namespaceBindings);
+        edits.set(right.start,{end:right.end,value:namedDefinition(expression,left.name)});
+      }else walk(right,node.value,'right');
+      return;
+    }
     const nameTarget=node.type==='VariableDeclarator'?node.id:
       node.type==='AssignmentPattern'||node.type==='AssignmentExpression'&&
       ['=','&&=','||=','??='].includes(node.operator)?node.left:null;
@@ -392,6 +414,7 @@ function rewrite(module,root,names,namespaceBindings=new Map()){
       if(node.name.startsWith('__traced_eval_'))
         reject('reserved generated identifier '+node.name+' in '+module.file);
       if(!module.bindingIdentifiers.has(node))return;
+      if(preserveDeclarationName&&node===root.id)return;
       if(namespaceBindings.has(node.name))
         reject('namespace identity escapes a static property read in '+module.file);
       const replacement=names.get(node.name);
@@ -609,7 +632,14 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     const module=get(file),names=bound.get(file);
     for(const item of module.initializers){
       let fragment;
-      if(item.kind==='default'){
+      if(item.kind==='class'){
+        // The outer module binding is mutable and stays uninitialized until
+        // class evaluation completes. A named class expression retains the
+        // separate immutable inner name, including in heritage/static code.
+        const expression=rewrite(module,item.node,names,namespaces.get(file));
+        const value=item.anonymous?namedDefinition(expression,'default'):'('+expression+')';
+        fragment='let '+names.get(item.local)+' = '+value+';';
+      }else if(item.kind==='default'){
         const expression=rewrite(module,item.node,names,namespaces.get(file));
         // `export default <anonymous function/class definition>` performs
         // NamedEvaluation with the name "default" before the value is
@@ -625,6 +655,21 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       append(file,'evaluate',lower?lowerModuleAwaits(fragment):fragment);
     }
   }
+  function instantiateFunctions(file){
+    const module=get(file),names=bound.get(file);
+    for(const item of module.functions){
+      if(item.node.generator||item.anonymous){
+        // Creating the value before the first environment yield is module
+        // instantiation, before any initializer in the graph executes. Keep
+        // generator names observable while source references continue to use
+        // the original mutable module cell rather than an expression-local one.
+        const expression=rewrite(module,item.node,names,namespaces.get(file),
+          {preserveDeclarationName:true});
+        const value=item.anonymous?namedDefinition(expression,'default'):'('+expression+')';
+        append(file,'instantiate','var '+names.get(item.local)+' = '+value+';');
+      }else append(file,'instantiate',rewrite(module,item.node,names,namespaces.get(file)));
+    }
+  }
   if(scheduled){
     append(null,'scheduler-state','const __traced_eval_cells=[];\n'+
       '  const __traced_eval_modules=[];\n'+
@@ -632,8 +677,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     for(const file of order){
       const module=get(file),names=bound.get(file),index=indices.get(file);
       append(file,'environment','function* __traced_eval_module_'+index+'(){');
-      for(const fn of module.functions)
-        append(file,'instantiate',rewrite(module,fn,names,namespaces.get(file)));
+      instantiateFunctions(file);
       // Capturing a getter does not read its lexical binding. Functions are
       // already initialized while let/const stay in TDZ until evaluation.
       const getters=[...renamed.get(file).values()].map(name=>
@@ -661,9 +705,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     // The already-qualified synchronous/single-chain profile shares lexical
     // cells directly. Parallel async graphs use retained environments above.
     for(const file of order){
-      const module=get(file),names=bound.get(file);
-      for(const fn of module.functions)
-        append(file,'instantiate',rewrite(module,fn,names,namespaces.get(file)));
+      instantiateFunctions(file);
     }
     for(const file of order){
       initializers(file);
