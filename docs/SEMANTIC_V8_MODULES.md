@@ -108,15 +108,23 @@ distinct even when both modules have identical source bytes. Static reads
 through the resolved namespace continue to observe live exported cells in both
 evaluation strategies.
 
+`typeof` on a source-owned namespace binding or a pure static namespace path
+returns `"object"` without manufacturing a namespace object in the owned heap.
+Namespace bindings initialize during module instantiation, so this also works
+inside a synchronous dependency cycle. Lexical shadows keep their ordinary
+semantics; reads of ordinary exported cells still observe temporal dead zones.
+Surrounding expressions retain their effects. Dynamic computed paths and
+effectful expressions whose result would escape as a namespace remain refused.
+
 The two original Test262 namespace-alias tests and their four dependency files
 are retained unchanged with Git blob identities under
-`fixtures/test262-namespace-reexports`. Their source-only resolution checks pass.
-Their exact bodies still meet the owned namespace-identity boundary at
-`typeof foo`, and Node 24.22.3 / V8 13.6 still reports a linking `SyntaxError`.
-Those owned refusals and failed native references remain explicit. Separate
-owned static-read controls satisfy the retained specification and preserve the
-native disagreement as a diagnostic; none of these controls grants public,
-native-consumer, or dataset admission to the original cases.
+`fixtures/test262-namespace-reexports`. Their source-only resolution and original
+owned test bodies pass with archive validation and exact replay. Node 24.22.3 /
+V8 13.6 still reports a linking `SyntaxError`, which remains an explicit failed
+independent reference. Native-agreeing namespace `typeof` graphs have separate
+source/public and fresh-recheck controls; an original-module reference failure
+blocks that export path. None of these controls grants native-consumer or
+dataset admission to the original cases.
 
 ## Boundaries
 

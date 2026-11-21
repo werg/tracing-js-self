@@ -27,7 +27,7 @@ test('unchanged pinned Test262 namespace reexports resolve to one target module 
   assert.deepEqual(unresolvedOriginalModuleBindings(parsed),[]);
 });
 
-test('original namespace bodies retain their explicit owned boundary and independent native result',t=>{
+test('original namespace bodies execute owned while preserving the independent native result',t=>{
   const sources={...modules,...Object.fromEntries(['assert.js','sta.js'].map(name=>[
     'harness/'+name,readFileSync(new URL('../fixtures/test262-harness/'+name,import.meta.url),'utf8')]))},
     snapshot={repository:pin.repository,revision:pin.revision,
@@ -38,9 +38,10 @@ test('original namespace bodies retain their explicit owned boundary and indepen
   for(const variant of catalog.variants){
     const options={variant,profile,suiteRevision:pin.revision,sources},
       owned=executeOfficialTest262Variant(options),reference=executeOfficialTest262Reference(options);
-    assert.equal(owned.status,'unsupported',owned.reason);
-    assert.match(owned.reason,/namespace identity escapes a static property read/);
-    assert.equal(owned.executionPerformed,false);
+    assert.equal(owned.status,'passed',owned.reason);
+    assert.equal(owned.executionPerformed,true);
+    assert.equal(owned.trace.structurallyValidated,true);
+    assert.equal(owned.trace.exactlyReplayed,true);
     assert.equal(owned.claims.admitted,false);
     // Current Node 24 fails these unchanged graphs during resolution. A later
     // native engine may implement the retained specification; preserve either

@@ -360,6 +360,16 @@ function rewrite(module,root,names,namespaceBindings=new Map(),{preserveDeclarat
       return;
     }
     if(typeof node.type!=='string')return;
+    if(node.type==='UnaryExpression'&&node.operator==='typeof'){
+      const operand=node.argument.type==='ChainExpression'?node.argument.expression:node.argument;
+      if(namespaceOf(operand)){
+        // Imported namespace bindings exist at module instantiation, including
+        // cycles. Only source-owned bindings and pure static namespace paths
+        // reach here; ordinary exported cells retain their reads and TDZ, and
+        // computed/effectful operands keep their existing ownership boundary.
+        edits.set(node.start,{end:node.end,value:'"object"'});return;
+      }
+    }
     if(node.type==='AssignmentExpression')checkAssignment(node.left);
     if(node.type==='UpdateExpression')checkAssignment(node.argument);
     if((node.type==='ForOfStatement'||node.type==='ForInStatement')&&

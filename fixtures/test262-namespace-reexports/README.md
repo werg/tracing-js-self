@@ -10,10 +10,14 @@ step 10.a.ii: exporting an imported namespace binds the namespace of its target
 module, exactly as a direct `export * as` declaration does. Multiple star paths
 to that same namespace are unambiguous.
 
-The controls verify source-only resolution over the original bytes. The bounded
-owned module runtime still refuses the escaping namespace observation used by
-these exact test bodies (`typeof foo`). Node 24.22.3 / V8 13.6 also rejects these
-graphs while linking. Tests retain that independent reference result explicitly;
-source-only resolution is not public/native replay, dataset admission, or an
-edition-wide conformance claim. Separate owned static-read controls exercise the
-corrected namespace origin through live exported cells.
+The controls verify source-only resolution and execute the original test bodies
+with owned validation and exact replay. Their `typeof foo` observations are
+supported when the source binding proves that `foo` is an imported namespace;
+this does not permit the namespace object itself to escape.
+
+Node 24.22.3 / V8 13.6 still rejects these graphs while linking. Tests retain that
+failed independent reference result explicitly. The original cases have no
+public/native admission, dataset admission, or edition-wide conformance claim.
+Separate owned static-read controls exercise the corrected namespace origin
+through live exported cells, while a native-agreeing namespace `typeof` graph
+has its own source/public and fresh-recheck controls.
