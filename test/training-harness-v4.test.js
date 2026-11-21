@@ -110,10 +110,12 @@ test('restoration preserves uncertain intent and does not replay native side eff
     realmId:'r1',triggerId:'call1',args:['counter']});
   h.selected('i',req('i','fx','demo.readAsync',[['str','counter']],'["counter"]'));
   const pending=h.dispatch('i','fx');
-  const restored=SelectedExecutionHarness.restore(h.checkpoint(),{services:service});
-  assert.throws(()=>restored.dispatch('i','fx'),/uncertain/);
+  assert.throws(()=>h.checkpoint(),/acknowledgement/);
   assert.equal(invoked,0);
   await Promise.resolve();assert.equal(invoked,1);
+  const restored=SelectedExecutionHarness.restore(h.checkpoint(),{services:service});
+  assert.throws(()=>restored.dispatch('i','fx'),/uncertain/);
+  assert.equal(invoked,1);
   restored.deliverResult('i','fx',{status:'fulfilled',value:5});
   selectedValue(restored,'i',5);
   assert.equal(invoked,1);

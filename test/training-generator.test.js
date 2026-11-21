@@ -74,7 +74,7 @@ test('seeded retained invocations and checkpoint restoration keep one realm stre
     forged.realms[0][1].randomState++;
     const {integrity,...body}=forged;
     forged.integrity=createHash('sha256').update(JSON.stringify(body)).digest('hex');
-    assert.throws(()=>SelectedExecutionHarness.restore(forged),/randomState/);
+    assert.throws(()=>SelectedExecutionHarness.restore(forged),/realm ownership or state|randomState/);
   }
   assert.equal(SelectedExecutionHarness.replay(h.exportEpisode()).realms.get('realm').randomState,state);
 });

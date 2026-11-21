@@ -118,10 +118,8 @@ test('explicit delivery cannot bypass an earlier listener and core checkpoints v
   core.selected('event1',core.encodeRecord('return',{value:['undefined']}));
   core.selected('event1',core.encodeRecord('end',{kind:'return'}));
   assert.equal(core.deliverReadyEvents('callback2').triggerId,'event:callback2:second');
-  const restored=SelectedExecutionLifecycleV8.restore(checkpoint);
-  assert.equal(restored.nextIngressSequence,3);
-  assert.equal(restored.deliverReadyEvents('callback1'),null,
-    'generic restore retains the lost-handler durable-only gate');
+  assert.throws(()=>SelectedExecutionLifecycleV8.restore(checkpoint),/independently retained checked ingress/,
+    'a private checkpoint hash cannot authenticate additional queued inputs');
   const duplicate=structuredClone(checkpoint);
   duplicate.handlers.find(row=>row[0]==='callback1')[1].queue[0].arrivalSequence=2;
   assert.throws(()=>SelectedExecutionLifecycleV8.restore(resealCore(duplicate)),/arrival order/);
