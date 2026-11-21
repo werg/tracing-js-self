@@ -22,6 +22,33 @@ function retainedClosureFunction(program,closure,entry){
     'Callback entry must identify the same unique static function site as its retained closure');
   return selected[0];
 }
+function assertEventInvocation(h,fields){
+  const event=h.timeline.at(-1);
+  if(event?.kind!=='event'){
+    demand(fields.activation!=='callback'||fields.parentInvocationId!==null,
+      'Parentless callback requires its immediately preceding registered event');
+    return;
+  }
+  const handler=h.handlers.get(event.subscriptionId);
+  demand(handler&&fields.invocationId===event.invocationId&&fields.programId===handler.programId&&
+    fields.trackId===handler.trackId&&fields.realmId===event.realmId&&fields.triggerId===event.triggerId&&
+    fields.ingressKey===event.triggerId&&fields.activation==='callback'&&
+    fields.realmPolicy===handler.realmPolicy&&(fields.entry??handler.entry)===handler.entry&&
+    fields.closureId===handler.closureId&&fields.parentInvocationId===handler.ownerInvocationId&&
+    fields.taskRevision===(h.realms.get(handler.realmId)?.taskRevision??1)&&fields.deadline===null&&
+    fields.receiver===undefined&&(fields.receiverValue===null||isDeepStrictEqual(fields.receiverValue,['undefined']))&&
+    fields.bindings&&typeof fields.bindings==='object'&&!Array.isArray(fields.bindings)&&
+    Object.keys(fields.bindings).length===0,
+    'Event invocation differs from its registered handler delivery');
+}
+function nextEventOrdinal(h){
+  let ordinal=h.nextEventDelivery;
+  demand(Number.isSafeInteger(ordinal)&&ordinal>=0,'Invalid event delivery counter');
+  do{
+    ordinal++;demand(Number.isSafeInteger(ordinal),'Event delivery counter exhausted');
+  }while(h.invocations.has('event'+ordinal));
+  return ordinal;
+}
 function validateIngressQueueOrder(rows,nextSequence){
   demand(Number.isSafeInteger(nextSequence)&&nextSequence>=1,
     'Invalid next host ingress sequence');
@@ -218,6 +245,8 @@ export class SelectedExecutionCore {
     demand(deadline===null||deadline>this.now(),'Invocation deadline already expired');
     demand(['call','module-init','callback'].includes(activation),'Invalid activation kind');
     completionPolicy=canonicalCompletionPolicy(completionPolicy);
+    assertEventInvocation(this,{programId,invocationId,trackId,realmId,triggerId,ingressKey,
+      activation,realmPolicy,entry,closureId,parentInvocationId,taskRevision,deadline,receiver,receiverValue,bindings});
     const ingressDigest=createHash('sha256').update(JSON.stringify({programId,invocationId,
       trackId,realmId,triggerId,completionPolicy,realmPolicy,entry,closureId,activation,
       parentInvocationId,taskRevision,deadline,bindings,receiverValue,
@@ -358,6 +387,12 @@ export class SelectedExecutionCore {
       'Handler requires an owned closure in its realm');
     const realm=this.realms.get(realmId),closure=closureId===null?null:realm.heap.get(closureId),
       selectedEntry=entry??closure?.code??program.entry;
+    demand(closureId===null||realmPolicy==='retained','A retained handler closure requires its retained realm');
+    if(ownerInvocationId!==null){
+      const owner=this.invocations.get(ownerInvocationId);
+      demand(owner&&!['cancelled','failed'].includes(owner.status)&&owner.programId===programId&&
+        owner.realmId===realmId&&owner.trackId===trackId,'Handler owner differs from its live source realm');
+    }
     if(closure){
       demand(realm.digest===program.digest,'Handler closure belongs to a different source revision');
       retainedClosureFunction(program,closure,selectedEntry);
@@ -429,9 +464,8 @@ export class SelectedExecutionCore {
     if(!this.queuedEventCanBeDelivered(handler))return null;
     if(handler.realmPolicy==='retained'&&
        this.nextQueuedEventSubscription(handler.realmId,{retainedOnly:true})!==subscriptionId)return null;
-    const next=handler.queue.shift();
-    let invocationId;
-    do{invocationId='event'+(++this.nextEventDelivery);}while(this.invocations.has(invocationId));
+    const ordinal=nextEventOrdinal(this),invocationId='event'+ordinal;
+    const next=handler.queue.shift();this.nextEventDelivery=ordinal;
     const triggerId='event:'+subscriptionId+':'+next.eventId;
     const realmId=handler.realmPolicy==='retained'?
       handler.realmId:handler.realmId+invocationId;
@@ -1126,7 +1160,10 @@ export class SelectedExecutionCore {
    * before applying it to the live lifecycle, preserving native service handles. */
   replayRecord(item){
     const h=this,previous=this.replaying,index=this.timeline.length;
-    this.validateRecord(item);this.replaying=true;
+    this.validateRecord(item);
+    demand(this.timeline.at(-1)?.kind!=='event'||item.kind==='invocation',
+      'Registered event must be followed immediately by its callback invocation');
+    this.replaying=true;
     try{
       if(item.kind==='program'){
         h.publishProgram({programId:item.programId,source:item.source,
@@ -1151,12 +1188,18 @@ export class SelectedExecutionCore {
         const handler=h.handlers.get(item.subscriptionId);
         demand(['active','closing'].includes(handler?.state)&&!handler.seen.has(item.eventId),
           'Replay event has no live unique subscription');
+        const n=nextEventOrdinal(h);
+        const expectedRealm=handler.realmPolicy==='retained'?handler.realmId:handler.realmId+'event'+n;
+        demand(Number.isSafeInteger(n)&&item.invocationId==='event'+n&&
+          item.track===handler.trackId&&item.programId===handler.programId&&item.realmId===expectedRealm&&
+          item.triggerId==='event:'+item.subscriptionId+':'+item.eventId,
+          'Replay event routing differs from its registered handler delivery');
         const realm=h.realms.get(item.realmId);
-        demand(!realm?.closed&&!realm?.running,'Replay event delivered during active or closed guest turn');
+        demand(!h.realms.get(handler.realmId)?.closed&&!realm?.closed&&!realm?.running,
+          'Replay event delivered during active or closed guest turn');
+        const suffix=/^callbackevent([1-9][0-9]*)$/.exec(item.eventId);
+        demand(!suffix||Number.isSafeInteger(Number(suffix[1])),'Invalid native callback event sequence');
         handler.seen.add(item.eventId);
-        const n=Number(String(item.invocationId).replace(/^event/,''));
-        demand(Number.isSafeInteger(n)&&n>h.nextEventDelivery,
-          'Invalid replay dynamic event invocation identity');
         h.nextEventDelivery=n;
         h.record('observed','event',item.track,{
           subscriptionId:item.subscriptionId,eventId:item.eventId,
@@ -1166,6 +1209,14 @@ export class SelectedExecutionCore {
       }else if(item.kind==='handler-close'){
         const handler=h.handlers.get(item.subscriptionId);
         demand(['active','closing','lost'].includes(handler?.state),'Replay closes nonexistent subscription');
+        demand(Array.isArray(item.discarded)&&new Set(item.discarded).size===item.discarded.length&&
+          item.discarded.every(identity=>typeof identity==='string'&&ID.test(identity)&&
+            !h.timeline.some(row=>row.kind==='event'&&row.subscriptionId===item.subscriptionId&&row.eventId===identity)),
+          'Handler close discards duplicate, invalid or already delivered events');
+        demand(!handler.queue.length||isDeepStrictEqual(item.discarded,handler.queue.map(event=>event.eventId)),
+          'Handler close differs from its retained pending inputs');
+        for(const identity of item.discarded)handler.seen.add(identity);
+        handler.queue.length=0;
         handler.state='closed';
         for(const callback of h.callbacks.values())
           if(callback.subscriptionId===item.subscriptionId)callback.state='revoked';
@@ -1306,6 +1357,8 @@ export class SelectedExecutionCore {
     const verified=this.replay({public:{schema:this.contract.executionVersion,
       traceFormat:this.contract.traceVersion,contextFormat:this.contract.contextVersion,
       profile:this.contract.profile,timeline:packet.timeline}},{requireTerminal:false});
+    demand(packet.nextEventDelivery===verified.nextEventDelivery,
+      'Checkpoint event delivery counter contradicts committed events');
     for(const [key,activation] of packet.invocations){
       const expected=verified.invocations.get(key)?.controller.segmentPacket();
       demand(expected,'Checkpoint invocation lacks public provenance');

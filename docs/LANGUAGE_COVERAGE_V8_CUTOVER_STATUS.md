@@ -16,6 +16,49 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Current continuation from published heads — 21 November 2026
+
+Resumed from producer `1965c3767cfb4ff1719c90ecf3a0d71ff3142e39` and consumer
+`de58ef4a59cfa0967fa63b937077dd61dec1a4c4`. The main PR remains the active
+work ledger. **0 of 17 complete acceptance packages are closed.**
+
+- The exact starting pair passes all **46 original-source checks, 46 independent
+  native admissions, 46 exact-token measurements and 46 native packing checks**.
+  The declared population is 44 scripts plus two original module graphs; all
+  four return-callback cases are included. The complete inputs, tokenizer,
+  temporary exact-pair policy, receipts and logs are being retained for
+  publication. These results do not qualify later executable changes. No
+  optimizer update or learned-success result is included in this campaign.
+- Consumer `72e994504af9b90d403b96f336a5a473ff691357` preserves shared state
+  across retained closure and ordinary calls, assigns parameter cells by actual
+  invocation order, and independently checks retained source/parent/input
+  identities. Eleven new controls and 65 related controls pass. Its three
+  producer-pinned fixture episodes contain 26 selected records; those engineering
+  controls explicitly leave source admission and model success untested.
+- Producer `5d095e8b4108bfe27e9fe4fc2c1ab9252767bd41` preserves inferred module
+  function/class names before static initialization, including assignments and
+  defaults. Four new original-ESM controls fail before correction and pass
+  after it; 59 integrated module/binding/namespace controls pass. Existing
+  specification/native disagreements remain visible.
+- Registered event replay now binds routing and the immediately following
+  callback invocation to the exact handler. Canonical event counters, source,
+  realm, track, trigger, closure, parent, task revision, receiver and binding
+  policy are checked before mutation. Invalid handler owners and fresh-realm
+  retained closures refuse registration. Closing a handler preserves the
+  identities of discarded private arrivals in public obligations while refusing
+  duplicate, delivered or substituted discard claims. **56 integrated controls
+  pass**, including five new authority/close tests, native lifecycle, durable
+  ingress and original-source nested callback recovery. The consumer's matching
+  host-handler continuation implementation is in progress.
+
+Current priorities remain retained host-handler/native composition, module
+declaration and live-binding semantics, missing later acknowledged public
+history, final-pair integration/CI and complete evidence retention. Lessons:
+invocation identity spelling is not an allocation ordinal; a delivery receipt
+cannot choose a different handler destination; discarded private arrivals must
+remain accounted for after public replay; and module rewriting must preserve
+names at evaluation time rather than patching them after static initialization.
+
 ## Resumed implementation checkpoints — 21 November 2026
 
 This continuation resumed from producer `45ea3e78a4aa9d44b2ba5100acd81ce55bccba12`
