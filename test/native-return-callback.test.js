@@ -71,6 +71,18 @@ test('concurrent callback arrivals use FIFO capture cells and distinct return wa
   assert.deepEqual(ids,['callbackreturn1','callbackreturn2']);
 });
 
+test('repeated owned callback handles retain one native trampoline identity',async()=>{
+  const {bundle}=await executeWithNativeServices({
+    entry:entry('function run(){const fn=function(v){return v+1;};'+
+      'return host.natlangCall("identity",null,{first:fn,second:fn});}'),
+    services:{'natlang.call':({args})=>{
+      assert.equal(args[2].first,args[2].second);
+      return Reflect.apply(args[2].second,undefined,[8]);
+    }}
+  });
+  assert.deepEqual(outcome(bundle),scalar('return',9));
+});
+
 test('callback child may await another host request and callback before returning to its parent',async()=>{
   const calls=[];
   const {bundle}=await executeWithNativeServices({

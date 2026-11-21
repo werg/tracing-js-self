@@ -45,7 +45,10 @@ export function checkEffectfulProjectionState(bundle,{protocolProfiles=[]}={}){
       reject('retained property-key conversion requires an explicit v8 protocol profile');
     for(const change of event.stateChanges??[]){
     if(change.table==='heap'&&change.after){
-      inspectHeap(change.after,change.before,{boundary:change.before===null&&event.operation==='external.input.deliver',protocolProfiles});snapshots++;
+      const callbackInput=event.operation==='job.enter'&&event.stateChanges.some(p=>p.table==='frames'&&
+        p.before===null&&p.after?.externalCallbackReturn?.graphIdentities.some(item=>item.target===change.id));
+      inspectHeap(change.after,change.before,{boundary:change.before===null&&
+        (event.operation==='external.input.deliver'||callbackInput),protocolProfiles});snapshots++;
     }
     if(change.table==='frames'&&change.after&&(change.after.constructReceiver||change.after.newTarget||
       change.after.afterInstanceInitialization||change.after.classStaticResult||

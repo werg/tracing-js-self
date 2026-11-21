@@ -123,17 +123,53 @@ or propagate it. A callback may itself await another host request and callback.
 Read-only archive validation checks the closure against the immutable dispatched
 request, the imported input graph, receiver and parameter aliases, and the
 return identity. Exact replay executes the same original owned frames using
-recorded arrivals, without restarting any native service. Six focused controls
+recorded arrivals, without restarting any native service. Seven focused controls
 in `test/native-return-callback.test.js` cover sync/async closure returns and
 throws, captured receiver/argument cycles, concurrent FIFO return waiters,
 reentrant child host work, atomic authority refusals and tampered archives.
 
-This transport increment does not yet establish source-witness admission. That
-also requires the deterministic fixture environment and source projector to
-preserve these return-value callback turns and compare them with independent
-native source execution. `natlang.callSync` return callbacks fail closed: the
+`natlang.callSync` return callbacks fail closed: the
 synchronous owner is blocked inside its guest job and cannot yield for this
 asynchronous re-entry protocol. Notification callbacks retain their existing
 primitive, void-return contract. Cross-boundary graphs are snapshots; native
 identity across separately captured host calls is not an implicit retained-cell
 capability.
+
+## Source-derived continuation evidence
+
+The ordinary source pipeline now carries return callbacks end to end. A fixture
+may identify a callback anywhere in its declared argument graph with `path`,
+capture the receiver and arguments in one `inputGraph`, and set
+`resultFromCallback` to derive the parent fixture result from that callback's
+actual completion. The fixture records both arrival and completion. It cannot
+replace an incorrect callback answer with a predetermined parent answer.
+Repeated occurrences of one owned callback also share one native trampoline.
+
+The projector admits the child at the original runtime's `job.enter` event,
+after checking the dispatched parent and original callback-arrival identity.
+It maps the imported input graph into the retained selected realm, preserves
+the exact receiver and captured lexical cells, and attaches both arrival and
+activation events to its private source certificate. The public representation
+uses the ordinary callback invocation and child continuation records.
+
+`fixtures/semantic-regions/return-callbacks.js` supplies four reusable source
+cases: receiver/argument cycles and captured state across two callbacks, a
+thrown callback, an async callback, and a child that awaits another host request
+and callback. All pass the ordinary source certification path, four independent
+native source executions (original, operations, branches and completions),
+mixed public replay and source evidence rechecking. A detailed fallback for a
+case without a supported compact local region is recorded honestly.
+
+`test/semantic-source-return-callback-v8.test.js` additionally restores a later
+durable arrival from an earlier source-produced checkpoint, restores the active
+child again, and consumes only the remaining source-produced selections. Its
+public timeline exactly matches uninterrupted source execution, including the
+second callback and captured-cell update. A fresh Node process separately
+restores the source-derived throwing child. Both controls keep the native
+parent uncertain until its independently retained external result is imported;
+they recreate no native waiter and make no native dispatch.
+
+These source and durable-recovery controls still do not establish actual-model
+selection, callback-capable deployment qualification, or an adapter-owned
+external continuation protocol. Native consumer admission is a separate gate;
+the source-only tests explicitly report it as untested.

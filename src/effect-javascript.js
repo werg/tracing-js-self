@@ -44,10 +44,14 @@ function argumentsJS(fx) {
  * ordinary lookalike objects never gain callback authority. */
 export function materializeNativeEffectArguments(fx,callback){
   const spec=hostOperation(fx.operation),args=decodeHostPayload(fx.request.payload,spec.codec,spec);
-  const seen=new WeakSet();
+  const seen=new WeakSet(),callbacks=new Map();
+  const trampoline=id=>{
+    if(!callbacks.has(id))callbacks.set(id,callback(fx.id,id));
+    return callbacks.get(id);
+  };
   function visit(value){
     const id=ownedCallbackId(value);
-    if(id)return callback(fx.id,id);
+    if(id)return trampoline(id);
     if(value===null||typeof value!=='object'||seen.has(value))return value;
     seen.add(value);
     for(const key of Object.keys(value))value[key]=visit(value[key]);
@@ -55,7 +59,7 @@ export function materializeNativeEffectArguments(fx,callback){
   }
   return args.map((value,index)=>{
     if(spec.codec==='canonical-json/1'&&spec.callbackIndices.includes(index))
-      return callback(fx.id,value.$ownedCallback);
+      return trampoline(value.$ownedCallback);
     return visit(value);
   });
 }

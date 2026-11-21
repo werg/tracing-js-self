@@ -296,6 +296,41 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       refuse('callback arrival differs from the native call registration');
     return registration;
   };
+  const admitReturnCallback=(arrival,queue,created,event)=>{
+    const effect=state.effects[queue.effectId],parentInvocationId=rootFor(effect?.frameId);
+    const parent=harness.invocations.get(parentInvocationId),closureId=identity(queue.functionId);
+    const intent=harness.intents.get(parentInvocationId+'/'+queue.effectId);
+    const continuation=created.after.externalCallbackReturn;
+    if(!parent||!hostOperation(effect.operation).callbackGraph||intent?.status!=='dispatched'||
+      continuation?.id!==queue.returnId||arrival.returnId!==queue.returnId||
+      parent.controller.heap.get(closureId)?.kind!=='closure')
+      refuse('return callback lost its dispatched parent, owned closure or arrival identity');
+    const graph=copy(queue.inputGraph),aliases=new Map(),reserved=new Set(parent.controller.heap.keys());
+    let ordinal=0;
+    for(const node of graph.objects){
+      let id;do{id='o'+ordinal++;}while(reserved.has(id));
+      aliases.set(node.id,id);reserved.add(id);
+    }
+    const remap=value=>value[0]==='ref'?['ref',aliases.get(value[1])]:copy(value);
+    const inputGraph={roots:graph.roots.slice(1).map(remap),objects:graph.objects.map(node=>({
+      ...node,id:aliases.get(node.id),properties:node.properties.map(p=>({...p,value:remap(p.value)}))}))};
+    for(const mapping of continuation.graphIdentities){
+      if(!aliases.has(mapping.source))refuse('return callback graph has an unbound owned input identity');
+      publicIdentities.set(mapping.target,aliases.get(mapping.source));
+      certifiedDataIdentities.add(aliases.get(mapping.source));
+    }
+    const owner=queue.returnId;
+    const receipt=harness.admitInvocation({programId:parent.programId,invocationId:owner,
+      trackId:parent.trackId,realmId:parent.realmId,triggerId:owner,inputGraph,
+      receiverValue:tag(created.after.thisValue),closureId,realmPolicy:'retained',activation:'callback',
+      parentInvocationId,taskRevision:parent.taskRevision,deadline:parent.deadline,
+      completionPolicy:'await-returned-promise'});
+    roots.set(created.id,owner);frames.set(created.id,owner);
+    certificates.push({sequence:receipt.sequence,rule:'owned-return-callback/8',
+      journalEvents:[arrival.journalEvent,event.eventId],digest:hash({effect:effect.request,
+        closureId,returnId:queue.returnId,inputGraph,receiver:tag(created.after.thisValue)})});
+    return owner;
+  };
   const cell=(env,name)=>{
     const key=env+':'+name;
     if(!cellNames.has(key)){
@@ -713,6 +748,8 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     const promiseChanges=event.stateChanges.filter(change=>change.table==='promises');
     const effectCreated=event.stateChanges.find(change=>change.table==='effects'&&change.before===null);
     const queued=state.control.a0.queue?.[0];
+    const returnCallbackFrame=event.operation==='job.enter'&&queued?.returnId?
+      event.stateChanges.find(change=>change.table==='frames'&&change.before===null):null;
     const declaredTargets=new Set();
     if(event.operation!=='job.enter'){
       for(const change of promiseChanges)for(const observer of change.after?.observers??[])
@@ -724,6 +761,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     // Only source-generated promise creation is a prediction. An external
     // request declares its own promise identity in the same atomic record.
     for(const change of promiseChanges)if(change.before===null&&change.id!==effectCreated?.after?.promiseId&&
+      change.id!==returnCallbackFrame?.after?.asyncPromiseId&&
       !declaredTargets.has(change.id))
       promise(change.id,owner,event);
     function registerReaction(promiseId,reaction){
@@ -787,11 +825,15 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       const queue=event.stateChanges.find(change=>change.table==='control')?.after?.queue??[];
       const callback=queue.at(-1);
       if(callback?.kind!=='external-callback')refuse('callback lacks owned queue receipt');
-      const eventId='teacherevent'+(++eventOrdinal);
-      const registration=callbackRegistration(callback.effectId,callback.functionId);
-      harness.postEvent({subscriptionId:registration.subscriptionId,eventId,
-        args:realizeGraph(state.heap,callback.args),completionPolicy:'await-returned-promise',deliver:false});
-      callbackArrivals.push({...copy(callback),eventId,subscriptionId:registration.subscriptionId});
+      if(callback.returnId){
+        callbackArrivals.push({...copy(callback),journalEvent:event.eventId});
+      }else{
+        const eventId='teacherevent'+(++eventOrdinal);
+        const registration=callbackRegistration(callback.effectId,callback.functionId);
+        harness.postEvent({subscriptionId:registration.subscriptionId,eventId,
+          args:realizeGraph(state.heap,callback.args),completionPolicy:'await-returned-promise',deliver:false});
+        callbackArrivals.push({...copy(callback),eventId,subscriptionId:registration.subscriptionId});
+      }
       handled=true;
     }else if(event.operation==='effect.dispatch'){
       const effectId=event.causes.find(cause=>cause.kind==='effect')?.effectId;
@@ -890,10 +932,15 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
         const arrival=callbackArrivals.shift();
         if(!arrival||arrival.effectId!==queue.effectId||arrival.functionId!==queue.functionId)
           refuse('callback activation order disagrees with arrival receipt');
-        const registration=callbackRegistration(queue.effectId,queue.functionId);
-        const activation=harness.deliverReadyEvents(registration.subscriptionId);
-        if(!activation)refuse('callback activation was not eligible at owned checkpoint');
-        owner=activation.invocationId;roots.set(changed.id,owner);frames.set(changed.id,owner);
+        if(queue.returnId){
+          owner=admitReturnCallback(arrival,queue,changed,event);
+          if(changed.after.asyncPromiseId)promise(changed.after.asyncPromiseId,owner,event);
+        }else{
+          const registration=callbackRegistration(queue.effectId,queue.functionId);
+          const activation=harness.deliverReadyEvents(registration.subscriptionId);
+          if(!activation)refuse('callback activation was not eligible at owned checkpoint');
+          owner=activation.invocationId;roots.set(changed.id,owner);frames.set(changed.id,owner);
+        }
       }else if(changed?.before===null&&['reaction','microtask'].includes(queue?.kind)){
         // Promise reactions are ordinary owned closure activations at a job
         // boundary. They use the shared selected heap; no native guest call.

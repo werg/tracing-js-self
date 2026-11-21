@@ -4,11 +4,11 @@
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {executeWithNativeServices} from '../host/native-driver.js';
-import {hostOperationContract,hostOperation} from '../host/operations.js';
+import {hostOperationContract} from '../host/operations.js';
 import {encodeNativeGraph} from '../host/graph-codec.js';
-import {decodeHostPayload} from '../host/materialize.js';
+import {materializeNativeEffectArguments} from '../effect-javascript.js';
 import {realizeGraph} from '../training/graph.js';
-import {createFixtureBroker,canonicalFixturePlan} from '../training/fixture-broker.js';
+import {createFixtureBroker,canonicalFixturePlan,normalizeFixtureArguments} from '../training/fixture-broker.js';
 import {defaultSplitIdentity,validateSplitIdentity,cloneSplitIdentity,normalizeSeeds,
   admissionEnvironment} from './source-identity.js';
 import {AdmissionFailure,createFailureRecord} from '../training/failure-record.js';
@@ -140,10 +140,10 @@ async function recheckAdmission(exported,{requireAdmitted=true,timeoutMs=10000,e
   if(dispatches.length!==recorded.length)throw new Error('Native effect count differs from owned dispatch journal');
   for(const [index,event] of dispatches.entries()){
     const id=event.causes.find(cause=>cause.kind==='effect')?.effectId;
-    const effect=side.archive.finalState.effects[id],spec=hostOperation(effect.operation);
-    const actual=decodeHostPayload(effect.request.payload,spec.codec,spec).map((arg,slot)=>
-      spec.callbackIndices.includes(slot)?{callback:true}:arg);
-    if(effect.operation!==recorded[index].operation||!isDeepStrictEqual(encodeNativeGraph(actual),recorded[index].arguments))
+    const effect=side.archive.finalState.effects[id];
+    const actual=normalizeFixtureArguments(effect.operation,
+      materializeNativeEffectArguments(effect,()=>()=>{}));
+    if(effect.operation!==recorded[index].operation||!isDeepStrictEqual(actual,recorded[index].arguments))
       throw new Error('Native evaluated argument receipt differs from owned request');
     const input=side.archive.finalState.inputs[effect.inputIds[0]];
     const outcome=side.effects.find(receipt=>receipt.kind==='settlement'&&receipt.call===index);
