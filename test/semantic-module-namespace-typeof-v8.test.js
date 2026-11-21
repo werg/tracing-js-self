@@ -31,7 +31,13 @@ test('namespace typeof cannot bypass an original-module graph rejected by the na
       exportName:fixture.exportName,calls:null,inputGraph:encodeNativeGraph([linked.entryInput])}),
     result=await verifyRegionModuleTrainingCase(fixture);
   assert(['passed','unsupported'].includes(reference.status),reference.reason);
-  if(reference.status!=='passed'){
+  if(linked.metadata.requiresModuleNamespace){
+    assert.equal(result.status,'projection_refused');
+    assert.equal(result.category,'unsupported.module-namespace-projection');
+    assert.equal(result.exported,undefined,
+      'owned namespace state cannot bypass the public projection boundary');
+    if(reference.status!=='passed')assert.match(reference.reason,/conflicting star exports/);
+  }else if(reference.status!=='passed'){
     assert.match(reference.reason,/conflicting star exports/);
     assert.equal(result.status,reference.status);assert.equal(result.phase,'module-reference');
     assert.equal(result.exported,undefined,'owned typeof folding is not independent reference authority');
@@ -39,5 +45,6 @@ test('namespace typeof cannot bypass an original-module graph rejected by the na
     assert.ok(result.exported,result.reason);assert.equal(result.moduleCorrespondence,'passed');
   }
   t.diagnostic(JSON.stringify({node:process.version,v8:process.versions.v8,
-    nativeModuleReference:reference.status,publicExported:Boolean(result.exported),nativeConsumerAdmitted:false}));
+    nativeModuleReference:reference.status,publicStatus:result.status,
+    publicExported:Boolean(result.exported),nativeConsumerAdmitted:false}));
 });

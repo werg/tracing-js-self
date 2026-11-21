@@ -211,7 +211,7 @@ function scalarUpdate(previous,operator) {
 function propertyAccessor(heap, receiver, key) {
   let obj=heap[receiver[1]];
   const visited=new Set();
-  while(obj && ['object','array'].includes(obj.kind)){
+  while(obj && ['object','array','module-namespace'].includes(obj.kind)){
     if(visited.has(obj.id))throw new Error('Cyclic owned prototype graph');
     visited.add(obj.id);
     if(Object.hasOwn(obj.properties,key))return null;
@@ -243,6 +243,8 @@ function proxyRoute(heap,receiver,operation) {
   return {kind:'ordinary',target:['ref',obj.id],receiver};
 }
 function ownPropertyKeys(obj){
+  if(obj.kind==='module-namespace')
+    return [...obj.namespaceExportNames,symbolPropertyKey('well-known:toStringTag')];
   const present=key=>Object.hasOwn(obj.properties??{},key)||Object.hasOwn(obj.accessors??{},key);
   const known=[...new Set([...(obj.propertyOrder??[]),...Object.keys(obj.properties??{}),...Object.keys(obj.accessors??{})])].filter(present);
   return [...known.filter(arrayIndex).sort((a,b)=>Number(a)-Number(b)),...known.filter(key=>!arrayIndex(key)&&!isSymbolPropertyKey(key)),...known.filter(isSymbolPropertyKey)];
@@ -405,18 +407,25 @@ export class Runtime {
     }
     this.chunkStart=0;this.chunkBefore='q0';this.result=U;
   }
-  registerSource({text,url='<inline>',goal='script',trainingProfile=false,scriptProfile=false}={}) {
+  registerSource({text,url='<inline>',goal='script',trainingProfile=false,
+    scriptProfile=false,moduleNamespaceIntrinsic=false}={}) {
     if(this.started)throw new Error('Source registry is frozen after start');
     if(goal!=='script')throw new SyntaxError('Only script goal is implemented');
     if(typeof text!=='string')throw new TypeError('Source text required');
     if(trainingProfile&&scriptProfile)throw new TypeError('Select one owned source profile');
+    if(typeof moduleNamespaceIntrinsic!=='boolean'||
+       moduleNamespaceIntrinsic&&!trainingProfile)
+      throw new TypeError('The module namespace intrinsic is reserved for linked modules');
     const sourceId=`src${this.sources.length+1}`;
-    const compiled=compile(trainingProfile?parseTraining(text):scriptProfile?parseOwnedScript(text):parse(text));
+    const compiled=compile(trainingProfile?parseTraining(text,{moduleNamespaceIntrinsic}):
+      scriptProfile?parseOwnedScript(text):parse(text));
     const rename={};
     for(const id of Object.keys(compiled.programs))rename[id]=`${sourceId}:${id}`;
     for(const [id,program] of Object.entries(compiled.programs))this.programs[rename[id]]={...program,id:rename[id],instructions:program.instructions.map(inst=>['DEF_FN','MAKE_FUNCTION'].includes(inst.op)?{...inst,arg:{...inst.arg,codeId:rename[inst.arg.codeId]},siteId:`${sourceId}:${inst.siteId}`}:{...inst,siteId:`${sourceId}:${inst.siteId}`})};
     this.sites.push(...compiled.sites.map(site=>({...site,siteId:`${sourceId}:${site.siteId}`,codeId:rename[site.codeId],sourceId})));
-    const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:trainingProfile?TRAINING_PARSER:scriptProfile?OWNED_SCRIPT_PARSER:'bounded-pratt/2'};
+    const record={sourceId,text,url,goal,entry:rename[compiled.entry],
+      parser:trainingProfile?TRAINING_PARSER:scriptProfile?OWNED_SCRIPT_PARSER:'bounded-pratt/2',
+      ...(moduleNamespaceIntrinsic?{moduleNamespaceIntrinsic:true}:{})};
     this.sources.push(record);return record;
   }
   next(draft,kind) {const ids=draft.counters.ids;return `${kind==='operation'?'op':kind[0]}${++ids[kind]}`;}
@@ -426,6 +435,164 @@ export class Runtime {
     draft.heap[id]={id,kind:'symbol',description:copy(description),
       ...(registeredKey===undefined?{}:{registeredKey}),properties:{},propertyVersions:{},shapeVersion:0,version:0};
     return ['symbol',id];
+  }
+  moduleNamespaceDescriptor(draft,namespace,key,value,eventId){
+    const id=this.next(draft,'obj');
+    const attributes=key===symbolPropertyKey('well-known:toStringTag')?
+      {writable:false,enumerable:false,configurable:false}:
+      {writable:true,enumerable:true,configurable:false};
+    const descriptor=draft.heap[id]={id,kind:'object',properties:{},
+      propertyVersions:{},shapeVersion:0,version:0};
+    for(const [name,item] of Object.entries({value,
+      writable:['bool',attributes.writable],enumerable:['bool',attributes.enumerable],
+      configurable:['bool',attributes.configurable]}))putOwn(descriptor,name,item,eventId);
+    return ['ref',id];
+  }
+  startModuleNamespaceRead(draft,caller,namespace,key,kind,details,eventId){
+    const accessor=namespace.accessors?.[key];
+    const getter=accessor?.get?.value;
+    if(!getter||getter[0]!=='ref'||draft.heap[getter[1]]?.kind!=='function')
+      throw new Error('Module namespace export lacks its owned live-cell getter');
+    const fn=draft.heap[getter[1]];
+    if(fn.async||this.programs[fn.codeId]?.generator)
+      throw new Error('Module namespace live-cell getter is not synchronous');
+    const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,caller.id,null,[],
+      this.functionThis(fn,['ref',namespace.id]),fn.id);
+    caller.pendingModuleNamespace={kind,namespaceId:namespace.id,key,
+      waitingFrameId:child,...details};
+    draft.control.a0.activeFrameId=child;
+    return child;
+  }
+  finishModuleNamespaceRead(draft,caller,pending,value,eventId){
+    const namespace=draft.heap[pending.namespaceId];
+    if(namespace?.kind!=='module-namespace')throw new Error('Module namespace identity disappeared');
+    if(pending.kind==='namespace-inspection')
+      return this.finishModuleNamespaceInspection(draft,caller,namespace,pending,eventId);
+    if(pending.kind==='descriptor'){
+      this.stackPush(caller,this.moduleNamespaceDescriptor(draft,namespace,
+        pending.key,value,eventId),eventId);
+      return caller.id;
+    }
+    if(pending.kind==='define'){
+      const outcome=this.moduleNamespaceDefinitionResult(namespace,pending.key,
+        pending.descriptorFields,value,pending.reflect);
+      if(outcome.error){
+        if(pending.reflect){
+          this.stackPush(caller,['bool',false],eventId);return caller.id;
+        }
+        const origin=pending.operationEventId??eventId,
+          completion={type:'throw',errorType:'TypeError',message:outcome.error,origin};
+        completion.value=this.caughtError(draft,completion,origin);
+        return this.routeModuleNamespaceCompletion(draft,caller,completion,origin);
+      }
+      this.stackPush(caller,pending.reflect?['bool',true]:['ref',namespace.id],eventId);
+      return caller.id;
+    }
+    throw new Error('Unknown module namespace continuation');
+  }
+  routeModuleNamespaceCompletion(draft,caller,completion,eventId){
+    this.routeCompletion(draft,caller,completion,eventId);
+    return caller.status==='running'?caller.id:draft.control.a0.activeFrameId;
+  }
+  moduleNamespaceDefinitionResult(namespace,key,fields,current,reflect){
+    const attributes=key===symbolPropertyKey('well-known:toStringTag')?
+      {writable:false,enumerable:false,configurable:false}:
+      {writable:true,enumerable:true,configurable:false};
+    const invalid=Object.hasOwn(fields,'get')||Object.hasOwn(fields,'set')||
+      Object.hasOwn(fields,'configurable')&&truthy(fields.configurable)!==attributes.configurable||
+      Object.hasOwn(fields,'enumerable')&&truthy(fields.enumerable)!==attributes.enumerable||
+      Object.hasOwn(fields,'writable')&&truthy(fields.writable)!==attributes.writable||
+      Object.hasOwn(fields,'value')&&!ownedSameValue(current,fields.value);
+    return invalid?{error:'Cannot redefine property: '+key}:{ok:true};
+  }
+  moduleNamespaceDefine(draft,caller,namespace,key,descriptor,reflect,eventId){
+    if(!Object.hasOwn(namespace.accessors??{},key)&&!Object.hasOwn(namespace.properties,key))
+      return reflect?{value:['bool',false]}:
+        guestFault('TypeError','Cannot redefine property: '+key);
+    const fields=Object.fromEntries(Object.entries(descriptor.properties)
+      .map(([name,field])=>[name,field.value]));
+    if(Object.hasOwn(namespace.accessors??{},key))
+      return {child:this.startModuleNamespaceRead(draft,caller,namespace,key,'define',
+        {descriptorFields:fields,reflect,operationEventId:eventId},eventId)};
+    const outcome=this.moduleNamespaceDefinitionResult(namespace,key,fields,
+      namespace.properties[key].value,reflect);
+    if(outcome.error)return reflect?{value:['bool',false]}:
+      guestFault('TypeError',outcome.error);
+    return {value:reflect?['bool',true]:['ref',namespace.id]};
+  }
+  moduleNamespaceInspectionValue(draft,namespace,pending,eventId){
+    if(pending.operation==='Object.keys'){
+      const id=this.next(draft,'obj'),array=draft.heap[id]={id,kind:'array',
+        properties:{length:token(['num',0],eventId)},propertyVersions:{length:0},
+        shapeVersion:0,version:0};
+      pending.keys.forEach((key,index)=>putOwn(array,String(index),['str',key],eventId));
+      return ['ref',id];
+    }
+    if(pending.operation==='Object.seal')return ['ref',namespace.id];
+    if(pending.operation==='Object.isSealed')return ['bool',true];
+    if(pending.operation==='Object.freeze')return ['ref',namespace.id];
+    if(pending.operation==='Object.isFrozen')return ['bool',true];
+    throw new Error('Unknown module namespace inspection result');
+  }
+  advanceModuleNamespaceInspection(draft,caller,namespace,pending,eventId){
+    while(pending.index<pending.keys.length){
+      const key=pending.keys[pending.index];
+      if(Object.hasOwn(namespace.accessors??{},key)){
+        const child=this.startModuleNamespaceRead(draft,caller,namespace,key,
+          'namespace-inspection',{operation:pending.operation,keys:pending.keys,
+            index:pending.index,phase:pending.phase,
+            operationEventId:pending.operationEventId},eventId);
+        return {child};
+      }
+      // Module namespace [[OwnPropertyKeys]] also includes @@toStringTag.
+      // Its own data descriptor is already known and has no live cell to read.
+      pending.index++;
+    }
+    return {value:this.moduleNamespaceInspectionValue(draft,namespace,pending,eventId)};
+  }
+  startModuleNamespaceInspection(draft,caller,namespace,operation,key,eventId){
+    if(operation==='Object.hasOwn'){
+      const present=Object.hasOwn(namespace.properties??{},key)||
+        Object.hasOwn(namespace.accessors??{},key);
+      if(!present)return {value:['bool',false]};
+      if(!Object.hasOwn(namespace.accessors??{},key))return {value:['bool',true]};
+      return this.advanceModuleNamespaceInspection(draft,caller,namespace,
+        {operation,keys:[key],index:0,phase:'read-export',operationEventId:eventId},eventId);
+    }
+    const keys=operation==='Object.keys'?namespace.namespaceExportNames.slice():
+      ownPropertyKeys(namespace);
+    return this.advanceModuleNamespaceInspection(draft,caller,namespace,
+      {operation,keys,index:0,phase:'read-export',operationEventId:eventId},eventId);
+  }
+  finishModuleNamespaceInspection(draft,caller,namespace,pending,eventId){
+    if(pending.operation==='Object.hasOwn'){
+      this.stackPush(caller,['bool',true],eventId);return caller.id;
+    }
+    if(pending.operation==='Object.isFrozen'){
+      this.stackPush(caller,['bool',false],eventId);return caller.id;
+    }
+    if(pending.operation==='Object.freeze'&&pending.phase==='read-export'){
+      // SetIntegrityLevel first obtains the live data descriptor, then
+      // [[DefineOwnProperty]] obtains it again before rejecting writable:false.
+      const child=this.startModuleNamespaceRead(draft,caller,namespace,pending.key,
+        'namespace-inspection',{operation:pending.operation,keys:pending.keys,
+          index:pending.index,phase:'freeze-define',
+          operationEventId:pending.operationEventId},eventId);
+      return child;
+    }
+    if(pending.operation==='Object.freeze'){
+      const origin=pending.operationEventId??eventId,
+        completion={type:'throw',errorType:'TypeError',
+          message:'Cannot redefine property: '+pending.key,origin};
+      completion.value=this.caughtError(draft,completion,origin);
+      return this.routeModuleNamespaceCompletion(draft,caller,completion,origin);
+    }
+    pending.index++;
+    const outcome=this.advanceModuleNamespaceInspection(draft,caller,namespace,
+      pending,eventId);
+    if(outcome.child)return outcome.child;
+    this.stackPush(caller,outcome.value,eventId);
+    return caller.id;
   }
   symbolDescription(draft,value){
     if(value[1].startsWith('well-known:')){
@@ -669,11 +836,16 @@ export class Runtime {
   }
   /** Explicit invocation entry for training-js/1. The top level contains only
    * an exact strict directive and named ordinary function declarations. */
-  startEntry({text,source=null,functionName,args=[],allowAsync=false,allowHost=false}={}) {
+  startEntry({text,source=null,functionName,args=[],allowAsync=false,allowHost=false,
+    moduleNamespaceIntrinsic=false}={}) {
     if(this.started)throw new Error('Run already started');
-    if(!source)source=this.registerSource({text,trainingProfile:true});
+    if(typeof moduleNamespaceIntrinsic!=='boolean')
+      throw new TypeError('Invalid internal module namespace entry option');
+    if(!source)source=this.registerSource({text,trainingProfile:true,moduleNamespaceIntrinsic});
     if(source.parser!==TRAINING_PARSER)throw new SyntaxError('Entry requires the Acorn training profile');
-    const ast=parseTraining(source.text);
+    if(!!source.moduleNamespaceIntrinsic!==moduleNamespaceIntrinsic)
+      throw new TypeError('Entry module namespace option does not match compiled source');
+    const ast=parseTraining(source.text,{moduleNamespaceIntrinsic});
     if(!ast.body.length || ast.body[0].type!=='Expression' ||
        ast.body[0].expr.type!=='Literal' ||
        ast.body[0].expr.value[0]!=='str' || ast.body[0].expr.value[1]!=='use strict' ||
@@ -705,6 +877,9 @@ export class Runtime {
     for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set',...ERROR_CONSTRUCTORS,'ArrayBuffer','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
+    if(moduleNamespaceIntrinsic)
+      state.envs[global].bindings.__traced_eval_create_module_namespace={kind:'const',
+        initialized:true,token:token(['builtinfn','__traced_eval_create_module_namespace']),version:0};
     state.control.a0.globalEnvId=global;
     const initializers=ast.body.slice(1).flatMap(n=>
       n.type==='VariableGroup'?n.declarations:n.type==='Variable'?[n]:[]);
@@ -747,7 +922,8 @@ export class Runtime {
      const root=this.newFrame(state,selected.arg.codeId,global,null,rootPromise,imported.map(v=>token(v)));
     state.control.a0.activeFrameId=root;
     state.control.a0.status='running';
-    this.entrySpec={kind:'function',sourceId:source.sourceId,functionName,arguments:imported};
+    this.entrySpec={kind:'function',sourceId:source.sourceId,functionName,arguments:imported,
+      ...(moduleNamespaceIntrinsic?{moduleNamespaceIntrinsic:true}:{})};
     this.started=true;
     this.initialState=copy(state);
     this.checkpoints.q0=copy(state);
@@ -860,6 +1036,12 @@ export class Runtime {
     }
     if(frame.callerFrameId){
       const caller=draft.frames[frame.callerFrameId];
+      if(caller.pendingModuleNamespace?.waitingFrameId===frame.id){
+        const pending=caller.pendingModuleNamespace;
+        delete caller.pendingModuleNamespace;
+        const nextFrame=this.finishModuleNamespaceRead(draft,caller,pending,value,origin);
+        draft.control.a0.activeFrameId=nextFrame===undefined?caller.id:nextFrame;return;
+      }
       if(caller.pendingNumberConversion?.waitingFrameId===frame.id){
         const pending=caller.pendingNumberConversion;
         if(!['waiting','getter-waiting'].includes(pending.phase))throw new Error('Number conversion callback returned twice');
@@ -1389,6 +1571,7 @@ export class Runtime {
          if(caller.pendingNumberConversion?.waitingFrameId===frame.id)delete caller.pendingNumberConversion;
          if(caller.pendingPropertyKeyConversion?.conversion.waitingFrameId===frame.id)delete caller.pendingPropertyKeyConversion;
          if(caller.pendingArrayMethod?.waitingFrameId===frame.id)delete caller.pendingArrayMethod;
+         if(caller.pendingModuleNamespace?.waitingFrameId===frame.id)delete caller.pendingModuleNamespace;
         draft.control.a0.activeFrameId=caller.id;
         const waiting=caller.operationId&&draft.operations[caller.operationId]?.coercion?.waitingFrameId;
         if(waiting===frame.id)caller.pendingCoercionThrow=copy(completion);
@@ -2027,7 +2210,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             else if(['for','keyFor'].includes(property))v=['builtinfn','Symbol.'+property];
             else throw new TypeError('Unmodeled Symbol static property');
           }
-          else if(base.value[0]==='intrinsic'&&base.value[1]==='Reflect'&&['ownKeys','apply'].includes(property))v=['builtinfn','Reflect.'+property];
+          else if(base.value[0]==='intrinsic'&&base.value[1]==='Reflect'&&
+             ['ownKeys','apply','set','deleteProperty','defineProperty'].includes(property))v=['builtinfn','Reflect.'+property];
           else if(base.value[0]==='symbol'){
             if(property==='description')v=this.symbolDescription(s,base.value);
             else if(['toString','valueOf'].includes(property))v=['builtinfn','Symbol.prototype.'+property];
@@ -2037,7 +2221,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
           else if(base.value[0]==='intrinsic'&&base.value[1]==='ArrayBuffer'&&property==='isView')
             v=['builtinfn','ArrayBuffer.isView'];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' &&
-             ['create','setPrototypeOf','getPrototypeOf','defineProperty','getOwnPropertyDescriptor','isFrozen','hasOwn','keys','values','entries','assign','is','getOwnPropertySymbols','getOwnPropertyNames'].includes(property))
+             ['create','setPrototypeOf','getPrototypeOf','defineProperty','getOwnPropertyDescriptor','isFrozen','isSealed','isExtensible','preventExtensions','freeze','seal','hasOwn','keys','values','entries','assign','is','getOwnPropertySymbols','getOwnPropertyNames'].includes(property))
             v=['builtinfn',`Object.${property}`];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Object' && property==='prototype')
             v=['intrinsic','Object.prototype'];
@@ -2607,6 +2791,45 @@ if(object.kind==='regexp'){
           const fn=pop();let callable=fn.value;
           const receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn'&&
+             callable[1]==='__traced_eval_create_module_namespace'){
+            if(!this.entrySpec?.moduleNamespaceIntrinsic||args.length!==1)
+              throw new TypeError('Module namespace constructor is reserved for linked module entries');
+            const listValue=args[0].value,list=listValue[0]==='ref'?s.heap[listValue[1]]:null;
+            if(list?.kind!=='array'||Object.keys(list.accessors??{}).length)
+              throw new TypeError('Module namespace entries must be an owned dense array');
+            const length=decode(list.properties.length?.value??U),names=[],accessors={};
+            if(!Number.isSafeInteger(length)||length<0||length>10000)
+              throw new TypeError('Module namespace export count is outside the owned limit');
+            for(let index=0;index<length;index++){
+              const pairRef=list.properties[String(index)]?.value,
+                pair=pairRef?.[0]==='ref'?s.heap[pairRef[1]]:null;
+              if(pair?.kind!=='array'||Object.keys(pair.accessors??{}).length||
+                 decode(pair.properties.length?.value??U)!==2||
+                 !pair.properties['0']||!pair.properties['1'])
+                throw new TypeError('Module namespace export entry is malformed');
+              const nameValue=pair.properties['0'].value,
+                getterValue=pair.properties['1'].value,
+                getter=getterValue?.[0]==='ref'?s.heap[getterValue[1]]:null;
+              if(nameValue?.[0]!=='str'||!getter||getter.kind!=='function'||
+                 getter.async||this.programs[getter.codeId]?.generator)
+                throw new TypeError('Module namespace export needs a string name and synchronous owned getter');
+              const name=nameValue[1];
+              if(names.length&&names.at(-1)>=name)
+                throw new TypeError('Module namespace export names must be unique and sorted');
+              names.push(name);
+              accessors[name]={get:token(getterValue,eventId),set:token(U,eventId),
+                enumerable:true,configurable:false};
+            }
+            const tag=symbolPropertyKey('well-known:toStringTag'),id=this.next(s,'obj');
+            const namespace=s.heap[id]={id,kind:'module-namespace',prototype:null,
+              extensible:false,namespaceExportNames:names,accessors,
+              properties:{[tag]:token(['str','Module'],eventId)},
+              dataAttributes:{[tag]:{writable:false,enumerable:false,configurable:false}},
+              propertyOrder:[...names,tag],propertyVersions:Object.fromEntries(
+                [...names,tag].map(name=>[name,1])),shapeVersion:names.length+1,version:0};
+            return {...operands(fn,...args),...result(['ref',id])};
+          }
           if(callable[0]==='builtinfn'&&['Function.prototype.call','Function.prototype.apply','Reflect.apply'].includes(callable[1])){
             const reflect=callable[1]==='Reflect.apply',targetValue=reflect?args[0]?.value??U:receiver,
               thisValue=args[reflect?1:0]?.value??U,
@@ -3209,6 +3432,30 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             return {...operands(fn,...args),...result(['bool',
               ownedSameValue(args[0]?.value??U,args[1]?.value??U)])};
           }
+          if(callable[0]==='builtinfn'&&
+             ['Reflect.set','Reflect.deleteProperty','Reflect.defineProperty'].includes(callable[1])){
+            const value=args[0]?.value??U,object=value[0]==='ref'?s.heap[value[1]]:null;
+            if(!object||object.kind!=='module-namespace')
+              throw new TypeError(callable[1]+' currently requires an owned module namespace');
+            const key=valueKey(args[1]?.value??U);
+            if(callable[1]==='Reflect.set')
+              return {...operands(fn,...args),...result(['bool',false])};
+            if(callable[1]==='Reflect.deleteProperty')
+              return {...operands(fn,...args),...result(['bool',
+                !Object.hasOwn(object.accessors??{},key)&&!Object.hasOwn(object.properties,key)])};
+            const descriptorValue=args[2]?.value??U,
+              descriptor=descriptorValue[0]==='ref'?s.heap[descriptorValue[1]]:null;
+            if(!descriptor||!['object','array'].includes(descriptor.kind))
+              guestFault('TypeError','Property descriptor must be an object');
+            if(Object.keys(descriptor.accessors??{}).length)
+              throw new TypeError('Accessor descriptor fields are outside the bounded profile');
+            if(![null,'Object.prototype','Array.prototype'].includes(objectPrototype(descriptor)))
+              throw new TypeError('Inherited descriptor fields are outside the bounded profile');
+            const outcome=this.moduleNamespaceDefine(s,f,object,key,descriptor,true,eventId);
+            if(outcome.child)
+              return {...operands(fn,...args),causes:[{kind:'invocation',frameId:outcome.child}]};
+            return {...operands(fn,...args),...result(outcome.value)};
+          }
           if(callable[0]==='builtinfn' && callable[1]==='Object.assign'){
             const ref=args[0]?.value??U;
             const target=ref[0]==='ref'?s.heap[ref[1]]:null;
@@ -3236,9 +3483,34 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             for(const [key,value] of copies)putOwn(target,key,value,eventId);
             return {...operands(fn,...args),...result(ref)};
           }
+          if(callable[0]==='builtinfn'&&['Object.preventExtensions','Object.isExtensible',
+             'Object.seal','Object.isSealed','Object.freeze'].includes(callable[1])){
+            const value=args[0]?.value??U,object=value[0]==='ref'?s.heap[value[1]]:null;
+            if(callable[1]==='Object.isExtensible')
+              return {...operands(fn,...args),...result(['bool',!!object&&object.extensible!==false])};
+            if(callable[1]==='Object.preventExtensions'){
+              if(object)object.extensible=false;
+              return {...operands(fn,...args),...result(value)};
+            }
+            if(object?.kind==='module-namespace'){
+              const outcome=this.startModuleNamespaceInspection(s,f,object,
+                callable[1],null,eventId);
+              if(outcome.child)
+                return {...operands(fn,...args),causes:[{kind:'invocation',frameId:outcome.child}]};
+              return {...operands(fn,...args),...result(outcome.value)};
+            }
+            throw new TypeError(callable[1]+' requires its bounded ordinary-object profile');
+          }
           if(callable[0]==='builtinfn'&&['Object.isFrozen','Object.getOwnPropertyDescriptor'].includes(callable[1])){
             const base=args[0]?.value??U,object=base[0]==='ref'?s.heap[base[1]]:null;
             if(callable[1]==='Object.isFrozen'){
+              if(object?.kind==='module-namespace'){
+                const outcome=this.startModuleNamespaceInspection(s,f,object,
+                  callable[1],null,eventId);
+                if(outcome.child)
+                  return {...operands(fn,...args),causes:[{kind:'invocation',frameId:outcome.child}]};
+                return {...operands(fn,...args),...result(outcome.value)};
+              }
               const primitive=!['ref','promise','intrinsic','builtinfn','hostfn'].includes(base[0]);
               const frozen=primitive||object?.extensible===false&&ownPropertyKeys(object).every(key=>{
                 const accessor=object.accessors?.[key],data=object.dataAttributes?.[key];
@@ -3246,10 +3518,16 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               });
               return {...operands(fn,...args),...result(['bool',!!frozen])};
             }
-            if(!object||!['object','array','generator'].includes(object.kind)&&!(object.kind==='function'&&object.properties?.name&&object.properties?.length))
+            if(!object||!['object','array','generator','module-namespace'].includes(object.kind)&&!(object.kind==='function'&&object.properties?.name&&object.properties?.length))
               throw new TypeError('Own descriptor reflection requires owned ordinary storage');
             const key=valueKey(args[1]?.value??U),accessor=object.accessors?.[key],slot=object.properties[key];
             if(!accessor&&!slot)return {...operands(fn,...args),...result(U)};
+            if(object.kind==='module-namespace'&&accessor){
+              const child=this.startModuleNamespaceRead(s,f,object,key,'descriptor',{},eventId);
+              return {...operands(fn,...args),causes:[{kind:'invocation',frameId:child}]};
+            }
+            if(object.kind==='module-namespace')
+              return {...operands(fn,...args),...result(this.moduleNamespaceDescriptor(s,object,key,slot.value,eventId))};
             const attributes=object.dataAttributes?.[key],arrayLength=object.kind==='array'&&key==='length';
             const fields=accessor?{get:accessor.get.value,set:accessor.set.value,enumerable:['bool',accessor.enumerable],configurable:['bool',accessor.configurable]}:
               {value:slot.value,writable:['bool',attributes?.writable??true],enumerable:['bool',attributes?.enumerable??!arrayLength],configurable:['bool',attributes?.configurable??!arrayLength]};
@@ -3262,13 +3540,27 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             if(obj?.kind==='function'&&!['Object.keys','Object.values','Object.entries'].includes(callable[1])&&
                !(obj.properties?.name&&obj.properties?.length))
               throw new TypeError('Function descriptor reflection requires the complete Function profile');
-            if(!obj||!['object','array','function','generator'].includes(obj.kind))
+            if(!obj||!['object','array','function','generator','module-namespace'].includes(obj.kind))
               throw new TypeError('Object builtin requires an owned ordinary reference');
             if(callable[1]==='Object.hasOwn'){
               const property=valueKey(args[1]?.value??U);
+              if(obj.kind==='module-namespace'){
+                const outcome=this.startModuleNamespaceInspection(s,f,obj,
+                  callable[1],property,eventId);
+                if(outcome.child)
+                  return {...operands(fn,...args),causes:[{kind:'invocation',frameId:outcome.child}]};
+                return {...operands(fn,...args),...result(outcome.value)};
+              }
               return {...operands(fn,...args),...result(['bool',
                 Object.hasOwn(obj.properties,property) ||
                 Object.hasOwn(obj.accessors??{},property)])};
+            }
+            if(callable[1]==='Object.keys'&&obj.kind==='module-namespace'){
+              const outcome=this.startModuleNamespaceInspection(s,f,obj,
+                callable[1],null,eventId);
+              if(outcome.child)
+                return {...operands(fn,...args),causes:[{kind:'invocation',frameId:outcome.child}]};
+              return {...operands(fn,...args),...result(outcome.value)};
             }
             const keysOnly=['Object.keys','Object.getOwnPropertySymbols','Object.getOwnPropertyNames','Reflect.ownKeys'].includes(callable[1]);
             if(!keysOnly&&Object.keys(obj.accessors??{}).length)
@@ -3515,12 +3807,12 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             const primitiveProto=v=>{
               if(v?.[0]==='null')return null;
               if(v?.[0]==='intrinsic' && ['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(v[1]))return v[1];
-              if(v?.[0]==='ref' && ['object','array','function','generator'].includes(s.heap[v[1]]?.kind))return v[1];
+              if(v?.[0]==='ref' && ['object','array','function','generator','module-namespace'].includes(s.heap[v[1]]?.kind))return v[1];
               guestFault('TypeError','Prototype must be null or an owned ordinary object');
             };
             const v=args[0]?.value??U, obj=v[0]==='ref'?s.heap[v[1]]:null;
             if(callable[1]==='Object.defineProperty'){
-              if(!obj||!['object','array'].includes(obj.kind))
+              if(!obj||!['object','array','module-namespace'].includes(obj.kind))
                 guestFault('TypeError','Object.defineProperty requires an owned ordinary object');
               const key=args[1]?.value??U,descValue=args[2]?.value??U;
               const name=valueKey(key),descriptor=descValue[0]==='ref'?s.heap[descValue[1]]:null;
@@ -3535,6 +3827,12 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               const d=descriptor.properties;
               if(![null,'Object.prototype','Array.prototype'].includes(objectPrototype(descriptor)))
                 throw new TypeError('Inherited descriptor fields are outside the bounded profile');
+              if(obj.kind==='module-namespace'){
+                const outcome=this.moduleNamespaceDefine(s,f,obj,name,descriptor,false,eventId);
+                if(outcome.child)
+                  return {...operands(fn,...args),causes:[{kind:'invocation',frameId:outcome.child}]};
+                return {...operands(fn,...args),...result(outcome.value)};
+              }
               const previous=Object.hasOwn(obj.accessors??{},name)?obj.accessors[name]:null;
               if(obj.extensible===false&&!Object.hasOwn(obj.properties,name)&&!previous)
                 guestFault('TypeError','Cannot define property on non-extensible object');
@@ -3616,7 +3914,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               return {...operands(fn,...args),...result(['intrinsic',generatorIntrinsicParent(v[1])])};
             if(callable[1]==='Object.getPrototypeOf'&&v[0]==='intrinsic'&&['Object.prototype','Array.prototype','Function.prototype'].includes(v[1]))
               return {...operands(fn,...args),...result(v[1]==='Object.prototype'?['null']:['intrinsic','Object.prototype'])};
-            if(!obj||!['object','array','function','generator'].includes(obj.kind))
+            if(!obj||!['object','array','function','generator','module-namespace'].includes(obj.kind))
               guestFault('TypeError','Prototype operation requires an owned ordinary object');
             if(callable[1]==='Object.getPrototypeOf'){
               const proto=objectPrototype(obj);
@@ -3631,7 +3929,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               if(visited.has(current))guestFault('TypeError','Cyclic prototype value');
               visited.add(current);
               const next=s.heap[current];
-              if(!next||!['object','array','function','generator'].includes(next.kind))
+              if(!next||!['object','array','function','generator','module-namespace'].includes(next.kind))
                 throw new TypeError('Broken prototype identity');
               current=objectPrototype(next);
             }

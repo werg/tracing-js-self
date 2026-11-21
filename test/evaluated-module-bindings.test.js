@@ -77,12 +77,17 @@ test('shadowed namespace receivers remain ordinary method calls',async()=>{
   assert.deepEqual(run.result,[17,23,5]);
 });
 
-test('an import write after an unrelated shadow still rejects before module execution',()=>{
-  for(const statement of ['x=9;','[x]=[9];','({x}={x:9});','ns.x=9;'])
+test('import writes fail at link time and namespace writes keep their strict TypeError',async()=>{
+  for(const statement of ['x=9;','[x]=[9];','({x}={x:9});'])
     assert.throws(()=>linkEvaluatedModules({modules:{'leaf.js':'export let x=5;',
       'main.js':"import {x} from './leaf.js';import * as ns from './leaf.js';"+
         'export function run(){{let x=2;const ns={x:3};x++;ns.x++;}'+statement+'}'},
       entryModule:'main.js',exportName:'run'}),/read-only/);
+  const namespaceWrite=await differential(`export function run(){
+    {let x=2;const ns={x:3};x++;ns.x++;}
+    try{ns.x=9;}catch(error){return [error.name,x];}
+    return 'no error';}`);
+  assert.deepEqual(namespaceWrite.result,['TypeError',5]);
 });
 
 test('captured shadow cells survive JSON restoration without rebinding the module import',()=>{

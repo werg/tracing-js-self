@@ -74,6 +74,13 @@ function outcomeAgreement(left,right){
     {leftInputIds:anchors(left.graph),rightInputIds:anchors(right.graph)}).equal;
 }
 function moduleProjectionRefusal(linked){
+  if(linked.metadata.requiresModuleNamespace===true)
+    return {status:'projection_refused',phase:'module-projection',
+      category:'unsupported.module-namespace-projection',sourceProfile:MODULE_REGION_PROFILE,
+      moduleLink:'passed',ownedRuntimeProfile:linked.profile,
+      moduleNamespace:'owned-internal',moduleReference:'untested',
+      publicProjection:'unqualified',nativeQualification:'unqualified',
+      reason:'Owned module namespace exotics have no qualified public/native heap projection'};
   if(linked.metadata.evaluationStrategy!=='async-dependency-scheduler')return null;
   // Owned generator/Promise execution is a distinct implementation milestone.
   // A generic generator projection cannot establish public/native module

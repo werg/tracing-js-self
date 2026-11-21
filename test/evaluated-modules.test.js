@@ -500,18 +500,23 @@ test('namespace reads agree with independent Node ESM loader for mutable exports
   assert.equal(run.result,oracle);
 });
 
-test('namespace mutation and unsupported first-class/dynamic namespace exotics fail closed',()=>{
+test('namespace operations retain guest TypeErrors and dynamic reads while namespace outputs refuse',async()=>{
   const leaf='export let x=1;';
-  for(const code of [
-    "import * as ns from './leaf.js';export function main(){ns.x=3;}",
-    "import * as ns from './leaf.js';export function main(){return ns;}",
-    "import * as ns from './leaf.js';export function main(k){return ns[k];}",
-    "import * as ns from './leaf.js';export function main(){return Object.keys(ns);}",
-    "import * as ns from './leaf.js';export function main(){return ns.x();}"
-  ])assert.throws(()=>linkEvaluatedModules({
-    modules:{'leaf.js':leaf,'main.js':code},
-    entryModule:'main.js',exportName:'main'
-  }),/Unsupported evaluated-module/);
+  const body=`export function main(k){let assignment,call;
+    try{ns.x=3;}catch(error){assignment=error.name;}
+    try{ns.x();}catch(error){call=error.name;}
+    return [assignment,call,ns[k],Object.keys(ns)];}`;
+  const nativeSource='import * as ns from '+JSON.stringify('data:text/javascript,'+encodeURIComponent(leaf))+';'+body;
+  const native=await import('data:text/javascript,'+encodeURIComponent(nativeSource));
+  const run=await verified({modules:{'leaf.js':leaf,
+    'main.js':"import * as ns from './leaf.js';"+body},
+    entryModule:'main.js',exportName:'main',args:['x']});
+  assert.deepEqual(run.result,native.main('x'));
+  assert.deepEqual(run.result,['TypeError','TypeError',1,['x']]);
+  await assert.rejects(()=>executeEvaluatedModules({modules:{'leaf.js':leaf,
+    'main.js':"import * as ns from './leaf.js';export function main(){return ns;}"},
+    entryModule:'main.js',exportName:'main'}),
+  /Module namespace values are not supported by the evaluated-module result codec/);
 });
 
 test('ESM production-style initialization creates one owned shared closure with live state',async()=>{

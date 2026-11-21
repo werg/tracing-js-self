@@ -4,7 +4,7 @@ import {mkdtemp,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {linkEvaluatedModules,executeEvaluatedModules} from '../src/evaluated-modules.js';
+import {executeEvaluatedModules} from '../src/evaluated-modules.js';
 import {validateBundle} from '../src/validation.js';
 import {replayExact} from '../src/replay.js';
 
@@ -72,13 +72,16 @@ test('namespace typeof preserves surrounding effects and ordinary export reads',
   },['object',0,'number',3]);
 });
 
-test('effectful namespace operands retain explicit ownership boundaries instead of losing evaluation',()=>{
-  for(const expression of ['typeof ns[(effect(),"inner")]','typeof (effect(),ns)',
-    'typeof identity(ns).inner'])assert.throws(()=>linkEvaluatedModules({
-    modules:{'leaf.js':'export const value=9;',
-      'forward.js':"export * as inner from './leaf.js';",
-      'main.js':"import * as ns from './forward.js';let calls=0;"+
-        'function effect(){calls++;return "inner";}function identity(value){return value;}'+
-        'export function run(){return '+expression+';}'},entryModule:'main.js',exportName:'run'
-  }),/dynamic namespace|namespace identity escapes/);
+test('effectful namespace operands keep their evaluation and object identity',async()=>{
+  for(const [expression,calls] of [
+    ['typeof ns[(effect(),"inner")]',1],
+    ['typeof (effect(),ns)',1],
+    ['typeof identity(ns).inner',0]
+  ])await checked({
+    'leaf.js':'export const value=9;',
+    'forward.js':"export * as inner from './leaf.js';",
+    'main.js':"import * as ns from './forward.js';let calls=0;"+
+      'function effect(){calls++;return "inner";}function identity(value){return value;}'+
+      'export function run(){return ['+expression+',calls];}'
+  },['object',calls]);
 });

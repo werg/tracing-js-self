@@ -66,7 +66,7 @@ export function objectPrototype(obj) {
 }
 export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
   const original=receiver[0]==='ref'?heap[receiver[1]]:null;
-  if(!original||!['object','array'].includes(original.kind))return null;
+  if(!original||!['object','array','module-namespace'].includes(original.kind))return null;
   const observation=value=>({
     kind:'property',objectId:original.id,key:name,
     version:Object.hasOwn(original.propertyVersions??{},name)?original.propertyVersions[name]:0,shapeVersion:original.shapeVersion??0,
@@ -131,7 +131,7 @@ export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
 }
 export function ordinaryBuiltin(heap, receiver, name) {
   const obj=receiver[0]==='ref'?heap[receiver[1]]:null;
-  if(!obj||!['object','array'].includes(obj.kind))return null;
+  if(!obj||!['object','array','module-namespace'].includes(obj.kind))return null;
   if(name==='Object.valueOf')return receiver;
   if(name==='Object.toString'){
     const tag=ordinaryGet(heap,receiver,symbolPropertyKey('well-known:toStringTag'));

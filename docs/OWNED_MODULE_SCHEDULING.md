@@ -24,6 +24,13 @@ Function declarations are already initialized. Imported reads and static
 namespace reads call the getter for the original binding, preserving identity,
 mutable values, closures, and temporal dead zones.
 
+When a namespace identity or exotic operation escapes static lowering, the
+linker builds its module-namespace object after all module environments are
+primed and before any module body runs. Its getter functions therefore close
+over the same retained live cells used by ordinary imports, including cycles.
+Descriptor reads resume through a serialized caller continuation, so a cyclic
+TDZ error remains the getter's abrupt completion across a JSON checkpoint.
+
 Only awaits at module scope become parenthesized generator yields. Awaits in
 nested async functions remain ordinary async-function syntax. An owned async
 driver awaits each yielded operand and resumes the generator with either its
@@ -178,9 +185,15 @@ No test count here represents general Test262 or full ESM conformance.
   independently implemented native semantics, and data admission remain
   unqualified; the module source adapter explicitly refuses promotion even if
   saved proof metadata claims a different evaluation strategy.
-- Module namespace exotic objects, namespace receiver calls, dynamic imports,
-  top-level classes, general module declarations, import attributes, package
-  resolution, and a native host loader remain outside this bounded profile.
+- The owned module-namespace slice covers identity, receiver calls, live reads,
+  own-key ordering, selected reflection and Set/Define/Delete semantics. It has
+  no qualified public/native heap projection; namespace-valued outputs,
+  Object.getOwnPropertyDescriptors and Object.values/entries/assign getter
+  continuations, namespace proxies,
+  for-in/spread/destructuring and `Object.prototype.toString.call` remain
+  outside the slice. Dynamic imports, top-level classes, general module
+  declarations, import attributes, package resolution and a native host loader
+  remain outside this bounded profile.
 - Top-level `for await` needs an owned async-iterator continuation and is
   refused by the scheduler. Nested async generators remain outside the owned
   generator profile.

@@ -16,6 +16,57 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Owned module namespace identities and live-cell inspection — 21 November 2026
+
+The owned module runtime now represents namespace identities explicitly. Resolved
+reexports share one object, exports read their live binding cells, the prototype
+is null, the object is non-extensible, and write/delete/definition operations
+retain their guest outcomes. Namespace method receivers and dynamic property
+reads keep their source meaning. Namespace getter and inspection continuations
+survive JSON checkpoints and exact replay, including asynchronous environments
+and retained module sessions.
+
+The integrated six-file module/namespace selection at local commit
+`0683bd37ac497a039c91656c3e79ec3692e5fff9` passes **47/47**, zero failures or skips,
+in 64.845 seconds. A follow-up uncaught-freeze control at local
+`79cd4205fa0d832a141207eec2950adc56ca9bc0` separately passes **1/1**. The focused
+TDZ correction at `a66bb6504f7a9dc6501e19556e3535305e03e8a1` passed **11/11**;
+these selections overlap and their counts are not additive.
+
+The first integrated broad module run remains **134 passed / two failed** out of
+136; its failures were assertions that namespace operations must fail at link
+time. The separate population control remains **four passed / one failed** before
+its assertion repair, followed by **5/5**. The repaired boundary selection passes
+**4/4**, including original-source Node comparisons and an explicit prohibition
+on exporting namespace state into public/native training representation.
+
+Independent original cyclic-module probes additionally exposed a real semantic
+bug: `hasOwn`, `keys`, sealing and freezing bypassed uninitialized live exports.
+All six now reproduce the native `ReferenceError`. Keys-only names/ownKeys remain
+read-free; frozen checks stop at the first writable export, and freezing retains
+both descriptor reads before its `TypeError`. An uncaught completion-routing bug
+found during that correction is covered by rejected module evaluation plus valid
+terminal archive/replay checks. Original failing probes and logs are retained for
+the next evidence supplement.
+
+This is an **owned-runtime increment only**. Public/source/native admission and
+host namespace outputs remain explicitly refused. The internal linker capability
+is trusted plumbing, not unforgeable source authority. The original Test262
+module-initialization route still refuses observable namespaces; connecting this
+route and rerunning the complete 843-variant module campaign remain open. Plural
+descriptor/value/entry/assignment reflection, Proxy combinations, dynamic import
+and complete namespace observation remain unfinished. The observed Node 24
+integer-like namespace-key ordering discrepancy is retained separately from the
+specification-defined lexical order. **0 of 17 acceptance packages are closed.**
+
+Separately, consumer `c9977b240a26c897299f07043a82cd5f26920f31` changes only the
+complete CPU CI allowance from 25 to 45 minutes and retains both original hosted
+logs. Exact consumer `1ddcc61` / PR merge `a19c6afa4875ad4274d346338b4b970bc5ec8349`
+passed 3,567 tests with 82 skips on Python 3.11; Python 3.12 reached 88% and was
+cancelled at approximately 25 minutes. The timing is consistent with the former
+limit, but the log does not identify the initiator. The incomplete run remains
+incomplete; fresh hosted results are pending.
+
 ## Actual cancelled-sibling recovery and complete consumer tests — 21 November 2026
 
 The published actual-model qualifier passes at clean producer

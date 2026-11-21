@@ -1,7 +1,8 @@
 // Explicit, bounded ESM module evaluation over an in-memory source graph.
 // Unlike the function-only static linker, this profile executes module
 // initialization in dependency order and aliases imported mutable bindings.
-// It does not create module namespace exotics or invoke a native module loader.
+// Module namespace objects are created only when their identity or exotic
+// behavior is observed; otherwise static reads lower directly to live cells.
 import {parse as parseAcorn} from 'acorn';
 import ts from 'typescript';
 import path from 'node:path';
@@ -24,6 +25,24 @@ const ambiguousExport=Symbol('ambiguous module export');
 const namespaceExport=Symbol('namespace module export');
 const reject=reason=>{throw new SyntaxError('Unsupported evaluated-module/1: '+reason);};
 const id=node=>node?.type==='Identifier'?node.name:null;
+const staticMemberName=node=>node?.type==='MemberExpression'?
+  (node.computed?
+    (node.property?.type==='Literal'&&typeof node.property.value==='string'?
+      node.property.value:null):
+    node.property?.type==='Identifier'?node.property.name:null):null;
+function rejectNamespaceOutput(heap,roots){
+  const visited=new Set(),pending=roots.slice();
+  while(pending.length){
+    const value=pending.pop();
+    if(value?.[0]!=='ref'||visited.has(value[1]))continue;
+    visited.add(value[1]);
+    const entity=heap[value[1]];
+    if(entity?.kind==='module-namespace')
+      throw new TypeError('Module namespace values are not supported by the evaluated-module result codec');
+    for(const property of Object.values(entity?.properties??{}))
+      if(property?.value?.[0]==='ref')pending.push(property.value);
+  }
+}
 function validName(name){
   return typeof name==='string'&&namePattern.test(name);
 }
@@ -306,7 +325,7 @@ function parseModule(file,text,sources){
       reject('export '+exported+' references missing local '+local+' in '+file);
   // JS modules can contain a source-level import binding not referenced in
   // the emitted code; preflight all such imports without executing anything.
-  return {file,text,lowering,symbols,imports,namespaceImports,exports,forwards,
+  return {file,text,lowering,ast,symbols,imports,namespaceImports,exports,forwards,
     stars:[...new Set(stars)],deps:[...deps],functions,initializers,
     bindingIdentifiers:moduleBindingIdentifiers(ast),
     hasImportMeta:usesImportMeta(ast),
@@ -332,11 +351,8 @@ function namedDefinition(source,name){
   return '({['+key+']:('+source+')})['+key+']';
 }
 function rewrite(module,root,names,namespaceBindings=new Map(),{
-  preserveDeclarationName=false,importMetaName=null}={}){
+  preserveDeclarationName=false,importMetaName=null,namespaceName=null}={}){
   const edits=new Map();
-  const staticName=node=>node.computed?
-    (node.property?.type==='Literal'&&typeof node.property.value==='string'?
-      node.property.value:null):node.property?.type==='Identifier'?node.property.name:null;
   // A namespace re-export is still a namespace. Resolve a whole static path
   // before replacing its final value, without manufacturing a guest object.
   function namespaceOf(node){
@@ -345,8 +361,11 @@ function rewrite(module,root,names,namespaceBindings=new Map(),{
     if(node?.type!=='MemberExpression')return null;
     const parent=namespaceOf(node.object);
     if(!parent)return null;
-    const name=staticName(node);
-    if(name===null)reject('dynamic namespace property access requires module namespace exotic semantics');
+    const name=staticMemberName(node);
+    if(name===null){
+      if(namespaceName)return null;
+      reject('dynamic namespace property access requires module namespace exotic semantics');
+    }
     return parent(name).readNamespace??null;
   }
   function checkAssignment(pattern){
@@ -357,7 +376,7 @@ function rewrite(module,root,names,namespaceBindings=new Map(),{
     const checkNamespace=target=>{
       if(!target)return;
       if(target.type==='MemberExpression'&&namespaceOf(target.object))
-        reject('namespace exports are read-only live bindings');
+        if(!namespaceName)reject('namespace exports are read-only live bindings');
       if(target.type==='AssignmentPattern')checkNamespace(target.left);
       else if(target.type==='RestElement')checkNamespace(target.argument);
       else if(target.type==='ArrayPattern')target.elements.forEach(checkNamespace);
@@ -366,10 +385,10 @@ function rewrite(module,root,names,namespaceBindings=new Map(),{
     };
     checkNamespace(pattern);
   }
-  function walk(node,parent=null,key=null){
+  function walk(node,parent=null,key=null,writeTarget=false){
     if(!node||typeof node!=='object')return;
     if(Array.isArray(node)){
-      for(const child of node)walk(child,parent,key);
+      for(const child of node)walk(child,parent,key,writeTarget);
       return;
     }
     if(typeof node.type!=='string')return;
@@ -401,7 +420,7 @@ function rewrite(module,root,names,namespaceBindings=new Map(),{
       walk(left,node,'value');
       if(left.type==='Identifier'&&module.bindingIdentifiers.has(left)&&anonymousDefinition(right)){
         const expression=rewrite(module,right,names,namespaceBindings,
-          {importMetaName});
+          {importMetaName,namespaceName});
         edits.set(right.start,{end:right.end,value:namedDefinition(expression,left.name)});
       }else walk(right,node.value,'right');
       return;
@@ -417,28 +436,50 @@ function rewrite(module,root,names,namespaceBindings=new Map(),{
       // static fields execute, while recursively preserving all source reads.
       walk(nameTarget,node,node.type==='VariableDeclarator'?'id':'left');
       const expression=rewrite(module,definition,names,namespaceBindings,
-        {importMetaName});
+        {importMetaName,namespaceName});
       edits.set(definition.start,{end:definition.end,
         value:namedDefinition(expression,nameTarget.name)});
       return;
     }
     const namespace=node.type==='MemberExpression'?namespaceOf(node.object):null;
     if(namespace){
-      if((parent?.type==='AssignmentExpression'&&key==='left')||
-         (parent?.type==='UpdateExpression'&&key==='argument')||
-         (parent?.type==='UnaryExpression'&&parent.operator==='delete'))
+      const write=writeTarget||
+        (parent?.type==='AssignmentExpression'&&key==='left')||
+        (parent?.type==='UpdateExpression'&&key==='argument')||
+        ((parent?.type==='ForInStatement'||parent?.type==='ForOfStatement')&&key==='left')||
+        (parent?.type==='UnaryExpression'&&parent.operator==='delete');
+      if(write&&!namespaceName)
         reject('namespace exports are read-only live bindings');
-      // ns.fn() receives a namespace exotic as its strict this receiver.
-      // Bare lexical fn() does not. Without a namespace identity in the
-      // owned heap that call transformation would silently change semantics.
+      const exportedName=staticMemberName(node);
+      if(exportedName===null){
+        if(!namespaceName)reject('dynamic namespace property access requires module namespace exotic semantics');
+        const property=rewrite(module,node.property,names,namespaceBindings,
+          {importMetaName,namespaceName});
+        edits.set(node.start,{end:node.end,
+          value:namespaceName(namespace.moduleFile)+'['+property+']'});
+        return;
+      }
+      if(write){
+        edits.set(node.start,{end:node.end,
+          value:namespaceName(namespace.moduleFile)+'['+JSON.stringify(exportedName)+']'});
+        return;
+      }
+      // A namespace member call preserves the namespace as `this`; a plain
+      // read can still resolve directly to its live export cell.
       if(parent?.type==='CallExpression'&&key==='callee'||
-         parent?.type==='TaggedTemplateExpression'&&key==='tag')
-        reject('namespace method call needs an owned namespace receiver');
-      const exportedName=staticName(node);
-      if(exportedName===null)reject('dynamic namespace property access requires module namespace exotic semantics');
+         parent?.type==='TaggedTemplateExpression'&&key==='tag'){
+        if(!namespaceName)reject('namespace method call needs an owned namespace receiver');
+        edits.set(node.start,{end:node.end,
+          value:namespaceName(namespace.moduleFile)+'['+JSON.stringify(exportedName)+']'});
+        return;
+      }
       const target=namespace(exportedName);
       if(target.readNamespace)
-        reject('namespace identity escapes a static property read in '+module.file);
+        if(namespaceName){
+          edits.set(node.start,{end:node.end,
+            value:namespaceName(target.readNamespace.moduleFile)});
+          return;
+        }else reject('namespace identity escapes a static property read in '+module.file);
       edits.set(node.start,{end:node.end,value:'('+target.linked+')'});
       return;
     }
@@ -447,8 +488,13 @@ function rewrite(module,root,names,namespaceBindings=new Map(),{
         reject('reserved generated identifier '+node.name+' in '+module.file);
       if(!module.bindingIdentifiers.has(node))return;
       if(preserveDeclarationName&&node===root.id)return;
-      if(namespaceBindings.has(node.name))
-        reject('namespace identity escapes a static property read in '+module.file);
+      if(namespaceBindings.has(node.name)){
+        if(!namespaceName)
+          reject('namespace identity escapes a static property read in '+module.file);
+        edits.set(node.start,{end:node.end,
+          value:namespaceName(namespaceBindings.get(node.name).moduleFile)});
+        return;
+      }
       const replacement=names.get(node.name);
       if(!replacement)return;
       if(parent?.type==='Property'&&parent.shorthand&&key==='value'){
@@ -461,8 +507,22 @@ function rewrite(module,root,names,namespaceBindings=new Map(),{
     }
     for(const [field,value] of Object.entries(node)){
       if(['start','end','loc','range','raw','regex'].includes(field))continue;
-      if(Array.isArray(value)||value&&typeof value==='object'&&value.type)
-        walk(value,node,field);
+      if(Array.isArray(value)||value&&typeof value==='object'&&value.type){
+        let childWriteTarget=false;
+        if(node.type==='AssignmentExpression'&&field==='left'||
+           node.type==='UpdateExpression'&&field==='argument'||
+           (node.type==='ForInStatement'||node.type==='ForOfStatement')&&
+             field==='left'&&node.left.type!=='VariableDeclaration')
+          childWriteTarget=true;
+        else if(writeTarget){
+          childWriteTarget=node.type==='ArrayPattern'&&field==='elements'||
+            node.type==='ObjectPattern'&&field==='properties'||
+            node.type==='Property'&&(field==='value'||field==='argument')||
+            node.type==='AssignmentPattern'&&field==='left'||
+            node.type==='RestElement'&&field==='argument';
+        }
+        walk(value,node,field,childWriteTarget);
+      }
     }
   }
   walk(root);
@@ -620,18 +680,108 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       reject('cannot invoke a non-function module export '+call.exportName);
     return {...call,binding};
   }):null;
+  const namespaceTargets=new Set();
+  function namespaceTargetOf(module,node){
+    if(node?.type==='Identifier'){
+      if(!module.bindingIdentifiers.has(node))return null;
+      if(module.namespaceImports.has(node.name))
+        return module.namespaceImports.get(node.name);
+      const imported=module.imports.get(node.name);
+      if(imported){
+        const binding=resolve(imported.module,imported.name);
+        return binding?.kind==='namespace'?binding.namespace:null;
+      }
+      return null;
+    }
+    if(node?.type!=='MemberExpression')return null;
+    const target=namespaceTargetOf(module,node.object),name=staticMemberName(node);
+    if(target===null||name===null)return null;
+    const binding=resolve(target,name);
+    return binding?.kind==='namespace'?binding.namespace:null;
+  }
+  for(const file of order){
+    const module=get(file);
+    function inspect(node,parent=null,key=null){
+      if(!node||typeof node!=='object')return;
+      if(Array.isArray(node)){
+        for(const child of node)inspect(child,parent,key);
+        return;
+      }
+      if(typeof node.type!=='string')return;
+      if(node.type==='Identifier'&&module.bindingIdentifiers.has(node)){
+        const target=namespaceTargetOf(module,node);
+        const staticMember=parent?.type==='MemberExpression'&&key==='object'&&
+          staticMemberName(parent)!==null;
+        const typeQuery=parent?.type==='UnaryExpression'&&parent.operator==='typeof';
+        const importBinding=(parent?.type==='ImportNamespaceSpecifier'||
+          parent?.type==='ImportSpecifier'||parent?.type==='ImportDefaultSpecifier')&&key==='local';
+        if(target!==null&&!staticMember&&!typeQuery&&!importBinding)
+          namespaceTargets.add(target);
+      }else if(node.type==='MemberExpression'){
+        const base=namespaceTargetOf(module,node.object),
+          value=namespaceTargetOf(module,node),
+          staticChain=parent?.type==='MemberExpression'&&key==='object'&&
+            staticMemberName(parent)!==null,
+          typeQuery=parent?.type==='UnaryExpression'&&parent.operator==='typeof',
+          called=parent?.type==='CallExpression'&&key==='callee'||
+            parent?.type==='TaggedTemplateExpression'&&key==='tag',
+          written=parent?.type==='AssignmentExpression'&&key==='left'||
+            parent?.type==='UpdateExpression'&&key==='argument'||
+            (parent?.type==='ForInStatement'||parent?.type==='ForOfStatement')&&key==='left'||
+            parent?.type==='UnaryExpression'&&parent.operator==='delete';
+        if(base!==null&&(staticMemberName(node)===null||called||written))
+          namespaceTargets.add(base);
+        if(value!==null&&!staticChain&&!typeQuery)namespaceTargets.add(value);
+      }
+      for(const [field,value] of Object.entries(node)){
+        if(['start','end','loc','range','raw','regex'].includes(field))continue;
+        if(Array.isArray(value)||value&&typeof value==='object'&&value.type)
+          inspect(value,node,field);
+      }
+    }
+    inspect(module.ast);
+  }
+  function exportedNames(file,trail=new Set()){
+    if(trail.has(file))return new Set();
+    const seen=new Set(trail);seen.add(file);
+    const module=get(file),names=new Set([
+      ...module.exports.keys(),...module.forwards.keys()
+    ]);
+    for(const from of module.stars)
+      for(const name of exportedNames(from,seen))if(name!=='default')names.add(name);
+    return names;
+  }
+  // If a namespace object is observable, namespace-valued exports reachable
+  // from it must share the exact object associated with their target module.
+  for(const file of namespaceTargets){
+    for(const name of exportedNames(file)){
+      const binding=resolve(file,name);
+      if(binding?.kind==='namespace')namespaceTargets.add(binding.namespace);
+    }
+  }
+  if(!evaluateOnly&&!sequence&&selected.kind==='namespace')
+    reject('returning a namespace through the host result needs the namespace output profile');
+  if(requested?.some(call=>call.binding.kind==='namespace'))
+    reject('returning a namespace through the host result needs the namespace output profile');
+  if(evaluateOnly&&namespaceTargets.size)
+    reject('evaluate-only host has no internal module namespace object environment');
+  const namespaceName=file=>'__traced_eval_namespace_'+indices.get(file);
   const linkedAccess=binding=>{
-    if(binding.kind==='namespace')reject('namespace identity escapes a static property read');
+    if(binding.kind==='namespace')return namespaceName(binding.namespace);
     return scheduled?'__traced_eval_cells['+indices.get(binding.file)+'].'+binding.linked+'()':
       binding.linked;
   };
-  const namespaceRead=file=>exported=>{
+  const namespaceRead=file=>{
+    const read=exported=>{
     const binding=resolve(file,exported);
     // Missing and ambiguous names are absent own properties of the namespace.
     // `void 0` cannot be captured by a guest binding named undefined.
     if(binding===null||binding===ambiguousExport)return {linked:'void 0'};
     if(binding.kind==='namespace')return {...binding,readNamespace:namespaceRead(binding.namespace)};
     return {...binding,linked:linkedAccess(binding)};
+    };
+    read.moduleFile=file;
+    return read;
   };
   const bound=new Map(),links=[];
   const namespaces=new Map();
@@ -655,6 +805,15 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
         binding:target.linked,live:true});
     }
     bound.set(file,names);
+  }
+  function namespaceInitializer(file){
+    const entries=[...exportedNames(file)].sort().flatMap(exported=>{
+      const binding=resolve(file,exported);
+      if(!binding||binding===ambiguousExport)return [];
+      return ['['+JSON.stringify(exported)+',()=>('+linkedAccess(binding)+')]'];
+    });
+    return 'const '+namespaceName(file)+'=__traced_eval_create_module_namespace(['+
+      entries.join(',')+']);';
   }
   const entryFunction=evaluateOnly?'__traced_eval_entry':'__traced_evaluated_entry';
   let source='"use strict";\nasync function '+entryFunction+'(self) {\n';
@@ -681,12 +840,12 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
         // class evaluation completes. A named class expression retains the
         // separate immutable inner name, including in heritage/static code.
         const expression=rewrite(module,item.node,names,namespaces.get(file),
-          {importMetaName:importMetaName(file)});
+          {importMetaName:importMetaName(file),namespaceName});
         const value=item.anonymous?namedDefinition(expression,'default'):'('+expression+')';
         fragment='let '+names.get(item.local)+' = '+value+';';
       }else if(item.kind==='default'){
         const expression=rewrite(module,item.node,names,namespaces.get(file),
-          {importMetaName:importMetaName(file)});
+          {importMetaName:importMetaName(file),namespaceName});
         // `export default <anonymous function/class definition>` performs
         // NamedEvaluation with the name "default" before the value is
         // initialized. A synthetic `const __default_expr = ...` would infer
@@ -697,7 +856,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
         fragment='const '+names.get(item.local)+' = ('+value+');';
       }else{
         fragment=rewrite(module,item.node,names,namespaces.get(file),
-          {importMetaName:importMetaName(file)});
+          {importMetaName:importMetaName(file),namespaceName});
       }
       append(file,'evaluate',lower?lowerModuleAwaits(fragment):fragment);
     }
@@ -711,11 +870,11 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
         // generator names observable while source references continue to use
         // the original mutable module cell rather than an expression-local one.
         const expression=rewrite(module,item.node,names,namespaces.get(file),
-          {preserveDeclarationName:true,importMetaName:importMetaName(file)});
+          {preserveDeclarationName:true,importMetaName:importMetaName(file),namespaceName});
         const value=item.anonymous?namedDefinition(expression,'default'):'('+expression+')';
         append(file,'instantiate','var '+names.get(item.local)+' = '+value+';');
       }else append(file,'instantiate',rewrite(module,item.node,names,namespaces.get(file),
-        {importMetaName:importMetaName(file)}));
+        {importMetaName:importMetaName(file),namespaceName}));
     }
   }
   if(scheduled){
@@ -748,6 +907,8 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       append(file,'instantiate-environment','__traced_eval_cells['+index+']='+
         '__traced_eval_modules['+index+'].iterator.next().value;');
     }
+    for(const file of namespaceTargets)
+      append(file,'namespace-object',namespaceInitializer(file));
     append(null,'async-scheduler',ownedModuleSchedulerSource);
   }else{
     // The already-qualified synchronous/single-chain profile shares lexical
@@ -755,6 +916,8 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     for(const file of order){
       instantiateFunctions(file);
     }
+    for(const file of namespaceTargets)
+      append(file,'namespace-object',namespaceInitializer(file));
     for(const file of order){
       initializers(file);
       // ExecuteAsyncModule settles an execution Promise, whose fulfillment
@@ -790,11 +953,13 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   // Linking must never hand off unowned guest syntax to an assumed Node or
   // browser module loader. Validate the actual concatenated guest program,
   // including its identifier resolution, before an entry can be executed.
-  try {evaluateOnly?parseOwnedScript(source):parseTraining(source);}
+  try {evaluateOnly?parseOwnedScript(source):parseTraining(source,
+    {moduleNamespaceIntrinsic:namespaceTargets.size>0});}
   catch(error){reject('unowned generated guest syntax: '+error.message);}
   const metadata={
     profile:'evaluated-module/1',entryModule,exportName:evaluateOnly?null:exportName,
     importMetaPolicy:'empty-null-prototype',
+    ...(namespaceTargets.size?{requiresModuleNamespace:true}:{}),
     evaluationStrategy:scheduled?'async-dependency-scheduler':'dependency-concatenation',
     evaluationOrder:order.slice(),cycles,linkedBinding:selected?.linked??null,
     ...(scheduled?{asyncDependencies:order.map(file=>({file,index:indices.get(file),
@@ -820,7 +985,8 @@ export async function executeEvaluatedModules({modules,entryModule,
   const entry={text:linked.source,
     url:'evaluated-module://'+entryModule,
     functionName:linked.entryFunction,
-    args:[linked.entryInput]};
+    args:[linked.entryInput],
+    ...(linked.metadata.requiresModuleNamespace?{moduleNamespaceIntrinsic:true}:{})};
   if(services!==null){
     const executed=await executeWithNativeServices({
       entry,services,maxSteps,signal
@@ -829,9 +995,11 @@ export async function executeEvaluatedModules({modules,entryModule,
   }else{
     runtime=createRuntime({maxSteps});
     const source=runtime.registerSource({text:linked.source,
-      url:entry.url,trainingProfile:true});
+      url:entry.url,trainingProfile:true,
+      moduleNamespaceIntrinsic:linked.metadata.requiresModuleNamespace===true});
     runtime.startEntry({source,functionName:entry.functionName,
-      args:entry.args,allowAsync:true});
+      args:entry.args,allowAsync:true,
+      moduleNamespaceIntrinsic:linked.metadata.requiresModuleNamespace===true});
     progress=runtime.drive();
     bundle=JSON.parse(JSON.stringify(runtime.exportRun()));
     validateBundle(bundle);
@@ -849,6 +1017,7 @@ export async function executeEvaluatedModules({modules,entryModule,
     throw new Error('Owned module evaluation rejected: '+String(
       value&&typeof value==='object'?value.message??value.name??'guest object':value));
   }
+  rejectNamespaceOutput(runtime.state.heap,[settled.value.value]);
   const value=realizeGraph(runtime.state.heap,[settled.value.value])[0];
   return {result:value,bundle,metadata:linked.metadata};
 }
@@ -869,9 +1038,11 @@ export function executeEvaluatedModulesSync({modules,entryModule,
     throw new RangeError('Module evaluation step budget out of range');
   const runtime=createRuntime({maxSteps});
   const source=runtime.registerSource({text:linked.source,
-    url:'evaluated-module://'+entryModule,trainingProfile:true});
+    url:'evaluated-module://'+entryModule,trainingProfile:true,
+    moduleNamespaceIntrinsic:linked.metadata.requiresModuleNamespace===true});
   runtime.startEntry({source,functionName:linked.entryFunction,
-    args:[linked.entryInput],allowAsync:true});
+    args:[linked.entryInput],allowAsync:true,
+    moduleNamespaceIntrinsic:linked.metadata.requiresModuleNamespace===true});
   const progress=runtime.drive();
   const bundle=JSON.parse(JSON.stringify(runtime.exportRun()));
   validateBundle(bundle);
@@ -888,6 +1059,7 @@ export function executeEvaluatedModulesSync({modules,entryModule,
     throw new Error('Owned module evaluation rejected: '+String(
       value&&typeof value==='object'?value.message??value.name??'guest object':value));
   }
+  rejectNamespaceOutput(runtime.state.heap,[settled.value.value]);
   return {result:realizeGraph(runtime.state.heap,[settled.value.value])[0],
     bundle,metadata:linked.metadata};
 }

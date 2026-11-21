@@ -19,7 +19,9 @@ export async function executeWithNativeServices({text,entry=null,services={},max
     if(text!==undefined||!entry||typeof entry!=='object'||
        typeof entry.text!=='string'||typeof entry.functionName!=='string'||
        (entry.args!==undefined&&!Array.isArray(entry.args)) ||
-       (entry.url!==undefined&&typeof entry.url!=='string'))
+       (entry.url!==undefined&&typeof entry.url!=='string')||
+       (entry.moduleNamespaceIntrinsic!==undefined&&
+        typeof entry.moduleNamespaceIntrinsic!=='boolean'))
       throw new TypeError('Native strict entry needs source text, name and optional argument array');
   }else if(typeof text!=='string')
     throw new TypeError('Native driver needs JS source text');
@@ -134,10 +136,11 @@ export async function executeWithNativeServices({text,entry=null,services={},max
     }
   };
   if(entry){
+    const moduleNamespaceIntrinsic=entry.moduleNamespaceIntrinsic===true;
     const source=runtime.registerSource({text:entry.text,
-      url:entry.url??'<native-entry>',trainingProfile:true});
+      url:entry.url??'<native-entry>',trainingProfile:true,moduleNamespaceIntrinsic});
     runtime.startEntry({source,functionName:entry.functionName,
-      args:entry.args??[],allowAsync:true,allowHost:true});
+      args:entry.args??[],allowAsync:true,allowHost:true,moduleNamespaceIntrinsic});
   }else runtime.start(text);
   const abort=()=>{owner.abort(signal?.reason??new Error('Native driver aborted'));
     if(wake){const notify=wake;wake=null;notify();}};

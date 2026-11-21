@@ -18,8 +18,10 @@ const unary=new Set(['!','-','+','typeof','void','~']);
 const ownedConstructors=new Set(['Set','Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError','Symbol','Promise','ArrayBuffer','SharedArrayBuffer','DataView',
   'Int8Array','Uint8Array','Int16Array','Uint16Array','Int32Array','Uint32Array',
   'BigInt64Array','BigUint64Array','Float32Array','Float64Array']);
-export function parseTraining(source) {
-  return parseOwnedProfile(source,{training:true});
+export function parseTraining(source,{moduleNamespaceIntrinsic=false}={}) {
+  if(typeof moduleNamespaceIntrinsic!=='boolean')
+    throw new TypeError('Invalid internal module namespace parser option');
+  return parseOwnedProfile(source,{training:true,moduleNamespaceIntrinsic});
 }
 
 /** Original global script code, lowered through the same owned operations.
@@ -29,7 +31,7 @@ export function parseOwnedScript(source){
   return parseOwnedProfile(source,{training:false});
 }
 
-function parseOwnedProfile(source,{training}){
+function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){
   const profile=training?TRAINING_PROFILE:OWNED_SCRIPT_PROFILE;
   const reject=(node,why)=>{throw new SyntaxError('Unsupported '+profile+' '+why+' at '+
     (node.start??'?')+':'+(node.end??'?'));};
@@ -383,7 +385,9 @@ function parseOwnedProfile(source,{training}){
       }
     }
     const env={names,parent};
-    const has=(name,e)=>!!e&&(e.names.has(name)||has(name,e.parent));
+    const has=(name,e)=>moduleNamespaceIntrinsic&&
+      name==='__traced_eval_create_module_namespace'||
+      !!e&&(e.names.has(name)||has(name,e.parent));
     function value(n,e){
       switch(n.type){
         case 'Identifier':

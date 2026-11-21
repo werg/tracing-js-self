@@ -93,8 +93,11 @@ test('module proof tampering, exotic namespace receivers and asynchronous cycles
   const namespace=await verifyRegionModuleTrainingCase({id:'namespace-receiver',family:'namespace-receiver',
     modules:{'a.js':'export function f(){return this;}',
       'b.js':'import * as ns from "./a.js";export function run(){return ns.f();}'},entryModule:'b.js'});
-  assert.equal(namespace.status,'unsupported');assert.equal(namespace.phase,'module-link');
-  assert.match(namespace.reason,/namespace receiver/);
+  assert.equal(namespace.status,'projection_refused');
+  assert.equal(namespace.phase,'module-projection');
+  assert.equal(namespace.category,'unsupported.module-namespace-projection');
+  assert.equal(namespace.moduleNamespace,'owned-internal');
+  assert.equal(namespace.exported,undefined);
   const cycle=await verifyRegionModuleTrainingCase({id:'async-cycle',family:'async-cycle',modules:{
     'a.js':'import {b} from "./b.js";export const a=await Promise.resolve(1);export function run(){return b;}',
     'b.js':'import {a} from "./a.js";export const b=2;'},entryModule:'a.js'});

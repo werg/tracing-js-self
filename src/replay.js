@@ -123,7 +123,9 @@ export function replayExact(bundle) {
     for (const src of bundle.sources) {
       const compiled = runtime.registerSource({ text: src.text, url: src.url, goal: src.goal,
         trainingProfile: src.parser === 'acorn/8.15.0:training-js/1',
-        scriptProfile:src.parser==='acorn/8.15.0:owned-script/1' });
+        scriptProfile:src.parser==='acorn/8.15.0:owned-script/1',
+        moduleNamespaceIntrinsic:bundle.entrySpec?.moduleNamespaceIntrinsic===true&&
+          src.sourceId===bundle.entrySpec.sourceId });
       if (compiled.entry === entryCode || runtime.programs[entryCode] && entryCode.startsWith(`${compiled.sourceId}:`)) entry = compiled;
     }
     if (!entry) fail('Initial frame has no matching registered source');
@@ -138,8 +140,10 @@ export function replayExact(bundle) {
       // source after the full bytecode comparison; never trust an archive flag.
       const allowAsync=runtime.programs[entry.entry].instructions.some(instruction=>
         instruction.op==='DEF_FN'&&instruction.arg?.async===true);
+      const moduleNamespaceIntrinsic=bundle.entrySpec.moduleNamespaceIntrinsic===true;
       runtime.startEntry({source:entry,functionName,args:realizeGraph(initial.heap,roots),
         allowAsync,
+        moduleNamespaceIntrinsic,
         allowHost:initial.envs?.[initial.control.a0.globalEnvId]?.bindings?.host?.token?.value?.[0]==='host'});
     } else if(bundle.entrySpec?.kind==='scripts'){
       const sourceIds=bundle.entrySpec.sourceIds;

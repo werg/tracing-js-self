@@ -160,18 +160,25 @@ test('missing and ambiguous named imports and unused indirect exports still fail
     /ambiguous export|unresolved export/);
 });
 
-test('namespace aliases cannot escape, become receivers, mutate or bind generated identities',()=>{
-  for(const expression of ['return cells;','return all.cells;','return cells.fn();',
-    'return all.cells.fn();','return cells.fn`x`;','cells.x=7;','all.cells.x++;',
-    '[cells.x]=[7];','({x:cells.x}={x:7});','for(cells.x of [1]){}',
-    'return all.cells[key];']){
-    assert.throws(()=>linkEvaluatedModules({modules:{
-      'leaf.js':'export let x=1;export function fn(){return this;}',
-      'barrel.js':"export * as cells from './leaf.js';",
-      'main.js':`import * as all from './barrel.js';import {cells} from './barrel.js';
-        export function run(key){${expression}}`
-    },entryModule:'main.js',exportName:'run'}),/Unsupported evaluated-module/);
-  }
+test('namespace aliases preserve identity receivers and strict mutation failures',async()=>{
+  const run=await checked({
+    'leaf.js':`export let x=1;
+      export function fn(strings){return [Object.getPrototypeOf(this)===null,
+        strings?.[0]??null];}`,
+    'barrel.js':"export * as cells from './leaf.js';",
+    'main.js':`import * as all from './barrel.js';
+      import {cells} from './barrel.js';
+      export function run(key='x'){
+        let assignment,destructure,loop;
+        try{cells.x=7;}catch(error){assignment=error.name;}
+        try{[cells.x]=[7];}catch(error){destructure=error.name;}
+        try{for(const item of [9]){cells.x=item;}}catch(error){loop=error.name;}
+        return [cells===all.cells,cells.x,all.cells[key],cells.fn(),
+          cells.fn\`x\`,assignment,destructure,loop];
+      }`
+  });
+  assert.deepEqual(run.result,[true,1,1,[true,null],[true,'x'],
+    'TypeError','TypeError','TypeError']);
 });
 
 test('namespace lexical shadows retain their local bindings without rewriting unrelated imported cells',async()=>{
