@@ -29,6 +29,13 @@ export declare class DurableHostIngressBroker {
   constructor(options: {harness: any; journal: DurableHostIngressJournal; receipt?: HostIngressLogReceipt | null});
   readonly receipt: HostIngressLogReceipt | null;
   receive(event: {subscriptionId: string; eventId: string; args?: unknown[]; completionPolicy?: string; deliver?: boolean}): Promise<any>;
+  receiveCallback(event: {ownerInvocationId: string; parentEffectId: string; closureId: string;
+    invocationId?: string; args?: unknown[]; receiver?: unknown; deliver?: boolean}): Promise<{
+      status: 'buffered' | 'delivered' | 'duplicate'; invocationId: string; receipt: HostIngressLogReceipt;
+      completion?: Promise<unknown>;
+    }>;
+  invokeClosure(event: {ownerInvocationId: string; parentEffectId: string; closureId: string;
+    args?: unknown[]; receiver?: unknown}): Promise<unknown>;
   hasPending(subscriptionId: string, eventId: string): boolean;
   assertIdle(): void;
   flush(): Promise<HostIngressLogReceipt | null>;

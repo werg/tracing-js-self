@@ -320,16 +320,18 @@ export class RegionExecutionHarness {
   }
   checkpoint({ingress=null}={}){
     this.inner.hostIngressBroker?.assertIdle();
+    this.inner.hostIngressBroker?.assertCallbackQueue();
     this.sync();if(this.active)fail('cannot checkpoint an uncommitted local transition');
     if(ingress!==null){
       if(!ingressTickets.has(ingress)||!eq(ingress.snapshot,capturePendingIngress(this)))
         fail('durable ingress snapshot differs from the current callback boundary');
     }else if([...this.inner.handlers.values()].some(handler=>handler.queue.length)||
-      [...this.inner.callbacks.values()].some(callback=>callback.queued.length)||this.inner.closureQueue.length)
+      [...this.inner.callbacks.values()].some(callback=>callback.queued.length)||
+      this.inner.closureQueue.length&&!this.inner.hostIngressBroker)
       fail('unjournaled native arrivals require an explicit durable ingress receipt');
     const body={schema:REGION_CONTINUATION_VERSION,profile:REGION_PROFILE,public:this.exportEpisode(),
       regionCursor:{active:null,consumed:copy(this.consumed)},ingressCursor:this.inner.nextIngressSequence,
-      selected:this.hasProtocol()||ingress?
+      selected:this.hasProtocol()||ingress||this.inner.closureQueue.length?
         this.protocolCheckpoint({ingress}):this.inner.checkpoint(),...(ingress?{ingress:copy(ingress.receipt)}:{}),
       ...(this.inner.hostIngressBroker?.receipt?{ingressLog:this.inner.hostIngressBroker.receipt}:{})};
     return {...body,integrity:hashAlgorithmData(clean(body))};
@@ -347,8 +349,10 @@ export class RegionExecutionHarness {
     try{return this.checkpoint({ingress:ticket});}finally{ingressTickets.delete(ticket);}
   }
   protocolCheckpoint({ingress=null}={}){
+    this.inner.hostIngressBroker?.assertCallbackQueue();
     if(!ingress&&[...this.inner.handlers.values()].some(handler=>handler.queue.length)||
-      [...this.inner.callbacks.values()].some(callback=>callback.queued.length)||this.inner.closureQueue.length)
+      [...this.inner.callbacks.values()].some(callback=>callback.queued.length)||
+      this.inner.closureQueue.length&&!this.inner.hostIngressBroker)
       fail('unjournaled native arrivals require an explicit durable ingress receipt');
     return clean({schema:protocolCheckpointSchema,invocations:[...this.invocations].map(([id,activation])=>[
       id,{status:activation.status,state:sharedRegionState(activation.controller)}]),

@@ -59,8 +59,10 @@ export function validatePendingIngressSnapshot(snapshot){
 }
 
 export function capturePendingIngress(harness){
-  if([...harness.inner.callbacks.values()].some(callback=>callback.queued.length)||harness.inner.closureQueue.length)
+  if([...harness.inner.callbacks.values()].some(callback=>callback.queued.length)||
+    harness.inner.closureQueue.length&&!harness.inner.hostIngressBroker)
     fail('unregistered or return-value callbacks require their own durable continuation');
+  harness.inner.hostIngressBroker?.assertCallbackQueue();
   const publicData=harness.exportEpisode(),queues=[];
   for(const [subscriptionId,handler]of harness.handlers){
     if(!handler.queue.length)continue;

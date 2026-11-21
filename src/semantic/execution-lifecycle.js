@@ -370,6 +370,9 @@ export class SelectedExecutionCore {
       const next=handler.queue[0].arrivalSequence;
       if(next<sequence){selected=subscriptionId;sequence=next;}
     }
+    if(this.handlers.get(selected)?.realmPolicy==='retained'&&
+      this.closureQueue.some(request=>this.invocations.get(request.ownerInvocationId)?.realmId===realmId&&
+      Number.isSafeInteger(request.arrivalSequence)&&request.arrivalSequence<sequence))return null;
     return selected;
   }
   /** Queue each accepted outside arrival once. Delivery is separate, and
@@ -632,6 +635,7 @@ export class SelectedExecutionCore {
     return {ownerInvocationId,closureId,inputGraph,receiverValue};
   }
   enqueueClosure(options){
+    if(this.hostIngressBroker)return this.hostIngressBroker.invokeClosure(options);
     const request=this.prepareClosureInput(options),owner=this.invocations.get(request.ownerInvocationId);
     demand(this.closureQueue.length<64,'Owned callback queue overflow');
     const invocationId='callbackinvoke'+(++this.nextCallback);
@@ -666,6 +670,9 @@ export class SelectedExecutionCore {
       this.invocations.get(request.ownerInvocationId)?.realmId===realmId);
     if(index<0)return null;
     const request=this.closureQueue[index];
+    if(Number.isSafeInteger(request.arrivalSequence)&&[...this.handlers.values()].some(handler=>
+      handler.realmId===realmId&&handler.realmPolicy==='retained'&&this.queuedEventCanBeDelivered(handler)&&
+      handler.queue[0].arrivalSequence<request.arrivalSequence))return null;
     const owner=this.invocations.get(request.ownerInvocationId);
     let inputGraph=request.inputGraph??null,receiverValue=request.receiverValue??null;
     if(inputGraph?.objects.some(node=>realm.heap.has(node.id))){
@@ -786,7 +793,7 @@ export class SelectedExecutionCore {
             for(const child of Object.values(value))visit(child);
           };
           visit(nativeArgs);demand(found.has(closureId),'Callback was not supplied to this committed request');
-          return this.enqueueClosure({ownerInvocationId:invocationId,closureId,args,receiver});
+          return this.enqueueClosure({ownerInvocationId:invocationId,parentEffectId:effectId,closureId,args,receiver});
         },
         subscriptionId:slot=>this.callbacks.get(key+'/'+slot)?.subscriptionId,
         closeSubscription:id=>{

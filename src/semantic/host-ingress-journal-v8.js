@@ -7,6 +7,8 @@ import {canonicalCompletionPolicy} from './record-schema.js';
 import {assertAlgorithmFields,stableAlgorithmJSON} from './ir.js';
 import {hashAlgorithmData} from './program.js';
 import {validatePendingIngressSnapshot} from './pending-ingress-v8.js';
+import {validateCallbackArrival,captureCallbackArrival,verifyCallbackArrival,callbackRequest,
+  sameCallbackInput,sameCallbackRetry} from './callback-ingress-v8.js';
 
 const eq=isDeepStrictEqual,copy=structuredClone;
 const ID=/^[a-z][a-z0-9:_-]*$/,HASH=/^[a-f0-9]{64}$/;
@@ -32,6 +34,7 @@ export function validateHostIngressLogReceipt(receipt){
 }
 
 export function validateHostIngressArrival(arrival){
+  if(arrival?.schema==='semantic-callback-return-arrival/8')return validateCallbackArrival(arrival);
   stableAlgorithmJSON(arrival);
   assertAlgorithmFields(arrival,['schema','sessionId','visibleThrough','prefixDigest',
     'subscriptionId','binding','event'],'host arrival');
@@ -94,7 +97,8 @@ export class DurableHostIngressBroker {
     if(harness.inner.hostIngressBroker)fail('harness already has an intake owner');
     if(receipt!==null)validateHostIngressLogReceipt(receipt);
     this.harness=harness;this.journal=journal;this.head=copy(receipt);
-    this.pending=new Map();this.accepted=new Map();this.failure=null;this.tail=Promise.resolve();
+    this.pending=new Map();this.accepted=new Map();this.acceptedCallbacks=new Map();
+    this.failure=null;this.tail=Promise.resolve();
     harness.inner.hostIngressBroker=this;
   }
   get receipt(){return copy(this.head);}
@@ -109,6 +113,70 @@ export class DurableHostIngressBroker {
     if(this.pending.size)fail('unacknowledged durable arrivals are still being written');
   }
   async flush(){await this.tail;this.assertIdle();return this.receipt;}
+  assertCallbackQueue(){
+    for(const request of this.harness.inner.closureQueue){
+      const arrival=this.acceptedCallbacks.get(request.invocationId);
+      if(!arrival||!eq(request,callbackRequest(arrival)))fail('queued callback has no matching durable arrival');
+    }
+  }
+  /** Acknowledgement and completion are distinct. The receipt is available as
+   * soon as intake is durable; completion resolves only for this live adapter.
+   */
+  receiveCallback({invocationId=null,deliver=true,...options}={}){
+    if(this.failure)throw this.failure;
+    const harness=this.harness,inner=harness.inner;
+    if(typeof deliver!=='boolean')fail('invalid callback delivery policy');
+    invocationId??='callbackreturn'+(inner.nextIngressSequence+this.pending.size);
+    const captured=captureCallbackArrival(harness,{...options,invocationId}),key='callback:'+invocationId,
+      pending=this.pending.get(key),accepted=this.acceptedCallbacks.get(invocationId);
+    if(pending){
+      if(!sameCallbackRetry(pending.callback,captured))fail('conflicting pending callback duplicate');
+      return pending.promise;
+    }
+    if(accepted){
+      if(!sameCallbackRetry(accepted,captured))fail('conflicting accepted callback duplicate');
+      return Promise.resolve({status:'duplicate',invocationId,receipt:this.receipt});
+    }
+    if(inner.invocations.has(invocationId)||inner.closureQueue.some(row=>row.invocationId===invocationId))
+      fail('callback identity already belongs to other work');
+    if(inner.closureQueue.length+[...this.pending.values()].filter(row=>row.callback).length>=64||
+      this.pending.size>=4096)fail('callback queue overflow');
+    const work=this.tail.then(async()=>{
+      if(this.failure)throw this.failure;
+      const checkLive=()=>{
+        const owner=inner.invocations.get(options.ownerInvocationId),realm=inner.realms.get(owner?.realmId);
+        verifyCallbackArrival(harness,captured);
+        if(!owner||['cancelled','failed'].includes(owner.status)||realm?.closed||
+          inner.invocations.has(invocationId)||inner.closureQueue.some(row=>row.invocationId===invocationId)||
+          inner.closureQueue.length>=64)fail('callback owner changed before admission');
+      };
+      checkLive();captured.event.arrivalSequence=inner.nextIngressSequence;
+      validateCallbackArrival(captured);
+      const receipt=await this.journal.append(captured,{previous:this.head});
+      const entries=validateHostIngressLogChain(await this.journal.readAll(receipt),receipt),last=entries.at(-1);
+      if(!last||!eq(last.arrival,captured)||!eq(last.previous,this.head))fail('journal acknowledged different callback bytes');
+      this.head=copy(receipt);checkLive();
+      if(inner.nextIngressSequence!==captured.event.arrivalSequence)
+        fail('callback arrival order changed after durable admission; explicit recovery required');
+      this.acceptedCallbacks.set(invocationId,copy(captured));
+      inner.closureQueue.push(callbackRequest(captured));inner.nextIngressSequence++;
+      const completion=new Promise((resolve,reject)=>inner.completionWaiters.set(invocationId,{resolve,reject}));
+      void completion.catch(()=>{});
+      if(deliver)inner.activateQueuedClosures(captured.binding.realmId);
+      inner.wake();harness.sync();
+      return {status:inner.invocations.has(invocationId)?'delivered':'buffered',invocationId,receipt:copy(receipt),completion};
+    });
+    this.pending.set(key,{callback:captured,promise:work});
+    this.tail=work.then(()=>{this.pending.delete(key);},error=>{this.pending.delete(key);this.failure??=error;});
+    return work;
+  }
+  invokeClosure(options){
+    const returned=this.receiveCallback(options).then(result=>{
+      if(!result.completion)fail('duplicate callback completion requires explicit outcome reconciliation');
+      return result.completion;
+    });
+    void returned.catch(()=>{});return returned;
+  }
   receive({subscriptionId,eventId,args=[],completionPolicy='call-return',deliver=true}={}){
     if(this.failure)throw this.failure;
     if(!ID.test(subscriptionId??'')||!ID.test(eventId??'')||!Array.isArray(args)||typeof deliver!=='boolean')
@@ -188,17 +256,51 @@ export class DurableHostIngressBroker {
     if(!harness?.inner||harness.inner.hostIngressBroker||typeof journal?.append!=='function'||
       typeof journal?.readAll!=='function')fail('recovery requires a fresh intake owner and journal');
     const entries=validateHostIngressLogChain(await journal.readAll(receipt),receipt),
-      staged=[],identities=new Set(),sequences=new Set();
+      staged=[],callbacks=[],identities=new Set(),sequences=new Set();
     let next=harness.inner.nextIngressSequence,previousSequence=0;
     const counts=new Map();
     for(const entry of entries){
       validateHostIngressLogEntry(entry);
-      const arrival=entry.arrival,{handler,timeline}=verifyOwnerAndPrefix(harness,arrival),event=arrival.event;
-      const key=JSON.stringify([arrival.subscriptionId,event.eventId]);
+      const arrival=entry.arrival,event=arrival.event,isCallback=arrival.schema==='semantic-callback-return-arrival/8',
+        key=isCallback?'callback:'+event.invocationId:JSON.stringify([arrival.subscriptionId,event.eventId]);
       if(identities.has(key)||sequences.has(event.arrivalSequence)||
         previousSequence&&event.arrivalSequence!==previousSequence+1)
         fail('duplicate or reversed durable arrival');
       identities.add(key);sequences.add(event.arrivalSequence);previousSequence=event.arrivalSequence;
+      if(isCallback){
+        const {owner,timeline}=verifyCallbackArrival(harness,arrival),request=callbackRequest(arrival),
+          queued=harness.inner.closureQueue.find(row=>row.invocationId===event.invocationId),
+          invoked=timeline.find(row=>row.kind==='invocation'&&row.fields.invocationId===event.invocationId);
+        if(queued){
+          if(event.arrivalSequence>=harness.inner.nextIngressSequence||!eq(queued,request))
+            fail('saved callback queue differs from durable arrival');
+          continue;
+        }
+        if(invoked){
+          const fields=invoked.fields;
+          if(event.arrivalSequence>=harness.inner.nextIngressSequence||invoked.sequence<=arrival.visibleThrough||
+            fields.activation!=='callback'||fields.parentInvocationId!==arrival.binding.ownerInvocationId||
+            fields.closureId!==arrival.binding.closureId||fields.programId!==arrival.binding.programId||
+            fields.realmId!==arrival.binding.realmId||fields.track!==arrival.binding.trackId||
+            fields.taskRevision!==arrival.binding.taskRevision||fields.deadline!==arrival.binding.deadline||
+            fields.triggerId!==event.invocationId||fields.ingressKey!==event.invocationId||fields.realmPolicy!=='retained'||
+            fields.completionPolicy!=='await-returned-promise'||
+            !sameCallbackInput(event,{inputGraph:fields.inputGraph,receiverValue:fields.receiver}))
+            fail('delivered callback differs from durable arrival');
+          continue;
+        }
+        if(event.arrivalSequence>next)fail('callback arrival skips the saved order');
+        if(event.arrivalSequence===next)next++;
+        if(['cancelled','failed'].includes(owner?.status)||harness.realms.get(owner?.realmId)?.closed){
+          if(!timeline.some(row=>row.sequence>arrival.visibleThrough&&row.kind==='cancel'&&
+            row.fields.invocationId===arrival.binding.ownerInvocationId))fail('discarded callback lacks owner cancellation');
+          continue;
+        }
+        if(!owner||harness.inner.ingress.has(event.invocationId)||harness.inner.closureQueue.length+callbacks.length>=64)
+          fail('callback has no available source owner or exceeds queue bound');
+        callbacks.push(request);continue;
+      }
+      const {handler,timeline}=verifyOwnerAndPrefix(harness,arrival);
       const queued=handler.queue.find(row=>row.eventId===event.eventId);
       if(queued){
         if(!handler.seen.has(event.eventId)||event.arrivalSequence>=harness.inner.nextIngressSequence||
@@ -231,9 +333,13 @@ export class DurableHostIngressBroker {
     if(previousSequence+1!==next)fail('saved arrival cursor does not match the durable head');
     // Every source, prefix, order and graph was checked before any live mutation.
     for(const {handler,event}of staged){handler.seen.add(event.eventId);handler.queue.push(event);}
+    harness.inner.closureQueue.push(...callbacks);
     harness.inner.nextIngressSequence=next;
     const broker=new DurableHostIngressBroker({harness,journal,receipt});
-    for(const {arrival}of entries)broker.accepted.set(JSON.stringify([arrival.subscriptionId,arrival.event.eventId]),copy(arrival.event));
+    for(const {arrival}of entries){
+      if(arrival.schema==='semantic-callback-return-arrival/8')broker.acceptedCallbacks.set(arrival.event.invocationId,copy(arrival));
+      else broker.accepted.set(JSON.stringify([arrival.subscriptionId,arrival.event.eventId]),copy(arrival.event));
+    }
     return broker;
   }
 }
