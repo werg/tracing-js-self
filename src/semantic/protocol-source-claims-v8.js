@@ -130,7 +130,10 @@ function ordinaryEvent(view,input){
   return Boolean(row.allocations?.length||row.arithmetic||['carry','branch'].includes(row.op)||ordinaryOperations.has(event.operation));
 }
 function completionOwners(view,change){
-  return [...(change.after?.generatorId?[generator]:[]),
+  const routedGenerator=change.after?.completion?.type==='throw'&&view.event?.operation==='completion.throw'&&
+    view.event.stateChanges.filter(row=>row.table==='frames'&&row.after?.generatorId&&
+      row.before?.generatorId===row.after.generatorId&&row.before.handlers?.length!==row.after.handlers?.length);
+  return [...(change.after?.generatorId||routedGenerator?.length===1?[generator]:[]),
     ...[[construction,'roles'],[number,'callbacks'],[proxy,'callbacks'],[map,'callbacks']]
       .filter(([id,key])=>has(state(view,id)[key],change.id)).map(([id])=>id)];
 }

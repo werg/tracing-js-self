@@ -229,7 +229,22 @@ export function createGeneratorSourceAdapterV8({bundle}){
       }
       return true;
     },
-    completeFrame:finish,
+    completeFrame(ctx,change,event){
+      if(change.after.generatorId)return finish(ctx,change,event);
+      if(change.after.completion?.type!=='throw'||event.operation!=='completion.throw')return false;
+      const affected=event.stateChanges.filter(row=>row.table==='frames'&&row.after?.generatorId&&
+        row.before?.generatorId===row.after.generatorId&&row.before.handlers?.length!==row.after.handlers?.length);
+      require(ctx,affected.length===1,'abrupt iterator callback must change one retained generator completion');
+      const generatorId=affected[0].after.generatorId,completion=change.after.completion,value=ctx.tag(completion.value.value,event),
+        invocation=ctx.frame(change.id);
+      require(ctx,invocation===ctx.controller.stack.at(-1)&&ctx.controller.heap.get(generatorId)?.kind==='generator',
+        'abrupt iterator callback must unwind before its generator completion');
+      emit(ctx,{kind:'throw',invocation,value},event,'owned-generator-callback-throw/1');
+      const generator=ctx.controller.heap.get(generatorId);
+      require(ctx,ctx.controller.stack.at(-1)===generator.invocation,'throwing callback did not restore the generator continuation');
+      emit(ctx,{kind:'generator.handler.route',object:generatorId,completion:{kind:'throw',value}},event);
+      return true;
+    },
     checkHeap(ctx,node){
       const actual=ctx.controller.heap.get(node.id);require(ctx,actual,'generator-owned heap identity is absent');
       if(node.generatorFunction)require(ctx,actual.generatorFunction===true&&node.nonConstructible===true&&!node.async&&

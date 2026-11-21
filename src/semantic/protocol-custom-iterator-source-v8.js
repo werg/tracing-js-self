@@ -49,7 +49,8 @@ export function createCustomIteratorSourceAdapterV8({bundle,source}){
         return true;
       }
       if(inst.op==='INIT'&&(cached.test(inst.arg)||pattern&&event.result?.[0]==='method')){
-        require(ctx,!frame.generatorId&&!frame.asyncPromiseId,'only ordinary synchronous loop cleanup is qualified');
+        require(ctx,!frame.asyncPromiseId&&(!frame.generatorId||ctx.bundle.programs[frame.codeId]?.generator===true),
+          'async cleanup or an unqualified generator frame is not supported');
         const method=event.result,environment=event.stateChanges.find(row=>row.table==='envs'&&row.after?.bindings?.[inst.arg]?.initialized)?.after;
         require(ctx,method?.length===3&&method[0]==='method'&&method[1]?.[0]==='ref'&&method[2]?.[0]==='ref'&&environment&&
           ['object','array'].includes(ctx.state.heap[method[2][1]]?.kind)&&ctx.state.heap[method[1][1]]?.kind==='function',
@@ -76,9 +77,11 @@ export function createCustomIteratorSourceAdapterV8({bundle,source}){
       }
       if(inst.op==='PENDING_THROW'){
         const owned=frame.handlers.findLast(handler=>handler.phase==='finally'),
-          retained=ctx.controller.pending?.handler?.frames?.find(row=>row.invocation===ctx.frame(frame.id))?.handlers.findLast(handler=>handler.phase==='finally');
-        require(ctx,owned?.pending&&retained?.pending&&ctx.eq(event.result,['bool',owned.pending.type==='throw'])&&
-          (owned.pending.type==='throw')===(retained.pending.kind==='throw'),'close lost the pending throw precedence');
+          retained=frame.generatorId?ctx.controller.heap.get(frame.generatorId)?.handlers.findLast(handler=>handler.phase==='finally'):
+            ctx.controller.pending?.handler?.frames?.find(row=>row.invocation===ctx.frame(frame.id))?.handlers.findLast(handler=>handler.phase==='finally');
+        require(ctx,Boolean(owned)===Boolean(retained)&&(!owned?ctx.eq(event.result,['bool',false]):owned.pending&&retained.pending&&
+          ctx.eq(event.result,['bool',owned.pending.type==='throw'])&&
+          (owned.pending.type==='throw')===(retained.pending.kind==='throw')),'close lost the pending throw precedence');
         return true;
       }
       return false;

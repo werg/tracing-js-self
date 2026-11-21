@@ -149,3 +149,30 @@ test('a rejected map-generator composite restores both adapter states atomically
   assert.throws(()=>compileProtocolSourceV8(bundle,{adapters:[map,generator,audit]}),/reject composite map-generator event/);
   assert(failed);assert.deepEqual(map.captureState(),beforeMap);assert.deepEqual(generator.captureState(),beforeGenerator);
 });
+
+test('mapped generator IteratorClose resumes after JSON recovery and preserves throw precedence once',async()=>{
+  const cases=[
+    ['closed++;throw 2;', '',112],
+    ['closed++;return {done:true};','throw 3;',113]
+  ];
+  for(const [closeBody,finallyBody,expected]of cases){
+    const source='"use strict";function run(){let closed=0;const iterable={[Symbol.iterator]:function(){return this},'+
+      'next:function(){return {value:3,done:false}},return:function(){'+closeBody+'}};const gen=[iterable].map(function*(it){'+
+      'try{for(const value of it){yield value;break}}finally{closed+=10;'+finallyBody+'}})[0];gen.next();'+
+      'try{gen.return(8)}catch(error){return closed*10+error}return 0;}';
+    const result=await verifyProtocolRegionTrainingCase({source,entry:'run',family:'map-generator-iterator-close',timeoutMs:30000});
+    assert(result.exported,result.reason);
+    assert.deepEqual(result.exported.sidecar.sourceArtifact.sidecar.outcome.graph.roots.at(-1),['num',expected]);
+    assert.equal((await recheckProtocolRegionEvidence(result.exported)).projectionValidated,true);
+    const timeline=result.exported.public.timeline,cut=timeline.findIndex(row=>row.fields.line?.includes('"kind":"generator.yield"'));
+    assert(cut>=0,'checkpoint follows the yielded value while the iterator close obligation is live');
+    const prefix={...result.exported.public,timeline:timeline.slice(0,cut+1)},
+      original=RegionExecutionHarness.replay(prefix,{requireTerminal:false}),
+      restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(original.checkpoint())));
+    for(const row of timeline.slice(cut+1))restored.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+    const complete=RegionExecutionHarness.replay(result.exported);
+    assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(complete.controller));
+    const closes=timeline.slice(cut+1).filter(row=>row.kind==='semantic'&&row.fields.line?.includes('\"kind\":\"bind\"')&&row.fields.line?.includes('\"name\":\"closed\"'));
+    assert.equal(closes.length,2,'iterator return and generator finally each update the live close counter once');
+  }
+});
