@@ -299,6 +299,15 @@ function bindingIdentifiers(pattern,out=[]){
     pattern.properties.forEach(x=>bindingIdentifiers(x.value??x.argument,out));
   return out;
 }
+const anonymousDefinition=node=>node?.type==='ArrowFunctionExpression'||
+  (node?.type==='FunctionExpression'||node?.type==='ClassExpression')&&node.id===null;
+function namedDefinition(source,name){
+  // A property NamedEvaluation supplies the original observable function/class
+  // name without adding an inner lexical binding. The computed key also keeps
+  // a binding called __proto__ from becoming an object-literal prototype setter.
+  const key=JSON.stringify(name);
+  return '({['+key+']:('+source+')})['+key+']';
+}
 function rewrite(module,root,names,namespaceBindings=new Map()){
   const edits=new Map();
   const staticName=node=>node.computed?
@@ -344,6 +353,21 @@ function rewrite(module,root,names,namespaceBindings=new Map()){
     if(node.type==='UpdateExpression')checkAssignment(node.argument);
     if((node.type==='ForOfStatement'||node.type==='ForInStatement')&&
        node.left.type!=='VariableDeclaration')checkAssignment(node.left);
+    const nameTarget=node.type==='VariableDeclarator'?node.id:
+      node.type==='AssignmentPattern'||node.type==='AssignmentExpression'&&
+      ['=','&&=','||=','??='].includes(node.operator)?node.left:null;
+    const definition=node.type==='VariableDeclarator'?node.init:node.right;
+    if(nameTarget?.type==='Identifier'&&module.bindingIdentifiers.has(nameTarget)&&
+       anonymousDefinition(definition)){
+      // Renaming a module cell must not rename an anonymous value initialized
+      // or assigned to it. Set the name as part of evaluation, before class
+      // static fields execute, while recursively preserving all source reads.
+      walk(nameTarget,node,node.type==='VariableDeclarator'?'id':'left');
+      const expression=rewrite(module,definition,names,namespaceBindings);
+      edits.set(definition.start,{end:definition.end,
+        value:namedDefinition(expression,nameTarget.name)});
+      return;
+    }
     const namespace=node.type==='MemberExpression'?namespaceOf(node.object):null;
     if(namespace){
       if((parent?.type==='AssignmentExpression'&&key==='left')||
@@ -593,10 +617,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
         // that implementation name instead. Use an object property value as
         // the NamedEvaluation context; this also makes the name observable
         // during class static initialization, without consulting guest globals.
-        const anonymousDefinition=item.node.type==='ArrowFunctionExpression'||
-          (item.node.type==='FunctionExpression'||item.node.type==='ClassExpression')&&
-          item.node.id===null;
-        const value=anonymousDefinition?'({default:('+expression+')}).default':expression;
+        const value=anonymousDefinition(item.node)?'({default:('+expression+')}).default':expression;
         fragment='const '+names.get(item.local)+' = ('+value+');';
       }else{
         fragment=rewrite(module,item.node,names,namespaces.get(file));
