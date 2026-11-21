@@ -18,6 +18,18 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Active continuation — 21 November 2026
 
+- Resumed from actual producer `274d327cf18ecd33fa4a5b524433c8a4526b4fd1`
+  and consumer `18a55a8400cbf8c7e9ec220bc323d5dd5b10579a`. At these heads,
+  eight producer workflows passed and the full Node 20/22/24 test matrix failed
+  on the same obsolete map-throw refusal assertion; the three consumer semantic
+  workflows passed, while its general CI was cancelled. The obsolete refusal is
+  replaced by a positive original-source/recheck/JSON-checkpoint test of the
+  thrown value. All 15 enumeration and source-transaction controls pass locally,
+  with zero failures/skips. The four remaining refusal cases are retained.
+  Hardest-first work now targets durable return-value callback continuation,
+  original module namespace/export semantics, and real V8 decoder fitting from
+  strictly admitted ordinary prepared data. All 17 acceptance packages remain
+  open; these baseline observations do not qualify subsequent changes.
 - Exact published pair **producer `20fca49ca21d3b9d4cfed9e2b439e4e5f288b0fd` / consumer `18a55a8400cbf8c7e9ec220bc323d5dd5b10579a`** passes **35/35 original source checks, 35/35 independent native admissions, all 35 exact-token cost measurements and all 35 native-packing receipts**. Ordinary preparation, exactly two optimizer updates, fresh-process resume, export and real service restoration pass at this pair; zero semantic records are acknowledged. Detailed output is 44,122 of 45,164 measured generated text tokens (97.69%), so broad compact coverage remains open. Both this complete pair and the original 34/33 failed pair are being retained with full tensors/checkpoints/tokenizer/prepared data and exact native input bytes reconstructed and matched to each original receipt.
 - The corrected full 843-module campaign at published producer `f04f1beb09e94824a15994625e6e43ec326c53e9` retains all 102,994 variants, including 102,151 unselected. Owned execution: **147 passed, 34 failed, 351 unsupported, 13 environment-unavailable, 205 not-run parse negatives, 93 blocked by parse failures; zero infrastructure errors**. Reference: **672 passed, 104 failed, 67 environment-unavailable**. Parse: 750 passed/93 failed. Every selected-stage denominator sums to 843. Source correspondence has zero passes (146 not run/697 blocked); public/native/checkpoint/data/training/serving stages remain blocked. Full report SHA-256: `98a8ae8e666563fe7cc87255eed0bc2d526f010f4464812c322c400c2899ec7f`. Earlier d4 full and d6 partial attempts retain their original identities.
 - A new edition-reference audit checks original test bytes, unchanged variant IDs/modes and exact normative HTML anchors with clause ancestry. It preserves all classifications and counts; anchors do not certify edition membership or test success. Six inventory/specification controls pass, including changed bytes, rehashed missing variants, duplicate anchors, script/comment markup and CR-only headers. A clean implementation preview covers all **102,994 variants / 53,616 tests / 198 feature tags**, with 58,589 resolved exact references, 23,474 absent anchors and 20,931 missing `esid` fields. These are reference-review counts, not exclusions. A fresh report at the published audit revision is required; edition/applicability decisions remain open. See `docs/TEST262_EDITION_RECONCILIATION.md`.

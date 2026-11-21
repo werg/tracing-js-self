@@ -56,13 +56,27 @@ test('a checkpoint between map callbacks retains the shared result and rejects f
   assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(RegionExecutionHarness.replay(result.exported).controller));
 });
 
-test('accessors, sparse inputs, changed species, source mutation and abrupt map callbacks remain explicit refusals',async()=>{
+test('an abrupt map callback preserves its thrown value through source validation and checkpoint recovery',async()=>{
+  const result=await checked('const object=Object.create(null);object.a=x;return Object.entries(object).map(pair=>{throw pair[1];});');
+  assert.equal((await recheckProtocolRegionEvidence(result.exported)).valid,true);
+  const timeline=result.exported.public.timeline,
+    cut=timeline.findIndex(row=>row.kind==='protocol'&&decodeProtocolRecordV8(row.fields.line).kind==='throw');
+  assert(cut>0,'the callback throw must have a public checkpoint boundary');
+  const prefix={...result.exported.public,timeline:timeline.slice(0,cut)},
+    paused=RegionExecutionHarness.replay(prefix,{requireTerminal:false}),
+    restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(paused.checkpoint())));
+  for(const row of timeline.slice(cut))restored.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+  const complete=RegionExecutionHarness.replay(result.exported);
+  assert.deepEqual(complete.controller.completion,{kind:'throw',value:['num',4]});
+  assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(complete.controller));
+});
+
+test('accessors, sparse inputs, changed species and source mutation remain explicit refusals',async()=>{
   for(const body of [
     'const object={get a(){return x;}};return Object.entries(object);',
     'const array=[1,,3];return array.map(value=>value);',
     'const array=[1];array.constructor={};return array.map(value=>value);',
-    'const object=Object.create(null);object.a=x;return Object.entries(object).map((pair,index,array)=>{array.push(pair);return pair[0];});',
-    'const object=Object.create(null);object.a=x;return Object.entries(object).map(pair=>{throw pair[1];});'
+    'const object=Object.create(null);object.a=x;return Object.entries(object).map((pair,index,array)=>{array.push(pair);return pair[0];});'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert.equal(result.exported,undefined,body);
     assert.notEqual(result.status,'locally_verified');
