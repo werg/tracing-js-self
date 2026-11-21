@@ -6,8 +6,9 @@ import {isDeepStrictEqual} from 'node:util';
 import {atomicWrite} from '../src/corpus/campaign-store.mjs';
 import {identityHash} from '../src/corpus/campaign-store.mjs';
 import {createNativeConsumer} from '../src/corpus/native-admission-client.mjs';
-import {verifyEffectfulTrainingCase,independentEffectfulReference} from '../src/training/effectful-admit.js';
-import {verifyEffectfulSession} from '../src/training/effectful-session.js';
+// Original-source observation is shared authority, independent of the selected
+// wire client. Load legacy producers only after dispatching an actual V6 task.
+import {independentEffectfulReference} from '../src/semantic/source-reference.js';
 import {encodeNativeGraph,decodeOwnedGraph} from '../src/host/graph-codec.js';
 import {decodeGenerationTask} from '../src/corpus/generation-process.mjs';
 import {canonicalJavaScriptExpected} from '../src/corpus/owned-exercism.mjs';
@@ -82,7 +83,9 @@ try{
         result=await verifyRegionTrainingCase(options);}
       else if(task.traceVersion===7){const {verifyAlgorithmTrainingCase}=await import('../src/semantic/compiler.js');
         result=await verifyAlgorithmTrainingCase(options);}
-      else if(task.traceVersion===undefined||task.traceVersion===6)result=await verifyEffectfulTrainingCase(options);
+      else if(task.traceVersion===undefined||task.traceVersion===6){
+        const {verifyEffectfulTrainingCase}=await import('../src/training/effectful-admit.js');
+        result=await verifyEffectfulTrainingCase(options);}
       else throw new Error('Unknown generation trace version');
     }
   }
@@ -90,7 +93,12 @@ try{
     phase='module-verification';const {verifyRegionModuleTrainingCase}=await import('../src/semantic/module-v8.js');
     result=await verifyRegionModuleTrainingCase(options);
   }
-  else if(task.kind==='session')result=await verifyEffectfulSession(options);
+  else if(task.kind==='session'){
+    if(task.traceVersion!==undefined&&task.traceVersion!==6)
+      throw new Error('Generation sessions require trace version 6');
+    const {verifyEffectfulSession}=await import('../src/training/effectful-session.js');
+    result=await verifyEffectfulSession(options);
+  }
   else throw new Error('Unknown generation task kind');
 }catch(error){result={status:phase==='original-reference'?'original_reference_failure':'collection_failed',
   phase,reason:String(error.message??error),failure:{source:task.fixture.source,originalSource:task.fixture.originalReferenceSource,
