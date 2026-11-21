@@ -260,6 +260,39 @@ and transport evidence mutation, policy/branch/ingress rollback, and the retaine
 unsaved-public-tail refusal. Its decoder and model-shaped test snapshots are
 explicitly supplied orchestration controls, not learned execution evidence.
 
+### Actual model qualification command
+
+`tools/qualify-v8-checkpoint-history.mjs` measures this explicit-cut API with an
+existing actual serving bundle and an original-source artifact. It freezes
+clean producer and consumer revisions, verifies model/tokenizer bytes against
+the serving manifest, and retains the model's existing training identity.
+It performs no training. Only the initial observed public prefix and causal
+context enter the unmodified native service; source correspondence is checked
+after model execution.
+
+```sh
+node tools/qualify-v8-checkpoint-history.mjs \
+  --megatoken /absolute/path/to/clean/megatoken \
+  --python /absolute/path/to/qualified/python \
+  --served /absolute/path/to/actual/served-bundle \
+  --source /absolute/path/to/original-source-artifact.json \
+  --out /absolute/path/to/new-evidence-directory \
+  --seed 17 --max-tokens 128 --max-fragments 1
+```
+
+The command saves a cut before selection, acknowledges one actual model record
+through the normal driver methods, and saves a later cut. A fresh native
+service restores the older packet through the independently retained later
+receipt. Complete native/host checkpoint state, consumed attempts, and the next
+actual output are compared; only measured timing fields are excluded from
+next-selection equality. Both next-output probes remain unacknowledged. The
+report separates retained driver accounting from both native service lifetimes,
+including reconstruction and probes, without counting copied historical costs
+twice. Original outputs, checkpoints, profiles, source inputs and failed native
+evidence remain in the new output directory. A passing result establishes this
+bounded recovery case, not complete source execution, automatic durability,
+ordinary training quality or held-out generalization.
+
 ### Remaining general boundary
 
 This API requires one driver and a dedicated native transport for its session.
