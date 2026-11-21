@@ -37,3 +37,5 @@ export type {SelectedServiceAction,SelectedServiceOutcome,SelectedServiceJournal
 export {DurableFencedSelectedServiceJournal} from './selected-service-fence-journal.js';
 export type {SelectedServiceFenceReceipt,SelectedServiceFenceState,DurableFencedSelectedServiceJournalOptions}
   from './selected-service-fence-journal.js';
+export {SelectedServiceAdmissionCoordinator} from './selected-service-coordinator.js';
+export type {SelectedServiceAdmissionPolicy,SelectedServiceAdmissionFence} from './selected-service-coordinator.js';
