@@ -18,6 +18,23 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Active continuation — 21 November 2026
 
+- Exact clean producer `1240d009ceba524ed53092b7a93a40d8ef0ca410` and consumer
+  `edf83bc3f23c15d0bd1f41cf471c06c8893d3874` now pass **37/37 original-source
+  checks and 37/37 independent native admissions**, including the two new
+  sparse/live map cases. Exact-token and packing measurements are running.
+  The same pair regenerates the complete 37-source registry before selecting
+  its predeclared training source, passes strict preparation, performs exactly
+  two normal optimizer updates, exports and restores the real service in a
+  fresh process. **Zero ordinary model records are acknowledged.** Complete
+  local assets and original logs are retained; archive publication is pending.
+  Earlier dirty-environment and stale-source refusals remain failed attempts.
+- Consumer `edf83bc3` repairs the V8 decoder-fitting diagnostic to consume one
+  verified ordinary training row, preserve its source-family/split annotations
+  through grouped boundary capture, and supply the actual training policy.
+  Four focused controls and Ruff pass. Review also identified incomplete
+  diagnostic lineage and whole-example versus fitted-prefix token accounting;
+  those are being corrected before an accepted-record experiment. Bounded
+  decoder fitting does not establish ordinary learning or held-out quality.
 - Sparse and mutating ordinary array maps now project through the existing
   checked property/call operations. Holes remain absent; undefined elements
   still invoke callbacks; later values and filled holes use the live heap;
