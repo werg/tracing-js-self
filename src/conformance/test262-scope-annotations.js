@@ -1,9 +1,11 @@
 // Narrow source/grammar annotations for selected Test262 parse failures.
 // These annotations describe relation to one pinned grammar, not conformance.
 import {createHash} from 'node:crypto';
+import {existsSync} from 'node:fs';
 import {tokenizer} from 'acorn';
-import {validateTest262Catalog,bindTest262CatalogProfile,conformanceDigest} from './test262-catalog.js';
+import {validateTest262Catalog,conformanceDigest} from './test262-catalog.js';
 import {verifyEcma262SpecificationBytes} from './test262-specification.js';
+import {validateOriginalTest262Report} from './test262-campaign.js';
 import {gitBlobSha} from '../test262-baseline.js';
 
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -69,9 +71,18 @@ export function classifyImportDeferParseFailure(row,source,productionEvidence){
 }
 
 /** Preserve every frozen variant; attach a narrow note only to proven parse failures. */
-export function buildTest262ScopeAnnotations({catalog,campaign,triage,specification,bytes,sources}={}){
+export function assertNewScopeOutput(path){
+  if(typeof path!=='string'||!path)throw new TypeError('Scope annotation output path is required');
+  if(existsSync(path))throw new TypeError('Scope annotation output must be new');
+  return true;
+}
+
+export function buildTest262ScopeAnnotations({catalog,campaign,triage,specification,bytes,sources,toolIdentity}={}){
   validateTest262Catalog(catalog);
   verifyEcma262SpecificationBytes(bytes,specification);
+  if(!campaign?.profile?.specification||
+    conformanceDigest(campaign.profile.specification)!==conformanceDigest(specification))
+    throw new TypeError('Campaign-declared ECMA-262 profile differs from exact pinned specification bytes');
   const productions=extractImportDeferGrammarEvidence(bytes);
   if(campaign?.schema!=='original-test262-campaign-report/1'||
     campaign.baseCatalogDigest!==catalog.digest||campaign.catalogDigest!==triage?.catalogDigest||
@@ -79,9 +90,9 @@ export function buildTest262ScopeAnnotations({catalog,campaign,triage,specificat
     triage?.schema!=='test262-module-campaign-triage/1'||
     !Array.isArray(triage.failedCases?.parseStatic)||!Array.isArray(campaign.campaign.rows))
     throw new TypeError('Scope annotation requires retained parse failure rows');
-  const runCatalog=bindTest262CatalogProfile(catalog,campaign.profile);
-  if(runCatalog.digest!==campaign.catalogDigest)
-    throw new TypeError('Campaign profile does not derive its declared catalog identity');
+  const validated=validateOriginalTest262Report(campaign,{baseCatalog:catalog,
+    implementation:campaign.campaign.implementation});
+  const runCatalog=validated.catalog;
   const byId=new Map(catalog.variants.map(row=>[row.id,row]));
   const runById=new Map(runCatalog.variants.map((row,index)=>[row.id,{variant:row,base:catalog.variants[index]}]));
   const campaignById=new Map(campaign.campaign.rows.map(row=>[row.id,row]));
@@ -121,7 +132,8 @@ export function buildTest262ScopeAnnotations({catalog,campaign,triage,specificat
   const tally={};for(const row of rows){const key=row.scopeAnnotation.status;tally[key]=(tally[key]??0)+1;}
   const body={schema:'test262-scope-annotations/1',catalogDigest:catalog.digest,
     test262Revision:catalog.suiteRevision,campaignCatalogDigest:triage.catalogDigest,
-    specification,productions,summary:{catalogVariants:catalog.variants.length,annotatedRows:rows.length,
+    campaignProducerRevision:campaign.campaign.implementation.producerRevision,
+    ...(toolIdentity?{toolIdentity}:{}),specification,productions,summary:{catalogVariants:catalog.variants.length,annotatedRows:rows.length,
       parseFailureRows:triage.failedCases.parseStatic.length,scope:tally,
       importDeferFeatureRows:catalog.variants.filter(row=>row.metadata?.features?.includes('import-defer')).length},
     rows,claims:{editionMembershipCertified:false,conformance:false,denominatorRowsRemoved:0},
