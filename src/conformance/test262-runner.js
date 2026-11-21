@@ -6,6 +6,7 @@ import {posix} from 'node:path';
 import {parse as parseSyntax} from 'acorn';
 import {createRuntime} from '../runtime.js';
 import {linkEvaluatedModules} from '../evaluated-modules.js';
+import {unresolvedOriginalModuleBindings} from './test262-module-resolution.js';
 import {validateBundle} from '../validation.js';
 import {replayExact} from '../replay.js';
 import {conformanceDigest,parseTest262Header,test262VariantModes} from './test262-catalog.js';
@@ -50,6 +51,7 @@ export function ownedTest262Profile({specification=null,maxSteps=20000,maxSource
       moduleResolver:'frozen-static-relative-graph/1',
       moduleExecution:{profile:'evaluated-module/1',entry:'evaluation-only',
         sourceHandling:'original-bytes-bound-and-lowered-to-owned-entry',
+        staticResolution:'original-module-records/1',
         generatedAndOriginalDigests:'both-recorded',sourceCorrespondence:false,
         dynamicImport:'unsupported',moduleNamespaceObjects:'unsupported',importMeta:'unsupported',
         importAttributes:'unsupported',hostLoading:'unavailable',retainedSession:false},
@@ -186,76 +188,7 @@ export function checkOfficialTest262ModuleGraph({variant,profile,sources}={}){
   if(variant.metadata.negative?.phase==='parse')
     return {stage:outcome('failed','Expected a module parse-time error but original source parsed successfully',
       {phase:'parse'}),ast:parsed.get(variant.path),parseOnly:true};
-  const exportedNames=new Map();
-  let unsupportedLinkShape=false;
-  for(const [path,ast] of parsed){
-    const names=new Set();
-    const importedLocals=new Set(ast.body.filter(node=>node.type==='ImportDeclaration')
-      .flatMap(node=>node.specifiers.map(spec=>spec.local.name)));
-    for(const node of ast.body){
-      if(node.type==='ExportDefaultDeclaration')names.add('default');
-      else if(node.type==='ExportNamedDeclaration'){
-        if(node.source&&typeof node.source.value==='string'){
-          unsupportedLinkShape=true;
-          for(const spec of node.specifiers??[])if(spec.exported?.name)names.add(spec.exported.name);
-        }
-        if(node.declaration){
-          const declaration=node.declaration;
-          if(declaration.id?.name)names.add(declaration.id.name);
-          for(const item of declaration.declarations??[]){
-            if(item.id?.type==='Identifier')names.add(item.id.name);
-            else unsupportedLinkShape=true;
-          }
-        }
-        for(const spec of node.specifiers??[]){
-          if(spec.local?.type!=='Identifier'||spec.exported?.type!=='Identifier'||importedLocals.has(spec.local.name))
-            unsupportedLinkShape=true;
-          if(spec.exported?.name)names.add(spec.exported.name);
-        }
-      }else if(node.type==='ExportAllDeclaration'){
-        unsupportedLinkShape=true;
-        if(node.exported?.name)names.add(node.exported.name);
-      }
-    }
-    exportedNames.set(path,names);
-  }
-  if(unsupportedLinkShape)return {stage:outcome('unsupported',
-    'Owned preflight does not certify export-star, forwarding, imported-local, or destructuring export resolution',
-    {phase:'link'}),ast:parsed.get(variant.path),parseOnly:true};
-  for(const [path,ast] of parsed){
-    for(const node of ast.body){
-      if(!['ImportDeclaration','ExportNamedDeclaration','ExportAllDeclaration'].includes(node.type)||
-         node.type!=='ExportAllDeclaration'&&!node.source)continue;
-      const specifier=node.source?.value;
-      if(typeof specifier!=='string')continue;
-      if(!specifier.startsWith('./')&&!specifier.startsWith('../')){
-        missing.push({from:path,target:specifier,kind:'module'});continue;
-      }
-      const target=posix.normalize(posix.join(posix.dirname(path),specifier));
-      if(!graph.has(target))missing.push({from:path,target,kind:'module'});
-      else if(node.type==='ImportDeclaration'){
-        const names=exportedNames.get(target)??new Set();
-        for(const imported of node.specifiers){
-          if(imported.type==='ImportSpecifier'&&imported.imported?.type!=='Identifier'){
-            missing.push({from:path,target,kind:'unsupported-name'});continue;
-          }
-          const name=imported.type==='ImportDefaultSpecifier'?'default':
-            imported.type==='ImportSpecifier'?imported.imported.name:null;
-          if(name!==null&&!names.has(name))missing.push({from:path,target,name,kind:'export'});
-        }
-      }else if(node.type==='ExportNamedDeclaration'&&node.source){
-        const names=exportedNames.get(target)??new Set();
-        for(const forwarded of node.specifiers??[]){
-          const name=forwarded.local?.name;
-          if(name&&!names.has(name))missing.push({from:path,target,name,kind:'export'});
-        }
-      }
-    }
-  }
-  if(missing.some(edge=>edge.kind==='unsupported-name'))
-    return {stage:outcome('unsupported',
-      'Owned preflight does not certify string-named import resolution',{phase:'link'}),
-      ast:parsed.get(variant.path),parseOnly:true};
+  missing.push(...unresolvedOriginalModuleBindings(parsed));
   if(unresolvedClosure&&variant.metadata.negative?.phase==='resolution'&&
      variant.metadata.negative.type==='SyntaxError'){
     // The frozen acquisition has already recorded unresolved source edges.

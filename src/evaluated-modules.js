@@ -65,6 +65,10 @@ function nodeName(node){
   if(node?.type!=='Identifier')reject('module bindings must use identifiers');
   return node.name;
 }
+function exportNameOf(node){
+  if(node?.type==='Literal'&&typeof node.value==='string')return node.value;
+  return nodeName(node);
+}
 function ownDataArray(value,label,max){
   if(!Array.isArray(value)||types.isProxy(value)||
      Object.getPrototypeOf(value)!==Array.prototype||
@@ -88,7 +92,7 @@ function parseModule(file,text,sources){
   const stars=[],deps=new Set(),functions=[],initializers=[];
   const addDependency=from=>deps.add(from);
   const addImport=(local,from,imported)=>{
-    if(!validName(local)||!validName(imported)&&imported!=='default')
+    if(!validName(local)||typeof imported!=='string')
       reject('unrepresentable imported binding in '+file);
     const prior=imports.get(local);
     if(prior && (prior.module!==from||prior.name!==imported))
@@ -105,15 +109,15 @@ function parseModule(file,text,sources){
     namespaceImports.set(local,from);addDependency(from);
   };
   const addExport=(exported,local)=>{
-    if(!validName(exported)&&exported!=='default'||!validName(local))
+    if(typeof exported!=='string'||!validName(local))
       reject('unrepresentable exported binding in '+file);
     if(forwards.has(exported)||exports.has(exported)&&exports.get(exported)!==local)
       reject('duplicate export '+exported+' in '+file);
     exports.set(exported,local);
   };
   const addForward=(exported,from,imported)=>{
-    if(!validName(exported)&&exported!=='default'||
-       imported!==namespaceExport&&!validName(imported)&&imported!=='default')
+    if(typeof exported!=='string'||
+       imported!==namespaceExport&&typeof imported!=='string')
       reject('unrepresentable forwarding export in '+file);
     if(exports.has(exported)||forwards.has(exported)&&(
        forwards.get(exported).module!==from||
@@ -214,7 +218,7 @@ function parseModule(file,text,sources){
           continue;
         }
         addImport(nodeName(spec.local),from,
-          spec.type==='ImportDefaultSpecifier'?'default':nodeName(spec.imported));
+          spec.type==='ImportDefaultSpecifier'?'default':exportNameOf(spec.imported));
       }
     }else if(node.type==='FunctionDeclaration'||
              node.type==='VariableDeclaration'){
@@ -226,17 +230,17 @@ function parseModule(file,text,sources){
         for(const spec of node.specifiers){
           if(spec.type!=='ExportSpecifier')
             reject('module namespace forwarded export');
-          addForward(nodeName(spec.exported),from,nodeName(spec.local));
+          addForward(exportNameOf(spec.exported),from,exportNameOf(spec.local));
         }
       }else if(node.declaration){
         addDeclaration(node.declaration,true);
       }else{
         for(const spec of node.specifiers)
-          addExport(nodeName(spec.exported),nodeName(spec.local));
+          addExport(exportNameOf(spec.exported),nodeName(spec.local));
       }
     }else if(node.type==='ExportAllDeclaration'){
       const from=requestPath(file,node.source.value,sources);
-      if(node.exported)addForward(nodeName(node.exported),from,namespaceExport);
+      if(node.exported)addForward(exportNameOf(node.exported),from,namespaceExport);
       else {addDependency(from);stars.push(from);}
     }else if(node.type==='ExportDefaultDeclaration'){
       if(node.declaration.type==='FunctionDeclaration'){
@@ -479,7 +483,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     renamed.set(file,names);
   }
   function resolve(file,exported,trail=new Set()){
-    const marker=file+'#'+exported;
+    const marker=JSON.stringify([file,exported]);
     if(trail.has(marker))return null;
     // ResolveExport shares its visited pairs across every recursive star
     // branch. Besides detecting cycles, this bounds diamond traversal.

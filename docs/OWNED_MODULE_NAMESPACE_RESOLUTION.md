@@ -35,6 +35,23 @@ algorithms. The exact specification bytes and digest are retained in
 
 ## Evidence and its limits
 
+The original Test262 preflight now constructs static module binding records
+directly from the original parsed source, without compiling an evaluated
+entry. It resolves named and quoted imports, local/indirect exports, namespace
+re-exports, star diamonds, cycles and destructuring-export bound names. Every
+explicit import/indirect export is checked even when unused. The runner profile
+records `staticResolution: "original-module-records/1"` and campaign
+fingerprinting includes the resolver's actual source bytes.
+
+This removes the old blanket refusal for any star or forwarding declaration.
+A resolution-negative test can pass only when this source-only phase finds
+a real missing or ambiguous binding; a later owned parser/compiler refusal
+cannot satisfy it. Supported valid graphs continue into actual owned
+evaluation with the original harness. Resolution of an unimplemented body,
+such as a destructuring module declaration, does not claim that the body can
+execute. Quoted external names are now also supported by the evaluated
+lowering; local bindings still use source identifiers.
+
 `test/evaluated-module-namespace.test.js` executes original source graphs with
 Node's native ESM loader independently of the owned lowering. Missing values,
 direct ambiguity, same-origin ordinary binding diamonds, live namespace

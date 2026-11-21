@@ -206,6 +206,50 @@ test('default anonymous class and generator expressions preserve ESM name infere
   }
 });
 
+test('original module namespace and quoted reexport graphs execute their original assertions',()=>{
+  const [options]=moduleFixture(`import * as all from './barrel_FIXTURE.js';
+    import {cells} from './barrel_FIXTURE.js';
+    import {'renamed!' as renamed} from './barrel_FIXTURE.js';
+    import {bump} from './leaf_FIXTURE.js';
+    assert.sameValue(all.missing,undefined);assert.sameValue(cells.x,1);
+    bump();assert.sameValue(all.cells.x,3);assert.sameValue(renamed,3);
+    assert.sameValue(cells[''],3);`,{dependencies:{
+      'test/leaf_FIXTURE.js':`export let x=1;export function bump(){x+=2;}
+        export {x as '',x as 'not-an-identifier'};`,
+      'test/barrel_FIXTURE.js':`export * as cells from './leaf_FIXTURE.js';
+        export {'not-an-identifier' as 'renamed!'} from './leaf_FIXTURE.js';`
+    }});
+  const owned=executeOfficialTest262Variant({...options,includeBundle:true});
+  const reference=executeOfficialTest262Reference(options);
+  assert.equal(owned.status,'passed',owned.reason);
+  assert.equal(reference.status,'passed',reference.reason);
+  assert.equal(owned.executionPerformed,true);
+  assert.equal(owned.trace.structurallyValidated,true);
+  assert.equal(owned.trace.exactlyReplayed,true);
+  assert.equal(owned.claims.publicSemanticReplay,false);
+});
+
+test('source-only module resolution negatives certify ambiguous and unused exports before execution',()=>{
+  const dependencies={
+    'test/a_FIXTURE.js':'export const x=1;',
+    'test/b_FIXTURE.js':'export const x=2;',
+    'test/barrel_FIXTURE.js':"export * from './a_FIXTURE.js';export * from './b_FIXTURE.js';"
+  };
+  for(const body of ["import {x} from './barrel_FIXTURE.js';$DONOTEVALUATE();",
+    "export {x} from './barrel_FIXTURE.js';$DONOTEVALUATE();",
+    "export {absent} from './a_FIXTURE.js';$DONOTEVALUATE();"]){
+    const [options]=moduleFixture(body,{dependencies,
+      metadata:'negative:\n  phase: resolution\n  type: SyntaxError\n'});
+    const owned=executeOfficialTest262Variant(options),reference=executeOfficialTest262Reference(options);
+    assert.equal(owned.status,'passed',owned.reason);
+    assert.equal(reference.status,'passed',reference.reason);
+    assert.equal(owned.phase,'resolution');
+    assert.equal(owned.executionPerformed,false);
+    assert.equal(owned.parseOnly,true);
+    assert.equal(owned.stages.ownedExecution,undefined);
+  }
+});
+
 test('module references and owned module preflight keep parse, link, and evaluation phases distinct',()=>{
   const [parseNegative]=moduleFixture('let = ;',{
     metadata:'negative:\n  phase: parse\n  type: SyntaxError\n'
@@ -323,8 +367,9 @@ test('module references and owned module preflight keep parse, link, and evaluat
     dependencies:{'test/value_FIXTURE.js':'export {value as "not-an-identifier"};const value=1;'}
   });
   const quoted=executeOfficialTest262Variant(quotedImport);
-  assert.equal(quoted.status,'unsupported',quoted.reason);
-  assert.equal(quoted.phase,'link');
+  assert.equal(quoted.status,'failed',quoted.reason);
+  assert.equal(quoted.phase,'resolution');
+  assert.equal(quoted.executionPerformed,false,'a valid quoted import cannot satisfy a negative test');
   for(const body of [
     'import value from "./value_FIXTURE.js" with {type:"json"};void value;',
     'using resource = null;'
