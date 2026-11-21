@@ -23,6 +23,13 @@ test('interoperability includes all source goldens and returns fresh mutable gue
   const declared=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
   const selected=regionQualificationPopulation();
   assert.equal(selected.scripts.length,40);
+  assert.equal(selected.modules.length,2);
+  assert.equal(new Set([...selected.scripts,...selected.modules].map(row=>row.id)).size,42);
+  assert.deepEqual(selected.modules.map(row=>row.id),['module-namespace-shadow-live','module-scoped-var-isolation']);
+  for(const fixture of selected.modules){
+    const task={kind:'module',traceVersion:8,fixture,producerRevision:'frozen-test'};
+    assert.deepEqual(decodeGenerationTask(JSON.parse(JSON.stringify(encodeGenerationTask(task)))).fixture,fixture);
+  }
   for(const row of declared.cases)assert.deepEqual(selected.scripts.find(fixture=>fixture.id===row.id),row.fixture);
   for(const fixture of HOST_PROTOCOL_FIXTURES_V8)
     assert.deepEqual(selected.scripts.find(row=>row.id===fixture.id),fixture);
@@ -35,6 +42,8 @@ test('interoperability includes all source goldens and returns fresh mutable gue
   const first=selected.scripts.find(row=>row.id==='ordered-map');
   first.args[0].push(99);
   assert.deepEqual(regionQualificationPopulation().scripts.find(row=>row.id==='ordered-map').args,[[2,3,4]]);
+  selected.modules[0].modules['leaf.js']='export let n=99;';
+  assert.equal(regionQualificationPopulation().modules[0].modules['leaf.js'],'export let n=2;export function bump(){n+=3;}');
   assert.equal(regionQualificationPopulation({population:'gallery'}).scripts.length,11);
   assert.throws(()=>regionQualificationPopulation({population:'unknown'}),/Unknown/);
 });

@@ -60,6 +60,23 @@ export function sharedProtocolQualificationFixtures(){return [
     entry:'run',args:[],family:'v8-contract-promise-allsettled-empty',fixture:{calls:[]}}
 ];}
 
+// Original module graphs retain their own source/reference evidence before
+// entering the shared public/native qualification path.
+export function moduleQualificationFixtures(){return [
+  {id:'module-namespace-shadow-live',family:'v8-contract-module-namespace-shadow',
+    moduleEntry:'main.js',exportName:'run',args:[],modules:{
+      'leaf.js':'export let n=2;export function bump(){n+=3;}',
+      'barrel.js':"export * as cells from './leaf.js';",
+      'main.js':"import {cells} from './barrel.js';import {bump} from './leaf.js';"+
+        'function local(cells){cells.n+=1;return cells.n;}export function run(){const before=cells.n;'+
+        'bump();return [before,cells.n,local({n:7}),cells.missing];}'}},
+  {id:'module-scoped-var-isolation',family:'v8-contract-module-var-scope',
+    moduleEntry:'main.js',exportName:'run',args:[],modules:{
+      'leaf.js':'{var shared=3;}export function read(){return shared;}',
+      'main.js':"import {read} from './leaf.js';const before=shared;{var shared=9;}"+
+        'export function run(){return [before,shared,read()];}'}}
+];}
+
 // The interoperability population includes every declared source-qualified
 // protocol golden, not just the original three shared-state examples.
 export function regionQualificationPopulation({population='interoperability',allInputs=true}={}){
@@ -70,5 +87,6 @@ export function regionQualificationPopulation({population='interoperability',all
   return {scripts:[...regionQualificationFixtures(),...declared.cases.map(row=>{
     if(row.id!==row.fixture?.id)throw new TypeError('Invalid protocol fixture identity');
     return structuredClone(row.fixture);
-  }),...structuredClone(HOST_PROTOCOL_FIXTURES_V8),...sharedProtocolQualificationFixtures()],modules:[]};
+  }),...structuredClone(HOST_PROTOCOL_FIXTURES_V8),...sharedProtocolQualificationFixtures()],
+    modules:moduleQualificationFixtures()};
 }
