@@ -66,7 +66,6 @@ def semantic_v6_capture_config(checkpoint_config, train_config_type, *, producer
         phase='SE',
         microbatch_episodes=1,
         max_accumulation_windows=1,
-        max_window_records=1,
         semantic_v7_policy=None,
         semantic_v8_policy=None,
         semantic_experiment={

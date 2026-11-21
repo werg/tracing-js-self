@@ -242,7 +242,7 @@ class SemanticV6CaptureAdmissionTests(unittest.TestCase):
         config, binding = CLI.semantic_v6_capture_config(original, self.TrainConfig)
         self.assertEqual(original, original_copy)
         self.assertEqual(config.phase, 'SE')
-        self.assertEqual(config.max_window_records, 1)
+        self.assertEqual(config.max_window_records, 3)
         self.assertEqual(binding['scope'], 'read-only V6 conditional capture; no optimizer exposure')
         self.assertEqual(binding['optimizerSteps'], 0)
         self.assertEqual(len(binding['cohortDigest']), 64)
