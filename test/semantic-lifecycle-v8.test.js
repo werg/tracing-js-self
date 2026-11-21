@@ -82,7 +82,9 @@ test('public replay retires call callbacks and failed subscriptions at the resul
 test('direct V8 effects require durable intent acknowledgment and restore never redispatches uncertain work',async()=>{
   const source='"use strict";function run(){return host.readNumber("x");}';
   let calls=0,acknowledged=false,resolve;
-  const h=new SelectedExecutionLifecycleV8({journal:{append:async()=>{acknowledged=true;}},
+  const h=new SelectedExecutionLifecycleV8({journal:{append:async()=>{},
+    readIntent:async()=>{throw Object.assign(Error('missing'),{code:'ENOENT'});},
+    claim:async()=>{acknowledged=true;return {claimed:true};}},
     services:{'demo.readNumber':()=>{assert(acknowledged);calls++;return new Promise(done=>{resolve=done;});}}});
   begin(h,source,['demo.readNumber']);
   const line=w('request',{effect:'e',operation:'demo.readNumber',invocation:'call',

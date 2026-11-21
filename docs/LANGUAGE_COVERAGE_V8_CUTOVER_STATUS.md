@@ -26,8 +26,9 @@ work ledger. **0 of 17 complete acceptance packages are closed.**
   native admissions, 46 exact-token measurements and 46 native packing checks**.
   The declared population is 44 scripts plus two original module graphs; all
   four return-callback cases are included. The complete inputs, tokenizer,
-  temporary exact-pair policy, receipts and logs are being retained for
-  publication. These results do not qualify later executable changes. No
+  temporary exact-pair policy, receipts and logs are retained in published
+  `36829c83343bf67449f86df9e5b67d9a76a581bc`: the checksummed archive contains
+  198 files and all reproduction inputs. These results do not qualify later executable changes. No
   optimizer update or learned-success result is included in this campaign.
 - Consumer `72e994504af9b90d403b96f336a5a473ff691357` preserves shared state
   across retained closure and ordinary calls, assigns parameter cells by actual
@@ -70,8 +71,18 @@ work ledger. **0 of 17 complete acceptance packages are closed.**
   **29 integrated lifecycle/recovery controls pass**, including five new
   atomicity, ownership, retry and retirement controls. Independent probes also
   reproduced a stale pre-dispatch checkpoint repeating an operation and a
-  rehashed private intent contradicting public dispatch history; those remain
-  active recovery work until their repairs and regressions are published.
+  rehashed private intent contradicting public dispatch history.
+- Durable action journals now expose atomic claims separately from idempotent
+  append. Dispatch consults later retained intents before model acknowledgment,
+  verifies the complete source-bound request, and recovers only an uncertain
+  dispatch boundary without repeating the adapter. Competing claims allow one
+  adapter; failed acknowledgments do not silently consume public attempt
+  numbers. Checkpoints wait for unfinished dispatch acknowledgment. **14
+  integrated tests pass**, including real fsync files, a fresh-process stale
+  checkpoint, racing restorations, lost acknowledgments, invalid retained
+  requests and cancellation. See `SEMANTIC_V8_ACTION_RECOVERY.md`. Full private
+  checkpoint authority validation is being implemented separately; general
+  later-public-history and distributed resource ownership remain open.
 
 Current priorities remain retained host-handler/native composition, module
 declaration and live-binding semantics, missing later acknowledged public

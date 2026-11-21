@@ -17,23 +17,25 @@ export class SelectedIntentJournal {
       throw new TypeError('Selected journal requires a private directory and positive byte limit');
     this.directory=resolve(directory);this.maxBytes=maxBytes;
   }
-  async put(key,record){
+  async put(key,record,{claim=false}={}){
     if(!/^[a-f0-9]{64}$/.test(key))throw new TypeError('Invalid journal object key');
     const bytes=Buffer.from(JSON.stringify(record)+'\n');
     if(bytes.length>this.maxBytes)throw new RangeError('Selected journal byte limit exceeded');
     await mkdir(this.directory,{recursive:true,mode:0o700});
     const target=join(this.directory,key+'.json'),temporary=join(this.directory,'.tmp-'+randomUUID());
+    let claimed=true;
     try{
       const handle=await open(temporary,'wx',0o600);
       try{await handle.writeFile(bytes);await handle.sync();}finally{await handle.close();}
       try{await link(temporary,target);}catch(error){
         if(error.code!=='EEXIST')throw error;
+        claimed=false;
         const existing=await this.readBytes(key);
         if(!existing.equals(bytes))throw new Error('Conflicting durable selected action identity');
       }
       await syncDirectory(this.directory);
     }finally{await unlink(temporary).catch(error=>{if(error.code!=='ENOENT')throw error;});}
-    return Object.freeze({key,digest:digest(bytes),bytes:bytes.length});
+    return Object.freeze({key,digest:digest(bytes),bytes:bytes.length,...(claim?{claimed}:{})});
   }
   async readBytes(key){
     if(!/^[a-f0-9]{64}$/.test(key))throw new TypeError('Invalid journal object key');
@@ -47,12 +49,23 @@ export class SelectedIntentJournal {
     }finally{await handle.close();}
   }
   intentKey(session,key,attempt){return digest(JSON.stringify([session,key,attempt]));}
-  append(record){
+  validateIntent(record){
     if(record?.schema!=='semantic-action-intent/4'||typeof record.session!=='string'||
        typeof record.key!=='string'||!Number.isSafeInteger(record.attempt)||record.attempt<1||
        typeof record.payload!=='string'||digest(record.payload)!==record.payloadDigest)
       throw new TypeError('Invalid durable selected action intent');
+    return record;
+  }
+  append(record){
+    this.validateIntent(record);
     return this.put(this.intentKey(record.session,record.key,record.attempt),record);
+  }
+  // The immutable link is also the single dispatch claim. Idempotent append
+  // acknowledges existing bytes; it must never be mistaken for a new right
+  // to perform the external operation after an older checkpoint is restored.
+  claim(record){
+    this.validateIntent(record);
+    return this.put(this.intentKey(record.session,record.key,record.attempt),record,{claim:true});
   }
   async readIntent(session,key,attempt=1){
     const record=JSON.parse(await this.readBytes(this.intentKey(session,key,attempt)));

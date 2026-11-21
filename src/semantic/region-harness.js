@@ -319,6 +319,8 @@ export class RegionExecutionHarness {
     const result=this.inner.reconcile(invocationId,effectId,options);this.sync();return result;
   }
   checkpoint({ingress=null}={}){
+    if([...this.intents.values()].some(intent=>intent.status==='dispatching'))
+      fail('await durable action acknowledgement before checkpointing');
     this.inner.hostIngressBroker?.assertIdle();
     this.inner.hostIngressBroker?.assertCallbackQueue();
     this.sync();if(this.active)fail('cannot checkpoint an uncommitted local transition');

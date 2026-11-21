@@ -177,7 +177,8 @@ export class SelectedExecutionCore {
     this.maxGenerated=maxGenerated;
     demand(Number.isSafeInteger(maxGenerated)&&maxGenerated>0&&
       Number.isSafeInteger(maxOutstanding)&&maxOutstanding>0,'Invalid execution bounds');
-    demand(journal===null||typeof journal.append==='function','Invalid durable action journal');
+    demand(journal===null||['append','claim','readIntent'].every(method=>typeof journal[method]==='function'),
+      'Durable action journal requires append, atomic claim and independently readable intents');
     this.maxOutstanding=maxOutstanding;this.grants=grants===null?null:new Set(grants);
     this.journal=journal;this.now=now;
     demand(typeof automaticDelivery==='boolean','Invalid delivery scheduling policy');
@@ -756,7 +757,9 @@ export class SelectedExecutionCore {
     const activation=this.invocations.get(invocationId);
     demand(!['cancelled','failed','completed'].includes(activation.status),'Cannot dispatch closed invocation');
     demand(activation.deadline===null||activation.deadline>this.now(),'Invocation deadline expired');
-    intent.status='dispatching';intent.attempts++;
+    const attempt=intent.attempts+1;
+    demand(Number.isSafeInteger(attempt)&&attempt>=1,'External dispatch attempt counter exhausted');
+    intent.status='dispatching';
     const abort=new AbortController();this.abortControllers.set(key,abort);
     const callbackFor=slot=>{
       const registration=this.callbacks.get(key+'/'+slot);
@@ -790,8 +793,42 @@ export class SelectedExecutionCore {
       return Object.freeze(fn);
     };
     const run=Promise.resolve().then(async()=>{
+      const durable={schema:'semantic-action-intent/4',session:this.sessionId,key,attempt,
+        invocationId,effectId,operation:intent.operation,payload:intent.payload,
+        payloadDigest:intent.payloadDigest,taskRevision:intent.taskRevision,witness:intent.witness};
+      const recover=record=>{
+        const {nativeAction,...identity}=record??{};
+        demand(isDeepStrictEqual(identity,durable),
+          'Durable intent contradicts the committed selected request');
+        if(nativeAction!==undefined)demand(nativeAction?.schema==='semantic-native-action/4'&&
+          typeof nativeAction.actionKey==='string'&&nativeAction.actionKey&&
+          nativeAction.invocationId===invocationId&&nativeAction.effectId===effectId&&
+          nativeAction.operation===intent.operation&&nativeAction.payload===intent.payload&&
+          nativeAction.ownerTrack===activation.trackId&&
+          nativeAction.recordDigest===createHash('sha256').update(intent.witness).digest('hex'),
+          'Durable native selected-action commitment receipt is invalid');
+        if(abort.signal.aborted)throw abort.signal.reason;
+        // The independently retained intent proves only that this attempt
+        // may have crossed the external boundary. It does not prove a result,
+        // a live subscription, or permission to repeat the adapter call.
+        this.record('observed','dispatch',activation.trackId,{invocationId,effectId,key,attempt,
+          ...(nativeAction?{nativeAction}:{})});
+        intent.attempts=attempt;intent.status='uncertain';
+        if(nativeAction)intent.nativeAction=clone(nativeAction);
+        else delete intent.nativeAction;
+        throw new Error('Durable intent already exists; reconcile before dispatch');
+      };
+      // Read first so a stale checkpoint cannot recommit model state before
+      // learning that the same operation was already durably dispatched.
+      if(this.journal){
+        let existing;
+        try{existing=await this.journal.readIntent(this.sessionId,key,attempt);}
+        catch(error){if(error.code!=='ENOENT')throw error;}
+        if(existing!==undefined)recover(existing);
+      }
+      let nativeAction=intent.nativeAction;
       if(beforeDispatch){
-        const nativeAction=await beforeDispatch();
+        nativeAction=await beforeDispatch();
         demand(nativeAction?.schema==='semantic-native-action/4'&&
           typeof nativeAction.actionKey==='string'&&nativeAction.actionKey&&
           nativeAction.invocationId===invocationId&&nativeAction.effectId===effectId&&
@@ -799,20 +836,21 @@ export class SelectedExecutionCore {
           nativeAction.ownerTrack===activation.trackId&&
           nativeAction.recordDigest===createHash('sha256').update(intent.witness).digest('hex'),
           'Native selected-action commitment receipt is required');
-        intent.nativeAction=clone(nativeAction);
+        nativeAction=clone(nativeAction);
       }
       // The durable embedding acknowledges the intent before any adapter can
       // touch the environment. A crash after this point is uncertain, not an
       // automatic invitation to repeat a write.
-      if(this.journal)await this.journal.append({schema:'semantic-action-intent/4',
-        session:this.sessionId,key,attempt:intent.attempts,invocationId,effectId,
-        operation:intent.operation,payload:intent.payload,payloadDigest:intent.payloadDigest,
-        taskRevision:intent.taskRevision,witness:intent.witness});
+      if(this.journal){
+        const receipt=await this.journal.claim({...durable,...(nativeAction?{nativeAction}:{})});
+        demand(typeof receipt?.claimed==='boolean','Durable dispatch claim was not acknowledged');
+        if(!receipt.claimed)recover(await this.journal.readIntent(this.sessionId,key,attempt));
+      }
       if(abort.signal.aborted){intent.status='cancelled';throw abort.signal.reason;}
-      intent.status='dispatched';
       this.record('observed','dispatch',activation.trackId,
-        {invocationId,effectId,key,attempt:intent.attempts,
-          ...(intent.nativeAction?{nativeAction:intent.nativeAction}:{})});
+        {invocationId,effectId,key,attempt,...(nativeAction?{nativeAction}:{})});
+      intent.attempts=attempt;intent.status='dispatched';
+      if(nativeAction)intent.nativeAction=nativeAction;
       for(const registration of this.callbacks.values())if(registration.ownerInvocationId===invocationId&&
           registration.state==='pending'&&this.callbacks.get(key+'/'+registration.slot)===registration){
         this.registerEventHandler({subscriptionId:registration.subscriptionId,
@@ -1358,6 +1396,8 @@ export class SelectedExecutionCore {
   }
   /** No service code executes during state restoration or trace inspection. */
   checkpoint(){
+    demand(![...this.intents.values()].some(intent=>intent.status==='dispatching'),
+      'Await durable action acknowledgement before checkpointing');
     validateIngressQueueOrder([...this.handlers],this.nextIngressSequence);
     const packet={schema:this.contract.checkpointVersion,profile:this.contract.profile,sessionId:this.sessionId,
       callbacks:[...this.callbacks],nextCallback:this.nextCallback,
