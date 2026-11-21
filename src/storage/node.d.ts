@@ -31,3 +31,6 @@ export type {HostIngressLogReceipt,DurableHostIngressJournalOptions} from './hos
 export {DurableSelectedHistoryJournal} from './selected-history.js';
 export type {SelectedHistoryReceipt,DurableSelectedHistoryJournalOptions,SelectedTerminalSnapshot,
   SelectedTerminalCloseReceipt,SelectedHistoryTerminalEvent,SelectedTerminalDisposition} from './selected-history.js';
+export {DurableSelectedServiceJournal} from './selected-service-journal.js';
+export type {SelectedServiceAction,SelectedServiceOutcome,SelectedServiceJournalReceipt,
+  DurableSelectedServiceJournalOptions} from './selected-service-journal.js';

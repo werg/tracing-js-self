@@ -189,3 +189,4 @@ export {DurableHostIngressStore,createDurableHostIngressStore} from './host-ingr
 export {DurableHostIngressJournal} from './host-ingress-journal.js';
 export {DurableHostIngressBroker} from '../semantic/host-ingress-journal-v8.js';
 export {DurableSelectedHistoryJournal} from './selected-history.js';
+export {DurableSelectedServiceJournal} from './selected-service-journal.js';

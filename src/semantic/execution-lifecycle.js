@@ -9,6 +9,7 @@ import {renderSemanticRecord} from './record-render.js';
 import {analyzeSemanticProgram} from '../training/semantic-program.js';
 import {describeGraph} from '../training/graph.js';
 import {hostOperation} from '../host/operations.js';
+import {SelectedServiceBoundaryError,SelectedServiceRejectedError} from '../host/selected-service.js';
 import {decodeHostPayload,ownedCallbackId} from '../host/materialize.js';
 import {canonicalInvocationIngressDigest,validateCheckpointAuthority,
   validateNativeActionBinding} from './checkpoint-authority.js';
@@ -913,6 +914,10 @@ export class SelectedExecutionCore {
       try{returned=adapter(nativeArgs,
       Object.freeze({sessionId:this.sessionId,invocationId,effectId,
         idempotencyKey:intent.nativeAction?.actionKey??this.sessionId+'/'+key,operation:intent.operation,
+        selectedAction:freeze({sessionId:this.sessionId,invocationId,effectId,operation:intent.operation,
+          idempotencyKey:intent.nativeAction?.actionKey??this.sessionId+'/'+key,
+          payload:intent.payload,payloadDigest:intent.payloadDigest,taskRevision:intent.taskRevision,
+          witness:clone(intent.witness)}),
         realmId:activation.realmId,signal:abort.signal,
         callback:callbackFor,
         invokeClosure:(closureId,args,receiver)=>{
@@ -937,6 +942,9 @@ export class SelectedExecutionCore {
             'Cannot revoke a foreign or unknown listener');
           return this.closeEventHandler(id);
         }}));}catch(error){
+        if(error instanceof SelectedServiceBoundaryError)throw error;
+        if(error instanceof SelectedServiceRejectedError)return this.deliverResult(invocationId,effectId,
+          {status:'rejected',value:error.value,errorOrigin:error.errorOrigin});
         return this.deliverResult(invocationId,effectId,{status:'rejected',
           value:error instanceof GuestCallbackFailure?error.guestValue:
             error instanceof Error?error.message:error,
@@ -944,6 +952,9 @@ export class SelectedExecutionCore {
       }
       let value;
       try{value=await returned;}catch(error){
+        if(error instanceof SelectedServiceBoundaryError)throw error;
+        if(error instanceof SelectedServiceRejectedError)return this.deliverResult(invocationId,effectId,
+          {status:'rejected',value:error.value,errorOrigin:error.errorOrigin});
         return this.deliverResult(invocationId,effectId,{status:'rejected',
           value:error instanceof GuestCallbackFailure?error.guestValue:
             error instanceof Error?error.message:error,
