@@ -9,7 +9,7 @@ Record implementation.
 
 ```js
 import {verifyRegionModuleTrainingCase,recheckRegionEvidence}
-  from 'tracing-js-self/semantic';
+  from 'tracing-js-self/semantic/v8';
 
 const checked=await verifyRegionModuleTrainingCase({
   id:'live-counter',family:'live-counter',entryModule:'main.js',exportName:'run',

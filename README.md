@@ -38,7 +38,7 @@ serving-efficiency studies and default promotion are outside this bounded
 candidate's completion scope; their unmeasured status remains explicit.
 
 ```js
-import {verifyRegionTrainingCase} from 'tracing-js-self/semantic';
+import {verifyRegionTrainingCase} from 'tracing-js-self/semantic/v8';
 
 const checked = await verifyRegionTrainingCase({
   id: 'double-elements', family: 'ordered-map', entry: 'run',
@@ -47,6 +47,12 @@ const checked = await verifyRegionTrainingCase({
 });
 console.log(checked.status, checked.exported?.sidecar.regionCoverage);
 ```
+
+The explicit `tracing-js-self/semantic/v8` entry exposes the V8 runtime, source
+verification, native-admission and dataset APIs without loading historical wire
+clients. The existing `tracing-js-self/semantic` and `tracing-js-self/training`
+entries keep their current exports. This package boundary does not promote V8
+command defaults or establish whole-population parity.
 
 ```sh
 npm run test:semantic-v8

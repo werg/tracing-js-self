@@ -15,6 +15,7 @@
     "./causal": "./src/causal.js",
     "./training": "./src/training/index.js",
     "./semantic": "./src/semantic/index.js",
+    "./semantic/v8": "./src/semantic/index-v8.js",
     "./natlang-selected": {
       "types": "./src/natlang-selected.d.ts",
       "default": "./src/natlang-selected.js"

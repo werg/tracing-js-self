@@ -3,19 +3,18 @@
 import {assertAlgorithmFields,assertAlgorithmId,assertAlgorithmValue,validateTerm,
   ALGORITHM_LIMITS} from './ir.js';
 import {OPERATION_REGISTRY} from './operations.js';
+import {encodeAlgorithmValue,renderValueName as name} from './value-render.js';
+export {encodeAlgorithmValue} from './value-render.js';
 
 export const ALGORITHM_TRACE_VERSION='semantic-trace/7';
 export const ALGORITHM_TRACE_MAX_BYTES=65536;
 export const ALGORITHM_RECORD_KINDS=Object.freeze([
   'compute','request','observe','write','return','throw','suspend'
 ]);
-const plainName=/^[A-Za-z_$][A-Za-z0-9_$]*$/;
 const plainSymbol=/^[A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*$/;
-const reservedNames=new Set(['request','observe','write','return','throw','suspend']);
 const own=(value,key)=>Object.hasOwn(value,key);
 const fail=message=>{throw new TypeError('Invalid '+ALGORITHM_TRACE_VERSION+': '+message);};
 const dense=value=>Array.isArray(value)&&Object.keys(value).length===value.length;
-const name=value=>plainName.test(value)&&!reservedNames.has(value)?value:JSON.stringify(value);
 const symbol=value=>plainSymbol.test(value)?value:JSON.stringify(value);
 function roleCheck(kind,role){
   if(!['any','generated','observed'].includes(role))fail('record role');
@@ -59,17 +58,6 @@ export function validateAlgorithmRecord(record,{role='any'}={}){
       if(!record.requests.length)fail('suspension requires a pending request');break;
   }
   return record;
-}
-
-export function encodeAlgorithmValue(value){
-  assertAlgorithmValue(value);
-  switch(value[0]){
-    case 'undefined':case 'null':return value[0];
-    case 'bool':case 'str':return JSON.stringify(value[1]);
-    case 'num':return value[1]==='+Infinity'?'Infinity':typeof value[1]==='string'?value[1]:JSON.stringify(value[1]);
-    case 'bigint':return value[1]+'n';
-    case 'ref':return '@'+name(value[1]);
-  }
 }
 
 function termText(term){

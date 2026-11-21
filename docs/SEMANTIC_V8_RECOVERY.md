@@ -13,6 +13,8 @@ and pass that identity to the driver. It includes the model and tokenizer
 identities, seed, device and generation settings.
 
 ```js
+import {RegionSelectedModelDriver} from 'tracing-js-self/semantic/v8';
+
 const nativeIdentity = await select.initialize({
   checkpointIdentity, tokenizerIdentity, seed
 });
@@ -196,7 +198,7 @@ count. Defaults are 64 MiB and 1,024 cuts. The producer never fabricates native
 model state from public rows or private counters.
 
 ```js
-import {RegionSelectedModelDriver} from 'tracing-js-self/semantic';
+import {RegionSelectedModelDriver} from 'tracing-js-self/semantic/v8';
 import {DurableSelectedHistoryJournal} from 'tracing-js-self/storage/node';
 
 const historyJournal = new DurableSelectedHistoryJournal({

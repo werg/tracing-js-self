@@ -3,7 +3,7 @@
 import {stableAlgorithmJSON,assertAlgorithmValue,assertAlgorithmId,isAlgorithmDataRecord} from './ir.js';
 import {validateAlgorithmV8,validateTermV8} from './algorithm-v8.js';
 import {OPERATION_REGISTRY} from './operations.js';
-import {encodeAlgorithmValue} from './trace-codec.js';
+import {encodeAlgorithmValue} from './value-render.js';
 
 export const V8_NOTATION_STYLES=Object.freeze(['canonical','formal','hybrid','prose']);
 const styleCheck=style=>{if(!V8_NOTATION_STYLES.includes(style))throw new TypeError('Unknown v8 notation style');};

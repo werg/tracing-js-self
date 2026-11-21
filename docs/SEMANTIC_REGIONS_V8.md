@@ -159,7 +159,7 @@ and source/continuation qualification for the declared slice.
 
 ## Producer and evidence
 
-`verifyRegionTrainingCase` is the common v8 source entry point. When historical
+`verifyRegionTrainingCase` is the common v8 source entry point. When direct
 detailed projection or its completion observer cannot represent a supported
 protocol, it tries the independently checked direct protocol compiler. Each
 attempt has an explicit disposition. Existing reference disagreements and
@@ -172,7 +172,7 @@ dispatch on the exact evidence schema and repeat those source checks. Symbol,
 descriptor and binary-memory episodes therefore use the same family split,
 causal serializer and generated-only training masks as other v8 episodes.
 Public APIs, including explicit direct-protocol verification and profile field
-tables, are exported from `tracing-js-self/semantic`. Adding a public operation
+tables, are exported from `tracing-js-self/semantic/v8`. Adding a public operation
 does not by itself qualify its source adapter or matching native consumer.
 
 Logical protocol choices publish an independently evaluable `logical-test`
@@ -196,6 +196,43 @@ The public API supplies `RegionExecutionHarness`, `verifyRegionTrainingCase`,
 records whole-episode disposition, compact/detailed region and record counts,
 and actual line bytes. Token shares remain `null` until a tokenizer is supplied;
 bytes are not token measurements.
+
+### Public V8 package entry
+
+Import supported V8 APIs from `tracing-js-self/semantic/v8`. This entry exports
+the implementations directly and loads only V8 and neutral execution modules;
+it does not re-export the historical aggregate entry.
+
+| Purpose | Representative exports |
+| --- | --- |
+| Direct detail and lifecycle | `encodeDetailedRecord`, `decodeDetailedRecord`, `SemanticControllerV8`, `SelectedExecutionLifecycleV8` |
+| Mixed execution and recovery | `RegionExecutionHarness`, `RegionSelectedModelDriver`, `runSelectedRegionExecution` |
+| Source certification | `compileSourceWitnessV8`, `verifySourceTrainingCaseV8`, `verifyRegionTrainingCase`, `recheckRegionEvidence`, `verifyRegionModuleTrainingCase` |
+| Independent native admission | `admitRegionEvidence`, `createNativeV8ProcessSelector`, `loadV8NativePolicy`, `validateV8NativeReceipt` |
+| Contexts, datasets and profiles | `buildCausalLmV8Examples`, `buildRegionDataset`, `exportRegionDatasetJSONL`, V8 protocol codecs and field tables |
+
+Durable Node stores continue to come from `tracing-js-self/storage/node`.
+The `tracing-js-self/semantic` and `tracing-js-self/training` entries preserve
+their existing exports and command defaults. Their historical clients are still
+part of the package while whole-population parity and default promotion remain
+separate work.
+
+`test/semantic-public-entry-v8.test.js` installs a packed copy of the runtime
+assets with the exact package metadata and then removes historical wire,
+harness and source-compiler clients. Through the installed public V8 entry it
+checks direct source detail, a host effect, replay and mixed checkpoint
+continuation. A separate process checks complete pure, host-effect and protocol
+source examples and refuses a forged native receipt through the same public
+entry in a source checkout, with historical imports blocked by their resolved
+paths.
+
+Complete source admission currently requires the checkout's `package-lock.json`
+as environment evidence; npm omits that file from package archives. The installed
+gate retains that missing-evidence refusal rather than inventing provenance.
+Shipping the required dependency evidence remains a packaging boundary. These
+bounded engineering gates establish dependency separation for the exercised
+paths, not complete language coverage, whole-population parity, native admission
+or learned execution.
 
 ## Restore and effects
 
