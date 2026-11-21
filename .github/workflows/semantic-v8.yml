@@ -86,7 +86,7 @@ jobs:
       - name: Check independent v8 semantics and malformed boundaries
         working-directory: megatoken
         run: |
-          python -m pytest -q tests/test_*v8.py tests/test_algorithm_v7.py tests/test_protocol_properties.py \
+          python -m pytest -q tests/test_*v8*.py tests/test_algorithm_v7.py tests/test_protocol_properties.py \
             --junitxml="$RUNNER_TEMP/semantic-v8-tests.xml" 2>&1 | tee "$RUNNER_TEMP/semantic-v8-tests.log"
           python - <<'PY'
           import os, xml.etree.ElementTree as ET

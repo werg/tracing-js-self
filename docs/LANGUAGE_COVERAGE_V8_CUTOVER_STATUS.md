@@ -18,64 +18,87 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Current checkpoint and active implementation
 
-Continuation on **21 November 2026**. Both PRs remain drafts; all 17 acceptance
-packages remain open. Work follows the user's hardest-first instruction.
+Continuation on **21 November 2026**. Both PRs remain drafts; **0 of 17 acceptance
+packages are complete**. Delivered increments below are bounded evidence. Work
+continues in the user's hardest-first order.
 
-- Producer `444e6027d6c9ad6c9159e5083abe0dbfa82d528b`: all ten direct protocol source
-  adapters stage public and private state atomically. Rejected events preserve
-  the committed prefix and every pre/post observer runs. The 70 related source
-  controls passed with zero failures/skips, including mixed Number, Proxy,
-  binary memory, map callbacks and iterators. Producer `6888ca122460d3456f275dee4add9b61ba56b6f9`
-  then replaced first-match runtime dispatch with complete, unique ownership of
-  allocations, events and exiting frames. Eight final ownership/rollback controls,
-  28 routing/certification controls and 47 broader composition controls passed
-  without failures/skips (overlapping populations). The shared Promise/protocol
-  compiler bridge remains in active implementation.
-- Producer `39009dd2dbd3c34a01a97e834472a75cf7eca40f`: ownership registries and claim
-  requests are copied and frozen without executing caller accessors or Proxy
-  traps. The 13 coordinator/composition controls passed without failures/skips.
-- Fresh clean-pair qualification at producer `13070721a02b8e052112d2b259eb8de8a5400c4f`
-  / consumer `3a0eb90e3e7282e9b3cb2ca0da27454451b50e21` retained all **30 declared cases**:
-  **30 source-qualified, 26 native-admitted, four rejected**. The four direct
-  Promise/host/callback cases reached native replay but the producer receipt
-  validator still required a nested source artifact. The complete failed run is
-  retained; this is not an all-pass result.
-- Producer `1227eb88e0ed72efa6eb9c62136dc498ecaed2bd` corrects that receipt boundary:
-  direct evidence requires its exact source identity, fresh independent identity
-  verification and matching tokenizer/consumer/contract pins; mixed or forged
-  authorities are refused. Sixteen focused controls passed, zero failures/skips.
-  Fresh qualification at producer `6888ca122460d3456f275dee4add9b61ba56b6f9`
-  / consumer `c0ac528a5db70de51fb77f38ead88974c0fa386c` now passes **30 of 30 source checks
-  and 30 of 30 native admissions**, with the actual pinned tokenizer. This is a
-  bounded engineering population: zero optimizer work and no model-learning claim.
-- Consumer `721748f6c7867bd6eabea81b6b6b5a90a6ed9964` extracts neutral JS primitive
-  and heap semantics from the legacy V7 wire client. Seventy-six core regressions
-  pass. A fresh process blocks the legacy modules before V8 imports, then replays
-  **32 fixture examples / 1,181 contexts**, including prefix/checkpoint restore
-  and malformed-state refusal. This bounds native replay; ordinary lifecycle
-  transitive dependencies and installed-package absence remain under review.
-- Consumer `c0ac528a5db70de51fb77f38ead88974c0fa386c` adds strict V8 preflight to
-  ordinary readiness and an explicit V8 producer/production launch example.
-  The 57 affected tests passed, zero failures/skips, including actual pinned
-  tokenizer loading and missing-policy, altered-registry, orphaned-data and
-  old/unknown-schema refusal controls. Source audit boundaries in these unit
-  fixtures remain explicitly injected; this does not qualify a production run.
-- Distributed initialization, worker identity, checkpoint and export lineage are
-  under final review, with real-tokenizer local HTTP handshake/export/reload
-  controls passing. Ordinary full-source preparation/train/resume/export/reload
-  for the new implementation is next. A fresh-process trainer check exposed and
-  is removing a remaining unconditional legacy experiment import without
-  discarding the original checkpoint-state refusal rules.
-- The separate 30-case cost run measured 28 cases and retained two failed callback
-  reconstructions. Native packing was measured for all 30. Producer
-  `9a9c270ec835e77a5f5b8576f1d4d1f40d0c308f` fixes replay synthesizing a host closure
-  ahead of its recorded observation. Eleven focused controls pass; a fresh
-  full-pair cost run remains required. Complete original admission and cost
-  artifacts are retained in `docs/evidence/semantic-v8-admission-20261121/`.
-- Complete edition coverage, production parity, held-out model studies, durable
-  host ingress and deployment/rollback gates remain unfinished. Historical
-  receipts retain their original identities. No learned quality, release
-  readiness or default cutover is claimed.
+- **Atomic source composition is implemented for the current direct adapters.**
+  Producer `444e6027d6c9ad6c9159e5083abe0dbfa82d528b` stages all ten adapters'
+  public and retained private state together. Producer
+  `39009dd2dbd3c34a01a97e834472a75cf7eca40f` freezes ownership declarations and
+  requests without executing caller accessors or Proxy traps. Producer
+  `6888ca122460d3456f275dee4add9b61ba56b6f9` resolves unique allocation, event and
+  exiting-frame owners before publishing any transition. Related controls pass:
+  70 transactional/source checks, 13 immutable-policy checks, eight final ownership
+  controls, 28 routing/certification checks and 47 broader composition checks
+  (overlapping populations; zero failures/skips).
+- **Promises now share the execution controller with Number, Proxy and binary
+  memory source protocols.** Producer
+  `7735421985dc2c71c9817ce4273a75978bf17805` adds the common bridge and a recurring
+  Promise-executor → Number → Proxy → memory → join/await source case. Fifty
+  targeted checks pass, including independent source comparison, source recheck
+  and checkpoint recovery during nested memory work. Six frozen wire examples
+  and contract/interoperability digests remain byte-identical. The declared
+  interoperability population is now **31 cases**; its fresh full native and cost
+  runs are pending. Iterator/map integration is active; construction, generators,
+  cleanup, enumeration, general async protocol callers and rich host input remain
+  separate qualification work.
+- **The complete earlier 30-case admission attempts are preserved.** Producer
+  `13070721a02b8e052112d2b259eb8de8a5400c4f` / consumer
+  `3a0eb90e3e7282e9b3cb2ca0da27454451b50e21` produced 30 source passes but only 26
+  native admissions: four direct Promise/host/callback receipts were rejected.
+  Producer `1227eb88e0ed72efa6eb9c62136dc498ecaed2bd` fixes the direct evidence
+  identity boundary with 16 refusal/positive controls. The fresh corrected pair
+  `6888ca122460d3456f275dee4add9b61ba56b6f9` /
+  `c0ac528a5db70de51fb77f38ead88974c0fa386c` then passed **30/30 source checks and
+  30/30 native admissions** using the actual pinned tokenizer. This is engineering
+  admission with zero optimizer work and no model-learning claim.
+- **Cost qualification exposed and fixed a separate callback replay defect.**
+  The corrected pair's cost run measured 28/30 cases and retained two failures;
+  native packing was measured for all 30. Producer
+  `9a9c270ec835e77a5f5b8576f1d4d1f40d0c308f` prevents replay from synthesizing a
+  callback closure ahead of its recorded observation. Eleven focused controls
+  pass; fresh full-pair costs remain required. Complete failed and corrected
+  artifacts, receipts, inputs and logs are committed under
+  `docs/evidence/semantic-v8-admission-20261121/` in
+  `af36310a3b567cd0ed7baaf019990f57eb697a4c`.
+- **Ordinary V8 admission and distributed lineage are implemented.** Consumer
+  `c0ac528a5db70de51fb77f38ead88974c0fa386c` applies strict policy, corpus and
+  actual-tokenizer checks to ordinary readiness and explicit production recipes;
+  57 affected tests pass with zero failures/skips. Consumer
+  `a2373660a4653ca5ab485c82bf453f1755e0dc1a` carries admitted corpus and stream
+  identity through coordinator initialization, worker HTTP handshake, stage
+  bootstrap, resume, export and served reload. The final eight lifecycle, lineage
+  and entrypoint controls pass with the real tokenizer, including substituted
+  identities and export refusal before weight loading. Unit source-verifier
+  boundaries are explicitly injected: full-source ordinary preparation, two real
+  optimizer steps, resume, export and serving qualification at the new pair is
+  still required; production-scale parity remains open.
+- **V8 replay and normal entrypoints no longer require legacy wire imports.**
+  Consumer `721748f6c7867bd6eabea81b6b6b5a90a6ed9964` extracts neutral JS primitive
+  and heap semantics; 76 core regressions pass. A fresh blocked-import process
+  replays **32 fixture examples / 1,181 contexts**, including prefix/checkpoint
+  recovery and malformed-state refusal. Consumer `a2373660a4653ca5ab485c82bf453f1755e0dc1a`
+  extends absence controls to preparation, fitting, normal training resume,
+  export and serving while retaining rejection of unexpected legacy experiment
+  checkpoint state. Installed-package absence and complete default cutover remain
+  separate gates.
+- **Conformance and recurring CI gaps are being closed.** Producer
+  `21ad98f1792f9ccb3eab67aa17a1eb461df5d7af` preserves hashbang placement when
+  adding strict mode to original Test262 scripts; all 18 runner/campaign controls
+  pass, including five JavaScript line terminators. Producer
+  `fe1eae67cb1c91295582dc1e40afdaa38dd2c103` derives old-native CI consumer checkouts
+  from their checked policy. That exposed an existing conditional-probe capture
+  lacking explicit legacy admission; a legitimate pinned cohort/configuration
+  repair is active. The V8 workflows are being expanded to select the newly
+  named lifecycle, policy, lineage and import-absence tests, with exact current
+  paired revisions and their existing zero-skip gate.
+- **Remaining finish lines:** complete edition coverage and original-script
+  campaigns, general composable protocol/effect/async source support, production
+  lifecycle parity, independently readmitted final corpus, frozen held-out model
+  studies, durable host ingress, actual-head CI, installed absence, deployment,
+  restore and rollback proof. No learned quality, release readiness or default
+  cutover is claimed. Historical receipts retain their original identities.
 
 ## Overall progress
 
