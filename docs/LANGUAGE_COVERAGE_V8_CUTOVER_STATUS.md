@@ -16,6 +16,51 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Complete installed gate and integration corrections — 21 November 2026
+
+Producer `ca01e72` publishes a complete npm qualification tool. It materializes
+the whole committed Git tree, packs it normally, checks official dependency
+archives against shrinkwrap integrity, installs offline with scripts disabled,
+removes legacy clients physically and executes only the public V8 entry. Every
+original source input, original module graph, utility source comparison and
+declared canonical expectation remains authoritative. The separate populations
+retain all **665 original and 66 selected** cases; any selected source/public
+failure fails the gate. Eight bounded tooling controls pass. The full actual
+package measurement is still unmeasured locally because the complete source
+requires 656.8 MiB before packing, exceeding available disk.
+
+The recurring V8 CI matrix now includes the unchanged original665 population in
+addition to interoperability66 and gallery. Its all-population job must pass
+fresh source/native/token/packing checks and complete installed665/66 source,
+public replay and checkpoint continuation. Explicit workflow assertions require
+every declared installed row to pass; retaining a refusal is not a passing full
+gate. The job keeps failed attempts and allows 90 minutes for the complete work.
+
+The frozen `042dfee` integration tree's full local run reports **2,495 passed,
+ten failed and six skipped (2,511 total)**. Four failed tests require a complete
+clone that exhausts local disk; two need committed archived data omitted from
+the sparse checkout; two still used the previous native policy; two expected
+Promise-only profiles before computed property access selected the conversion
+component. The two profile assertions now preserve original source/recheck and
+tamper controls, and explicitly require no invented continuation for scalar
+indices. The affected Promise/public-entry selection passes **19/19**. After
+materializing the exact two archived files, their selection passes **12/12** at
+published `321935b`; separately run reference fixtures pass **8/8**. These scoped
+checks do not retroactively change the full run's failure/skip counts. The full
+hosted suite and release-clone drill remain required.
+
+Intermediate hosted `e4de45e` V8 qualification failed the paired-contract byte
+comparison before the consumer policy was advanced. Its later gates were skipped.
+Both failures and corrective checks are retained with exact-byte hashes in
+`docs/evidence/conversion-integration-regressions-2026-11-21/`.
+
+The complete V8 contract `--check` passes with the installed tooling, preserving
+the freshly regenerated contract/interoperability digests. No unnecessary
+historical evidence rewrite is used to repair the source-profile assertions.
+All17 complete acceptance packages remain open; full current-pair measurement,
+operational service fencing, production parity, language expansion and learned
+quality remain separately tracked.
+
 ## Published service recovery and paired primitive conversion — 21 November 2026
 
 The resumed work is published in increments. Producer `fdc13a9` adds the bounded

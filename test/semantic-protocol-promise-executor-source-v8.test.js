@@ -115,7 +115,12 @@ test('a deferred parameter arrow retains its lexical receiver and forward captur
 });
 test('common v8 admission routes executors and rechecks each source/context authority',async()=>{
   const result=await verifyRegionTrainingCase(fixture(first));assert(result.exported,result.reason);
-  assert.equal(result.profile,'promise-executors-source/1');
+  // Computed array access selects the conversion-capable source composition,
+  // while its scalar index needs no guest conversion continuation.
+  assert.equal(result.profile,'composed-protocol-source/1');
+  assert.deepEqual(result.exported.sidecar.protocolExtensions,['primitive-conversion-source/1','promise-executor/1']);
+  assert(!result.exported.public.timeline.filter(row=>row.kind==='protocol')
+    .map(row=>decodeProtocolRecordV8(row.fields.line)).some(record=>record.kind.startsWith('conversion.')));
   assert.equal((await recheckProtocolRegionEvidence(result.exported)).sourceValidated,true);
   const forged=structuredClone(result.exported);forged.contexts.at(-1).state.scheduler.ready++;
   await assert.rejects(recheckProtocolRegionEvidence(forged),/altered|changed|differs/);

@@ -14,11 +14,11 @@ concurrency:
 jobs:
   paired-v8:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
-        population: [interoperability, gallery]
+        population: [interoperability, gallery, all]
     defaults:
       run:
         shell: bash
@@ -135,6 +135,26 @@ jobs:
             --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \
             --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \
             2>&1 | tee "$RUNNER_TEMP/semantic-v8-ordinary-lifecycle.log"
+      - name: Qualify the complete installed package with legacy clients absent
+        if: ${{ !cancelled() && matrix.population == 'all' }}
+        working-directory: tracing-js-self
+        run: |
+          node tools/qualify-installed-v8.mjs --population both --workers 2 \
+            --out "$RUNNER_TEMP/v8-installed" \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-installed.log"
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          const report=JSON.parse(readFileSync(join(process.env.RUNNER_TEMP,'v8-installed','report.json')));
+          if(report.status!=='completed'||report.coverageComplete!==true||report.sourcePopulationQualified!==true)
+            throw new Error('Installed qualification requires every declared source/public case to pass');
+          for(const [name,declared]of [['all',665],['interoperability',66]]){
+            const count=report.totals[name];
+            if(count?.declared!==declared||count.attempted!==declared||count.sourceQualified!==declared||
+              count.sourceUnqualified!==0||count.untested!==0)
+              throw new Error('Installed qualification changed or failed the complete '+name+' population');
+          }
+          JS
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -151,3 +171,5 @@ jobs:
             ${{ runner.temp }}/v8-costs/
             ${{ runner.temp }}/semantic-v8-ordinary-lifecycle.log
             ${{ runner.temp }}/v8-ordinary-lifecycle/
+            ${{ runner.temp }}/semantic-v8-installed.log
+            ${{ runner.temp }}/v8-installed/

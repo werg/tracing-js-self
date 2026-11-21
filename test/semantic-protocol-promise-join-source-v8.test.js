@@ -20,10 +20,14 @@ test('source Promise joins preserve current-event allocations, duplicate depende
     '"use strict";async function run(){const p=Promise.resolve(2).then(x=>x+1);return await Promise.all([p,Promise.resolve(4)]);}'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(source));assert(result.exported,result.reason);
-    assert.deepEqual(result.exported.sidecar.protocolExtensions,['promise-join/1']);
+    assert.deepEqual(result.exported.sidecar.protocolExtensions,source===mixed?
+      ['primitive-conversion-source/1','promise-join/1']:['promise-join/1']);
     const replay=RegionExecutionHarness.replay(result.exported),restored=RegionExecutionHarness.restore(replay.checkpoint());
     assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(replay.controller));
     const records=result.exported.public.timeline.filter(row=>row.kind==='protocol').map(row=>decodeProtocolRecordV8(row.fields.line));
+    // The mixed source has computed accesses, but both indices stay scalar.
+    // Declaring the source component must not invent a guest continuation.
+    assert(!records.some(record=>record.kind.startsWith('conversion.')));
     for(const record of records.filter(row=>row.kind==='promise.join'&&row.inputs.length)){
       assert.equal(record.output,null);assert.equal(record.error,null);
     }
