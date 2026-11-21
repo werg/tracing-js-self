@@ -127,6 +127,14 @@ jobs:
             costs.summary.flat.tokenMeasurement!=='passed'||costs.summary.nativePacking.measuredEpisodes!==declared)
             throw new Error('Every declared CI case requires complete production-tokenizer and native-packing measurements');
           JS
+      - name: Qualify ordinary V8 training resume export and real service restoration
+        if: ${{ matrix.population == 'interoperability' }}
+        working-directory: tracing-js-self
+        run: |
+          node tools/qualify-ordinary-v8-lifecycle.mjs --out "$RUNNER_TEMP/v8-ordinary-lifecycle" \
+            --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \
+            --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-ordinary-lifecycle.log"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -141,3 +149,5 @@ jobs:
             ${{ runner.temp }}/semantic-v8-costs.log
             ${{ runner.temp }}/v8-admitted/
             ${{ runner.temp }}/v8-costs/
+            ${{ runner.temp }}/semantic-v8-ordinary-lifecycle.log
+            ${{ runner.temp }}/v8-ordinary-lifecycle/
