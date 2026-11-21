@@ -49,7 +49,15 @@ export function sharedProtocolQualificationFixtures(){return [
   {id:'promise-map-sparse-truncate',source:'"use strict";async function run(){const p=new Promise(resolve=>{'+
     'const input=[1,2,3];const output=input.map(function(value,index,array){if(index===0)array.length=1;return value;});'+
     'resolve(output.length+output[0]);});return await p;}',
-    entry:'run',args:[],family:'v8-contract-promise-map-sparse',fixture:{calls:[]}}
+    entry:'run',args:[],family:'v8-contract-promise-map-sparse',fixture:{calls:[]}},
+  {id:'promise-allsettled-mixed-aliases',source:'"use strict";async function run(){const p=Promise.resolve({x:3});'+
+    'const rows=await Promise.allSettled([p,Promise.reject(7),p]);return [rows[0]===rows[2],rows[0].value===rows[2].value,rows];}',
+    entry:'run',args:[],family:'v8-contract-promise-allsettled-mixed',fixture:{calls:[]}},
+  {id:'promise-allsettled-nested-executor',source:'"use strict";async function run(){const p=new Promise(resolve=>resolve(3));'+
+    'return await Promise.all([Promise.allSettled([p,Promise.reject(4)]),Promise.resolve(5)]);}',
+    entry:'run',args:[],family:'v8-contract-promise-allsettled-composition',fixture:{calls:[]}},
+  {id:'promise-allsettled-empty-mutation',source:'"use strict";async function run(){const rows=await Promise.allSettled([]);rows.push(7);return rows;}',
+    entry:'run',args:[],family:'v8-contract-promise-allsettled-empty',fixture:{calls:[]}}
 ];}
 
 // The interoperability population includes every declared source-qualified

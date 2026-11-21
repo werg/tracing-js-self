@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {verifyProtocolRegionTrainingCase,recheckProtocolRegionEvidence} from '../src/semantic/protocol-source-v8.js';
-import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
+import {verifyRegionTrainingCase,recheckRegionEvidence} from '../src/semantic/compiler-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {sharedRegionState} from '../src/semantic/regions.js';
 import {encodeProtocolRecordV8,decodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
@@ -63,5 +63,26 @@ test('Promise source extension keeps external effects and unsupported thenable r
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(source));assert.equal(result.exported,undefined);
     assert.match(result.reason,/resolver|unrepresentable|protocol|host|capabilit|Unknown|Undefined|initialized/i);
+  }
+});
+
+test('allSettled source admits mixed, empty, duplicate and mutable snapshots with independent original execution',async()=>{
+  for(const source of [
+    '"use strict";async function run(){return await Promise.allSettled([Promise.resolve(2),Promise.reject(7),undefined]);}',
+    '"use strict";async function run(){const rows=await Promise.allSettled([]);rows.push(7);return rows;}',
+    '"use strict";async function run(){const p=Promise.resolve({x:2});const rows=await Promise.allSettled([p,p]);return [rows[0]===rows[1],rows[0].value===rows[1].value,rows];}',
+    '"use strict";async function run(){const rows=await Promise.allSettled([Promise.resolve(2)]);rows[0].status="changed";return rows;}',
+    '"use strict";async function run(){const p=new Promise(resolve=>resolve(3));return await Promise.all([Promise.allSettled([p,Promise.reject(4)]),Promise.resolve(5)]);}'
+  ]){
+    const result=await verifyRegionTrainingCase(fixture(source));assert(result.exported,result.reason);
+    const checked=await recheckRegionEvidence(result.exported);assert.equal(checked.sourceValidated,true);
+    const complete=RegionExecutionHarness.replay(result.exported),timeline=result.exported.public.timeline;
+    const cuts=timeline.flatMap((row,index)=>row.kind==='protocol'&&decodeProtocolRecordV8(row.fields.line).kind==='promise.join.step'?[index]:[]);
+    for(const cut of cuts){
+      const prefix=RegionExecutionHarness.replay({...result.exported.public,timeline:timeline.slice(0,cut)},{requireTerminal:false}),
+        restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(prefix.checkpoint())));
+      for(const row of timeline.slice(cut))restored.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+      assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(complete.controller));
+    }
   }
 });

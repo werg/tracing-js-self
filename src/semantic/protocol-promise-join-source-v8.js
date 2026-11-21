@@ -16,7 +16,7 @@ export function createPromiseJoinTeacherV8(){return {id,
     const changes=event.stateChanges,owner=ctx.rootFor(event.invocationId),
       callee=row?.operands?.[0],method=callee?.[0]==='method'?callee[1]:callee,
       mode=method?.[0]==='builtinfn'&&method[1].startsWith('Promise.')?method[1].slice(8):null;
-    if(event.operation==='call.enter'&&['all','race'].includes(mode)){
+    if(event.operation==='call.enter'&&['all','allSettled','race'].includes(mode)){
       const result=row.result?.[0]==='promise'?row.result[1]:null,
         node=changes.find(change=>change.table==='promises'&&change.id===result)?.after;
       if(!node||mode!=='race'&&node.combinator?.kind!==mode)ctx.refuse('join result lacks exact owned combinator state');
@@ -33,7 +33,7 @@ export function createPromiseJoinTeacherV8(){return {id,
       if(jobs.length!==length||jobs.some((job,index)=>job.index!==index||job.mode!==mode))
         ctx.refuse('join source lacks one ordered dependency per input');
       const allocated=changes.filter(change=>change.table==='heap'&&change.before===null);
-      const output=length===0&&mode==='all'?node.value?.value?.[1]:null;
+      const output=length===0&&mode!=='race'?node.value?.value?.[1]:null;
       if(allocated.length!==(output===null?0:1)||output!==null&&allocated[0].id!==output)
         ctx.refuse('join registration has an undeclared allocation');
       ctx.emitProtocol(owner,{kind:'promise.join',mode,result,inputs:jobs.map(job=>job.promiseId),
@@ -44,16 +44,18 @@ export function createPromiseJoinTeacherV8(){return {id,
     const queued=ctx.state.control.a0.queue?.[0];
     if(event.operation!=='job.enter'||queued?.kind!=='combinator')return false;
     const result=queued.resultId,node=changes.find(change=>change.table==='promises'&&change.id===result)?.after??ctx.state.promises[result];
-    if(!['all','race'].includes(queued.mode)||!node||queued.mode!=='race'&&!node.combinator)ctx.refuse('unqualified Promise join step');
+    if(!['all','allSettled','race'].includes(queued.mode)||!node||queued.mode!=='race'&&!node.combinator)ctx.refuse('unqualified Promise join step');
     const allocated=changes.filter(change=>change.table==='heap'&&change.before===null);
-    const output=allocated.length===1&&allocated[0].after.kind==='array'?allocated[0].id:null;
-    if(allocated.length!==(output===null?0:1))ctx.refuse('join step has an undeclared allocation');
+    const output=allocated.find(change=>change.after.kind==='array')?.id??null,
+      entry=queued.mode==='allSettled'?allocated.find(change=>change.after.kind==='object')?.id??null:null;
+    if(allocated.length!==(output===null?0:1)+(entry===null?0:1))ctx.refuse('join step has an undeclared allocation');
     const joinOwner=ctx.controller(ctx.rootInvocation).heap.get(result)?.join?.owner;
     if(!joinOwner)ctx.refuse('join step lacks a retained owning invocation');
     ctx.emitProtocol(joinOwner,{kind:'promise.join.step',result,job:jobId(result,queued.index),
-      entry:null,output:output===null?null:ctx.identity(output),error:null,status:node.status,
+      entry:entry===null?null:ctx.identity(entry),output:output===null?null:ctx.identity(output),error:null,status:node.status,
       value:node.status==='pending'?null:ctx.tag(node.value.value)},event,'source-promise-join-step/1');
     if(output!==null)ctx.claimDataIdentity(output);
+    if(entry!==null)ctx.claimDataIdentity(entry);
     return true;
   },
   checkEvent(ctx,event){
@@ -66,7 +68,7 @@ export function createPromiseJoinTeacherV8(){return {id,
         if(owned.combinator&&(!selected?.join||selected.join.mode!==owned.combinator.kind))
           ctx.refuse('owned join state has no public scheduler operation');
       }
-      if(change.table==='heap'&&change.before===null&&controller.heap.has(ctx.identity(change.id))&&change.after.kind==='array'){
+      if(change.table==='heap'&&change.before===null&&controller.heap.has(ctx.identity(change.id))&&['array','object'].includes(change.after.kind)){
         const selected=controller.heap.get(ctx.identity(change.id)),owned=change.after;
         const properties=new Map(Object.entries(owned.properties).map(([key,value])=>[key,ctx.tag(value.value)]));
         if(!eq(selected.properties,properties))ctx.refuse('join output differs from current owned allocation');
@@ -85,7 +87,7 @@ export function createPromiseJoinTeacherV8(){return {id,
 
 export function createPromiseJoinSourceAdapterV8(input={}){
   if(!sourceHasSyntaxV8(input,node=>node.type==='MemberExpression'&&node.object.type==='Identifier'&&
-    node.object.name==='Promise'&&['all','race'].includes(node.computed?
+    node.object.name==='Promise'&&['all','allSettled','race'].includes(node.computed?
       node.property.type==='Literal'?node.property.value:null:node.property.name)))return null;
   return {id,sourceComponent:createPromiseJoinTeacherV8(),sourceProfile:'promise-joins-source/1'};
 }

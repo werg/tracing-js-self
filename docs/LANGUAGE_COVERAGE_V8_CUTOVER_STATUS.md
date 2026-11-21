@@ -16,7 +16,71 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
-## Active continuation — 21 November 2026
+## Resumed implementation checkpoints — 21 November 2026
+
+This continuation resumed from producer `45ea3e78a4aa9d44b2ba5100acd81ce55bccba12`
+and consumer `edf83bc3f23c15d0bd1f41cf471c06c8893d3874`. All nine producer and
+four consumer workflows passed at those starting heads. Historical results do
+not qualify subsequent executable changes. **0 of 17 full packages are closed.**
+
+- Producer `de44a01e3548ed426b07b76b9163c0cb1185e56a` captures callback receiver
+  and arguments together, preserving shared identities and cycles. Unknown
+  receivers refuse before mutation; queued work leaves the queue only after
+  child admission succeeds. Seven focused recovery controls pass.
+- Producer `1864b92851f25b6472b83d5e79d36f4e008e493c` journals return-value
+  callback arrivals before enqueue and restores queued, active and completed
+  children against exact public history and independently retained private
+  input. Forty-nine integrated controls pass, including ten new tests and a
+  fresh-process child/host/grandchild chain. Exact guest return/throw is exposed
+  while each external parent remains uncertain until explicitly reconciled.
+  These are controlled selected-record tests; the ordinary original-source
+  callbackGraph bridge and projection are a separately identified gap now being
+  implemented. See `docs/SEMANTIC_V8_DURABLE_CALLBACK_CONTINUATIONS.md`.
+- Producer `ebb4758d08e25e2cc22f1b7a855cd625398a58e0` repairs namespace missing
+  reads, ambiguous export propagation and bounded namespace re-exports; 50
+  focused module controls pass. Two specification controls retain failed
+  Node 24.22.3 differentials and are not native-admission passes. Producer
+  `8c7368914fd2d044279392fff5fda02361b79cc4` extends original module preflight
+  to star/forwarded/imported-local exports and quoted external names; 38
+  original-runner/resolution/campaign/reference controls pass. Scope-aware
+  lexical lowering and a fresh full module campaign remain active work.
+- Consumer `22611c50600bba62debe825b7a808fa0d2130fe6` retains verified ordinary
+  training lineage, prepared chunk sizes and selected-prefix accounting in the
+  fitter; 15 focused controls pass. Consumer
+  `70e8b9e2f09a1115620c895e46dde1e8accc129a` adds full accepted-checkpoint and
+  next-output comparison through a fresh standard service; 18 focused controls
+  pass, with injected subprocess tests explicitly separate from actual model
+  evidence. Consumer `37c60669256228bf05988b32e96f5166c843f021` bounds trainer
+  capture to the selected prefix without changing verified provenance; 12
+  fitter controls compare its first causal state with full capture.
+- At producer `ebb4758` / consumer `70e8b9e`, the ordinary command run freezes
+  all 37 sources, prepares the predeclared train source, performs exactly two
+  normal optimizer updates with fresh-process resume, exports and restores the
+  real service. **Zero ordinary model records are acknowledged.** The separate
+  one-record fitting diagnostic remains in progress; its initial complete-row
+  capture is slow and retained as its own attempt. No learned quality claim.
+- The current allSettled increment adds public and independent native reaction
+  semantics, original-source checks and recovery before every reaction. Mixed
+  outcomes wait for all inputs; repeated dependencies receive distinct entry
+  objects while preserving value aliases. Exposed outputs remain mutable after
+  fulfillment. Twenty-six producer join/source/rollback/population tests and
+  46 native join/protocol/replay tests pass, with zero failures or skips.
+  Consumer `1a8b941df70efe365c467c3db8b8eac5d8ed21c7` mirrors the regenerated
+  public/private contract and regional fixture. Three new recurring cases make
+  the population **40 sources**; fresh exact-pair admission/cost/lifecycle gates
+  remain required. The new contract digest is
+  `5c5583fe37dd851dc6f008ee14271c66a605d79d14ce21415a9208ba9fee3b5d`.
+  See `docs/SEMANTIC_V8_ALL_SETTLED.md`.
+
+Lessons: cross-root callback aliases require one graph capture; a durable guest
+result cannot reconstruct a native adapter stack; export ambiguity must survive
+every forwarding path; allSettled snapshots become mutable only when exposed;
+actual accepted-prefix recovery must use decoder outputs, complete model state
+and a fresh process. Promise.any's simplified owned AggregateError remains an
+explicit semantic blocker. Default routing, held-out quality and full edition
+coverage remain open.
+
+## Earlier active continuation — 21 November 2026
 
 - Exact clean producer `1240d009ceba524ed53092b7a93a40d8ef0ca410` and consumer
   `edf83bc3f23c15d0bd1f41cf471c06c8893d3874` now pass **37/37 original-source

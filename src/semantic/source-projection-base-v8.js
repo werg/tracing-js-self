@@ -16,7 +16,7 @@ export const sourcePromiseConstructorV8=event=>event.operation==='object.constru
 export function sourcePromiseJoinEventV8(view,{event,row}){
   const callee=row?.operands?.[0],method=callee?.[0]==='method'?callee[1]:callee;
   return event.operation==='call.enter'&&method?.[0]==='builtinfn'&&
-    ['Promise.all','Promise.race'].includes(method[1])||
+    ['Promise.all','Promise.allSettled','Promise.race'].includes(method[1])||
     event.operation==='job.enter'&&view.owned.control.a0.queue?.[0]?.kind==='combinator';
 }
 export function sourcePromiseExecutorEventV8(view,{event,row}){
@@ -30,7 +30,7 @@ export function sourceExecutorCompletionV8(view,exit){
     state.calls.some(([frame])=>frame===exit.invocation)));
 }
 export function sourceJoinAllocationV8(view,input){
-  return input.kind==='array'&&Boolean(view.event)&&sourcePromiseJoinEventV8(view,{event:view.event,row:view.row})&&
+  return ['array','object'].includes(input.kind)&&Boolean(view.event)&&sourcePromiseJoinEventV8(view,{event:view.event,row:view.row})&&
     view.event.stateChanges.some(change=>change.table==='heap'&&change.before===null&&change.id===input.identity);
 }
 const ordinaryFamilies=new Set(['request','observe','await','call','alloc','value','branch','write','read','carry',
