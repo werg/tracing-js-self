@@ -34,3 +34,6 @@ export type {SelectedHistoryReceipt,DurableSelectedHistoryJournalOptions,Selecte
 export {DurableSelectedServiceJournal} from './selected-service-journal.js';
 export type {SelectedServiceAction,SelectedServiceOutcome,SelectedServiceJournalReceipt,
   DurableSelectedServiceJournalOptions} from './selected-service-journal.js';
+export {DurableFencedSelectedServiceJournal} from './selected-service-fence-journal.js';
+export type {SelectedServiceFenceReceipt,SelectedServiceFenceState,DurableFencedSelectedServiceJournalOptions}
+  from './selected-service-fence-journal.js';

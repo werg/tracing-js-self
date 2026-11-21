@@ -190,3 +190,4 @@ export {DurableHostIngressJournal} from './host-ingress-journal.js';
 export {DurableHostIngressBroker} from '../semantic/host-ingress-journal-v8.js';
 export {DurableSelectedHistoryJournal} from './selected-history.js';
 export {DurableSelectedServiceJournal} from './selected-service-journal.js';
+export {DurableFencedSelectedServiceJournal} from './selected-service-fence-journal.js';

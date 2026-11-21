@@ -72,7 +72,12 @@ export class DurableSelectedServiceJournal {
     let outcome=null;
     try{outcome=(await this.readBytes(key,'outcome')).record;}
     catch(error){if(error.code!=='ENOENT')throw error;}
-    if(outcome)validateSelectedServiceOutcome(outcome,action);
+    if(outcome){
+      validateSelectedServiceOutcome(outcome,action);
+      // A duplicate claim's synchronization can precede a concurrent outcome
+      // link. Reading that later file is not a durable result acknowledgement.
+      await syncDirectory(this.directory);
+    }
     return {action:structuredClone(action),outcome};
   }
   async complete(action,outcome,receipt){

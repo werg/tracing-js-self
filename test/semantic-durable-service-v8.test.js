@@ -45,8 +45,8 @@ function context(value=7){
 }
 function action(c=context()){return {schema:'semantic-service-action/8',serviceId:'controlled-store',...c.selectedAction};}
 const boundary=error=>error instanceof SelectedServiceBoundaryError;
-function child(t,configuration){
-  const proc=fork(new URL('./fixtures/durable-selected-service-worker.mjs',import.meta.url),
+function child(t,configuration,worker='./fixtures/durable-selected-service-worker.mjs'){
+  const proc=fork(new URL(worker,import.meta.url),
     [JSON.stringify(configuration)],{stdio:['ignore','pipe','pipe','ipc']});
   let output='',errors='';const messages=[],waiters=[];
   proc.stdout.on('data',data=>{output+=data;});proc.stderr.on('data',data=>{errors+=data;});
@@ -159,6 +159,18 @@ test('a lost outcome acknowledgement recovers exact durable bytes while an unpub
       assert.deepEqual(H.replay(restored.exportEpisode()).exportEpisode(),restored.exportEpisode());
     }else await assert.rejects(restored.dispatch('call','e'),error=>boundary(error)&&error.code==='outcome-unknown');
     assert.equal(calls,1);
+  }
+});
+
+test('a concurrent outcome read must synchronize after the outcome link even when the duplicate claim was durable earlier',async t=>{
+  for(const fenced of [false,true]){
+    const path=await directory(t),worker=child(t,{directory:path,fenced},'./fixtures/selected-service-outcome-sync-worker.mjs');
+    assert.deepEqual(await worker.phase('finished'),{
+      phase:'finished',observed:{status:'refused',code:'service-unavailable',causeCode:'EIO'},
+      published:{status:'refused',code:'service-unavailable',causeCode:'EIO'},
+      readerSynchronizations:1,recovered:7,calls:1
+    });
+    assert.equal((await worker.exit).code,0);
   }
 });
 
