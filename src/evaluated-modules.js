@@ -16,6 +16,11 @@ import {realizeGraph} from './training/graph.js';
 import {hasTopLevelAwait,lowerModuleAwaits,ownedModuleSchedulerSource} from './evaluated-module-scheduler.js';
 
 const namePattern=/^[A-Za-z_$][A-Za-z0-9_$]*$/;
+// ResolveExport distinguishes a missing name/circular path from ambiguity.
+// Namespace objects omit either, but named imports must reject both. Never
+// collapse ambiguity to null: a later star path must not supply that name.
+const ambiguousExport=Symbol('ambiguous module export');
+const namespaceExport=Symbol('namespace module export');
 const reject=reason=>{throw new SyntaxError('Unsupported evaluated-module/1: '+reason);};
 const id=node=>node?.type==='Identifier'?node.name:null;
 function validName(name){
@@ -108,7 +113,7 @@ function parseModule(file,text,sources){
   };
   const addForward=(exported,from,imported)=>{
     if(!validName(exported)&&exported!=='default'||
-       !validName(imported)&&imported!=='default')
+       imported!==namespaceExport&&!validName(imported)&&imported!=='default')
       reject('unrepresentable forwarding export in '+file);
     if(exports.has(exported)||forwards.has(exported)&&(
        forwards.get(exported).module!==from||
@@ -185,8 +190,10 @@ function parseModule(file,text,sources){
         reject('dynamic forwarding export');
       const from=requestPath(file,node.moduleSpecifier.text,sources);
       const clause=node.exportClause;
-      if(clause&&ts.isNamespaceExport(clause))
-        reject('namespace forwarding requires an exotic object');
+      if(clause&&ts.isNamespaceExport(clause)){
+        addForward(clause.name.text,from,namespaceExport);
+        continue;
+      }
       const elements=clause&&ts.isNamedExports(clause)?
         clause.elements.filter(e=>!e.isTypeOnly):null;
       if(elements&&elements.length===0)continue;
@@ -228,10 +235,9 @@ function parseModule(file,text,sources){
           addExport(nodeName(spec.exported),nodeName(spec.local));
       }
     }else if(node.type==='ExportAllDeclaration'){
-      if(node.exported)
-        reject('module namespace star export');
       const from=requestPath(file,node.source.value,sources);
-      addDependency(from);stars.push(from);
+      if(node.exported)addForward(nodeName(node.exported),from,namespaceExport);
+      else {addDependency(from);stars.push(from);}
     }else if(node.type==='ExportDefaultDeclaration'){
       if(node.declaration.type==='FunctionDeclaration'){
         addExport('default',addDeclaration(node.declaration,false));
@@ -252,7 +258,7 @@ function parseModule(file,text,sources){
     }else reject('unowned module statement '+node.type+' in '+file);
   }
   for(const [exported,local] of exports)
-    if(!symbols.has(local)&&!imports.has(local))
+    if(!symbols.has(local)&&!imports.has(local)&&!namespaceImports.has(local))
       reject('export '+exported+' references missing local '+local+' in '+file);
   // JS modules can contain a source-level import binding not referenced in
   // the emitted code; preflight all such imports without executing anything.
@@ -272,6 +278,36 @@ function bindingNames(pattern,out=[]){
 }
 function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map()){
   const edits=new Map();
+  const staticName=node=>node.computed?
+    (node.property?.type==='Literal'&&typeof node.property.value==='string'?
+      node.property.value:null):node.property?.type==='Identifier'?node.property.name:null;
+  // A namespace re-export is still a namespace. Resolve a whole static path
+  // before replacing its final value, without manufacturing a guest object.
+  function namespaceOf(node){
+    if(node?.type==='Identifier')return namespaceBindings.get(node.name)??null;
+    if(node?.type!=='MemberExpression')return null;
+    const parent=namespaceOf(node.object);
+    if(!parent)return null;
+    const name=staticName(node);
+    if(name===null)reject('dynamic namespace property access requires module namespace exotic semantics');
+    return parent(name).readNamespace??null;
+  }
+  function checkAssignment(pattern){
+    for(const name of bindingNames(pattern))
+      if(module.imports.has(name)||module.namespaceImports.has(name))
+        reject('assignment to read-only import '+name+' in '+module.file);
+    const checkNamespace=target=>{
+      if(!target)return;
+      if(target.type==='MemberExpression'&&namespaceOf(target.object))
+        reject('namespace exports are read-only live bindings');
+      if(target.type==='AssignmentPattern')checkNamespace(target.left);
+      else if(target.type==='RestElement')checkNamespace(target.argument);
+      else if(target.type==='ArrayPattern')target.elements.forEach(checkNamespace);
+      else if(target.type==='ObjectPattern')
+        target.properties.forEach(property=>checkNamespace(property.value??property.argument));
+    };
+    checkNamespace(pattern);
+  }
   function walk(node,parent=null,key=null){
     if(!node||typeof node!=='object')return;
     if(Array.isArray(node)){
@@ -279,15 +315,13 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
       return;
     }
     if(typeof node.type!=='string')return;
-    if(node.type==='AssignmentExpression'&&
-       node.left?.type==='Identifier'&&module.imports.has(node.left.name))
-      reject('assignment to read-only import '+node.left.name+' in '+module.file);
-    if(node.type==='UpdateExpression'&&
-       node.argument?.type==='Identifier'&&module.imports.has(node.argument.name))
-      reject('update of read-only import '+node.argument.name+' in '+module.file);
+    if(node.type==='AssignmentExpression')checkAssignment(node.left);
+    if(node.type==='UpdateExpression')checkAssignment(node.argument);
+    if((node.type==='ForOfStatement'||node.type==='ForInStatement')&&
+       node.left.type!=='VariableDeclaration')checkAssignment(node.left);
     if(node.type==='FunctionDeclaration'||node.type==='FunctionExpression'||
        node.type==='ArrowFunctionExpression'){
-      if(node!==root&&node.id&&names.has(node.id.name))
+      if(node!==root&&node.id&&(names.has(node.id.name)||namespaceBindings.has(node.id.name)))
         reject('shadowed module function '+node.id.name+' in '+module.file);
       for(const parameter of node.params??[])
         for(const name of bindingNames(parameter))
@@ -300,10 +334,13 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
     if(node.type==='VariableDeclarator'&&
        !initialIdentifiers.has(node.id?.start))
       for(const name of bindingNames(node.id))
-        if(names.has(name))
+        if(names.has(name)||namespaceBindings.has(name))
           reject('shadowed lexical binding '+name+' in '+module.file);
-    if(node.type==='MemberExpression'&&
-       node.object?.type==='Identifier'&&namespaceBindings.has(node.object.name)){
+    if((node.type==='ClassDeclaration'||node.type==='ClassExpression')&&node.id&&
+       (names.has(node.id.name)||namespaceBindings.has(node.id.name)))
+      reject('shadowed class binding '+node.id.name+' in '+module.file);
+    const namespace=node.type==='MemberExpression'?namespaceOf(node.object):null;
+    if(namespace){
       if((parent?.type==='AssignmentExpression'&&key==='left')||
          (parent?.type==='UpdateExpression'&&key==='argument')||
          (parent?.type==='UnaryExpression'&&parent.operator==='delete'))
@@ -311,29 +348,29 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
       // ns.fn() receives a namespace exotic as its strict this receiver.
       // Bare lexical fn() does not. Without a namespace identity in the
       // owned heap that call transformation would silently change semantics.
-      if(parent?.type==='CallExpression'&&key==='callee')
+      if(parent?.type==='CallExpression'&&key==='callee'||
+         parent?.type==='TaggedTemplateExpression'&&key==='tag')
         reject('namespace method call needs an owned namespace receiver');
-      const exportedName=node.computed?
-        (node.property?.type==='Literal'&&typeof node.property.value==='string'?
-          node.property.value:null):
-        node.property?.type==='Identifier'?node.property.name:null;
+      const exportedName=staticName(node);
       if(exportedName===null)reject('dynamic namespace property access requires module namespace exotic semantics');
-      const target=namespaceBindings.get(node.object.name)(exportedName);
-      edits.set(node.start,{end:node.end,value:target.linked});
+      const target=namespace(exportedName);
+      if(target.readNamespace)
+        reject('namespace identity escapes a static property read in '+module.file);
+      edits.set(node.start,{end:node.end,value:'('+target.linked+')'});
       return;
     }
     if(node.type==='Identifier'){
       if(node.name.startsWith('__traced_eval_'))
         reject('reserved generated identifier '+node.name+' in '+module.file);
-      if(namespaceBindings.has(node.name))
-        reject('namespace identity escapes a static property read in '+module.file);
-      const replacement=names.get(node.name);
-      if(!replacement)return;
       if(parent?.type==='MemberExpression'&&key==='property'&&!parent.computed)return;
       if((parent?.type==='Property'||parent?.type==='MethodDefinition')&&
          key==='key'&&!parent.computed)return;
       if(key==='label'||parent?.type==='BreakStatement'||
          parent?.type==='ContinueStatement')return;
+      if(namespaceBindings.has(node.name))
+        reject('namespace identity escapes a static property read in '+module.file);
+      const replacement=names.get(node.name);
+      if(!replacement)return;
       if(parent?.type==='Property'&&parent.shorthand&&key==='value'){
         edits.set(node.start,{end:node.end,value:node.name+': '+replacement});
         return;
@@ -343,7 +380,8 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
         return;
       if(parent?.type==='VariableDeclarator'&&key==='id'&&
          !initialIdentifiers.has(node.start))return;
-      edits.set(node.start,{end:node.end,value:replacement});
+      edits.set(node.start,{end:node.end,value:parent?.type==='NewExpression'&&key==='callee'?
+        '('+replacement+')':replacement});
       return;
     }
     for(const [field,value] of Object.entries(node)){
@@ -443,31 +481,43 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   function resolve(file,exported,trail=new Set()){
     const marker=file+'#'+exported;
     if(trail.has(marker))return null;
-    const seen=new Set(trail);seen.add(marker);
+    // ResolveExport shares its visited pairs across every recursive star
+    // branch. Besides detecting cycles, this bounds diamond traversal.
+    const seen=trail;seen.add(marker);
     const module=get(file);
     if(module.exports.has(exported)){
       const local=module.exports.get(exported);
       if(module.symbols.has(local))
         return {file,local,linked:renamed.get(file).get(local),
           kind:module.symbols.get(local).kind};
+      if(module.namespaceImports.has(local))
+        return {file,local,linked:'namespace:'+file+'#'+local,
+          kind:'namespace',namespace:module.namespaceImports.get(local)};
       const binding=module.imports.get(local);
       return binding?resolve(binding.module,binding.name,seen):null;
     }
     if(module.forwards.has(exported)){
       const forward=module.forwards.get(exported);
+      if(forward.name===namespaceExport)
+        return {file:forward.module,local:namespaceExport,
+          linked:'namespace:'+forward.module,kind:'namespace',namespace:forward.module};
       return resolve(forward.module,forward.name,seen);
     }
     if(exported==='default')return null;
-    const matches=new Map();
+    let match=null;
     for(const from of module.stars){
       const found=resolve(from,exported,seen);
-      if(found!==null)matches.set(found.file+'#'+found.local,found);
-      if(matches.size>1)reject('ambiguous export * for '+exported+' in '+file);
+      if(found===ambiguousExport)return ambiguousExport;
+      if(found===null)continue;
+      if(match!==null&&(found.file!==match.file||found.local!==match.local))
+        return ambiguousExport;
+      match=found;
     }
-    return matches.size===1?[...matches.values()][0]:null;
+    return match;
   }
   function required(file,exported){
     const found=resolve(file,exported);
+    if(found===ambiguousExport)reject('ambiguous export '+exported+' in '+file);
     if(!found)reject('unresolved export '+exported+' in '+file);
     return found;
   }
@@ -491,30 +541,39 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       reject('cannot invoke a non-function module export '+call.exportName);
     return {...call,binding};
   }):null;
-  const linkedAccess=binding=>scheduled?
-    '__traced_eval_cells['+indices.get(binding.file)+'].'+binding.linked+'()':
-    binding.linked;
+  const linkedAccess=binding=>{
+    if(binding.kind==='namespace')reject('namespace identity escapes a static property read');
+    return scheduled?'__traced_eval_cells['+indices.get(binding.file)+'].'+binding.linked+'()':
+      binding.linked;
+  };
+  const namespaceRead=file=>exported=>{
+    const binding=resolve(file,exported);
+    // Missing and ambiguous names are absent own properties of the namespace.
+    // `void 0` cannot be captured by a guest binding named undefined.
+    if(binding===null||binding===ambiguousExport)return {linked:'void 0'};
+    if(binding.kind==='namespace')return {...binding,readNamespace:namespaceRead(binding.namespace)};
+    return {...binding,linked:linkedAccess(binding)};
+  };
   const bound=new Map(),links=[];
   const namespaces=new Map();
   for(const file of order){
     const module=get(file),names=new Map(renamed.get(file));
     const reads=new Map();
     for(const [local,from] of module.namespaceImports)
-      reads.set(local,exported=>{
-        const binding=required(from,exported);
-        return {...binding,linked:linkedAccess(binding)};
-      });
+      reads.set(local,namespaceRead(from));
     namespaces.set(file,reads);
     for(const [local,imp] of module.imports){
       const resolved=required(imp.module,imp.name);
-      names.set(local,linkedAccess(resolved));
+      if(resolved.kind==='namespace')reads.set(local,namespaceRead(resolved.namespace));
+      else names.set(local,linkedAccess(resolved));
       links.push({from:file,local,source:imp.module,exportName:imp.name,
         binding:resolved.linked,live:true});
     }
     for(const [name,forward] of module.forwards){
       const target=required(file,name);
       links.push({from:file,exportName:name,source:forward.module,
-        imported:forward.name,binding:target.linked,live:true});
+        imported:forward.name===namespaceExport?'*namespace*':forward.name,
+        binding:target.linked,live:true});
     }
     bound.set(file,names);
   }

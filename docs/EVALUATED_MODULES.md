@@ -37,8 +37,9 @@ No on-disk lookup, `require`, external package resolution, automatic extension
 resolution or native `import()` executes guest source. Host accessor/proxy
 module records are rejected without invoking their traps.
 
-The source is lowered with pinned TypeScript 5.9.3 to ES2022, parsed as modules
-with Acorn, and rewritten into one strict async guest function. The resulting
+JavaScript text is preserved byte for byte; typed TypeScript is lowered with
+pinned TypeScript 5.9.3 to ES2022. The result is parsed as modules with Acorn
+and rewritten into one strict async guest function. The resulting
 function is itself parsed through the owned `training-js/1` frontend **before
 execution**, which rejects unsupported grammar and ambient identifiers.
 There is no fallback that runs the source in the Node `vm`, native
@@ -53,13 +54,34 @@ A bounded `import * as ns from './module.js'` is supported only when every
 runtime use of `ns` is a **statically named property read** (`ns.value` or
 `ns['value']`). The frontend resolves that reference to the original exported
 binding, so mutation through a **separately named-imported** function remains
-visible. Direct `ns.fn()` is rejected because its `this` receiver is a module
+visible. Missing and ambiguous exports are absent properties and read as
+`undefined`; they are not link errors unless explicitly requested by a named
+import or indirect export. The generated missing-value expression is `void 0`,
+so a guest binding named `undefined` cannot change its meaning.
+
+Bounded namespace re-exports (`export * as cells from './leaf.js'` and
+`import * as ns from './leaf.js'; export {ns}`) retain their namespace target
+through named imports and star graphs. Static chained reads such as
+`barrel.cells.value` reach the original live cell without creating a guest
+namespace object. Ambiguity propagates through every star path and is never
+treated as a missing name which a later path may fill. Direct namespace
+re-exports of the same target compare by the target module and namespace
+binding; local namespace bindings keep their own binding identity.
+
+Direct `ns.fn()` and tagged namespace calls are rejected because their `this` receiver is a module
 namespace exotic, whereas a bare rewritten `fn()` would have `undefined`
 as its strict receiver.
 Assignments to `ns.value`, dynamic keys (`ns[key]`), escaping `ns` as a
-value, arbitrary reflection, `Object.keys(ns)`, and namespace re-exports are
+value, arbitrary reflection and `Object.keys(ns)` are
 not implemented. They fail at linking instead of substituting an ordinary
 mutable JavaScript object for the ECMAScript module namespace exotic.
+Lexical bindings shadowing a lowered module/import name are also rejected,
+including namespace names in blocks, nested functions, catch bindings and
+classes. Property names such as `object.ns` and `{ns: 1}` are not identifier
+reads. Destructuring and loop assignments to imported bindings fail before
+execution just as direct assignments do. See
+[namespace resolution evidence](OWNED_MODULE_NAMESPACE_RESOLUTION.md) for the
+specification controls and explicitly recorded native-engine discrepancies.
 
 ## Initialization, mutable bindings and asynchronous results
 
@@ -77,9 +99,11 @@ and their bounded module-side effects occur before dependent module bodies.
 Synchronous cyclic imports follow DFS dependency initialization, with
 function declarations instantiated before module bodies and mutable lexical
 reads referencing the original owned binding. A cyclic read before
-initialization produces a guest abrupt completion. Cycles with top-level
-`await` fail closed: the current machine has no complete ESM async-dependency
-or deadlock scheduler. Each call to `executeEvaluatedModules` starts a
+initialization produces a guest abrupt completion. Graphs requiring parallel
+top-level-await dependencies or async cycles use retained per-module generator
+environments and the [owned SCC scheduler](OWNED_MODULE_SCHEDULING.md).
+That scheduler remains outside public/native source qualification.
+Each call to `executeEvaluatedModules` starts a
 **fresh** owned realm; state does not persist across separate calls.
 
 A module may `await` an internally owned Promise during initialization;
