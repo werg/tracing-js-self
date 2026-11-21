@@ -3,6 +3,7 @@
 import { isDeepStrictEqual } from 'node:util';
 import {validatePreparedRequest} from './host/validate-request.js';
 import {hostOperation,SUBSCRIPTION_CLOSERS} from './host/operations.js';
+import {validateExternalCallbackJob} from './external-callback-validation.js';
 
 // Check external scalar and data-graph bytes independently of the runtime and
 // production result encoder. Native identities never enter the owned heap.
@@ -199,14 +200,14 @@ export function validateHostJournal(bundle, fail) {
          patches.length!==1||!control||
          queued?.kind!=='external-callback'||
          queued.effectId!==effectId||
-         !hostOperation(createdEffect.operation).callbackIndices?.some(i=>
-           createdEffect.args[i]?.[0]==='ref'&&
-           createdEffect.args[i][1]===queued.functionId)||
          !isDeepStrictEqual(queued.args,event.operands)||
-         !Array.isArray(queued.args)||queued.args.length>32||!queued.args.every(canonicalScalar)||
+         !Array.isArray(queued.args)||queued.args.length>32||
          !isDeepStrictEqual(control.after.queue.slice(0,-1),control.before?.queue)||
          control.after.version!==control.before.version+1)
         fail('Invalid owned external callback registration',event.eventId);
+      try{validateExternalCallbackJob({heap,effects:effectState,frames:{},
+        control:{a0:control.before}},queued,{arrival:true});}
+      catch(error){fail(error.message,event.eventId);}
       continue;
     }
 

@@ -12,6 +12,7 @@ import {validatePropertyKeyConversionState,validatePropertyKeyConversionEvent} f
 import {validatePromiseResolutionState,validatePromiseResolutionEvent} from './promise-resolution-validation.js';
 import {validateScriptSequenceState,validateScriptSequenceEvent} from './script-validation.js';
 import {validateScriptHostEvent} from './script-host-validation.js';
+import {validateExternalCallbackJob,validateExternalCallbackEntry} from './external-callback-validation.js';
 // Read-only validation. Does not import the evaluator or call its mutation routines.
 import { readFileSync } from 'node:fs';
 import {validateSymbolReferences,validateSymbolAllocation} from './symbol-validation.js';
@@ -96,15 +97,13 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
          !Array.isArray(job.args)||!eq(job.args,e.operands)||
          !eq(patch.after.queue.slice(0,-1),state.control.a0.queue))
         fail('External callback must enqueue a registered owned job',e.eventId);
+      try{validateExternalCallbackJob(state,job,{arrival:true});}
+      catch(error){fail(error.message,e.eventId);}
     }
     if(e.operation==='job.enter'){
       if(job?.kind==='external-callback'){
-        const fx=state.effects[job.effectId],fn=state.heap[job.functionId];
-        if(!fx||fx.dispatch!=='dispatched'||fn?.kind!=='function'||fn.async||
-           !Array.isArray(job.args)||e.causes.filter(c=>c.kind==='effect'&&
-             c.effectId===fx.id).length!==1||
-           e.causes.filter(c=>c.kind==='invocation').length!==1)
-          fail('External callback job lacks registered owned function',e.eventId);
+        try{validateExternalCallbackEntry(state,e,job,bundle.programs);}
+        catch(error){fail(error.message,e.eventId);}
       }else if(job?.kind==='microtask'){
         if(typeof job.functionId!=='string'||
            state.heap[job.functionId]?.kind!=='function'||
@@ -260,6 +259,10 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
              f.promiseExecutorTarget&&eq(f.completion,c)&&
              (state.promises[f.promiseExecutorTarget]?.status==='rejected'||
               state.promises[f.promiseExecutorTarget]?.resolverCalled));
+          const callbackRejection=e.stateChanges.some(p=>p.table==='frames'&&
+            p.before?.externalCallbackReturn&&p.after?.status==='thrown'&&
+            eq(p.after.externalCallbackReturn,p.before.externalCallbackReturn)&&
+            eq(p.after.completion,c)&&state.control.a0.activeFrameId===null);
            const thenableRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
              f.thenableJob&&eq(f.completion,c)&&
              (state.promises[f.thenableJob.promiseId]?.thenableLocked===true||
@@ -267,7 +270,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
            // A thenable that calls resolve() and then throws ignores the throw.
            // It remains an executed guest abrupt completion, not a second
            // promise rejection, and is validated against the locked capability.
-           if(!rejection&&!reactionRejection&&!resolutionRejection&&!pendingCoercion&&!executorCompletion&&!thenableRejection&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
+           if(!rejection&&!reactionRejection&&!resolutionRejection&&!pendingCoercion&&!executorCompletion&&!thenableRejection&&!callbackRejection&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
              !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally')))
             fail('Guest throw was not routed to a handler or async rejection',e.eventId);
         }

@@ -15,6 +15,7 @@ import {supportsPinnedRegExp,testPinnedRegExp,scanPinnedReplacement} from './own
 import {createNumberConversion,advanceNumberConversion} from './owned-number-conversion.js';
 import {createPrimitiveConversion,advancePrimitiveConversion} from './owned-primitive-conversion.js';
 import {ownedHasProperty} from './owned-has-property.js';
+import {validateExternalCallbackJob} from './external-callback-validation.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
@@ -1363,6 +1364,11 @@ export class Runtime {
       }else if(frame.reactionPromiseId){
         const reason=this.caughtError(draft,completion,eventId);
         this.rejectPromise(draft,frame.reactionPromiseId,reason.value,reason.origin);
+        draft.control.a0.activeFrameId=null;
+      }else if(frame.externalCallbackReturn){
+        // A thrown callback rejects its native waiter. It cannot fail the
+        // unrelated root invocation or invent the parent effect's outcome.
+        frame.completion.value=this.caughtError(draft,completion,eventId);
         draft.control.a0.activeFrameId=null;
       }else if(frame.callerFrameId){
         const caller=draft.frames[frame.callerFrameId];
@@ -3771,27 +3777,18 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
   /**
    * An external callback is a delivered environment event. It queues the
    * original owned closure, never executing guest source in the native realm.
-   * Current callback arguments must be primitive values; native objects and
-   * DOM Event handles require a separately declared host data codec.
+   * Notification slots carry primitive values. A callback-graph operation
+   * carries one snapshotted receiver/argument graph and a return identity.
    */
-  recordExternalCallback({effectId,callbackId,args=[]}={}){
-    const effect=this.state.effects[effectId];
-    if(!effect||effect.dispatch!=='dispatched'||
-       !(effect.external==='pending'||effect.external==='completed'&&effect.subscription?.state==='active'))
-      throw new Error('Callback requires an outstanding dispatched effect or active subscription');
-    const spec=hostOperation(effect.operation);
-    if(!spec.callbackIndices?.some(i=>effect.args[i]?.[0]==='ref'&&
-      effect.args[i][1]===callbackId))
-      throw new TypeError('Callback handle was not passed by this guest invocation');
-    const fn=this.state.heap[callbackId];
-    if(fn?.kind!=='function'||fn.async||!Array.isArray(args)||args.length>32)
-      throw new TypeError('Unowned or unsupported external callback');
-    const values=args.map(value=>guestValue(value)?copy(value):encode(value));
-    if(values.some(v=>v[0]==='ref'||v[0]==='promise'))
-      throw new TypeError('External callback needs primitive serializable arguments');
+  recordExternalCallback({effectId,callbackId,args=[],returnId=null,inputGraph=null}={}){
+    if(!Array.isArray(args)||args.length>32)throw new TypeError('Invalid external callback argument list');
+    const values=returnId===null?args.map(value=>guestValue(value)?copy(value):encode(value)):
+      copy(inputGraph?.roots?.slice(1));
+    const job={kind:'external-callback',effectId,functionId:callbackId,args:values,
+      ...(returnId===null?{}:{returnId,inputGraph:copy(inputGraph)})};
+    validateExternalCallbackJob(this.state,job,{arrival:true});
     this.commit('external.callback.enqueue',s=>{
-      s.control.a0.queue.push({kind:'external-callback',effectId,
-        functionId:callbackId,args:values});
+      s.control.a0.queue.push(job);
       return {operands:values,causes:[{kind:'effect',effectId}]};
     });
   }
@@ -3913,15 +3910,29 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
            result:['promise',p.id]};
        }
        if(job.kind==='external-callback'){
-        const effect=s.effects[job.effectId],fn=s.heap[job.functionId];
-        if(!effect||effect.dispatch!=='dispatched'||fn?.kind!=='function'||
-           fn.async||!Array.isArray(job.args)||
-           !hostOperation(effect.operation).callbackIndices?.some(i=>
-             effect.args[i]?.[0]==='ref'&&effect.args[i][1]===job.functionId))
-          throw new Error('External callback has no owned registered function');
-        const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,null,
-          job.args.map(v=>token(v,eventId)),this.functionThis(fn),fn.id);
+        const {fn,returns}=validateExternalCallbackJob(s,job);
+        let args=job.args,receiver=U,graphIdentities;
+        if(returns){
+          const identities=new Map(job.inputGraph.objects.map(node=>[node.id,this.next(s,'obj')]));
+          const value=tag=>tag[0]==='ref'?['ref',identities.get(tag[1])]:copy(tag);
+          graphIdentities=[...identities].map(([source,target])=>({source,target}));
+          for(const node of job.inputGraph.objects){
+            const id=identities.get(node.id),properties={},propertyVersions={};
+            for(const member of node.properties){
+              properties[stringPropertyKey(member.key)]=token(value(member.value),eventId);
+              propertyVersions[stringPropertyKey(member.key)]=0;
+            }
+            s.heap[id]={id,kind:node.kind,...(node.prototype===null?{prototype:null}:{}),
+              properties,propertyVersions,shapeVersion:0,version:0};
+          }
+          receiver=value(job.inputGraph.roots[0]);args=job.args.map(value);
+        }
+        const inner=fn.async?this.newPromise(s):null;
+        const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,
+          args.map(v=>token(v,eventId)),this.functionThis(fn,receiver),fn.id);
         s.frames[id].reactionJob=true;
+        if(returns)s.frames[id].externalCallbackReturn={id:job.returnId,effectId:job.effectId,
+          functionId:job.functionId,graphIdentities};
         s.control.a0.activeFrameId=id;
         return {causes:[{kind:'effect',effectId:job.effectId},
           {kind:'invocation',frameId:id}],result:U};

@@ -190,7 +190,8 @@ export function replayExact(bundle) {
           if(job?.kind!=='external-callback')
             fail('Missing external callback job',expected.eventId);
           runtime.recordExternalCallback({effectId:causeId(expected,'effect','effectId'),
-            callbackId:job.functionId,args:job.args});
+            callbackId:job.functionId,args:job.args,...(job.returnId?
+              {returnId:job.returnId,inputGraph:job.inputGraph}:{})});
           break;
         }
         case 'external.input.deliver':

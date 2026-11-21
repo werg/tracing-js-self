@@ -108,3 +108,32 @@ public history is missing, and deployment/rollback qualification remain open.
 The journal's existing bounded single-writer storage and independently retained
 receipt assumptions continue to apply. The runtime deliberately never infers
 whether or how the external parent should settle from a guest callback result.
+
+## Original-runtime transport
+
+`executeWithNativeServices` now supports the declared Promise-returning callback
+bridge on asynchronous `natlang.call` requests. It snapshots one receiver and
+argument graph before yielding and journals a typed `external.callback.enqueue`
+job with a unique return identity. The job imports its graph atomically when
+entering the original owned closure. A native Promise waits for that frame's
+exact return, throw or returned owned Promise settlement. A callback throw does
+not fail the unrelated root invocation; the native service decides how to use
+or propagate it. A callback may itself await another host request and callback.
+
+Read-only archive validation checks the closure against the immutable dispatched
+request, the imported input graph, receiver and parameter aliases, and the
+return identity. Exact replay executes the same original owned frames using
+recorded arrivals, without restarting any native service. Six focused controls
+in `test/native-return-callback.test.js` cover sync/async closure returns and
+throws, captured receiver/argument cycles, concurrent FIFO return waiters,
+reentrant child host work, atomic authority refusals and tampered archives.
+
+This transport increment does not yet establish source-witness admission. That
+also requires the deterministic fixture environment and source projector to
+preserve these return-value callback turns and compare them with independent
+native source execution. `natlang.callSync` return callbacks fail closed: the
+synchronous owner is blocked inside its guest job and cannot yield for this
+asynchronous re-entry protocol. Notification callbacks retain their existing
+primitive, void-return contract. Cross-boundary graphs are snapshots; native
+identity across separately captured host calls is not an implicit retained-cell
+capability.
