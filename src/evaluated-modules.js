@@ -14,6 +14,7 @@ import {validateBundle} from './validation.js';
 import {replayExact} from './replay.js';
 import {realizeGraph} from './training/graph.js';
 import {hasTopLevelAwait,lowerModuleAwaits,ownedModuleSchedulerSource} from './evaluated-module-scheduler.js';
+import {moduleBindingIdentifiers} from './evaluated-module-bindings.js';
 
 const namePattern=/^[A-Za-z_$][A-Za-z0-9_$]*$/;
 // ResolveExport distinguishes a missing name/circular path from ambiguity.
@@ -127,6 +128,7 @@ function parseModule(file,text,sources){
     addDependency(from);
   };
   const addSymbol=(name,kind,node)=>{
+    if(kind==='var'&&symbols.get(name)?.kind==='var')return;
     if(!validName(name)||name.startsWith('__traced_eval_')||
        symbols.has(name)||imports.has(name)||namespaceImports.has(name))
       reject('duplicate, reserved or invalid module binding '+name+' in '+file);
@@ -142,7 +144,7 @@ function parseModule(file,text,sources){
       return local;
     }
     if(declaration.type==='VariableDeclaration'&&
-       ['const','let'].includes(declaration.kind)){
+       ['const','let','var'].includes(declaration.kind)){
       for(const item of declaration.declarations){
         const local=nodeName(item.id);
         // A const initialized by a guest function expression/arrow is a
@@ -261,6 +263,22 @@ function parseModule(file,text,sources){
       initializers.push({kind:'node',node});
     }else reject('unowned module statement '+node.type+' in '+file);
   }
+  // `var` inside a top-level block/loop is a module binding too. Omitting it
+  // from the renaming map would merge independent modules in the flattened
+  // representation. Nested functions and class static blocks own their vars.
+  function moduleVars(node){
+    if(!node||typeof node!=='object')return;
+    if(['FunctionDeclaration','FunctionExpression','ArrowFunctionExpression',
+      'ClassDeclaration','ClassExpression'].includes(node.type))return;
+    if(node.type==='VariableDeclaration'&&node.kind==='var')
+      for(const declaration of node.declarations)addSymbol(nodeName(declaration.id),'var',declaration);
+    for(const [key,value] of Object.entries(node)){
+      if(['start','end','loc','range','raw','regex'].includes(key))continue;
+      if(Array.isArray(value))value.forEach(moduleVars);
+      else if(value&&typeof value==='object'&&value.type)moduleVars(value);
+    }
+  }
+  moduleVars(ast);
   for(const [exported,local] of exports)
     if(!symbols.has(local)&&!imports.has(local)&&!namespaceImports.has(local))
       reject('export '+exported+' references missing local '+local+' in '+file);
@@ -268,19 +286,20 @@ function parseModule(file,text,sources){
   // the emitted code; preflight all such imports without executing anything.
   return {file,text,lowering,symbols,imports,namespaceImports,exports,forwards,
     stars:[...new Set(stars)],deps:[...deps],functions,initializers,
+    bindingIdentifiers:moduleBindingIdentifiers(ast),
     hasTLA:initializers.some(part=>hasTopLevelAwait(part.node))};
 }
-function bindingNames(pattern,out=[]){
+function bindingIdentifiers(pattern,out=[]){
   if(!pattern)return out;
-  if(pattern.type==='Identifier')out.push(pattern.name);
-  else if(pattern.type==='AssignmentPattern')bindingNames(pattern.left,out);
-  else if(pattern.type==='RestElement')bindingNames(pattern.argument,out);
-  else if(pattern.type==='ArrayPattern')pattern.elements.forEach(x=>bindingNames(x,out));
+  if(pattern.type==='Identifier')out.push(pattern);
+  else if(pattern.type==='AssignmentPattern')bindingIdentifiers(pattern.left,out);
+  else if(pattern.type==='RestElement')bindingIdentifiers(pattern.argument,out);
+  else if(pattern.type==='ArrayPattern')pattern.elements.forEach(x=>bindingIdentifiers(x,out));
   else if(pattern.type==='ObjectPattern')
-    pattern.properties.forEach(x=>bindingNames(x.value??x.argument,out));
+    pattern.properties.forEach(x=>bindingIdentifiers(x.value??x.argument,out));
   return out;
 }
-function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map()){
+function rewrite(module,root,names,namespaceBindings=new Map()){
   const edits=new Map();
   const staticName=node=>node.computed?
     (node.property?.type==='Literal'&&typeof node.property.value==='string'?
@@ -288,7 +307,8 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
   // A namespace re-export is still a namespace. Resolve a whole static path
   // before replacing its final value, without manufacturing a guest object.
   function namespaceOf(node){
-    if(node?.type==='Identifier')return namespaceBindings.get(node.name)??null;
+    if(node?.type==='Identifier')return module.bindingIdentifiers.has(node)?
+      namespaceBindings.get(node.name)??null:null;
     if(node?.type!=='MemberExpression')return null;
     const parent=namespaceOf(node.object);
     if(!parent)return null;
@@ -297,9 +317,10 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
     return parent(name).readNamespace??null;
   }
   function checkAssignment(pattern){
-    for(const name of bindingNames(pattern))
-      if(module.imports.has(name)||module.namespaceImports.has(name))
-        reject('assignment to read-only import '+name+' in '+module.file);
+    for(const identifier of bindingIdentifiers(pattern))
+      if(module.bindingIdentifiers.has(identifier)&&
+         (module.imports.has(identifier.name)||module.namespaceImports.has(identifier.name)))
+        reject('assignment to read-only import '+identifier.name+' in '+module.file);
     const checkNamespace=target=>{
       if(!target)return;
       if(target.type==='MemberExpression'&&namespaceOf(target.object))
@@ -323,26 +344,6 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
     if(node.type==='UpdateExpression')checkAssignment(node.argument);
     if((node.type==='ForOfStatement'||node.type==='ForInStatement')&&
        node.left.type!=='VariableDeclaration')checkAssignment(node.left);
-    if(node.type==='FunctionDeclaration'||node.type==='FunctionExpression'||
-       node.type==='ArrowFunctionExpression'){
-      if(node!==root&&node.id&&(names.has(node.id.name)||namespaceBindings.has(node.id.name)))
-        reject('shadowed module function '+node.id.name+' in '+module.file);
-      for(const parameter of node.params??[])
-        for(const name of bindingNames(parameter))
-          if(names.has(name)||namespaceBindings.has(name))
-            reject('shadowed imported/module name '+name+' in '+module.file);
-    }
-    if(node.type==='CatchClause')
-      for(const name of bindingNames(node.param))
-        if(names.has(name)||namespaceBindings.has(name))reject('shadowed catch binding '+name);
-    if(node.type==='VariableDeclarator'&&
-       !initialIdentifiers.has(node.id?.start))
-      for(const name of bindingNames(node.id))
-        if(names.has(name)||namespaceBindings.has(name))
-          reject('shadowed lexical binding '+name+' in '+module.file);
-    if((node.type==='ClassDeclaration'||node.type==='ClassExpression')&&node.id&&
-       (names.has(node.id.name)||namespaceBindings.has(node.id.name)))
-      reject('shadowed class binding '+node.id.name+' in '+module.file);
     const namespace=node.type==='MemberExpression'?namespaceOf(node.object):null;
     if(namespace){
       if((parent?.type==='AssignmentExpression'&&key==='left')||
@@ -366,11 +367,7 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
     if(node.type==='Identifier'){
       if(node.name.startsWith('__traced_eval_'))
         reject('reserved generated identifier '+node.name+' in '+module.file);
-      if(parent?.type==='MemberExpression'&&key==='property'&&!parent.computed)return;
-      if((parent?.type==='Property'||parent?.type==='MethodDefinition')&&
-         key==='key'&&!parent.computed)return;
-      if(key==='label'||parent?.type==='BreakStatement'||
-         parent?.type==='ContinueStatement')return;
+      if(!module.bindingIdentifiers.has(node))return;
       if(namespaceBindings.has(node.name))
         reject('namespace identity escapes a static property read in '+module.file);
       const replacement=names.get(node.name);
@@ -379,11 +376,6 @@ function rewrite(module,root,names,initialIdentifiers,namespaceBindings=new Map(
         edits.set(node.start,{end:node.end,value:node.name+': '+replacement});
         return;
       }
-      if(parent?.type==='FunctionExpression'&&key==='id')return;
-      if(parent?.type==='FunctionDeclaration'&&key==='id'&&node!==root.id)
-        return;
-      if(parent?.type==='VariableDeclarator'&&key==='id'&&
-         !initialIdentifiers.has(node.start))return;
       edits.set(node.start,{end:node.end,value:parent?.type==='NewExpression'&&key==='callee'?
         '('+replacement+')':replacement});
       return;
@@ -594,7 +586,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     for(const item of module.initializers){
       let fragment;
       if(item.kind==='default'){
-        const expression=rewrite(module,item.node,names,new Set(),namespaces.get(file));
+        const expression=rewrite(module,item.node,names,namespaces.get(file));
         // `export default <anonymous function/class definition>` performs
         // NamedEvaluation with the name "default" before the value is
         // initialized. A synthetic `const __default_expr = ...` would infer
@@ -607,11 +599,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
         const value=anonymousDefinition?'({default:('+expression+')}).default':expression;
         fragment='const '+names.get(item.local)+' = ('+value+');';
       }else{
-        const initialIdentifiers=new Set();
-        if(item.node.type==='VariableDeclaration')
-          for(const declarator of item.node.declarations)
-            initialIdentifiers.add(declarator.id.start);
-        fragment=rewrite(module,item.node,names,initialIdentifiers,namespaces.get(file));
+        fragment=rewrite(module,item.node,names,namespaces.get(file));
       }
       append(file,'evaluate',lower?lowerModuleAwaits(fragment):fragment);
     }
@@ -624,7 +612,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       const module=get(file),names=bound.get(file),index=indices.get(file);
       append(file,'environment','function* __traced_eval_module_'+index+'(){');
       for(const fn of module.functions)
-        append(file,'instantiate',rewrite(module,fn,names,new Set(),namespaces.get(file)));
+        append(file,'instantiate',rewrite(module,fn,names,namespaces.get(file)));
       // Capturing a getter does not read its lexical binding. Functions are
       // already initialized while let/const stay in TDZ until evaluation.
       const getters=[...renamed.get(file).values()].map(name=>
@@ -654,7 +642,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     for(const file of order){
       const module=get(file),names=bound.get(file);
       for(const fn of module.functions)
-        append(file,'instantiate',rewrite(module,fn,names,new Set(),namespaces.get(file)));
+        append(file,'instantiate',rewrite(module,fn,names,namespaces.get(file)));
     }
     for(const file of order){
       initializers(file);

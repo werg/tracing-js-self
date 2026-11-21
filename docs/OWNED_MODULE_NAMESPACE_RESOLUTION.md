@@ -27,8 +27,15 @@ algorithms. The exact specification bytes and digest are retained in
   local namespace export bindings preserve their distinct defining origins.
 - Ordinary property names are distinguished from identifier references.
   A property called `ns` does not accidentally read an imported namespace.
-  Lexical namespace shadows are explicitly refused instead of silently
-  rewriting the local object's property into an unrelated export.
+  A scope pass distinguishes module bindings from parameter, body-variable,
+  block, loop, switch, catch, named-function and class bindings before any
+  rewrite. Parameter defaults are resolved outside body variable bindings.
+  Lexical namespace shadows remain ordinary local objects and preserve their
+  receivers; they cannot silently read or mutate an unrelated export.
+- Module `var` declarations, including ones nested in top-level blocks and
+  loops, have their own renamed module cells. Repeated declarations share
+  that cell and cyclic imports can read its instantiated `undefined` value.
+  Nested functions and class static blocks keep their separate variable scopes.
 - Destructuring and loop writes cannot mutate an imported live cell.
   Namespace receivers, tags, mutation, reflection, dynamic keys and escaped
   namespace values remain explicit refusals.
@@ -80,9 +87,19 @@ correspondence, public V8 transitions, independent Python replay, data
 admission, a full Test262 campaign or complete ESM conformance. The new
 scheduler cases retain the scheduler's existing public-admission refusal.
 
+`test/evaluated-module-bindings.test.js` separately compares original ESM for
+lexical shadows, hoisting, parameter defaults, lexical and parameter TDZ,
+destructuring, switches, loops, named functions/classes and local receivers.
+The combined shadow graph runs through both evaluation representations.
+A suspended owned async call also restores its captured local namespace-like
+object and mutable shadow cell from JSON and produces the identical complete
+archive without rebinding the actual module import.
+Original-source controls also distinguish identically named block/loop vars
+in independent modules and cyclic reads before a var export's evaluation.
+
 ## Remaining work
 
-General lexical-scope rewriting, namespace exotic identity/internal methods,
+Namespace exotic identity/internal methods,
 receiver calls, import attributes, dynamic loading, top-level classes and
 full module declaration coverage remain open. The original-module Test262
 campaign must be rerun on the published implementation with its complete

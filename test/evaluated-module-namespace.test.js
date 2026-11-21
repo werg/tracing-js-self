@@ -141,13 +141,13 @@ test('namespace aliases cannot escape, become receivers, mutate or bind generate
   }
 });
 
-test('namespace lexical shadows refuse instead of reading an unrelated imported cell',()=>{
+test('namespace lexical shadows retain their local bindings without rewriting unrelated imported cells',async()=>{
   for(const body of ["let ns={x:9};return ns.x;","{const ns={x:9};return ns.x;}",
-    "function ns(){return 9;}return ns();","const read=function ns(){return ns;};return read();",
-    "class ns{}return ns;","const C=class ns{};return C;"])
-    assert.throws(()=>linkEvaluatedModules({modules:{'leaf.js':'export const x=1;',
-      'main.js':"import * as ns from './leaf.js';export function run(){"+body+'}'},
-      entryModule:'main.js',exportName:'run'}),/shadowed/);
+    "function ns(){return 9;}return ns();",
+    "const read=function ns(){return ns===read;};return read();",
+    "class ns{}return ns.name;","const C=class ns{};return C.name;"])
+    await checked({'leaf.js':'export const x=1;',
+      'main.js':"import * as ns from './leaf.js';export function run(){"+body+'}'});
 });
 
 test('property keys sharing a namespace name are not namespace reads',async()=>{

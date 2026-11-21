@@ -75,10 +75,13 @@ Assignments to `ns.value`, dynamic keys (`ns[key]`), escaping `ns` as a
 value, arbitrary reflection and `Object.keys(ns)` are
 not implemented. They fail at linking instead of substituting an ordinary
 mutable JavaScript object for the ECMAScript module namespace exotic.
-Lexical bindings shadowing a lowered module/import name are also rejected,
-including namespace names in blocks, nested functions, catch bindings and
-classes. Property names such as `object.ns` and `{ns: 1}` are not identifier
-reads. Destructuring and loop assignments to imported bindings fail before
+The lowering resolves each identifier's lexical binding before rewriting it.
+Parameters, default initializers, body variables, block/catch/loop bindings,
+named functions and classes may shadow module/import names without changing
+which cell a read or write addresses. A shadowed `ns` is an ordinary local
+value, so its method calls retain their receiver. Property names such as
+`object.ns` and `{ns: 1}` are not identifier reads.
+Destructuring and loop assignments to actual imported bindings fail before
 execution just as direct assignments do. See
 [namespace resolution evidence](OWNED_MODULE_NAMESPACE_RESOLUTION.md) for the
 specification controls and explicitly recorded native-engine discrepancies.
@@ -93,6 +96,11 @@ the importer never receives a value snapshot. Writes to an imported binding
 are rejected before execution. Explicit re-exports and unambiguous `export *`
 resolve by the same original binding identity. Direct/indirect export
 resolution is checked at link time, including unused imports and re-exports.
+Module `var` bindings, including declarations inside top-level blocks and
+loops, are registered and renamed independently for every module. Repeated
+`var` declarations share their own module cell, initialized to `undefined`
+during instantiation; cyclic imports can observe that value before evaluation.
+Module declaration binding patterns remain outside the bounded lowering.
 
 Dependencies are evaluated once per graph in depth-first dependency order,
 and their bounded module-side effects occur before dependent module bodies.
