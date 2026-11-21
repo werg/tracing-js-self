@@ -61,8 +61,8 @@ work ledger. **0 of 17 complete acceptance packages are closed.**
   pass**. The recurring population is now **47 = 44 scripts + three module
   graphs**; the new original-source module case passes, while full later-pair
   qualification is still required. Class/private and generator reflection
-  public projection remain explicit limitations. A fresh pinned 843-variant
-  module campaign is running against `28261b8`.
+  public projection remain explicit limitations. The pinned 843-variant
+  module campaign against `28261b8` is retained below.
 - Reconciled results are validated against an isolated selected controller
   before any receipt is acknowledged. Public replay checks the owner and
   immediately matching result; lost outcomes remain unresolved, and a truthful
@@ -113,8 +113,35 @@ work ledger. **0 of 17 complete acceptance packages are closed.**
   unsupported / 42 environment-unavailable / 205 not-run / 93 blocked; native
   reference has 664 passes / 102 failures / 77 environment-unavailable.
   No infrastructure errors or resource limits occurred. These stages do not
-  establish public/source/native admission. Namespace identity gaps exposed by
-  the campaign are being repaired with pinned-specification controls.
+  establish public/source/native admission.
+- Imported namespace reexports now resolve to the original target module,
+  including star diamonds; equal source bytes in different modules do not
+  collapse identity. Source-owned, statically resolved namespace `typeof`
+  preserves lexical shadowing, cyclic ordinary-cell TDZ and side effects.
+  Both unchanged original Test262 cases exposed by the campaign now pass owned
+  execution and exact replay. Node 24.22.3 still fails their original linking;
+  the public/source adapter preserves that independent failure and exports
+  neither case. A separate native-agreeing graph passes source/public checks
+  and fresh rechecking. These fixes do not rewrite the historical campaign.
+- Consumer `f25fa325def722c5ec7d6ed7f9300ac235cf6e1a` independently binds native
+  action receipts to the committed invocation, effect, operation, payload,
+  owner and witness digest; it retains the complete plain JSON metadata in
+  reconstructed obligations. Explicit null, malformed, cyclic, nonfinite and
+  substituted bindings refuse atomically. **128 focused controls pass**,
+  including 34 new receipt controls. Producer-pinned fixtures contain 12
+  recovery/action episodes and 54 selected records. A fixture signature does
+  not authenticate a model; original-source admission and learned success are
+  still separate gates. The producer native policy pins this consumer.
+- The complete producer run at `9fc1935` completed with **2,294 passing, seven
+  failing and six externally gated skipped tests out of 2,307**. All seven
+  failures were obsolete positive/refusal assumptions after the stronger
+  dispatch, durable-input, owner and module declaration boundaries. Corrections
+  preserve meaningful positives and assert the new refusals; 46 affected
+  lifecycle/generator controls, three module controls and five integrated
+  namespace/callback controls pass (overlapping runs, not additive totals).
+  The failed full run remains recorded. A fresh complete run, exact 47-case
+  source/native/cost qualification and ordinary two-update lifecycle are
+  pending at the newly integrated pair.
 
 Current priorities remain retained host-handler/native composition, module
 declaration and live-binding semantics, missing later acknowledged public
