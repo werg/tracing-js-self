@@ -1,5 +1,6 @@
 // Teacher-only ownership planning. Claims receive immutable current-prefix
 // data, never a controller, journal, emit function, or a later owned event.
+import {types} from 'node:util';
 export const SOURCE_CLAIM_COORDINATOR_V8='semantic-source-claim-coordinator/1';
 const kinds=new Set(['value','allocation','event','completion']);
 function fail(message){const error=new TypeError('Source ownership: '+message);
@@ -9,7 +10,7 @@ export function immutableSourceDataV8(value){
   const active=new Set();
   function visit(value){
     if(value===null||['undefined','string','number','boolean','bigint'].includes(typeof value))return value;
-    if(typeof value!=='object'||active.has(value)||
+    if(typeof value!=='object'||types.isProxy(value)||active.has(value)||
       ![Object.prototype,null,Array.prototype].includes(Object.getPrototypeOf(value)))
       fail('claim views and plans must contain only acyclic plain data');
     active.add(value);
@@ -27,8 +28,34 @@ export function immutableSourceDataV8(value){
 }
 
 export function createSourceClaimCoordinatorV8(components){
-  if(!Array.isArray(components)||!components.length)fail('an explicit component registry is required');
-  const registry=[...components].sort((a,b)=>String(a?.id).localeCompare(String(b?.id))),ids=new Set();
+  if(!Array.isArray(components)||types.isProxy(components)||!components.length)fail('an explicit component registry is required');
+  // Snapshot registration before planning. Descriptors are inspected only
+  // after transparent proxies have been rejected, so registration cannot run
+  // a getter/trap or change the owner registry between events.
+  function record(value,label){
+    if(!value||typeof value!=='object'||types.isProxy(value)||
+      ![Object.prototype,null].includes(Object.getPrototypeOf(value)))fail(label+' must be an ordinary data record');
+    const result={};
+    for(const key of Reflect.ownKeys(value)){
+      const descriptor=Object.getOwnPropertyDescriptor(value,key);
+      if(typeof key!=='string'||!descriptor.enumerable||!Object.hasOwn(descriptor,'value'))
+        fail(label+' cannot contain accessors or hidden properties');
+      Object.defineProperty(result,key,{value:descriptor.value,enumerable:true});
+    }
+    return result;
+  }
+  const registry=[],ids=new Set();
+  for(let index=0;index<components.length;index++){
+    const descriptor=Object.getOwnPropertyDescriptor(components,String(index));
+    if(!descriptor||!Object.hasOwn(descriptor,'value'))fail('component registry cannot contain holes or accessors');
+    const source=record(descriptor.value,'source component');
+    if(typeof source.id!=='string'||!source.id)fail('component identities must be unique');
+    const component={...source,
+      claims:Object.freeze(record(source.claims??{},'source claims')),
+      prepare:Object.freeze(record(source.prepare??{},'source preparations'))};
+    registry.push(Object.freeze(component));
+  }
+  registry.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
   for(const component of registry){
     if(typeof component?.id!=='string'||!component.id||ids.has(component.id))fail('component identities must be unique');
     ids.add(component.id);
@@ -40,16 +67,17 @@ export function createSourceClaimCoordinatorV8(components){
         fail('each supported slot needs a declarative claim and preparation: '+component.id+'/'+kind);
     }
   }
-  function plan({view,slots}){
+  function plan(request){
+    const {view,slots}=immutableSourceDataV8(request);
     if(!Array.isArray(slots)||slots.length>16384)fail('invalid current-event slot inventory');
-    const frozenView=immutableSourceDataV8(view),seen=new Set(),owners=[];
+    const frozenView=view,seen=new Set(),owners=[];
     // Resolve the whole supplied inventory before invoking even a pure
     // preparation function. There is no priority, last-wins, or base fallback.
     for(const slot of slots){
       if(typeof slot?.id!=='string'||!slot.id||seen.has(slot.id)||!kinds.has(slot.kind))
         fail('slot identities must be unique and typed');
       seen.add(slot.id);
-      const input=immutableSourceDataV8(slot.input),claimed=[];
+      const input=slot.input,claimed=[];
       for(const component of registry){
         const claim=component.claims?.[slot.kind];if(!claim)continue;
         const accepted=claim(frozenView,input);

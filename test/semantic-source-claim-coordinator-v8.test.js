@@ -49,3 +49,26 @@ test('value, allocation, event and every frame-exit slot resolve before any prep
       .plan({view:{},slots:[slot('current')]}),/claim must return a boolean/);
   }
 });
+
+test('claim data and registry inspection reject transparent proxies and accessors without executing them',()=>{
+  let called=0;
+  const proxy=new Proxy({state:1},{getPrototypeOf(){called++;return Object.prototype;},
+    ownKeys(){called++;return ['state'];},getOwnPropertyDescriptor(){called++;return {value:1,enumerable:true,configurable:true};}});
+  assert.throws(()=>immutableSourceDataV8(proxy),/plain data/);
+  assert.throws(()=>createSourceClaimCoordinatorV8([proxy]),/ordinary data record/);
+  assert.throws(()=>createSourceClaimCoordinatorV8([{get id(){called++;return 'bad';}}]),/accessors/);
+  assert.throws(()=>createSourceClaimCoordinatorV8([component('ordinary',()=>true),
+    {id:{toString(){called++;return 'coerced';}}}]),/identities/);
+  const coordinator=createSourceClaimCoordinatorV8([component('ordinary',()=>true)]);
+  assert.throws(()=>coordinator.plan({view:{},slots:[{get id(){called++;return 'current';},kind:'event',input:{}}]}),/accessors/);
+  assert.throws(()=>coordinator.plan(new Proxy({view:{},slots:[]},{get(){called++;throw Error('must not run');}})),/plain data/);
+  assert.equal(called,0);
+});
+
+test('a registered ownership policy cannot be changed through caller-owned component objects',()=>{
+  const owner=component('ordinary',()=>true,()=>({kind:'original'})),coordinator=createSourceClaimCoordinatorV8([owner]);
+  owner.id='different';owner.claims.event=()=>false;owner.prepare.event=()=>({kind:'substitute'});
+  assert.deepEqual(coordinator.ids,['ordinary']);
+  assert.deepEqual(coordinator.plan({view:{},slots:[slot('current')]}).map(({owner,prepared})=>({owner,prepared})),
+    [{owner:'ordinary',prepared:{kind:'original'}}]);
+});
