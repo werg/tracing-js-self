@@ -53,6 +53,44 @@ test('destructured live module cells pass original-source/public checks and fres
   assert.equal(check.native.admitted,false,'independent consumer admission is a separate gate');
 });
 
+test('static namespace re-export reads keep live-cell public projection without admitting namespace escape',async()=>{
+  const fixture=moduleQualificationFixtures().find(row=>row.id==='module-namespace-shadow-live'),
+    request={modules:fixture.modules,entryModule:fixture.moduleEntry,exportName:fixture.exportName,args:fixture.args},
+    linked=linkEvaluatedModules(request),owned=await executeEvaluatedModules(request);
+  assert.equal(linked.metadata.requiresModuleNamespace,undefined);
+  assert.equal(linked.metadata.instantiationAndEvaluation.some(row=>row.kind==='namespace-object'),false);
+  assert.deepEqual(owned.result,[2,5,8,undefined]);
+  const result=await verifyRegionModuleTrainingCase(fixture);
+  assert.ok(result.exported,result.reason);
+  assert.equal(result.moduleReference,'passed');
+  assert.equal(result.moduleCorrespondence,'passed');
+  const fresh=await recheckRegionEvidence(result.exported);
+  assert.equal(fresh.moduleReference.status,'passed');
+  assert.equal(fresh.native.admitted,false,'native admission remains a separate gate');
+
+  // A syntactic imported spelling is not an escape for either form of import.
+  for(const specifier of ['{cells}','{cells as space}']){
+    const local=specifier==='{cells}'?'cells':'space',modules={
+      'leaf.js':'export let n=2;',
+      'barrel.js':"export * as cells from './leaf.js';",
+      'main.js':`import ${specifier} from './barrel.js';export function run(){return ${local}.n;}`
+    };
+    const candidate=linkEvaluatedModules({modules,entryModule:'main.js',exportName:'run'});
+    assert.equal(candidate.metadata.requiresModuleNamespace,undefined,specifier);
+  }
+
+  const escape={id:'namespace-value-escape',family:'namespace-value-escape',entryModule:'main.js',exportName:'run',
+    modules:{'leaf.js':'export let n=2;',
+      'main.js':"import * as ns from './leaf.js';export function run(){return ns;}"}},
+    escaped=linkEvaluatedModules(escape);
+  assert.equal(escaped.metadata.requiresModuleNamespace,true);
+  const refused=await verifyRegionModuleTrainingCase(escape);
+  assert.equal(refused.status,'projection_refused');
+  assert.equal(refused.phase,'module-projection');
+  assert.equal(refused.category,'unsupported.module-namespace-projection');
+  assert.equal(refused.exported,undefined);
+});
+
 test('owned module declarations do not bypass public class and generator observation boundaries',async()=>{
   for(const [source,reason] of [
     ['export class C{static observed=this.name;}export function run(){return C.observed;}',/class\/private state/],

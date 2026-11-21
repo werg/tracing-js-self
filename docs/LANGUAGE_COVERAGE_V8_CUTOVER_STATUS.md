@@ -16,6 +16,27 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Restore the unchanged namespace-shadow production case — 21 November 2026
+
+The hosted 46/47 source/native result exposed a linker scanner bug, rather than
+an unsupported operation in the required fixture. For unaliased `import {cells}`,
+Acorn can reuse the Identifier node for both the syntactic imported name and the
+local binding. The namespace scanner mistook the imported spelling for a runtime
+value escape and created an unnecessary namespace object, forcing the existing
+public projection refusal. Syntactic imported names are now excluded; actual
+namespace value uses still materialize owned namespace state and refuse public
+projection until that representation is independently qualified.
+
+The exact original `module-namespace-shadow-live` source/input fixture is unchanged.
+Its live-cell reads before/after mutation, missing property and shadowed local
+binding now pass original-module reference, public/source projection and fresh
+source recheck. Aliased/unaliased import controls and a real namespace-output
+refusal protect both sides of the boundary. The nine-test module selection passes
+**9/9**, zero failures or skips, on the two-file working patch committed as local
+`416b2be6615914c2453117d8f688c8f57b8c5edd` (base `973400f`). The complete exact-pair
+47 source/native/token/packing run follows publication; it is not inferred from
+this focused source-only test. The original hosted 46/47 failure remains retained.
+
 ## Offline installed-package gate correction — 21 November 2026
 
 The Node22 hosted failure at producer `973400f` was in test dependency packing:

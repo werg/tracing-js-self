@@ -715,7 +715,12 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
         const typeQuery=parent?.type==='UnaryExpression'&&parent.operator==='typeof';
         const importBinding=(parent?.type==='ImportNamespaceSpecifier'||
           parent?.type==='ImportSpecifier'||parent?.type==='ImportDefaultSpecifier')&&key==='local';
-        if(target!==null&&!staticMember&&!typeQuery&&!importBinding)
+        // In an unaliased `import {name}`, Acorn can expose the same Identifier
+        // node as both `imported` and `local`. The imported spelling is syntax,
+        // not a read of the imported namespace value. Treating it as a value
+        // escape would materialize an unnecessary namespace for static reads.
+        const importedName=parent?.type==='ImportSpecifier'&&key==='imported';
+        if(target!==null&&!staticMember&&!typeQuery&&!importBinding&&!importedName)
           namespaceTargets.add(target);
       }else if(node.type==='MemberExpression'){
         const base=namespaceTargetOf(module,node.object),
