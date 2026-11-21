@@ -26,11 +26,22 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - id: native-policy
+        name: Read the exact consumer required by native admission
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          revision = json.loads(Path('contracts/native-admission-policy-v6.json').read_text())['consumerRevision']
+          if not isinstance(revision, str) or not re.fullmatch('[0-9a-f]{40}', revision):
+              raise ValueError('Native admission requires an exact consumer commit')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'consumer={revision}\n')
+          PY
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          # Exact paired consumer; old checkpoint and prepared formats are rejected.
-          ref: 7b36617a446fafe21b5f28ae5ec73956e246f7bf
+          ref: ${{ steps.native-policy.outputs.consumer }}
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
