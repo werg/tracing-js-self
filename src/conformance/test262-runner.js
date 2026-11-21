@@ -17,6 +17,21 @@ const equivalent=(a,b)=>conformanceDigest(a)===conformanceDigest(b);
 const outcome=(status,reason,extra={})=>({status,reason,...extra});
 const errorKinds=new Set(['Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError']);
 
+export function test262VariantSource(source,mode){
+  if(mode!=='strict')return source;
+  const directive='"use strict";\n';
+  // Hashbang comments are only recognized at the start of a Script. Keep the
+  // original bytes in place and add the strict directive after that line.
+  if(source.startsWith('#!')){
+    const end=source.search(/[\r\n\u2028\u2029]/);
+    if(end<0)return source+'\n'+directive;
+    const lineEnding=source[end]==='\r'&&source[end+1]==='\n'?'\r\n':source[end];
+    const breakEnd=end+lineEnding.length;
+    return source.slice(0,breakEnd)+'"use strict";'+lineEnding+source.slice(breakEnd);
+  }
+  return directive+source;
+}
+
 export function ownedTest262Profile({specification=null,maxSteps=20000,maxSourceBytes=1048576,
   referenceTimeoutMs=300}={}){
   if(!Number.isSafeInteger(referenceTimeoutMs)||referenceTimeoutMs<10||referenceTimeoutMs>1000)
@@ -63,7 +78,7 @@ export function prepareOfficialTest262Variant({variant,profile,suiteRevision,sou
     harness.push({path:file.path,text,digest:file.sha256});
   }
   return {source,sourceBytes,harness,
-    code:(variant.mode==='strict'?'"use strict";\n':'')+source};
+    code:test262VariantSource(source,variant.mode)};
 }
 
 /** Missing optional host facilities must not look like guest ReferenceErrors. */
@@ -144,7 +159,7 @@ export function executeOfficialTest262Variant(options={}){
   }
   // Syntax is checked before harness availability: parse-negative tests must
   // never execute their $DONOTEVALUATE body or any harness code.
-  prepared.code??=(variant.mode==='strict'?'"use strict";\n':'')+prepared.source;
+  prepared.code??=test262VariantSource(prepared.source,variant.mode);
   const syntax=checkOfficialTest262Syntax(prepared,variant);
   result.stages.parseStatic=syntax.stage;
   if(syntax.parseOnly)return finish(syntax.stage.status,syntax.stage.reason,{phase:'parse',parseOnly:true});

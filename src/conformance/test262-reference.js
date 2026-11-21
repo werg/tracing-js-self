@@ -2,7 +2,7 @@
 // No result from this module is an owned-execution or semantic-admission receipt.
 import {Script,createContext,runInContext} from 'node:vm';
 import {parse as parseSyntax} from 'acorn';
-import {prepareOfficialTest262Variant,requiredOriginalHostCapabilities} from './test262-runner.js';
+import {prepareOfficialTest262Variant,requiredOriginalHostCapabilities,test262VariantSource} from './test262-runner.js';
 
 export function executeOfficialTest262Reference(options={}){
   const {variant,profile}=options;
@@ -22,7 +22,7 @@ export function executeOfficialTest262Reference(options={}){
   const negative=variant.metadata.negative;
   if(variant.mode==='module')return answer('environment_unavailable','Original module reference adapter is not connected',{phase:'environment'});
   if(negative?.phase==='early')return answer('unsupported','V8 Script cannot independently certify a distinct early-error phase',{phase:'parse'});
-  const code=(variant.mode==='strict'?'"use strict";\n':'')+prepared.source;
+  const code=test262VariantSource(prepared.source,variant.mode);
   let script;
   try{script=new Script(code,{filename:variant.path,displayErrors:false});}
   catch(error){

@@ -64,6 +64,26 @@ test('raw preserves exact bytes and loads no implicit harness or wrapper',()=>{
   assert.equal(executeOfficialTest262Reference(options).status,'passed');
 });
 
+test('strict variants preserve an original hashbang before inserting the directive',()=>{
+  for(const lineEnding of ['\n','\r\n','\r','\u2028','\u2029']){
+    const path='test/hashbang.js';
+    const original='#!/usr/bin/env node'+lineEnding+'/*---\nflags: [onlyStrict]\n---*/\n'+
+      'assert.sameValue((function(){return this;})(),undefined);';
+    const sources={...official,[path]:original};
+    const snapshot={repository:'tc39/test262',revision,
+      files:Object.fromEntries(Object.entries(sources).map(([file,text])=>[file,gitBlobSha(text)]))};
+    const profile=ownedTest262Profile();
+    const catalog=buildTest262Catalog({snapshot,sources,profile});
+    const [variant]=catalog.variants;
+    const options={variant,profile,suiteRevision:revision,sources};
+    const prepared=prepareOfficialTest262Variant(options);
+    assert.equal(prepared.code,'#!/usr/bin/env node'+lineEnding+'"use strict";'+lineEnding+
+      original.slice(original.indexOf(lineEnding)+lineEnding.length));
+    assert.equal(executeOfficialTest262Variant(options).status,'passed');
+    assert.equal(executeOfficialTest262Reference(options).status,'passed');
+  }
+});
+
 test('parse negatives execute neither original body nor harness and strict prefix affects early syntax',()=>{
   const metadata='flags: [onlyStrict]\nnegative:\n  phase: parse\n  type: SyntaxError\n';
   const [options]=fixture('$DONOTEVALUATE();with({}){}',{metadata});
