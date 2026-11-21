@@ -85,7 +85,8 @@ export function createSourceClaimCoordinatorV8(components){
         if(accepted)claimed.push(component);
       }
       if(claimed.length!==1)fail((claimed.length?'ambiguous':'missing')+' owner for '+slot.kind+' '+slot.id+
-        (claimed.length?': '+claimed.map(component=>component.id).join(', '):''));
+        (claimed.length?': '+claimed.map(component=>component.id).join(', '):'')+
+        (slot.kind==='event'&&slot.input?.event?` at ${slot.input.event.operation}/${slot.input.event.invocationId}/${slot.input.event.eventId}`:''));
       owners.push({id:slot.id,kind:slot.kind,input,component:claimed[0]});
     }
     return Object.freeze(owners.map(({id,kind,input,component})=>{

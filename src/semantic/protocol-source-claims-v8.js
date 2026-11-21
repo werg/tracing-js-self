@@ -59,9 +59,11 @@ const eventClaims={
   [proxy](view,{event,row}){return event.operation==='proxy.allocate'||
     ['property.read','property.write'].includes(event.operation)&&heap(view,row?.operands[0])?.kind==='proxy';},
   [map](view,{event,row}){
-    const own=state(view,map),plan=at(own.plans,event.invocationId);
+    const own=state(view,map),plan=at(own.plans,event.invocationId),callback=at(own.callbacks,event.invocationId);
     return has(own.callbacks,event.invocationId)&&event.stateChanges.some(change=>change.table==='frames'&&
-      change.id===event.invocationId&&['completed','thrown'].includes(change.after?.status))||
+      change.id===event.invocationId&&['completed','thrown'].includes(change.after?.status)&&
+      !['LOOP_ENTER','TRY_ENTER','BIND_CATCH','TRY_NORMAL','END_FINALLY'].includes(view.instruction?.op))||
+      Boolean(callback?.generatorCallback&&event.operation==='call.return')||
       Boolean(plan&&plan.waitingFrameId===null&&event.operation==='call.enter')||
       Boolean(row&&event.operation==='property.read'&&!row.child&&builtin(selected(row.result))==='Array.prototype.map')||
       Boolean(row&&event.operation==='call.enter'&&builtin(callee(row.operands[0]))==='Array.prototype.map');
@@ -93,6 +95,7 @@ const eventClaims={
   },
   [generator](view,{event,row}){
     const current=frame(view),inst=view.instruction;
+    if(at(state(view,map).callbacks,event.invocationId)?.generatorCallback&&event.operation==='call.return')return false;
     if(delegates(view)&&(delegateOps.has(inst.op)||['INIT','GET'].includes(inst.op)&&/^\[\[delegate next /.test(inst.arg)||
       event.operation==='call.enter'&&event.operands[0]?.[1]?.[1]==='Iterator.next'))return true;
     if(current?.generatorId&&['TRY_ENTER','TRY_NORMAL','BIND_CATCH','END_FINALLY'].includes(inst?.op))return true;
@@ -116,6 +119,12 @@ function standardEventClaims(view,input){return Object.entries(eventClaims).filt
 function ordinaryEvent(view,input){
   if(standardEventClaims(view,input).length)return false;
   const {event,row}=input;
+  // An Array#map callback's completion belongs to the map adapter, which must
+  // both finish the nested public call and advance or abruptly terminate the
+  // retained map continuation. Ordinary completion syntax inside that
+  // callback is still handled at its own source events.
+  if(has(state(view,map).callbacks,event.invocationId)&&event.stateChanges.some(change=>change.table==='frames'&&
+    change.id===event.invocationId&&['completed','thrown'].includes(change.after?.status)))return false;
   if(!row)return !event.stateChanges.some(change=>change.table==='heap');
   if(event.operation==='call.enter')return Boolean(row.child&&callee(row.operands[0])?.[0]==='ref')||baseBuiltins.has(builtin(callee(row.operands[0])));
   return Boolean(row.allocations?.length||row.arithmetic||['carry','branch'].includes(row.op)||ordinaryOperations.has(event.operation));

@@ -18,6 +18,9 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Active continuation — 21 November 2026
 
+- The current source-composition increment adds callback `throw` through `finally` into an outer catch, nested-finally return/throw precedence, and generator callbacks passed to `Array#map`. The public event still has exactly one owner; map delegates only explicit generator creation/start subtransitions, each independently planned for its unique owner inside the same rollback transaction. Recovery controls stop before a callback throw and after generator creation, then consume only the remaining public records. **34 integrated source-transaction, population, generator and completion tests pass**, with zero failures or skips; contract regeneration is byte-identical. The recurring interoperability population is now **34 sources** (`map-callback-finally-throw` and `map-generator-yield` added); it has its own population digest, separate from the unchanged frozen wire manifest. Fresh exact-pair native admission and cost qualification are pending for this increment. Mapped-generator IteratorClose, more general abrupt cleanup and full cross-family composition remain open.
+- The durable-intake increment is published at producer `52ea51c92500288535d9845ec31392fb6ce8cc51`; consumer `8ad60100c30a533a24cb12bb7e4d750175deabfa` mirrors the exact private contract and fixtures, with **26 tests and 15 subtests** passing. Consumer `3fcc28f79e014d8021d23b17d5963667a8cd123b` pins that producer in CI. The first hosted CPU jobs for recovery commit `4918b3d` stopped at Ruff formatting, while its three semantic workflows passed. Formatting-only repair `8772c0d9d3be16c848365594d0fe49273e328090` passes the affected Ruff lint/format checks; its hosted full-suite results are pending. The native policy now pins that exact repaired consumer.
+- The earlier 16-update record-fitting diagnostic used the **V6** selection path and omitted its fitted tensor bundle. It is not evidence of a V8 accepted-record restore. The current ordinary V8 bundle emits malformed text at the first tested boundary; no record has been acknowledged. A separately labeled, fully retained V8 diagnostic using actual trained tensors and the actual decoder is under implementation. Ordinary quality, accepted-record recovery and held-out results remain distinct gates.
 - Current continuation starts from producer `c6d6357a11e8dc9eb35993db45f4e5828914f100` and consumer `31e5688f81cd951384d9b6bcafc1421d43babdff`. All nine producer and four consumer PR workflows at those actual heads completed successfully. These are historical baseline results and do not qualify later changes.
 - Per-arrival durable registered input is implemented with immutable, linked and fsynced journal entries, independent expected head receipts, exact graph/owner/public-prefix checks and private queue reconciliation. Later arrivals can be recovered beyond a saved checkpoint without dispatching a host request or opening model state first. A saved journal acknowledgement cannot be replaced by an older head. Conflicting duplicate payloads, stale public history, failed writes and unknown tails refuse. Owner retirement waits for pending intake; exact lost-acknowledgement retries are idempotent after explicit read-only inspection. **62 focused producer controls pass**, covering the new journal/driver recovery, existing private snapshots, lifecycle, selected execution and native callback boundaries. See `docs/SEMANTIC_V8_DURABLE_INGRESS.md` for API, evidence and limits. The private contract digest is `a3ef5979c34f7151495b78bef19315baf6342fd659bb06a597fffba0817242e0`; public fixture/interoperability digests are unchanged. Return-value callback continuations, later missing public history, distributed intake ownership, log rotation and operational deployment/rollback remain open.
 - Consumer `4918b3d1c65b8113f9334a8afdc1daf9f129a80d` independently compares all deterministic acknowledged model-selection evidence and reconstructed session-opening metadata during restoration. Rehashed token-accounting, context-visibility and opening-metadata substitutions refuse. Fifteen focused CPU recovery/serving/identity/lineage controls pass, including an actual fresh JSONL service. Wall-clock timings and the expected replay acknowledgement transition are excluded from equality. This does not prove accepted-record selection by an ordinarily trained model or learned execution quality.
@@ -160,7 +163,7 @@ serving, and measured learned success.
 | 3 | Neutral JS execution state | In progress | Extract typed values and transitions; preserve all current state and lifecycle behavior; equivalence tests. |
 | 4 | Direct V8 detail and source certification | In progress | Own detail/context/checkpoint schema and direct compilation; no V6 witness artifact or old episode replay. |
 | 5 | Independent native V8 semantics | In progress | Direct detail, observation, effect and primitive paths plus installed import controls are delivered. Remaining: complete contract ownership and paired language-family semantics, broader malformed-state controls, final current-pair absence/replay proof. |
-| 6 | Composable source projections | In progress | Event-level adapters with complete, unique transition ownership; no exclusive whole-episode projector limitation. Mixed Promise/host source certification is under qualification. |
+| 6 | Composable source projections | In progress | Unique event ownership and atomic private/public rollback are implemented for current adapters; map callbacks now compose finally/throw and generator creation/yield. Remaining: general IteratorClose/abrupt cleanup, cross-family ownership and exact source/native qualification of the expanded population. |
 | 7 | Protocol/effect/lifecycle composition | In progress | Protocol → effect → callback → protocol, reentrancy, guest errors, cancellation and restore with independent source/native checks. Coordinated driver/model/host recovery now preserves acknowledged history and budgets. |
 | 8 | Ordinary V8 training admission | In progress | Strict preparation, ordinary readiness, recipe/loader/config/stage/resume gates are implemented. Remaining: fresh command-level qualification of the expanded source population and production recipes with the exact final assets; source eligibility remains distinct from learned outcomes. |
 | 9 | Canonical selected serving and live restore | In progress | Acknowledged state, random/budget state, registered private snapshots and per-arrival durable intake with later-tail recovery are implemented. Remaining: accepted-model-record end-to-end recovery, return-value callback continuations, child/reentrant work, missing later public history, bounded log rotation/distributed ownership, and final source/native/no-redispatch operational proof. |
@@ -631,10 +634,11 @@ serving, and measured learned success.
 
 https://github.com/werg/megatoken/pull/38
 
-## Latest published branch heads
+## Published branch checkpoint before this source increment
 
-- Producer at this ledger update: `7b2a75621233dd86b2c5c13616df479cf443effb`.
-- Consumer: `31e5688f81cd951384d9b6bcafc1421d43babdff`.
+- Producer: `52ea51c92500288535d9845ec31392fb6ce8cc51`.
+- Consumer: `8772c0d9d3be16c848365594d0fe49273e328090`.
+- The main PR description records the resulting published producer SHA; the current commit adds source composition and pins the consumer above.
 - Latest complete source/native/cost pair: producer
   `7b2a75621233dd86b2c5c13616df479cf443effb` / consumer
   `31e5688f81cd951384d9b6bcafc1421d43babdff`: **32 declared, 32 source-qualified,
@@ -644,7 +648,7 @@ https://github.com/werg/megatoken/pull/38
   records. Later executable changes require their own qualification;
   no release/default-cutover or learned task-success gate is closed.
 
-## Latest hosted-check observation
+## Historical hosted-check observation
 
 Consumer `351c8f7` completed both Python CPU suites, i18n, installed-wheel absence
 checks and source/native/bridge workflows successfully. The GPU Blackwell job

@@ -4,6 +4,7 @@ import {createRuntime} from '../src/runtime.js';
 import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-v8.js';
 import {createNumberSourceAdapterV8} from '../src/semantic/protocol-number-source-v8.js';
 import {createArrayMapSourceAdapterV8} from '../src/semantic/protocol-array-map-source-v8.js';
+import {createGeneratorSourceAdapterV8} from '../src/semantic/protocol-generator-source-v8.js';
 import {sharedRegionState} from '../src/semantic/regions.js';
 import {verifyProtocolRegionTrainingCase,recheckProtocolRegionEvidence} from '../src/semantic/protocol-source-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
@@ -78,4 +79,73 @@ test('Number, Proxy, memory, map and iterator callbacks share one independently 
   assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(replayed.controller));
   const projected=compileProtocolSourceV8(archive(source)),kinds=new Set(projected.claims.map(claim=>claim.record.kind));
   for(const kind of ['number.begin','proxy.get.call','memory.set','iterator.next','call'])assert(kinds.has(kind),kind);
+});
+
+test('map callback finally cleanup composes with abrupt completion and survives JSON recovery',async()=>{
+  const source='"use strict";function run(){let cleaned=0;try{return [2].map(function(value){'+
+    'try{throw value;}finally{cleaned+=5;}})[0];}catch(error){return cleaned+error;}}';
+  const result=await verifyProtocolRegionTrainingCase({source,entry:'run',family:'map-finally-composition',timeoutMs:30000});
+  assert(result.exported,result.reason);
+  assert.equal(result.exported.sidecar.sourceArtifact.sidecar.outcome.graph.roots.at(-1)[1],7);
+  assert.equal((await recheckProtocolRegionEvidence(result.exported)).projectionValidated,true);
+  const timeline=result.exported.public.timeline,cut=timeline.findIndex(row=>row.kind==='protocol'&&row.fields.line?.includes('"kind":"throw"'));
+  assert(cut>0,'the callback throw must be a retained public boundary');
+  const prefix={...result.exported.public,timeline:timeline.slice(0,cut)},
+    original=RegionExecutionHarness.replay(prefix,{requireTerminal:false}),
+    restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(original.checkpoint())));
+  assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(original.controller));
+  const cleanupWrites=timeline.slice(0,cut).filter(row=>row.kind==='semantic'&&row.fields.line?.includes('\"kind\":\"bind\"')&&row.fields.line?.includes('\"name\":\"cleaned\"')).length;
+  assert.equal(cleanupWrites,1,'cleanup has already committed before the throw boundary');
+  for(const row of timeline.slice(cut))restored.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+  const complete=RegionExecutionHarness.replay(result.exported);
+  assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(complete.controller));
+  assert.deepEqual(complete.controller.completion,{kind:'return',value:['num',7]});
+});
+
+test('map callback nested finally preserves return and throw precedence',async()=>{
+  const cases=[
+    ['try{throw 2}finally{return 9}',9],
+    ['try{return 3}finally{throw 2}',2],
+    ['try{try{throw 2}finally{x+=1}}finally{x+=2}',32],
+    ['try{try{return 3}finally{x+=1}}finally{x+=2}',3]
+  ];
+  for(const [body,expected] of cases){
+    const source='"use strict";function run(){let x=0;try{return [1].map(function(value){'+body+
+      '})[0];}catch(error){return x*10+error;}}';
+    const result=await verifyProtocolRegionTrainingCase({source,entry:'run',family:'map-completion-precedence',timeoutMs:30000});
+    assert(result.exported,body+': '+result.reason);
+    assert.deepEqual(result.exported.sidecar.sourceArtifact.sidecar.outcome.graph.roots.at(-1),['num',expected],body);
+    assert.equal((await recheckProtocolRegionEvidence(result.exported)).projectionValidated,true,body);
+  }
+});
+
+test('map generator callbacks compose creation, result writes, yield and JSON recovery',async()=>{
+  const source='"use strict";function run(){const values=[2,3].map(function*(value){yield value+1;});'+
+    'return values[0].next().value+values[1].next().value;}';
+  const result=await verifyProtocolRegionTrainingCase({source,entry:'run',family:'map-generator-composition',timeoutMs:30000});
+  assert(result.exported,result.reason);
+  assert.deepEqual(result.exported.sidecar.sourceArtifact.sidecar.outcome.graph.roots.at(-1),['num',7]);
+  assert.equal((await recheckProtocolRegionEvidence(result.exported)).projectionValidated,true);
+  const timeline=result.exported.public.timeline,cut=timeline.findIndex(row=>row.fields.line?.includes('"kind":"generator.create"'));
+  assert(cut>0,'generator creation is a public suspension boundary');
+  const prefix={...result.exported.public,timeline:timeline.slice(0,cut+1)},
+    original=RegionExecutionHarness.replay(prefix,{requireTerminal:false}),
+    restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(original.checkpoint())));
+  for(const row of timeline.slice(cut+1))restored.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+  assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(RegionExecutionHarness.replay(result.exported).controller));
+  assert.equal(timeline.filter(row=>row.fields.line?.includes('"kind":"generator.create"')).length,2);
+});
+
+test('a rejected map-generator composite restores both adapter states atomically',()=>{
+  const source='"use strict";function run(){return [2].map(function*(value){yield value;});}',
+    runtime=createRuntime({maxSteps:10000}).startEntry({text:source,functionName:'run',args:[]});
+  runtime.drive();const bundle=runtime.exportRun(),map=createArrayMapSourceAdapterV8(),generator=createGeneratorSourceAdapterV8({bundle}),
+    beforeMap=structuredClone(map.captureState()),beforeGenerator=structuredClone(generator.captureState());
+  let failed=false;
+  const audit={id:'map-generator-reject/1',stateless:true,afterEvent(_ctx,event){
+    if(!failed&&event.operation==='call.enter'&&event.operands[0]?.[0]==='method'&&
+      event.operands[0][1]?.[1]==='Array.prototype.map'){failed=true;throw Error('reject composite map-generator event');}
+  }};
+  assert.throws(()=>compileProtocolSourceV8(bundle,{adapters:[map,generator,audit]}),/reject composite map-generator event/);
+  assert(failed);assert.deepEqual(map.captureState(),beforeMap);assert.deepEqual(generator.captureState(),beforeGenerator);
 });

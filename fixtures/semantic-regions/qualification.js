@@ -32,7 +32,13 @@ export function sharedProtocolQualificationFixtures(){return [
     'const result=[converted].map(function(value,index,array){const cursor=[value,index].values();'+
     'return cursor.next().value+1;});resolve(result[0]+bytes[0]);});'+
     'const values=await Promise.all([p,Promise.resolve(2)]);return values[0]+values[1];}',
-    entry:'run',args:[],family:'v8-contract-shared-map-iterator',fixture:{calls:[]}}
+    entry:'run',args:[],family:'v8-contract-shared-map-iterator',fixture:{calls:[]}},
+  {id:'map-callback-finally-throw',source:'"use strict";function run(){let cleaned=0;try{return [2].map(function(value){'+
+    'try{throw value;}finally{cleaned+=5;}})[0];}catch(error){return cleaned+error;}}',
+    entry:'run',args:[],family:'v8-contract-map-finally',fixture:{calls:[]}},
+  {id:'map-generator-yield',source:'"use strict";function run(){const values=[2,3].map(function*(value){yield value+1;});'+
+    'return values[0].next().value+values[1].next().value;}',
+    entry:'run',args:[],family:'v8-contract-map-generator',fixture:{calls:[]}}
 ];}
 
 // The interoperability population includes every declared source-qualified

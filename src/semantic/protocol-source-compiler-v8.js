@@ -374,7 +374,19 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     markPublished(id){published.add(id);},
     get publicInvocation(){return controller.stack.at(-1);},
     getOwnedFrame(id){return state.frames[id];},
-    get extensionState(){return extensionState;}};
+    get extensionState(){return extensionState;},delegateEvent};
+  function delegateEvent(adapterId,event,row=null){
+    const adapter=adapterById.get(adapterId);if(!adapter?.event)refuse('unknown compositional source subtransition: '+adapterId);
+    const ownedFrame=event&&state.frames[event.invocationId],candidate=ownedFrame&&bundle.programs[ownedFrame.codeId]?.instructions[ownedFrame.pc],
+      instruction=candidate?.siteId===event?.siteId?candidate:null,
+      site=event&&bundle.sites.find(item=>item.siteId===event.siteId),sourceNode=site?inventory.nodes.get(site.start+':'+site.end)??null:null,
+      view={source,owned:state,event,row:row??null,instruction,sourceNode:copy(sourceNode),
+        components:Object.fromEntries(adapters.map(item=>[item.id,item.captureState?.()??{}]))},
+      [selected]=coordinator.plan({view,slots:[{id:'delegated-event',kind:'event',input:{event,row:row??null}}]});
+    if(selected.owner!==adapterId)refuse('compositional subtransition has a different unique owner: '+selected.owner);
+    if(adapter.event(context,event,row,selected.prepared)!==true)refuse('compositional source subtransition declined: '+adapterId);
+    use(adapter);return true;
+  }
   for(const adapter of adapters)adapter.setup?.(context);
   function observe(method,event,row){
     let failure;
