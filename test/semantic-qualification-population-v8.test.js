@@ -39,6 +39,7 @@ test('interoperability includes all source goldens and returns fresh mutable gue
       restored=decodeGenerationTask(JSON.parse(JSON.stringify(encodeGenerationTask(task))));
     assert.equal(restored.fixture.source,fixture.source);
     assert.equal(restored.fixture.id,fixture.id);
+    assert.deepEqual(restored.fixture.args,fixture.args);
   }
   assert.equal(new Set(selected.scripts.map(row=>row.id)).size,selected.scripts.length);
   for(const id of ['number-callback-cleanup','custom-iterator-close','iterable-binding-close',
@@ -54,4 +55,22 @@ test('interoperability includes all source goldens and returns fresh mutable gue
   assert.equal(regionQualificationPopulation().modules[0].modules['leaf.js'],'export let n=2;export function bump(){n+=3;}');
   assert.equal(regionQualificationPopulation({population:'gallery'}).scripts.length,11);
   assert.throws(()=>regionQualificationPopulation({population:'unknown'}),/Unknown/);
+});
+
+test('complete ordinary inventory preserves cyclic callback inputs through durable JSON',()=>{
+  const population=regionQualificationPopulation(),fixtures=[...population.scripts,...population.modules];
+  assert.throws(()=>JSON.stringify(fixtures),/circular/);
+  const frozen=JSON.parse(JSON.stringify(fixtures.map(fixture=>encodeGenerationTask({
+    kind:fixture.modules?'module':'source',traceVersion:8,fixture,producerRevision:'frozen-test'}))));
+  assert.equal(frozen.length,47);
+  assert.deepEqual(frozen.map(task=>task.fixture.id),fixtures.map(fixture=>fixture.id));
+  for(const [index,task]of frozen.entries()){
+    const restored=decodeGenerationTask(task).fixture,original=fixtures[index];
+    assert.deepEqual(restored.args,original.args??[]);
+    assert.equal(restored.source,original.source);
+    assert.deepEqual(restored.modules,original.modules);
+    // Fixture responses and callback arguments use the same canonical graph
+    // contract as the worker path, including aliases, cycles and special scalars.
+    assert.deepEqual(encodeGenerationTask({...task,fixture:restored}),task);
+  }
 });

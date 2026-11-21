@@ -40,6 +40,7 @@ assertRoots();
 const {regionQualificationPopulation}=await moduleAt('fixtures/semantic-regions/qualification.js');
 const {prepareRegionFamilyRegistry,bindRegionFamilySplit}=await moduleAt('src/semantic/dataset-v8.js');
 const {verifyRegionTrainingCase}=await moduleAt('src/semantic/compiler-v8.js');
+const {encodeGenerationTask}=await moduleAt('src/corpus/generation-process.mjs');
 const population=regionQualificationPopulation({population:'interoperability',allInputs:true}),
   candidates=[...population.scripts,...population.modules],
   prepared=prepareRegionFamilyRegistry(candidates,{seed}),
@@ -69,7 +70,9 @@ const run=(stage,command,args)=>{
 try{
   record();
   write('frozen-population.json',{schema:'semantic-v8-ordinary-source-population/1',producerRevision,
-    seed,declared:candidates.length,selectedId,candidates,
+    seed,declared:candidates.length,selectedId,fixtureEncoding:'canonical-generation-fixture/1',
+    tasks:candidates.map(fixture=>encodeGenerationTask({
+      kind:fixture.modules?'module':'source',traceVersion:8,fixture,producerRevision})),
     scope:'Complete interoperability source inventory frozen before source execution or optimizer work.'});
   write('family-registry.json',prepared.registry);
   const source=await verifyRegionTrainingCase(candidates[membership.index]);
