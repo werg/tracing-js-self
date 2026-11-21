@@ -89,6 +89,17 @@ function ownDataArray(value,label,max){
 function parseModule(file,text,sources){
   const lowering=compileBoundedTypeScript(text,{path:file});
   const ast=parseAcorn(lowering.javascript,{ecmaVersion:2022,sourceType:'module',allowHashBang:true});
+  const usesImportMeta=node=>{
+    if(!node||typeof node!=='object')return false;
+    if(Array.isArray(node))return node.some(usesImportMeta);
+    if(node.type==='MetaProperty'&&node.meta?.name==='import'&&
+       node.property?.name==='meta')return true;
+    return Object.entries(node).some(([key,value])=>
+      !['start','end','loc','range','raw','regex'].includes(key)&&
+      (Array.isArray(value)?usesImportMeta(value):
+        value&&typeof value==='object'&&typeof value.type==='string'&&
+          usesImportMeta(value)));
+  };
   const symbols=new Map(),imports=new Map(),namespaceImports=new Map(),exports=new Map(),forwards=new Map();
   const stars=[],deps=new Set(),functions=[],initializers=[];
   const addDependency=from=>deps.add(from);
@@ -298,6 +309,7 @@ function parseModule(file,text,sources){
   return {file,text,lowering,symbols,imports,namespaceImports,exports,forwards,
     stars:[...new Set(stars)],deps:[...deps],functions,initializers,
     bindingIdentifiers:moduleBindingIdentifiers(ast),
+    hasImportMeta:usesImportMeta(ast),
     hasTLA:initializers.some(part=>hasTopLevelAwait(part.node))};
 }
 function bindingIdentifiers(pattern,out=[]){
@@ -319,7 +331,8 @@ function namedDefinition(source,name){
   const key=JSON.stringify(name);
   return '({['+key+']:('+source+')})['+key+']';
 }
-function rewrite(module,root,names,namespaceBindings=new Map(),{preserveDeclarationName=false}={}){
+function rewrite(module,root,names,namespaceBindings=new Map(),{
+  preserveDeclarationName=false,importMetaName=null}={}){
   const edits=new Map();
   const staticName=node=>node.computed?
     (node.property?.type==='Literal'&&typeof node.property.value==='string'?
@@ -360,6 +373,13 @@ function rewrite(module,root,names,namespaceBindings=new Map(),{preserveDeclarat
       return;
     }
     if(typeof node.type!=='string')return;
+    if(node.type==='MetaProperty'&&node.meta?.name==='import'&&
+       node.property?.name==='meta'){
+      if(!importMetaName)
+        reject('import.meta requires a generated module environment');
+      edits.set(node.start,{end:node.end,value:importMetaName});
+      return;
+    }
     if(node.type==='UnaryExpression'&&node.operator==='typeof'){
       const operand=node.argument.type==='ChainExpression'?node.argument.expression:node.argument;
       if(namespaceOf(operand)){
@@ -380,7 +400,8 @@ function rewrite(module,root,names,namespaceBindings=new Map(),{preserveDeclarat
       // renamed. `{value=...}` must become `{value: linkedValue=...}`.
       walk(left,node,'value');
       if(left.type==='Identifier'&&module.bindingIdentifiers.has(left)&&anonymousDefinition(right)){
-        const expression=rewrite(module,right,names,namespaceBindings);
+        const expression=rewrite(module,right,names,namespaceBindings,
+          {importMetaName});
         edits.set(right.start,{end:right.end,value:namedDefinition(expression,left.name)});
       }else walk(right,node.value,'right');
       return;
@@ -395,7 +416,8 @@ function rewrite(module,root,names,namespaceBindings=new Map(),{preserveDeclarat
       // or assigned to it. Set the name as part of evaluation, before class
       // static fields execute, while recursively preserving all source reads.
       walk(nameTarget,node,node.type==='VariableDeclarator'?'id':'left');
-      const expression=rewrite(module,definition,names,namespaceBindings);
+      const expression=rewrite(module,definition,names,namespaceBindings,
+        {importMetaName});
       edits.set(definition.start,{end:definition.end,
         value:namedDefinition(expression,nameTarget.name)});
       return;
@@ -642,6 +664,14 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     source+='  '+fragment+'\n';
     spans.push({file,kind,start,end:source.length});
   };
+  // The bounded host profile supplies no import.meta properties. ECMAScript
+  // permits the host to choose them, while still requiring one stable,
+  // module-specific object. A null-prototype object matches the default
+  // SourceTextModule host hook and keeps guest mutations local to that module.
+  const importMetaName=file=>'__traced_eval_import_meta_'+indices.get(file);
+  for(const file of order)
+    if(get(file).hasImportMeta)
+      append(file,'import-meta','const '+importMetaName(file)+'=Object.create(null);');
   function initializers(file,lower=false){
     const module=get(file),names=bound.get(file);
     for(const item of module.initializers){
@@ -650,11 +680,13 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
         // The outer module binding is mutable and stays uninitialized until
         // class evaluation completes. A named class expression retains the
         // separate immutable inner name, including in heritage/static code.
-        const expression=rewrite(module,item.node,names,namespaces.get(file));
+        const expression=rewrite(module,item.node,names,namespaces.get(file),
+          {importMetaName:importMetaName(file)});
         const value=item.anonymous?namedDefinition(expression,'default'):'('+expression+')';
         fragment='let '+names.get(item.local)+' = '+value+';';
       }else if(item.kind==='default'){
-        const expression=rewrite(module,item.node,names,namespaces.get(file));
+        const expression=rewrite(module,item.node,names,namespaces.get(file),
+          {importMetaName:importMetaName(file)});
         // `export default <anonymous function/class definition>` performs
         // NamedEvaluation with the name "default" before the value is
         // initialized. A synthetic `const __default_expr = ...` would infer
@@ -664,7 +696,8 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
         const value=anonymousDefinition(item.node)?'({default:('+expression+')}).default':expression;
         fragment='const '+names.get(item.local)+' = ('+value+');';
       }else{
-        fragment=rewrite(module,item.node,names,namespaces.get(file));
+        fragment=rewrite(module,item.node,names,namespaces.get(file),
+          {importMetaName:importMetaName(file)});
       }
       append(file,'evaluate',lower?lowerModuleAwaits(fragment):fragment);
     }
@@ -678,10 +711,11 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
         // generator names observable while source references continue to use
         // the original mutable module cell rather than an expression-local one.
         const expression=rewrite(module,item.node,names,namespaces.get(file),
-          {preserveDeclarationName:true});
+          {preserveDeclarationName:true,importMetaName:importMetaName(file)});
         const value=item.anonymous?namedDefinition(expression,'default'):'('+expression+')';
         append(file,'instantiate','var '+names.get(item.local)+' = '+value+';');
-      }else append(file,'instantiate',rewrite(module,item.node,names,namespaces.get(file)));
+      }else append(file,'instantiate',rewrite(module,item.node,names,namespaces.get(file),
+        {importMetaName:importMetaName(file)}));
     }
   }
   if(scheduled){
@@ -760,6 +794,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   catch(error){reject('unowned generated guest syntax: '+error.message);}
   const metadata={
     profile:'evaluated-module/1',entryModule,exportName:evaluateOnly?null:exportName,
+    importMetaPolicy:'empty-null-prototype',
     evaluationStrategy:scheduled?'async-dependency-scheduler':'dependency-concatenation',
     evaluationOrder:order.slice(),cycles,linkedBinding:selected?.linked??null,
     ...(scheduled?{asyncDependencies:order.map(file=>({file,index:indices.get(file),

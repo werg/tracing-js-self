@@ -84,6 +84,23 @@ Nested async functions do not make a module syntactically async. In particular,
 their await expressions no longer cause an otherwise synchronous cycle to be
 rejected as an async cycle.
 
+## Minimal `import.meta` host
+
+Each linked module receives one distinct, stable, extensible object with a null
+prototype and no host-supplied properties. The linker creates it before module
+evaluation, so closures and repeated `import.meta` reads share the same object;
+guest property writes remain local to the owning module. The declared policy is
+`empty-null-prototype`, matching Node's default `vm.SourceTextModule` import-meta
+initialization when no `initializeImportMeta` hook is supplied. Original source
+differentials cover identity, prototype, per-module separation, mutation across
+calls, and JSON-history restoration of the bounded replay-backed session.
+
+This profile does not provide `url`, `resolve`, host-added metadata, or a
+general native loader. Session restoration replays committed calls and module
+source; it is not restoration of a live native or guest module record. The
+owned `evaluated-module/1` result names the policy, while public source/native
+qualification for broader module behavior remains separate.
+
 ## Original JavaScript and TypeScript provenance
 
 Original `.js`, `.mjs`, and `.cjs` text now passes through

@@ -28,6 +28,10 @@ export interface EvaluatedModulesMetadata {
   profile:'evaluated-module/1';
   entryModule:string;
   exportName:string;
+  /** Every module gets one stable, distinct, extensible null-prototype object
+   * with no host-supplied properties, matching the default Node
+   * SourceTextModule import-meta hook used by the differential controls. */
+  importMetaPolicy:'empty-null-prototype';
   /** Parallel TLA branches retain per-module environments and dependency
    * records. This strategy is owned-runtime evidence, not public qualification. */
   evaluationStrategy:'dependency-concatenation'|'async-dependency-scheduler';

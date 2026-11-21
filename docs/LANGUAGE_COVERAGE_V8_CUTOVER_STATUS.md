@@ -48,7 +48,18 @@ admission or learned model quality. Earlier private native RNG/cache state is
 retained as authenticated history data; the real native service separately
 reconstructs the final native checkpoint.
 
-Parallel work continues on per-module metadata/namespace semantics, consumer
+The integrated module linker now owns the bounded host's `import.meta` object:
+one stable, mutable, null-prototype object per module that actually uses it,
+including retained closures, JSON restoration and asynchronous module evaluation.
+The host adds no URL or other properties. Modules that never use metadata allocate
+no extra object, preserving their existing linked source and allocation order.
+**50 integrated metadata/module/source-population controls pass**, with zero
+failures/skips, after preserving the concurrent checkpoint-history diagnostic.
+The three new metadata controls include original `SourceTextModule` comparisons;
+this does not establish general namespace, dynamic-import or scheduled public
+module admission.
+
+Parallel work continues on module namespace semantics, consumer
 cancellation and surviving-session restore, and scope annotations that preserve
 ordinary imports whose binding happens to be named `defer`. Final-pair source,
 native, ordinary lifecycle and actual-head CI results remain separate gates.
