@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {applyProtocolRecordV8,createProtocolStateV8,PROTOCOL_MACHINE_API_V8} from '../src/semantic/protocol-state-v8.js';
-import {validateProtocolValueV8} from '../src/semantic/protocol-codec-v8.js';
+import {applyProtocolRecordV8,createProtocolStateV8,restoreProtocolStateV8,PROTOCOL_MACHINE_API_V8} from '../src/semantic/protocol-state-v8.js';
+import {validateProtocolValueV8,encodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
 import {PRIMITIVE_CONVERSION_RECORD_FIELDS,PRIMITIVE_CONVERSION_FAULTS_V8,
   validatePrimitiveConversionRecordV8,assertPrimitiveConversionNextV8,applyPrimitiveConversionRecordV8,
   restorePrimitiveConversionStateV8} from '../src/semantic/protocol-primitive-conversion-v8.js';
@@ -135,6 +135,20 @@ test('four fault causes are derived and fault records allocate only fresh bounde
     // invalidate the retained fact that conversion originally produced it.
     apply(c,define('error',['str','message'],data(['str','changed by catch'])));
   }
+});
+
+test('public fault allocations reject invalid reference identities before mutation',()=>{
+  const c=controller();applyProtocolRecordV8(c,begin('convert','Number',['symbol','well-known:iterator']));
+  for(const error of ['bad/name','bad name','0error',...['\n','\r','\u2028','\u2029'].map(ending=>'error'+ending)]){
+    const record={kind:'conversion.fault',id:'convert',error},before=copy(c);
+    assert.throws(()=>applyProtocolRecordV8(c,record),/value reference/);
+    assert.deepEqual(c,before,'invalid error identities must not allocate or complete the conversion');
+    assert.throws(()=>encodeProtocolRecordV8(record),/value reference/);
+    restoreProtocolStateV8(c,c.protocol);
+  }
+  applyProtocolRecordV8(c,{kind:'conversion.fault',id:'convert',error:'typeError'});
+  assert.deepEqual(c.lastReturn,{kind:'throw',value:['ref','typeError']});
+  restoreProtocolStateV8(c,c.protocol);
 });
 
 test('ordinary builtin leaves use live descriptors and retain explicit accessor, join and element boundaries',()=>{

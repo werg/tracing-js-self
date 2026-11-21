@@ -140,7 +140,7 @@ export function validatePrimitiveConversionRecordV8(record,{value}){
   if(record.kind==='conversion.begin'){
     if(!goals.includes(record.goal))throw new TypeError('Primitive conversion goal');value(record.value);
   }else if(['conversion.call','conversion.getter.call'].includes(record.kind))id(record.child);
-  else if(record.kind==='conversion.fault')id(record.error);
+  else if(record.kind==='conversion.fault'){id(record.error);value(['ref',record.error]);}
   else if(record.kind==='conversion.lookup'){
     value(record.key);if(!['str','symbol'].includes(record.key[0]))throw new TypeError('Primitive conversion property key');
     value(record.value);if(!descriptors.includes(record.descriptor))throw new TypeError('Primitive conversion descriptor');
