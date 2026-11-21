@@ -18,6 +18,8 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Active continuation — 21 November 2026
 
+- The fresh exact pair **producer `7b2a75621233dd86b2c5c13616df479cf443effb` / consumer `31e5688f81cd951384d9b6bcafc1421d43babdff`** passes contract regeneration, **32/32 source checks, 32/32 native admissions, all 32 exact-token/native-packing measurements, and the published ordinary preparation → update → fresh-process resume → export → real service restoration runner**. Exactly two optimizer updates, 315 retained moment owners, 311 advancing owners and 300 changed master tensors are measured; all seven next-selection fields agree after restoration. Zero semantic records were acknowledged, so accepted-record recovery remains open. The complete current-pair assets, including both optimizer checkpoints, model tensors, tokenizer, prepared databases and every report/log, are retained under `docs/evidence/semantic-v8-pair-7b2a756-31e5688/`. The full archive has 390 files including explicitly scoped historical reports; no current-pair asset is omitted.
+- The first full **843-module Test262 shard** at producer `7b2a756` and suite `d53ebc8b1931d9f1541e43d59650776e4b766248` is complete. All 102,994 catalog rows remain present and 102,151 are unselected. Parse: 750 passed / 93 failed; independent native reference: 670 passed / 110 failed / 63 environment-unavailable. Owned execution: 545 environment-unavailable, 205 not-run parse negatives and 93 parse-blocked, with zero owned module passes. All 93 parse failures concern `import-defer`; annual-edition membership remains unclassified. The immutable original run is retained while actual runner defects in Test262Error classification, ShadowRealm capability reporting and top-level-await rejection handling are investigated. Sixty-one focused runner controls pass in the clean isolated checkout.
 - Producer `f5c44c055c389a78b89fe7ae573ae37986aeb848` preserves arrival order across registered listeners sharing a retained realm, including durable restoration. Private sequences and cursors are checked for duplicates, reversal and substitution before mutation. Twenty-six affected producer controls, 27 paired consumer controls and one installed-wheel absence check pass; contract mirrors are published in consumer `812e8bedf71807de1074a59d072e8048b1698f3c`. The new contract digest is `1be6863d4c4fd4d67698be2d92023db55ea624f6cf8ff9139117d5f48df2cbac`; fixture and interoperability digests are unchanged. Per-arrival broker durability and return-value callback continuations remain open.
 - Producer `cb40321a0d9a0682678f0c0a4073efe313bd6742` adds recurring ordinary V8 preparation, one optimizer update, a fresh-process second update, export and actual service restoration to CI. A corrected local runner against producer `a2a2067` / consumer `351c8f7` passes all five stages with exactly two updates, 315 optimizer moment owners, 311 advancing owners and 300 changed master tensors; restored next selection agrees on all seven checked fields. Zero semantic records were acknowledged. The first attempt incorrectly treated `max_steps` as a global cap, performed three updates and pruned the first checkpoint; that failure is retained. The published runner keeps an independent first-checkpoint copy, reuses the unchanged one-update configuration and verifies the latest-checkpoint pointer. A selected held-out source refuses before output creation. Fresh qualification of the published runner/current contract is active; no learned-quality claim is made.
 - Consumer `31e5688f81cd951384d9b6bcafc1421d43babdff` refreshes its V8 source-authority checkout to producer `cb40321` and adds the same ordinary lifecycle CI gate. The preceding `812e8be` V8 matrix correctly failed contract comparison against its obsolete producer pin; it is not counted as passing. Producer `c5348ea4b77a84e944ba0892f071c87e143cbae9` now pins this consumer. Current-head CI remains pending.
@@ -626,13 +628,15 @@ https://github.com/werg/megatoken/pull/38
 
 ## Latest published branch heads
 
-- Producer at this ledger update: `c5348ea4b77a84e944ba0892f071c87e143cbae9`.
+- Producer at this ledger update: `7b2a75621233dd86b2c5c13616df479cf443effb`.
 - Consumer: `31e5688f81cd951384d9b6bcafc1421d43babdff`.
 - Latest complete source/native/cost pair: producer
-  `a2a2067cc87a36f7636e6d32e603de3bf13beade` / consumer
-  `351c8f7aed56ac400d533156544e34a76ea3e5b5`: **32 declared, 32 source-qualified,
+  `7b2a75621233dd86b2c5c13616df479cf443effb` / consumer
+  `31e5688f81cd951384d9b6bcafc1421d43babdff`: **32 declared, 32 source-qualified,
   32 native-admitted, 32 exact-token and native-packing measurements**, actual
-  pinned tokenizer. Later executable changes require their own qualification;
+  pinned tokenizer, plus exactly two ordinary optimizer updates, fresh-process
+  resume, export and real service restoration with zero acknowledged semantic
+  records. Later executable changes require their own qualification;
   no release/default-cutover or learned task-success gate is closed.
 
 ## Latest hosted-check observation
