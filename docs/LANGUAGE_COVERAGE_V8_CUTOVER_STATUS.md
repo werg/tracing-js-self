@@ -46,8 +46,11 @@ All six now reproduce the native `ReferenceError`. Keys-only names/ownKeys remai
 read-free; frozen checks stop at the first writable export, and freezing retains
 both descriptor reads before its `TypeError`. An uncaught completion-routing bug
 found during that correction is covered by rejected module evaluation plus valid
-terminal archive/replay checks. Original failing probes and logs are retained for
-the next evidence supplement.
+terminal archive/replay checks. The [verified 25-file namespace supplement](evidence/module-namespace-76a06f8/README.md)
+retains original failures, before/after source probes, focused logs, exact
+unpublished source commits and the published native comparison. Every member and
+compressed part verifies; archive SHA-256 is
+`aaee2eafe09de417c92578bab4987aeadb8a90ec341dbc76b21b352d504dc6d8`.
 
 This is an **owned-runtime increment only**. Public/source/native admission and
 host namespace outputs remain explicitly refused. The internal linker capability
