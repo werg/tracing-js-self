@@ -28,7 +28,7 @@ test('the public V8 entry reuses direct implementations and retains historical p
   for(const [name,value]of Object.entries(v8))if(Object.hasOwn(aggregate,name)&&
     !['encodeDetailedRecord','decodeDetailedRecord'].includes(name))assert.equal(value,aggregate[name],name);
   for(const name of ['compileSourceWitnessV8','verifySourceProjectionV8','verifySourceTrainingCaseV8',
-    'recheckSourceAdmissionV8','verifyRegionTrainingCase','recheckRegionEvidence','admitRegionEvidence',
+    'recheckSourceAdmissionV8','independentSourceReferenceV8','verifyRegionTrainingCase','recheckRegionEvidence','admitRegionEvidence',
     'RegionSelectedModelDriver','createNativeV8ProcessSelector','buildRegionDataset'])
     assert.equal(typeof v8[name],'function',name);
   assert.equal(aggregate.ALGORITHM_TRACE_VERSION,'semantic-trace/7');

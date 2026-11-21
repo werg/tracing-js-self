@@ -6,6 +6,7 @@ export {SemanticControllerV8} from './controller-v8.js';
 export {SelectedExecutionLifecycleV8,V8_LIFECYCLE_CONTRACT} from './lifecycle-v8.js';
 export {compileSourceWitnessV8,verifySourceProjectionV8} from './source-compiler-v8.js';
 export {verifySourceTrainingCaseV8,recheckSourceAdmissionV8,SOURCE_ADMISSION_CONTRACT_V8} from './source-admission-v8.js';
+export {independentEffectfulReference as independentSourceReferenceV8} from './source-reference.js';
 
 export {ALGORITHM_V8_SCHEMA,ALGORITHM_V8_PROFILE,ALGORITHM_V8_LIMITS,ALGORITHM_V8_OPERATION_METADATA,
   validateAlgorithmV8,validateTermV8,evaluateAlgorithmV8,evaluateTermV8,checkAlgorithmV8Claims} from './algorithm-v8.js';
