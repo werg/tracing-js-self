@@ -221,6 +221,50 @@ class CheckpointBindingTests(unittest.TestCase):
                         CLI.serving_capture('served', {}, identity=identity, seed=17, max_tokens=128)
 
 
+@unittest.skipUnless(os.environ.get('MEGATOKEN_REPOSITORY'),
+                     'V6 admission config needs an explicit consumer checkout')
+class SemanticV6CaptureAdmissionTests(unittest.TestCase):
+    def setUp(self):
+        self.consumer = Path(os.environ['MEGATOKEN_REPOSITORY']).resolve()
+        sys.path.insert(0, str(self.consumer/'src'))
+        from megatoken.training.config import TrainConfig
+        self.TrainConfig = TrainConfig
+
+    def tearDown(self):
+        consumer_src = str(self.consumer/'src')
+        while consumer_src in sys.path:
+            sys.path.remove(consumer_src)
+
+    def test_capture_uses_real_frozen_v6_admission_and_preserves_checkpoint_config(self):
+        original = {'purpose': 'diagnostic', 'phase': 'P1', 'model': '1x16', 'max_steps': 1,
+                    'max_window_records': 3, 'semantic_experiment': None}
+        original_copy = copy.deepcopy(original)
+        config, binding = CLI.semantic_v6_capture_config(original, self.TrainConfig)
+        self.assertEqual(original, original_copy)
+        self.assertEqual(config.phase, 'SE')
+        self.assertEqual(config.max_window_records, 1)
+        self.assertEqual(binding['scope'], 'read-only V6 conditional capture; no optimizer exposure')
+        self.assertEqual(binding['optimizerSteps'], 0)
+        self.assertEqual(len(binding['cohortDigest']), 64)
+        self.assertEqual(len(binding['engineeringReceiptSha256']), 64)
+        self.assertEqual(config.semantic_experiment['regime'], 'fixed-examples')
+        self.assertEqual(config.semantic_experiment['limit'], 1)
+        historical = json.loads((ROOT/'docs/evidence/semantic-v4/effectful-tracks-events-cohort.json').read_text())
+        capture = json.loads(Path(binding['cohort']).read_text())
+        self.assertEqual(capture['cases'], historical['cases'])
+        self.assertEqual(capture['thresholds'], historical['thresholds'])
+        receipt = json.loads(Path(binding['engineeringReceipt']).read_text())
+        self.assertEqual(receipt['schema'], 'semantic-engineering-completion/4')
+        self.assertEqual(set(receipt['repositories']), {'tracing-js-self', 'megatoken', 'natlang'})
+
+    def test_missing_frozen_evidence_blocks_capture_config(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(FileNotFoundError, 'frozen effectful cohort'):
+                CLI.semantic_v6_capture_config(
+                    {'purpose': 'diagnostic', 'phase': 'P1'}, self.TrainConfig,
+                    producer_root=directory)
+
+
 @unittest.skipUnless(importlib.util.find_spec('torch') and os.environ.get('MEGATOKEN_REPOSITORY'),
                      'Actual conditional hook requires local Torch and an explicit companion checkout')
 class ActualNativeHookTests(unittest.TestCase):

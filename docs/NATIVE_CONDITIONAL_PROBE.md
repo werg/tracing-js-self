@@ -67,13 +67,20 @@ separate measurements.
 
 ## The executed boundaries
 
-The training arm uses the actual saved configuration and native
+The training arm reloads the exact saved checkpoint and uses the native
 `PreparedCorpus`, `_WindowPlan`, `prepare_batches`, `TransducerTrainer`,
-`LossLedger` and `forward_meridian_batch`. It runs that trainer forward with
+`LossLedger` and `forward_meridian_batch`. For semantic V6 rows, it constructs a
+separate one-example SE capture config from the existing frozen effectful cohort
+and engineering receipt, then validates them with the consumer's
+`SemanticExperimentConfig.preflight`. See [native conditional capture
+admission](evidence/semantic-v4/native-conditional-capture-admission.md) for
+the cohort provenance and scope. The checkpoint's saved training config remains
+unchanged and its digest is reported separately. The forward runs with
 `differentiate=False`, under `torch.no_grad()`, with every model module in eval
-mode. This is the same disabled-dropout forward used for native held-out loss.
-The original native metadata, observation reconstruction, context announcements,
-track identities and bank lookups remain in place.
+mode. This is a read-only capture with zero optimizer steps; it is not an actual
+semantic training run. The original native metadata, observation
+reconstruction, context announcements, track identities and bank lookups
+remain in place.
 
 The serving arm reloads the exact `ServedBundle`, opens the real
 `MultiTrackRuntime`, initializes `SelectedSemanticInference` with the bound
