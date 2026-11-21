@@ -123,6 +123,27 @@ test('native callback counters expose only delivered IDs and reconstruct after J
   assert.throws(()=>controls.fire(44),/revoked/);
 });
 
+test('restored selected callback exposes its exact return or throw without a live waiter',async()=>{
+  for(const kind of ['return','throw']){
+    const {host}=await callbacks({protocol:false});
+    finish(host,'root');
+    const pending=host.inner.enqueueClosure({ownerInvocationId:'root',closureId:'fn',args:[kind]});
+    host.sync();
+    void pending.catch(()=>{});
+    const child=[...host.inner.invocations.keys()].find(id=>id.startsWith('callbackinvoke'));
+    host.select(child,kind==='return'?{kind:'return',fields:{value:['num',17]}}:
+      {kind:'throw',fields:{value:['num',23]}});
+    host.select(child,{kind:'end',fields:{kind}});
+    const restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(host.checkpoint())));
+    assert.deepEqual(restored.inner.callbackOutcome(child),{
+      status:kind==='return'?'fulfilled':'rejected',
+      completion:{kind,value:['num',kind==='return'?17:23]}});
+    // The adapter's in-process Promise is intentionally not fabricated by
+    // restore; the saved child result is explicit host reconciliation input.
+    assert.equal(restored.inner.completionWaiters.has(child),false);
+  }
+});
+
 test('direct lifecycle recovery rejects rehashed closure, callback counter and result identity changes',async()=>{
   const {host,controls}=await callbacks({protocol:false});finish(host,'root');controls.fire(1);host.sync();
   finish(host,'event1',['num',1]);host.closeRealm('realm');

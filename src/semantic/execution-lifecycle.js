@@ -631,6 +631,23 @@ export class SelectedExecutionCore {
     void completion.catch(()=>{});
     this.activateQueuedClosures(owner.realmId);this.wake();return completion;
   }
+  /** Read the selected callback's saved completion after a process restore.
+   * This reports guest state only: it never recreates the dead adapter Promise
+   * or resumes/re-dispatches the native parent operation. A host adapter that
+   * owns a durable continuation can use this value as input to explicit
+   * reconciliation of that parent's uncertain intent.
+   */
+  callbackOutcome(invocationId){
+    const activation=this.invocations.get(invocationId);
+    demand(activation?.activation==='callback','Unknown selected callback invocation');
+    if(activation.status==='completed'){
+      const completion=clone(activation.controller.completion);
+      return {status:completion.kind==='throw'?'rejected':'fulfilled',completion};
+    }
+    if(['failed','cancelled'].includes(activation.status))
+      return {status:activation.status,reason:activation.reason??null};
+    return {status:'pending'};
+  }
   activateQueuedClosures(realmId){
     const realm=this.realms.get(realmId);
     if(!realm||realm.running)return null;
