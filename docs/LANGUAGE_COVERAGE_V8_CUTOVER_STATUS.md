@@ -16,7 +16,76 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
-## Current continuation from published heads — 21 November 2026
+## Latest measured checkpoints and active work — 21 November 2026
+
+**0 of 17 complete acceptance packages are closed.** Measurements below keep
+their exact producer/consumer pins; later fixes require fresh qualification.
+
+| Executed gate | Exact revision(s) | Result and scope |
+| --- | --- | --- |
+| Complete producer suite and reference fixture | Producer `934a111cf952e084b599ddff6932ce34849550b6` | 2,320 tests: **2,314 passed, zero failed, six external prerequisites skipped**; reference fixture 8/8 checks passed. The six skipped prerequisites were exercised separately below. |
+| External native coordinator gates | Producer `35be3b75d7eff768274afd034ff8b4215ddba77c`, consumer `f25fa325def722c5ec7d6ed7f9300ac235cf6e1a` | **13/13 passed, zero skipped**, including the five formerly external coordinator tests. Independent consumer validation passed all five runtime cases. Actual initialized weights exercise a truthful refusal/cost boundary; controlled decoder cases are not learned success. |
+| Exact external ByteCodec gate | Producer `35be3b7`, policy-pinned historical consumer `3a0eb90e3e7282e9b3cb2ca0da27454451b50e21` | **3/3 passed, zero skipped**, including the remaining external prerequisite. The production tokenizer is retained. This is a separate run at its declared legacy tokenizer pin. |
+| All recurring source/native/cost/packing cases | Producer `934a111`, consumer `f25fa32` | **47/47 original-source checks, 47/47 independent native admissions, 47/47 exact-token measurements, 47/47 native packing checks passed**. The full population is 44 scripts and three original module graphs. |
+| Ordinary production training lifecycle | Producer `35be3b7`, consumer `f25fa32` | Frozen all-47 inventory; prepare, train, fresh-process resume, export and real service restoration all passed. **Exactly two normal optimizer updates; zero acknowledged model records.** All 315 retained optimizer moment owners match, 311 advance and 300 master tensors change. This does not establish useful learned execution. |
+| Separate bounded decoder diagnostic | Producer `35be3b7`, consumer `f25fa32` | **32 decoder-only updates**, 18 target tokens/update; actual fitted weights emit and acknowledge **one** original Promise-create record. Fresh unchanged service restores the acknowledged checkpoint and emits identical next output; zero host dispatch, next probe unacknowledged. Independent producer source/projection/public replay confirms the exact accepted prefix and context. Full program incomplete, no held-out or generalization claim. |
+| Historical complete consumer selection | Producer `9fc193538c4e5c2e512f9fef767d30ed9e437c5a`, consumer `f25fa32` | **553/555 passed, two failed, zero skipped**. Both failures were stale callback test setups, corrected separately in `a2734bba6f23f2af29f3bc698d538e75d0d52223`; its 22 affected controls passed. The historical failed run is retained unchanged. |
+| Canonical JSON authority repair | Consumer `84dee6ab3da55f164001d6d127ce4bc6f8eaa661` | **170 focused controls passed**, including 16 boolean/number substitutions that reproduced bypasses before correction and eight ECMAScript number-equivalence positives. A fresh full **579-test** selection is running against clean producer `9fc1935`. |
+
+The 47-case measurement contains 34 compact and 1,755 detailed records across
+34 compact and 294 detailed regions. Detailed records account for **55,388 of
+56,597 generated text tokens (97.86%)**. Flat observed/context cost is 2,951,658
+tokens; native packing contains 6,920 physical chunks, 1,948 logical records,
+3,013,123 observed/context tokens and zero terminal tokens. Twenty-two cases
+contain some compact records and 25 are wholly detailed. These are exact
+representation costs, not model-quality results. Complete inputs, reports,
+tokenizer, ordinary/fitted model and optimizer assets, transcripts and failed
+preflights are being packaged with hashes and separate revision identities.
+
+Producer `35be3b7` fixes a real ordinary-runner failure before training: the
+frozen full population includes cyclic/shared callback graphs and cannot be
+serialized as raw JSON. It now uses the existing lossless generation-fixture
+codec. Three controls round-trip all 665 candidates and the selected 47-source
+inventory. The wrong-import-root and circular-JSON attempts remain failed
+preflights with zero optimizer updates; the later successful run is separate.
+
+Consumer `84dee6a` compares independently derived JSON through the existing
+ECMAScript-compatible canonical representation at committed-context,
+prediction-context and checkpoint boundaries. Python's container equality
+previously treated `true` as `1` and `false` as `0`, allowing altered native
+action metadata to pass; a rehashed private checkpoint did not repair that
+authority gap. The fix preserves equivalent JSON numbers `1` and `1.0`.
+The producer policy now pins this corrected consumer. The producer's hosted
+V8 run at `35be3b7` failed on the same two historical consumer test assumptions
+before source admission; that failed run is retained, not called flaky.
+
+Producer `49ad23d94ea41038e0fe7dc8426d0f7e2776a0e1` adds a bounded immutable
+checkpoint-history journal. Six focused controls exercise fsynced files,
+fresh-process reading, racing writers, missing/reordered/changed entries,
+resource bounds and public-history rollback. The application must explicitly
+record complete checkpoints and independently retain the acknowledged head.
+The reader never discovers unacknowledged later files as authority. Driver
+integration is in progress: validate all later cuts before opening native
+state, preserve complete accepted/stale attempt ledgers, and restore a later
+recorded cut without replaying acknowledged host effects. Automatic capture of
+every transition, durable cancellation tombstones, distributed ownership and
+log rotation remain open; storage tests alone do not establish those properties.
+
+The complete **843-module campaign at producer `35be3b7`** is running with the
+same pinned annual specification, Test262 revision, 102,994-row catalog and
+resource policy as the historical `28261b8` campaign. No outcome has yet been
+projected from the two repaired namespace cases. A separate narrow annotation
+audit for original parse failures preserves every catalog row and status;
+proposal feature tags alone are insufficient to change edition scope.
+
+Lessons: canonical JSON value types, not host-language container equality,
+must preserve public authority; complete source populations can contain cycles
+even before training starts; costs and consumed stale model attempts belong to
+recovery state; an independently retained journal head grants authority only
+to explicitly recorded cuts. Full suite, external-asset, source/native,
+ordinary lifecycle and in-sample model gates remain distinct measurements.
+
+## Earlier continuation from published heads — 21 November 2026
 
 Resumed from producer `1965c3767cfb4ff1719c90ecf3a0d71ff3142e39` and consumer
 `de58ef4a59cfa0967fa63b937077dd61dec1a4c4`. The main PR remains the active
