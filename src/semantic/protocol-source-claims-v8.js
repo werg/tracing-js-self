@@ -23,6 +23,10 @@ const delegateOps=new Set(['LOGICAL_JUMP','REQUIRE_OBJECT','BINARY','DELEGATE_RE
 const ordinaryOperations=new Set(['property.read','property.write','property.update','primitive.binary','primitive.unary',
   'binding.update','binding.read','binding.initialize','binding.write','call.return','completion.throw','control.jump',
   'environment.iteration','binding.default.guard']);
+// The same declarative domains are available to the shared effectful source
+// engine. Its base and Promise peers exclude only these explicit domains;
+// arbitrary extensions still have to prove unique ownership.
+export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy]);
 const callee=value=>value?.[0]==='method'?value[1]:value;
 const builtin=value=>['intrinsic','builtinfn'].includes(value?.[0])?value[1]:null;
 const selected=value=>value?.[0]==='method'?value[1]:value;
@@ -135,4 +139,11 @@ export function protocolSourceClaimsV8(id){
       return id===ORDINARY_PROTOCOL_SOURCE_V8?owners.length===0:owners.includes(id);},
     allocation:(view,node)=>allocationOwner(view,node)===id
   };
+}
+export function sharedProtocolSourceEventV8(view,input){
+  return SHARED_PROTOCOL_SOURCE_IDS_V8.some(id=>enabled(view,id)&&eventClaims[id](view,input));
+}
+export function sharedProtocolSourceCompletionV8(view,exit){
+  const change=view.event?.stateChanges.find(change=>change.table==='frames'&&change.id===exit.invocation);
+  return Boolean(change&&completionOwners(view,change).some(id=>SHARED_PROTOCOL_SOURCE_IDS_V8.includes(id)&&enabled(view,id)));
 }

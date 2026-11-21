@@ -8,6 +8,7 @@ import {encodeProtocolRecordV8} from './protocol-codec-v8.js';
 import {isDeepStrictEqual} from 'node:util';
 import {createSourceClaimCoordinatorV8,immutableSourceDataV8} from './source-claim-coordinator-v8.js';
 import {createBaseSourceComponentV8,BASE_SOURCE_COMPONENT_V8} from './source-projection-base-v8.js';
+import {SHARED_PROTOCOL_SOURCE_IDS_V8} from './protocol-source-claims-v8.js';
 
 export const EFFECTFUL_REGION_TEACHER_SCHEMA_V8='semantic-region-teacher-adapter/1';
 const copy=structuredClone;
@@ -129,6 +130,7 @@ export function createEffectfulRegionAdapterV8({extensions=[],allowHost=false}={
     return result;
   }
   return Object.freeze({schema:EFFECTFUL_REGION_TEACHER_SCHEMA_V8,
+    projectionStateProfiles:Object.freeze(ids.filter(id=>SHARED_PROTOCOL_SOURCE_IDS_V8.includes(id))),
     createHarness:options=>facade(new RegionExecutionHarness(options),[],allowHost),
     replay:artifact=>RegionExecutionHarness.replay(artifact),
     restore:packet=>facade(RegionExecutionHarness.restore(packet),[],allowHost),
@@ -196,6 +198,14 @@ export function createEffectfulRegionAdapterV8({extensions=[],allowHost=false}={
         apply(planned,'completion',event,row,planned.input);invocations.push(planned.input.invocation);
       }
       return invocations.length?{invocations}:false;
+    },
+    beforeEvent(ctx,event,row){
+      const failures=[];
+      for(const component of components)if(component.beforeEvent){
+        try{if(component.beforeEvent(ctx,event,row)===false)fail('source precondition failed: '+component.id);}
+        catch(error){failures.push(error);}
+      }
+      if(failures.length)throw failures[0];
     },
     checkEvent(ctx,event,row){
       if(!event)return;

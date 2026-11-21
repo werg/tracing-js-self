@@ -1,12 +1,14 @@
 # V8 source event ownership and publication
 
 The Promise executor, Promise join and ordinary detailed source components now
-share one teacher projection. They no longer choose a single whole-episode
-compiler or install one another as an incidental dependency. This is a bounded
-composition increment. The direct source projector for the other protocol
-families now uses the same ownership coordinator and stages every event and
-its private adapter state. The two source compiler paths still have separate
-admission profiles; arbitrary Promise/protocol-family mixtures remain a gate.
+share one teacher projection with Number conversion, ordinary Proxy traps and
+binary memory. A source program can nest these operations inside an executor,
+then join and await the resulting Promise. The direct protocol adapters emit
+on the same invocation controller through the shared ownership coordinator;
+they do not compile a second trace or replace the episode. The separate direct
+source projector still serves other protocol families, using the same ownership
+coordinator and complete event staging. General protocol-family composition
+remains a gate.
 
 ## Ownership before execution
 
@@ -19,9 +21,9 @@ claims and a selected handler that declines are source refusals.
 | Slot | Reservation and owner |
 | --- | --- |
 | Value | Supported tagged values in the current owned prefix, current event and completion facts, plus the language's default `undefined` value. Ordinary values belong to the base component; resolving-function identities belong to the executor component. |
-| Allocation | Newly introduced heap/Promise identities and initial or deferred closures that can become visible at the current boundary. The join component owns its result arrays; the executor component owns its explicitly described closures; the base component owns ordinary data and Promise creation. |
-| Main event | One component owns the current event. Join registration/dispatch and executor entry/resolver/helper calls are distinguished from ordinary source projection. |
-| Completion | Each exiting frame receives its own slot. One owned throw can finish a helper, an executor and an ordinary caller without one component consuming the other exits. |
+| Allocation | Newly introduced heap/Promise identities and initial or deferred closures that can become visible at the current boundary. The join owns its result arrays; the executor owns its explicitly described closures; binary and Proxy components own their event-created storage; the base owns ordinary data and Promise creation. |
+| Main event | One component owns the current event. Join registration/dispatch, executor entry/resolver/helper calls, Number conversion, Proxy access and binary operations have explicit domains. |
+| Completion | Each exiting frame receives its own slot. One owned throw can finish a Proxy trap, Number callback, helper, executor and ordinary caller without one component consuming the other exits. |
 
 The ordinary component explicitly declares its accepted value, allocation,
 event and completion families. Selecting it invokes the existing detailed
@@ -117,9 +119,54 @@ a host prototype function as private source data when a guest first writes a
 same-named property.
 
 This compiler's ordinary scalar/reference/Symbol values still use its direct
-codec and shared value checks. It does not yet combine its domains with the
-Promise source compiler, generalize the supported language profiles, or qualify
-new producer/consumer revisions for ordinary training.
+codec and shared value checks. Its generator, construction, iterator, cleanup,
+enumeration and array-map domains have not yet moved to the shared effectful
+source engine.
+
+## Protocol operations inside the shared Promise source engine
+
+`protocol-source-bridge-v8.js` adapts individual source events from the existing
+Number, Proxy and binary components. Discovery uses static source syntax, and
+their event/allocation/completion claims reuse the direct compiler's declarative
+domains. The ordinary component explicitly excludes those selected domains.
+The executor helper domain also excludes those declared protocol events, so a
+builtin conversion or implicit Proxy trap cannot claim executor ownership.
+Other helper-call restrictions remain unchanged.
+Missing and overlapping owners still fail before any preparation or prelude.
+
+Each bridged handler uses the common engine's authoritative controller, public
+identity mapping, lexical cells and frame ownership. Private adapter snapshots
+live in the common component-state transaction. A handler temporarily restores
+its snapshot, runs, saves its new snapshot and restores the adapter object; it
+cannot leave closure-local state behind if staging fails. The original family
+heap/frame checks run after every event, and all pre/post observers retain the
+same deterministic publication boundary. Declared state profiles allow only
+the corresponding Proxy storage or pending Number conversion through the
+effectful profile guard; construction, property-key conversion and other
+undeclared metadata remain refused.
+
+The recurring interoperability case `promise-number-proxy-memory-join` executes
+Promise executor → Number callback → Proxy trap → typed-memory write/read, then
+Promise join and await. It raises the declared recurring interoperability
+population from 30 to **31 cases**, while preserving the existing wire golden
+manifest. Independent source execution checks its operation,
+completion, descriptor, backing-memory, Proxy and conversion observations. A
+fresh source recheck reproduces its public contexts. A checkpoint taken after
+the nested memory write preserves the simultaneously active executor, Number
+conversion and Proxy trap, and replay reaches the same terminal shared state.
+Another source control throws through all three callback/executor completion
+owners. Fault controls reject a Proxy handler after call emission and a binary
+postcondition after backing mutation, proving the complete live public/private
+prefix is unchanged. Reversing the registry produces identical output.
+
+These cases retain the existing public wire operations. The new composed source
+profile does not admit async Number/Proxy caller continuations, general cleanup
+inside those pending callbacks, Symbol-valued effectful bindings, or rich host
+input identity remapping. The host source gate still needs the corresponding
+independent rich-state observers before these families can be promoted in
+retained host callbacks. Native admission and tokenizer measurements must be
+regenerated for the exact producer/consumer pair; passing source controls alone
+does not grant training eligibility.
 
 ## Qualification and limits
 

@@ -18,6 +18,7 @@ import {createSourceClaimCoordinatorV8} from './source-claim-coordinator-v8.js';
 import {ORDINARY_PROTOCOL_SOURCE_V8,protocolSourceClaimsV8} from './protocol-source-claims-v8.js';
 import {encodeProtocolRecordV8,validateProtocolValueV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
 import {PROTOCOL_SOURCE_ADAPTERS_V8} from './protocol-source-extensions-v8.js';
+import {createSharedProtocolSourceComponentsV8} from './protocol-source-bridge-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual,lit=value=>({op:'literal',value:copy(value)});
@@ -97,10 +98,13 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     new Set(adapters.map(adapter=>adapter.id)).size!==adapters.length)refuse('distinct versioned extension identities required');
   adapters.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
   const components=adapters.filter(adapter=>adapter.sourceComponent).sort((a,b)=>a.id.localeCompare(b.id));
-  if(components.length)return compilePromiseSourceProjectionV8(bundle,{maxGenerated,
-    extensions:components.map(adapter=>adapter.sourceComponent),extensionIds:components.map(adapter=>adapter.id),
-    sourceProfile:components.some(adapter=>adapter.id==='promise-executor/1')?
-      'promise-executors-source/1':'promise-joins-source/1'});
+  if(components.length){
+    const shared=createSharedProtocolSourceComponentsV8({source,bundle,adapters}),
+      extensions=[...components.map(adapter=>adapter.sourceComponent),...shared].sort((a,b)=>a.id.localeCompare(b.id));
+    return compilePromiseSourceProjectionV8(bundle,{maxGenerated,extensions,extensionIds:extensions.map(component=>component.id),
+      sourceProfile:shared.length?'composed-protocol-source/1':components.some(adapter=>adapter.id==='promise-executor/1')?
+        'promise-executors-source/1':'promise-joins-source/1'});
+  }
   for(const adapter of adapters){
     const stateful=typeof adapter.captureState==='function'&&typeof adapter.restoreState==='function';
     if((adapter.captureState!==undefined||adapter.restoreState!==undefined)&&!stateful)

@@ -120,7 +120,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
     refuse('compact expressions require an operator bound from 1 through 8');
   validateBundle(bundle);replayExact(bundle);
-  checkEffectfulProjectionState(bundle);
+  checkEffectfulProjectionState(bundle,{protocolProfiles:regionAdapter?.projectionStateProfiles??[]});
   const semantic=normalizeJournal(bundle);validateSemantic(bundle,semantic);
   const entry=bundle.entrySpec;
   if(entry?.kind!=='function')refuse('an explicit owned function entry is required');
@@ -674,6 +674,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     harness=stagedHarness;selectProjectionState(stagedProjection);
     try{
       regionAdapter.beginEvent(event,row,fact);
+      regionAdapter.beforeEvent?.(extensionContext,event,row);
       run();
       regionAdapter.checkEvent?.(extensionContext,event,row);
       liveHarness.commitPrepared(harness);harness=liveHarness;

@@ -1,4 +1,5 @@
 import {parse} from 'acorn';
+import {sharedProtocolSourceEventV8,sharedProtocolSourceCompletionV8} from './protocol-source-claims-v8.js';
 
 // The ordinary projector is an explicit peer, not a fallback after extension
 // handlers decline. These are the bounded grammar distinctions already used
@@ -21,7 +22,7 @@ export function sourcePromiseJoinEventV8(view,{event,row}){
 export function sourcePromiseExecutorEventV8(view,{event,row}){
   const callee=row?.operands?.[0],method=callee?.[0]==='method'?callee[1]:callee;
   return sourcePromiseConstructorV8(event)||event.operation==='call.enter'&&sourcePromiseResolverV8(method)!==null||
-    row?.op==='call'&&event.operation!=='job.enter';
+    row?.op==='call'&&event.operation!=='job.enter'&&!sharedProtocolSourceEventV8(view,{event,row});
 }
 export function sourceExecutorCompletionV8(view,exit){
   const state=view.components[PROMISE_EXECUTOR_COMPONENT_V8];
@@ -40,13 +41,15 @@ export function createBaseSourceComponentV8(){return {id:BASE_SOURCE_COMPONENT_V
     allocation:(view,fields)=>['object','array','closure','promise'].includes(fields.kind)&&!sourceJoinAllocationV8(view,fields)&&
       !(fields.kind==='closure'&&Object.hasOwn(view.components,PROMISE_EXECUTOR_COMPONENT_V8)),
     event(view,input){
+      if(sharedProtocolSourceEventV8(view,input))return false;
       if(sourcePromiseConstructorV8(input.event)||sourcePromiseJoinEventV8(view,input))return false;
       const callee=input.row?.operands?.[0],method=callee?.[0]==='method'?callee[1]:callee;
       if(input.event.operation==='call.enter'&&sourcePromiseResolverV8(method))return false;
       if(Object.hasOwn(view.components,PROMISE_EXECUTOR_COMPONENT_V8)&&sourcePromiseExecutorEventV8(view,input))return false;
       return !input.row||ordinaryFamilies.has(input.row.op);
     },
-    completion:(view,exit)=>!['return','throw','unhandled-throw'].includes(exit.operation)||!sourceExecutorCompletionV8(view,exit)
+    completion:(view,exit)=>!sharedProtocolSourceCompletionV8(view,exit)&&
+      (!['return','throw','unhandled-throw'].includes(exit.operation)||!sourceExecutorCompletionV8(view,exit))
   },
   prepare:{
     value:(_view,value)=>({kind:'ordinary-value',value}),

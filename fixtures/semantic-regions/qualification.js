@@ -17,6 +17,17 @@ export function regionQualificationFixtures(){return [
     entry:'run',args:[],family:'v8-contract-iterable-binding',fixture:{calls:[]}}
 ];}
 
+// Recurring cross-family source/native qualification is broader than the
+// frozen wire examples. Adding source coverage need not revise wire goldens.
+export function sharedProtocolQualificationFixtures(){return [
+  {id:'promise-number-proxy-memory-join',source:'"use strict";async function run(){'+
+    'const p=new Promise(resolve=>{const bytes=new Uint8Array(2);'+
+    'const proxy=new Proxy({x:3},{get:function(object,key){bytes[0]=object[key];return bytes[0]+1;}});'+
+    'resolve(Number({valueOf:function(){return proxy.x;}}));});'+
+    'const values=await Promise.all([p,Promise.resolve(2)]);return values[0]+values[1];}',
+    entry:'run',args:[],family:'v8-contract-shared-protocol-source',fixture:{calls:[]}}
+];}
+
 // The interoperability population includes every declared source-qualified
 // protocol golden, not just the original three shared-state examples.
 export function regionQualificationPopulation({population='interoperability',allInputs=true}={}){
@@ -27,5 +38,5 @@ export function regionQualificationPopulation({population='interoperability',all
   return {scripts:[...regionQualificationFixtures(),...declared.cases.map(row=>{
     if(row.id!==row.fixture?.id)throw new TypeError('Invalid protocol fixture identity');
     return structuredClone(row.fixture);
-  }),...structuredClone(HOST_PROTOCOL_FIXTURES_V8)],modules:[]};
+  }),...structuredClone(HOST_PROTOCOL_FIXTURES_V8),...sharedProtocolQualificationFixtures()],modules:[]};
 }

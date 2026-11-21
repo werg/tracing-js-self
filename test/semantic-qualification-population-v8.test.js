@@ -22,12 +22,12 @@ test('native qualification retains every frozen family input, script and module 
 test('interoperability includes all source goldens and returns fresh mutable guest inputs',()=>{
   const declared=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
   const selected=regionQualificationPopulation();
-  assert.equal(selected.scripts.length,30);
+  assert.equal(selected.scripts.length,31);
   for(const row of declared.cases)assert.deepEqual(selected.scripts.find(fixture=>fixture.id===row.id),row.fixture);
   for(const fixture of HOST_PROTOCOL_FIXTURES_V8)
     assert.deepEqual(selected.scripts.find(row=>row.id===fixture.id),fixture);
   assert.equal(new Set(selected.scripts.map(row=>row.id)).size,selected.scripts.length);
-  for(const id of ['number-callback-cleanup','custom-iterator-close','iterable-binding-close'])
+  for(const id of ['number-callback-cleanup','custom-iterator-close','iterable-binding-close','promise-number-proxy-memory-join'])
     assert.ok(selected.scripts.some(fixture=>fixture.id===id),id+' remains in recurring qualification');
   const first=selected.scripts.find(row=>row.id==='ordered-map');
   first.args[0].push(99);
