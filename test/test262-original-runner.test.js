@@ -230,6 +230,32 @@ test('original module namespace and quoted reexport graphs execute their origina
   assert.equal(owned.claims.publicSemanticReplay,false);
   const generated=owned.bundle.sources.find(source=>
     source.url==='owned-test262-module://test/control.js');
+  assert.equal(generated.moduleNamespaceIntrinsic,undefined,
+    'static live-cell reads do not allocate or receive a namespace constructor');
+  assert.ok(owned.bundle.sources.every(source=>source.moduleNamespaceIntrinsic!==true));
+  assert.equal(owned.trace.moduleGraph.requiresModuleNamespace,undefined);
+  assert.equal(replayExact(JSON.parse(JSON.stringify(owned.bundle))).valid,true);
+});
+
+test('original module namespace observations grant their constructor only to generated module source',()=>{
+  const [options]=moduleFixture(`import * as ns from './leaf_FIXTURE.js';
+    assert.sameValue(Object.getPrototypeOf(ns),null);
+    assert.sameValue(Object.isExtensible(ns),false);
+    assert.sameValue(Object.keys(ns)[0],'value');
+    assert.sameValue(ns.value,42);`,{dependencies:{
+      'test/leaf_FIXTURE.js':'export const value=42;'
+    }});
+  const owned=executeOfficialTest262Variant({...options,includeBundle:true});
+  const reference=executeOfficialTest262Reference(options);
+  assert.equal(owned.status,'passed',owned.reason);
+  assert.equal(reference.status,'passed',reference.reason);
+  assert.equal(owned.executionPerformed,true);
+  assert.equal(owned.trace.structurallyValidated,true);
+  assert.equal(owned.trace.exactlyReplayed,true);
+  assert.equal(owned.trace.moduleGraph.requiresModuleNamespace,true);
+  assert.equal(owned.claims.publicSemanticReplay,false);
+  const generated=owned.bundle.sources.find(source=>
+    source.url==='owned-test262-module://test/control.js');
   assert.equal(generated.moduleNamespaceIntrinsic,true);
   assert.ok(owned.bundle.sources.filter(source=>source!==generated)
     .every(source=>source.moduleNamespaceIntrinsic!==true),

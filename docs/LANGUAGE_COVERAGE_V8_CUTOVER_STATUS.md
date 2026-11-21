@@ -16,6 +16,40 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Resumed implementation and complete hosted evidence — 21 November 2026
+
+Resumption starts at producer `d608aaa4c76ade9bc54e00892ce2ff11a558324f` and
+consumer `c9977b240a26c897299f07043a82cd5f26920f31`. The main PR's complete
+pre-resumption narrative is preserved in
+`docs/progress/PR47_NARRATIVE_2026_11_21_RESUMED.md`. All 17 acceptance packages
+remain open; no historical result qualifies the ongoing executable changes.
+
+The previous in-progress recurring campaign is now verified complete on hosted
+run [44944824734](https://github.com/werg/tracing-js-self/actions/runs/44944824734),
+producer `d608aaa` / policy-pinned consumer `1ddcc61`: **47/47 original sources,
+47/47 independent native admissions, 47/47 exact-token measurements and 47/47
+packing measurements**, followed by the ordinary **two optimizer-update**
+preparation/train/resume/export/service-restoration lifecycle. Generated tokens
+remain 56,597, including 55,388 detailed tokens (97.8638%). Learned success is
+unmeasured. The original 46/47 campaign remains failed evidence.
+
+The complete producer Node20/22/24 jobs at `d608aaa` all fail the same outdated
+namespace-capability assertion. The imported-name scanner fix correctly avoids
+materializing namespace state for static live-cell reads; the test still expects
+the capability. The original source and native assertions pass. This correction
+keeps those assertions, verifies that static reads get no capability, and adds a
+real namespace-inspection case that verifies source-scoped capability and exact
+JSON replay. The first local two-file module/runner selection passes **39/39**,
+zero failures/skips; clean committed-tree requalification follows publication.
+Complete original hosted logs and checksums are retained in
+`docs/evidence/ci-d608aaa-module-regression/`.
+
+Hardest-first active work: service-side durable effect deduplication against the
+paused-owner race, integrated Number/PropertyKey source/public/native conversion
+continuations, then paired qualification and remaining module/edition coverage.
+Generic uncertain external outcomes remain unknown; intrinsic-error authority,
+reference-engine disagreements, learned quality and default cutover stay separate.
+
 ## Restore the unchanged namespace-shadow production case — 21 November 2026
 
 The hosted 46/47 source/native result exposed a linker scanner bug, rather than
