@@ -8,6 +8,24 @@ import {runtimeDifferential} from './helpers/runtime-frontier.js';
 const json=value=>JSON.parse(JSON.stringify(value));
 const snapshot=runtime=>json(Object.fromEntries(Object.entries(runtime).filter(([key])=>key!=='adapters')));
 
+test('own descriptor reflection never fabricates descriptors from metadata prototypes',()=>{
+  for(const body of [
+    `const out=[];for(const object of [{},[]]){
+      for(const key of ['__proto__','constructor','toString','valueOf','hasOwnProperty'])
+        out.push(Object.getOwnPropertyDescriptor(object,key)===undefined);
+    }return out;`,
+    `let reads=0;const parent={constructor:2,get toString(){reads++;return 3;}};
+      const object=Object.create(parent);return [
+        Object.getOwnPropertyDescriptor(object,'constructor')===undefined,
+        Object.getOwnPropertyDescriptor(object,'toString')===undefined,reads];`,
+    `const object={['__proto__']:1,constructor:2,get toString(){throw 'must not run';}};
+      const descriptor=Object.getOwnPropertyDescriptor(object,'toString');return [
+        Object.getOwnPropertyDescriptor(object,'__proto__').value,
+        Object.getOwnPropertyDescriptor(object,'constructor').value,
+        typeof descriptor.get,descriptor.set===undefined,descriptor.enumerable,descriptor.configurable];`
+  ])runtimeDifferential(body);
+});
+
 test('literal accessor metadata uses own names and preserves insertion order through conversion and restore',()=>{
   const body=`let calls='';const key={
     get [Symbol.toPrimitive](){calls+='s';return undefined;},

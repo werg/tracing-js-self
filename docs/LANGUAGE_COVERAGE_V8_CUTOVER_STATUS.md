@@ -16,6 +16,70 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Fenced service authority, namespace corrections and production admission gaps — 21 November 2026
+
+Producer `8dcf4b3` publishes the reviewed service-session fence. New claims,
+owner changes and irreversible terminal fences share one atomic numbered-log
+publication point. A stale precomputed claim must lose and replay the winning
+fence; already admitted work may still finish. Lost owner/terminal acknowledgements
+require a fresh directory sync before retained authority is returned. Original
+claimant capability is process-local and cannot be recreated by a later owner,
+serialized receipt or restart. The 83-test service/recovery selection passes with
+zero failures/skips. Its original failing and fixed actual-I/O probes are retained
+under `docs/evidence/service-fence/`.
+
+Independent review also reproduced a basic-journal race: the duplicate claimant's
+directory sync can precede the winner's outcome link. Reading that new outcome
+then bypassed the failed publication sync. Both journal readers now synchronize
+the validated outcome before exposing it. Injected writer and reader `EIO` errors
+refuse completion; restored I/O recovers the retained result with one original
+service call. This proves neither remote transaction rollback nor cancellation
+of already admitted work. Service fences and selected-history terminal authority
+still require explicitly ordered supervisor coordination; callbacks/resources,
+incoming-input atomicity, rollback-proof storage and rotation remain open.
+
+Producer `507398d` corrects namespace descriptor reflection for absent inherited
+implementation names and validates malformed descriptor fields before namespace
+definition or a cyclic TDZ read. All55 affected module tests pass, including
+original ESM comparisons, JSON replay and callable class/generator/async controls.
+The adjacent ordinary descriptor path also manufactured absent inherited names;
+its own-entry correction preserves real data/accessor descriptors and passes the
+21-test property/namespace selection. Public/native namespace admission remains
+refused. Getter/inherited descriptor profiles, live-cell identity/TDZ authority
+and the numeric-export Node24/spec disagreement remain separate open boundaries.
+
+The actual production tokenizer path exposed a consumer CLI omission missed by
+component replay tests. On clean `c3a81e4` / `5ea3eb3`, four new conversions pass
+source checks and exact token measurement, but all four fail native admission
+because `primitive-conversion-source/1` is absent from the CLI's allowlist.
+All66 declared inputs remain, with62 untested; native packing is zero measured.
+The deterministic complete failed-attempt archive retains all348 files, source
+packets, journals, exact commands/pins and hashes. Consumer `afd6ba0` repairs the
+exact profile registration and preserves malformed-inventory refusals.
+
+Consumer `776519e` also fixes a real ordinary-export dependency: coverage routed
+V8 episodes through a module that eagerly imports legacy wire validators. The
+V8 branch now imports only its native census. Three actual prepare/replay/physical
+packing/dedup/export/reload controls pass with11 legacy imports blocked and
+byte-identical manifests/indexes/shards to the available-module controls. Only
+source/tokenizer audit boundaries are injected in those tests; they are not
+fresh source-admission or actual-tokenizer evidence. A broader local selection
+retains8 passes and3 missing-torch failures for hosted qualification.
+
+The native policy now pins the combined published consumer `776519e`; the same
+four production-path cases and full hosted populations must be freshly rerun.
+Logs, before/after probes, namespace design review and failed archive are retained
+in `docs/evidence/v8-production-boundaries-2026-11-21/`.
+
+The route inventory identifies remaining cutover blockers beyond import absence:
+V8 lacks the typed open/step/status/cancel orchestration RPCs and their child
+create/join/completion/cancel/restore path; standard production SE requires three
+behavior families unavailable from the current V8 census; the production launch
+qualifier requires legacy `semantic_experiment` while V8 configs forbid that
+field. Ordinary SC diagnostics and callback parity do not close those routes.
+Do not add behavior labels or switch defaults to conceal these missing paths.
+All17 complete acceptance packages remain open.
+
 ## Complete installed gate and integration corrections — 21 November 2026
 
 Producer `ca01e72` publishes a complete npm qualification tool. It materializes

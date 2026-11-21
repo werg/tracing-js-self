@@ -1,0 +1,174 @@
+{
+  "schema": "v8-production-boundary-evidence/1",
+  "date": "2026-11-21",
+  "scope": "Original failures and bounded corrections; no full current-pair qualification, learned success or default-promotion claim.",
+  "publishedNamespaceProducer": "507398dc17a562dde1c9c2bb00aa7a1cb6cae4f6",
+  "publishedCombinedConsumer": "776519e69b32b11927edd60eab84c77cebfe2a9c",
+  "failedNativeAttempt": {
+    "producer": "c3a81e44284870ad9cae889edd8a229ad9ce6bde",
+    "consumer": "5ea3eb36ae18e109f0f988a47eb58a71f7c4ff85",
+    "declared": 66,
+    "selected": 4,
+    "sourceQualified": 4,
+    "nativeAdmitted": 0,
+    "tokenMeasured": 4,
+    "nativePackingMeasured": 0,
+    "untested": 62
+  },
+  "artifacts": [
+    {
+      "file": "namespace-owned-fixes-callables.log.xz",
+      "originalPath": "namespace-owned-fixes-callables.log",
+      "originalBytes": 7701,
+      "originalSha256": "2662fdc1bbded963926776059ff1934ddc22b9c61c2a06314bdb5f1af0c274de",
+      "archiveBytes": 2656,
+      "archiveSha256": "1fa32274e2ce43dc949bccf952a0dfcd20ba861ae4a858397808a48f9e72db7f"
+    },
+    {
+      "file": "namespace-owned-fixes-final.log.xz",
+      "originalPath": "namespace-owned-fixes-final.log",
+      "originalBytes": 24661,
+      "originalSha256": "6020c8c56550129ca99bce37c77aa4013b58b723d9dc7fbc2c781761c7ae0633",
+      "archiveBytes": 3476,
+      "archiveSha256": "272c98d97de729cf9010f9a4a0e097e2bd7d1529a7fed416e2de935f5544e9ea"
+    },
+    {
+      "file": "namespace-design-targeted-sources.json.xz",
+      "originalPath": "namespace-design-targeted-sources.json",
+      "originalBytes": 2304,
+      "originalSha256": "1da7c38db477d3fb07614d82fabbc771b35367f8c2ee0ccdf24c4ecc91124eca",
+      "archiveBytes": 732,
+      "archiveSha256": "5376d8f048279f0eb05efcfcb0f9884390e40a6c3837c9b97c8b252f31a145da"
+    },
+    {
+      "file": "namespace-design-targeted-results.json.xz",
+      "originalPath": "namespace-design-targeted-results.json",
+      "originalBytes": 7083,
+      "originalSha256": "bcf7230ecc69febcaee6f2b5207c2c63aaadb0d8ec331020a292328895c87086",
+      "archiveBytes": 1320,
+      "archiveSha256": "ace42dfc1b414b6830b72e2ddb30b56da20270ed9cce0c858091b3dd59d3ccae"
+    },
+    {
+      "file": "namespace-design-fixed-results.json.xz",
+      "originalPath": "namespace-design-fixed-results.json",
+      "originalBytes": 7723,
+      "originalSha256": "67dec2fafa6ce7fedaa0f9fecce305b3951fb165c44f56ef5519803103ce0cc3",
+      "archiveBytes": 1236,
+      "archiveSha256": "9781f6329e7bdee3650fa9889ca4953970587532354d82812ac8c85dab952c33"
+    },
+    {
+      "file": "namespace-public-design-review.md.xz",
+      "originalPath": "namespace-public-design-review.md",
+      "originalBytes": 10282,
+      "originalSha256": "df6c0484199585b5e7622d8d7c8e45d39ac17f2d9e344855fc7b955085394ceb",
+      "archiveBytes": 4188,
+      "archiveSha256": "f76ad4ffd5a94219cc2e59372b2096849c846b2d11b903a9219517f9c295d318"
+    },
+    {
+      "file": "conversion-admission-regression-precommit.log.xz",
+      "originalPath": "conversion-admission-regression-precommit.log",
+      "originalBytes": 552,
+      "originalSha256": "ec1cf335ca9d5b8890b95b9298baf43283ed776699a74c1e6d03529d1be14da7",
+      "archiveBytes": 304,
+      "archiveSha256": "df997140820bb174d4e3caeb3b4fb1bf9f35c5eacc9401d0ea1a4ef1eda2fbb6"
+    },
+    {
+      "file": "ordinary-descriptor-before.log.xz",
+      "originalPath": "ordinary-descriptor-before.log",
+      "originalBytes": 985,
+      "originalSha256": "a8bbb71b807614d493eece188e29eb77a8d11462993184062b144e62cf3201bb",
+      "archiveBytes": 316,
+      "archiveSha256": "6d84317d0cdba5471338e2b1f21974cb97c88653835aaba18bf5958b549670ac"
+    },
+    {
+      "file": "ordinary-descriptor-unsupported-control.log.xz",
+      "originalPath": "ordinary-descriptor-unsupported-control.log",
+      "originalBytes": 3306,
+      "originalSha256": "180e79650aeb6375bc44a7ccda1cfc72247261f3fddd414cb2e82f7d6eeaf0ec",
+      "archiveBytes": 1372,
+      "archiveSha256": "1da31da762a11fdc7138fd4ae9085b619e4226f7e819ae3788868e3ded6e0860"
+    },
+    {
+      "file": "ordinary-descriptor-fixed.log.xz",
+      "originalPath": "ordinary-descriptor-fixed.log",
+      "originalBytes": 2133,
+      "originalSha256": "983f5425a5b9df396d6fe4f63670e5a9e83234d3b770ab6ea3cc6a5481a8da6c",
+      "archiveBytes": 1028,
+      "archiveSha256": "731acaafdfa11515c7283c776f761dc425f4df9da639a1b1ce1ccba399e2ccbe"
+    },
+    {
+      "file": "cutover-route-audit-export-absence-before.log.xz",
+      "originalPath": "cutover-route-audit/export-absence-before.log",
+      "originalBytes": 7970,
+      "originalSha256": "b15fc320cba0598ab79d0d4bdb858e81a7a1e3fc69901df1af9210b628e67da0",
+      "archiveBytes": 2472,
+      "archiveSha256": "68076ea7a5a17c363f0f3861208ff307b41f827a0ca7ad4bbdd4f664cd123d2c"
+    },
+    {
+      "file": "cutover-route-audit-export-absence-after.log.xz",
+      "originalPath": "cutover-route-audit/export-absence-after.log",
+      "originalBytes": 99,
+      "originalSha256": "2d122fd63411e126961d823acf3f962438221ba54dec2f0af5680416fccc2873",
+      "archiveBytes": 96,
+      "archiveSha256": "d19f3909625d6f7afafafa04b9cdeb744686ea955c6fa62a045cf7602ce6f47c"
+    },
+    {
+      "file": "cutover-route-audit-export-coverage-integration.log.xz",
+      "originalPath": "cutover-route-audit/export-coverage-integration.log",
+      "originalBytes": 5060,
+      "originalSha256": "814866ac661a15288de24ae5e27ff2dafd892fc505f947a70127473da96019e5",
+      "archiveBytes": 1624,
+      "archiveSha256": "e00cb9ac654258c53c19c2d44a965c705df4efaab6eae92c41bb09c1768ada05"
+    },
+    {
+      "file": "cutover-route-audit-consumer-routes-before.json.xz",
+      "originalPath": "cutover-route-audit/consumer-routes-before.json",
+      "originalBytes": 6096,
+      "originalSha256": "1c8966c3c7955c16d2b9b1481fce78cec5e04a9eca4a9ba88d2050f398b72838",
+      "archiveBytes": 2136,
+      "archiveSha256": "b7be3a6f4468df218116c7880411c2d5eff909f6b60ac9a876768e795f5596fe"
+    },
+    {
+      "file": "cutover-route-audit-consumer-routes-after.json.xz",
+      "originalPath": "cutover-route-audit/consumer-routes-after.json",
+      "originalBytes": 5199,
+      "originalSha256": "7f77c3dd3269104b02401ad25c244597bf387b8d0a76a42a101d4789efd2c93c",
+      "archiveBytes": 1836,
+      "archiveSha256": "44134bee89f5e7d2c30ca53e7717d9660c09382fce8b86765290abbbcb5d16cb"
+    },
+    {
+      "file": "cutover-route-audit-producer-entries.json.xz",
+      "originalPath": "cutover-route-audit/producer-entries.json",
+      "originalBytes": 3739,
+      "originalSha256": "45a27da41b22e89fbe47739db06ebbde90a512286c71a8079ddfe9326122ff3e",
+      "archiveBytes": 1088,
+      "archiveSha256": "08e92343d6d685e27ac7768ce2020901725dabad5ff9c7f47058be98bf4280e8"
+    },
+    {
+      "file": "cutover-route-audit-probe-consumer-routes.py.xz",
+      "originalPath": "cutover-route-audit/probe-consumer-routes.py",
+      "originalBytes": 9726,
+      "originalSha256": "d5e293466be0fe4c4c7be67e55cbfee55a6190b52eac713caeb13b4554bfc2de",
+      "archiveBytes": 3492,
+      "archiveSha256": "cd00e90ed788404c39e46cd9bc1513c9a771233ec583d0dbaf4a35c16b19223f"
+    },
+    {
+      "file": "cutover-route-audit-probe-producer-entries.mjs.xz",
+      "originalPath": "cutover-route-audit/probe-producer-entries.mjs",
+      "originalBytes": 2426,
+      "originalSha256": "a01c8bd575ee536259afb953288f0e2a3c969a0d0b9dfb52e9b2840200c331e1",
+      "archiveBytes": 1272,
+      "archiveSha256": "acda2ade33156af7f9246e758a8393366e9b1748267af6d2e5ac01ff7bdca00c"
+    },
+    {
+      "file": "conversion-real-tokenizer-c3a81e4-5ea3eb3-failed.tar.gz",
+      "bytes": 953508,
+      "sha256": "9acd1f1eac199c204724a4930ec96b45610d68e562f471d0a24cdd928b56cc7f"
+    },
+    {
+      "file": "conversion-real-tokenizer-c3a81e4-5ea3eb3-failed.manifest.json",
+      "bytes": 1131,
+      "sha256": "d8f1ccd244851d50a3b52deebdf1f00cc321cc9cac523f7433474472a3100956"
+    }
+  ]
+}

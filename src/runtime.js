@@ -3565,7 +3565,8 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               return {...operands(fn,...args),...result(this.moduleNamespaceDescriptor(s,object,key,
                 object.properties[key].value,eventId))};
             }
-            const accessor=object.accessors?.[key],slot=object.properties[key];
+            const accessor=Object.hasOwn(object.accessors??{},key)?object.accessors[key]:null,
+              slot=Object.hasOwn(object.properties,key)?object.properties[key]:null;
             if(!accessor&&!slot)return {...operands(fn,...args),...result(U)};
             const attributes=object.dataAttributes?.[key],arrayLength=object.kind==='array'&&key==='length';
             const fields=accessor?{get:accessor.get.value,set:accessor.set.value,enumerable:['bool',accessor.enumerable],configurable:['bool',accessor.configurable]}:
