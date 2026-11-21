@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildCapabilityLedger,CAPABILITY_CASES} from '../src/training/capability-ledger.js';
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {join} from 'node:path';
+import {execFileSync} from 'node:child_process';
 
 test('capability ladder preserves untested stages and exact attempted denominators',async()=>{
   const report=await buildCapabilityLedger({traceVersion:6,cases:CAPABILITY_CASES.filter(row=>
@@ -136,4 +138,59 @@ test('progress includes frontend refusals exactly once in declared population or
   assert.deepEqual(progress.map(row=>row.disposition),report.rows.map(row=>row.disposition));
   assert.equal(progress[0].result,null);
   assert.equal(progress[2].result,'failed');
+});
+
+test('selection never changes the frozen population or drops unselected failures',async()=>{
+  const calls=[],progress=[],cases=[CAPABILITY_CASES[0],
+    {id:'unselected-syntax',source:'not valid source !',entry:'run',args:[],fixture:{calls:[]}},
+    {...CAPABILITY_CASES[0],id:'another-case'}];
+  const options={cases,verifyCase:async fixture=>{
+    calls.push(fixture.id);return {status:'unsupported',phase:'projection',reason:'bounded profile'};
+  }};
+  const report=await buildCapabilityLedger({...options,selectedCaseIds:[cases[0].id],
+    onProgress:row=>{progress.push(row.id);}});
+  const unselected=await buildCapabilityLedger({...options,selectedCaseIds:[]});
+  assert.deepEqual(calls,[cases[0].id]);
+  assert.deepEqual(progress,cases.map(row=>row.id));
+  assert.equal(report.rows.length,3);
+  assert.equal(report.populationDigest,unselected.populationDigest);
+  assert.notEqual(report.selection.digest,unselected.selection.digest);
+  assert.deepEqual(report.selection.caseIds,[cases[0].id]);
+  assert.equal(report.selection.notSelected,2);
+  assert.equal(report.totals.frontend.total,3);
+  assert.equal(report.totals.frontend.attempted,1);
+  assert.equal(report.totals.frontend.not_selected,2);
+  for(const row of report.rows.slice(1)){
+    assert.equal(row.selected,false);
+    assert.equal(row.disposition,'not_selected');
+    assert(Object.values(row.stages).every(status=>status==='not_selected'));
+  }
+  assert.equal(unselected.totals.frontend.not_selected,3);
+  assert.equal(unselected.totals.frontend.attempted,0);
+});
+
+test('selection is validated before execution and is canonical in population order',async()=>{
+  const cases=CAPABILITY_CASES.slice(0,2);
+  for(const selectedCaseIds of [['missing'],[cases[0].id,cases[0].id],'scalar-arithmetic'])
+    await assert.rejects(buildCapabilityLedger({cases,selectedCaseIds}),/known and unique/);
+  await assert.rejects(buildCapabilityLedger({cases:[cases[0],cases[0]]}),/unique source case IDs/);
+  const verifyCase=async()=>({status:'unsupported',phase:'projection'});
+  const forward=await buildCapabilityLedger({cases,verifyCase,selectedCaseIds:cases.map(row=>row.id)});
+  const reversed=await buildCapabilityLedger({cases,verifyCase,selectedCaseIds:cases.map(row=>row.id).reverse()});
+  assert.equal(forward.selection.digest,reversed.selection.digest);
+});
+
+test('capability CLI --cases retains the complete declared denominator',()=>{
+  const directory=mkdtempSync(join(process.cwd(),'capability-selection-'));
+  try{
+    const output=join(directory,'report.json');
+    execFileSync(process.execPath,['tools/generate-capability-ledger.mjs','--version','8',
+      '--cases','scalar-arithmetic','--out',output],{cwd:new URL('..',import.meta.url),stdio:'pipe'});
+    const report=JSON.parse(readFileSync(output,'utf8'));
+    assert.equal(report.rows.length,CAPABILITY_CASES.length);
+    assert.equal(report.totals.frontend.total,CAPABILITY_CASES.length);
+    assert.equal(report.totals.frontend.not_selected,CAPABILITY_CASES.length-1);
+    assert.equal(report.totals.frontend.passed,1);
+    assert.equal(report.selection.selected,1);
+  }finally{rmSync(directory,{recursive:true,force:true});}
 });

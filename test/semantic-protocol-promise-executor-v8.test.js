@@ -134,7 +134,7 @@ test('restoration rejects an executor capability claiming independent join owner
   const h=setup();enter(h);finish(h);
   const c=Object.assign(Object.create(Object.getPrototypeOf(h.controller)),h.controller);
   for(const key of ['heap','protocol','stack'])c[key]=structuredClone(c[key]);
-  c.heap.get('p1').join={schema:'semantic-promise-join-state/1',mode:'race',inputs:[],jobs:[],
+  c.heap.get('p1').join={schema:'semantic-promise-join-state/1',owner:c.rootInvocation,mode:'race',inputs:[],jobs:[],
     observed:[],values:[],output:null,error:null,settled:false};
   assert.throws(()=>restoreProtocolStateV8(c,c.protocol),/capability cannot own a join/);
 });

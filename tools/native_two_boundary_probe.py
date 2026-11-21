@@ -24,6 +24,7 @@ from native_conditional_probe import (
     require_checkpoint_hash, tensor_record,
 )
 from native_decoder_capture import compare_output_support, observe_decoder
+from native_semantic_capture import semantic_v6_capture_config
 
 _SPEC = importlib.util.spec_from_file_location(
     "paired_conditional_cli", Path(__file__).with_name("probe-native-conditionals.py")
@@ -374,7 +375,8 @@ def _training_at(checkpoint, prepared, packet, *, identity, boundary, seed, emit
     model, codec = trained.model, trained.codec
     model.eval()
     before = SMOKE.state_identity(model.state_dict())
-    config = TrainConfig.from_dict(trained.payload["train_config"], expand_data=False)
+    config, capture_admission = semantic_v6_capture_config(
+        trained.payload["train_config"], TrainConfig)
     expected, _ = adapt_selected_harness_v6(
         packet["exported"], codec=codec, max_positions=model.config.max_capacity,
         max_history=model.config.max_history_chunks, allow_local=False,
@@ -460,6 +462,7 @@ def _training_at(checkpoint, prepared, packet, *, identity, boundary, seed, emit
         replay_comparison = numeric_decoder_comparison(model, replay, emitted["decoderExecution"], action["tokenIds"])
         result.update(
             boundaryIndex=boundary, coupledSamples=samples,
+            captureAdmission=capture_admission,
             preparedEpisodeId=episode.episode_id, preparedCorpusIdentity=corpus.identity,
             actualModelTensorIdentity=SMOKE.state_identity(model.served_state_dict()),
             servedStateDictCompared=True, executionSettings=execution_settings(),
@@ -633,6 +636,7 @@ def main():
             "decisionControls": controls, "singletonTextChoices": singletons,
             "actualSampledFacets": samples, "outputSupport": support, "sameEmissionDecoderConditionals": decoder,
             "loadedModelTensorsExactlyEqual": tensor_identity,
+            "captureAdmission": training["captureAdmission"],
         })
         del training
         gc.collect()

@@ -89,7 +89,8 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     const capturedEpoch=epoch,capturedIdentity=identity,contextDigest=hashAlgorithmData(input.context);
     const evidence={attempt:attempts.length,session:input.session,invocationId:input.context.invocationId,
       prefixDigest:input.context.prefixDigest,contextDigest,checkpointIdentity:identity.checkpointIdentity,
-      tokenizerIdentity:identity.tokenizerIdentity,status:'submitted',elapsedMs:null,selection:null,
+      tokenizerIdentity:identity.tokenizerIdentity,trainingIdentity:identity.trainingIdentity??null,
+      status:'submitted',elapsedMs:null,selection:null,
       record:null,failure:null,failureEvidence:null};
     attempts.push(evidence);const started=performance.now();
     let output=null,provenanceValidated=false;
@@ -107,6 +108,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       demand(selection?.modelSelected===true&&selection.origin==='actual-model-selected'&&
         typeof selection.selectionId==='string'&&selection.selectionId.length>0&&
         selection.checkpointIdentity===identity.checkpointIdentity&&selection.tokenizerIdentity===identity.tokenizerIdentity&&
+        (selection.trainingIdentity??null)===(identity.trainingIdentity??null)&&
         selection.prefixDigest===input.context.prefixDigest&&selection.contextDigest===contextDigest,
         'model selection is not bound to the frozen checkpoint and current prefix');
       demand(typeof selection.payloadHex==='string'&&/^(?:[0-9a-f]{2})+$/.test(selection.payloadHex)&&
@@ -134,6 +136,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
           partial.session===input.session&&partial.invocationId===input.context.invocationId&&
           partial.checkpointIdentity===capturedIdentity.checkpointIdentity&&
           partial.tokenizerIdentity===capturedIdentity.tokenizerIdentity&&
+          (partial.trainingIdentity??null)===(capturedIdentity.trainingIdentity??null)&&
           partial.prefixDigest===input.context.prefixDigest&&partial.contextDigest===contextDigest&&
           typeof partial.payloadHex==='string'&&/^(?:[0-9a-f]{2})*$/.test(partial.payloadHex)&&
           Array.isArray(fragments)&&fragments.length>0&&fragments.every(fragment=>
@@ -152,11 +155,14 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   select.initialize=async input=>{
     const capturedEpoch=++epoch;identity=null;sessions.clear();
     demand(input&&HASH.test(input.checkpointIdentity??'')&&HASH.test(input.tokenizerIdentity??'')&&
-      Number.isSafeInteger(input.seed)&&input.seed>=0,'frozen checkpoint, tokenizer and seed required');
+      (input.trainingIdentity==null||HASH.test(input.trainingIdentity))&&
+      Number.isSafeInteger(input.seed)&&input.seed>=0,'frozen checkpoint, tokenizer, training lineage and seed required');
     const receipt=await request({op:'initialize',seed:input.seed,
-      checkpointIdentity:input.checkpointIdentity,tokenizerIdentity:input.tokenizerIdentity});
+      checkpointIdentity:input.checkpointIdentity,tokenizerIdentity:input.tokenizerIdentity,
+      trainingIdentity:input.trainingIdentity??null});
     demand(capturedEpoch===epoch&&receipt?.schema==='semantic-inference-identity/8'&&
       receipt.checkpointIdentity===input.checkpointIdentity&&receipt.tokenizerIdentity===input.tokenizerIdentity&&
+      (receipt.trainingIdentity??null)===(input.trainingIdentity??null)&&
       receipt.seed===input.seed,'loaded model identity differs from frozen experiment');
     identity=copy(receipt);return copy(receipt);
   };
@@ -191,6 +197,53 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     session.evidence.status='rejected';session.evidence.failure=input.reason??'stale prediction';
     session.pending=null;return result;
   };
+  select.checkpoint=async()=>{
+    demand(identity!==null,'model has not attested its checkpoint');
+    const native=await request({op:'checkpoint'}),{digest,...body}=native??{};
+    demand(native?.schema==='semantic-model-checkpoint/8'&&
+      native.equivalence==='verified-model-reexecution'&&HASH.test(digest??'')&&
+      digest===hashAlgorithmData(body)&&hashAlgorithmData(native.initialization)===hashAlgorithmData(identity),
+      'native session checkpoint is not bound to the attested model');
+    const packet={schema:'semantic-native-transport-checkpoint/8',native:copy(native),
+      identity:copy(identity),attempts:copy(attempts),runtimeMetrics:copy(runtimeMetrics)};
+    return {...packet,digest:hashAlgorithmData(packet)};
+  };
+  select.restore=async({checkpoint}={})=>{
+    demand(identity===null&&attempts.length===0&&sessions.size===0&&pending.size===0,
+      'restore requires a fresh native transport');
+    const {digest,...body}=checkpoint??{};
+    demand(checkpoint?.schema==='semantic-native-transport-checkpoint/8'&&HASH.test(digest??'')&&
+      digest===hashAlgorithmData(body)&&Array.isArray(checkpoint.attempts)&&
+      checkpoint.attempts.every((row,index)=>row?.attempt===index)&&
+      checkpoint.native?.schema==='semantic-model-checkpoint/8'&&
+      hashAlgorithmData(checkpoint.native.initialization)===hashAlgorithmData(checkpoint.identity)&&
+      HASH.test(checkpoint.identity?.checkpointIdentity??'')&&HASH.test(checkpoint.identity?.tokenizerIdentity??''),
+      'invalid native transport checkpoint');
+    demand(checkpoint.identity.trainingIdentity==null||HASH.test(checkpoint.identity.trainingIdentity),
+      'invalid retained training-lineage identity');
+    const native=checkpoint.native,{digest:nativeDigest,...nativeBody}=native;
+    demand(HASH.test(nativeDigest??'')&&nativeDigest===hashAlgorithmData(nativeBody)&&
+      Array.isArray(native.attempts)&&native.sessions&&typeof native.sessions==='object',
+      'invalid native model checkpoint');
+    const costs=checkpoint.runtimeMetrics;
+    demand(costs&&['rpcCalls','computeSeconds','peakMemoryBytes'].every(key=>Number.isFinite(costs[key])&&costs[key]>=0),
+      'invalid retained native costs');
+    try{
+      const result=await request({op:'restore',checkpoint:copy(native)});
+      demand(result?.schema==='semantic-model-restore/8'&&result.restored===true&&
+        result.checkpointDigest===nativeDigest&&result.equivalence==='verified-model-reexecution'&&
+        result.restoredSessions===Object.keys(native.sessions).length&&
+        result.consumedAttempts===native.attempts.length&&result.hostDispatches===0,
+        'native model did not attest exact checkpoint restoration');
+      identity=copy(checkpoint.identity);epoch++;
+      attempts.push(...copy(checkpoint.attempts).map(row=>['submitted','decoded'].includes(row.status)?
+        {...row,status:'abandoned-on-restore',failure:'Unacknowledged candidate excluded from restored history'}:row));
+      for(const session of Object.keys(native.sessions))sessions.set(session,{pending:null,evidence:null});
+      runtimeMetrics.rpcCalls+=costs.rpcCalls;runtimeMetrics.computeSeconds+=costs.computeSeconds;
+      runtimeMetrics.peakMemoryBytes=Math.max(runtimeMetrics.peakMemoryBytes,costs.peakMemoryBytes);
+      return {...copy(result),transportCheckpointDigest:digest};
+    }catch(error){stop(error);throw error;}
+  };
   select.cancel=async input=>{
     const session=sessions.get(input?.session);
     if(session?.pending){session.evidence.status='rejected';session.evidence.failure=input.reason??'semantic rejection';}
@@ -204,7 +257,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   };
   select.metrics=()=>({schema:'semantic-native-model-metrics/8',attempts:copy(attempts),
     predictionAttempts:attempts.length,semanticallyAccepted:attempts.filter(row=>row.status==='accepted').length,
-    failedAttempts:attempts.filter(row=>['failed','rejected','commit-failed'].includes(row.status)).length,
+    failedAttempts:attempts.filter(row=>['failed','rejected','commit-failed','abandoned-on-restore'].includes(row.status)).length,
     unknownGenerationCostAttempts:attempts.filter(row=>row.selection===null).length,
     elapsedMs:attempts.reduce((sum,row)=>sum+(row.elapsedMs??0),0),
     runtime:copy(runtimeMetrics),

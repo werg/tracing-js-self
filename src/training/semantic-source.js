@@ -2,7 +2,7 @@
 // candidate explanation: the committed public state and the independent
 // primitive evaluator decide whether the claim can be emitted.
 // This module neither executes guest JavaScript nor consults a future state.
-import {validateExpression} from './format.js';
+import {validateExpression} from '../semantic/record-schema.js';
 import {checkWitnessClaim} from './witness-check.js';
 
 const binary=new Set(['+','-','*','/','%','**','<','<=','>','>=','===','!==',

@@ -19,7 +19,8 @@ export const CAPABILITY_STAGES=Object.freeze([
   'negativeSeparation','detailedFallback','nativeAdmission','modelComprehension',
   'modelNextStep','modelExecution','modelEvaluation'
 ]);
-export const CAPABILITY_STATUSES=Object.freeze(['passed','failed','unsupported','resource_limited','untested']);
+export const CAPABILITY_STATUSES=Object.freeze(['passed','failed','unsupported','resource_limited',
+  'environment_unavailable','infrastructure_error','blocked_by_prior_stage','not_selected','untested']);
 const pure=(id,body,args=[])=>({id,feature:id,source:'"use strict";'+body,entry:'run',args,fixture:{calls:[]}});
 export const CAPABILITY_CASES=Object.freeze([
   pure('scalar-arithmetic','function run(a,b){return (a+b)*(a-b);}',[7,3]),
@@ -81,7 +82,8 @@ export function summarizeCapabilityRows(rows,{stages=CAPABILITY_STAGES}={}){
       if(!CAPABILITY_STATUSES.includes(status))throw new TypeError('Unknown capability status '+status);
       counts[status]++;
     }
-    return [stage,{total:rows.length,attempted:rows.length-counts.untested,...counts}];
+    return [stage,{total:rows.length,attempted:counts.passed+counts.failed+counts.unsupported+
+      counts.resource_limited+counts.infrastructure_error,...counts}];
   }));
 }
 const limited=result=>/limit|timeout|deadline|bound.exceeded/.test(result.status+' '+(result.reason??''));
@@ -117,12 +119,21 @@ function regionCoverage(exported){
  * create a measured v8 receipt. */
 export async function buildCapabilityLedger({producerRevision=null,cases=CAPABILITY_CASES,
     nativeConsumer=null,nativePolicy=null,traceVersion=7,verifyCase=null,contracts=null,
-    population='capabilities',modelEvidence=null,onProgress=()=>{}}={}){
+    population='capabilities',selectedCaseIds=null,modelEvidence=null,onProgress=()=>{}}={}){
   if(![6,7,8].includes(traceVersion))throw new TypeError('Capability traceVersion must be 6, 7 or 8');
   if(traceVersion===8&&(typeof verifyCase!=='function'||!contracts||
     contracts.execution!=='semantic-execution/8'||contracts.trace!=='semantic-trace/8'))
     throw new TypeError('V8 coverage needs its real compiler and exact contracts');
   if(modelEvidence!==null)throw new TypeError('Model evidence must be scored by the frozen experiment, not injected into a capability receipt');
+  if(!Array.isArray(cases)||cases.some(row=>!row||typeof row.id!=='string'||!row.id||typeof row.source!=='string')||
+    new Set(cases.map(row=>row.id)).size!==cases.length)
+    throw new TypeError('Capability population must have unique source case IDs');
+  const ids=cases.map(row=>row.id),selection=selectedCaseIds??ids;
+  if(!Array.isArray(selection)||new Set(selection).size!==selection.length||selection.some(id=>!ids.includes(id)))
+    throw new TypeError('Selected capability case IDs must be known and unique');
+  const selected=new Set(selection),selectedIds=ids.filter(id=>selected.has(id));
+  const populationDigest=hashAlgorithmData(cases.map(({id,source,entry,args,fixture})=>({
+    id,source,entry,args:encodeNativeGraph(args??[]),fixture:encodeNativeGraph([fixture??null])})));
   const legacy=traceVersion===6,stageNames=legacy?LEGACY_CAPABILITY_STAGES:CAPABILITY_STAGES;
   const versionContracts=contracts??{execution:`semantic-execution/${traceVersion}`,
     trace:`semantic-trace/${traceVersion}`,context:`semantic-context/${traceVersion}`,
@@ -130,9 +141,15 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
   const verifier=verifyCase??(legacy?verifyEffectfulTrainingCase:verifyAlgorithmTrainingCase);
   const rows=[];
   for(const fixture of cases){
-    const stages=Object.fromEntries(stageNames.map(stage=>[stage,'untested']));
+    const isSelected=selected.has(fixture.id);
+    const stages=Object.fromEntries(stageNames.map(stage=>[stage,isSelected?'untested':'not_selected']));
     const row={id:fixture.id,feature:fixture.feature??fixture.family??fixture.id,
-      profile:fixture.sourceProfile??'training-js/1',traceVersion,sourceDigest:hashAlgorithmData(fixture.source),stages};
+      profile:fixture.sourceProfile??'training-js/1',traceVersion,sourceDigest:hashAlgorithmData(fixture.source),
+      selected:isSelected,stages};
+    if(!isSelected){
+      row.disposition='not_selected';row.reason='Retained in the frozen population; not selected for this run';
+      rows.push(row);await onProgress(row,{fixture,result:null});continue;
+    }
     try{parseTraining(fixture.source);stages.frontend='passed';}
     catch(error){stages.frontend='unsupported';row.disposition='frontend-refused';
       row.reason=error.message;rows.push(row);await onProgress(row,{fixture,result:null});continue;}
@@ -201,8 +218,9 @@ export async function buildCapabilityLedger({producerRevision=null,cases=CAPABIL
   const measured=rows.filter(row=>row.regions?.status==='passed'),compact=measured.reduce((n,row)=>n+row.regions.compact,0),
     detailed=measured.reduce((n,row)=>n+row.regions.detailed,0);
   return {schema:legacy?'semantic-capability-ledger/2':'semantic-capability-ledger/3',producerRevision,
-    population,populationDigest:hashAlgorithmData(cases.map(({id,source,entry,args,fixture})=>({
-      id,source,entry,args:encodeNativeGraph(args??[]),fixture:encodeNativeGraph([fixture??null])}))),contracts:versionContracts,
+    population,populationDigest,selection:{caseIds:selectedIds,selected:selectedIds.length,
+      notSelected:cases.length-selectedIds.length,
+      digest:hashAlgorithmData({populationDigest,caseIds:selectedIds})},contracts:versionContracts,
     environment:admissionEnvironment(),nativePolicy,unit:'declared source/input/fixture probe',rows,
     totals:summarizeCapabilityRows(rows,{stages:stageNames}),
     ...(!legacy?{coverage:{episodes:{declared:rows.length,qualified:measured.length,

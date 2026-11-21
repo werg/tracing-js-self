@@ -25,6 +25,7 @@ import traceback
 from native_conditional_probe import (capture_prior, compare_priors, compare_recurrent_states, decoder_support_comparison,
                                       digest, require_checkpoint_hash)
 from native_decoder_capture import compare_output_support
+from native_semantic_capture import semantic_v6_capture_config
 
 SPEC = importlib.util.spec_from_file_location('optimization_smoke', Path(__file__).with_name('run-optimization-smoke.py'))
 SMOKE = importlib.util.module_from_spec(SPEC)
@@ -117,7 +118,8 @@ def training_capture(checkpoint, prepared, packet, *, identity, seed, execute_de
     from megatoken.training.transducer import TransducerTrainer
     model, codec = trained.model, trained.codec
     model.eval()
-    config = TrainConfig.from_dict(trained.payload['train_config'], expand_data=False)
+    config, capture_admission = semantic_v6_capture_config(
+        trained.payload['train_config'], TrainConfig)
     expected, _ = adapt_selected_harness_v6(packet['exported'], codec=codec,
         max_positions=model.config.max_capacity, max_history=model.config.max_history_chunks,
         allow_local=False, admission_verifier=lambda document:
@@ -179,6 +181,7 @@ def training_capture(checkpoint, prepared, packet, *, identity, seed, execute_de
                 'tokenIds': list(first.token_ids), 'freeMask': list(first.free_mask),
                 'partIndex': first.record.part_index, 'partCount': first.record.part_count},
             trainingConfigSha256=digest(trained.payload['train_config']),
+            captureAdmission=capture_admission,
             actualModelTensorIdentity=before)
     if SMOKE.state_identity(model.state_dict()) != before:
         raise ValueError('Read-only training conditional probe changed the native model state')

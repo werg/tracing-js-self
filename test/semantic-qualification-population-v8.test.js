@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {regionQualificationPopulation} from '../fixtures/semantic-regions/qualification.js';
 import {encodeGenerationTask,decodeGenerationTask} from '../src/corpus/generation-process.mjs';
+import {HOST_PROTOCOL_FIXTURES_V8} from '../fixtures/semantic-regions/host-protocol.js';
 
 test('native qualification retains every frozen family input, script and module interaction',()=>{
   const population=regionQualificationPopulation({population:'all'});
@@ -21,9 +22,14 @@ test('native qualification retains every frozen family input, script and module 
 test('interoperability includes all source goldens and returns fresh mutable guest inputs',()=>{
   const declared=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
   const selected=regionQualificationPopulation();
-  assert.equal(selected.scripts.length,26);
+  assert.equal(selected.scripts.length,37);
   for(const row of declared.cases)assert.deepEqual(selected.scripts.find(fixture=>fixture.id===row.id),row.fixture);
-  for(const id of ['number-callback-cleanup','custom-iterator-close','iterable-binding-close'])
+  for(const fixture of HOST_PROTOCOL_FIXTURES_V8)
+    assert.deepEqual(selected.scripts.find(row=>row.id===fixture.id),fixture);
+  assert.equal(new Set(selected.scripts.map(row=>row.id)).size,selected.scripts.length);
+  for(const id of ['number-callback-cleanup','custom-iterator-close','iterable-binding-close',
+    'promise-number-proxy-memory-join','promise-map-iterator','map-callback-finally-throw','map-generator-yield',
+    'map-generator-iterator-close','map-sparse-live-mutation','promise-map-sparse-truncate'])
     assert.ok(selected.scripts.some(fixture=>fixture.id===id),id+' remains in recurring qualification');
   const first=selected.scripts.find(row=>row.id==='ordered-map');
   first.args[0].push(99);

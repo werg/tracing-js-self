@@ -61,9 +61,12 @@ TypeScript semantics.
 
 ## Boundaries
 
-The existing linker refuses async dependency cycles, dynamic imports, escaping
-module namespace objects, namespace method receivers, import writes, and other
-unowned syntax. Its explicit refusals are retained. The reference data boundary
+The owned linker supports bounded async dependency cycles through retained
+DFS/SCC scheduling. That scheduler, including parallel top-level await, remains
+explicitly refused by this public/native module-source adapter. Owned execution
+and original-ESM differential tests are distinct from source/data admission.
+The linker still refuses dynamic imports, escaping module namespace objects,
+namespace method receivers, import writes, and other unowned syntax. The reference data boundary
 accepts ordinary returned graphs and primitive completions; custom prototypes,
 accessors, Symbols, and other exotic return values remain separate profiles.
 Ambient/native services are not supplied by this source-graph reference.

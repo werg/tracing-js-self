@@ -6,6 +6,7 @@ import {validateBundle} from '../validation.js';
 import {callAdapterInvocation} from '../call-adapter-validation.js';
 import {isSymbolPropertyKey,stringPropertyName} from '../property-keys.js';
 const visibleKey=key=>isSymbolPropertyKey(key)?key:stringPropertyName(key);
+const ownValue=(object,key)=>object&&Object.hasOwn(object,key)?object[key]:undefined;
 
 const selection={
   'binding.initialize':'value','binding.write':'value','binding.update':'write',
@@ -25,7 +26,7 @@ function allocation(p) {
     codeId:obj.codeId??null,capture:obj.closureEnvId??null,
     shapeVersion:obj.shapeVersion??0,
     properties:Object.entries(obj.properties??{}).map(([key,record])=>({
-      key:visibleKey(key),version:obj.propertyVersions?.[key]??0,value:record.value
+      key:visibleKey(key),version:ownValue(obj.propertyVersions,key)??0,value:record.value
     }))};
 }
 function changes(before,after) {
@@ -33,10 +34,10 @@ function changes(before,after) {
   const keys=new Set([...Object.keys(before?.properties??{}),...Object.keys(after.properties)]);
   const result=[];
   for(const key of keys){
-    const old=before?.properties?.[key],next=after.properties[key];
+    const old=ownValue(before?.properties,key),next=ownValue(after.properties,key);
     if(isDeepStrictEqual(old,next))continue;
-    result.push({key:visibleKey(key),present:next!==undefined,oldVersion:before?.propertyVersions?.[key]??0,
-      version:after.propertyVersions?.[key]??0,value:next?.value??null,
+    result.push({key:visibleKey(key),present:next!==undefined,oldVersion:ownValue(before?.propertyVersions,key)??0,
+      version:ownValue(after.propertyVersions,key)??0,value:next?.value??null,
       origin:next?.origin??null});
   }
   return result;

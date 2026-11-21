@@ -1,4 +1,5 @@
-/** Acyclic, bounded ES-module source-graph evaluator; not a native ESM loader. */
+/** Bounded ES-module evaluator with synchronous cycles and acyclic async
+ * dependency scheduling; not a native ESM loader. */
 export interface EvaluatedModuleCall {
   /** Named/default export to invoke after the graph is evaluated. */
   exportName:string;
@@ -27,12 +28,24 @@ export interface EvaluatedModulesMetadata {
   profile:'evaluated-module/1';
   entryModule:string;
   exportName:string;
+  /** Parallel TLA branches retain per-module environments and dependency
+   * records. This strategy is owned-runtime evidence, not public qualification. */
+  evaluationStrategy:'dependency-concatenation'|'async-dependency-scheduler';
   evaluationOrder:string[];
+  cycles:Array<{path:string;members:string[]}>;
+  asyncDependencies?:Array<{
+    file:string;
+    index:number;
+    hasTLA:boolean;
+    dependencies:string[];
+  }>;
   linkedBinding:string;
   calls?:Array<{exportName:string;binding:string}>;
   instantiationAndEvaluation:Array<{
-    file:string;
-    kind:'instantiate'|'evaluate';
+    file:string|null;
+    kind:'instantiate'|'evaluate'|'scheduler-state'|'environment'|'bindings'|
+      'module-record'|'instantiate-environment'|'async-scheduler'|
+      'async-completion'|'invoke-after-evaluation';
     start:number;
     end:number;
   }>;

@@ -8,7 +8,7 @@ const checked=(ctx,condition,message)=>{if(!condition)ctx.refuse('array map: '+m
 const patched=(ctx,event,table,id)=>event.stateChanges.find(change=>change.table===table&&change.id===id)?.after??ctx.state[table][id];
 
 export function createArrayMapSourceAdapterV8(){
-  const plans=new Map(),callbacks=new Map();
+  let plans=new Map(),callbacks=new Map();
   function input(ctx,value){
     const node=value?.[0]==='ref'?ctx.state.heap[value[1]]:null;
     checked(ctx,node?.kind==='array'&&[undefined,'Array.prototype'].includes(node.prototype)&&
@@ -16,15 +16,35 @@ export function createArrayMapSourceAdapterV8(){
       'requires an ordinary array with unchanged map and species selection');
     const length=node.properties.length?.value;
     checked(ctx,length?.[0]==='num'&&Number.isSafeInteger(length[1])&&length[1]>=0&&length[1]<=4096,'bounded own array length');
-    for(let index=0;index<length[1];index++)checked(ctx,ctx.descriptor(node,String(index))?.kind==='data','requires dense own data elements');
     return node;
   }
   function invoke(ctx,event,plan){
+    // Array#map snapshots length, then tests each index against the live heap.
+    // The declared ordinary prototype has no indexed inherited properties, so
+    // an absent own slot is a checked hole. Never turn it into undefined or
+    // evaluate the callback for it. Existing dense projections stay identical.
+    const array=ctx.state.heap[plan.arrayId];
+    checked(ctx,array?.kind==='array'&&[undefined,'Array.prototype'].includes(array.prototype),
+      'inherited indexed properties need their own iteration profile');
+    for(;plan.index<plan.length;plan.index++){
+      const descriptor=ctx.descriptor(array,String(plan.index));
+      checked(ctx,descriptor===null||descriptor.kind==='data','index accessor requires a getter continuation');
+      if(descriptor!==null)break;
+      ctx.emit({kind:'property.hasOwn',object:plan.arrayId,key:['str',String(plan.index)],result:['bool',false]},
+        event,'owned-source-map-hole/1');
+    }
+    if(plan.index===plan.length){
+      const parent=patched(ctx,event,'frames',plan.parent);
+      checked(ctx,!event.causes?.some(cause=>cause.kind==='invocation')&&!parent.pendingArrayMethod&&
+        ctx.eq(event.result,ref(plan.outputId))&&ctx.eq(parent.stack.at(-1)?.value,ref(plan.outputId)),
+        'exhausted sparse map must return its original result without another callback');
+      plans.delete(plan.parent);return;
+    }
     const child=event.causes?.find(cause=>cause.kind==='invocation')?.frameId,
       frame=child?event.stateChanges.find(change=>change.table==='frames'&&change.id===child&&change.before===null)?.after:null,
       pending=patched(ctx,event,'frames',plan.parent)?.pendingArrayMethod,
       fn=ctx.state.heap[plan.callbackId],value=ctx.state.heap[plan.arrayId].properties[String(plan.index)]?.value;
-    checked(ctx,frame&&fn?.kind==='function'&&!fn.async&&!ctx.bundle.programs[fn.codeId]?.generator&&
+    checked(ctx,frame&&fn?.kind==='function'&&!fn.async&&
       frame.codeId===fn.codeId&&frame.callerFrameId===plan.parent&&pending?.waitingFrameId===child&&value,
       'callback lost its original closure, index or caller');
     const receiver=fn.arrow?fn.lexicalThis:plan.thisArg,arguments_=[value,num(plan.index),ref(plan.arrayId)],
@@ -34,9 +54,24 @@ export function createArrayMapSourceAdapterV8(){
       parameters.every((name,index)=>ctx.eq(environment.bindings[name]?.token?.value,arguments_[index]??U)),
       'callback activation changed receiver or effective arguments');
     ctx.emit({kind:'property.get',object:plan.arrayId,key:['str',String(plan.index)],receiver:ref(plan.arrayId),result:ctx.tag(value,event)},event,'owned-source-map-element/1');
+    if(fn.generatorFunction){
+      const created=event.stateChanges.find(change=>change.table==='heap'&&change.id===frame.generatorId)?.after;
+      checked(ctx,frame.generatorId&&created?.kind==='generator'&&created.functionId===plan.callbackId,
+        'generator callback must retain its exact created instance');
+      const synthetic={...event,invocationId:child,operands:[['method',ref(plan.callbackId),ctx.tag(receiver,event)],
+        ...arguments_.map((value,index)=>index===1?ctx.copy(value):ctx.tag(value,event))]};
+      ctx.delegateEvent('synchronous-generator-source/1',synthetic,null);
+      plan.waitingFrameId=child;plan.currentValue=ctx.copy(value);
+      plan.generatorCallback=true;plan.currentGenerator=frame.generatorId;callbacks.set(child,plan);return;
+    }
+    checked(ctx,!ctx.bundle.programs[fn.codeId]?.generator,'non-generator map callback has generator metadata');
     ctx.emit({kind:'call',child:ctx.frame(child),callee:ctx.tag(ref(plan.callbackId),event),receiver:ctx.tag(plan.thisArg,event),
-      arguments:arguments_.map(value=>ctx.tag(value,event))},event,'owned-source-map-callback/1');
-    for(const [name,binding]of Object.entries(environment.bindings))if(binding.initialized)ctx.bind(ctx.cell(environment.id,name),binding.token.value,event);
+      arguments:arguments_.map((value,index)=>index===1?ctx.copy(value):ctx.tag(value,event))},event,'owned-source-map-callback/1');
+    for(const [name,binding]of Object.entries(environment.bindings))if(binding.initialized){
+      if(parameters.indexOf(name)===1&&typeof ctx.bindDerived==='function')
+        ctx.bindDerived(ctx.cell(environment.id,name),binding.token.value,event);
+      else ctx.bind(ctx.cell(environment.id,name),binding.token.value,event);
+    }
     plan.waitingFrameId=child;plan.currentValue=ctx.copy(value);callbacks.set(child,plan);
   }
   function checkFrame(ctx,node){
@@ -50,11 +85,37 @@ export function createArrayMapSourceAdapterV8(){
     return true;
   }
   return {id:ARRAY_MAP_SOURCE_PROFILE_V8,
+    completionWritesHandled:true,
+    captureState:()=>({plans:[...plans],callbacks:[...callbacks]}),
+    restoreState(state){plans=new Map(state.plans);callbacks=new Map(state.callbacks);},
     frameFields(node){return node.pendingArrayMethod?['pendingArrayMethod']:null;},checkFrame,
-    event(ctx,event,row){
+    beforeEvent(ctx,event){
       for(const plan of plans.values())for(const change of event.stateChanges)
         if(change.table==='heap'&&change.id===plan.arrayId&&!ctx.eq(change.before,change.after))
-          ctx.refuse('array map: mutation of the source array during a callback needs its broader iteration profile');
+          checked(ctx,change.after?.kind==='array'&&[undefined,'Array.prototype'].includes(change.after.prototype)&&
+            Object.keys(change.after.accessors??{}).length===0,
+            'prototype/accessor mutation during a callback requires its broader iteration profile');
+    },
+    event(ctx,event,row){
+      const generatorCallback=callbacks.get(event.invocationId);
+      if(generatorCallback?.generatorCallback&&event.operation==='call.return'){
+        const object=generatorCallback.currentGenerator??ctx.state.frames[event.invocationId]?.generatorId,
+          generator=(object&&event.stateChanges.find(change=>change.table==='heap'&&change.id===object)?.after)??
+            (object&&ctx.state.heap[object]),value=event.result;
+        checked(ctx,generator?.kind==='generator'&&generator.functionId===generatorCallback.callbackId&&
+          value?.[0]==='ref'&&value[1]===object&&generator.state==='suspendedStart',
+          'generator callback did not return its exact initial generator');
+        const frame=ctx.state.frames[event.invocationId],start=frame&&ctx.bundle.programs[frame.codeId]?.instructions[frame.pc];
+        checked(ctx,frame?.generatorId===object&&start?.op==='GENERATOR_START','generator callback start must match its retained initial frame');
+        ctx.delegateEvent('synchronous-generator-source/1',{...event,operation:'generator.start',codeId:frame.codeId,
+          siteId:start.siteId,result:ref(object)},null);
+        ctx.emit({kind:'property.set',object:generatorCallback.outputId,key:['str',String(generatorCallback.index)],
+          receiver:ref(generatorCallback.outputId),value:ctx.tag(value,event),success:true},event,'owned-source-map-generator-result/1');
+        callbacks.delete(event.invocationId);generatorCallback.index++;generatorCallback.waitingFrameId=null;
+        delete generatorCallback.generatorCallback;delete generatorCallback.currentGenerator;
+        if(generatorCallback.index===generatorCallback.length)plans.delete(generatorCallback.parent);
+        return true;
+      }
       if(callbacks.has(event.invocationId)&&event.stateChanges.some(change=>change.table==='frames'&&change.id===event.invocationId&&
         ['completed','thrown'].includes(change.after?.status)))return true;
       const plan=plans.get(event.invocationId);
@@ -72,24 +133,35 @@ export function createArrayMapSourceAdapterV8(){
       const source=input(ctx,raw[2]),callback=row.operands[1],fn=callback?.[0]==='ref'?ctx.state.heap[callback[1]]:null,
         output=event.stateChanges.find(change=>change.table==='heap'&&change.before===null&&change.after?.kind==='array')?.after,
         length=source.properties.length.value[1];
-      checked(ctx,fn?.kind==='function'&&!fn.async&&!ctx.bundle.programs[fn.codeId]?.generator&&output&&
+      checked(ctx,fn?.kind==='function'&&!fn.async&&output&&
         Object.keys(output.properties).length===1&&ctx.eq(output.properties.length.value,num(length)),
         'callback or fresh result allocation is outside the bounded profile');
-      checked(ctx,event.stateChanges.filter(change=>change.table==='heap').length===1,'undeclared allocation during map entry');
+      const generatorAllocations=event.stateChanges.filter(change=>change.table==='heap'&&change.before===null&&change.after?.kind==='generator');
+      const callbackStarted=event.causes?.some(cause=>cause.kind==='invocation')??false;
+      checked(ctx,(fn.generatorFunction&&callbackStarted?generatorAllocations.length===1:generatorAllocations.length===0)&&
+        event.stateChanges.filter(change=>change.table==='heap').length===1+generatorAllocations.length,
+        'undeclared allocation during map entry');
       ctx.emit({kind:'property.get',object:source.id,key:['str','length'],receiver:raw[2],result:num(length)},event,'owned-source-map-length/1');
       ctx.publish(output,event);
       if(!length){checked(ctx,!row.child&&ctx.eq(row.result,ref(output.id)),'empty map must return its fresh empty result');return true;}
       const pending=patched(ctx,event,'frames',event.invocationId)?.pendingArrayMethod;
       const next={parent:event.invocationId,arrayId:source.id,callbackId:callback[1],outputId:output.id,length,index:0,
         waitingFrameId:null,siteId:event.siteId,currentValue:U,thisArg:row.operands[2]??U};
-      checked(ctx,pending?.method==='map'&&!plans.has(next.parent),'duplicate or changed map continuation');
+      checked(ctx,(!callbackStarted||pending?.method==='map')&&!plans.has(next.parent),'duplicate or changed map continuation');
       plans.set(next.parent,next);invoke(ctx,event,next);return true;
     },
     completeFrame(ctx,change,event){
       const plan=callbacks.get(change.id);if(!plan)return false;
       const completion=change.after.completion;
-      checked(ctx,completion?.type==='return'&&completion.value?.value&&plan.waitingFrameId===change.id,
-        'abrupt callback completion needs its explicit iteration completion profile');
+      checked(ctx,['return','throw'].includes(completion?.type)&&completion.value?.value&&plan.waitingFrameId===change.id,
+        'callback completion must match its retained map invocation');
+      if(completion.type==='throw'){
+        const value=ctx.tag(completion.value.value,event),invocation=ctx.frame(change.id);
+        checked(ctx,invocation===ctx.controller.stack.at(-1),'thrown map callback is not the active public call');
+        ctx.emit({kind:'throw',invocation,value},event,'owned-source-map-throw/1');
+        callbacks.delete(change.id);plans.delete(plan.parent);
+        return true;
+      }
       const value=ctx.tag(completion.value.value,event),output=patched(ctx,event,'heap',plan.outputId);
       checked(ctx,ctx.eq(output.properties[String(plan.index)]?.value,value),'callback result was not written to the matching map index');
       ctx.emit({kind:'return',invocation:ctx.frame(change.id),value},event,'owned-source-map-return/1');

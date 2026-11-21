@@ -4,7 +4,6 @@ import {parse} from 'acorn';
 import {isDeepStrictEqual} from 'node:util';
 import {encode} from '../values.js';
 import {evaluateWitnessExpression} from '../training/witness-check.js';
-import {encodeWitness} from '../training/format.js';
 import {hashAlgorithmData} from './program.js';
 import {assertAlgorithmFields,assertAlgorithmValue,stableAlgorithmJSON} from './ir.js';
 import {tryLowerJavaScriptV8} from './lower-v8.js';
@@ -231,7 +230,7 @@ export function evaluateLocalRegion(region,controller){
       records.push({kind:'return',fields:{value:copy(value),invocation:active}});
     }else refuse('unknown local completion');
   }
-  return {bindings,decisions,completion,records:records.map(row=>encodeWitness(row.kind,row.fields))};
+  return {bindings,decisions,completion,records};
 }
 
 export function encodeRegionRecord(record){

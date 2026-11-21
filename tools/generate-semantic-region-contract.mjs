@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
+import {gunzipSync} from 'node:zlib';
 import {semanticV8Contract} from '../src/semantic/contract-v8.js';
 import {regionQualificationFixtures} from '../fixtures/semantic-regions/qualification.js';
+import {HOST_PROTOCOL_FIXTURES_V8} from '../fixtures/semantic-regions/host-protocol.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 
 const args=process.argv.slice(2);if(args.some(arg=>arg!=='--check'))throw new Error('Usage: node tools/generate-semantic-region-contract.mjs [--check]');
@@ -50,11 +52,32 @@ for(const row of protocolSources.cases){
   if(!verified.valid||!verified.sourceValidated||!verified.projectionValidated||!verified.replayValidated)
     throw new Error('Source-qualified protocol fixture failed independent recheck: '+id);
 }
+const hostFixtures=JSON.parse(gunzipSync(Buffer.from(await readFile(
+  new URL('../test/fixtures/semantic-host-protocol-v8.json.gz.b64',import.meta.url),'utf8'),'base64')).toString());
+if(hostFixtures.schema!=='semantic-host-protocol-interoperability/1'||
+  !Array.isArray(hostFixtures.cases)||hostFixtures.cases.length!==HOST_PROTOCOL_FIXTURES_V8.length)
+  throw new Error('Missing mixed host/protocol interoperability fixtures');
+for(const [index,fixture]of HOST_PROTOCOL_FIXTURES_V8.entries()){
+  const row=hostFixtures.cases[index],id='protocol-host:'+fixture.id;
+  if(row?.id!==fixture.id||ids.has(id))throw new Error('Duplicate or invalid host fixture identity: '+id);
+  ids.add(id);
+  const result=await verifyRegionTrainingCase(fixture);
+  if(!result.exported)throw new Error(id+': '+result.reason);
+  const checked=await recheckRegionEvidence(result.exported);
+  if(!checked.sourceValidated||!checked.projectionValidated||!checked.replayValidated)
+    throw new Error(id+': mixed source/public recheck failed');
+  const expected={id:fixture.id,sourceInputDigest:hashAlgorithmData(fixture),
+    public:result.exported.public,contexts:result.exported.contexts};
+  if(hashAlgorithmData(row)!==hashAlgorithmData(expected))
+    throw new Error(id+': regenerate mixed source/context fixture');
+}
 const manifest=[...examples.map(row=>({id:row.id,publicDigest:hashAlgorithmData(row.public),contextDigest:hashAlgorithmData(row.contexts)})),
   {id:'protocol-machine',schema:protocolFixtures.schema,fixtureDigest:hashAlgorithmData(protocolFixtures)},
   {id:'iterator-machine',schema:iteratorFixtures.schema,fixtureDigest:hashAlgorithmData(iteratorFixtures)},
   ...protocolSources.cases.map(row=>({id:'protocol-region:'+row.id,
-    publicDigest:hashAlgorithmData(row.artifact.public),contextDigest:hashAlgorithmData(row.artifact.contexts)}))];
+    publicDigest:hashAlgorithmData(row.artifact.public),contextDigest:hashAlgorithmData(row.artifact.contexts)})),
+  ...hostFixtures.cases.map(row=>({id:'protocol-host:'+row.id,
+    publicDigest:hashAlgorithmData(row.public),contextDigest:hashAlgorithmData(row.contexts)}))];
 const contract=semanticV8Contract(records,manifest),interop={schema:'semantic-v8-interoperability/1',
   contractDigest:contract.digest,interoperabilityDigest:contract.interoperabilityDigest,examples};
 for(const [relative,value] of [['../contracts/semantic-execution-v8.json',contract],['../test/fixtures/semantic-regions-v8.json',interop]]){
@@ -63,4 +86,5 @@ for(const [relative,value] of [['../contracts/semantic-execution-v8.json',contra
   else await writeFile(path,bytes);
 }
 process.stdout.write(JSON.stringify({valid:true,contractDigest:contract.digest,interoperabilityDigest:contract.interoperabilityDigest,
-  examples:examples.map(row=>({id:row.id,...row.regionCoverage})),protocolSources:protocolSources.cases.map(row=>row.id),mode:check?'checked':'generated'})+'\n');
+  examples:examples.map(row=>({id:row.id,...row.regionCoverage})),protocolSources:protocolSources.cases.map(row=>row.id),
+  protocolHostSources:hostFixtures.cases.map(row=>row.id),mode:check?'checked':'generated'})+'\n');

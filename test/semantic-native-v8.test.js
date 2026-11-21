@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {validateV8NativePolicy,validateV8NativeReceipt,V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_INTEROPERABILITY_DIGEST,V8_NATIVE_CHECKS} from '../src/semantic/native-v8.js';
 import {verifyRegionTrainingCase,recheckRegionEvidence,admitRegionEvidence} from '../src/semantic/compiler-v8.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
+import {identityDigest} from '../src/semantic/source-identity.js';
 
 const policy={schema:'semantic-native-policy/8',consumerRepository:'werg/megatoken',consumerRevision:'a'.repeat(40),
   contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,interoperabilityDigest:V8_INTEROPERABILITY_DIGEST,tokenizerIdentity:'b'.repeat(64),tokenizerSha256:'c'.repeat(64)};
@@ -59,4 +60,46 @@ test('production region admission reruns source checking and refuses missing or 
   let called=false;
   await assert.rejects(admitRegionEvidence(modified,{nativePolicy:policy,nativeConsumer:async()=>{called=true;return unitReceipt();}}),/contexts/);
   assert.equal(called,false,'invalid source/context evidence must fail before invoking the native gate');
+});
+
+test('direct host receipts bind exactly one verified source identity without a nested artifact',()=>{
+  // Shape-only receipt controls. Actual original-source/native/tokenizer checks
+  // run separately through qualify-semantic-v8 on clean paired revisions.
+  const direct=structuredClone(artifact),side=direct.sidecar;
+  delete side.sourceArtifact;delete side.sourceArtifactDigest;
+  side.schema='semantic-protocol-host-region-evidence/1';
+  side.identity={schema:'semantic-source-candidate-identity/8',
+    execution:{execution:'semantic-execution/8',trace:'semantic-trace/8',context:'semantic-context/8',
+      harness:'compositional-regions/1',representation:'mixed'},
+    certification:{schemaDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,
+      evidenceKind:'deterministic-engineering',optimizerSteps:0,learnedSuccess:null}};
+  side.identityDigest=identityDigest(side.identity);
+  const receipt=unitReceipt();receipt.sourceArtifactDigest=null;receipt.sourceIdentityDigest=side.identityDigest;
+  Object.assign(receipt.sourceVerification,{sourceArtifactDigest:null,
+    sourceIdentityDigest:side.identityDigest,identityValidated:true});
+  assert.equal(validateV8NativeReceipt(direct,receipt,policy),true);
+  for(const location of ['receipt','verification'])for(const field of ['sourceIdentityDigest','sourceArtifactDigest']){
+    const changed=structuredClone(receipt),target=location==='receipt'?changed:changed.sourceVerification;
+    target[field]='0'.repeat(64);
+    assert.throws(()=>validateV8NativeReceipt(direct,changed,policy),/receipt|source correspondence/);
+    delete target[field];
+    assert.throws(()=>validateV8NativeReceipt(direct,changed,policy),/receipt|source correspondence/);
+  }
+  for(const value of [false,undefined]){
+    const changed=structuredClone(receipt);changed.sourceVerification.identityValidated=value;
+    assert.throws(()=>validateV8NativeReceipt(direct,changed,policy),/source correspondence/);
+  }
+  for(const mutate of [
+    value=>{delete value.sidecar.identity;},
+    value=>{value.sidecar.sourceArtifact={};},
+    value=>{value.sidecar.identity.execution.trace='semantic-trace/6';},
+    value=>{value.sidecar.identity.certification.schemaDigest='0'.repeat(64);},
+    value=>{value.sidecar.identity.certification.learnedSuccess=true;}
+  ]){
+    const changed=structuredClone(direct);mutate(changed);
+    if(changed.sidecar.identity)changed.sidecar.identityDigest=identityDigest(changed.sidecar.identity);
+    assert.throws(()=>validateV8NativeReceipt(changed,receipt,policy),/direct source identity/);
+  }
+  const nested=unitReceipt();nested.sourceIdentityDigest=side.identityDigest;
+  assert.throws(()=>validateV8NativeReceipt(artifact,nested,policy),/receipt/);
 });

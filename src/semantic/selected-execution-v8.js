@@ -1,7 +1,7 @@
 // Live v8 inference reuses the established host/callback lifecycle. Only the
 // selected public prefix crosses the model boundary; no teacher or oracle does.
 import {isDeepStrictEqual} from 'node:util';
-import {SelectedModelDriver} from '../training/model-driver.js';
+import {SelectedExecutionDriver} from './execution-driver.js';
 import {createFixtureBroker} from '../training/fixture-broker.js';
 import {hostOperation} from '../host/operations.js';
 import {RegionExecutionHarness} from './region-harness.js';
@@ -17,16 +17,104 @@ const originalFragments=(payloadHex,selection)=>isPayloadHex(payloadHex)&&Array.
     fragment.tokenIds.every(id=>Number.isSafeInteger(id)&&id>=0)&&isPayloadHex(fragment.payloadHex))&&
   Buffer.concat(selection.fragments.map(fragment=>Buffer.from(fragment.payloadHex,'hex')))
     .equals(Buffer.from(payloadHex,'hex'));
-const boundPayload=(payloadHex,selection,context,checkpointIdentity,tokenizerIdentity)=>
+const boundPayload=(payloadHex,selection,context,checkpointIdentity,tokenizerIdentity,trainingIdentity=null)=>
   selection?.modelSelected===true&&selection.origin==='actual-model-selected'&&
   typeof selection.selectionId==='string'&&selection.selectionId.length>0&&
   selection.checkpointIdentity===checkpointIdentity&&selection.tokenizerIdentity===tokenizerIdentity&&
+  (selection.trainingIdentity??null)===trainingIdentity&&
   selection.prefixDigest===context.prefixDigest&&selection.contextDigest===hashAlgorithmData(context)&&
   selection.payloadHex===payloadHex&&originalFragments(payloadHex,selection);
-const boundSelection=(record,selection,context,checkpointIdentity,tokenizerIdentity)=>typeof record==='string'&&
-  boundPayload(Buffer.from(record,'utf8').toString('hex'),selection,context,checkpointIdentity,tokenizerIdentity);
+const boundSelection=(record,selection,context,checkpointIdentity,tokenizerIdentity,trainingIdentity=null)=>typeof record==='string'&&
+  boundPayload(Buffer.from(record,'utf8').toString('hex'),selection,context,checkpointIdentity,tokenizerIdentity,trainingIdentity);
 const attemptPayload=row=>typeof row.record==='string'?Buffer.from(row.record,'utf8').toString('hex'):
   isPayloadHex(row.rawPayloadHex)?row.rawPayloadHex:null;
+const recoveryTickets=new WeakSet();
+
+function verifyDriverCheckpoint(packet,policy){
+  const fields=['schema','policy','bridge','contexts','attempts','staleRetries','native','digest'];
+  demand(packet&&Object.keys(packet).length===fields.length&&fields.every(key=>Object.hasOwn(packet,key)),
+    'invalid selected driver checkpoint fields');
+  const {digest,...body}=packet;
+  demand(packet.schema==='semantic-selected-driver-checkpoint/8'&&HASH.test(digest??'')&&
+    digest===hashAlgorithmData(body),'selected driver checkpoint integrity differs');
+  demand(policy&&isDeepStrictEqual(packet.policy,policy)&&HASH.test(policy.checkpointIdentity??'')&&
+    HASH.test(policy.tokenizerIdentity??'')&&positive(policy.maxSelections,100000)&&
+    positive(policy.maxOutstanding,1024)&&Number.isSafeInteger(policy.maxStaleRetries)&&
+    policy.maxStaleRetries>=0&&policy.maxStaleRetries<=1000&&
+    policy.nativeIdentity?.schema==='semantic-inference-identity/8'&&
+    Number.isSafeInteger(policy.nativeIdentity.seed)&&policy.nativeIdentity.seed>=0&&
+    policy.nativeIdentity.generationSettings&&typeof policy.nativeIdentity.generationSettings==='object'&&
+    !Array.isArray(policy.nativeIdentity.generationSettings)&&
+    positive(policy.hostLimits?.maxGenerated,1000000)&&positive(policy.hostLimits?.maxOutstanding,1024)&&
+    typeof policy.automaticDelivery==='boolean',
+    'recovery requires the externally expected model identities and execution budgets');
+  demand(Array.isArray(packet.contexts)&&Array.isArray(packet.attempts)&&
+    packet.attempts.length<=policy.maxSelections&&Number.isSafeInteger(packet.staleRetries)&&
+    packet.staleRetries===packet.attempts.filter(row=>row.status==='stale').length&&
+    packet.staleRetries<=policy.maxStaleRetries,'retained prediction or stale-retry budget differs');
+  const transport=packet.native,{digest:transportDigest,...transportBody}=transport??{};
+  demand(transport?.schema==='semantic-native-transport-checkpoint/8'&&HASH.test(transportDigest??'')&&
+    transportDigest===hashAlgorithmData(transportBody)&&
+    transport.identity?.checkpointIdentity===policy.checkpointIdentity&&
+    transport.identity?.tokenizerIdentity===policy.tokenizerIdentity&&
+    isDeepStrictEqual(transport.identity,policy.nativeIdentity)&&
+    Array.isArray(transport.attempts)&&transport.attempts.length===packet.attempts.length,
+    'model transport checkpoint does not cover the driver identity and consumed attempts');
+  const native=transport.native,{digest:nativeDigest,...nativeBody}=native??{};
+  demand(native?.schema==='semantic-model-checkpoint/8'&&HASH.test(nativeDigest??'')&&
+    nativeDigest===hashAlgorithmData(nativeBody)&&isDeepStrictEqual(native.initialization,transport.identity)&&
+    Array.isArray(native.attempts)&&native.attempts.length===packet.attempts.length,
+    'native checkpoint does not preserve the same acknowledged attempts');
+  const publicData=packet.bridge?.public,session=publicData?.timeline?.[0]?.fields?.session;
+  demand(typeof session==='string'&&native.sessions&&typeof native.sessions==='object'&&!Array.isArray(native.sessions)&&
+    Object.keys(native.sessions).every(key=>key===session),
+    'driver recovery requires a dedicated native transport for this session');
+  const accepted=packet.attempts.filter(row=>row.status==='accepted');
+  demand(accepted.length===packet.contexts.length,'acknowledged selections and causal contexts differ');
+  for(const [index,attempt]of packet.attempts.entries()){
+    const retained=transport.attempts[index],model=native.attempts[index];
+    demand(attempt.attempt===index&&['accepted','stale'].includes(attempt.status)&&
+      boundSelection(attempt.record,attempt.selection,attempt.context,policy.checkpointIdentity,policy.tokenizerIdentity,
+        policy.nativeIdentity.trainingIdentity??null)&&
+      retained?.attempt===index&&retained.session===session&&retained.invocationId===attempt.invocationId&&
+      retained.record===attempt.record&&isDeepStrictEqual(retained.selection,attempt.selection)&&
+      retained.status===(attempt.status==='accepted'?'accepted':'rejected')&&
+      model?.selectionId===attempt.selection.selectionId&&model.session===session&&
+      model.invocationId===attempt.invocationId&&model.payloadHex===attempt.selection.payloadHex&&
+      isDeepStrictEqual(model.fragments,attempt.selection.fragments)&&
+      model.status===(attempt.status==='accepted'?'committed':'semantic-rejected'),
+      'checkpoint contains unacknowledged, changed or omitted original selections');
+  }
+  const saved=native.sessions[session];
+  if(!saved)demand(packet.attempts.length===0,'native checkpoint omitted its selected session');
+  else{
+    const prefix=saved.public?.timeline;
+    demand(Array.isArray(prefix)&&saved.unacknowledgedSelection===null&&
+      isDeepStrictEqual(saved.contexts,packet.contexts)&&
+      isDeepStrictEqual({...saved.public,timeline:[]},{...publicData,timeline:[]})&&
+      isDeepStrictEqual(prefix,publicData.timeline.slice(0,prefix.length))&&
+      publicData.timeline.slice(prefix.length).every(row=>row.mode==='observed'),
+      'native acknowledged history is not the same public prefix');
+  }
+  // Rebuild the causal boundaries from the public machine. Saved contexts or
+  // locally rehashed state never substitute for the state before each record.
+  const replay=new RegionExecutionHarness({sessionId:session,automaticDelivery:false,now:()=>-Infinity,
+    ...policy.hostLimits});
+  let generated=0;
+  for(const row of publicData.timeline){
+    if(row.mode==='generated'){
+      const attempt=accepted[generated],context=packet.contexts[generated];
+      demand(attempt&&row.fields.invocationId===attempt.invocationId&&row.fields.line===attempt.record&&
+        isDeepStrictEqual(context,attempt.context)&&
+        isDeepStrictEqual(context,replay.modelContext(attempt.invocationId)),
+        'checkpoint causal boundary or accepted record differs from public history');
+      commitCausalLmV8Selection(replay,attempt.invocationId,attempt.record,{context});generated++;
+    }else replay.importObserved(row);
+    demand(isDeepStrictEqual(replay.timeline.at(-1),row),'checkpoint public history changed during replay');
+  }
+  demand(generated===accepted.length,'checkpoint omitted acknowledged generated records');
+  return true;
+}
 
 function driverFacade(bridge,contexts,predictions){
   const host={
@@ -55,14 +143,28 @@ function driverFacade(bridge,contexts,predictions){
 
 /** No source-success claim is made here: the public machine checks values and
  * transitions; a separate private scorer checks correspondence after rollout. */
-export class RegionSelectedModelDriver extends SelectedModelDriver {
+export class RegionSelectedModelDriver extends SelectedExecutionDriver {
   constructor({select,harness=new RegionExecutionHarness(),maxSelections=4096,maxOutstanding=64,
-      maxStaleRetries=8,origin='model',checkpointIdentity=null,tokenizerIdentity=null,signal=null}={}){
+      maxStaleRetries=8,origin='model',checkpointIdentity=null,tokenizerIdentity=null,nativeIdentity=null,
+      trainingIdentity=nativeIdentity?.trainingIdentity??null,
+      hostLimits=null,automaticDelivery=null,signal=null,recovery=null}={}){
     demand(typeof select==='function'&&['model','engineering'].includes(origin),'selector and explicit origin required');
     if(origin==='model')demand(typeof select.commit==='function'&&HASH.test(checkpointIdentity??'')&&HASH.test(tokenizerIdentity??''),
       'model selections require pinned identities and native commit acknowledgments');
-    const contexts=[],predictions=new Map(),attempts=[],acknowledged=new Map();
-    let driver,queue=Promise.resolve(),releaseActive=null,fatal=null,staleRetries=0;
+    demand(trainingIdentity===null||HASH.test(trainingIdentity),'invalid expected training-lineage identity');
+    demand(nativeIdentity===null||(nativeIdentity.trainingIdentity??null)===trainingIdentity,
+      'native identity differs from the expected training lineage');
+    demand(recovery===null||recoveryTickets.has(recovery),'driver recovery must pass verified restoration');
+    const retainedHostLimits={maxGenerated:harness.inner.maxGenerated,maxOutstanding:harness.inner.maxOutstanding};
+    demand(hostLimits===null||isDeepStrictEqual(hostLimits,retainedHostLimits),
+      'host continuation limits differ from the externally expected execution policy');
+    const retainedAutomaticDelivery=harness.inner.automaticDelivery;
+    demand(automaticDelivery===null||automaticDelivery===retainedAutomaticDelivery,
+      'host callback delivery differs from the externally expected execution policy');
+    const contexts=copy(recovery?.contexts??[]),predictions=new Map(),attempts=copy(recovery?.attempts??[]),acknowledged=new Map();
+    for(const attempt of attempts)if(attempt.status==='accepted')
+      acknowledged.set(attempt.invocationId,{record:attempt.record,selection:copy(attempt.selection)});
+    let driver,queue=Promise.resolve(),releaseActive=null,fatal=null,staleRetries=recovery?.staleRetries??0;
     const acquire=async()=>{
       const previous=queue;let release;queue=new Promise(resolve=>{release=resolve;});
       await previous;if(fatal){release();throw fatal;}return release;
@@ -89,7 +191,7 @@ export class RegionSelectedModelDriver extends SelectedModelDriver {
         if(origin==='model')demand(selection?.modelSelected===true&&selection.origin==='actual-model-selected',
           'model experiment requires original model selection provenance');
         demand(typeof record==='string','one original canonical v8 record required');
-        if(origin==='model')demand(boundSelection(record,selection,current.context,checkpointIdentity,tokenizerIdentity),
+        if(origin==='model')demand(boundSelection(record,selection,current.context,checkpointIdentity,tokenizerIdentity,trainingIdentity),
           'selected bytes, model identity or causal provenance differ from the frozen invocation');
         attempt.provenanceValidated=origin==='model';
         decodeCausalLmV8Target(record);attempt.completeRecord=true;attempt.status='decoded';
@@ -105,8 +207,8 @@ export class RegionSelectedModelDriver extends SelectedModelDriver {
               attempt.rawPayloadHex=typeof error.evidence.rawPayloadHex==='string'?error.evidence.rawPayloadHex:
                 Buffer.from(attempt.record,'utf8').toString('hex');
               const bound=attempt.record!==null?boundSelection(attempt.record,attempt.selection,
-                attempt.context,checkpointIdentity,tokenizerIdentity):
-                boundPayload(attempt.rawPayloadHex,attempt.selection,attempt.context,checkpointIdentity,tokenizerIdentity)&&
+                attempt.context,checkpointIdentity,tokenizerIdentity,trainingIdentity):
+                boundPayload(attempt.rawPayloadHex,attempt.selection,attempt.context,checkpointIdentity,tokenizerIdentity,trainingIdentity)&&
                   attempt.selection.session===harness.inner.sessionId&&attempt.selection.invocationId===attempt.invocationId;
               attempt.provenanceValidated=origin==='model'&&error.evidence.schema==='semantic-native-selection-failure/1'&&
                 error.evidence.provenanceValidated===true&&bound;
@@ -177,6 +279,57 @@ export class RegionSelectedModelDriver extends SelectedModelDriver {
       }});
     driver=this;this.bridge=harness;this.contexts=contexts;this.attempts=attempts;
     this.originalSelect=select;this.origin=origin;this.executionSignal=signal;
+    const policy=Object.freeze({checkpointIdentity,tokenizerIdentity,nativeIdentity:copy(nativeIdentity),
+      hostLimits:copy(retainedHostLimits),automaticDelivery:retainedAutomaticDelivery,
+      maxSelections,maxOutstanding,maxStaleRetries});
+    this.checkpoint=async({ingressStore=null}={})=>{
+      demand(origin==='model'&&typeof select.checkpoint==='function',
+        'durable recovery requires a checkpoint-capable native model selector');
+      const unlock=await acquire();
+      try{
+        // Acquiring the same lock as selection/acknowledgement ensures no
+        // speculative local record can enter the saved public history. Native
+        // observations may arrive while the model snapshot is collected; only
+        // an observed suffix beyond its acknowledged prefix is permitted.
+        demand(predictions.size===0,'cannot checkpoint an uncommitted prediction');
+        demand(harness.inner.maxGenerated===retainedHostLimits.maxGenerated&&
+          harness.inner.maxOutstanding===retainedHostLimits.maxOutstanding&&
+          harness.inner.automaticDelivery===retainedAutomaticDelivery&&
+          [...harness.invocations.values()].every(row=>row.controller.maxGenerated===retainedHostLimits.maxGenerated),
+          'host continuation limits changed after the driver policy was frozen');
+        const native=await select.checkpoint();
+        const bridge=ingressStore?await harness.checkpointDurable({ingressStore}):harness.checkpoint();
+        const body={schema:'semantic-selected-driver-checkpoint/8',policy:copy(policy),
+          bridge,contexts:copy(contexts),attempts:copy(attempts),staleRetries,native:copy(native)};
+        const packet={...body,digest:hashAlgorithmData(body)};
+        verifyDriverCheckpoint(packet,policy);return packet;
+      }finally{unlock();}
+    };
+  }
+  static async restore(packet,{select,policy,harnessOptions={},signal=null}={}){
+    demand(typeof select==='function'&&typeof select.restore==='function'&&typeof select.checkpoint==='function',
+      'fresh native model transport with checkpoint/restore is required');
+    const saved=copy(packet);verifyDriverCheckpoint(saved,policy);
+    // Restore host ownership before opening native model state. Neither step
+    // dispatches a request or re-registers an existing callback. Unknown host
+    // outcomes remain uncertain and require an explicit broker receipt.
+    const harness=saved.bridge.ingress||saved.bridge.ingressLog||harnessOptions.ingressReceipt||harnessOptions.ingressJournal||harnessOptions.ingressLogReceipt?
+      await RegionExecutionHarness.restoreDurable(saved.bridge,harnessOptions):
+      RegionExecutionHarness.restore(saved.bridge,harnessOptions);
+    demand(harness.inner.maxGenerated===policy.hostLimits.maxGenerated&&
+      harness.inner.maxOutstanding===policy.hostLimits.maxOutstanding&&
+      harness.inner.automaticDelivery===policy.automaticDelivery&&
+      [...harness.invocations.values()].every(row=>row.controller.maxGenerated===policy.hostLimits.maxGenerated),
+      'restored host continuation changed its externally expected resource limits');
+    try{
+      const receipt=await select.restore({checkpoint:saved.native});
+      demand(receipt?.restored===true&&receipt.transportCheckpointDigest===saved.native.digest&&
+        receipt.hostDispatches===0,'native restoration did not attest this checkpoint without host dispatch');
+      const recovery={contexts:saved.contexts,attempts:saved.attempts,staleRetries:saved.staleRetries};
+      recoveryTickets.add(recovery);
+      const driver=new RegionSelectedModelDriver({select,harness,...saved.policy,origin:'model',signal,recovery});
+      recoveryTickets.delete(recovery);return driver;
+    }catch(error){select.close?.();throw error;}
   }
   runInvocation(invocationId,{signal=this.executionSignal??null}={}){
     return super.runInvocation(invocationId,{signal});
@@ -208,9 +361,10 @@ export class RegionSelectedModelDriver extends SelectedModelDriver {
  * Fixture replies and callbacks are supplied only when the selected request
  * reaches the ordinary broker; none are included in a model request. */
 export async function runSelectedRegionExecution({initialPublic,fixture={calls:[]},select,
-    checkpointIdentity,tokenizerIdentity,seed=17,origin='model',maxPredictions=4096,
+    checkpointIdentity,tokenizerIdentity,trainingIdentity=null,seed=17,origin='model',maxPredictions=4096,
     maxGenerated=16384,maxStaleRetries=8,maxOutstanding=64,timeoutMs=15000,generationSettings=null}={}){
   demand(HASH.test(checkpointIdentity??'')&&HASH.test(tokenizerIdentity??'')&&
+    (trainingIdentity===null||HASH.test(trainingIdentity))&&
     Number.isSafeInteger(seed)&&seed>=0,'frozen checkpoint, tokenizer and seed required');
   demand(positive(maxPredictions,100000)&&positive(maxGenerated,1000000)&&positive(maxOutstanding,1024)&&
     positive(timeoutMs,300000)&&Number.isSafeInteger(maxStaleRetries)&&maxStaleRetries>=0&&maxStaleRetries<=1000,
@@ -237,7 +391,8 @@ export async function runSelectedRegionExecution({initialPublic,fixture={calls:[
     return result;
   };
   const abort=new AbortController(),driver=new RegionSelectedModelDriver({select,harness,
-    maxSelections:maxPredictions,maxStaleRetries,maxOutstanding,origin,checkpointIdentity,tokenizerIdentity,signal:abort.signal}),
+    maxSelections:maxPredictions,maxStaleRetries,maxOutstanding,origin,checkpointIdentity,tokenizerIdentity,
+    trainingIdentity,signal:abort.signal}),
     invocationId=initialPublic.timeline.find(row=>row.kind==='invocation').fields.invocationId,
     started=performance.now();
   let inferenceIdentity=null,failure=null,cleanupFailure=null,outcome=null,deadlineExceeded=false;
@@ -245,8 +400,9 @@ export async function runSelectedRegionExecution({initialPublic,fixture={calls:[
   const onAbort=()=>rejectAbort(abort.signal.reason);abort.signal.addEventListener('abort',onAbort,{once:true});
   const timer=setTimeout(()=>{deadlineExceeded=true;abort.abort(new Error('Selected v8 execution deadline exceeded'));},timeoutMs);
   try{
-    inferenceIdentity=copy(await Promise.race([select.initialize({seed,checkpointIdentity,tokenizerIdentity}),aborted]));
+    inferenceIdentity=copy(await Promise.race([select.initialize({seed,checkpointIdentity,tokenizerIdentity,trainingIdentity}),aborted]));
     demand(inferenceIdentity?.checkpointIdentity===checkpointIdentity&&inferenceIdentity.tokenizerIdentity===tokenizerIdentity&&
+      (inferenceIdentity.trainingIdentity??null)===trainingIdentity&&
       inferenceIdentity.seed===seed,'selector attestation differs from the frozen experiment');
     if(origin==='model')demand(isDeepStrictEqual(inferenceIdentity.generationSettings,requestedSettings),
       'loaded generation settings differ from the frozen experiment');
@@ -272,7 +428,7 @@ export async function runSelectedRegionExecution({initialPublic,fixture={calls:[
     publicCompleted=!failure&&controllers.every(row=>row.status==='completed'),
     firstViolation=controllers.map(row=>row.controller.firstWitnessViolation).find(Boolean)??null;
   if(publicCompleted)RegionExecutionHarness.replay(publicData);
-  const result={schema:'semantic-selected-execution-result/8',origin,checkpointIdentity,tokenizerIdentity,seed,
+  const result={schema:'semantic-selected-execution-result/8',origin,checkpointIdentity,tokenizerIdentity,trainingIdentity,seed,
     generationSettings:requestedSettings,
     inferenceIdentity,status:failure?(failure.message.includes('budget')||deadlineExceeded?'resource_limited':'failed'):
       publicCompleted?'completed':'incomplete',publicAccepted:!firstViolation&&!failure,publicCompleted,

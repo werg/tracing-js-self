@@ -7,8 +7,10 @@ const factories=new Map([['Array.prototype.values','values'],['Array.prototype.k
 const builtinNames=new Set([...factories.keys(),'Iterator.next','Iterator.identity']);
 function instruction(ctx,event){const frame=ctx.getOwnedFrame(event.invocationId);
   return ctx.bundle.programs[frame?.codeId]?.instructions[frame.pc];}
-export function createIteratorSourceAdapterV8(){const arrayLoops=new Set();return {
+export function createIteratorSourceAdapterV8(){let arrayLoops=new Set();return {
   id,
+  captureState:()=>({arrayLoops:[...arrayLoops]}),
+  restoreState(state){arrayLoops=new Set(state.arrayLoops);},
   heapFields(node){return node.kind==='iterator'?fields:null;},
   checkHeap(ctx,node){
     if(node.kind!=='iterator')return true;

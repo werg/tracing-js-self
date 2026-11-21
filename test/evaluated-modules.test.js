@@ -27,6 +27,14 @@ test('evaluated modules run dependency initialization once and share mutable liv
   assert.match(run.bundle.sources[0].text,/__traced_eval_m1_count/);
 });
 
+test('evaluate-only mode has a private entry name while exported calls preserve their entry name',()=>{
+  const modules={'main.js':'export function main(){return 1;}'};
+  assert.equal(linkEvaluatedModules({modules,entryModule:'main.js',exportName:'main'}).entryFunction,
+    '__traced_evaluated_entry');
+  assert.equal(linkEvaluatedModules({modules,entryModule:'main.js',evaluateOnly:true}).entryFunction,
+    '__traced_eval_entry');
+});
+
 test('module side effects use dependency ordering even with import elision',async()=>{
   const modules={
     'a.ts':'export let result = 2;',
@@ -99,6 +107,22 @@ test('expression default exports and value exports evaluate once',async()=>{
   };
   const run=await verified({modules,entryModule:'main.js'});
   assert.equal(run.result,12);
+});
+
+test('anonymous default class and generator expressions receive the source-level name',async()=>{
+  const cases=[
+    {source:`export default (class { static observed=this.name; });\n`+
+      `import C from './main.js';\n`+
+      `export function read(){return [C.name,C.observed];}`,expected:['default','default']},
+    {source:`export default (function* () { return 24601; });\n`+
+      `import g from './main.js';\n`+
+      `export function read(){return g.name;}`,expected:'default'}
+  ];
+  for(const {source,expected} of cases){
+    const run=await verified({modules:{'main.js':source},entryModule:'main.js',exportName:'read'});
+    assert.deepEqual(run.result,expected);
+    assert.match(run.bundle.sources[0].text,/\(\{default:/);
+  }
 });
 
 test('module linker rejects cycles, unknown dependencies, and native packages',()=>{
@@ -397,14 +421,16 @@ test('cycles that observe an uninitialized lexical binding throw like native ESM
   }),/Owned module evaluation rejected:|not defined|before initialization/);
 });
 
-test('cycles with top-level await fail link before native effects dispatch',()=>{
+test('cycles with top-level await use the owned SCC scheduler',async()=>{
   const modules={
     'a.js':"import {value} from './b.js';export const x=await Promise.resolve(3);",
     'b.js':"import {x} from './a.js';export const value=4;"
   };
-  assert.throws(()=>linkEvaluatedModules({
+  const run=await verified({
     modules,entryModule:'a.js',exportName:'x'
-  }),/cyclic module initialization with await/);
+  });
+  assert.equal(run.result,3);
+  assert.equal(run.metadata.evaluationStrategy,'async-dependency-scheduler');
 });
 
 test('same-origin cyclic ESM function behavior agrees with independent native Node ESM',async()=>{

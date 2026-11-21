@@ -5,12 +5,10 @@ import {isDeepStrictEqual,TextDecoder} from 'node:util';
 import {stableAlgorithmJSON,assertAlgorithmFields} from './ir.js';
 import {validateRegionProgram,decodeRegionRecord,cloneRegionController,REGION_CONTEXT_VERSION,
   REGION_TRACE_VERSION,REGION_PROFILE} from './regions.js';
-import {encodeWitness} from '../training/format.js';
 import {decodePureRegionRecord,pureRegionEntry} from './pure-region-v8.js';
-import {decodeDetailedRecord} from './detailed-v7.js';
+import {decodeDetailedRecord} from './detail-v8.js';
 import {decodeProtocolRecordV8} from './protocol-codec-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
-import {recheckRegionEvidence} from './compiler-v8.js';
 import {SEMANTIC_V8_DEFINITION} from './contract-v8.js';
 import {hashAlgorithmData} from './program.js';
 
@@ -113,6 +111,11 @@ export function validateRegionTrainingContexts(exported){
   require(Array.isArray(contexts),'actual prediction contexts required');
   const harness=new RegionExecutionHarness({sessionId:publicData.timeline[0]?.fields?.session,
     automaticDelivery:false,now:()=>-Infinity}),items=[];
+  // Recorded host lifecycle rows are replay authority. Finishing a callback
+  // must not synthesize a live handler-close ahead of its recorded observation.
+  // Use the same replay mode as RegionExecutionHarness.replay while collecting
+  // each context strictly before its generated record is applied.
+  harness.replayingPublic=true;harness.inner.replaying=true;
   for(const row of publicData.timeline){
     assertAlgorithmFields(row,['sequence','mode','kind','fields'],'v8 public row');
     require(row.sequence===harness.timeline.length+1,'noncontiguous public prefix');
@@ -136,6 +139,7 @@ export async function buildCausalLmV8Examples(exported,{tokenizer,eosTokenId,max
   require(typeof allowLocal==='boolean','allowLocal must be explicit boolean');
   require(Number.isSafeInteger(maxExamples)&&maxExamples>0,'positive example cap required');
   require(['train','validation','test'].includes(expectedSplit),'invalid dataset split');
+  const {recheckRegionEvidence}=await import('./compiler-v8.js');
   const checked=await recheckRegionEvidence(exported,{nativePolicy,nativeConsumer,requireNative:!allowLocal});
   const {verifyRegionDatasetBinding}=await import('./family-registry-v8.js');
   const side=exported.sidecar,binding=verifyRegionDatasetBinding(exported,{expectedSplit});
@@ -173,7 +177,7 @@ export function commitCausalLmV8Selection(harness,invocationId,record,{context=n
     // Diagnostic replay deliberately retains incorrect claims and their supplied
     // values. Live serving rejects them before changing the shared machine.
     const staged=cloneRegionController(controller),{kind,fields}=decoded.record;
-    staged.commit(encodeWitness(kind,fields),{mode:'generated',track:activation.trackId});
+    staged.commitRecord({kind,fields},{mode:'generated',track:activation.trackId});
     require(!staged.firstWitnessViolation,'false detailed computation, branch, or summary claim');
   }
   const entry=decoded.kind==='region'?harness.entry(invocationId,decoded.record.region):

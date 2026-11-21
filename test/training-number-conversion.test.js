@@ -39,10 +39,16 @@ test('primitive Number calls pass independent source, intermediate and public re
   }
 });
 
-test('Number accessor and exotic conversion profiles remain explicit refusals',()=>{
-  for(const value of ['{get [Symbol.toPrimitive](){return ()=>7;}}','new Proxy({}, {})']){
-    const runtime=createRuntime().startEntry({text:'"use strict";function run(){return Number('+value+');}',functionName:'run'});
-    assert.throws(()=>runtime.drive(),/Number .*requires/);
-    assert.equal(Object.keys(runtime.state.effects).length,0);
-  }
+test('Number accessors execute without promoting an unqualified training projection',async()=>{
+  const source=compare('let calls=0;const value={get [Symbol.toPrimitive](){calls++;return ()=>7;}};'+
+    'return [Number(value),calls];');
+  const result=await verifyEffectfulTrainingCase({source,entry:'run',fixture:{calls:[]},
+    family:'number-accessor-projection-boundary'});
+  assert.equal(result.status,'projection_refused',result.reason);
+});
+
+test('Number exotic conversion profiles remain explicit refusals',()=>{
+  const runtime=createRuntime().startEntry({text:'"use strict";function run(){return Number(new Proxy({}, {}));}',functionName:'run'});
+  assert.throws(()=>runtime.drive(),/Number object conversion requires an owned ordinary object/);
+  assert.equal(Object.keys(runtime.state.effects).length,0);
 });

@@ -5,7 +5,7 @@ import {BinaryProfileError,BinaryResourceError,binaryIndex,binaryInteger,binaryE
 import { parse, compile } from './frontend.js';
 import {GENERATOR_INTRINSIC_PROTOTYPES,generatorIntrinsicParent,generatorIntrinsicProperty,generatorInstancePrototype} from './owned-generator-objects.js';
 import { importGraph } from './training/graph.js';
-import { parseTraining, TRAINING_PARSER } from './training/profile.js';
+import { parseTraining, TRAINING_PARSER, parseOwnedScript, OWNED_SCRIPT_PARSER } from './training/profile.js';
 import { createArithmetic, advanceArithmetic, isOwnedArithmetic, ordinaryGet, ordinaryBuiltin, objectPrototype } from './spec-operations.js';
 import { operationMutation } from './spec-mutations.js';
 import {hostOperation,prepareHostRequest,HOST_METHODS,SUBSCRIPTION_CLOSERS} from './host/operations.js';
@@ -13,9 +13,12 @@ import {encodeNativeGraph,validateOwnedGraph} from './host/graph-codec.js';
 import { specStep, ENGINE_REVISION } from './spec-schema.js';
 import {supportsPinnedRegExp,testPinnedRegExp,scanPinnedReplacement} from './owned-pinned-regexp.js';
 import {createNumberConversion,advanceNumberConversion} from './owned-number-conversion.js';
+import {createPrimitiveConversion,advancePrimitiveConversion} from './owned-primitive-conversion.js';
+import {ownedHasProperty} from './owned-has-property.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
+const ERROR_CONSTRUCTORS=['Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError'];
 function binaryGuest(operation){
   try{return operation();}catch(error){
     if(error instanceof BinaryProfileError)throw error;
@@ -88,6 +91,33 @@ function valueKey(tagged) {
   if (!['str','num','bool','null','undefined','bigint'].includes(tagged[0]))
     throw new TypeError('Property keys requiring guest coercion are unsupported');
   return stringPropertyKey(String(decode(tagged)));
+}
+function propertyKeySlot(frame,instruction){
+  const op=instruction.op;
+  if(['GET_PROP','GET_METHOD','UPDATE_PROP','PROPERTY_KEY'].includes(op)||
+    op==='DUP2'&&instruction.arg?.cachePropertyKey===true)return frame.stack.length-1;
+  return op==='PUT_PROP'?frame.stack.length-2:null;
+}
+function retainedPropertyKey(frame,instruction,state){
+  const stackIndex=propertyKeySlot(frame,instruction),key=frame.stack[stackIndex];
+  if(stackIndex===null||key?.value[0]!=='ref')return null;
+  // GetValue/PutValue perform ToObject before ToPropertyKey. A nullish base
+  // must fail at the ordinary instruction without running the key's hooks.
+  if(instruction.op!=='PROPERTY_KEY'&&['null','undefined'].includes(frame.stack[stackIndex-1]?.value[0]))return null;
+  if(!['object','array'].includes(state.heap[key.value[1]]?.kind))
+    throw new TypeError('PropertyKey conversion requires an owned ordinary object');
+  let cacheBinding=null;
+  if(instruction.op==='GET_PROP'&&instruction.arg?.cachePropertyKey){
+    const name=instruction.arg.cachePropertyKey;
+    if(typeof name!=='string'||!/^\[\[logical key [1-9]\d*\]\]$/.test(name))
+      throw new Error('Invalid internal property reference binding');
+    const {env,cell}=lookup(state,frame.envId,name);
+    if(cell.kind!=='const'||!cell.initialized||!equal(cell.token.value,key.value))
+      throw new Error('Property reference binding lost its original key');
+    cacheBinding={envId:env.id,name,token:copy(cell.token),version:cell.version};
+  }
+  return {pc:frame.pc,opcode:instruction.op,stackIndex,stack:copy(frame.stack),cacheBinding,
+    conversion:createPrimitiveConversion('PropertyKey',key.value,instruction.siteId)};
 }
 function arrayIndex(key) {
   return /^(0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295;
@@ -374,17 +404,18 @@ export class Runtime {
     }
     this.chunkStart=0;this.chunkBefore='q0';this.result=U;
   }
-  registerSource({text,url='<inline>',goal='script',trainingProfile=false}={}) {
+  registerSource({text,url='<inline>',goal='script',trainingProfile=false,scriptProfile=false}={}) {
     if(this.started)throw new Error('Source registry is frozen after start');
     if(goal!=='script')throw new SyntaxError('Only script goal is implemented');
     if(typeof text!=='string')throw new TypeError('Source text required');
+    if(trainingProfile&&scriptProfile)throw new TypeError('Select one owned source profile');
     const sourceId=`src${this.sources.length+1}`;
-    const compiled=compile(trainingProfile?parseTraining(text):parse(text));
+    const compiled=compile(trainingProfile?parseTraining(text):scriptProfile?parseOwnedScript(text):parse(text));
     const rename={};
     for(const id of Object.keys(compiled.programs))rename[id]=`${sourceId}:${id}`;
     for(const [id,program] of Object.entries(compiled.programs))this.programs[rename[id]]={...program,id:rename[id],instructions:program.instructions.map(inst=>['DEF_FN','MAKE_FUNCTION'].includes(inst.op)?{...inst,arg:{...inst.arg,codeId:rename[inst.arg.codeId]},siteId:`${sourceId}:${inst.siteId}`}:{...inst,siteId:`${sourceId}:${inst.siteId}`})};
     this.sites.push(...compiled.sites.map(site=>({...site,siteId:`${sourceId}:${site.siteId}`,codeId:rename[site.codeId],sourceId})));
-    const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:trainingProfile?TRAINING_PARSER:'bounded-pratt/2'};
+    const record={sourceId,text,url,goal,entry:rename[compiled.entry],parser:trainingProfile?TRAINING_PARSER:scriptProfile?OWNED_SCRIPT_PARSER:'bounded-pratt/2'};
     this.sources.push(record);return record;
   }
   next(draft,kind) {const ids=draft.counters.ids;return `${kind==='operation'?'op':kind[0]}${++ids[kind]}`;}
@@ -525,13 +556,13 @@ export class Runtime {
     fn.closureEnvId=this.newEnv(draft,fn.closureEnvId);
     draft.envs[fn.closureEnvId].bindings['[[home object]]']={kind:'const',initialized:true,token:token(home,eventId),version:0};
   }
-  newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U,functionId=null) {
+  newFrame(draft,codeId,parentEnv,callerFrameId=null,asyncPromiseId=null,args=[],thisValue=U,functionId=null,scriptEnvironmentId=null) {
     const thisBindingFrameId=thisValue[0]==='thisbinding'?thisValue[1]:null;
     if(thisBindingFrameId){
       if(!draft.frames[thisBindingFrameId])throw new Error('Lexical receiver frame is missing');
       thisValue=draft.frames[thisBindingFrameId].thisValue;
     }
-    const id=this.next(draft,'frame'),envId=this.newEnv(draft,parentEnv);
+    const id=this.next(draft,'frame'),envId=scriptEnvironmentId??this.newEnv(draft,parentEnv);
     const params=this.programs[codeId].params;
     const restIndex=this.programs[codeId].restIndex??-1;
     params.forEach((name,i)=>{
@@ -581,11 +612,59 @@ export class Runtime {
       s.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     s.envs[global].bindings.undefined={kind:'const',initialized:true,token:token(U),version:0};
+    if(source.parser===OWNED_SCRIPT_PARSER){
+      for(const [name,value] of [['NaN',['num','NaN']],['Infinity',['num','+Infinity']]])
+        s.envs[global].bindings[name]={kind:'const',initialized:true,token:token(value),version:0};
+      for(const name of ['Set',...ERROR_CONSTRUCTORS])
+        s.envs[global].bindings[name]={kind:'const',initialized:true,token:token(['intrinsic',name]),version:0};
+      for(const name of ['parseInt','isNaN','print'])
+        s.envs[global].bindings[name]={kind:'const',initialized:true,token:token(['builtinfn',name]),version:0};
+      s.control.a0.test262Output=[];
+    }
     s.control.a0.globalEnvId=global;
     s.control.a0.activeFrameId=this.newFrame(s,source.entry,global);
     s.control.a0.status='running';this.started=true;
     this.initialState=copy(this.state);this.checkpoints.q0=copy(this.state);
     return this;
+  }
+  /** Evaluate separately parsed scripts in one fresh owned global environment.
+   * Script declaration instantiation occurs at its entry, after prior scripts,
+   * rather than hoisting future test declarations into harness initialization. */
+  startScriptSequence(sources){
+    if(this.started)throw new Error('Run already started');
+    if(!Array.isArray(sources)||!sources.length||new Set(sources.map(source=>source?.sourceId)).size!==sources.length||
+      sources.some(source=>source?.parser!==OWNED_SCRIPT_PARSER||!this.sources.includes(source)))
+      throw new TypeError('Script sequence requires unique registered owned script sources');
+    this.start(sources[0]);
+    const environmentId=this.state.frames[this.state.control.a0.activeFrameId].envId;
+    this.state.control.a0.scriptSequence={sourceIds:sources.map(source=>source.sourceId),nextIndex:1,environmentId};
+    this.entrySpec={kind:'scripts',sourceIds:sources.map(source=>source.sourceId)};
+    this.initialState=copy(this.state);this.checkpoints.q0=copy(this.state);
+    return this;
+  }
+  enterNextScript(){
+    const control=this.state.control.a0,sequence=control.scriptSequence;
+    if(!sequence||sequence.nextIndex>=sequence.sourceIds.length||control.activeFrameId||
+      control.queue.length||['failed','unsupported'].includes(control.status)||this.prepared())
+      throw new Error('No ready next owned script');
+    const source=this.sources.find(source=>source.sourceId===sequence.sourceIds[sequence.nextIndex]);
+    if(source?.parser!==OWNED_SCRIPT_PARSER)throw new Error('Unregistered owned script entry');
+    const program=this.programs[source.entry],environment=this.state.envs[sequence.environmentId];
+    // Full GlobalDeclarationInstantiation (global property descriptors and
+    // lexical conflicts) remains a separate profile. Never silently overwrite
+    // an earlier lexical binding while executing a harness/test sequence.
+    const declarations=program.instructions.filter(inst=>inst.op==='DEF_FN').map(inst=>inst.arg.name);
+    for(const name of [...program.varNames,...declarations]){
+      const existing=environment.bindings[name];
+      if(existing&&!['var','function'].includes(existing.kind))
+        throw new TypeError('Unsupported owned script global declaration collision: '+name);
+    }
+    return this.commit('script.enter',s=>{
+      const id=this.newFrame(s,source.entry,s.control.a0.globalEnvId,null,null,[],U,null,sequence.environmentId);
+      s.control.a0.activeFrameId=id;s.control.a0.scriptSequence.nextIndex++;
+      s.control.a0.status='running';delete s.control.a0.completion;
+      return {operands:[['str',source.sourceId]],causes:[{kind:'invocation',frameId:id}]};
+    },{sourceId:source.sourceId,codeId:source.entry});
   }
   /** Explicit invocation entry for training-js/1. The top level contains only
    * an exact strict directive and named ordinary function declarations. */
@@ -622,7 +701,7 @@ export class Runtime {
     for(const name of ['parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Error','TypeError','ArrayBuffer','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set',...ERROR_CONSTRUCTORS,'ArrayBuffer','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     state.control.a0.globalEnvId=global;
@@ -688,19 +767,41 @@ export class Runtime {
     this.events.push(event);return event;
   }
   stackPush(frame,value,origin){frame.stack.push(token(value,origin));}
+  invokePrimitiveConversion(draft,frame,method,receiver,args,eventId,goal){
+    const fn=draft.heap[method[1]];
+    if(fn?.kind!=='function'||fn.async||this.programs[fn.codeId].generator)
+      throw new TypeError('Async/generator '+goal+' conversion callback requires its owned profile');
+    const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,frame.id,null,
+      args.map(value=>token(value,eventId)),this.functionThis(fn,receiver),fn.id);
+    draft.control.a0.activeFrameId=child;return child;
+  }
   advanceNumberConversion(draft,frame,eventId){
     const outcome=advanceNumberConversion(frame.pendingNumberConversion,{heap:draft.heap,
-      invoke:(method,receiver,args)=>{
-        const fn=draft.heap[method[1]];
-        if(fn.async||this.programs[fn.codeId].generator)
-          throw new TypeError('Async/generator Number conversion callback requires its owned profile');
-        const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,frame.id,null,
-          args.map(value=>token(value,eventId)),this.functionThis(fn,receiver),fn.id);
-        draft.control.a0.activeFrameId=child;return child;
-      }});
+      invoke:(method,receiver,args)=>this.invokePrimitiveConversion(draft,frame,method,receiver,args,eventId,'Number')});
     if(outcome.fault){delete frame.pendingNumberConversion;guestFault(outcome.fault.name,outcome.fault.message);}
     if(outcome.done){delete frame.pendingNumberConversion;this.stackPush(frame,outcome.value,eventId);}
     return {reads:outcome.reads,...(outcome.done?{result:outcome.value}:{causes:[{kind:'invocation',frameId:outcome.child}]})};
+  }
+  advancePropertyKeyConversion(draft,frame,eventId){
+    const pending=frame.pendingPropertyKeyConversion;
+    if(frame.pc!==pending.pc||!equal(frame.stack,pending.stack))
+      throw new Error('PropertyKey conversion lost its retained reference stack');
+    const outcome=advancePrimitiveConversion(pending.conversion,{heap:draft.heap,
+      invoke:(method,receiver,args)=>this.invokePrimitiveConversion(draft,frame,method,receiver,args,eventId,'PropertyKey')});
+    if(outcome.fault){delete frame.pendingPropertyKeyConversion;guestFault(outcome.fault.name,outcome.fault.message);}
+    if(outcome.done){
+      frame.stack[pending.stackIndex]=token(outcome.value,eventId);
+      const binding=pending.cacheBinding;
+      if(binding){
+        const cell=draft.envs[binding.envId]?.bindings[binding.name];
+        if(!cell||cell.version!==binding.version||!equal(cell.token,binding.token))
+          throw new Error('PropertyKey conversion lost its cached reference binding');
+        cell.token=token(outcome.value,eventId);cell.version++;
+      }
+      delete frame.pendingPropertyKeyConversion;
+    }
+    return {operands:[pending.conversion.input],origins:[pending.stack[pending.stackIndex].origin],
+      reads:outcome.reads,...(outcome.done?{result:outcome.value}:{causes:[{kind:'invocation',frameId:outcome.child}]})};
   }
   completeFrame(draft,frame,value,origin) {
     frame.status='completed';
@@ -742,15 +843,32 @@ export class Runtime {
     this.deliverFrameValue(draft,frame,output,origin);frame.callerFrameId=null;
     return output;
   }
-  deliverFrameValue(draft,frame,value,origin){
-    if(frame.asyncPromiseId){this.resolvePromise(draft,frame.asyncPromiseId,value,origin);value=['promise',frame.asyncPromiseId];}
-    if(frame.reactionPromiseId)this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
+  deliverFrameValue(draft,frame,value,origin,phase=0){
+    if(phase===0&&frame.asyncPromiseId){
+      const waiting=this.resolvePromise(draft,frame.asyncPromiseId,value,origin);
+      value=['promise',frame.asyncPromiseId];
+      if(waiting){
+        draft.frames[waiting].promiseThenLookup.resume={kind:'frame-return',frameId:frame.id,value,origin,phase:1};
+        return;
+      }
+    }
+    if(phase<2&&this.deliverReactionValue(draft,frame,value,origin,
+      {kind:'frame-return',frameId:frame.id,value,origin,phase:2}))return;
+    if(frame.promiseThenLookup&&!frame.promiseThenLookup.delivered){
+      this.finishPromiseThenLookup(draft,frame,value,origin);return;
+    }
     if(frame.callerFrameId){
       const caller=draft.frames[frame.callerFrameId];
       if(caller.pendingNumberConversion?.waitingFrameId===frame.id){
         const pending=caller.pendingNumberConversion;
-        if(pending.phase!=='waiting')throw new Error('Number conversion callback returned twice');
-        pending.phase='returned';pending.result=copy(value);
+        if(!['waiting','getter-waiting'].includes(pending.phase))throw new Error('Number conversion callback returned twice');
+        pending.phase=pending.phase==='getter-waiting'?'getter-returned':'returned';pending.result=copy(value);
+        draft.control.a0.activeFrameId=caller.id;return;
+      }
+      if(caller.pendingPropertyKeyConversion?.conversion.waitingFrameId===frame.id){
+        const pending=caller.pendingPropertyKeyConversion.conversion;
+        if(!['waiting','getter-waiting'].includes(pending.phase))throw new Error('PropertyKey callback returned twice');
+        pending.phase=pending.phase==='getter-waiting'?'getter-returned':'returned';pending.result=copy(value);
         draft.control.a0.activeFrameId=caller.id;return;
       }
       if(caller.pendingPromiseExecutor?.waitingFrameId===frame.id){
@@ -966,13 +1084,6 @@ export class Runtime {
     p.status=status;p.value=token(value,origin);
     for(const observer of p.observers)draft.control.a0.queue.push({promiseId:id,...observer});
     p.observers=[];
-    const adopters=p.adopters??[];p.adopters=[];
-    for(const adoptedId of adopters) {
-      const adopted=draft.promises[adoptedId];
-      if(adopted.adopting!==id)throw new Error('Broken promise adoption link');
-      adopted.adopting=null;
-      this.settlePromise(draft,adoptedId,status,value,origin);
-    }
   }
   rejectPromise(draft,id,reason,origin) {
     // Rejection reasons are opaque guest values, including promise identities.
@@ -983,55 +1094,170 @@ export class Runtime {
       throw new Error('Promise already settled or adopting another promise');
     if(value[0]==='ref'){
       const object=draft.heap[value[1]];
-      if(object&&['object','array'].includes(object.kind)){
-        const found=ordinaryGet(draft.heap,value,'then');
-        // No silent fallback to native accessors or Proxies.
-        if(!found)throw new TypeError('Accessor/exotic thenable needs an owned get continuation');
-        const method=found.method.value;
-        if(this.callableGuest(draft,method)){
-          if(p.thenableSeen.includes(value[1])){
-            const reason=this.caughtError(draft,
-              {errorType:'TypeError',message:'Thenable resolution cycle'},origin);
-            this.rejectPromise(draft,id,reason.value,reason.origin);return;
+      if(object&&['object','array','function','generator','proxy'].includes(object.kind)){
+        const route=object.kind==='proxy'?proxyRoute(draft.heap,value,'get'):
+          {kind:'ordinary',target:value,receiver:value};
+        const target=draft.heap[route.target[1]],described=route.kind==='ordinary'?
+          functionProperty(draft.heap,target,'then'):null;
+        const getter=route.kind==='trap'?route.method:described.accessor?.get.value??U;
+        if(route.kind==='trap'||getter[0]!=='undefined'){
+          if(route.kind==='trap'&&!this.callableGuest(draft,getter)&&!['builtinfn','hostfn'].includes(getter[0])){
+            const reason=this.caughtError(draft,{errorType:'TypeError',message:'Proxy get trap is not callable'},origin);
+            this.rejectPromise(draft,id,reason.value,reason.origin);return null;
           }
-          if(p.thenableSeen.length>=64||draft.control.a0.queue.length>=256)
-            throw new RangeError('Owned thenable assimilation budget');
-          p.thenableSeen.push(value[1]);
-          const serial=++p.thenableSerial;
-          p.thenableLocked=false;
-          draft.control.a0.queue.push({kind:'thenable',promiseId:id,thenableId:value[1],
-            thenId:method[1],serial});
-          return;
+          if(!this.callableGuest(draft,getter))
+            throw new TypeError('Promise then lookup requires an owned getter or Proxy trap');
+          const fn=draft.heap[getter[1]],inner=fn.async?this.newPromise(draft):null,
+            args=route.kind==='trap'?[token(route.target,origin),token(['str','then'],origin),token(value,origin)]:[],
+            receiver=route.kind==='trap'?route.handler:value;
+          const resume={kind:'active',frameId:draft.control.a0.activeFrameId};
+          const child=this.newFrame(draft,fn.codeId,fn.closureEnvId,null,inner,args,
+            this.functionThis(fn,receiver),fn.id);
+          draft.frames[child].promiseThenLookup={promiseId:id,resolution:copy(value),origin,
+            resume,delivered:false,...(route.kind==='trap'?{proxyTarget:copy(route.target)}:{})};
+          // A getter is synchronous protocol work. It runs before its caller
+          // continues, without entering the Promise/microtask queue.
+          draft.frames[child].reactionJob=true;
+          draft.control.a0.activeFrameId=child;
+          return child;
         }
-        if(['builtinfn','hostfn'].includes(method[0]))
-          throw new TypeError('Native thenable method outside bounded profile');
+        const method=described.slot?.value??U;
+        this.resolvePromiseThen(draft,id,value,method,origin);return null;
       }
     }
     if(value[0]==='promise'){
       const target=draft.promises[value[1]];
       if(!target)throw new Error('Unknown guest promise');
-      let cycle=target===p;
-      const seen=new Set();
-      for(let current=target;!cycle&&current?.adopting;current=draft.promises[current.adopting]){
-        if(seen.has(current.id)||current.adopting===id)cycle=true;
-        seen.add(current.id);
-      }
-      if(cycle){
+      if(target===p){
         const reason=this.caughtError(draft,{errorType:'TypeError',
           message:'Chaining cycle detected for promise'},origin);
         this.rejectPromise(draft,id,reason.value,reason.origin);
         return;
       }
-      if(target.status==='pending'){
-        p.adopting=target.id;target.adopters??=[];target.adopters.push(id);return;
-      }
-      this.settlePromise(draft,id,target.status,target.value.value,target.value.origin);
-      return;
+      // Promise resolution performs the intrinsic then call in an assimilation
+      // job, even when the target is already settled. Its reaction is another
+      // job. Cascading settlement here would overtake competing microtasks.
+      p.adopting=target.id;
+      draft.control.a0.queue.push({kind:'promise-adopt',promiseId:id,targetId:target.id});
+      return null;
     }
     this.settlePromise(draft,id,'fulfilled',value,origin);
+    return null;
+  }
+  resolvePromiseThen(draft,id,value,method,origin){
+    const p=draft.promises[id];
+    if(this.callableGuest(draft,method)){
+      // Repeated identity is legal; each assimilation has its own resolving
+      // pair. The driver budget, not identity, bounds a nonterminating chain.
+      if(draft.control.a0.queue.length>=256)throw new RangeError('Owned thenable assimilation budget');
+      const serial=++p.thenableSerial;p.thenableLocked=false;
+      draft.control.a0.queue.push({kind:'thenable',promiseId:id,thenableId:value[1],thenId:method[1],serial});
+    }else if(['builtinfn','hostfn'].includes(method[0]))
+      throw new TypeError('Native thenable method outside bounded profile');
+    else this.settlePromise(draft,id,'fulfilled',value,origin);
+  }
+  finishPromiseThenLookup(draft,frame,method,origin,completion=null){
+    const lookup=frame.promiseThenLookup;
+    if(!lookup||lookup.delivered||draft.promises[lookup.promiseId]?.status!=='pending')
+      throw new Error('Invalid Promise then lookup continuation');
+    lookup.delivered=true;
+    if(!completion&&lookup.proxyTarget){
+      const target=draft.heap[lookup.proxyTarget[1]],data=target.properties.then,
+        attributes=target.dataAttributes?.then,accessor=target.accessors?.then;
+      if(data&&attributes?.configurable===false&&attributes.writable===false&&!ownedSameValue(data.value,method)||
+         accessor?.configurable===false&&accessor.get.value[0]==='undefined'&&method[0]!=='undefined')
+        completion={type:'throw',errorType:'TypeError',message:'Proxy get trap contradicted a non-configurable target then property',origin};
+    }
+    if(completion){
+      const reason=this.caughtError(draft,completion,origin);
+      this.rejectPromise(draft,lookup.promiseId,reason.value,reason.origin);
+    }else this.resolvePromiseThen(draft,lookup.promiseId,lookup.resolution,method,lookup.origin);
+    this.resumePromiseResolution(draft,lookup.resume);
+  }
+  resumePromiseResolution(draft,resume){
+    if(resume.kind==='active')draft.control.a0.activeFrameId=resume.frameId;
+    else if(resume.kind==='frame-return')this.deliverFrameValue(draft,draft.frames[resume.frameId],resume.value,resume.origin,resume.phase);
+    else if(resume.kind==='finally-adopt'){
+      this.resolvePromise(draft,resume.resultId,['promise',resume.passed],resume.origin);
+      this.resumePromiseResolution(draft,resume.after);
+    }else if(resume.kind==='await')this.awaitPromise(draft,draft.frames[resume.frameId],resume.promiseId);
+    else if(resume.kind==='combinator'){
+      draft.control.a0.activeFrameId=resume.frameId;
+      this.advancePromiseCombinator(draft,draft.frames[resume.frameId],resume.origin);
+    }else throw new Error('Unknown Promise resolution continuation');
+  }
+  deliverReactionValue(draft,frame,value,origin,after=null){
+    if(frame.finallyReaction){
+      const reaction=frame.finallyReaction;delete frame.finallyReaction;
+      // finally returns PromiseResolve(callback()).then(valueThunk/thrower).
+      // The outer reaction then adopts that distinct promise. All three
+      // scheduling boundaries remain visible even for a primitive callback
+      // result, and an existing Promise is used directly by PromiseResolve.
+      const cleanup=value[0]==='promise'?value[1]:this.newPromise(draft);
+      const waiting=value[0]!=='promise'?this.resolvePromise(draft,cleanup,value,origin):null;
+      const passed=this.newPromise(draft);
+      this.observePromise(draft,cleanup,{kind:'finally-pass',resultId:passed,
+        originalStatus:reaction.originalStatus,original:reaction.original});
+      if(waiting){
+        draft.frames[waiting].promiseThenLookup.resume={kind:'finally-adopt',resultId:reaction.resultId,passed,origin,
+          after:after??{kind:'active',frameId:null}};
+        return true;
+      }
+      this.resolvePromise(draft,reaction.resultId,['promise',passed],origin);
+    }else if(frame.reactionPromiseId){
+      const waiting=this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
+      // An async callback publishes its returned promise at its first await
+      // or completion. Its later resumption must not resolve the reaction again.
+      if(frame.asyncPromiseId)delete frame.reactionPromiseId;
+      if(waiting){draft.frames[waiting].promiseThenLookup.resume=after??{kind:'active',frameId:null};return true;}
+    }
+    return false;
+  }
+  awaitPromise(draft,frame,promiseId){
+    frame.awaiting=promiseId;this.observePromise(draft,promiseId,{kind:'await',frameId:frame.id});
+    this.suspendAsync(draft,frame);
+  }
+  advancePromiseCombinator(draft,frame,origin){
+    const pending=frame.pendingPromiseCombinator;
+    if(!pending)throw new Error('Missing Promise combinator continuation');
+    const array=draft.heap[pending.arrayId],result=draft.promises[pending.resultId];
+    for(;;){
+      const length=decode(array.properties.length.value);
+      if(!Number.isInteger(length)||length<0||length>64)
+        throw new RangeError('Promise combinator iterable limit exceeded');
+      if(pending.index>=length)break;
+      const index=pending.index++,found=ordinaryGet(draft.heap,['ref',array.id],String(index));
+      if(!found)throw new TypeError('Promise combinator element requires its own getter continuation');
+      const v=found.method,inputId=v.value[0]==='promise'?v.value[1]:this.newPromise(draft);
+      if(result.combinator){result.combinator.values.push(null);result.combinator.remaining++;}
+      const waiting=v.value[0]!=='promise'?this.resolvePromise(draft,inputId,v.value,v.origin):null;
+      this.observePromise(draft,inputId,{kind:'combinator',resultId:pending.resultId,index,mode:pending.kind});
+      if(waiting){
+        draft.frames[waiting].promiseThenLookup.resume={kind:'combinator',frameId:frame.id,origin};return;
+      }
+    }
+    if(result.combinator&&--result.combinator.remaining===0)this.finishPromiseCombinator(draft,result.id,origin);
+    delete frame.pendingPromiseCombinator;
+  }
+  finishPromiseCombinator(draft,promiseId,origin){
+    const comb=draft.promises[promiseId].combinator,id=this.next(draft,'obj'),values=comb.values;
+    const array=draft.heap[id]={id,kind:'array',properties:{length:token(['num',values.length],origin)},
+      propertyVersions:{length:0},shapeVersion:0,version:0};
+    for(let index=0;index<values.length;index++)putOwn(array,String(index),values[index].value,origin);
+    if(comb.kind==='any'){
+      const errorId=this.next(draft,'obj'),error=draft.heap[errorId]={id:errorId,kind:'object',
+        properties:{},propertyVersions:{},shapeVersion:0,version:0};
+      putOwn(error,'name',['str','AggregateError'],origin);
+      putOwn(error,'errors',['ref',id],origin);
+      this.rejectPromise(draft,promiseId,['ref',errorId],origin);
+    }else this.resolvePromise(draft,promiseId,['ref',id],origin);
   }
   suspendAsync(draft,frame) {
     frame.status='suspended';
+    this.deliverReactionValue(draft,frame,['promise',frame.asyncPromiseId],null);
+    if(frame.promiseThenLookup&&!frame.promiseThenLookup.delivered){
+      this.finishPromiseThenLookup(draft,frame,['promise',frame.asyncPromiseId],null);return;
+    }
     if(frame.callerFrameId) {
       const caller=draft.frames[frame.callerFrameId];
       const pending=caller.pendingPromiseExecutor;
@@ -1062,9 +1288,17 @@ export class Runtime {
       name:token(['str',completion.errorType],eventId),
       message:token(['str',completion.message??''],eventId)
     },propertyVersions:{name:1,message:1},shapeVersion:2,version:0};
-    // Only own name/message data properties are modeled, not Error prototypes,
-    // stacks, identity of native constructors, or instanceof.
+    // Declared constructor identity is modeled without importing a native
+    // Error. Mutable Error prototypes, stacks and instanceof remain separate.
     return token(['ref',id],eventId);
+  }
+  newDeclaredError(draft,name,args,eventId){
+    if(args.length>1)throw new TypeError('Error options are outside the bounded error profile');
+    const value=args[0]?.value??U;
+    if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
+      throw new TypeError('Error message requires owned scalar coercion');
+    return this.caughtError(draft,{errorType:name,
+      message:value[0]==='undefined'?'':String(decode(value))},eventId).value;
   }
   routeCompletion(draft,frame,completion,eventId) {
     const stop=completion.type==='jump'?completion.handlerDepth:0;
@@ -1095,9 +1329,11 @@ export class Runtime {
     }else if(completion.type==='throw'){
       frame.status='thrown';frame.completion=copy(completion);
       if(frame.generatorId)draft.heap[frame.generatorId].state='completed';
-      if(frame.thenableJob&&!frame.asyncPromiseId){
+      if(frame.promiseThenLookup&&!frame.promiseThenLookup.delivered&&!frame.asyncPromiseId){
+        this.finishPromiseThenLookup(draft,frame,U,eventId,completion);
+      }else if(frame.thenableJob&&!frame.asyncPromiseId){
          const p=draft.promises[frame.thenableJob.promiseId];
-         if(p?.status==='pending'&&!p.thenableLocked){
+         if(p?.status==='pending'&&p.thenableSerial===frame.thenableJob.serial&&!p.thenableLocked){
            p.thenableLocked=true;
            const reason=this.caughtError(draft,completion,eventId);
            this.rejectPromise(draft,p.id,reason.value,reason.origin);
@@ -1107,6 +1343,10 @@ export class Runtime {
          // Async throws reject a guest promise, never the whole agent.
         const reason=this.caughtError(draft,completion,eventId);
         this.rejectPromise(draft,frame.asyncPromiseId,reason.value,reason.origin);
+        this.deliverReactionValue(draft,frame,['promise',frame.asyncPromiseId],eventId);
+        if(frame.promiseThenLookup&&!frame.promiseThenLookup.delivered){
+          this.finishPromiseThenLookup(draft,frame,['promise',frame.asyncPromiseId],eventId);return;
+        }
         if(frame.callerFrameId){
           const caller=draft.frames[frame.callerFrameId];
           const pending=caller.pendingPromiseExecutor;
@@ -1116,6 +1356,10 @@ export class Runtime {
           }else this.stackPush(caller,['promise',frame.asyncPromiseId],eventId);
           draft.control.a0.activeFrameId=caller.id;
         }else draft.control.a0.activeFrameId=null;
+      }else if(frame.finallyReaction){
+        const reason=this.caughtError(draft,completion,eventId);
+        this.rejectPromise(draft,frame.finallyReaction.resultId,reason.value,reason.origin);
+        draft.control.a0.activeFrameId=null;
       }else if(frame.reactionPromiseId){
         const reason=this.caughtError(draft,completion,eventId);
         this.rejectPromise(draft,frame.reactionPromiseId,reason.value,reason.origin);
@@ -1137,6 +1381,7 @@ export class Runtime {
          }
          if(caller.pendingProperty?.waitingFrameId===frame.id)caller.pendingProperty=null;
          if(caller.pendingNumberConversion?.waitingFrameId===frame.id)delete caller.pendingNumberConversion;
+         if(caller.pendingPropertyKeyConversion?.conversion.waitingFrameId===frame.id)delete caller.pendingPropertyKeyConversion;
          if(caller.pendingArrayMethod?.waitingFrameId===frame.id)delete caller.pendingArrayMethod;
         draft.control.a0.activeFrameId=caller.id;
         const waiting=caller.operationId&&draft.operations[caller.operationId]?.coercion?.waitingFrameId;
@@ -1183,7 +1428,7 @@ export class Runtime {
     const c=this.state.control.a0,frame=c.activeFrameId&&this.state.frames[c.activeFrameId];
     if(!frame||frame.status!=='running')return null;
     if(frame.operationId)return this.stepArithmetic(frame);
-    if(frame.pendingNumberConversion?.phase==='returned'){
+    if(['returned','getter-returned'].includes(frame.pendingNumberConversion?.phase)){
       const siteId=frame.pendingNumberConversion.siteId;
       return this.commit('intrinsic.number.resume',(s,eventId)=>{
         const parent=s.frames[frame.id];
@@ -1220,6 +1465,24 @@ export class Runtime {
     }
     const inst=this.programs[frame.codeId].instructions[frame.pc];
     if(!inst)throw new Error('Program counter out of range');
+    const retained=frame.pendingPropertyKeyConversion;
+    if(retained&&!['returned','getter-returned'].includes(retained.conversion.phase))
+      throw new Error('PropertyKey conversion is still waiting for its callback');
+    const reference=retained??retainedPropertyKey(frame,inst,this.state);
+    if(reference){
+      const operation=retained?'property.key.resume':'property.key.convert';
+      return this.commit(operation,(s,eventId)=>{
+        const parent=s.frames[frame.id];
+        if(!retained)parent.pendingPropertyKeyConversion=copy(reference);
+        try{return this.advancePropertyKeyConversion(s,parent,eventId);}
+        catch(error){
+          if(!(error instanceof GuestFault))throw error;
+          const completion={type:'throw',errorType:error.name,message:error.message,origin:eventId};
+          completion.value=this.caughtError(s,completion,eventId);this.routeCompletion(s,parent,completion,eventId);
+          return {completion};
+        }
+      },{siteId:inst.siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
+    }
     const {op,arg}=inst;
     return this.commit(opNames[op],(s,eventId)=>{
       const f=s.frames[frame.id], st=f.stack;f.pc++;
@@ -1367,9 +1630,10 @@ export class Runtime {
               supplyingEvent:before.origin??null}]};
         }
         case 'UPDATE_PROP':{
-          const key=pop(),base=pop(),property=valueKey(key.value);
+          const key=pop(),base=pop();
           if(['undefined','null'].includes(base.value[0]))
             guestFault('TypeError','Cannot update properties of '+base.value[0]);
+          const property=valueKey(key.value);
           if(base.value[0]!=='ref')throw new TypeError('Unowned update receiver');
           const obj=s.heap[base.value[1]];
           if(!obj||!['object','array'].includes(obj.kind))
@@ -1388,7 +1652,7 @@ export class Runtime {
             this.stackPush(f,returned,eventId);
             return {...operands(base,key,old),result:returned,reads:[found.observation]};
           }
-          if(this.entrySpec && obj.kind==='array'){
+          if(this.entrySpec?.kind==='function' && obj.kind==='array'){
             if(arrayIndex(property) &&
                Number(property)>decode(obj.properties.length.value))
               throw new TypeError('Sparse array updates are outside training-js/1');
@@ -1513,6 +1777,12 @@ export class Runtime {
         }
         case 'BINARY':{
           const b=pop(),a=pop();
+          if(arg==='in'){
+            if(!['ref','promise','intrinsic','builtinfn','hostfn','host'].includes(b.value[0]))
+              guestFault('TypeError','Right-hand side of in is not an object');
+            const key=valueKey(a.value);
+            return {...operands(a,b),...result(['bool',ownedHasProperty(s.heap,b.value,key)])};
+          }
           if([a,b].some(value=>value.value[0]==='symbol')&&!isOwnedArithmetic(arg)&&!['===','!==','==','!='].includes(arg))
             guestFault('TypeError','Cannot convert a Symbol value to a number');
           if(!isOwnedArithmetic(arg))return {...operands(a,b),...result(primitiveBinary(arg,a.value,b.value))};
@@ -1578,18 +1848,8 @@ export class Runtime {
             return {...operands(fn,...args),causes:[{kind:'invocation',frameId:id}]};
           }
           if(fn.value[0]==='intrinsic'&&fn.value[1]==='Symbol')guestFault('TypeError','Symbol is not a constructor');
-          if(fn.value[0]==='intrinsic'&&['Error','TypeError'].includes(fn.value[1])){
-            if(args.length>1)throw new TypeError('Error options are outside the bounded error profile');
-            const value=args[0]?.value??U;
-            if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
-              throw new TypeError('Error message requires owned scalar coercion');
-            const id=this.next(s,'obj');
-            s.heap[id]={id,kind:'object',declaredError:fn.value[1],properties:{
-              name:token(['str',fn.value[1]],eventId),
-              message:token(['str',value[0]==='undefined'?'':String(decode(value))],eventId)
-            },propertyVersions:{name:1,message:1},shapeVersion:2,version:0};
-            return {...operands(fn,...args),...result(['ref',id])};
-          }
+          if(fn.value[0]==='intrinsic'&&ERROR_CONSTRUCTORS.includes(fn.value[1]))
+            return {...operands(fn,...args),...result(this.newDeclaredError(s,fn.value[1],args,eventId))};
           if(fn.value[0]==='intrinsic'&&fn.value[1]==='Promise'){
              if(args.length!==1||!this.callableGuest(s,args[0]?.value))
                guestFault('TypeError','Promise executor must be callable');
@@ -1726,7 +1986,10 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
           return {...operands(base,item),...result(base.value)};
         }
         case 'GET_PROP':case 'GET_METHOD':{
-          const key=pop(),base=pop(),property=valueKey(key.value);let v,read=null;
+          const key=pop(),base=pop();
+          if(['null','undefined'].includes(base.value[0]))
+            guestFault('TypeError',`Cannot read properties of ${base.value[0]}`);
+          const property=valueKey(key.value);let v,read=null;
           if(base.value[0]==='intrinsic'&&base.value[1]==='Math'&&property==='random' &&
              !Number.isInteger(s.control.a0.randomSeed)){
             const completion={type:'unsupported',feature:'Math.random requires an explicit deterministic fixture seed'};
@@ -1744,6 +2007,8 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
              ['load','store','add','sub','and','or','xor','exchange','compareExchange','wait','notify'].includes(property))
             v=['builtinfn','Atomics.'+property];
           else if(base.value[0]==='intrinsic' && base.value[1]==='Promise' && ['resolve','reject','all','race','allSettled','any','withResolvers'].includes(property))v=['builtinfn',`Promise.${property}`];
+          else if(base.value[0]==='intrinsic'&&ERROR_CONSTRUCTORS.includes(base.value[1])&&property==='name')
+            v=['str',base.value[1]];
           else if(base.value[0]==='intrinsic' &&
              ((base.value[1]==='Math' &&
                ['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot','random'].includes(property)) ||
@@ -1819,6 +2084,10 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
                return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v),reads:[{
                  kind:'property',objectId:obj.id,key:property,present:!!slot,version:obj.propertyVersions[property]??0,
                  shapeVersion:obj.shapeVersion,value:v,supplyingEvent:slot?.origin??null}]};
+             }
+             if(obj.declaredError&&property==='constructor'){
+               const constructor=['intrinsic',obj.declaredError];
+               return {...operands(base,key),...result(op==='GET_METHOD'?['method',constructor,base.value]:constructor)};
              }
              if(obj.declaredError&&!['name','message'].includes(property))
                throw new TypeError('Declared error exposes only name and message');
@@ -2204,9 +2473,10 @@ if(obj.kind==='set'){
           return {...operands(base,key,value),...result(value.value)};
         }
         case 'PUT_PROP':{
-          const v=pop(),key=pop(),base=pop(),property=valueKey(key.value);
+          const v=pop(),key=pop(),base=pop();
           if(['null','undefined'].includes(base.value[0]))
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
+          const property=valueKey(key.value);
            if(base.value[0]!=='ref'||!s.heap[base.value[1]])throw new TypeError('Not a writable guest object');
           const object=s.heap[base.value[1]];
           if(object.kind==='iterator'&&property===symbolPropertyKey('well-known:toStringTag')&&
@@ -2300,7 +2570,7 @@ if(object.kind==='regexp'){
             if(this.programs[f.codeId].strict)guestFault('TypeError',failure);
             return {...operands(base,key,v),...result(v.value)};
           }
-          if(this.entrySpec && obj.kind==='array') {
+          if(this.entrySpec?.kind==='function' && obj.kind==='array') {
             const oldLength=decode(obj.properties.length.value);
             // Array length growth and out-of-range writes create actual
             // absent slots, never invented `undefined` properties. Enforce a
@@ -2770,6 +3040,15 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               throw new TypeError('Number fixed-digit count outside supported range');
             return {...operands(fn,...args),...result(encode(
               Number.prototype[method].call(number,format)))};
+          }
+          if(callable[0]==='intrinsic'&&ERROR_CONSTRUCTORS.includes(callable[1]))
+            return {...operands(fn,...args),...result(this.newDeclaredError(s,callable[1],args,eventId))};
+          if(callable[0]==='builtinfn'&&callable[1]==='print'){
+            if(!Array.isArray(s.control.a0.test262Output)||args.length!==1||args[0].value[0]!=='str')
+              throw new TypeError('Owned Test262 print requires one string in the script host profile');
+            if(s.control.a0.test262Output.length>=10000)throw new RangeError('Owned print budget exceeded');
+            s.control.a0.test262Output.push(token(args[0].value,eventId));
+            return {...operands(fn,...args),...result(U)};
           }
           if(callable[0]==='builtinfn' && ['parseInt','isNaN'].includes(callable[1])){
             if(callable[1]==='parseInt'){
@@ -3399,41 +3678,17 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
             const input=args[0]?.value,arr=input?.[0]==='ref'?s.heap[input[1]]:null;
             if(args.length!==1||arr?.kind!=='array'||Object.keys(arr.accessors??{}).length)
               guestFault('TypeError','Promise combinator requires an owned dense array');
-            const length=decode(arr.properties.length.value);
-            if(!Number.isInteger(length)||length<0||length>64)
-              throw new RangeError('Promise combinator iterable limit exceeded');
-            const values=[];
-            for(let i=0;i<length;i++){
-              const entry=arr.properties[String(i)];
-              if(!entry)guestFault('TypeError','Sparse Promise combinator iterable unsupported');
-              values.push(entry);
-            }
-            const kind=callable[1].slice('Promise.'.length);
-            const resultId=this.newPromise(s);
-            if(['all','allSettled','any'].includes(kind))s.promises[resultId].combinator={kind,remaining:length,values:Array(length).fill(null)};
-            if(['all','allSettled'].includes(kind)&&length===0){
-              const id=this.next(s,'obj');
-              s.heap[id]={id,kind:'array',properties:{length:token(['num',0],eventId)},
-                propertyVersions:{length:0},shapeVersion:0,version:0};
-              this.resolvePromise(s,resultId,['ref',id],eventId);
-            }
-            if(kind==='any'&&length===0){
-              const errorId=this.next(s,'obj'),errorsId=this.next(s,'obj');
-              const error=s.heap[errorId]={id:errorId,kind:'object',properties:{},
-                propertyVersions:{},shapeVersion:0,version:0};
-              s.heap[errorsId]={id:errorsId,kind:'array',
-                properties:{length:token(['num',0],eventId)},
-                propertyVersions:{length:0},shapeVersion:0,version:0};
-              putOwn(error,'name',['str','AggregateError'],eventId);
-              putOwn(error,'errors',['ref',errorsId],eventId);
-              this.rejectPromise(s,resultId,['ref',errorId],eventId);
-            }
-            for(let i=0;i<length;i++){
-              const v=values[i],inputId=v.value[0]==='promise'?v.value[1]:
-                this.newPromise(s);
-              if(v.value[0]!=='promise')this.resolvePromise(s,inputId,v.value,v.origin);
-              this.observePromise(s,inputId,{kind:'combinator',resultId,index:i,mode:kind});
-            }
+            const iterator=ordinaryGet(s.heap,input,symbolPropertyKey('well-known:iterator'));
+            if(!iterator||!equal(iterator.method.value,['builtinfn','Array.prototype.values']))
+              throw new TypeError('Promise combinator custom iterator requires its owned continuation');
+            const kind=callable[1].slice('Promise.'.length),resultId=this.newPromise(s);
+            // The sentinel accounts for iterator exhaustion, while each
+            // visited element owns one further settlement. Array iteration
+            // reads length and the next value after each synchronous lookup.
+            if(['all','allSettled','any'].includes(kind))
+              s.promises[resultId].combinator={kind,remaining:1,values:[]};
+            f.pendingPromiseCombinator={kind,resultId,arrayId:arr.id,index:0};
+            this.advancePromiseCombinator(s,f,eventId);
             return {...operands(fn,...args),...result(['promise',resultId])};
           }
           if(callable[0]==='hostfn'){
@@ -3457,9 +3712,10 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
         case 'AWAIT':{
           const a=pop(),v=a.value;if(!f.asyncPromiseId)throw new SyntaxError('await outside async function');
           const promiseId=v[0]==='promise'?v[1]:this.newPromise(s);
-           if(v[0]!=='promise')this.resolvePromise(s,promiseId,v,a.origin);
-          f.awaiting=promiseId;this.observePromise(s,promiseId,{kind:'await',frameId:f.id});
-          this.suspendAsync(s,f);return {...operands(a),causes:[{kind:'promise',promiseId}]};
+          const waiting=v[0]!=='promise'?this.resolvePromise(s,promiseId,v,a.origin):null;
+          if(waiting)s.frames[waiting].promiseThenLookup.resume={kind:'await',frameId:f.id,promiseId};
+          else this.awaitPromise(s,f,promiseId);
+          return {...operands(a),causes:[{kind:'promise',promiseId}]};
         }
         case 'GENERATOR_START':{
           const output=this.suspendGenerator(s,f,U,eventId,true);return {result:output};
@@ -3634,6 +3890,13 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
     if(!item)return;
     this.commit('job.enter',(s,eventId)=>{
       const job=s.control.a0.queue.shift();
+      if(job.kind==='promise-adopt'){
+        const adopter=s.promises[job.promiseId],target=s.promises[job.targetId];
+        if(adopter?.status!=='pending'||!target||adopter.adopting!==target.id||adopter===target)
+          throw new Error('Invalid queued Promise adoption');
+        this.observePromise(s,target.id,{kind:'adoption',resultId:adopter.id});
+        return {causes:[{kind:'promise',promiseId:adopter.id}],result:['promise',adopter.id]};
+      }
       if(job.kind==='thenable'){
          const p=s.promises[job.promiseId],fn=s.heap[job.thenId];
          if(p?.status!=='pending'||p.thenableSerial!==job.serial||
@@ -3675,15 +3938,25 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
         return {causes:[{kind:'invocation',frameId:id}],result:U};
       }
       const p=s.promises[job.promiseId];
+      if(job.kind==='adoption'){
+        const adopter=s.promises[job.resultId];
+        if(!p||!['fulfilled','rejected'].includes(p.status)||adopter?.status!=='pending'||adopter.adopting!==p.id)
+          throw new Error('Invalid Promise adoption reaction');
+        adopter.adopting=null;
+        if(p.status==='rejected')this.rejectPromise(s,adopter.id,p.value.value,p.value.origin);
+        else this.resolvePromise(s,adopter.id,p.value.value,p.value.origin);
+        return {causes:[{kind:'promise',promiseId:p.id}],result:p.value.value};
+      }
       if(job.kind==='combinator'){
         if(!p||!['fulfilled','rejected'].includes(p.status))
           throw new Error('Combinator job on unsettled promise');
         const target=s.promises[job.resultId];
         if(!target)throw new Error('Unknown combinator result');
-        if(target.status!=='pending')
+        if(target.status!=='pending'||target.resolverCalled)
           return {causes:[{kind:'promise',promiseId:job.promiseId}],result:p.value.value};
         if(job.mode==='race'||(job.mode==='all'&&p.status==='rejected')||
            (job.mode==='any'&&p.status==='fulfilled')){
+          target.resolverCalled=true;
           if(p.status==='rejected')this.rejectPromise(s,job.resultId,p.value.value,p.value.origin);
           else this.resolvePromise(s,job.resultId,p.value.value,p.value.origin);
         }else{
@@ -3699,21 +3972,7 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
             comb.values[job.index]=token(['ref',id],eventId);
           }else comb.values[job.index]=copy(p.value);
           comb.remaining--;
-          if(comb.remaining===0){
-            const id=this.next(s,'obj'),values=comb.values;
-            const array=s.heap[id]={id,kind:'array',
-              properties:{length:token(['num',values.length],eventId)},
-              propertyVersions:{length:0},shapeVersion:0,version:0};
-            for(let i=0;i<values.length;i++)putOwn(array,String(i),values[i].value,eventId);
-            if(job.mode==='any'){
-              const errId=this.next(s,'obj');
-              const error=s.heap[errId]={id:errId,kind:'object',
-                properties:{},propertyVersions:{},shapeVersion:0,version:0};
-              putOwn(error,'name',['str','AggregateError'],eventId);
-              putOwn(error,'errors',['ref',id],eventId);
-              this.rejectPromise(s,job.resultId,['ref',errId],eventId);
-            }else this.resolvePromise(s,job.resultId,['ref',id],eventId);
-          }
+          if(comb.remaining===0)this.finishPromiseCombinator(s,job.resultId,eventId);
         }
         return {causes:[{kind:'promise',promiseId:job.promiseId}],result:p.value.value};
       }
@@ -3736,21 +3995,15 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
           else this.resolvePromise(s,reaction.resultId,original.value,original.origin);
           return {causes:[{kind:'promise',promiseId:job.promiseId}],result:original.value};
         }
-        let targetPromiseId=reaction.resultId;
-        if(isFinally){
-          // Adopt returned guest promises before preserving original outcome.
-          targetPromiseId=this.newPromise(s);
-          this.observePromise(s,targetPromiseId,{kind:'finally-pass',
-            resultId:reaction.resultId,originalStatus:p.status,original});
-        }
         const fn=s.heap[callback[1]];
         const args=isFinally?[]:[original];
         const inner=fn.async?this.newPromise(s):null;
         const id=this.newFrame(s,fn.codeId,fn.closureEnvId,null,inner,args,this.functionThis(fn),fn.id);
         const child=s.frames[id];
         child.reactionJob=true;
-        if(inner)this.resolvePromise(s,targetPromiseId,['promise',inner],eventId);
-        else child.reactionPromiseId=targetPromiseId;
+        if(isFinally)child.finallyReaction={resultId:reaction.resultId,
+          originalStatus:p.status,original:copy(original)};
+        else child.reactionPromiseId=reaction.resultId;
         s.control.a0.activeFrameId=id;
         return {causes:[{kind:'promise',promiseId:job.promiseId},
           {kind:'invocation',frameId:id}],result:['promise',reaction.resultId]};
@@ -3808,10 +4061,18 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       exit:{kind,pendingEffects:pending,waitingOn:waitingOn.filter(Boolean)}});
     this.chunkStart=last;this.chunkBefore=after;
   }
-  drive() {
+  // Native hosts can stop between owned jobs to preserve microtask ordering.
+  // Yielding
+  // leaves the next job and the open archive chunk intact; it is not a wait,
+  // completion, or an implicit checkpoint. The ordinary driver still drains
+  // the queue. Callers resuming a yielded turn retain their remaining budget.
+  drive({yieldBeforeJob=false,stepLimit=this.maxSteps}={}) {
+    if(typeof yieldBeforeJob!=='boolean')throw new TypeError('Job yielding policy must be boolean');
+    if(!Number.isSafeInteger(stepLimit)||stepLimit<1||stepLimit>this.maxSteps)
+      throw new RangeError('Driver step limit must be positive and within its configured budget');
     if(!this.started)throw new Error('Start first');
     let steps=0;
-    while(steps++<this.maxSteps) {
+    while(steps++<stepLimit) {
       const terminal=this.state.control.a0.status;
       if(terminal==='failed'||terminal==='unsupported') {
         const kind=terminal==='failed'?'runtime.failure':'unsupported';this.seal(kind);
@@ -3823,7 +4084,11 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       const active=c.activeFrameId&&this.state.frames[c.activeFrameId];
       if(active?.status==='running') {this.step();continue;}
       if(active?.status==='blocked'){this.seal('waiting');return {kind:'waiting',waitingOn:active.blockedOn,pendingEffects:this.chunks.at(-1).exit.pendingEffects};}
-      if(c.queue.length){this.enterQueuedJob();continue;}
+      if(c.queue.length){
+        if(yieldBeforeJob)return {kind:'yield',steps:steps-1};
+        this.enterQueuedJob();continue;
+      }
+      if(c.scriptSequence&&c.scriptSequence.nextIndex<c.scriptSequence.sourceIds.length){this.enterNextScript();continue;}
       if(c.timers.length){this.enterTimerTask();continue;}
       const pendingPromises=Object.values(this.state.promises).some(p=>p.status==='pending');
       const pendingEffects=Object.values(this.state.effects).some(e=>e.external==='pending');
@@ -3831,13 +4096,13 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
       const kind=pendingPromises||pendingEffects||subscriptions?'waiting':'terminated';
       this.seal(kind);return {kind,waitingOn:this.chunks.at(-1)?.exit.waitingOn??[],pendingEffects:this.chunks.at(-1)?.exit.pendingEffects??[]};
     }
-    throw new Error(`Driver safety limit (${this.maxSteps} steps); no chunk has been misreported as complete`);
+    throw new Error(`Driver safety limit (${stepLimit} steps); no chunk has been misreported as complete`);
   }
   checkpoint() {return {stateRoot:`q${this.events.length}`,state:copy(this.state)};}
   inspectState() {return copy(this.state);}
   inspectOpenChunk() {return {before:this.chunkBefore,eventIds:this.events.slice(this.chunkStart).map(e=>e.eventId),open:true};}
   exportRun() {
-    const bundle={manifest:{schema:'semantic-tracing-run/2',profile:this.entrySpec?'training-js/1':'bounded-js-subset/2',completeSemanticTrace:false,
+    const bundle={manifest:{schema:'semantic-tracing-run/2',profile:this.entrySpec?.kind==='scripts'||this.sources[0]?.parser===OWNED_SCRIPT_PARSER?'owned-script/1':this.entrySpec?'training-js/1':'bounded-js-subset/2',completeSemanticTrace:false,
       completeEcma262:false,completeHostIntegration:false,coverage:'docs/STATUS.md',chunkPolicy:'accumulate-until-wait/1',
       eventVersion:2,operationVersion:2,mutationSchema:'owned-spec-commands/2',
       ownedSymbols:{revision:1,propertyKeys:'owned-property-key/1',hostTransport:'unsupported'},

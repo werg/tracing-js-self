@@ -71,6 +71,32 @@ journal and are checked by replay; no callback body runs in the native engine.
 The native return from the trampoline is always `undefined`: APIs demanding
 a synchronous JS return from the guest callback remain unsupported.
 
+### Native and owned microtask ordering
+
+The collector preserves the FIFO prefix of guest jobs already ready in a native
+turn, then yields to the native microtask queue before executing descendant jobs
+created by that prefix. This lets an already-scheduled service settlement compete
+with callback-owned Promise reactions. Draining every descendant reaction before
+accepting that settlement changes source-visible values and statement order.
+Callbacks queued together remain ahead of the microtasks they subsequently
+create; each callback still executes entirely in the owned interpreter.
+
+A synchronous host operation can suspend transport while its guest job remains
+unfinished. The collector records native input arrivals but delays unrelated
+delivery until that guest job and its already-ready prefix finish. The matching
+immediate result resumes the blocked job without dispatching the service again.
+This prevents transport latency from allowing another guest job to preempt an
+otherwise synchronous callback. The work limit counts committed steps across
+all native/owned yields and cannot reset on each microtask.
+
+`test/native-microtask-boundaries.test.js` compares original source, computations,
+branches, assignments, calls, and statement completions in an independent native
+process. It covers callback-owned joins with and without an explicit wait, two
+queued callbacks, descendant microtasks, and synchronous effects within those
+callbacks. It also checks exact replay, internal yield restoration, and refusal
+of unbounded microtasks. These controls qualify the declared collector profile;
+they do not establish arbitrary Node/browser event-loop or cross-realm behavior.
+
 An `AbortSignal` can interrupt the wait but does **not** magically cancel an
 underlying native resource: services must honor the signal themselves. This
 driver does not itself implement callable-folder module realms, general

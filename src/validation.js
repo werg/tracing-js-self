@@ -8,6 +8,10 @@ import {validateConstructionEvent} from './construction-validation.js';
 import {validateSuperEvent} from './super-validation.js';
 import {isBinaryMemoryKind,validateBinaryMemoryState,validateBinaryMemoryEvent} from './binary-memory-validation.js';
 import {validateNumberConversionState,validateNumberConversionEvent} from './number-conversion-validation.js';
+import {validatePropertyKeyConversionState,validatePropertyKeyConversionEvent} from './property-key-conversion-validation.js';
+import {validatePromiseResolutionState,validatePromiseResolutionEvent} from './promise-resolution-validation.js';
+import {validateScriptSequenceState,validateScriptSequenceEvent} from './script-validation.js';
+import {validateScriptHostEvent} from './script-host-validation.js';
 // Read-only validation. Does not import the evaluator or call its mutation routines.
 import { readFileSync } from 'node:fs';
 import {validateSymbolReferences,validateSymbolAllocation} from './symbol-validation.js';
@@ -32,6 +36,9 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
   validateBinaryMemoryState(state,fail,binaryIds);
   const sites=new Set(bundle.sites.map(s=>s.siteId));
   validateNumberConversionState(state,bundle.programs,sites,fail);
+  validatePropertyKeyConversionState(state,bundle.programs,sites,fail);
+  validatePromiseResolutionState(state,fail);
+  validateScriptSequenceState(state,bundle,fail,{initial:true});
   const seen=new Set();
   const parameterTdzOrigins=new Map();
   for(let i=0;i<bundle.events.length;i++) {
@@ -104,6 +111,12 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
            e.causes.filter(c=>c.kind==='invocation').length!==1||
            e.causes.some(c=>c.kind==='promise'))
           fail('Microtask entry lacks an owned queued callback',e.eventId);
+      }else if(job?.kind==='promise-adopt'){
+        const adopter=state.promises[job.promiseId],target=state.promises[job.targetId];
+        if(adopter?.status!=='pending'||!target||adopter.adopting!==target.id||adopter===target||
+           e.causes.length!==1||e.causes[0].kind!=='promise'||e.causes[0].promiseId!==adopter.id||
+           !eq(e.result,['promise',adopter.id]))
+          fail('Queued Promise adoption lacks its target and resolving owner',e.eventId);
       }else if(job?.kind==='thenable'){
          const p=state.promises[job.promiseId];
          if(!p||p.status!=='pending'||p.thenableSerial!==job.serial||
@@ -116,6 +129,11 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
          e.causes.filter(c=>c.kind==='promise').length!==1 ||
          e.causes.find(c=>c.kind==='promise').promiseId!==job.promiseId)
         fail('Job entry does not consume the next settled promise observer',e.eventId);
+      if(job?.kind==='adoption'){
+        const adopter=state.promises[job.resultId];
+        if(adopter?.status!=='pending'||adopter.adopting!==job.promiseId)
+          fail('Promise adoption reaction has no matching pending owner',e.eventId);
+      }
     }
     if(e.operation==='host.task.enter'){
       const control=state.control.a0;
@@ -137,7 +155,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     if(e.completion && !['spec.operation.complete','completion.throw','external.input.deliver',
       'job.enter','binding.read','binding.write','binding.update','primitive.unary',
       'property.read','property.write','property.update','primitive.binary','reference.this','call.return','call.enter','proxy.allocate',
-      'object.construct','completion.finally.end','execution.unsupported','regexp.allocate','intrinsic.number.resume'].includes(e.operation))
+      'object.construct','completion.finally.end','execution.unsupported','regexp.allocate','intrinsic.number.resume',
+      'property.key.convert','property.key.resume'].includes(e.operation))
       fail('Completion metadata without an owned completion operation',e.eventId);
     validateSpecEvent(state,e,fail);
     validateGeneratorEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
@@ -150,6 +169,10 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     validateSuperEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateBinaryMemoryEvent(e,message=>fail(message,e.eventId));
     validateNumberConversionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validatePropertyKeyConversionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validatePromiseResolutionEvent(state,e,message=>fail(message,e.eventId));
+    validateScriptSequenceEvent(state,e,bundle,message=>fail(message,e.eventId));
+    validateScriptHostEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     for(const p of e.stateChanges) {
       validateSymbolAllocation(p,e,message=>fail(message,e.eventId));
       if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);
@@ -179,6 +202,9 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     for(const patch of e.stateChanges)if(patch.table==='heap'&&isBinaryMemoryKind(patch.after?.kind))binaryIds.add(patch.id);
     validateBinaryMemoryState(state,message=>fail(message,e.eventId),binaryIds);
     validateNumberConversionState(state,bundle.programs,sites,message=>fail(message,e.eventId));
+    validatePropertyKeyConversionState(state,bundle.programs,sites,message=>fail(message,e.eventId));
+    validatePromiseResolutionState(state,message=>fail(message,e.eventId));
+    validateScriptSequenceState(state,bundle,message=>fail(message,e.eventId));
     validateSymbolReferences({operands:e.operands,result:e.result,changed:e.stateChanges.map(p=>p.after??p.record??null)},state.heap,message=>fail(message,e.eventId));
     if(job && !eq(state.control.a0.queue.slice(0,queuedBefore.length),queuedBefore))
       fail('Guest job FIFO order changed during entry',e.eventId);
@@ -218,7 +244,11 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
           const rejection=Object.values(state.frames).some(f=>f.status==='thrown'&&f.asyncPromiseId&&
             eq(f.completion,c)&&state.promises[f.asyncPromiseId]?.status==='rejected');
           const reactionRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
-            f.reactionPromiseId&&eq(f.completion,c)&&state.promises[f.reactionPromiseId]?.status==='rejected');
+            (f.reactionPromiseId||f.finallyReaction?.resultId)&&eq(f.completion,c)&&
+            state.promises[f.reactionPromiseId??f.finallyReaction.resultId]?.status==='rejected');
+          const resolutionRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
+            f.promiseThenLookup?.delivered&&eq(f.completion,c)&&
+            state.promises[f.promiseThenLookup.promiseId]?.status==='rejected');
           const pendingCoercion=Object.values(state.frames).some(f=>{
             const pending=f.pendingCoercionThrow, operation=state.operations[f.operationId];
             const methodId=operation?.coercion?.waitingFrameId;
@@ -232,11 +262,12 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
               state.promises[f.promiseExecutorTarget]?.resolverCalled));
            const thenableRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
              f.thenableJob&&eq(f.completion,c)&&
-             state.promises[f.thenableJob.promiseId]?.thenableLocked===true);
+             (state.promises[f.thenableJob.promiseId]?.thenableLocked===true||
+              state.promises[f.thenableJob.promiseId]?.thenableSerial>f.thenableJob.serial));
            // A thenable that calls resolve() and then throws ignores the throw.
            // It remains an executed guest abrupt completion, not a second
            // promise rejection, and is validated against the locked capability.
-           if(!rejection&&!reactionRejection&&!pendingCoercion&&!executorCompletion&&!thenableRejection&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
+           if(!rejection&&!reactionRejection&&!resolutionRejection&&!pendingCoercion&&!executorCompletion&&!thenableRejection&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
              !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally')))
             fail('Guest throw was not routed to a handler or async rejection',e.eventId);
         }

@@ -37,8 +37,8 @@ function normalizedRequest(fixture){
 }
 function prepare(fixture){
   const request=normalizedRequest(fixture),linked=linkEvaluatedModules(request);
-  // The native reference evaluates the same pinned TS-emitted JS as ESM,
-  // independently of the owned module-to-cell/linking transformation.
+  // The native reference evaluates original JavaScript (or pinned TS output)
+  // as ESM, independently of the owned module-to-cell/linking transformation.
   const emitted=Object.fromEntries(Object.entries(request.modules).map(([id,source])=>[id,
     compileBoundedTypeScript(source,{path:id}).javascript]));
   const graph=encodeNativeGraph([linked.entryInput],{maxBytes:1048576});
@@ -73,6 +73,18 @@ function outcomeAgreement(left,right){
   return left?.kind===right?.kind&&compareObservableGraphs(left.graph,right.graph,
     {leftInputIds:anchors(left.graph),rightInputIds:anchors(right.graph)}).equal;
 }
+function moduleProjectionRefusal(linked){
+  if(linked.metadata.evaluationStrategy!=='async-dependency-scheduler')return null;
+  // Owned generator/Promise execution is a distinct implementation milestone.
+  // A generic generator projection cannot establish public/native module
+  // dependency counts, retained cells, completion jobs, or failure propagation.
+  return {status:'projection_refused',phase:'module-projection',
+    category:'unsupported.module-scheduler-projection',sourceProfile:MODULE_REGION_PROFILE,
+    moduleLink:'passed',ownedRuntimeProfile:linked.profile,
+    evaluationStrategy:linked.metadata.evaluationStrategy,moduleReference:'untested',
+    publicProjection:'unqualified',nativeQualification:'unqualified',
+    reason:'Owned parallel top-level-await or cyclic async module scheduling has no qualified public/native module-state projection'};
+}
 
 export async function verifyRegionModuleTrainingCase(fixture){
   const identity=Object.fromEntries(['id','family','moduleEntry','entryModule','exportName','ancestorIds']
@@ -81,6 +93,8 @@ export async function verifyRegionModuleTrainingCase(fixture){
   try{prepared=prepare(fixture);}catch(error){return {...identity,status:'unsupported',phase:'module-link',
     sourceProfile:MODULE_REGION_PROFILE,reason:error.message};}
   identity.modules=copy(prepared.request.modules);
+  const refused=moduleProjectionRefusal(prepared.linked);
+  if(refused)return {...identity,...refused};
   const reference=await independentModuleRegionReference(prepared.referenceInput);
   if(reference.status!=='passed')return {...identity,status:reference.status,phase:'module-reference',
     sourceProfile:MODULE_REGION_PROFILE,reason:reference.reason};
@@ -116,6 +130,8 @@ export async function recheckModuleRegionEvidence(sourceArtifact){
   const request={...evidence.request,args:evidence.request.calls?[]:input.args,
     calls:evidence.request.calls?.map((call,index)=>({...call,args:input.calls[index].args}))??null};
   const prepared=prepare(request),side=sourceArtifact.sidecar;
+  const refused=moduleProjectionRefusal(prepared.linked);
+  if(refused)throw Object.assign(new TypeError('Module regions: '+refused.reason),refused);
   if(evidence.graphDigest!==hashAlgorithmData(prepared.request.modules)||
     evidence.generatedSourceDigest!==hashAlgorithmData(prepared.linked.source)||
     side.referenceInput.source!==prepared.linked.source||side.referenceInput.entry!==prepared.linked.entryFunction||

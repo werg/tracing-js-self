@@ -6,6 +6,7 @@ const ordinary=new Set(['Object.prototype','Array.prototype','Function.prototype
 const prototype=value=>value===null?null:ordinary.has(value)?'ordinary':['ref',value];
 export function createEnumerationSourceAdapterV8(){return {
   id:'ordinary-for-in/1',
+  stateless:true,
   heapFields:node=>node.kind==='enumerator'?fields:null,
   checkHeap(ctx,node){
     if(node.kind!=='enumerator')return true;

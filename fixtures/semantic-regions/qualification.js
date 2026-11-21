@@ -1,6 +1,7 @@
 import {SEMANTIC_GALLERY_FIXTURES} from '../../src/training/semantic-trace-gallery.js';
 import {readFileSync} from 'node:fs';
 import {expansionCoveragePopulation} from '../../src/semantic/expansion-benchmark.js';
+import {HOST_PROTOCOL_FIXTURES_V8} from './host-protocol.js';
 
 export function regionQualificationFixtures(){return [
   {id:'ordered-map',source:'"use strict";function run(xs){return xs.map(x=>x*2);}',
@@ -16,6 +17,41 @@ export function regionQualificationFixtures(){return [
     entry:'run',args:[],family:'v8-contract-iterable-binding',fixture:{calls:[]}}
 ];}
 
+// Recurring cross-family source/native qualification is broader than the
+// frozen wire examples. Adding source coverage need not revise wire goldens.
+export function sharedProtocolQualificationFixtures(){return [
+  {id:'promise-number-proxy-memory-join',source:'"use strict";async function run(){'+
+    'const p=new Promise(resolve=>{const bytes=new Uint8Array(2);'+
+    'const proxy=new Proxy({x:3},{get:function(object,key){bytes[0]=object[key];return bytes[0]+1;}});'+
+    'resolve(Number({valueOf:function(){return proxy.x;}}));});'+
+    'const values=await Promise.all([p,Promise.resolve(2)]);return values[0]+values[1];}',
+    entry:'run',args:[],family:'v8-contract-shared-protocol-source',fixture:{calls:[]}},
+  {id:'promise-map-iterator',source:'"use strict";async function run(){const p=new Promise(resolve=>{'+
+    'const bytes=new Uint8Array(1);const proxy=new Proxy({x:3},{get:function(object,key){bytes[0]=object[key];return bytes[0]+1;}});'+
+    'const converted=Number({valueOf:function(){return proxy.x;}});'+
+    'const result=[converted].map(function(value,index,array){const cursor=[value,index].values();'+
+    'return cursor.next().value+1;});resolve(result[0]+bytes[0]);});'+
+    'const values=await Promise.all([p,Promise.resolve(2)]);return values[0]+values[1];}',
+    entry:'run',args:[],family:'v8-contract-shared-map-iterator',fixture:{calls:[]}},
+  {id:'map-callback-finally-throw',source:'"use strict";function run(){let cleaned=0;try{return [2].map(function(value){'+
+    'try{throw value;}finally{cleaned+=5;}})[0];}catch(error){return cleaned+error;}}',
+    entry:'run',args:[],family:'v8-contract-map-finally',fixture:{calls:[]}},
+  {id:'map-generator-yield',source:'"use strict";function run(){const values=[2,3].map(function*(value){yield value+1;});'+
+    'return values[0].next().value+values[1].next().value;}',
+    entry:'run',args:[],family:'v8-contract-map-generator',fixture:{calls:[]}},
+  {id:'map-generator-iterator-close',source:'"use strict";function run(){let closed=0;const iterable={[Symbol.iterator]:function(){return this},'+
+    'next:function(){return {value:3,done:false}},return:function(){closed++;throw 2}};const gen=[iterable].map(function*(it){'+
+    'try{for(const value of it){yield value;break}}finally{closed+=10}})[0];gen.next();try{gen.return(8)}catch(error){return closed*10+error}return 0;}',
+    entry:'run',args:[],family:'v8-contract-map-generator-iterator-close',fixture:{calls:[]}},
+  {id:'map-sparse-live-mutation',source:'"use strict";function run(){const input=[1,,3,,];let calls=0;'+
+    'const output=input.map(function(value,index,array){calls++;if(index===0){array[1]=7;array[2]=8;array.push(9);}return value+index;});'+
+    'return [input,output,calls];}',entry:'run',args:[],family:'v8-contract-map-sparse-live',fixture:{calls:[]}},
+  {id:'promise-map-sparse-truncate',source:'"use strict";async function run(){const p=new Promise(resolve=>{'+
+    'const input=[1,2,3];const output=input.map(function(value,index,array){if(index===0)array.length=1;return value;});'+
+    'resolve(output.length+output[0]);});return await p;}',
+    entry:'run',args:[],family:'v8-contract-promise-map-sparse',fixture:{calls:[]}}
+];}
+
 // The interoperability population includes every declared source-qualified
 // protocol golden, not just the original three shared-state examples.
 export function regionQualificationPopulation({population='interoperability',allInputs=true}={}){
@@ -26,5 +62,5 @@ export function regionQualificationPopulation({population='interoperability',all
   return {scripts:[...regionQualificationFixtures(),...declared.cases.map(row=>{
     if(row.id!==row.fixture?.id)throw new TypeError('Invalid protocol fixture identity');
     return structuredClone(row.fixture);
-  })],modules:[]};
+  }),...structuredClone(HOST_PROTOCOL_FIXTURES_V8),...sharedProtocolQualificationFixtures()],modules:[]};
 }

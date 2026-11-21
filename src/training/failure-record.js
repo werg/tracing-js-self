@@ -2,7 +2,7 @@
 // original source, inputs and independent observations before any reduction.
 import {createHash} from 'node:crypto';
 import {encodeNativeGraph} from '../host/graph-codec.js';
-import {identityDigest,admissionEnvironment,normalizeSeeds} from './admission-identity.js';
+import {identityDigest,admissionEnvironment,normalizeSeeds} from '../semantic/source-identity.js';
 
 export class AdmissionFailure extends Error{
   constructor(category,message,details=null){

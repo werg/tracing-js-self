@@ -1,8 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyRegionModuleTrainingCase,recheckModuleRegionEvidence} from '../src/semantic/module-v8.js';
+import {MODULE_REGION_PROFILE,verifyRegionModuleTrainingCase,recheckModuleRegionEvidence} from '../src/semantic/module-v8.js';
 import {recheckRegionEvidence} from '../src/semantic/compiler-v8.js';
 import {LANGUAGE_EXPANSION_INTERACTIONS} from '../fixtures/language-expansion/benchmark.js';
+import {executeEvaluatedModules,linkEvaluatedModules} from '../src/evaluated-modules.js';
+import {encodeNativeGraph} from '../src/host/graph-codec.js';
+
+const siblingSchedulerFixture={id:'parallel-tla-boundary',family:'parallel-tla-boundary',modules:{
+  'state.js':'export let order="";export function add(value){order+=value;}',
+  'a.js':'import {add} from "./state.js";add("a");await 0;add("A");',
+  'b.js':'import {add} from "./state.js";add("b");await 0;add("B");',
+  'main.js':'import "./a.js";import "./b.js";import {order} from "./state.js";export function run(){return order;}'
+},entryModule:'main.js',exportName:'run',fixture:{calls:[]}};
 
 test('native ESM independently agrees with owned live cells, a synchronous cycle and acyclic top-level await',async()=>{
   for(const fixture of LANGUAGE_EXPANSION_INTERACTIONS.filter(row=>row.modules)){
@@ -60,9 +69,49 @@ test('module proof tampering, exotic namespace receivers and asynchronous cycles
   const cycle=await verifyRegionModuleTrainingCase({id:'async-cycle',family:'async-cycle',modules:{
     'a.js':'import {b} from "./b.js";export const a=await Promise.resolve(1);export function run(){return b;}',
     'b.js':'import {a} from "./a.js";export const b=2;'},entryModule:'a.js'});
-  assert.equal(cycle.status,'unsupported');assert.match(cycle.reason,/async ESM/);
+  assert.equal(cycle.status,'projection_refused');
+  assert.equal(cycle.phase,'module-projection');
+  assert.equal(cycle.moduleLink,'passed');
+  assert.equal(cycle.nativeQualification,'unqualified');
+  assert.equal(cycle.exported,undefined);
+  assert.match(cycle.reason,/cyclic async module scheduling/);
   let reads=0;
   const modules=Object.defineProperty({},'main.js',{enumerable:true,get(){reads++;return 'export function run(){return 1;}';}});
   const hooked=await verifyRegionModuleTrainingCase({id:'hooked-module',family:'hooked-module',modules,entryModule:'main.js'});
   assert.equal(hooked.status,'unsupported');assert.equal(reads,0,'module graph eligibility must not invoke host getters');
+});
+
+test('parallel TLA links and runs in owned state while public/native module projection stays unqualified',async()=>{
+  const linked=linkEvaluatedModules(siblingSchedulerFixture);
+  assert.equal(linked.metadata.evaluationStrategy,'async-dependency-scheduler');
+  const owned=await executeEvaluatedModules(siblingSchedulerFixture);
+  assert.equal(owned.result,'abAB');
+  const result=await verifyRegionModuleTrainingCase(siblingSchedulerFixture);
+  assert.equal(result.status,'projection_refused');
+  assert.equal(result.phase,'module-projection');
+  assert.equal(result.moduleLink,'passed');
+  assert.equal(result.ownedRuntimeProfile,'evaluated-module/1');
+  assert.equal(result.moduleReference,'untested');
+  assert.equal(result.publicProjection,'unqualified');
+  assert.equal(result.nativeQualification,'unqualified');
+  assert.equal(result.exported,undefined);
+  assert.match(result.reason,/parallel top-level-await.*public\/native/);
+});
+
+test('module rechecking derives the scheduler refusal from source even when proof metadata lies',async()=>{
+  for(const fixture of [siblingSchedulerFixture,{modules:{
+    'main.js':`import './cycle.js';await 0;export function run(){return 1;}`,
+    'cycle.js':`import './main.js';`
+  },entryModule:'main.js',exportName:'run'}]){
+    const linked=linkEvaluatedModules(fixture);
+    const artifact={sidecar:{sourceProvenance:{upstream:{moduleEvidence:{
+      schema:'semantic-module-evidence/1',profile:MODULE_REGION_PROFILE,
+      request:{modules:fixture.modules,entryModule:'main.js',exportName:'run',
+        inputGraph:encodeNativeGraph([linked.entryInput]),calls:null},
+      metadata:{...linked.metadata,evaluationStrategy:'dependency-concatenation'}
+    }}}}};
+    await assert.rejects(recheckModuleRegionEvidence(artifact),error=>
+      error.status==='projection_refused'&&error.phase==='module-projection'&&
+      error.moduleLink==='passed'&&error.evaluationStrategy==='async-dependency-scheduler');
+  }
 });

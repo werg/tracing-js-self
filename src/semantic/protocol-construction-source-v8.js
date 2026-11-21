@@ -18,7 +18,7 @@ const finished=frame=>['completed','thrown'].includes(frame.status);
 export function createConstructionSourceAdapterV8({bundle,source}){
   const inventory=constructionSourceInventoryV8(source);
   if(!inventory.classes.length&&!inventory.objectMethods.size&&!inventory.ordinaryConstruction)return null;
-  const classes=new Map(inventory.classes.map(item=>[item.node.start,item])),definitions=new Map(),roles=new Map();
+  const classes=new Map(inventory.classes.map(item=>[item.node.start,item])),definitions=new Map();let roles=new Map();
   for(const program of Object.values(bundle.programs))for(let index=0;index<program.instructions.length;index++){
     const instruction=program.instructions[index];if(!['DEF_FN','MAKE_FUNCTION'].includes(instruction.op))continue;
     const code=instruction.arg.codeId,method=inventory.methods.get(instruction.start),item=classes.get(instruction.start),
@@ -72,7 +72,7 @@ export function createConstructionSourceAdapterV8({bundle,source}){
     let initialized=false;
     for(const change of event.stateChanges){
       const node=change.after;
-      if(change.table!=='heap'||node?.kind!=='function'||!node.prototypeInitialized||change.before?.prototypeInitialized||node.classConstructor)continue;
+      if(change.table!=='heap'||node?.kind!=='function'||!node.prototypeInitialized||change.before?.prototypeInitialized||node.classConstructor||node.generatorFunction)continue;
       require(ctx,definitions.get(node.codeId)?.placement==='ordinary-function'&&!node.arrow&&!node.async&&!node.nonConstructible,
         'initialized ordinary prototype has no constructible source function');
       ctx.tag(ref(node.id),event);
@@ -139,6 +139,8 @@ export function createConstructionSourceAdapterV8({bundle,source}){
     require(ctx,ctx.eq(node.thisValue,entry.receiver),'retained receiver differs from shared construction state');return true;
   }
   return {id:CONSTRUCTION_SOURCE_PROFILE_V8,
+    captureState:()=>({roles:[...roles]}),
+    restoreState(state){roles=new Map(state.roles);},
     syntax(node){
       if(['ClassDeclaration','ClassExpression'].includes(node.type)){
         for(const element of node.body.body)if(element.key?.type==='PrivateIdentifier'&&['get','set'].includes(element.kind))
@@ -155,9 +157,11 @@ export function createConstructionSourceAdapterV8({bundle,source}){
       require(ctx,!node.lexicalThisFrameId,'lexical constructor arrow context needs its public continuation');
       ctx.baseAllocate(node,event);emit(ctx,{kind:'callable.define',object:node.id,...capability(node)},event);return true;
     },
+    beforeEvent(ctx,event){initializeOrdinaryPrototypes(ctx,event);},
     event(ctx,event,row){
       const inst=instruction(ctx,event);if(!inst)return false;const op=inst.op;
-      const ordinaryPrototypeInitialized=initializeOrdinaryPrototypes(ctx,event);
+      const ordinaryPrototypeInitialized=event.stateChanges.some(change=>change.table==='heap'&&change.after?.kind==='function'&&
+        change.after.prototypeInitialized&&!change.before?.prototypeInitialized&&!change.after.classConstructor&&!change.after.generatorFunction);
       if(['CLASS_CREATE','SET_HOME_OBJECT','CLASS_INITIALIZER','CLASS_FINISH','CLASS_CONSTRUCTOR_GUARD','CONSTRUCT',
         'SUPER_CONSTRUCTOR','SUPER_CALL','SUPER_FORWARD_CALL','SUPER_BIND','THIS','NEW_TARGET','PROPERTY_KEY',
         'PRIVATE_DEFINE','PRIVATE_GET','PRIVATE_GET_METHOD','PRIVATE_SET','PRIVATE_HAS','PRIVATE_UPDATE'].includes(op))

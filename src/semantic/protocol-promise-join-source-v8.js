@@ -2,12 +2,16 @@
 // operations. No later event can choose an earlier allocation identity.
 import {isDeepStrictEqual as eq} from 'node:util';
 import {compileEffectfulRegionWitnessV8} from './effectful-teacher-v8.js';
-import {decodeDetailedRecord} from './detailed-v7.js';
+import {decodeDetailedRecord} from './detail-v8.js';
 import {decodeProtocolRecordV8} from './protocol-codec-v8.js';
+import {sourcePromiseJoinEventV8,sourceJoinAllocationV8,sourceHasSyntaxV8} from './source-projection-base-v8.js';
 
 const id='promise-join/1',copy=structuredClone;
 const jobId=(result,index)=>'join'+result+'x'+index;
 export function createPromiseJoinTeacherV8(){return {id,
+  claims:{event:sourcePromiseJoinEventV8,allocation:sourceJoinAllocationV8},
+  prepare:{event:(_view,input)=>({kind:'join-event',operation:input.event.operation}),
+    allocation:(_view,input)=>({kind:'join-result-array',identity:input.identity})},
   event(ctx,event,row){
     const changes=event.stateChanges,owner=ctx.rootFor(event.invocationId),
       callee=row?.operands?.[0],method=callee?.[0]==='method'?callee[1]:callee,
@@ -44,7 +48,9 @@ export function createPromiseJoinTeacherV8(){return {id,
     const allocated=changes.filter(change=>change.table==='heap'&&change.before===null);
     const output=allocated.length===1&&allocated[0].after.kind==='array'?allocated[0].id:null;
     if(allocated.length!==(output===null?0:1))ctx.refuse('join step has an undeclared allocation');
-    ctx.emitProtocol(ctx.rootInvocation,{kind:'promise.join.step',result,job:jobId(result,queued.index),
+    const joinOwner=ctx.controller(ctx.rootInvocation).heap.get(result)?.join?.owner;
+    if(!joinOwner)ctx.refuse('join step lacks a retained owning invocation');
+    ctx.emitProtocol(joinOwner,{kind:'promise.join.step',result,job:jobId(result,queued.index),
       entry:null,output:output===null?null:ctx.identity(output),error:null,status:node.status,
       value:node.status==='pending'?null:ctx.tag(node.value.value)},event,'source-promise-join-step/1');
     if(output!==null)ctx.claimDataIdentity(output);
@@ -66,7 +72,9 @@ export function createPromiseJoinTeacherV8(){return {id,
         if(!eq(selected.properties,properties))ctx.refuse('join output differs from current owned allocation');
       }
       if(change.table==='control'&&controller.protocol){
-        const actual=controller.ready.filter(job=>controller.jobs.get(job)?.reaction==='join'),
+        const actual=[...ctx.harness.invocations.values()].flatMap(({controller:c})=>c.ready
+          .filter(job=>c.jobs.get(job)?.reaction==='join').map(id=>({id,sequence:c.jobs.get(id).readySequence})))
+          .sort((a,b)=>a.sequence-b.sequence).map(row=>row.id),
           expected=(change.after.queue??[]).filter(job=>job.kind==='combinator').map(job=>jobId(job.resultId,job.index));
         if(!eq(actual,expected))ctx.refuse('join readiness differs from the current owned FIFO queue');
       }
@@ -75,12 +83,11 @@ export function createPromiseJoinTeacherV8(){return {id,
   }
 };}
 
-export function createPromiseJoinSourceAdapterV8({bundle}={}){
-  if(bundle?.events?.some(event=>event.operation==='object.construct'&&event.operands?.[0]?.[0]==='intrinsic'&&event.operands[0][1]==='Promise'))return null;
-  if(!bundle?.events?.some(event=>event.operation==='call.enter'&&['Promise.all','Promise.race'].includes(
-    event.operands?.[0]?.[0]==='method'?event.operands[0][1]?.[1]:event.operands?.[0]?.[1])))return null;
-  return {id,compile({maxGenerated}){return compilePromiseSourceProjectionV8(bundle,{maxGenerated,extensions:[createPromiseJoinTeacherV8()],
-    sourceProfile:'promise-joins-source/1',extensionIds:[id]});}};
+export function createPromiseJoinSourceAdapterV8(input={}){
+  if(!sourceHasSyntaxV8(input,node=>node.type==='MemberExpression'&&node.object.type==='Identifier'&&
+    node.object.name==='Promise'&&['all','race'].includes(node.computed?
+      node.property.type==='Literal'?node.property.value:null:node.property.name)))return null;
+  return {id,sourceComponent:createPromiseJoinTeacherV8(),sourceProfile:'promise-joins-source/1'};
 }
 export function compilePromiseSourceProjectionV8(bundle,{maxGenerated,extensions,sourceProfile,extensionIds}){
     const compiled=compileEffectfulRegionWitnessV8(bundle,{maxGenerated,extensions}),
