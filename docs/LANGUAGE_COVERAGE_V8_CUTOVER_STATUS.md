@@ -16,6 +16,29 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Production worker isolation and parallel native integration — 22 November 2026
+
+The ordinary generation worker now loads the V6 effect verifier and session
+collector only when that route is selected. Both ordinary V8 collection and the
+original-versus-transformed-source check run with those two legacy clients
+actively blocked by an import loader. The original-reference route uses the V8
+independent source checker. This is an executable worker boundary check; it does
+not by itself establish complete installed-package or default-cutover parity.
+
+The long paired V8 workflow now preserves a running qualification job across
+incremental pushes and explicitly runs the semantic launch regressions. The
+earlier cancelled all665 token job remains incomplete historical evidence.
+
+Concurrent consumer commits `44a0771` and `88764cc` delivered ordinary V8 launch
+qualification and acknowledged native child orchestration. Their changes were
+preserved by a guarded integration after the branch advanced during publication.
+Our parallel drafts were retained for comparison rather than overwriting those
+commits. Further review covers exact source/input authority, original selected
+bytes, completion retries, shared native recovery, YAML input and stream identity.
+Producer transport/driver parity and authoritative training-record coverage are
+still in progress. A JavaScript parent-invocation edge remains insufficient to
+count the production `semantic_child` behavior. No acceptance package is closed.
+
 ## Coordinated terminal service/history authority — 22 November 2026
 
 The coordinator published at `d1e3045` now participates in the selected-driver

@@ -6,8 +6,6 @@ import {isDeepStrictEqual} from 'node:util';
 import {atomicWrite} from '../src/corpus/campaign-store.mjs';
 import {identityHash} from '../src/corpus/campaign-store.mjs';
 import {createNativeConsumer} from '../src/corpus/native-admission-client.mjs';
-import {verifyEffectfulTrainingCase,independentEffectfulReference} from '../src/training/effectful-admit.js';
-import {verifyEffectfulSession} from '../src/training/effectful-session.js';
 import {encodeNativeGraph,decodeOwnedGraph} from '../src/host/graph-codec.js';
 import {decodeGenerationTask} from '../src/corpus/generation-process.mjs';
 import {canonicalJavaScriptExpected} from '../src/corpus/owned-exercism.mjs';
@@ -32,8 +30,11 @@ try{
       const referenceInput={source:options.originalReferenceSource,entry:options.entry,
         inputGraph:encodeNativeGraph(options.args??[]),fixture:options.fixture,
         randomSeed:options.randomSeed??options.seeds?.guestRng??null};
-      const original=await independentEffectfulReference(referenceInput,{timeoutMs:options.timeoutMs??10000});
-      const transformed=await independentEffectfulReference({...referenceInput,source:options.source},
+      const reference=task.traceVersion===8?
+        (await import('../src/semantic/index-v8.js')).independentSourceReferenceV8:
+        (await import('../src/training/effectful-admit.js')).independentEffectfulReference;
+      const original=await reference(referenceInput,{timeoutMs:options.timeoutMs??10000});
+      const transformed=await reference({...referenceInput,source:options.source},
         {timeoutMs:options.timeoutMs??10000});
       if(!isDeepStrictEqual(original,transformed))result={status:'original_source_mismatch',
         reason:'Pinned original and transformed source observations disagree',
@@ -82,7 +83,9 @@ try{
         result=await verifyRegionTrainingCase(options);}
       else if(task.traceVersion===7){const {verifyAlgorithmTrainingCase}=await import('../src/semantic/compiler.js');
         result=await verifyAlgorithmTrainingCase(options);}
-      else if(task.traceVersion===undefined||task.traceVersion===6)result=await verifyEffectfulTrainingCase(options);
+      else if(task.traceVersion===undefined||task.traceVersion===6){
+        const {verifyEffectfulTrainingCase}=await import('../src/training/effectful-admit.js');
+        result=await verifyEffectfulTrainingCase(options);}
       else throw new Error('Unknown generation trace version');
     }
   }
@@ -90,7 +93,9 @@ try{
     phase='module-verification';const {verifyRegionModuleTrainingCase}=await import('../src/semantic/module-v8.js');
     result=await verifyRegionModuleTrainingCase(options);
   }
-  else if(task.kind==='session')result=await verifyEffectfulSession(options);
+  else if(task.kind==='session'){
+    const {verifyEffectfulSession}=await import('../src/training/effectful-session.js');
+    result=await verifyEffectfulSession(options);}
   else throw new Error('Unknown generation task kind');
 }catch(error){result={status:phase==='original-reference'?'original_reference_failure':'collection_failed',
   phase,reason:String(error.message??error),failure:{source:task.fixture.source,originalSource:task.fixture.originalReferenceSource,
