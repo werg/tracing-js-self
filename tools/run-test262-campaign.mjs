@@ -8,6 +8,7 @@ import {acquireTest262GitSnapshot} from '../src/conformance/test262-acquisition.
 import {ownedTest262Profile,prepareOfficialTest262Variant,checkOfficialTest262Syntax} from '../src/conformance/test262-runner.js';
 import {fingerprintTest262Implementation,verifyTest262ImplementationFiles,readTest262Json,writeTest262Json,
   createTest262CampaignReport,validateOriginalTest262Report,runOriginalTest262Worker} from '../src/conformance/test262-campaign.js';
+import {readPinnedEcma262Specification} from '../src/conformance/test262-specification.js';
 
 const root=fileURLToPath(new URL('..',import.meta.url)),flags=new Map();
 const booleans=new Set(['--all']);
@@ -42,7 +43,7 @@ if(flags.has('--check')){
     throw new TypeError('Stages must be a unique comma-separated selection of parse,owned,reference');
   if(stages.some(stage=>stage!=='parse')&&!['--paths','--cases','--limit','--all'].some(key=>flags.has(key)))
     throw new TypeError('Execution requires an explicit --paths, --cases, --limit or --all selection');
-  const profile=ownedTest262Profile({specification:baseCatalog.profile.specification,
+  const profile=ownedTest262Profile({specification:readPinnedEcma262Specification().specification,
     maxSteps:number('--max-steps',20000),maxSourceBytes:number('--max-source-bytes',1048576),
     referenceTimeoutMs:number('--reference-timeout-ms',300,10,1000)});
   const catalog=bindTest262CatalogProfile(baseCatalog,profile);

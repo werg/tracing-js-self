@@ -18,8 +18,12 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Active continuation — 21 November 2026
 
-- The complete fresh pair **producer `a2a2067cc87a36f7636e6d32e603de3bf13beade` / consumer `351c8f7aed56ac400d533156544e34a76ea3e5b5`** passes **32/32 source checks, 32/32 independent native admissions and 32/32 exact-token/native-packing measurements**. Fifteen cases contain compact regions, seventeen are wholly detailed; 39,890 of 40,869 generated text tokens (97.60%) remain detailed. Zero optimizer updates and no learned/latency/default-cutover claim. All 268 original artifacts and logs are being retained under `docs/evidence/semantic-v8-admission-a2a2067-351c8f7/`.
+- Producer `f5c44c055c389a78b89fe7ae573ae37986aeb848` preserves arrival order across registered listeners sharing a retained realm, including durable restoration. Private sequences and cursors are checked for duplicates, reversal and substitution before mutation. Twenty-six affected producer controls, 27 paired consumer controls and one installed-wheel absence check pass; contract mirrors are published in consumer `812e8bedf71807de1074a59d072e8048b1698f3c`. The new contract digest is `1be6863d4c4fd4d67698be2d92023db55ea624f6cf8ff9139117d5f48df2cbac`; fixture and interoperability digests are unchanged. Per-arrival broker durability and return-value callback continuations remain open.
+- Producer `cb40321a0d9a0682678f0c0a4073efe313bd6742` adds recurring ordinary V8 preparation, one optimizer update, a fresh-process second update, export and actual service restoration to CI. A corrected local runner against producer `a2a2067` / consumer `351c8f7` passes all five stages with exactly two updates, 315 optimizer moment owners, 311 advancing owners and 300 changed master tensors; restored next selection agrees on all seven checked fields. Zero semantic records were acknowledged. The first attempt incorrectly treated `max_steps` as a global cap, performed three updates and pruned the first checkpoint; that failure is retained. The published runner keeps an independent first-checkpoint copy, reuses the unchanged one-update configuration and verifies the latest-checkpoint pointer. A selected held-out source refuses before output creation. Fresh qualification of the published runner/current contract is active; no learned-quality claim is made.
+- Consumer `31e5688f81cd951384d9b6bcafc1421d43babdff` refreshes its V8 source-authority checkout to producer `cb40321` and adds the same ordinary lifecycle CI gate. The preceding `812e8be` V8 matrix correctly failed contract comparison against its obsolete producer pin; it is not counted as passing. Producer `c5348ea4b77a84e944ba0892f071c87e143cbae9` now pins this consumer. Current-head CI remains pending.
+- The complete fresh pair **producer `a2a2067cc87a36f7636e6d32e603de3bf13beade` / consumer `351c8f7aed56ac400d533156544e34a76ea3e5b5`** passes **32/32 source checks, 32/32 independent native admissions and 32/32 exact-token/native-packing measurements**. Fifteen cases contain compact regions, seventeen are wholly detailed; 39,890 of 40,869 generated text tokens (97.60%) remain detailed. Zero optimizer updates and no learned/latency/default-cutover claim. All 268 original artifacts and logs are committed in producer `edf7ea9ba9d34f358f1f4407cf20657edd8771ad` under `docs/evidence/semantic-v8-admission-a2a2067-351c8f7/`.
 - Producer `7b403e8cedb71765301463722e2219aab566834f` executes original Test262 module graphs in isolated native reference processes, forwarding exact dependency bytes and handling static/literal-dynamic imports, resolution/runtime negatives, async completion and TLA. Fifty-nine focused controls pass. Review reproduced and fixed both tracked and statically imported pending-TLA races: a VM `evaluated` status alone cannot certify completion. Owned modules, fresh realms/agents, distinct early-error certification and full upstream qualification remain open.
+- The normative ECMA-262 17th edition HTML for ECMAScript 2026 is retained at `artifacts/conformance/ecma262-17.0-index.html.xz`, bound by `artifacts/conformance/ecma262-17.0.json` (8,348,904 uncompressed bytes; SHA-256 `5df49e088c2b5c7a3dfd4a330414b92897fb4535cb62fc5936cad101a6c2304a`). New Test262 campaigns verify these actual retained bytes before creating an edition-bound runner profile. The original full 102,994-variant catalog remains unchanged with its historical unpinned profile and unclassified edition membership. Exact upstream checkout materialization and full 843-module-shard execution remain pending.
 - Producer `92145f14ca5669e4c21417f9e39ae85b2a1245ba` now saves registered callback queues against immutable private ingress snapshots and their externally retained receipts. Recovery verifies exact public history and source ownership before model restoration, keeps queued graphs outside model input until delivery, and resumes saved events without registration replay. Eighteen focused lifecycle/driver/ingress controls pass, including fresh-process reconstruction, graph identities, mutation/refusal and write-race controls. Per-arrival broker logging, callback-return continuations and arrivals beyond the saved boundary remain open.
 - Consumer `351c8f7aed56ac400d533156544e34a76ea3e5b5` adds an installed-wheel CI gate proving ordinary V8 entrypoints load from the installed package with eight legacy modules blocked. Twenty affected lifecycle/lineage/serving checks plus one isolated wheel check pass with actual pinned tokenizer bytes; test source-verifier injection remains explicitly bounded evidence.
 - Producer `72f00114577aff958e2ce67cb2bbe190c96268cb` reuses the validated, explicitly declared read-only V6 capture policy in the record-fitting diagnostic and retains that policy in its boundary/report metadata. The optimizer diagnostic and original saved training configuration remain separately disclosed. Fifteen affected Python controls pass. Fresh exact-pair source/native admission, Gaussian and recurrent-state parity, decoder support and supervision auditing pass. The one-record diagnostic fits the exact target in 16 updates; its first training/serving sample is bit-identical. This is not ordinary model training or learned task success.
@@ -28,7 +32,7 @@ must name executable evidence; historical receipts retain their original pins.
 - Fresh clean-checkout source identity verification passes on `92145f1`; contract regeneration also passes with unchanged wire digests. The earlier dirty-checkout refusal remains an actual failed attempt rather than being counted as source proof.
 - Resumed from actual producer `f1151a1cb65d5997ba13ba33c5d219ae7eeac19a` and consumer `262cb089b3c0cb035b2c51cdcb342a5271ad25b9`; the older checkpoint sections below remain historical.
 - Hardest-first implementation is active in shared Promise/iterator/map source composition, host callback ingress/recovery, original-module conformance execution, and installed ordinary training/serving parity. All 17 acceptance packages remain open.
-- Consumer formatting repair is published at `fe027cd429e7368fec4f144f582f71a8597a84ea`. Both Python hosted runs had stopped at formatting before CPU tests. Fresh local Ruff lint and format checks pass for all 561 selected files; new hosted checks are pending.
+- Consumer formatting repair is published at `fe027cd429e7368fec4f144f582f71a8597a84ea`. The subsequent full hosted CPU suites at `351c8f7` pass on Python 3.11 and 3.12, as do i18n, installed-wheel checks and all three source/native/bridge workflows. The Blackwell job is skipped, not executed. Fresh local Ruff lint and format checks pass for all 561 selected files. Later commits retain their own CI status.
 - Producer hosted V8 qualification at `f1151a1` retained **31 source-qualified / 30 native-admitted** cases, with the new composed example rejected by the older pinned consumer `a237366`. Consumer `6997cae` already adds the required strict extension checks; paired pin refresh and fresh qualification remain required.
 - The producer's other hosted failure is the record-fitting diagnostic omitting the required explicit legacy admission policy. The admission guard remains intact while the diagnostic is repaired.
 - Consumer `262cb08` contains the prior exact-pair ordinary optimizer/resume/export/serving bundle; it does not qualify later source or consumer changes. New evidence will retain its exact pair and failed attempts.
@@ -144,7 +148,7 @@ serving, and measured learned success.
 
 | # | Work package | Status | Required completion evidence / remaining work |
 | --- | --- | --- | --- |
-| 1 | Frozen scope, denominator, parity inventory | In progress | Pin specification bytes, suite/variant and real-source inventories, parser/host/resource identities; preserve unselected rows; map every production V6 route to a replacement test. |
+| 1 | Frozen scope, denominator, parity inventory | In progress | ECMA-262 17th edition HTML bytes and the full Test262 catalog are pinned; edition membership and applicability remain unclassified. Reconcile suite/variant and real-source inventories, parser/host/resource identities; preserve unselected rows; map every production V6 route to a replacement test. |
 | 2 | Qualified Test262 runner | In progress | Original script variants and isolated native module-reference graphs now run with pinned harness/dependency bytes and negative/async/TLA controls. Remaining: original owned modules, fresh realms/agents, separate early-error qualification and complete upstream applicability/failure reconciliation. |
 | 3 | Neutral JS execution state | In progress | Extract typed values and transitions; preserve all current state and lifecycle behavior; equivalence tests. |
 | 4 | Direct V8 detail and source certification | In progress | Own detail/context/checkpoint schema and direct compilation; no V6 witness artifact or old episode replay. |
@@ -242,9 +246,11 @@ serving, and measured learned success.
   pinned upstream revision `d53ebc8b1931d9f1541e43d59650776e4b766248`.
   The inventory contains 53,616 tests, 294 fixtures, 43 harness files and 21 other
   resources; 102,994 execution variants are frozen before selection, with zero
-  unresolved metadata records and no missing official harness assets. Every
-  variant is still unrun and edition classification remains unclassified; the
-  specification bytes are not yet pinned. Catalog digest:
+  unresolved metadata records and no missing official harness assets. At this
+  historical catalog checkpoint the specification bytes were not yet pinned;
+  every variant remains unrun and edition classification remains unclassified.
+  The annual specification pin and byte verification are recorded in the active
+  continuation above. Catalog digest:
   `2e1c7727c58d41822edaac2294761baa550a8ad7be8f5dcfedbfc7b779457299`.
   Acquisition/catalog controls: 12 passed, zero failed/skipped.
 
@@ -620,8 +626,8 @@ https://github.com/werg/megatoken/pull/38
 
 ## Latest published branch heads
 
-- Producer: `7b403e8cedb71765301463722e2219aab566834f`.
-- Consumer: `351c8f7aed56ac400d533156544e34a76ea3e5b5`.
+- Producer at this ledger update: `c5348ea4b77a84e944ba0892f071c87e143cbae9`.
+- Consumer: `31e5688f81cd951384d9b6bcafc1421d43babdff`.
 - Latest complete source/native/cost pair: producer
   `a2a2067cc87a36f7636e6d32e603de3bf13beade` / consumer
   `351c8f7aed56ac400d533156544e34a76ea3e5b5`: **32 declared, 32 source-qualified,
@@ -630,6 +636,15 @@ https://github.com/werg/megatoken/pull/38
   no release/default-cutover or learned task-success gate is closed.
 
 ## Latest hosted-check observation
+
+Consumer `351c8f7` completed both Python CPU suites, i18n, installed-wheel absence
+checks and source/native/bridge workflows successfully. The GPU Blackwell job
+was skipped. Consumer `812e8be` then failed both V8 population jobs at contract
+comparison against an older pinned producer; `31e5688` corrects that checkout
+and adds ordinary lifecycle qualification. Current-head results remain pending.
+These observations do not qualify a later producer/consumer pair automatically.
+
+### Historical hosted-check checkpoint
 
 Observed hosted checks for producer `6888ca122460d3456f275dee4add9b61ba56b6f9`
 on 21 November 2026: owned-corpus audits, semantic inspection, selected harness

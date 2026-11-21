@@ -7,6 +7,7 @@ import {gitBlobSha} from '../src/test262-baseline.js';
 import {buildTest262Catalog,parseTest262Header,test262VariantModes,createTest262Campaign,
   recordTest262Stage,recordTest262Stages,bindTest262CatalogProfile,summarizeTest262Campaign,validateTest262Campaign,validateTest262Catalog,
   conformanceDigest,CONFORMANCE_STAGES} from '../src/conformance/test262-catalog.js';
+import {readPinnedEcma262Specification} from '../src/conformance/test262-specification.js';
 
 const fixture=(body='',metadata='')=>`/*---\ndescription: synthetic runner control\n${metadata}---*/\n${body}`;
 const profile={name:'synthetic-runner-controls',edition:'ECMAScript 2026',specification:null,
@@ -173,6 +174,8 @@ test('retained snapshot catalog can be generated without claiming missing harnes
     assert.equal(result.catalog.summary.testFiles,42);
     assert(result.catalog.summary.knownVariants>42);
     assert(result.catalog.summary.missingHarnessFiles.includes('harness/assert.js'));
+    assert.deepEqual(result.catalog.profile.specification,readPinnedEcma262Specification().specification);
+    assert.equal(result.catalog.summary.specificationPinned,true);
     assert.equal(result.catalog.claims.ownedConformance,false);
     assert(result.campaign.rows.every(row=>Object.values(row.stages).every(stage=>stage.status==='not_run')));
     assert.equal(result.catalog.digest,conformanceDigest(Object.fromEntries(

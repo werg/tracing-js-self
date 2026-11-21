@@ -48,7 +48,8 @@ export function ownedTest262Profile({specification=null,maxSteps=20000,maxSource
       moduleResolver:'unavailable',test262HostObject:'unavailable',
       reference:{node:process.version,v8:process.versions.v8,timeoutMs:referenceTimeoutMs}},
     resourcePolicy:{maxSteps,maxSourceBytes},
-    limits:['Edition membership is unclassified until the normative specification inventory is pinned.',
+    limits:[specification?'Test262 edition membership remains unclassified although the normative specification bytes are pinned.':
+      'Edition membership is unclassified until the normative specification inventory is pinned.',
       'Unsupported language, global-object, host-realm and module operations remain explicit gaps.',
       'Owned structural validation and exact replay do not establish public or native semantic admission.']};
 }

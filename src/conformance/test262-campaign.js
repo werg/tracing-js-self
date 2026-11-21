@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {execFileSync,spawn} from 'node:child_process';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {parse} from 'acorn';
+import {verifyDeclaredEcma262Specification} from './test262-specification.js';
 import {bindTest262CatalogProfile,conformanceDigest,validateTest262Catalog,validateTest262Campaign,
   summarizeTest262Campaign} from './test262-catalog.js';
 
@@ -79,6 +80,7 @@ export function writeTest262Json(path,value){
 }
 
 export function createTest262CampaignReport({baseCatalog,catalog,campaign,runPolicy}){
+  verifyDeclaredEcma262Specification(catalog.profile.specification);
   return {schema:'original-test262-campaign-report/1',baseCatalogDigest:baseCatalog.digest,
     catalogDigest:catalog.digest,profile:catalog.profile,runPolicy,campaign,
     summary:summarizeTest262Campaign(campaign),
@@ -90,6 +92,7 @@ export function validateOriginalTest262Report(report,{baseCatalog,implementation
   validateTest262Catalog(baseCatalog);
   if(report?.schema!=='original-test262-campaign-report/1'||report.baseCatalogDigest!==baseCatalog.digest)
     throw new TypeError('Original Test262 report changed its frozen inventory');
+  verifyDeclaredEcma262Specification(report.profile?.specification);
   const catalog=bindTest262CatalogProfile(baseCatalog,report.profile);
   if(report.catalogDigest!==catalog.digest)throw new TypeError('Original Test262 report changed its execution profile');
   validateTest262Campaign(report.campaign,{catalog,implementation});

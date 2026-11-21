@@ -9,6 +9,8 @@ import {createHash} from 'node:crypto';
 import {buildTest262Catalog,createTest262Campaign,summarizeTest262Campaign,conformanceDigest}
   from '../src/conformance/test262-catalog.js';
 import {acquireTest262GitSnapshot,discoverTest262ModuleDependencies} from '../src/conformance/test262-acquisition.js';
+import {readPinnedEcma262Specification,verifyEcma262SpecificationBytes}
+  from '../src/conformance/test262-specification.js';
 
 const root=fileURLToPath(new URL('..',import.meta.url)),flags=new Map();
 for(let i=2;i<process.argv.length;i++){
@@ -35,8 +37,13 @@ if(flags.has('--revision')){
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 if(flags.has('--specification-file')!==flags.has('--specification-uri'))
   throw new TypeError('Supply specification bytes and their exact source URI together');
-const specification=flags.has('--specification-file')?
-  {uri:flags.get('--specification-uri'),sha256:digest(readFileSync(resolve(flags.get('--specification-file'))))}:null;
+const retainedSpecification=readPinnedEcma262Specification();
+const specification=retainedSpecification.specification;
+if(flags.has('--specification-file')){
+  if(flags.get('--specification-uri')!==specification.uri)throw new TypeError('Specification URI differs from the retained ECMA-262 2026 edition');
+  verifyEcma262SpecificationBytes(readFileSync(resolve(flags.get('--specification-file'))),specification,
+    retainedSpecification.manifest);
+}
 const sourceFiles=[];
 function collect(directory){
   for(const entry of readdirSync(directory,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){
@@ -60,7 +67,8 @@ const implementation={producerRevision:execFileSync('git',['-C',root,'rev-parse'
   codeDigest:conformanceDigest(sourceFiles),runnerDigest:conformanceDigest([
     ['catalog-test262.mjs',digest(readFileSync(fileURLToPath(import.meta.url)))],
     ['test262-catalog.js',digest(readFileSync(join(root,'src/conformance/test262-catalog.js')))],
-    ['test262-acquisition.js',digest(readFileSync(join(root,'src/conformance/test262-acquisition.js')))]]),
+    ['test262-acquisition.js',digest(readFileSync(join(root,'src/conformance/test262-acquisition.js')))],
+    ['test262-specification.js',digest(readFileSync(join(root,'src/conformance/test262-specification.js')))]]),
   node:process.version,v8:process.versions.v8};
 const campaign=createTest262Campaign({catalog,implementation,
   selectedIds:flags.has('--cases')?flags.get('--cases').split(','):null});

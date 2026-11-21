@@ -6,6 +6,7 @@ import {execFileSync} from 'node:child_process';
 import {acquireTest262GitSnapshot,discoverTest262ModuleDependencies} from '../src/conformance/test262-acquisition.js';
 import {buildTest262Catalog,bindTest262CatalogProfile,createTest262Campaign,recordTest262Stages} from '../src/conformance/test262-catalog.js';
 import {ownedTest262Profile} from '../src/conformance/test262-runner.js';
+import {readPinnedEcma262Specification} from '../src/conformance/test262-specification.js';
 import {readTest262Json,writeTest262Json,createTest262CampaignReport,validateOriginalTest262Report,fingerprintTest262Implementation,
   runOriginalTest262Worker} from '../src/conformance/test262-campaign.js';
 
@@ -51,6 +52,7 @@ test('campaign CLI retains the frozen full denominator while executing an explic
     assert.equal(report.summary.stages.independentReference.passed,2);
     assert.equal(report.summary.stages.nativeReplay.passed,0);
     assert.equal(report.summary.stages.parseStatic.not_selected,7);
+    assert.deepEqual(report.profile.specification,readPinnedEcma262Specification().specification);
     assert(report.campaign.rows.filter(row=>!row.selected).every(row=>Object.values(row.stages).every(stage=>stage.status==='not_selected')));
     assert.equal(validateOriginalTest262Report(report,{baseCatalog:suite.catalog,
       implementation:report.campaign.implementation}).valid,true);
