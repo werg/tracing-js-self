@@ -18,6 +18,8 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Active continuation — 21 November 2026
 
+- The complete fresh pair **producer `a2a2067cc87a36f7636e6d32e603de3bf13beade` / consumer `351c8f7aed56ac400d533156544e34a76ea3e5b5`** passes **32/32 source checks, 32/32 independent native admissions and 32/32 exact-token/native-packing measurements**. Fifteen cases contain compact regions, seventeen are wholly detailed; 39,890 of 40,869 generated text tokens (97.60%) remain detailed. Zero optimizer updates and no learned/latency/default-cutover claim. All 268 original artifacts and logs are being retained under `docs/evidence/semantic-v8-admission-a2a2067-351c8f7/`.
+- Producer `7b403e8cedb71765301463722e2219aab566834f` executes original Test262 module graphs in isolated native reference processes, forwarding exact dependency bytes and handling static/literal-dynamic imports, resolution/runtime negatives, async completion and TLA. Fifty-nine focused controls pass. Review reproduced and fixed both tracked and statically imported pending-TLA races: a VM `evaluated` status alone cannot certify completion. Owned modules, fresh realms/agents, distinct early-error certification and full upstream qualification remain open.
 - Producer `92145f14ca5669e4c21417f9e39ae85b2a1245ba` now saves registered callback queues against immutable private ingress snapshots and their externally retained receipts. Recovery verifies exact public history and source ownership before model restoration, keeps queued graphs outside model input until delivery, and resumes saved events without registration replay. Eighteen focused lifecycle/driver/ingress controls pass, including fresh-process reconstruction, graph identities, mutation/refusal and write-race controls. Per-arrival broker logging, callback-return continuations and arrivals beyond the saved boundary remain open.
 - Consumer `351c8f7aed56ac400d533156544e34a76ea3e5b5` adds an installed-wheel CI gate proving ordinary V8 entrypoints load from the installed package with eight legacy modules blocked. Twenty affected lifecycle/lineage/serving checks plus one isolated wheel check pass with actual pinned tokenizer bytes; test source-verifier injection remains explicitly bounded evidence.
 - Producer `72f00114577aff958e2ce67cb2bbe190c96268cb` reuses the validated, explicitly declared read-only V6 capture policy in the record-fitting diagnostic and retains that policy in its boundary/report metadata. The optimizer diagnostic and original saved training configuration remain separately disclosed. Fifteen affected Python controls pass. Fresh exact-pair source/native admission, Gaussian and recurrent-state parity, decoder support and supervision auditing pass. The one-record diagnostic fits the exact target in 16 updates; its first training/serving sample is bit-identical. This is not ordinary model training or learned task success.
@@ -143,7 +145,7 @@ serving, and measured learned success.
 | # | Work package | Status | Required completion evidence / remaining work |
 | --- | --- | --- | --- |
 | 1 | Frozen scope, denominator, parity inventory | In progress | Pin specification bytes, suite/variant and real-source inventories, parser/host/resource identities; preserve unselected rows; map every production V6 route to a replacement test. |
-| 2 | Qualified Test262 runner | In progress | Fresh realms, official includes, strict/sloppy/raw/module variants, early/runtime errors, async and agent handling; runner fault controls; reconciled full applicable catalog. |
+| 2 | Qualified Test262 runner | In progress | Original script variants and isolated native module-reference graphs now run with pinned harness/dependency bytes and negative/async/TLA controls. Remaining: original owned modules, fresh realms/agents, separate early-error qualification and complete upstream applicability/failure reconciliation. |
 | 3 | Neutral JS execution state | In progress | Extract typed values and transitions; preserve all current state and lifecycle behavior; equivalence tests. |
 | 4 | Direct V8 detail and source certification | In progress | Own detail/context/checkpoint schema and direct compilation; no V6 witness artifact or old episode replay. |
 | 5 | Independent native V8 semantics | In progress | Direct detail, observation, effect and primitive paths plus installed import controls are delivered. Remaining: complete contract ownership and paired language-family semantics, broader malformed-state controls, final current-pair absence/replay proof. |
@@ -618,13 +620,14 @@ https://github.com/werg/megatoken/pull/38
 
 ## Latest published branch heads
 
-- Producer: `a2a2067cc87a36f7636e6d32e603de3bf13beade`.
+- Producer: `7b403e8cedb71765301463722e2219aab566834f`.
 - Consumer: `351c8f7aed56ac400d533156544e34a76ea3e5b5`.
-- Latest complete source/native admission pair: producer
-  `6888ca122460d3456f275dee4add9b61ba56b6f9` / consumer
-  `c0ac528a5db70de51fb77f38ead88974c0fa386c`: **30 declared, 30 source-qualified,
-  30 native-admitted**, actual pinned tokenizer. Executable changes after this
-  pair require fresh qualification; this is not a release/default-cutover gate.
+- Latest complete source/native/cost pair: producer
+  `a2a2067cc87a36f7636e6d32e603de3bf13beade` / consumer
+  `351c8f7aed56ac400d533156544e34a76ea3e5b5`: **32 declared, 32 source-qualified,
+  32 native-admitted, 32 exact-token and native-packing measurements**, actual
+  pinned tokenizer. Later executable changes require their own qualification;
+  no release/default-cutover or learned task-success gate is closed.
 
 ## Latest hosted-check observation
 

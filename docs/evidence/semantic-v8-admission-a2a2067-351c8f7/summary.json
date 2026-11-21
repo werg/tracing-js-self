@@ -1,0 +1,114 @@
+{
+  "producerRevision": "a2a2067cc87a36f7636e6d32e603de3bf13beade",
+  "population": "interoperability",
+  "inputs": "all",
+  "populationDigest": "22fe905b41c7c825ab8cc56ba45ff3a80ec93a871f962b20370c6eeaa4796a56",
+  "declared": 32,
+  "sourceQualified": 32,
+  "nativeAdmitted": 32,
+  "nativePolicy": {
+    "schema": "semantic-native-policy/8",
+    "consumerRepository": "werg/megatoken",
+    "consumerRevision": "351c8f7aed56ac400d533156544e34a76ea3e5b5",
+    "contractDigest": "15f330f8bc5038d9bccd65f6b9594e9a97b1e621a4920c042b0db403b3d244b0",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "interoperabilityDigest": "d74f0ad0e25093303d8b06e2a274d338fc026cc0134678c11282159a29472e30"
+  },
+  "optimizerSteps": 0,
+  "model": "untested",
+  "defaultPromotion": "not-qualified",
+  "scope": "Source and native engineering qualification; no model-learning or native-serving success claim",
+  "schema": "semantic-v8-admission-and-cost-summary/1",
+  "status": "passed",
+  "costs": {
+    "declared": 32,
+    "sourceQualified": 32,
+    "sourceDispositions": {
+      "passed": 32
+    },
+    "compactEpisodes": 15,
+    "whollyDetailedEpisodes": 17,
+    "regionCoverage": {
+      "measuredEpisodes": 32,
+      "unmeasuredEpisodes": 0,
+      "compact": 27,
+      "detailed": 275,
+      "compactRecords": 27,
+      "detailedRecords": 1266
+    },
+    "flat": {
+      "sourceQualified": 32,
+      "measured": 32,
+      "unmeasured": 0,
+      "dispositions": {
+        "passed": 32
+      },
+      "bytes": {
+        "generated": 138397,
+        "detailed": 135325,
+        "detailedShare": 0.9778029870589681,
+        "cumulativeContext": 6923741,
+        "peakContext": 11052
+      },
+      "tokenMeasurement": "passed",
+      "tokenMeasuredEpisodes": 32,
+      "tokens": {
+        "generated": 40869,
+        "detailed": 39890,
+        "detailedShare": 0.9760454133940151,
+        "terminal": 1293,
+        "observedAndContext": 2231289,
+        "total": 2273451,
+        "peakContext": 3597
+      },
+      "scope": "Sums cover measured episodes only; source refusals and measurement limits remain in the declared denominator."
+    },
+    "nativePacking": {
+      "status": "measured",
+      "measuredEpisodes": 32,
+      "unmeasuredEpisodes": 0,
+      "generatedTokens": 40869,
+      "observedTokens": 2272293,
+      "terminalTokens": 0,
+      "physicalRecords": 5143,
+      "logicalRecords": 1391,
+      "scope": "Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."
+    },
+    "model": {
+      "status": "unmeasured",
+      "nextStep": null,
+      "completedExecution": null,
+      "latencyMs": null
+    },
+    "nativeServing": {
+      "status": "unmeasured",
+      "latencyMs": null,
+      "cacheSavings": null
+    },
+    "defaultPromotion": "not-qualified"
+  },
+  "tokenizerEvidence": {
+    "identity": {
+      "name": "inclusionAI/Ling-3.0-tiny",
+      "revision": "9a98e35fe1c9ee255f78dd64771c7ae15a799481",
+      "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+      "fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "codecVersion": "raw-byte-bpe-v2;binary=single-byte-v1;special-merges=masked",
+      "vocabSize": 157184
+    },
+    "qualification": {
+      "schema": "semantic-codec-meter/1",
+      "status": "qualified",
+      "scope": "byte-exact-token-meter-only",
+      "consumerRevision": "351c8f7aed56ac400d533156544e34a76ea3e5b5",
+      "consumerClean": true,
+      "codecSourceSha256": "98de7394ae3c4f47fe86d2767aaa103b8569de446913135a89de914af7182200",
+      "pythonVersion": "3.12.14",
+      "tokenizersVersion": "0.23.3",
+      "nativeAdmission": false
+    }
+  },
+  "retention": "Complete original source, native receipts, population, cost inputs/reports, progress journals and logs. No optimizer/model execution occurred in this engineering qualification."
+}
