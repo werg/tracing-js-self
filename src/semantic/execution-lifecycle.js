@@ -325,7 +325,14 @@ export class SelectedExecutionCore {
       'Invocation input cannot overwrite a retained identity');
     if(selectedReceiver[0]==='ref')demand(retained.includes(selectedReceiver[1])||
       graph.objects.some(node=>node.id===selectedReceiver[1]),'Unknown receiver identity');
-    const input=this.encodeRecord('input',{graph,...(retained.length?{retained}:{})});
+    // The legacy input wire uses JSON text. Restore its established schema
+    // field order after checkpoint serialization, without changing any graph
+    // identity, property-array order, alias or cycle. Validation precedes this
+    // reconstruction so unknown fields cannot be silently removed.
+    const inputGraphFields={roots:graph.roots,objects:graph.objects.map(node=>({id:node.id,kind:node.kind,
+      ...(Object.hasOwn(node,'prototype')?{prototype:node.prototype}:{}),
+      properties:node.properties.map(property=>({key:property.key,value:property.value}))}))};
+    const input=this.encodeRecord('input',{graph:inputGraphFields,...(retained.length?{retained}:{})});
     const sourceCode=selectedEntry===program.entry?program.code:
       this.encodeRecord('code',{entry:selectedEntry,source:program.source,
         sites:analyzeSemanticProgram(program.source).sites,
