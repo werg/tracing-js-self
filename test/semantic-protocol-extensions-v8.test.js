@@ -10,19 +10,20 @@ import {applyMemoryRecordV8,restoreMemoryStateV8} from '../src/semantic/protocol
 function archive(source){const runtime=createRuntime().startEntry({text:source,functionName:'run',args:[]});runtime.drive();return runtime.exportRun();}
 
 test('producer adapters declare their exact profile and preserve ordinary state checking',()=>{
-  const bundle=archive('"use strict";function run(){const o={n:3};return o.n+1;}');
-  const adapter={id:'test-arithmetic/1',stateless:true,event(ctx,event,row){
-    if(!row||!['primitive.binary','spec.operation.complete'].includes(event.operation))return false;
-    ctx.emit({kind:'compute',expr:{op:'binary',operator:'+',left:{op:'literal',value:row.operands[0]},
-      right:{op:'literal',value:row.operands[1]}},result:row.result,bind:null},event,'source-test-adapter/1');return true;
+  const bundle=archive('"use strict";function run(){return Math.abs(-3);}'),
+    ordinary=archive('"use strict";function run(){const o={n:3};return o.n+1;}');
+  const adapter={id:'test-arithmetic/1',stateless:true,
+    claims:{event:(_view,{event,row})=>event.operation==='call.enter'&&row?.operands[0]?.[1]?.[1]==='Math.abs'},
+    event(ctx,event,row){
+    ctx.emit({kind:'compute',expr:{op:'unary',operator:'-',arg:{op:'literal',value:row.operands[1]}},
+      result:row.result,bind:null},event,'source-test-adapter/1');return true;
   }};
   const compiled=compileProtocolSourceV8(bundle,{adapters:[adapter]});
   assert.deepEqual(compiled.extensions,['test-arithmetic/1']);assert.equal(compiled.sourceProfile,'protocol-source-extensions/1');
-  assert.deepEqual(compiled.outcome.graph.roots.at(-1),['num',4]);
-  assert.throws(()=>compileProtocolSourceV8(bundle,{adapters:[{id:'bad/1',heapFields:()=>[]}]}),/complete state check/);
-  assert.throws(()=>compileProtocolSourceV8(bundle,{adapters:[{id:'bad/1',heapFields:()=>[],checkHeap:()=>false}]}),/complete heap comparison/);
+  assert.deepEqual(compiled.outcome.graph.roots.at(-1),['num',3]);
+  assert.throws(()=>compileProtocolSourceV8(ordinary,{adapters:[{id:'bad/1',heapFields:()=>[]}]}),/complete state check/);
+  assert.throws(()=>compileProtocolSourceV8(ordinary,{adapters:[{id:'bad/1',heapFields:()=>[],checkHeap:()=>false}]}),/complete heap comparison/);
   assert.throws(()=>compileProtocolSourceV8(bundle,{adapters:[{...adapter,event(ctx,event,row){
-    if(!row||!['primitive.binary','spec.operation.complete'].includes(event.operation))return false;
     ctx.emit({kind:'compute',expr:{op:'literal',value:['num',99]},result:row.result,bind:null},event);return true;
   }}]}),/computation|claim|result/);
 });

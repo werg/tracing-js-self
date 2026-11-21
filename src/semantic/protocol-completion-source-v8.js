@@ -97,7 +97,7 @@ export function createCompletionSourceAdapterV8({bundle}){
           'loop entry differs from its exact source declaration');
         targets.set(current.id,[...entries,{id:'target'+(++targetSequence),definition:ctx.copy(loop)}]);
         // This remains private correspondence until a live cleanup needs it.
-        return false;
+        return true;
       }
       if(inst?.op==='TRY_ENTER'){
         const after=event.stateChanges.find(row=>row.table==='frames'&&row.id===current.id)?.after,

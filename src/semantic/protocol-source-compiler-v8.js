@@ -14,6 +14,8 @@ import {compilePromiseSourceProjectionV8} from './protocol-promise-join-source-v
 import {encodeDetailedRecord} from './detail-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
 import {cloneRegionController} from './regions.js';
+import {createSourceClaimCoordinatorV8} from './source-claim-coordinator-v8.js';
+import {ORDINARY_PROTOCOL_SOURCE_V8,protocolSourceClaimsV8} from './protocol-source-claims-v8.js';
 import {encodeProtocolRecordV8,validateProtocolValueV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
 import {PROTOCOL_SOURCE_ADAPTERS_V8} from './protocol-source-extensions-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
@@ -93,6 +95,7 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   adapters=adapters.map(adapter=>typeof adapter==='function'?adapter({bundle,source}):adapter).filter(Boolean);
   if(adapters.some(adapter=>typeof adapter.id!=='string'||!adapter.id||adapter.id.length>128)||
     new Set(adapters.map(adapter=>adapter.id)).size!==adapters.length)refuse('distinct versioned extension identities required');
+  adapters.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
   const components=adapters.filter(adapter=>adapter.sourceComponent).sort((a,b)=>a.id.localeCompare(b.id));
   if(components.length)return compilePromiseSourceProjectionV8(bundle,{maxGenerated,
     extensions:components.map(adapter=>adapter.sourceComponent),extensionIds:components.map(adapter=>adapter.id),
@@ -105,10 +108,22 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     if(['event','allocate','completeFrame','beforeEvent','afterEvent'].some(name=>typeof adapter[name]==='function')&&
       adapter.stateless!==true&&!stateful)refuse('source adapter must declare retained state or be stateless: '+adapter.id);
   }
+  const componentRegistry=[{id:ORDINARY_PROTOCOL_SOURCE_V8,claims:protocolSourceClaimsV8(ORDINARY_PROTOCOL_SOURCE_V8)},
+    ...adapters.map(adapter=>({id:adapter.id,claims:adapter.claims??protocolSourceClaimsV8(adapter.id)??{},
+      event:adapter.event,allocation:adapter.allocate,completion:adapter.completeFrame,prepare:adapter.prepare}))]
+    .map(component=>({...component,prepare:Object.fromEntries(Object.keys(component.claims).map(kind=>[
+      kind,component.prepare?.[kind]??((_view,input)=>({kind,identity:input.id??input.event?.eventId??null}))]))}));
+  const coordinator=createSourceClaimCoordinatorV8(componentRegistry),adapterById=new Map(adapters.map(adapter=>[adapter.id,adapter]));
   let usedAdapters=new Set(),heapOwners=new Map(),frameOwners=new Map();
   const use=adapter=>{if(typeof adapter.id!=='string'||!adapter.id)refuse('extension requires a stable profile identity');usedAdapters.add(adapter.id);};
-  function extension(method,...args){for(const adapter of adapters){const result=adapter[method]?.(...args);
-    if(result!==undefined&&result!==null&&result!==false){use(adapter);return result;}}return null;}
+  function extension(method,...args){
+    const results=[];
+    for(const adapter of adapters){const result=adapter[method]?.(...args);
+      if(result!==undefined&&result!==null&&result!==false){use(adapter);results.push(result);}}
+    if(method==='syntax'||method==='program')return results.length?true:null;
+    if(results.length>1)refuse('ambiguous static source declaration: '+method);
+    return results[0]??null;
+  }
   function guardedHeap(node){const owners=adapters.filter(adapter=>adapter.heapFields?.(node)!=null),extraFields=[];
     for(const adapter of owners){const fields=adapter.heapFields(node);if(!Array.isArray(fields)||typeof adapter.checkHeap!=='function')refuse('heap extension requires fields and a complete state check');
       extraFields.push(...fields);use(adapter);}
@@ -164,7 +179,13 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     value=tag(value,event);emit(value[0]==='symbol'?{kind:'bind',name,value}:{kind:'bind',fields:{name,value}},event,'owned-source-cell/1',{detail:value[0]!=='symbol'});
   };
   function publish(node,event){
-    guardedHeap(node);if(extension('allocate',context,node,event)){published.add(node.id);return;}return baseAllocate(node,event);
+    guardedHeap(node);if(published.has(node.id))return;
+    const owner=prepared('allocation:'+node.id);
+    if(owner.owner===ORDINARY_PROTOCOL_SOURCE_V8)return baseAllocate(node,event);
+    const adapter=adapterById.get(owner.owner);
+    if(adapter?.allocate?.(context,node,event,owner.prepared)!==true)
+      refuse('claimed source allocation handler declined: '+owner.owner);
+    use(adapter);published.add(node.id);
   }
   function baseAllocate(node,event){
     guardedHeap(node);if(published.has(node.id))return;if(publishing.has(node.id))refuse('recursive unpublished closure capture');publishing.add(node.id);
@@ -324,6 +345,23 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     }
     refuse('builtin call needs a declared protocol operation: '+name);
   }
+  let activePlan=null;
+  function prepared(id){const selected=activePlan?.get(id);if(!selected)refuse('unreserved current source slot: '+id);return selected;}
+  function planEvent(event,row){
+    const ownedFrame=event&&state.frames[event.invocationId],candidate=ownedFrame&&bundle.programs[ownedFrame.codeId]?.instructions[ownedFrame.pc],
+      instruction=candidate?.siteId===event?.siteId?candidate:null,
+      site=event&&bundle.sites.find(item=>item.siteId===event.siteId),sourceNode=site?inventory.nodes.get(site.start+':'+site.end)??null:null,
+      view={source,owned:state,event,row:row??null,instruction,sourceNode:copy(sourceNode),
+        components:Object.fromEntries(adapters.map(adapter=>[adapter.id,adapter.captureState?.()??{}]))},slots=[],allocations=new Map();
+    for(const node of Object.values(state.heap))if(!published.has(node.id))allocations.set(node.id,node);
+    for(const change of event?.stateChanges??[])if(change.table==='heap'&&change.before===null)allocations.set(change.id,change.after);
+    for(const node of allocations.values())slots.push({id:'allocation:'+node.id,kind:'allocation',input:node});
+    if(event)slots.push({id:'event',kind:'event',input:{event,row:row??null}});
+    for(const change of event?.stateChanges??[])if(change.table==='frames'&&change.before&&change.after&&
+      !['completed','thrown'].includes(change.before.status)&&['completed','thrown'].includes(change.after.status))
+      slots.push({id:'completion:'+change.id,kind:'completion',input:change});
+    activePlan=new Map(coordinator.plan({view,slots}).map(slot=>[slot.id,slot]));
+  }
   const context={bundle,source,inventory,
     get state(){return state;},get beforeState(){return state;},get controller(){return controller;},get claims(){return claims;},
     emit,bind,tag,cell,frame,codeFor,publish,baseAllocate,baseCheckHeap,
@@ -342,19 +380,21 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     }
     if(failure)throw failure;
   }
-  const projectionState=()=>({controller,claims,state,names,used,frames,pendingAccessors,published,publishing,
+  const projectionState=()=>({controller,claims,state,names,used,frames,pendingAccessors,published,publishing,activePlan,
     extensionState,usedAdapters,heapOwners,frameOwners,cellCounter,frameCounter,accessorCounter});
   function selectProjectionState(selected){
-    ({controller,claims,state,names,used,frames,pendingAccessors,published,publishing,
+    ({controller,claims,state,names,used,frames,pendingAccessors,published,publishing,activePlan,
       extensionState,usedAdapters,heapOwners,frameOwners,cellCounter,frameCounter,accessorCounter}=selected);
   }
   function transaction(run){
     const live=projectionState(),adapterStates=adapters.map(adapter=>adapter.captureState?.()),
-      detached=copy({state,names,used,frames,pendingAccessors,published,publishing,extensionState});
+      stagedAdapterStates=copy(adapterStates),detached=copy({state,names,used,frames,pendingAccessors,published,publishing,extensionState});
     selectProjectionState({...live,...detached,controller:cloneRegionController(controller),claims:[...claims],
       usedAdapters:new Set(usedAdapters),heapOwners:new Map(heapOwners),frameOwners:new Map(frameOwners)});
-    for(const [index,adapter]of adapters.entries())if(adapter.captureState)adapter.restoreState(copy(adapterStates[index]));
-    try{return run();}
+    try{
+      for(const [index,adapter]of adapters.entries())if(adapter.captureState)adapter.restoreState(stagedAdapterStates[index]);
+      return run();
+    }
     catch(error){
       selectProjectionState(live);
       for(const [index,adapter]of adapters.entries())if(adapter.captureState)adapter.restoreState(adapterStates[index]);
@@ -362,10 +402,11 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     }
   }
   const entryEnv=state.frames[semantic.rootInvocation].envId;
-  transaction(()=>{for(const [name,binding]of Object.entries(state.envs[entryEnv]?.bindings??{}))
+  transaction(()=>{planEvent(null,null);for(const [name,binding]of Object.entries(state.envs[entryEnv]?.bindings??{}))
     if(binding.initialized)bind(cell(entryEnv,name),binding.token.value);});
   function projectEvent(event){
     const row=rows.get(event.eventId),heapChanges=event.stateChanges.filter(change=>change.table==='heap');
+    planEvent(event,row);
     observe('beforeEvent',event,row);
     for(const change of heapChanges)if(change.after)guardedHeap(change.after);else refuse('heap deletion needs a protocol');
     for(const change of event.stateChanges)if(change.table==='frames'&&change.after){
@@ -376,7 +417,12 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       if(Object.keys(change.after).some(key=>!allowed.has(key))||
         !owners.length&&(change.after.asyncPromiseId||change.after.awaiting||change.after.handlers?.length))refuse('frame continuation needs its declared protocol');
     }
-    const handled=extension('event',context,event,row);
+    const eventOwner=prepared('event'),eventAdapter=adapterById.get(eventOwner.owner),handled=eventOwner.owner!==ORDINARY_PROTOCOL_SOURCE_V8;
+    if(handled){
+      if(eventAdapter?.event?.(context,event,row,eventOwner.prepared)!==true)
+        refuse('claimed source event handler declined: '+eventOwner.owner);
+      use(eventAdapter);
+    }
     if(!row&&!handled&&heapChanges.length)refuse('unprojected owned heap transition: '+event.operation);
     if(row&&!handled){
       if(row.child){
@@ -498,7 +544,13 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       !['completed','thrown'].includes(change.before.status)&&['completed','thrown'].includes(change.after.status));
     finished.sort((a,b)=>controller.stack.indexOf(frame(b.id))-controller.stack.indexOf(frame(a.id)));
     for(const change of finished){
-      if(extension('completeFrame',context,change,event))continue;
+      const completionOwner=prepared('completion:'+change.id);
+      if(completionOwner.owner!==ORDINARY_PROTOCOL_SOURCE_V8){
+        const adapter=adapterById.get(completionOwner.owner);
+        if(adapter?.completeFrame?.(context,change,event,completionOwner.prepared)!==true)
+          refuse('claimed source completion handler declined: '+completionOwner.owner);
+        use(adapter);continue;
+      }
       const invocation=frame(change.id),completion=change.after.completion;
       if(!completion?.value?.value)refuse('completed frame lacks a value');
       const kind=completion.type==='throw'?'throw':'return',value=tag(completion.value.value,event);

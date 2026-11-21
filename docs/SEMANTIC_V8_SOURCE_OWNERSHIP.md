@@ -3,10 +3,10 @@
 The Promise executor, Promise join and ordinary detailed source components now
 share one teacher projection. They no longer choose a single whole-episode
 compiler or install one another as an incidental dependency. This is a bounded
-composition increment: the separate source projector for the other protocol
-families still has its own admission and extension path. That path now stages
-each source event and all private adapter state as described below; migrating
-its remaining first-match dispatch to declarative ownership is a separate gate.
+composition increment. The direct source projector for the other protocol
+families now uses the same ownership coordinator and stages every event and
+its private adapter state. The two source compiler paths still have separate
+admission profiles; arbitrary Promise/protocol-family mixtures remain a gate.
 
 ## Ownership before execution
 
@@ -33,6 +33,10 @@ and prior component state. They contain no controller, harness, emitter,
 journal reader, later event or archive. Preparation results are also frozen
 plain data. Component discovery inspects static source syntax; it does not
 scan future owned execution to decide how an earlier closure is represented.
+The coordinator snapshots registered identities and claim functions. Caller
+mutation cannot replace the policy after registration. Transparent Proxies,
+accessors and non-data slot inventories are refused before their traps or
+getters execute.
 
 ## A rejected event publishes nothing
 
@@ -60,7 +64,7 @@ undo earlier valid source events. Source staging refuses a harness with live
 native transports, pending native dispatches or wake listeners; it never calls
 or duplicates host services.
 
-## Remaining protocol families: atomic event publication
+## Direct protocol families: ownership and atomic publication
 
 The direct protocol source compiler also stages complete owned events. Number
 conversion, Proxy traps, synchronous generators, construction, iterator cursors,
@@ -68,6 +72,25 @@ ordinary cleanup, enumeration, binary memory and array-map expansion share one
 detached public controller during an event. The source-prefix state, emitted
 claims, lexical and frame identities, pending accessors, publication sets, and
 private adapter state move together only after all event checks pass.
+
+`protocol-source-claims-v8.js` declares current-event domains for those families.
+The compiler reserves every unpublished allocation in the current prefix and
+event, one main-event slot and one slot for each exiting frame. It resolves
+the complete inventory before any preparation, precondition observer, allocation
+handler or event handler runs. Claims see frozen source syntax, the current
+instruction, owned prefix and private component data; they receive no mutable
+public controller or archive reader. The ordinary component has an explicit
+operation/builtin domain. An extension cannot decline after emission and fall
+back to ordinary projection.
+
+Generator delegation and builtin iteration have disjoint synthetic guard/call
+domains. Ordinary construction, binary constructors and Proxy creation have
+separate domains. A callback completion belongs to the retained operation that
+registered that frame; overlapping callback owners are refused. All allocation
+and completion handlers must explicitly succeed. Static syntax capabilities may
+overlap and are all checked; function-definition declarations must be unique.
+Reversing the registry gives the same records, certificates and profile list,
+including code in branches that are not executed.
 
 Stateful adapters declare capture and restore operations. The snapshot preserves
 aliases between their retained records, including an array-map plan shared by
@@ -79,16 +102,24 @@ its reserved identities. Earlier committed source events remain intact.
 
 The source-array mutation guard now runs as an unconditional event precondition.
 It can no longer be skipped because another protocol adapter handles the event.
+Lazy ordinary-constructor prototype publication also runs as a staged prelude,
+including a prototype write whose main event belongs to ordinary properties.
 The combined qualification source nests a Proxy trap and typed-memory write
 inside Number conversion, then invokes builtin iterators from map callbacks.
 Original-source checks, public replay and terminal checkpoint restoration agree.
 Fault controls reject Number entry and map callback completion after staged
 records were emitted, then compare the complete previous public/private prefix.
 
-This adds transactional publication to that compiler. Its allocation, event and
-completion dispatch still uses the existing adapter routing. It does not claim
-that all protocol families have joined the declarative ownership registry or
-that Promise/protocol-family mixed source programs are admitted.
+The frozen-view controls exposed inherited `valueOf`, `toString` and `constructor`
+properties being mistaken for numeric version counters by semantic normalization.
+Normalization now reads only owned property/version entries. It cannot retain
+a host prototype function as private source data when a guest first writes a
+same-named property.
+
+This compiler's ordinary scalar/reference/Symbol values still use its direct
+codec and shared value checks. It does not yet combine its domains with the
+Promise source compiler, generalize the supported language profiles, or qualify
+new producer/consumer revisions for ordinary training.
 
 ## Qualification and limits
 
