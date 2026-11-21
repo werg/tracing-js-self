@@ -122,6 +122,30 @@ results for the later correction. Focused original-harness controls exercise
 JSON/text bytes, attributed requests for `.js` files, resolution negatives,
 parse-negative ordering, static re-exports and caught dynamic imports.
 
+## Terminal unsupported completions
+
+The raw 843-module campaign at `4c1a4a42ca21fb1a958b2ed9305372c04833fe3a`
+retained two infrastructure errors. One was the validator interpreting the
+`execution.unsupported` event from `await /x.y/g` as a guest throw. The machine
+had correctly stopped at its unimplemented RegExp profile boundary. Independent
+validation now checks the active instruction, input provenance, completion
+feature, and exact frame/control transition for expression, constructor and
+unseeded randomness refusals. A refusal cannot enter guest catch/finally, fulfill
+or reject the async result, mutate unrelated state, or continue execution.
+Corruption controls check these event properties independently of final-state
+and checkpoint equality; exact replay also reexecutes the stopped program.
+Supported constructor algorithms and `Symbol`'s guest TypeError cannot be
+forged into the generic constructor refusal, even with self-consistent terminal
+patches. Mutation controls cover every declared Error, Promise, Set, buffers,
+DataView and the owned typed-array constructors.
+
+The other error was a classification gap for the runtime's exact `TypeError`
+diagnostic `Intrinsic instanceof requires its owned prototype profile`. The
+original Test262 runner now records that explicit boundary as `unsupported`.
+The correction adds no Promise prototype or RegExp semantics, and neither
+refusal can satisfy a runtime-negative test. The earlier campaign stays intact;
+only a new run against the corrected published revision can change its counts.
+
 ## Remaining work
 
 Namespace exotic identity/internal methods,

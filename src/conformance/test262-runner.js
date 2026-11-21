@@ -7,8 +7,8 @@ import {parse as parseSyntax} from 'acorn';
 import {createRuntime} from '../runtime.js';
 import {linkEvaluatedModules} from '../evaluated-modules.js';
 import {unresolvedOriginalModuleBindings} from './test262-module-resolution.js';
-import {validateBundle} from '../validation.js';
-import {replayExact} from '../replay.js';
+import {validateBundle,TraceValidationError} from '../validation.js';
+import {replayExact,TraceReplayError} from '../replay.js';
 import {conformanceDigest,parseTest262Header,test262VariantModes} from './test262-catalog.js';
 import {test262HostCapabilities,unsupportedOwnedGlobals,
   unavailableOwnedStandardGlobal,requiresScriptGlobalThis} from './test262-capabilities.js';
@@ -347,8 +347,10 @@ function executeOwnedTest262Module({options,prepared,profile,result,includeBundl
     {phase:'runtime'});
   return {...observed,trace,moduleGraphComplete:true,...(includeBundle?{bundle}:{})};
 }
-const profileRefusal=error=>error?.name==='SyntaxError'&&/^Unsupported owned-script\/1 /.test(error.message)||
-  /(?:outside (?:the )?.*profile|\b(?:Unsupported|Unmodeled)\b|not (?:modeled|implemented)|requires? (?:an? )?owned|needs? (?:an? )?owned|bounded (?:error|object|array|function|iterator) profile|Declared error exposes)/i.test(error?.message??'');
+const profileRefusal=error=>!(error instanceof TraceValidationError||error instanceof TraceReplayError)&&(
+  error?.name==='SyntaxError'&&/^Unsupported owned-script\/1 /.test(error.message)||
+  error?.name==='TypeError'&&error.message==='Intrinsic instanceof requires its owned prototype profile'||
+  /(?:outside (?:the )?.*profile|\b(?:Unsupported|Unmodeled)\b|not (?:modeled|implemented)|requires? (?:an? )?owned|needs? (?:an? )?owned|bounded (?:error|object|array|function|iterator) profile|Declared error exposes)/i.test(error?.message??''));
 
 /** Run one immutable variant; a new machine is always allocated for it. */
 export function executeOfficialTest262Variant(options={}){

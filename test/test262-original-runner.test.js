@@ -549,6 +549,42 @@ test('resource bounds and corrupt trace validation never satisfy a runtime-negat
   assert.equal(bad.status,'infrastructure_error');assert.equal(bad.phase,'verification');
 });
 
+test('module runtime profile stops remain unsupported after structural validation',()=>{
+  for(const body of ['await /x.y/g;','assert(Promise.resolve(1) instanceof Promise);']){
+    const [options]=moduleFixture(body);
+    const owned=executeOfficialTest262Variant({...options,includeBundle:true});
+    assert.equal(owned.status,'unsupported',owned.reason);
+    assert.equal(owned.executionPerformed,true);
+    assert.equal(owned.phase,'owned-module-runtime');
+    assert.equal(executeOfficialTest262Reference(options).status,'passed');
+    if(body.startsWith('await')){
+      assert.equal(owned.trace.structurallyValidated,true);
+      assert.equal(owned.trace.exactlyReplayed,true);
+      assert.equal(owned.bundle.events.at(-1).completion.type,'unsupported');
+    }
+    const [negative]=moduleFixture(body,{metadata:'negative:\n  phase: runtime\n  type: TypeError\n'});
+    assert.equal(executeOfficialTest262Variant(negative).status,'unsupported');
+    assert.equal(executeOfficialTest262Reference(negative).status,'failed');
+  }
+});
+
+test('corrupt unsupported-completion evidence stays an infrastructure error',t=>{
+  const original=Runtime.prototype.exportRun;
+  t.mock.method(Runtime.prototype,'exportRun',function(){
+    const bundle=original.call(this);
+    const event=bundle.events.find(event=>event.operation==='execution.unsupported');
+    if(event)event.completion.feature='forged unsupported operation';
+    return bundle;
+  });
+  for(const metadata of ['', 'negative:\n  phase: runtime\n  type: TypeError\n']){
+    const [options]=moduleFixture('await /x.y/g;',{metadata});
+    const result=executeOfficialTest262Variant(options);
+    assert.equal(result.status,'infrastructure_error',result.reason);
+    assert.equal(result.phase,'owned-module-runtime');
+    assert.match(result.reason,/Invalid owned unsupported completion/);
+  }
+});
+
 test('both authorities apply the original byte budget before parse-negative success',()=>{
   statuses(both('var = ;',{metadata:'flags: [raw]\nnegative:\n  phase: parse\n  type: SyntaxError\n',
     profile:ownedTest262Profile({maxSourceBytes:50})}),'resource_limited');

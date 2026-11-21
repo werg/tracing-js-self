@@ -22,10 +22,58 @@ const clone = x => structuredClone(x);
 const eq = (a,b) => JSON.stringify(a)===JSON.stringify(b);
 const operations = JSON.parse(readFileSync(new URL('../catalog/operations.json',import.meta.url),'utf8'));
 const known = new Set(operations.entries.map(e=>e.operationId));
+// Independently declared constructor paths which complete, throw or refuse
+// through their own algorithms before the generic unsupported fallback.
+const handledConstructors=new Set(['Symbol','Error','EvalError','RangeError','ReferenceError',
+  'SyntaxError','TypeError','URIError','Promise','Set','ArrayBuffer','SharedArrayBuffer','DataView',
+  'Int8Array','Uint8Array','Int16Array','Uint16Array','Int32Array','Uint32Array',
+  'BigInt64Array','BigUint64Array','Float32Array','Float64Array']);
 export class TraceValidationError extends Error {
   constructor(message,eventId=null){super(eventId?`${message} at ${eventId}`:message);this.name='TraceValidationError';this.eventId=eventId;}
 }
 function fail(message,eventId=null){throw new TraceValidationError(message,eventId);}
+// A bounded-profile stop is not a guest throw. Check its owning instruction and
+// complete terminal transition independently before accepting that distinction.
+function validateUnsupportedCompletion(state,event,programs){
+  const control=state.control.a0,frame=state.frames[event.invocationId];
+  const instruction=programs[frame?.codeId]?.instructions[frame?.pc];
+  if(!frame||control.activeFrameId!==frame.id||frame.status!=='running'||
+     event.codeId!==frame.codeId||instruction?.siteId!==event.siteId)
+    fail('Unsupported completion lacks its active instruction',event.eventId);
+  let consumed,feature;
+  if(event.operation==='execution.unsupported'&&instruction.op==='UNSUPPORTED_EXPRESSION'){
+    consumed=0;feature=instruction.arg;
+  }else if(event.operation==='object.construct'&&instruction.op==='CONSTRUCT'&&
+      Number.isSafeInteger(instruction.arg)&&instruction.arg>=0){
+    consumed=instruction.arg+1;
+    const constructor=frame.stack.at(-consumed)?.value;
+    if(constructor?.[0]!=='intrinsic'&&
+       !(constructor?.[0]==='ref'&&state.heap[constructor[1]]?.kind==='proxy'))
+      fail('Unsupported constructor lacks its owned input',event.eventId);
+    if(constructor[0]==='intrinsic'&&handledConstructors.has(constructor[1]))
+      fail('Owned constructor cannot become a generic unsupported completion',event.eventId);
+    feature='Constructor requires owned semantics: '+String(constructor[1]);
+  }else if(event.operation==='property.read'&&['GET_PROP','GET_METHOD'].includes(instruction.op)&&
+      eq(frame.stack.at(-2)?.value,['intrinsic','Math'])&&
+      eq(frame.stack.at(-1)?.value,['str','random'])&&!Number.isInteger(control.randomSeed)){
+    consumed=2;feature='Math.random requires an explicit deterministic fixture seed';
+  }else fail('Unsupported completion is not an owned profile stop',event.eventId);
+  const completion={type:'unsupported',feature};
+  const operands=consumed?frame.stack.slice(-consumed):[];
+  if(typeof feature!=='string'||!feature||frame.stack.length<consumed||
+     !eq(event.completion,completion)||!eq(event.operands,operands.map(token=>token.value))||
+     !eq(event.operandOrigins,operands.map(token=>token.origin))||event.result!==null||
+     !eq(event.causes,[])||!eq(event.readObservations,[])||event.stateChanges.length!==2)
+    fail('Invalid owned unsupported completion',event.eventId);
+  const framePatch=event.stateChanges.find(p=>p.table==='frames'&&p.id===frame.id);
+  const controlPatch=event.stateChanges.find(p=>p.table==='control'&&p.id==='a0');
+  if(!eq(framePatch?.after,{...frame,pc:frame.pc+1,
+       stack:frame.stack.slice(0,frame.stack.length-consumed),status:'unsupported',
+       completion,version:frame.version+1})||
+     !eq(controlPatch?.after,{...control,status:'unsupported',activeFrameId:null,
+       failure:{kind:'unsupported',frameId:frame.id,completion},version:control.version+1}))
+    fail('Unowned terminal unsupported completion',event.eventId);
+}
 /** Apply the canonical per-entity typed patches to an independently held state. */
 export function reconstruct(bundle,{throughEventId=null}={}) {
   if(bundle.manifest?.schema!=='semantic-tracing-run/2')fail('Unknown run schema');
@@ -172,6 +220,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     validatePromiseResolutionEvent(state,e,message=>fail(message,e.eventId));
     validateScriptSequenceEvent(state,e,bundle,message=>fail(message,e.eventId));
     validateScriptHostEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    if(e.operation==='execution.unsupported'||e.completion?.type==='unsupported'&&
+       e.operation!=='spec.operation.complete')validateUnsupportedCompletion(state,e,bundle.programs);
     for(const p of e.stateChanges) {
       validateSymbolAllocation(p,e,message=>fail(message,e.eventId));
       if(patched.has(`${p.table}:${p.id}`))fail('Double application of mutation',e.eventId);
@@ -212,7 +262,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
         ? state.inputs[e.causes.find(c=>c.kind==='input')?.inputId] : null;
       const hostThrow=delivered?.abrupt && state.effects[delivered.effectId]?.kind==='synchronous';
       const c=e.completion;
-      if(e.operation==='completion.throw'||hostThrow||(c && (e.operation!=='spec.operation.complete'||c.type==='throw'))) {
+      if(e.operation==='completion.throw'||hostThrow||(c&&c.type!=='unsupported'&&
+          (e.operation!=='spec.operation.complete'||c.type==='throw'))) {
         if(c?.type!=='throw')fail('Missing guest throw completion',e.eventId);
         if(e.operation==='completion.throw'||hostThrow){
           if(hostThrow ? !eq(c.value,{value:delivered.value,origin:e.eventId}) :
