@@ -369,7 +369,9 @@ function putOwn(obj,key,value,eventId,{literal=false}={}) {
   if(!existed&&!Object.hasOwn(obj.accessors??{},key))
     (obj.propertyOrder??=Object.keys(obj.properties).concat(Object.keys(obj.accessors??{}))).push(key);
   Object.defineProperty(obj.properties,key,{value:token(value,eventId),enumerable:true,configurable:true,writable:true});
-  obj.propertyVersions[key] = (Object.hasOwn(obj.propertyVersions,key) ? obj.propertyVersions[key] : 0) + 1;
+  Object.defineProperty(obj.propertyVersions,key,{value:
+    (Object.hasOwn(obj.propertyVersions,key) ? obj.propertyVersions[key] : 0) + 1,
+    enumerable:true,configurable:true,writable:true});
   if (!existed) obj.shapeVersion++;
   if (obj.kind === 'array' && arrayIndex(key) && Number(key) >= decode(obj.properties.length.value)) {
     obj.properties.length = token(['num',Number(key)+1],eventId);
@@ -2654,19 +2656,25 @@ if(obj.kind==='set'){
             putOwn(obj,name,value.value,eventId,{literal:true});
             if(obj.accessors)delete obj.accessors[name];
             if(arg.enumerable!==undefined||obj.dataAttributes?.[name]){
-              obj.dataAttributes??={};obj.dataAttributes[name]={enumerable:arg.enumerable??true,writable:true,configurable:true};
+              obj.dataAttributes??={};Object.defineProperty(obj.dataAttributes,name,{value:
+                {enumerable:arg.enumerable??true,writable:true,configurable:true},
+                enumerable:true,configurable:true,writable:true});
             }
           }else if(['get','set'].includes(arg.kind)){
             if(!this.callableGuest(s,value.value))throw new TypeError('Literal accessor must be an owned function');
-            const previous=obj.accessors?.[name];
+            const previous=Object.hasOwn(obj.accessors??{},name)?obj.accessors[name]:undefined;
             if(!previous&&!Object.hasOwn(obj.properties,name))
               (obj.propertyOrder??=Object.keys(obj.properties).concat(Object.keys(obj.accessors??{}))).push(name);
             obj.accessors??={};
-            obj.accessors[name]={get:previous?.get??token(U),set:previous?.set??token(U),
-              [arg.kind]:value,enumerable:arg.enumerable??true,configurable:true};
+            Object.defineProperty(obj.accessors,name,{value:
+              {get:previous?.get??token(U),set:previous?.set??token(U),
+                [arg.kind]:value,enumerable:arg.enumerable??true,configurable:true},
+              enumerable:true,configurable:true,writable:true});
             delete obj.properties[name];
             if(obj.dataAttributes)delete obj.dataAttributes[name];
-            obj.propertyVersions[name]=(obj.propertyVersions[name]??0)+1;obj.shapeVersion++;
+            Object.defineProperty(obj.propertyVersions,name,{value:
+              (Object.hasOwn(obj.propertyVersions,name)?obj.propertyVersions[name]:0)+1,
+              enumerable:true,configurable:true,writable:true});obj.shapeVersion++;
           }else throw new TypeError('Unknown literal property kind');
           return {...operands(base,key,value),...result(value.value)};
         }
@@ -2829,8 +2837,10 @@ if(object.kind==='regexp'){
               if(names.length&&names.at(-1)>=name)
                 throw new TypeError('Module namespace export names must be unique and sorted');
               names.push(name);
-              accessors[name]={get:token(getterValue,eventId),set:token(U,eventId),
-                enumerable:true,configurable:false};
+              Object.defineProperty(accessors,name,{value:
+                {get:token(getterValue,eventId),set:token(U,eventId),
+                  enumerable:true,configurable:false},
+                enumerable:true,configurable:true,writable:true});
             }
             const tag=symbolPropertyKey('well-known:toStringTag'),id=this.next(s,'obj');
             const namespace=s.heap[id]={id,kind:'module-namespace',prototype:null,

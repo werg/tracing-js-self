@@ -115,6 +115,27 @@ async function originalVmEvaluationOutcome(modules,entryModule){
   return JSON.parse(result.stdout);
 }
 
+test('namespace exports named __proto__, constructor and toString keep live own accessors',async()=>{
+  const modules={
+    'leaf.js':`export let value=1;export function bump(){value++;}
+      export {value as '__proto__',value as 'constructor',value as 'toString'};`,
+    'main.js':`import * as ns from './leaf.js';export function run(){
+      const before=[ns.__proto__,ns.constructor,ns.toString];
+      const descriptor=Object.getOwnPropertyDescriptor(ns,'__proto__');ns.bump();
+      return [Object.keys(ns),before,[ns.__proto__,ns.constructor,ns.toString],
+        descriptor.value,Object.hasOwn(ns,'__proto__'),Object.getPrototypeOf(ns)===null];
+    }`
+  };
+  const calls=[{exportName:'run',args:[]}],native=await originalVmRun(modules,calls);
+  const owned=await executeEvaluatedModules({modules,entryModule:'main.js',calls});
+  assert.deepEqual(owned.result,native);
+  assert.deepEqual(native[0],[['__proto__','bump','constructor','toString','value'],
+    [1,1,1],[2,2,2],1,true,true]);
+  const bundle=JSON.parse(JSON.stringify(owned.bundle));
+  assert.equal(validateBundle(bundle).valid,true);
+  assert.equal(replayExact(bundle).valid,true);
+});
+
 test('observed namespace identities use live, sorted, null-prototype exotics',async()=>{
   const calls=[{exportName:'inspect',args:[]},{exportName:'inspectEmpty',args:[]}];
   const native=await originalVmRun(sourceGraph,calls);
