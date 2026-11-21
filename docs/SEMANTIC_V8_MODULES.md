@@ -93,7 +93,9 @@ which retains an object-pattern live export and an array-pattern constant across
 an imported mutation. Its original-source/public check and fresh recheck are
 explicit controls; independent consumer admission and cost qualification still
 require their own exact-revision run. Async generator declarations remain
-refused by the owned frontend.
+refused by the owned frontend. Reading the `name` of an ordinary or async
+non-generator function also remains an explicit owned runtime reflection
+boundary; the name controls above cover classes and synchronous generators.
 
 ## Boundaries
 
