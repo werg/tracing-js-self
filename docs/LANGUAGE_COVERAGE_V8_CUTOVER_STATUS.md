@@ -76,7 +76,8 @@ their exact producer/consumer pins; later fixes require fresh qualification.
 | Ordinary production training lifecycle | Producer `35be3b7`, consumer `f25fa32` | Frozen all-47 inventory; prepare, train, fresh-process resume, export and real service restoration all passed. **Exactly two normal optimizer updates; zero acknowledged model records.** All 315 retained optimizer moment owners match, 311 advance and 300 master tensors change. This does not establish useful learned execution. |
 | Separate bounded decoder diagnostic | Producer `35be3b7`, consumer `f25fa32` | **32 decoder-only updates**, 18 target tokens/update; actual fitted weights emit and acknowledge **one** original Promise-create record. Fresh unchanged service restores the acknowledged checkpoint and emits identical next output; zero host dispatch, next probe unacknowledged. Independent producer source/projection/public replay confirms the exact accepted prefix and context. Full program incomplete, no held-out or generalization claim. |
 | Historical complete consumer selection | Producer `9fc193538c4e5c2e512f9fef767d30ed9e437c5a`, consumer `f25fa32` | **553/555 passed, two failed, zero skipped**. Both failures were stale callback test setups, corrected separately in `a2734bba6f23f2af29f3bc698d538e75d0d52223`; its 22 affected controls passed. The historical failed run is retained unchanged. |
-| Canonical JSON authority repair | Consumer `84dee6ab3da55f164001d6d127ce4bc6f8eaa661` | **170 focused controls passed**, including 16 boolean/number substitutions that reproduced bypasses before correction and eight ECMAScript number-equivalence positives. A fresh full **579-test** selection is running against clean producer `9fc1935`. |
+| Canonical JSON authority repair | Consumer `84dee6ab3da55f164001d6d127ce4bc6f8eaa661` | **170 focused controls passed**, including 16 boolean/number substitutions that reproduced bypasses before correction and eight ECMAScript number-equivalence positives. The complete **579/579-test** installed-dependency selection then passed against clean producer `9fc1935`, with zero failures, errors or skips. |
+| Model and request JSON authority | Consumer `0351fe9607735898da441458fdf7182e20a9ace5` | **114 focused controls passed**, including 14 reproduced bypass refusals and 11 positive controls. Actual model cache/random-state restoration is included; supplied-decoder tamper controls remain engineering evidence. Complete **604-test** final selection is running against producer `9fc1935`. |
 
 The 47-case measurement contains 34 compact and 1,755 detailed records across
 34 compact and 294 detailed regions. Detailed records account for **55,388 of
@@ -101,7 +102,12 @@ prediction-context and checkpoint boundaries. Python's container equality
 previously treated `true` as `1` and `false` as `0`, allowing altered native
 action metadata to pass; a rehashed private checkpoint did not repair that
 authority gap. The fix preserves equivalent JSON numbers `1` and `1.0`.
-The producer policy now pins this corrected consumer. The producer's hosted
+The producer policy now pins the subsequent model/request repair `0351fe9`.
+That follow-up binds acknowledged native history, settings, independently
+reexecuted selection metadata and restored sessions to exact JSON values. A
+boolean cannot stand in for a reconstruction context index, model-selected or
+fragment-terminal flag, or numeric external request payload. It preserves
+valid booleans and equivalent ECMAScript numeric representations. The producer's hosted
 V8 run at `35be3b7` failed on the same two historical consumer test assumptions
 before source admission; that failed run is retained, not called flaky.
 
@@ -110,19 +116,54 @@ checkpoint-history journal. Six focused controls exercise fsynced files,
 fresh-process reading, racing writers, missing/reordered/changed entries,
 resource bounds and public-history rollback. The application must explicitly
 record complete checkpoints and independently retain the acknowledged head.
-The reader never discovers unacknowledged later files as authority. Driver
-integration is in progress: validate all later cuts before opening native
-state, preserve complete accepted/stale attempt ledgers, and restore a later
-recorded cut without replaying acknowledged host effects. Automatic capture of
+The reader never discovers unacknowledged later files as authority. Producer
+`090e634fdb6383a8774f16fab8cce07b696ce6f9` integrates the driver APIs:
+`checkpointDurableHistory` and `restoreLatest`. It validates every cut's host
+and public authority before native restoration, exact accepted/stale attempt
+prefixes, budgets, costs and independently read ingress chains. The latest
+complete model checkpoint is independently reexecuted by ordinary native
+restore; earlier private RNG/cache states are not individually reexecuted.
+**191 focused controls pass**, including fresh-process recovery with one
+original host call and zero redispatch. The complete contract check passes
+unchanged. Automatic capture of
 every transition, durable cancellation tombstones, distributed ownership and
 log rotation remain open; storage tests alone do not establish those properties.
 
-The complete **843-module campaign at producer `35be3b7`** is running with the
-same pinned annual specification, Test262 revision, 102,994-row catalog and
-resource policy as the historical `28261b8` campaign. No outcome has yet been
-projected from the two repaired namespace cases. A separate narrow annotation
-audit for original parse failures preserves every catalog row and status;
-proposal feature tags alone are insufficient to change edition scope.
+Producer `41ee8c1c26ebc4c4065ad7a8a0c4ff95124556cb` repairs a separate integrity
+bug exposed by durable storage: lifecycle checkpoints used insertion-order
+JSON hashes, so canonical storage reordered object keys and made valid saved
+state unreadable. Canonical hashing now preserves object-key reordering while
+array order, values and public authority remain checked. **142 affected controls
+pass**, including four new reorder/tamper controls. Earlier pre-release
+insertion-order checkpoint bytes require regeneration; there is no compatibility
+decoder or automatic resigning of supplied state. A fresh full suite at
+`090e634` is running because this shared lifecycle change also reaches legacy
+paths. New 47-case source/native/cost/packing qualification is running at exact
+producer `090e634` and consumer `0351fe9` in a separate clean checkout.
+
+The complete **843-module campaign at producer `35be3b7`** passed report
+validation with the same pinned annual specification, Test262 revision,
+102,994-row catalog and resource policy as the historical `28261b8` campaign.
+There are 2,231 attempts. Parse remains **750 passed / 93 failed**. Owned
+execution is **278 passed / 14 failed / 211 unsupported / 42 environment-unavailable
+/ 205 not-run / 93 blocked**. Native reference remains **664 passed / 102 failed
+/ 77 environment-unavailable**. No infrastructure or resource-limit outcomes.
+The exact row comparison finds only three status changes: the two namespace
+failures and one previously unsupported namespace case now pass owned execution.
+The remaining 14 owned failures are dependency parses. These results do not
+establish public/source/native admission; original native disagreements remain.
+
+The final scope annotation tool is published in `5820da1`, `6a9dbff` and
+`3bdc1fb4a396f73cfd1b4a98dc7e2ddd6da9667c`. Eight focused tests pass, covering
+exact source/specification/campaign identities, row completeness, comment/string
+exclusion and an output-publication race. The report generated by clean exact
+`3bdc1fb` over campaign `35be3b7` retains **all 102,994 catalog rows and all 388
+import-defer feature-tagged variants**. It narrowly annotates 93 original parse
+failures (88 static forms, five meta-member forms) against exact pinned grammar
+productions, leaving 102,901 rows unclassified. No original status changes and
+zero denominator rows are removed; edition membership and conformance are
+unclaimed. Annotation digest:
+`1ccf04fb3a8983a483a4f580ab957751c5d32ebce62566af1af7fa6a74823aa3`.
 
 Lessons: canonical JSON value types, not host-language container equality,
 must preserve public authority; complete source populations can contain cycles
