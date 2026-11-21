@@ -35,6 +35,7 @@ const attemptPayload=row=>typeof row.record==='string'?Buffer.from(row.record,'u
 const recoveryTickets=new WeakSet();
 
 function verifyDriverCheckpoint(packet,policy){
+  stableAlgorithmJSON(packet);
   const fields=['schema','policy','bridge','contexts','attempts','staleRetries','native','digest'];
   demand(packet&&Object.keys(packet).length===fields.length&&fields.every(key=>Object.hasOwn(packet,key)),
     'invalid selected driver checkpoint fields');
@@ -65,6 +66,9 @@ function verifyDriverCheckpoint(packet,policy){
     Array.isArray(transport.attempts)&&transport.attempts.length===packet.attempts.length,
     'model transport checkpoint does not cover the driver identity and consumed attempts');
   const native=transport.native,{digest:nativeDigest,...nativeBody}=native??{};
+  demand(transport.runtimeMetrics&&['rpcCalls','computeSeconds','peakMemoryBytes'].every(key=>
+    Number.isFinite(transport.runtimeMetrics[key])&&transport.runtimeMetrics[key]>=0)&&
+    Number.isSafeInteger(transport.runtimeMetrics.rpcCalls),'invalid retained native cost accounting');
   demand(native?.schema==='semantic-model-checkpoint/8'&&HASH.test(nativeDigest??'')&&
     nativeDigest===hashAlgorithmData(nativeBody)&&isDeepStrictEqual(native.initialization,transport.identity)&&
     Array.isArray(native.attempts)&&native.attempts.length===packet.attempts.length,
@@ -367,6 +371,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
   }
   static async restoreLatest(packet,{historyJournal,historyReceipt,select,policy,harnessOptions={},signal=null}={}){
     demand(typeof historyJournal?.readAll==='function','independently read checkpoint history is required');
+    stableAlgorithmJSON(packet);
     const saved=copy(packet),retainedHead=copy(historyReceipt);
     validateSelectedHistoryReceipt(retainedHead);
     const entries=validateSelectedHistoryChain(copy(await historyJournal.readAll(copy(retainedHead))),retainedHead);
@@ -385,6 +390,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
   static async restore(packet,{select,policy,harnessOptions={},signal=null}={}){
     demand(typeof select==='function'&&typeof select.restore==='function'&&typeof select.checkpoint==='function',
       'fresh native model transport with checkpoint/restore is required');
+    stableAlgorithmJSON(packet);
     const saved=copy(packet);verifyDriverCheckpoint(saved,policy);
     // Restore host ownership before opening native model state. Neither step
     // dispatches a request or re-registers an existing callback. Unknown host

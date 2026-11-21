@@ -16,7 +16,53 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
-## Latest measured checkpoints and active work — 21 November 2026
+## Continued recovery hardening and concurrent integration — 21 November 2026
+
+This continuation started from producer `4fda1a49b7449199d83435bc7bac936142a728d1`
+and consumer `84dee6ab3da55f164001d6d127ce4bc6f8eaa661`. While it was running,
+the producer advanced to `090e634fdb6383a8774f16fab8cce07b696ce6f9` and the
+consumer to `0351fe9607735898da441458fdf7182e20a9ace5`. Their new work is
+preserved. The producer's published `checkpointDurableHistory()` /
+`restoreLatest()` API remains authoritative; a parallel local implementation
+was reconciled into it, rather than adding another recovery API.
+**0 of 17 complete acceptance packages are closed.**
+
+The combined producer now rejects malformed retained native costs and
+non-data checkpoint accessors before opening native state. Even a one-cut
+journal requires nonnegative numeric CPU/memory accounting and a nonnegative
+integer RPC count. Checking a presented checkpoint must not execute a getter
+while cloning it. Eight malformed-accounting cases and the accessor case
+failed before this correction; their parent test is also counted by Node's
+test runner, so the initial new selection reports 3 passed / 10 failed from
+13 tests rather than ten distinct defects.
+
+**50 integrated recovery tests now pass, zero failures/skips**, including
+canonical nested checksums, fsynced history, every recorded public/host cut,
+accepted and stale attempts, native/transport prefix authority and exact
+ingress ancestry. Additional positive controls restore a completed external
+write in a fresh process without repeating it, ignore files beyond the trusted
+head, execute a recovered private callback, save its consumed state, and admit
+a separately retained later input tail only against the final recorded cut.
+These supplied-decoder controls establish engineering behavior, not source
+admission or learned model quality. Earlier private native RNG/cache state is
+retained as authenticated history data; the real native service separately
+reconstructs the final native checkpoint.
+
+Parallel work continues on per-module metadata/namespace semantics, consumer
+cancellation and surviving-session restore, and scope annotations that preserve
+ordinary imports whose binding happens to be named `defer`. Final-pair source,
+native, ordinary lifecycle and actual-head CI results remain separate gates.
+Durability of unsaved transitions, cancellation after the trusted head,
+distributed ownership, log rotation, held-out usefulness and default/release
+cutover remain open.
+
+Lessons: nested integrity must use the same canonical serialization as durable
+storage; single-cut validation cannot rely on a later monotonicity comparison;
+validation must reject data accessors before cloning; concurrent published
+increments need reconciliation before any branch update. The independently
+retained head authorizes only its explicit saved cuts and original inputs.
+
+## Earlier measured checkpoints and active work — 21 November 2026
 
 **0 of 17 complete acceptance packages are closed.** Measurements below keep
 their exact producer/consumer pins; later fixes require fresh qualification.
