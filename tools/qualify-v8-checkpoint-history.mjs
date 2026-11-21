@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {mkdirSync,readFileSync,writeFileSync} from 'node:fs';
+import {mkdirSync,readFileSync,writeFileSync,existsSync,openSync,closeSync,fsyncSync,renameSync} from 'node:fs';
 import {dirname,isAbsolute,join,relative,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
@@ -16,16 +16,18 @@ import {DurableSelectedHistoryJournal} from '../src/storage/selected-history.js'
 const options=new Map(),required=['--megatoken','--python','--served','--source','--out'];
 for(let index=2;index<process.argv.length;index+=2){
   const key=process.argv[index],value=process.argv[index+1];
-  if(![...required,'--seed','--max-tokens','--max-fragments'].includes(key)||
+  if(![...required,'--seed','--max-tokens','--max-fragments','--history-mode'].includes(key)||
     options.has(key)||!value||value.startsWith('--'))
-    throw new TypeError('Use --megatoken DIR --python EXECUTABLE --served DIR --source ARTIFACT.json --out NEW_DIR [--seed N --max-tokens N --max-fragments N]');
+    throw new TypeError('Use --megatoken DIR --python EXECUTABLE --served DIR --source ARTIFACT.json --out NEW_DIR [--seed N --max-tokens N --max-fragments N --history-mode explicit|automatic]');
   options.set(key,value);
 }
 for(const key of required)if(!options.has(key))throw new TypeError('Required '+key);
 const producerRoot=fileURLToPath(new URL('..',import.meta.url)),consumerRoot=resolve(options.get('--megatoken')),
   output=resolve(options.get('--out')),served=resolve(options.get('--served')),sourcePath=resolve(options.get('--source')),
   python=options.get('--python'),seed=Number(options.get('--seed')??17),
-  maxTokens=Number(options.get('--max-tokens')??128),maxFragments=Number(options.get('--max-fragments')??1);
+  maxTokens=Number(options.get('--max-tokens')??128),maxFragments=Number(options.get('--max-fragments')??1),
+  historyMode=options.get('--history-mode')??'explicit';
+assert(['explicit','automatic'].includes(historyMode),'History mode must be explicit or automatic');
 assert(Number.isSafeInteger(seed)&&seed>=0,'Nonnegative integer seed required');
 assert(Number.isSafeInteger(maxTokens)&&maxTokens>=1&&maxTokens<=8192,'Token bound required');
 assert(Number.isSafeInteger(maxFragments)&&maxFragments>=1&&maxFragments<=64,'Fragment bound required');
@@ -63,7 +65,7 @@ const input={schema:'semantic-model-checkpoint-history-run/1',producer,consumer,
   command:[process.execPath,...process.argv.slice(1)],node:process.version,pythonRuntime,
   sourceArtifactSha256:bytesSha(sourceBytes),modelSha256:modelSha,tokenizerSha256:tokenizerSha,
   manifestSha256:bytesSha(readFileSync(join(served,'manifest.json'))),
-  trainingIdentity:manifest.semantic_v8_lineage_digest??null,seed,maxTokens,maxFragments,
+  trainingIdentity:manifest.semantic_v8_lineage_digest??null,seed,maxTokens,maxFragments,historyMode,
   optimizationPerformed:false,scope:'One actual model selection; explicit checkpoint-cut recovery and next-output equality. No complete-program or generalization claim.'};
 save('run-input.json',input);save('original-source.json',source);save('serving-manifest.json',manifest);
 const services=[],serviceCommands=[];
@@ -109,14 +111,31 @@ try{
   originalDriver=new RegionSelectedModelDriver({select:original,harness:initial,...policy});
   const historyDirectory=join(output,'history'),journal=new DurableSelectedHistoryJournal({
     directory:historyDirectory,streamId:'actual-model-cuts'});
-  const earlier=await originalDriver.checkpointDurableHistory({journal});save('earlier-cut.json',earlier);
+  const headPath=join(output,'independently-retained-head.json');
+  const acknowledge=async({receipt,previous})=>{
+    // The diagnostic exclusively owns this new directory. This file is a
+    // separate application head, not a scan for the newest journal entry.
+    const current=existsSync(headPath)?readJSON(headPath):null;
+    assert.deepEqual(current,previous,'Application durable head changed');
+    const temporary=headPath+'.next',file=openSync(temporary,'wx',0o600);
+    try{writeFileSync(file,JSON.stringify(receipt)+'\n');fsyncSync(file);}finally{closeSync(file);}
+    renameSync(temporary,headPath);const directory=openSync(output,'r');
+    try{fsyncSync(directory);}finally{closeSync(directory);}
+    return readJSON(headPath);
+  };
+  const earlier=historyMode==='automatic'?await originalDriver.enableDurableHistory({journal,acknowledge}):
+    await originalDriver.checkpointDurableHistory({journal});
+  save('earlier-cut.json',earlier);
   const request=originalDriver.prefix(invocationId);save('selection-request.json',request);
   const selected=await originalDriver.select(request);save('actual-selection.json',selected);
   // Use the same selection, public commitment and native acknowledgement methods
   // as the ordinary driver, stopping at one explicit cut without cancelling it.
   const result=originalDriver.harness.selected(invocationId,selected.record);
   await originalDriver.onCommitted({invocationId,record:selected.record,selection:selected.selection,result});
-  const later=await originalDriver.checkpointDurableHistory({journal,previous:earlier.receipt});
+  const later=historyMode==='automatic'?{
+    checkpoint:(await journal.readAll(readJSON(headPath))).at(-1).checkpoint,receipt:readJSON(headPath)
+  }:await originalDriver.checkpointDurableHistory({journal,previous:earlier.receipt});
+  if(historyMode==='automatic')assert.deepEqual(later.receipt,originalDriver.historyReceipt);
   save('later-cut.json',later);
   assert.equal(earlier.checkpoint.attempts.length,0);assert.equal(later.checkpoint.attempts.length,1);
   assert.equal(later.checkpoint.attempts[0].status,'accepted');assert.equal(later.checkpoint.contexts.length,1);
@@ -173,6 +192,7 @@ try{
     sourceValidated:true,projectionValidated:true,replayValidated:true,exactOriginalSourcePrefix:true,
     originalModelPayloadExact:true,hostDispatches:dispatches,completeSourceExecution:false,
     heldoutTested:false,generalizationEstablished:false,automaticTransitionDurability:false,
+    automaticAcknowledgedBoundaryDurability:historyMode==='automatic',
     modelTrainingForThisRun:false,retainedDriverMetrics:restoredDriver.metrics(),
     originalTransportMetrics,restoredTransportMetrics,newRestoreProcessCosts,
     totalDiagnosticCosts:{rpcCalls:originalTransportMetrics.runtime.rpcCalls+newRestoreProcessCosts.rpcCalls,

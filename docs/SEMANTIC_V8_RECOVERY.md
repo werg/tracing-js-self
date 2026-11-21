@@ -278,6 +278,63 @@ and transport evidence mutation, policy/branch/ingress rollback, and the retaine
 unsaved-public-tail refusal. Its decoder and model-shaped test snapshots are
 explicitly supplied orchestration controls, not learned execution evidence.
 
+### Automatic durability at acknowledged selection boundaries
+
+An application can opt in before starting an invocation:
+
+```js
+const first = await driver.enableDurableHistory({
+  journal,
+  previous: independentlyRetainedHead, // null for a new history
+  ingressStore,
+  ingressJournal,
+  acknowledge: async ({receipt, previous}) => {
+    await applicationHeadStore.compareAndCommit(previous, receipt);
+    return receipt;
+  }
+});
+await driver.runInvocation(invocationId);
+const acknowledgedHead = driver.historyReceipt;
+```
+
+`applicationHeadStore` is an application-owned durable capability, not a store
+created by this driver. Its operation must commit the exact new receipt against
+the expected previous head and resolve only when that acknowledgement is durable.
+It must not call back into this driver's checkpoint/selection methods: the
+selection lock remains held until the acknowledgement settles. The driver
+independently rereads and validates the immutable journal before invoking it,
+and checks the returned receipt exactly. An arbitrary latest journal file is
+never a substitute for that independently retained head.
+
+Enabling writes and acknowledges the initial complete cut. Thereafter every
+native-acknowledged selection, consumed stale attempt and native completion
+gets a complete validated cut before the next prediction, external dispatch or
+successful completion is exposed. The native acknowledgement timing is finalized
+before saving, so later snapshots preserve the consumed attempt bytes exactly.
+If append, reread, resource bounds or head acknowledgement fail, execution stops;
+the actual native acknowledgement remains recorded as accepted rather than being
+relabeled as a model failure. A cancellation while the head acknowledgement is
+pending cannot dispatch after that acknowledgement arrives.
+
+If the head commit succeeds but its response is lost, the in-process receipt may
+be older than the application's durable head. Stop that driver and recover using
+the independently read head. An unacknowledged journal file alone grants no new
+authority. The failure controls retain both possibilities, with zero external
+dispatch. Once enabled, `flushDurableHistory()` saves an explicit observed-only
+cut; `checkpointDurableHistory()` refuses competing manual ownership of the same
+head. Ordinary `checkpoint()` remains available. A restored driver must enable
+the mode explicitly with its recovered trusted head before continuing.
+
+This mode covers acknowledged selection/stale/completion boundaries. It does
+not make failed model attempts, later cancellation, arbitrary application
+mutations, external side effects or incoming callbacks automatically durable.
+Those require their existing durable action/input mechanisms or separate terminal
+authority. Multi-process fencing, application-transaction atomicity and bounded
+log rotation remain open. Full snapshots retain explicit storage bounds and can
+be expensive for long runs; exhausting a bound stops execution rather than
+silently dropping earlier costs or evidence. The new tests use supplied decoders
+to prove orchestration, failure and recovery behavior, not model quality.
+
 ### Actual model qualification command
 
 `tools/qualify-v8-checkpoint-history.mjs` measures this explicit-cut API with an
@@ -315,10 +372,19 @@ evidence remain in the new output directory. A passing result establishes this
 bounded recovery case, not complete source execution, automatic durability,
 ordinary training quality or held-out generalization.
 
+Add `--history-mode automatic` to exercise the same actual model experiment
+through the automatic boundary mode. The command's private output directory then
+contains a separately fsynced, atomically replaced application head; the driver
+must acknowledge that exact head before returning its one committed selection.
+The restored packet is loaded through that separately read head. The report marks
+`automaticAcknowledgedBoundaryDurability: true` only for this mode; general
+automatic transition/cancellation durability remains false. This one-writer
+diagnostic does not qualify distributed compare-and-swap or deployment fencing.
+
 ### Remaining general boundary
 
 This API requires one driver and a dedicated native transport for its session.
-It refuses a transport containing unrelated sessions, in-flight selections,
+It refuses a transport containing unrelated or closed sessions, in-flight selections,
 failed acknowledgments or fatal attempts. Take durable checkpoints at successful
 acknowledged boundaries. Multi-driver atomic snapshots, application storage
 transactions, arbitrary external handle recovery and deployment rollback remain

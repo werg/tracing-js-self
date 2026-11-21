@@ -22,6 +22,9 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   const stop=error=>{
     if(closed)return;
     closed=true;identity=null;epoch++;
+    for(const attempt of attempts)if(attempt.status==='acknowledging'){
+      attempt.status='acknowledgement-unknown';attempt.failure=String(error.message);
+    }
     for(const item of pending.values()){clearTimeout(item.timer);item.reject(error);}
     pending.clear();child.stdin.destroy();child.kill();
   };
@@ -170,6 +173,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     const session=sessions.get(input?.session),selected=session?.pending;
     demand(selected&&input.record===selected.record&&
       hashAlgorithmData(input.selection)===hashAlgorithmData(selected.selection),'commit changed original model selection');
+    session.evidence.status='acknowledging';
     try{
       const result=await request({op:'commit',session:input.session,public:input.public,contexts:input.contexts,
         invocationId:input.invocationId,record:input.record,selection:input.selection});
@@ -177,7 +181,13 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
         result.selectionId===selected.selection.selectionId&&result.publicDigest===hashAlgorithmData(input.public),
         'native model did not acknowledge this exact semantic commit');
       session.evidence.status='accepted';session.pending=null;return result;
-    }catch(error){session.evidence.status='commit-failed';session.evidence.failure=String(error.message);throw error;}
+    }catch(error){
+      // Closing the transport cannot tell whether the remote commit preceded
+      // the lost reply. Preserve that uncertainty through later cleanup.
+      session.evidence.status=closed?'acknowledgement-unknown':'commit-failed';
+      if(closed)error.acknowledgementUnknown=true;
+      session.evidence.failure=String(error.message);throw error;
+    }
   };
   select.complete=async input=>{
     const result=await request({op:'complete',session:input.session,public:input.public,
@@ -246,7 +256,9 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   };
   select.cancel=async input=>{
     const session=sessions.get(input?.session);
-    if(session?.pending){session.evidence.status='rejected';session.evidence.failure=input.reason??'semantic rejection';}
+    if(session?.pending&&!['acknowledgement-unknown','commit-failed'].includes(session.evidence.status)){
+      session.evidence.status='rejected';session.evidence.failure=input.reason??'semantic rejection';
+    }
     try{
       const result=await request({op:'cancel',session:input.session,reason:input.reason});
       demand(result?.schema==='semantic-native-close/8'&&result.closed===true&&result.session===input.session,
@@ -258,6 +270,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   select.metrics=()=>({schema:'semantic-native-model-metrics/8',attempts:copy(attempts),
     predictionAttempts:attempts.length,semanticallyAccepted:attempts.filter(row=>row.status==='accepted').length,
     failedAttempts:attempts.filter(row=>['failed','rejected','commit-failed','abandoned-on-restore'].includes(row.status)).length,
+    unknownAcknowledgements:attempts.filter(row=>row.status==='acknowledgement-unknown').length,
     unknownGenerationCostAttempts:attempts.filter(row=>row.selection===null).length,
     elapsedMs:attempts.reduce((sum,row)=>sum+(row.elapsedMs??0),0),
     runtime:copy(runtimeMetrics),

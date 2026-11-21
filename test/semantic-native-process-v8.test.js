@@ -220,6 +220,21 @@ test('native acknowledgement failure does not count an execution as accepted',as
   }finally{select.close();}
 });
 
+test('transport closure during an unreturned native commit preserves unknown acknowledgement through cancellation',async()=>{
+  const select=selector({commitAlter:'continue;'}),{input}=boundary();
+  try{
+    await select.initialize(identity);const output=await select(input);
+    const committing=select.commit({session:input.session,public:input.public,...output});
+    assert.equal(select.status().pending,1);select.close();
+    assert.equal(select.metrics().unknownAcknowledgements,1,'The immediate forced-close accounting cutoff must be exact');
+    await assert.rejects(committing,error=>error.acknowledgementUnknown===true);
+    await assert.rejects(select.cancel({session:input.session,reason:'cleanup'}),/closed/);
+    assert.equal(select.metrics().attempts[0].status,'acknowledgement-unknown');
+    assert.equal(select.metrics().semanticallyAccepted,0);assert.equal(select.metrics().unknownAcknowledgements,1);
+    assert.equal(select.metrics().failedAttempts,0);
+  }finally{select.close();}
+});
+
 test('stale native candidates can be rejected without closing the session or losing their costs',async()=>{
   const select=selector(),{input}=boundary();
   try{

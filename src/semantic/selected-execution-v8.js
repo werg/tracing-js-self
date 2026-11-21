@@ -77,6 +77,10 @@ function verifyDriverCheckpoint(packet,policy){
   demand(typeof session==='string'&&native.sessions&&typeof native.sessions==='object'&&!Array.isArray(native.sessions)&&
     Object.keys(native.sessions).every(key=>key===session),
     'driver recovery requires a dedicated native transport for this session');
+  demand(native.closedSessions===undefined||native.closedSessions&&
+    typeof native.closedSessions==='object'&&!Array.isArray(native.closedSessions)&&
+    Object.keys(native.closedSessions).length===0,
+    'a closed native session cannot restore an active selected driver');
   const accepted=packet.attempts.filter(row=>row.status==='accepted');
   demand(accepted.length===packet.contexts.length,'acknowledged selections and causal contexts differ');
   for(const [index,attempt]of packet.attempts.entries()){
@@ -209,7 +213,10 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     const contexts=copy(recovery?.contexts??[]),predictions=new Map(),attempts=copy(recovery?.attempts??[]),acknowledged=new Map();
     for(const attempt of attempts)if(attempt.status==='accepted')
       acknowledged.set(attempt.invocationId,{record:attempt.record,selection:copy(attempt.selection)});
-    let driver,queue=Promise.resolve(),releaseActive=null,fatal=null,staleRetries=recovery?.staleRetries??0;
+    let driver,queue=Promise.resolve(),releaseActive=null,fatal=null,automaticHistory=null,
+      activeSelection=null,activeAcknowledgement=null,
+      cancellationPromise=null,
+      staleRetries=recovery?.staleRetries??0;
     const acquire=async()=>{
       const previous=queue;let release;queue=new Promise(resolve=>{release=resolve;});
       await previous;if(fatal){release();throw fatal;}return release;
@@ -219,6 +226,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
       contexts:copy(contexts),invocationId});
     const selected=async previous=>{
       const unlock=await acquire();releaseActive=unlock;
+      let selectionSettled;activeSelection=new Promise(resolve=>{selectionSettled=resolve;});
       let attempt;
       try{
         demand(attempts.length<maxSelections,'global prediction budget exhausted');
@@ -240,6 +248,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
           'selected bytes, model identity or causal provenance differ from the frozen invocation');
         attempt.provenanceValidated=origin==='model';
         decodeCausalLmV8Target(record);attempt.completeRecord=true;attempt.status='decoded';
+        if(fatal)throw fatal;
         return {record,selection};
       }catch(error){
         if(attempt){attempt.status='rejected';attempt.failure=String(error.message);
@@ -260,22 +269,38 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
             }
           }}
         predictions.delete(previous.context.invocationId);fatal=error;release();throw error;
-      }
+      }finally{activeSelection=null;selectionSettled();}
     };
     const onCommitted=async({invocationId,record,selection})=>{
       const attempt=attempts.at(-1),start=performance.now();
-      attempt.status='acknowledging';
+      attempt.status='acknowledging';let nativeAcknowledged=false;
+      let acknowledgementSettled;activeAcknowledgement=new Promise(resolve=>{acknowledgementSettled=resolve;});
       try{
         if(typeof select.commit==='function'){
           const receipt=await select.commit({...packet(invocationId),record,selection:copy(selection)});
           demand(receipt?.committed===true,'native model did not acknowledge the selected record');
           attempt.commitReceipt=copy(receipt);
         }else demand(origin==='engineering'&&!selection?.modelSelected,'model selection lacks a native acknowledgement');
-        if(fatal)throw fatal;
         acknowledged.set(invocationId,{record,selection:copy(selection)});
-        attempt.status='accepted';
-      }catch(error){attempt.status='commit-failed';attempt.failure=String(error.message);fatal=error;throw error;}
-      finally{attempt.commitMs=performance.now()-start;release();}
+        attempt.status='accepted';attempt.commitMs=performance.now()-start;nativeAcknowledged=true;
+        if(fatal)throw fatal;
+        // Keep the selection lock until both the complete cut and its externally
+        // retained head are acknowledged. The caller cannot dispatch a request
+        // or expose the next selected transition before this returns.
+        await persistAutomaticHistory();
+      }catch(error){
+        // Storage failure does not undo an actual native acknowledgement. Its
+        // final outcome may be recoverable from the application's trusted head.
+        if(!nativeAcknowledged){
+          if(attempt.status!=='acknowledgement-unknown')
+            attempt.status=error.acknowledgementUnknown?'acknowledgement-unknown':'commit-failed';
+          attempt.failure=String(error.message);
+        }
+        fatal=error;throw error;
+      }finally{
+        if(attempt.commitMs===null)attempt.commitMs=performance.now()-start;
+        activeAcknowledgement=null;release();acknowledgementSettled();
+      }
     };
     const onRejected=async({invocationId,selection,error})=>{
       const attempt=attempts.at(-1);
@@ -289,27 +314,45 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
       }
       attempt.status='stale';attempt.failure=String(error.message);
       predictions.delete(invocationId);staleRetries++;
+      let rejectionSettled;activeAcknowledgement=new Promise(resolve=>{rejectionSettled=resolve;});
       try{
         if(selection?.modelSelected)demand(typeof select.reject==='function','native stale prediction requires rejection acknowledgement');
         await select.reject?.({session:harness.inner.sessionId,selectionId:selection?.selectionId,
           reason:error.message});
+        await persistAutomaticHistory();
         return true;
-      }finally{release();}
+      }catch(error){fatal=error;throw error;}
+      finally{activeAcknowledgement=null;release();rejectionSettled();}
     };
     selected.complete=async previous=>{
       const invocationId=previous.context.invocationId,unlock=await acquire();
-      try{return await select.complete?.({...packet(invocationId),
-        completion:copy(harness.activation(invocationId).controller.completion)});}
-      catch(error){fatal=error;throw error;}finally{unlock();}
+      let completionSettled;activeAcknowledgement=new Promise(resolve=>{completionSettled=resolve;});
+      try{
+        const receipt=await select.complete?.({...packet(invocationId),
+          completion:copy(harness.activation(invocationId).controller.completion)});
+        await persistAutomaticHistory();return receipt;
+      }
+      catch(error){fatal=error;throw error;}
+      finally{activeAcknowledgement=null;unlock();completionSettled();}
     };
-    selected.cancel=async previous=>{
+    selected.cancel=previous=>{
+      if(cancellationPromise!==null)return cancellationPromise;
       const invocationId=previous.context.invocationId,
-        reason=driver.rejections.at(-1)?.error??'selected execution cancelled';
+        reason=previous.reason??driver.rejections.at(-1)?.error??'selected execution cancelled';
       fatal??=new Error(reason);
-      const attempt=attempts.findLast(row=>row.invocationId===invocationId&&['decoded','acknowledging'].includes(row.status));
-      if(attempt){attempt.status=attempt.status==='acknowledging'?'commit-failed':'semantic-rejected';attempt.failure=reason;}
-      predictions.delete(invocationId);release();
-      return select.cancel?.({...packet(invocationId),reason});
+      const acknowledging=attempts.findLast(row=>row.invocationId===invocationId&&row.status==='acknowledging');
+      if(acknowledging)acknowledging.status='acknowledgement-unknown';
+      // The outer execution loop may already have returned its abort. A late
+      // native result still owns its original accounting and acknowledgement;
+      // do not close the session concurrently or mislabel a positive receipt.
+      cancellationPromise=(async()=>{
+        await (activeAcknowledgement??activeSelection);
+        const attempt=attempts.findLast(row=>row.invocationId===invocationId&&['decoded','acknowledging'].includes(row.status));
+        if(attempt){attempt.status=attempt.status==='acknowledging'?'acknowledgement-unknown':'semantic-rejected';attempt.failure=reason;}
+        predictions.delete(invocationId);release();
+        return select.cancel?.({...packet(invocationId),reason});
+      })();
+      return cancellationPromise;
     };
     const decodeSelection=line=>{
       const decoded=decodeCausalLmV8Target(line);
@@ -327,30 +370,31 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
     const policy=Object.freeze({checkpointIdentity,tokenizerIdentity,nativeIdentity:copy(nativeIdentity),
       hostLimits:copy(retainedHostLimits),automaticDelivery:retainedAutomaticDelivery,
       maxSelections,maxOutstanding,maxStaleRetries});
-    this.checkpoint=async({ingressStore=null}={})=>{
+    const checkpointUnlocked=async({ingressStore=null}={})=>{
       demand(origin==='model'&&typeof select.checkpoint==='function',
         'durable recovery requires a checkpoint-capable native model selector');
-      const unlock=await acquire();
-      try{
-        // Acquiring the same lock as selection/acknowledgement ensures no
-        // speculative local record can enter the saved public history. Native
-        // observations may arrive while the model snapshot is collected; only
-        // an observed suffix beyond its acknowledged prefix is permitted.
-        demand(predictions.size===0,'cannot checkpoint an uncommitted prediction');
-        demand(harness.inner.maxGenerated===retainedHostLimits.maxGenerated&&
-          harness.inner.maxOutstanding===retainedHostLimits.maxOutstanding&&
-          harness.inner.automaticDelivery===retainedAutomaticDelivery&&
-          [...harness.invocations.values()].every(row=>row.controller.maxGenerated===retainedHostLimits.maxGenerated),
-          'host continuation limits changed after the driver policy was frozen');
-        const native=await select.checkpoint();
-        const bridge=ingressStore?await harness.checkpointDurable({ingressStore}):harness.checkpoint();
-        const body={schema:'semantic-selected-driver-checkpoint/8',policy:copy(policy),
-          bridge,contexts:copy(contexts),attempts:copy(attempts),staleRetries,native:copy(native)};
-        const packet={...body,digest:hashAlgorithmData(body)};
-        verifyDriverCheckpoint(packet,policy);return packet;
-      }finally{unlock();}
+      // The caller owns the same lock as selection/acknowledgement, so no
+      // speculative local record can enter the saved public history. Native
+      // observations may arrive while the model snapshot is collected; only
+      // an observed suffix beyond its acknowledged prefix is permitted.
+      demand(predictions.size===0,'cannot checkpoint an uncommitted prediction');
+      demand(harness.inner.maxGenerated===retainedHostLimits.maxGenerated&&
+        harness.inner.maxOutstanding===retainedHostLimits.maxOutstanding&&
+        harness.inner.automaticDelivery===retainedAutomaticDelivery&&
+        [...harness.invocations.values()].every(row=>row.controller.maxGenerated===retainedHostLimits.maxGenerated),
+        'host continuation limits changed after the driver policy was frozen');
+      const native=await select.checkpoint();
+      const bridge=ingressStore?await harness.checkpointDurable({ingressStore}):harness.checkpoint();
+      const body={schema:'semantic-selected-driver-checkpoint/8',policy:copy(policy),
+        bridge,contexts:copy(contexts),attempts:copy(attempts),staleRetries,native:copy(native)};
+      const packet={...body,digest:hashAlgorithmData(body)};
+      verifyDriverCheckpoint(packet,policy);return packet;
     };
-    this.checkpointDurableHistory=async({journal,previous=null,ingressStore=null,
+    this.checkpoint=async(options={})=>{
+      const unlock=await acquire();
+      try{return await checkpointUnlocked(options);}finally{unlock();}
+    };
+    const historyUnlocked=async({journal,previous=null,ingressStore=null,
         ingressJournal=harness.inner.hostIngressBroker?.journal??null}={})=>{
       demand(typeof journal?.append==='function'&&typeof journal?.readAll==='function',
         'durable checkpoint history requires append and independent reads');
@@ -358,7 +402,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
       if(retainedHead!==null)validateSelectedHistoryReceipt(retainedHead);
       const earlier=retainedHead===null?[]:
         validateSelectedHistoryChain(copy(await journal.readAll(copy(retainedHead))),retainedHead);
-      const checkpoint=await this.checkpoint({ingressStore});
+      const checkpoint=await checkpointUnlocked({ingressStore});
       await verifyRecordedHistoryCuts([...earlier,{checkpoint}],policy,{ingressStore,ingressJournal});
       const receipt=copy(await journal.append(copy(checkpoint),{previous:copy(retainedHead)}));
       validateSelectedHistoryReceipt(receipt);
@@ -367,6 +411,46 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
         isDeepStrictEqual(last.previous,retainedHead)&&isDeepStrictEqual(last.checkpoint,checkpoint),
         'history journal acknowledged a different complete checkpoint');
       return {checkpoint:copy(checkpoint),receipt:copy(receipt)};
+    };
+    this.checkpointDurableHistory=async(options={})=>{
+      const unlock=await acquire();
+      try{
+        demand(automaticHistory===null,'automatic history owns its acknowledged head; use flushDurableHistory');
+        return await historyUnlocked(options);
+      }finally{unlock();}
+    };
+    async function persistAutomaticHistory(state=automaticHistory){
+      if(state===null)return null;
+      if(fatal)throw fatal;
+      const previous=copy(state.previous),saved=await historyUnlocked(state);
+      const acknowledgedHead=await state.acknowledge({receipt:copy(saved.receipt),previous});
+      validateSelectedHistoryReceipt(acknowledgedHead);
+      demand(isDeepStrictEqual(acknowledgedHead,saved.receipt),
+        'automatic history acknowledgement differs from the recorded cut');
+      state.previous=copy(saved.receipt);
+      if(fatal)throw fatal;
+      return saved;
+    }
+    Object.defineProperty(this,'historyReceipt',{enumerable:true,get:()=>copy(automaticHistory?.previous??null)});
+    this.enableDurableHistory=async({acknowledge,journal,previous=null,ingressStore=null,
+        ingressJournal=harness.inner.hostIngressBroker?.journal??null}={})=>{
+      demand(typeof acknowledge==='function','automatic history requires independent durable head acknowledgement');
+      const unlock=await acquire();
+      try{
+        demand(automaticHistory===null,'automatic history is already enabled');
+        demand(!driver.running.size&&predictions.size===0,'enable automatic history before execution starts');
+        const state={acknowledge,journal,previous:copy(previous),ingressStore,ingressJournal};
+        try{
+          const saved=await persistAutomaticHistory(state);automaticHistory=state;return saved;
+        }catch(error){fatal=error;throw error;}
+      }finally{unlock();}
+    };
+    this.flushDurableHistory=async()=>{
+      const unlock=await acquire();
+      try{
+        demand(automaticHistory!==null,'automatic history is not enabled');
+        try{return await persistAutomaticHistory();}catch(error){fatal=error;throw error;}
+      }finally{unlock();}
     };
   }
   static async restoreLatest(packet,{historyJournal,historyReceipt,select,policy,harnessOptions={},signal=null}={}){
@@ -421,7 +505,8 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
       (this.origin==='engineering'||row.provenanceValidated),
       tokenCount=row=>row.selection.fragments.reduce((total,fragment)=>total+fragment.tokenIds.length,0);
     return {predictionAttempts:rows.length,accepted:rows.filter(row=>row.status==='accepted').length,
-      rejected:rows.filter(row=>!['accepted','submitted','decoded'].includes(row.status)).length,
+      rejected:rows.filter(row=>!['accepted','submitted','decoded','acknowledging','acknowledgement-unknown'].includes(row.status)).length,
+      unknownAcknowledgements:rows.filter(row=>row.status==='acknowledgement-unknown').length,
       staleRetries:rows.filter(row=>row.status==='stale').length,
       stalePredictions:rows.filter(row=>['stale','stale-limit'].includes(row.status)).length,
       generatedBytes:rows.reduce((sum,row)=>sum+(attemptPayload(row)?.length??0)/2,0),
@@ -473,12 +558,13 @@ export async function runSelectedRegionExecution({initialPublic,fixture={calls:[
     trainingIdentity,signal:abort.signal}),
     invocationId=initialPublic.timeline.find(row=>row.kind==='invocation').fields.invocationId,
     started=performance.now();
-  let inferenceIdentity=null,failure=null,cleanupFailure=null,outcome=null,deadlineExceeded=false;
+  let inferenceIdentity=null,initializationTask=null,failure=null,cleanupFailure=null,outcome=null,deadlineExceeded=false;
   let rejectAbort;const aborted=new Promise((_,reject)=>{rejectAbort=reject;});void aborted.catch(()=>{});
   const onAbort=()=>rejectAbort(abort.signal.reason);abort.signal.addEventListener('abort',onAbort,{once:true});
   const timer=setTimeout(()=>{deadlineExceeded=true;abort.abort(new Error('Selected v8 execution deadline exceeded'));},timeoutMs);
   try{
-    inferenceIdentity=copy(await Promise.race([select.initialize({seed,checkpointIdentity,tokenizerIdentity,trainingIdentity}),aborted]));
+    initializationTask=Promise.resolve().then(()=>select.initialize({seed,checkpointIdentity,tokenizerIdentity,trainingIdentity}));
+    inferenceIdentity=copy(await Promise.race([initializationTask,aborted]));
     demand(inferenceIdentity?.checkpointIdentity===checkpointIdentity&&inferenceIdentity.tokenizerIdentity===tokenizerIdentity&&
       (inferenceIdentity.trainingIdentity??null)===trainingIdentity&&
       inferenceIdentity.seed===seed,'selector attestation differs from the frozen experiment');
@@ -494,12 +580,20 @@ export async function runSelectedRegionExecution({initialPublic,fixture={calls:[
     clearTimeout(timer);abort.signal.removeEventListener('abort',onAbort);driver.close();broker.abort();
     await Promise.allSettled([...driver.running.values()].map(row=>row.task));
     let cleanupTimer;
-    try{await Promise.race([select.cancel?.({session:harness.inner.sessionId,public:harness.exportEpisode(),
-      contexts:copy(driver.contexts),invocationId,reason:failure?'failed':'completed'}),new Promise((_,reject)=>{
+    try{await Promise.race([(async()=>{
+      // Initialization and selection/acknowledgement have the same ownership
+      // rule: graceful cancellation cannot race a late native response.
+      try{await initializationTask;}catch{/* Preserve the original failure. */}
+      return driver.select.cancel({context:{invocationId},reason:failure?'failed':'completed'});
+    })(),new Promise((_,reject)=>{
         cleanupTimer=setTimeout(()=>reject(new Error('Selected v8 cleanup deadline exceeded')),Math.min(timeoutMs,1000));
       })]);}
     catch(error){cleanupFailure={category:error.category??error.name,message:String(error.message)};
-      failure??=cleanupFailure;}
+      failure??=cleanupFailure;
+      // A bounded graceful shutdown may expire while native work never settles.
+      // Closing the transport invalidates late identities and releases resources.
+      try{select.close?.();}catch{/* Preserve the cleanup failure. */}
+    }
     finally{clearTimeout(cleanupTimer);}
   }
   const publicData=harness.exportEpisode(),controllers=[...harness.invocations.values()],

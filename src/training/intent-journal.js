@@ -6,6 +6,7 @@ import {constants} from 'node:fs';
 import {mkdir,open,link,unlink} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {hashAlgorithmData} from '../semantic/program.js';
+import {stableAlgorithmJSON} from '../semantic/ir.js';
 
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 async function syncDirectory(directory){
@@ -76,6 +77,7 @@ export class SelectedIntentJournal {
     return record;
   }
   putCheckpoint(packet){
+    stableAlgorithmJSON(packet);
     if(packet?.schema!=='semantic-checkpoint/6')throw new TypeError('Expected selected checkpoint');
     const {integrity,...body}=packet;
     if(hashAlgorithmData(body)!==integrity)throw new Error('Selected checkpoint integrity mismatch');

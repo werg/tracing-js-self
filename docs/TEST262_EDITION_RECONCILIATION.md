@@ -58,3 +58,37 @@ record explicit edition/addition and optionality decisions, freeze separate
 host/Intl profiles where required, and then bind those decisions into a new
 catalog. A resolved reference is not a conformance pass. An unreferenced clause
 is not automatically untested because a test may cite a parent or omit `esid`.
+
+## Narrow source-form review for `import-defer`
+
+`tools/annotate-test262-scope.mjs` adds a separate review record for every
+catalog variant tagged `import-defer`. It scans exact test bytes and each
+catalogued module dependency that is available, with SHA-256 and Git-blob
+checks. The token scan distinguishes proposal-shaped `import defer *` and
+`import.defer(...)` forms from a normal default import binding named `defer`.
+The annual-grammar observation is tied to the retained HTML production hashes
+for `ImportDeclaration`, `ImportClause`, `ImportedDefaultBinding`,
+`ImportedBinding`, `BindingIdentifier`, `Identifier`, and `ReservedWord`; the
+dynamic form is tied to `ImportCall` and `ImportMeta`. In the pinned reserved
+word production, `defer` is absent.
+
+Each review record includes the original campaign parse disposition and an
+interpretation of that specific attempt: a source accepted by the parser, an
+expected parse-negative error, an unexpected parse error, or an unobserved
+stage. This is necessary because Test262 `passed` can mean “expected
+SyntaxError observed” as well as “ordinary source parsed.” The report carries
+the original catalog and campaign rows and attempt histories intact. It never
+changes `classification`, adds no edition-membership claim, and reports zero
+removed denominator rows. A source-form observation is only a review cue; it
+does not settle a test's complete edition applicability.
+
+Replaying the retained 843-module bundle at producer `28261b8` with its exact
+catalog, report, triage, consumed source files, and pinned annual HTML found
+104 selected `import-defer` variants: 93 unexpected parse failures, two
+expected parse-negative successes, and nine source-parse successes. The nine
+include eight cases whose direct fixture dependency contains a proposal-shaped
+form and one ordinary `import defer from` binding test. Across the selected
+104, 103 source closures contain a proposal-shaped form and one contains only
+the annual default-binding form. All 104 original statuses and unclassified
+memberships remain; zero rows are removed. These figures describe the retained
+historical run, not a qualification of later producer revisions.

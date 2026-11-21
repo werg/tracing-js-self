@@ -137,6 +137,74 @@ The three new metadata controls include original `SourceTextModule` comparisons;
 this does not establish general namespace, dynamic-import or scheduled public
 module admission.
 
+Automatic durable history is now available as an explicit opt-in. The driver
+records an initial cut, then saves every native-acknowledged selection, consumed
+stale attempt and native completion under its selection lock. It independently
+rereads the journal and requires the application's exact durable head
+acknowledgement before another prediction, external dispatch or successful
+completion. Storage failure stops execution without rewriting a genuine native
+acknowledgement as a model failure. A lost acknowledgement is recovered from the
+application's independently retained head; late acknowledgement after cancellation
+cannot dispatch work. Manual observed-only flushing and continuation after restore
+are explicit. **71 integrated selected execution/history/recovery controls pass,
+zero failures/skips**; ten initial controls failed before the new API existed,
+and the later cancellation race control passes too. A separate **14-control**
+tail rerun adds refusal of closed native-session authority before opening an
+active driver. These supplied-decoder controls overlap the earlier populations
+and do not establish actual-model reconstruction or learned quality.
+
+The automatic mode does not cover arbitrary application changes, failed model
+attempts, cancellation beyond the retained cut, atomic application transactions
+or distributed/log-rotation policy. Existing durable actions/inputs remain
+necessary. Its bounded complete snapshots intentionally stop on storage
+exhaustion. A callback that acknowledges the head must provide real durability
+and must not reenter the locked driver. These are explicit capability contracts,
+not guarantees inferred from an ordinary resolved callback.
+
+Review then found and repaired cancellation races during original selection,
+native commit, stale rejection and completion. Native cancellation waits for
+the in-flight operation; outer runner cleanup shares that same cancellation
+instead of bypassing it. An unreturned commit is explicitly
+`acknowledgement-unknown`, including when transport shutdown rejects its pending
+RPC. A late positive receipt becomes accepted; neither outcome dispatches work
+after cancellation. Unknown acknowledgements have their own counter. A bounded
+cleanup timeout closes an available native transport and invalidates late
+initialization responses. **96 integrated controls passed before the final
+unknown-outcome refinement; its 44 affected controls pass afterward**, including
+an actual child-process transport closure. The earlier 32/33 run exposed the
+obsolete assertion that a timed-out acknowledgement was necessarily failed.
+The actual-model history command now also has an automatic-boundary mode with
+an independently fsynced head; its fresh execution is pending.
+
+Hosted producer run `44933754826` at `21fc226` failed one of 94 selected-harness
+controls: the older durable checkpoint store still expected insertion-order
+integrity after lifecycle checkpoints became canonical. The store now uses the
+same canonical integrity function, preserves its exact storage-byte receipts,
+and refuses accessors before reading supplied data. The local failure reproduces
+before correction; **six canonical/storage controls pass** afterward. Retained
+V6 input witness strings are byte-exact; this correction does not rewrite their
+separate structured input representation or change that format's serialization.
+Concurrent `b074e0e` independently repaired the same journal hash check; the
+integrated change preserves it and adds the accessor refusal. The later upstream
+lifecycle reconstruction restores the legacy input wire's established field
+order after canonical JSON. Concurrent `29e802f` also preserves source parameter
+binding order and special binding names through canonical recovery; its paired
+consumer implementation is retained. **45 integration controls pass** across
+binding order, journal storage, automatic durability and private input tails.
+
+The source-based edition audit now reviews all 388 feature-tagged `import-defer`
+variants without using the tag as scope authority. Replaying the retained
+`28261b8` module campaign preserves all 102,994 catalog rows and all original
+statuses. Of 104 selected tagged modules, 93 record unexpected parse errors,
+two pass because the expected parse-negative error occurred, and nine actually
+parse. Exact source/dependency bytes show 103 proposal-shaped cases and one
+ordinary default import whose binding is named `defer`. That last row follows
+the pinned annual grammar from `ImportDeclaration` through `ReservedWord` and is
+reported as overlap, still with membership unclassified. **Eight integrated
+annotation controls pass; zero rows are removed.** A successful parse-negative
+test must not be reported as successful parsing of its source. The fresh final
+module campaign remains separate work.
+
 Parallel work continues on module namespace semantics, consumer
 cancellation and surviving-session restore, and scope annotations that preserve
 ordinary imports whose binding happens to be named `defer`. Final-pair source,

@@ -64,3 +64,28 @@ test('real fsynced intent and JSON checkpoint survive new journal and harness in
     resolve(5);await pending;
   }finally{await rm(directory,{recursive:true,force:true});}
 });
+
+test('durable checkpoints use canonical lifecycle integrity while storage receipts still bind exact bytes',async()=>{
+  const directory=await mkdtemp(join(process.cwd(),'.selected-journal-'));
+  try{
+    const journal=new SelectedIntentJournal({directory}),harness=new SelectedExecutionHarness();
+    harness.publishProgram({programId:'p',source:'function run(){return 1;}',entry:'run'});
+    harness.admitInvocation({programId:'p',invocationId:'call',realmId:'r',trackId:'worker',triggerId:'outside'});
+    const original=harness.checkpoint();
+    // The integrated lifecycle reconstructs the legacy input wire's established
+    // field order without rewriting source bytes or graph property-array order.
+    const reorder=value=>Array.isArray(value)?value.map(reorder):value&&typeof value==='object'?
+      Object.fromEntries(Object.entries(value).reverse().map(([key,item])=>[key,reorder(item)])):value;
+    const reordered=reorder(original),receipt=await journal.putCheckpoint(reordered);
+    assert.deepEqual(await journal.readCheckpoint(receipt.key),original);
+    assert.deepEqual(SelectedExecutionHarness.restore(await journal.readCheckpoint(receipt.key)).checkpoint(),original);
+    const changed=structuredClone(original);changed.maxGenerated++;
+    assert.throws(()=>journal.putCheckpoint(changed),/integrity mismatch/);
+    const key=createHash('sha256').update(JSON.stringify(changed)+'\n').digest('hex');
+    await journal.put(key,changed);
+    await assert.rejects(journal.readCheckpoint(key),/integrity mismatch/);
+    let getterReads=0;const accessor=structuredClone(original);
+    Object.defineProperty(accessor,'maxGenerated',{enumerable:true,get(){getterReads++;return original.maxGenerated;}});
+    assert.throws(()=>journal.putCheckpoint(accessor));assert.equal(getterReads,0);
+  }finally{await rm(directory,{recursive:true,force:true});}
+});

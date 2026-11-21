@@ -71,6 +71,20 @@ test('restoration refuses checkpoint accessors without executing them',async()=>
   }
 });
 
+test('an active driver refuses cancelled native-session authority before opening model state',async()=>{
+  const driver=new Driver({select:suppliedSelector(choose),harness:begin(source),...policy});
+  const original=await driver.checkpoint();driver.close();
+  const session=original.bridge.public.timeline[0].fields.session;
+  for(const closedSessions of [{[session]:null},{unrelated:null},[],null]){
+    const packet=structuredClone(original);packet.native.native.closedSessions=closedSessions;
+    let {digest,...body}=packet.native.native;packet.native.native=seal(body);
+    ({digest,...body}=packet.native);packet.native=seal(body);
+    ({digest,...body}=packet);const altered=seal(body),next=suppliedSelector(choose);
+    await assert.rejects(Driver.restore(altered,{select:next,policy}),/closed native session/);
+    assert.equal(next.controls().restoreCalls,0);
+  }
+});
+
 test('fresh-process recovery selects the later acknowledged cut without repeating a completed host effect',async t=>{
   const {directory,historyJournal}=await fixture(t),effects=join(directory,'effects.txt');
   const hostSource='"use strict";function run(){return host.store("key",7);}';
