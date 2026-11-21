@@ -16,6 +16,100 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Published service recovery and paired primitive conversion — 21 November 2026
+
+The resumed work is published in increments. Producer `fdc13a9` adds the bounded
+durable service gate; `05d4d28` repairs own-property metadata and namespace export
+names; `042dfee` integrates shared primitive conversion into production source
+projection and public replay; `e4de45e` makes malformed conversion-fault reference
+creation refuse atomically. Consumer `21da508` / `26da3eb` implements the
+independent machine and complete shared-state binding; `0e6518b`, `45fdb48` and
+`9ee8265` repair the two reproduced cross-language mistakes; `e675b80` mirrors
+the contract and source fixtures; `5ea3eb3` regenerates supporting provenance at
+the actual published producer `e4de45e`. The native policy now binds that exact
+consumer and the new contract/interoperability digests. Current-pair complete
+source/native/token/packing and ordinary lifecycle results are still pending.
+
+### Service boundary and actual process failure controls
+
+`createDurableSelectedService` binds one logical service action across producer
+attempts to a service-owned durable claim. Atomic no-replace publication, file and
+directory fsync, winner-only in-process completion authority, exact request
+binding and retained scalar outcomes prevent a second controlled invocation.
+Claims with no retained outcome remain unknown; they are not an invitation to
+retry. Tests include independent worker races, a paused old producer, death after
+an external append, lost acknowledgements, corrupt bytes, malformed identifiers
+and altered completion receipts. The lifecycle preserves uncertainty rather than
+manufacturing an observed guest rejection. See `docs/DURABLE_SELECTED_SERVICES.md`.
+
+The published mechanism is invocation-scoped and callback-free. Newest-owner and
+terminal admission fencing are being implemented separately with a single
+cross-process ordering point. Callback/resource results, incoming-input atomicity,
+remote transactions and safe rotation remain open. No generic exactly-once or
+production deployment claim is made.
+
+### Conversion source composition and independently reproduced mistakes
+
+Shared Number/PropertyKey continuation now participates in production projection,
+public registration, atomic source transactions, complete retained state and the
+independently implemented Python checker. The shared `primitiveConversions`
+field is required; affected fixtures were regenerated from their authored inputs,
+not patched by inserting a default value into historical evidence.
+
+The conversion inventory retains **all 24 candidates: 19 source positives and
+five explicit refusals**. Two refusals need intrinsic-error source authority;
+three retain a discrepancy with the pinned Node 24 reference behavior. All
+original 16 conversion inputs remain in order, with eight composition cases
+added. The recurring interoperability population preserves the original 47
+ordered source/input identities and adds the 19 positives, giving **66 cases:
+63 scripts and three module graphs**. The encoded original47 input digest remains
+`60fd28bdbb54bc4e144414422a8ff23caa036a573191d64857baa6cb6d6a6ae8`.
+The original665 population remains separate and unchanged.
+
+Independent review exposed a shared invented result when an ordinary object
+inherited from a function: both checkers fell through to Object stringification
+where JavaScript selects the incompatible function intrinsic. Both public paths
+now refuse that unmodeled fallback and retain supported own guest hooks. Review
+also found that a conversion fault could allocate an identifier that was invalid
+as a public heap reference, making its own snapshot unrestorable. Both codecs now
+validate the eventual reference before mutation. Seven malformed-name controls
+cover slash, space, a numeric prefix and all four line terminators. A separate
+suspected regexp issue was disproved by direct Node probes and was not committed.
+
+Runtime metadata used to mistake inherited `toString`/`constructor` properties
+for owned accessor entries, corrupting insertion order and numeric property
+versions. Own-entry checks and safe data-property definitions also prevent
+`__proto__` from mutating metadata prototypes. Module namespace exports of these
+names preserve live getters, independent original-module comparison and JSON
+replay. A pair of agreeing interpreters is insufficient evidence of source truth.
+
+### Verification retained without combining overlapping counts
+
+| Scope | Recorded result |
+| --- | --- |
+| Clean published producer `05d4d28`, integrated service/property/module selection | 144 passed, zero failures/skips. |
+| Frozen conversion-fault tree, local `42b4279` / published `e4de45e` | 51 IR/codec/conversion checks passed, zero failures/skips. |
+| Native source conversion working integration | 41 checks passed over all 19 positives, including every checkpoint, prefix reconstruction and tampering. |
+| Existing native regenerated fixture selection | 64 passed. |
+| Native support and legacy-import-absence gate | 21 passed in 183.03 seconds; eight legacy wire imports blocked, all 19 positives retained, existing 240-second bound unchanged. |
+| Supporting fixture regeneration at published `e4de45e` | Three packets reproduced; 20 native checks passed. Only two producer-revision metadata fields changed from the previous local-pin packets. |
+| Independent audit | 6,630 scalar conversion comparisons with no disagreement; 24 adversarial sources retained, 17 source-positive/native-replayed and seven explicitly refused. No token admission claim. |
+
+Earlier 68-service and 37-property selections overlap the 144-test result. Native
+component/source/absence selections likewise overlap. Original logs, failed
+attempts, deterministic probe inputs and exact-byte checksums are retained in
+`docs/evidence/service-conversion-2026-11-21/`. The missing-`uniseg` setup attempt
+remains failed evidence; installing the pinned base parsing dependencies enabled
+the real preparation path. API-published commits have different commit identities
+from local staging commits; identical Git trees are explicitly recorded, and
+retained source receipts keep the identity actually used.
+
+All **17 acceptance packages remain open**. The next gates are complete current
+paired qualification, a full committed npm package installed offline with legacy
+clients physically absent across every original665 and selected66 input, ordinary
+lifecycle preservation, and the remaining language/operational work. Learned
+success and default promotion remain unqualified.
+
 ## Resumed implementation and complete hosted evidence — 21 November 2026
 
 Resumption starts at producer `d608aaa4c76ade9bc54e00892ce2ff11a558324f` and
