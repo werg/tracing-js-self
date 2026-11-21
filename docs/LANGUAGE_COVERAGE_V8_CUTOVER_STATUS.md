@@ -18,6 +18,26 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Active continuation — 21 November 2026
 
+- Sparse and mutating ordinary array maps now project through the existing
+  checked property/call operations. Holes remain absent; undefined elements
+  still invoke callbacks; later values and filled holes use the live heap;
+  appends respect the captured length; truncation preserves the original result
+  length. Nested maps, generator creation and Promise composition retain their
+  event ownership. A forged hole claim refuses without state mutation, and
+  JSON recovery preserves the post-mutation continuation. Fifteen integrated
+  source/transaction/population controls and twelve overlapping cross-feature
+  controls pass with zero failures/skips. Contract regeneration is byte-identical.
+  Recurring source inventory grows from 35 to **37**, adding
+  `map-sparse-live-mutation` and `promise-map-sparse-truncate`; fresh independent
+  native and cost qualification is pending. Indexed accessors, custom species,
+  prototype mutations and async callbacks remain outside this bounded slice.
+  See `docs/SEMANTIC_V8_LIVE_ARRAY_MAP.md`.
+- Producer `31fea631d964d718fd55477af3e279b09b9e8cd9` exposes retained
+  return-value callback completion after JSON restoration, with five focused
+  host recovery controls passing. This is the guest-outcome retrieval primitive;
+  it neither recreates an adapter Promise nor settles an uncertain external
+  request. Durable pre-enqueue callback intake and full child continuation are
+  being implemented separately, with explicit host reconciliation required.
 - Resumed from actual producer `274d327cf18ecd33fa4a5b524433c8a4526b4fd1`
   and consumer `18a55a8400cbf8c7e9ec220bc323d5dd5b10579a`. At these heads,
   eight producer workflows passed and the full Node 20/22/24 test matrix failed

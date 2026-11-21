@@ -71,12 +71,11 @@ test('an abrupt map callback preserves its thrown value through source validatio
   assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(complete.controller));
 });
 
-test('accessors, sparse inputs, changed species and source mutation remain explicit refusals',async()=>{
+test('accessors and changed species remain explicit refusals',async()=>{
   for(const body of [
     'const object={get a(){return x;}};return Object.entries(object);',
-    'const array=[1,,3];return array.map(value=>value);',
     'const array=[1];array.constructor={};return array.map(value=>value);',
-    'const object=Object.create(null);object.a=x;return Object.entries(object).map((pair,index,array)=>{array.push(pair);return pair[0];});'
+    'const array=[1,2];return array.map((value,index,input)=>{Object.defineProperty(input,"1",{get(){return 9;}});return value;});'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert.equal(result.exported,undefined,body);
     assert.notEqual(result.status,'locally_verified');

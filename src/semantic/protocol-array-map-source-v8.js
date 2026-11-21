@@ -16,10 +16,30 @@ export function createArrayMapSourceAdapterV8(){
       'requires an ordinary array with unchanged map and species selection');
     const length=node.properties.length?.value;
     checked(ctx,length?.[0]==='num'&&Number.isSafeInteger(length[1])&&length[1]>=0&&length[1]<=4096,'bounded own array length');
-    for(let index=0;index<length[1];index++)checked(ctx,ctx.descriptor(node,String(index))?.kind==='data','requires dense own data elements');
     return node;
   }
   function invoke(ctx,event,plan){
+    // Array#map snapshots length, then tests each index against the live heap.
+    // The declared ordinary prototype has no indexed inherited properties, so
+    // an absent own slot is a checked hole. Never turn it into undefined or
+    // evaluate the callback for it. Existing dense projections stay identical.
+    const array=ctx.state.heap[plan.arrayId];
+    checked(ctx,array?.kind==='array'&&[undefined,'Array.prototype'].includes(array.prototype),
+      'inherited indexed properties need their own iteration profile');
+    for(;plan.index<plan.length;plan.index++){
+      const descriptor=ctx.descriptor(array,String(plan.index));
+      checked(ctx,descriptor===null||descriptor.kind==='data','index accessor requires a getter continuation');
+      if(descriptor!==null)break;
+      ctx.emit({kind:'property.hasOwn',object:plan.arrayId,key:['str',String(plan.index)],result:['bool',false]},
+        event,'owned-source-map-hole/1');
+    }
+    if(plan.index===plan.length){
+      const parent=patched(ctx,event,'frames',plan.parent);
+      checked(ctx,!event.causes?.some(cause=>cause.kind==='invocation')&&!parent.pendingArrayMethod&&
+        ctx.eq(event.result,ref(plan.outputId))&&ctx.eq(parent.stack.at(-1)?.value,ref(plan.outputId)),
+        'exhausted sparse map must return its original result without another callback');
+      plans.delete(plan.parent);return;
+    }
     const child=event.causes?.find(cause=>cause.kind==='invocation')?.frameId,
       frame=child?event.stateChanges.find(change=>change.table==='frames'&&change.id===child&&change.before===null)?.after:null,
       pending=patched(ctx,event,'frames',plan.parent)?.pendingArrayMethod,
@@ -72,7 +92,9 @@ export function createArrayMapSourceAdapterV8(){
     beforeEvent(ctx,event){
       for(const plan of plans.values())for(const change of event.stateChanges)
         if(change.table==='heap'&&change.id===plan.arrayId&&!ctx.eq(change.before,change.after))
-          ctx.refuse('array map: mutation of the source array during a callback needs its broader iteration profile');
+          checked(ctx,change.after?.kind==='array'&&[undefined,'Array.prototype'].includes(change.after.prototype)&&
+            Object.keys(change.after.accessors??{}).length===0,
+            'prototype/accessor mutation during a callback requires its broader iteration profile');
     },
     event(ctx,event,row){
       const generatorCallback=callbacks.get(event.invocationId);
@@ -115,7 +137,8 @@ export function createArrayMapSourceAdapterV8(){
         Object.keys(output.properties).length===1&&ctx.eq(output.properties.length.value,num(length)),
         'callback or fresh result allocation is outside the bounded profile');
       const generatorAllocations=event.stateChanges.filter(change=>change.table==='heap'&&change.before===null&&change.after?.kind==='generator');
-      checked(ctx,(fn.generatorFunction?generatorAllocations.length===1:generatorAllocations.length===0)&&
+      const callbackStarted=event.causes?.some(cause=>cause.kind==='invocation')??false;
+      checked(ctx,(fn.generatorFunction&&callbackStarted?generatorAllocations.length===1:generatorAllocations.length===0)&&
         event.stateChanges.filter(change=>change.table==='heap').length===1+generatorAllocations.length,
         'undeclared allocation during map entry');
       ctx.emit({kind:'property.get',object:source.id,key:['str','length'],receiver:raw[2],result:num(length)},event,'owned-source-map-length/1');
@@ -124,7 +147,7 @@ export function createArrayMapSourceAdapterV8(){
       const pending=patched(ctx,event,'frames',event.invocationId)?.pendingArrayMethod;
       const next={parent:event.invocationId,arrayId:source.id,callbackId:callback[1],outputId:output.id,length,index:0,
         waitingFrameId:null,siteId:event.siteId,currentValue:U,thisArg:row.operands[2]??U};
-      checked(ctx,pending?.method==='map'&&!plans.has(next.parent),'duplicate or changed map continuation');
+      checked(ctx,(!callbackStarted||pending?.method==='map')&&!plans.has(next.parent),'duplicate or changed map continuation');
       plans.set(next.parent,next);invoke(ctx,event,next);return true;
     },
     completeFrame(ctx,change,event){

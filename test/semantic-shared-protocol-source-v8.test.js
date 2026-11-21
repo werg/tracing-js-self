@@ -104,12 +104,13 @@ test('Promise source projection composes map callbacks and iterator state throug
   assert.deepEqual(sharedRegionState(resumed.controller),sharedRegionState(RegionExecutionHarness.replay(result.exported).controller));
 });
 
-test('a Promise/map interaction that mutates its source array refuses without partial evidence',async()=>{
+test('a Promise/map interaction keeps the current callback argument across source array mutation',async()=>{
   const source='"use strict";async function run(){const result=new Promise(resolve=>{const array=[1,2];'+
     'const mapped=array.map(function(value){array[0]=9;return value;});resolve(mapped[0]);});return await result;}';
-  const result=await verifyProtocolRegionTrainingCase({source,entry:'run',family:'promise-map-unsupported-mutation'});
-  assert.equal(result.status,'unsupported');assert.equal(result.exported,undefined);
-  assert.match(result.reason,/mutation of the source array/);
+  const result=await verifyProtocolRegionTrainingCase({source,entry:'run',family:'promise-map-live-mutation'});
+  assert(result.exported,result.reason);
+  assert.equal((await recheckProtocolRegionEvidence(result.exported)).valid,true);
+  assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion,{kind:'return',value:['num',1]});
 });
 
 test('missing or ambiguous shared family ownership fails before preparation or publication',()=>{

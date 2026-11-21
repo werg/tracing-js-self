@@ -42,7 +42,14 @@ export function sharedProtocolQualificationFixtures(){return [
   {id:'map-generator-iterator-close',source:'"use strict";function run(){let closed=0;const iterable={[Symbol.iterator]:function(){return this},'+
     'next:function(){return {value:3,done:false}},return:function(){closed++;throw 2}};const gen=[iterable].map(function*(it){'+
     'try{for(const value of it){yield value;break}}finally{closed+=10}})[0];gen.next();try{gen.return(8)}catch(error){return closed*10+error}return 0;}',
-    entry:'run',args:[],family:'v8-contract-map-generator-iterator-close',fixture:{calls:[]}}
+    entry:'run',args:[],family:'v8-contract-map-generator-iterator-close',fixture:{calls:[]}},
+  {id:'map-sparse-live-mutation',source:'"use strict";function run(){const input=[1,,3,,];let calls=0;'+
+    'const output=input.map(function(value,index,array){calls++;if(index===0){array[1]=7;array[2]=8;array.push(9);}return value+index;});'+
+    'return [input,output,calls];}',entry:'run',args:[],family:'v8-contract-map-sparse-live',fixture:{calls:[]}},
+  {id:'promise-map-sparse-truncate',source:'"use strict";async function run(){const p=new Promise(resolve=>{'+
+    'const input=[1,2,3];const output=input.map(function(value,index,array){if(index===0)array.length=1;return value;});'+
+    'resolve(output.length+output[0]);});return await p;}',
+    entry:'run',args:[],family:'v8-contract-promise-map-sparse',fixture:{calls:[]}}
 ];}
 
 // The interoperability population includes every declared source-qualified
