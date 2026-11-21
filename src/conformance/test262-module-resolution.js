@@ -70,10 +70,11 @@ export function unresolvedOriginalModuleBindings(parsed){
     if(!record)return null;
     if(record.locals.has(exported)){
       const local=record.locals.get(exported),imported=record.imports.get(local);
-      // A local namespace import has its own immutable binding; named imports
-      // re-export the original binding instead of creating another origin.
-      return imported&&imported.imported!==namespace?
-        resolve(imported.from,imported.imported,seen):{file,local};
+      // ParseModule (ECMA-262 17.0, 10.a.ii) rewrites exports of imported
+      // bindings, including namespaces, into indirect exports. Namespace
+      // identity belongs to the target module, not to the importing local.
+      return imported?(imported.imported===namespace?{file:imported.from,local:namespace}:
+        resolve(imported.from,imported.imported,seen)):{file,local};
     }
     if(record.indirect.has(exported)){
       const entry=record.indirect.get(exported);

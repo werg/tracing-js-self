@@ -1,0 +1,31 @@
+{
+  "repository": "tc39/test262",
+  "revision": "d53ebc8b1931d9f1541e43d59650776e4b766248",
+  "originalDirectory": "test/language/module-code/ambiguous-export-bindings/",
+  "files": {
+    "namespace-empty-module_FIXTURE.js": {
+      "gitBlobSha": "83f0192f9b1de1e4c762be956ea1b05dd3053792",
+      "bytes": 127
+    },
+    "namespace-export-star-as-from-1_FIXTURE.js": {
+      "gitBlobSha": "bac71889439ad0214c5fe4b3c0a01c4252b1e872",
+      "bytes": 188
+    },
+    "namespace-import-star-as-and-export-1_FIXTURE.js": {
+      "gitBlobSha": "3f13da5a01d22a62b042765f8be9a8eec89b5f4c",
+      "bytes": 204
+    },
+    "namespace-import-star-as-and-export-2_FIXTURE.js": {
+      "gitBlobSha": "3f13da5a01d22a62b042765f8be9a8eec89b5f4c",
+      "bytes": 204
+    },
+    "namespace-unambiguous-if-export-star-as-from-and-import-star-as-and-export.js": {
+      "gitBlobSha": "86034b9a50780fed089ef078c76516f2f5a44a5f",
+      "bytes": 4163
+    },
+    "namespace-unambiguous-if-import-star-as-and-export.js": {
+      "gitBlobSha": "b340b9be69a5e169829529e0491aa859af31501f",
+      "bytes": 4123
+    }
+  }
+}

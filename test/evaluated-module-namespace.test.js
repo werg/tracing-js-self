@@ -113,6 +113,39 @@ test('specification control: same-origin namespace reexports survive a star diam
   assert.equal(run.result,23);
 });
 
+test('specification control: imported namespace aliases keep their target identity through star diamonds',async t=>{
+  for(const directRight of [false,true])for(const scheduled of [false,true]){
+    const modules={
+      'leaf.js':'export let x=23;export function bump(){x+=4;}',
+      'left.js':"import * as left from './leaf.js';export {left as cells};",
+      'right.js':directRight?"export * as cells from './leaf.js';":
+        "import * as right from './leaf.js';export {right as cells};",
+      'barrel.js':"export * from './left.js';export * from './right.js';",
+      'main.js':"import {cells} from './barrel.js';import {bump} from './leaf.js';"+
+        'export function run(){const before=cells.x;bump();return [before,cells.x];}',
+      ...(scheduled?{'async.js':'await 0;'}:{})
+    };
+    if(scheduled)modules['main.js']="import './async.js';"+modules['main.js'];
+    const run=await specificationControl(t,modules,[23,27]);
+    assert.equal(run.metadata.evaluationStrategy,scheduled?
+      'async-dependency-scheduler':'dependency-concatenation');
+  }
+});
+
+test('imported namespaces from different modules remain distinct export origins',()=>{
+  for(const directRight of [false,true])assert.throws(()=>linkEvaluatedModules({
+    modules:{
+      'leaf.js':'export const x=23;',
+      'other.js':'export const x=23;',
+      'left.js':"import * as left from './leaf.js';export {left as cells};",
+      'right.js':directRight?"export * as cells from './other.js';":
+        "import * as right from './other.js';export {right as cells};",
+      'barrel.js':"export * from './left.js';export * from './right.js';",
+      'main.js':"import {cells} from './barrel.js';export function run(){return cells.x;}"
+    },entryModule:'main.js',exportName:'run'
+  }),/ambiguous export cells/);
+});
+
 test('missing and ambiguous named imports and unused indirect exports still fail linking',()=>{
   const modules={
     'a.js':'export const x=1;',

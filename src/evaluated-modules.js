@@ -533,9 +533,13 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       if(module.symbols.has(local))
         return {file,local,linked:renamed.get(file).get(local),
           kind:module.symbols.get(local).kind};
-      if(module.namespaceImports.has(local))
-        return {file,local,linked:'namespace:'+file+'#'+local,
-          kind:'namespace',namespace:module.namespaceImports.get(local)};
+      if(module.namespaceImports.has(local)){
+        // ParseModule normalizes an exported imported namespace to the same
+        // target-module binding as `export * as name from ...`.
+        const from=module.namespaceImports.get(local);
+        return {file:from,local:namespaceExport,linked:'namespace:'+from,
+          kind:'namespace',namespace:from};
+      }
       const binding=module.imports.get(local);
       return binding?resolve(binding.module,binding.name,seen):null;
     }

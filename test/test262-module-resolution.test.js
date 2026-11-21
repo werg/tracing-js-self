@@ -29,17 +29,29 @@ test('original-source nested ambiguity is retained and only requested exports re
       {from:'main.js',target:'barrel.js',name:'x',kind:'export',resolution:'ambiguous'}]);
 });
 
-test('namespace reexports compare their module origin but local namespace bindings stay distinct',()=>{
-  for(const local of [false,true]){
+test('direct and imported namespace reexports share the identity of their target module',()=>{
+  for(const leftLocal of [false,true])for(const rightLocal of [false,true]){
     const result=missing({
       'leaf.js':'export const x=1;',
-      'a.js':local?"import * as cells from './leaf.js';export {cells};":"export * as cells from './leaf.js';",
-      'b.js':local?"import * as cells from './leaf.js';export {cells};":"export * as cells from './leaf.js';",
+      'a.js':leftLocal?"import * as left from './leaf.js';export {left as cells};":"export * as cells from './leaf.js';",
+      'b.js':rightLocal?"import * as right from './leaf.js';export {right as cells};":"export * as cells from './leaf.js';",
       'barrel.js':"export * from './a.js';export * from './b.js';",
       'main.js':"import {cells} from './barrel.js';void cells;"
     });
-    assert.deepEqual(result,local?[
-      {from:'main.js',target:'barrel.js',name:'cells',kind:'export',resolution:'ambiguous'}]:[]);
+    assert.deepEqual(result,[]);
+  }
+});
+
+test('namespace objects from distinct modules remain ambiguous even when their bytes agree',()=>{
+  for(const leftLocal of [false,true])for(const rightLocal of [false,true]){
+    assert.deepEqual(missing({
+      'leaf.js':'export const x=1;',
+      'other.js':'export const x=1;',
+      'a.js':leftLocal?"import * as left from './leaf.js';export {left as cells};":"export * as cells from './leaf.js';",
+      'b.js':rightLocal?"import * as right from './other.js';export {right as cells};":"export * as cells from './other.js';",
+      'barrel.js':"export * from './a.js';export * from './b.js';",
+      'main.js':"import {cells} from './barrel.js';void cells;"
+    }),[{from:'main.js',target:'barrel.js',name:'cells',kind:'export',resolution:'ambiguous'}]);
   }
 });
 

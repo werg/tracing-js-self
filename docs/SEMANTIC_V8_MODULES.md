@@ -97,6 +97,27 @@ refused by the owned frontend. Reading the `name` of an ordinary or async
 non-generator function also remains an explicit owned runtime reflection
 boundary; the name controls above cover classes and synchronous generators.
 
+## Namespace export origins
+
+The source-only Test262 resolver and owned evaluated linker both follow the
+retained ECMA-262 17.0 `ParseModule` step 10.a.ii: `import * as local from
+"./leaf.js"; export {local as cells}` resolves `cells` to the namespace of
+`leaf.js`, just as `export * as cells from "./leaf.js"` does. Multiple star paths
+to that same namespace are unambiguous. Namespaces of different modules remain
+distinct even when both modules have identical source bytes. Static reads
+through the resolved namespace continue to observe live exported cells in both
+evaluation strategies.
+
+The two original Test262 namespace-alias tests and their four dependency files
+are retained unchanged with Git blob identities under
+`fixtures/test262-namespace-reexports`. Their source-only resolution checks pass.
+Their exact bodies still meet the owned namespace-identity boundary at
+`typeof foo`, and Node 24.22.3 / V8 13.6 still reports a linking `SyntaxError`.
+Those owned refusals and failed native references remain explicit. Separate
+owned static-read controls satisfy the retained specification and preserve the
+native disagreement as a diagnostic; none of these controls grants public,
+native-consumer, or dataset admission to the original cases.
+
 ## Boundaries
 
 The owned linker supports bounded async dependency cycles through retained
