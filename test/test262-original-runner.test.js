@@ -175,6 +175,37 @@ test('owned and native module runners bind the complete pinned fixture graph',()
   assert.equal(executeOfficialTest262Reference(changed).status,'infrastructure_error');
 });
 
+test('default anonymous class and generator expressions preserve ESM name inference',()=>{
+  const bodies=[
+    `export default (class { static observed=this.name; });\n`+
+      `import C from './control.js';\n`+
+      `assert.sameValue(C.name,'default');assert.sameValue(C.observed,'default');`,
+    `export default (function* () { return 24601; });\n`+
+      `import g from './control.js';\n`+
+      `assert.sameValue(g.name,'default');assert.sameValue(g().next().value,24601);`,
+    `export default (function Named () { return 5; });\n`+
+      `import f from './control.js';\n`+
+      `assert.sameValue(f(),5);`,
+    `export default function Named () { return 6; }\n`+
+      `import f from './control.js';\n`+
+      `assert.sameValue(f(),6);`
+  ];
+  for(const [index,body] of bodies.entries()){
+    const [options]=moduleFixture(body);
+    const owned=executeOfficialTest262Variant({...options,includeBundle:true});
+    const reference=executeOfficialTest262Reference(options);
+    assert.equal(owned.status,'passed',owned.reason);
+    assert.equal(reference.status,'passed',reference.reason);
+    assert.equal(owned.executionPerformed,true);
+    assert.equal(owned.trace.structurallyValidated,true);
+    assert.equal(owned.trace.exactlyReplayed,true);
+    assert.equal(owned.claims.publicSemanticReplay,false);
+    const generated=owned.bundle.sources.find(source=>source.url.startsWith('owned-test262-module://'))?.text;
+    assert.equal(generated?.includes('({default:'),index<2,
+      'only anonymous default class and generator expressions need synthesized NamedEvaluation');
+  }
+});
+
 test('module references and owned module preflight keep parse, link, and evaluation phases distinct',()=>{
   const [parseNegative]=moduleFixture('let = ;',{
     metadata:'negative:\n  phase: parse\n  type: SyntaxError\n'

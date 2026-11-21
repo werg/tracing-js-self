@@ -109,6 +109,22 @@ test('expression default exports and value exports evaluate once',async()=>{
   assert.equal(run.result,12);
 });
 
+test('anonymous default class and generator expressions receive the source-level name',async()=>{
+  const cases=[
+    {source:`export default (class { static observed=this.name; });\n`+
+      `import C from './main.js';\n`+
+      `export function read(){return [C.name,C.observed];}`,expected:['default','default']},
+    {source:`export default (function* () { return 24601; });\n`+
+      `import g from './main.js';\n`+
+      `export function read(){return g.name;}`,expected:'default'}
+  ];
+  for(const {source,expected} of cases){
+    const run=await verified({modules:{'main.js':source},entryModule:'main.js',exportName:'read'});
+    assert.deepEqual(run.result,expected);
+    assert.match(run.bundle.sources[0].text,/\(\{default:/);
+  }
+});
+
 test('module linker rejects cycles, unknown dependencies, and native packages',()=>{
   const requests=[
     {modules:{'a.js':"import {x} from './missing.js';export const y=x;"},entryModule:'a.js',exportName:'y'},

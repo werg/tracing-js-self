@@ -531,8 +531,18 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     for(const item of module.initializers){
       let fragment;
       if(item.kind==='default'){
-        fragment='const '+names.get(item.local)+' = ('+
-          rewrite(module,item.node,names,new Set(),namespaces.get(file))+');';
+        const expression=rewrite(module,item.node,names,new Set(),namespaces.get(file));
+        // `export default <anonymous function/class definition>` performs
+        // NamedEvaluation with the name "default" before the value is
+        // initialized. A synthetic `const __default_expr = ...` would infer
+        // that implementation name instead. Use an object property value as
+        // the NamedEvaluation context; this also makes the name observable
+        // during class static initialization, without consulting guest globals.
+        const anonymousDefinition=item.node.type==='ArrowFunctionExpression'||
+          (item.node.type==='FunctionExpression'||item.node.type==='ClassExpression')&&
+          item.node.id===null;
+        const value=anonymousDefinition?'({default:('+expression+')}).default':expression;
+        fragment='const '+names.get(item.local)+' = ('+value+');';
       }else{
         const initialIdentifiers=new Set();
         if(item.node.type==='VariableDeclaration')
