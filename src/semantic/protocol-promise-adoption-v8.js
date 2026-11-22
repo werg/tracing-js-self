@@ -159,11 +159,11 @@ export function assertPromiseAdoptionNextV8(controller,record){
   if(record.kind==='promise'&&['resolve','reject','adopt'].includes(fields.action)&&controller.heap.get(fields.promise)?.adoption)return false;
   if(['promise.join','promise.executor.enter','async.call'].includes(record.kind)&&
     controller.heap.get(fields.result??fields.promise)?.adoption)return false;
-  const selected=controller.jobs.get(fields.job);
+  const selected=controller.jobs?.get(fields.job);
   if(record.kind==='job'&&['adopt','adoption'].includes(selected?.reaction))return false;
   if(record.kind==='promise.reaction.complete')return true;
   if(record.kind==='job'&&fields.action==='complete'&&selected?.status==='running')return true;
-  const head=controller.ready[0],job=controller.jobs.get(head);
+  const head=controller.ready?.[0],job=controller.jobs?.get(head);
   if(controller.stack.length===0&&!controller.activeJob&&['adopt','adoption'].includes(job?.reaction))
     return record.kind===(job.reaction==='adopt'?'promise.adopt.enter':'promise.adopt.forward')&&fields.job===head;
   return true;

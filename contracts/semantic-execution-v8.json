@@ -2688,7 +2688,7 @@
       "reason": "old artifacts require their original contract"
     }
   ],
-  "interoperabilityDigest": "f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661",
+  "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
   "interoperability": [
     {
       "id": "ordered-map",
@@ -2829,6 +2829,21 @@
       "id": "protocol-region:source-for-in-own-keys",
       "publicDigest": "5a5961de79bb1d7f3ad2565dba08869aa815f6f1410fce0579cc07afa98f03b3",
       "contextDigest": "92eb19f1ac38a3253d4b626cb2c33207e4cc3228053830785a7c957ce6267c84"
+    },
+    {
+      "id": "protocol-region:source-promise-adoption-executor",
+      "publicDigest": "36d138193179ab2abe153499a3e59ca6fbad1aa3208b6531f4a5780294229778",
+      "contextDigest": "ffecb8f64b09f16b939addf6f1cd96a3676b187c35bea04bde3e8863f3f86b3a"
+    },
+    {
+      "id": "protocol-region:source-promise-adoption-async-return",
+      "publicDigest": "248276df4d76e30f9cee1f72741f3d3c8d5248955c907c0609ac7ae1587d7ebf",
+      "contextDigest": "6a43dcb23fe19b3389d4da82cb8ddc229f6450f4afc6be20f3bb6757f868a746"
+    },
+    {
+      "id": "protocol-region:source-promise-adoption-reaction-return",
+      "publicDigest": "fa2f7a1ef47377d8783bf75c76ae250b188c625a8a82c3151119c68e98bd8736",
+      "contextDigest": "ac6c0e3b2eae52e022936524778e8688315a6d0b3b800b900ba40cbe92b62abc"
     },
     {
       "id": "protocol-host:join-host-join",
