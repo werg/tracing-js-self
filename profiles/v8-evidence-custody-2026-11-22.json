@@ -45,6 +45,28 @@
           "sha256": "faadeb7a306ae4f14b266f2c174449d12b65fa6e78e95d42056f7cf7081f0de5"
         }
       ]
+    },
+    {
+      "label": "complete-installed-cc0d",
+      "scope": "Exact complete separately installed public V8 source and checkpoint qualification at cc0d: 665 original plus 69 composed interoperability rows, zero omissions. Native admission and learned-model scopes remain untested. Archive custody does not promote later source changes.",
+      "runId": 45047897532,
+      "runAttempt": 1,
+      "sourceRevision": "cc0d61e98dc6252749f4a2a4c8b669d79b0f7efa",
+      "conclusion": "success",
+      "workflowPath": ".github/workflows/installed-v8.yml",
+      "artifactId": 14764442586,
+      "artifactName": "semantic-v8-installed-evidence",
+      "archiveBytes": 688988565,
+      "archiveSha256": "04873c75d45db2ba31a5d72672193a59b9f3b7ad10f6e6eac3a365f711d648c6",
+      "jobs": [
+        {
+          "id": 137286402541,
+          "name": "installed-v8",
+          "conclusion": "success",
+          "bytes": 129200,
+          "sha256": "3b7bfd06824cb5c9c962db5fc3f9f40b49c10ed719ef7da6d755a4bbf90b4e7a"
+        }
+      ]
     }
   ]
 }
