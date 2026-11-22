@@ -164,3 +164,23 @@ checksum refusal, hostile paths and links, and fresh-process wrapper imports
 with every legacy release file absent. The native verifier's controlled model
 checks and the hosted real package/restore gate are separately counted; these
 archive controls do not execute source admission or optimization.
+
+## Manual package and restore gate candidate
+
+`.github/workflows/v8-release-package-restore.yml` is manual-only and is not
+triggered by publishing its source branch. Root composition must choose the
+final producer/native pair before this workflow is run. It reads the exact
+native revision and tokenizer identity from the producer policy, qualifies all
+64 original SE support inputs, checks the frozen 48/12/4 split, and prepares
+those original source files in sorted `sourceId` order. It then reuses the
+ordinary lifecycle command without `--full-target-coverage`, packages the exact
+`SE-000000002-periodic` checkpoint with its matching served export and
+`training-config.json`, and restores after removing the original qualification,
+prepared tree, tokenizer, lifecycle outputs and package staging tree.
+
+The gate also rehashes a modified served-model archive and requires the sealed
+member inventory to refuse it before native restore starts. Its success summary
+keeps the two lifecycle optimizer updates separate from the zero-update package
+and restore verifiers. Full one-pass training coverage, learned success,
+default promotion, live history recovery and portable-container qualification
+remain false or unmeasured. The workflow candidate has not been launched.
