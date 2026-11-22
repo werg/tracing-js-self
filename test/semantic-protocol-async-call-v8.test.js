@@ -4,6 +4,7 @@ import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {encodeDetailedRecord} from '../src/semantic/detailed-v7.js';
 import {encodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
 import {sharedRegionState} from '../src/semantic/regions.js';
+import {restoreProtocolStateV8} from '../src/semantic/protocol-state-v8.js';
 
 const source='"use strict";async function helper(){return 1;}function run(){}';
 function fixture({settled=true,complete=true}={}){
@@ -123,13 +124,21 @@ test('future settlement identities stay reserved across ordinary jobs and other 
   protocol({kind:'async.resolve.enqueue',promise:'p3',invocation:'other-body',target:'p2',job:'j3',settlementJob:'j4'});
   detail('await',{invocation:'invocation1',promise:'p1',continuation:'c1'});
   const reservation=harness.controller.jobs.get('j2');
-  harness.controller.jobs.set('j2',{...reservation,reaction:'unrelated'});
-  const forged=sharedRegionState(harness.controller);
-  assert.throws(()=>subscribe(protocol),/queued async|assimilation|resolution/);
-  assert.deepEqual(sharedRegionState(harness.controller),forged);
-  assert.throws(()=>RegionExecutionHarness.restore(JSON.parse(JSON.stringify(harness.checkpoint()))),
-    /queued async assimilation|checkpoint differs/);
-  assert.deepEqual(sharedRegionState(harness.controller),forged);
+  for(const altered of [
+    {...reservation,owner:'other'},
+    {...reservation,target:'p3'},
+    {...reservation,asyncResolution:{...reservation.asyncResolution,phase:'wrong'}},
+    {...reservation,readySequence:1},
+    {...reservation,foreignMetadata:true}
+  ]){
+    harness.controller.jobs.set('j2',altered);
+    const forged=sharedRegionState(harness.controller),cloned=Object.assign(
+      Object.create(Object.getPrototypeOf(harness.controller)),structuredClone(harness.controller));
+    assert.throws(()=>subscribe(protocol),/queued async|assimilation|resolution|reserved async settlement/);
+    assert.deepEqual(sharedRegionState(harness.controller),forged);
+    assert.throws(()=>restoreProtocolStateV8(cloned,cloned.protocol),
+      /queued async assimilation|reserved async settlement job fields/);
+  }
   harness.controller.jobs.set('j2',reservation);
   subscribe(protocol);
 });

@@ -143,13 +143,17 @@ export function applyAsyncCallRecordV8(controller,record,api){
   if(record.kind==='async.resolve.subscribe'){
     const resolution=call.resolution,job=controller.jobs.get(record.job),reserved=controller.jobs.get(record.settlementJob),
       target=controller.heap.get(record.target);
+    assertAlgorithmFields(reserved,['status','owner','promise','reaction','closure','rejectionClosure','target','sequence',
+      'asyncResolution'],'reserved async settlement job');
     api.require(call.phase==='completed'&&resolution?.schema===resolutionSchema&&resolution.phase==='queued'&&
       resolution.target===record.target&&resolution.assimilationJob===record.job&&
       resolution.settlementJob===record.settlementJob&&record.job!==record.settlementJob&&
       call.completion?.kind==='return'&&api.eq(call.completion.value,['ref',record.target])&&
       job?.owner===call.owner&&job.status==='queued'&&job.reaction==='async-resolution-enqueue'&&
       api.eq(job.asyncResolution,{promise:record.promise,target:record.target,phase:'enqueue'})&&
-      reserved?.owner===call.owner&&reserved.status==='reserved'&&reserved.reaction==='async-resolution-reserved'&&
+      reserved?.owner===call.owner&&reserved.status==='reserved'&&reserved.promise===null&&
+      reserved.reaction==='async-resolution-reserved'&&reserved.closure===null&&reserved.rejectionClosure===null&&
+      reserved.target===record.promise&&reserved.sequence===null&&
       api.eq(reserved.asyncResolution,{promise:record.promise,target:record.target,phase:'reserved'})&&
       controller.ready[0]===record.job&&!controller.stack.length&&!controller.activeJob&&
       target?.kind==='promise'&&target.external===null,
@@ -340,9 +344,14 @@ function validateResolutionState(controller,identity,node,call,api){
     api.eq(assimilation.asyncResolution,{promise:identity,target:targetId,phase:'enqueue'}),
   'retained async assimilation job differs');
   if(resolution.phase==='queued'){
+    const reserved=controller.jobs.get(resolution.settlementJob);
+    assertAlgorithmFields(reserved,['status','owner','promise','reaction','closure','rejectionClosure','target','sequence',
+      'asyncResolution'],'reserved async settlement job');
     api.require(assimilation.status==='queued'&&controller.ready.includes(resolution.assimilationJob)&&
-      controller.jobs.get(resolution.settlementJob)?.status==='reserved'&&
-      controller.jobs.get(resolution.settlementJob)?.reaction==='async-resolution-reserved'&&
+      reserved?.owner===call.owner&&reserved.status==='reserved'&&reserved.promise===null&&
+      reserved.reaction==='async-resolution-reserved'&&reserved.closure===null&&reserved.rejectionClosure===null&&
+      reserved.target===identity&&reserved.sequence===null&&
+      api.eq(reserved.asyncResolution,{promise:identity,target:targetId,phase:'reserved'})&&
       !controller.ready.includes(resolution.settlementJob)&&
       node.state==='pending'&&node.result===null,
     'queued async assimilation job or unresolved Promise differs');return;
