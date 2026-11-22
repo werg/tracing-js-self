@@ -66,8 +66,12 @@ The previous detailed PR narrative is preserved in
   skips. Its [original ZIP, complete log and runtime pins](evidence/causal-gate-45030773600-2026-11-22/README.md)
   are retained. Five passing parent test containers account for the Node
   reporter's 175-test summary; they are not five additional leaf cases.
-  Fixture-corrected `e5d53e47/56cce3b8` has a separate 151/170 hosted run;
-  that population does not substitute for the larger final composition below.
+  Fixture-corrected `e5d53e47/56cce3b8` completed 151 native cases, then its
+  Node command was cancelled with no completed leaf results. The job's elapsed
+  35m11s is consistent with its configured 35-minute limit; the log reports
+  cancellation rather than an explicit timeout diagnosis. Its [partial original
+  evidence](../coverage/language-expansion/combined-gate-retention/run-45032886414/README.md)
+  does not qualify any of the intended 170 Node leaves.
 - **Terminal close has a separate native foundation and pending history gate.**
   Native main includes terminal-only durable close/recovery and nine native
   close controls. A completed/cancelled coordinator and every owned track must
@@ -95,15 +99,25 @@ The previous detailed PR narrative is preserved in
   focused builder controls. Two selected actual-native recovery controls passed
   separately; that narrow run does not qualify all transport/history paths.
   [Run 45034849522](https://github.com/werg/tracing-js-self/actions/runs/45034849522)
-  requires **165 native and 193 producer leaf cases**, zero failures/errors/skips,
-  across four parallel groups on this single frozen source pair. Its structural
-  group (165 native and 123 producer cases) has passed. The transport group
-  completed with 28 of 33 passes and five failures, zero skips: four stopped in
-  the controlled peer before intended storage checks because its explicit no-loss
-  mode was refused, and one asserted an obsolete refusal message. The other
-  21 bootstrap-history and 16 terminal-history cases are still running. The
-  original failed output is retained and corrections are under focused review;
-  promotion requires a new exact-pair gate with every group passing.
+  completed **165 native passes and 185 of 193 producer leaf passes**, eight
+  failures and zero errors/skips. Structural controls passed 123/123; transport
+  28/33; combined commit/bootstrap history 20/21; terminal history 14/16.
+  Four failures were the controlled peer's rejected no-loss logging mode, two
+  were obsolete refusal-message expectations, and two were a real driver-path
+  omission: the independently verified service owner was not included in the
+  policy sent to strict closed-state reconstruction. No validation was loosened.
+  [All original logs, ZIPs, XML, runtime and per-file counts](../coverage/language-expansion/combined-gate-retention/run-45034849522/README.md)
+  are retained. The 21-case group completed normally in about 27 minutes; its
+  three two-child scenarios accounted for about 794 seconds. A separate profiled
+  unclocked baseline passed locally in 174.560 seconds and makes no live-clock claim.
+  The corrected producer [a3bbbd31](https://github.com/werg/tracing-js-self/commit/a3bbbd313dc3c92e723a746187679b10c85d884a)
+  / unchanged native `15844c00` is now frozen in
+  [run 45038208676](https://github.com/werg/tracing-js-self/actions/runs/45038208676).
+  It still requires all **165 native and 193 producer leaf cases**, zero skips,
+  now split into five groups with retained live spec progress and exact JUnit.
+  Individual tests have a ten-minute cap; application clock limits are unchanged.
+  Five selected actual-native transport corrections already pass locally, but
+  final same-owner service/history qualification and promotion remain pending.
 
 The latest composed local checks and hosted gate use Python 3.12.14, locked
 Torch 2.10.0+cpu and pytest 8.4.2. Separately retained earlier local checks used
@@ -156,13 +170,29 @@ no mocked clock or previous passing run supplies that authority.
   coverage. These are two fits, not one 350-update trajectory. Learned success,
   production assets, GPU behavior and production throughput remain unqualified.
   [Exact archive inventory, audit, source map and limits](evidence/v8-fullfit-campaign-revalidation-2026-11-22/README-campaign-45025994295.md).
-- **The earlier frozen full-support campaign remains in progress.**
+- **The earlier frozen full-support campaign stopped at its configured limit.**
   [Run 45023684906](https://github.com/werg/tracing-js-self/actions/runs/45023684906)
-  freezes `9cf091e6/1a69d9d` for exact target and scored-position coverage.
-  Both campaigns retain their own 64-source population and 48/12/4 split. This
-  earlier schema has no router fields: its original reader and independent
-  target/position reconstruction must be retained, without adding fictional
-  zeros or retrofitting newer receipts. Its final totals remain unclaimed.
+  freezes `9cf091e6/1a69d9d`. Its training command reported `ETIMEDOUT` after
+  about two hours. The original archive retains an interrupted coverage checkpoint
+  at **step 314 of the planned 348**, plus its separate two-update ordinary
+  lifecycle. There is no final 348-step checkpoint and no full-population pass.
+  Exact partial target/position reconstruction and a bounded continuation of the
+  remaining 34 updates are being assessed against the unchanged original schema,
+  inputs, sampler, optimizer and RNG. No continuation is counted until executed
+  and independently audited. Both campaigns retain their own 64-source population
+  and 48/12/4 split; this earlier schema has no router fields, and none will be
+  retrofitted or reported as fictional zeros.
+- **Complete successful-fit assets are durably preserved on GitHub.**
+  [Archive run 45037236499](https://github.com/werg/tracing-js-self/actions/runs/45037236499)
+  verified all 593 original ZIP members, then preserved the unchanged 178,270,704-byte
+  ZIP, 116,189-byte independent audit archive, 8,188,741-byte complete original
+  training job log and checksums in an unpublished evidence draft. Each uploaded
+  asset was independently downloaded and matched byte-for-byte by size/SHA-256.
+  [Receipt, exact draft link and initial archive failures](evidence/v8-training-artifact-archive-2026-11-22/README.md)
+  are retained. This is diagnostic evidence preservation, not a production release.
+  The original served weights come from the **separate two-update lifecycle**;
+  the 348-update trajectory currently has its own checkpoint and exposure proof.
+  Installed/offline trained-weight packaging and restoration remain in progress.
 - **Router receipt validation is corrected on native main.** Source `19d01124`
   and retained evidence `c489ff8e` refuse nonempty maps with zero audited
   updates, assignments below rows, backwards counts, dropped selectors and

@@ -1,0 +1,4 @@
+test/semantic-native-durable-commit-v8.test.js
+test/semantic-native-durable-bootstrap-v8.test.js
+test/semantic-native-orchestration-recovery-v8.test.js
+test/semantic-native-durable-close-v8.test.js
