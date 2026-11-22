@@ -17,7 +17,7 @@ const siblingSchedulerFixture={id:'parallel-tla-boundary',family:'parallel-tla-b
 test('native ESM independently agrees with owned live cells, a synchronous cycle and acyclic top-level await',async()=>{
   for(const fixture of LANGUAGE_EXPANSION_INTERACTIONS.filter(row=>row.modules)){
     const result=await verifyRegionModuleTrainingCase(fixture);
-    assert.ok(result.exported,result.reason);assert.equal(result.moduleCorrespondence,'passed');
+    assert.ok(result.exported,[result.reason,result.failure?.original?.error?.stack].filter(Boolean).join('\n'));assert.equal(result.moduleCorrespondence,'passed');
     assert.equal(result.exported.public.schema,'semantic-execution/8');
     assert.equal(result.exported.sidecar.sourceArtifact.sidecar.referenceStatus,'agreed');
     const check=await recheckRegionEvidence(result.exported);
