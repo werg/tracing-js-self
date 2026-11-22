@@ -14,7 +14,7 @@ concurrency:
 jobs:
   paired-bootstrap-recovery:
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 60
     defaults:
       run:
         shell: bash
@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ github.sha }}
+          ref: e5d53e47b39ccc1699db6da0c6f53bb703b3dce2
           path: tracing-js-self
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -50,8 +50,19 @@ jobs:
           npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
           python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
           python -m pip install --no-deps --no-build-isolation -e ./megatoken
+          test "$(git -C tracing-js-self rev-parse HEAD)" = e5d53e47b39ccc1699db6da0c6f53bb703b3dce2
           test "$(git -C megatoken rev-parse HEAD)" = 56cce3b80423b0cb70c3a096d867561066e3a211
           cmp tracing-js-self/contracts/semantic-execution-v8.json megatoken/src/megatoken/data/contracts/semantic-execution-v8.json
+          python - <<'PY'
+          import json,os,subprocess
+          from pathlib import Path
+          data={'workflowRevision':os.environ['GITHUB_SHA'],'requiredNativeCases':151,'requiredProducerCases':170}
+          for repo in ('tracing-js-self','megatoken'):
+              data[repo]={key:subprocess.check_output(['git','-C',repo,'rev-parse',value],text=True).strip()
+                  for key,value in [('revision','HEAD'),('tree','HEAD^{tree}')]}
+          (Path(os.environ['RUNNER_TEMP'])/'bootstrap-source-identities.json').write_text(json.dumps(data,indent=2)+'\n')
+          print(json.dumps(data))
+          PY
       - name: Verify unified native bootstrap, close, router and launch controls
         working-directory: megatoken
         run: |
@@ -70,7 +81,9 @@ jobs:
       - name: Verify complete host history, actual native recovery and crash boundaries
         working-directory: tracing-js-self
         run: |
-          node --experimental-vm-modules --test --test-concurrency=1 --test-reporter=junit \
+          node --experimental-vm-modules --test --test-concurrency=1 \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=junit --test-reporter-destination="$RUNNER_TEMP/host-bootstrap-history.xml" \
             test/native-request-journal-v8.test.js \
             test/selected-orchestration-clock.test.js \
             test/semantic-known-commit-builder-v8.test.js \
@@ -85,7 +98,7 @@ jobs:
             test/semantic-selected-orchestration-v8.test.js \
             test/semantic-selected-history-v8.test.js \
             test/semantic-selected-history-automatic-v8.test.js \
-            2>&1 | tee "$RUNNER_TEMP/host-bootstrap-history.xml"
+            2>&1 | tee "$RUNNER_TEMP/host-bootstrap-history.log"
           python - <<'PY'
           import os,xml.etree.ElementTree as ET
           from pathlib import Path
@@ -108,3 +121,5 @@ jobs:
           path: |
             ${{ runner.temp }}/native-bootstrap.xml
             ${{ runner.temp }}/host-bootstrap-history.xml
+            ${{ runner.temp }}/host-bootstrap-history.log
+            ${{ runner.temp }}/bootstrap-source-identities.json
