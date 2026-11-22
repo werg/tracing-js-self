@@ -1,0 +1,147 @@
+name: Owned Promise lookup profile and exact paired regression
+
+on:
+  push:
+    branches: [codex/v8-owned-promise-lookup-profile-20261122]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: owned-promise-lookup-profile-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  paired-owned-promise-lookup-profile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    env:
+      MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+      MEGATOKEN_PYTHON: python
+      PYTHONPATH: ${{ github.workspace }}/megatoken/src
+      REQUIRE_PROMISE_ADOPTION_V8: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      NODE_OPTIONS: --experimental-vm-modules
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: werg/megatoken
+          ref: 03a9e33866207b5b0c4105297c6050dacadcf85f
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: tracing-js-self/.nvmrc
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.14'
+      - name: Install exact locked pair and verify all shared payload bytes
+        run: |
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+          test "$(git -C tracing-js-self rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git -C megatoken rev-parse HEAD)" = 03a9e33866207b5b0c4105297c6050dacadcf85f
+          python - <<'PY'
+          import base64,gzip,hashlib,json,os,subprocess
+          from pathlib import Path
+          producer=Path('tracing-js-self');native=Path('megatoken')
+          manifest=json.loads((producer/'docs/evidence/owned-promise-adoption-interop-20261122/payload-map.json').read_text())
+          assert manifest['fixturePayloads']==6 and manifest['contractFiles']==1 and manifest['sourceExamples']==23
+          assert len(manifest['files'])==7
+          for row in manifest['files']:
+              source=(producer/row['source']).read_bytes();actual=(native/row['native']).read_bytes()
+              assert hashlib.sha256(actual).hexdigest()==row['nativeSha256'],row['native']
+              decoded=gzip.decompress(base64.b64decode(actual)) if row['encoding']=='gzip-base64' else actual
+              assert decoded==source,row['source']
+          policy=json.loads((producer/'contracts/semantic-native-policy-v8.json').read_text())
+          assert policy['consumerRevision']=='03a9e33866207b5b0c4105297c6050dacadcf85f'
+          assert policy['contractDigest']==manifest['definition'] and policy['interoperabilityDigest']==manifest['interoperability']
+          data={'workflowRevision':os.environ['GITHUB_SHA'],'requiredNativeCases':104,'requiredProducerCases':144,
+              'sourceCases':15,'sourceRestoreCuts':65,'sourceGeneratedContexts':423,'sharedRealmContexts':19,
+              'mutationSourceCases':24,'mutationRefusedSources':19,'mutationEligibleSources':5,'mutationNativeContexts':96,
+              'contractDigest':manifest['definition'],'interoperabilityDigest':manifest['interoperability']}
+          for repo in ('tracing-js-self','megatoken'):
+              data[repo]={key:subprocess.check_output(['git','-C',repo,'rev-parse',value],text=True).strip()
+                  for key,value in [('revision','HEAD'),('tree','HEAD^{tree}')]}
+          (Path(os.environ['RUNNER_TEMP'])/'promise-adoption-identities.json').write_text(json.dumps(data,indent=2)+'\n')
+          print(json.dumps(data))
+          PY
+      - name: Independently recheck the complete source interoperability contract
+        run: npm run semantic:v8:contract --prefix tracing-js-self 2>&1 | tee "$RUNNER_TEMP/promise-contract.log"
+      - name: Require every independent native scheduler and interoperability control
+        working-directory: megatoken
+        run: |
+          python -m pytest -q tests/test_promise_executor_v8.py tests/test_async_call_v8.py \
+            tests/test_promise_scheduler_v8.py tests/test_promise_executor_boundaries_v8.py \
+            tests/test_promise_join_v8.py tests/test_protocol_v8.py tests/test_protocol_host_v8.py \
+            tests/test_protocol_host_composition_v8.py --junitxml="$RUNNER_TEMP/native-promise.xml" \
+            2>&1 | tee "$RUNNER_TEMP/native-promise.log"
+          python - <<'PY'
+          import os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'native-promise.xml').getroot().iter('testcase'))
+          assert len(cases)==104 and not any(c.find(k) is not None for c in cases for k in ('failure','error','skipped'))
+          print('104 independent native Promise/protocol/host controls passed; zero skips')
+          PY
+      - name: Require original-source authority, both FIFO turns and every restored native context
+        working-directory: tracing-js-self
+        run: |
+          node --experimental-vm-modules --test --test-concurrency=1 \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=junit --test-reporter-destination="$RUNNER_TEMP/producer-promise.xml" \
+            test/semantic-protocol-v8.test.js test/semantic-protocol-iterator-v8.test.js \
+            test/semantic-protocol-promise-join-v8.test.js test/semantic-protocol-promise-adoption-v8.test.js \
+            test/semantic-protocol-promise-executor-v8.test.js test/semantic-protocol-promise-adoption-source-v8.test.js \
+            test/semantic-async-call-source-v8.test.js test/semantic-protocol-promise-executor-source-v8.test.js \
+            test/semantic-shared-protocol-source-v8.test.js test/semantic-promise-mutation-profile-source-v8.test.js 2>&1 | tee "$RUNNER_TEMP/producer-promise.log"
+          python - <<'PY'
+          import json,os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          cases=list(ET.parse(root/'producer-promise.xml').getroot().iter('testcase'))
+          assert len(cases)==144 and not any(c.find(k) is not None for c in cases for k in ('failure','error','skipped'))
+          source=json.loads((root/'promise-adoption-source-evidence.json').read_text())
+          assert [source[k] for k in ('sourceCases','actualNativeCases','snapshotCuts','generatedContexts')]==[15,15,65,423]
+          assert len(source['nativeReceipts'])==15 and sum(r['counts']['contexts'] for r in source['nativeReceipts'])==423
+          assert source['optimizerUpdates']==0 and source['moduleAdmission'] is False and source['trainingAdmission'] is False
+          assert 'pending-forwarding-before-microtask-settlement' in {r['name'] for r in source['cases']}
+          shared=json.loads((root/'promise-adoption-shared-realm-public.json').read_text())
+          assert len(shared['states'])==2 and len(shared['artifact']['contexts'])==19
+          mutation=json.loads((root/'promise-mutation-profile-evidence.json').read_text())
+          assert [mutation[k] for k in ('sourceCases','refusedSources','eligibleSources','actualNativeCases','generatedContexts')]==[24,19,5,5,96]
+          assert len(mutation['nativeReceipts'])==5 and sum(r['counts']['contexts'] for r in mutation['nativeReceipts'])==96
+          assert mutation['sourceAdmissionWasAlreadyRefusing'] is True and mutation['directCompilerProfileRefusalAdded'] is True
+          assert mutation['moduleAdmission'] is False and mutation['trainingAdmission'] is False and mutation['optimizerUpdates']==0
+          print('144 producer controls passed; original15 native sources/65cuts/423contexts plus19 mutation refusals and5 eligible native controls/96contexts; zero skips')
+          PY
+      - name: Preserve exact tested source trees
+        if: ${{ !cancelled() }}
+        run: |
+          test -z "$(git -C tracing-js-self status --porcelain)"
+          test -z "$(git -C megatoken status --porcelain)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owned-promise-lookup-profile-exact-pair
+          retention-days: 90
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/promise-adoption-identities.json
+            ${{ runner.temp }}/promise-contract.log
+            ${{ runner.temp }}/native-promise.xml
+            ${{ runner.temp }}/native-promise.log
+            ${{ runner.temp }}/producer-promise.xml
+            ${{ runner.temp }}/producer-promise.log
+            ${{ runner.temp }}/promise-adoption-source-evidence.json
+            ${{ runner.temp }}/promise-adoption-shared-realm-public.json
+            ${{ runner.temp }}/promise-mutation-profile-evidence.json

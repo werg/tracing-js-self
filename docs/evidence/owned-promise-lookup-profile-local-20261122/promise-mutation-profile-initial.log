@@ -1,0 +1,103 @@
+✔ Promise mutation source boundary: positive-async-owned-return (1148.567576ms)
+✔ Promise mutation source boundary: external-published-literal-own-then-accessor (152.11563ms)
+✔ Promise mutation source boundary: computed-binding-own-then-accessor (152.705562ms)
+✔ Promise mutation source boundary: computed-expression-own-then-accessor (149.159747ms)
+✔ Promise mutation source boundary: literal-own-then-assignment (66.522851ms)
+✔ Promise mutation source boundary: computed-binding-own-then-assignment (64.787897ms)
+✔ Promise mutation source boundary: computed-expression-own-then-assignment (67.928298ms)
+✔ Promise mutation source boundary: aliased-promise-own-then-accessor (111.771916ms)
+✔ Promise mutation source boundary: aliased-object-defineProperty (105.757646ms)
+✔ Promise mutation source boundary: aliased-method-defineProperty (103.274115ms)
+✔ Promise mutation source boundary: destructured-method-defineProperty (117.518201ms)
+✔ Promise mutation source boundary: computed-object-assign-then (77.738549ms)
+✔ Promise mutation source boundary: computed-reflect-set-then (70.146052ms)
+✔ Promise mutation source boundary: computed-defineProperties-then (69.001396ms)
+✔ Promise mutation source boundary: aliased-setPrototypeOf (213.66558ms)
+✔ Promise mutation source boundary: prototype-computed-then (65.105019ms)
+✔ Promise mutation source boundary: aliased-promise-resolve-override (64.31341ms)
+✔ Promise mutation source boundary: shadowed-promise-resolve (1261.404396ms)
+✔ Promise mutation source boundary: positive-unrelated-object-write (1072.519157ms)
+✔ Promise mutation source boundary: evaluated-spread-then-accessor (141.21653ms)
+✔ Promise mutation source boundary: caught-unmodeled-promise-descriptor (100.027176ms)
+✔ Promise mutation source boundary: unmodeled-non-then-promise-property (93.124632ms)
+✔ Promise mutation source boundary: shadowed-object-define-property (988.896852ms)
+✖ Promise mutation source boundary: ordinary-object-descriptor (93.363406ms)
+✖ actual native independently replays every eligible mutation-boundary control (0.314745ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 23
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7247.937081
+
+✖ failing tests:
+
+test at test/semantic-promise-mutation-profile-source-v8.test.js:198:29
+✖ Promise mutation source boundary: ordinary-object-descriptor (93.363406ms)
+  AssertionError [ERR_ASSERTION]: Effectful teacher projection: constructor/prototype descriptors require an explicit v8 behavioral-state profile
+  + actual - expected
+  
+  + Error: Effectful teacher projection: constructor/prototype descriptors require an explicit v8 behavioral-state profile
+  +     at reject (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/training/projection-state-profile.js:6:36)
+  +     at inspectHeap (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/training/projection-state-profile.js:19:5)
+  +     at checkEffectfulProjectionState (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/training/projection-state-profile.js:53:7)
+  +     at compileSourceProjection (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/semantic/source-projection.js:131:3)
+  +     at compileEffectfulRegionWitnessV8 (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/semantic/effectful-teacher-v8.js:237:10)
+  +     at compilePromiseSourceProjectionV8 (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/semantic/protocol-promise-join-source-v8.js:95:20)
+  +     at compileProtocolSourceV8 (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/semantic/protocol-source-compiler-v8.js:84:12)
+  +     at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/semantic-promise-mutation-profile-source-v8.test.js:202:60)
+  +     at Test.runInAsyncScope (node:async_hooks:227:14)
+  +     at Test.run (node:internal/test_runner/test:1402:25) {
+  +   category: 'unsupported.witness-projection'
+  + }
+  - undefined
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/semantic-promise-mutation-profile-source-v8.test.js:210:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: Effectful teacher projection: constructor/prototype descriptors require an explicit v8 behavioral-state profile
+        at reject (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/training/projection-state-profile.js:6:36)
+        at inspectHeap (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/training/projection-state-profile.js:19:5)
+        at checkEffectfulProjectionState (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/training/projection-state-profile.js:53:7)
+        at compileSourceProjection (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/semantic/source-projection.js:131:3)
+        at compileEffectfulRegionWitnessV8 (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/semantic/effectful-teacher-v8.js:237:10)
+        at compilePromiseSourceProjectionV8 (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/semantic/protocol-promise-join-source-v8.js:95:20)
+        at compileProtocolSourceV8 (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/semantic/protocol-source-compiler-v8.js:84:12)
+        at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/semantic-promise-mutation-profile-source-v8.test.js:202:60)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1402:25),
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/semantic-promise-mutation-profile-source-v8.test.js:227:1
+✖ actual native independently replays every eligible mutation-boundary control (0.314745ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  4 !== 5
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/semantic-promise-mutation-profile-source-v8.test.js:229:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 4,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
