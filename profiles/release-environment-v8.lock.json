@@ -1,0 +1,16 @@
+{
+  "schema": "semantic-v8-release-environment-lock/1",
+  "node": "24.22.3",
+  "v8": "13.6.233.17-node.63",
+  "npm": "11.9.0",
+  "python": "3.12.14",
+  "platform": "linux",
+  "arch": "x64",
+  "timezone": "UTC",
+  "locale": "C.UTF-8",
+  "producerDependencies": "npm-shrinkwrap.json",
+  "consumerDependencies": "tools/native-consumer/requirements.lock",
+  "consumerPolicy": "The complete release qualification journal pins the exact V8 pair and tokenizer",
+  "containerDigest": null,
+  "containerPolicy": "Record actual host and runner identity; this lock does not qualify a portable container."
+}
