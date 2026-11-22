@@ -31,12 +31,13 @@ def main():
     original = peer.dispatch
 
     def dispatch(adapter, request, **kwargs):
-        target = request.get("op") == (
-            "durable-bootstrap" if action_name == "bootstrap-orchestration-child" else "durable-commit"
-        )
+        target_op = ("durable-close" if action_name == "cancel" else
+                     "durable-bootstrap" if action_name == "bootstrap-orchestration-child" else "durable-commit")
+        target = request.get("op") == target_op
         if target and action_name is not None:
             original_request = json.loads(base64.b64decode(request["requestBase64"]))
-            target = (original_request.get("op") == "bootstrap-orchestration-child"
+            target = (original_request.get("op") == "cancel" if action_name == "cancel" else
+                      original_request.get("op") == "bootstrap-orchestration-child"
                       if action_name == "bootstrap-orchestration-child" else
                       original_request.get("op") == "commit-orchestration"
                       and json.loads(original_request["record"]).get("name") == action_name)

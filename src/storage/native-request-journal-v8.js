@@ -1,4 +1,4 @@
-// Producer-owned exact commit and bootstrap frames. This journal alone never authorizes a
+// Producer-owned exact commit, bootstrap and terminal-close frames. This journal alone never authorizes a
 // native retry or host replay; the native side must independently own its outcome.
 import {createHash,randomUUID} from 'node:crypto';
 import {constants} from 'node:fs';
@@ -31,6 +31,10 @@ export function decodeNativeV8RequestFrame(requestBase64){
     if(!exact(request,['op','session','track','childTrack','id'])||
         !ID.test(request.track??'')||!ID.test(request.childTrack??'')||request.track===request.childTrack)
       fail('only an exact reserved child bootstrap frame may be retained');
+  }else if(request.op==='cancel'){
+    if(!exact(request,['op','session','reason','id'])||typeof request.reason!=='string'||
+        request.reason.length===0||Buffer.byteLength(request.reason,'utf8')>4096)
+      fail('only an exact terminal session close frame may be retained');
   }else if(!['commit','commit-orchestration'].includes(request.op)||typeof request.record!=='string'||
       !request.selection||typeof request.selection.selectionId!=='string')
     fail('only an exact semantic, orchestration commit or child bootstrap frame may be retained');
@@ -41,7 +45,7 @@ function validateIdentity(value,scope){
   if(!exact(value,['schema','session_id','stream_id','session_generation','ordinal','operation','model_identity'])||
       value.schema!=='semantic-native-request-identity/1'||!ID.test(value.session_id??'')||
       !ID.test(value.stream_id??'')||!positive(value.session_generation)||!positive(value.ordinal)||
-      !['commit','commit-orchestration','bootstrap-orchestration-child'].includes(value.operation))
+      !['commit','commit-orchestration','bootstrap-orchestration-child','cancel'].includes(value.operation))
     fail('invalid exact request identity');
   const model=value.model_identity;
   if(!exact(model,['checkpoint','tokenizer'])&&!exact(model,['checkpoint','tokenizer','training']))
@@ -68,6 +72,10 @@ function validateIntent(record,scope){
   const model=record.identity.model_identity,identity=packet.identity;
   if(identity.checkpointIdentity!==model.checkpoint||identity.tokenizerIdentity!==model.tokenizer||
       (identity.trainingIdentity??null)!==(model.training??null))fail('checkpoint changed request model identity');
+  if(request.op==='cancel'){
+    assertNativeV8TerminalCloseCheckpoint(native,request.session);
+    return record;
+  }
   if(request.op==='bootstrap-orchestration-child'){
     const session=native.sessions?.[request.session],state=session?.orchestration,
       child=state?.children?.find(row=>row.track===request.childTrack),last=packet.attempts.at(-1),
@@ -90,6 +98,26 @@ function validateIntent(record,scope){
   if(matching.length!==1||matching[0].status!=='acknowledging'||matching[0].record!==request.record||
       !isDeepStrictEqual(matching[0].selection,request.selection))fail('commit does not name the exact pending attempt');
   return record;
+}
+
+/** A recoverable close consumes a terminal coordinator, never uncertain active work. */
+export function assertNativeV8TerminalCloseCheckpoint(native,sessionId){
+  const session=native?.sessions?.[sessionId],state=session?.orchestration,
+    last=state?.decisions?.at(-1),operation=state?.operations?.at(-1);
+  let action=null;try{if(last)action=JSON.parse(last.record);}catch{fail('invalid terminal coordinator decision');}
+  const selected=last?.outcome?.committed===true&&last.outcome.track?.address===state?.track&&
+    operation?.kind==='coordinator'&&native.attempts?.[operation.attempt]?.selectionId===last.selectionId&&
+    native.attempts[operation.attempt].status==='committed';
+  const completed=selected&&action?.name==='track_complete'&&last.outcome.track.status==='completed'&&
+    state.cancelled===null;
+  const cancelled=typeof state?.cancelled==='string'&&state.cancelled.length>0&&
+    (operation?.kind==='cancel'&&operation.reason===state.cancelled||
+      selected&&action?.name==='track_cancel'&&last.outcome.track.status==='cancelled');
+  if(!session||session.unacknowledgedSelection!==null||(!completed&&!cancelled)||
+      !native.closedSessions||Object.hasOwn(native.closedSessions,sessionId)||
+      Object.values(native.sessions).some(row=>row?.unacknowledgedSelection!==null))
+    fail('durable close requires an exact terminal coordinator and no pending selection');
+  return session;
 }
 
 async function syncDirectory(path){
