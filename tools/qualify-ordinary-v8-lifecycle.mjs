@@ -8,9 +8,15 @@ import {execFileSync,spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 
 const known=new Set(['--out','--producer-root','--megatoken','--python','--tokenizer','--native-policy','--source-id']);
+const booleans=new Set(['--orchestration-teacher']);
 const flags=new Map();
 for(let i=2;i<process.argv.length;i++){
-  const key=process.argv[i],value=process.argv[++i];
+  const key=process.argv[i];
+  if(booleans.has(key)){
+    if(flags.has(key))throw new TypeError('Duplicate ordinary lifecycle option: '+key);
+    flags.set(key,true);continue;
+  }
+  const value=process.argv[++i];
   if(!known.has(key)||flags.has(key)||!value||value.startsWith('--'))
     throw new TypeError('Unknown, duplicate or incomplete ordinary lifecycle option: '+key);
   flags.set(key,value);
@@ -20,7 +26,8 @@ for(const key of ['--out','--megatoken','--python','--tokenizer'])
 const producer=resolve(flags.get('--producer-root')??fileURLToPath(new URL('..',import.meta.url))),
   consumer=resolve(flags.get('--megatoken')),out=resolve(flags.get('--out')),
   python=flags.get('--python'),tokenizer=resolve(flags.get('--tokenizer')),
-  selectedId=flags.get('--source-id')??'promise-number-proxy-memory-join',seed=17;
+  selectedId=flags.get('--source-id')??'promise-number-proxy-memory-join',seed=17,
+  orchestrationTeacher=flags.has('--orchestration-teacher');
 const within=(root,path)=>{const rel=relative(root,path);return rel===''||rel!=='..'&&!rel.startsWith('../')&&!isAbsolute(rel);};
 if(within(producer,out)||within(consumer,out)||existsSync(out))
   throw new TypeError('Use a new output directory outside both pinned checkouts');
@@ -52,7 +59,7 @@ mkdirSync(out);
 const write=(name,value)=>writeFileSync(join(out,name),JSON.stringify(value,null,2)+'\n');
 const env={...process.env,PYTHONPATH:join(consumer,'src'),OMP_NUM_THREADS:'1',MKL_NUM_THREADS:'1'};
 const report={schema:'semantic-ordinary-command-lifecycle/8',status:'running',producerRevision,consumerRevision,
-  selectedId,seed,populationCount:candidates.length,registryDigest:prepared.registry.digest,
+  selectedId,seed,orchestrationTeacher,populationCount:candidates.length,registryDigest:prepared.registry.digest,
   nativePolicy:settings.policy,runnerSha256:createHash('sha256').update(readFileSync(fileURLToPath(import.meta.url))).digest('hex'),
   optimizerUpdates:0,learnedSuccess:null,stages:[],
   scope:'One predeclared training source, two ordinary optimizer updates, checkpoint resume, export and real service restoration. No held-out, accepted-record recovery or whole-program success claim.'};
@@ -70,7 +77,7 @@ const run=(stage,command,args)=>{
 try{
   record();
   write('frozen-population.json',{schema:'semantic-v8-ordinary-source-population/1',producerRevision,
-    seed,declared:candidates.length,selectedId,fixtureEncoding:'canonical-generation-fixture/1',
+    seed,declared:candidates.length,selectedId,orchestrationTeacher,fixtureEncoding:'canonical-generation-fixture/1',
     tasks:candidates.map(fixture=>encodeGenerationTask({
       kind:fixture.modules?'module':'source',traceVersion:8,fixture,producerRevision})),
     scope:'Complete interoperability source inventory frozen before source execution or optimizer work.'});
@@ -78,7 +85,16 @@ try{
   const source=await verifyRegionTrainingCase(candidates[membership.index]);
   write('source-result.json',source);
   if(!source.exported)throw new Error('Independent lifecycle source verification failed: '+source.reason);
-  const bound=bindRegionFamilySplit(source.exported,membership,prepared.registry);
+  let exported=source.exported;
+  if(orchestrationTeacher){
+    const {attachSourceQualifiedOrchestrationV8,validateOrchestrationTranscriptV8}=
+      await moduleAt('src/semantic/orchestration-training-v8.js');
+    exported=await attachSourceQualifiedOrchestrationV8(exported);
+    report.orchestration=validateOrchestrationTranscriptV8(exported);
+    report.scope+=' This run also admits four source-qualified teacher lifecycle targets; their materialization does not assert that every target was consumed by the two optimizer updates.';
+    record();
+  }
+  const bound=bindRegionFamilySplit(exported,membership,prepared.registry);
   write('source.json',bound);
   run('prepare',python,[join(consumer,'scripts/prepare_semantic_v8.py'),
     '--input',join(out,'source.json'),'--output',join(out,'prepared'),

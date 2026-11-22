@@ -34,5 +34,8 @@ const receipt={schema:'semantic-native-source-recheck/1',producerRevision:revisi
   ...(direct?{sourceIdentityDigest:exported.sidecar.identityDigest,identityValidated:true}:{}),
   publicDigest:sha(exported.public),
   contextDigest:sha(exported.contexts),sourceValidated:true,projectionValidated:true,replayValidated:true,
+  ...(Object.hasOwn(exported.sidecar,'orchestrationTranscript')?{
+    orchestrationTranscriptDigest:sha(exported.sidecar.orchestrationTranscript),
+    orchestrationValidated:checked.orchestrationValidated===true}:{}),
   regionRecords:checked.regionCoverage?.records??null};
 process.stdout.write(JSON.stringify(receipt)+'\n');

@@ -70,6 +70,17 @@ export function causalLmV8Prompt(context){
     stableAlgorithmJSON(context)+'\nNext record:\n';
 }
 
+export function causalLmV8OrchestrationPrompt(context){
+  assertAlgorithmFields(context,['schema','session','track','children','tracks','receipts','published',
+    'publicDigest','instruction'],'v8 orchestration context');
+  require(context.schema==='semantic-orchestration-context/8'&&typeof context.session==='string'&&
+    context.session.length>0&&typeof context.track==='string'&&context.track.length>0&&
+    HASH.test(context.publicDigest??'')&&typeof context.instruction==='string'&&context.instruction.length>0&&
+    ['children','tracks','receipts','published'].every(key=>Array.isArray(context[key])),
+    'canonical coordinator context required');
+  return context.instruction+'\n'+stableAlgorithmJSON(context)+'\nNext action:\n';
+}
+
 function tokenizerContract(tokenizer,eosTokenId){
   require(tokenizer&&HASH.test(tokenizer.identity??'')&&typeof tokenizer.encode==='function'&&
     typeof tokenizer.decode==='function','a pinned lossless tokenizer is required');
@@ -86,14 +97,26 @@ async function segment(tokenizer,text,eosTokenId){
 }
 
 export async function encodeCausalLmV8Example(context,target,{tokenizer,eosTokenId,maxContextTokens}={}){
+  const decoded=decodeCausalLmV8Target(target),prompt=causalLmV8Prompt(context);
+  return encodeSegments(prompt,target,decoded.kind,{tokenizer,eosTokenId,maxContextTokens});
+}
+
+export async function encodeCausalLmV8OrchestrationExample(context,target,options={}){
+  let action;try{action=JSON.parse(target);}catch{fail('canonical lifecycle target required');}
+  require(plain(action)&&Object.keys(action).length===2&&plain(action.arguments)&&
+    ['track_create','track_join','track_progress','track_complete'].includes(action.name)&&
+    stableAlgorithmJSON(action)===target,'canonical source-qualified lifecycle target required');
+  return encodeSegments(causalLmV8OrchestrationPrompt(context),target,'orchestration',options);
+}
+
+async function encodeSegments(prompt,target,recordKind,{tokenizer,eosTokenId,maxContextTokens}={}){
   tokenizerContract(tokenizer,eosTokenId);
   require(Number.isSafeInteger(maxContextTokens)&&maxContextTokens>1,'explicit context budget required');
-  const decoded=decodeCausalLmV8Target(target),prompt=causalLmV8Prompt(context);
   const promptIds=await segment(tokenizer,prompt,eosTokenId),targetIds=await segment(tokenizer,target,eosTokenId);
   const inputIds=[...promptIds,...targetIds,eosTokenId];
   require(inputIds.length<=maxContextTokens,'flat context budget exceeded; truncation is forbidden');
   return {schema:CAUSAL_LM_V8_BRIDGE_VERSION,traceFormat:REGION_TRACE_VERSION,representation:'mixed',
-    recordKind:decoded.kind,tokenizerIdentity:tokenizer.identity,
+    recordKind,tokenizerIdentity:tokenizer.identity,
     encoding:'independent-context-and-target-segments/1',prompt,target,
     promptSha256:sha(prompt),targetSha256:sha(target),inputIds,
     labels:[...promptIds.map(()=>-100),...targetIds,eosTokenId],attentionMask:inputIds.map(()=>1),eosTokenId,
@@ -134,6 +157,23 @@ export function validateRegionTrainingContexts(exported){
   return items;
 }
 
+/** Keep the semantic timeline unchanged; place each authored coordinator target
+ * after its exact public anchor and before any later child transition.
+ */
+async function trainingTargets(exported){
+  const items=validateRegionTrainingContexts(exported).map(item=>({...item,orchestrationOrdinal:null}));
+  if(Object.hasOwn(exported.sidecar??{},'orchestrationTranscript')){
+    const {validateOrchestrationTranscriptV8}=await import('./orchestration-training-v8.js');
+    validateOrchestrationTranscriptV8(exported);
+    for(const event of exported.sidecar.orchestrationTranscript.events)if(event.kind==='decision')
+      items.push({row:{sequence:event.afterPublicSequence,kind:'orchestration',
+        fields:{line:event.record,invocationId:null}},context:event.context,orchestrationOrdinal:event.ordinal});
+    items.sort((left,right)=>left.row.sequence-right.row.sequence||
+      (left.orchestrationOrdinal??0)-(right.orchestrationOrdinal??0));
+  }
+  return items.map((item,targetOrdinal)=>({...item,targetOrdinal}));
+}
+
 export async function buildCausalLmV8Examples(exported,{tokenizer,eosTokenId,maxContextTokens,
     allowLocal=false,maxExamples=4096,expectedSplit='train',nativePolicy=null,nativeConsumer=null}={}){
   require(typeof allowLocal==='boolean','allowLocal must be explicit boolean');
@@ -147,15 +187,19 @@ export async function buildCausalLmV8Examples(exported,{tokenizer,eosTokenId,max
   require(side.splitIdentity.split===expectedSplit&&side.split===expectedSplit,'dataset split cannot be relabeled');
   if(!allowLocal)require(nativePolicy?.tokenizerIdentity===tokenizer?.identity,
     'training tokenizer differs from admitted native policy');
-  const items=validateRegionTrainingContexts(exported);
+  const items=await trainingTargets(exported);
   require(items.length<=maxExamples,'example cap exceeded; partial episodes are forbidden');
   const rows=[];
-  for(const {row,context,targetOrdinal} of items){
-    const encoded=await encodeCausalLmV8Example(context,row.fields.line,{tokenizer,eosTokenId,maxContextTokens});
+  for(const {row,context,targetOrdinal,orchestrationOrdinal} of items){
+    const orchestration=orchestrationOrdinal!==null,encode=orchestration?
+      encodeCausalLmV8OrchestrationExample:encodeCausalLmV8Example;
+    const encoded=await encode(context,row.fields.line,{tokenizer,eosTokenId,maxContextTokens});
     rows.push({...encoded,metadata:{sourceFamily:side.sourceFamily,sourceId:side.splitIdentity.sourceId,
       sourceComponent:side.splitIdentity.componentId,splitPolicy:side.splitIdentity.policy,split:expectedSplit,
       targetOrdinal,sequence:row.sequence,invocationId:row.fields.invocationId,
-      contextVisibleThrough:context.visibleThrough,publicDigest:side.publicDigest,contextDigest:side.contextDigest,
+      contextVisibleThrough:orchestration?row.sequence:context.visibleThrough,
+      ...(orchestration?{orchestrationOrdinal,orchestrationTranscriptDigest:hashAlgorithmData(side.orchestrationTranscript)}:{}),
+      publicDigest:side.publicDigest,contextDigest:side.contextDigest,
       sourceAdmission:checked.sourceValidated?'passed':'failed',nativeAdmission:checked.native.admitted===true,
       optimizerSteps:0,learningClaim:null}});
   }
@@ -273,11 +317,15 @@ export function createCausalLmV8Selector({runtime,tokenizer,checkpointIdentity,e
 
 export async function auditRegionServingCosts(exported,{tokenizer=null,eosTokenId=null,
     maxContextTokens=1048576,retainTokenIds=true}={}){
-  const items=validateRegionTrainingContexts(exported),rows=[];
-  for(const {row,context,targetOrdinal} of items){
-    const target=row.fields.line,prompt=causalLmV8Prompt(context);
-    const encoded=tokenizer?await encodeCausalLmV8Example(context,target,{tokenizer,eosTokenId,maxContextTokens}):null;
-    rows.push({prediction:targetOrdinal,invocationId:context.invocationId,visibleThrough:context.visibleThrough,
+  const items=await trainingTargets(exported),rows=[];
+  for(const {row,context,targetOrdinal,orchestrationOrdinal} of items){
+    const orchestration=orchestrationOrdinal!==null,target=row.fields.line,
+      prompt=orchestration?causalLmV8OrchestrationPrompt(context):causalLmV8Prompt(context),
+      encode=orchestration?encodeCausalLmV8OrchestrationExample:encodeCausalLmV8Example;
+    const encoded=tokenizer?await encode(context,target,{tokenizer,eosTokenId,maxContextTokens}):null;
+    rows.push({prediction:targetOrdinal,invocationId:orchestration?null:context.invocationId,
+      visibleThrough:orchestration?row.sequence:context.visibleThrough,
+      ...(orchestration?{orchestrationOrdinal}:{}),
       prompt,target,promptSha256:sha(prompt),targetSha256:sha(target),promptBytes:bytes(prompt),targetBytes:bytes(target),
       snapshotBytes:bytes(JSON.stringify(context)),detail:['semantic','protocol'].includes(row.kind),recordKind:row.kind,
       promptTokens:encoded?.boundaries.promptTokens??null,generatedTokens:encoded?.boundaries.targetTokens??null,
@@ -288,6 +336,8 @@ export async function auditRegionServingCosts(exported,{tokenizer=null,eosTokenI
     generatedTokens=tokenizer?sum(rows.map(row=>row.generatedTokens)):null;
   return {schema:'semantic-flat-serving-costs/2',path:'actual-semantic-causal-lm/4',representation:'mixed',
     episodeDigest:hashAlgorithmData(exported.public),contextsDigest:hashAlgorithmData(exported.contexts),
+    ...(Object.hasOwn(exported.sidecar??{},'orchestrationTranscript')?
+      {orchestrationTranscriptDigest:hashAlgorithmData(exported.sidecar.orchestrationTranscript)}:{}),
     measurement:tokenizer?'passed':'untested',byteMeasurement:'passed',tokenizerIdentity:tokenizer?.identity??null,
     eosTokenId:tokenizer?eosTokenId:null,predictions:rows.length,
     tokenReason:tokenizer?null:'Exact pinned serving tokenizer and EOS were not supplied; bytes are not estimates',

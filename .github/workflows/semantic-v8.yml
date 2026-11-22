@@ -101,11 +101,12 @@ jobs:
           if counts['tests'] == 0 or any(counts[key] for key in ('failures', 'errors', 'skipped')):
               raise ValueError(f'Native v8 tests, including live source checks, must all run and pass: {counts}')
           PY
-      - name: Check the paired ordinary coordinator transport
+      - name: Check the ordinary coordinator and source-qualified teacher boundaries
         working-directory: tracing-js-self
         run: |
           node --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \
             test/semantic-selected-orchestration-v8.test.js \
+            test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js \
             2>&1 | tee "$RUNNER_TEMP/semantic-v8-transport-tests.xml"
           python - <<'PY'
           import os, xml.etree.ElementTree as ET

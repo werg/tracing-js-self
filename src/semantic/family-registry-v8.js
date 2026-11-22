@@ -189,6 +189,8 @@ export function regionDatasetBinding(artifact,identity){
     episodeDigest:digest(artifact.public),contextsDigest:digest(artifact.contexts),
     sourceArtifactDigest:direct?null:digest(artifact.sidecar.sourceArtifact),
     ...(direct?{sourceIdentityDigest:artifact.sidecar.identityDigest}:{}),
+    ...(Object.hasOwn(artifact.sidecar,'orchestrationTranscript')?
+      {orchestrationTranscriptDigest:digest(artifact.sidecar.orchestrationTranscript)}:{}),
     registryDigest:identity.registryDigest,componentId:identity.componentId,split:identity.split,
     sourceId:identity.sourceId,family:identity.family,sourceDigest:identity.sourceDigest,
     coreDigest:identity.coreDigest};

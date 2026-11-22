@@ -4,6 +4,7 @@ import {validateV8NativePolicy,validateV8NativeReceipt,V8_CONTRACT_DIGEST,V8_FIX
 import {verifyRegionTrainingCase,recheckRegionEvidence,admitRegionEvidence} from '../src/semantic/compiler-v8.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 import {identityDigest} from '../src/semantic/source-identity.js';
+import {attachSourceQualifiedOrchestrationV8} from '../src/semantic/orchestration-training-v8.js';
 
 const policy={schema:'semantic-native-policy/8',consumerRepository:'werg/megatoken',consumerRevision:'a'.repeat(40),
   contractDigest:V8_CONTRACT_DIGEST,fixtureDigest:V8_FIXTURE_DIGEST,interoperabilityDigest:V8_INTEROPERABILITY_DIGEST,tokenizerIdentity:'b'.repeat(64),tokenizerSha256:'c'.repeat(64)};
@@ -60,6 +61,39 @@ test('production region admission reruns source checking and refuses missing or 
   let called=false;
   await assert.rejects(admitRegionEvidence(modified,{nativePolicy:policy,nativeConsumer:async()=>{called=true;return unitReceipt();}}),/contexts/);
   assert.equal(called,false,'invalid source/context evidence must fail before invoking the native gate');
+});
+
+test('orchestration admission requires one exact transcript across source and native receipts',async()=>{
+  const augmented=await attachSourceQualifiedOrchestrationV8(artifact),
+    digest=hashAlgorithmData(augmented.sidecar.orchestrationTranscript),receipt=unitReceipt();
+  receipt.orchestrationTranscriptDigest=digest;
+  Object.assign(receipt.sourceVerification,{orchestrationTranscriptDigest:digest,orchestrationValidated:true});
+  receipt.checks.orchestration='passed';receipt.counts.orchestrationRecords=4;
+  assert.equal(validateV8NativeReceipt(augmented,receipt,policy),true);
+  for(const mutate of [
+    row=>{delete row.orchestrationTranscriptDigest;},
+    row=>{row.orchestrationTranscriptDigest='e'.repeat(64);},
+    row=>{delete row.sourceVerification.orchestrationTranscriptDigest;},
+    row=>{row.sourceVerification.orchestrationTranscriptDigest='e'.repeat(64);},
+    row=>{row.sourceVerification.orchestrationValidated=false;},
+    row=>{delete row.checks.orchestration;},
+    row=>{row.counts.orchestrationRecords=0;}
+  ]){
+    const changed=structuredClone(receipt);mutate(changed);
+    assert.throws(()=>validateV8NativeReceipt(augmented,changed,policy),/Native v8/);
+  }
+  for(const mutate of [
+    row=>{row.orchestrationTranscriptDigest=digest;},
+    row=>{row.sourceVerification.orchestrationValidated=true;},
+    row=>{row.sourceVerification.orchestrationTranscriptDigest=digest;},
+    row=>{row.checks.orchestration='passed';},
+    row=>{row.counts.orchestrationRecords=4;}
+  ]){
+    const changed=unitReceipt();mutate(changed);
+    assert.throws(()=>validateV8NativeReceipt(artifact,changed,policy),/Native v8/);
+  }
+  const nullTranscript=structuredClone(artifact);nullTranscript.sidecar.orchestrationTranscript=null;
+  assert.throws(()=>validateV8NativeReceipt(nullTranscript,unitReceipt(),policy),/V8 orchestration training/);
 });
 
 test('direct host receipts bind exactly one verified source identity without a nested artifact',()=>{

@@ -9,6 +9,7 @@ import {hashAlgorithmData} from './program.js';
 import {evaluatePureRegion} from './pure-region-v8.js';
 import {compareObservableGraphs} from './observables.js';
 import {validateV8NativePolicy,validateV8NativeReceipt} from './native-v8.js';
+import {validateOrchestrationTranscriptV8} from './orchestration-training-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual;
 const clean=value=>JSON.parse(JSON.stringify(value));
@@ -186,14 +187,15 @@ export async function verifyRegionTrainingCase(fixture){
 }
 
 export async function recheckRegionEvidence(exported,{nativeConsumer=null,nativePolicy=null,requireNative=false}={}){
-  const side=exported?.sidecar;
+  const side=exported?.sidecar,orchestration=side&&Object.hasOwn(side,'orchestrationTranscript')?
+    validateOrchestrationTranscriptV8(exported):{};
   if(side?.schema==='semantic-protocol-host-region-evidence/1'){
     const {recheckProtocolHostEvidenceV8}=await import('./protocol-host-source-v8.js');
-    return recheckProtocolHostEvidenceV8(exported,{nativeConsumer,nativePolicy,requireNative});
+    return {...await recheckProtocolHostEvidenceV8(exported,{nativeConsumer,nativePolicy,requireNative}),...orchestration};
   }
   if(side?.schema==='semantic-protocol-region-evidence/1'){
     const {recheckProtocolRegionEvidence}=await import('./protocol-source-v8.js');
-    return recheckProtocolRegionEvidence(exported,{nativeConsumer,nativePolicy,requireNative});
+    return {...await recheckProtocolRegionEvidence(exported,{nativeConsumer,nativePolicy,requireNative}),...orchestration};
   }
   if(side?.schema!=='semantic-region-evidence/1'||side.representation!==REGION_TRACE_VERSION||
     side.referenceStatus!=='agreed'||side.sourceArtifactDigest!==digest(side.sourceArtifact)||
@@ -215,7 +217,7 @@ export async function recheckRegionEvidence(exported,{nativeConsumer=null,native
     validateV8NativeReceipt(exported,native,nativePolicy);
   }else if(requireNative)fail('exact v8 native admission must be rechecked by the pinned consumer');
   return {valid:true,sourceValidated:true,projectionValidated:true,replayValidated:true,
-    source,moduleReference,native,regionCoverage:copy(side.regionCoverage),completed:replay.invocations.size};
+    source,moduleReference,native,regionCoverage:copy(side.regionCoverage),completed:replay.invocations.size,...orchestration};
 }
 
 export async function admitRegionEvidence(exported,{nativeConsumer,nativePolicy}={}){

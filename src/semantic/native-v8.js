@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {hashAlgorithmData} from './program.js';
 import {SEMANTIC_V8_DEFINITION} from './contract-v8.js';
 import {identityDigest} from './source-identity.js';
+import {validateOrchestrationTranscriptV8} from './orchestration-training-v8.js';
 
 const contract=JSON.parse(readFileSync(new URL('../../contracts/semantic-execution-v8.json',import.meta.url),'utf8'));
 if(contract.schema!=='semantic-execution-contract/8'||contract.digest!==hashAlgorithmData(contract.definition)||
@@ -56,11 +57,16 @@ export function validateV8NativeReceipt(exported,receipt,policy){
     sourceArtifactDigest=side.sourceArtifactDigest;
   }
   const generated=exported.public.timeline.filter(row=>row.mode==='generated').length;
+  const hasOrchestration=Object.hasOwn(side,'orchestrationTranscript'),
+    orchestrationDigest=hasOrchestration?hashAlgorithmData(side.orchestrationTranscript):null;
+  if(hasOrchestration)validateOrchestrationTranscriptV8(exported);
   if(receipt?.schema!=='semantic-native-admission/8'||receipt.componentGate!=='native-consumer-only'||
     receipt.traceFormat!=='semantic-trace/8'||receipt.contextFormat!=='semantic-context/8'||
     receipt.representation!=='mixed'||receipt.admitted!==true||receipt.optimizerSteps!==0||receipt.learningClaim!==null||
     receipt.publicDigest!==hashAlgorithmData(exported.public)||receipt.contextsDigest!==hashAlgorithmData(exported.contexts)||
     receipt.sourceArtifactDigest!==sourceArtifactDigest||
+    (hasOrchestration?receipt.orchestrationTranscriptDigest!==orchestrationDigest:
+      Object.hasOwn(receipt,'orchestrationTranscriptDigest'))||
     (direct?receipt.sourceIdentityDigest!==side.identityDigest:Object.hasOwn(receipt,'sourceIdentityDigest'))||
     receipt.datasetBindingDigest!==(exported.sidecar.datasetBinding?hashAlgorithmData(exported.sidecar.datasetBinding):null)||
     !HASH.test(receipt.nativeTrainingDigest??''))fail('receipt is missing, stale, unadmitted, or bound to another artifact');
@@ -71,6 +77,9 @@ export function validateV8NativeReceipt(exported,receipt,policy){
   if(source?.schema!=='semantic-native-source-recheck/1'||source.producerTreeClean!==true||
     !REVISION.test(source.producerRevision??'')||source.sourceValidated!==true||
     source.projectionValidated!==true||source.replayValidated!==true||
+    (hasOrchestration?source.orchestrationTranscriptDigest!==orchestrationDigest||
+      source.orchestrationValidated!==true:Object.hasOwn(source,'orchestrationTranscriptDigest')||
+      Object.hasOwn(source,'orchestrationValidated'))||
     !HASH.test(source.artifactSha256??'')||source.sourceArtifactDigest!==sourceArtifactDigest||
     (direct?source.sourceIdentityDigest!==side.identityDigest||source.identityValidated!==true:
       Object.hasOwn(source,'sourceIdentityDigest'))||
@@ -84,5 +93,9 @@ export function validateV8NativeReceipt(exported,receipt,policy){
     !Number.isSafeInteger(counts.generatedTokens)||counts.generatedTokens<1||
     !Number.isSafeInteger(counts.observedTokens)||counts.observedTokens<1)
     fail('physical supervision counts do not describe this execution');
+  if(hasOrchestration&&(receipt.checks.orchestration!=='passed'||counts.orchestrationRecords!==4))
+    fail('the four source-qualified lifecycle targets were not independently admitted');
+  if(!hasOrchestration&&(Object.hasOwn(receipt.checks,'orchestration')||Object.hasOwn(counts,'orchestrationRecords')))
+    fail('orchestration admission claims require the exact source-qualified transcript');
   return true;
 }

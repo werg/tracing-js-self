@@ -1,0 +1,16 @@
+{
+  "schema": "semantic-engineering-test-evidence/1",
+  "producerParent": "58e10e5212fe5d5d50892f0062674bc081b8dcc7",
+  "tests": 20,
+  "passed": 20,
+  "failed": 0,
+  "skipped": 0,
+  "scope": "Producer source-qualified teacher, receipt validation, causal serialization and dataset controls. No production-tokenizer or optimizer/learned result.",
+  "command": "node --test --test-reporter=tap test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js test/semantic-causal-lm-v8.test.js test/semantic-dataset-v8.test.js",
+  "log": {
+    "path": "producer-20.log.gz.b64",
+    "decodedBytes": 5087,
+    "decodedSha256": "0da2c025149c32785fcc32b2f40e5e9a6da58f49f9aba0b846144210de393bae",
+    "encodedSha256": "32f6d19588cb9e6660b1ec95f0d40893916ebd0cdbdccb6bceca2b3a1c11ca5a"
+  }
+}

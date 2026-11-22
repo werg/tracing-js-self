@@ -46,6 +46,9 @@ export {verifyRegionTrainingCase,projectRegionWitness,recheckRegionEvidence,admi
 export {CAUSAL_LM_V8_BRIDGE_VERSION,validateRegionContext,decodeCausalLmV8Target,causalLmV8Prompt,
   encodeCausalLmV8Example,validateRegionTrainingContexts,buildCausalLmV8Examples,createCausalLmV8Selector,
   commitCausalLmV8Selection,auditRegionServingCosts} from './causal-lm-v8.js';
+export {causalLmV8OrchestrationPrompt,encodeCausalLmV8OrchestrationExample} from './causal-lm-v8.js';
+export {V8_ORCHESTRATION_TRAINING_POLICY,buildOrchestrationTranscriptV8,
+  validateOrchestrationTranscriptV8,attachSourceQualifiedOrchestrationV8} from './orchestration-training-v8.js';
 export {createNativeV8ProcessSelector,createNativeV8PythonSelector} from './native-process-v8.js';
 export {RegionSelectedModelDriver,runSelectedRegionExecution} from './selected-execution-v8.js';
 export {RegionSelectedOrchestrationDriver,runSelectedRegionOrchestrationV8} from './selected-orchestration-v8.js';

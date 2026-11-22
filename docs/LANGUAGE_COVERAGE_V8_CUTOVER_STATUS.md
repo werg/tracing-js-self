@@ -16,6 +16,32 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Source-qualified orchestration teacher — 22 November 2026
+
+A separate source-bound transcript now authors four lifecycle targets without
+altering the child public timeline or fabricating model-selection evidence. The
+attaching API reruns original-source, projection and replay qualification before
+constructing create/reserve/bootstrap/join/complete/publish events. Rehashed
+controlled-fixture origins cannot acquire teacher provenance. The flat serializer
+and cost audit include all four actual supervised decisions at their causal cuts.
+
+The complete producer teacher/receipt/serializer/dataset selection passes
+**20/20**, zero skips. Dataset and fresh source/native receipt boundaries bind the
+entire transcript. Child-only and augmented copies retain distinct candidate
+identities in the same immutable source-family/split component. The ordinary
+lifecycle command can attach the teacher before binding and then use the normal
+prepare/train/resume/export/service-restore route with real pinned assets.
+Documentation and full local logs are in `docs/V8_ORCHESTRATION_TRAINING.md` and
+`docs/evidence/v8-orchestration-training-2026-11-22/`.
+
+**Still open:** paired native physical materialization, exact coordinator/child
+track ownership and serving-control parity, persisted ordinary-policy rebuild,
+production census, and fresh exact-pair tokenizer/command/optimizer proof. The
+current producer policy remains on its prior native executable until that
+consumer increment is published and verified. Old consumers cannot satisfy the
+new transcript admission checks. Learned orchestration and complete production
+SE coverage are unmeasured. **0/17 complete packages are closed.**
+
 ## Ordinary model coordinator driver — 22 November 2026
 
 The public V8 entry now exposes `RegionSelectedOrchestrationDriver` and its
