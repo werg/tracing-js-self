@@ -225,7 +225,7 @@ export class RegionExecutionHarness {
     if(activation.deadline!==null&&activation.deadline<=this.inner.now())fail('protocol invocation deadline expired');
     if(realm.running!==null&&realm.running!==invocationId)
       fail('another invocation owns the active realm turn');
-    if(['promise.join.step','async.resume'].includes(record.kind)){
+    if(['promise.join.step','async.resume','promise.adopt.enter','promise.adopt.forward'].includes(record.kind)){
       this.inner.assertNoOtherActiveJob(invocationId);
       if(this.inner.nextReadyInvocation(activation.realmId)!==invocationId)
         fail('protocol scheduler step violates shared realm global ready order');

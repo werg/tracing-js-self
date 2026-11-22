@@ -2,6 +2,7 @@
 // teacher authority only: serving never imports this module or its private
 // archive. Public replay uses the same selected controller with adapters off.
 import {isDeepStrictEqual} from 'node:util';
+import {prepareSourcePromiseAdoptionV8,publishSourcePromiseAdoptionV8} from './protocol-promise-adoption-source-v8.js';
 import {createHash} from 'node:crypto';
 import {parse} from 'acorn';
 import {validateBundle} from '../validation.js';
@@ -695,6 +696,8 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     get state(){return state;},
     componentState:id=>regionAdapter.componentState(id),
     emit,emitProtocol,allocations,writes,publishInitialClosure,refuse,copy,
+    preparePromiseAdoption:(event,owner,promise,target)=>prepareSourcePromiseAdoptionV8(extensionContext,event,owner,promise,target),
+    publishPromiseAdoption:(event,owner,promise,target)=>publishSourcePromiseAdoptionV8(extensionContext,event,owner,promise,target),
     registerFrame(frame,owner){roots.set(frame,owner);return frameId(frame);},
     get harness(){return harness;},
     claimDataIdentity(id){certifiedDataIdentities.add(identity(id));},
@@ -826,6 +829,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       if(!['adoption','finally-pass'].includes(observer.kind))return;
       const key=observer.kind+':'+observer.resultId;
       if(forwardingJobs.has(key))return;
+      if(regionAdapter&&observer.kind==='adoption')return; // Typed source owner registers this at its current job.enter.
       if(regionAdapter)refuse(observer.kind==='adoption'?
         'Promise adoption requires explicit assimilation jobs':'Normal Promise finally completion requires explicit cleanup jobs');
       const job='forward'+(++jobOrdinal);
@@ -1102,10 +1106,19 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
         event.causes.find(cause=>cause.kind==='effect')?.effectId]?.promiseId===change.id)continue;
       if(privatePromises.has(change.id)||reactionTargets.has(change.id))continue;
       const publicPromise=controller(owner).heap.get(change.id);
+      if(regionAdapter&&!publicPromise?.adoption&&change.before?.status==='pending'&&change.after?.status==='rejected'&&
+        event.stateChanges.some(row=>row.table==='frames'&&row.after?.asyncPromiseId===change.id&&
+          row.after.completion?.type==='return'&&isDeepStrictEqual(row.after.completion.value?.value,['promise',change.id]))){
+        extensionContext.preparePromiseAdoption(event,owner,change.id,change.id);
+        extensionContext.publishPromiseAdoption(event,owner,change.id,change.id);
+      }
       if(['fulfilled','rejected'].includes(change.after?.status)&&publicPromise?.state===change.after.status&&
         isDeepStrictEqual(publicPromise.result,tag(change.after.value.value))){settledPromises.add(change.id);continue;}
       if(change.after?.adopting&&change.before?.adopting!==change.after.adopting&&publicPromise?.adopted!==change.after.adopting){
-        if(regionAdapter)refuse('Promise adoption requires explicit assimilation jobs');
+        if(regionAdapter){
+          extensionContext.preparePromiseAdoption(event,owner,change.id,change.after.adopting);
+          extensionContext.publishPromiseAdoption(event,owner,change.id,change.after.adopting);
+        }
         // The operation queues an adoption job; it does not yet observe or
         // settle its target. Publish that job after any same-event settlements
         // below, in the source queue order.
@@ -1119,9 +1132,9 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     const previousQueue=event.stateChanges.find(change=>change.table==='control')?.before?.queue??[],
       currentQueue=event.stateChanges.find(change=>change.table==='control')?.after?.queue??[];
     for(const job of currentQueue)if(job.kind==='promise-adopt'&&!adoptionJobs.has(job.promiseId)){
+      if(regionAdapter)continue; // Typed source owners retain their own current registration identities.
       if(previousQueue.some(prior=>prior.kind==='promise-adopt'&&prior.promiseId===job.promiseId))
         refuse('adoption job appeared without its source enqueue event');
-      if(regionAdapter)refuse('Promise adoption requires explicit assimilation jobs');
       const id='adopt'+(++jobOrdinal);
       emit(owner,'job',{action:'enqueue',job:id,owner},event,'promise-adoption-enqueue');
       adoptionJobs.set(job.promiseId,{job:id,owner,target:job.targetId});
@@ -1139,10 +1152,17 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
         const frame=state.frames[exit.invocation],asyncResult=frame?.asyncPromiseId;
         const value=asyncResult?['ref',asyncResult]:tag(exit.value??event.operands?.[0]);
         const kind=asyncResult?'return':exit.operation==='return'?'return':'throw';
+        const reaction=reactionFrames.get(exit.invocation),adoptedTarget=regionAdapter&&reaction&&kind==='return'&&
+          value[0]==='ref'&&controller(owner).heap.get(value[1])?.kind==='promise'?value[1]:null;
+        if(adoptedTarget!==null)extensionContext.preparePromiseAdoption(event,owner,reaction.target,adoptedTarget);
         emit(owner,kind,{value,invocation:frameId(exit.invocation)},event,'completion');
         if(reactionFrames.has(exit.invocation)){
           const job=reactionFrames.get(exit.invocation);
-          emit(owner,'job',{action:'complete',job:job.job,owner},event,'job-complete');
+          if(adoptedTarget!==null){
+            emitProtocol(owner,{kind:'promise.reaction.complete',job:job.job,owner,promise:job.target,target:adoptedTarget},
+              event,'source-promise-reaction-complete/1');
+            extensionContext.publishPromiseAdoption(event,owner,job.target,adoptedTarget);
+          }else emit(owner,'job',{action:'complete',job:job.job,owner},event,'job-complete');
         }else if(frames.get(exit.invocation)===owner)awaitingCompletion.set(owner,kind);
       }
       handled=true;

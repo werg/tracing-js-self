@@ -81,7 +81,8 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       extensions=[...components.map(adapter=>adapter.sourceComponent),...shared].sort((a,b)=>a.id.localeCompare(b.id));
     return compilePromiseSourceProjectionV8(bundle,{maxGenerated,extensions,extensionIds:extensions.map(component=>component.id),
       sourceProfile:shared.length?'composed-protocol-source/1':components.some(adapter=>adapter.id==='promise-executor/1')?
-        'promise-executors-source/1':'promise-joins-source/1'});
+        'promise-executors-source/1':components.some(adapter=>adapter.id==='promise-adoption/1')?
+        'promise-adoption-source/1':'promise-joins-source/1'});
   }
   for(const adapter of adapters){
     const stateful=typeof adapter.captureState==='function'&&typeof adapter.restoreState==='function';

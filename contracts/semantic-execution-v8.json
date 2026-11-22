@@ -934,6 +934,39 @@
             "promise",
             "invocation",
             "completion"
+          ],
+          "promise.adopt.enqueue": [
+            "kind",
+            "promise",
+            "target",
+            "job"
+          ],
+          "promise.adopt.enter": [
+            "kind",
+            "promise",
+            "target",
+            "job",
+            "forwarding"
+          ],
+          "promise.adopt.forward": [
+            "kind",
+            "promise",
+            "target",
+            "job",
+            "status",
+            "value"
+          ],
+          "promise.adopt.self": [
+            "kind",
+            "promise",
+            "error"
+          ],
+          "promise.reaction.complete": [
+            "kind",
+            "job",
+            "owner",
+            "promise",
+            "target"
           ]
         },
         "expressionKinds": [
@@ -978,7 +1011,8 @@
           "number-conversion/1",
           "synchronous-generator/1",
           "ordinary-data-proxy/1",
-          "promise-executor/1"
+          "promise-executor/1",
+          "promise-adoption/1"
         ],
         "limits": {
           "symbols": 4096,
@@ -2033,8 +2067,8 @@
           "completion"
         ],
         "storage": "Retained asyncCall metadata belongs to its internal execution Promise; asyncFunction marks its callable closure.",
-        "capabilities": "First await detaches the child and restores its caller scope. Later continuations resume in the realm FIFO with the same receiver, live capture cells, and execution Promise. Child completion settles that Promise without completing its parent invocation.",
-        "boundaries": "Async Promise callbacks, Promise adoption, thenable assimilation and implicit scheduler completion require separate profiles."
+        "capabilities": "First await detaches the child and restores its caller scope. Later continuations resume in the realm FIFO with the same receiver, live capture cells, and execution Promise. Child completion settles that Promise or stages its exact owned-Promise adoption intent without completing its parent invocation.",
+        "boundaries": "Async Promise callbacks, callable thenables and implicit scheduler completion require separate profiles."
       },
       "moduleScheduler": {
         "profile": "bound-module-scheduler/1",
@@ -2393,7 +2427,58 @@
           "promise",
           "mode"
         ],
-        "capabilities": "Synchronous source executor calls, stable resolving function identities, a shared first-call cell, retained resolvers, primitive or owned Promise resolution, and executor throw rejection. Thenables, self resolution and async executor bodies require separate profiles."
+        "capabilities": "Synchronous source executor calls, stable resolving function identities, a shared first-call cell, retained resolvers, primitive settlement or an exact owned-Promise adoption intent, and executor throw rejection. The first resolve consumes authority before either adoption job. Callable thenables and async executor bodies require separate profiles."
+      },
+      "promiseAdoption": {
+        "profile": "promise-adoption/1",
+        "schema": "semantic-promise-adoption-state/1",
+        "fields": [
+          "schema",
+          "owner",
+          "target",
+          "phase",
+          "cause",
+          "job",
+          "forwarding",
+          "error"
+        ],
+        "phases": [
+          "intent",
+          "queued",
+          "observing",
+          "completed",
+          "self"
+        ],
+        "causes": [
+          "resolver",
+          "async",
+          "reaction",
+          "source"
+        ],
+        "assimilationJobFields": [
+          "status",
+          "owner",
+          "closure",
+          "reaction",
+          "adoptionPromise",
+          "adoptionTarget",
+          "readySequence"
+        ],
+        "forwardingJobFields": [
+          "status",
+          "owner",
+          "promise",
+          "reaction",
+          "closure",
+          "rejectionClosure",
+          "target",
+          "sequence",
+          "adoptionPromise",
+          "adoptionTarget",
+          "readySequence"
+        ],
+        "capabilities": "Owned internal Promises with unchanged intrinsic then lookup use one existing realm FIFO. The original resolver or completed async/reaction frame binds an immediate resolution intent. Enqueue consumes that intent before any further record. The first job registers a forwarding dependency in registration order; a separate FIFO job forwards the settled target. First-call authority remains consumed throughout. Distinct mutual adoption cycles remain pending. Direct self resolution allocates a fresh declared TypeError identity at the self step, without either job. Source admission independently rebuilds each identity and source event.",
+        "boundaries": "Callable thenables, then getters, proxies, changed Promise properties/prototypes, async reaction activation and general Error reflection are outside this slice. A declared self error has ordinary name/message data properties; native Error descriptors, stack and prototype are not claimed equivalent. Original-source checks refuse any observable mismatch."
       },
       "binaryMemory": {
         "profile": "owned-binary-memory/1",
@@ -2578,7 +2663,7 @@
       "default": "not promoted by engineering receipts alone"
     }
   },
-  "digest": "a952385535b9b5e19d737206286f6f26c149f7301c51b4b106fe3b1cae5ab55a",
+  "digest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
   "fixtures": [
     {
