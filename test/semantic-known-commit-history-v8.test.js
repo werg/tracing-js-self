@@ -23,10 +23,12 @@ const faultPeer=join(root,'test/fixtures/semantic-v8-durable-commit-peer.py');
 const env={...process.env,PYTHONPATH:[join(nativeRoot,'src'),nativeRoot,process.env.PYTHONPATH].filter(Boolean).join(delimiter)};
 let namespaceAvailable=false,described;
 try{namespaceAvailable=/^time:\[[1-9][0-9]*\]$/.test(readlinkSync('/proc/self/ns/time'));}catch{}
-const skip=namespaceAvailable?false:'Linux time namespace identity is unavailable; hosted positive gate is mandatory';
+const paired=Object.hasOwn(process.env,'MEGATOKEN_ROOT')&&existsSync(peer);
+const skip=!paired?'Exact paired native recovery runtime is unconfigured; hosted gate is mandatory':
+  namespaceAvailable?false:'Actual Linux time namespace identity is unavailable; hosted gate is mandatory';
 if(process.env.REQUIRE_KNOWN_COMMIT_RECOVERY==='1'){
   assert(namespaceAvailable,'Mandatory recovery gate requires the actual Linux time namespace identity');
-  assert(existsSync(peer),'Mandatory recovery gate requires its exact native peer');
+  assert(paired,'Mandatory recovery gate requires its exact native peer');
 }
 
 async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}){
