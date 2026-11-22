@@ -58,3 +58,27 @@ with the `b534-` prefix. Artifact `14748467994` has archive SHA-256
 `88f620b2e803b59c5804a2d14a32e1a440381b8a522470011d8ffc8de7ca36f8`.
 Producer `e56fcd02b8d716ef60727038ee85ee1ae0aff8a6` pins the corrected and
 admission-reusing native `a1d7f83` for the next complete campaign.
+
+That exact pair's [run 45007991460](https://github.com/werg/tracing-js-self/actions/runs/45007991460)
+was cancelled during preparation, before any optimizer update, to replace a known
+insufficient 30-minute coverage-stage timeout. A bounded local CPU measurement had
+already taken 448.51 seconds for preflight and the first 25 of 348 required updates.
+Producer `7c468f8f3d06e32e43e3ebb482137840bdce676d` gives the separate coverage
+stage a finite two hours inside a three-hour job, retaining every strict target,
+window and denominator check and the same native pin. No GPU is available in the
+local environment. The runtime/config distinction and partial census are recorded
+in `local-finite-budget-measurement.json`; the partial fit is not complete coverage.
+
+The superseded cancellation remains an unsuccessful attempt. Its complete job log
+is retained as `e56-cancelled-job45007991460.log.gz`. The archive
+`e56-cancelled-complete-reports.tar.gz` retains all 403 original raw report files,
+including all per-source native receipts, full tokenizer/packing measurements,
+progress journals, prepared manifest/registry/report and stage logs. The provenance
+manifest lists every included path, byte length and SHA-256, the original artifact
+identity and cancellation reason. Raw source/admitted payloads and prepared episode
+and SQLite data remain in original artifact `14748763367`, archive SHA-256
+`3ba8856c1b41fe0d39931f85dd9758c207e4bbcf03f715a6952d317aa90d9319`;
+the repository archive preserves the complete reports without duplicating those inputs.
+The replacement [run 45009024141](https://github.com/werg/tracing-js-self/actions/runs/45009024141)
+must complete its actual optimizer pass and checkpoint comparison before it earns
+full target-exposure credit.
