@@ -69,6 +69,9 @@ test('forwarding queue tampering and unpaired V8 promotion are refused',()=>{
   assert.throws(()=>verifyEffectfulProjection(bundle,tampered,{semanticRegions:false}),/certificates|bytes/);
   for(const index of [0,2,3]){
     const candidate=project(cases[index][1]);
-    assert.throws(()=>compileEffectfulRegionWitnessV8(candidate.bundle),/explicit.*jobs/);
+    // The bare teacher has no adoption component. The paired source compiler
+    // supplies that owner; unpaired projection must still refuse explicitly.
+    assert.throws(()=>compileEffectfulRegionWitnessV8(candidate.bundle),index===0?
+      {name:'TypeError',category:'unsupported.effectful-region-source'}:/explicit.*jobs/);
   }
 });
