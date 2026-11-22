@@ -47,6 +47,62 @@ def git(root, *args):
     return subprocess.check_output(["git", *args], cwd=root, env=environment, text=True).strip()
 
 
+def verify_task_binding_snapshot(rows, registry, snapshot):
+    """Join task bindings by case label, then verify their physical registry ID."""
+    require(isinstance(rows, list) and isinstance(registry, dict) and isinstance(snapshot, dict),
+            "Task binding inputs are malformed")
+    members, components = {}, {}
+    for member in registry.get("sources", []):
+        require(isinstance(member, dict) and isinstance(member.get("id"), str) and member["id"] not in members,
+                "Physical source registry IDs must be present and unique")
+        members[member["id"]] = member
+    for component in registry.get("components", []):
+        require(isinstance(component, dict) and isinstance(component.get("sourceIds"), list),
+                "Physical source registry component is malformed")
+        for source_id in component["sourceIds"]:
+            require(isinstance(source_id, str) and source_id not in components,
+                    "Physical source registry membership must be unique")
+            components[source_id] = component
+    require(members and set(members) == set(components),
+            "Physical source registry membership is incomplete")
+
+    report_by_case = {}
+    for row in rows:
+        require(isinstance(row, dict) and isinstance(row.get("id"), str) and
+                isinstance(row.get("sourceId"), str) and isinstance(row.get("split"), str) and
+                row["id"] not in report_by_case,
+                "Qualification case IDs and physical source IDs must be present and unique")
+        report_by_case[row["id"]] = row
+    physical_ids = [row["sourceId"] for row in report_by_case.values()]
+    require(len(physical_ids) == len(set(physical_ids)) == len(members) and set(physical_ids) == set(members),
+            "Qualification rows must cover every physical source exactly once")
+
+    cases = snapshot.get("cases")
+    require(snapshot.get("status") == "verified" and isinstance(cases, list) and
+            len(cases) == len(report_by_case), "Task binding snapshot does not cover the exact qualification population")
+    cases_by_id = {}
+    for case in cases:
+        require(isinstance(case, dict) and isinstance(case.get("id"), str) and case["id"] not in cases_by_id,
+                "Task binding snapshot case IDs must be present and unique")
+        cases_by_id[case["id"]] = case
+    require(set(cases_by_id) == set(report_by_case),
+            "Task binding snapshot case membership differs from qualification report")
+
+    for case_id, row in report_by_case.items():
+        case = cases_by_id[case_id]
+        binding = case.get("taskArtifactBinding")
+        membership = binding.get("membership") if isinstance(binding, dict) else None
+        physical_id = row["sourceId"]
+        require(isinstance(binding, dict) and binding.get("caseId") == case_id and
+                isinstance(membership, dict) and membership.get("sourceId") == physical_id,
+                "Task binding does not match its exact case and physical source identity")
+        require(physical_id in members and physical_id in components and
+                membership.get("registryDigest") == registry.get("digest") and
+                membership.get("split") == row["split"] == components[physical_id].get("split") and
+                members[physical_id].get("split") in (None, row["split"]),
+                "Task binding physical identity differs from the exact registry membership")
+
+
 def qualify(args):
     producer = Path(__file__).resolve().parents[1]
     native = args.megatoken.resolve(strict=True)
@@ -149,10 +205,9 @@ def qualify(args):
     require(binding_snapshot["status"] == "verified" and
             binding_snapshot["taskArtifactBindings"]["checkedAttempts"] == 64 and
             binding_snapshot["taskArtifactBindings"]["checkedCurrentSources"] == 64 and
-            binding_snapshot["taskArtifactBindings"]["checkedNativeRecords"] == 64 and
-            all(row["taskArtifactBinding"]["membership"]["sourceId"] == row["id"]
-                for row in binding_snapshot["cases"]),
+            binding_snapshot["taskArtifactBindings"]["checkedNativeRecords"] == 64,
             "Original task to artifact binding did not cover the complete frozen campaign")
+    verify_task_binding_snapshot(rows, registry, binding_snapshot)
     source_inventory = inputs / "source-ids.json"
     write(source_inventory, {"schema": "semantic-v8-source-population/1",
                              "registryDigest": registry["digest"], "sourceIds": ids})
