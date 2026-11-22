@@ -16,6 +16,49 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Latest paired campaign and isolated hard-boundary work — 22 November 2026
+
+The complete `8dad4e6/e9817ad` four-population campaign passed: 665 original,
+66 interoperability, 11 gallery and 64 support source/native/token/packing cases.
+Each lane retains its own denominator. The native suite ran 801 controls and the
+paired transport suite 77, zero skips. Support and interoperability also passed
+their actual prepared-corpus optimizer/resume/export/service-restoration routes.
+Producer `134a832` passed 108 focused controls, installed 665+66 source checks and
+general CI. [Full logs and exact scope index](evidence/v8-paired8dad-main134-2026-11-22/README.md)
+are permanently retained. These results do not expand the separately measured
+optimizer census or claim learned success.
+
+The hardest current changes remain isolated until their complete gates pass:
+
+- Service candidate `5e8b987f13b43aff6b7084828646e2a3c258185b` on
+  `codex/v8-service-terminal-recovery-20261122`: acknowledged terminal intent,
+  exact same-owner service fences, settled complete/cancel reconciliation, and
+  read-only terminal/active-owner outcome listings. Prior runs passed 140/141
+  focused cases and 78/79 actual Python cases; remaining assertions were corrected
+  for the exact tampered-chain error and the selected cancellation decoder record.
+  Latest tests also compare original/restored decoder fragments and distinguish
+  one terminal session reexecution from zero-session final tombstone restoration.
+  Promotion remains pending. Missing outcomes, unsettled children, successor and
+  distributed ownership are not authorized for recovery.
+- Namespace producer `c6d88f69fe466a984173a634644c31d032a70d74` / native
+  `642d792aa6bac62b62e9384870e0be5e8e883be7` on paired
+  `codex/v8-namespace-state-validation-20261122`: the generated contract and
+  fixtures are committed, seven public-machine controls passed, and actual JS
+  and Python shared protocol states agreed at all 23 accepted/refused transition
+  cuts. The run passed 33/34 JS and 44/45 native cases, zero skips; the remaining
+  native failure is a missing fixture frame table, while source integration still
+  needs the reserved generated intrinsic and real original-ESM observation path.
+  The first source profile is restricted to a proved synchronous scalar subset,
+  with shadowing/thenable exclusions. Main namespace refusal remains intact.
+
+Recovery lesson: a published fence file can be visible when its writer loses
+its directory-sync acknowledgement. Independent synchronization/readback proves
+current retained bytes, not the missing original ACK. Native restore must remain
+behind verification of every service fence. Active recovery listings are
+point-in-time observations, not exclusive ownership or permission to retry.
+
+**0/17 complete acceptance packages are closed.** Both main PRs remain drafts.
+
 ## Full support-corpus census measured — 22 November 2026
 
 Exact producer `3cf0e4732290ab07a6f0d1f897e8893df762cc92` / native
