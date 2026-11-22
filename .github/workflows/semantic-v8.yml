@@ -105,7 +105,8 @@ jobs:
         working-directory: tracing-js-self
         run: |
           node --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \
-            test/semantic-selected-orchestration-v8.test.js \
+            test/semantic-selected-orchestration-v8.test.js test/semantic-selected-orchestration-checkpoint-v8.test.js \
+            test/semantic-native-orchestration-recovery-v8.test.js \
             test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js \
             2>&1 | tee "$RUNNER_TEMP/semantic-v8-transport-tests.xml"
           python - <<'PY'

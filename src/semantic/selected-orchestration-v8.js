@@ -2,8 +2,10 @@
 // output; this host driver only acknowledges, bootstraps and runs declared roots.
 import {isDeepStrictEqual} from 'node:util';
 import {RegionExecutionHarness} from './region-harness.js';
-import {RegionSelectedModelDriver,boundedCancellationReason} from './selected-execution-v8.js';
+import {RegionSelectedModelDriver,boundedCancellationReason,restoreSelectedOrchestrationChildDriver} from
+  './selected-execution-v8.js';
 import {nativeV8OrchestrationContext} from './native-orchestration-transport-v8.js';
+import {verifySelectedOrchestrationCheckpoint} from './selected-orchestration-checkpoint-v8.js';
 import {hashAlgorithmData} from './program.js';
 
 const copy=structuredClone,HASH=/^[a-f0-9]{64}$/;
@@ -104,7 +106,7 @@ export class RegionSelectedOrchestrationDriver {
   constructor({initialPublic,select,checkpointIdentity,tokenizerIdentity,trainingIdentity=null,seed=17,
       generationSettings,maxActive=1,childBudget=128,maxCoordinatorSelections=128,maxPredictions=4096,
       maxGenerated=16384,maxOutstanding=64,maxStaleRetries=8,timeoutMs=15000,
-      harness=null,harnessOptions={}}={}){
+      automaticDelivery=null,harness=null,harnessOptions={}}={}){
     const ingress=validateIngress(initialPublic);
     demand(typeof select==='function'&&typeof select.initialize==='function'&&
       typeof select.openOrchestration==='function'&&typeof select.statusOrchestration==='function'&&
@@ -129,48 +131,104 @@ export class RegionSelectedOrchestrationDriver {
       'host execution harness must represent the exact original public ingress');
     bridge.inner.maxGenerated=maxGenerated;bridge.inner.maxOutstanding=maxOutstanding;
     for(const activation of bridge.invocations.values())activation.controller.maxGenerated=maxGenerated;
+    demand(automaticDelivery===null||automaticDelivery===bridge.inner.automaticDelivery,
+      'host callback delivery differs from the frozen orchestration policy');
     Object.assign(this,{initialPublic:copy(initialPublic),session:ingress.session,invocations:ingress.invocations.map(row=>copy(row)),
       select,bridge,checkpointIdentity,tokenizerIdentity,trainingIdentity,seed,
       generationSettings:copy(generationSettings),maxActive,childBudget,maxCoordinatorSelections,maxPredictions,
-      maxGenerated,maxOutstanding,maxStaleRetries,timeoutMs});
-    this.coordinatorAttempts=[];this.state=null;this.running=false;this.used=false;
+      maxGenerated,maxOutstanding,maxStaleRetries,timeoutMs,automaticDelivery:bridge.inner.automaticDelivery});
+    this.policy=Object.freeze({checkpointIdentity,tokenizerIdentity,trainingIdentity,seed,
+      generationSettings:copy(generationSettings),maxActive,childBudget,maxCoordinatorSelections,maxPredictions,
+      maxGenerated,maxOutstanding,maxStaleRetries,timeoutMs,automaticDelivery:bridge.inner.automaticDelivery});
+    this.coordinatorAttempts=[];this.state=null;this.initialState=null;this.nativeIdentity=null;
+    this.continuation={phase:'unopened',coordinatorSelections:0,joinedAttempt:null,joinedDependency:null,elapsedMs:0};
+    this.createdDependencies=new Map();this.pausedCheckpoint=null;this.restored=false;this.running=false;this.used=false;
   }
 
-  checkpoint(){throw new Error('Selected orchestration v8: composite coordinator and child recovery is not available');}
+  checkpoint(){
+    demand(this.pausedCheckpoint,'checkpoint is available only after a requested quiescent safe-point pause');
+    return copy(this.pausedCheckpoint);
+  }
   checkpointDurableHistory(){throw new Error('Selected orchestration v8: composite coordinator history is not available');}
   startAutomaticHistory(){throw new Error('Selected orchestration v8: composite coordinator history is not available');}
-  static restore(){throw new Error('Selected orchestration v8: composite coordinator restore is not available');}
+  static async restore(packet,{initialPublic,select,policy,harnessOptions={},signal=null}={}){
+    demand(initialPublic&&typeof select==='function'&&typeof select.restore==='function'&&
+      typeof select.checkpoint==='function'&&typeof select.status==='function',
+      'external source cut and a fresh checkpoint-capable native selector are required');
+    verifySelectedOrchestrationCheckpoint(packet,policy,{initialPublic});
+    demand(select.status().closed===false&&select.status().pending===0,
+      'restore requires a fresh native process selector');
+    const bridge=RegionExecutionHarness.restore(copy(packet.bridge),{...harnessOptions,
+      maxGenerated:policy.maxGenerated,maxOutstanding:policy.maxOutstanding});
+    demand(hashAlgorithmData(bridge.checkpoint())===hashAlgorithmData(packet.bridge),
+      'restored host bridge differs from the independently verified cut');
+    try{
+      const receipt=await select.restore({checkpoint:copy(packet.native)});
+      demand(receipt?.restored===true&&receipt.transportCheckpointDigest===packet.native.digest&&
+        receipt.hostDispatches===0&&receipt.consumedAttempts===packet.native.native.attempts.length,
+        'native restore did not acknowledge the exact checkpoint without host dispatch');
+      const state=await select.statusOrchestration({session:packet.session,track:packet.state.track});
+      demand(isDeepStrictEqual(state,packet.state),'restored coordinator state differs from the composite cut');
+      const ingressHarness=RegionExecutionHarness.replay(copy(packet.initialPublic),{...harnessOptions,
+        requireTerminal:false,automaticDelivery:policy.automaticDelivery});
+      const driver=new RegionSelectedOrchestrationDriver({initialPublic:copy(packet.initialPublic),select,
+        ...policy,automaticDelivery:policy.automaticDelivery,harness:ingressHarness});
+      driver.bridge=bridge;
+      driver.state=copy(state);driver.initialState=copy(packet.initialState);
+      driver.nativeIdentity=copy(packet.native.identity);driver.continuation=copy(packet.continuation);
+      driver.coordinatorAttempts=copy(packet.coordinatorAttempts);driver.restored=true;
+      for(const attempt of driver.coordinatorAttempts)if(attempt.action?.name==='track_create'){
+        const dependency=attempt.commitReceipt?.completion_dependency;
+        demand(dependency,'restored create has no exact dependency receipt');
+        driver.createdDependencies.set(dependency.track,copy(dependency));
+      }
+      driver.#childDriver=await restoreSelectedOrchestrationChildDriver({packet,policy,
+        initialPublic:driver.initialPublic,bridge,select,childSelect:childSelector(select)});
+      return driver;
+    }catch(error){select.close?.();throw error;}
+  }
   static restoreLatest(){throw new Error('Selected orchestration v8: composite coordinator restore is not available');}
 
-  async run({signal=null}={}){
+  async run({signal=null,stopAt=null}={}){
     demand(!this.running&&!this.used,'coordinator driver is one-shot and cannot be reopened');
+    demand(stopAt===null||stopAt&&typeof stopAt==='object'&&!Array.isArray(stopAt)&&
+      Object.keys(stopAt).length===2&&['phase','coordinatorSelections'].every(key=>Object.hasOwn(stopAt,key))&&
+      ['coordinator-ready','child-ready'].includes(stopAt.phase)&&
+      Number.isSafeInteger(stopAt.coordinatorSelections)&&stopAt.coordinatorSelections>=0,
+      'checkpoint stop point must name an explicit safe continuation phase and selection count');
     this.running=true;this.used=true;
     const started=performance.now(),abort=new AbortController(),coordinatorAttempts=this.coordinatorAttempts;
-    let nativeIdentity=null,initialState=null,state=null,task=null,failure=null,cleanupFailure=null,
-      closeReceipt=null,cancelReceipt=null,terminalReason=null,deadlineExceeded=false,opened=false;
+    let nativeIdentity=null,initialState=null,state=null,failure=null,cleanupFailure=null,
+      closeReceipt=null,cancelReceipt=null,terminalReason=null,deadlineExceeded=false,opened=false,paused=false;
     let timer=null;
     const onExternalAbort=()=>abort.abort(signal.reason??new Error('Selected orchestration v8 cancelled'));
     const checkAbort=()=>{if(abort.signal.aborted)throw abort.signal.reason instanceof Error?
       abort.signal.reason:new Error(String(abort.signal.reason??'Selected orchestration v8 cancelled'));};
+    const elapsed=()=>this.continuation.elapsedMs+performance.now()-started;
     const readState=async()=>{
-      state=await this.select.statusOrchestration({session:this.session,track:state.track});return state;
+      state=await this.select.statusOrchestration({session:this.session,track:state.track});
+      this.state=copy(state);return state;
     };
     const rootById=new Map(this.invocations.map(row=>[row.fields.invocationId,row]));
-    const createdDependencies=new Map();
     const runJoinedChild=async dependency=>{
       const child=state.children.find(row=>row.track===dependency.track&&
         row.execution.invocation_id===dependency.invocation);
-      demand(child&&createdDependencies.has(child.track)&&
-        isDeepStrictEqual(createdDependencies.get(child.track),dependency),
+      demand(child&&this.createdDependencies.has(child.track)&&
+        isDeepStrictEqual(this.createdDependencies.get(child.track),dependency),
         'join must name the exact dependency returned for this coordinator child');
       const track=state.tracks.find(row=>row.address===child.track);
       demand(track?.status==='active'&&track.bootstrap_ready===true,
         'native join did not make its exact bootstrapped child runnable');
-      const ingress=rootById.get(child.execution.invocation_id);
-      demand(ingress,'native coordinator selected an undeclared root invocation');
+      demand(rootById.has(child.execution.invocation_id),
+        'native coordinator selected an undeclared root invocation');
       const outcome=await this.#childDriver.runInvocation(child.execution.invocation_id,{signal:abort.signal});
       const completed=outcome.taskCompletion?await outcome.taskCompletion:outcome;
       checkAbort();
+      while(this.#childDriver.running.size){
+        await Promise.allSettled([...this.#childDriver.running.values()].map(row=>row.task));
+        await new Promise(resolve=>queueMicrotask(resolve));
+      }
+      demand(this.#childDriver.running.size===0,'child execution must settle before composite recovery');
       const after=await readState(),saved=after.children.find(row=>row.track===child.track),
         receipt=saved?.completion;
       demand(receipt?.schema==='semantic-child-completion/8'&&receipt.session===this.session&&
@@ -184,39 +242,90 @@ export class RegionSelectedOrchestrationDriver {
       return {invocationId:child.execution.invocation_id,track:child.track,
         completion:copy(receipt),outcome:copy(completed)};
     };
+    const captureCheckpoint=async()=>{
+      demand((this.continuation.phase!=='unopened'&&state?.status==='active')||
+        (this.continuation.phase==='child-ready'&&state?.status==='waiting'),
+        'only an active safe coordinator or acknowledged waiting child can be checkpointed');
+      demand(this.#childDriver?.running.size===0,'a running child cannot be checkpointed');
+      const transportStatus=this.select.status?.();
+      demand(transportStatus?.closed===false&&transportStatus.pending===0,
+        'in-flight native acknowledgements cannot be checkpointed');
+      state=await readState();
+      const bridge=this.bridge.checkpoint(),native=await this.select.checkpoint(),
+        elapsedMs=elapsed();
+      demand(elapsedMs<this.timeoutMs,'cooperative orchestration deadline expired before checkpoint');
+      this.continuation={...this.continuation,elapsedMs};
+      const body={schema:'semantic-selected-orchestration-checkpoint/8',policy:copy(this.policy),session:this.session,
+          initialPublic:copy(this.initialPublic),initialState:copy(initialState),state:copy(state),bridge,
+          contexts:copy(this.#childDriver.contexts),coordinatorAttempts:copy(coordinatorAttempts),
+          childAttempts:copy(this.#childDriver.attempts),childRejections:copy(this.#childDriver.rejections),
+          staleRetries:this.#childDriver.metrics().staleRetries,continuation:copy(this.continuation),native};
+      const packet={...body,digest:hashAlgorithmData(body)};
+      verifySelectedOrchestrationCheckpoint(packet,this.policy,{initialPublic:this.initialPublic});
+      return packet;
+    };
+    const maybePause=async()=>{
+      if(!stopAt||stopAt.phase!==this.continuation.phase||
+        stopAt.coordinatorSelections!==this.continuation.coordinatorSelections)return false;
+      checkAbort();this.pausedCheckpoint=await captureCheckpoint();checkAbort();
+      this.state=copy(state);paused=true;return true;
+    };
     try{
       if(signal){if(signal.aborted)onExternalAbort();else signal.addEventListener('abort',onExternalAbort,{once:true});}
-      timer=setTimeout(()=>{deadlineExceeded=true;abort.abort(new Error('Selected orchestration v8 deadline exceeded'));},this.timeoutMs);
+      const remainingMs=this.timeoutMs-this.continuation.elapsedMs;
+      if(remainingMs<=0){deadlineExceeded=true;abort.abort(new Error('Selected orchestration v8 deadline exceeded'));}
+      else timer=setTimeout(()=>{deadlineExceeded=true;
+        abort.abort(new Error('Selected orchestration v8 deadline exceeded'));},remainingMs);
       checkAbort();
-      nativeIdentity=copy(await this.select.initialize({seed:this.seed,checkpointIdentity:this.checkpointIdentity,
-        tokenizerIdentity:this.tokenizerIdentity,trainingIdentity:this.trainingIdentity}));
-      demand(nativeIdentity?.schema==='semantic-inference-identity/8'&&
-        nativeIdentity.adapter==='native-semantic-v8/1'&&nativeIdentity.checkpointIdentity===this.checkpointIdentity&&
-        nativeIdentity.tokenizerIdentity===this.tokenizerIdentity&&
-        (nativeIdentity.trainingIdentity??null)===this.trainingIdentity&&nativeIdentity.seed===this.seed&&
-        nativeIdentity.generationSettings&&isDeepStrictEqual(nativeIdentity.generationSettings,this.generationSettings),
-        'loaded native V8 model differs from the frozen identity or generation settings');
-      demand(nativeIdentity.nativeAdmissionClaim===false&&
-        (nativeIdentity.sourceAdmissionClaim===undefined||nativeIdentity.sourceAdmissionClaim===false),
-        'native initialization made an unsupported admission claim');
-      checkAbort();
-      state=await this.select.openOrchestration({session:this.session,public:copy(this.initialPublic),
-        maxActive:this.maxActive,childBudget:this.childBudget,origin:'model'});
-      opened=true;initialState=copy(state);
-      demand(state?.schema==='semantic-orchestration-state/8'&&state.session===this.session&&
-        state.origin==='model'&&state.sourceAdmissionClaim===false&&Array.isArray(state.children)&&
-        state.children.length===this.invocations.length&&typeof state.track==='string',
-        'native coordinator opening changed the model-only ingress authority');
-      const contextPolicy={maxGenerated:this.maxGenerated,maxOutstanding:this.maxOutstanding};
-      this.#childDriver=new RegionSelectedModelDriver({select:childSelector(this.select),harness:this.bridge,
-        maxSelections:this.maxPredictions,maxOutstanding:this.maxOutstanding,maxStaleRetries:this.maxStaleRetries,
-        origin:'model',checkpointIdentity:this.checkpointIdentity,tokenizerIdentity:this.tokenizerIdentity,
-        nativeIdentity,trainingIdentity:this.trainingIdentity,hostLimits:contextPolicy});
-
-      for(let step=0;step<this.maxCoordinatorSelections;step++){
+      if(this.restored){
+        nativeIdentity=copy(this.nativeIdentity);initialState=copy(this.initialState);state=copy(this.state);opened=true;
+        demand(nativeIdentity&&state&&this.#childDriver,'restored coordinator continuation is incomplete');
+      }else{
+        nativeIdentity=copy(await this.select.initialize({seed:this.seed,checkpointIdentity:this.checkpointIdentity,
+          tokenizerIdentity:this.tokenizerIdentity,trainingIdentity:this.trainingIdentity}));
+        demand(nativeIdentity?.schema==='semantic-inference-identity/8'&&
+          nativeIdentity.adapter==='native-semantic-v8/1'&&nativeIdentity.checkpointIdentity===this.checkpointIdentity&&
+          nativeIdentity.tokenizerIdentity===this.tokenizerIdentity&&
+          (nativeIdentity.trainingIdentity??null)===this.trainingIdentity&&nativeIdentity.seed===this.seed&&
+          nativeIdentity.generationSettings&&isDeepStrictEqual(nativeIdentity.generationSettings,this.generationSettings),
+          'loaded native V8 model differs from the frozen identity or generation settings');
+        demand(nativeIdentity.nativeAdmissionClaim===false&&
+          (nativeIdentity.sourceAdmissionClaim===undefined||nativeIdentity.sourceAdmissionClaim===false),
+          'native initialization made an unsupported admission claim');
+        this.nativeIdentity=copy(nativeIdentity);checkAbort();
+        state=await this.select.openOrchestration({session:this.session,public:copy(this.initialPublic),
+          maxActive:this.maxActive,childBudget:this.childBudget,origin:'model'});
+        opened=true;initialState=copy(state);this.initialState=copy(state);this.state=copy(state);
+        demand(state?.schema==='semantic-orchestration-state/8'&&state.session===this.session&&
+          state.origin==='model'&&state.sourceAdmissionClaim===false&&Array.isArray(state.children)&&
+          state.children.length===this.invocations.length&&typeof state.track==='string',
+          'native coordinator opening changed the model-only ingress authority');
+        this.continuation={phase:'coordinator-ready',coordinatorSelections:0,joinedAttempt:null,
+          joinedDependency:null,elapsedMs:this.continuation.elapsedMs};
+        this.#childDriver=new RegionSelectedModelDriver({select:childSelector(this.select),harness:this.bridge,
+          maxSelections:this.maxPredictions,maxOutstanding:this.maxOutstanding,maxStaleRetries:this.maxStaleRetries,
+          origin:'model',checkpointIdentity:this.checkpointIdentity,tokenizerIdentity:this.tokenizerIdentity,
+          nativeIdentity,trainingIdentity:this.trainingIdentity,
+          hostLimits:{maxGenerated:this.maxGenerated,maxOutstanding:this.maxOutstanding},
+          automaticDelivery:this.automaticDelivery});
+      }
+      if(await maybePause())throw Object.assign(new Error('orchestration paused at requested checkpoint boundary'),
+        {selectedOrchestrationPause:true});
+      while(state.status!=='completed'&&state.status!=='cancelled'){
         checkAbort();
-        if(state.status==='completed'||state.status==='cancelled')break;
-        demand(state.status==='active','native coordinator is waiting without an acknowledged join to drive');
+        if(this.continuation.phase==='child-ready'){
+          const index=this.continuation.joinedAttempt,attempt=coordinatorAttempts[index],
+            joined=await runJoinedChild(this.continuation.joinedDependency);
+          attempt.childCompletion=copy(joined.completion);attempt.childOutcome=copy(joined.outcome);
+          this.continuation={...this.continuation,phase:'coordinator-ready',joinedAttempt:null,joinedDependency:null};
+          if(await maybePause())throw Object.assign(new Error('orchestration paused at requested checkpoint boundary'),
+            {selectedOrchestrationPause:true});
+          continue;
+        }
+        demand(this.continuation.phase==='coordinator-ready'&&state.status==='active',
+          'native coordinator is waiting without an acknowledged child continuation');
+        demand(this.continuation.coordinatorSelections<this.maxCoordinatorSelections,
+          'Selected orchestration v8 coordinator selection budget exhausted');
         const context=nativeV8OrchestrationContext(state),attempt={attempt:coordinatorAttempts.length,
           family:'orchestration',session:this.session,track:state.track,contextDigest:hashAlgorithmData(context),
           publicDigest:state.publicDigest,status:'submitted',record:null,selection:null,commitReceipt:null,
@@ -229,36 +338,37 @@ export class RegionSelectedOrchestrationDriver {
             checkpointIdentity:this.checkpointIdentity,tokenizerIdentity:this.tokenizerIdentity,
             trainingIdentity:this.trainingIdentity});
           attempt.record=original.record;attempt.selection=copy(original.selection);attempt.status='decoded';
-          checkAbort();
-          commitStarted=true;
+          checkAbort();commitStarted=true;
           const receipt=await this.select.commitOrchestration({session:this.session,track:state.track,
             record:original.record,selection:copy(original.selection)});
-          attempt.commitReceipt=copy(receipt);attempt.status='committed';
-          checkAbort();
+          attempt.commitReceipt=copy(receipt);attempt.status='committed';checkAbort();
           action=parseAction(original.record);attempt.action=copy(action);
+          this.continuation={...this.continuation,
+            coordinatorSelections:this.continuation.coordinatorSelections+1};
           state=await readState();
           if(action.name==='track_create'){
             const invocationId=action.arguments.execution?.invocation_id,
               child=state.children.find(row=>row.execution.invocation_id===invocationId);
             demand(child&&child.track===receipt.track?.address&&receipt.track?.parent===state.track&&
-              receipt.track.bootstrap_ready===false&&
-              receipt.completion_dependency?.track===child.track&&
+              receipt.track.bootstrap_ready===false&&receipt.completion_dependency?.track===child.track&&
               receipt.completion_dependency.invocation===invocationId,
               'native create receipt changed its original declared child binding');
-            createdDependencies.set(child.track,copy(receipt.completion_dependency));
+            this.createdDependencies.set(child.track,copy(receipt.completion_dependency));
             const bootstrap=await this.select.bootstrapOrchestrationChild({session:this.session,
               track:state.track,childTrack:child.track});
-            attempt.bootstrapReceipt=copy(bootstrap);
-            state=await readState();
+            attempt.bootstrapReceipt=copy(bootstrap);state=await readState();
             const bound=state.tracks.find(row=>row.address===child.track);
             demand(bound?.bootstrap_ready===true&&isDeepStrictEqual(bound.execution,child.execution),
               'native child is not ready under the exact bootstrapped execution binding');
           }else if(action.name==='track_join'){
-            const joined=await runJoinedChild(action.arguments.completion_dependency);
-            attempt.childCompletion=copy(joined.completion);
-            attempt.childOutcome=copy(joined.outcome);
+            this.continuation={...this.continuation,phase:'child-ready',joinedAttempt:attempt.attempt,
+              joinedDependency:copy(action.arguments.completion_dependency)};
+            if(await maybePause())throw Object.assign(new Error('orchestration paused at requested checkpoint boundary'),
+              {selectedOrchestrationPause:true});
+            continue;
           }
         }catch(error){
+          if(error?.selectedOrchestrationPause)throw error;
           if(output&&typeof output==='object'){
             if(attempt.record===null&&typeof output.record==='string')attempt.record=output.record;
             if(attempt.selection===null&&output.selection!==undefined)attempt.selection=copy(output.selection);
@@ -279,18 +389,20 @@ export class RegionSelectedOrchestrationDriver {
           if(error?.evidence!==undefined)attempt.failureEvidence=copy(error.evidence);
           throw error;
         }
-        if(action.name==='track_complete')
-          demand(state.status==='completed','model-selected completion lacks a native terminal receipt');
-        if(action.name==='track_cancel')
-          demand(state.status==='cancelled','model-selected cancellation lacks a native terminal receipt');
+        if(!['track_complete','track_cancel'].includes(action?.name)&&await maybePause())
+          throw Object.assign(new Error('orchestration paused at requested checkpoint boundary'),
+            {selectedOrchestrationPause:true});
       }
-      if(state.status!=='completed'&&state.status!=='cancelled')
-        throw new RangeError('Selected orchestration v8 coordinator selection budget exhausted');
-      terminalReason=state.status==='cancelled'?boundedCancellationReason(state.receipts.find(row=>
-        row.schema==='semantic-orchestration-cancel/8')?.reason??'selected coordinator cancellation'):
-        'Selected orchestration v8 completed';
+      if(!paused){
+        if(state.status!=='completed'&&state.status!=='cancelled')
+          throw new RangeError('Selected orchestration v8 coordinator selection budget exhausted');
+        terminalReason=state.status==='cancelled'?boundedCancellationReason(state.receipts.find(row=>
+          row.schema==='semantic-orchestration-cancel/8')?.reason??'selected coordinator cancellation'):
+          'Selected orchestration v8 completed';
+      }
     }catch(error){
-      failure=failureOf(error);terminalReason=boundedCancellationReason(error?.message??error);
+      if(error?.selectedOrchestrationPause)paused=true;
+      else{failure=failureOf(error);terminalReason=boundedCancellationReason(error?.message??error);}
     }finally{
       if(timer!==null)clearTimeout(timer);
       signal?.removeEventListener('abort',onExternalAbort);
@@ -301,12 +413,12 @@ export class RegionSelectedOrchestrationDriver {
         if(rejected&&failure===null)failure=failureOf(rejected.reason);
       }
       this.#childDriver?.close();
-      if(opened&&failure&&state?.status!=='completed'&&state?.status!=='cancelled'){
+      if(!paused&&opened&&failure&&state?.status!=='completed'&&state?.status!=='cancelled'){
         try{cancelReceipt=copy(await this.select.cancelOrchestration({session:this.session,track:state.track,
           reason:terminalReason}));state=cancelReceipt;}
         catch(error){cleanupFailure??=failureOf(error);}
       }
-      if(nativeIdentity){
+      if(!paused&&nativeIdentity){
         try{closeReceipt=copy(await this.select.cancel({session:this.session,
           reason:terminalReason??'Selected orchestration v8 finished'}));}
         catch(error){cleanupFailure??=failureOf(error);}
@@ -333,8 +445,9 @@ export class RegionSelectedOrchestrationDriver {
             Array.isArray(row.selection.fragments)?row.selection.fragments.reduce((total,fragment)=>
               total+(Array.isArray(fragment.tokenIds)?fragment.tokenIds.length:0),0):0),0)},
       nativeMetrics=copy(this.select.metrics?.()??null),
-      finalStatus=failure?(failure.message.includes('budget')||deadlineExceeded?'resource_limited':'failed'):
-        state?.status==='cancelled'?'cancelled':publicCompleted?'completed':'incomplete';
+      finalStatus=paused?'paused':failure?(failure.message.includes('budget')||deadlineExceeded?'resource_limited':'failed'):
+        state?.status==='cancelled'?'cancelled':publicCompleted?'completed':'incomplete',
+      totalElapsed=paused?this.continuation.elapsedMs:elapsed();
     const result={schema:'semantic-selected-orchestration-result/8',origin:'model',session:this.session,
       checkpointIdentity:this.checkpointIdentity,tokenizerIdentity:this.tokenizerIdentity,
       trainingIdentity:this.trainingIdentity,seed:this.seed,generationSettings:copy(this.generationSettings),
@@ -348,11 +461,13 @@ export class RegionSelectedOrchestrationDriver {
         coordinatorPostCommitFailures:coordinatorMetrics.postCommitFailures,
         coordinatorUnknownAcknowledgements:coordinatorMetrics.unknownAcknowledgements,
         coordinatorGeneratedBytes:coordinatorMetrics.generatedBytes,
-        coordinatorGeneratedTokens:coordinatorMetrics.generatedTokens,elapsedMs:performance.now()-started},
+        coordinatorGeneratedTokens:coordinatorMetrics.generatedTokens,elapsedMs:totalElapsed},
       nativeMetrics,completionReceipts:copy(state?.children?.map(row=>
         row.completion).filter(Boolean)??[]),cancelReceipt,closeReceipt,terminalReason,
-      failure,cleanupFailure,firstViolation:copy(firstViolation),recovery:{resumable:false,
-        reason:'Composite coordinator and child checkpoints are not available in this driver increment'},
+      failure,cleanupFailure,firstViolation:copy(firstViolation),recovery:{resumable:paused,
+        reason:paused?'Composite checkpoint paused at a verified quiescent phase':
+          'Terminal histories remain unavailable; completed and failed sessions cannot be resumed'},
+      ...(paused?{checkpoint:copy(this.pausedCheckpoint)}:{}),
       limits:{hostExecutionTimeoutMs:this.timeoutMs,nativeRequestDeadlineOwnedBySelector:true},
       qualification:{modelMeasurement:childMetrics.accepted>0?'actual-model-selected':'unmeasured',
         sourceCorrespondence:'not-checked-by-public-replay',defaultPromotion:false}};
@@ -361,5 +476,5 @@ export class RegionSelectedOrchestrationDriver {
 }
 
 export async function runSelectedRegionOrchestrationV8(options){
-  return new RegionSelectedOrchestrationDriver(options).run({signal:options?.signal??null});
+  return new RegionSelectedOrchestrationDriver(options).run({signal:options?.signal??null,stopAt:options?.stopAt??null});
 }

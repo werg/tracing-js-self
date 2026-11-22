@@ -812,3 +812,37 @@ export async function runSelectedRegionExecution({initialPublic,fixture={calls:[
       sourceCorrespondence:'not-checked-by-public-replay',defaultPromotion:false}};
   return {...result,digest:hashAlgorithmData(result)};
 }
+
+/** Seed the ordinary semantic child driver only from a fully verified
+ * orchestration checkpoint whose shared selector and host bridge are already
+ * restored. This does not restore or reopen native state itself. */
+export async function restoreSelectedOrchestrationChildDriver({packet,policy,initialPublic,bridge,
+    select,childSelect}={}){
+  const {verifySelectedOrchestrationCheckpoint}=await import('./selected-orchestration-checkpoint-v8.js');
+  verifySelectedOrchestrationCheckpoint(packet,policy,{initialPublic});
+  demand(bridge instanceof RegionExecutionHarness&&typeof bridge.checkpoint==='function'&&
+    isDeepStrictEqual(bridge.checkpoint(),packet.bridge)&&bridge.inner.sessionId===packet.session,
+    'restored host bridge differs from the verified composite checkpoint');
+  demand(typeof select?.statusOrchestration==='function'&&typeof select.metrics==='function'&&
+    typeof select.status==='function'&&typeof childSelect==='function',
+    'restored native coordinator and child selector are required');
+  const state=await select.statusOrchestration({session:packet.session,track:packet.state.track}),
+    metrics=select.metrics(),transport=packet.native;
+  demand(isDeepStrictEqual(state,packet.state)&&select.status().closed===false&&select.status().pending===0&&
+    isDeepStrictEqual(metrics.attempts,transport.attempts),
+    'restored native coordinator or mixed attempt ledger differs without host dispatch');
+  const recovery={contexts:copy(packet.contexts),attempts:copy(packet.childAttempts),
+    staleRetries:packet.staleRetries};
+  recoveryTickets.add(recovery);
+  try{
+    const driver=new RegionSelectedModelDriver({select:childSelect,harness:bridge,
+      maxSelections:policy.maxPredictions,maxOutstanding:policy.maxOutstanding,
+      maxStaleRetries:policy.maxStaleRetries,origin:'model',checkpointIdentity:policy.checkpointIdentity,
+      tokenizerIdentity:policy.tokenizerIdentity,nativeIdentity:transport.identity,
+      trainingIdentity:policy.trainingIdentity,
+      hostLimits:{maxGenerated:policy.maxGenerated,maxOutstanding:policy.maxOutstanding},
+      automaticDelivery:policy.automaticDelivery,recovery});
+    driver.rejections.push(...copy(packet.childRejections));
+    return driver;
+  }finally{recoveryTickets.delete(recovery);}
+}

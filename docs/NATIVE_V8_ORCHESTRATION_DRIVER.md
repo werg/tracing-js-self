@@ -118,17 +118,82 @@ session identity.
 
 ## Recovery boundary
 
-There is no resumable orchestration checkpoint or durable history API in this
-increment. `checkpoint`, `checkpointDurableHistory`, automatic history, and
-restore entry points refuse the request. The ordinary
-`semantic-selected-driver-checkpoint/8` schema only verifies semantic attempts
-and cannot represent a mixed coordinator and child attempt ledger. The native
-model can replay its orchestration operations, but a host/native composite
-checkpoint and independently retained history chain have not been implemented
-for this driver. A failed active run is cancelled and returned as terminal
-evidence; it must not be resumed from a child-only checkpoint.
+Composite checkpoints are available only at a requested quiescent pause. Use
+`run({ stopAt: { phase, coordinatorSelections } })`; `phase` is
+`coordinator-ready` or `child-ready`, and the selection count names the exact
+coordinator prefix. A `coordinator-ready` cut follows opening, exact
+create-plus-bootstrap, an acknowledged child completion, or progress. A
+`child-ready` cut follows the exact acknowledged join and precedes all child
+execution. With `maxActive` above one, other created and bootstrapped roots may
+already occupy active slots; the driver still runs only the root named by the
+acknowledged join. Roots must remain in the bounded ingress profile described
+above.
 
-The JSONL protocol-peer integration test exercises the driver and native
+The checkpoint joins the immutable source ingress, host bridge and causal
+contexts, original coordinator and child bytes, positive receipts, rejected
+child selections, native attempt/replay/operation history, and an explicit
+next-action phase. Restore independently verifies that mixed ledger before
+asking a fresh native selector to replay the native checkpoint. The native
+restore receipt must report zero host dispatch. The restored selector status
+and attempt ledger are then compared with the same composite packet before the
+child driver receives its recovery state.
+
+An acknowledged stale child prediction is retained as a rejected native
+attempt, with its original selection, rejection reason, retry count, and host
+preflight rejection row. It does not appear as a semantic replay operation or
+add a generated public row. Restore checks that its native `semantic-rejected`
+status and transport `rejected` status both bind the same original selection
+and refusal reason.
+
+Pause returns the packet as `result.checkpoint` and leaves the selector process
+open. The caller closes that process, creates a fresh selector with the same
+frozen model settings, and restores the packet with the same initial public
+cut, policy, and live host services:
+
+```js
+let paused;
+const policy = {
+  checkpointIdentity, tokenizerIdentity, trainingIdentity, seed, generationSettings,
+  maxActive: 1, childBudget: 128, maxCoordinatorSelections: 128, maxPredictions: 4096,
+  maxGenerated: 16384, maxOutstanding: 64, maxStaleRetries: 8, timeoutMs: 15000,
+  automaticDelivery: true,
+};
+const first = createNativeV8PythonSelector({ python: 'python3', megatokenRepository, servedBundle });
+try {
+  paused = await runSelectedRegionOrchestrationV8({
+    initialPublic, select: first, ...policy,
+    stopAt: { phase: 'coordinator-ready', coordinatorSelections: 2 },
+    harnessOptions: { services: productionServices },
+  });
+} finally {
+  first.close();
+}
+
+const resumedSelect = createNativeV8PythonSelector({ python: 'python3', megatokenRepository, servedBundle });
+try {
+  const resumed = await RegionSelectedOrchestrationDriver.restore(paused.checkpoint, {
+    initialPublic, select: resumedSelect, policy, harnessOptions: { services: productionServices },
+  });
+  result = await resumed.run();
+} finally {
+  resumedSelect.close();
+}
+```
+
+`policy` must contain the exact checkpoint, tokenizer, training, seed,
+generation, host-limit, callback-delivery, and timeout fields used to create
+the original driver. The native selector's per-request timeout bounds each
+JSONL RPC. `timeoutMs` is a cooperative active-run budget; the checkpoint keeps
+the consumed `elapsedMs`, and restored execution receives only the remaining
+budget. The timer is stopped while the caller holds a paused packet.
+
+An in-flight or unknown acknowledgement, running child, unsettled host intent,
+terminal coordinator, or unsupported ingress cannot be checkpointed. The
+ordinary semantic-only checkpoint is not used as a substitute. Durable history,
+automatic history, and `restoreLatest` remain unavailable; completed or failed
+terminal sessions are not resumable through this API.
+
+The JSONL protocol-peer integration test exercises the JavaScript driver and
 transport contract with generated fixture records. It validates binding,
-receipt, original-byte, and ordering checks; it is not a model-quality or
-production completion qualification.
+receipt, original-byte, mixed-ledger, zero-dispatch restore, and ordering
+checks; it is not a model-quality or production completion qualification.

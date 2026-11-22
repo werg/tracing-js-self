@@ -16,10 +16,37 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Composite recovery and stricter behavior evidence — 22 November 2026
+
+The ordinary coordinator/child driver now supports verified quiescent composite
+checkpoints. Restore binds original selected bytes, exact causal/source cuts,
+ordered native replay and receipts, child reservations/bootstrap/join/completion,
+and stale rejection/retry history. It preserves the caller's live clock and
+consumed active timeout, and requires native restoration with zero host dispatch.
+The combined process/transport/driver/checkpoint suite passes **34/34 with zero
+skips**, including the overlapping 19 focused controls. Complete logs are under
+`docs/evidence/v8-composite-recovery-2026-11-22/`.
+
+The policy now pins native `9a189f6e1fa133134591f69f2cf412bd8289f73a`. That increment
+fixes module initialization counting and requires a recovered effect to have
+its exact request, contiguous dispatch history beginning at attempt 1, and typed
+result; callback reattachment without lost-state authority does not count.
+Its six focused census controls pass, as do Ruff checks over 589 Python files.
+The paired gate now requires the real Python shared-runtime composite recovery
+test. Local validation of that new test is static only because Torch is absent;
+actual hosted execution is pending and no learned-quality result is inferred.
+
+Remaining recovery work includes durable automatic history, restore-latest,
+terminal packets and dynamic descendants. Repeated source-session composition
+and a separately declared production behavior cohort are under implementation;
+they do not alter the unchanged 665 original or 66 selected denominators.
+The historical exact producer `073870f` now also passes all Node 20/22/24 general
+lanes. **0/17 full acceptance packages are closed.**
+
 ## Native orchestration training and complete installed proof — 22 November 2026
 
-Native `21572be70f7884397e513fd65099fda240526971` is published and is now the
-producer policy pin. It independently validates the source-qualified teacher,
+Native `21572be70f7884397e513fd65099fda240526971` was published and pinned in
+the preceding producer checkpoint. It independently validates the source-qualified teacher,
 materializes four lifecycle targets on a coordinator track and original child
 targets on their own track, binds exact physical/control/action evidence, and
 rebuilds it during ordinary admission. The production behavior census requires
