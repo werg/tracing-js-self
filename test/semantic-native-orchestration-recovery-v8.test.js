@@ -14,6 +14,7 @@ import {tmpdir} from 'node:os';
 import {gunzipSync} from 'node:zlib';
 import {createNativeV8ProcessSelector} from '../src/semantic/native-process-v8.js';
 import {RegionSelectedOrchestrationDriver} from '../src/semantic/selected-orchestration-v8.js';
+import {DurableSelectedHistoryJournal} from '../src/storage/selected-history.js';
 import {verifySelectedOrchestrationCheckpoint} from '../src/semantic/selected-orchestration-checkpoint-v8.js';
 
 const repository=dirname(dirname(fileURLToPath(import.meta.url)));
@@ -114,6 +115,80 @@ function nativeSession(packet){
   assert(value,'composite checkpoint omitted its native V8 session');
   return value;
 }
+
+
+async function nativeAutomaticInputs(t){
+  if(!existsSync(peer)||!existsSync(fixturePath)){
+    if(explicitMegatokenRoot)assert.fail('MEGATOKEN_ROOT is set but the paired recovery peer or fixture is missing');
+    t.skip('paired megatoken checkout is unavailable');return null;
+  }
+  const described=spawnSync(python,[peer,'--describe'],{cwd:megatokenRepository,env:pythonEnvironment(),
+    encoding:'utf8',timeout:120000});
+  if(described.status!==0&&!explicitMegatokenRoot){t.skip('paired native runtime is unavailable');return null;}
+  assert.equal(described.status,0,described.stderr);
+  const identity=JSON.parse(described.stdout),policy=policyFor(identity),document=readFixture(),
+    records=recordsFrom(document),initialPublic={...structuredClone(document.public),
+      timeline:structuredClone(document.public.timeline.slice(0,2))};
+  return {identity,policy,document,records,initialPublic};
+}
+
+test('actual Python native automatic history refuses an unacknowledged coordinator selection',async t=>{
+  const input=await nativeAutomaticInputs(t);if(!input)return;
+  const {policy,initialPublic}=input,root=await mkdtemp(join(tmpdir(),'native-auto-before-'));
+  t.after(()=>rm(root,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory:root,streamId:'nativebefore'});
+  const log=join(root,'model.jsonl'),select=selector(log),driver=new RegionSelectedOrchestrationDriver({
+    initialPublic,select,...policy});
+  let head=null;
+  driver.startAutomaticHistory({journal,acknowledge:async({receipt,previous})=>{
+    assert.deepEqual(previous,head);
+    const entry=await journal.read(receipt);
+    if(entry.pending?.kind==='coordinator-selection')
+      throw new Error('simulated lost coordinator-fence acknowledgement');
+    head=structuredClone(receipt);return structuredClone(head);
+  }});
+  try{
+    const result=await driver.run();
+    assert.notEqual(result.status,'completed');
+    assert.equal(driver.coordinatorAttempts.length,0,'coordinator selection follows only an acknowledged fence');
+    assert(head,'the initial coordinator-ready cut was retained before the failed fence');
+    const entries=await journal.readAll(head);
+    assert.equal(entries.at(-1).pending,undefined);
+  }finally{await select.shutdown();}
+});
+
+test('actual Python child execution remains fenced after its completion-cut acknowledgement is lost',async t=>{
+  const input=await nativeAutomaticInputs(t);if(!input)return;
+  const {policy,initialPublic}=input,root=await mkdtemp(join(tmpdir(),'native-auto-after-'));
+  t.after(()=>rm(root,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory:root,streamId:'nativeafter'});
+  const log=join(root,'model.jsonl'),select=selector(log),driver=new RegionSelectedOrchestrationDriver({
+    initialPublic,select,...policy});
+  let head=null,childFence=null;
+  driver.startAutomaticHistory({journal,acknowledge:async({receipt,previous})=>{
+    assert.deepEqual(previous,head);
+    const entry=await journal.read(receipt);
+    if(entry.pending?.kind==='child-dispatch')childFence=structuredClone(entry.checkpoint);
+    if(entry.checkpoint.continuation.phase==='coordinator-ready'&&entry.checkpoint.childAttempts.length>0)
+      throw new Error('simulated lost child-completion cut acknowledgement');
+    head=structuredClone(receipt);return structuredClone(head);
+  }});
+  try{
+    const result=await driver.run();
+    assert.notEqual(result.status,'completed');
+    assert(childFence,'the exact child dispatch intent was durably acknowledged');
+    assert.equal(driver.bridge.exportEpisode().timeline.filter(row=>row.mode==='generated').length,2,
+      'the real shared runtime completed the child before the later cut ACK failed');
+    const freshLog=join(root,'fresh.jsonl'),fresh=selector(freshLog);
+    let restoreCalls=0;const restore=fresh.restore;
+    fresh.restore=async request=>{restoreCalls++;return restore(request);};
+    try{
+      await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(childFence,{historyJournal:journal,
+        historyReceipt:head,initialPublic,select:fresh,policy}),/unresolved in-flight work/i);
+      assert.equal(restoreCalls,0,'fenced work is refused before native restore or any host dispatch');
+    }finally{await fresh.shutdown();}
+  }finally{await select.shutdown();}
+});
 
 test('actual Python V8 checkpoint bytes restore through the JS composite driver at mixed cuts',async t=>{
   if(!existsSync(peer)||!existsSync(fixturePath)){
