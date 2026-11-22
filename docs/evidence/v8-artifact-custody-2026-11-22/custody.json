@@ -1,0 +1,95 @@
+{
+  "archive": {
+    "bytes": 175381869,
+    "name": "semantic-v8-run-45023684906-artifact-14759987389.zip",
+    "sha256": "6dc909ecc1c1ed7401fa5ceb1cba7006c07641d530a1550f16a7870af3e483af"
+  },
+  "archiveExtracted": false,
+  "learnedSuccess": null,
+  "optimizerUpdates": 0,
+  "originalArtifact": {
+    "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14759987389/zip",
+    "created_at": "2026-11-22T15:15:19Z",
+    "digest": "sha256:6dc909ecc1c1ed7401fa5ceb1cba7006c07641d530a1550f16a7870af3e483af",
+    "expired": false,
+    "expires_at": "2026-12-22T15:15:09Z",
+    "id": 14759987389,
+    "name": "semantic-v8-target-inventory-support",
+    "node_id": "MDg6QXJ0aWZhY3QxNDc1OTk4NzM4OQ==",
+    "size_in_bytes": 175381869,
+    "updated_at": "2026-11-22T15:15:19Z",
+    "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14759987389",
+    "workflow_run": {
+      "head_branch": "codex/v8-target-coverage-position-qualification-20261122",
+      "head_repository_id": 1429775465,
+      "head_sha": "9cf091e6ccc5add960ef0897576d0c391b199a65",
+      "id": 45023684906,
+      "repository_id": 1429775465
+    }
+  },
+  "productionPromotion": false,
+  "python": "3.12.14 (main, Aug 13 2026, 02:47:42) [GCC 13.3.0]",
+  "release": {
+    "draft": true,
+    "id": 454557330,
+    "tag": "v8-evidence-run-45023684906-attempt-1",
+    "tagBinding": {
+      "status": "absent"
+    },
+    "url": "https://github.com/werg/tracing-js-self/releases/tag/untagged-a24ee5fcd6f254b71c21"
+  },
+  "repository": "werg/tracing-js-self",
+  "retainedAsset": {
+    "browser_download_url": "https://github.com/werg/tracing-js-self/releases/download/untagged-a24ee5fcd6f254b71c21/semantic-v8-run-45023684906-artifact-14759987389.zip",
+    "content_type": "application/zip",
+    "created_at": "2026-11-22T15:49:36Z",
+    "digest": "sha256:6dc909ecc1c1ed7401fa5ceb1cba7006c07641d530a1550f16a7870af3e483af",
+    "download_count": 0,
+    "id": 779560656,
+    "label": "",
+    "name": "semantic-v8-run-45023684906-artifact-14759987389.zip",
+    "node_id": "RA_kwDOVTikac4udybQ",
+    "size": 175381869,
+    "state": "uploaded",
+    "updated_at": "2026-11-22T15:49:44Z",
+    "uploader": {
+      "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+      "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+      "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+      "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+      "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+      "gravatar_id": "",
+      "html_url": "https://github.com/apps/github-actions",
+      "id": 41898282,
+      "login": "github-actions[bot]",
+      "node_id": "MDM6Qm90NDE4OTgyODI=",
+      "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+      "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+      "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+      "site_admin": false,
+      "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+      "type": "Bot",
+      "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+      "user_view_type": "public"
+    },
+    "url": "https://api.github.com/repos/werg/tracing-js-self/releases/assets/779560656"
+  },
+  "retainedBytesIndependentlyReread": true,
+  "retainedReceiptAsset": {
+    "bindingValidatedByRemoteRead": true,
+    "bytes": 3976,
+    "id": 779561564,
+    "name": "custody-14759987389.json"
+  },
+  "schema": "workflow-artifact-custody/1",
+  "sourceRun": {
+    "attempt": 1,
+    "conclusion": "failure",
+    "headSha": "9cf091e6ccc5add960ef0897576d0c391b199a65",
+    "id": 45023684906,
+    "url": "https://github.com/werg/tracing-js-self/actions/runs/45023684906"
+  },
+  "status": "verified",
+  "workflowRevision": "2bd8f6795c21f74b0e713df68bdebaa1b0d8f39a"
+}
