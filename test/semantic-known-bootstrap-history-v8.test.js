@@ -287,7 +287,7 @@ test('bootstrap recovery refuses changed owner scope, absent clock or mixed reco
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,options(c,fresh,{
       executionClock:{}})),/original live clock/);
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,options(c,fresh,{
-      commitRecovery:{receipt:c.createReceipt}})),/distinct exact native boundaries/);
+      commitRecovery:{receipt:c.createReceipt}})),/one exact native recovery operation is required/);
     assertNoNativeOrHostWork(fresh);
   }finally{await c.close(fresh);}
 });

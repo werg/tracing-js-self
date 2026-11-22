@@ -23,8 +23,10 @@ jobs:
             expected: 123
           - lane: transport
             expected: 33
+          - lane: commit-history
+            expected: 9
           - lane: bootstrap-history
-            expected: 21
+            expected: 12
           - lane: terminal-history
             expected: 16
     defaults:
@@ -113,9 +115,11 @@ jobs:
                 test/semantic-native-orchestration-recovery-v8.test.js
                 test/semantic-native-durable-close-v8.test.js)
               ;;
+            commit-history)
+              files=(test/semantic-known-commit-history-v8.test.js)
+              ;;
             bootstrap-history)
-              files=(test/semantic-known-commit-history-v8.test.js
-                test/semantic-known-bootstrap-history-v8.test.js)
+              files=(test/semantic-known-bootstrap-history-v8.test.js)
               ;;
             terminal-history)
               files=(test/semantic-known-close-builder-v8.test.js
@@ -125,8 +129,10 @@ jobs:
             *) exit 1 ;;
           esac
           printf '%s\n' "${files[@]}" > "$RUNNER_TEMP/composed-recovery-controls/test-manifest.txt"
-          node --experimental-vm-modules --test --test-concurrency=1 --test-reporter=junit "${files[@]}" \
-            2>&1 | tee "$RUNNER_TEMP/composed-recovery-controls/complete-history.xml"
+          node --experimental-vm-modules --test --test-concurrency=1 --test-timeout=600000 \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=junit --test-reporter-destination="$RUNNER_TEMP/composed-recovery-controls/complete-history.xml" \
+            "${files[@]}" 2>&1 | tee "$RUNNER_TEMP/composed-recovery-controls/host-recovery.log"
           python - <<'PY'
           import os,xml.etree.ElementTree as ET
           from pathlib import Path
