@@ -16,6 +16,52 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Current paired checkpoint and optimizer exposure — 22 November 2026
+
+This increment pins native `e9817ad637f57ba82e370770420f6f3ef877c7b3`, which records the actual
+positive-weight source targets used by ordinary optimizer updates and carries
+that census through fresh-process resume. The collector verifies the exact parent
+digest, registry and preserved cumulative targets. The native
+[57-control probe](https://github.com/werg/megatoken/actions/runs/44990761001)
+passed with zero skips; the native branch contains the exact formatted tested
+sources. [Count definitions and limits](https://github.com/werg/megatoken/blob/e9817ad637f57ba82e370770420f6f3ef877c7b3/docs/SEMANTIC_V8_TARGET_EXPOSURE.md).
+New-pair complete support-corpus optimization is still pending.
+
+At producer `e78dc8735da8f515c3d962a79e52ad00717db7cd`, all106 focused
+continuation cases passed with zero skips in run44989239899, including cancellation
+during head acknowledgement before native selection. The installed package passed
+all665 original and66 interoperability source cases, with zero omissions, in
+[run44989239920](https://github.com/werg/tracing-js-self/actions/runs/44989239920).
+The installed source report explicitly leaves native/model qualification untested.
+
+At producer `10c301666e1509e7376639b8d02600ea04e88dc0` / native
+`a886fb8fd80c7a117d0b212aa6a142a75e52ee2c`, the66-source and11-source
+paired lanes passed complete source/native/token/packing gates. Both ran74 paired
+JS cases and784 native cases, zero skips, including the positive automatic
+child-complete restore through the actual Python/shared runtime. The66-source
+ordinary and orchestration-teacher two-update lifecycle routes also passed.
+[Run44988934223](https://github.com/werg/tracing-js-self/actions/runs/44988934223).
+Its64-source support route and original665 lane were still active when this
+checkpoint was prepared. Complete logs for finished lanes are retained in
+`docs/evidence/v8-paired10c-e78-2026-11-22`.
+
+Terminal recovery is under isolated validation: it must bind a completed host
+cut to the exact native closed-session checkpoint, reexecute that checkpoint
+with zero active sessions and zero host dispatch, and leave unresolved
+acknowledgements fenced. It is not yet credited on this PR branch.
+
+The namespace probe diagnosis is corrected: the initial primitive-encoding
+failure came from Symbol.toStringTag in a Reflect.ownKeys result, before source
+projection. String-only output then reached the unqualified generated namespace
+intrinsic. This identifies separate result-codec, source-capability, public-state
+and independent-native boundaries; it does not prove that ordinary object
+lowering supplies namespace authority. Original production refusal remains.
+[Corrected retained evidence](evidence/v8-namespace-probe-2026-11-22/README.md).
+
+All17 full acceptance packages remain open. Historical pending statuses below
+apply to their recorded checkpoints and are superseded by this section and the
+main PR's current detailed tally.
+
 ## Cancellation during durability acknowledgement — 22 November 2026
 
 A cancellation can arrive while the independent head acknowledgement is awaited.

@@ -1,0 +1,954 @@
+﻿2026-11-22T05:19:58.6066859Z Current runner version: '2.338.2'
+2026-11-22T05:19:58.6094131Z ##[group]Runner Image Provisioner
+2026-11-22T05:19:58.6095021Z Hosted Compute Agent
+2026-11-22T05:19:58.6095757Z Version: 20261111.635
+2026-11-22T05:19:58.6096445Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-22T05:19:58.6097186Z Build Date: 2026-11-11T01:49:01Z
+2026-11-22T05:19:58.6098011Z Worker ID: {a7c9cefa-5f99-4bfa-b35d-0a7dae55ad44}
+2026-11-22T05:19:58.6098792Z Region: westcentralus
+2026-11-22T05:19:58.6099438Z Cloud: Azure
+2026-11-22T05:19:58.6100018Z ##[endgroup]
+2026-11-22T05:19:58.6101863Z ##[group]Operating System
+2026-11-22T05:19:58.6102704Z Ubuntu
+2026-11-22T05:19:58.6103254Z 24.04.5
+2026-11-22T05:19:58.6103853Z LTS
+2026-11-22T05:19:58.6104417Z ##[endgroup]
+2026-11-22T05:19:58.6104991Z ##[group]Runner Image
+2026-11-22T05:19:58.6105689Z Image: ubuntu-24.04
+2026-11-22T05:19:58.6106290Z Version: 20261116.376.1
+2026-11-22T05:19:58.6107671Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.376/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-22T05:19:58.6109297Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.376
+2026-11-22T05:19:58.6110371Z ##[endgroup]
+2026-11-22T05:19:58.6111795Z ##[group]GITHUB_TOKEN Permissions
+2026-11-22T05:19:58.6114066Z Contents: read
+2026-11-22T05:19:58.6114902Z Metadata: read
+2026-11-22T05:19:58.6115534Z ##[endgroup]
+2026-11-22T05:19:58.6117807Z Secret source: Actions
+2026-11-22T05:19:58.6118785Z Cache mode: write
+2026-11-22T05:19:58.6119972Z Prepare workflow directory
+2026-11-22T05:19:58.6722777Z Prepare all required actions
+2026-11-22T05:19:58.6784249Z Getting action download info
+2026-11-22T05:19:58.9700822Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-22T05:19:59.0889396Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-22T05:19:59.1858415Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-11-22T05:19:59.2642169Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-22T05:19:59.4767611Z Complete job name: paired-v8 (gallery)
+2026-11-22T05:19:59.5709023Z ##[group]Run actions/checkout@v4
+2026-11-22T05:19:59.5710067Z with:
+2026-11-22T05:19:59.5710560Z   ref: 10c301666e1509e7376639b8d02600ea04e88dc0
+2026-11-22T05:19:59.5711164Z   path: tracing-js-self
+2026-11-22T05:19:59.5711882Z   persist-credentials: false
+2026-11-22T05:19:59.5712435Z   repository: werg/tracing-js-self
+2026-11-22T05:19:59.5716210Z   token: ***
+2026-11-22T05:19:59.5716652Z   ssh-strict: true
+2026-11-22T05:19:59.5717099Z   ssh-user: git
+2026-11-22T05:19:59.5717535Z   clean: true
+2026-11-22T05:19:59.5717988Z   sparse-checkout-cone-mode: true
+2026-11-22T05:19:59.5718525Z   fetch-depth: 1
+2026-11-22T05:19:59.5718958Z   fetch-tags: false
+2026-11-22T05:19:59.5719413Z   show-progress: true
+2026-11-22T05:19:59.5719880Z   lfs: false
+2026-11-22T05:19:59.5720328Z   submodules: false
+2026-11-22T05:19:59.5720794Z   set-safe-directory: true
+2026-11-22T05:19:59.5721318Z   allow-unsafe-pr-checkout: false
+2026-11-22T05:19:59.5722283Z env:
+2026-11-22T05:19:59.5722750Z   OMP_NUM_THREADS: 1
+2026-11-22T05:19:59.5723212Z   MKL_NUM_THREADS: 1
+2026-11-22T05:19:59.5724089Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:19:59.5725374Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:19:59.5726555Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:19:59.5727611Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:19:59.5728389Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:19:59.5729455Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:19:59.5730562Z   V8_POPULATION: gallery
+2026-11-22T05:19:59.5731578Z ##[endgroup]
+2026-11-22T05:19:59.8096033Z Syncing repository: werg/tracing-js-self
+2026-11-22T05:19:59.8098795Z ##[group]Getting Git version info
+2026-11-22T05:19:59.8099869Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self'
+2026-11-22T05:19:59.8101918Z [command]/usr/bin/git version
+2026-11-22T05:19:59.8193099Z git version 2.56.1
+2026-11-22T05:19:59.8208159Z ##[endgroup]
+2026-11-22T05:19:59.8223410Z Temporarily overriding HOME='/home/runner/work/_temp/99ce3cd1-6ea9-4790-93d6-85940d69b0e6' before making global git config changes
+2026-11-22T05:19:59.8224850Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T05:19:59.8231794Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:19:59.8333867Z ##[group]Initializing the repository
+2026-11-22T05:19:59.8335951Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:19:59.8416424Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T05:19:59.8417613Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T05:19:59.8418928Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T05:19:59.8419767Z hint: call:
+2026-11-22T05:19:59.8420196Z hint:
+2026-11-22T05:19:59.8421039Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T05:19:59.8422345Z hint:
+2026-11-22T05:19:59.8423320Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T05:19:59.8424815Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T05:19:59.8425958Z hint:
+2026-11-22T05:19:59.8426422Z hint: 	git branch -m <name>
+2026-11-22T05:19:59.8426936Z hint:
+2026-11-22T05:19:59.8428025Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T05:19:59.8429994Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/.git/
+2026-11-22T05:19:59.8440595Z [command]/usr/bin/git remote add origin https://github.com/werg/tracing-js-self
+2026-11-22T05:19:59.8496661Z ##[endgroup]
+2026-11-22T05:19:59.8498089Z ##[group]Disabling automatic garbage collection
+2026-11-22T05:19:59.8501703Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T05:19:59.8540177Z ##[endgroup]
+2026-11-22T05:19:59.8541710Z ##[group]Setting up auth
+2026-11-22T05:19:59.8549019Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T05:19:59.8593995Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T05:19:59.9015297Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T05:19:59.9074272Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T05:19:59.9334089Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T05:19:59.9381042Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T05:19:59.9626043Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T05:19:59.9677025Z ##[endgroup]
+2026-11-22T05:19:59.9688012Z ##[group]Fetching the repository
+2026-11-22T05:19:59.9689222Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 10c301666e1509e7376639b8d02600ea04e88dc0
+2026-11-22T05:20:29.7906152Z From https://github.com/werg/tracing-js-self
+2026-11-22T05:20:29.7907197Z  * branch            10c301666e1509e7376639b8d02600ea04e88dc0 -> FETCH_HEAD
+2026-11-22T05:20:29.7910709Z ##[endgroup]
+2026-11-22T05:20:29.7911687Z ##[group]Determining the checkout info
+2026-11-22T05:20:29.7914867Z ##[endgroup]
+2026-11-22T05:20:29.7921894Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T05:20:29.7987194Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T05:20:29.8025786Z ##[group]Checking out the ref
+2026-11-22T05:20:29.8031733Z [command]/usr/bin/git checkout --progress --force 10c301666e1509e7376639b8d02600ea04e88dc0
+2026-11-22T05:20:30.8214184Z Updating files:  42% (1550/3611)
+2026-11-22T05:20:30.8349354Z Updating files:  43% (1553/3611)
+2026-11-22T05:20:30.8367912Z Updating files:  44% (1589/3611)
+2026-11-22T05:20:30.8425184Z Updating files:  45% (1625/3611)
+2026-11-22T05:20:30.8486990Z Updating files:  46% (1662/3611)
+2026-11-22T05:20:30.8691948Z Updating files:  47% (1698/3611)
+2026-11-22T05:20:30.8737116Z Updating files:  48% (1734/3611)
+2026-11-22T05:20:30.8764454Z Updating files:  49% (1770/3611)
+2026-11-22T05:20:30.8782233Z Updating files:  50% (1806/3611)
+2026-11-22T05:20:30.8806513Z Updating files:  51% (1842/3611)
+2026-11-22T05:20:30.8846408Z Updating files:  52% (1878/3611)
+2026-11-22T05:20:30.8882530Z Updating files:  53% (1914/3611)
+2026-11-22T05:20:30.8934179Z Updating files:  54% (1950/3611)
+2026-11-22T05:20:30.8976247Z Updating files:  55% (1987/3611)
+2026-11-22T05:20:30.9024087Z Updating files:  56% (2023/3611)
+2026-11-22T05:20:30.9045136Z Updating files:  57% (2059/3611)
+2026-11-22T05:20:30.9062247Z Updating files:  58% (2095/3611)
+2026-11-22T05:20:30.9079386Z Updating files:  59% (2131/3611)
+2026-11-22T05:20:30.9107085Z Updating files:  60% (2167/3611)
+2026-11-22T05:20:30.9128331Z Updating files:  61% (2203/3611)
+2026-11-22T05:20:30.9144141Z Updating files:  62% (2239/3611)
+2026-11-22T05:20:30.9161882Z Updating files:  63% (2275/3611)
+2026-11-22T05:20:30.9184687Z Updating files:  64% (2312/3611)
+2026-11-22T05:20:30.9209479Z Updating files:  65% (2348/3611)
+2026-11-22T05:20:30.9234917Z Updating files:  66% (2384/3611)
+2026-11-22T05:20:30.9252418Z Updating files:  67% (2420/3611)
+2026-11-22T05:20:30.9282700Z Updating files:  68% (2456/3611)
+2026-11-22T05:20:30.9297604Z Updating files:  69% (2492/3611)
+2026-11-22T05:20:30.9340560Z Updating files:  70% (2528/3611)
+2026-11-22T05:20:30.9367676Z Updating files:  71% (2564/3611)
+2026-11-22T05:20:30.9391187Z Updating files:  72% (2600/3611)
+2026-11-22T05:20:30.9412655Z Updating files:  73% (2637/3611)
+2026-11-22T05:20:30.9433310Z Updating files:  74% (2673/3611)
+2026-11-22T05:20:30.9458372Z Updating files:  75% (2709/3611)
+2026-11-22T05:20:30.9481155Z Updating files:  76% (2745/3611)
+2026-11-22T05:20:30.9508386Z Updating files:  77% (2781/3611)
+2026-11-22T05:20:30.9549683Z Updating files:  78% (2817/3611)
+2026-11-22T05:20:30.9578722Z Updating files:  79% (2853/3611)
+2026-11-22T05:20:30.9609267Z Updating files:  80% (2889/3611)
+2026-11-22T05:20:30.9645072Z Updating files:  81% (2925/3611)
+2026-11-22T05:20:30.9667234Z Updating files:  82% (2962/3611)
+2026-11-22T05:20:30.9692189Z Updating files:  83% (2998/3611)
+2026-11-22T05:20:30.9714371Z Updating files:  84% (3034/3611)
+2026-11-22T05:20:30.9966565Z Updating files:  85% (3070/3611)
+2026-11-22T05:20:30.9986506Z Updating files:  86% (3106/3611)
+2026-11-22T05:20:31.0008306Z Updating files:  87% (3142/3611)
+2026-11-22T05:20:31.0032059Z Updating files:  88% (3178/3611)
+2026-11-22T05:20:31.0062051Z Updating files:  89% (3214/3611)
+2026-11-22T05:20:31.0091064Z Updating files:  90% (3250/3611)
+2026-11-22T05:20:31.0118346Z Updating files:  91% (3287/3611)
+2026-11-22T05:20:31.0144064Z Updating files:  92% (3323/3611)
+2026-11-22T05:20:31.0164381Z Updating files:  93% (3359/3611)
+2026-11-22T05:20:31.0187072Z Updating files:  94% (3395/3611)
+2026-11-22T05:20:31.0208413Z Updating files:  95% (3431/3611)
+2026-11-22T05:20:31.0234413Z Updating files:  96% (3467/3611)
+2026-11-22T05:20:31.0263737Z Updating files:  97% (3503/3611)
+2026-11-22T05:20:31.0301857Z Updating files:  98% (3539/3611)
+2026-11-22T05:20:31.0323594Z Updating files:  99% (3575/3611)
+2026-11-22T05:20:31.0323961Z Updating files: 100% (3611/3611)
+2026-11-22T05:20:31.0324306Z Updating files: 100% (3611/3611), done.
+2026-11-22T05:20:31.0365738Z Note: switching to '10c301666e1509e7376639b8d02600ea04e88dc0'.
+2026-11-22T05:20:31.0366147Z 
+2026-11-22T05:20:31.0366441Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T05:20:31.0367143Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T05:20:31.0367833Z state without impacting any branches by switching back to a branch.
+2026-11-22T05:20:31.0368232Z 
+2026-11-22T05:20:31.0368509Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T05:20:31.0369138Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T05:20:31.0369514Z 
+2026-11-22T05:20:31.0369689Z   git switch -c <new-branch-name>
+2026-11-22T05:20:31.0369933Z 
+2026-11-22T05:20:31.0370099Z Or undo this operation with:
+2026-11-22T05:20:31.0370331Z 
+2026-11-22T05:20:31.0370470Z   git switch -
+2026-11-22T05:20:31.0370651Z 
+2026-11-22T05:20:31.0371003Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T05:20:31.0371696Z 
+2026-11-22T05:20:31.0372072Z HEAD is now at 10c3016 Verify durable cuts once per chain and qualify sparse multi-child recovery
+2026-11-22T05:20:31.0504569Z ##[endgroup]
+2026-11-22T05:20:31.0560020Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T05:20:31.0596843Z 10c301666e1509e7376639b8d02600ea04e88dc0
+2026-11-22T05:20:31.0611099Z ##[group]Removing auth
+2026-11-22T05:20:31.0616158Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T05:20:31.0662129Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T05:20:31.0920693Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T05:20:31.0959023Z http.https://github.com/.extraheader
+2026-11-22T05:20:31.0968333Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-22T05:20:31.1016702Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T05:20:31.1280593Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T05:20:31.1326594Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T05:20:31.1600991Z ##[endgroup]
+2026-11-22T05:20:31.1871283Z ##[group]Run actions/setup-node@v4
+2026-11-22T05:20:31.1872016Z with:
+2026-11-22T05:20:31.1872266Z   node-version-file: tracing-js-self/.nvmrc
+2026-11-22T05:20:31.1872561Z   always-auth: false
+2026-11-22T05:20:31.1872777Z   check-latest: false
+2026-11-22T05:20:31.1875372Z   token: ***
+2026-11-22T05:20:31.1875575Z env:
+2026-11-22T05:20:31.1875759Z   OMP_NUM_THREADS: 1
+2026-11-22T05:20:31.1875978Z   MKL_NUM_THREADS: 1
+2026-11-22T05:20:31.1876362Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:20:31.1877229Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:20:31.1877965Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:20:31.1878685Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:20:31.1879105Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:20:31.1879889Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:20:31.1880715Z   V8_POPULATION: gallery
+2026-11-22T05:20:31.1880953Z ##[endgroup]
+2026-11-22T05:20:31.3320689Z Node version file is not JSON file
+2026-11-22T05:20:31.3323186Z Resolved tracing-js-self/.nvmrc as 24.22.3
+2026-11-22T05:20:31.3349459Z Found in cache @ /opt/hostedtoolcache/node/24.22.3/x64
+2026-11-22T05:20:31.3354625Z (node:2577) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T05:20:31.3355692Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T05:20:31.3357165Z ##[group]Environment details
+2026-11-22T05:20:31.7232674Z node: v24.22.3
+2026-11-22T05:20:31.7233176Z npm: 11.19.1
+2026-11-22T05:20:31.7233556Z yarn: 1.22.22
+2026-11-22T05:20:31.7235228Z ##[endgroup]
+2026-11-22T05:20:31.7447511Z ##[group]Run node --input-type=module <<'JS'
+2026-11-22T05:20:31.7447957Z [36;1mnode --input-type=module <<'JS'[0m
+2026-11-22T05:20:31.7448339Z [36;1mimport {readFileSync,appendFileSync} from 'node:fs';[0m
+2026-11-22T05:20:31.7448898Z [36;1mconst policy=JSON.parse(readFileSync('contracts/semantic-native-policy-v8.json'));[0m
+2026-11-22T05:20:31.7449640Z [36;1mif(policy.consumerRepository!=='werg/megatoken'||!/^[0-9a-f]{40}$/.test(policy.consumerRevision))[0m
+2026-11-22T05:20:31.7450317Z [36;1m  throw new Error('Exact independent consumer repository and commit required');[0m
+2026-11-22T05:20:31.7450934Z [36;1mappendFileSync(process.env.GITHUB_OUTPUT,`consumer=${policy.consumerRevision}\n`);[0m
+2026-11-22T05:20:31.7451672Z [36;1mJS[0m
+2026-11-22T05:20:31.7483225Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T05:20:31.7483593Z env:
+2026-11-22T05:20:31.7483791Z   OMP_NUM_THREADS: 1
+2026-11-22T05:20:31.7484016Z   MKL_NUM_THREADS: 1
+2026-11-22T05:20:31.7484455Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:20:31.7485124Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:20:31.7485811Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:20:31.7486393Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:20:31.7486788Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:20:31.7487386Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:20:31.7488008Z   V8_POPULATION: gallery
+2026-11-22T05:20:31.7488247Z ##[endgroup]
+2026-11-22T05:20:31.8038820Z ##[group]Run actions/checkout@v4
+2026-11-22T05:20:31.8039120Z with:
+2026-11-22T05:20:31.8039327Z   repository: werg/megatoken
+2026-11-22T05:20:31.8039607Z   ref: a886fb8fd80c7a117d0b212aa6a142a75e52ee2c
+2026-11-22T05:20:31.8039903Z   path: megatoken
+2026-11-22T05:20:31.8040139Z   persist-credentials: false
+2026-11-22T05:20:31.8043136Z   token: ***
+2026-11-22T05:20:31.8043361Z   ssh-strict: true
+2026-11-22T05:20:31.8043568Z   ssh-user: git
+2026-11-22T05:20:31.8043760Z   clean: true
+2026-11-22T05:20:31.8043972Z   sparse-checkout-cone-mode: true
+2026-11-22T05:20:31.8044236Z   fetch-depth: 1
+2026-11-22T05:20:31.8044461Z   fetch-tags: false
+2026-11-22T05:20:31.8044674Z   show-progress: true
+2026-11-22T05:20:31.8044878Z   lfs: false
+2026-11-22T05:20:31.8045063Z   submodules: false
+2026-11-22T05:20:31.8045270Z   set-safe-directory: true
+2026-11-22T05:20:31.8045520Z   allow-unsafe-pr-checkout: false
+2026-11-22T05:20:31.8045764Z env:
+2026-11-22T05:20:31.8045940Z   OMP_NUM_THREADS: 1
+2026-11-22T05:20:31.8046172Z   MKL_NUM_THREADS: 1
+2026-11-22T05:20:31.8046557Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:20:31.8047233Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:20:31.8047899Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:20:31.8048465Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:20:31.8048861Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:20:31.8049636Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:20:31.8050259Z   V8_POPULATION: gallery
+2026-11-22T05:20:31.8050482Z ##[endgroup]
+2026-11-22T05:20:31.8950963Z Syncing repository: werg/megatoken
+2026-11-22T05:20:31.8952168Z ##[group]Getting Git version info
+2026-11-22T05:20:31.8953320Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self/megatoken'
+2026-11-22T05:20:31.8989935Z [command]/usr/bin/git version
+2026-11-22T05:20:31.9041929Z git version 2.56.1
+2026-11-22T05:20:31.9097385Z ##[endgroup]
+2026-11-22T05:20:31.9115837Z Temporarily overriding HOME='/home/runner/work/_temp/2c6acd2e-dda3-4c03-9a41-93731901f193' before making global git config changes
+2026-11-22T05:20:31.9117913Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T05:20:31.9138211Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:20:31.9184453Z ##[group]Initializing the repository
+2026-11-22T05:20:31.9193591Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:20:31.9248707Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T05:20:31.9263473Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T05:20:31.9265617Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T05:20:31.9266556Z hint: call:
+2026-11-22T05:20:31.9267019Z hint:
+2026-11-22T05:20:31.9267673Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T05:20:31.9268323Z hint:
+2026-11-22T05:20:31.9269090Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T05:20:31.9270242Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T05:20:31.9271045Z hint:
+2026-11-22T05:20:31.9271786Z hint: 	git branch -m <name>
+2026-11-22T05:20:31.9272439Z hint:
+2026-11-22T05:20:31.9273779Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T05:20:31.9275518Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/megatoken/.git/
+2026-11-22T05:20:31.9277943Z [command]/usr/bin/git remote add origin https://github.com/werg/megatoken
+2026-11-22T05:20:31.9312259Z ##[endgroup]
+2026-11-22T05:20:31.9313301Z ##[group]Disabling automatic garbage collection
+2026-11-22T05:20:31.9319053Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T05:20:31.9360856Z ##[endgroup]
+2026-11-22T05:20:31.9362098Z ##[group]Setting up auth
+2026-11-22T05:20:31.9369902Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T05:20:31.9411031Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T05:20:31.9704021Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T05:20:31.9756134Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T05:20:32.0041104Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T05:20:32.0093252Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T05:20:32.0348122Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T05:20:32.0402591Z ##[endgroup]
+2026-11-22T05:20:32.0411751Z ##[group]Fetching the repository
+2026-11-22T05:20:32.0413453Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin a886fb8fd80c7a117d0b212aa6a142a75e52ee2c
+2026-11-22T05:20:34.3073745Z From https://github.com/werg/megatoken
+2026-11-22T05:20:34.3074966Z  * branch            a886fb8fd80c7a117d0b212aa6a142a75e52ee2c -> FETCH_HEAD
+2026-11-22T05:20:34.3078783Z ##[endgroup]
+2026-11-22T05:20:34.3079608Z ##[group]Determining the checkout info
+2026-11-22T05:20:34.3082083Z ##[endgroup]
+2026-11-22T05:20:34.3089349Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T05:20:34.3146190Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T05:20:34.3189167Z ##[group]Checking out the ref
+2026-11-22T05:20:34.3195260Z [command]/usr/bin/git checkout --progress --force a886fb8fd80c7a117d0b212aa6a142a75e52ee2c
+2026-11-22T05:20:34.5594457Z Note: switching to 'a886fb8fd80c7a117d0b212aa6a142a75e52ee2c'.
+2026-11-22T05:20:34.5594988Z 
+2026-11-22T05:20:34.5595486Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T05:20:34.5596486Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T05:20:34.5597488Z state without impacting any branches by switching back to a branch.
+2026-11-22T05:20:34.5597973Z 
+2026-11-22T05:20:34.5598530Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T05:20:34.5599455Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T05:20:34.5599899Z 
+2026-11-22T05:20:34.5600122Z   git switch -c <new-branch-name>
+2026-11-22T05:20:34.5600422Z 
+2026-11-22T05:20:34.5600622Z Or undo this operation with:
+2026-11-22T05:20:34.5600886Z 
+2026-11-22T05:20:34.5601042Z   git switch -
+2026-11-22T05:20:34.5601241Z 
+2026-11-22T05:20:34.5602023Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T05:20:34.5602547Z 
+2026-11-22T05:20:34.5603255Z HEAD is now at a886fb8 Bind ordinary optimizer lifecycle evidence to the complete frozen support corpus
+2026-11-22T05:20:34.5634329Z ##[endgroup]
+2026-11-22T05:20:34.5688195Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T05:20:34.5723939Z a886fb8fd80c7a117d0b212aa6a142a75e52ee2c
+2026-11-22T05:20:34.5733965Z ##[group]Removing auth
+2026-11-22T05:20:34.5738217Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T05:20:34.5780136Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T05:20:34.6030288Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T05:20:34.6065476Z http.https://github.com/.extraheader
+2026-11-22T05:20:34.6074826Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-22T05:20:34.6120008Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T05:20:34.6370963Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T05:20:34.6417936Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T05:20:34.6659263Z ##[endgroup]
+2026-11-22T05:20:34.6820888Z ##[group]Run actions/setup-python@v5
+2026-11-22T05:20:34.6821198Z with:
+2026-11-22T05:20:34.6821661Z   python-version: 3.12.14
+2026-11-22T05:20:34.6822057Z   check-latest: false
+2026-11-22T05:20:34.6824693Z   token: ***
+2026-11-22T05:20:34.6824907Z   update-environment: true
+2026-11-22T05:20:34.6825161Z   allow-prereleases: false
+2026-11-22T05:20:34.6825392Z   freethreaded: false
+2026-11-22T05:20:34.6825601Z env:
+2026-11-22T05:20:34.6825779Z   OMP_NUM_THREADS: 1
+2026-11-22T05:20:34.6825977Z   MKL_NUM_THREADS: 1
+2026-11-22T05:20:34.6826350Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:20:34.6827009Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:20:34.6827897Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:20:34.6828504Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:20:34.6828902Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:20:34.6829478Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:20:34.6830098Z   V8_POPULATION: gallery
+2026-11-22T05:20:34.6830322Z ##[endgroup]
+2026-11-22T05:20:34.8219785Z ##[group]Installed versions
+2026-11-22T05:20:34.8238765Z Version 3.12.14 was not found in the local cache
+2026-11-22T05:20:34.8385567Z (node:2812) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T05:20:34.8386681Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T05:20:35.7046459Z Version 3.12.14 is available for downloading
+2026-11-22T05:20:35.7048667Z Download from "https://github.com/actions/python-versions/releases/download/3.12.14-31661455385/python-3.12.14-linux-24.04-x64.tar.gz"
+2026-11-22T05:20:36.5208319Z Extract downloaded archive
+2026-11-22T05:20:36.5372310Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/5b088174-aeea-471c-a2e8-3e1120a3f02f -f /home/runner/work/_temp/b0f37f50-b326-4bd0-a8f6-9b53e7c84174
+2026-11-22T05:20:38.4461814Z Execute installation script
+2026-11-22T05:20:38.4591935Z Check if Python hostedtoolcache folder exist...
+2026-11-22T05:20:38.4592779Z Create Python 3.12.14 folder
+2026-11-22T05:20:38.4611366Z Copy Python binaries to hostedtoolcache folder
+2026-11-22T05:20:38.9355224Z Create additional symlinks (Required for the UsePythonVersion Azure Pipelines task and the setup-python GitHub Action)
+2026-11-22T05:20:38.9400689Z Upgrading pip...
+2026-11-22T05:20:40.7243114Z Collecting pip
+2026-11-22T05:20:40.8052339Z Downloading pip-26.3-py3-none-any.whl.metadata (4.6 kB)
+2026-11-22T05:20:40.8294062Z Downloading pip-26.3-py3-none-any.whl (2.0 MB)
+2026-11-22T05:20:40.9291791Z ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 32.4 MB/s eta 0:00:00
+2026-11-22T05:20:40.9292482Z 
+2026-11-22T05:20:40.9498539Z Installing collected packages: pip
+2026-11-22T05:20:40.9499515Z Attempting uninstall: pip
+2026-11-22T05:20:40.9522526Z Found existing installation: pip 25.0.1
+2026-11-22T05:20:40.9872595Z Uninstalling pip-25.0.1:
+2026-11-22T05:20:40.9927636Z Successfully uninstalled pip-25.0.1
+2026-11-22T05:20:41.9957300Z Successfully installed pip-26.3
+2026-11-22T05:20:42.0607460Z Create complete file
+2026-11-22T05:20:42.0647357Z Successfully set up CPython (3.12.14)
+2026-11-22T05:20:42.0648351Z ##[endgroup]
+2026-11-22T05:20:42.0838288Z ##[group]Run npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+2026-11-22T05:20:42.0838950Z [36;1mnpm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund[0m
+2026-11-22T05:20:42.0839607Z [36;1mpython -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock[0m
+2026-11-22T05:20:42.0840291Z [36;1mpython -m pip install --no-deps --no-build-isolation -e ./megatoken[0m
+2026-11-22T05:20:42.0862863Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T05:20:42.0863226Z env:
+2026-11-22T05:20:42.0863418Z   OMP_NUM_THREADS: 1
+2026-11-22T05:20:42.0863631Z   MKL_NUM_THREADS: 1
+2026-11-22T05:20:42.0864057Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:20:42.0864728Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:20:42.0865460Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:20:42.0866057Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:20:42.0866457Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:20:42.0867060Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:20:42.0867918Z   V8_POPULATION: gallery
+2026-11-22T05:20:42.0868230Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:20:42.0868704Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T05:20:42.0869166Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:20:42.0869574Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:20:42.0869977Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:20:42.0870376Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T05:20:42.0870723Z ##[endgroup]
+2026-11-22T05:20:44.1980580Z 
+2026-11-22T05:20:44.1981318Z added 4 packages in 2s
+2026-11-22T05:20:45.1452963Z Looking in indexes: https://pypi.org/simple, https://download.pytorch.org/whl/cpu
+2026-11-22T05:20:45.7942027Z Collecting anyio==4.16.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 9))
+2026-11-22T05:20:45.8890335Z   Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+2026-11-22T05:20:46.1184615Z Collecting attrs==26.1.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 13))
+2026-11-22T05:20:46.1389114Z   Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-11-22T05:20:46.2482204Z Collecting certifi==2026.10.23 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 19))
+2026-11-22T05:20:46.2681760Z   Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+2026-11-22T05:20:46.4738319Z Collecting click==8.5.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 25))
+2026-11-22T05:20:46.4931700Z   Downloading click-8.5.1-py3-none-any.whl (126 kB)
+2026-11-22T05:20:46.7132419Z Collecting editables==0.6 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 29))
+2026-11-22T05:20:46.7332265Z   Downloading editables-0.6-py3-none-any.whl (5.4 kB)
+2026-11-22T05:20:46.9593796Z Collecting filelock==4.2.12 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 33))
+2026-11-22T05:20:46.9788378Z   Downloading filelock-4.2.12-py3-none-any.whl (222 kB)
+2026-11-22T05:20:47.0989061Z Collecting fsspec==2026.9.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 39))
+2026-11-22T05:20:47.1178639Z   Downloading fsspec-2026.9.0-py3-none-any.whl (221 kB)
+2026-11-22T05:20:47.2823229Z Collecting h11==0.16.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 45))
+2026-11-22T05:20:47.3015009Z   Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2026-11-22T05:20:47.3977811Z Collecting hatchling==1.33.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 49))
+2026-11-22T05:20:47.4175709Z   Downloading hatchling-1.33.0-py3-none-any.whl (78 kB)
+2026-11-22T05:20:47.5719225Z Collecting hf-xet==1.8.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 53))
+2026-11-22T05:20:47.5914101Z   Downloading hf_xet-1.8.0-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.3 MB)
+2026-11-22T05:20:47.6571803Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.3/4.3 MB 67.2 MB/s  0:00:00
+2026-11-22T05:20:47.8152502Z Collecting httpcore==1.0.9 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 72))
+2026-11-22T05:20:47.8354337Z   Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+2026-11-22T05:20:47.9302900Z Collecting httpx==0.28.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 76))
+2026-11-22T05:20:47.9495396Z   Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+2026-11-22T05:20:48.1456897Z Collecting huggingface-hub==1.33.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 80))
+2026-11-22T05:20:48.1663023Z   Downloading huggingface_hub-1.33.0-py3-none-any.whl (846 kB)
+2026-11-22T05:20:48.1746728Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 846.4/846.4 kB 104.9 MB/s  0:00:00
+2026-11-22T05:20:48.2323743Z Collecting idna==3.20 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 86))
+2026-11-22T05:20:48.2517788Z   Downloading idna-3.20-py3-none-any.whl (69 kB)
+2026-11-22T05:20:48.3426223Z Collecting iniconfig==2.3.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 92))
+2026-11-22T05:20:48.3620127Z   Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+2026-11-22T05:20:48.4138849Z Collecting jinja2==3.1.6 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 96))
+2026-11-22T05:20:48.4334355Z   Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-11-22T05:20:48.5290576Z Collecting jsonschema==4.26.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 100))
+2026-11-22T05:20:48.5486009Z   Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-11-22T05:20:48.6397130Z Collecting jsonschema-specifications==2025.9.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 104))
+2026-11-22T05:20:48.6600277Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-11-22T05:20:48.7525178Z Collecting markdown-it-py==4.0.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 108))
+2026-11-22T05:20:48.7720431Z   Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+2026-11-22T05:20:48.8808651Z Collecting markupsafe==3.0.4 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 112))
+2026-11-22T05:20:48.9003245Z   Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2026-11-22T05:20:48.9875340Z Collecting mdurl==0.1.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 265))
+2026-11-22T05:20:49.0087810Z   Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-11-22T05:20:49.0691726Z Collecting mpmath==1.3.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 269))
+2026-11-22T05:20:49.0890455Z   Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+2026-11-22T05:20:49.0942657Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 95.5 MB/s  0:00:00
+2026-11-22T05:20:49.1706469Z Collecting networkx==3.7 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 273))
+2026-11-22T05:20:49.1903366Z   Downloading networkx-3.7-py3-none-any.whl (2.1 MB)
+2026-11-22T05:20:49.1997180Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 269.5 MB/s  0:00:00
+2026-11-22T05:20:49.8173997Z Collecting numpy==2.5.5 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 277))
+2026-11-22T05:20:49.8371993Z   Downloading numpy-2.5.5-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (15.7 MB)
+2026-11-22T05:20:49.8933427Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.7/15.7 MB 291.6 MB/s  0:00:00
+2026-11-22T05:20:49.9639859Z Collecting packaging==26.3 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 345))
+2026-11-22T05:20:49.9839949Z   Downloading packaging-26.3-py3-none-any.whl (129 kB)
+2026-11-22T05:20:50.0735591Z Collecting pathspec==1.1.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 352))
+2026-11-22T05:20:50.0934969Z   Downloading pathspec-1.1.1-py3-none-any.whl (57 kB)
+2026-11-22T05:20:50.1992826Z Collecting pluggy==1.7.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 356))
+2026-11-22T05:20:50.2194242Z   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+2026-11-22T05:20:50.3154398Z Collecting pygments==2.21.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 362))
+2026-11-22T05:20:50.3350242Z   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-11-22T05:20:50.3419284Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 218.2 MB/s  0:00:00
+2026-11-22T05:20:50.5066396Z Collecting pytest==8.4.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 366))
+2026-11-22T05:20:50.5347823Z   Downloading pytest-8.4.2-py3-none-any.whl (365 kB)
+2026-11-22T05:20:50.6732261Z Collecting pyyaml==6.0.3 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 370))
+2026-11-22T05:20:50.6936138Z   Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+2026-11-22T05:20:50.6996799Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 148.5 MB/s  0:00:00
+2026-11-22T05:20:50.7953211Z Collecting referencing==0.37.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 447))
+2026-11-22T05:20:50.8150939Z   Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-11-22T05:20:51.1455294Z Collecting rpds-py==2026.9.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 453))
+2026-11-22T05:20:51.1653196Z   Downloading rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (371 kB)
+2026-11-22T05:20:51.3646063Z Collecting safetensors==0.8.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 585))
+2026-11-22T05:20:51.3846068Z   Downloading safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (516 kB)
+2026-11-22T05:20:51.4510392Z Collecting sympy==1.14.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 604))
+2026-11-22T05:20:51.4710763Z   Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+2026-11-22T05:20:51.4933598Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 316.3 MB/s  0:00:00
+2026-11-22T05:20:51.8083948Z Collecting tokenizers==0.23.3 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 608))
+2026-11-22T05:20:51.8286055Z   Downloading tokenizers-0.23.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.4 MB)
+2026-11-22T05:20:51.8417212Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 304.2 MB/s  0:00:00
+2026-11-22T05:20:51.9398899Z Collecting tomlkit==0.15.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 634))
+2026-11-22T05:20:51.9597540Z   Downloading tomlkit-0.15.2-py3-none-any.whl (52 kB)
+2026-11-22T05:20:52.1412837Z Collecting torch==2.10.0+cpu (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 638))
+2026-11-22T05:20:52.2761842Z   Downloading torch-2.10.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl (188.9 MB)
+2026-11-22T05:20:53.2576239Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 188.9/188.9 MB 201.2 MB/s  0:00:00
+2026-11-22T05:20:53.5196038Z Collecting tqdm==4.70.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 678))
+2026-11-22T05:20:53.5424730Z   Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+2026-11-22T05:20:53.6659385Z Collecting tree-sitter==0.25.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 682))
+2026-11-22T05:20:53.6859116Z   Downloading tree_sitter-0.25.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (635 kB)
+2026-11-22T05:20:53.6913897Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 635.4/635.4 kB 120.1 MB/s  0:00:00
+2026-11-22T05:20:53.7855916Z Collecting tree-sitter-c-sharp==0.23.5 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 722))
+2026-11-22T05:20:53.8050615Z   Downloading tree_sitter_c_sharp-0.23.5-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (358 kB)
+2026-11-22T05:20:53.8943238Z Collecting tree-sitter-embedded-template==0.25.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 735))
+2026-11-22T05:20:53.9142096Z   Downloading tree_sitter_embedded_template-0.25.0-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (18 kB)
+2026-11-22T05:20:54.0883270Z Collecting tree-sitter-language-pack==0.13.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 748))
+2026-11-22T05:20:54.1109406Z   Downloading tree_sitter_language_pack-0.13.0-cp310-abi3-manylinux2014_x86_64.whl (20.0 MB)
+2026-11-22T05:20:54.2497836Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.0/20.0 MB 144.5 MB/s  0:00:00
+2026-11-22T05:20:54.3547563Z Collecting tree-sitter-yaml==0.7.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 756))
+2026-11-22T05:20:54.3745937Z   Downloading tree_sitter_yaml-0.7.2-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (91 kB)
+2026-11-22T05:20:54.4750061Z Collecting trove-classifiers==2026.9.21.13 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 769))
+2026-11-22T05:20:54.4946064Z   Downloading trove_classifiers-2026.9.21.13-py3-none-any.whl (14 kB)
+2026-11-22T05:20:54.5559861Z Collecting typing-extensions==4.16.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 773))
+2026-11-22T05:20:54.5753162Z   Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-11-22T05:20:54.6658806Z Collecting uniseg==0.10.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 781))
+2026-11-22T05:20:54.6867821Z   Downloading uniseg-0.10.1-py3-none-any.whl (8.2 MB)
+2026-11-22T05:20:54.7399831Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.2/8.2 MB 156.6 MB/s  0:00:00
+2026-11-22T05:20:54.8512101Z Collecting setuptools==84.2.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 787))
+2026-11-22T05:20:54.8709207Z   Downloading setuptools-84.2.1-py3-none-any.whl (876 kB)
+2026-11-22T05:20:54.8774456Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 876.3/876.3 kB 164.3 MB/s  0:00:00
+2026-11-22T05:20:55.1550619Z Installing collected packages: trove-classifiers, mpmath, uniseg, typing-extensions, tree-sitter-yaml, tree-sitter-embedded-template, tree-sitter-c-sharp, tree-sitter, tqdm, tomlkit, sympy, setuptools, safetensors, rpds-py, pyyaml, pygments, pluggy, pathspec, packaging, numpy, networkx, mdurl, markupsafe, iniconfig, idna, hf-xet, h11, fsspec, filelock, editables, click, certifi, attrs, tree-sitter-language-pack, referencing, pytest, markdown-it-py, jinja2, httpcore, hatchling, anyio, torch, jsonschema-specifications, httpx, jsonschema, huggingface-hub, tokenizers
+2026-11-22T05:21:19.5237621Z 
+2026-11-22T05:21:19.5280295Z Successfully installed anyio-4.16.0 attrs-26.1.0 certifi-2026.10.23 click-8.5.1 editables-0.6 filelock-4.2.12 fsspec-2026.9.0 h11-0.16.0 hatchling-1.33.0 hf-xet-1.8.0 httpcore-1.0.9 httpx-0.28.1 huggingface-hub-1.33.0 idna-3.20 iniconfig-2.3.1 jinja2-3.1.6 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 markdown-it-py-4.0.0 markupsafe-3.0.4 mdurl-0.1.2 mpmath-1.3.0 networkx-3.7 numpy-2.5.5 packaging-26.3 pathspec-1.1.1 pluggy-1.7.0 pygments-2.21.0 pytest-8.4.2 pyyaml-6.0.3 referencing-0.37.0 rpds-py-2026.9.1 safetensors-0.8.0 setuptools-84.2.1 sympy-1.14.0 tokenizers-0.23.3 tomlkit-0.15.2 torch-2.10.0+cpu tqdm-4.70.1 tree-sitter-0.25.2 tree-sitter-c-sharp-0.23.5 tree-sitter-embedded-template-0.25.0 tree-sitter-language-pack-0.13.0 tree-sitter-yaml-0.7.2 trove-classifiers-2026.9.21.13 typing-extensions-4.16.0 uniseg-0.10.1
+2026-11-22T05:21:19.9919456Z Obtaining file:///home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:21:19.9932416Z   Checking if build backend supports build_editable: started
+2026-11-22T05:21:20.0293625Z   Checking if build backend supports build_editable: finished with status 'done'
+2026-11-22T05:21:20.0301005Z   Preparing editable metadata (pyproject.toml): started
+2026-11-22T05:21:20.1884639Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+2026-11-22T05:21:20.1958245Z Building wheels for collected packages: megatoken
+2026-11-22T05:21:20.1966638Z   Building editable for megatoken (pyproject.toml): started
+2026-11-22T05:21:20.2333239Z   Building editable for megatoken (pyproject.toml): finished with status 'done'
+2026-11-22T05:21:20.2339382Z   Created wheel for megatoken: filename=megatoken-0.1.0-py3-none-any.whl size=8443 sha256=ea4c3ba695bb3188f69e88a67ae66f73f2f5b278ffad2b77e5ca6b99c9649272
+2026-11-22T05:21:20.2341770Z   Stored in directory: /tmp/pip-ephem-wheel-cache-eow9mzof/wheels/0b/ed/7b/b8468944e64c9e6abb5bf5ba9ba8cb86d84dbb9c76e21fd64a
+2026-11-22T05:21:20.2368059Z Successfully built megatoken
+2026-11-22T05:21:20.2538341Z Installing collected packages: megatoken
+2026-11-22T05:21:20.2626895Z Successfully installed megatoken-0.1.0
+2026-11-22T05:21:20.3066625Z ##[group]Run python - <<'PY'
+2026-11-22T05:21:20.3066959Z [36;1mpython - <<'PY'[0m
+2026-11-22T05:21:20.3067240Z [36;1mimport hashlib, json, os, shutil[0m
+2026-11-22T05:21:20.3067538Z [36;1mfrom pathlib import Path[0m
+2026-11-22T05:21:20.3067836Z [36;1mfrom huggingface_hub import hf_hub_download[0m
+2026-11-22T05:21:20.3068384Z [36;1mfrom megatoken.generation.codec import LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256[0m
+2026-11-22T05:21:20.3068953Z [36;1mpath = Path(os.environ['MEGATOKEN_TOKENIZER_JSON'])[0m
+2026-11-22T05:21:20.3069525Z [36;1mshutil.copyfile(hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION), path)[0m
+2026-11-22T05:21:20.3070176Z [36;1mpolicy = json.loads(Path(os.environ['SEMANTIC_V8_NATIVE_POLICY']).read_text())[0m
+2026-11-22T05:21:20.3070685Z [36;1mdigest = hashlib.sha256(path.read_bytes()).hexdigest()[0m
+2026-11-22T05:21:20.3071154Z [36;1massert digest == LING_TOKENIZER_SHA256 == policy['tokenizerSha256'][0m
+2026-11-22T05:21:20.3071789Z [36;1mPY[0m
+2026-11-22T05:21:20.3092317Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T05:21:20.3092672Z env:
+2026-11-22T05:21:20.3092888Z   OMP_NUM_THREADS: 1
+2026-11-22T05:21:20.3093098Z   MKL_NUM_THREADS: 1
+2026-11-22T05:21:20.3093473Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:21:20.3094141Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:21:20.3094800Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:21:20.3095370Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:21:20.3095777Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:21:20.3096368Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:21:20.3096986Z   V8_POPULATION: gallery
+2026-11-22T05:21:20.3097280Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:21:20.3097714Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T05:21:20.3098140Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:21:20.3098518Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:21:20.3098897Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:21:20.3099279Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T05:21:20.3099610Z ##[endgroup]
+2026-11-22T05:21:20.8066610Z Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-11-22T05:21:30.8378757Z ##[group]Run npm run semantic:v8:contract --prefix tracing-js-self 2>&1 | tee "$RUNNER_TEMP/semantic-v8-contract.log"
+2026-11-22T05:21:30.8379622Z [36;1mnpm run semantic:v8:contract --prefix tracing-js-self 2>&1 | tee "$RUNNER_TEMP/semantic-v8-contract.log"[0m
+2026-11-22T05:21:30.8380502Z [36;1mcmp tracing-js-self/contracts/semantic-execution-v8.json megatoken/src/megatoken/data/contracts/semantic-execution-v8.json[0m
+2026-11-22T05:21:30.8404409Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T05:21:30.8404754Z env:
+2026-11-22T05:21:30.8404941Z   OMP_NUM_THREADS: 1
+2026-11-22T05:21:30.8405153Z   MKL_NUM_THREADS: 1
+2026-11-22T05:21:30.8405530Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:21:30.8406192Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:21:30.8406906Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:21:30.8407483Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:21:30.8407881Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:21:30.8408481Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:21:30.8409114Z   V8_POPULATION: gallery
+2026-11-22T05:21:30.8409414Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:21:30.8409840Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T05:21:30.8410256Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:21:30.8410644Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:21:30.8411023Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:21:30.8411707Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T05:21:30.8412049Z ##[endgroup]
+2026-11-22T05:21:30.9434623Z 
+2026-11-22T05:21:30.9435302Z > tracing-js-self@0.3.0 semantic:v8:contract
+2026-11-22T05:21:30.9436277Z > node tools/generate-semantic-region-contract.mjs --check
+2026-11-22T05:21:30.9436771Z 
+2026-11-22T05:22:18.4634421Z {"valid":true,"contractDigest":"75b4b47cccd0b137e00f477e45572d9d160acbb63f70af4f506e8003359e32cc","interoperabilityDigest":"f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661","examples":[{"id":"ordered-map","compactRegions":1,"detailedRegions":1,"compactRecords":1,"detailedRecords":1,"compactBytes":365,"detailedBytes":48,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"shared-getter","compactRegions":2,"detailedRegions":3,"compactRecords":2,"detailedRecords":11,"compactBytes":234,"detailedBytes":908,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"causal-counter","compactRegions":1,"detailedRegions":2,"compactRecords":1,"detailedRecords":10,"compactBytes":100,"detailedBytes":1099,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"number-callback-cleanup","compactRegions":0,"detailedRegions":1,"compactRecords":0,"detailedRecords":15,"protocolRecords":11,"compactBytes":0,"detailedBytes":1955,"protocolBytes":1267,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"custom-iterator-close","compactRegions":2,"detailedRegions":2,"compactRecords":2,"detailedRecords":52,"protocolRecords":30,"compactBytes":197,"detailedBytes":6681,"protocolBytes":3900,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"iterable-binding-close","compactRegions":2,"detailedRegions":2,"compactRecords":2,"detailedRecords":54,"protocolRecords":30,"compactBytes":197,"detailedBytes":6434,"protocolBytes":3900,"detailTokenShare":null,"tokenMeasurement":"untested"}],"protocolSources":["source-symbol-getter-arithmetic","typed-views-shared-backing","source-derived-private-arithmetic","builtin-iterator-mixed-arithmetic","source-promise-all-reaction-arithmetic","source-promise-join-rejection-finally","source-number-private-arithmetic","source-generator-cleanup-suspension","source-generator-delegated-cleanup","source-proxy-traps-arithmetic","source-base-initializer-throw","source-derived-initializer-throw","source-promise-executor-first-call","source-promise-executor-retained-resolution","source-promise-executor-abrupt","source-ordinary-constructor-prototype","source-enumeration-map-callback","generator-own-symbol-alias","source-logical-left-operands","source-for-in-own-keys"],"protocolHostSources":["join-host-join","join-retained-callback","callback-owned-join","callback-owned-join-awaited"],"mode":"checked"}
+2026-11-22T05:22:18.5379757Z ##[group]Run python -m pytest -q tests/test_*v8*.py tests/test_algorithm_v7.py tests/test_protocol_properties.py tests/test_semantic_launch.py \
+2026-11-22T05:22:18.5380781Z [36;1mpython -m pytest -q tests/test_*v8*.py tests/test_algorithm_v7.py tests/test_protocol_properties.py tests/test_semantic_launch.py \[0m
+2026-11-22T05:22:18.5381912Z [36;1m  --junitxml="$RUNNER_TEMP/semantic-v8-tests.xml" 2>&1 | tee "$RUNNER_TEMP/semantic-v8-tests.log"[0m
+2026-11-22T05:22:18.5382429Z [36;1mpython - <<'PY'[0m
+2026-11-22T05:22:18.5382697Z [36;1mimport os, xml.etree.ElementTree as ET[0m
+2026-11-22T05:22:18.5383008Z [36;1mfrom pathlib import Path[0m
+2026-11-22T05:22:18.5383498Z [36;1msuites = ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-tests.xml').getroot().iter('testsuite')[0m
+2026-11-22T05:22:18.5384117Z [36;1mcounts = {key: 0 for key in ('tests', 'failures', 'errors', 'skipped')}[0m
+2026-11-22T05:22:18.5384514Z [36;1mfor suite in suites:[0m
+2026-11-22T05:22:18.5384787Z [36;1m    for key in counts:[0m
+2026-11-22T05:22:18.5385065Z [36;1m        counts[key] += int(suite.get(key, 0))[0m
+2026-11-22T05:22:18.5385523Z [36;1mif counts['tests'] == 0 or any(counts[key] for key in ('failures', 'errors', 'skipped')):[0m
+2026-11-22T05:22:18.5386180Z [36;1m    raise ValueError(f'Native v8 tests, including live source checks, must all run and pass: {counts}')[0m
+2026-11-22T05:22:18.5386683Z [36;1mPY[0m
+2026-11-22T05:22:18.5407198Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T05:22:18.5407549Z env:
+2026-11-22T05:22:18.5407732Z   OMP_NUM_THREADS: 1
+2026-11-22T05:22:18.5407949Z   MKL_NUM_THREADS: 1
+2026-11-22T05:22:18.5408325Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:22:18.5408980Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:22:18.5409650Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:22:18.5410222Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:22:18.5410617Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:22:18.5411198Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:22:18.5412202Z   V8_POPULATION: gallery
+2026-11-22T05:22:18.5412499Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:22:18.5412936Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T05:22:18.5413358Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:22:18.5413730Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:22:18.5414121Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:22:18.5414516Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T05:22:18.5414867Z ##[endgroup]
+2026-11-22T05:23:49.2902512Z ........................................................................ [  9%]
+2026-11-22T05:24:17.2698931Z ........................................................................ [ 18%]
+2026-11-22T05:24:25.4189915Z ........................................................................ [ 27%]
+2026-11-22T05:24:53.9106928Z ........................................................................ [ 36%]
+2026-11-22T05:24:58.7385999Z ........................................................................ [ 45%]
+2026-11-22T05:28:40.6151184Z ........................................................................ [ 55%]
+2026-11-22T05:31:45.4356663Z ........................................................................ [ 64%]
+2026-11-22T05:34:23.0333827Z ........................................................................ [ 73%]
+2026-11-22T05:36:04.3310404Z ........................................................................ [ 82%]
+2026-11-22T05:43:01.5733478Z ........................................................................ [ 91%]
+2026-11-22T05:43:20.5519045Z ................................................................         [100%]
+2026-11-22T05:43:20.5522573Z ------ generated xml file: /home/runner/work/_temp/semantic-v8-tests.xml -------
+2026-11-22T05:43:20.5523532Z 784 passed in 1259.13s (0:20:59)
+2026-11-22T05:43:21.8618614Z ##[group]Run node --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \
+2026-11-22T05:43:21.8619771Z [36;1mnode --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \[0m
+2026-11-22T05:43:21.8620760Z [36;1m  test/semantic-selected-orchestration-v8.test.js test/semantic-selected-orchestration-checkpoint-v8.test.js \[0m
+2026-11-22T05:43:21.8621784Z [36;1m  test/semantic-native-orchestration-recovery-v8.test.js \[0m
+2026-11-22T05:43:21.8622721Z [36;1m  test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js \[0m
+2026-11-22T05:43:21.8623872Z [36;1m  test/semantic-source-session-v8.test.js test/semantic-region-support-cohort.test.js \[0m
+2026-11-22T05:43:21.8624951Z [36;1m  test/semantic-qualification-population-v8.test.js test/qualify-support-lifecycle.test.js \[0m
+2026-11-22T05:43:21.8625587Z [36;1m  2>&1 | tee "$RUNNER_TEMP/semantic-v8-transport-tests.xml"[0m
+2026-11-22T05:43:21.8625937Z [36;1mpython - <<'PY'[0m
+2026-11-22T05:43:21.8626201Z [36;1mimport os, xml.etree.ElementTree as ET[0m
+2026-11-22T05:43:21.8626504Z [36;1mfrom pathlib import Path[0m
+2026-11-22T05:43:21.8627038Z [36;1mcases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-transport-tests.xml').getroot().iter('testcase'))[0m
+2026-11-22T05:43:21.8627826Z [36;1mif not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):[0m
+2026-11-22T05:43:21.8628618Z [36;1m    raise ValueError('Every paired V8 transport control, including the Python contract check, must run and pass')[0m
+2026-11-22T05:43:21.8629290Z [36;1mprint(f'{len(cases)} paired transport controls passed with zero skips')[0m
+2026-11-22T05:43:21.8629675Z [36;1mPY[0m
+2026-11-22T05:43:21.8650114Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T05:43:21.8650462Z env:
+2026-11-22T05:43:21.8650658Z   OMP_NUM_THREADS: 1
+2026-11-22T05:43:21.8650872Z   MKL_NUM_THREADS: 1
+2026-11-22T05:43:21.8651266Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:43:21.8652112Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:43:21.8652803Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:43:21.8653397Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:43:21.8653874Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:43:21.8654478Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:43:21.8655102Z   V8_POPULATION: gallery
+2026-11-22T05:43:21.8655391Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:43:21.8655819Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T05:43:21.8656247Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:43:21.8656638Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:43:21.8657010Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:43:21.8657387Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T05:43:21.8657707Z ##[endgroup]
+2026-11-22T05:43:21.9242799Z <?xml version="1.0" encoding="utf-8"?>
+2026-11-22T05:43:21.9273670Z <testsuites>
+2026-11-22T05:45:12.1731635Z 	<testcase name="test/qualify-support-lifecycle.test.js" time="0.364924" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/qualify-support-lifecycle.test.js"/>
+2026-11-22T05:45:12.1735499Z 	<testcase name="actual Python native automatic history refuses an unacknowledged coordinator selection" time="8.795117" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T05:45:12.1739305Z 	<testcase name="actual Python child execution remains fenced after its completion-cut acknowledgement is lost" time="27.880671" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T05:45:12.1742967Z 	<testcase name="actual Python V8 checkpoint bytes restore through the JS composite driver at mixed cuts" time="31.651017" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T05:45:12.1745470Z 	<testcase name="actual Python shared-runtime automatic history restores a child-complete sparse cut without redispatch" time="41.753431" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T05:45:12.1748567Z 	<testcase name="V8 coordinator JSONL fixture preserves child bindings, original bytes, typed commits and closed retry" time="0.345367" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T05:45:12.1750747Z 	<testcase name="ordinary V8 orchestration driver uses the native JSONL transport for model and child choices" time="0.258856" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T05:45:12.1753452Z 	<testcase name="cancellation discards a pending coordinator candidate and retains the exact receipt" time="0.113773" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T05:45:12.1755608Z 	<testcase name="noninteger or altered coordinator fragment provenance is refused" time="0.097260" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T05:45:12.1757725Z 	<testcase name="creation acknowledgement cannot substitute another declared child binding" time="0.119672" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T05:45:12.1759835Z 	<testcase name="Python and JavaScript V8 coordinator contexts and child bindings agree" time="0.353148" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T05:45:12.1762256Z 	<testcase name="transport refuses altered model/context/payload and forged lifecycle receipts" time="0.601979" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T05:45:12.1764461Z 	<testcase name="native v8 transport preserves fragmented original output and waits for semantic acknowledgement" time="0.162994" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1766505Z 	<testcase name="native v8 output cannot change checkpoint, causal boundary or original bytes" time="0.644043" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1768862Z 	<testcase name="native malformed semantic output retains original bytes and token evidence as failed cost" time="0.097883" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1771133Z 	<testcase name="native partial binary failures retain authenticated original tokens without inventing a record" time="0.097990" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1774314Z 	<testcase name="native v8 transport rejects current-context leakage, stale prefixes and changed commit bytes" time="0.075742" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1776230Z 	<testcase name="native v8 failed initialization cannot leave an earlier checkpoint active" time="0.070758" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1778094Z 	<testcase name="native ordinary training lineage is bound at initialization, selection and recovery" time="0.445915" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1779892Z 	<testcase name="native v8 malformed UTF-8 and deadlines terminate the transport" time="0.150626" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1781884Z 	<testcase name="native acknowledgement failure does not count an execution as accepted" time="0.077068" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1783846Z 	<testcase name="transport closure during an unreturned native commit preserves unknown acknowledgement through cancellation" time="0.080229" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1785810Z 	<testcase name="stale native candidates can be rejected without closing the session or losing their costs" time="0.095181" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1787699Z 	<testcase name="native completion and close acknowledgments bind the exact invocation and public history" time="0.575691" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1789572Z 	<testcase name="native close receipt preserves the consumer reason and rejects altered or extended fields" time="0.579883" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1791690Z 	<testcase name="native checkpoint transport retains attempts and restores with pending candidates excluded" time="0.110481" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1793639Z 	<testcase name="native restore transport rejects altered checkpoints and false recovery acknowledgements" time="0.390181" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T05:45:12.1795586Z 	<testcase name="v8 receipt validator requires exact contract, source, contexts, tokenizer and every native gate" time="0.314761" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-v8.test.js"/>
+2026-11-22T05:45:12.1797481Z 	<testcase name="production region admission reruns source checking and refuses missing or fabricated native evidence" time="1.963352" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-v8.test.js"/>
+2026-11-22T05:45:12.1799617Z 	<testcase name="orchestration admission requires one exact transcript across source and native receipts" time="0.825938" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-v8.test.js"/>
+2026-11-22T05:45:12.1801867Z 	<testcase name="direct host receipts bind exactly one verified source identity without a nested artifact" time="0.020516" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-v8.test.js"/>
+2026-11-22T05:45:12.1804459Z 	<testcase name="a complete source-qualified child outside the authored work budget is refused" time="9.146651" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T05:45:12.1806971Z 	<testcase name="source-qualified scalar child attaches the canonical ten-event four-target lifecycle without mutation" time="0.025753" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T05:45:12.1809228Z 	<testcase name="the transcript digest cannot bless missing, reordered, or rehashed altered teacher events" time="0.125474" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T05:45:12.1811173Z 	<testcase name="source, input, causal context, ownership, dependency and terminal bytes remain bound" time="0.127641" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T05:45:12.1813377Z 	<testcase name="attachment refuses controlled source origin and artifacts already bound or admitted" time="0.015982" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T05:45:12.1815411Z 	<testcase name="family-bound local diagnostic serialization keeps four flat lifecycle targets loss-masked and source-bound" time="0.675924" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T05:45:12.1817446Z 	<testcase name="native qualification retains every frozen family input, script and module interaction" time="1.299624" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-qualification-population-v8.test.js"/>
+2026-11-22T05:45:12.1819412Z 	<testcase name="interoperability includes all source goldens and returns fresh mutable guest inputs" time="0.398805" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-qualification-population-v8.test.js"/>
+2026-11-22T05:45:12.1821561Z 	<testcase name="complete ordinary inventory preserves cyclic callback inputs through durable JSON" time="0.105641" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-qualification-population-v8.test.js"/>
+2026-11-22T05:45:12.1823730Z 	<testcase name="conversion qualification extends the original 47 unchanged and retains five explicit candidate refusals" time="0.209359" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-qualification-population-v8.test.js"/>
+2026-11-22T05:45:12.1825807Z 	<testcase name="fixed support cohort keeps all 16 templates and four declared variants before execution" time="0.188003" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+2026-11-22T05:45:12.1827725Z 	<testcase name="support registry rejects changed split, membership and source-derived core relations" time="0.264798" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+2026-11-22T05:45:12.1829788Z 	<testcase name="support-only mutable materialization round-trips all 64 authored fixtures" time="0.148336" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+2026-11-22T05:45:12.1831979Z 	<testcase name="generic generation encoding still refuses genuinely frozen guest values" time="0.000445" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+2026-11-22T05:45:12.1833917Z 	<testcase name="restores coordinator-ready after exact create and bootstrap receipts" time="0.578687" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1835890Z 	<testcase name="restores bootstrapped active children within the declared active bound" time="0.501862" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1837763Z 	<testcase name="restored host bridge keeps the caller live clock" time="0.368251" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1839724Z 	<testcase name="restores the exact acknowledged stale child rejection and retries its original selection" time="0.749836" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1842159Z 	<testcase name="restores join-before-run and executes only the acknowledged child" time="0.449864" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1844179Z 	<testcase name="restores the mixed child ledger after exact native child completion" time="0.641907" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1846184Z 	<testcase name="composite verifier rejects mixed-ledger, dependency, and unknown-ack mutations" time="1.410908" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1848067Z 	<testcase name="checkpoint is unavailable before a safe point" time="0.012451" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1849961Z 	<testcase name="two declared children restore from sparse acknowledged cuts without redispatch" time="5.338355" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1852349Z 	<testcase name="durable composite checkpoint requires an independent exact head acknowledgement and restores latest" time="4.356861" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1854540Z 	<testcase name="automatic composite history acknowledges the join safe point before child dispatch" time="14.599777" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1856626Z 	<testcase name="post-child persistence failure leaves a durable in-flight fence that refuses fresh replay" time="3.892180" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1858664Z 	<testcase name="automatic persistence refuses a journal readback that drops its pending fence" time="0.397280" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1860984Z 	<testcase name="requested child-ready pause stores a complete cut and arms its fence only on resumed dispatch" time="11.679332" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1863524Z 	<testcase name="requested orchestration safe point is snapshotted before native initialization awaits" time="0.094735" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1865551Z 	<testcase name="failed durable head acknowledgement leaves no reusable history receipt" time="0.273534" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:45:12.1867523Z 	<testcase name="model-only coordinator runs only the exact joined, bootstrapped child before its next choice" time="0.205604" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T05:45:12.1869510Z 	<testcase name="failed original coordinator bytes and one normalized cancellation reason survive cleanup" time="0.017978" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T05:45:12.1871667Z 	<testcase name="a committed create remains counted as acknowledged when bootstrap later fails" time="0.019157" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T05:45:12.1873769Z 	<testcase name="orchestration exposes only safe composite checkpoints and requires explicit durable dependencies" time="0.011914" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T05:45:12.1875793Z 	<testcase name="source sessions retain both independently checked fresh roots and every original target byte" time="1.886690" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:45:12.1877694Z 	<testcase name="session source recheck independently reruns both components after a JSON round trip" time="1.473170" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:45:12.1879526Z 	<testcase name="source session remains one exact member of the registry frozen before collection" time="1.763086" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:45:12.1881287Z 	<testcase name="rehashing an altered original source cannot certify a source session" time="0.197915" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:45:12.1883323Z 	<testcase name="rehashed changes to the composition plan, public bytes and component authority refuse" time="3.350872" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:45:12.1885227Z 	<testcase name="colliding callback identities retain both source dispositions and refuse session composition" time="3.112417" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:45:12.1887128Z 	<testcase name="a failed declared source call stays in the denominator and prevents partial session export" time="1.090570" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:45:12.1892337Z 	<testcase name="the bounded session profile refuses changed sources and out-of-range root counts before collection" time="0.000598" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:45:12.1895440Z 	<testcase name="native session receipts must bind the complete source collection and exact native gates" time="7.108289" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:45:12.1896537Z 	<!-- tests 74 -->
+2026-11-22T05:45:12.1896762Z 	<!-- suites 0 -->
+2026-11-22T05:45:12.1896973Z 	<!-- pass 74 -->
+2026-11-22T05:45:12.1897170Z 	<!-- fail 0 -->
+2026-11-22T05:45:12.1897373Z 	<!-- cancelled 0 -->
+2026-11-22T05:45:12.1897588Z 	<!-- skipped 0 -->
+2026-11-22T05:45:12.1897803Z 	<!-- todo 0 -->
+2026-11-22T05:45:12.1898045Z 	<!-- duration_ms 110269.759844 -->
+2026-11-22T05:45:12.1898301Z </testsuites>
+2026-11-22T05:45:12.2072276Z 74 paired transport controls passed with zero skips
+2026-11-22T05:45:12.2145744Z ##[group]Run node tools/qualify-semantic-v8.mjs --population "$V8_POPULATION" --inputs all --workers 2 \
+2026-11-22T05:45:12.2146551Z [36;1mnode tools/qualify-semantic-v8.mjs --population "$V8_POPULATION" --inputs all --workers 2 \[0m
+2026-11-22T05:45:12.2147308Z [36;1m  --out "$RUNNER_TEMP/v8-admitted" --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \[0m
+2026-11-22T05:45:12.2147992Z [36;1m  --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \[0m
+2026-11-22T05:45:12.2148541Z [36;1m  2>&1 | tee "$RUNNER_TEMP/semantic-v8-qualification.log"[0m
+2026-11-22T05:45:12.2169652Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T05:45:12.2169999Z env:
+2026-11-22T05:45:12.2170192Z   OMP_NUM_THREADS: 1
+2026-11-22T05:45:12.2170414Z   MKL_NUM_THREADS: 1
+2026-11-22T05:45:12.2170809Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:45:12.2171986Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:45:12.2172682Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:45:12.2173257Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:45:12.2173651Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:45:12.2174224Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:45:12.2174851Z   V8_POPULATION: gallery
+2026-11-22T05:45:12.2175137Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:45:12.2175557Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T05:45:12.2175998Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:45:12.2176376Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:45:12.2176752Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:45:12.2177125Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T05:45:12.2177445Z ##[endgroup]
+2026-11-22T05:45:17.5675541Z {"id":"compound-pure","status":"admitted","native":"passed"}
+2026-11-22T05:45:18.5628604Z {"id":"branch-1","status":"admitted","native":"passed"}
+2026-11-22T05:45:22.0820482Z {"id":"object-alias","status":"admitted","native":"passed"}
+2026-11-22T05:45:22.8996467Z {"id":"pure-helper","status":"admitted","native":"passed"}
+2026-11-22T05:45:27.4007959Z {"id":"dense-loop","status":"admitted","native":"passed"}
+2026-11-22T05:45:27.8814667Z {"id":"throw-finally","status":"admitted","native":"passed"}
+2026-11-22T05:45:33.4240498Z {"id":"counter-0","status":"admitted","native":"passed"}
+2026-11-22T05:45:33.9233131Z {"id":"rejection-finally","status":"admitted","native":"passed"}
+2026-11-22T05:45:42.7364618Z {"id":"callback-captured-write","status":"admitted","native":"passed"}
+2026-11-22T05:45:45.9178225Z {"id":"persistent-external-trigger","status":"admitted","native":"passed"}
+2026-11-22T05:45:46.8637555Z {"id":"redundant-cell-write","status":"admitted","native":"passed"}
+2026-11-22T05:45:46.8652658Z {"output":"/home/runner/work/_temp/v8-admitted","producerRevision":"10c301666e1509e7376639b8d02600ea04e88dc0","sourceQualified":11,"nativeAdmitted":11,"declared":11}
+2026-11-22T05:45:46.8982290Z ##[group]Run node tools/measure-semantic-v8.mjs --qualification "$RUNNER_TEMP/v8-admitted" \
+2026-11-22T05:45:46.8983032Z [36;1mnode tools/measure-semantic-v8.mjs --qualification "$RUNNER_TEMP/v8-admitted" \[0m
+2026-11-22T05:45:46.8983722Z [36;1m  --out "$RUNNER_TEMP/v8-costs" --tokenizer-module tools/semantic-v8-tokenizer-adapter.mjs \[0m
+2026-11-22T05:45:46.8984260Z [36;1m  2>&1 | tee "$RUNNER_TEMP/semantic-v8-costs.log"[0m
+2026-11-22T05:45:46.8984608Z [36;1mnode --input-type=module <<'JS'[0m
+2026-11-22T05:45:46.8984913Z [36;1mimport {readFileSync} from 'node:fs';[0m
+2026-11-22T05:45:46.8985223Z [36;1mimport {join} from 'node:path';[0m
+2026-11-22T05:45:46.8985741Z [36;1mconst read=directory=>JSON.parse(readFileSync(join(process.env.RUNNER_TEMP,directory,'report.json')));[0m
+2026-11-22T05:45:46.8986479Z [36;1mconst qualification=read('v8-admitted'),costs=read('v8-costs'),declared=qualification.declared;[0m
+2026-11-22T05:45:46.8987165Z [36;1mif(!Number.isSafeInteger(declared)||declared<1||qualification.preparationOnly||[0m
+2026-11-22T05:45:46.8987797Z [36;1m  qualification.sourceQualified!==declared||qualification.nativeAdmitted!==declared)[0m
+2026-11-22T05:45:46.8988425Z [36;1m  throw new Error('Every declared CI case requires fresh source and native admission');[0m
+2026-11-22T05:45:46.8988984Z [36;1mif(!costs.tokenizerEvidence||costs.summary.declared!==declared||[0m
+2026-11-22T05:45:46.8989597Z [36;1m  costs.summary.flat.measured!==declared||costs.summary.flat.tokenMeasuredEpisodes!==declared||[0m
+2026-11-22T05:45:46.8990374Z [36;1m  costs.summary.flat.tokenMeasurement!=='passed'||costs.summary.nativePacking.measuredEpisodes!==declared)[0m
+2026-11-22T05:45:46.8991220Z [36;1m  throw new Error('Every declared CI case requires complete production-tokenizer and native-packing measurements');[0m
+2026-11-22T05:45:46.8992143Z [36;1mJS[0m
+2026-11-22T05:45:46.9013018Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T05:45:46.9013358Z env:
+2026-11-22T05:45:46.9013552Z   OMP_NUM_THREADS: 1
+2026-11-22T05:45:46.9013764Z   MKL_NUM_THREADS: 1
+2026-11-22T05:45:46.9014140Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:45:46.9014809Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:45:46.9015471Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:45:46.9016064Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:45:46.9016459Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:45:46.9017046Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:45:46.9017667Z   V8_POPULATION: gallery
+2026-11-22T05:45:46.9017955Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:45:46.9018387Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T05:45:46.9018809Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:45:46.9019191Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:45:46.9019567Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:45:46.9019946Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T05:45:46.9020267Z ##[endgroup]
+2026-11-22T05:45:48.6424335Z {"id":"compound-pure","status":"measured"}
+2026-11-22T05:45:48.7625335Z {"id":"branch-1","status":"measured"}
+2026-11-22T05:45:48.8042098Z {"id":"object-alias","status":"measured"}
+2026-11-22T05:45:48.8340019Z {"id":"pure-helper","status":"measured"}
+2026-11-22T05:45:48.8852594Z {"id":"dense-loop","status":"measured"}
+2026-11-22T05:45:48.9541815Z {"id":"throw-finally","status":"measured"}
+2026-11-22T05:45:49.0665710Z {"id":"counter-0","status":"measured"}
+2026-11-22T05:45:49.1613327Z {"id":"rejection-finally","status":"measured"}
+2026-11-22T05:45:49.4063156Z {"id":"callback-captured-write","status":"measured"}
+2026-11-22T05:45:49.7406607Z {"id":"persistent-external-trigger","status":"measured"}
+2026-11-22T05:45:49.7634530Z {"id":"redundant-cell-write","status":"measured"}
+2026-11-22T05:45:49.7656012Z {"output":"/home/runner/work/_temp/v8-costs","producerRevision":"10c301666e1509e7376639b8d02600ea04e88dc0","summary":{"declared":11,"sourceQualified":11,"sourceDispositions":{"passed":11},"compactEpisodes":9,"whollyDetailedEpisodes":2,"regionCoverage":{"measuredEpisodes":11,"unmeasuredEpisodes":0,"compact":10,"detailed":15,"compactRecords":10,"detailedRecords":87},"flat":{"sourceQualified":11,"measured":11,"unmeasured":0,"dispositions":{"passed":11},"bytes":{"generated":11618,"detailed":10163,"detailedShare":0.8747632983301773,"cumulativeContext":431999,"peakContext":9642},"tokenMeasurement":"passed","tokenMeasuredEpisodes":11,"tokens":{"generated":3378,"detailed":2915,"detailedShare":0.8629366489046774,"terminal":97,"observedAndContext":147634,"total":151109,"peakContext":3191},"scope":"Sums cover measured episodes only; source refusals and measurement limits remain in the declared denominator."},"nativePacking":{"status":"measured","measuredEpisodes":11,"unmeasuredEpisodes":0,"generatedTokens":3378,"observedTokens":166322,"terminalTokens":0,"physicalRecords":424,"logicalRecords":169,"scope":"Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."},"model":{"status":"unmeasured","nextStep":null,"completedExecution":null,"latencyMs":null},"nativeServing":{"status":"unmeasured","latencyMs":null,"cacheSavings":null},"defaultPromotion":"not-qualified"}}
+2026-11-22T05:45:49.8881151Z ##[group]Run actions/upload-artifact@v4
+2026-11-22T05:45:49.8881664Z with:
+2026-11-22T05:45:49.8881891Z   name: semantic-v8-gallery-native-evidence
+2026-11-22T05:45:49.8882198Z   if-no-files-found: warn
+2026-11-22T05:45:49.8882429Z   retention-days: 30
+2026-11-22T05:45:49.8885951Z   path: /home/runner/work/_temp/semantic-v8-contract.log
+/home/runner/work/_temp/semantic-v8-tests.xml
+/home/runner/work/_temp/semantic-v8-tests.log
+/home/runner/work/_temp/semantic-v8-transport-tests.xml
+/home/runner/work/_temp/semantic-v8-qualification.log
+/home/runner/work/_temp/semantic-v8-costs.log
+/home/runner/work/_temp/v8-admitted/
+/home/runner/work/_temp/v8-costs/
+/home/runner/work/_temp/semantic-v8-ordinary-lifecycle.log
+/home/runner/work/_temp/v8-ordinary-lifecycle/
+/home/runner/work/_temp/semantic-v8-ordinary-orchestration.log
+/home/runner/work/_temp/v8-ordinary-orchestration/
+/home/runner/work/_temp/semantic-v8-support-supply.log
+/home/runner/work/_temp/semantic-v8-support-supply.json
+/home/runner/work/_temp/v8-support-source-ids.json
+/home/runner/work/_temp/v8-support-prepared/
+/home/runner/work/_temp/semantic-v8-support-lifecycle.log
+/home/runner/work/_temp/v8-support-lifecycle/
+
+2026-11-22T05:45:49.8889394Z   compression-level: 6
+2026-11-22T05:45:49.8889617Z   overwrite: false
+2026-11-22T05:45:49.8889828Z   include-hidden-files: false
+2026-11-22T05:45:49.8890064Z env:
+2026-11-22T05:45:49.8890243Z   OMP_NUM_THREADS: 1
+2026-11-22T05:45:49.8890443Z   MKL_NUM_THREADS: 1
+2026-11-22T05:45:49.8890812Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:45:49.8891590Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:45:49.8892255Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T05:45:49.8893022Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:45:49.8893422Z   MEGATOKEN_PYTHON: python
+2026-11-22T05:45:49.8894015Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T05:45:49.8894632Z   V8_POPULATION: gallery
+2026-11-22T05:45:49.8894922Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:45:49.8895350Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T05:45:49.8895787Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:45:49.8896166Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:45:49.8896541Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T05:45:49.8896925Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T05:45:49.8897261Z ##[endgroup]
+2026-11-22T05:45:50.0657780Z (node:8964) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T05:45:50.0658656Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T05:45:50.1088538Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-22T05:45:50.1098074Z The least common ancestor is /home/runner/work/_temp. This will be the root directory of the artifact
+2026-11-22T05:45:50.1122520Z With the provided path, there will be 102 files uploaded
+2026-11-22T05:45:50.1149848Z Artifact name is valid!
+2026-11-22T05:45:50.1150347Z Root directory input is valid!
+2026-11-22T05:45:50.4148188Z Beginning upload of artifact content to blob storage
+2026-11-22T05:45:50.6743874Z (node:8964) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-22T05:45:51.1040295Z Uploaded bytes 1130396
+2026-11-22T05:45:51.1586165Z Finished uploading artifact content to blob storage!
+2026-11-22T05:45:51.1588415Z SHA256 digest of uploaded artifact zip is 88a42dec27872104f17ef3476c7809c20f50a216813fb4fa63daabf82221edb0
+2026-11-22T05:45:51.1589597Z Finalizing artifact upload
+2026-11-22T05:45:51.5217490Z Artifact semantic-v8-gallery-native-evidence.zip successfully finalized. Artifact ID 14741274486
+2026-11-22T05:45:51.5218594Z Artifact semantic-v8-gallery-native-evidence has been successfully uploaded! Final size is 1130396 bytes. Artifact ID is 14741274486
+2026-11-22T05:45:51.5226105Z Artifact download URL: https://github.com/werg/tracing-js-self/actions/runs/44988934223/artifacts/14741274486
+2026-11-22T05:45:51.5445296Z Post job cleanup.
+2026-11-22T05:45:51.6684936Z (node:8976) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T05:45:51.6686690Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T05:45:51.6886855Z Post job cleanup.
+2026-11-22T05:45:51.7870153Z [command]/usr/bin/git version
+2026-11-22T05:45:51.7917884Z git version 2.56.1
+2026-11-22T05:45:51.7958588Z Temporarily overriding HOME='/home/runner/work/_temp/19eb4ae7-41cf-4316-857c-e58a8ebdc8ae' before making global git config changes
+2026-11-22T05:45:51.7960086Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T05:45:51.7964808Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T05:45:51.8007475Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T05:45:51.8048847Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T05:45:51.8325912Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T05:45:51.8368479Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T05:45:51.8645478Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T05:45:51.8694771Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T05:45:51.9173658Z Post job cleanup.
+2026-11-22T05:45:52.0461888Z (node:9079) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T05:45:52.0462759Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T05:45:52.0706243Z Post job cleanup.
+2026-11-22T05:45:52.1642624Z [command]/usr/bin/git version
+2026-11-22T05:45:52.1689037Z git version 2.56.1
+2026-11-22T05:45:52.1760784Z Temporarily overriding HOME='/home/runner/work/_temp/fcb59694-0efa-423e-98fc-591653a29d4a' before making global git config changes
+2026-11-22T05:45:52.1762515Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T05:45:52.1767551Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T05:45:52.1815854Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T05:45:52.1856939Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T05:45:52.2156228Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T05:45:52.2202335Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T05:45:52.2496145Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T05:45:52.2545965Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T05:45:52.2950529Z Cleaning up orphan processes
+2026-11-22T05:45:52.3347972Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/setup-python@v5, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
