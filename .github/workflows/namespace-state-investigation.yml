@@ -14,10 +14,14 @@ concurrency:
 jobs:
   paired-state:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
       OMP_NUM_THREADS: '1'
       MKL_NUM_THREADS: '1'
+      TRACING_JS_SELF_ROOT: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_NATIVE_SOURCE_PRODUCER: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/tokenizer.json
+      SEMANTIC_V8_NATIVE_POLICY: ${{ github.workspace }}/tracing-js-self/contracts/semantic-native-policy-v8.json
       MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
       MEGATOKEN_PYTHON: python
     steps:
@@ -29,7 +33,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          ref: 642d792aa6bac62b62e9384870e0be5e8e883be7
+          ref: d8aed032e6128007f48888940f888ac3719a0f19
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -44,6 +48,19 @@ jobs:
           python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
           python -m pip install --no-deps --no-build-isolation -e ./megatoken
           python -m pip install ruff
+      - name: Acquire the exact production tokenizer
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, shutil
+          from pathlib import Path
+          from huggingface_hub import hf_hub_download
+          from megatoken.generation.codec import LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256
+          path = Path(os.environ['MEGATOKEN_TOKENIZER_JSON'])
+          shutil.copyfile(hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION), path)
+          policy = json.loads(Path(os.environ['SEMANTIC_V8_NATIVE_POLICY']).read_text())
+          digest = hashlib.sha256(path.read_bytes()).hexdigest()
+          assert digest == LING_TOKENIZER_SHA256 == policy['tokenizerSha256']
+          PY
       - name: Check the committed paired namespace contract
         working-directory: tracing-js-self
         shell: bash
@@ -55,7 +72,7 @@ jobs:
           import base64,gzip,json
           from pathlib import Path
           assert Path('test/fixtures/semantic-regions-v8.json').read_bytes()==gzip.decompress(base64.b64decode(Path('../megatoken/tests/fixtures/semantic-regions-v8.json.gz.b64').read_text()))
-          assert json.loads(Path('contracts/semantic-native-policy-v8.json').read_text())['consumerRevision']=='642d792aa6bac62b62e9384870e0be5e8e883be7'
+          assert json.loads(Path('contracts/semantic-native-policy-v8.json').read_text())['consumerRevision']=='d8aed032e6128007f48888940f888ac3719a0f19'
           PY
       - name: Format and retain the experimental native candidate
         working-directory: megatoken
@@ -68,21 +85,21 @@ jobs:
           for path in ('src/megatoken/data/module_namespace_state_v8.py','src/megatoken/data/module_namespace_machine_v8.py','tests/test_module_namespace_state_v8.py','tests/test_module_namespace_machine_v8.py','src/megatoken/data/protocol_v8.py','src/megatoken/data/native_v8.py'):
               print('FORMATTED_SOURCE_JSON '+json.dumps({'path':path,'content':Path(path).read_text()}))
           PY
-      - name: Check independent native state transitions
+      - name: Check native protocol and namespace regressions
         working-directory: megatoken
         shell: bash
         run: |
           set -o pipefail
           python -m ruff check src/megatoken/data/module_namespace_state_v8.py src/megatoken/data/module_namespace_machine_v8.py src/megatoken/data/protocol_v8.py src/megatoken/data/native_v8.py tests/test_module_namespace_state_v8.py tests/test_module_namespace_machine_v8.py
           python -m ruff format --check src/megatoken/data/module_namespace_state_v8.py src/megatoken/data/module_namespace_machine_v8.py src/megatoken/data/protocol_v8.py src/megatoken/data/native_v8.py tests/test_module_namespace_state_v8.py tests/test_module_namespace_machine_v8.py
-          python -m pytest -q tests/test_module_namespace_state_v8.py tests/test_module_namespace_machine_v8.py --junitxml="$RUNNER_TEMP/namespace-native.xml" 2>&1 | tee "$RUNNER_TEMP/namespace-native.log"
+          python -m pytest -q tests/test_*v8*.py tests/test_algorithm_v7.py tests/test_protocol_properties.py tests/test_semantic_launch.py --junitxml="$RUNNER_TEMP/namespace-native.xml" 2>&1 | tee "$RUNNER_TEMP/namespace-native.log"
           python - <<'PY'
           import os,xml.etree.ElementTree as ET
           from pathlib import Path
           cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'namespace-native.xml').getroot().iter('testcase'))
           if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
               raise ValueError('Every experimental native state control must run and pass')
-          print(f'{len(cases)} experimental native state controls passed with zero skips')
+          print(f'{len(cases)} native protocol and namespace regression controls passed with zero skips')
           PY
       - name: Compare source-derived state, native ESM and owned module behavior
         if: ${{ !cancelled() }}
@@ -100,6 +117,25 @@ jobs:
               raise ValueError('Every experimental namespace differential must run and pass')
           print(f'{len(cases)} namespace differentials and refusal controls passed with zero skips')
           PY
+      - name: Check the ordinary coordinator and source-qualified teacher boundaries
+        if: ${{ !cancelled() }}
+        working-directory: tracing-js-self
+        run: |
+          node --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \
+            test/semantic-selected-orchestration-v8.test.js test/semantic-selected-orchestration-checkpoint-v8.test.js \
+            test/semantic-native-orchestration-recovery-v8.test.js \
+            test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js \
+            test/semantic-source-session-v8.test.js test/semantic-region-support-cohort.test.js \
+            test/semantic-qualification-population-v8.test.js test/qualify-support-lifecycle.test.js \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-transport-tests.xml"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-transport-tests.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('Every paired V8 transport control, including the Python contract check, must run and pass')
+          print(f'{len(cases)} paired transport controls passed with zero skips')
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -107,6 +143,7 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
           path: |
+            ${{ runner.temp }}/semantic-v8-transport-tests.xml
             ${{ runner.temp }}/namespace-contract.log
             ${{ runner.temp }}/namespace-native.xml
             ${{ runner.temp }}/namespace-native.log
