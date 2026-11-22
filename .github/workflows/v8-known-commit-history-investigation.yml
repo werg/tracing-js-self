@@ -67,9 +67,9 @@ jobs:
           import os,xml.etree.ElementTree as ET
           from pathlib import Path
           cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'known-commit-history.xml').getroot().iter('testcase'))
-          if len(cases)!=55 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
-              raise ValueError('Every one of the 55 exact known-commit/clock/whole-history controls must run and pass')
-          print('55 known-commit, kernel-clock, native durability and complete-history controls passed; zero skips')
+          if len(cases)!=62 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('Every one of the 62 exact known-commit/clock/whole-history controls must run and pass')
+          print('62 known-commit, kernel-clock, native durability and complete-history controls passed; zero skips')
           PY
       - name: Preserve exact candidate checkouts
         if: ${{ !cancelled() }}

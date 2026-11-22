@@ -2,7 +2,7 @@
 // checks establish recovery ordering/identity, not learned execution quality.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {existsSync,readFileSync,readlinkSync} from 'node:fs';
+import {existsSync,readFileSync,readlinkSync,writeFileSync} from 'node:fs';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
@@ -52,6 +52,9 @@ async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}
   };
   async function open(faultAction=null){
     const executionLease=await lock.acquire(),log=join(directory,'decoder-'+(++count)+'.log');
+    // Refusals can complete before the child initializes its decoder log.
+    // Give the observation an empty baseline without waiting for model work.
+    writeFileSync(log,'',{flag:'wx'});
     const args=faultAction?[faultPeer,'--peer',peer,'--fault',fault,'--fault-action',faultAction]:[peer];
     args.push('--decoder-log',log,'--request-journal-dir',requests.directory,'--execution-lock-fd','3',
       '--execution-lock-path',executionLease.lockPath,'--execution-session-id',sessionId,'--execution-stream-id',streamId,
@@ -149,7 +152,8 @@ test('wrong request scope or absent live clock refuses before any native recover
     }
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,
       options(c,fresh,{executionClock:{}})),/original live clock/);
-    assert.equal(fresh.select.metrics().predictionAttempts,0);assert.equal(readFileSync(fresh.log,'utf8'),'');
+    assert.equal(fresh.select.metrics().predictionAttempts,0);
+    assert.equal(fresh.select.metrics().rpcCalls,0);assert.equal(readFileSync(fresh.log,'utf8'),'');
   }finally{await c.close(fresh);}
 });
 
@@ -165,7 +169,8 @@ test('lost reconciled-head acknowledgement leaves the old receipt fenced without
   const third=await c.replacement();
   try{
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,options(c,third)),/latest|later|head/);
-    assert.equal(third.select.metrics().predictionAttempts,0);assert.equal(readFileSync(third.log,'utf8'),'');
+    assert.equal(third.select.metrics().predictionAttempts,0);
+    assert.equal(third.select.metrics().rpcCalls,0);assert.equal(readFileSync(third.log,'utf8'),'');
   }finally{await c.close(third);}
 });
 
@@ -176,6 +181,7 @@ test('a real expired pending clock cannot refund time on process replacement',{s
   const fresh=await c.replacement();
   try{
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,options(c,fresh)),/deadline has expired/);
-    assert.equal(fresh.select.metrics().predictionAttempts,0);assert.equal(readFileSync(fresh.log,'utf8'),'');
+    assert.equal(fresh.select.metrics().predictionAttempts,0);
+    assert.equal(fresh.select.metrics().rpcCalls,0);assert.equal(readFileSync(fresh.log,'utf8'),'');
   }finally{await c.close(fresh);}
 });
