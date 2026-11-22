@@ -1,0 +1,7 @@
+START unhandled-dependency-rejection
+{"id":"unhandled-dependency-rejection","status":"source-verified","producerRevision":"52d9073b33173ce1caf8830558df01c4e5d052df","contexts":553,"ownedModuleCuts":9,"artifactBytes":22299595,"artifactSha256":"9d1aabbf07c07ee57b0c6759639c5ca6b6cdc05ba8d2b3eb20fc87f00d27af16","originalEsm":"passed","originalCorrespondence":"passed","sourceValidated":true,"projectionValidated":true,"replayValidated":true,"nativeAdmission":false,"outcome":"throw","withinSourceRecheckByteLimit":true,"elapsedMs":146047.00224499998,"productionPopulationChanged":false,"optimizerUpdates":0}
+START syntactic-tla-without-executed-await
+{"id":"syntactic-tla-without-executed-await","status":"source-verified","producerRevision":"52d9073b33173ce1caf8830558df01c4e5d052df","contexts":690,"ownedModuleCuts":8,"artifactBytes":28394538,"artifactSha256":"5a3af79ec0ac82a06368ac8002b09cd7be5cd4f7b0397fc030493b1568258b11","originalEsm":"passed","originalCorrespondence":"passed","sourceValidated":true,"projectionValidated":true,"replayValidated":true,"nativeAdmission":false,"outcome":"return","withinSourceRecheckByteLimit":true,"elapsedMs":203441.606067,"productionPopulationChanged":false,"optimizerUpdates":0}
+START diamond-shared-synchronous-dependency
+{"id":"diamond-shared-synchronous-dependency","status":"refused","phase":"owned-and-independent-source","reason":"Unexpected end of JSON input"}
+COMPLETE 3
