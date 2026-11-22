@@ -1,0 +1,13 @@
+# Binding released source artifacts to their original tasks
+
+The direct V8 release verifier now checks a relationship that neither a complete journal nor fresh replay alone establishes: the artifact being replayed must represent the source task that the qualification selected.
+
+The journal snapshot still independently preserves the full population, every attempt and exact artifact bytes. Before constructing the native descriptor, the package driver reads the frozen population, report, family registry and original source documents through that snapshot's byte inventories. For every selected source it compares the original source text, entry, canonical argument graph, host fixture and settlement order, RNG seed, family, normalized ancestry, producer identity, task identity when carried, physical source identity and split. Repeated source invocations must retain their exact count, order and individual inputs. An authored orchestration transcript must agree with the task's declared teacher flag.
+
+The same check runs before packaging, after copying the input tree, and after archive extraction on restore. It performs no source execution, native admission, optimizer update or decoder call. Fresh native source and prepared-data verification still runs afterwards; this correspondence check does not replace it.
+
+Native descriptor source rows now contain exactly `caseId`, `sourceId` and `path`. The case label and physical source ID remain separate. The expected physical source ID comes from the task/report/registry relationship and must match the artifact's own binding before fresh native preparation. Existing digest-suffixed physical IDs are preserved.
+
+The first ordinary text release profile requires explicit original **source tasks** with a frozen family registry. It includes the already implemented repeated-invocation and authored-teacher source forms. Module-task correspondence is explicitly undeclared and refuses before native/model checks; module source qualification or packing evidence is not promoted to release qualification by this source-only profile.
+
+The consistency gap was demonstrated at the native membership boundary using an unchanged valid rectangular-capacity artifact under a rectangle-perimeter case label. That was a bounded membership observation, not a completed package acceptance or a new source/native execution. The correction's focused source-input controls and the original archive controls have separate, explicit populations. A read-only check of all 64 original retained support artifacts agrees with their frozen source tasks; it does not requalify those old artifacts on the current pair.

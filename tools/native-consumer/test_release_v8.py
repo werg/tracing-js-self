@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import fcntl
+import hashlib
 import importlib.util
 import io
 import json
@@ -21,6 +22,53 @@ release = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(release)
 
 
+def make_source_campaign(root):
+    """Minimal data-consistency fixture; never a source/native qualification."""
+    family, source_id = "controlled-source", "selected-physical-0123456789ab"
+    source = "function run(value){return value;}"
+    graph = {"schema": "owned-graph/1", "roots": [["num", 1]], "objects": []}
+    host = {"calls": [], "settlementOrder": None}
+    fixture = {"id": "selected", "source": source, "entry": "run", "family": family,
+               "ancestorIds": ["controlled-template"], "argsGraph": graph, "fixture": host}
+    registry = {"schema": "semantic-region-family-registry/1", "digest": "6" * 64, "sources": [
+        {"id": source_id, "source": source, "entry": "run", "family": family, "ancestors": ["controlled-template"]}]}
+    original = {"producerRevision": "a" * 40, "taskId": "selected", "sourceFamily": family,
+                "sourceLineage": family, "ancestorIds": ["controlled-template"],
+                "referenceInput": {"source": source, "entry": "run", "inputGraph": graph,
+                                   "fixture": host, "randomSeed": None}}
+    binding = {"sourceId": source_id, "registryDigest": registry["digest"], "split": "train"}
+    artifact = {"public": {"schema": "semantic-execution/8"}, "sidecar": {
+        "schema": "semantic-region-evidence/1", "sourceFamily": family, "family": family,
+        "sourceArtifact": {"sidecar": original}, "datasetBinding": binding,
+        "splitIdentity": {**binding, "registry": registry}}}
+    case = {"id": "selected", "selected": True, "status": "admitted", "source": "passed", "native": "passed",
+            "sourceArtifact": "selected.source.json", "admittedArtifact": "selected.admitted.json"}
+    population = {"tasks": [{"kind": "source", "traceVersion": 8, "producerRevision": "a" * 40, "fixture": fixture}],
+                  "registryDigest": registry["digest"]}
+    report = {"familyRegistryArtifact": "family-registry.json", "registryDigest": registry["digest"],
+              "rows": [{**case, "sourceId": source_id, "family": family, "split": "train"}]}
+    documents = {"population.json": population, "report.json": report, "family-registry.json": registry,
+                 "selected.source.json": artifact}
+    snapshot = {"producerRevision": "a" * 40, "nativePolicy": {"consumerRevision": "b" * 40},
+                "contractDigest": "1" * 64, "fixtureDigest": "2" * 64, "interoperabilityDigest": "3" * 64,
+                "selectedCaseIds": ["selected"], "cases": [case,
+                    {"id": "untested", "selected": False, "status": "untested", "source": "untested", "native": "untested"}]}
+    population["tasks"].append({"kind": "source", "traceVersion": 8, "producerRevision": "a" * 40,
+                                "fixture": {**fixture, "id": "untested"}})
+    report["rows"].append(snapshot["cases"][1])
+    documents = json.loads(json.dumps(documents))
+
+    def save():
+        root.mkdir(parents=True, exist_ok=True)
+        snapshot["files"] = []
+        for name, document in documents.items():
+            data = (json.dumps(document, sort_keys=True) + "\n").encode()
+            (root / name).write_bytes(data)
+            snapshot["files"].append({"path": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()})
+    save()
+    return snapshot, documents, save
+
+
 class DirectV8ReleaseTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="direct-v8-release-test-")
@@ -28,13 +76,7 @@ class DirectV8ReleaseTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
 
     def snapshot(self):
-        return {"producerRevision": "a" * 40, "nativePolicy": {"consumerRevision": "b" * 40},
-                "contractDigest": "1" * 64, "fixtureDigest": "2" * 64, "interoperabilityDigest": "3" * 64,
-                "selectedCaseIds": ["selected"], "cases": [
-                    {"id": "selected", "selected": True, "status": "admitted", "source": "passed", "native": "passed",
-                     "sourceArtifact": "selected.source.json", "admittedArtifact": "selected.admitted.json"},
-                    {"id": "untested", "selected": False, "status": "untested", "source": "untested", "native": "untested"},
-                ]}
+        return make_source_campaign(self.root)[0]
 
     def recipe(self):
         return {"codec": "/original/tokenizer.json", "datasets": ["/original/prepared"],
@@ -194,15 +236,16 @@ class DirectV8ReleaseTests(unittest.TestCase):
         snapshot = self.snapshot()
         snapshot["cases"][0]["native"] = "untested"
         with self.assertRaisesRegex(ValueError, "Every selected"):
-            release.descriptor_from_campaign(snapshot, {"revision": "a" * 40}, {"revision": "b" * 40})
+            release.descriptor_from_campaign(snapshot, {"revision": "a" * 40}, {"revision": "b" * 40}, self.root)
 
     def test_complete_selection_and_source_pair_authorize_only_the_selected_artifacts(self):
         snapshot = self.snapshot()
-        descriptor = release.descriptor_from_campaign(snapshot, {"revision": "a" * 40}, {"revision": "b" * 40})
+        descriptor = release.descriptor_from_campaign(snapshot, {"revision": "a" * 40}, {"revision": "b" * 40}, self.root)
         self.assertEqual(descriptor["roles"]["prepared"][0]["sourceArtifacts"], [
-            {"caseId": "selected", "path": "source-qualification/selected.source.json"}])
+            {"caseId": "selected", "sourceId": "selected-physical-0123456789ab",
+             "path": "source-qualification/selected.source.json"}])
         with self.assertRaisesRegex(ValueError, "another source pair"):
-            release.descriptor_from_campaign(snapshot, {"revision": "c" * 40}, {"revision": "b" * 40})
+            release.descriptor_from_campaign(snapshot, {"revision": "c" * 40}, {"revision": "b" * 40}, self.root)
 
     def test_active_writer_and_missing_lock_refuse_without_creating_lock(self):
         qualification = self.root / "campaign"
