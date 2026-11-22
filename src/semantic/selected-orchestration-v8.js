@@ -417,6 +417,7 @@ export class RegionSelectedOrchestrationDriver {
           await persistAutomaticCheckpoint(beforeSelection,pendingMarker(beforeSelection,'coordinator-selection',{
             attempt:coordinatorAttempts.length,coordinatorSelections:this.continuation.coordinatorSelections,
             track:state.track}));
+          checkAbort();
         }
         const context=nativeV8OrchestrationContext(state),attempt={attempt:coordinatorAttempts.length,
           family:'orchestration',session:this.session,track:state.track,contextDigest:hashAlgorithmData(context),

@@ -16,6 +16,26 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Cancellation during durability acknowledgement — 22 November 2026
+
+A cancellation can arrive while the independent head acknowledgement is awaited.
+The coordinator now checks that signal immediately after acknowledging its
+pre-selection fence, before issuing the next native selection RPC. The new control
+aborts inside the acknowledgement callback and requires zero coordinator selections,
+the exact cancellation reason, and a retained pending fence. Its new hosted
+result remains pending.
+
+The controlled shared-native gate at producer candidate
+`ac85e028b35ce9757186be746b677698a3b4232d` / native
+`a886fb8fd80c7a117d0b212aa6a142a75e52ee2c` passed **73 paired transport test
+cases, zero skips**, in [run 44988575766](https://github.com/werg/tracing-js-self/actions/runs/44988575766).
+This includes actual Python/shared-runtime refusal after a lost coordinator-fence
+acknowledgement and after a child's completion-cut acknowledgement, plus the
+existing mixed-cut reexecution control. The deterministic lexical decoder is
+explicit, so no learned-quality or actual-production-model claim follows. The
+additional positive automatic restore test on the main branch still needs its
+own current-head result. Full log is retained with the automatic-history evidence.
+
 ## Automatic history validation and two-child continuation — 22 November 2026
 
 The initial automatic-history implementation at `ee881819ec01f26830dc8a04a50de19c8dfcb080`

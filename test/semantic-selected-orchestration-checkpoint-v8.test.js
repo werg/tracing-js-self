@@ -486,6 +486,31 @@ test('requested child-ready pause stores a complete cut and arms its fence only 
   }finally{second.close();}
 });
 
+test('cancellation during coordinator fence acknowledgement prevents a later selection',async t=>{
+  const policy=automaticPolicy,signal=new AbortController(),directory=await mkdtemp(join(tmpdir(),
+    'v8-composite-abort-fence-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory,streamId:'abortfence'});
+  const select=selector(),driver=new RegionSelectedOrchestrationDriver({initialPublic,select,...policy});
+  let head=null;
+  driver.startAutomaticHistory({journal,acknowledge:async({receipt,previous})=>{
+    assert.deepEqual(previous,head);
+    const entry=await journal.read(receipt);
+    head=structuredClone(receipt);
+    if(entry.pending?.kind==='coordinator-selection')
+      signal.abort(new Error('cancelled while acknowledging the coordinator fence'));
+    return structuredClone(head);
+  }});
+  try{
+    const result=await driver.run({signal:signal.signal});
+    assert.match(result.failure?.message??'',/cancelled while acknowledging the coordinator fence/);
+    assert.equal(driver.coordinatorAttempts.length,0,'an acknowledged fence cannot override cancellation');
+    const entry=(await journal.readAll(head)).at(-1);
+    assert.equal(entry.pending.kind,'coordinator-selection');
+    assert.equal(entry.checkpoint.coordinatorAttempts.length,0);
+  }finally{select.close();}
+});
+
 test('requested orchestration safe point is snapshotted before native initialization awaits',async()=>{
   const select=selector(),stopAt={phase:'coordinator-ready',coordinatorSelections:0},
     initialize=select.initialize;
