@@ -344,7 +344,7 @@ def aggregate(args):
         reports[lane] = report["tests"]
     write(args.out, {"schema": "semantic-v8-combined-qualification/1", "status": "passed", "pair": pair,
           "lanes": reports, "requiredGroups": {"recovery": {"native": 165, "producer": 193},
-          "promise": {"native": 106, "producer": 173}}, "optimizerUpdates": None,
+          "promise": {"native": 106, "producer": 185}}, "optimizerUpdates": None,
           "optimizerUpdateScope": "No global update tally across all tests; the emitted controlled position proof is counted below",
           "controlledTraining": controlled_training,
           "moduleAdmission": False, "trainingAdmission": False, "learnedQualityClaim": None})

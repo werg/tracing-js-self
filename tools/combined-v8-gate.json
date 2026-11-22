@@ -110,9 +110,12 @@
         "test/semantic-protocol-promise-executor-source-v8.test.js": 10,
         "test/semantic-protocol-promise-executor-v8.test.js": 11,
         "test/semantic-protocol-promise-join-v8.test.js": 10,
+        "test/semantic-protocol-promise-join-source-v8.test.js": 5,
         "test/semantic-protocol-v8.test.js": 14,
+        "test/semantic-qualification-population-v8.test.js": 4,
         "test/semantic-shared-protocol-source-v8.test.js": 8,
-        "test/semantic-async-return-adoption-composition-source-v8.test.js": 4
+        "test/semantic-async-return-adoption-composition-source-v8.test.js": 4,
+        "test/training-promise-job-projection.test.js": 3
       },
       "native": {
         "tests/test_promise_executor_v8.py": 11,
@@ -128,6 +131,6 @@
   },
   "expectationEvidence": {
     "recovery": "GitHub Actions45042073863 original downloaded JUnit per-file leaves",
-    "promise": "GitHub Actions45042386283 plus exact local original-source4 and public/native boundary20/10 groups; required final173/106 is not qualified until this workflow succeeds."
+    "promise": "GitHub Actions45042386283 plus exact local original-source4 and public/native boundary20/10 groups, with twelve adjacent ordinary-contract leaves (join-source5, qualification-population4, training-projection3) added after six stale assertions reproduced on cc0d61e9 and all twelve passed on b79f7ae1. Required final185/106 is not qualified until this workflow succeeds."
   }
 }
