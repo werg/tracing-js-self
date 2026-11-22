@@ -1,0 +1,72 @@
+[
+  {
+    "path": "bootstrap-history.job.log.gz",
+    "size": 14876,
+    "sha256": "62280bfe91d37aeeead841eea62c1e11649b51ea68287ad8a86b3f4c87661324"
+  },
+  {
+    "path": "commit-history.job.log.gz",
+    "size": 14525,
+    "sha256": "609308d164d7d9672f335380aac5c832fc33203b52a8a0aea3035d4d97938025"
+  },
+  {
+    "path": "composed-recovery-bootstrap-history.zip",
+    "size": 2995,
+    "sha256": "44a6d3ec19ef3c11c7eae3e67d128471b4e655d9265f89c67970afde4f0d7234"
+  },
+  {
+    "path": "composed-recovery-commit-history.zip",
+    "size": 2562,
+    "sha256": "d982a0ba0a1c7465662b11d6905e9bc80c1974e26c95c5b4cebf3bb01cff0325"
+  },
+  {
+    "path": "composed-recovery-structural.zip",
+    "size": 14362,
+    "sha256": "516427c6aac51800318e19794a652383546b68375d03fcaeaa7ff43894c5f75c"
+  },
+  {
+    "path": "composed-recovery-terminal-history.zip",
+    "size": 5165,
+    "sha256": "84ba15754b7e98611862933c4f1ca14ae6216b390a3f5a0bd29f0df24f249760"
+  },
+  {
+    "path": "composed-recovery-transport.zip",
+    "size": 4276,
+    "sha256": "3a113353ab3e62ef1ac4c537f06647aed75f68f916d5002c1f6b4d0990690d00"
+  },
+  {
+    "path": "local-structural.xml.gz",
+    "size": 6570,
+    "sha256": "ce99dcd1bdd910f470eafabee3d4bb1f1595c5869880aed63a2c852bb5e001e0"
+  },
+  {
+    "path": "metadata.json",
+    "size": 34226,
+    "sha256": "2fb294c70af40785d2250053bf2dbbd91fb8f6641c6955f482a55e7d8c484b69"
+  },
+  {
+    "path": "native-composition-map.json",
+    "size": 3091,
+    "sha256": "49e04352b6c7643509932d7d595e4434f5bf3cfdddd5bbaa934b5da41bc566d5"
+  },
+  {
+    "path": "parsed-summary.json",
+    "size": 6285,
+    "sha256": "0b15d0206baf8018b027ea15631122c34fd0177b5a27cd10cb30616172d65d72"
+  },
+  {
+    "path": "structural.job.log.gz",
+    "size": 19504,
+    "sha256": "91e3517d30740ece361a61754807fa7238c9aa7766303965ae3a2f2c5016a1c6"
+  },
+  {
+    "path": "terminal-history.job.log.gz",
+    "size": 16169,
+    "sha256": "bd3ea0576f79a545bce13c0e512087b783937511bf1a78e325b969e86efe6186"
+  },
+  {
+    "path": "transport.job.log.gz",
+    "size": 15729,
+    "sha256": "e36bc79b55fbe737ef1802dd60e68e1c75cd9ee58919d449f2d768e6f2ad3753"
+  }
+]
