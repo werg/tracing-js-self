@@ -164,8 +164,10 @@ function checkSelectionLedgers(packet,session,native,transport,allowTerminal=fal
           row.commitReceipt?.schema==='semantic-orchestration-commit/8'&&row.commitReceipt.committed===true&&
           row.commitReceipt.selectionId===row.selection.selectionId&&row.action&&
           isDeepStrictEqual(row.action,action),'coordinator commit evidence is not an exact positive receipt');
+        const terminalAction=action.name==='track_complete'&&allowTerminal||
+          action.name==='track_cancel'&&allowCancelled;
         demand(!['track_complete','track_cancel'].includes(action.name)||
-          allowTerminal&&kind==='coordinator'&&expectedLocal===rows.length-1&&action.name==='track_complete',
+          terminalAction&&kind==='coordinator'&&expectedLocal===rows.length-1,
           'terminal orchestration cannot be restored as active work');
       }else{
         demand(!Object.hasOwn(row,'family')&&['accepted','stale'].includes(row.status)&&
