@@ -1,0 +1,10 @@
+{
+  "schema": "native-live-cli-registration-audit/1",
+  "nativeRevision": "6ef4794048a4d2ab0e732ccfd61c5cc3e7c3c822",
+  "parserCommands": 46,
+  "missing": 0,
+  "unexpected": 0,
+  "handlerMismatches": 0,
+  "dispatchedCommands": 0,
+  "semanticParityQualified": false
+}
