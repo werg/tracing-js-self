@@ -56,6 +56,9 @@ function fixture(t,{overwriteHistory=false,admitUnselected=false,mismatchedNativ
           sourceArtifact:{sidecar:{schema:'semantic-supervision/8',producerRevision:REVISION,
             sourceFamily:tasks[index].fixture.family,ancestorIds:[],taskId:id,
             license:'repository-fixture',trustTier:'repository-fixture',
+            projectionOptions:{sourceLineage:tasks[index].fixture.family,semanticRegions:false,localStateCompaction:false},
+            executionLimits:{maxSteps:100000,timeoutMs:10000,maxGenerated:16384,maxOperators:8},
+            seeds:{generation:null,input:null,schedule:null,optimizer:null,guestRng:null,split:17},
             referenceInput:{source:wrongTaskSource&&id==='accepted'?'function run(){return 2;}':tasks[index].fixture.source,entry:'run',
               inputGraph:tasks[index].fixture.argsGraph,fixture:{calls:[],settlementOrder:null},randomSeed:null}}}}};
       if(registry){
