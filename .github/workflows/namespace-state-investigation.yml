@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          ref: 8aa4ca2f81fb77a3841e5ef05275bfbf71fd02d2
+          ref: 31525b63bee31ae6738c3f0fd9aa68eb9cf1c3dd
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -44,6 +44,37 @@ jobs:
           python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
           python -m pip install --no-deps --no-build-isolation -e ./megatoken
           python -m pip install ruff
+      - name: Regenerate and retain exact public namespace contract
+        working-directory: tracing-js-self
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/generate-semantic-region-contract.mjs 2>&1 | tee "$RUNNER_TEMP/namespace-contract.log"
+          python - <<'PY'
+          import base64,gzip,json
+          from pathlib import Path
+          producer=Path('.')
+          native=Path('../megatoken')
+          contract_text=(producer/'contracts/semantic-execution-v8.json').read_text()
+          fixture_text=(producer/'test/fixtures/semantic-regions-v8.json').read_text()
+          contract=json.loads(contract_text)
+          (native/'src/megatoken/data/contracts/semantic-execution-v8.json').write_text(contract_text)
+          packed=base64.b64encode(gzip.compress(fixture_text.encode(),mtime=0)).decode()+'\n'
+          (native/'tests/fixtures/semantic-regions-v8.json.gz.b64').write_text(packed)
+          policy_path=producer/'contracts/semantic-native-policy-v8.json'
+          policy=json.loads(policy_path.read_text())
+          policy.update(consumerRevision='31525b63bee31ae6738c3f0fd9aa68eb9cf1c3dd',contractDigest=contract['digest'],fixtureDigest=contract['fixtureDigest'],interoperabilityDigest=contract['interoperabilityDigest'])
+          policy_path.write_text(json.dumps(policy,indent=2)+'\n')
+          for repository,root,paths in (
+              ('werg/tracing-js-self',producer,('contracts/semantic-execution-v8.json','test/fixtures/semantic-regions-v8.json','contracts/semantic-native-policy-v8.json')),
+              ('werg/megatoken',native,('src/megatoken/data/contracts/semantic-execution-v8.json','tests/fixtures/semantic-regions-v8.json.gz.b64'))
+          ):
+              for path in paths:
+                  text=(root/path).read_text()
+                  for offset in range(0,len(text),60000):
+                      print('CONTRACT_CANDIDATE_CHUNK_JSON '+json.dumps({'repository':repository,'path':path,'offset':offset,'length':len(text),'content':text[offset:offset+60000]}))
+          print('NAMESPACE_CONTRACT_DIGESTS_JSON '+json.dumps({key:contract[key] for key in ('digest','fixtureDigest','interoperabilityDigest')}))
+          PY
       - name: Format and retain the experimental native candidate
         working-directory: megatoken
         run: |
@@ -94,6 +125,7 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
           path: |
+            ${{ runner.temp }}/namespace-contract.log
             ${{ runner.temp }}/namespace-native.xml
             ${{ runner.temp }}/namespace-native.log
             ${{ runner.temp }}/namespace-paired.xml
