@@ -7,6 +7,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
+import {assertIndependentPositionCoverage} from './semantic-v8-position-coverage.mjs';
 
 const known=new Set(['--out','--producer-root','--megatoken','--python','--tokenizer','--native-policy','--source-id','--prepared-root','--source-inventory','--sample-source']);
 const booleans=new Set(['--orchestration-teacher','--full-target-coverage']);
@@ -119,7 +120,7 @@ const report={schema:'semantic-ordinary-command-lifecycle/8',status:'running',pr
   fullTargetCoverageRequested:fullTargetCoverage,fullTargetCoverageQualified:false,
   targetCoverageStatus:fullTargetCoverage?'pending':'not-requested',
   scope:supportMode?(fullTargetCoverage?
-    'Two-step resume/export/service route plus an explicitly selected bounded fresh ordinary training pass over the exact prequalified 64-source SE support corpus. Complete target-presence coverage requires its separate final checkpoint comparison; token or mask-position coverage and learned success remain unmeasured.':
+    'Two-step resume/export/service route plus an explicitly selected bounded fresh ordinary training pass over the exact prequalified 64-source SE support corpus. Complete target presence and prepared-text positions require their separate final checkpoint comparisons; hidden routing positions and learned success remain unmeasured.':
     'Two ordinary optimizer updates, fresh resume, export and real service restoration over the exact prequalified 64-source SE support corpus, with measured partial target presence against the complete planner inventory. Full optimizer target coverage was not requested or qualified.'):
     'One predeclared training source, two ordinary optimizer updates, checkpoint resume, export and real service restoration. No held-out, accepted-record recovery or whole-program success claim.'};
 const record=()=>write('command-report.json',report);
@@ -239,6 +240,13 @@ try{
     throw new Error('Ordinary lifecycle collector did not retain the exact resumed target-exposure and inventory comparison');
   report.qualification='qualification/summary.json';
   report.optimizerTargetExposure=exposure;
+  const positions=measured.optimizerResumeExport?.optimizerPositionExposure;
+  if(positions?.historyContinued!==true||positions.registryDigest!==prepared.registry.digest||
+     positions.firstCheckpointCounts?.lastGlobalStep!==1||positions.resumedCounts?.lastGlobalStep!==2||
+     positions.fullPopulationQualified!==false||positions.routerInternalPositionCoverage!=='unmeasured'||
+     positions.learnedSuccess!==null)
+    throw new Error('Ordinary lifecycle collector lost its bounded executed-position history or scope');
+  report.optimizerPositionExposure=positions;
   report.optimizerUpdateCounts={lifecycle:2,coverage:0,total:2};
   report.optimizerUpdatesScope='optimizerUpdates retains the original two-step lifecycle count; optimizerUpdateCounts reports lifecycle, separate coverage-fit and combined counts';
   if(supportMode){
@@ -276,14 +284,15 @@ try{
        coverageEvidence.inventory?.digest!==targetInventory.digest||
        coverageEvidence.comparison?.allPositiveWeightTargetsExposed!==true||
        coverageEvidence.comparison?.exactOnePassCensus!==true||
-       coverageEvidence.tokenOrMaskPositionCoverage!=='unmeasured'||coverageEvidence.learnedSuccess!==null)
+       coverageEvidence.learnedSuccess!==null)
       throw new Error('Ordinary one-pass route did not prove exact target-presence coverage');
+    assertIndependentPositionCoverage(coverageEvidence,targetInventory);
     report.targetCoverage=coverageEvidence;
     report.targetCoverageStatus='passed';
     report.fullTargetCoverageQualified=true;
     report.optimizerUpdateCounts={lifecycle:2,coverage:coverageMetadata.global_step,
       total:2+coverageMetadata.global_step};
-    report.supportPopulation.optimizerTargetExposure='verified positive-weight target presence across all inventory keys';
+    report.supportPopulation.optimizerTargetExposure='verified positive-weight target presence and independently reconstructed plain-text loss positions across all inventory keys';
     console.log('V8_TARGET_COVERAGE_EVIDENCE_JSON '+JSON.stringify(coverageEvidence));
   }
   report.limits=measured.limits;report.serving=measured.serving;
