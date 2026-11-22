@@ -1,0 +1,28 @@
+✔ settled target still requires the separate assimilation and forwarding FIFO turns (109.528252ms)
+✔ pending target registration preserves prior source reactions and microtasks ahead of forwarding (53.785726ms)
+✔ forwarding registered before target settlement waits through JSON restoration (62.784809ms)
+✔ rejected adoption forwards an opaque Promise-valued reason without assimilating it (20.179514ms)
+✔ direct self resolution rejects with its source error without enqueuing either job (45.663774ms)
+✔ distinct mutually adopting Promises remain pending without fabricating a cycle rejection (18.881693ms)
+✔ intrinsic Promise adoption refuses own data then before consuming the resolving cell (3.473648ms)
+✔ intrinsic Promise adoption refuses own accessor then before consuming the resolving cell (3.42042ms)
+✔ intrinsic Promise adoption refuses custom prototype before consuming the resolving cell (3.155369ms)
+✔ intrinsic Promise adoption refuses null prototype before consuming the resolving cell (2.909627ms)
+✔ intrinsic Promise adoption refuses external Promise before consuming the resolving cell (3.275356ms)
+✔ forged adoption owner, source, FIFO identity and settlement cannot mutate the public machine (9.912805ms)
+✔ malformed restored adoption state cannot substitute its cause, owner or forwarding dependency (11.090095ms)
+✔ typed adoption forwarding cannot overtake another invocation in the shared realm FIFO (1047.936092ms)
+✔ async adoption readies result reactions before a later await after both FIFO turns (44.985078ms)
+✔ async adoption waits for a later target settlement and preserves registration order (43.035609ms)
+✔ async completion and its adoption cannot substitute the body, target or settlement turn (13.791562ms)
+✔ restored async adoption binds its original body and completion through the settled result (57.452095ms)
+✔ async throws preserve an owned Promise as an opaque rejection across restoration (14.476013ms)
+✔ async forwarding identities cannot collide with ordinary jobs or another adopter (48.415342ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1871.344769

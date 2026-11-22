@@ -1,0 +1,22 @@
+[
+  [
+    "/observations/14/directCategory",
+    "unsupported.witness-projection",
+    "unsupported.promise-source-object-operation"
+  ],
+  [
+    "/observations/14/directReason",
+    "Effectful teacher projection: unrepresentable captured cell",
+    "Protocol source projection: Promise object operation Object.setPrototypeOf requires its declared source profile"
+  ],
+  [
+    "/observations/14/sourceCategory",
+    "unsupported.witness-projection",
+    "unsupported.promise-source-object-operation"
+  ],
+  [
+    "/observations/14/sourceReason",
+    "Effectful teacher projection: unrepresentable captured cell",
+    "Protocol source projection: Promise object operation Object.setPrototypeOf requires its declared source profile"
+  ]
+]
