@@ -148,28 +148,28 @@ test('source handlers require explicit success and observer applicability requir
   }
 });
 
-test('a failed context copy cannot partially publish a prepared source event',async()=>{
-  // Import a separate instance with a controllable clone fault. Production
-  // still uses structuredClone; the injected allocation failure occurs only
-  // at the final context copy, after the staged transition has succeeded.
-  const nativeClone=globalThis.structuredClone;let rejectContextCopy=false,isolated;
-  globalThis.structuredClone=value=>{
-    if(rejectContextCopy&&Array.isArray(value)&&value[0]?.schema==='semantic-context/8')
-      throw new RangeError('injected context copy failure');
-    return nativeClone(value);
-  };
-  try{isolated=await import('../src/semantic/effectful-teacher-v8.js?context-copy-fault');}
-  finally{globalThis.structuredClone=nativeClone;}
-  const adapter=isolated.createEffectfulRegionAdapterV8(),live=adapter.createHarness({sessionId:'copy-fault'});
+test('a failed context index copy cannot partially publish a prepared source event',()=>{
+  const adapter=createEffectfulRegionAdapterV8(),live=adapter.createHarness({sessionId:'copy-fault'});
   live.publishProgram({programId:'program1',source:'"use strict";function run(){return 1;}',entry:'run',capabilities:[]});
   live.admitInvocation({programId:'program1',invocationId:'invocation1',trackId:'worker1',realmId:'realm1',
     triggerId:'copy-fault-entry',inputGraph:{roots:[],objects:[]},realmPolicy:'fresh'});
   const before=snapshot(live),staged=live.fork();
   staged.prepareModelContext('invocation1');
   staged.selected('invocation1',SOURCE_PROJECTION_CLIENT_V8.encodeRecord('bind',{name:'saved',value:['num',3]}));
-  rejectContextCopy=true;
-  assert.throws(()=>live.commitPrepared(staged),/injected context copy failure/);
-  rejectContextCopy=false;
+  // Earlier snapshots are already private immutable copies. Publication now
+  // allocates only their append-only index, after the staged transition. Fail
+  // that real allocation boundary and require the entire live prefix to stay
+  // unchanged; do not require repeated deep copying of earlier snapshots.
+  const nativeSlice=Array.prototype.slice;let copyFaults=0;
+  Array.prototype.slice=function(...args){
+    if(this[0]?.schema==='semantic-context/8'){
+      copyFaults++;throw new RangeError('injected context index copy failure');
+    }
+    return Reflect.apply(nativeSlice,this,args);
+  };
+  try{assert.throws(()=>live.commitPrepared(staged),/injected context index copy failure/);}
+  finally{Array.prototype.slice=nativeSlice;}
+  assert.equal(copyFaults,1);
   assert.deepEqual(snapshot(live),before);
   live.commitPrepared(staged);
   assert.deepEqual(snapshot(live),snapshot(staged));
