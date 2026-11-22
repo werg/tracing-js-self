@@ -340,5 +340,22 @@ test('actual Python shared-runtime automatic history restores a child-complete s
     const trace=decoderTrace(secondLog);
     assertTracePrefix(trace,records);
     assertSameTrace(firstTrace,trace.slice(0,firstTrace.length));
+    assert.equal(result.terminalDisposition?.schema,'semantic-selected-orchestration-terminal-event/8');
+    const terminalLog=join(root,'terminal.jsonl'),terminalSelect=selector(terminalLog),nativeRestore=terminalSelect.restore;
+    let closeProof=null;
+    terminalSelect.restore=async request=>{closeProof=await nativeRestore(request);return closeProof;};
+    try{
+      const disposition=await RegionSelectedOrchestrationDriver.restoreLatest(anchor,{historyJournal:journal,
+        historyReceipt:head,initialPublic,select:terminalSelect,policy});
+      assert.equal(disposition.schema,'semantic-selected-orchestration-disposition/8');
+      assert.equal(disposition.status,'completed');
+      assert.equal(disposition.resumable,false);
+      assert.equal(disposition.sourceValidated,false);
+      assert.equal(disposition.qualification.defaultPromotion,false);
+      assert.equal(closeProof.restoredSessions,0);
+      assert.equal(closeProof.hostDispatches,0);
+      const terminalEvent=(await journal.readAll(head)).at(-1).terminal;
+      assert.equal(closeProof.consumedAttempts,terminalEvent.closedNative.native.attempts.length);
+    }finally{await terminalSelect.shutdown();}
   }finally{await second.shutdown();}
 });

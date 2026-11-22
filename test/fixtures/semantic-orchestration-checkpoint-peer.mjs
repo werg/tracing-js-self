@@ -72,9 +72,10 @@ function makeCheckpoint(){
   const session=sessionId,body={schema:'semantic-model-checkpoint/8',
     equivalence:'verified-model-reexecution',contractDigest:'a'.repeat(64),initialization:copy(identity),
     settings:{},randomState:{},attempts:copy(attempts),openings:[{session,metadataTokens:0,metadataBytes:0,openSeconds:0}],
-    sessions:{[session]:{public:copy(currentPublic),contexts:copy(contexts),ingestedThrough:currentPublic.timeline.length,
-      completed:copy(completed),openingRandom:{},replay:copy(replay),continuationDigest:'b'.repeat(64),
-      unacknowledgedSelection:null,orchestration:copy(orchestration)}},closedSessions:{}};
+    sessions:closedSessions[session]?{}:{[session]:{public:copy(currentPublic),contexts:copy(contexts),
+      ingestedThrough:currentPublic.timeline.length,completed:copy(completed),openingRandom:{},replay:copy(replay),
+      continuationDigest:'b'.repeat(64),unacknowledgedSelection:null,orchestration:copy(orchestration)}},
+    closedSessions:copy(closedSessions)};
   return {...body,digest:hashAlgorithmData(body)};
 }
 
@@ -221,31 +222,43 @@ for await(const line of createInterface({input:process.stdin})){
       completed:true,sessionRetained:true,publicDigest:hashAlgorithmData(request.public),childCompletion:receipt};
   }else if(request.op==='checkpoint')result=makeCheckpoint();
   else if(request.op==='restore'){
-    const checkpoint=request.checkpoint,session=Object.keys(checkpoint.sessions)[0],saved=checkpoint.sessions[session];
+    const checkpoint=request.checkpoint,sessions=Object.keys(checkpoint.sessions??{}),
+      tombstones=Object.keys(checkpoint.closedSessions??{});
     identity=copy(checkpoint.initialization);attempts=copy(checkpoint.attempts);nextSelection=attempts.length;
-    sessionId=session;
-    currentPublic=copy(saved.public);contexts=copy(saved.contexts);replay=copy(saved.replay);completed=copy(saved.completed);
-    orchestration=copy(saved.orchestration);pending.clear();closedSessions=copy(checkpoint.closedSessions??{});
-    dependencies=new Map(orchestration.decisions.filter(row=>row.outcome?.completion_dependency)
-      .map(row=>[row.outcome.completion_dependency.track,row.outcome.completion_dependency]));
-    currentStatus=orchestration.decisions.at(-1)?.record.includes('track_complete')?'completed':
-      orchestration.children.some(row=>row.completion)?'active':
-        orchestration.operations.at(-1)?.kind==='coordinator'&&
-        orchestration.decisions.at(-1)?.record.includes('track_join')?'waiting':'active';
-    childStatuses=new Map();
-    const bootstrapped=new Set(orchestration.operations.filter(row=>row.kind==='bootstrap').map(row=>row.track));
-    let activeSlots=orchestration.maxActive-(currentStatus==='active'?1:0);
-    if(currentStatus==='waiting')activeSlots=orchestration.maxActive;
-    for(const child of orchestration.children){
-      if(!child.track)continue;
-      if(child.completion){childStatuses.set(child.track,'completed');continue;}
-      const active=bootstrapped.has(child.track)&&activeSlots>0;
-      childStatuses.set(child.track,active?'active':'waiting');
-      if(active)activeSlots--;
+    pending.clear();closedSessions=copy(checkpoint.closedSessions??{});
+    if(sessions.length===0){
+      if(tombstones.length!==1||!closedSessions[tombstones[0]])throw new Error('invalid closed-session tombstone');
+      sessionId=null;currentPublic=null;contexts=[];replay=[];completed=true;orchestration=null;
+      childStatuses=new Map();dependencies=new Map();
+      result={schema:'semantic-model-restore/8',checkpointDigest:checkpoint.digest,
+        equivalence:'verified-model-reexecution',restored:true,restoredSessions:0,
+        consumedAttempts:attempts.length,hostDispatches:0};
+    }else{
+      if(sessions.length!==1||tombstones.length!==0)throw new Error('invalid active session checkpoint');
+      const session=sessions[0],saved=checkpoint.sessions[session];
+      sessionId=session;currentPublic=copy(saved.public);contexts=copy(saved.contexts);
+      replay=copy(saved.replay);completed=copy(saved.completed);orchestration=copy(saved.orchestration);
+      dependencies=new Map(orchestration.decisions.filter(row=>row.outcome?.completion_dependency)
+        .map(row=>[row.outcome.completion_dependency.track,row.outcome.completion_dependency]));
+      currentStatus=orchestration.decisions.at(-1)?.record.includes('track_complete')?'completed':
+        orchestration.children.some(row=>row.completion)?'active':
+          orchestration.operations.at(-1)?.kind==='coordinator'&&
+          orchestration.decisions.at(-1)?.record.includes('track_join')?'waiting':'active';
+      childStatuses=new Map();
+      const bootstrapped=new Set(orchestration.operations.filter(row=>row.kind==='bootstrap').map(row=>row.track));
+      let activeSlots=orchestration.maxActive-(currentStatus==='active'?1:0);
+      if(currentStatus==='waiting')activeSlots=orchestration.maxActive;
+      for(const child of orchestration.children){
+        if(!child.track)continue;
+        if(child.completion){childStatuses.set(child.track,'completed');continue;}
+        const active=bootstrapped.has(child.track)&&activeSlots>0;
+        childStatuses.set(child.track,active?'active':'waiting');
+        if(active)activeSlots--;
+      }
+      result={schema:'semantic-model-restore/8',checkpointDigest:checkpoint.digest,
+        equivalence:'verified-model-reexecution',restored:true,restoredSessions:1,
+        consumedAttempts:attempts.length,hostDispatches:0};
     }
-    result={schema:'semantic-model-restore/8',checkpointDigest:checkpoint.digest,
-      equivalence:'verified-model-reexecution',restored:true,restoredSessions:1,
-      consumedAttempts:attempts.length,hostDispatches:0};
   }else if(request.op==='cancel'){
     result={schema:'semantic-native-close/8',session:request.session,closed:true,reason:request.reason};
     if(orchestration)closedSessions[request.session]={...makeCheckpoint().sessions[request.session]};

@@ -188,11 +188,12 @@ the consumed `elapsedMs`, and restored execution receives only the remaining
 budget. The timer is stopped while the caller holds a paused packet.
 
 An in-flight or unknown acknowledgement, running child, unsettled host intent,
-terminal coordinator, or unsupported ingress cannot be checkpointed. The
-ordinary semantic-only checkpoint is not used as a substitute. Explicit durable
-history, automatic pre-action fences and `restoreLatest` are supported as
-described below. Completed or failed terminal restoration remains outside this
-increment.
+terminal coordinator, or unsupported ingress cannot produce an active checkpoint.
+Successful coordinator completion has a separate, nonresumable disposition described
+below. The ordinary semantic-only checkpoint is not used as a substitute. Explicit
+durable history, automatic pre-action fences and `restoreLatest` preserve this
+distinction. Failed or cancelled orchestration reconciliation remains outside this
+profile.
 
 The JSONL protocol-peer integration test exercises the JavaScript driver and
 transport contract with generated fixture records. It validates binding,
@@ -229,8 +230,9 @@ application must supply its current independently acknowledged head under sole
 supervisor ownership. Supplying an older valid receipt verifies only that older
 prefix; this API cannot discover that the application's external head is stale. Native
 restoration must still report zero host dispatch. A partial chain, altered
-predecessor, absent packet, changed policy or terminal entry is refused before
-native restoration. Caller-owned data arguments are snapshotted before storage
+predecessor, absent packet or changed policy is refused before native restoration.
+A valid completed terminal head follows the separate closed-session verification
+path below; it cannot become active work. Caller-owned data arguments are snapshotted before storage
 awaits; live host clock/service functions remain supplied through `harnessOptions`.
 
 Automatic history can be started before execution with
@@ -250,15 +252,16 @@ that head can be acknowledged. A lost or mismatched acknowledgement stops the li
 
 A latest pending marker means the action may have started after the saved cut.
 `restoreLatest` refuses that head before native restoration, so it
-cannot replay a possibly dispatched child. Coordinator completion and
-cancellation remain fenced at their pending selection marker; terminal restore
-and external reconciliation are not implemented. This provides a durable
-no-replay boundary, not in-flight continuation or distributed transactionality.
+cannot replay a possibly dispatched child. Successful coordinator completion may
+seal its exact pending selection with the independently verified closed-session
+disposition below. Cancellation, failed or unknown outcomes remain fenced at the
+pending selection marker. In-flight continuation, external reconciliation and
+distributed transactionality are not implemented.
 It does not coordinate service owners, discover unacknowledged files, or permit
 a second process to resume from a stale independently retained head. Supervisor
 ownership remains required. The new controls use fresh JSONL fixture peers and
-actual durable storage; real native paired replay remains a separate mandatory
-hosted gate.
+actual durable storage. The successful real-native result is recorded below;
+new executable revisions still require their own paired qualification.
 
 ## Validation scope for the automatic-history increment
 
@@ -274,6 +277,49 @@ every chain read verifies every entry plus all action/prefix constraints.
 
 Actual Python/shared-runtime controls exercise automatic positive restore and
 lost acknowledgement before coordinator selection and after child completion.
-Their new hosted results remain pending at this commit. Their final lexical
-decoder is an explicit deterministic fixture, so a pass does not qualify learned
-model quality, arbitrary external side effects or distributed ownership.
+At candidate `e32b412e86e8ececf2e025c8ccaffd23e1f17c53`, paired with native
+`e9817ad637f57ba82e370770420f6f3ef877c7b3`, all 77 paired transport controls passed
+with zero skips in [run 44991390261](https://github.com/werg/tracing-js-self/actions/runs/44991390261).
+This includes positive automatic restore, closed-session completion, and lost
+acknowledgements. Their final lexical decoder is an explicit deterministic fixture,
+so a pass does not qualify learned model quality, arbitrary external side effects
+or distributed ownership.
+
+
+### Composite terminal disposition
+
+Automatic composite history can retain a successful `track_complete` as a nonresumable
+terminal disposition. Before closing, the driver stores and verifies the full completed
+coordinator checkpoint. After native close succeeds, it stores the native transport
+checkpoint whose model state has no open session and contains the exact closed-session
+tombstone from the completed checkpoint. The terminal event binds both checkpoints,
+the completion fence, and the acknowledged history chain.
+
+`restoreLatest` handles this terminal head as a disposition. It reexecutes the native
+closed-session checkpoint on a fresh transport and requires zero restored active sessions,
+zero host dispatches, and exact attempt consumption. It does not restore the completed
+coordinator as active work. Lost close acknowledgements, lost terminal history
+acknowledgements, cancellation, and unknown terminal outcomes remain fenced and are
+not converted into a completed disposition.
+
+A completed disposition records coordinator completion and the native closed-session
+tombstone. It does not assert source correspondence, source validation, or promotion:
+`sourceValidated` remains false and `qualification.defaultPromotion` remains false.
+
+### Terminal evidence and failure boundaries
+
+The exact promoted implementation passed 108 individual JUnit test cases with zero
+skips in [focused run 44991390200](https://github.com/werg/tracing-js-self/actions/runs/44991390200).
+Node's outer summary also counts four test-suite containers; the 108-case count
+excludes those containers. Controls cover changed base/pending identity, completed
+host state, completion receipts, closed-session contents, consumed native attempts,
+lost close and history acknowledgements, and cancellation after journal reading
+before any native RPC. The paired gate above includes the actual Python checkpoint
+reexecution. [Complete success and failure logs](evidence/v8-composite-terminal-2026-11-22/README.md)
+are retained in git.
+
+The application must still provide its independently retained current journal head
+under sole supervisor ownership. This API cannot discover a newer head in another
+owner's store. Failed, cancelled and uncertain completion, dynamic descendants,
+external service reconciliation, takeover and distributed ownership remain separate
+acceptance work. A two-process deterministic test is not a learned-program result.

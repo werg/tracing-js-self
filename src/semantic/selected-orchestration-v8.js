@@ -143,7 +143,7 @@ export class RegionSelectedOrchestrationDriver {
       maxGenerated,maxOutstanding,maxStaleRetries,timeoutMs,automaticDelivery:bridge.inner.automaticDelivery});
     this.coordinatorAttempts=[];this.state=null;this.initialState=null;this.nativeIdentity=null;
     this.continuation={phase:'unopened',coordinatorSelections:0,joinedAttempt:null,joinedDependency:null,elapsedMs:0};
-    this.createdDependencies=new Map();this.pausedCheckpoint=null;this.historyReceipt=null;this.automaticHistory=null;this.restored=false;this.running=false;this.used=false;
+    this.createdDependencies=new Map();this.pausedCheckpoint=null;this.historyReceipt=null;this.automaticHistory=null;this.terminalDisposition=null;this.restored=false;this.running=false;this.used=false;
   }
 
   checkpoint(){
@@ -219,6 +219,9 @@ export class RegionSelectedOrchestrationDriver {
     }catch(error){select.close?.();throw error;}
   }
   static async restoreLatest(packet,{historyJournal,historyReceipt,initialPublic,select,policy,harnessOptions={},signal=null}={}){
+    const checkAbort=()=>{if(signal?.aborted)throw signal.reason instanceof Error?
+      signal.reason:new Error(String(signal.reason??'Selected orchestration v8 restore cancelled'));};
+    checkAbort();
     packet=copy(packet);historyReceipt=copy(historyReceipt);initialPublic=copy(initialPublic);
     policy=copy(policy);harnessOptions={...harnessOptions};
     demand(typeof historyJournal?.readAll==='function','independently retained composite history is required');
@@ -227,9 +230,34 @@ export class RegionSelectedOrchestrationDriver {
     demand(entries.some(entry=>isDeepStrictEqual(entry.checkpoint,packet)),
       'supplied composite checkpoint is absent from the independently acknowledged history');
     for(const entry of entries)verifySelectedOrchestrationCheckpoint(entry.checkpoint,policy,{initialPublic});
-    const latest=entries.at(-1).checkpoint;
-    demand(!entries.at(-1).terminal,'terminal orchestration disposition cannot be restored as active work');
-    demand(!entries.at(-1).pending,'latest composite history head has unresolved in-flight work and cannot be replayed');
+    const latestEntry=entries.at(-1);
+    if(latestEntry.terminal?.schema==='semantic-selected-orchestration-terminal-event/8'){
+      const terminal=latestEntry.terminal,snapshot=terminal.snapshot;
+      checkAbort();
+      demand(typeof select==='function'&&typeof select.restore==='function'&&
+        typeof select.status==='function'&&select.status().closed===false&&select.status().pending===0,
+        'terminal verification requires a fresh native process selector');
+      const closedRestore=copy(await select.restore({checkpoint:copy(terminal.closedNative)}));
+      checkAbort();
+      const {digest:closedTransportDigest,...closedTransportBody}=terminal.closedNative;
+      demand(closedRestore?.schema==='semantic-model-restore/8'&&closedRestore.restored===true&&
+        closedRestore.restoredSessions===0&&closedRestore.consumedAttempts===terminal.closedNative.native.attempts.length&&
+        closedRestore.hostDispatches===0&&closedRestore.equivalence==='verified-model-reexecution'&&
+        closedRestore.transportCheckpointDigest===closedTransportDigest&&
+        closedTransportDigest===hashAlgorithmData(closedTransportBody),
+        'native closed-session tombstone did not reexecute without restoring active sessions');
+      return {schema:'semantic-selected-orchestration-disposition/8',status:'completed',resumable:false,
+        session:terminal.session,terminalId:terminal.terminalId,historyReceipt:copy(historyReceipt),
+        snapshotDigest:terminal.snapshotDigest,closeReceipt:copy(terminal.closeReceipt),
+        initialPublic:copy(snapshot.initialPublic),public:copy(snapshot.bridge.public),
+        publicCompleted:true,completionReceipts:copy(snapshot.state.children.map(row=>row.completion)),
+        nativeIdentity:copy(snapshot.native.identity),sourceValidated:false,
+        qualification:{modelMeasurement:'actual-model-selected',sourceCorrespondence:'not-checked-by-public-replay',
+          defaultPromotion:false}};
+    }
+    const latest=latestEntry.checkpoint;
+    demand(!latestEntry.terminal,'terminal orchestration disposition cannot be restored as active work');
+    demand(!latestEntry.pending,'latest composite history head has unresolved in-flight work and cannot be replayed');
     const restored=await this.restore(latest,{initialPublic,select,policy,harnessOptions,signal});
     restored.historyReceipt=copy(historyReceipt);return restored;
   }
@@ -245,7 +273,7 @@ export class RegionSelectedOrchestrationDriver {
     this.running=true;this.used=true;
     const started=performance.now(),baseElapsed=this.continuation.elapsedMs,abort=new AbortController(),coordinatorAttempts=this.coordinatorAttempts;
     let nativeIdentity=null,initialState=null,state=null,failure=null,cleanupFailure=null,
-      closeReceipt=null,cancelReceipt=null,terminalReason=null,deadlineExceeded=false,opened=false,paused=false;
+      closeReceipt=null,cancelReceipt=null,terminalReason=null,terminalCheckpoint=null,deadlineExceeded=false,opened=false,paused=false;
     let timer=null;
     const onExternalAbort=()=>abort.abort(signal.reason??new Error('Selected orchestration v8 cancelled'));
     const checkAbort=()=>{if(abort.signal.aborted)throw abort.signal.reason instanceof Error?
@@ -288,10 +316,11 @@ export class RegionSelectedOrchestrationDriver {
       return {invocationId:child.execution.invocation_id,track:child.track,
         completion:copy(receipt),outcome:copy(completed)};
     };
-    const captureCheckpoint=async()=>{
-      demand((this.continuation.phase!=='unopened'&&state?.status==='active')||
+    const captureCheckpoint=async({allowTerminal=false}={})=>{
+      demand(allowTerminal?state?.status==='completed':
+        (this.continuation.phase!=='unopened'&&state?.status==='active')||
         (this.continuation.phase==='child-ready'&&state?.status==='waiting'),
-        'only an active safe coordinator or acknowledged waiting child can be checkpointed');
+        'only an active safe coordinator, acknowledged waiting child or proved completion can be checkpointed');
       demand(this.#childDriver?.running.size===0,'a running child cannot be checkpointed');
       const transportStatus=this.select.status?.();
       demand(transportStatus?.closed===false&&transportStatus.pending===0,
@@ -307,7 +336,7 @@ export class RegionSelectedOrchestrationDriver {
           childAttempts:copy(this.#childDriver.attempts),childRejections:copy(this.#childDriver.rejections),
           staleRetries:this.#childDriver.metrics().staleRetries,continuation:copy(this.continuation),native};
       const packet={...body,digest:hashAlgorithmData(body)};
-      verifySelectedOrchestrationCheckpoint(packet,this.policy,{initialPublic:this.initialPublic});
+      verifySelectedOrchestrationCheckpoint(packet,this.policy,{initialPublic:this.initialPublic,allowTerminal});
       return packet;
     };
     const pendingMarker=(checkpoint,kind,details)=>{
@@ -338,6 +367,42 @@ export class RegionSelectedOrchestrationDriver {
         history.previous=copy(receipt);history.status='ready';this.historyReceipt=copy(receipt);
         return copy(receipt);
       }catch(error){this.pausedCheckpoint=null;history.status='failed';history.failure=error;throw error;}
+    };
+    const persistCompletedTerminal=async(snapshot,closeReceipt,closedNative)=>{
+      const history=this.automaticHistory;
+      demand(history!==null&&history.status==='ready',
+        'completed terminal disposition requires an acknowledged active history head');
+      history.status='saving';
+      try{
+        demand(closeReceipt?.schema==='semantic-native-close/8'&&closeReceipt.closed===true&&
+          closeReceipt.session===this.session&&closeReceipt.reason==='Selected orchestration v8 completed',
+          'completed terminal disposition requires the exact positive native close receipt');
+        const previous=copy(history.previous);
+        validateSelectedHistoryReceipt(previous);
+        const entries=validateSelectedHistoryChain(copy(await history.journal.readAll(copy(previous))),copy(previous)),
+          tail=entries.at(-1),base=copy(tail?.checkpoint),pending=tail?.pending,saved=copy(snapshot);
+        demand(base&&pending?.kind==='coordinator-selection'&&
+          pending.checkpointDigest===base.digest&&pending.attempt===base.coordinatorAttempts.length,
+          'completed terminal disposition has no exact pending completion selection');
+        const snapshotDigest=hashAlgorithmData(saved),identity={schema:'semantic-selected-orchestration-terminal-event/8',
+          phase:'completed',session:this.session,baseCheckpointDigest:base.digest,pendingId:pending.id,
+          snapshotDigest,closeReceipt:copy(closeReceipt),closedNativeDigest:hashAlgorithmData(closedNative)},terminalId=hashAlgorithmData(identity),
+          unsigned={...identity,terminalId,snapshot:saved,closedNative:copy(closedNative)},
+          terminal={...unsigned,digest:hashAlgorithmData(unsigned)};
+        const receipt=copy(await history.journal.append(base,{previous:copy(previous),terminal:copy(terminal)}));
+        validateSelectedHistoryReceipt(receipt);
+        const recorded=validateSelectedHistoryChain(copy(await history.journal.readAll(copy(receipt))),copy(receipt)),
+          latest=recorded.at(-1);
+        demand(isDeepStrictEqual(latest?.checkpoint,base)&&isDeepStrictEqual(latest?.previous,previous)&&
+          isDeepStrictEqual(latest?.terminal,terminal)&&!Object.hasOwn(latest??{},'pending'),
+          'terminal history journal retained a different base cut or close disposition');
+        const acknowledged=copy(await history.acknowledge({receipt:copy(receipt),previous:copy(previous)}));
+        validateSelectedHistoryReceipt(acknowledged);
+        demand(isDeepStrictEqual(acknowledged,receipt),
+          'independent terminal history acknowledgement differs from the recorded disposition');
+        history.previous=copy(receipt);history.status='ready';this.historyReceipt=copy(receipt);
+        this.terminalDisposition=copy(terminal);return copy(receipt);
+      }catch(error){history.status='failed';history.failure=error;throw error;}
     };
     const maybePause=async()=>{
       const requested=Boolean(stopAt&&stopAt.phase===this.continuation.phase&&
@@ -492,6 +557,8 @@ export class RegionSelectedOrchestrationDriver {
         terminalReason=state.status==='cancelled'?boundedCancellationReason(state.receipts.find(row=>
           row.schema==='semantic-orchestration-cancel/8')?.reason??'selected coordinator cancellation'):
           'Selected orchestration v8 completed';
+        if(state.status==='completed'&&this.automaticHistory!==null)
+          terminalCheckpoint=await captureCheckpoint({allowTerminal:true});
       }
     }catch(error){
       if(error?.selectedOrchestrationPause)paused=true;
@@ -513,7 +580,12 @@ export class RegionSelectedOrchestrationDriver {
       }
       if(!paused&&nativeIdentity){
         try{closeReceipt=copy(await this.select.cancel({session:this.session,
-          reason:terminalReason??'Selected orchestration v8 finished'}));}
+          reason:terminalReason??(state?.status==='completed'?'Selected orchestration v8 completed':'Selected orchestration v8 finished')}));}
+        catch(error){cleanupFailure??=failureOf(error);}
+      }
+      if(!paused&&failure===null&&terminalCheckpoint&&this.automaticHistory!==null&&closeReceipt){
+        try{const closedNative=copy(await this.select.checkpoint());
+          await persistCompletedTerminal(terminalCheckpoint,closeReceipt,closedNative);}
         catch(error){cleanupFailure??=failureOf(error);}
       }
       if(cleanupFailure&&failure===null)failure=cleanupFailure;
@@ -559,7 +631,10 @@ export class RegionSelectedOrchestrationDriver {
         row.completion).filter(Boolean)??[]),cancelReceipt,closeReceipt,terminalReason,
       failure,cleanupFailure,firstViolation:copy(firstViolation),recovery:{resumable:paused,
         reason:paused?'Composite checkpoint paused at a verified quiescent phase':
-          'Terminal histories remain unavailable; completed and failed sessions cannot be resumed'},
+          this.terminalDisposition?'Completed session retained as a nonresumable terminal disposition':
+            'Only verified active cuts can be restored; terminal histories without a positive disposition remain fenced'},
+      ...(this.terminalDisposition?{terminalDisposition:copy(this.terminalDisposition),
+        historyReceipt:copy(this.historyReceipt)}:{}),
       ...(paused?{checkpoint:copy(this.pausedCheckpoint)}:{}),
       limits:{hostExecutionTimeoutMs:this.timeoutMs,nativeRequestDeadlineOwnedBySelector:true},
       qualification:{modelMeasurement:childMetrics.accepted>0?'actual-model-selected':'unmeasured',

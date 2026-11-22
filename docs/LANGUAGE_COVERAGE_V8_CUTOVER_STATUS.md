@@ -16,7 +16,45 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
-## Current paired checkpoint and optimizer exposure — 22 November 2026
+## Successful completed orchestration recovery — 22 November 2026
+
+The exact implementation tested at producer
+`e32b412e86e8ececf2e025c8ccaffd23e1f17c53`, paired with native
+`e9817ad637f57ba82e370770420f6f3ef877c7b3`, is now promoted from its isolated
+validation branch. [Focused run 44991390200](https://github.com/werg/tracing-js-self/actions/runs/44991390200)
+passed 108 individual JUnit cases with zero skips; [real Python paired run
+44991390261](https://github.com/werg/tracing-js-self/actions/runs/44991390261)
+passed 77 cases with zero skips. [Full success/failure evidence](evidence/v8-composite-terminal-2026-11-22/README.md)
+and [API scope](NATIVE_V8_ORCHESTRATION_DRIVER.md) are retained.
+
+Successful `track_complete` now binds the verified completed host/native cut,
+the exact positive close receipt, and the actual closed-session native checkpoint
+to the latest pending coordinator action. `restoreLatest` independently reexecutes
+the closed checkpoint and requires zero restored active sessions and zero host
+dispatches before returning a nonresumable completed disposition. Original
+attempts, contexts, children, receipts and costs remain bound. Cancellation during
+asynchronous history reading is checked before native work. Lost close or history
+acknowledgement remains unresolved and refuses replay.
+
+The first terminal attempts are retained: correct malformed-base refusal but an
+outdated expected error string, followed by a missing locally scoped cancellation
+helper. Both are corrected and the zero-RPC cancellation test prevents recurrence.
+The reported 108 focused cases exclude Node's four suite-container summary entries.
+
+The complete 64-source optimizer route at exact producer `10c3016` / native
+`a886fb8` has now passed source/native/token/packing, strict behavior supply,
+actual ordinary two-update training, fresh resume, export and service restoration.
+Its [full log and JSON lines](evidence/v8-support-optimizer10c-2026-11-22/README.md)
+are permanently retained. The newer scored-target census still awaits full
+exact-pair execution. Learned success remains unmeasured.
+
+Still open: cancelled/failed/unknown terminal reconciliation, dynamic descendants,
+external service reconciliation, current-head discovery and coordinated successor
+or distributed ownership. The native test's final lexical decoder is controlled;
+it does not qualify learned program success. Source validation and default
+promotion remain false. All 17 broad acceptance packages remain open.
+
+## Previous paired checkpoint and optimizer exposure — 22 November 2026
 
 This increment pins native `e9817ad637f57ba82e370770420f6f3ef877c7b3`, which records the actual
 positive-weight source targets used by ordinary optimizer updates and carries

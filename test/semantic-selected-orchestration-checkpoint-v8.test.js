@@ -104,6 +104,14 @@ function rechain(entries){
   });
   return {entries:chained,receipt:previous};
 }
+function resealCompositeTerminal(event){
+  const identity={schema:'semantic-selected-orchestration-terminal-event/8',phase:event.phase,
+    session:event.session,baseCheckpointDigest:event.baseCheckpointDigest,pendingId:event.pendingId,
+    snapshotDigest:event.snapshotDigest,closeReceipt:event.closeReceipt,
+    closedNativeDigest:hashAlgorithmData(event.closedNative)};
+  event.terminalId=hashAlgorithmData(identity);
+  const {digest,...body}=event;event.digest=hashAlgorithmData(body);return event;
+}
 
 test('restores coordinator-ready after exact create and bootstrap receipts',async()=>{
   const packet=await pauseAndResume({phase:'coordinator-ready',coordinatorSelections:1});
@@ -340,6 +348,64 @@ test('durable composite checkpoint requires an independent exact head acknowledg
 });
 
 
+
+test('lost completed-disposition ACK leaves the last external head fenced',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'v8-composite-terminal-ack-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory,streamId:'termack'});
+  let head=null;
+  const select=selector(),driver=new RegionSelectedOrchestrationDriver({initialPublic,select,...automaticPolicy});
+  driver.startAutomaticHistory({journal,acknowledge:async({receipt,previous})=>{
+    assert.deepEqual(previous,head);
+    const entry=await journal.read(receipt);
+    if(entry.terminal)throw new Error('simulated terminal ACK loss');
+    head=structuredClone(receipt);return structuredClone(head);
+  }});
+  try{
+    const result=await driver.run();
+    assert.match(result.failure?.message??'',/simulated terminal ACK loss/i);
+    const entries=await journal.readAll(head),tail=entries.at(-1);
+    assert.equal(tail.pending?.kind,'coordinator-selection');
+    assert.notEqual(tail.checkpoint.coordinatorAttempts.at(-1)?.action?.name,'track_complete');
+    const fresh=selector();let restoreCalls=0;const restore=fresh.restore;
+    fresh.restore=async request=>{restoreCalls++;return restore(request);};
+    try{
+      await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(tail.checkpoint,
+        {historyJournal:journal,historyReceipt:head,initialPublic,select:fresh,policy:automaticPolicy}),
+      /unresolved in-flight work/i);
+      assert.equal(restoreCalls,0);
+    }finally{fresh.close();}
+  }finally{select.close();}
+});
+
+test('unknown native close leaves a completed session fenced without a terminal disposition',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'v8-composite-terminal-close-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory,streamId:'termclose'});
+  let head=null;
+  const select=selector(),close=select.cancel;
+  select.cancel=async request=>{
+    if(request.reason==='Selected orchestration v8 completed')throw new Error('simulated native close loss');
+    return close(request);
+  };
+  const driver=new RegionSelectedOrchestrationDriver({initialPublic,select,...automaticPolicy});
+  driver.startAutomaticHistory({journal,acknowledge:async({receipt,previous})=>{
+    assert.deepEqual(previous,head);head=structuredClone(receipt);return structuredClone(head);
+  }});
+  try{
+    const result=await driver.run();
+    assert.match(result.failure?.message??'',/simulated native close loss/i);
+    const tail=(await journal.readAll(head)).at(-1);
+    assert.equal(tail.pending?.kind,'coordinator-selection');
+    const fresh=selector();
+    try{
+      await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(tail.checkpoint,
+        {historyJournal:journal,historyReceipt:head,initialPublic,select:fresh,policy:automaticPolicy}),
+      /unresolved in-flight work/i);
+    }finally{fresh.close();}
+  }finally{select.close();}
+});
+
 test('automatic composite history acknowledges the join safe point before child dispatch',async t=>{
   const policy=automaticPolicy;
   const directory=await mkdtemp(join(tmpdir(),'v8-composite-automatic-'));
@@ -384,8 +450,76 @@ test('automatic composite history acknowledges the join safe point before child 
       .fields.invocationId);
     assert.deepEqual(joinAttempt.childOutcome.completion,joinAttempt.childCompletion.completion);
     assert.equal(entries.at(-1).position,head.position);
-    assert.equal(entries.at(-1).pending?.kind,'coordinator-selection',
-      'the unqualified terminal coordinator action remains explicitly fenced');
+    const terminalEntry=entries.at(-1),terminal=terminalEntry.terminal;
+    assert.equal(terminal?.schema,'semantic-selected-orchestration-terminal-event/8');
+    assert.equal(terminal.phase,'completed');
+    assert.equal(terminal.closeReceipt.closed,true);
+    assert.equal(Object.hasOwn(terminalEntry,'pending'),false);
+    const expectTamper=(mutate,pattern)=>{
+      const changed=structuredClone(entries);mutate(changed.at(-1).terminal);
+      resealCompositeTerminal(changed.at(-1).terminal);
+      const rebuilt=rechain(changed);
+      assert.throws(()=>validateSelectedHistoryChain(rebuilt.entries,rebuilt.receipt),pattern);
+    };
+    expectTamper(value=>{value.baseCheckpointDigest='f'.repeat(64);},/composite terminal event identity or digest differs/i);
+    expectTamper(value=>{value.pendingId='0'.repeat(64);},/pending completion|pending marker/i);
+    expectTamper(value=>{value.closeReceipt.reason='forged close';},/positive native close/i);
+    expectTamper(value=>{value.closeReceipt.session='forged-session';},/positive native close/i);
+    expectTamper(value=>{
+      value.closedNative.native.attempts[0].selectionId='forged-selection';
+      value.closedNative.attempts[0].selectionId='forged-selection';
+      const seal=packet=>{const {digest,...body}=packet;return {...body,digest:hashAlgorithmData(body)};};
+      value.closedNative.native=seal(value.closedNative.native);
+      value.closedNative=seal(value.closedNative);
+      value.closedNativeDigest=hashAlgorithmData(value.closedNative);
+    },/closed-native checkpoint|attempts/i);
+    expectTamper(value=>{
+      value.snapshot.coordinatorAttempts.at(-1).record='{"name":"track_complete","arguments":{}}';
+      rehash(value.snapshot);value.snapshotDigest=hashAlgorithmData(value.snapshot);
+    },/attempt|operation|receipt|coordinator/i);
+    expectTamper(value=>{value.closedNative.native.closedSessions[value.session].completed=false;
+      const seal=packet=>{const {digest,...body}=packet;return {...body,digest:hashAlgorithmData(body)};};
+      value.closedNative.native=seal(value.closedNative.native);
+      value.closedNative=seal(value.closedNative);
+      value.closedNativeDigest=hashAlgorithmData(value.closedNative);
+    },/closed-native checkpoint|tombstone/i);
+    const fresh=selector();let tombstoneReceipt=null;const nativeRestore=fresh.restore;
+    fresh.restore=async request=>{tombstoneReceipt=await nativeRestore(request);return tombstoneReceipt;};
+    try{
+      const disposition=await RegionSelectedOrchestrationDriver.restoreLatest(terminalEntry.checkpoint,
+        {historyJournal:journal,historyReceipt:head,initialPublic,select:fresh,policy:automaticPolicy});
+      assert.equal(disposition.schema,'semantic-selected-orchestration-disposition/8');
+      assert.equal(disposition.status,'completed');
+      assert.equal(disposition.resumable,false);
+      assert.equal(disposition.sourceValidated,false);
+      assert.equal(disposition.qualification.defaultPromotion,false);
+      assert.equal(tombstoneReceipt.restoredSessions,0);
+      assert.equal(tombstoneReceipt.hostDispatches,0);
+      assert.equal(tombstoneReceipt.consumedAttempts,terminal.closedNative.native.attempts.length);
+    }finally{fresh.close();}
+
+    const cancelled=new AbortController(),cancelledSelect=selector();let restoreCalls=0;
+    const restoreCancelled=cancelledSelect.restore;
+    cancelledSelect.restore=async request=>{restoreCalls++;return restoreCancelled(request);};
+    try{
+      await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(terminalEntry.checkpoint,{
+        historyJournal:{readAll:async receipt=>{
+          const retained=await journal.readAll(receipt);
+          cancelled.abort(new Error('cancelled while reading the terminal history'));
+          return retained;
+        }},historyReceipt:head,initialPublic,select:cancelledSelect,policy:automaticPolicy,
+        signal:cancelled.signal
+      }),/cancelled while reading the terminal history/);
+      assert.equal(restoreCalls,0,'cancellation after durable read cannot start native reexecution');
+    }finally{cancelledSelect.close();}
+
+    const afterTerminal=rechain([...entries,structuredClone(terminalEntry)]);
+    assert.throws(()=>validateSelectedHistoryChain(afterTerminal.entries,afterTerminal.receipt),
+      /history continues after terminal disposition/i);
+    const trailing=structuredClone(terminalEntry);delete trailing.terminal;
+    const extended=rechain([...entries,trailing]);
+    assert.throws(()=>validateSelectedHistoryChain(extended.entries,extended.receipt),
+      /history continues after terminal disposition/i);
     const firstCoordinatorFence=entries.find(row=>row.pending?.kind==='coordinator-selection'&&
       row.pending.attempt===0),skippedCoordinator=entries.find(row=>row.checkpoint.coordinatorAttempts.length>=2);
     const skipped=rechain([firstCoordinatorFence,skippedCoordinator]);
@@ -510,6 +644,7 @@ test('cancellation during coordinator fence acknowledgement prevents a later sel
     assert.equal(entry.checkpoint.coordinatorAttempts.length,0);
   }finally{select.close();}
 });
+
 
 test('requested orchestration safe point is snapshotted before native initialization awaits',async()=>{
   const select=selector(),stopAt={phase:'coordinator-ready',coordinatorSelections:0},

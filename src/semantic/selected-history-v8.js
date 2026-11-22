@@ -271,6 +271,86 @@ function validatePendingResolution(pending,before,after){
   }
 }
 
+const compositeTerminalSchema='semantic-selected-orchestration-terminal-event/8';
+function validateCompositeTerminalEvent(event,checkpoint,pending=null){
+  const fields=['schema','terminalId','phase','session','baseCheckpointDigest','pendingId',
+    'snapshot','snapshotDigest','closeReceipt','closedNativeDigest','closedNative','digest'];
+  assertAlgorithmFields(event,fields,'composite terminal event');
+  const {digest,...body}=event,snapshot=event.snapshot;
+  demand(event.schema===compositeTerminalSchema&&event.phase==='completed'&&
+    HASH.test(event.terminalId??'')&&HASH.test(event.baseCheckpointDigest??'')&&
+    event.baseCheckpointDigest===checkpoint.digest&&HASH.test(event.pendingId??'')&&
+    event.session===checkpoint.session&&HASH.test(event.snapshotDigest??'')&&
+    event.snapshotDigest===hashAlgorithmData(snapshot)&&
+    event.closedNativeDigest===hashAlgorithmData(event.closedNative)&&HASH.test(digest??'')&&digest===hashAlgorithmData(body),
+    'composite terminal event identity or digest differs');
+  demand(snapshot?.schema==='semantic-selected-orchestration-checkpoint/8',
+    'composite terminal snapshot is missing');
+  const replayedBridge=verifySelectedOrchestrationCheckpoint(snapshot,snapshot.policy,
+    {initialPublic:checkpoint.initialPublic,allowTerminal:true,returnBridge:true});
+  demand(replayedBridge.invocations.size===snapshot.state.children.length&&snapshot.state.children.every(child=>{
+    const id=child.execution?.invocation_id,activation=replayedBridge.invocations.get(id);
+    return activation?.status==='completed'&&activation.controller?.completion!=null&&
+      eq(activation.controller.completion,child.completion?.completion);
+  }), 'terminal replay does not prove every host child invocation completed with its published receipt');
+  validateHistoryExtension(checkpoint,snapshot,false);
+  demand(checkpoint.state.status==='active'&&checkpoint.continuation.phase==='coordinator-ready'&&
+    checkpoint.continuation.joinedAttempt===null&&checkpoint.continuation.joinedDependency===null&&
+    snapshot.state.status==='completed'&&snapshot.continuation.phase==='coordinator-ready'&&
+    snapshot.continuation.coordinatorSelections===checkpoint.continuation.coordinatorSelections+1&&
+    snapshot.coordinatorAttempts.length===checkpoint.coordinatorAttempts.length+1&&
+    snapshot.coordinatorAttempts.at(-1)?.action?.name==='track_complete'&&
+    snapshot.coordinatorAttempts.at(-1)?.status==='committed'&&
+    snapshot.childAttempts.length===checkpoint.childAttempts.length&&
+    eq(snapshot.childAttempts,checkpoint.childAttempts)&&
+    eq(snapshot.childRejections,checkpoint.childRejections)&&
+    eq(snapshot.contexts,checkpoint.contexts)&&
+    eq(snapshot.bridge.public,checkpoint.bridge.public)&&
+    snapshot.native.native.attempts.length===checkpoint.native.native.attempts.length+1,
+    'completed terminal snapshot is not exactly one completion action beyond its active cut');
+  const close=event.closeReceipt,closed=event.closedNative;
+  demand(close?.schema==='semantic-native-close/8'&&close.closed===true&&
+    close.session===checkpoint.session&&close.reason==='Selected orchestration v8 completed',
+    'completed terminal event lacks the exact positive native close receipt');
+  const {digest:closedDigest,...closedBody}=closed??{},closedModel=closed?.native,
+    {digest:closedModelDigest,...closedModelBody}=closedModel??{},
+    oldModel=snapshot.native.native,
+    oldModelImmutable=Object.fromEntries(Object.entries(oldModel).filter(([key])=>
+      !['digest','sessions','closedSessions'].includes(key))),
+    closedModelImmutable=Object.fromEntries(Object.entries(closedModel??{}).filter(([key])=>
+      !['digest','sessions','closedSessions'].includes(key)));
+  demand(closed?.schema===snapshot.native.schema&&HASH.test(closedDigest??'')&&
+    closedDigest===hashAlgorithmData(closedBody)&&
+    closed?.identity&&eq(closed.identity,snapshot.native.identity)&&
+    Array.isArray(closed.attempts)&&eq(closed.attempts,snapshot.native.attempts)&&
+    closedModel?.schema==='semantic-model-checkpoint/8'&&HASH.test(closedModelDigest??'')&&
+    closedModelDigest===hashAlgorithmData(closedModelBody)&&
+    eq(closedModelImmutable,oldModelImmutable)&&
+    eq(closedModel.initialization,oldModel.initialization)&&
+    eq(closedModel.attempts,oldModel.attempts)&&
+    closedModel.sessions&&Object.keys(closedModel.sessions).length===0&&
+    closedModel.closedSessions&&Object.keys(closedModel.closedSessions).length===1&&
+    eq(closedModel.closedSessions[checkpoint.session],oldModel.sessions[checkpoint.session])&&
+    eq(closedModel.openings,oldModel.openings)&&
+    closed.runtimeMetrics&&['rpcCalls','computeSeconds','peakMemoryBytes'].every(key=>
+      Number.isFinite(closed.runtimeMetrics[key])&&closed.runtimeMetrics[key]>=snapshot.native.runtimeMetrics[key]),
+    'closed-native checkpoint does not independently prove the exact completed session tombstone');
+  if(pending!==null){
+    demand(pending.kind==='coordinator-selection'&&pending.session===checkpoint.session&&
+      pending.checkpointDigest===checkpoint.digest&&pending.attempt===checkpoint.coordinatorAttempts.length&&
+      pending.coordinatorSelections===checkpoint.continuation.coordinatorSelections&&
+      event.pendingId===pending.id,
+      'completed terminal event does not resolve the exact pending completion selection');
+  }
+  const identity={schema:'semantic-selected-orchestration-terminal-event/8',phase:event.phase,
+    session:event.session,baseCheckpointDigest:event.baseCheckpointDigest,pendingId:event.pendingId,
+    snapshotDigest:event.snapshotDigest,closeReceipt:event.closeReceipt,
+    closedNativeDigest:hashAlgorithmData(event.closedNative)};
+  demand(event.terminalId===hashAlgorithmData(identity),
+    'composite terminal id does not bind the complete close disposition');
+  return true;
+}
+
 export function validateSelectedHistoryEntry(entry){
   stableAlgorithmJSON(entry);
   const fields=['schema','streamId','position','previous','checkpoint',
@@ -287,8 +367,9 @@ export function validateSelectedHistoryEntry(entry){
   }
   const packet=entry.checkpoint;
   if(packet?.schema==='semantic-selected-orchestration-checkpoint/8'){
-    demand(!Object.hasOwn(entry,'terminal'),
-      'composite terminal history is unsupported until its terminal disposition is independently verified');
+    if(Object.hasOwn(entry,'terminal'))
+      demand(entry.terminal?.schema===compositeTerminalSchema,
+        'composite terminal history requires its verified completion disposition');
     if(Object.hasOwn(entry,'pending'))validateCompositePending(entry.pending,packet);
     verifySelectedOrchestrationCheckpoint(packet,packet.policy,{initialPublic:packet.initialPublic});
   }else{
@@ -300,7 +381,12 @@ export function validateSelectedHistoryEntry(entry){
     demand(packet.schema==='semantic-selected-driver-checkpoint/8'&&HASH.test(digest??'')&&
       digest===hashAlgorithmData(body),'checkpoint integrity differs');
   }
-  if(Object.hasOwn(entry,'terminal'))validateTerminalEvent(entry.terminal,packet);
+  if(Object.hasOwn(entry,'terminal')){
+    if(packet?.schema==='semantic-selected-orchestration-checkpoint/8')
+      validateCompositeTerminalEvent(entry.terminal,packet);
+    else validateTerminalEvent(entry.terminal,packet);
+    demand(!Object.hasOwn(entry,'pending'),'terminal disposition cannot carry a new pending marker');
+  }
   return entry;
 }
 
@@ -438,8 +524,14 @@ export function validateSelectedHistoryChain(entries,receipt){
     validateSelectedHistoryEntry(entry);
     demand(entry.streamId===receipt.streamId&&entry.position===(previous?.position??0)+1&&eq(entry.previous,previous),
       'substituted or reordered acknowledged chain');
+    let resolvedByTerminal=false;
     if(pending){
-      validatePendingResolution(pending,pendingCheckpoint,entry.checkpoint);
+      if(entry.terminal?.schema===compositeTerminalSchema){
+        demand(eq(entry.checkpoint,pendingCheckpoint),
+          'completed terminal event changed its acknowledged active base cut');
+        validateCompositeTerminalEvent(entry.terminal,pendingCheckpoint,pending);
+        resolvedByTerminal=true;
+      }else validatePendingResolution(pending,pendingCheckpoint,entry.checkpoint);
       pending=null;pendingCheckpoint=null;
     }
     if(terminal?.phase==='requested'){
@@ -450,10 +542,16 @@ export function validateSelectedHistoryChain(entries,receipt){
     }else if(terminal){
       fail('history continues after terminal disposition');
     }else if(Object.hasOwn(entry,'terminal')){
-      demand(checkpoint&&entry.terminal.phase==='requested'&&eq(entry.checkpoint,checkpoint),
-        'terminal request must anchor the latest validated checkpoint');
-      validateTerminalEvent(entry.terminal,entry.checkpoint);
-      terminal=entry.terminal;
+      if(entry.terminal?.schema===compositeTerminalSchema){
+        demand(resolvedByTerminal&&checkpoint&&eq(entry.checkpoint,checkpoint),
+          'completed terminal event must resolve the exact latest pending coordinator selection');
+        terminal=entry.terminal;
+      }else{
+        demand(checkpoint&&entry.terminal.phase==='requested'&&eq(entry.checkpoint,checkpoint),
+          'terminal request must anchor the latest validated checkpoint');
+        validateTerminalEvent(entry.terminal,entry.checkpoint);
+        terminal=entry.terminal;
+      }
     }else if(checkpoint)validateHistoryExtension(checkpoint,entry.checkpoint,false);
     checkpoint=entry.checkpoint;
     if(Object.hasOwn(entry,'pending')){
