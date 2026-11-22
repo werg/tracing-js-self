@@ -1,0 +1,4613 @@
+{
+  "schema": "experimental-module-scheduler-state-differential/1",
+  "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+  "acceptedCuts": 15,
+  "refusedCuts": 14,
+  "refusedPlans": 1,
+  "publicAdmission": false,
+  "payload": {
+    "metadata": {
+      "profile": "evaluated-module/1",
+      "evaluationStrategy": "async-dependency-scheduler",
+      "modules": [
+        {
+          "file": "shared.js",
+          "source": "export const value=1;"
+        },
+        {
+          "file": "left.js",
+          "source": "import {value} from './shared.js'; await Promise.resolve(); export const left=value;"
+        },
+        {
+          "file": "right.js",
+          "source": "import {value} from './shared.js'; await Promise.resolve(); export const right=value;"
+        },
+        {
+          "file": "main.js",
+          "source": "import {left} from './left.js'; import {right} from './right.js'; export function run(){return left+right;}"
+        }
+      ],
+      "asyncDependencies": [
+        {
+          "file": "shared.js",
+          "index": 0,
+          "hasTLA": false,
+          "dependencies": []
+        },
+        {
+          "file": "left.js",
+          "index": 1,
+          "hasTLA": true,
+          "dependencies": [
+            "shared.js"
+          ]
+        },
+        {
+          "file": "right.js",
+          "index": 2,
+          "hasTLA": true,
+          "dependencies": [
+            "shared.js"
+          ]
+        },
+        {
+          "file": "main.js",
+          "index": 3,
+          "hasTLA": false,
+          "dependencies": [
+            "left.js",
+            "right.js"
+          ]
+        }
+      ],
+      "entryModule": "main.js"
+    },
+    "plan": {
+      "schema": "semantic-module-scheduler-plan/1",
+      "entryModule": "main.js",
+      "modules": [
+        {
+          "file": "shared.js",
+          "index": 0,
+          "sourceDigest": "c504694a78af4c2fd507f0923d02e9ca593a9f3dd0a1326eb7d1b3b2264cde55",
+          "dependencies": [],
+          "hasTLA": false
+        },
+        {
+          "file": "left.js",
+          "index": 1,
+          "sourceDigest": "289ec8fbfba11c5e86853527579217d8adba81457154a747e020bf620a1db7e8",
+          "dependencies": [
+            "shared.js"
+          ],
+          "hasTLA": true
+        },
+        {
+          "file": "right.js",
+          "index": 2,
+          "sourceDigest": "f48ea04bd3daf9f224b4b9dac738adf6c2cbdf63f219d6344d694cd71da56a3f",
+          "dependencies": [
+            "shared.js"
+          ],
+          "hasTLA": true
+        },
+        {
+          "file": "main.js",
+          "index": 3,
+          "sourceDigest": "1a2638de4014e947cbc9ba0e86db42144e8a6e3893f20f175c96250da9188bd0",
+          "dependencies": [
+            "left.js",
+            "right.js"
+          ],
+          "hasTLA": false
+        }
+      ],
+      "digest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2"
+    },
+    "initial": {
+      "schema": "semantic-module-scheduler-state/1",
+      "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+      "nextStartOrder": 0,
+      "modules": {
+        "shared.js": {
+          "status": "waiting",
+          "pendingDependencies": 0,
+          "startOrder": null,
+          "frameId": null,
+          "executionPromiseId": null,
+          "awaited": null,
+          "completionJobId": null,
+          "failure": null,
+          "completedDependencies": []
+        },
+        "left.js": {
+          "status": "waiting",
+          "pendingDependencies": 1,
+          "startOrder": null,
+          "frameId": null,
+          "executionPromiseId": null,
+          "awaited": null,
+          "completionJobId": null,
+          "failure": null,
+          "completedDependencies": []
+        },
+        "right.js": {
+          "status": "waiting",
+          "pendingDependencies": 1,
+          "startOrder": null,
+          "frameId": null,
+          "executionPromiseId": null,
+          "awaited": null,
+          "completionJobId": null,
+          "failure": null,
+          "completedDependencies": []
+        },
+        "main.js": {
+          "status": "waiting",
+          "pendingDependencies": 2,
+          "startOrder": null,
+          "frameId": null,
+          "executionPromiseId": null,
+          "awaited": null,
+          "completionJobId": null,
+          "failure": null,
+          "completedDependencies": []
+        }
+      }
+    },
+    "cuts": [
+      {
+        "label": "parent cannot start early",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 0,
+          "modules": {
+            "shared.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.start",
+          "file": "left.js",
+          "frameId": "frame:left.js",
+          "executionPromiseId": "execution:left.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:left.js": {
+              "id": "frame:left.js",
+              "moduleFile": "left.js",
+              "executionPromiseId": "execution:left.js"
+            }
+          },
+          "promises": {
+            "execution:left.js": {
+              "id": "execution:left.js",
+              "status": "pending"
+            }
+          },
+          "jobs": {}
+        },
+        "accepted": false
+      },
+      {
+        "label": "forged completed dependency edge",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 0,
+          "modules": {
+            "shared.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.start",
+          "file": "shared.js",
+          "frameId": "frame:shared.js",
+          "executionPromiseId": "execution:shared.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:shared.js": {
+              "id": "frame:shared.js",
+              "moduleFile": "shared.js",
+              "executionPromiseId": "execution:shared.js"
+            }
+          },
+          "promises": {
+            "execution:shared.js": {
+              "id": "execution:shared.js",
+              "status": "pending"
+            }
+          },
+          "jobs": {}
+        },
+        "accepted": false
+      },
+      {
+        "label": "boolean is not a dependency count",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 0,
+          "modules": {
+            "shared.js": {
+              "status": "waiting",
+              "pendingDependencies": false,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.start",
+          "file": "shared.js",
+          "frameId": "frame:shared.js",
+          "executionPromiseId": "execution:shared.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:shared.js": {
+              "id": "frame:shared.js",
+              "moduleFile": "shared.js",
+              "executionPromiseId": "execution:shared.js"
+            }
+          },
+          "promises": {
+            "execution:shared.js": {
+              "id": "execution:shared.js",
+              "status": "pending"
+            }
+          },
+          "jobs": {}
+        },
+        "accepted": false
+      },
+      {
+        "label": "shared module starts once",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 0,
+          "modules": {
+            "shared.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.start",
+          "file": "shared.js",
+          "frameId": "frame:shared.js",
+          "executionPromiseId": "execution:shared.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:shared.js": {
+              "id": "frame:shared.js",
+              "moduleFile": "shared.js",
+              "executionPromiseId": "execution:shared.js"
+            }
+          },
+          "promises": {
+            "execution:shared.js": {
+              "id": "execution:shared.js",
+              "status": "pending"
+            }
+          },
+          "jobs": {}
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 1,
+          "modules": {
+            "shared.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "label": "shared module completes",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 1,
+          "modules": {
+            "shared.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.complete",
+          "file": "shared.js",
+          "frameId": "frame:shared.js",
+          "promiseId": "execution:shared.js",
+          "jobId": "settle:shared.js"
+        },
+        "facts": {
+          "promises": {
+            "execution:shared.js": {
+              "id": "execution:shared.js",
+              "status": "fulfilled",
+              "value": null
+            }
+          },
+          "jobs": {
+            "settle:shared.js": {
+              "id": "settle:shared.js",
+              "promiseId": "execution:shared.js",
+              "frameId": "frame:shared.js",
+              "moduleFile": "shared.js",
+              "status": "fulfilled",
+              "kind": "module-execution-settle",
+              "value": null
+            }
+          }
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 1,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "label": "duplicate shared completion",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 1,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.complete",
+          "file": "shared.js",
+          "frameId": "frame:shared.js",
+          "promiseId": "execution:shared.js",
+          "jobId": "settle:shared.js"
+        },
+        "facts": {
+          "promises": {
+            "execution:shared.js": {
+              "id": "execution:shared.js",
+              "status": "fulfilled",
+              "value": null
+            }
+          },
+          "jobs": {
+            "settle:shared.js": {
+              "id": "settle:shared.js",
+              "promiseId": "execution:shared.js",
+              "frameId": "frame:shared.js",
+              "moduleFile": "shared.js",
+              "status": "fulfilled",
+              "kind": "module-execution-settle",
+              "value": null
+            }
+          }
+        },
+        "accepted": false
+      },
+      {
+        "label": "fulfilled state cannot retain await",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 1,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": {
+                "promiseId": "forged"
+              },
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.start",
+          "file": "left.js",
+          "frameId": "frame:left.js",
+          "executionPromiseId": "execution:left.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:left.js": {
+              "id": "frame:left.js",
+              "moduleFile": "left.js",
+              "executionPromiseId": "execution:left.js"
+            }
+          },
+          "promises": {
+            "execution:left.js": {
+              "id": "execution:left.js",
+              "status": "pending"
+            }
+          },
+          "jobs": {}
+        },
+        "accepted": false
+      },
+      {
+        "label": "execution frame cannot be shared",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 1,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.start",
+          "file": "left.js",
+          "frameId": "frame:shared.js",
+          "executionPromiseId": "execution:left.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:left.js": {
+              "id": "frame:left.js",
+              "moduleFile": "left.js",
+              "executionPromiseId": "execution:left.js"
+            },
+            "frame:shared.js": {
+              "id": "frame:shared.js",
+              "moduleFile": "left.js",
+              "executionPromiseId": "execution:left.js"
+            }
+          },
+          "promises": {
+            "execution:left.js": {
+              "id": "execution:left.js",
+              "status": "pending"
+            }
+          },
+          "jobs": {}
+        },
+        "accepted": false
+      },
+      {
+        "label": "left module starts",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 1,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.start",
+          "file": "left.js",
+          "frameId": "frame:left.js",
+          "executionPromiseId": "execution:left.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:left.js": {
+              "id": "frame:left.js",
+              "moduleFile": "left.js",
+              "executionPromiseId": "execution:left.js"
+            }
+          },
+          "promises": {
+            "execution:left.js": {
+              "id": "execution:left.js",
+              "status": "pending"
+            }
+          },
+          "jobs": {}
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 2,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "label": "right module starts",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 2,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.start",
+          "file": "right.js",
+          "frameId": "frame:right.js",
+          "executionPromiseId": "execution:right.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:right.js": {
+              "id": "frame:right.js",
+              "moduleFile": "right.js",
+              "executionPromiseId": "execution:right.js"
+            }
+          },
+          "promises": {
+            "execution:right.js": {
+              "id": "execution:right.js",
+              "status": "pending"
+            }
+          },
+          "jobs": {}
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "label": "await left.js",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.await",
+          "file": "left.js",
+          "frameId": "frame:left.js",
+          "promiseId": "awaited:left.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:left.js": {
+              "id": "frame:left.js",
+              "moduleFile": "left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaitedPromiseId": "awaited:left.js"
+            }
+          },
+          "promises": {
+            "awaited:left.js": {
+              "id": "awaited:left.js",
+              "status": "pending"
+            }
+          },
+          "jobs": {}
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": {
+                "promiseId": "awaited:left.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "label": "await right.js",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": {
+                "promiseId": "awaited:left.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.await",
+          "file": "right.js",
+          "frameId": "frame:right.js",
+          "promiseId": "awaited:right.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:right.js": {
+              "id": "frame:right.js",
+              "moduleFile": "right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaitedPromiseId": "awaited:right.js"
+            }
+          },
+          "promises": {
+            "awaited:right.js": {
+              "id": "awaited:right.js",
+              "status": "pending"
+            }
+          },
+          "jobs": {}
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": {
+                "promiseId": "awaited:left.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "label": "suspended body cannot complete",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": {
+                "promiseId": "awaited:left.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.complete",
+          "file": "left.js",
+          "frameId": "frame:left.js",
+          "promiseId": "execution:left.js",
+          "jobId": "settle:left.js"
+        },
+        "facts": {
+          "promises": {
+            "execution:left.js": {
+              "id": "execution:left.js",
+              "status": "fulfilled",
+              "value": null
+            }
+          },
+          "jobs": {
+            "settle:left.js": {
+              "id": "settle:left.js",
+              "promiseId": "execution:left.js",
+              "frameId": "frame:left.js",
+              "moduleFile": "left.js",
+              "status": "fulfilled",
+              "kind": "module-execution-settle",
+              "value": null
+            }
+          }
+        },
+        "accepted": false
+      },
+      {
+        "label": "reaction must own the promise",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": {
+                "promiseId": "awaited:left.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.resume",
+          "file": "left.js",
+          "frameId": "frame:left.js",
+          "promiseId": "awaited:left.js",
+          "jobId": "reaction:left.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:left.js": {
+              "id": "frame:left.js",
+              "moduleFile": "left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaitedPromiseId": "awaited:left.js"
+            }
+          },
+          "promises": {
+            "awaited:left.js": {
+              "id": "awaited:left.js",
+              "status": "fulfilled",
+              "value": 2
+            }
+          },
+          "jobs": {
+            "reaction:left.js": {
+              "id": "reaction:left.js",
+              "promiseId": "unrelated",
+              "frameId": "frame:left.js",
+              "moduleFile": "left.js",
+              "status": "fulfilled",
+              "kind": "promise-reaction",
+              "value": 2
+            }
+          }
+        },
+        "accepted": false
+      },
+      {
+        "label": "fulfilled reaction outcome must agree",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": {
+                "promiseId": "awaited:left.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.resume",
+          "file": "left.js",
+          "frameId": "frame:left.js",
+          "promiseId": "awaited:left.js",
+          "jobId": "reaction:left.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:left.js": {
+              "id": "frame:left.js",
+              "moduleFile": "left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaitedPromiseId": "awaited:left.js"
+            }
+          },
+          "promises": {
+            "awaited:left.js": {
+              "id": "awaited:left.js",
+              "status": "fulfilled",
+              "value": 2
+            }
+          },
+          "jobs": {
+            "reaction:left.js": {
+              "id": "reaction:left.js",
+              "promiseId": "awaited:left.js",
+              "frameId": "frame:left.js",
+              "moduleFile": "left.js",
+              "status": "fulfilled",
+              "kind": "promise-reaction",
+              "value": 3
+            }
+          }
+        },
+        "accepted": false
+      },
+      {
+        "label": "left resumes",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": {
+                "promiseId": "awaited:left.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.resume",
+          "file": "left.js",
+          "frameId": "frame:left.js",
+          "promiseId": "awaited:left.js",
+          "jobId": "reaction:left.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:left.js": {
+              "id": "frame:left.js",
+              "moduleFile": "left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaitedPromiseId": "awaited:left.js"
+            }
+          },
+          "promises": {
+            "awaited:left.js": {
+              "id": "awaited:left.js",
+              "status": "fulfilled",
+              "value": 2
+            }
+          },
+          "jobs": {
+            "reaction:left.js": {
+              "id": "reaction:left.js",
+              "promiseId": "awaited:left.js",
+              "frameId": "frame:left.js",
+              "moduleFile": "left.js",
+              "status": "fulfilled",
+              "kind": "promise-reaction",
+              "value": 2
+            }
+          }
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "label": "left completes",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        },
+        "action": {
+          "type": "module.complete",
+          "file": "left.js",
+          "frameId": "frame:left.js",
+          "promiseId": "execution:left.js",
+          "jobId": "settle:left.js"
+        },
+        "facts": {
+          "promises": {
+            "execution:left.js": {
+              "id": "execution:left.js",
+              "status": "fulfilled",
+              "value": null
+            }
+          },
+          "jobs": {
+            "settle:left.js": {
+              "id": "settle:left.js",
+              "promiseId": "execution:left.js",
+              "frameId": "frame:left.js",
+              "moduleFile": "left.js",
+              "status": "fulfilled",
+              "kind": "module-execution-settle",
+              "value": null
+            }
+          }
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "label": "rejected reaction outcome must agree",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        },
+        "action": {
+          "type": "module.resume",
+          "file": "right.js",
+          "frameId": "frame:right.js",
+          "promiseId": "awaited:right.js",
+          "jobId": "reaction:right.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:right.js": {
+              "id": "frame:right.js",
+              "moduleFile": "right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaitedPromiseId": "awaited:right.js"
+            }
+          },
+          "promises": {
+            "awaited:right.js": {
+              "id": "awaited:right.js",
+              "status": "rejected",
+              "value": "failure"
+            }
+          },
+          "jobs": {
+            "reaction:right.js": {
+              "id": "reaction:right.js",
+              "promiseId": "awaited:right.js",
+              "frameId": "frame:right.js",
+              "moduleFile": "right.js",
+              "status": "rejected",
+              "kind": "promise-reaction",
+              "value": "different"
+            }
+          }
+        },
+        "accepted": false
+      },
+      {
+        "label": "right await rejects",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        },
+        "action": {
+          "type": "module.resume",
+          "file": "right.js",
+          "frameId": "frame:right.js",
+          "promiseId": "awaited:right.js",
+          "jobId": "reaction:right.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:right.js": {
+              "id": "frame:right.js",
+              "moduleFile": "right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaitedPromiseId": "awaited:right.js"
+            }
+          },
+          "promises": {
+            "awaited:right.js": {
+              "id": "awaited:right.js",
+              "status": "rejected",
+              "value": "failure"
+            }
+          },
+          "jobs": {
+            "reaction:right.js": {
+              "id": "reaction:right.js",
+              "promiseId": "awaited:right.js",
+              "frameId": "frame:right.js",
+              "moduleFile": "right.js",
+              "status": "rejected",
+              "kind": "promise-reaction",
+              "value": "failure"
+            }
+          }
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "failed-await",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "awaited:right.js",
+                "jobId": "reaction:right.js"
+              },
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "label": "rejected await cannot fulfill module",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "failed-await",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "awaited:right.js",
+                "jobId": "reaction:right.js"
+              },
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        },
+        "action": {
+          "type": "module.complete",
+          "file": "right.js",
+          "frameId": "frame:right.js",
+          "promiseId": "execution:right.js",
+          "jobId": "settle:right.js"
+        },
+        "facts": {
+          "promises": {
+            "execution:right.js": {
+              "id": "execution:right.js",
+              "status": "fulfilled",
+              "value": null
+            }
+          },
+          "jobs": {
+            "settle:right.js": {
+              "id": "settle:right.js",
+              "promiseId": "execution:right.js",
+              "frameId": "frame:right.js",
+              "moduleFile": "right.js",
+              "status": "fulfilled",
+              "kind": "module-execution-settle",
+              "value": null
+            }
+          }
+        },
+        "accepted": false
+      },
+      {
+        "label": "right execution rejects",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "failed-await",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "awaited:right.js",
+                "jobId": "reaction:right.js"
+              },
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        },
+        "action": {
+          "type": "module.reject",
+          "file": "right.js",
+          "frameId": "frame:right.js",
+          "promiseId": "execution:right.js",
+          "jobId": "settle:right.js"
+        },
+        "facts": {
+          "promises": {
+            "execution:right.js": {
+              "id": "execution:right.js",
+              "status": "rejected",
+              "value": "failure"
+            }
+          },
+          "jobs": {
+            "settle:right.js": {
+              "id": "settle:right.js",
+              "promiseId": "execution:right.js",
+              "frameId": "frame:right.js",
+              "moduleFile": "right.js",
+              "status": "rejected",
+              "kind": "module-evaluation-failure",
+              "value": "failure"
+            }
+          }
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "rejected",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "execution:right.js",
+                "jobId": "settle:right.js"
+              },
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "label": "rejected terminal state cannot retain await",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "rejected",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "forged"
+              },
+              "completionJobId": "settle:right.js",
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "execution:right.js",
+                "jobId": "settle:right.js"
+              },
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        },
+        "action": {
+          "type": "module.propagateFailure",
+          "file": "main.js",
+          "dependencyFile": "right.js",
+          "promiseId": "execution:right.js",
+          "jobId": "settle:right.js"
+        },
+        "facts": {
+          "promises": {
+            "execution:right.js": {
+              "id": "execution:right.js",
+              "status": "rejected",
+              "value": "failure"
+            }
+          },
+          "jobs": {
+            "settle:right.js": {
+              "id": "settle:right.js",
+              "promiseId": "execution:right.js",
+              "frameId": "frame:right.js",
+              "moduleFile": "right.js",
+              "status": "rejected",
+              "kind": "module-evaluation-failure",
+              "value": "failure"
+            }
+          }
+        },
+        "accepted": false
+      },
+      {
+        "label": "failure propagates through exact dependency",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "rejected",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "execution:right.js",
+                "jobId": "settle:right.js"
+              },
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        },
+        "action": {
+          "type": "module.propagateFailure",
+          "file": "main.js",
+          "dependencyFile": "right.js",
+          "promiseId": "execution:right.js",
+          "jobId": "settle:right.js"
+        },
+        "facts": {
+          "promises": {
+            "execution:right.js": {
+              "id": "execution:right.js",
+              "status": "rejected",
+              "value": "failure"
+            }
+          },
+          "jobs": {
+            "settle:right.js": {
+              "id": "settle:right.js",
+              "promiseId": "execution:right.js",
+              "frameId": "frame:right.js",
+              "moduleFile": "right.js",
+              "status": "rejected",
+              "kind": "module-evaluation-failure",
+              "value": "failure"
+            }
+          }
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "rejected",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "execution:right.js",
+                "jobId": "settle:right.js"
+              },
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "rejected",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "execution:right.js",
+                "jobId": "settle:right.js"
+              },
+              "completedDependencies": [
+                "left.js",
+                "right.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "label": "propagated failure cannot run parent",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "rejected",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "execution:right.js",
+                "jobId": "settle:right.js"
+              },
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "rejected",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "execution:right.js",
+                "jobId": "settle:right.js"
+              },
+              "completedDependencies": [
+                "left.js",
+                "right.js"
+              ]
+            }
+          }
+        },
+        "action": {
+          "type": "module.start",
+          "file": "main.js",
+          "frameId": "frame:main.js",
+          "executionPromiseId": "execution:main.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:main.js": {
+              "id": "frame:main.js",
+              "moduleFile": "main.js",
+              "executionPromiseId": "execution:main.js"
+            }
+          },
+          "promises": {
+            "execution:main.js": {
+              "id": "execution:main.js",
+              "status": "pending"
+            }
+          },
+          "jobs": {}
+        },
+        "accepted": false
+      },
+      {
+        "label": "failure state needs a rejected dependency",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "rejected",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": "fake",
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "execution:right.js",
+                "jobId": "fake"
+              },
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        },
+        "action": {
+          "type": "module.resume",
+          "file": "right.js",
+          "frameId": "frame:right.js",
+          "promiseId": "awaited:right.js",
+          "jobId": "reaction:right.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:right.js": {
+              "id": "frame:right.js",
+              "moduleFile": "right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaitedPromiseId": "awaited:right.js"
+            }
+          },
+          "promises": {
+            "awaited:right.js": {
+              "id": "awaited:right.js",
+              "status": "rejected",
+              "value": "failure"
+            }
+          },
+          "jobs": {
+            "reaction:right.js": {
+              "id": "reaction:right.js",
+              "promiseId": "awaited:right.js",
+              "frameId": "frame:right.js",
+              "moduleFile": "right.js",
+              "status": "rejected",
+              "kind": "promise-reaction",
+              "value": "failure"
+            }
+          }
+        },
+        "accepted": false
+      },
+      {
+        "label": "independent success branch resumes right",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        },
+        "action": {
+          "type": "module.resume",
+          "file": "right.js",
+          "frameId": "frame:right.js",
+          "promiseId": "awaited:right.js",
+          "jobId": "reaction:right.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:right.js": {
+              "id": "frame:right.js",
+              "moduleFile": "right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaitedPromiseId": "awaited:right.js"
+            }
+          },
+          "promises": {
+            "awaited:right.js": {
+              "id": "awaited:right.js",
+              "status": "fulfilled",
+              "value": 2
+            }
+          },
+          "jobs": {
+            "reaction:right.js": {
+              "id": "reaction:right.js",
+              "promiseId": "awaited:right.js",
+              "frameId": "frame:right.js",
+              "moduleFile": "right.js",
+              "status": "fulfilled",
+              "kind": "promise-reaction",
+              "value": 2
+            }
+          }
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "label": "success branch completes right",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        },
+        "action": {
+          "type": "module.complete",
+          "file": "right.js",
+          "frameId": "frame:right.js",
+          "promiseId": "execution:right.js",
+          "jobId": "settle:right.js"
+        },
+        "facts": {
+          "promises": {
+            "execution:right.js": {
+              "id": "execution:right.js",
+              "status": "fulfilled",
+              "value": null
+            }
+          },
+          "jobs": {
+            "settle:right.js": {
+              "id": "settle:right.js",
+              "promiseId": "execution:right.js",
+              "frameId": "frame:right.js",
+              "moduleFile": "right.js",
+              "status": "fulfilled",
+              "kind": "module-execution-settle",
+              "value": null
+            }
+          }
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js",
+                "right.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "label": "completed DAG starts entry",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js",
+                "right.js"
+              ]
+            }
+          }
+        },
+        "action": {
+          "type": "module.start",
+          "file": "main.js",
+          "frameId": "frame:main.js",
+          "executionPromiseId": "execution:main.js"
+        },
+        "facts": {
+          "frames": {
+            "frame:main.js": {
+              "id": "frame:main.js",
+              "moduleFile": "main.js",
+              "executionPromiseId": "execution:main.js"
+            }
+          },
+          "promises": {
+            "execution:main.js": {
+              "id": "execution:main.js",
+              "status": "pending"
+            }
+          },
+          "jobs": {}
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 4,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 3,
+              "frameId": "frame:main.js",
+              "executionPromiseId": "execution:main.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js",
+                "right.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "label": "entry completes",
+        "before": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 4,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 3,
+              "frameId": "frame:main.js",
+              "executionPromiseId": "execution:main.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js",
+                "right.js"
+              ]
+            }
+          }
+        },
+        "action": {
+          "type": "module.complete",
+          "file": "main.js",
+          "frameId": "frame:main.js",
+          "promiseId": "execution:main.js",
+          "jobId": "settle:main.js"
+        },
+        "facts": {
+          "promises": {
+            "execution:main.js": {
+              "id": "execution:main.js",
+              "status": "fulfilled",
+              "value": null
+            }
+          },
+          "jobs": {
+            "settle:main.js": {
+              "id": "settle:main.js",
+              "promiseId": "execution:main.js",
+              "frameId": "frame:main.js",
+              "moduleFile": "main.js",
+              "status": "fulfilled",
+              "kind": "module-execution-settle",
+              "value": null
+            }
+          }
+        },
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 4,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 3,
+              "frameId": "frame:main.js",
+              "executionPromiseId": "execution:main.js",
+              "awaited": null,
+              "completionJobId": "settle:main.js",
+              "failure": null,
+              "completedDependencies": [
+                "left.js",
+                "right.js"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "refusedPlans": [
+      {
+        "schema": "semantic-module-scheduler-plan/1",
+        "entryModule": "main.js",
+        "modules": [
+          {
+            "file": "shared.js",
+            "index": false,
+            "sourceDigest": "c504694a78af4c2fd507f0923d02e9ca593a9f3dd0a1326eb7d1b3b2264cde55",
+            "dependencies": [],
+            "hasTLA": false
+          },
+          {
+            "file": "left.js",
+            "index": 1,
+            "sourceDigest": "289ec8fbfba11c5e86853527579217d8adba81457154a747e020bf620a1db7e8",
+            "dependencies": [
+              "shared.js"
+            ],
+            "hasTLA": true
+          },
+          {
+            "file": "right.js",
+            "index": 2,
+            "sourceDigest": "f48ea04bd3daf9f224b4b9dac738adf6c2cbdf63f219d6344d694cd71da56a3f",
+            "dependencies": [
+              "shared.js"
+            ],
+            "hasTLA": true
+          },
+          {
+            "file": "main.js",
+            "index": 3,
+            "sourceDigest": "1a2638de4014e947cbc9ba0e86db42144e8a6e3893f20f175c96250da9188bd0",
+            "dependencies": [
+              "left.js",
+              "right.js"
+            ],
+            "hasTLA": false
+          }
+        ],
+        "digest": "ef1d465b672ef524ef7904deadd2360a6a88b653f9c675592f70b283b2e95676"
+      }
+    ]
+  },
+  "native": {
+    "cuts": [
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 1,
+          "modules": {
+            "shared.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 1,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 2,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": {
+                "promiseId": "awaited:left.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": {
+                "promiseId": "awaited:left.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 2,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": []
+            }
+          }
+        }
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "suspended",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": {
+                "promiseId": "awaited:right.js"
+              },
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "failed-await",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "awaited:right.js",
+                "jobId": "reaction:right.js"
+              },
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "rejected",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "execution:right.js",
+                "jobId": "settle:right.js"
+              },
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "rejected",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "execution:right.js",
+                "jobId": "settle:right.js"
+              },
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "rejected",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": {
+                "moduleFile": "right.js",
+                "promiseId": "execution:right.js",
+                "jobId": "settle:right.js"
+              },
+              "completedDependencies": [
+                "left.js",
+                "right.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": false,
+        "errorType": "ModuleSchedulerError"
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 1,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 3,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "waiting",
+              "pendingDependencies": 0,
+              "startOrder": null,
+              "frameId": null,
+              "executionPromiseId": null,
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js",
+                "right.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 4,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "running",
+              "pendingDependencies": 0,
+              "startOrder": 3,
+              "frameId": "frame:main.js",
+              "executionPromiseId": "execution:main.js",
+              "awaited": null,
+              "completionJobId": null,
+              "failure": null,
+              "completedDependencies": [
+                "left.js",
+                "right.js"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "accepted": true,
+        "after": {
+          "schema": "semantic-module-scheduler-state/1",
+          "planDigest": "2693cf502c3954f2e64b11172228d8b8371dbb39d154e1a2213adc6d5f95d0b2",
+          "nextStartOrder": 4,
+          "modules": {
+            "shared.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 0,
+              "frameId": "frame:shared.js",
+              "executionPromiseId": "execution:shared.js",
+              "awaited": null,
+              "completionJobId": "settle:shared.js",
+              "failure": null,
+              "completedDependencies": []
+            },
+            "left.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 1,
+              "frameId": "frame:left.js",
+              "executionPromiseId": "execution:left.js",
+              "awaited": null,
+              "completionJobId": "settle:left.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "right.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 2,
+              "frameId": "frame:right.js",
+              "executionPromiseId": "execution:right.js",
+              "awaited": null,
+              "completionJobId": "settle:right.js",
+              "failure": null,
+              "completedDependencies": [
+                "shared.js"
+              ]
+            },
+            "main.js": {
+              "status": "fulfilled",
+              "pendingDependencies": 0,
+              "startOrder": 3,
+              "frameId": "frame:main.js",
+              "executionPromiseId": "execution:main.js",
+              "awaited": null,
+              "completionJobId": "settle:main.js",
+              "failure": null,
+              "completedDependencies": [
+                "left.js",
+                "right.js"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "refusedPlans": [
+      true
+    ]
+  }
+}

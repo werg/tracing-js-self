@@ -93,6 +93,7 @@ jobs:
             test/evaluated-module-scheduler.test.js \
             test/semantic-module-scheduler-state-v8.test.js \
             test/semantic-native-module-scheduler-state-v8.test.js \
+            test/module-scheduler-reference-observations.test.js \
             2>&1 | tee "$RUNNER_TEMP/module-scheduler-js.xml"
           python - <<'PY'
           import json, os, xml.etree.ElementTree as ET
