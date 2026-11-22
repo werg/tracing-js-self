@@ -9,7 +9,7 @@ import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 
 const known=new Set(['--out','--producer-root','--megatoken','--python','--tokenizer','--native-policy','--source-id','--prepared-root','--source-inventory','--sample-source']);
-const booleans=new Set(['--orchestration-teacher']);
+const booleans=new Set(['--orchestration-teacher','--full-target-coverage']);
 const flags=new Map();
 for(let i=2;i<process.argv.length;i++){
   const key=process.argv[i];
@@ -29,6 +29,7 @@ const producer=resolve(flags.get('--producer-root')??fileURLToPath(new URL('..',
   python=flags.get('--python'),tokenizer=resolve(flags.get('--tokenizer')),
   selectedId=flags.get('--source-id')??'promise-number-proxy-memory-join',seed=17,
   orchestrationTeacher=flags.has('--orchestration-teacher'),
+  fullTargetCoverage=flags.has('--full-target-coverage'),
   supportMode=flags.has('--prepared-root'),
   supportPrepared= supportMode ? resolve(flags.get('--prepared-root')) : null,
   supportInventory= supportMode ? resolve(flags.get('--source-inventory')??'') : null,
@@ -39,6 +40,8 @@ if(supportMode && (!flags.has('--source-inventory')||!flags.has('--sample-source
   throw new TypeError('Support lifecycle requires --source-inventory and --sample-source');
 if(!supportMode && (flags.has('--source-inventory')||flags.has('--sample-source')))
   throw new TypeError('Support inventory and sample options require --prepared-root');
+if(fullTargetCoverage&&!supportMode)
+  throw new TypeError('Full target coverage requires the explicit prepared support corpus');
 if(supportMode&&flags.has('--source-id'))
   throw new TypeError('Support lifecycle selects its source only from the admitted source artifact');
 if(supportMode&&orchestrationTeacher)
@@ -110,19 +113,27 @@ const write=(name,value)=>writeFileSync(join(out,name),JSON.stringify(value,null
 const env={...process.env,PYTHONPATH:join(consumer,'src'),OMP_NUM_THREADS:'1',MKL_NUM_THREADS:'1'};
 const report={schema:'semantic-ordinary-command-lifecycle/8',status:'running',producerRevision,consumerRevision,
   selectedId:supportMode?sourceId:selectedId,seed,orchestrationTeacher,populationCount:supportMode?64:candidates.length,registryDigest:prepared.registry.digest,
-  ...(supportMode?{supportPopulation:{count:64,fullLaunchQualified:false,optimizerTargetExposure:'bounded-two-updates; not all targets qualified'}}:{}),
+  ...(supportMode?{supportPopulation:{count:64,fullLaunchQualified:false,optimizerTargetExposure:'two-step lifecycle plus pending target-inventory comparison'}}:{}),
   nativePolicy:settings.policy,runnerSha256:createHash('sha256').update(readFileSync(fileURLToPath(import.meta.url))).digest('hex'),
   optimizerUpdates:0,learnedSuccess:null,stages:[],
-  scope:supportMode?'Qualification of two ordinary optimizer updates, resume, export and real service restoration using the exact prequalified 64-source SE support corpus. Two updates do not establish exposure of every target or learned success.':'One predeclared training source, two ordinary optimizer updates, checkpoint resume, export and real service restoration. No held-out, accepted-record recovery or whole-program success claim.'};
+  fullTargetCoverageRequested:fullTargetCoverage,fullTargetCoverageQualified:false,
+  targetCoverageStatus:fullTargetCoverage?'pending':'not-requested',
+  scope:supportMode?(fullTargetCoverage?
+    'Two-step resume/export/service route plus an explicitly selected bounded fresh ordinary training pass over the exact prequalified 64-source SE support corpus. Complete target-presence coverage requires its separate final checkpoint comparison; token or mask-position coverage and learned success remain unmeasured.':
+    'Two ordinary optimizer updates, fresh resume, export and real service restoration over the exact prequalified 64-source SE support corpus, with measured partial target presence against the complete planner inventory. Full optimizer target coverage was not requested or qualified.'):
+    'One predeclared training source, two ordinary optimizer updates, checkpoint resume, export and real service restoration. No held-out, accepted-record recovery or whole-program success claim.'};
 const record=()=>write('command-report.json',report);
-const run=(stage,command,args)=>{
+const run=(stage,command,args,{timeoutMs=600000}={})=>{
   assertRoots();
   const log=stage+'.log',fd=openSync(join(out,log),'wx'),started=Date.now();let result;
-  try{result=spawnSync(command,args,{cwd:consumer,env,stdio:['ignore',fd,fd],timeout:600000});}
+  try{result=spawnSync(command,args,{cwd:consumer,env,stdio:['ignore',fd,fd],timeout:timeoutMs});}
   finally{closeSync(fd);}
   report.stages.push({stage,command:[command,...args],log,exitCode:result.status,
     signal:result.signal,error:result.error?.message??null,durationMs:Date.now()-started});record();
-  if(result.error||result.status!==0)throw new Error('Ordinary lifecycle '+stage+' failed; see '+join(out,log));
+  if(result.error||result.status!==0){
+    process.stderr.write(readFileSync(join(out,log),'utf8').slice(-12000));
+    throw new Error('Ordinary lifecycle '+stage+' failed; see '+join(out,log));
+  }
   assertRoots();
 };
 try{
@@ -191,6 +202,19 @@ try{
       throw new Error('Ordinary trainer performed an unexpected number of updates');
     return JSON.parse(readFileSync(join(expected,'metadata.json'),'utf8')).global_step;
   };
+  let targetInventory=null;
+  const targetInventoryPath=join(out,'target-inventory.json');
+  if(supportMode){
+    run('inventory-positive-loss-targets',python,[join(consumer,'scripts/qualify_semantic_v8_target_inventory.py'),
+      '--config',config,'--expected-source-ids',supportInventoryForRun,'--output',targetInventoryPath]);
+    targetInventory=JSON.parse(readFileSync(targetInventoryPath,'utf8'));
+    if(targetInventory.sourceIds.length!==48||targetInventory.trainEpisodeCount!==48||
+       targetInventory.windowCount<1||targetInventory.optimizerWindowCount<1||
+       targetInventory.phaseMeter!=='P'||targetInventory.onePassMeterCount>targetInventory.phaseBudget||
+       targetInventory.registryDigest!==prepared.registry.digest)
+      throw new Error('Positive-loss target inventory differs from exact 64-source support training split');
+    console.log('V8_TARGET_INVENTORY_EVIDENCE_JSON '+JSON.stringify(targetInventory));
+  }
   run('train-first',python,['-m','megatoken','train','--config',config]);
   cpSync(firstLive,first,{recursive:true,errorOnExist:true,force:false});
   report.optimizerUpdates=completedStep(firstLive);record();
@@ -204,17 +228,75 @@ try{
   const lifecycleArgs=[join(consumer,'scripts/qualify_semantic_v8_lifecycle.py'),
     '--consumer-root',consumer,'--prepared',trainingPrepared,'--source',join(out,'source.json'),
     '--first-checkpoint',first,'--resumed-checkpoint',resumed,'--served',served,'--output',join(out,'qualification')];
-  if(supportMode)lifecycleArgs.push('--expected-source-ids',supportInventoryForRun);
+  if(supportMode)lifecycleArgs.push('--expected-source-ids',supportInventoryForRun,
+    '--target-inventory',targetInventoryPath);
   run('qualify-lifecycle',python,lifecycleArgs);
   const measured=JSON.parse(readFileSync(join(out,'qualification/summary.json'),'utf8'));
   const exposure=measured.optimizerResumeExport?.optimizerTargetExposure;
   if(exposure?.historyContinued!==true||exposure.registryDigest!==prepared.registry.digest||
-     exposure.allTargetsExposed!==false||!exposure.firstCheckpointCounts||!exposure.resumedCounts)
-    throw new Error('Ordinary lifecycle collector did not retain the exact resumed target-exposure census');
-  report.status='passed';report.qualification='qualification/summary.json';
+     !exposure.firstCheckpointCounts||!exposure.resumedCounts||
+     supportMode&&exposure.targetPresenceComparison?.inventoryDigest!==targetInventory.digest)
+    throw new Error('Ordinary lifecycle collector did not retain the exact resumed target-exposure and inventory comparison');
+  report.qualification='qualification/summary.json';
   report.optimizerTargetExposure=exposure;
-  report.limits=measured.limits;report.serving=measured.serving;record();
+  report.optimizerUpdateCounts={lifecycle:2,coverage:0,total:2};
+  report.optimizerUpdatesScope='optimizerUpdates retains the original two-step lifecycle count; optimizerUpdateCounts reports lifecycle, separate coverage-fit and combined counts';
+  if(supportMode){
+    report.targetInventory={digest:targetInventory.digest,windowCount:targetInventory.windowCount,
+      sourceIds:targetInventory.sourceIds,available:targetInventory.available,
+      positiveWeight:targetInventory.positiveWeight};
+    report.supportPopulation.optimizerTargetExposure='verified two-update target-presence subset; complete optimizer pass '+(fullTargetCoverage?'pending':'not requested');
+    record();
+  }
+  if(fullTargetCoverage){
+    const coverageConfig={...configuration,output:join(out,'fit-coverage'),
+      max_steps:targetInventory.optimizerWindowCount,
+      checkpoint_every:targetInventory.optimizerWindowCount,keep_checkpoints:1};
+    const coverageConfigPath=join(out,'coverage-training-config.json');
+    writeFileSync(coverageConfigPath,JSON.stringify(coverageConfig,null,2)+'\n',{flag:'wx'});
+    report.coverageBudget={kind:'one-train-window-pass',windowCount:targetInventory.windowCount,
+      optimizerWindowCount:targetInventory.optimizerWindowCount,phase:coverageConfig.phase,
+      phaseMeter:targetInventory.phaseMeter,phaseBudget:targetInventory.phaseBudget,
+      onePassMeterCount:targetInventory.onePassMeterCount,timeoutMs:7200000};
+    run('train-full-target-window-pass',python,['-m','megatoken','train','--config',coverageConfigPath],
+      {timeoutMs:7200000});
+    const latest=JSON.parse(readFileSync(join(out,'fit-coverage/checkpoints/latest.json'),'utf8'));
+    const coverageCheckpoint=join(out,'fit-coverage/checkpoints',latest.checkpoint);
+    const coverageMetadata=JSON.parse(readFileSync(join(coverageCheckpoint,'metadata.json'),'utf8'));
+    if(coverageMetadata.global_step!==targetInventory.optimizerWindowCount)
+      throw new Error('Ordinary target coverage run stopped before its bounded one-pass update count');
+    const coverageEvidencePath=join(out,'target-coverage-evidence.json');
+    run('qualify-full-target-window-pass',python,[join(consumer,'scripts/qualify_semantic_v8_target_coverage.py'),
+      '--checkpoint',coverageCheckpoint,'--prepared',trainingPrepared,
+      '--expected-source-ids',supportInventoryForRun,'--inventory',targetInventoryPath,
+      '--output',coverageEvidencePath]);
+    const coverageEvidence=JSON.parse(readFileSync(coverageEvidencePath,'utf8'));
+    if(coverageEvidence.consumerRevision!==consumerRevision||
+       coverageEvidence.globalStep!==targetInventory.optimizerWindowCount||
+       coverageEvidence.inventory?.digest!==targetInventory.digest||
+       coverageEvidence.comparison?.allPositiveWeightTargetsExposed!==true||
+       coverageEvidence.comparison?.exactOnePassCensus!==true||
+       coverageEvidence.tokenOrMaskPositionCoverage!=='unmeasured'||coverageEvidence.learnedSuccess!==null)
+      throw new Error('Ordinary one-pass route did not prove exact target-presence coverage');
+    report.targetCoverage=coverageEvidence;
+    report.targetCoverageStatus='passed';
+    report.fullTargetCoverageQualified=true;
+    report.optimizerUpdateCounts={lifecycle:2,coverage:coverageMetadata.global_step,
+      total:2+coverageMetadata.global_step};
+    report.supportPopulation.optimizerTargetExposure='verified positive-weight target presence across all inventory keys';
+    console.log('V8_TARGET_COVERAGE_EVIDENCE_JSON '+JSON.stringify(coverageEvidence));
+  }
+  report.limits=measured.limits;report.serving=measured.serving;
+  report.status='passed';record();
   console.log(JSON.stringify({output:out,producerRevision,consumerRevision,selectedId:supportMode?sourceId:selectedId,
-    declared:supportMode?64:candidates.length,optimizerUpdates:2,status:report.status,
-    optimizerTargetExposure:report.optimizerTargetExposure,learnedSuccess:null,fullLaunchQualified:false}));
-}catch(error){report.status='failed';report.reason=error.message;record();throw error;}
+    declared:supportMode?64:candidates.length,optimizerUpdates:2,optimizerUpdateCounts:report.optimizerUpdateCounts,
+    status:report.status,optimizerTargetExposure:report.optimizerTargetExposure,
+    fullTargetCoverageRequested:report.fullTargetCoverageRequested,
+    fullTargetCoverageQualified:report.fullTargetCoverageQualified,
+    targetCoverageStatus:report.targetCoverageStatus,
+    targetCoverage:report.targetCoverage??null,learnedSuccess:null,fullLaunchQualified:false}));
+}catch(error){
+  report.status='failed';report.reason=error.message;
+  if(fullTargetCoverage){report.targetCoverageStatus='failed';report.fullTargetCoverageQualified=false;}
+  record();throw error;
+}

@@ -306,6 +306,10 @@ jobs:
           result = json.loads((temporary / 'v8-support-lifecycle' / 'command-report.json').read_text())
           if (result['status'] != 'passed' or result['populationCount'] != 64
               or result['registryDigest'] != registry['digest'] or result['optimizerUpdates'] != 2
+              or result.get('fullTargetCoverageRequested') is not False
+              or result.get('fullTargetCoverageQualified') is not False
+              or result.get('targetCoverageStatus') != 'not-requested'
+              or result.get('optimizerUpdateCounts') != {'lifecycle': 2, 'coverage': 0, 'total': 2}
               or result['learnedSuccess'] is not None):
               raise ValueError('Support optimizer qualification changed corpus identity or completion evidence')
           PY

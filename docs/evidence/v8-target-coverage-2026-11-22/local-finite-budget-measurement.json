@@ -1,0 +1,26 @@
+{
+  "scope": "Partial local diagnostic timing on retained prepared input, not complete exposure or fresh paired qualification",
+  "torch": "2.14.1+cpu",
+  "hostedLockedTorch": "2.10.0+cpu",
+  "plannedOptimizerUpdates": 348,
+  "completedOptimizerUpdates": 25,
+  "preflightSeconds": 83.80050563199984,
+  "elapsedSeconds": 448.5099953070003,
+  "lastStepSeconds": 20.442520553999202,
+  "observedOptimizerExposure": {
+    "logicalTargetCount": 50,
+    "lossDenominators": {
+      "lexical": 1887,
+      "reconstruction": 1887,
+      "router_z": 52,
+      "structure": 208,
+      "terminal": 104
+    },
+    "physicalTargetRecordCount": 52,
+    "scoredOccurrences": 52,
+    "sourceCount": 4
+  },
+  "checkpointCompleted": false,
+  "allPositiveWeightTargetsExposed": false,
+  "learnedSuccess": null
+}
