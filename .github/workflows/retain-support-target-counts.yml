@@ -69,6 +69,8 @@ jobs:
               'declaredSources':64,
               'optimizerUpdates':2,
               'optimizerTargetExposure':target,
+              'commandReport':command,
+              'lifecycleQualification':summary,
               'productionBehaviorSupply':supply,
               'reports':[{'path':str(path.relative_to(root)),'bytes':path.stat().st_size,
                           'sha256':hashlib.sha256(path.read_bytes()).hexdigest()} for path in files],
