@@ -359,7 +359,7 @@ test('service recovery listing rejects altered action chains and outcome binding
   entry.command.claim.action.witness='substituted action witness';
   await writeFile(entryPath,stableAlgorithmJSON(entry));
   await assert.rejects(actionJournal.inspectRecovery({owner,terminal,reason}),
-    /digest|predecessor|chain|action/i,
+    /noncontiguous, substituted or foreign entry/,
     'an action replacement cannot survive the retained fence chain');
 
   const outcomePath=await directory(t),outcomeJournal=new Journal(options(outcomePath)),

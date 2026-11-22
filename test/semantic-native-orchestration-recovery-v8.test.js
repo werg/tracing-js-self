@@ -455,7 +455,9 @@ test('actual Python track_cancel reconciliation requires the acknowledged same-o
 
   unavailableBeta.unavailable=false;
   const resumedCoordinator=new SelectedServiceAdmissionCoordinator({sessionId,services});
-  const recovery=selector(join(root,'recovery.jsonl'),{trackCancel:true});
+  const recovery=selector(join(root,'recovery.jsonl'),{trackCancel:true}),recoverNative=recovery.restore;
+  let recoveryProof=null;
+  recovery.restore=async request=>{recoveryProof=await recoverNative(request);return recoveryProof;};
   try{
     const disposition=await RegionSelectedOrchestrationDriver.restoreLatest(requestCut.checkpoint,{
       historyJournal:journal,historyReceipt:head,initialPublic,select:recovery,policy,
@@ -466,21 +468,30 @@ test('actual Python track_cancel reconciliation requires the acknowledged same-o
     assert.equal(disposition.publicCompleted,false);
     assert.equal(disposition.sourceValidated,false);
     assert.equal(disposition.qualification.defaultPromotion,false);
+    assert.equal(recoveryProof.restoredSessions,1);
+    assert.equal(recoveryProof.hostDispatches,0);
     assert.deepEqual((await journal.readAll(head)).at(-1).terminal.serviceAdmission.services.map(row=>row.serviceId),
       ['alpha','beta']);
     const trace=decoderTrace(join(root,'first.jsonl'));
     assert.equal(trace.at(-1).terminal,true);
-    assertTracePrefix(trace,records.slice(0,-1));
+    const terminalRecord=JSON.parse(records.at(-1));
+    assert.equal(terminalRecord.name,'track_complete');terminalRecord.name='track_cancel';
+    assertTracePrefix(trace,[...records.slice(0,-1),stableAlgorithmJSON(terminalRecord)]);
+    assertSameTrace(trace,decoderTrace(join(root,'recovery.jsonl')));
   }finally{await recovery.shutdown();}
 
   const finalCoordinator=new SelectedServiceAdmissionCoordinator({sessionId,services}),
-    finalSelector=selector(join(root,'final.jsonl'),{trackCancel:true});
+    finalSelector=selector(join(root,'final.jsonl'),{trackCancel:true}),finalNativeRestore=finalSelector.restore;
+  let finalProof=null;
+  finalSelector.restore=async request=>{finalProof=await finalNativeRestore(request);return finalProof;};
   try{
     const finalDisposition=await RegionSelectedOrchestrationDriver.restoreLatest(requestCut.checkpoint,{
       historyJournal:journal,historyReceipt:head,initialPublic,select:finalSelector,policy,
       serviceAdmissionCoordinator:finalCoordinator,acknowledge});
     assert.equal(finalDisposition.status,'cancelled');
     assert.equal(finalDisposition.resumable,false);
+    assert.equal(finalProof.restoredSessions,0);
+    assert.equal(finalProof.hostDispatches,0);
     const tail=(await journal.readAll(head)).at(-1).terminal;
     assert.equal(tail.phase,'cancelled');
     assert.equal(tail.closedNative.native.sessions && Object.keys(tail.closedNative.native.sessions).length,0);
