@@ -1,5 +1,6 @@
 import {parse} from 'acorn';
-import {sharedProtocolSourceEventV8,sharedProtocolSourceCompletionV8} from './protocol-source-claims-v8.js';
+import {sharedProtocolSourceEventV8,sharedProtocolSourceCompletionV8,
+  sharedProtocolSourceAllocationV8} from './protocol-source-claims-v8.js';
 
 // The ordinary projector is an explicit peer, not a fallback after extension
 // handlers decline. These are the bounded grammar distinctions already used
@@ -39,6 +40,7 @@ export function createBaseSourceComponentV8(){return {id:BASE_SOURCE_COMPONENT_V
   claims:{
     value:(_view,value)=>ordinarySourceValueV8(value),
     allocation:(view,fields)=>['object','array','closure','promise'].includes(fields.kind)&&!sourceJoinAllocationV8(view,fields)&&
+      !sharedProtocolSourceAllocationV8(view,fields)&&
       !(fields.kind==='closure'&&Object.hasOwn(view.components,PROMISE_EXECUTOR_COMPONENT_V8)),
     event(view,input){
       if(sharedProtocolSourceEventV8(view,input))return false;

@@ -1,7 +1,7 @@
 // Private source-execution completion facts: a RETURN opcode does not
 // necessarily close a guest invocation. The owned frame transition is the
 // authority for actual exit after catch/finally routing.
-export function normalizeCompletionFacts(bundle) {
+export function normalizeCompletionFacts(bundle,{generators=false}={}) {
   const facts=new Map();
   for(const event of bundle.events){
     if(!['call.return','completion.finally.end','completion.throw','job.enter',
@@ -19,12 +19,31 @@ export function normalizeCompletionFacts(bundle) {
     }
     // A synchronous host rejection resumes its blocked caller on observed
     // delivery, which has no source instruction invocationId of its own.
-    const invocation=event.invocationId??(event.operation==='external.input.deliver'?
+    let invocation=event.invocationId??(event.operation==='external.input.deliver'?
       event.stateChanges.find(p=>p.table==='effects')?.before?.frameId:null);
+    if(generators&&event.operation==='call.enter'&&event.operands?.[0]?.[0]==='method'&&
+      ['Generator.return','Generator.throw'].includes(event.operands[0][1]?.[1])){
+      const receiver=event.operands[0][2],resumed=receiver?.[0]==='ref'&&event.stateChanges.find(change=>
+        change.table==='frames'&&change.after?.generatorId===receiver[1]);
+      if(resumed)invocation=resumed.id;
+    }
     const frame=event.stateChanges.find(p=>p.table==='frames' && p.id===invocation);
     if(!frame)continue;
     const status=frame.after?.status;
-    if(event.operation==='completion.catch.bind'){
+    if(generators&&frame.after?.generatorId){
+      // Generator creation/yield use call.return to suspend a retained frame;
+      // they do not close it. A final return's event result is the fresh
+      // iterator-result object, while its source completion carries the value.
+      // Only the explicit shared generator profile can consume these exits.
+      const completion=frame.after.completion;
+      if(['completed','thrown'].includes(status)&&!['completed','thrown'].includes(frame.before?.status)){
+        if(!['return','throw'].includes(completion?.type)||!Array.isArray(completion.value?.value))
+          throw new TypeError('Generator exit lacks its exact retained completion');
+        facts.set(event.eventId,{operation:completion.type,kind:completion.type,value:completion.value.value,
+          invocation,journalEvent:event.eventId});
+      }
+      else continue;
+    }else if(event.operation==='completion.catch.bind'){
       const introduced=event.stateChanges.filter(p=>p.table==='envs'&&p.after &&
         p.before===null).flatMap(p=>Object.entries(p.after.bindings??{}));
       if(introduced.length!==1||introduced[0][1].kind!=='catch'||
@@ -35,8 +54,7 @@ export function normalizeCompletionFacts(bundle) {
         value:binding.token.value,invocation,
         journalEvent:event.eventId});
       continue;
-    }
-    if(event.operation==='call.return'){
+    }else if(event.operation==='call.return'){
       if(!Array.isArray(event.result))
         throw new TypeError('Completion evidence missing evaluated return value');
       const actual=status==='completed';

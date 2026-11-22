@@ -48,11 +48,39 @@ The corrected JavaScript and Python controllers preserve these distinctions and
 refuse invented synchronous Promises or mismatched synchronous frame completions.
 
 **This is a source-ownership qualification, not public artifact admission.** The
-general source compiler does not yet compose the module generator environments,
-namespace source cells and async shared-controller components. The source owner
+general source compiler does not yet compose nested async module-driver calls,
+namespace source cells and the shared controller. The source owner
 refuses incomplete/unsettled module graphs and unsupported failure ownership.
 Reports explicitly retain `publicAdmission:false`, `trainingAdmission:false` and
 zero optimizer updates. No production denominator changes.
+
+## Shared generator and Promise composition
+
+The shared source compiler can now use the existing synchronous generator
+protocol inside a Promise executor or reaction and across a root async await.
+Generator definitions and their prototype capabilities publish together in the
+same event transaction. The direct and composed compilers use the same exact
+heap/descriptor shape checks. Generator frames have their own ownership and
+retained-state comparison; Promise peer frames keep their existing checks.
+
+Completion normalization distinguishes a generator's initial/yield suspension
+from a final return, and the iterator result identity from its source return
+value. An injected throw that enters a generator catch stays with that generator;
+an uncaught throw exits the generator and executor in the actual caller order.
+Tests cover six independently executed source cases, reverse component ordering,
+exact JSON checkpoint recovery, ambiguous ownership before preparation, and
+observer-failure rollback. The actual Python public consumer replays every
+generated context and compares the complete final shared state. This new
+foundation does not add fixtures to a production corpus or change its denominator.
+
+Original linked module execution now reaches the next explicit boundary:
+`Promise source helper requires a synchronous owned closure`. The public scoped
+call engine needs an explicit nested async call protocol that detaches the child
+at its first await, restores caller aliases and receiver, binds the actual
+execution Promise, and later resumes/completes the same child independently.
+Treating an async helper as an ordinary synchronous call would retain the wrong
+call scope and permit false completion/FIFO evidence. Shared yield delegation
+also remains refused; existing direct synchronous delegation stays supported.
 
 Still required before public admission: public module scheduler operations and
 active-program plan binding; composition with the shared source compiler; independent

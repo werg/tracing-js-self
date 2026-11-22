@@ -4,6 +4,7 @@ import {isDeepStrictEqual as eq} from 'node:util';
 import {parse} from 'acorn';
 import {sourcePromiseResolverV8,sourcePromiseConstructorV8,sourcePromiseExecutorEventV8,
   sourceExecutorCompletionV8,sourceHasSyntaxV8} from './source-projection-base-v8.js';
+import {sharedProtocolSourceAllocationV8} from './protocol-source-claims-v8.js';
 const id='promise-executor/1',copy=structuredClone;
 const resolver=sourcePromiseResolverV8;
 const resolverId=(promise,mode)=>promise+mode;
@@ -26,7 +27,7 @@ export function createPromiseExecutorTeacherV8(){
   },
   claims:{
     value:(_view,value)=>resolver(value)!==null,
-    allocation:(_view,input)=>input.kind==='closure',
+    allocation:(view,input)=>input.kind==='closure'&&!sharedProtocolSourceAllocationV8(view,input),
     event:sourcePromiseExecutorEventV8,
     completion:(view,exit)=>['return','throw','unhandled-throw'].includes(exit.operation)&&sourceExecutorCompletionV8(view,exit)
   },

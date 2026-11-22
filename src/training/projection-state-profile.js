@@ -8,14 +8,16 @@ const reject=message=>{const error=new Error('Effectful teacher projection: '+me
 
 function inspectHeap(node,before,{boundary=false,protocolProfiles=[]}={}){
   if(!node)return;
+  const generator=protocolProfiles.includes('synchronous-generator-source/1')&&
+    (node.generatorFunction===true||node.kind==='generator'||node.kind==='object'&&node.prototype==='Generator.prototype');
   if(node.kind==='proxy'&&!protocolProfiles.includes('ordinary-data-proxy-source/1'))
     reject('Proxy target/handler state requires an explicit v8 protocol profile');
   if(node.classConstructor||node.instanceInitializer||node.staticInitializer||
     ['privateSlots','privateKinds','privateVersions'].some(key=>Object.hasOwn(node,key)))
     reject('class/private state requires an explicit v8 behavioral-state profile');
-  if(node.prototypeInitialized||Object.keys(node.dataAttributes??{}).length)
+  if(!generator&&(node.prototypeInitialized||Object.keys(node.dataAttributes??{}).length))
     reject('constructor/prototype descriptors require an explicit v8 behavioral-state profile');
-  if(node.extensible===false||node.templateSite||node.templateRawOf)
+  if((!generator&&node.extensible===false)||node.templateSite||node.templateRawOf)
     reject('frozen template identity and descriptors require an explicit v8 behavioral-state profile');
   if(Object.hasOwn(node,'prototype')){
     const ordinary=node.kind==='array'?'Array.prototype':node.kind==='object'?'Object.prototype':
@@ -23,7 +25,7 @@ function inspectHeap(node,before,{boundary=false,protocolProfiles=[]}={}){
     // Observed ordinary null-prototype objects are already represented by the
     // input/result graph contract. A guest operation changing that link is not.
     const observedNull=node.kind==='object'&&node.prototype===null&&(boundary||before?.prototype===null);
-    if(node.prototype!==ordinary&&!observedNull)
+    if(node.prototype!==ordinary&&!observedNull&&!generator)
       reject('guest custom/null prototype state requires an explicit v8 behavioral-state profile');
   }
 }

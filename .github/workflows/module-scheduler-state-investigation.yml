@@ -114,6 +114,31 @@ jobs:
           print('SCHEDULER_STATE_EVIDENCE_JSON '+json.dumps(evidence,separators=(',',':')))
           print('SCHEDULER_SOURCE_EVIDENCE_JSON '+json.dumps(source,separators=(',',':')))
           PY
+      - name: Check shared generator and Promise composition against actual native replay
+        if: ${{ !cancelled() }}
+        working-directory: tracing-js-self
+        run: |
+          node --test --test-concurrency=1 --test-reporter=junit \
+            test/semantic-protocol-generator-source-v8.test.js \
+            test/semantic-protocol-promise-executor-source-v8.test.js \
+            test/semantic-shared-protocol-source-v8.test.js \
+            test/semantic-shared-generator-source-v8.test.js \
+            2>&1 | tee "$RUNNER_TEMP/shared-generator-js.xml"
+          python - <<'PY'
+          import json, os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          cases=list(ET.parse(root/'shared-generator-js.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('Every generator/Promise/composition control must run and pass')
+          evidence=json.loads((root/'shared-generator-source-evidence.json').read_text())
+          if evidence['sourceCases']!=6 or evidence['actualNativeCases']!=6 or evidence['generatedContexts']<1:
+              raise ValueError('Every shared generator source case requires actual native replay of all contexts')
+          if evidence['moduleAdmission'] is not False or evidence['trainingAdmission'] is not False or evidence['optimizerUpdates']!=0:
+              raise ValueError('Generator composition alone cannot grant module/data admission or optimizer exposure')
+          print(f'{len(cases)} shared generator and Promise controls passed, zero skips')
+          print('SHARED_GENERATOR_EVIDENCE_SUMMARY_JSON '+json.dumps({key:value for key,value in evidence.items() if key!='cases'},separators=(',',':')))
+          PY
       - name: Verify both candidate checkouts remained exact
         if: ${{ !cancelled() }}
         run: |
@@ -129,3 +154,4 @@ jobs:
           retention-days: 30
           path: |
             ${{ runner.temp }}/module-scheduler-*
+            ${{ runner.temp }}/shared-generator-*
