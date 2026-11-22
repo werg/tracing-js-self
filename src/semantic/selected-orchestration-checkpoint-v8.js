@@ -4,6 +4,7 @@
 import {isDeepStrictEqual} from 'node:util';
 import {RegionExecutionHarness} from './region-harness.js';
 import {hashAlgorithmData} from './program.js';
+import {validateSelectedOrchestrationClockReceipt} from '../storage/selected-orchestration-clock.js';
 import {stableAlgorithmJSON} from './ir.js';
 import {validateServiceAdmissionOwnerSnapshot} from './service-admission-v8.js';
 
@@ -388,13 +389,19 @@ function checkCoordinatorHistory(packet,nativeSession,all,session){
 
 function checkContinuation(packet,nativeSession,allowTerminal=false,allowCancelled=false,bridge=null){
   const continuation=packet.continuation,state=packet.state,policy=packet.policy;
-  demand(keys(continuation,['phase','coordinatorSelections','joinedAttempt','joinedDependency','elapsedMs'])&&
+  demand(keys(continuation,['phase','coordinatorSelections','joinedAttempt','joinedDependency','elapsedMs',
+      ...(Object.hasOwn(continuation??{},'clockReceipt')?['clockReceipt']:[])])&&
     ['coordinator-ready','child-ready'].includes(continuation.phase)&&
     continuation.coordinatorSelections===packet.coordinatorAttempts.length&&
     continuation.coordinatorSelections<=policy.maxCoordinatorSelections&&
     Number.isFinite(continuation.elapsedMs)&&continuation.elapsedMs>=0&&
     continuation.elapsedMs<policy.timeoutMs,
     'explicit active continuation phase or consumed coordinator budget differs');
+  if(Object.hasOwn(continuation,'clockReceipt')){
+    validateSelectedOrchestrationClockReceipt(continuation.clockReceipt,{timeoutMs:policy.timeoutMs});
+    demand(continuation.elapsedMs>=continuation.clockReceipt.consumedElapsedMs,
+      'continuation elapsed budget predates its retained clock receipt');
+  }
   demand(keys(state,nativeStatusKeys)&&state.schema==='semantic-orchestration-state/8'&&state.session===packet.session&&
     state.origin==='model'&&state.sourceAdmissionClaim===false&&
     (['active','waiting'].includes(state.status)||allowTerminal&&state.status==='completed'||

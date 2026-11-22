@@ -1,7 +1,7 @@
 // Opt-in transport for the independent native v8 model. Only public execution
 // prefixes cross this boundary; source evidence and expected answers do not.
 import {spawn} from 'node:child_process';
-import {TextDecoder} from 'node:util';
+import {TextDecoder,isDeepStrictEqual} from 'node:util';
 import {hashAlgorithmData} from './program.js';
 import {decodeCausalLmV8Target,validateRegionContext} from './causal-lm-v8.js';
 import {attachNativeV8OrchestrationTransport} from './native-orchestration-transport-v8.js';
@@ -282,10 +282,10 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     demand(identity!==null,'model has not attested its checkpoint');
     return transportPacket(await request({op:'checkpoint'}));
   };
-  select.recoverCommit=async({receipt}={})=>{
+  select.recoverCommit=async({receipt,accountingCheckpoint=null}={})=>{
     demand(durable&&identity===null&&attempts.length===0&&sessions.size===0&&pending.size===0&&!requestBusy,
       'durable commit recovery requires a fresh guarded native transport');
-    const captured=copy(receipt);requestBusy=true;
+    const captured=copy(receipt),retainedAccounting=copy(accountingCheckpoint);requestBusy=true;
     try{
       assertSelectedOrchestrationExecutionLease(durable.lease);
       const intent=await durable.journal.read(captured,{latest:true});
@@ -300,9 +300,21 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       if(verified.request.op==='commit-orchestration')target.commitReceipt=copy(verified.result);
       attempts.push(...restored);
       for(const session of Object.keys(verified.postCheckpoint.sessions))sessions.set(session,{pending:null,evidence:null});
-      const costs=intent.checkpoint.runtimeMetrics;
+      let costs=intent.checkpoint.runtimeMetrics;
       demand(costs&&['rpcCalls','computeSeconds','peakMemoryBytes'].every(key=>Number.isFinite(costs[key])&&costs[key]>=0),
         'invalid retained native costs');
+      if(retainedAccounting!==null){
+        const {digest,...body}=retainedAccounting;
+        const floor=retainedAccounting.runtimeMetrics;
+        demand(retainedAccounting.schema==='semantic-native-transport-checkpoint/8'&&
+          Object.keys(retainedAccounting).length===6&&digest===hashAlgorithmData(body)&&
+          isDeepStrictEqual(retainedAccounting.identity,identity)&&
+          isDeepStrictEqual(retainedAccounting.native,verified.postCheckpoint)&&
+          isDeepStrictEqual(retainedAccounting.attempts,restored)&&floor&&Object.keys(floor).length===3&&
+          ['rpcCalls','computeSeconds','peakMemoryBytes'].every(key=>Number.isFinite(floor[key])&&floor[key]>=costs[key]),
+          'accounting checkpoint is not the exact recovered commit or refunds retained native costs');
+        costs=floor;
+      }
       runtimeMetrics.rpcCalls+=costs.rpcCalls;runtimeMetrics.computeSeconds+=costs.computeSeconds;
       runtimeMetrics.peakMemoryBytes=Math.max(runtimeMetrics.peakMemoryBytes,costs.peakMemoryBytes);
       nextOrdinal=intent.identity.ordinal;lastDurableRequest=captured;
@@ -381,6 +393,16 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     nativeAdmissionClaim:false,sourceAdmissionClaim:false});
   select.status=()=>({closed,pending:pending.size||Number(requestBusy),stderr:stderr.slice(-1000)});
   select.durableRequestReceipt=()=>copy(lastDurableRequest);
+  select.durableRequestBoundary=()=>{
+    if(!durable)return null;
+    demand(!closed&&!requestBusy&&pending.size===0,'durable request boundary requires a quiescent live transport');
+    assertSelectedOrchestrationExecutionLease(durable.lease);
+    const journal=durable.journal;
+    demand(Number.isSafeInteger(nextOrdinal+1)&&nextOrdinal+1<=journal.maxRequests,
+      'durable request sequence is exhausted');
+    return {schema:'semantic-native-producer-request-boundary/8',ordinal:nextOrdinal+1,
+      sessionId:journal.sessionId,streamId:journal.streamId,sessionGeneration:journal.sessionGeneration};
+  };
   select.close=()=>stop(new Error('Native v8 model process closed'));
   select.shutdown=()=>{
     if(shutdownPromise)return shutdownPromise;

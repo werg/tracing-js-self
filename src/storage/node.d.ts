@@ -44,3 +44,8 @@ export {DurableSelectedOrchestrationExecutionLock} from './selected-orchestratio
 export type {SelectedOrchestrationExecutionLease} from './selected-orchestration-execution-lock.js';
 export {DurableNativeV8RequestJournal} from './native-request-journal-v8.js';
 export type {NativeV8RequestReceipt,NativeV8RequestDurability} from './native-request-journal-v8.js';
+export {createSelectedOrchestrationExecutionClock,assertSelectedOrchestrationExecutionClock,
+  validateSelectedOrchestrationClockReceipt}
+  from './selected-orchestration-clock.js';
+export type {SelectedOrchestrationClock,SelectedOrchestrationClockReceipt}
+  from './selected-orchestration-clock.js';

@@ -4,6 +4,8 @@ The production native adapter and durable bridge still execute every operation.
 This fixture changes only the requested process-exit boundary or returned bytes.
 """
 import importlib.util
+import base64
+import json
 import os
 import sys
 from pathlib import Path
@@ -17,6 +19,11 @@ def main():
     fault_index = args.index("--fault")
     fault = args[fault_index + 1]
     del args[fault_index:fault_index + 2]
+    action_name = None
+    if "--fault-action" in args:
+        action_index = args.index("--fault-action")
+        action_name = args[action_index + 1]
+        del args[action_index:action_index + 2]
     spec = importlib.util.spec_from_file_location("durable_commit_test_peer", peer_path)
     peer = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = peer
@@ -24,10 +31,15 @@ def main():
     original = peer.dispatch
 
     def dispatch(adapter, request, **kwargs):
-        if request.get("op") == "durable-commit" and fault == "before-native-intent":
+        target = request.get("op") == "durable-commit"
+        if target and action_name is not None:
+            original_request = json.loads(base64.b64decode(request["requestBase64"]))
+            target = (original_request.get("op") == "commit-orchestration"
+                      and json.loads(original_request["record"]).get("name") == action_name)
+        if target and fault == "before-native-intent":
             os._exit(86)
         result = original(adapter, request, **kwargs)
-        if request.get("op") == "durable-commit":
+        if target:
             if fault == "after-native-outcome":
                 os._exit(87)
             if fault == "alter-reply":

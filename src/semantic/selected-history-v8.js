@@ -6,6 +6,7 @@ import {hashAlgorithmData} from './program.js';
 import {validateServiceAdmissionPolicy,validateServiceAdmissionFence,
   validateServiceAdmissionOwnerSnapshot} from './service-admission-v8.js';
 import {verifySelectedOrchestrationCheckpoint} from './selected-orchestration-checkpoint-v8.js';
+import {validateSelectedOrchestrationClockReceipt} from '../storage/selected-orchestration-clock.js';
 
 const eq=isDeepStrictEqual,ID=/^[a-z][a-z0-9:_-]*$/,HASH=/^[a-f0-9]{64}$/;
 const fail=message=>{throw new TypeError('Selected checkpoint history: '+message);};
@@ -221,12 +222,28 @@ function validateCompositePending(pending,checkpoint){
   const {id,...body}=pending;
   demand(HASH.test(id??'')&&id===hashAlgorithmData(body),'pending marker integrity differs');
   if(pending.kind==='coordinator-selection'){
+    const clockBound=Object.hasOwn(pending,'clockReceipt');
     assertAlgorithmFields(pending,['schema','kind','session','checkpointDigest','attempt',
-      'coordinatorSelections','track','id'],'composite coordinator pending marker');
+      'coordinatorSelections','track','id',...(clockBound?['clockReceipt','requestBoundary']:[])],
+      'composite coordinator pending marker');
     demand(checkpoint.continuation.phase==='coordinator-ready'&&checkpoint.state.status==='active'&&
       pending.attempt===checkpoint.coordinatorAttempts.length&&
       pending.coordinatorSelections===checkpoint.continuation.coordinatorSelections&&
       pending.track===checkpoint.state.track,'coordinator selection fence differs from its safe cut');
+    if(clockBound){
+      validateSelectedOrchestrationClockReceipt(pending.clockReceipt,{timeoutMs:checkpoint.policy.timeoutMs});
+      demand(pending.clockReceipt.consumedElapsedMs>=checkpoint.continuation.elapsedMs,
+        'pending clock receipt refunded the consumed execution budget');
+      const boundary=pending.requestBoundary;
+      assertAlgorithmFields(boundary,['schema','ordinal','sessionId','streamId','sessionGeneration'],
+        'composite native request boundary');
+      demand(boundary.schema==='semantic-native-producer-request-boundary/8'&&
+        boundary.sessionId===checkpoint.session&&typeof boundary.streamId==='string'&&
+        /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(boundary.streamId)&&
+        Number.isSafeInteger(boundary.ordinal)&&boundary.ordinal>0&&
+        Number.isSafeInteger(boundary.sessionGeneration)&&boundary.sessionGeneration>0,
+        'pending native request scope or ordinal is invalid');
+    }
   }else if(pending.kind==='child-dispatch'){
     assertAlgorithmFields(pending,['schema','kind','session','checkpointDigest','attempt',
       'invocationId','track','dependency','id'],'composite child pending marker');
@@ -250,6 +267,9 @@ function validatePendingResolution(pending,before,after){
       after.coordinatorAttempts.length===pending.attempt+1&&
       after.continuation.coordinatorSelections===pending.coordinatorSelections+1,
       'coordinator selection fence must resolve exactly one committed selection in the next cut');
+    if(pending.clockReceipt)demand(eq(after.continuation.clockReceipt,pending.clockReceipt)&&
+      after.continuation.elapsedMs>=pending.clockReceipt.consumedElapsedMs,
+      'resolved coordinator cut changed its pending clock or refunded its execution budget');
   }else{
     demand(before.continuation.phase==='child-ready'&&before.continuation.joinedAttempt===pending.attempt&&
       before.continuation.joinedDependency?.track===pending.track&&
@@ -583,6 +603,15 @@ function validateHistoryExtension(before,after,verifyComposite){
         before.continuation.phase==='coordinator-ready'&&after.continuation.phase==='child-ready'||
         before.continuation.phase==='child-ready'&&after.continuation.phase==='coordinator-ready'),
       'composite retry budget, phase, selection count or elapsed deadline rolled back');
+    if(before.continuation.clockReceipt){
+      const prior=before.continuation.clockReceipt,next=after.continuation.clockReceipt;
+      demand(next&&next.bootId===prior.bootId&&next.timeNamespace===prior.timeNamespace&&
+        BigInt(next.issuedMonotonicNs)>=BigInt(prior.issuedMonotonicNs)&&
+        next.consumedElapsedMs>=prior.consumedElapsedMs&&next.timeoutMs===prior.timeoutMs&&
+        next.consumedElapsedMs-prior.consumedElapsedMs+0.000001>=
+          Number(BigInt(next.issuedMonotonicNs)-BigInt(prior.issuedMonotonicNs))/1_000_000,
+        'composite history removed or rolled back its live execution clock');
+    }
     const oldNative=before.native?.native,newNative=after.native?.native,
       oldTransport=before.native,newTransport=after.native,
       oldSession=oldNative?.sessions?.[before.session],newSession=newNative?.sessions?.[after.session];
