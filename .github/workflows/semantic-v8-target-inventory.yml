@@ -24,7 +24,7 @@ jobs:
       MKL_NUM_THREADS: '1'
       TRACING_JS_SELF_ROOT: ${{ github.workspace }}/tracing-js-self
       MEGATOKEN_NATIVE_SOURCE_PRODUCER: ${{ github.workspace }}/tracing-js-self
-      MEGATOKEN_TOKENIZER_JSON: ${{ runner.temp }}/semantic-v8-tokenizer.json
+      MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/semantic-v8-tokenizer.json
       MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
       MEGATOKEN_PYTHON: python
       SEMANTIC_V8_NATIVE_POLICY: ${{ github.workspace }}/tracing-js-self/contracts/semantic-native-policy-v8.json
