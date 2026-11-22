@@ -16,6 +16,7 @@ import platform
 import re
 import subprocess
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 
 
@@ -223,12 +224,52 @@ def verify_promise_packets(root):
     return result
 
 
+def verify_controlled_position_proof(path, expected_native):
+    packet = read(path)
+    require(packet["schema"] == "semantic-v8-controlled-position-evidence/1",
+            "Missing original controlled position evidence")
+    require(packet["sourceCommit"] == expected_native,
+            "Controlled position evidence belongs to another native checkout")
+    updates, total = packet["optimizerUpdates"], packet["totalOptimizerUpdatesExecuted"]
+    require(type(updates) is int and 1 <= updates <= 8 and type(total) is int and total == updates + 1,
+            "Controlled optimizer update counts differ from the executed two-phase test")
+    boundaries = packet["boundaries"]
+    require(boundaries == {"sourceAdmission": "injected fixture receipt",
+                           "tokenizerAdmission": "injected byte-fallback fixture",
+                           "sourcePopulation": "one controlled prepared fixture, not the 64-source support population"},
+            "Controlled fixture evidence cannot grant production admission")
+    inventory, comparison = packet["independentPreparedPositionInventory"], packet["comparison"]
+    require(type(inventory["physicalTargetRecordCount"]) is int and inventory["physicalTargetRecordCount"] == 4
+            and comparison["exactOnePassPreparedTextPositions"] is True
+            and comparison["positiveWeightPositionCountsMatch"] is True,
+            "Missing independent exact-position comparison")
+    phase = packet["phaseTransition"]
+    require((phase["from"], phase["to"]) == ("SC", "SE")
+            and phase["previousObjectiveArchived"] is True and phase["newStageExposureStartsEmpty"] is True,
+            "Missing controlled phase transition")
+    for exposure, start, end, count in ((packet["optimizerPositionExposure"], 0, updates, updates),
+                                        (phase["positionExposure"], updates, total, 1)):
+        require(all(type(exposure[key]) is int and exposure[key] == value for key, value in
+                    (("startingGlobalStep", start), ("lastGlobalStep", end), ("optimizerUpdates", count))),
+                "Controlled position exposure does not match actual optimizer steps")
+    for metadata, step, name in ((packet["checkpointMetadata"], updates, "SC"),
+                                 (phase["checkpointMetadata"], total, "SE")):
+        require(type(metadata["global_step"]) is int and metadata["global_step"] == step and metadata["phase"] == name,
+                "Controlled checkpoint does not match emitted position evidence")
+    require(packet["routerInternalPositionCoverage"] == "unmeasured" and packet["learnedSuccess"] is None,
+            "Controlled fixture cannot infer learned quality or router coverage")
+    return {"file": path.name, "sha256": sha(path), "sourceCommit": packet["sourceCommit"],
+            "boundaries": boundaries, "firstPhaseOptimizerUpdates": updates,
+            "phaseTransitionOptimizerUpdates": 1, "totalOptimizerUpdatesExecuted": total,
+            "routerInternalPositionCoverage": "unmeasured", "learnedSuccess": None}
+
+
 def run_lane(args):
     original = read(args.out / "pair-identity.json")
     require(original["pair"] == identity(args.producer, args.native, args.producer_revision, args.native_revision),
             "Pair changed after attestation")
     env = {**os.environ, "RUNNER_TEMP": str(args.out)}
-    results = {}
+    results, controlled_training = {}, None
     for kind in ("native", "producer"):
         files = SPEC["lanes"][args.lane][kind]
         if not files:
@@ -237,12 +278,25 @@ def run_lane(args):
         require(all((repo / file).is_file() for file in files), "A required test file is absent")
         xml = args.out / (kind + ".xml")
         if kind == "native":
-            argv = [sys.executable, "-m", "pytest", "-q", *files, "--junitxml=" + str(xml)]
+            # Pytest owns this fresh directory; retain the test's original proof,
+            # without uploading temporary model checkpoints as gate artifacts.
+            with tempfile.TemporaryDirectory(prefix="combined-v8-native-", dir=args.out.parent) as temporary:
+                temp = Path(temporary)
+                argv = [sys.executable, "-m", "pytest", "-q", *files, "--junitxml=" + str(xml),
+                        "--basetemp=" + str(temp / "pytest")]
+                command(argv, repo, args.out / (kind + ".log"), env)
+                if args.lane == "structural":
+                    proofs = list(temp.rglob("position-proof.json"))
+                    require(len(proofs) == 1, "Require the actual controlled position test's single emitted proof")
+                    retained = args.out / "controlled-position-proof.json"
+                    with retained.open("xb") as handle:
+                        handle.write(proofs[0].read_bytes())
+                    controlled_training = verify_controlled_position_proof(retained, args.native_revision)
         else:
             argv = ["node", "--experimental-vm-modules", "--test", "--test-concurrency=1", "--test-timeout=600000",
                     "--test-reporter=spec", "--test-reporter-destination=stdout", "--test-reporter=junit",
                     "--test-reporter-destination=" + str(xml), *files]
-        command(argv, repo, args.out / (kind + ".log"), env)
+            command(argv, repo, args.out / (kind + ".log"), env)
         results[kind] = verify_junit(xml, kind, files)
     packets = verify_promise_packets(args.out) if args.lane == "promise" else []
     require(original["pair"] == identity(args.producer, args.native, args.producer_revision, args.native_revision),
@@ -250,14 +304,15 @@ def run_lane(args):
     files = [{"path": str(path.relative_to(args.out)), "bytes": path.stat().st_size, "sha256": sha(path)}
              for path in sorted(args.out.rglob("*")) if path.is_file()]
     write(args.out / "lane-result.json", {"schema": "semantic-v8-combined-lane/1", "status": "passed",
-          "lane": args.lane, "pair": original["pair"], "tests": results, "sourcePopulations": packets, "files": files})
+          "lane": args.lane, "pair": original["pair"], "tests": results, "sourcePopulations": packets,
+          "controlledTraining": controlled_training, "files": files})
 
 
 def aggregate(args):
     policy = read(args.producer / "contracts/semantic-native-policy-v8.json")
     require(git(args.producer, "rev-parse", "HEAD") == args.producer_revision, "Aggregate producer checkout changed")
     require(not git(args.producer, "status", "--porcelain"), "Aggregate producer is not clean")
-    reports, pair = {}, None
+    reports, pair, controlled_training = {}, None, None
     for lane in SPEC["lanes"]:
         root = args.artifacts / ("combined-v8-" + lane)
         report = read(root / "lane-result.json")
@@ -280,10 +335,18 @@ def aggregate(args):
         if lane == "promise":
             require(len(installed["sourceReceipts"]) == SPEC["sourceExamples"], "Missing installed source replays")
             verify_promise_packets(root)
+        if lane == "structural":
+            controlled_training = verify_controlled_position_proof(root / "controlled-position-proof.json",
+                                                                   policy["consumerRevision"])
+            require(report["controlledTraining"] == controlled_training, "Controlled training summary differs")
+        else:
+            require(report["controlledTraining"] is None, "Controlled training evidence belongs to the structural lane")
         reports[lane] = report["tests"]
     write(args.out, {"schema": "semantic-v8-combined-qualification/1", "status": "passed", "pair": pair,
           "lanes": reports, "requiredGroups": {"recovery": {"native": 165, "producer": 193},
-          "promise": {"native": 106, "producer": 173}}, "optimizerUpdates": 0,
+          "promise": {"native": 106, "producer": 173}}, "optimizerUpdates": None,
+          "optimizerUpdateScope": "No global update tally across all tests; the emitted controlled position proof is counted below",
+          "controlledTraining": controlled_training,
           "moduleAdmission": False, "trainingAdmission": False, "learnedQualityClaim": None})
     print(json.dumps({"status": "passed", "pair": pair, "lanes": list(reports)}))
 
