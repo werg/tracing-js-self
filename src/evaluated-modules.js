@@ -534,7 +534,9 @@ function rewrite(module,root,names,namespaceBindings=new Map(),{
   return source;
 }
 export function linkEvaluatedModules({modules,entryModule,exportName='default',
-  args=[],calls=null,evaluateOnly=false}={}){
+  args=[],calls=null,evaluateOnly=false,experimentalNamespacePlan=false}={}){
+  if(typeof experimentalNamespacePlan!=='boolean')
+    throw new TypeError('Experimental namespace plan option must be boolean');
   if(typeof evaluateOnly!=='boolean'||evaluateOnly&&(calls!==null||args.length))
     throw new TypeError('Module evaluate-only mode cannot carry export calls or arguments');
   const sources=sourcesOf(modules);
@@ -960,9 +962,25 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     {moduleNamespaceIntrinsic:namespaceTargets.size>0}):parseTraining(source,
     {moduleNamespaceIntrinsic:namespaceTargets.size>0});}
   catch(error){reject('unowned generated guest syntax: '+error.message);}
+  const namespaceSourcePlan=experimentalNamespacePlan&&namespaceTargets.size?{
+    cells:order.flatMap(file=>[...get(file).symbols.entries()].map(([local,symbol])=>({
+      file,local,kind:symbol.kind,mutable:symbol.kind!=='const'
+    }))),
+    namespaces:[...namespaceTargets].sort((a,b)=>a<b?-1:a>b?1:0).map(file=>({
+      file,exports:[...exportedNames(file)].sort((a,b)=>a<b?-1:a>b?1:0).map(name=>{
+        if(/^(0|[1-9][0-9]*)$/.test(name)&&Number(name)<=0xfffffffe)
+          reject('experimental namespace plans exclude integer-index export names until native ordering parity is verified');
+        const binding=resolve(file,name);
+        if(binding?.kind==='namespace')
+          reject('experimental namespace plans exclude namespace-valued forwarded exports');
+        return binding?{name,file:binding.file,local:binding.local}:null;
+      }).filter(Boolean)
+    }))
+  }:null;
   const metadata={
     profile:'evaluated-module/1',entryModule,exportName:evaluateOnly?null:exportName,
     importMetaPolicy:'empty-null-prototype',
+    ...(namespaceSourcePlan?{namespaceSourcePlan}:{}),
     ...(namespaceTargets.size?{requiresModuleNamespace:true}:{}),
     evaluationStrategy:scheduled?'async-dependency-scheduler':'dependency-concatenation',
     evaluationOrder:order.slice(),cycles,linkedBinding:selected?.linked??null,
