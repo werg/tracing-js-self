@@ -1,0 +1,1111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="diagnostic selections retain the full population and bind resume to canonical selected IDs" time="0.001835" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/qualification-progress.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at directory (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/qualification-progress.test.js:12:36)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/qualification-progress.test.js:22:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/qualification-progress-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="resume preserves refusals and completed evidence while leaving incomplete cases untested" time="0.000203" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/qualification-progress.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at directory (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/qualification-progress.test.js:12:36)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/qualification-progress.test.js:28:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/qualification-progress-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="resume rejects stale revisions, changed policies or bounds, and corrupted completed bytes" time="0.000187" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/qualification-progress.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at directory (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/qualification-progress.test.js:12:36)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/qualification-progress.test.js:49:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/qualification-progress-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="bounded independent jobs preserve declared result order and wait for active jobs on failure" time="0.052508" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/qualification-progress.test.js"/>
+	<testcase name="V8 release snapshot retains complete population, selection, failures and every committed attempt" time="0.001455" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:104:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testsuite name="V8 release snapshot refuses changed, omitted and forged report authority" time="0.002076" disabled="0" errors="0" tests="7" failures="7" skipped="0" timestamp="2026-11-22T17:37:00.248Z" hostname="07bf85b14210">
+		<testcase name="row" time="0.000275" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:96) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:123:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:104)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="count" time="0.000115" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:96) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:123:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:104)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="omitted" time="0.000129" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:96) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:123:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:104)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="revision" time="0.000159" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:96) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:123:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:104)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="selected" time="0.000223" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:96) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:123:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:104)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="contract" time="0.000172" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:96) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:123:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:104)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="candidate" time="0.000137" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:96) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:123:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:122:104)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+	</testsuite>
+	<testsuite name="V8 release snapshot refuses changed completed bytes and missing original failures" time="0.001071" disabled="0" errors="0" tests="3" failures="3" skipped="0" timestamp="2026-11-22T17:37:00.251Z" hostname="07bf85b14210">
+		<testcase name="changed" time="0.000322" classname="V8 release snapshot refuses changed completed bytes and missing original failures" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:140:64) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:141:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:140:72)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="changed-source" time="0.000187" classname="V8 release snapshot refuses changed completed bytes and missing original failures" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:140:64) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:141:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:140:72)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="missing" time="0.000090" classname="V8 release snapshot refuses changed completed bytes and missing original failures" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:140:64) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:141:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:140:72)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+	</testsuite>
+	<testsuite name="V8 release snapshot binds every interpreted artifact to its original read bytes" time="0.001298" disabled="0" errors="0" tests="4" failures="4" skipped="0" timestamp="2026-11-22T17:37:00.252Z" hostname="07bf85b14210">
+		<testcase name="accepted.source.json" time="0.000220" classname="V8 release snapshot binds every interpreted artifact to its original read bytes" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:151:5) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:152:25)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:151:13)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="accepted.admitted.json" time="0.000111" classname="V8 release snapshot binds every interpreted artifact to its original read bytes" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:151:5) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:152:25)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:151:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="accepted.native.json" time="0.000157" classname="V8 release snapshot binds every interpreted artifact to its original read bytes" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:151:5) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:152:25)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:151:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="family-registry.json" time="0.000186" classname="V8 release snapshot binds every interpreted artifact to its original read bytes" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:151:5) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:152:25)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:151:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+	</testsuite>
+	<testsuite name="V8 release snapshot refuses torn and reordered logs without repairing their bytes" time="0.000473" disabled="0" errors="0" tests="2" failures="2" skipped="0" timestamp="2026-11-22T17:37:00.255Z" hostname="07bf85b14210">
+		<testcase name="torn" time="0.000164" classname="V8 release snapshot refuses torn and reordered logs without repairing their bytes" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:164:46) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:165:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:164:54)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="reordered" time="0.000074" classname="V8 release snapshot refuses torn and reordered logs without repairing their bytes" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:164:46) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:165:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:164:54)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+	</testsuite>
+	<testsuite name="V8 release snapshot verifies journal CAS bytes and refuses an active writer" time="0.000451" disabled="0" errors="0" tests="2" failures="2" skipped="0" timestamp="2026-11-22T17:37:00.256Z" hostname="07bf85b14210">
+		<testcase name="cas" time="0.000183" classname="V8 release snapshot verifies journal CAS bytes and refuses an active writer" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:177:42) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:178:33)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:177:50)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="writer" time="0.000063" classname="V8 release snapshot verifies journal CAS bytes and refuses an active writer" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:177:42) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:178:33)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:177:50)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+	</testsuite>
+	<testcase name="V8 release snapshot refuses a coherent journal that qualifies an unselected source" time="0.000102" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:192:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="V8 release snapshot cannot hide overwritten historical artifact bytes" time="0.000094" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:197:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="V8 release snapshot binds native artifact bytes to the exact committed receipt" time="0.000106" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:202:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="V8 release snapshot refuses a coherently resealed journal returning another source for the original task" time="0.000107" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:207:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="V8 release snapshot refuses a resealed admitted copy from another source" time="0.000129" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:213:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testsuite name="V8 release snapshot binds historical native receipt claims to exact original input and policy" time="0.001635" disabled="0" errors="0" tests="9" failures="9" skipped="0" timestamp="2026-11-22T17:37:00.261Z" hostname="07bf85b14210">
+		<testcase name="public" time="0.000142" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:64) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:231:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:72)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="source" time="0.000072" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:64) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:231:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:72)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="dataset" time="0.000065" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:64) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:231:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:72)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="source-input-bytes" time="0.000100" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:64) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:231:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:72)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="producer" time="0.000119" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:64) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:231:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:72)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="consumer" time="0.000063" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:64) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:231:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:72)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="tokenizer" time="0.000137" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:64) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:231:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:72)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="validation-boolean" time="0.000074" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:64) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:231:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:72)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="unrequested-teacher" time="0.000111" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+			<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+    at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:64) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:231:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:230:72)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+			</failure>
+		</testcase>
+	</testsuite>
+	<testcase name="uncommitted orphan files remain explicit auxiliary bytes and never gain admission" time="0.000151" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:238:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="V8 release snapshot refuses symbolic-link input before reading campaign objects" time="0.000107" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:249:28)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="V8 release snapshot refuses a symbolic-link ancestor of its root" time="0.000184" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:255:28)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="V8 release campaign verification runs with every semantic compiler and old release tool absent" time="0.000176" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js" failure="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+		<failure type="testCodeFailure" message="ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'">
+[Error [ERR_TEST_FAILURE]: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:21:16)
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-campaign.test.js:261:28)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="ordinary source projection ownership binds actual changed public records and contexts" time="1.028536" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="ordinary module projection ownership binds actual changed public records and contexts" time="1.181271" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="source generated-record cap cannot borrow a successful artifact from another bound" time="0.122368" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="module generated-record cap cannot borrow a successful artifact from another bound" time="0.275091" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="direct protocol generated-record cap cannot borrow a successful artifact from another bound" time="0.301521" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="ordinary source instruction cap must match actual bounded generation" time="0.004030" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="ordinary source invalid deadline cannot borrow a prior successful artifact" time="0.001649" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="ordinary source retained deadline is bound even when both executions finish" time="0.383914" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="ordinary source operator bound is tied to its recorded options and execution limits" time="0.376825" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="ordinary source non-guest seeds bind private source identity without claiming a public semantic difference" time="0.389124" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="ordinary source split seed binds its original split identity" time="0.385860" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="ordered-session component record caps remain material after session ownership overrides" time="1.250310" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="ordered-session component private seeds remain bound after the outer split seed override" time="0.810411" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="ordered-session outer projection options and limits remain genuinely ignored" time="0.918183" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="ordered-session component ownership options retain the actual forced identities" time="0.943422" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="direct protocol ignores ownership and operator options outside its actual profile" time="0.248221" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="direct protocol ignores valid non-guest seed metadata discarded by that profile" time="0.265236" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="direct protocol preserves its nullable generated-record default" time="0.234526" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="module caller still strips untrusted projection plans before source admission" time="0.556228" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testcase name="explicit namespace module profile ignores ownership options and nullable source limit defaults" time="0.743935" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-request-fields.test.js"/>
+	<testsuite name="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" time="4.376198" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-22T17:37:11.823Z" hostname="07bf85b14210">
+		<testcase name="pure" time="0.581260" classname="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="callbacks-recovery" time="1.471145" classname="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="repeated-two-calls" time="1.458424" classname="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="child-teacher" time="0.863367" classname="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testcase name="individually valid source artifacts cannot be swapped between original frozen task IDs" time="0.424742" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+	<testsuite name="coherent original-task substitutions cannot retain another artifact source or inputs" time="0.002941" disabled="0" errors="0" tests="11" failures="0" skipped="0" timestamp="2026-11-22T17:37:16.645Z" hostname="07bf85b14210">
+		<testcase name="source" time="0.000342" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="entry" time="0.000185" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="argument" time="0.000220" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="boolean-versus-number" time="0.000213" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="family" time="0.000111" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="ancestry" time="0.000121" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="producer-revision" time="0.000092" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="task-id" time="0.000155" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="random-seed" time="0.000182" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="host-fixture" time="0.000168" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="teacher-requirement" time="0.000090" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testsuite name="ordered session request binds every component including arguments and callback outcomes" time="0.001244" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-22T17:37:16.647Z" hostname="07bf85b14210">
+		<testcase name="order" time="0.000257" classname="ordered session request binds every component including arguments and callback outcomes" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="omitted" time="0.000115" classname="ordered session request binds every component including arguments and callback outcomes" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="argument" time="0.000240" classname="ordered session request binds every component including arguments and callback outcomes" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="callback-outcome" time="0.000248" classname="ordered session request binds every component including arguments and callback outcomes" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testcase name="relabeling a valid artifact and resealing its dataset hashes cannot replace frozen registry membership" time="0.002624" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+	<testsuite name="actual source membership keeps the case label separate from its digest-suffixed physical identity" time="0.397994" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-22T17:37:16.641Z" hostname="07bf85b14210">
+		<testcase name="absent" time="0.000603" classname="actual source membership keeps the case label separate from its digest-suffixed physical identity" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="case-label" time="0.000266" classname="actual source membership keeps the case label separate from its digest-suffixed physical identity" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="another-physical-source" time="0.000135" classname="actual source membership keeps the case label separate from its digest-suffixed physical identity" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="changed-split" time="0.002620" classname="actual source membership keeps the case label separate from its digest-suffixed physical identity" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testcase name="original ancestry uses the existing normalized set identity without weakening different-ancestor refusal" time="0.004807" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+	<testcase name="the original host settlement schedule remains part of the request" time="0.000277" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+	<testsuite name="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" time="1.946453" disabled="0" errors="0" tests="7" failures="0" skipped="0" timestamp="2026-11-22T17:37:17.021Z" hostname="07bf85b14210">
+		<testcase name="explicit-zero" time="0.422673" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="guest-zero" time="0.355738" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="omitted-random-with-guest-seed" time="0.397692" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="explicit-null" time="0.365813" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="matching-null" time="0.402151" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="conflicting-guest-seed-with-null" time="0.000688" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="conflicting-guest-seed-with-0" time="0.000207" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testsuite name="original module graph, entry, export, aliases and ordered calls bind actual module evidence" time="1.805254" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-22T17:37:19.129Z" hostname="07bf85b14210">
+		<testsuite name="release-module-alias" time="0.789434" disabled="0" errors="0" tests="5" failures="0" skipped="0" timestamp="2026-11-22T17:37:18.961Z" hostname="07bf85b14210">
+			<testcase name="graph" time="0.000492" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+			<testcase name="entry" time="0.000154" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+			<testcase name="export" time="0.000253" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+			<testcase name="plan-boolean" time="0.000246" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+			<testcase name="input" time="0.000223" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		</testsuite>
+		<testsuite name="release-module-calls" time="1.015480" disabled="0" errors="0" tests="5" failures="0" skipped="0" timestamp="2026-11-22T17:37:19.919Z" hostname="07bf85b14210">
+			<testcase name="graph" time="0.000560" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+			<testcase name="entry" time="0.000166" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+			<testcase name="export" time="0.000317" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+			<testcase name="plan-boolean" time="0.000206" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+			<testcase name="input" time="0.000181" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		</testsuite>
+	</testsuite>
+	<testsuite name="direct protocol and mixed host protocol requests bind their actual source evidence" time="2.055856" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-22T17:37:20.758Z" hostname="07bf85b14210">
+		<testcase name="release-protocol-source" time="0.460011" classname="direct protocol and mixed host protocol requests bind their actual source evidence" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+		<testcase name="join-host-join" time="1.595137" classname="direct protocol and mixed host protocol requests bind their actual source evidence" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testcase name="task normalization preserves omitted source defaults" time="0.560886" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves explicit null guest RNG" time="0.547860" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves inherited guest RNG" time="0.376608" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves false seed metadata" time="0.384079" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves zero seed metadata" time="0.402723" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves false empty fixture" time="0.399944" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves zero empty fixture" time="0.521440" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves empty-string fixture" time="0.408451" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves ordinary source ignores the protocol-only ancestry alias" time="0.386896" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves the direct protocol ancestry alias" time="0.380429" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves the direct protocol null ancestry default" time="0.299050" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null fixture rejected by ordinary source generation" time="0.001499" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null license rejected by ordinary source generation" time="0.000331" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null trustTier rejected by ordinary source generation" time="0.000278" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null ancestorIds rejected by ordinary source generation" time="0.384619" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null seeds rejected by ordinary source generation" time="0.000798" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null seed rejected by ordinary source generation" time="0.000434" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses conflicting explicit-null and inherited guest RNG declarations" time="0.000418" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves omitted ordered-session defaults" time="0.967689" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null session seed" time="0.001094" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null session sessionId" time="0.141236" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves explicit ordered-session seed and identity" time="0.766575" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization takes session source and entry from its ordered components" time="0.756526" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization ignores session outer source metadata not passed to components" time="0.786189" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization applies the session seed before component defaults" time="0.878302" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization derives session ancestry from its actual ordered components" time="0.904138" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves the module null default for experimentalNamespacePlan" time="0.617519" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves the module null default for experimentalSchedulerPlan" time="0.574748" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves module null host-fixture default" time="0.539284" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves actual namespace-profile nullable custody defaults" time="0.470769" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves actual namespace-profile unused seed metadata" time="0.383116" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses null custody for a statically lowered namespace import" time="0.676608" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses null custody rejected by mixed host-protocol generation" time="1.435093" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-currentpair/test/v8-release-task-normalization.test.js"/>
+	<!-- tests 155 -->
+	<!-- suites 0 -->
+	<!-- pass 109 -->
+	<!-- fail 46 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 38213.202693 -->
+</testsuites>
