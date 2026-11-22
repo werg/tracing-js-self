@@ -90,10 +90,13 @@ async function setup(t,{fault='after-native-outcome',finalAction='track_complete
       '--execution-session-generation',String(requests.sessionGeneration));
     const select=createNativeV8ProcessSelector({command:python,args,cwd:nativeRoot,env,timeoutMs:120000,
       maxMessageBytes:64*1024*1024,durableRequests:{journal:requests,executionLease:lease}});
-    let closeRecoveryCalls=0;
+    let closeRecoveryCalls=0,closeTerminalCalls=0,recovered=null;
     const recoverClose=select.recoverClose;
-    select.recoverClose=(...values)=>{closeRecoveryCalls++;return recoverClose(...values);};
-    const value={select,lease,log,closeRecoveryCalls:()=>closeRecoveryCalls,released:false};
+    select.recoverClose=async(...values)=>{closeRecoveryCalls++;recovered=copy(await recoverClose(...values));return copy(recovered);};
+    const closeTerminal=select.closeTerminal;
+    select.closeTerminal=(...values)=>{closeTerminalCalls++;return closeTerminal(...values);};
+    const value={select,lease,log,closeRecoveryCalls:()=>closeRecoveryCalls,
+      closeTerminalCalls:()=>closeTerminalCalls,recovered:()=>copy(recovered),released:false};
     opened.add(value);return value;
   }
   async function close(value){
@@ -136,6 +139,25 @@ function assertNoNativeRecovery(selector,closeCalls,log){
   assert.equal(selector.metrics().runtime.rpcCalls,0,'service refusal precedes every native recovery RPC');
   assert.equal(selector.metrics().predictionAttempts,0);
   assert.deepEqual(decoderLines(log),[],'service refusal cannot dispatch model or host work');
+}
+function assertExactClosedRecovery(context,selector,retained){
+  const metrics=selector.select.metrics(),original=decoderLines(context.first.log);
+  assert(original.length>0,'the original run must contain actual native decoder work');
+  // Native restore rebuilds and verifies the retained model state by replaying
+  // its selections. These are historical attempts, not permission to dispatch
+  // new host work or request another terminal close.
+  assert.deepEqual(metrics.attempts,retained.attempts);
+  assert.equal(metrics.predictionAttempts,retained.attempts.length);
+  assert.equal(metrics.runtime.rpcCalls,retained.runtimeMetrics.rpcCalls+2,
+    'retain prior costs and add exactly one recovery RPC and one checkpoint RPC');
+  for(const key of ['computeSeconds','peakMemoryBytes'])
+    assert(metrics.runtime[key]>=retained.runtimeMetrics[key]);
+  assert.deepEqual(decoderLines(selector.log),original,
+    'reconstruction must replay exactly the original decoder fragments without new selections');
+  assert.equal(selector.closeRecoveryCalls(),1);
+  assert.equal(selector.closeTerminalCalls(),0,'recovery must not dispatch another terminal close');
+  assert.equal(selector.recovered().hostDispatches,0);
+  assert.equal(selector.recovered().hostRecoveryAuthorized,false);
 }
 
 test('service-owned known close recovers only after exact same-owner authority and preserves it across process loss',
@@ -237,16 +259,13 @@ test('service-owned known close recovers only after exact same-owner authority a
         recoveryOptions(c,recovered,c.receipt,sameOwner));
       assert.equal(disposition.status,'completed');assert.equal(disposition.resumable,false);
       assert.equal(disposition.publicCompleted,true);
-      assert.equal(recovered.select.metrics().predictionAttempts,0);
-      assert.equal(recovered.select.metrics().runtime.rpcCalls,2,
-        'known close recovery only checkpoints after its one durable recovery RPC');
-      assert.deepEqual(decoderLines(recovered.log),[]);
+      const retainedIntent=await c.requests.read(c.receipt,{latest:true});
+      assertExactClosedRecovery(c,recovered,retainedIntent.checkpoint);
       const firstTerminal=(await c.history.readLatest(disposition.historyReceipt)).at(-1).terminal;
       assert.deepEqual(firstTerminal.ownerSnapshot,c.tail.terminal.ownerSnapshot);
       assert.deepEqual(firstTerminal.serviceAdmission,c.serviceFence());
       assert.deepEqual(firstTerminal.closeRequestReceipt,c.receipt);
       assert.equal(firstTerminal.closeReceipt.reason,c.tail.terminal.reason);
-      assert.equal(recovered.closeRecoveryCalls(),1);
       await c.close(recovered);
 
       repeated=await c.replacement();
@@ -266,8 +285,7 @@ test('service-owned known close recovers only after exact same-owner authority a
       assert(secondTerminal.closeElapsedMs>=firstTerminal.closeElapsedMs);
       for(const key of ['rpcCalls','computeSeconds','peakMemoryBytes'])
         assert(secondTerminal.closedNative.runtimeMetrics[key]>=firstTerminal.closedNative.runtimeMetrics[key]);
-      assert.equal(repeated.closeRecoveryCalls(),1);
-      assert.deepEqual(decoderLines(repeated.log),[]);
+      assertExactClosedRecovery(c,repeated,firstTerminal.closedNative);
     }finally{
       for(const value of [repeated,recovered,unknownBlocked,headBlocked,verifyBlocked,readBlocked,syncBlocked,ownerBlocked,c.first])
         await c.close(value);
@@ -296,6 +314,6 @@ test('service-owned settled cancellation preserves its exact owner and terminal 
     assert.deepEqual(repeated.serviceAdmission,terminal.serviceAdmission);
     assert.deepEqual(repeated.closeRequestReceipt,terminal.closeRequestReceipt);
     assert.deepEqual(repeated.closeReceipt,terminal.closeReceipt);
-    assert.deepEqual(decoderLines(fresh.log),[]);
+    assertExactClosedRecovery(c,fresh,terminal.closedNative);
   }finally{await c.close(fresh);await c.close(c.first);}
 });
