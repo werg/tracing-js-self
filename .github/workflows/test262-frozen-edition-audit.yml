@@ -47,7 +47,7 @@ jobs:
         run: |
           set -o pipefail
           node tools/catalog-test262.mjs \
-            --suite-root test262 \
+            --suite-root ../test262 \
             --revision d53ebc8b1931d9f1541e43d59650776e4b766248 \
             --out test262-catalog.json 2>&1 | tee catalog.log
           xz -6 test262-catalog.json
@@ -58,7 +58,7 @@ jobs:
           set -o pipefail
           node tools/audit-test262-edition.mjs \
             --catalog test262-catalog.json.xz \
-            --suite-root test262 \
+            --suite-root ../test262 \
             --python python3 \
             --out test262-edition-audit.json.xz 2>&1 | tee audit.log
       - name: Verify exact denominator reconciliation and retained pins
