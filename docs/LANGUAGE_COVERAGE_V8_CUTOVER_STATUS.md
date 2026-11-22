@@ -16,6 +16,24 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Explicit durable composite history — implementation awaiting hosted qualification
+
+The coordinator/child driver now appends verified quiescent cuts through the
+existing durable selected-history journal, independently rereads the complete
+chain, and requires the application's exact durable head acknowledgement.
+`restoreLatest` validates the externally expected head and all source/policy-bound
+cuts before restoring the latest native/host state with zero repeated host work.
+Sparse history and the completion of a previously recorded join are supported;
+changed prior selections, receipts, native identity, inputs, or consumed work
+refuse. Async data arguments are isolated from caller mutation while live host
+clock/service functions retain their handles. New tests cover sparse restore,
+failed acknowledgements, stale predecessors and mutation while storage waits.
+
+These are newly committed implementations and **hosted results are pending**.
+Automatic persistence, terminal recovery, dynamic descendants and coordinated
+successor/service ownership remain open. No learned-execution claim follows.
+See `docs/NATIVE_V8_ORCHESTRATION_DRIVER.md` for the API and explicit limits.
+
 ## Complete source-qualified production support — verified 22 November 2026
 
 The hosted ordinary route now passes at exact producer `1e71e5a9385de8f1425593787c3261c20c3a0160`

@@ -226,11 +226,11 @@ test('a committed create remains counted as acknowledged when bootstrap later fa
   assert.equal(result.metrics.coordinatorPostCommitFailures,1);
 });
 
-test('orchestration exposes only safe composite checkpoints and refuses durable history',async()=>{
+test('orchestration exposes only safe composite checkpoints and requires explicit durable dependencies',async()=>{
   const publicData=ingress(),fixture=fakeSelector(publicData),driver=new RegionSelectedOrchestrationDriver({
     initialPublic:publicData,select:fixture.select,...pin,generationSettings});
   assert.throws(()=>driver.checkpoint(),/requested quiescent safe-point pause/);
-  assert.throws(()=>driver.checkpointDurableHistory(),/composite coordinator history/);
+  await assert.rejects(driver.checkpointDurableHistory(),/verified quiescent composite checkpoint/);
   await assert.rejects(RegionSelectedOrchestrationDriver.restore({}),/external source cut/);
-  assert.throws(()=>RegionSelectedOrchestrationDriver.restoreLatest({}),/composite coordinator restore/);
+  await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest({}),/independently retained composite history/);
 });

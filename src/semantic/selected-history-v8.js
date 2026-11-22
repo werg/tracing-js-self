@@ -4,6 +4,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {assertAlgorithmFields,stableAlgorithmJSON} from './ir.js';
 import {hashAlgorithmData} from './program.js';
 import {validateServiceAdmissionPolicy,validateServiceAdmissionFence} from './service-admission-v8.js';
+import {verifySelectedOrchestrationCheckpoint} from './selected-orchestration-checkpoint-v8.js';
 
 const eq=isDeepStrictEqual,ID=/^[a-z][a-z0-9:_-]*$/,HASH=/^[a-f0-9]{64}$/;
 const fail=message=>{throw new TypeError('Selected checkpoint history: '+message);};
@@ -225,11 +226,17 @@ export function validateSelectedHistoryEntry(entry){
       'noncontiguous predecessor');
   }
   const packet=entry.checkpoint;
-  assertAlgorithmFields(packet,['schema','policy','bridge','contexts','attempts','staleRetries','native','digest'],
-    'selected history checkpoint');
-  const {digest,...body}=packet;
-  demand(packet.schema==='semantic-selected-driver-checkpoint/8'&&HASH.test(digest??'')&&
-    digest===hashAlgorithmData(body),'checkpoint integrity differs');
+  if(packet?.schema==='semantic-selected-orchestration-checkpoint/8'){
+    demand(!Object.hasOwn(entry,'terminal'),
+      'composite terminal history is unsupported until its terminal disposition is independently verified');
+    verifySelectedOrchestrationCheckpoint(packet,packet.policy,{initialPublic:packet.initialPublic});
+  }else{
+    assertAlgorithmFields(packet,['schema','policy','bridge','contexts','attempts','staleRetries','native','digest'],
+      'selected history checkpoint');
+    const {digest,...body}=packet;
+    demand(packet.schema==='semantic-selected-driver-checkpoint/8'&&HASH.test(digest??'')&&
+      digest===hashAlgorithmData(body),'checkpoint integrity differs');
+  }
   if(Object.hasOwn(entry,'terminal'))validateTerminalEvent(entry.terminal,packet);
   return entry;
 }
@@ -238,6 +245,74 @@ export function validateSelectedHistoryEntry(entry){
  * native restore. These cross-cut invariants additionally prevent a valid cut
  * on another branch, or a budget rollback, replacing recorded history. */
 export function validateSelectedHistoryExtension(before,after){
+  if(before?.schema==='semantic-selected-orchestration-checkpoint/8'||
+      after?.schema==='semantic-selected-orchestration-checkpoint/8'){
+    demand(before?.schema==='semantic-selected-orchestration-checkpoint/8'&&
+      after?.schema==='semantic-selected-orchestration-checkpoint/8',
+      'checkpoint history cannot mix semantic and composite cuts');
+    verifySelectedOrchestrationCheckpoint(before,before.policy,{initialPublic:before.initialPublic});
+    verifySelectedOrchestrationCheckpoint(after,after.policy,{initialPublic:after.initialPublic});
+    demand(eq(before.policy,after.policy)&&eq(before.initialPublic,after.initialPublic)&&
+      eq(before.initialState,after.initialState)&&before.session===after.session&&
+      before.bridge?.schema===after.bridge?.schema&&before.bridge?.profile===after.bridge?.profile,
+      'composite execution identity, ingress or initial coordinator state changed');
+    prefix(before.contexts,after.contexts,'composite causal contexts');
+    demand(after.coordinatorAttempts.length>=before.coordinatorAttempts.length,
+      'composite coordinator decisions were removed');
+    for(let index=0;index<before.coordinatorAttempts.length;index++){
+      const prior=before.coordinatorAttempts[index],next=after.coordinatorAttempts[index];
+      const stripJoinCompletion=row=>Object.fromEntries(Object.entries(row)
+        .filter(([key])=>key!=='childCompletion'&&key!=='childOutcome'));
+      demand(eq(stripJoinCompletion(prior),stripJoinCompletion(next)),
+        'a recorded coordinator selection or receipt changed');
+      if(prior.childCompletion!==undefined||prior.childOutcome!==undefined)
+        demand(eq(prior.childCompletion,next.childCompletion)&&eq(prior.childOutcome,next.childOutcome),
+          'acknowledged child completion evidence changed');
+      else if(next.childCompletion!==undefined||next.childOutcome!==undefined)
+        demand(prior.action?.name==='track_join'&&prior.status==='committed'&&
+          next.childCompletion?.schema==='semantic-child-completion/8'&&next.childOutcome&&
+          typeof next.childOutcome==='object',
+          'only an acknowledged join may acquire its exact child completion outcome');
+    }
+    prefix(before.childAttempts,after.childAttempts,'child selections');
+    prefix(before.childRejections,after.childRejections,'child rejections');
+    publicPrefix(before.bridge?.public,after.bridge?.public,'composite public history');
+    demand(Number.isSafeInteger(before.staleRetries)&&Number.isSafeInteger(after.staleRetries)&&
+      after.staleRetries>=before.staleRetries&&
+      Number.isSafeInteger(before.continuation?.coordinatorSelections)&&
+      Number.isSafeInteger(after.continuation?.coordinatorSelections)&&
+      after.continuation.coordinatorSelections>=before.continuation.coordinatorSelections&&
+      Number.isFinite(before.continuation?.elapsedMs)&&Number.isFinite(after.continuation?.elapsedMs)&&
+      after.continuation.elapsedMs>=before.continuation.elapsedMs&&
+      (before.continuation.phase===after.continuation.phase||
+        before.continuation.phase==='coordinator-ready'&&after.continuation.phase==='child-ready'||
+        before.continuation.phase==='child-ready'&&after.continuation.phase==='coordinator-ready'),
+      'composite retry budget, phase, selection count or elapsed deadline rolled back');
+    const oldNative=before.native?.native,newNative=after.native?.native,
+      oldTransport=before.native,newTransport=after.native,
+      oldSession=oldNative?.sessions?.[before.session],newSession=newNative?.sessions?.[after.session];
+    demand(eq(oldTransport?.identity,newTransport?.identity)&&oldSession&&newSession,
+      'composite native identity or session changed');
+    for(const key of ['schema','equivalence','contractDigest','initialization','settings'])
+      demand(eq(oldNative?.[key],newNative?.[key]),'composite native '+key+' changed');
+    prefix(oldNative?.openings,newNative?.openings,'composite native openings');
+    demand(eq(oldSession.openingRandom,newSession.openingRandom),
+      'composite native session random state changed');
+    prefix(oldSession.replay,newSession.replay,'composite native replay history');
+    for(const [key,value] of Object.entries(oldTransport?.runtimeMetrics??{}))
+      demand(Number.isFinite(value)&&value>=0&&Number.isFinite(newTransport?.runtimeMetrics?.[key])&&
+        newTransport.runtimeMetrics[key]>=value,'composite native runtime accounting rolled back');
+    prefix(oldTransport?.attempts,newTransport?.attempts,'composite transport attempts');
+    prefix(oldNative?.attempts,newNative?.attempts,'composite native attempts');
+    prefix(oldSession.orchestration?.operations,newSession.orchestration?.operations,
+      'composite acknowledged operation history');
+    prefix(oldSession.orchestration?.decisions,newSession.orchestration?.decisions,
+      'composite coordinator decisions');
+    prefix(oldSession.contexts,newSession.contexts,'composite native contexts');
+    demand(after.native.native.attempts.length>=before.native.native.attempts.length,
+      'composite acknowledged work rolled back');
+    return true;
+  }
   demand(eq(before.policy,after.policy),'execution policy or model identity changed');
   demand(before.bridge?.schema===after.bridge?.schema&&before.bridge?.profile===after.bridge?.profile,
     'host continuation identity changed');

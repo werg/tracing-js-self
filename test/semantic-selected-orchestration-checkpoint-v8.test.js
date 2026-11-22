@@ -3,6 +3,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {DurableSelectedHistoryJournal} from '../src/storage/selected-history.js';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createNativeV8ProcessSelector} from '../src/semantic/native-process-v8.js';
@@ -197,10 +201,80 @@ test('composite verifier rejects mixed-ledger, dependency, and unknown-ack mutat
     /attempt|selection|model ownership/i);
 });
 
-test('checkpoint is unavailable outside a captured safe point and durable history remains unavailable',()=>{
+test('checkpoint is unavailable before a safe point',()=>{
+  const select=selector(),driver=new RegionSelectedOrchestrationDriver({initialPublic,select,...policy});
+  try{assert.throws(()=>driver.checkpoint(),/requested quiescent safe-point pause/);}
+  finally{select.close();}
+});
+
+test('durable composite checkpoint requires an independent exact head acknowledgement and restores latest',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'v8-composite-history-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory,streamId:'composite'});
+  let head=null;
+  const acknowledge=async({receipt,previous})=>{
+    assert.deepEqual(previous,head);head=structuredClone(receipt);return structuredClone(head);
+  };
+  const first=selector(),driver=new RegionSelectedOrchestrationDriver({initialPublic,select:first,...policy});
+  let packet;
+  try{
+    const result=await driver.run({stopAt:{phase:'coordinator-ready',coordinatorSelections:1}});
+    assert.equal(result.status,'paused');packet=driver.checkpoint();
+    const receipt=await driver.checkpointDurableHistory({journal,acknowledge});
+    assert.deepEqual(receipt,head);
+    assert.deepEqual((await journal.readAll(receipt)).map(row=>row.checkpoint),[packet]);
+  }finally{first.close();}
+  const middleSelector=selector();
+  try{
+    const middle=await RegionSelectedOrchestrationDriver.restore(packet,
+      {initialPublic,select:middleSelector,policy});
+    const paused=await middle.run({stopAt:{phase:'coordinator-ready',coordinatorSelections:3}});
+    assert.equal(paused.status,'paused',JSON.stringify(paused.failure));
+    const secondPacket=middle.checkpoint();
+    head=await middle.checkpointDurableHistory({journal,acknowledge,previous:head});
+    packet={first:packet,second:secondPacket};
+  }finally{middleSelector.close();}
+  const second=selector(),priorCount=packet.second.native.attempts.length,restore=second.restore;
+  second.restore=async request=>{
+    const receipt=await restore(request);assert.equal(receipt.hostDispatches,0);return receipt;
+  };
+  try{
+    const restored=await RegionSelectedOrchestrationDriver.restoreLatest(packet.first,{historyJournal:journal,
+      historyReceipt:head,initialPublic,select:second,policy});
+    const result=await restored.run();
+    assert.equal(result.status,'completed',JSON.stringify(result.failure));
+    const operations=second.metrics().attempts.slice(priorCount).map(row=>row.family==='orchestration'?
+      JSON.parse(row.record).name:'child-selection');
+    assert.deepEqual(operations,['track_complete']);
+  }finally{second.close();}
+  const aliased=structuredClone(packet.first),aliasRead=journal.readAll.bind(journal);
+  const blockedJournal={readAll:async receipt=>{
+    await Promise.resolve();aliased.coordinatorAttempts[0].record='{}';return aliasRead(receipt);
+  }};
+  const aliasSelector=selector();
+  try{
+    const restored=await RegionSelectedOrchestrationDriver.restoreLatest(aliased,{historyJournal:blockedJournal,
+      historyReceipt:head,initialPublic,select:aliasSelector,policy});
+    assert.equal(restored.restored,true);
+  }finally{aliasSelector.close();}
+  const altered=structuredClone(packet.first);altered.coordinatorAttempts[0].record='{}';
+  const tamperedSelector=selector();
+  try{
+    await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(altered,{historyJournal:journal,
+      historyReceipt:head,initialPublic,select:tamperedSelector,policy}),/absent from|digest|checkpoint/i);
+  }finally{tamperedSelector.close();}
+  await assert.rejects(journal.append(packet.first,{previous:head}),/extension|rolled back|changed/i);
+});
+
+test('failed durable head acknowledgement leaves no reusable history receipt',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'v8-composite-history-fail-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory,streamId:'compositefail'});
   const select=selector(),driver=new RegionSelectedOrchestrationDriver({initialPublic,select,...policy});
   try{
-    assert.throws(()=>driver.checkpoint(),/requested quiescent safe-point pause/);
-    assert.throws(()=>driver.checkpointDurableHistory(),/composite coordinator history/);
+    await driver.run({stopAt:{phase:'coordinator-ready',coordinatorSelections:1}});
+    await assert.rejects(driver.checkpointDurableHistory({journal,acknowledge:async()=>null}),
+      /acknowledgement|receipt/i);
+    assert.equal(driver.historyReceipt,null);
   }finally{select.close();}
 });

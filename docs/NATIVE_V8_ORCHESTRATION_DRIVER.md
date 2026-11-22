@@ -189,11 +189,49 @@ budget. The timer is stopped while the caller holds a paused packet.
 
 An in-flight or unknown acknowledgement, running child, unsettled host intent,
 terminal coordinator, or unsupported ingress cannot be checkpointed. The
-ordinary semantic-only checkpoint is not used as a substitute. Durable history,
-automatic history, and `restoreLatest` remain unavailable; completed or failed
-terminal sessions are not resumable through this API.
+ordinary semantic-only checkpoint is not used as a substitute. Explicit durable
+history and `restoreLatest` are supported as described below. Automatic history
+and completed or failed terminal sessions remain outside this increment.
 
 The JSONL protocol-peer integration test exercises the JavaScript driver and
 transport contract with generated fixture records. It validates binding,
 receipt, original-byte, mixed-ledger, zero-dispatch restore, and ordering
 checks; it is not a model-quality or production completion qualification.
+
+## Independently acknowledged durable composite history
+
+After an explicit quiescent pause, `driver.checkpointDurableHistory({journal,
+acknowledge,previous})` appends the exact verified composite packet to
+`DurableSelectedHistoryJournal`. It independently rereads and validates the
+complete chain before asking the application's `acknowledge({receipt,previous})`
+callback to durably retain that exact head. The callback must return the same
+receipt after its own durable compare-and-swap succeeds. It must not merely echo
+the argument without independent storage. A failed or different acknowledgement
+leaves the driver without a new reusable receipt.
+
+The journal retains full cuts, so selection counts may be nonconsecutive. Every
+cut must be a true extension of the prior public, coordinator, child and native
+histories. An acknowledged join may acquire its verified child completion;
+original selection bytes, receipts and already recorded completion evidence
+cannot change. Initial inputs, policies, native identities and random opening
+state are immutable; consumed work, costs and elapsed time cannot roll back.
+The ordinary semantic-only history format remains accepted on its existing path,
+and semantic/composite cuts cannot be mixed in one chain.
+
+`RegionSelectedOrchestrationDriver.restoreLatest(packet,{historyJournal,
+historyReceipt,initialPublic,select,policy,harnessOptions})` requires an
+independently retained expected head. It reads the complete chain, finds the
+supplied packet in that chain, validates every cut against the external source
+and policy, then restores its latest acknowledged cut. A matching older packet
+is only an anchor; it never authorizes replay of work acknowledged later. Native
+restoration must still report zero host dispatch. A partial chain, altered
+predecessor, absent packet, changed policy or terminal entry is refused before
+native restoration. Caller-owned data arguments are snapshotted before storage
+awaits; live host clock/service functions remain supplied through `harnessOptions`.
+
+This is explicit quiescent history, not in-flight recovery or distributed
+transactionality. It does not coordinate service owners, restore a terminal
+coordinator, discover unacknowledged files, or permit a second process to resume
+from a stale independently retained head. Supervisor ownership remains required.
+The new controls use fresh JSONL fixture peers and actual durable storage; real
+native paired replay remains a separate mandatory hosted gate.

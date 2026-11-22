@@ -7,6 +7,7 @@ import {RegionSelectedModelDriver,boundedCancellationReason,restoreSelectedOrche
 import {nativeV8OrchestrationContext} from './native-orchestration-transport-v8.js';
 import {verifySelectedOrchestrationCheckpoint} from './selected-orchestration-checkpoint-v8.js';
 import {hashAlgorithmData} from './program.js';
+import {validateSelectedHistoryReceipt,validateSelectedHistoryChain} from './selected-history-v8.js';
 
 const copy=structuredClone,HASH=/^[a-f0-9]{64}$/;
 const demand=(value,message)=>{if(!value)throw new TypeError('Selected orchestration v8: '+message);};
@@ -142,16 +143,35 @@ export class RegionSelectedOrchestrationDriver {
       maxGenerated,maxOutstanding,maxStaleRetries,timeoutMs,automaticDelivery:bridge.inner.automaticDelivery});
     this.coordinatorAttempts=[];this.state=null;this.initialState=null;this.nativeIdentity=null;
     this.continuation={phase:'unopened',coordinatorSelections:0,joinedAttempt:null,joinedDependency:null,elapsedMs:0};
-    this.createdDependencies=new Map();this.pausedCheckpoint=null;this.restored=false;this.running=false;this.used=false;
+    this.createdDependencies=new Map();this.pausedCheckpoint=null;this.historyReceipt=null;this.restored=false;this.running=false;this.used=false;
   }
 
   checkpoint(){
     demand(this.pausedCheckpoint,'checkpoint is available only after a requested quiescent safe-point pause');
     return copy(this.pausedCheckpoint);
   }
-  checkpointDurableHistory(){throw new Error('Selected orchestration v8: composite coordinator history is not available');}
-  startAutomaticHistory(){throw new Error('Selected orchestration v8: composite coordinator history is not available');}
+  async checkpointDurableHistory({journal,acknowledge,previous=this.historyReceipt??null}={}){
+    demand(this.pausedCheckpoint,'durable history requires a verified quiescent composite checkpoint');
+    demand(typeof journal?.append==='function'&&typeof journal?.readAll==='function'&&
+      typeof acknowledge==='function','durable history requires the selected history journal and an independent head acknowledgement');
+    const prior=previous===null?null:copy(previous);
+    if(prior!==null)validateSelectedHistoryReceipt(prior);
+    const checkpoint=this.checkpoint();
+    const receipt=copy(await journal.append(copy(checkpoint),{previous:copy(prior)}));
+    validateSelectedHistoryReceipt(receipt);
+    const entries=validateSelectedHistoryChain(copy(await journal.readAll(copy(receipt))),copy(receipt));
+    demand(isDeepStrictEqual(entries.at(-1)?.checkpoint,checkpoint)&&
+      entries.at(-1)?.position===receipt.position&&isDeepStrictEqual(entries.at(-1)?.previous,prior),
+      'durable journal did not retain the exact composite checkpoint and requested predecessor');
+    const acknowledged=await acknowledge({receipt:copy(receipt),previous:copy(prior)});
+    validateSelectedHistoryReceipt(acknowledged);
+    demand(isDeepStrictEqual(acknowledged,receipt),
+      'independent durable head acknowledgement differs from the recorded composite checkpoint');
+    this.historyReceipt=copy(receipt);return copy(receipt);
+  }
+  startAutomaticHistory(){throw new Error('Selected orchestration v8: automatic composite history is not available');}
   static async restore(packet,{initialPublic,select,policy,harnessOptions={},signal=null}={}){
+    packet=copy(packet);initialPublic=copy(initialPublic);policy=copy(policy);harnessOptions={...harnessOptions};
     demand(initialPublic&&typeof select==='function'&&typeof select.restore==='function'&&
       typeof select.checkpoint==='function'&&typeof select.status==='function',
       'external source cut and a fresh checkpoint-capable native selector are required');
@@ -187,7 +207,20 @@ export class RegionSelectedOrchestrationDriver {
       return driver;
     }catch(error){select.close?.();throw error;}
   }
-  static restoreLatest(){throw new Error('Selected orchestration v8: composite coordinator restore is not available');}
+  static async restoreLatest(packet,{historyJournal,historyReceipt,initialPublic,select,policy,harnessOptions={},signal=null}={}){
+    packet=copy(packet);historyReceipt=copy(historyReceipt);initialPublic=copy(initialPublic);
+    policy=copy(policy);harnessOptions={...harnessOptions};
+    demand(typeof historyJournal?.readAll==='function','independently retained composite history is required');
+    validateSelectedHistoryReceipt(historyReceipt);
+    const entries=validateSelectedHistoryChain(copy(await historyJournal.readAll(copy(historyReceipt))),copy(historyReceipt));
+    demand(entries.some(entry=>isDeepStrictEqual(entry.checkpoint,packet)),
+      'supplied composite checkpoint is absent from the independently acknowledged history');
+    for(const entry of entries)verifySelectedOrchestrationCheckpoint(entry.checkpoint,policy,{initialPublic});
+    const latest=entries.at(-1).checkpoint;
+    demand(!entries.at(-1).terminal,'terminal orchestration disposition cannot be restored as active work');
+    const restored=await this.restore(latest,{initialPublic,select,policy,harnessOptions,signal});
+    restored.historyReceipt=copy(historyReceipt);return restored;
+  }
 
   async run({signal=null,stopAt=null}={}){
     demand(!this.running&&!this.used,'coordinator driver is one-shot and cannot be reopened');
