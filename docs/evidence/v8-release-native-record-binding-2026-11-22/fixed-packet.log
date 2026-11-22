@@ -1,0 +1,24 @@
+{
+  "schema": "semantic-v8-release-recorded-native-binding-control/1",
+  "positive": {
+    "status": "verified",
+    "declared": 64,
+    "sourceQualified": 64,
+    "nativeAdmitted": 64,
+    "bindings": {
+      "checkedAttempts": 64,
+      "checkedCurrentSources": 64,
+      "checkedNativeRecords": 64,
+      "authority": "Original encoded task request and frozen family registry; checked before source/native replay"
+    },
+    "identityDigest": "7a3c365b1bc4ae247e80a7c0b29ed8c3b2ff4395647c56989be8d8c76023ad19"
+  },
+  "negative": {
+    "status": "refused",
+    "reason": "V8 release task binding: recorded admitted artifact differs from the original task source",
+    "journalBytesUnchanged": true
+  },
+  "optimizerUpdatesPerformed": 0,
+  "freshNativeAdmissions": 0,
+  "freshSourceReplays": 0
+}

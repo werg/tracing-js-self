@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="diagnostic selections retain the full population and bind resume to canonical selected IDs" time="0.018718" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/qualification-progress.test.js"/>
+	<testcase name="resume preserves refusals and completed evidence while leaving incomplete cases untested" time="0.032556" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/qualification-progress.test.js"/>
+	<testcase name="resume rejects stale revisions, changed policies or bounds, and corrupted completed bytes" time="0.023016" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/qualification-progress.test.js"/>
+	<testcase name="bounded independent jobs preserve declared result order and wait for active jobs on failure" time="0.053377" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/qualification-progress.test.js"/>
+	<testcase name="V8 release snapshot retains complete population, selection, failures and every committed attempt" time="0.088271" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	<testsuite name="V8 release snapshot refuses changed, omitted and forged report authority" time="0.245283" disabled="0" errors="0" tests="7" failures="0" skipped="0" timestamp="2026-11-22T16:42:33.589Z" hostname="07bf85b14210">
+		<testcase name="row" time="0.045513" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="count" time="0.044083" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="omitted" time="0.033799" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="revision" time="0.027779" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="selected" time="0.032710" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="contract" time="0.028463" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="candidate" time="0.030779" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	</testsuite>
+	<testsuite name="V8 release snapshot refuses changed completed bytes and missing original failures" time="0.081220" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-22T16:42:33.829Z" hostname="07bf85b14210">
+		<testcase name="changed" time="0.050078" classname="V8 release snapshot refuses changed completed bytes and missing original failures" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="missing" time="0.030539" classname="V8 release snapshot refuses changed completed bytes and missing original failures" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	</testsuite>
+	<testsuite name="V8 release snapshot refuses torn and reordered logs without repairing their bytes" time="0.052819" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-22T16:42:33.913Z" hostname="07bf85b14210">
+		<testcase name="torn" time="0.025907" classname="V8 release snapshot refuses torn and reordered logs without repairing their bytes" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="reordered" time="0.026382" classname="V8 release snapshot refuses torn and reordered logs without repairing their bytes" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	</testsuite>
+	<testsuite name="V8 release snapshot verifies journal CAS bytes and refuses an active writer" time="0.063362" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-22T16:42:33.966Z" hostname="07bf85b14210">
+		<testcase name="cas" time="0.029772" classname="V8 release snapshot verifies journal CAS bytes and refuses an active writer" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="writer" time="0.033034" classname="V8 release snapshot verifies journal CAS bytes and refuses an active writer" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	</testsuite>
+	<testcase name="V8 release snapshot refuses a coherent journal that qualifies an unselected source" time="0.036539" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	<testcase name="V8 release snapshot cannot hide overwritten historical artifact bytes" time="0.027620" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	<testcase name="V8 release snapshot binds native artifact bytes to the exact committed receipt" time="0.030366" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	<testcase name="V8 release snapshot refuses a coherently resealed journal returning another source for the original task" time="0.031038" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	<testcase name="V8 release snapshot refuses a resealed admitted copy from another source" time="0.031373" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	<testsuite name="V8 release snapshot binds historical native receipt claims to exact original input and policy" time="0.284590" disabled="0" errors="0" tests="9" failures="0" skipped="0" timestamp="2026-11-22T16:42:34.190Z" hostname="07bf85b14210">
+		<testcase name="public" time="0.029496" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="source" time="0.029692" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="dataset" time="0.027421" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="source-input-bytes" time="0.033450" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="producer" time="0.033188" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="consumer" time="0.028671" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="tokenizer" time="0.031569" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="validation-boolean" time="0.031547" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+		<testcase name="unrequested-teacher" time="0.037400" classname="V8 release snapshot binds historical native receipt claims to exact original input and policy" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	</testsuite>
+	<testcase name="uncommitted orphan files remain explicit auxiliary bytes and never gain admission" time="0.057107" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	<testcase name="V8 release snapshot refuses symbolic-link input before reading campaign objects" time="0.024192" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	<testcase name="V8 release snapshot refuses a symbolic-link ancestor of its root" time="0.021962" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	<testcase name="V8 release campaign verification runs with every semantic compiler and old release tool absent" time="0.159904" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-campaign.test.js"/>
+	<testsuite name="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" time="4.362887" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-22T16:42:35.318Z" hostname="07bf85b14210">
+		<testcase name="pure" time="0.902063" classname="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="callbacks-recovery" time="1.249997" classname="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="repeated-two-calls" time="1.324598" classname="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="child-teacher" time="0.884084" classname="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testcase name="individually valid source artifacts cannot be swapped between original frozen task IDs" time="0.459248" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+	<testsuite name="coherent original-task substitutions cannot retain another artifact source or inputs" time="0.002983" disabled="0" errors="0" tests="11" failures="0" skipped="0" timestamp="2026-11-22T16:42:40.135Z" hostname="07bf85b14210">
+		<testcase name="source" time="0.000357" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="entry" time="0.000180" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="argument" time="0.000201" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="boolean-versus-number" time="0.000290" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="family" time="0.000120" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="ancestry" time="0.000120" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="producer-revision" time="0.000092" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="task-id" time="0.000154" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="random-seed" time="0.000136" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="host-fixture" time="0.000142" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="teacher-requirement" time="0.000085" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testsuite name="ordered session request binds every component including arguments and callback outcomes" time="0.001277" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-22T16:42:40.136Z" hostname="07bf85b14210">
+		<testcase name="order" time="0.000249" classname="ordered session request binds every component including arguments and callback outcomes" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="omitted" time="0.000110" classname="ordered session request binds every component including arguments and callback outcomes" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="argument" time="0.000277" classname="ordered session request binds every component including arguments and callback outcomes" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="callback-outcome" time="0.000284" classname="ordered session request binds every component including arguments and callback outcomes" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testcase name="relabeling a valid artifact and resealing its dataset hashes cannot replace frozen registry membership" time="0.002718" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+	<testsuite name="original module graph, entry, export, aliases and ordered calls bind actual module evidence" time="1.565439" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-22T16:42:40.252Z" hostname="07bf85b14210">
+		<testsuite name="release-module-alias" time="0.539573" disabled="0" errors="0" tests="5" failures="0" skipped="0" timestamp="2026-11-22T16:42:40.123Z" hostname="07bf85b14210">
+			<testcase name="graph" time="0.000467" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+			<testcase name="entry" time="0.000117" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+			<testcase name="export" time="0.000189" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+			<testcase name="plan-boolean" time="0.000182" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+			<testcase name="input" time="0.000228" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		</testsuite>
+		<testsuite name="release-module-calls" time="1.025564" disabled="0" errors="0" tests="5" failures="0" skipped="0" timestamp="2026-11-22T16:42:40.792Z" hostname="07bf85b14210">
+			<testcase name="graph" time="0.000549" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+			<testcase name="entry" time="0.000107" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+			<testcase name="export" time="0.000177" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+			<testcase name="plan-boolean" time="0.000187" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+			<testcase name="input" time="0.000212" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		</testsuite>
+	</testsuite>
+	<testsuite name="direct protocol and mixed host protocol requests bind their actual source evidence" time="1.711101" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-22T16:42:41.680Z" hostname="07bf85b14210">
+		<testcase name="release-protocol-source" time="0.344553" classname="direct protocol and mixed host protocol requests bind their actual source evidence" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+		<testcase name="join-host-join" time="1.365784" classname="direct protocol and mixed host protocol requests bind their actual source evidence" file="/workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<!-- tests 81 -->
+	<!-- suites 0 -->
+	<!-- pass 81 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 10344.824998 -->
+</testsuites>
