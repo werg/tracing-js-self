@@ -61,6 +61,17 @@
     "after-node.log": {
       "bytes": 2540,
       "sha256": "282872706241214266836b01053389b30b4e5512880f337e80d4323ee103ce15"
+    },
+    "final-pair-7c-original-hosted-job.log": {
+      "bytes": 23006,
+      "sha256": "9c94011ab018b349917c6e55eee78563c11d4cf96edd0a32f712dbd2150993c2"
     }
+  },
+  "repeatedHostedFailure": {
+    "run": 45045817948,
+    "job": 137280068568,
+    "producerRevision": "7c20124f3d89dfe1a8d5e892238e7b7f92589720",
+    "error": "Declared installed population changed: interoperability",
+    "phase": "inventory before package installation and source execution"
   }
 }
