@@ -42,8 +42,8 @@ export function buildRecoveredCoordinatorCheckpointV8({checkpoint,pending,recove
     receipt.committed===true&&receipt.selectionId===selection.selectionId,
     'recovered selection differs from the exact source and coordinator fence');
   const action=JSON.parse(request.record);
-  demand(['track_join','track_progress'].includes(action?.name),
-    'only acknowledged join and progress commits can preserve this host cut');
+  demand(['track_create','track_join','track_progress'].includes(action?.name),
+    'only acknowledged create, join and progress commits can preserve this host cut');
   demand(transport.attempts?.length===base.native.attempts.length+1&&
     transport.native?.attempts?.length===base.native.native.attempts.length+1&&
     transport.attempts.at(-1)?.selection?.selectionId===selection.selectionId&&
@@ -56,7 +56,8 @@ export function buildRecoveredCoordinatorCheckpointV8({checkpoint,pending,recove
     contextDigest:selection.contextDigest,publicDigest:selection.publicDigest,status:'committed',
     record:request.record,selection:copy(selection),commitReceipt:copy(receipt),failure:null,failureEvidence:null,
     action:copy(action)};
-  const continuation={phase:action.name==='track_join'?'child-ready':'coordinator-ready',
+  const continuation={phase:action.name==='track_create'?'bootstrap-ready':
+      action.name==='track_join'?'child-ready':'coordinator-ready',
     coordinatorSelections:base.continuation.coordinatorSelections+1,
     joinedAttempt:action.name==='track_join'?attempt.attempt:null,
     joinedDependency:action.name==='track_join'?copy(action.arguments.completion_dependency):null,elapsedMs,
@@ -84,7 +85,8 @@ export function refreshRecoveredCoordinatorCheckpointV8({checkpoint,recovery,nat
   const base=copy(checkpoint),known=copy(recovery),transport=copy(native),current=copy(state);
   verifySelectedOrchestrationCheckpoint(base,policy,{initialPublic});
   const last=base.coordinatorAttempts.at(-1),original=base.native.attempts.at(-1);
-  demand(base.continuation.clockReceipt&&['track_join','track_progress'].includes(last?.action?.name)&&
+  demand(base.continuation.clockReceipt&&(['track_join','track_progress'].includes(last?.action?.name)||
+      last?.action?.name==='track_create'&&base.continuation.phase==='bootstrap-ready')&&
     original?.family==='orchestration'&&original.status==='accepted'&&original.durableRequestReceipt&&
     known?.schema==='semantic-native-transport-commit-recovery/8'&&known.recovered===true&&
     known.hostDispatches===0&&known.hostRecoveryAuthorized===false&&

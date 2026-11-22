@@ -33,13 +33,15 @@ async function fixture(kind){
     const first=selector(),driver=new RegionSelectedOrchestrationDriver({initialPublic,select:first,...policy});
     let base;
     try{
-      const before=await driver.run({stopAt:{phase:'coordinator-ready',coordinatorSelections:kind==='track_join'?1:2}});
+      const before=await driver.run({stopAt:{phase:'coordinator-ready',
+        coordinatorSelections:kind==='track_create'?0:kind==='track_join'?1:2}});
       assert.equal(before.status,'paused',JSON.stringify(before.failure));base=before.checkpoint;
     }finally{first.close();}
     const second=selector();let after;
     try{
       const restored=await RegionSelectedOrchestrationDriver.restore(base,{initialPublic,select:second,policy});
-      const next=await restored.run({stopAt:{phase:kind==='track_join'?'child-ready':'coordinator-ready',
+      const next=await restored.run({stopAt:{phase:kind==='track_create'?'bootstrap-ready':
+        kind==='track_join'?'child-ready':'coordinator-ready',
         coordinatorSelections:base.coordinatorAttempts.length+1}});
       assert.equal(next.status,'paused',JSON.stringify(next.failure));after=next.checkpoint;
     }finally{second.close();}
@@ -65,12 +67,12 @@ async function fixture(kind){
   })();cases.set(kind,task);return copy(await task);
 }
 
-for(const kind of ['track_join','track_progress'])test('known '+kind+' reconstructs one exact cut with unchanged host work',async()=>{
+for(const kind of ['track_create','track_join','track_progress'])test('known '+kind+' reconstructs one exact cut with unchanged host work',async()=>{
   const input=await fixture(kind),snapshot=copy(input),next=buildRecoveredCoordinatorCheckpointV8(input);
   assert.deepEqual(input,snapshot);assert.deepEqual(next.bridge,input.checkpoint.bridge);
   assert.deepEqual(next.childAttempts,input.checkpoint.childAttempts);
   assert.equal(next.coordinatorAttempts.length,input.checkpoint.coordinatorAttempts.length+1);
-  assert.equal(next.continuation.phase,kind==='track_join'?'child-ready':'coordinator-ready');
+  assert.equal(next.continuation.phase,kind==='track_create'?'bootstrap-ready':kind==='track_join'?'child-ready':'coordinator-ready');
   assert.deepEqual(next.continuation.clockReceipt,input.pending.clockReceipt);
   assert.equal(verifySelectedOrchestrationCheckpoint(JSON.parse(stableAlgorithmJSON(next)),policy,{initialPublic}),true);
 });

@@ -214,6 +214,29 @@ function checkSelectionLedgers(packet,session,native,transport,allowTerminal=fal
         retained.status==='rejected'&&model.failure===entry.row.failure&&retained.failure===entry.row.failure,
         'stale child selection lacks its exact native rejection');
     }
+    const bootstrap=retained.durableBootstrap;
+    if(bootstrap!==undefined){
+      const create=retained.durableRequestReceipt,receipt=bootstrap.receipt,request=bootstrap.request;
+      const validReceipt=value=>keys(value,['schema','ordinal','digest','bytes','sessionId','streamId','sessionGeneration'])&&
+        value.schema==='semantic-native-producer-request-receipt/8'&&HASH.test(value.digest??'')&&
+        Number.isSafeInteger(value.ordinal)&&value.ordinal>0&&Number.isSafeInteger(value.bytes)&&value.bytes>0&&
+        value.sessionId===session&&typeof value.streamId==='string'&&value.streamId.length>0&&
+        Number.isSafeInteger(value.sessionGeneration)&&value.sessionGeneration>0;
+      demand(entry.kind==='coordinator'&&entry.action.name==='track_create'&&
+        keys(bootstrap,['schema','request','receipt','createReceipt','preCheckpointDigest','postCheckpointDigest','result'])&&
+        bootstrap.schema==='semantic-native-transport-bootstrap/8'&&validReceipt(create)&&validReceipt(receipt)&&
+        receipt.ordinal===create.ordinal+1&&receipt.streamId===create.streamId&&
+        receipt.sessionGeneration===create.sessionGeneration&&isDeepStrictEqual(bootstrap.createReceipt,create)&&
+        keys(request,['id','op','session','track','childTrack'])&&typeof request.id==='string'&&request.id.length>0&&
+        request.op==='bootstrap-orchestration-child'&&request.session===session&&request.track===entry.row.track&&
+        request.childTrack===entry.row.commitReceipt.track.address&&
+        HASH.test(bootstrap.preCheckpointDigest??'')&&HASH.test(bootstrap.postCheckpointDigest??'')&&
+        isDeepStrictEqual(bootstrap.result,entry.row.bootstrapReceipt),
+        'durable bootstrap evidence changed its exact accepted create, request scope, child or result');
+    }
+    if(entry.kind==='coordinator'&&entry.action.name==='track_create'&&
+        entry.row.bootstrapReceipt!==undefined&&retained.durableRequestReceipt!==undefined)
+      demand(bootstrap!==undefined,'durable create bootstrap lacks its original separate request receipt');
   }
   return all;
 }
@@ -290,10 +313,12 @@ function checkCoordinatorHistory(packet,nativeSession,all,session){
     progress=packet.coordinatorAttempts.filter(row=>row.action.name==='track_progress'),
     bootstraps=operations.filter(row=>row?.kind==='bootstrap'),
     completions=operations.filter(row=>row?.kind==='completion');
-  const bootstrapTracks=new Set(bootstraps.map(row=>row.track));
-  demand(bootstraps.length===creates.length&&bootstrapTracks.size===bootstraps.length&&
-    creates.every(row=>bootstrapTracks.has(row.commitReceipt.track?.address))&&
-    bootstraps.every(row=>creates.some(create=>create.commitReceipt.track?.address===row.track)),
+  const pendingCreate=packet.continuation.phase==='bootstrap-ready'?packet.coordinatorAttempts.at(-1):null,
+    settledCreates=creates.filter(row=>row!==pendingCreate),
+    bootstrapTracks=new Set(bootstraps.map(row=>row.track));
+  demand(bootstraps.length===settledCreates.length&&bootstrapTracks.size===bootstraps.length&&
+    settledCreates.every(row=>bootstrapTracks.has(row.commitReceipt.track?.address))&&
+    bootstraps.every(row=>settledCreates.some(create=>create.commitReceipt.track?.address===row.track)),
     'native bootstrap operation count or exact create-track coverage differs');
   for(const create of creates){
     const receipt=create.commitReceipt,dependency=receipt.completion_dependency,
@@ -301,10 +326,20 @@ function checkCoordinatorHistory(packet,nativeSession,all,session){
       bootstrap=create.bootstrapReceipt,track=state.children.find(row=>row.track===dependency?.track);
     demand(dependency?.schema==='semantic-completion-dependency/4'&&dependency.track===receipt.track?.address&&
       dependency.invocation===receipt.track?.execution?.invocation_id&&child&&track===child&&
-      isDeepStrictEqual(receipt.track.execution,child.execution)&&bootstrap?.schema==='semantic-orchestration-bootstrap/8'&&
-      bootstrap.bootstrapped===true&&bootstrap.track?.address===child.track&&bootstrap.track.bootstrap_ready===true&&
-      isDeepStrictEqual(bootstrap.track.execution,child.execution),
+      receipt.track.bootstrap_ready===false&&isDeepStrictEqual(receipt.track.execution,child.execution),
       'create, dependency or bootstrap receipt changed its exact declared root binding');
+    if(create===pendingCreate){
+      demand(!Object.hasOwn(create,'bootstrapReceipt')&&!bootstrapTracks.has(child.track)&&child.completion===null&&
+        operations.at(-1)?.kind==='coordinator'&&
+        operations.at(-1)?.attempt===nativeIndex(create.selection.selectionId)&&
+        !packet.childAttempts.some(row=>row.invocationId===dependency.invocation),
+        'bootstrap-ready cut must end immediately after its exact unbootstrapped create');
+      continue;
+    }
+    demand(bootstrap?.schema==='semantic-orchestration-bootstrap/8'&&bootstrap.bootstrapped===true&&
+      bootstrap.track?.address===child.track&&bootstrap.track.bootstrap_ready===true&&
+      isDeepStrictEqual(bootstrap.track.execution,child.execution),
+      'settled create lacks its exact original bootstrap receipt');
     demand(bootstraps.some(row=>row.track===child.track),'native bootstrap operation has no exact create receipt');
     const createdAt=operations.findIndex(row=>row.kind==='coordinator'&&
       row.attempt===nativeIndex(create.selection.selectionId)),nextCoordinator=operations.findIndex((row,index)=>
@@ -391,7 +426,7 @@ function checkContinuation(packet,nativeSession,allowTerminal=false,allowCancell
   const continuation=packet.continuation,state=packet.state,policy=packet.policy;
   demand(keys(continuation,['phase','coordinatorSelections','joinedAttempt','joinedDependency','elapsedMs',
       ...(Object.hasOwn(continuation??{},'clockReceipt')?['clockReceipt']:[])])&&
-    ['coordinator-ready','child-ready'].includes(continuation.phase)&&
+    ['coordinator-ready','bootstrap-ready','child-ready'].includes(continuation.phase)&&
     continuation.coordinatorSelections===packet.coordinatorAttempts.length&&
     continuation.coordinatorSelections<=policy.maxCoordinatorSelections&&
     Number.isFinite(continuation.elapsedMs)&&continuation.elapsedMs>=0&&
@@ -415,14 +450,19 @@ function checkContinuation(packet,nativeSession,allowTerminal=false,allowCancell
   const directTracks=state.tracks.filter(row=>row.parent===state.track),
     activeChildren=directTracks.filter(row=>row.status==='active'),
     childTracks=new Map(directTracks.map(row=>[row.address,row])),
-    coordinatorTrack=state.tracks.find(row=>row.address===state.track);
+    coordinatorTrack=state.tracks.find(row=>row.address===state.track),
+    pendingCreate=continuation.phase==='bootstrap-ready'?packet.coordinatorAttempts.at(-1):null;
   demand(coordinatorTrack&&coordinatorTrack.parent===null&&coordinatorTrack.execution===null&&
     coordinatorTrack.status===state.status&&coordinatorTrack.bootstrap_ready===false&&
     directTracks.length===state.children.filter(child=>child.track!==null).length&&
     childTracks.size===directTracks.length&&activeChildren.length<=policy.maxActive&&state.children.every(child=>{
     const track=child.track===null?null:childTracks.get(child.track);
     if(child.track===null)return child.completion===null&&!track;
-    if(!track||!isDeepStrictEqual(track.execution,child.execution)||track.bootstrap_ready!==true)return false;
+    if(!track||!isDeepStrictEqual(track.execution,child.execution))return false;
+    if(track.address===pendingCreate?.commitReceipt?.track?.address)
+      return child.completion===null&&track.bootstrap_ready===false&&track.status==='waiting'&&
+        isDeepStrictEqual(track,pendingCreate.commitReceipt.track);
+    if(track.bootstrap_ready!==true)return false;
     if(child.completion!==null)return track.status==='completed';
     if(allowCancelled)return track.status==='cancelled';
     return ['active','waiting'].includes(track.status);
@@ -432,7 +472,13 @@ function checkContinuation(packet,nativeSession,allowTerminal=false,allowCancell
     return child&&child.completion===null&&create?.bootstrapReceipt?.bootstrapped===true&&
       !packet.childAttempts.some(row=>row.invocationId===child.execution.invocation_id);
   }),'native active child tracks are not quiescent exact bootstrapped roots');
-  if(continuation.phase==='child-ready'){
+  if(continuation.phase==='bootstrap-ready'){
+    demand(!allowTerminal&&!allowCancelled&&continuation.joinedAttempt===null&&continuation.joinedDependency===null&&
+      state.status==='active'&&pendingCreate?.action?.name==='track_create'&&pendingCreate.status==='committed'&&
+      !Object.hasOwn(pendingCreate,'bootstrapReceipt')&&
+      childTracks.get(pendingCreate.commitReceipt?.track?.address)?.bootstrap_ready===false,
+      'bootstrap-ready continuation lacks its exact latest acknowledged reserved child');
+  }else if(continuation.phase==='child-ready'){
     const index=continuation.joinedAttempt,join=packet.coordinatorAttempts[index],dependency=continuation.joinedDependency;
     demand(Number.isSafeInteger(index)&&join?.action?.name==='track_join'&&join.childCompletion===undefined&&
       isDeepStrictEqual(join.action.arguments.completion_dependency,dependency)&&state.status==='waiting'&&
