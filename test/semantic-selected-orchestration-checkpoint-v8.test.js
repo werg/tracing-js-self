@@ -461,7 +461,7 @@ test('automatic composite history acknowledges the join safe point before child 
       const rebuilt=rechain(changed);
       assert.throws(()=>validateSelectedHistoryChain(rebuilt.entries,rebuilt.receipt),pattern);
     };
-    expectTamper(value=>{value.baseCheckpointDigest='f'.repeat(64);},/base checkpoint|base cut/i);
+    expectTamper(value=>{value.baseCheckpointDigest='f'.repeat(64);},/composite terminal event identity or digest differs/i);
     expectTamper(value=>{value.pendingId='0'.repeat(64);},/pending completion|pending marker/i);
     expectTamper(value=>{value.closeReceipt.reason='forged close';},/positive native close/i);
     expectTamper(value=>{
