@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   evaluate-fixed-rejection-evidence:
+    name: All sixteen frozen cases with complete rejection evidence
     runs-on: ubuntu-24.04
     timeout-minutes: 100
     env:
