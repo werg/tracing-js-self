@@ -1,0 +1,68 @@
+name: Regenerate original primitive-conversion data
+on:
+  push:
+    branches: [codex/language-coverage-v8-cutover]
+    paths: ['.github/workflows/v8-conversion-fixture-repair.yml']
+permissions:
+  contents: read
+jobs:
+  conversion-fixture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      TZ: UTC
+      TRACING_REFERENCE_ISOLATION: trusted-process
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Recheck frozen cases and regenerate independently verified data
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {gunzipSync} from 'node:zlib';
+          import {execFileSync} from 'node:child_process';
+          import {createHash} from 'node:crypto';
+          import {isDeepStrictEqual as equal} from 'node:util';
+          import {recheckProtocolRegionEvidence} from './src/semantic/protocol-source-v8.js';
+          const path='test/fixtures/semantic-primitive-conversion-v8.json.gz.b64';
+          const original=readFileSync(path);
+          const decode=bytes=>JSON.parse(gunzipSync(Buffer.from(bytes.toString().trim(),'base64')));
+          const old=decode(original),ids=['getter-replacement','nested-goals','promise-key','mapped-key'];
+          for(const id of ids){
+            const row=old.cases.find(row=>row.id===id);assert(row?.artifact,id);
+            try{const checked=await recheckProtocolRegionEvidence(row.artifact);console.log('CONVERSION_ORIGINAL_RECHECK '+JSON.stringify({id,valid:checked.valid,sourceValidated:checked.sourceValidated,projectionValidated:checked.projectionValidated,replayValidated:checked.replayValidated}));}
+            catch(error){console.log('CONVERSION_ORIGINAL_RECHECK '+JSON.stringify({id,error:error.stack}));}
+          }
+          try{
+            execFileSync(process.execPath,['tools/generate-primitive-conversion-fixtures.mjs'],{stdio:'inherit'});
+            const candidate=readFileSync(path),fresh=decode(candidate);
+            assert.deepEqual(fresh.originalIds,old.originalIds);
+            assert.deepEqual(fresh.cases.map(row=>({id:row.id,fixture:row.fixture,sourceInputDigest:row.sourceInputDigest,status:row.status,boundary:row.boundary})),
+              old.cases.map(row=>({id:row.id,fixture:row.fixture,sourceInputDigest:row.sourceInputDigest,status:row.status,boundary:row.boundary})));
+            for(const [index,row] of fresh.cases.entries()){
+              const before=old.cases[index];if(!row.artifact)continue;
+              assert.deepEqual(row.artifact.sidecar.sourceArtifact.sidecar.outcome,before.artifact.sidecar.sourceArtifact.sidecar.outcome,row.id+': original outcome changed');
+              const differences=[];let count=0;
+              const preview=value=>{const text=JSON.stringify(value);return text?.length>600?text.slice(0,600)+'...':value;};
+              function diff(a,b,path){
+                if(equal(a,b))return;
+                if(a&&b&&typeof a==='object'&&typeof b==='object'){
+                  for(const key of new Set([...Object.keys(a),...Object.keys(b)]))diff(a[key],b[key],path+'.'+key);
+                }else{count++;if(differences.length<12)differences.push({path,before:preview(a),after:preview(b)});}
+              }
+              diff(before.artifact,row.artifact,'artifact');
+              console.log('CONVERSION_REGENERATED_CASE '+JSON.stringify({id:row.id,publicEqual:equal(before.artifact.public,row.artifact.public),contextsEqual:equal(before.artifact.contexts,row.artifact.contexts),differenceCount:count,differences}));
+            }
+            const encoded=candidate.toString().trim();
+            console.log('CONVERSION_CANDIDATE_METADATA '+JSON.stringify({bytes:candidate.length,base64Characters:encoded.length,sha256:createHash('sha256').update(candidate).digest('hex'),gitBlobSha:execFileSync('git',['hash-object',path],{encoding:'utf8'}).trim(),cases:fresh.cases.length}));
+            for(let offset=0;offset<encoded.length;offset+=4096)console.log('CONVERSION_CANDIDATE_CHUNK '+JSON.stringify({index:offset/4096,data:encoded.slice(offset,offset+4096)}));
+            console.log('CONVERSION_CANDIDATE_COMPLETE');
+          }finally{writeFileSync(path,original);}
+          JS
