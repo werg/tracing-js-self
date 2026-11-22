@@ -211,7 +211,7 @@ def main():
         "schema": "semantic-v8-independent-prepared-target-coverage-check/1",
         "guardExecutableRevision": args.guard_revision,
         "scriptSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-        "runtime": {"torch": torch.__version__, "device": "cpu"},
+        "runtime": {"torch": str(torch.__version__), "device": "cpu"},
         "originalTrainingPolicy": policy,
         "runtimeInputRelocations": {
             "originalPreparedRoots": config.datasets,
