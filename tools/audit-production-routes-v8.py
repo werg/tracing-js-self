@@ -160,7 +160,7 @@ def cli_registrations(sources):
                          {function.args.args[0].arg: scopes[call.args[0].id]}, constants)
                 elif name.startswith("add_") and name.endswith("commands"):
                     raise ValueError("Unreviewed parser registration helper: " + name)
-                elif any(isinstance(arg, ast.Name) and arg.id in scopes for arg in call.args):
+                elif registration_sensitive(statement, scopes):
                     helper = functions.get((path, name))
                     if helper is None or any(
                         isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute)

@@ -34,13 +34,13 @@ handlers matched the static inventory, with zero commands dispatched.
 See [the reproducible check](check-live-cli.py) and its
 [corrected result](corrected-live-cli-audit.json).
 
-The corrected focused controls pass seven cases plus 20 explicit subtests,
+The corrected focused controls pass seven cases plus 22 explicit subtests,
 with zero failures/errors/skips. They exercise
 conditional package exports, nested command registration and literal loops,
 unknown dynamic/alias/helper refusal, added/removed/changed registrations,
 complete review ownership and the separation of inventory from semantic
-qualification. [Corrected JUnit](corrected-inventory-controls.xml) and
-[complete corrected log](corrected-inventory-controls.log) are retained. The local runtime was
+qualification. [Corrected JUnit](corrected-inventory-controls-final.xml) and
+[complete corrected log](corrected-inventory-controls-final.log) are retained. The local runtime was
 Python 3.12.14 and pytest 9.2.0; the native repository declares pytest <9.
 These standard-library inventory checks do not claim a locked native semantic
 qualification and do not load a model or perform optimization.
@@ -87,7 +87,9 @@ recipe still needs an operator-qualified immutable base image for production;
 recording its source is not a deployment qualification. The executable
 [correction check](check-review-corrections.py) compares all eight spellings
 against the frozen real dispatcher using a fake adapter and refuses all three
-original nested-registration probes; its [green result](independent-review-green.json)
+original nested-registration probes. A second review caught keyword and container-wrapped
+parser helper arguments; both now refuse and their [exact before/after results](keyword-and-container-helper-red-green.json)
+are retained. The [green dispatch result](independent-review-green.json)
 retains zero model loads, command dispatches and host dispatches. The whole-tree pins
 remain unchanged, and no runtime or command handler was dispatched.
 

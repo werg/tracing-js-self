@@ -61,6 +61,8 @@ def parser():
                      "getattr(commands, 'add_parser')('extra')",
                      "plugin.register_more(commands)",
                      "commands.register_plugin()",
+                     "register_more(parser=commands)",
+                     "register_more([commands])",
                      "alias = commands\n    register_more(alias)"):
             with self.subTest(body=body), self.assertRaises(ValueError):
                 audit.cli_registrations({"src/megatoken/cli.py": template.replace("BODY", body)})
