@@ -97,7 +97,7 @@ export function executeOfficialTest262Reference(options={}){
   }
   if(negative?.phase==='parse')return answer('failed','Expected a parse-time error but original source parsed successfully',{phase:'parse'});
   let ast;
-  try{ast=parseSyntax(code,{ecmaVersion:2026,sourceType:'script'});}
+  try{ast=parseSyntax(code,{ecmaVersion:'latest',sourceType:'script'});}
   catch{return answer('unsupported','Reference host-capability preflight does not support this grammar',{phase:'environment'});}
   const missing=requiredOriginalHostCapabilities(ast,variant);
   if(prepared.missingHarness)missing.push(prepared.missingHarness);

@@ -120,7 +120,7 @@ async function main(){
   const missing=[];
   for(const path of paths){
     try{
-      const ast=parse(sources[path],{ecmaVersion:2026,sourceType:'module'});
+      const ast=parse(sources[path],{ecmaVersion:'latest',sourceType:'module'});
       missing.push(...test262HostCapabilities(ast));
     }catch{
       // Native module parsing above remains the reference authority. If the

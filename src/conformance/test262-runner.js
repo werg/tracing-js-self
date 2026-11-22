@@ -3,7 +3,7 @@
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {posix} from 'node:path';
-import {parse as parseSyntax} from 'acorn';
+import {parse as parseSyntax,version as acornVersion} from 'acorn';
 import {createRuntime} from '../runtime.js';
 import {linkEvaluatedModules} from '../evaluated-modules.js';
 import {unresolvedOriginalModuleBindings} from './test262-module-resolution.js';
@@ -38,17 +38,18 @@ export function test262VariantSource(source,mode){
 
 export function ownedTest262Profile({specification=null,maxSteps=20000,maxSourceBytes=1048576,
   referenceTimeoutMs=300}={}){
-  if(!Number.isSafeInteger(referenceTimeoutMs)||referenceTimeoutMs<10||referenceTimeoutMs>1000)
-    throw new TypeError('Reference timeout must be between 10 and 1000 ms');
+  if(!Number.isSafeInteger(referenceTimeoutMs)||referenceTimeoutMs<10||referenceTimeoutMs>2147482147)
+    throw new TypeError('Reference timeout must fit a positive Node timer including worker shutdown allowance');
   if(!Number.isSafeInteger(maxSteps)||maxSteps<1||!Number.isSafeInteger(maxSourceBytes)||maxSourceBytes<1)
     throw new TypeError('Owned Test262 resource limits must be positive integers');
-  return {name:OWNED_TEST262_RUNNER,edition:'ECMAScript 2026',specification,
-    parser:{name:'acorn',version:'8.15.0',ecmaVersion:2026,lowering:'owned-script/1',
+  return {name:OWNED_TEST262_RUNNER,edition:'ECMAScript (living)',specification,
+    languageTarget:{uri:'https://tc39.es/ecma262/',policy:'current-language-and-Test262-inventory'},
+    parser:{name:'acorn',version:acornVersion,ecmaVersion:'latest',lowering:'owned-script/1',
       implementationDigest:conformanceDigest(['../training/profile.js','../frontend.js'].map(path=>
         [path,sha(readFileSync(new URL(path,import.meta.url)))]))},
     hostProfile:{name:'single-agent-owned-test262/1',harness:'original-test262-files',
       completion:'original-doneprintHandle-and-owned-print',realms:'fresh-per-variant',
-      moduleResolver:'frozen-static-relative-graph/1',
+      moduleResolver:'content-bound-static-relative-graph/1',
       moduleExecution:{profile:'evaluated-module/1',entry:'evaluation-only',
         sourceHandling:'original-bytes-bound-and-lowered-to-owned-entry',
         staticResolution:'original-module-records/1',
@@ -58,8 +59,7 @@ export function ownedTest262Profile({specification=null,maxSteps=20000,maxSource
       test262HostObject:'unavailable',
       reference:{node:process.version,v8:process.versions.v8,timeoutMs:referenceTimeoutMs}},
     resourcePolicy:{maxSteps,maxSourceBytes},
-    limits:[specification?'Test262 edition membership remains unclassified although the normative specification bytes are pinned.':
-      'Edition membership is unclassified until the normative specification inventory is pinned.',
+    limits:['The acquired Test262 tree is the current observed inventory, not a ceiling or a claim of complete language conformance. Metadata and unsupported features remain visible.',
       'Owned modules use the bounded evaluated-module/1 lowering recorded in the runner profile; namespace exotics execute only in the owned module runner and do not qualify public/native projection; dynamic import, import.meta, import attributes, host loading, retained sessions and source correspondence remain unqualified.',
       'Owned structural validation and exact replay do not establish public or native semantic admission.']};
 }
@@ -68,6 +68,11 @@ export function ownedTest262Profile({specification=null,maxSteps=20000,maxSource
 export function prepareOfficialTest262Variant({variant,profile,suiteRevision,sources}={}){
   if(profile?.name!==OWNED_TEST262_RUNNER||!variant||!sources)
     throw new TypeError('Original Test262 runner requires its explicitly bound profile and sources');
+  const actualProfile=ownedTest262Profile({specification:profile.specification,
+    maxSteps:profile.resourcePolicy?.maxSteps,maxSourceBytes:profile.resourcePolicy?.maxSourceBytes,
+    referenceTimeoutMs:profile.hostProfile?.reference?.timeoutMs});
+  if(!equivalent(profile,actualProfile))
+    throw new TypeError('Test262 runner profile differs from the actual parser, runtime or execution settings');
   const {id,...identity}=variant;
   if(conformanceDigest({suiteRevision,profile,...identity})!==id)
     throw new TypeError('Test262 variant identity does not match the runner profile');
@@ -107,7 +112,7 @@ export function checkOfficialTest262Syntax(prepared,variant){
   if(negative?.phase==='early')return {stage:outcome('unsupported',
     'The integrated parser cannot independently certify a distinct early-error phase'),ast:null,parseOnly:true};
   let ast;
-  try{ast=parseSyntax(prepared.code,{ecmaVersion:2026,sourceType:variant.mode==='module'?'module':'script',
+  try{ast=parseSyntax(prepared.code,{ecmaVersion:'latest',sourceType:variant.mode==='module'?'module':'script',
     allowAwaitOutsideFunction:false,allowReturnOutsideFunction:false});}
   catch(error){
     if(error instanceof SyntaxError)return {stage:outcome(
@@ -157,7 +162,7 @@ export function checkOfficialTest262ModuleGraph({variant,profile,sources}={}){
   while(pending.length){
     const path=pending.shift(),text=graph.get(path);
     let ast;
-    try{ast=parseSyntax(text,{ecmaVersion:2026,sourceType:'module',allowHashBang:true,
+    try{ast=parseSyntax(text,{ecmaVersion:'latest',sourceType:'module',allowHashBang:true,
       allowAwaitOutsideFunction:true,allowReturnOutsideFunction:false});parsed.set(path,ast);}
     catch(error){
       if(!(error instanceof SyntaxError))return {stage:outcome('infrastructure_error',

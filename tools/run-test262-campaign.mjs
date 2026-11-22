@@ -1,21 +1,22 @@
 #!/usr/bin/env node
 // Full-population accounting with explicitly selected, isolated executions.
-import {fileURLToPath} from 'node:url';
-import {resolve,join} from 'node:path';
-import {createTest262Campaign,bindTest262CatalogProfile,recordTest262Stages,
-  validateTest262Campaign,conformanceDigest} from '../src/conformance/test262-catalog.js';
-import {acquireTest262GitSnapshot} from '../src/conformance/test262-acquisition.js';
-import {ownedTest262Profile,prepareOfficialTest262Variant,checkOfficialTest262Syntax} from '../src/conformance/test262-runner.js';
+import {resolve} from 'node:path';
+import {setImmediate as yieldToEvents} from 'node:timers/promises';
+import {createTest262Campaign,buildTest262Catalog,bindTest262CatalogProfile,recordTest262Stages,
+  validateTest262Campaign,conformanceDigest,selectTest262Shard} from '../src/conformance/test262-catalog.js';
+import {acquireTest262GitSnapshot,discoverTest262ModuleDependencies} from '../src/conformance/test262-acquisition.js';
+import {ownedTest262Profile,prepareOfficialTest262Variant,checkOfficialTest262Syntax,
+  test262VariantSource} from '../src/conformance/test262-runner.js';
 import {fingerprintTest262Implementation,verifyTest262ImplementationFiles,readTest262Json,writeTest262Json,
   createTest262CampaignReport,validateOriginalTest262Report,runOriginalTest262Worker} from '../src/conformance/test262-campaign.js';
-import {readPinnedEcma262Specification} from '../src/conformance/test262-specification.js';
 
-const root=fileURLToPath(new URL('..',import.meta.url)),flags=new Map();
+const flags=new Map();
 const booleans=new Set(['--all']);
 for(let i=2;i<process.argv.length;i++){
   const key=process.argv[i],value=booleans.has(key)?true:process.argv[++i];
   if(!['--catalog','--suite-root','--out','--stages','--paths','--cases','--limit','--all','--resume','--check',
-    '--jobs','--max-steps','--max-source-bytes','--reference-timeout-ms','--worker-timeout-ms','--heap-mb','--retry'].includes(key)||
+    '--jobs','--max-steps','--max-source-bytes','--reference-timeout-ms','--worker-timeout-ms','--heap-mb','--retry',
+    '--revision','--shard-index','--shard-count'].includes(key)||
     flags.has(key)||value===undefined||typeof value==='string'&&value.startsWith('--'))
     throw new TypeError('Invalid original Test262 campaign argument: '+key);
   flags.set(key,value);
@@ -25,14 +26,15 @@ const number=(name,fallback,min=1,max=Number.MAX_SAFE_INTEGER)=>{
   if(!Number.isSafeInteger(value)||value<min||value>max)throw new TypeError('Invalid '+name);
   return value;
 };
-const baseInput=readTest262Json(flags.get('--catalog')??join(root,'artifacts/conformance/test262-d53ebc8b-frozen-catalog.json.xz'));
-const baseCatalog=baseInput.catalog??baseInput;
+const baseInput=flags.has('--catalog')?readTest262Json(flags.get('--catalog')):null;
+let baseCatalog=baseInput?.catalog??baseInput;
 const retryStatuses=flags.has('--retry')?flags.get('--retry').split(','):[];
 if(flags.has('--retry')&&(!flags.has('--resume')||!retryStatuses.length||new Set(retryStatuses).size!==retryStatuses.length||
-  retryStatuses.some(status=>!['failed','unsupported','resource_limited','environment_unavailable','infrastructure_error'].includes(status))))
+  retryStatuses.some(status=>!['failed','unsupported','resource_limited','environment_unavailable','infrastructure_error','interrupted'].includes(status))))
   throw new TypeError('--retry requires --resume and unique terminal non-pass dispositions');
 if(flags.has('--check')){
   const report=readTest262Json(flags.get('--check'));
+  baseCatalog??=report.baseCatalog;
   validateOriginalTest262Report(report,{baseCatalog,implementation:report.campaign.implementation});
   verifyTest262ImplementationFiles(report.campaign.implementation);
   console.log(JSON.stringify({valid:true,catalogDigest:report.catalogDigest,summary:report.summary}));
@@ -41,21 +43,31 @@ if(flags.has('--check')){
   const stages=(flags.get('--stages')??'parse,owned,reference').split(',');
   if(!stages.length||new Set(stages).size!==stages.length||stages.some(stage=>!['parse','owned','reference'].includes(stage)))
     throw new TypeError('Stages must be a unique comma-separated selection of parse,owned,reference');
-  if(stages.some(stage=>stage!=='parse')&&!['--paths','--cases','--limit','--all'].some(key=>flags.has(key)))
-    throw new TypeError('Execution requires an explicit --paths, --cases, --limit or --all selection');
-  const profile=ownedTest262Profile({specification:readPinnedEcma262Specification().specification,
-    maxSteps:number('--max-steps',20000),maxSourceBytes:number('--max-source-bytes',1048576),
-    referenceTimeoutMs:number('--reference-timeout-ms',300,10,1000)});
+  const prior=flags.has('--resume')?readTest262Json(flags.get('--resume')):null;
+  if(prior&&!baseCatalog){
+    baseCatalog=prior.baseCatalog;
+    if(!baseCatalog)throw new TypeError('Resume requires the original report catalog or an explicit --catalog');
+  }
+  if(flags.has('--revision')&&baseCatalog&&flags.get('--revision')!==baseCatalog.suiteRevision)
+    throw new TypeError('Requested revision differs from the retained catalog');
+  const {snapshot,sources}=acquireTest262GitSnapshot({suiteRoot:flags.get('--suite-root'),
+    revision:baseCatalog?.suiteRevision??flags.get('--revision')});
+  const profile=ownedTest262Profile({maxSteps:number('--max-steps',20000),maxSourceBytes:number('--max-source-bytes',1048576),
+    referenceTimeoutMs:number('--reference-timeout-ms',300,10,2147482147)});
+  baseCatalog??=buildTest262Catalog({snapshot,sources,profile,
+    moduleDependencies:discoverTest262ModuleDependencies(sources)});
   const catalog=bindTest262CatalogProfile(baseCatalog,profile);
+  if(Object.keys(snapshot.files).length!==catalog.files.length||catalog.files.some(file=>snapshot.files[file.path]!==file.gitBlobSha))
+    throw new TypeError('Acquired exact Git tree differs from the retained catalog population');
   let selected=catalog.variants;
   if(flags.has('--paths')){
     const paths=flags.get('--paths').split(',');
     if(new Set(paths).size!==paths.length||paths.some(path=>!path.startsWith('test/')||path.includes('..')))
       throw new TypeError('Selection paths must be unique safe test paths');
     if(paths.some(path=>!selected.some(row=>path.endsWith('/')?row.path.startsWith(path):row.path===path)))
-      throw new TypeError('--paths contains a path with no frozen variants');
+      throw new TypeError('--paths contains a path with no catalog variants');
     selected=selected.filter(row=>paths.some(path=>path.endsWith('/')?row.path.startsWith(path):row.path===path));
-    if(!selected.length)throw new TypeError('--paths selected no frozen variants');
+    if(!selected.length)throw new TypeError('--paths selected no catalog variants');
   }
   if(flags.has('--cases')){
     const ids=flags.get('--cases').split(',');
@@ -63,21 +75,23 @@ if(flags.has('--check')){
     selected=selected.filter(row=>ids.includes(row.id));
   }
   if(flags.has('--limit'))selected=selected.slice(0,number('--limit',1));
+  if(flags.has('--shard-index')!==flags.has('--shard-count'))
+    throw new TypeError('Supply --shard-index and --shard-count together');
+  const shard=flags.has('--shard-count')?{index:number('--shard-index',0,0),count:number('--shard-count',1),
+    strategy:'source-path-sha256/1'}:null;
+  if(shard)selected=selectTest262Shard(selected,shard);
   const runPolicy={stages,jobs:number('--jobs',2,1,16),workerTimeoutMs:number('--worker-timeout-ms',10000,10,3600000),
     heapMb:number('--heap-mb',384,64,4096),selection:{paths:flags.get('--paths')??null,
-      cases:flags.get('--cases')??null,limit:flags.has('--limit')?number('--limit',1):null,all:flags.has('--all')}};
+      cases:flags.get('--cases')??null,limit:flags.has('--limit')?number('--limit',1):null,
+      all:!['--paths','--cases','--limit'].some(key=>flags.has(key)),shard}};
   const implementation={...fingerprintTest262Implementation(),runPolicy};
   let campaign=createTest262Campaign({catalog,implementation,selectedIds:selected.map(row=>row.id)});
-  if(flags.has('--resume')){
-    const prior=readTest262Json(flags.get('--resume'));
+  if(prior){
     const checked=validateOriginalTest262Report(prior,{baseCatalog,implementation});
     if(checked.catalog.digest!==catalog.digest||prior.campaign.identityDigest!==campaign.identityDigest||
       conformanceDigest(prior.runPolicy)!==conformanceDigest(runPolicy))throw new TypeError('Incompatible original Test262 resume policy or selection');
     campaign=prior.campaign;
   }
-  const {snapshot,sources}=acquireTest262GitSnapshot({suiteRoot:flags.get('--suite-root'),revision:catalog.suiteRevision});
-  if(Object.keys(snapshot.files).length!==catalog.files.length||catalog.files.some(file=>snapshot.files[file.path]!==file.gitBlobSha))
-    throw new TypeError('Acquired exact Git tree differs from the frozen catalog population');
   const output=resolve(flags.get('--out'));
   const checkpoint=()=>{
     verifyTest262ImplementationFiles(implementation);
@@ -87,10 +101,16 @@ if(flags.has('--check')){
   checkpoint();
   console.log(JSON.stringify({phase:'acquired',catalogDigest:catalog.digest,population:catalog.variants.length,
     selected:selected.length,sourceRevision:catalog.suiteRevision,output}));
+  const controller=new AbortController();let interruptedSignal=null;
+  const interrupt=signal=>{interruptedSignal??=signal;controller.abort();};
+  const onInterrupt=()=>interrupt('SIGINT'),onTerminate=()=>interrupt('SIGTERM');
+  process.once('SIGINT',onInterrupt);process.once('SIGTERM',onTerminate);
   const rows=new Map(campaign.rows.map(row=>[row.id,row]));
-  const shouldRun=stage=>stage.status==='not_run'||retryStatuses.includes(stage.status);
+  const shouldRun=stage=>['not_run','interrupted'].includes(stage.status)||retryStatuses.includes(stage.status);
   const syntaxResults=new Map();let pending=[];
   for(let index=0;index<selected.length;index++){
+    if(index%32===0)await yieldToEvents();
+    if(controller.signal.aborted)break;
     const variant=selected[index];let syntax;
     const retained=rows.get(variant.id);
     if(!shouldRun(retained.stages.parseStatic)){
@@ -102,7 +122,7 @@ if(flags.has('--check')){
     }
     try{
       const prepared=prepareOfficialTest262Variant({variant,profile,suiteRevision:catalog.suiteRevision,sources});
-      prepared.code??=(variant.mode==='strict'?'"use strict";\n':'')+prepared.source;
+      prepared.code??=test262VariantSource(prepared.source,variant.mode);
       syntax=Buffer.byteLength(prepared.source)>profile.resourcePolicy.maxSourceBytes?
         {stage:{status:'resource_limited',reason:'Source exceeds the pinned byte budget'},parseOnly:true}:
         checkOfficialTest262Syntax(prepared,variant);
@@ -122,6 +142,7 @@ if(flags.has('--check')){
   const executionRows=new Map(campaign.rows.map(row=>[row.id,row]));
   const tasks=[];
   for(const variant of selected){
+    if(controller.signal.aborted)break;
     const syntax=syntaxResults.get(variant.id);
     const retained=executionRows.get(variant.id);
     if(stages.includes('owned')&&syntax.status==='passed'&&!syntax.parseOnly&&shouldRun(retained.stages.ownedExecution))
@@ -130,7 +151,7 @@ if(flags.has('--check')){
   }
   let cursor=0,completed=0;
   const work=async()=>{
-    while(cursor<tasks.length){
+    while(cursor<tasks.length&&!controller.signal.aborted){
       const {variant,authority}=tasks[cursor++];
       const paths=[variant.path,...variant.harness.map(file=>file.path),
         ...(variant.mode==='module'?variant.dependencies.files.map(file=>file.path):[])];
@@ -141,7 +162,7 @@ if(flags.has('--check')){
       }
       const result=await runOriginalTest262Worker({authority,implementation,
         options:{variant,profile,suiteRevision:catalog.suiteRevision,sources:subset},
-        wallTimeoutMs:runPolicy.workerTimeoutMs,heapMb:runPolicy.heapMb});
+        wallTimeoutMs:runPolicy.workerTimeoutMs,heapMb:runPolicy.heapMb,signal:controller.signal});
       const stage=authority==='owned'?'ownedExecution':'independentReference';
       pending.push({caseId:variant.id,stage,status:result.status,reason:result.reason,
         evidence:{...result,stages:undefined}});
@@ -155,7 +176,11 @@ if(flags.has('--check')){
     }
   };
   await Promise.all(Array.from({length:Math.min(runPolicy.jobs,tasks.length)},work));
+  if(pending.length){campaign=recordTest262Stages(campaign,pending);pending=[];}
   validateTest262Campaign(campaign,{catalog,implementation});
   const report=checkpoint();
-  console.log(JSON.stringify({phase:'complete',output,catalogDigest:catalog.digest,summary:report.summary}));
+  process.removeListener('SIGINT',onInterrupt);process.removeListener('SIGTERM',onTerminate);
+  console.log(JSON.stringify({phase:interruptedSignal?'interrupted':'complete',signal:interruptedSignal,
+    output,catalogDigest:catalog.digest,summary:report.summary}));
+  if(interruptedSignal)process.exitCode=interruptedSignal==='SIGINT'?130:143;
 }

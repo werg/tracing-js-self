@@ -8,11 +8,12 @@ import {gitBlobSha} from '../test262-baseline.js';
 import {safeTest262Path,parseTest262Header} from './test262-catalog.js';
 
 export function acquireTest262GitSnapshot({suiteRoot,revision}={}){
-  if(typeof suiteRoot!=='string'||!/^[a-f0-9]{40}$/.test(revision??''))
-    throw new TypeError('Test262 acquisition requires a local Git root and exact commit');
+  if(typeof suiteRoot!=='string'||revision!==undefined&&!/^[a-f0-9]{40}$/.test(revision))
+    throw new TypeError('Test262 acquisition requires a local Git root and an optional exact commit');
   const root=resolve(suiteRoot);
   const git=args=>execFileSync('git',['-C',root,...args],{encoding:'utf8',maxBuffer:64*1024*1024});
   const head=git(['rev-parse','HEAD']).trim();
+  revision??=head;
   if(head!==revision)throw new TypeError('Test262 checkout HEAD differs from the requested exact revision');
   const treeSha=git(['rev-parse',revision+'^{tree}']).trim();
   const entries=git(['ls-tree','-r','-z',revision,'--','test','harness']).split('\0').filter(Boolean);
@@ -53,7 +54,7 @@ export function discoverTest262ModuleDependencies(sources){
     const path=pending.pop();if(Object.hasOwn(result,path))continue;
     const paths=new Set(),unresolved=[];
     let ast;
-    try{ast=parse(text(path),{ecmaVersion:2026,sourceType:'module'});}
+    try{ast=parse(text(path),{ecmaVersion:'latest',sourceType:'module'});}
     catch(error){result[path]={paths:[],unresolved:['Module parser: '+error.message]};continue;}
     function request(specifier){
       if(typeof specifier!=='string'){unresolved.push('Computed dynamic import requires execution-time resolution');return;}

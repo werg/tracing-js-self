@@ -29,6 +29,7 @@ test('exact Git acquisition freezes the full test/harness tree and verifies chec
       'commit','--quiet','-m','Pinned synthetic suite']);
     const revision=git(['rev-parse','HEAD']);
     const {snapshot,sources}=acquireTest262GitSnapshot({suiteRoot:directory,revision});
+    assert.deepEqual(acquireTest262GitSnapshot({suiteRoot:directory}).snapshot,snapshot);
     assert.equal(Object.keys(snapshot.files).length,5);
     assert.equal(snapshot.acquisition.fullUpstreamTree,true);
     assert(!Object.hasOwn(snapshot.files,'README.md'));

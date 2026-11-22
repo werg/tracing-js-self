@@ -169,6 +169,20 @@ test('fresh machine and realm prevent script globals leaking between variants or
   }
 });
 
+test('source-bound variants cannot substitute parser, engine or host settings for the actual runner',()=>{
+  const profile=ownedTest262Profile();
+  for(const changed of [
+    {...profile,parser:{...profile.parser,version:'substituted'}},
+    {...profile,parser:{...profile.parser,ecmaVersion:2015}},
+    {...profile,hostProfile:{...profile.hostProfile,reference:{...profile.hostProfile.reference,node:'substituted'}}}
+  ])for(const {owned,reference} of both('assert.sameValue(1,1);',{profile:changed})){
+    assert.equal(owned.status,'infrastructure_error');assert.equal(reference.status,'infrastructure_error');
+    assert.equal(owned.executionPerformed,false);assert.equal(reference.executionPerformed,false);
+    assert.match(owned.reason,/actual parser, runtime or execution settings/);
+  }
+  assert.equal(ownedTest262Profile({referenceTimeoutMs:5000}).hostProfile.reference.timeoutMs,5000);
+});
+
 test('missing original includes, changed bytes, hosts and modules keep distinct dispositions',()=>{
   const [missing]=fixture('assert.sameValue(1,1);',{metadata:'includes: [missing.js]\n'});
   assert.equal(executeOfficialTest262Variant(missing).status,'environment_unavailable');

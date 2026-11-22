@@ -10,7 +10,7 @@ export const CONFORMANCE_STAGES=Object.freeze([
 ]);
 export const CONFORMANCE_DISPOSITIONS=Object.freeze([
   'passed','failed','unsupported','resource_limited','environment_unavailable',
-  'not_selected','not_run','blocked_by_prior_stage','infrastructure_error'
+  'not_selected','not_run','blocked_by_prior_stage','infrastructure_error','interrupted'
 ]);
 const prerequisites={
   parseStatic:[],ownedExecution:['parseStatic'],independentReference:[],
@@ -357,6 +357,18 @@ export function createTest262Campaign({catalog,selectedIds=null,implementation}=
     rows:catalog.variants.map(variant=>({id:variant.id,path:variant.path,mode:variant.mode,selected:selected.has(variant.id),
       stages:Object.fromEntries(CONFORMANCE_STAGES.map(stage=>[stage,{status:selected.has(variant.id)?'not_run':'not_selected'}])),
       attempts:[]}))};
+}
+
+/** Stable source-family shards: strict/sloppy variants stay together and adding
+ * another source never shifts previously assigned paths to another shard. */
+export function selectTest262Shard(variants,{index,count}={}){
+  if(!Array.isArray(variants)||!Number.isSafeInteger(count)||count<1||
+     !Number.isSafeInteger(index)||index<0||index>=count)
+    throw new TypeError('Test262 shard requires a positive count and an index between zero and count - 1');
+  return variants.filter(variant=>{
+    if(!safeTest262Path(variant.path))throw new TypeError('Unsafe Test262 shard source path');
+    return BigInt('0x'+sha(variant.path).slice(0,16))%BigInt(count)===BigInt(index);
+  });
 }
 
 /** Reject incompatible resume before consuming an old row or writing evidence. */
