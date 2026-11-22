@@ -1,0 +1,23 @@
+{
+  "schema": "semantic-v8-task-normalization-counts/1",
+  "sourceRevision": "d726bf4381fb78c8852656dce84d55a3ff2785b4",
+  "localEquivalent": "0799b39709ad35a32fc4439f31d270185ea838c9",
+  "sourceTree": "fc2431497aca275ef1edf89029ddcd81664a1c19",
+  "leaves": 106,
+  "passed": 106,
+  "failed": 0,
+  "skipped": 0,
+  "originalLeaves": 69,
+  "missingOriginalNames": [],
+  "newNormalizationLeaves": 33,
+  "newReadHashLeaves": 4,
+  "nodeReporterTests": 119,
+  "testFiles": [
+    "test/qualification-progress.test.js",
+    "test/v8-release-task-binding.test.js",
+    "test/v8-release-campaign.test.js",
+    "test/v8-release-task-normalization.test.js"
+  ],
+  "nativeAdmissions": 0,
+  "optimizerUpdates": 0
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "semantic-v8-task-normalization-initial-red/1",
+  "producerRevision": "7c20124f3d89dfe1a8d5e892238e7b7f92589720",
+  "producerTree": "13a2497fdd19ca5de94c86ba24a54f04251e808f",
+  "testBlob": "45684535c5d79e3d60d0657fa97ea3cca7cafdc8",
+  "leaves": 25,
+  "passed": 7,
+  "failed": 18,
+  "skipped": 0,
+  "classification": {
+    "confirmedHelperCorrespondenceFailures": 17,
+    "invalidPositiveFixture": 1
+  },
+  "fixtureLimitation": "The initial namespace positive used only a statically lowered property access; it did not activate namespace-plan execution and actual source generation rejected null custody. This case is not counted as a helper defect.",
+  "nativeAdmissions": 0,
+  "optimizerUpdates": 0,
+  "files": {
+    "task-normalization-observations.json": {
+      "bytes": 4446,
+      "sha256": "11e208e9bf74791d6eb0db25849802d2f5ddc5face4ce7b5fb7cb0abbbc05df6"
+    },
+    "test-source.txt": {
+      "bytes": 6870,
+      "sha256": "63aa8a3a9e270ef43451d92b4b661be66ba7d76f81b0ceca4745a1349fefdf37"
+    },
+    "tests.log": {
+      "bytes": 19032,
+      "sha256": "925536a60f23295c35fee8037f31e45d1aff22b196af7fd778405acdaeeb5bae"
+    },
+    "tests.xml": {
+      "bytes": 26248,
+      "sha256": "41256b4e0937a3046fa7cc31d59f376a070b7e353712e94bf8f79005d4ff7822"
+    }
+  }
+}
