@@ -21,6 +21,8 @@ import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIEL
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8} from './protocol-promise-executor-v8.js';
 import {ASYNC_CALL_PROFILE_V8,ASYNC_CALL_STATE_V8,ASYNC_CALL_FIELDS_V8} from './protocol-async-call-v8.js';
+import {BOUND_MODULE_SCHEDULER_PLAN_V8} from './module-scheduler-plan-v8.js';
+import {MODULE_SCHEDULER_PROFILE_V8,MODULE_SCHEDULER_LEDGER_FIELDS_V8} from './protocol-module-scheduler-v8.js';
 
 export const SEMANTIC_V8_DEFINITION=Object.freeze({
   execution:REGION_EXECUTION_VERSION,trace:REGION_TRACE_VERSION,context:REGION_CONTEXT_VERSION,
@@ -28,6 +30,7 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
   publicFields:['schema','traceFormat','contextFormat','representation','profile','timeline'],
   envelopeFields:['sequence','mode','kind','fields'],
   program:{schema:REGION_PROGRAM_VERSION,fields:['schema','traceFormat','profile','source','entry','sourceDigest','regions','algorithm','definitionDigest'],
+    optionalFields:['moduleNamespacePlan','moduleSchedulerPlan'],
     sourceCorrespondence:'Independently rechecked producer evidence; public hashes alone do not certify source truth.'},
   entry:{fields:['definition','region','regionDigest','visibleThrough','stateDigest'],
     authority:'trusted-host-envelope',supervised:false,state:'entire shared continuation'},
@@ -61,6 +64,11 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       storage:'Retained asyncCall metadata belongs to its internal execution Promise; asyncFunction marks its callable closure.',
       capabilities:'First await detaches the child and restores its caller scope. Later continuations resume in the realm FIFO with the same receiver, live capture cells, and execution Promise. Child completion settles that Promise without completing its parent invocation.',
       boundaries:'Async Promise callbacks, Promise adoption, thenable assimilation and implicit scheduler completion require separate profiles.'},
+    moduleScheduler:{profile:MODULE_SCHEDULER_PROFILE_V8,planSchema:BOUND_MODULE_SCHEDULER_PLAN_V8,heapFields:MODULE_SCHEDULER_LEDGER_FIELDS_V8,
+      storage:'One logical module-scheduler heap node bound to the active observed program source, entry, acyclic module plan, exact driver functions and completion reaction source offsets.',
+      initialization:'The first generated record initializes the fresh entry ledger using its exact active plan digest. The logical ledger cannot escape into guest values.',
+      transitions:'Validated scoped calls, owned async awaits and resumes, exact completion reaction dispatch and synchronous driver completion derive module starts, dependency scheduling, settlement and failure propagation from the same shared frames, Promises, jobs and source record objects. No selected record supplies lifecycle facts.',
+      boundaries:'Compact and algorithm routes, cyclic evaluation, namespace composition, dynamic import, cross-invocation retained ledgers and general production module admission require separate qualification. End requires every bounded module lifecycle to settle.'},
     construction:{schema:CONSTRUCTION_STATE_V8_SCHEMA,fields:CONSTRUCTION_STATE_V8_FIELDS,initial:null,
       callableFields:CALLABLE_STATE_V8_FIELDS,frameFields:CONSTRUCTION_FRAME_V8_FIELDS,
       privateElementFields:['kind','value','version'],

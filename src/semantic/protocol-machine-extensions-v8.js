@@ -27,7 +27,15 @@ import {MODULE_NAMESPACE_PROFILE_V8,MODULE_NAMESPACE_RECORD_FIELDS,validateModul
 import {ASYNC_CALL_PROFILE_V8,ASYNC_CALL_RECORD_FIELDS,validateAsyncCallRecordV8,applyAsyncCallRecordV8,
   restoreAsyncCallStateV8,assertAsyncCallV8,assertAsyncCallNextV8,
   allowsAsyncCallInternalSchedulerV8,allowsAsyncCallWithoutStackV8} from './protocol-async-call-v8.js';
+import {MODULE_SCHEDULER_PROFILE_V8,MODULE_SCHEDULER_RECORD_FIELDS,validateModuleSchedulerRecordV8,applyModuleSchedulerRecordV8,
+  validateBoundModuleSchedulerStateV8,assertBoundModuleSchedulerNextV8} from './protocol-module-scheduler-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
+  id:MODULE_SCHEDULER_PROFILE_V8,recordFields:MODULE_SCHEDULER_RECORD_FIELDS,
+  validateRecord:validateModuleSchedulerRecordV8,applyRecord:applyModuleSchedulerRecordV8,
+  restoreState:controller=>validateBoundModuleSchedulerStateV8(controller),
+  assertNext:assertBoundModuleSchedulerNextV8,hasRichState:node=>node.kind==='module-scheduler',
+  allowsInternalScheduler:controller=>Boolean(controller.moduleSchedulerPlan)
+}),Object.freeze({
   id:ASYNC_CALL_PROFILE_V8,recordFields:ASYNC_CALL_RECORD_FIELDS,validateRecord:validateAsyncCallRecordV8,
   applyRecord:applyAsyncCallRecordV8,restoreState:(controller,_snapshot,api)=>restoreAsyncCallStateV8(controller,api),
   assertNext:assertAsyncCallNextV8,assertCall:assertAsyncCallV8,
