@@ -144,7 +144,7 @@ function withoutChildState(child){
   return immutable;
 }
 
-function checkSelectionLedgers(packet,session,native,transport){
+function checkSelectionLedgers(packet,session,native,transport,allowTerminal=false){
   const all=new Map();
   for(const [kind,rows]of [['coordinator',packet.coordinatorAttempts],['child',packet.childAttempts]]){
     demand(Array.isArray(rows),kind+' attempts are missing');
@@ -161,7 +161,8 @@ function checkSelectionLedgers(packet,session,native,transport){
           row.commitReceipt?.schema==='semantic-orchestration-commit/8'&&row.commitReceipt.committed===true&&
           row.commitReceipt.selectionId===row.selection.selectionId&&row.action&&
           isDeepStrictEqual(row.action,action),'coordinator commit evidence is not an exact positive receipt');
-        demand(!['track_complete','track_cancel'].includes(action.name),
+        demand(!['track_complete','track_cancel'].includes(action.name)||
+          allowTerminal&&kind==='coordinator'&&expectedLocal===rows.length-1&&action.name==='track_complete',
           'terminal orchestration cannot be restored as active work');
       }else{
         demand(!Object.hasOwn(row,'family')&&['accepted','stale'].includes(row.status)&&
@@ -380,7 +381,7 @@ function checkCoordinatorHistory(packet,nativeSession,all,session){
   else demand(!joined||joined.completed,'coordinator-ready continuation has an incomplete join');
 }
 
-function checkContinuation(packet,nativeSession){
+function checkContinuation(packet,nativeSession,allowTerminal=false,bridge=null){
   const continuation=packet.continuation,state=packet.state,policy=packet.policy;
   demand(keys(continuation,['phase','coordinatorSelections','joinedAttempt','joinedDependency','elapsedMs'])&&
     ['coordinator-ready','child-ready'].includes(continuation.phase)&&
@@ -391,7 +392,7 @@ function checkContinuation(packet,nativeSession){
     'explicit active continuation phase or consumed coordinator budget differs');
   demand(keys(state,nativeStatusKeys)&&state.schema==='semantic-orchestration-state/8'&&state.session===packet.session&&
     state.origin==='model'&&state.sourceAdmissionClaim===false&&
-    ['active','waiting'].includes(state.status)&&
+    (['active','waiting'].includes(state.status)||allowTerminal&&state.status==='completed')&&
     state.pendingSelection===null&&state.publicDigest===hashAlgorithmData(packet.bridge.public)&&
     isDeepStrictEqual(state.children,nativeSession.orchestration.children)&&
     isDeepStrictEqual(state.decisions,nativeSession.orchestration.decisions)&&
@@ -425,6 +426,17 @@ function checkContinuation(packet,nativeSession){
         row.execution?.invocation_id===dependency.invocation)&&
       !packet.childAttempts.some(row=>row.invocationId===dependency.invocation),
       'joined child is not at the exact runnable pre-execution boundary');
+  }else if(allowTerminal){
+    demand(continuation.joinedAttempt===null&&continuation.joinedDependency===null&&state.status==='completed'&&
+      activeChildren.length===0&&state.children.every(child=>child.completion?.schema==='semantic-child-completion/8')&&
+      state.published.length===state.children.length&&state.children.every(child=>
+        state.published.includes(child.execution.invocation_id)),
+      'completed coordinator cut still has unpublished or incomplete children');
+    const latest=packet.coordinatorAttempts.at(-1);
+    demand(latest?.status==='committed'&&latest.action?.name==='track_complete'&&
+      latest.commitReceipt?.committed===true&&
+      coordinatorTrack?.status==='completed',
+      'completed cut has no exact final coordinator commit');
   }else{
     demand(continuation.joinedAttempt===null&&continuation.joinedDependency===null&&state.status==='active'&&
       activeChildren.every(row=>row.bootstrap_ready===true),'coordinator-ready continuation contains an unbootstrapped child');
@@ -438,7 +450,7 @@ function checkContinuation(packet,nativeSession){
 }
 
 /** Verify a complete mixed native/host cut before any native restoration RPC. */
-export function verifySelectedOrchestrationCheckpoint(packet,policy,{initialPublic}={}){
+export function verifySelectedOrchestrationCheckpoint(packet,policy,{initialPublic,allowTerminal=false,returnBridge=false}={}){
   stableAlgorithmJSON(packet);
   demand(keys(packet,['schema','policy','session','initialPublic','initialState','state','bridge','contexts',
     'coordinatorAttempts','childAttempts','childRejections','staleRetries','continuation','native','digest'])&&
@@ -539,8 +551,8 @@ export function verifySelectedOrchestrationCheckpoint(packet,policy,{initialPubl
     Object.keys(native.closedSessions).length===0&&
     !native.attempts.some(row=>row.session!==packet.session||!['committed','semantic-rejected'].includes(row.status)),
     'native checkpoint contains another session or an unacknowledged attempt');
-  const all=checkSelectionLedgers(packet,packet.session,native,transport);
+  const all=checkSelectionLedgers(packet,packet.session,native,transport,allowTerminal);
   checkCoordinatorHistory(packet,native.sessions[packet.session],all,packet.session);
-  checkContinuation(packet,native.sessions[packet.session]);
-  return true;
+  checkContinuation(packet,native.sessions[packet.session],allowTerminal,bridge);
+  return returnBridge?bridge:true;
 }

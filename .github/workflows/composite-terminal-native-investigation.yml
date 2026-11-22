@@ -1,0 +1,114 @@
+name: Composite terminal shared-native controls
+
+on:
+  push:
+    branches: [codex/v8-composite-terminal-validation-20261122]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: composite-history-native-${{ github.ref }}
+  # Preserve the running full-population evidence while incremental commits are
+  # published. Later work waits for the active gate instead of discarding it.
+  cancel-in-progress: false
+
+jobs:
+  shared-native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        population: [interoperability]
+    defaults:
+      run:
+        shell: bash
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      TRACING_JS_SELF_ROOT: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_NATIVE_SOURCE_PRODUCER: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/tokenizer.json
+      MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+      MEGATOKEN_PYTHON: python
+      SEMANTIC_V8_NATIVE_POLICY: ${{ github.workspace }}/tracing-js-self/contracts/semantic-native-policy-v8.json
+      V8_POPULATION: ${{ matrix.population }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: tracing-js-self/.nvmrc
+      - id: policy
+        name: Read the exact independent consumer pin
+        working-directory: tracing-js-self
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,appendFileSync} from 'node:fs';
+          const policy=JSON.parse(readFileSync('contracts/semantic-native-policy-v8.json'));
+          if(policy.consumerRepository!=='werg/megatoken'||!/^[0-9a-f]{40}$/.test(policy.consumerRevision))
+            throw new Error('Exact independent consumer repository and commit required');
+          appendFileSync(process.env.GITHUB_OUTPUT,`consumer=${policy.consumerRevision}\n`);
+          JS
+      - uses: actions/checkout@v4
+        with:
+          repository: werg/megatoken
+          ref: ${{ steps.policy.outputs.consumer }}
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - name: Install pinned native dependencies and producer
+        run: |
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+      - name: Acquire the exact production tokenizer
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, shutil
+          from pathlib import Path
+          from huggingface_hub import hf_hub_download
+          from megatoken.generation.codec import LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256
+          path = Path(os.environ['MEGATOKEN_TOKENIZER_JSON'])
+          shutil.copyfile(hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION), path)
+          policy = json.loads(Path(os.environ['SEMANTIC_V8_NATIVE_POLICY']).read_text())
+          digest = hashlib.sha256(path.read_bytes()).hexdigest()
+          assert digest == LING_TOKENIZER_SHA256 == policy['tokenizerSha256']
+          PY
+      - name: Check identical contracts and source-bound interoperability
+        run: |
+          npm run semantic:v8:contract --prefix tracing-js-self 2>&1 | tee "$RUNNER_TEMP/semantic-v8-contract.log"
+          cmp tracing-js-self/contracts/semantic-execution-v8.json megatoken/src/megatoken/data/contracts/semantic-execution-v8.json
+      - name: Check the ordinary coordinator and source-qualified teacher boundaries
+        working-directory: tracing-js-self
+        run: |
+          node --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \
+            test/semantic-selected-orchestration-v8.test.js test/semantic-selected-orchestration-checkpoint-v8.test.js \
+            test/semantic-native-orchestration-recovery-v8.test.js \
+            test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js \
+            test/semantic-source-session-v8.test.js test/semantic-region-support-cohort.test.js \
+            test/semantic-qualification-population-v8.test.js test/qualify-support-lifecycle.test.js \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-transport-tests.xml"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-transport-tests.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('Every paired V8 transport control, including the Python contract check, must run and pass')
+          print(f'{len(cases)} paired transport controls passed with zero skips')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: composite-history-shared-native
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/semantic-v8-contract.log
+            ${{ runner.temp }}/semantic-v8-transport-tests.xml

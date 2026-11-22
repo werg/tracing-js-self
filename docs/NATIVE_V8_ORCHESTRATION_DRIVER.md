@@ -277,3 +277,24 @@ lost acknowledgement before coordinator selection and after child completion.
 Their new hosted results remain pending at this commit. Their final lexical
 decoder is an explicit deterministic fixture, so a pass does not qualify learned
 model quality, arbitrary external side effects or distributed ownership.
+
+
+### Composite terminal disposition
+
+Automatic composite history can retain a successful `track_complete` as a nonresumable
+terminal disposition. Before closing, the driver stores and verifies the full completed
+coordinator checkpoint. After native close succeeds, it stores the native transport
+checkpoint whose model state has no open session and contains the exact closed-session
+tombstone from the completed checkpoint. The terminal event binds both checkpoints,
+the completion fence, and the acknowledged history chain.
+
+`restoreLatest` handles this terminal head as a disposition. It reexecutes the native
+closed-session checkpoint on a fresh transport and requires zero restored active sessions,
+zero host dispatches, and exact attempt consumption. It does not restore the completed
+coordinator as active work. Lost close acknowledgements, lost terminal history
+acknowledgements, cancellation, and unknown terminal outcomes remain fenced and are
+not converted into a completed disposition.
+
+A completed disposition records coordinator completion and the native closed-session
+tombstone. It does not assert source correspondence, source validation, or promotion:
+`sourceValidated` remains false and `qualification.defaultPromotion` remains false.
