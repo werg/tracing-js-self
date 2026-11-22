@@ -142,9 +142,19 @@ def checked_draft(api, receipt, entry):
     return release
 
 
-def retain_file(api, release, path, destination, content_type):
+def retain_file(api, release, path, destination, content_type, *, expected_size, expected_sha):
     name, size = path.name, path.stat().st_size
-    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    require(path.is_file() and not path.is_symlink() and size == expected_size,
+            "Original retained input changed type or size before upload")
+    checksum, counted = hashlib.sha256(), 0
+    with path.open("rb") as stream:
+        while block := stream.read(min(custody.CHUNK, expected_size - counted + 1)):
+            counted += len(block)
+            require(counted <= expected_size, "Original retained input grew before upload")
+            checksum.update(block)
+    digest = checksum.hexdigest()
+    require(counted == expected_size and digest == expected_sha,
+            "Original retained input changed its independently pinned bytes before upload")
     assets = api.json("GET", PREFIX + f"/releases/{release['id']}/assets?per_page=100")
     require(type(assets) is list and len(assets) < 100, "Evidence asset inventory exceeds its bound")
     matching = [asset for asset in assets if asset.get("name") == name]
@@ -202,7 +212,8 @@ def retain_entry(api, entry, output):
     release = checked_draft(api, archive, entry)
     retained_logs = []
     for job, path in logs:
-        asset = retain_file(api, release, path, output / (path.name + ".reread"), "text/plain; charset=utf-8")
+        asset = retain_file(api, release, path, output / (path.name + ".reread"), "text/plain; charset=utf-8",
+                            expected_size=job["bytes"], expected_sha=job["sha256"])
         retained_logs.append({"originalJob": job, "retainedAsset": asset})
     checked_draft(api, archive, entry)
     identity = hashlib.sha256(canonical(entry)).hexdigest()
@@ -216,8 +227,10 @@ def retain_entry(api, entry, output):
                "archiveExtracted": False, "archiveExecuted": False, "optimizerUpdates": 0,
                "learnedSuccess": None, "productionPromotion": False}
     path = output / f"complete-custody-{entry['artifactId']}-{identity[:16]}.json"
-    path.write_bytes(canonical(receipt))
-    receipt_asset = retain_file(api, release, path, output / "complete-custody.reread.json", "application/json")
+    receipt_bytes = canonical(receipt)
+    path.write_bytes(receipt_bytes)
+    receipt_asset = retain_file(api, release, path, output / "complete-custody.reread.json", "application/json",
+                                expected_size=len(receipt_bytes), expected_sha=hashlib.sha256(receipt_bytes).hexdigest())
     checked_draft(api, archive, entry)
     return {"label": entry["label"], "sourceConclusion": entry["conclusion"], "entryIdentity": identity,
             "release": archive["release"], "archive": archive["archive"], "completeJobLogs": retained_logs,
