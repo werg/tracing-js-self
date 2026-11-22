@@ -152,6 +152,8 @@ export function mergeGenerationShardReceipts(plan,receipts){
     const expected=plan.candidates.filter(row=>row.shard===receipt.index);
     ensure(receipt.complete===true&&receipt.expected===expected.length&&receipt.rows.length===expected.length,
       'Shard is incomplete or cancelled; resume durable candidates before merging');
+    ensure(receipt.attempted===receipt.rows.length&&Array.isArray(receipt.unrun)&&receipt.unrun.length===0,
+      'Complete shard receipt has inconsistent attempted/unrun accounting');
     for(const row of receipt.rows){
       const candidate=expected.find(item=>item.id===row.id);
       ensure(candidate&&!ids.has(row.id)&&row.taskDigest===candidate.taskDigest&&

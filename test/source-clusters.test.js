@@ -119,3 +119,14 @@ test('inventories have no preselected family ceiling and fingerprints must conta
   assert.throws(()=>clusterOwnedSources([row]),/Invalid owned source profile/);
  }
 });
+
+test('source labels with object-prototype names retain their actual clone identity',()=>{
+ const names=['__proto__','constructor','toString'];
+ const profiles=names.map(family=>profile(family,'train',first));
+ const result=clusterOwnedSources(profiles);
+ assert.equal(result.distinctSourceClusters,1);
+ for(const name of names){
+  assert(Object.hasOwn(result.keyByFamily,name));
+  assert.equal(result.keyByFamily[name],result.clusters[0].id);
+ }
+});

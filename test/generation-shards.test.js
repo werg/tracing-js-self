@@ -47,6 +47,9 @@ test('actual single and sharded generation have equivalent final public/certific
   const forged=structuredClone(parts);forged[0].rows[0].split='changed';
   const {digest,...payload}=forged[0];forged[0].digest=identityHash(payload);
   assert.throws(()=>mergeGenerationShardReceipts(sharded,forged),/frozen split/);
+  const unrun=structuredClone(parts);unrun[0].unrun.push({id:'unplanned',status:'unrun'});
+  const {digest:unused,...changed}=unrun[0];unrun[0].digest=identityHash(changed);
+  assert.throws(()=>mergeGenerationShardReceipts(sharded,unrun),/attempted\/unrun accounting/);
 });
 
 test('cancellation preserves the durable prefix and plain resume completes without repeating receipts',async t=>{

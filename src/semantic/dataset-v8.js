@@ -98,6 +98,8 @@ export function resolveRegionFamilyRegistry(members,options={}){
   if(bound.length){
     registry=bound[0].splitIdentity.registry;verifyRegionFamilyRegistry(registry);
     if(Object.hasOwn(options,'seed')&&options.seed!==registry.seed)fail('a frozen split seed cannot be replaced');
+    for(const key of ['nearThreshold','cloneBudget'])if(Object.hasOwn(options,key)&&
+      !isDeepStrictEqual(options[key],registry[key]))fail('frozen clone audit settings cannot be replaced: '+key);
     for(const key of ['families','sourceDigests','coreDigests'])if(Object.hasOwn(options,key)){
       if(!Array.isArray(options[key])||options[key].some(value=>!text(value))||
         new Set(options[key]).size!==options[key].length||
@@ -118,8 +120,8 @@ export function resolveRegionFamilyRegistry(members,options={}){
   return {registry,identityById,members};
 }
 export function prepareRegionFamilyRegistry(candidates,options={}){
-  if(!Array.isArray(candidates)||!candidates.length||candidates.length>20000)
-    fail('one to 20000 candidates are required');
+  if(!Array.isArray(candidates)||!candidates.length)
+    fail('a nonempty candidate inventory is required');
   const seen=new Map(),members=candidates.map((candidate,index)=>{
     const member=regionFamilyMembership(candidate,index),prior=seen.get(member.id);
     if(prior){
@@ -171,14 +173,15 @@ function disposition(member,identity,extra){
     sourceDigest:identity?.sourceDigest??null,coreDigest:identity?.coreDigest??null,
     registryDigest:identity?.registryDigest??null,componentId:identity?.componentId??null,
     split:identity?.split??null,examples:0,generatedTokens:0,nativeAdmitted:false,
-    optimizerSteps:0,learningClaim:null,...extra};
+    optimizerSteps:0,learningClaim:null,
+    ...(member.candidate?.originalLine!==undefined?{originalLine:member.candidate.originalLine}:{}),...extra};
 }
 
 /** No partial episode or failed admission is silently retained as training data. */
 export async function buildRegionDataset(candidates,options={}){
   const settings=configuration(options),{tokenizer,eosTokenId,maxContextTokens,allowLocal,maxExamplesPerEpisode}=settings;
   const registryOptions={};
-  for(const key of ['seed','families','sourceDigests','coreDigests'])
+  for(const key of ['seed','families','sourceDigests','coreDigests','nearThreshold','cloneBudget'])
     if(Object.hasOwn(options,key))registryOptions[key]=options[key];
   const prepared=prepareRegionFamilyRegistry(candidates,registryOptions);
   const examplesBySplit=bySplit(),artifactsBySplit=bySplit(),dispositions=[];
@@ -244,7 +247,8 @@ export async function buildRegionDataset(candidates,options={}){
     registryDigest:prepared.registry?.digest??null,registryMembers:prepared.registry?.sources.length??0,
     registryComponents:prepared.registry?.components.length??0,holdouts:structuredClone(prepared.registry?.holdouts??
       {families:[],sourceDigests:[],coreDigests:[]}),
-    inputCandidates:candidates.length,registeredCandidates:prepared.members.filter(row=>row.exactSource).length,
+    inputCandidates:candidates.length,...(options.inputEvidence?{inputEvidence:clean(options.inputEvidence)}:{}),
+    registeredCandidates:prepared.members.filter(row=>row.exactSource).length,
     exactSourceVariants:new Set(prepared.members.filter(row=>row.exactSource).map(row=>digest({source:row.source,entry:row.entry}))).size,
     declaredFamilies:new Set(prepared.members.map(row=>row.family).filter(Boolean)).size,
     sourceQualifiedCandidates:prepared.members.filter(row=>row.qualified&&!row.duplicateOf).length,

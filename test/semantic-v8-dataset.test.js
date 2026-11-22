@@ -62,6 +62,49 @@ test('unrelated detailed and refused sources never share a synthetic null-core c
   assert.throws(()=>buildRegionFamilyRegistry([row('pure','affine',affine)].map(x=>({...x,coreDigest:null})),{seed:13}),/source-derived/);
 });
 
+test('current v8 registry groups common-shingle clones and holds out the entire related population',()=>{
+  const body=Array.from({length:30},(_,i)=>'o.value'+i+'=input+'+i+';').join('');
+  const sources=Array.from({length:140},(_,i)=>row('clone-'+i,'family-'+i,
+    '"use strict";function run(o,input){'+body+'o.marker='+i+';return o;}'));
+  const registry=buildRegionFamilyRegistry(sources,{seed:71,families:['family-0']});
+  assert.equal(registry.components.length,1);
+  assert.equal(registry.components[0].split,'test');
+  assert.equal(registry.diagnostics.cloneAudit.complete,true);
+  assert.equal(registry.diagnostics.cloneAudit.comparedSourceVariants,140);
+  assert.equal(registry.diagnostics.nearPairs,140*139/2);
+  assert(registry.sources.every(source=>source.sourceFingerprintStatus==='tokenized'));
+  assert.equal(verifyRegionFamilyRegistry(registry).valid,true);
+  assert.deepEqual(buildRegionFamilyRegistry([...sources].reverse(),{seed:71,families:['family-0']}),registry);
+});
+
+test('current v8 clone accounting rejects forged fingerprints and retains lexical uncertainty',()=>{
+  const sources=[row('quoted','bad-string','"unterminated'),row('comment','empty','/* no tokens */'),
+    row('valid','valid',detailA)];
+  const registry=buildRegionFamilyRegistry(sources,{seed:17,families:['empty']});
+  const audit=registry.diagnostics.cloneAudit;
+  assert.equal(audit.complete,false);assert.equal(audit.assessedSources,1);
+  assert.deepEqual(audit.unassessedSources,['comment','quoted']);
+  assert.equal(audit.unassessedPolicy,'same-component');
+  assert.equal(registry.components.find(component=>component.members.includes('empty')).split,'test');
+  assert(registry.components.find(component=>component.members.includes('empty')).members.includes('bad-string'));
+  assert.equal(verifyRegionFamilyRegistry(registry).valid,true);
+  const forged=structuredClone(registry);forged.sources.find(source=>source.id==='valid').sourceFingerprint.alphaHash='0'.repeat(64);
+  assert.throws(()=>verifyRegionFamilyRegistry(resign(forged)),/fingerprint differs/);
+  const costs=structuredClone(registry);costs.diagnostics.cloneAudit.costs.comparisons++;
+  assert.throws(()=>verifyRegionFamilyRegistry(resign(costs)),/changed/);
+  assert.throws(()=>buildRegionFamilyRegistry([row('valid','valid',detailA)],{seed:17,cloneBudget:{maxIndexEntries:0}}),
+    error=>error.status==='resource_exhausted'&&error.complete===false);
+});
+
+test('input expansions do not multiply current v8 clone comparison work or impose a corpus ceiling',()=>{
+  const sources=Array.from({length:20001},(_,i)=>row('input-'+i,'same-family',affine));
+  const registry=buildRegionFamilyRegistry(sources,{seed:17,cloneBudget:{maxComparisons:0}});
+  assert.equal(registry.sources.length,20001);
+  assert.equal(registry.diagnostics.cloneAudit.comparedSourceVariants,1);
+  assert.equal(registry.diagnostics.cloneAudit.costs.comparisons,0);
+  assert.equal(registry.components.length,1);
+});
+
 test('rehashing cannot relabel a frozen member, change a component, substitute v7 or erase a holdout',()=>{
   const source=row('a','held-out',affine,['original']);
   const registry=buildRegionFamilyRegistry([source],{seed:7,families:['original']});
@@ -230,6 +273,32 @@ test('CLI retains malformed JSONL as a refusal beside source-qualified artifacts
     const report=JSON.parse(stdout);assert.equal(report.inputCandidates,3);assert.equal(report.admitted,false);
     const dispositions=(await readFile(join(output,'dispositions.jsonl'),'utf8')).trim().split('\n').map(JSON.parse);
     assert.equal(dispositions.length,3);assert.equal(dispositions[1].category,'invalid-jsonl');
+    assert.equal(dispositions[1].originalLine,'{invalid-json}');
     assert.match(dispositions[1].reason,/Line 2/);assert.equal(dispositions[2].family,'refused-write');
+    const manifest=JSON.parse(await readFile(join(output,'manifest.json'),'utf8'));
+    assert.equal(manifest.inputEvidence.sha256,createHash('sha256').update(await readFile(input)).digest('hex'));
+    assert.equal(manifest.inputEvidence.complete,true);
+  }finally{await rm(parent,{recursive:true,force:true});}
+});
+
+test('CLI resource exhaustion preserves original inputs and counts without publishing partial training data',async()=>{
+  const parent=await mkdtemp(join(tmpdir(),'semantic-v8-budget-'));
+  try{
+    const input=join(parent,'input.jsonl'),module=join(parent,'tokenizer.mjs'),output=join(parent,'corpus');
+    const bytes=JSON.stringify(refused)+'\n{invalid-json}\n';
+    await writeFile(input,bytes);
+    await writeFile(module,'export const tokenizer={identity:"'+tokenizer.identity+'",encode:s=>[...Buffer.from(s)],decode:ids=>Buffer.from(ids)};export const eosTokenId=256;');
+    await assert.rejects(promisify(execFile)(process.execPath,['tools/export-semantic-v8.mjs','--input',input,
+      '--tokenizer-module',module,'--max-context','1000000','--seed','17','--out',output,'--allow-local',
+      '--clone-max-index-entries','0'],{cwd:new URL('..',import.meta.url),maxBuffer:1000000}),
+      error=>error.code!==0&&/Source-clone indexEntries resource budget exhausted/.test(error.stderr));
+    const failure=JSON.parse(await readFile(output+'.failure.json','utf8'));
+    assert.equal(failure.status,'resource_exhausted');assert.equal(failure.admitted,false);
+    assert.equal(failure.complete,false);assert.equal(failure.costs.indexEntries,0);
+    assert.equal(failure.budget.maxIndexEntries,0);assert.equal(failure.input.complete,true);
+    assert.equal(failure.input.sha256,createHash('sha256').update(bytes).digest('hex'));
+    assert.equal(failure.candidates.length,2);assert.deepEqual(failure.candidates[0],refused);
+    assert.equal(failure.candidates[1].originalLine,'{invalid-json}');
+    await assert.rejects(readFile(join(output,'manifest.json')),error=>error.code==='ENOENT');
   }finally{await rm(parent,{recursive:true,force:true});}
 });

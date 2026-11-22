@@ -86,7 +86,8 @@ export function clusterOwnedSources(profiles,{nearThreshold=0.92,cloneBudget={}}
   }else families.set(row.family,{family:row.family,split:row.split,
    fp:row.sourceFingerprint});
  }
- const rows=[...families.values()].sort((a,b)=>a.family.localeCompare(b.family));
+ const compare=(a,b)=>a<b?-1:a>b?1:0;
+ const rows=[...families.values()].sort((a,b)=>compare(a.family,b.family));
  const parents=rows.map((_,i)=>i);
  const find=i=>{while(parents[i]!==i){parents[i]=parents[parents[i]];i=parents[i];}return i;};
  const union=(i,j)=>{i=find(i);j=find(j);if(i!==j)parents[Math.max(i,j)]=Math.min(i,j);};
@@ -130,7 +131,7 @@ export function clusterOwnedSources(profiles,{nearThreshold=0.92,cloneBudget={}}
    const ids=postings.get(shingle)??[];ids.push(i);postings.set(shingle,ids);
   }
  }
- const groups=new Map(),keyByFamily={};
+ const groups=new Map(),keyByFamily=Object.create(null);
  for(let i=0;i<rows.length;i++){
   const root=find(i),members=groups.get(root)??[];
   members.push(rows[i]);groups.set(root,members);
@@ -143,7 +144,7 @@ export function clusterOwnedSources(profiles,{nearThreshold=0.92,cloneBudget={}}
   const id=hash(members).slice(0,24);
   for(const member of members)keyByFamily[member]=id;
   return {id,members,split:splits[0]};
- }).sort((a,b)=>a.members[0].localeCompare(b.members[0]));
+ }).sort((a,b)=>compare(a.members[0],b.members[0]));
  return {schema:'owned-source-clusters/1',distinctFamilies:rows.length,
   distinctSourceClusters:clusters.length,nearPairs,
   clusters:clusters.filter(x=>x.members.length>1),keyByFamily,
