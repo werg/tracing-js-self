@@ -1,0 +1,55 @@
+{
+  "schema": "semantic-v8-evidence-files/1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5316,
+      "sha256": "bf370ef777c2b4baabefb7a458e60e4c6bf09c0a1efe2979dfa34ebddc9024e3"
+    },
+    {
+      "path": "complete-job.log",
+      "bytes": 208237,
+      "sha256": "870014e9756f439bc66062ea7ad4172ef4658ddec9bae579bcc938c5a8f29241"
+    },
+    {
+      "path": "github-metadata.json",
+      "bytes": 18906,
+      "sha256": "58caaf06ef761e65e818d5c9570ce789a96a8d9e4c712b56ec535948e796488d"
+    },
+    {
+      "path": "independent-partial-audit.json",
+      "bytes": 156339,
+      "sha256": "1e1396f50d77dac711e2c2894d64384c294ff894ecd95919048df4b1dfb94740"
+    },
+    {
+      "path": "independent-partial-audit.log",
+      "bytes": 116,
+      "sha256": "d53bff5d3a73375b38abf0ec5df288be764735f5eb71ee833cac0fa71b81d2d4"
+    },
+    {
+      "path": "initial-reader-api-attempt.log",
+      "bytes": 590,
+      "sha256": "fe574af296838605db2fbf3a4d1444991416344200ffa408f101d35ce7baa85e"
+    },
+    {
+      "path": "original-artifact-members.json",
+      "bytes": 128029,
+      "sha256": "e56680ef8f33414be78ce39c837cc8a96ccee59aa51224e73a0d9218bab5e466"
+    },
+    {
+      "path": "original-reports.tar.xz",
+      "bytes": 885012,
+      "sha256": "6b08529e46dc51d259407284fe95ca1bfc443e528277e494f576dbe7b998c2d5"
+    },
+    {
+      "path": "retained-reports.json",
+      "bytes": 86913,
+      "sha256": "61d6d20d4802ab6b1925298a70285a92106a7959d7a099a4071a102931696b42"
+    },
+    {
+      "path": "summary.json",
+      "bytes": 4706,
+      "sha256": "202b7f6272b14d4c6882dd06eeb3610eaeb5eebcfaeab2b89e7ea65d13ea9fd4"
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "schema": "semantic-v8-hosted-incomplete-position-evidence/1",
+  "status": "failed-finite-training-timeout",
+  "runId": 45023684906,
+  "jobId": 137211919487,
+  "runUrl": "https://github.com/werg/tracing-js-self/actions/runs/45023684906",
+  "producerRevision": "9cf091e6ccc5add960ef0897576d0c391b199a65",
+  "optimizerNativeRevision": "1a69d9da3254b7568c831d12866a629c206cf4fe",
+  "contractDigest": "a952385535b9b5e19d737206286f6f26c149f7301c51b4b106fe3b1cae5ab55a",
+  "originalArtifact": {
+    "id": 14759987389,
+    "name": "semantic-v8-target-inventory-support",
+    "size_in_bytes": 175381869,
+    "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14759987389",
+    "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14759987389/zip",
+    "expired": false,
+    "created_at": "2026-11-22T15:15:19Z",
+    "expires_at": "2026-12-22T15:15:09Z",
+    "updated_at": "2026-11-22T15:15:19Z",
+    "digest": "sha256:6dc909ecc1c1ed7401fa5ceb1cba7006c07641d530a1550f16a7870af3e483af",
+    "workflow_run": {
+      "id": 45023684906,
+      "repository_id": 1429775465,
+      "head_repository_id": 1429775465,
+      "head_branch": "codex/v8-target-coverage-position-qualification-20261122",
+      "head_sha": "9cf091e6ccc5add960ef0897576d0c391b199a65"
+    }
+  },
+  "originalArtifactFileCount": 591,
+  "originalArtifactUnpackedBytes": 472784236,
+  "fullTargetCoverageQualified": false,
+  "failedStage": {
+    "stage": "train-full-target-window-pass",
+    "command": [
+      "python",
+      "-m",
+      "megatoken",
+      "train",
+      "--config",
+      "/home/runner/work/_temp/v8-support-lifecycle/coverage-training-config.json"
+    ],
+    "log": "train-full-target-window-pass.log",
+    "exitCode": 0,
+    "signal": null,
+    "error": "spawnSync python ETIMEDOUT",
+    "durationMs": 7224146
+  },
+  "observedActualOptimizerUpdates": {
+    "lifecycle": 2,
+    "interruptedCoverage": 314,
+    "total": 316
+  },
+  "originalCommandReportUpdateCounts": {
+    "lifecycle": 2,
+    "coverage": 0,
+    "total": 2
+  },
+  "counterDiscrepancy": "The command driver only finalized full-fit counts after success. Its original zero coverage count is preserved;314 actual committed updates are independently proven by raw metrics and interrupted checkpoint.",
+  "requiredCoverageUpdates": 348,
+  "remainingCoverageUpdates": 34,
+  "sourceQualification": {
+    "declared": 64,
+    "sourceQualified": 64,
+    "nativeAdmitted": 64,
+    "splits": {
+      "train": 48,
+      "validation": 12,
+      "test": 4
+    }
+  },
+  "partialPreparedCoverage": {
+    "sourcesWithRecordedTargets": 44,
+    "expectedTrainingSources": 48,
+    "observedLogicalTargets": 628,
+    "expectedLogicalTargets": 696,
+    "observedPhysicalTargets": 650,
+    "expectedPhysicalTargets": 720,
+    "missingPhysicalTargets": 70,
+    "actualPositionCounts": {
+      "lexical": 23519,
+      "reconstruction": 23519,
+      "structure": 2600,
+      "terminal": 1300,
+      "modality": 650
+    },
+    "expectedPositionCounts": {
+      "lexical": 26027,
+      "reconstruction": 26027,
+      "structure": 2880,
+      "terminal": 1440,
+      "modality": 720
+    }
+  },
+  "checkpointStateSha256": "93828a840122cc2e209e1c448396324595adef476d610770384291847fdc8499",
+  "independentAudit": {
+    "status": "partial-consistency-passed-full-coverage-failed",
+    "readerNativeRevision": "1a69d9da3254b7568c831d12866a629c206cf4fe",
+    "checkpointMetadataBindingsChecked": 3,
+    "optimizerUpdatesPerformed": 0,
+    "decoderForwardPassesPerformed": 0,
+    "observedOraclesConsistent": true,
+    "boundedResumeComparisonUnchanged": true
+  },
+  "hostedRuntime": {
+    "cuda_build": null,
+    "cudnn": null,
+    "devices": [],
+    "errors": [],
+    "ok": true,
+    "packages": {
+      "numpy": "2.5.5",
+      "safetensors": "0.8.0",
+      "tokenizers": "0.23.3",
+      "torch": "2.10.0+cpu",
+      "triton": null
+    },
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "python": "3.12.14",
+    "warnings": [
+      "CPU reference mode: CUDA kernels, memory fit, and throughput are unverified"
+    ]
+  },
+  "completeGithubJobLog": {
+    "path": "complete-job.log",
+    "encoding": "UTF-8 exact decoded tool text; leading BOM preserved",
+    "bytes": 208237,
+    "sha256": "870014e9756f439bc66062ea7ad4172ef4658ddec9bae579bcc938c5a8f29241"
+  },
+  "campaignLockInOriginalArtifact": false,
+  "routerInternalPositionCoverage": "unmeasured",
+  "learnedSuccess": null,
+  "scope": "Exact failed9cf/1a campaign retained without rerun or altered limits. Separate2-update lifecycle passed;314-update fit is partial and fails required348 completeness. Expandedb415/2f3 success remains a distinct execution."
+}

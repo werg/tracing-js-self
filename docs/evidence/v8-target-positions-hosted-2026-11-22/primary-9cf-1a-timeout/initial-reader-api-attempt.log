@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/05d92519587f/tracing-position-hosted-evidence/docs/evidence/v8-target-positions-hosted-2026-11-22/audit-interrupted-hosted-positions.py", line 261, in <module>
+    main()
+  File "/workspace/scratch/05d92519587f/tracing-position-hosted-evidence/docs/evidence/v8-target-positions-hosted-2026-11-22/audit-interrupted-hosted-positions.py", line 150, in main
+    state = restore_position_exposure(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: restore_position_exposure() got an unexpected keyword argument 'checkpoint_metadata'
