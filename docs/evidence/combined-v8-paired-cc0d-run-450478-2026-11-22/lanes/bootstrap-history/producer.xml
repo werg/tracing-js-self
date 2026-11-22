@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="actual two-child lexical fixture completes through the full native and host history without a clock claim" time="109.706321" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+	<testcase name="actual later sibling create recovery preserves completed child work across lost reply and repeat loss" time="168.318903" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+	<testcase name="actual later sibling bootstrap recovery preserves completed child work across lost reply and repeat loss" time="173.810102" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+	<testcase name="actual lost create reply seals the exact intermediate cut and survives another process loss" time="43.254651" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+	<testcase name="actual lost bootstrap reply seals the exact intermediate cut and survives another process loss" time="46.703043" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+	<testcase name="process loss at the acknowledged create cut returns bootstrap-ready before any child initialization" time="41.065221" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+	<testcase name="unknown create outcome cannot authorize recovery or fall back past pending bootstrap" time="3.546859" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+	<testcase name="unknown bootstrap outcome cannot authorize recovery or fall back past pending bootstrap" time="6.193949" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+	<testcase name="a published bootstrap fence before producer intent prevents stale-create fallback and guessed replay" time="5.099906" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+	<testcase name="bootstrap recovery refuses changed owner scope, absent clock or mixed recovery authority before native RPC" time="7.065901" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+	<testcase name="lost reconstructed-bootstrap head acknowledgement leaves the old history fenced without runnable host work" time="11.889484" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+	<testcase name="bootstrap replacement cannot refund an actually expired original creation clock" time="31.214822" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+	<!-- tests 12 -->
+	<!-- suites 0 -->
+	<!-- pass 12 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 647999.989314 -->
+</testsuites>

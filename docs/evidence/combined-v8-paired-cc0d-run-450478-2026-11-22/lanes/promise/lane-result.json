@@ -1,0 +1,176 @@
+{
+  "controlledTraining": null,
+  "files": [
+    {
+      "bytes": 936655,
+      "path": "async-return-adoption-composition-evidence.json",
+      "sha256": "3ad428c63a41991353ca4aec18241c207ea2fb3217121563d809b8776e681037"
+    },
+    {
+      "bytes": 735,
+      "path": "attestation.log",
+      "sha256": "1dc1f98ae387ef89fe28077cb957a63757751d647acccc4cbddc8c044b6ee101"
+    },
+    {
+      "bytes": 2603,
+      "path": "contract.log",
+      "sha256": "5a1a1f5e13487bc0be55d8f1edd78f90be66cb316ab41042bd2af0eb52bd0966"
+    },
+    {
+      "bytes": 1397321,
+      "path": "native-wheel/megatoken-0.1.0-py3-none-any.whl",
+      "sha256": "79b060be3b3b5b7fdf91e5faf4669944b5784b356f4f06ecd7044f6b32255f06"
+    },
+    {
+      "bytes": 148,
+      "path": "native-wheel.sha256",
+      "sha256": "37196a759aa38ea13ca78fdb480a564e04aa08592bb8fd2f912b0e57f505f272"
+    },
+    {
+      "bytes": 273,
+      "path": "native.log",
+      "sha256": "7fa2e5eab50a0d05dbf7748f443e6672b23d55d43717ca70abadcdf2c52d3024"
+    },
+    {
+      "bytes": 17265,
+      "path": "native.xml",
+      "sha256": "9a1c116ae6107bb75c425156b84ff8973be9df687727bfb8dbf4747a0cf6e432"
+    },
+    {
+      "bytes": 2215067,
+      "path": "nested-async-source-evidence.json",
+      "sha256": "3213b68f03113bec366bfc232595095ef5d0f507cd06d4ecb741dd8b355dbe47"
+    },
+    {
+      "bytes": 23348,
+      "path": "pair-identity.json",
+      "sha256": "b7f5b84e9b29e294ac69713061ca3feb1223ae47f8cb1b357f5e8aa94a695e22"
+    },
+    {
+      "bytes": 16692,
+      "path": "producer.log",
+      "sha256": "1fe9265aa15ba4eacaf30a3f7f66244a6e3ed4544ea0cf4005dd49288e620ed5"
+    },
+    {
+      "bytes": 44292,
+      "path": "producer.xml",
+      "sha256": "b9c6c9cdb4ef41e21317e83cef911c9455b5a80b5bce93007b138a373a22e701"
+    },
+    {
+      "bytes": 75721,
+      "path": "promise-adoption-shared-realm-public.json",
+      "sha256": "01adf6e2f6b65f63634f5c02f33443613dbf7b6001b7170a315aadde586d4db6"
+    },
+    {
+      "bytes": 4399825,
+      "path": "promise-adoption-source-evidence.json",
+      "sha256": "b4f0d99ecdccc50e60361a2c6286a6faf8d421fac8d4d278cd8d1fd3e01a4252"
+    },
+    {
+      "bytes": 878418,
+      "path": "promise-mutation-profile-evidence.json",
+      "sha256": "e6a55c1bba0b4dde48fcf89fc2e4b5da19c73c5a7e5cf77aaff039dab19706a8"
+    },
+    {
+      "bytes": 493033,
+      "path": "promise-object-profile-evidence.json",
+      "sha256": "27b3b832ead672d828d8024cd58aeb20341d26abc5d794e60eef4d3d0c227a44"
+    }
+  ],
+  "lane": "promise",
+  "pair": {
+    "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "gateSpecSha256": "432fb031331297cf16e820b28a25d72c86a63567831bc18732099af04a1a33c4",
+    "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+    "native": {
+      "revision": "cdd01ac0dcd65d92e948cec39f7b5c156800206e",
+      "tree": "8698f34329ae2827aff090c05bdfdc2941974d10"
+    },
+    "policySha256": "b79963ff2ad6b0c3c34f36de623079bc350e020b56398a9b708df5e6278fb8fa",
+    "producer": {
+      "revision": "cc0d61e98dc6252749f4a2a4c8b669d79b0f7efa",
+      "tree": "c10c3dc89361c443583955fab0a8a37a22ac092a"
+    }
+  },
+  "schema": "semantic-v8-combined-lane/1",
+  "sourcePopulations": [
+    {
+      "actualNativeCases": 15,
+      "contexts": 423,
+      "file": "promise-adoption-source-evidence.json",
+      "refusedSources": null,
+      "restoreCuts": 65,
+      "sha256": "b4f0d99ecdccc50e60361a2c6286a6faf8d421fac8d4d278cd8d1fd3e01a4252",
+      "sourceCases": 15
+    },
+    {
+      "actualNativeCases": 5,
+      "contexts": 96,
+      "file": "promise-mutation-profile-evidence.json",
+      "refusedSources": 19,
+      "restoreCuts": null,
+      "sha256": "e6a55c1bba0b4dde48fcf89fc2e4b5da19c73c5a7e5cf77aaff039dab19706a8",
+      "sourceCases": 24
+    },
+    {
+      "actualNativeCases": 5,
+      "contexts": 51,
+      "file": "promise-object-profile-evidence.json",
+      "refusedSources": 17,
+      "restoreCuts": null,
+      "sha256": "27b3b832ead672d828d8024cd58aeb20341d26abc5d794e60eef4d3d0c227a44",
+      "sourceCases": 22
+    },
+    {
+      "actualNativeCases": 2,
+      "contexts": 78,
+      "file": "async-return-adoption-composition-evidence.json",
+      "refusedSources": null,
+      "restoreCuts": 9,
+      "sha256": "3ad428c63a41991353ca4aec18241c207ea2fb3217121563d809b8776e681037",
+      "sourceCases": 2
+    }
+  ],
+  "status": "passed",
+  "tests": {
+    "native": {
+      "cases": 106,
+      "errors": 0,
+      "failures": 0,
+      "files": {
+        "tests/test_async_call_v8.py": 10,
+        "tests/test_promise_executor_boundaries_v8.py": 13,
+        "tests/test_promise_executor_v8.py": 11,
+        "tests/test_promise_join_v8.py": 12,
+        "tests/test_promise_scheduler_v8.py": 10,
+        "tests/test_protocol_host_composition_v8.py": 15,
+        "tests/test_protocol_host_v8.py": 13,
+        "tests/test_protocol_v8.py": 22
+      },
+      "skipped": 0,
+      "xmlSha256": "9a1c116ae6107bb75c425156b84ff8973be9df687727bfb8dbf4747a0cf6e432"
+    },
+    "producer": {
+      "cases": 173,
+      "errors": 0,
+      "failures": 0,
+      "files": {
+        "test/semantic-async-call-source-v8.test.js": 18,
+        "test/semantic-async-return-adoption-composition-source-v8.test.js": 4,
+        "test/semantic-promise-mutation-profile-source-v8.test.js": 25,
+        "test/semantic-promise-object-profile-source-v8.test.js": 23,
+        "test/semantic-protocol-iterator-v8.test.js": 9,
+        "test/semantic-protocol-promise-adoption-source-v8.test.js": 21,
+        "test/semantic-protocol-promise-adoption-v8.test.js": 20,
+        "test/semantic-protocol-promise-executor-source-v8.test.js": 10,
+        "test/semantic-protocol-promise-executor-v8.test.js": 11,
+        "test/semantic-protocol-promise-join-v8.test.js": 10,
+        "test/semantic-protocol-v8.test.js": 14,
+        "test/semantic-shared-protocol-source-v8.test.js": 8
+      },
+      "skipped": 0,
+      "xmlSha256": "b9c6c9cdb4ef41e21317e83cef911c9455b5a80b5bce93007b138a373a22e701"
+    }
+  }
+}

@@ -1,0 +1,179 @@
+{
+  "controlledTraining": {
+    "boundaries": {
+      "sourceAdmission": "injected fixture receipt",
+      "sourcePopulation": "one controlled prepared fixture, not the 64-source support population",
+      "tokenizerAdmission": "injected byte-fallback fixture"
+    },
+    "file": "controlled-position-proof.json",
+    "firstPhaseOptimizerUpdates": 3,
+    "learnedSuccess": null,
+    "phaseTransitionOptimizerUpdates": 1,
+    "routerInternalPositionCoverage": "unmeasured",
+    "sha256": "eea3868179ed24732b765add2d16fc3e96509ad2963a80472311dc918a681ed5",
+    "sourceCommit": "cdd01ac0dcd65d92e948cec39f7b5c156800206e",
+    "totalOptimizerUpdatesExecuted": 4
+  },
+  "lanes": {
+    "bootstrap-history": {
+      "producer": {
+        "cases": 12,
+        "errors": 0,
+        "failures": 0,
+        "files": {
+          "test/semantic-known-bootstrap-history-v8.test.js": 12
+        },
+        "skipped": 0,
+        "xmlSha256": "428c44d476b07fdb72cab0385345686d3d3e0eeb8b6eed411f3117bc1d41f90f"
+      }
+    },
+    "commit-history": {
+      "producer": {
+        "cases": 9,
+        "errors": 0,
+        "failures": 0,
+        "files": {
+          "test/semantic-known-commit-history-v8.test.js": 9
+        },
+        "skipped": 0,
+        "xmlSha256": "75df93e42b090ef0bea080912022ad73f704ced1e28e57ddc334501fab1ff4bf"
+      }
+    },
+    "promise": {
+      "native": {
+        "cases": 106,
+        "errors": 0,
+        "failures": 0,
+        "files": {
+          "tests/test_async_call_v8.py": 10,
+          "tests/test_promise_executor_boundaries_v8.py": 13,
+          "tests/test_promise_executor_v8.py": 11,
+          "tests/test_promise_join_v8.py": 12,
+          "tests/test_promise_scheduler_v8.py": 10,
+          "tests/test_protocol_host_composition_v8.py": 15,
+          "tests/test_protocol_host_v8.py": 13,
+          "tests/test_protocol_v8.py": 22
+        },
+        "skipped": 0,
+        "xmlSha256": "9a1c116ae6107bb75c425156b84ff8973be9df687727bfb8dbf4747a0cf6e432"
+      },
+      "producer": {
+        "cases": 173,
+        "errors": 0,
+        "failures": 0,
+        "files": {
+          "test/semantic-async-call-source-v8.test.js": 18,
+          "test/semantic-async-return-adoption-composition-source-v8.test.js": 4,
+          "test/semantic-promise-mutation-profile-source-v8.test.js": 25,
+          "test/semantic-promise-object-profile-source-v8.test.js": 23,
+          "test/semantic-protocol-iterator-v8.test.js": 9,
+          "test/semantic-protocol-promise-adoption-source-v8.test.js": 21,
+          "test/semantic-protocol-promise-adoption-v8.test.js": 20,
+          "test/semantic-protocol-promise-executor-source-v8.test.js": 10,
+          "test/semantic-protocol-promise-executor-v8.test.js": 11,
+          "test/semantic-protocol-promise-join-v8.test.js": 10,
+          "test/semantic-protocol-v8.test.js": 14,
+          "test/semantic-shared-protocol-source-v8.test.js": 8
+        },
+        "skipped": 0,
+        "xmlSha256": "b9c6c9cdb4ef41e21317e83cef911c9455b5a80b5bce93007b138a373a22e701"
+      }
+    },
+    "structural": {
+      "native": {
+        "cases": 165,
+        "errors": 0,
+        "failures": 0,
+        "files": {
+          "tests/test_semantic_bootstrap_recovery_v8.py": 30,
+          "tests/test_semantic_close_recovery_v8.py": 9,
+          "tests/test_semantic_commit_recovery_v8.py": 42,
+          "tests/test_semantic_launch_v8.py": 16,
+          "tests/test_semantic_request_journal_v8.py": 13,
+          "tests/test_semantic_v8_position_receipts.py": 55
+        },
+        "skipped": 0,
+        "xmlSha256": "c57abf478a3d5b8cf1597936366de49ca88cac9ce719325d3146659d68228edb"
+      },
+      "producer": {
+        "cases": 123,
+        "errors": 0,
+        "failures": 0,
+        "files": {
+          "test/native-request-journal-v8.test.js": 8,
+          "test/selected-orchestration-clock.test.js": 5,
+          "test/semantic-known-bootstrap-builder-v8.test.js": 26,
+          "test/semantic-known-commit-builder-v8.test.js": 6,
+          "test/semantic-selected-history-automatic-v8.test.js": 21,
+          "test/semantic-selected-history-tail-v8.test.js": 13,
+          "test/semantic-selected-history-v8.test.js": 20,
+          "test/semantic-selected-orchestration-checkpoint-v8.test.js": 20,
+          "test/semantic-selected-orchestration-v8.test.js": 4
+        },
+        "skipped": 0,
+        "xmlSha256": "254f0c36a5f924b21da48d5665dce513734707fefc40cd615b0f4dcd06ff25e3"
+      }
+    },
+    "terminal-history": {
+      "producer": {
+        "cases": 16,
+        "errors": 0,
+        "failures": 0,
+        "files": {
+          "test/semantic-known-close-builder-v8.test.js": 5,
+          "test/semantic-known-close-history-v8.test.js": 9,
+          "test/semantic-known-service-close-history-v8.test.js": 2
+        },
+        "skipped": 0,
+        "xmlSha256": "8b59e56664732d827989808cd1b0150a53c0382c7b911070d6ab972e74670a94"
+      }
+    },
+    "transport": {
+      "producer": {
+        "cases": 33,
+        "errors": 0,
+        "failures": 0,
+        "files": {
+          "test/semantic-native-durable-bootstrap-v8.test.js": 9,
+          "test/semantic-native-durable-close-v8.test.js": 7,
+          "test/semantic-native-durable-commit-v8.test.js": 11,
+          "test/semantic-native-orchestration-recovery-v8.test.js": 6
+        },
+        "skipped": 0,
+        "xmlSha256": "5db5c60ff7988f5d9da393e7f705a87911e3244d0953d4af4e0887e9785e33cc"
+      }
+    }
+  },
+  "learnedQualityClaim": null,
+  "moduleAdmission": false,
+  "optimizerUpdateScope": "No global update tally across all tests; the emitted controlled position proof is counted below",
+  "optimizerUpdates": null,
+  "pair": {
+    "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "gateSpecSha256": "432fb031331297cf16e820b28a25d72c86a63567831bc18732099af04a1a33c4",
+    "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+    "native": {
+      "revision": "cdd01ac0dcd65d92e948cec39f7b5c156800206e",
+      "tree": "8698f34329ae2827aff090c05bdfdc2941974d10"
+    },
+    "policySha256": "b79963ff2ad6b0c3c34f36de623079bc350e020b56398a9b708df5e6278fb8fa",
+    "producer": {
+      "revision": "cc0d61e98dc6252749f4a2a4c8b669d79b0f7efa",
+      "tree": "c10c3dc89361c443583955fab0a8a37a22ac092a"
+    }
+  },
+  "requiredGroups": {
+    "promise": {
+      "native": 106,
+      "producer": 173
+    },
+    "recovery": {
+      "native": 165,
+      "producer": 193
+    }
+  },
+  "schema": "semantic-v8-combined-qualification/1",
+  "status": "passed",
+  "trainingAdmission": false
+}

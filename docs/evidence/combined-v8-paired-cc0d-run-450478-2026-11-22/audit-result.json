@@ -1,0 +1,242 @@
+{
+  "schema": "combined-v8-exact-pair-evidence/1",
+  "runId": 45047889597,
+  "producerRevision": "cc0d61e98dc6252749f4a2a4c8b669d79b0f7efa",
+  "producerTree": "c10c3dc89361c443583955fab0a8a37a22ac092a",
+  "nativeRevision": "cdd01ac0dcd65d92e948cec39f7b5c156800206e",
+  "nativeTree": "8698f34329ae2827aff090c05bdfdc2941974d10",
+  "combinedQualificationArtifact": {
+    "id": 14764832390,
+    "bytes": 2101,
+    "sha256": "c22ff69f137f14af898c9f927ec2bf5b6975481f2e5b807745a62a2d2b6f1679"
+  },
+  "lanes": [
+    {
+      "lane": "terminal-history",
+      "artifactId": 14763734685,
+      "artifactZipBytes": 1383361,
+      "artifactZipSha256": "0dc0b38799f36b2831fadaac89ff6dc0307891f963e3da3506b033bc2ee76fc9",
+      "laneResultSha256": "b35c3a1127e747d4d42c64c80572c4b0b53d1a578c200370eb7794c855b6469b",
+      "pairIdentitySha256": "4783406cad0a97465203cb3cd994952b27b61cc736c796b3ff58d693e39ed2b4",
+      "wheelSha256": "79b060be3b3b5b7fdf91e5faf4669944b5784b356f4f06ecd7044f6b32255f06",
+      "verifiedInstalledPythonFiles": 267,
+      "installedSourceCaseCount": 0,
+      "junit": {
+        "producer": {
+          "cases": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "xmlSha256": "8b59e56664732d827989808cd1b0150a53c0382c7b911070d6ab972e74670a94",
+          "perFile": {
+            "test/semantic-known-close-builder-v8.test.js": 5,
+            "test/semantic-known-close-history-v8.test.js": 9,
+            "test/semantic-known-service-close-history-v8.test.js": 2
+          }
+        }
+      }
+    },
+    {
+      "lane": "promise",
+      "artifactId": 14764481951,
+      "artifactZipBytes": 2001168,
+      "artifactZipSha256": "f97f3b4d731ae8d23bd0030f8ae6a9cd833ad28123683d8fae9c446118b9afb0",
+      "laneResultSha256": "4843711617987976101e30c53e930e900c0d0b1388d291c9a2a040a95118a1c6",
+      "pairIdentitySha256": "b7f5b84e9b29e294ac69713061ca3feb1223ae47f8cb1b357f5e8aa94a695e22",
+      "wheelSha256": "79b060be3b3b5b7fdf91e5faf4669944b5784b356f4f06ecd7044f6b32255f06",
+      "verifiedInstalledPythonFiles": 267,
+      "installedSourceCaseCount": 23,
+      "junit": {
+        "producer": {
+          "cases": 173,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "xmlSha256": "b9c6c9cdb4ef41e21317e83cef911c9455b5a80b5bce93007b138a373a22e701",
+          "perFile": {
+            "test/semantic-async-call-source-v8.test.js": 18,
+            "test/semantic-async-return-adoption-composition-source-v8.test.js": 4,
+            "test/semantic-promise-mutation-profile-source-v8.test.js": 25,
+            "test/semantic-promise-object-profile-source-v8.test.js": 23,
+            "test/semantic-protocol-iterator-v8.test.js": 9,
+            "test/semantic-protocol-promise-adoption-source-v8.test.js": 21,
+            "test/semantic-protocol-promise-adoption-v8.test.js": 20,
+            "test/semantic-protocol-promise-executor-source-v8.test.js": 10,
+            "test/semantic-protocol-promise-executor-v8.test.js": 11,
+            "test/semantic-protocol-promise-join-v8.test.js": 10,
+            "test/semantic-protocol-v8.test.js": 14,
+            "test/semantic-shared-protocol-source-v8.test.js": 8
+          }
+        },
+        "native": {
+          "cases": 106,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "xmlSha256": "9a1c116ae6107bb75c425156b84ff8973be9df687727bfb8dbf4747a0cf6e432",
+          "perFile": {
+            "tests/test_promise_executor_v8.py": 11,
+            "tests/test_async_call_v8.py": 10,
+            "tests/test_promise_scheduler_v8.py": 10,
+            "tests/test_promise_executor_boundaries_v8.py": 13,
+            "tests/test_promise_join_v8.py": 12,
+            "tests/test_protocol_v8.py": 22,
+            "tests/test_protocol_host_v8.py": 13,
+            "tests/test_protocol_host_composition_v8.py": 15
+          }
+        }
+      }
+    },
+    {
+      "lane": "bootstrap-history",
+      "artifactId": 14764667728,
+      "artifactZipBytes": 1383111,
+      "artifactZipSha256": "0721969be3f42cefb5b89db72da525d2f2fc8787680fa6e74b7ea93a2b09b683",
+      "laneResultSha256": "d1ecaa8c2ba06b739aed599001d7a9c7eb63ebae92763857196e6d2a961863da",
+      "pairIdentitySha256": "4e00bd84c0c53e90daadf54f0784fb8de9ae28f44444ab99575808426b4956a8",
+      "wheelSha256": "79b060be3b3b5b7fdf91e5faf4669944b5784b356f4f06ecd7044f6b32255f06",
+      "verifiedInstalledPythonFiles": 267,
+      "installedSourceCaseCount": 0,
+      "junit": {
+        "producer": {
+          "cases": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "xmlSha256": "428c44d476b07fdb72cab0385345686d3d3e0eeb8b6eed411f3117bc1d41f90f",
+          "perFile": {
+            "test/semantic-known-bootstrap-history-v8.test.js": 12
+          }
+        }
+      }
+    },
+    {
+      "lane": "commit-history",
+      "artifactId": 14764676742,
+      "artifactZipBytes": 1382670,
+      "artifactZipSha256": "a3cd566a614a26a9dc7350a469d03c5d0eaeed8cf0f0d95ebb7c829ebf8ea68d",
+      "laneResultSha256": "84c86e6fcd4ffebb8f5986e116753ff15785087f170bfe63c4b5d8d773786489",
+      "pairIdentitySha256": "1ab3cf9947dce76d343349013d9d3b1c87edde18600f60941e208e0aa83053f2",
+      "wheelSha256": "79b060be3b3b5b7fdf91e5faf4669944b5784b356f4f06ecd7044f6b32255f06",
+      "verifiedInstalledPythonFiles": 267,
+      "installedSourceCaseCount": 0,
+      "junit": {
+        "producer": {
+          "cases": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "xmlSha256": "75df93e42b090ef0bea080912022ad73f704ced1e28e57ddc334501fab1ff4bf",
+          "perFile": {
+            "test/semantic-known-commit-history-v8.test.js": 9
+          }
+        }
+      }
+    },
+    {
+      "lane": "transport",
+      "artifactId": 14764817012,
+      "artifactZipBytes": 1384428,
+      "artifactZipSha256": "26ea8ddf59caa321251e820c77a6d1dc0db9fb9bf3731fa4e4fa05884ac39a72",
+      "laneResultSha256": "9e468d16bc4073b910504129a3c46a58231cc09ae99dd90dad4b0551fa2b5a0c",
+      "pairIdentitySha256": "6c4e42367347dccb21ff6f5982cffb5b2bc165409e2b21bbb528b029d4e91278",
+      "wheelSha256": "79b060be3b3b5b7fdf91e5faf4669944b5784b356f4f06ecd7044f6b32255f06",
+      "verifiedInstalledPythonFiles": 267,
+      "installedSourceCaseCount": 0,
+      "junit": {
+        "producer": {
+          "cases": 33,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "xmlSha256": "5db5c60ff7988f5d9da393e7f705a87911e3244d0953d4af4e0887e9785e33cc",
+          "perFile": {
+            "test/semantic-native-durable-bootstrap-v8.test.js": 9,
+            "test/semantic-native-durable-close-v8.test.js": 7,
+            "test/semantic-native-durable-commit-v8.test.js": 11,
+            "test/semantic-native-orchestration-recovery-v8.test.js": 6
+          }
+        }
+      }
+    },
+    {
+      "lane": "structural",
+      "artifactId": 14764885920,
+      "artifactZipBytes": 1420114,
+      "artifactZipSha256": "7999cd52ea7c93210ec00281e6bb7b53fc5a529b91e3efc6cc83a1b23c93f24e",
+      "laneResultSha256": "04f347a8e95b412b5a4939a5f1ff94107f1ee9e06a06eecc796e681f543c4ddc",
+      "pairIdentitySha256": "2179d73048413cf306882d18afeba1c5a5f7b111d177384d7943f467681c6506",
+      "wheelSha256": "79b060be3b3b5b7fdf91e5faf4669944b5784b356f4f06ecd7044f6b32255f06",
+      "verifiedInstalledPythonFiles": 267,
+      "installedSourceCaseCount": 0,
+      "junit": {
+        "producer": {
+          "cases": 123,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "xmlSha256": "254f0c36a5f924b21da48d5665dce513734707fefc40cd615b0f4dcd06ff25e3",
+          "perFile": {
+            "test/native-request-journal-v8.test.js": 8,
+            "test/selected-orchestration-clock.test.js": 5,
+            "test/semantic-known-bootstrap-builder-v8.test.js": 26,
+            "test/semantic-known-commit-builder-v8.test.js": 6,
+            "test/semantic-selected-history-automatic-v8.test.js": 21,
+            "test/semantic-selected-history-tail-v8.test.js": 13,
+            "test/semantic-selected-history-v8.test.js": 20,
+            "test/semantic-selected-orchestration-checkpoint-v8.test.js": 20,
+            "test/semantic-selected-orchestration-v8.test.js": 4
+          }
+        },
+        "native": {
+          "cases": 165,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "xmlSha256": "c57abf478a3d5b8cf1597936366de49ca88cac9ce719325d3146659d68228edb",
+          "perFile": {
+            "tests/test_semantic_commit_recovery_v8.py": 42,
+            "tests/test_semantic_bootstrap_recovery_v8.py": 30,
+            "tests/test_semantic_close_recovery_v8.py": 9,
+            "tests/test_semantic_request_journal_v8.py": 13,
+            "tests/test_semantic_launch_v8.py": 16,
+            "tests/test_semantic_v8_position_receipts.py": 55
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "nativeRecovery": 165,
+    "producerRecovery": 193,
+    "nativePromise": 106,
+    "producerPromise": 173,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "optimizerUpdatesAcrossAllTests": null,
+    "controlledPositionProof": {
+      "firstPhase": 3,
+      "transitionPhase": 1,
+      "total": 4,
+      "fixtureScope": "one controlled prepared fixture, injected source and tokenizer receipts; not 64-source population"
+    },
+    "learnedSuccess": null,
+    "fullTargetCoverage": false,
+    "moduleAdmission": false
+  },
+  "installedRunReference": {
+    "runId": 45047897532,
+    "jobId": 137286402541,
+    "artifactId": 14764442586,
+    "artifactBytes": 688988565,
+    "artifactSha256": "04873c75d45db2ba31a5d72672193a59b9f3b7ad10f6e6eac3a365f711d648c6",
+    "downloaded": false,
+    "existingMainEvidence": "docs/evidence/v8-installed-cc0d-2026-11-22/"
+  },
+  "retention": {
+    "laneZipArchivesRetained": false,
+    "wheelPayloadsRetained": false,
+    "installedRunArtifactDownloaded": false
+  }
+}

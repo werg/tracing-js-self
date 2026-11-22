@@ -1,0 +1,17 @@
+✔ actual lost track_create reply seals history before exact continuation (55028.374507ms)
+✔ actual lost track_join reply seals history before exact continuation (59614.762665ms)
+✔ actual lost track_progress reply seals history before exact continuation (68401.406425ms)
+✔ actual lost bootstrap-orchestration-child reply seals history before exact continuation (56688.485132ms)
+✔ unknown native track_join outcome cannot resolve the history fence or authorize replay (9845.719692ms)
+✔ unknown native bootstrap-orchestration-child outcome cannot resolve the history fence or authorize replay (5729.799918ms)
+✔ wrong request scope or absent live clock refuses before any native recovery RPC (11729.086385ms)
+✔ lost reconciled-head acknowledgement leaves the old receipt fenced without another host dispatch (17020.810167ms)
+✔ a real expired pending clock cannot refund time on process replacement (31264.313261ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 315448.563687
