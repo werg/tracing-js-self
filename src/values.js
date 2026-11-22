@@ -13,7 +13,9 @@ export function encode(value) {
     if (value === -Infinity) return ['num', '-Infinity'];
     return ['num', value];
   }
-  throw new TypeError('Only primitive values may be encoded without a guest identity');
+  const error=new TypeError('Only primitive values may be encoded without a guest identity');
+  console.error('[namespace-debug] scalar encode rejected a non-primitive value\\n'+error.stack);
+  throw error;
 }
 export function decode(value) {
   switch (value?.[0]) {
