@@ -35,20 +35,24 @@ export interface SelectedTerminalCloseReceipt {
 export interface SelectedCompositeTerminalEvent {
   schema: 'semantic-selected-orchestration-terminal-event/8';
   terminalId: string;
-  phase: 'completed';
+  phase: 'requested' | 'completed' | 'cancelled';
   session: string;
   baseCheckpointDigest: string;
   pendingId: string;
   snapshot: unknown;
   snapshotDigest: string;
-  closeReceipt: SelectedTerminalCloseReceipt;
-  closedNativeDigest: string;
-  closedNative: unknown;
+  reason?: string;
+  ownerSnapshotDigest?: string;
+  ownerSnapshot?: unknown;
+  serviceAdmission?: SelectedServiceAdmissionFence;
+  closeReceipt?: SelectedTerminalCloseReceipt;
+  closedNativeDigest?: string;
+  closedNative?: unknown;
   digest: string;
 }
 export interface SelectedCompositeTerminalDisposition {
   schema: 'semantic-selected-orchestration-disposition/8';
-  status: 'completed';
+  status: 'completed' | 'cancelled';
   resumable: false;
   sourceValidated: false;
   session: string;
@@ -58,7 +62,7 @@ export interface SelectedCompositeTerminalDisposition {
   closeReceipt: SelectedTerminalCloseReceipt;
   initialPublic: unknown;
   public: unknown;
-  publicCompleted: true;
+  publicCompleted: boolean;
   completionReceipts: unknown[];
   nativeIdentity: unknown;
   qualification: {modelMeasurement: string; sourceCorrespondence: string; defaultPromotion: false};

@@ -288,23 +288,34 @@ or distributed ownership.
 
 ### Composite terminal disposition
 
-Automatic composite history can retain a successful `track_complete` as a nonresumable
-terminal disposition. Before closing, the driver stores and verifies the full completed
-coordinator checkpoint. After native close succeeds, it stores the native transport
-checkpoint whose model state has no open session and contains the exact closed-session
-tombstone from the completed checkpoint. The terminal event binds both checkpoints,
-the completion fence, and the acknowledged history chain.
+Automatic composite history supports a nonresumable terminal disposition for
+`track_complete`, and a service-aware terminal disposition for a committed
+`track_cancel` only when every declared host invocation is already completed and
+the composite is at a quiescent boundary. The service-aware path records an intent
+with the exact configured service-owner snapshot and reason, verifies the intent's
+independent history acknowledgement, fences and rereads the same service set, then
+closes native state and records a final disposition. The no-coordinator successful
+`track_complete` path retains its existing behavior.
 
-`restoreLatest` handles this terminal head as a disposition. It reexecutes the native
-closed-session checkpoint on a fresh transport and requires zero restored active sessions,
-zero host dispatches, and exact attempt consumption. It does not restore the completed
-coordinator as active work. Lost close acknowledgements, lost terminal history
-acknowledgements, cancellation, and unknown terminal outcomes remain fenced and are
-not converted into a completed disposition.
+After native close, the final history event contains the transport checkpoint with
+no open session and the exact closed-session tombstone from the validated terminal
+snapshot. `restoreLatest` reexecutes that tombstone and requires zero restored active
+sessions, zero host dispatches, and exact attempt consumption. It returns a terminal
+disposition; it does not restore completed or cancelled orchestration as active work.
 
-A completed disposition records coordinator completion and the native closed-session
-tombstone. It does not assert source correspondence, source validation, or promotion:
-`sourceValidated` remains false and `qualification.defaultPromotion` remains false.
+An acknowledged service-aware intent that is interrupted remains nonresumable. A
+reconciliation attempt must present the same retained owner snapshot and reason.
+It may repeat the same service fence idempotently and close only the validator-proved
+terminal native snapshot; it performs no new selection or host dispatch. A partial
+service fence or lost acknowledgement remains fenced until the same owner can verify
+it. Owner substitution, running host work, unknown acknowledgements, failed host
+actions, and unsettled cancellation are refused. This does not provide successor
+takeover or distributed ownership.
+
+A terminal disposition records coordinator completion or committed cancellation and
+the native closed-session tombstone. It does not assert source correspondence, source
+validation, or promotion: `sourceValidated` remains false and
+`qualification.defaultPromotion` remains false.
 
 ### Terminal evidence and failure boundaries
 

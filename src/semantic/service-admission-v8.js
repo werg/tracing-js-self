@@ -44,3 +44,21 @@ export function validateServiceAdmissionFence(fence,policy,reason=fence?.reason)
   }
   return fence;
 }
+
+/** Snapshot the exact coordinator-bound owners; this is a binding, not proof of a
+ * terminal write. Recovery must compare it to a fresh coordinator and re-read
+ * each independently owned service journal before acting on it. */
+export function validateServiceAdmissionOwnerSnapshot(snapshot,sessionId=snapshot?.policy?.sessionId){
+  assertAlgorithmFields(snapshot,['schema','policy','services'],'service admission owner snapshot');
+  stableAlgorithmJSON(snapshot);
+  validateServiceAdmissionPolicy(snapshot.policy,sessionId);
+  demand(snapshot.schema==='semantic-service-admission-owner-snapshot/8'&&
+    Array.isArray(snapshot.services)&&snapshot.services.length===snapshot.policy.serviceIds.length,
+    'owner snapshot must bind every participating service');
+  for(const [index,row]of snapshot.services.entries()){
+    assertAlgorithmFields(row,['serviceId','owner'],'service admission owner snapshot member');
+    demand(row.serviceId===snapshot.policy.serviceIds[index],'owner snapshot changed the sorted service set');
+    validateServiceFenceReceipt(row.owner,row.serviceId,sessionId);
+  }
+  return snapshot;
+}
