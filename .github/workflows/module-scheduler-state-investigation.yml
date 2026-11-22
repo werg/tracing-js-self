@@ -15,7 +15,7 @@ concurrency:
 jobs:
   scheduler-state:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 35
     defaults:
       run:
         shell: bash
@@ -163,13 +163,14 @@ jobs:
         working-directory: tracing-js-self
         run: |
           node --test --test-concurrency=1 --test-reporter=junit test/semantic-async-call-source-v8.test.js \
+            test/semantic-source-context-staging-v8.test.js \
             2>&1 | tee "$RUNNER_TEMP/nested-async-js.xml"
           python - <<'PY'
           import json,os,xml.etree.ElementTree as ET
           from pathlib import Path
           root=Path(os.environ['RUNNER_TEMP'])
           cases=list(ET.parse(root/'nested-async-js.xml').getroot().iter('testcase'))
-          if len(cases)!=18 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+          if len(cases)!=20 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
               raise ValueError('Every original-source async call and adversarial control must run and pass')
           evidence=json.loads((root/'nested-async-source-evidence.json').read_text())
           if evidence['sourceCases']!=10 or evidence['actualNativeCases']!=10 or evidence['generatedContexts']!=231:
@@ -178,6 +179,27 @@ jobs:
               raise ValueError('Async helper composition cannot grant module/data admission or optimizer exposure')
           print(f'{len(cases)} nested async source and independent native controls passed, zero skips')
           print('NESTED_ASYNC_EVIDENCE_SUMMARY_JSON '+json.dumps({key:value for key,value in evidence.items() if key!='cases'},separators=(',',':')))
+          PY
+      - name: Compare original TLA source, public async records and independent native cuts
+        if: ${{ !cancelled() }}
+        working-directory: tracing-js-self
+        run: |
+          node tools/probe-module-async-source.mjs "$RUNNER_TEMP/nested-async-module-probe-evidence.json" \
+            2>&1 | tee "$RUNNER_TEMP/nested-async-module-probe.log"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          evidence=json.loads((Path(os.environ['RUNNER_TEMP'])/'nested-async-module-probe-evidence.json').read_text())
+          summary=evidence['summary']
+          required={'modules':3,'ownedEvents':2012,'publicRecords':707,'protocolRecords':112,'detailedRecords':595,
+              'generatedContexts':707,'ownedModuleCuts':10,'nativePublicCuts':10,'originalEsmReference':'passed',
+              'finalSharedStateEqual':True,'moduleAdmission':False,'trainingAdmission':False,'optimizerUpdates':0}
+          if any(summary[key]!=value for key,value in required.items()):
+              raise ValueError('Original module engineering probe changed population, state parity or admission boundary')
+          receipt=summary['nativeReceipt']
+          if receipt['admitted'] is not False or any(receipt['checks'][key]!='passed' for key in ('replay','contexts','continuation')):
+              raise ValueError('Every original-module public context must pass actual native replay without claiming admission')
+          print('All 707 original-module public contexts and ten uniquely owned lifecycle cuts passed actual native replay')
           PY
       - name: Verify both candidate checkouts remained exact
         if: ${{ !cancelled() }}
