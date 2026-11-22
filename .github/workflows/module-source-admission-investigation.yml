@@ -15,7 +15,7 @@ on:
       - 'tools/emit-semantic-v8-module-scheduler-artifact.mjs'
       - '.github/workflows/module-source-admission-investigation.yml'
   push:
-    branches: [codex/v8-training-position-composition-20261122]
+    branches: [main]
     paths-ignore: ['docs/**']
   workflow_dispatch:
 
@@ -90,7 +90,7 @@ jobs:
           codec=ByteCodec.from_tokenizer_json(path,expected_sha256=LING_TOKENIZER_SHA256)
           print(json.dumps({'tokenizerIdentity':codec.fingerprint,'tokenizerSha256':LING_TOKENIZER_SHA256}))
           PY
-      - name: Check paired canonical contract and unchanged six interoperability cases
+      - name: Check paired canonical contract and six interoperability cases
         working-directory: tracing-js-self
         run: |
           node tools/generate-semantic-region-contract.mjs --check
@@ -101,8 +101,10 @@ jobs:
           producer=json.loads(Path('test/fixtures/semantic-regions-v8.json').read_text())
           native=json.loads(gzip.decompress(base64.b64decode(Path('../megatoken/tests/fixtures/semantic-regions-v8.json.gz.b64').read_bytes())))
           assert producer==native and len(producer['examples'])==6
-          assert producer['interoperabilityDigest']=='f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661'
-          print('Existing public contract and six interoperability payloads are unchanged')
+          contract=json.loads(Path('contracts/semantic-execution-v8.json').read_text())
+          assert producer['contractDigest']==contract['digest']
+          assert producer['interoperabilityDigest']==contract['interoperabilityDigest']
+          print('Paired public contract and six interoperability payloads match the canonical contract')
           PY
       - name: Check admission guards, live source authority and bounded recheck deadlines
         working-directory: megatoken

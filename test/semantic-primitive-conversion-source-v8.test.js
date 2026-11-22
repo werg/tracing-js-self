@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
 import {PRIMITIVE_CONVERSION_FIXTURES} from '../fixtures/semantic-regions/primitive-conversion.js';
 import {PRIMITIVE_CONVERSION_COMPOSITION_FIXTURES} from '../fixtures/semantic-regions/primitive-conversion-composition.js';
 import {verifyProtocolRegionTrainingCase,recheckProtocolRegionEvidence} from '../src/semantic/protocol-source-v8.js';
@@ -81,5 +83,22 @@ test('the ordinary V8 entry selects registered conversion and keeps unsupported 
   ]){
     const refused=await verifyProtocolRegionTrainingCase({source:'"use strict";function run(){'+body+'}',entry:'run',family:'conversion-boundary'});
     assert.equal(refused.status,'unsupported',refused.reason);assert(!refused.exported);
+  }
+});
+
+
+test('frozen native conversion inputs recheck against the composed source profiles',async()=>{
+  const packet=JSON.parse(gunzipSync(Buffer.from(readFileSync(new URL(
+    './fixtures/semantic-primitive-conversion-v8.json.gz.b64',import.meta.url),'utf8'),'base64')).toString('utf8'));
+  const ids=['getter-replacement','nested-goals','promise-key','mapped-key'],
+    cases=packet.cases.filter(row=>ids.includes(row.id));
+  assert.deepEqual(cases.map(row=>row.id).sort(),[...ids].sort());
+  for(const row of cases){
+    assert(row.artifact,row.id+': missing frozen source artifact');
+    let checked;
+    try{checked=await recheckProtocolRegionEvidence(row.artifact);}
+    catch(error){throw new Error(row.id+': '+error.message,{cause:error});}
+    for(const flag of ['valid','sourceValidated','projectionValidated','replayValidated'])
+      assert.equal(checked[flag],true,row.id+': '+flag);
   }
 });

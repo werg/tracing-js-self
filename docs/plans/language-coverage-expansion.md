@@ -1,4 +1,9 @@
 # Language coverage beyond the current supported scope
+
+> **Current delivery scope:** PR #47 is the bounded V8 data-preparation milestone.
+> This document describes the longer roadmap. The [current scope and issue index](../LANGUAGE_COVERAGE_V8_CUTOVER_STATUS.md)
+> define present acceptance and all deferred work; model performance, full-edition
+> completion and production cutover are not additional conditions for this PR.
 ## Design and implementation plan for tracing-js-self and megatoken
 
 **Status:** Proposed engineering design; no new language implementation is claimed by this document.  
