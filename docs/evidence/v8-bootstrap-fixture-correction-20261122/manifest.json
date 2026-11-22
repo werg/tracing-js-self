@@ -1,0 +1,92 @@
+{
+  "schema": "bootstrap-fixture-correction-evidence/1",
+  "historicalRuns": [
+    {
+      "label": "pre-alias",
+      "run": 45029326909,
+      "job": 137229192500,
+      "producer": "32efcddadf1cb441dc32ceb8263f6c3d9049fff9",
+      "native": "b504228288e2935c9e021da23896fc82babc6836",
+      "conclusion": "failure",
+      "rawLogBytes": 154444,
+      "rawLogSha256": "568d835b4564eafdf71bde283343420312cb4c2e5feb07cf40a50983709930ba",
+      "tests": {
+        "native-bootstrap": {
+          "cases": 145,
+          "failures": [],
+          "skips": 0,
+          "sha256": "7f6fb536fc0cb169f28ef214bbedd6f44ed2e312e2d4fd94f4602a9e6066950c"
+        },
+        "host-bootstrap-history": {
+          "cases": 170,
+          "failures": [
+            "actual two-child lexical fixture completes through the full native and host history without a clock claim",
+            "actual later sibling create recovery preserves completed child work across lost reply and repeat loss",
+            "actual later sibling bootstrap recovery preserves completed child work across lost reply and repeat loss",
+            "actual Python track_cancel reconciliation requires the acknowledged same-owner service intent"
+          ],
+          "skips": 0,
+          "sha256": "46b4ad52ff3391581f15a994ad89a427a1b05db9db3bb79870fede6ba25aacc8"
+        }
+      },
+      "zipSha256": "9527296eeb5a0e5f79ee7d2d78eb7f65d57fe74966ecdf5fd1e5c6676c88b5c2"
+    },
+    {
+      "label": "alias-fixed",
+      "run": 45030773600,
+      "job": 137233651896,
+      "producer": "ae5fa0f13fc8e8d8996cb6ff360c209ae2f83fa8",
+      "native": "56cce3b80423b0cb70c3a096d867561066e3a211",
+      "conclusion": "failure",
+      "rawLogBytes": 155055,
+      "rawLogSha256": "809b7437bd48e6694bc0783cd716c1d41043f9926479abafc65a24953d701c8e",
+      "tests": {
+        "native-bootstrap": {
+          "cases": 151,
+          "failures": [],
+          "skips": 0,
+          "sha256": "b073ea3500d63dcfc33c009216a1ccef9f78dad5eaa822ebdde8fc70772a9c4b"
+        },
+        "host-bootstrap-history": {
+          "cases": 170,
+          "failures": [
+            "actual two-child lexical fixture completes through the full native and host history without a clock claim",
+            "actual later sibling create recovery preserves completed child work across lost reply and repeat loss",
+            "actual later sibling bootstrap recovery preserves completed child work across lost reply and repeat loss",
+            "actual Python track_cancel reconciliation requires the acknowledged same-owner service intent"
+          ],
+          "skips": 0,
+          "sha256": "b6180df7c9b4e04bc13dcd267b563864715a5525e599671efada23a274720112"
+        }
+      },
+      "zipSha256": "4fefbefa16d67a6022ff8c46e6df65c1c8811aeb26c6c9e45cf4f18b39bfaf3b"
+    }
+  ],
+  "correctedRun": 45032886414,
+  "correctedProducer": "e5d53e47b39ccc1699db6da0c6f53bb703b3dce2",
+  "correctedNative": "56cce3b80423b0cb70c3a096d867561066e3a211",
+  "strictNativeCases": 151,
+  "strictProducerCases": 170,
+  "qualification": "pending-exact-corrected-run",
+  "fixtureProof": {
+    "nativeLocal": "9ea3da7ed8f0d2677dcae06707f37a6b7bd41729",
+    "nativeTree": "96ac16250743ac46d3f4b97d231bfcea8cc2a223",
+    "redExit": 1,
+    "greenExit": 0,
+    "semanticDispatches": 0,
+    "scope": "actual fixture startup and wrapper invocation only"
+  },
+  "files": {
+    "alias-fixed-45030773600.log.gz.b64": "4e8d9ed1a8324679fe4f53da14aa97ae13ea798e8e2646b26129f9549e43cf17",
+    "alias-fixed-host-bootstrap-history.xml": "b6180df7c9b4e04bc13dcd267b563864715a5525e599671efada23a274720112",
+    "alias-fixed-native-bootstrap.xml": "b073ea3500d63dcfc33c009216a1ccef9f78dad5eaa822ebdde8fc70772a9c4b",
+    "bootstrap-fixture-arity-green-durable-commit.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bootstrap-fixture-arity-green-track-cancel.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bootstrap-fixture-arity-red-durable-commit.log": "ee8915f9db93ee389087222c4c210fca7f6c9477c68efef951875f896068d262",
+    "bootstrap-fixture-arity-red-track-cancel.log": "ad97861fa3b7b8289e059e5f416353a3ae242e1885a451c0b354df0118304f9d",
+    "corrected-source-map22.json": "9bbb96d4e693b018120a621f48cb94d4b62c2b6f8ed3450b2dc2923d30d9a156",
+    "pre-alias-45029326909.log.gz.b64": "cd3df455b6de2efb1986df3cef2b4fd61e2d42a33cbdb1500f1100e07d5707ac",
+    "pre-alias-host-bootstrap-history.xml": "46b4ad52ff3391581f15a994ad89a427a1b05db9db3bb79870fede6ba25aacc8",
+    "pre-alias-native-bootstrap.xml": "7f6fb536fc0cb169f28ef214bbedd6f44ed2e312e2d4fd94f4602a9e6066950c"
+  }
+}

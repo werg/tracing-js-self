@@ -1,0 +1,122 @@
+{
+  "schema": "source-promotion-map/1",
+  "baseline": "9a0b84d89652e49e7157f6c9d808a819b904aa9b",
+  "local": "8f1c85b35d75b3822bbd05f912058f56d762b303",
+  "published": "e5d53e47b39ccc1699db6da0c6f53bb703b3dce2",
+  "tree": "4e1f048e718daa1a7ff7617202de2eb086090153",
+  "native": "56cce3b80423b0cb70c3a096d867561066e3a211",
+  "sourceRun": 45032886414,
+  "sourceRunStatus": "pending-at-archive-creation",
+  "paths": [
+    {
+      "path": ".github/workflows/v8-durable-bootstrap-history-investigation.yml",
+      "baselineBlob": null,
+      "sourceBlob": "c9add583cc09eea5403fe57ae25e8eeb22bcc8a4"
+    },
+    {
+      "path": "contracts/semantic-native-policy-v8.json",
+      "baselineBlob": "8e8afe488d102d8eb526771cb26904962e55d2b1",
+      "sourceBlob": "dcc660342d29251b0fe13ea338c8d8c15c2ef1f4"
+    },
+    {
+      "path": "src/semantic/native-durable-bootstrap-v8.js",
+      "baselineBlob": null,
+      "sourceBlob": "32e37123db7b2751501e192992e64f8bc79d4996"
+    },
+    {
+      "path": "src/semantic/native-durable-commit-v8.js",
+      "baselineBlob": "600486c1420991cad301f8033cbd548bff2b64f2",
+      "sourceBlob": "4c54edb396d2585f6bb03822fed1065ba867729f"
+    },
+    {
+      "path": "src/semantic/native-process-v8.js",
+      "baselineBlob": "91c94adc6f23172d2154d1dba32ecf9d134b76f5",
+      "sourceBlob": "381b4fe22296cb773594968647d897af88db60b4"
+    },
+    {
+      "path": "src/semantic/selected-history-v8.js",
+      "baselineBlob": "9a4612c88a73863b04d07e663996b2ca0fb54150",
+      "sourceBlob": "493f6ffa01675a3bfa78fb51e96696831837e38d"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-bootstrap-recovery-v8.js",
+      "baselineBlob": null,
+      "sourceBlob": "0736b929fb424346b7b795e066c8c9f2c52e5539"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-checkpoint-v8.js",
+      "baselineBlob": "261e9f0359b728d2c77d3ce6e1750bba08938514",
+      "sourceBlob": "32cc0aab1531c22884ffc1998ae8c4fd2301b4da"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-commit-recovery-v8.js",
+      "baselineBlob": "4c216b112f940a64e91d6f73469dcdef3ae85f3d",
+      "sourceBlob": "2bde2b7005fb8c8d591504671d763dafd8efa4e3"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-v8.js",
+      "baselineBlob": "88f432ffee3aa25f7681964607f7c3f3c6c333cb",
+      "sourceBlob": "7b32b044018fc1bb599ef53507c6c234ad63fd0a"
+    },
+    {
+      "path": "src/storage/native-request-journal-v8.d.ts",
+      "baselineBlob": "91c9b0994dfe0fcb739cc632b14b008f31ae1b45",
+      "sourceBlob": "a10b1b5cca95f8a520e944c23a9837061a33b9ca"
+    },
+    {
+      "path": "src/storage/native-request-journal-v8.js",
+      "baselineBlob": "52a1eb81dc4a77e648dd738798f9242c1ce39b0c",
+      "sourceBlob": "a1e709b24b080613c73db67989e638a2211b4131"
+    },
+    {
+      "path": "test/fixtures/semantic-v8-durable-commit-peer.py",
+      "baselineBlob": "a1e1c42160ea26f854d83b718ed18c8143f5f8ea",
+      "sourceBlob": "7a0c4aadfef8354d3c9d7613fe64246b4533c6e8"
+    },
+    {
+      "path": "test/fixtures/semantic-v8-track-cancel-recovery-peer.py",
+      "baselineBlob": "3e61288f2ff033b30e85b4eb4bf70a7d0af377ef",
+      "sourceBlob": "b94885a07daa508a9bf54134f4bb51911b3a40cf"
+    },
+    {
+      "path": "test/helpers/native-bootstrap-fixture-v8.js",
+      "baselineBlob": null,
+      "sourceBlob": "ec29971a4d5278f8560db9613987072e6ff3a93e"
+    },
+    {
+      "path": "test/native-request-journal-v8.test.js",
+      "baselineBlob": "0f7616c2a717a950c88039aa9d30a86759494a4f",
+      "sourceBlob": "d9399beca33b46873499a7ca49711734a40232c2"
+    },
+    {
+      "path": "test/semantic-known-bootstrap-builder-v8.test.js",
+      "baselineBlob": null,
+      "sourceBlob": "63d6409219308f7e18565fd504c221a0061932ee"
+    },
+    {
+      "path": "test/semantic-known-bootstrap-history-v8.test.js",
+      "baselineBlob": null,
+      "sourceBlob": "6a8be4046cf0a1246922575be6a4118db214c109"
+    },
+    {
+      "path": "test/semantic-known-commit-builder-v8.test.js",
+      "baselineBlob": "d1f7f5a577b21a043b50ce5e8fcc3c7686a32d56",
+      "sourceBlob": "7bc4964724a4c32026c54ec0d51ee854b6e0c612"
+    },
+    {
+      "path": "test/semantic-known-commit-history-v8.test.js",
+      "baselineBlob": "f7c78aab5618c3c455f0b1a400810203a74a5ed8",
+      "sourceBlob": "b66e16151f1ab0c9604376fb7607789f7cbaba62"
+    },
+    {
+      "path": "test/semantic-native-durable-bootstrap-v8.test.js",
+      "baselineBlob": null,
+      "sourceBlob": "c99499b2ed1fe18b65739d58c838737e25b3f8d3"
+    },
+    {
+      "path": "test/semantic-native-durable-commit-v8.test.js",
+      "baselineBlob": "be9db685b37d5408077bb630caa40e1b762e46f4",
+      "sourceBlob": "44d9c33f81a7c754fe68373dd80a80eea5c4fb4f"
+    }
+  ]
+}

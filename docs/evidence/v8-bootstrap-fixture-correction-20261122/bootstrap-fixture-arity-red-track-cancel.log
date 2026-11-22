@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/05d92519587f/producer-bootstrap-causal-final/test/fixtures/semantic-v8-track-cancel-recovery-peer.py", line 48, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/scratch/05d92519587f/producer-bootstrap-causal-final/test/fixtures/semantic-v8-track-cancel-recovery-peer.py", line 44, in main
+    return peer.main()
+           ^^^^^^^^^^^
+  File "/workspace/scratch/05d92519587f/native-bootstrap-alias-guard/tests/fixtures/serve_semantic_v8_recovery_fixture.py", line 297, in main
+    _serve(arguments.decoder_log, arguments if arguments.request_journal_dir is not None else None,
+  File "/workspace/scratch/05d92519587f/native-bootstrap-alias-guard/tests/fixtures/serve_semantic_v8_recovery_fixture.py", line 210, in _serve
+    decoder = _FragmentingFixtureDecoder(_fixture_records(final_action), codec, decoder_log)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: main.<locals>.track_cancel_records() takes 0 positional arguments but 1 was given
