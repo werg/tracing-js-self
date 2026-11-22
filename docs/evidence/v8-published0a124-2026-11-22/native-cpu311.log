@@ -1,0 +1,832 @@
+﻿2026-11-22T08:47:16.7114013Z Current runner version: '2.338.2'
+2026-11-22T08:47:16.7150179Z ##[group]Runner Image Provisioner
+2026-11-22T08:47:16.7151506Z Hosted Compute Agent
+2026-11-22T08:47:16.7152585Z Version: 20261111.635
+2026-11-22T08:47:16.7153693Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-22T08:47:16.7154932Z Build Date: 2026-11-11T01:49:01Z
+2026-11-22T08:47:16.7156399Z Worker ID: {20383672-fab7-4aa3-afc2-9ac73256cba0}
+2026-11-22T08:47:16.7157737Z Region: northcentralus
+2026-11-22T08:47:16.7159216Z Cloud: Azure
+2026-11-22T08:47:16.7160301Z ##[endgroup]
+2026-11-22T08:47:16.7162705Z ##[group]Operating System
+2026-11-22T08:47:16.7164095Z Ubuntu
+2026-11-22T08:47:16.7165072Z 24.04.5
+2026-11-22T08:47:16.7166074Z LTS
+2026-11-22T08:47:16.7167026Z ##[endgroup]
+2026-11-22T08:47:16.7168293Z ##[group]Runner Image
+2026-11-22T08:47:16.7169634Z Image: ubuntu-24.04
+2026-11-22T08:47:16.7170754Z Version: 20261116.376.1
+2026-11-22T08:47:16.7172989Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.376/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-22T08:47:16.7175864Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.376
+2026-11-22T08:47:16.7178266Z ##[endgroup]
+2026-11-22T08:47:16.7180199Z ##[group]GITHUB_TOKEN Permissions
+2026-11-22T08:47:16.7183433Z Contents: read
+2026-11-22T08:47:16.7184490Z Metadata: read
+2026-11-22T08:47:16.7185698Z ##[endgroup]
+2026-11-22T08:47:16.7189006Z Secret source: Actions
+2026-11-22T08:47:16.7190760Z Cache mode: write
+2026-11-22T08:47:16.7192330Z Prepare workflow directory
+2026-11-22T08:47:16.7632722Z Prepare all required actions
+2026-11-22T08:47:16.7705130Z Getting action download info
+2026-11-22T08:47:17.0244734Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-11-22T08:47:17.7094444Z Download action repository 'actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+2026-11-22T08:47:17.8410439Z Download action repository 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9' (SHA:cf430e030ddbb5b0abf93d22962f4752f3646cd9)
+2026-11-22T08:47:18.1012129Z Complete job name: cpu (3.11)
+2026-11-22T08:47:18.2076621Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-22T08:47:18.2078824Z with:
+2026-11-22T08:47:18.2079625Z   persist-credentials: false
+2026-11-22T08:47:18.2080593Z   repository: werg/megatoken
+2026-11-22T08:47:18.2088954Z   token: ***
+2026-11-22T08:47:18.2089732Z   ssh-strict: true
+2026-11-22T08:47:18.2090623Z   ssh-user: git
+2026-11-22T08:47:18.2091387Z   clean: true
+2026-11-22T08:47:18.2092199Z   sparse-checkout-cone-mode: true
+2026-11-22T08:47:18.2093176Z   fetch-depth: 1
+2026-11-22T08:47:18.2093979Z   fetch-tags: false
+2026-11-22T08:47:18.2094813Z   show-progress: true
+2026-11-22T08:47:18.2095643Z   lfs: false
+2026-11-22T08:47:18.2096418Z   submodules: false
+2026-11-22T08:47:18.2097236Z   set-safe-directory: true
+2026-11-22T08:47:18.2098482Z   allow-unsafe-pr-checkout: false
+2026-11-22T08:47:18.2099840Z ##[endgroup]
+2026-11-22T08:47:21.1297688Z Syncing repository: werg/megatoken
+2026-11-22T08:47:21.1299399Z ##[group]Getting Git version info
+2026-11-22T08:47:21.1299973Z Working directory is '/home/runner/work/megatoken/megatoken'
+2026-11-22T08:47:21.1300668Z [command]/usr/bin/git version
+2026-11-22T08:47:21.2774288Z git version 2.56.1
+2026-11-22T08:47:21.2798657Z ##[endgroup]
+2026-11-22T08:47:21.2810642Z Temporarily overriding HOME='/home/runner/work/_temp/146fea3f-f89b-4f15-b461-83e62817ea3b' before making global git config changes
+2026-11-22T08:47:21.2811624Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T08:47:21.2817049Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/megatoken/megatoken
+2026-11-22T08:47:21.3102162Z Deleting the contents of '/home/runner/work/megatoken/megatoken'
+2026-11-22T08:47:21.3105877Z ##[group]Determining repository object format
+2026-11-22T08:47:21.3107513Z ##[endgroup]
+2026-11-22T08:47:21.3108558Z ##[group]Initializing the repository
+2026-11-22T08:47:21.3113029Z [command]/usr/bin/git init /home/runner/work/megatoken/megatoken
+2026-11-22T08:47:21.3840679Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T08:47:21.3841911Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T08:47:21.3842697Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T08:47:21.3843204Z hint: call:
+2026-11-22T08:47:21.3843449Z hint:
+2026-11-22T08:47:21.3843806Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T08:47:21.3844186Z hint:
+2026-11-22T08:47:21.3844568Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T08:47:21.3845150Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T08:47:21.3845594Z hint:
+2026-11-22T08:47:21.3845854Z hint: 	git branch -m <name>
+2026-11-22T08:47:21.3846145Z hint:
+2026-11-22T08:47:21.3846551Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T08:47:21.3963423Z Initialized empty Git repository in /home/runner/work/megatoken/megatoken/.git/
+2026-11-22T08:47:21.3977012Z [command]/usr/bin/git remote add origin https://github.com/werg/megatoken
+2026-11-22T08:47:21.4262453Z ##[endgroup]
+2026-11-22T08:47:21.4263338Z ##[group]Disabling automatic garbage collection
+2026-11-22T08:47:21.4265984Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T08:47:21.4314253Z ##[endgroup]
+2026-11-22T08:47:21.4315076Z ##[group]Setting up auth
+2026-11-22T08:47:21.4315611Z Removing SSH command configuration
+2026-11-22T08:47:21.4321803Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:47:21.4373371Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:47:21.6859596Z Removing HTTP extra header
+2026-11-22T08:47:21.6866654Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:47:21.6930961Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:47:21.7216144Z Removing includeIf entries pointing to credentials config files
+2026-11-22T08:47:21.7216778Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:47:21.7268355Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:47:21.7546370Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-23f70bbf-b61d-4536-ac73-7463d8f1fd9b.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T08:47:21.7602142Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/megatoken/megatoken/.git.path /home/runner/work/_temp/git-credentials-23f70bbf-b61d-4536-ac73-7463d8f1fd9b.config
+2026-11-22T08:47:21.7652910Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/megatoken/megatoken/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-23f70bbf-b61d-4536-ac73-7463d8f1fd9b.config
+2026-11-22T08:47:21.7702851Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-23f70bbf-b61d-4536-ac73-7463d8f1fd9b.config
+2026-11-22T08:47:21.7760034Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-23f70bbf-b61d-4536-ac73-7463d8f1fd9b.config
+2026-11-22T08:47:21.7805205Z ##[endgroup]
+2026-11-22T08:47:21.7805780Z ##[group]Fetching the repository
+2026-11-22T08:47:21.7813029Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +bde895c92562c5343d427a8d163e6c183bfbac6a:refs/remotes/pull/38/merge
+2026-11-22T08:47:24.0750828Z From https://github.com/werg/megatoken
+2026-11-22T08:47:24.0751858Z  * [new ref]         bde895c92562c5343d427a8d163e6c183bfbac6a -> pull/38/merge
+2026-11-22T08:47:24.0760256Z ##[endgroup]
+2026-11-22T08:47:24.0843645Z ##[group]Determining the checkout info
+2026-11-22T08:47:24.0844639Z ##[endgroup]
+2026-11-22T08:47:24.0845104Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T08:47:24.0947362Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T08:47:24.0989922Z ##[group]Checking out the ref
+2026-11-22T08:47:24.0994164Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/38/merge
+2026-11-22T08:47:24.3459399Z Note: switching to 'refs/remotes/pull/38/merge'.
+2026-11-22T08:47:24.3459930Z 
+2026-11-22T08:47:24.3460360Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T08:47:24.3461042Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T08:47:24.3462222Z state without impacting any branches by switching back to a branch.
+2026-11-22T08:47:24.3462816Z 
+2026-11-22T08:47:24.3463139Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T08:47:24.3463776Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T08:47:24.3464126Z 
+2026-11-22T08:47:24.3464311Z   git switch -c <new-branch-name>
+2026-11-22T08:47:24.3464554Z 
+2026-11-22T08:47:24.3464697Z Or undo this operation with:
+2026-11-22T08:47:24.3464950Z 
+2026-11-22T08:47:24.3465083Z   git switch -
+2026-11-22T08:47:24.3465254Z 
+2026-11-22T08:47:24.3465503Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T08:47:24.3465875Z 
+2026-11-22T08:47:24.3466268Z HEAD is now at bde895c Merge 124fbd0d493c29af6fb7cf7965d06744e4c7bad5 into 24f4a7c16edf4603cbf5ea6863db1f6a8cc67e37
+2026-11-22T08:47:24.3548790Z ##[endgroup]
+2026-11-22T08:47:24.3667252Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T08:47:24.3706398Z bde895c92562c5343d427a8d163e6c183bfbac6a
+2026-11-22T08:47:24.3716263Z ##[group]Removing auth
+2026-11-22T08:47:24.3716810Z Removing SSH command configuration
+2026-11-22T08:47:24.3720647Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:47:24.3764948Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:47:24.4010561Z Removing HTTP extra header
+2026-11-22T08:47:24.4015171Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:47:24.4060081Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:47:24.4308501Z Removing includeIf entries pointing to credentials config files
+2026-11-22T08:47:24.4312048Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:47:24.4354210Z includeif.gitdir:/home/runner/work/megatoken/megatoken/.git.path
+2026-11-22T08:47:24.4355048Z includeif.gitdir:/home/runner/work/megatoken/megatoken/.git/worktrees/*.path
+2026-11-22T08:47:24.4355497Z includeif.gitdir:/github/workspace/.git.path
+2026-11-22T08:47:24.4355867Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-22T08:47:24.4365751Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/megatoken/megatoken/.git.path
+2026-11-22T08:47:24.4401579Z /home/runner/work/_temp/git-credentials-23f70bbf-b61d-4536-ac73-7463d8f1fd9b.config
+2026-11-22T08:47:24.4415849Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/megatoken/megatoken/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-23f70bbf\-b61d\-4536\-ac73\-7463d8f1fd9b\.config
+2026-11-22T08:47:24.4470808Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/megatoken/megatoken/.git/worktrees/*.path
+2026-11-22T08:47:24.4506471Z /home/runner/work/_temp/git-credentials-23f70bbf-b61d-4536-ac73-7463d8f1fd9b.config
+2026-11-22T08:47:24.4515740Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/megatoken/megatoken/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-23f70bbf\-b61d\-4536\-ac73\-7463d8f1fd9b\.config
+2026-11-22T08:47:24.4561797Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-11-22T08:47:24.4596955Z /github/runner_temp/git-credentials-23f70bbf-b61d-4536-ac73-7463d8f1fd9b.config
+2026-11-22T08:47:24.4606420Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-23f70bbf\-b61d\-4536\-ac73\-7463d8f1fd9b\.config
+2026-11-22T08:47:24.4656694Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-22T08:47:24.4693834Z /github/runner_temp/git-credentials-23f70bbf-b61d-4536-ac73-7463d8f1fd9b.config
+2026-11-22T08:47:24.4702319Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-23f70bbf\-b61d\-4536\-ac73\-7463d8f1fd9b\.config
+2026-11-22T08:47:24.4748664Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:47:24.4990596Z Removing credentials config '/home/runner/work/_temp/git-credentials-23f70bbf-b61d-4536-ac73-7463d8f1fd9b.config'
+2026-11-22T08:47:24.5000159Z ##[endgroup]
+2026-11-22T08:47:24.5265325Z ##[group]Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+2026-11-22T08:47:24.5265738Z with:
+2026-11-22T08:47:24.5265936Z   python-version: 3.11
+2026-11-22T08:47:24.5266155Z   cache: pip
+2026-11-22T08:47:24.5266382Z   cache-dependency-path: pyproject.toml
+2026-11-22T08:47:24.5266679Z   check-latest: false
+2026-11-22T08:47:24.5269375Z   token: ***
+2026-11-22T08:47:24.5269597Z   update-environment: true
+2026-11-22T08:47:24.5269839Z   allow-prereleases: false
+2026-11-22T08:47:24.5270063Z   freethreaded: false
+2026-11-22T08:47:24.5270272Z ##[endgroup]
+2026-11-22T08:47:24.6581462Z ##[group]Installed versions
+2026-11-22T08:47:24.7280615Z Successfully set up CPython (3.11.18)
+2026-11-22T08:47:24.7281422Z ##[endgroup]
+2026-11-22T08:47:24.7913922Z [command]/opt/hostedtoolcache/Python/3.11.18/x64/bin/pip cache dir
+2026-11-22T08:47:26.6291455Z /home/runner/.cache/pip
+2026-11-22T08:47:26.8363294Z Cache hit for: setup-python-Linux-x64-24.04-Ubuntu-python-3.11.18-pip-462c176a8621ed9f0daf626dfe285d274edbd103dfe5982b762acd78df11973e
+2026-11-22T08:47:28.0470634Z Received 134217728 of 370282399 (36.2%), 123.6 MBs/sec
+2026-11-22T08:47:29.0509436Z Received 348127232 of 370282399 (94.0%), 162.6 MBs/sec
+2026-11-22T08:47:29.2241280Z Received 370282399 of 370282399 (100.0%), 159.4 MBs/sec
+2026-11-22T08:47:29.2242514Z Cache Size: ~353 MB (370282399 B)
+2026-11-22T08:47:29.2280126Z [command]/usr/bin/tar -xf /home/runner/work/_temp/62a66b23-cd12-4eb8-b79b-6e19e2c23dba/cache.tzst -P -C /home/runner/work/megatoken/megatoken --use-compress-program unzstd
+2026-11-22T08:47:29.8331428Z Cache restored successfully
+2026-11-22T08:47:29.8493713Z Cache restored from key: setup-python-Linux-x64-24.04-Ubuntu-python-3.11.18-pip-462c176a8621ed9f0daf626dfe285d274edbd103dfe5982b762acd78df11973e
+2026-11-22T08:47:29.8890782Z ##[group]Run python -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+2026-11-22T08:47:29.8891547Z [36;1mpython -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu[0m
+2026-11-22T08:47:29.8892125Z [36;1mpython -m pip install -e '.[train,data,cache,storage,dev]'[0m
+2026-11-22T08:47:29.8919100Z shell: /usr/bin/bash -e {0}
+2026-11-22T08:47:29.8919370Z env:
+2026-11-22T08:47:29.8919638Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:47:29.8920311Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib/pkgconfig
+2026-11-22T08:47:29.8920757Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:47:29.8921147Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:47:29.8921533Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:47:29.8921920Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib
+2026-11-22T08:47:29.8922285Z ##[endgroup]
+2026-11-22T08:47:31.4280556Z Looking in indexes: https://download.pytorch.org/whl/cpu
+2026-11-22T08:47:31.6981422Z Collecting torch==2.10.0
+2026-11-22T08:47:31.7739073Z   Using cached torch-2.10.0%2Bcpu-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (29 kB)
+2026-11-22T08:47:31.8123201Z Collecting filelock (from torch==2.10.0)
+2026-11-22T08:47:31.8138621Z   Using cached filelock-4.2.4-py3-none-any.whl.metadata (2.0 kB)
+2026-11-22T08:47:31.8295509Z Collecting typing-extensions>=4.10.0 (from torch==2.10.0)
+2026-11-22T08:47:31.8310065Z   Using cached typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+2026-11-22T08:47:31.8454726Z Collecting sympy>=1.13.3 (from torch==2.10.0)
+2026-11-22T08:47:31.8470162Z   Using cached sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+2026-11-22T08:47:31.8681557Z Collecting networkx>=2.5.1 (from torch==2.10.0)
+2026-11-22T08:47:31.8695487Z   Using cached networkx-3.6.1-py3-none-any.whl.metadata (6.8 kB)
+2026-11-22T08:47:31.8810812Z Collecting jinja2 (from torch==2.10.0)
+2026-11-22T08:47:31.8869244Z   Using cached jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+2026-11-22T08:47:31.9069062Z Collecting fsspec>=0.8.5 (from torch==2.10.0)
+2026-11-22T08:47:31.9082962Z   Using cached fsspec-2026.9.0-py3-none-any.whl.metadata (10 kB)
+2026-11-22T08:47:31.9304100Z Collecting mpmath<1.4,>=1.1.0 (from sympy>=1.13.3->torch==2.10.0)
+2026-11-22T08:47:31.9318152Z   Using cached mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+2026-11-22T08:47:31.9506794Z Collecting MarkupSafe>=2.0 (from jinja2->torch==2.10.0)
+2026-11-22T08:47:31.9560084Z   Using cached markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+2026-11-22T08:47:31.9738628Z Using cached torch-2.10.0%2Bcpu-cp311-cp311-manylinux_2_28_x86_64.whl (188.8 MB)
+2026-11-22T08:47:32.0451900Z Using cached fsspec-2026.9.0-py3-none-any.whl (221 kB)
+2026-11-22T08:47:32.0465773Z Using cached networkx-3.6.1-py3-none-any.whl (2.1 MB)
+2026-11-22T08:47:32.0487129Z Using cached sympy-1.14.0-py3-none-any.whl (6.3 MB)
+2026-11-22T08:47:32.0522814Z Using cached mpmath-1.3.0-py3-none-any.whl (536 kB)
+2026-11-22T08:47:32.0538321Z Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-11-22T08:47:32.0552357Z Using cached filelock-4.2.4-py3-none-any.whl (162 kB)
+2026-11-22T08:47:32.0616789Z Using cached jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-11-22T08:47:32.0673438Z Using cached markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2026-11-22T08:47:32.6399455Z Installing collected packages: mpmath, typing-extensions, sympy, networkx, MarkupSafe, fsspec, filelock, jinja2, torch
+2026-11-22T08:47:48.9727205Z 
+2026-11-22T08:47:48.9738956Z Successfully installed MarkupSafe-3.0.3 filelock-4.2.4 fsspec-2026.9.0 jinja2-3.1.6 mpmath-1.3.0 networkx-3.6.1 sympy-1.14.0 torch-2.10.0+cpu typing-extensions-4.16.0
+2026-11-22T08:47:49.8227141Z Obtaining file:///home/runner/work/megatoken/megatoken
+2026-11-22T08:47:49.8246805Z   Installing build dependencies: started
+2026-11-22T08:47:50.9160357Z   Installing build dependencies: finished with status 'done'
+2026-11-22T08:47:50.9167501Z   Checking if build backend supports build_editable: started
+2026-11-22T08:47:50.9657030Z   Checking if build backend supports build_editable: finished with status 'done'
+2026-11-22T08:47:50.9665045Z   Getting requirements to build editable: started
+2026-11-22T08:47:51.1102513Z   Getting requirements to build editable: finished with status 'done'
+2026-11-22T08:47:51.1113486Z   Installing backend dependencies: started
+2026-11-22T08:47:52.0262690Z   Installing backend dependencies: finished with status 'done'
+2026-11-22T08:47:52.0269299Z   Preparing editable metadata (pyproject.toml): started
+2026-11-22T08:47:52.2318445Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+2026-11-22T08:47:52.2988506Z Collecting jsonschema<5,>=4.23 (from megatoken==0.1.0)
+2026-11-22T08:47:52.3005116Z   Using cached jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+2026-11-22T08:47:52.3143735Z Collecting markdown-it-py==4.0.0 (from megatoken==0.1.0)
+2026-11-22T08:47:52.3159020Z   Using cached markdown_it_py-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+2026-11-22T08:47:52.5089981Z Collecting numpy<3,>=1.26 (from megatoken==0.1.0)
+2026-11-22T08:47:52.5107263Z   Using cached numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+2026-11-22T08:47:52.5636712Z Collecting pyyaml<7,>=6.0 (from megatoken==0.1.0)
+2026-11-22T08:47:52.6105708Z   Downloading pyyaml-6.0.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.3 kB)
+2026-11-22T08:47:52.6250347Z Collecting tree-sitter-c-sharp==0.23.5 (from megatoken==0.1.0)
+2026-11-22T08:47:52.6266155Z   Using cached tree_sitter_c_sharp-0.23.5-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (2.7 kB)
+2026-11-22T08:47:52.6376867Z Collecting tree-sitter-embedded-template==0.25.0 (from megatoken==0.1.0)
+2026-11-22T08:47:52.6392795Z   Using cached tree_sitter_embedded_template-0.25.0-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (2.3 kB)
+2026-11-22T08:47:52.6679304Z Collecting tree-sitter-language-pack==0.13.0 (from megatoken==0.1.0)
+2026-11-22T08:47:52.6695669Z   Using cached tree_sitter_language_pack-0.13.0-cp310-abi3-manylinux2014_x86_64.whl.metadata (19 kB)
+2026-11-22T08:47:52.6803010Z Collecting tree-sitter-yaml==0.7.2 (from megatoken==0.1.0)
+2026-11-22T08:47:52.6818802Z   Using cached tree_sitter_yaml-0.7.2-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (1.8 kB)
+2026-11-22T08:47:52.7180515Z Collecting tree-sitter==0.25.2 (from megatoken==0.1.0)
+2026-11-22T08:47:52.7196710Z   Using cached tree_sitter-0.25.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (10.0 kB)
+2026-11-22T08:47:52.7308000Z Collecting uniseg==0.10.1 (from megatoken==0.1.0)
+2026-11-22T08:47:52.7322896Z   Using cached uniseg-0.10.1-py3-none-any.whl.metadata (7.3 kB)
+2026-11-22T08:47:52.9134528Z Collecting cryptography<51,>=43 (from megatoken==0.1.0)
+2026-11-22T08:47:52.9151411Z   Using cached cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (4.4 kB)
+2026-11-22T08:47:52.9558779Z Collecting huggingface-hub<2,>=0.28 (from megatoken==0.1.0)
+2026-11-22T08:47:52.9574044Z   Using cached huggingface_hub-1.33.0-py3-none-any.whl.metadata (16 kB)
+2026-11-22T08:47:53.0383465Z Collecting pyarrow<24,>=18 (from megatoken==0.1.0)
+2026-11-22T08:47:53.0399288Z   Using cached pyarrow-23.0.1-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (3.1 kB)
+2026-11-22T08:47:53.0976125Z Collecting zstandard<1,>=0.23 (from megatoken==0.1.0)
+2026-11-22T08:47:53.0992527Z   Using cached zstandard-0.25.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.3 kB)
+2026-11-22T08:47:53.1175317Z Collecting datasets<5,>=3 (from megatoken==0.1.0)
+2026-11-22T08:47:53.1190348Z   Using cached datasets-4.8.5-py3-none-any.whl.metadata (19 kB)
+2026-11-22T08:47:53.1435738Z Collecting httpx<1,>=0.27 (from megatoken==0.1.0)
+2026-11-22T08:47:53.1450527Z   Using cached httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+2026-11-22T08:47:53.2984501Z Collecting pillow<13,>=11 (from megatoken==0.1.0)
+2026-11-22T08:47:53.3001273Z   Using cached pillow-12.3.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (9.1 kB)
+2026-11-22T08:47:53.6969470Z Collecting regex>=2024.11 (from megatoken==0.1.0)
+2026-11-22T08:47:53.7008171Z   Downloading regex-2026.11.19-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+2026-11-22T08:47:53.7275942Z Collecting soundfile<1,>=0.12 (from megatoken==0.1.0)
+2026-11-22T08:47:53.7292150Z   Using cached soundfile-0.14.0-py2.py3-none-manylinux_2_28_x86_64.whl.metadata (18 kB)
+2026-11-22T08:47:53.8746780Z Collecting tokenizers<1,>=0.21 (from megatoken==0.1.0)
+2026-11-22T08:47:53.8763580Z   Using cached tokenizers-0.23.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.8 kB)
+2026-11-22T08:47:53.8894073Z Collecting build<2,>=1.2 (from megatoken==0.1.0)
+2026-11-22T08:47:53.8910148Z   Using cached build-1.6.1-py3-none-any.whl.metadata (5.6 kB)
+2026-11-22T08:47:53.9125875Z Collecting pytest<9,>=8.3 (from megatoken==0.1.0)
+2026-11-22T08:47:53.9141356Z   Using cached pytest-8.4.2-py3-none-any.whl.metadata (7.7 kB)
+2026-11-22T08:47:54.2503445Z Collecting ruff<1,>=0.11 (from megatoken==0.1.0)
+2026-11-22T08:47:54.2540923Z   Downloading ruff-0.17.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (20 kB)
+2026-11-22T08:47:54.4317833Z Collecting boto3<2,>=1.42.5 (from megatoken==0.1.0)
+2026-11-22T08:47:54.4355928Z   Downloading boto3-1.44.9-py3-none-any.whl.metadata (6.6 kB)
+2026-11-22T08:47:54.5866099Z Collecting safetensors<1,>=0.5 (from megatoken==0.1.0)
+2026-11-22T08:47:54.5884451Z   Using cached safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.2 kB)
+2026-11-22T08:47:54.5929373Z Requirement already satisfied: torch<2.15,>=2.10 in /opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages (from megatoken==0.1.0) (2.10.0+cpu)
+2026-11-22T08:47:54.6005426Z Collecting mdurl~=0.1 (from markdown-it-py==4.0.0->megatoken==0.1.0)
+2026-11-22T08:47:54.6020808Z   Using cached mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+2026-11-22T08:47:54.8035346Z Collecting botocore<1.45.0,>=1.44.9 (from boto3<2,>=1.42.5->megatoken==0.1.0)
+2026-11-22T08:47:54.8074921Z   Downloading botocore-1.44.9-py3-none-any.whl.metadata (5.6 kB)
+2026-11-22T08:47:54.8199483Z Collecting jmespath<2.0.0,>=0.7.1 (from boto3<2,>=1.42.5->megatoken==0.1.0)
+2026-11-22T08:47:54.8214504Z   Using cached jmespath-1.1.0-py3-none-any.whl.metadata (7.6 kB)
+2026-11-22T08:47:54.8343142Z Collecting s3transfer<0.20.0,>=0.19.0 (from boto3<2,>=1.42.5->megatoken==0.1.0)
+2026-11-22T08:47:54.8358416Z   Using cached s3transfer-0.19.3-py3-none-any.whl.metadata (1.7 kB)
+2026-11-22T08:47:54.8475363Z Collecting python-dateutil<3.0.0,>=2.1 (from botocore<1.45.0,>=1.44.9->boto3<2,>=1.42.5->megatoken==0.1.0)
+2026-11-22T08:47:54.8490338Z   Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+2026-11-22T08:47:54.8667137Z Collecting urllib3!=2.2.0,<3,>=1.25.4 (from botocore<1.45.0,>=1.44.9->boto3<2,>=1.42.5->megatoken==0.1.0)
+2026-11-22T08:47:54.8682949Z   Using cached urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+2026-11-22T08:47:54.8776439Z Collecting packaging>=24.0 (from build<2,>=1.2->megatoken==0.1.0)
+2026-11-22T08:47:54.8791527Z   Using cached packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+2026-11-22T08:47:54.8904653Z Collecting pyproject_hooks (from build<2,>=1.2->megatoken==0.1.0)
+2026-11-22T08:47:54.8919763Z   Using cached pyproject_hooks-1.3.3-py3-none-any.whl.metadata (1.3 kB)
+2026-11-22T08:47:55.0445194Z Collecting cffi>=2.0.0 (from cryptography<51,>=43->megatoken==0.1.0)
+2026-11-22T08:47:55.0463062Z   Using cached cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.5 kB)
+2026-11-22T08:47:55.0487444Z Requirement already satisfied: filelock in /opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages (from datasets<5,>=3->megatoken==0.1.0) (4.2.4)
+2026-11-22T08:47:55.0603487Z Collecting dill<0.4.2,>=0.3.0 (from datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:55.0619084Z   Using cached dill-0.4.1-py3-none-any.whl.metadata (10 kB)
+2026-11-22T08:47:55.1733177Z Collecting pandas (from datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:55.1750886Z   Using cached pandas-3.1.1-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (16 kB)
+2026-11-22T08:47:55.1969445Z Collecting requests>=2.32.2 (from datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:55.1984518Z   Using cached requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+2026-11-22T08:47:55.2195795Z Collecting tqdm>=4.66.3 (from datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:55.2211956Z   Using cached tqdm-4.70.1-py3-none-any.whl.metadata (57 kB)
+2026-11-22T08:47:55.4037100Z Collecting xxhash (from datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:55.4055155Z   Using cached xxhash-4.1.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (18 kB)
+2026-11-22T08:47:55.4251498Z Collecting multiprocess<0.70.20 (from datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:55.4266311Z   Using cached multiprocess-0.70.19-py311-none-any.whl.metadata (7.5 kB)
+2026-11-22T08:47:55.4428122Z Collecting fsspec<=2026.2.0,>=2023.1.0 (from fsspec[http]<=2026.2.0,>=2023.1.0->datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:55.4442469Z   Using cached fsspec-2026.2.0-py3-none-any.whl.metadata (10 kB)
+2026-11-22T08:47:55.9812600Z Collecting aiohttp!=4.0.0a0,!=4.0.0a1 (from fsspec[http]<=2026.2.0,>=2023.1.0->datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:55.9830204Z   Using cached aiohttp-3.14.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.3 kB)
+2026-11-22T08:47:56.0004764Z Collecting anyio (from httpx<1,>=0.27->megatoken==0.1.0)
+2026-11-22T08:47:56.0019392Z   Using cached anyio-4.16.0-py3-none-any.whl.metadata (4.7 kB)
+2026-11-22T08:47:56.0184560Z Collecting certifi (from httpx<1,>=0.27->megatoken==0.1.0)
+2026-11-22T08:47:56.0219330Z   Downloading certifi-2026.11.20-py3-none-any.whl.metadata (2.5 kB)
+2026-11-22T08:47:56.0354247Z Collecting httpcore==1.* (from httpx<1,>=0.27->megatoken==0.1.0)
+2026-11-22T08:47:56.0376537Z   Using cached httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+2026-11-22T08:47:56.0500871Z Collecting idna (from httpx<1,>=0.27->megatoken==0.1.0)
+2026-11-22T08:47:56.0515325Z   Using cached idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+2026-11-22T08:47:56.0608817Z Collecting h11>=0.16 (from httpcore==1.*->httpx<1,>=0.27->megatoken==0.1.0)
+2026-11-22T08:47:56.0623693Z   Using cached h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+2026-11-22T08:47:56.0757272Z Collecting click<9.0.0,>=8.4.2 (from huggingface-hub<2,>=0.28->megatoken==0.1.0)
+2026-11-22T08:47:56.0772224Z   Using cached click-8.5.1-py3-none-any.whl.metadata (2.6 kB)
+2026-11-22T08:47:56.1838647Z Collecting hf-xet<2.0.0,>=1.6.0 (from huggingface-hub<2,>=0.28->megatoken==0.1.0)
+2026-11-22T08:47:56.1854665Z   Using cached hf_xet-1.8.0-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (4.9 kB)
+2026-11-22T08:47:56.1901742Z Requirement already satisfied: typing-extensions>=4.1.0 in /opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages (from huggingface-hub<2,>=0.28->megatoken==0.1.0) (4.16.0)
+2026-11-22T08:47:56.2026590Z Collecting attrs>=22.2.0 (from jsonschema<5,>=4.23->megatoken==0.1.0)
+2026-11-22T08:47:56.2041442Z   Using cached attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+2026-11-22T08:47:56.2139302Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5,>=4.23->megatoken==0.1.0)
+2026-11-22T08:47:56.2153787Z   Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+2026-11-22T08:47:56.2326671Z Collecting referencing>=0.28.4 (from jsonschema<5,>=4.23->megatoken==0.1.0)
+2026-11-22T08:47:56.2341926Z   Using cached referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+2026-11-22T08:47:56.4732996Z Collecting rpds-py>=0.25.0 (from jsonschema<5,>=4.23->megatoken==0.1.0)
+2026-11-22T08:47:56.4749954Z   Using cached rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+2026-11-22T08:47:56.4881013Z Collecting iniconfig>=1 (from pytest<9,>=8.3->megatoken==0.1.0)
+2026-11-22T08:47:56.4895617Z   Using cached iniconfig-2.3.1-py3-none-any.whl.metadata (2.8 kB)
+2026-11-22T08:47:56.4956996Z Collecting pluggy<2,>=1.5 (from pytest<9,>=8.3->megatoken==0.1.0)
+2026-11-22T08:47:56.4971694Z   Using cached pluggy-1.7.0-py3-none-any.whl.metadata (5.0 kB)
+2026-11-22T08:47:56.5120184Z Collecting pygments>=2.7.2 (from pytest<9,>=8.3->megatoken==0.1.0)
+2026-11-22T08:47:56.5134603Z   Using cached pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+2026-11-22T08:47:56.5256117Z Collecting six>=1.5 (from python-dateutil<3.0.0,>=2.1->botocore<1.45.0,>=1.44.9->boto3<2,>=1.42.5->megatoken==0.1.0)
+2026-11-22T08:47:56.5270968Z   Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-11-22T08:47:56.5455039Z Requirement already satisfied: sympy>=1.13.3 in /opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages (from torch<2.15,>=2.10->megatoken==0.1.0) (1.14.0)
+2026-11-22T08:47:56.5459211Z Requirement already satisfied: networkx>=2.5.1 in /opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages (from torch<2.15,>=2.10->megatoken==0.1.0) (3.6.1)
+2026-11-22T08:47:56.5462873Z Requirement already satisfied: jinja2 in /opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages (from torch<2.15,>=2.10->megatoken==0.1.0) (3.1.6)
+2026-11-22T08:47:56.5585037Z Collecting aiohappyeyeballs>=2.5.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:56.5600220Z   Using cached aiohappyeyeballs-2.7.1-py3-none-any.whl.metadata (5.9 kB)
+2026-11-22T08:47:56.5683368Z Collecting aiosignal>=1.4.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:56.5697984Z   Using cached aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+2026-11-22T08:47:56.6253694Z Collecting frozenlist>=1.1.1 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:56.6268961Z   Using cached frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (20 kB)
+2026-11-22T08:47:56.9471597Z Collecting multidict<8.0,>=4.5 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:56.9488209Z   Using cached multidict-7.2.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (6.1 kB)
+2026-11-22T08:47:57.0109090Z Collecting propcache>=0.2.0 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:57.0125395Z   Using cached propcache-0.5.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (25 kB)
+2026-11-22T08:47:57.2377199Z Collecting yarl<2.0,>=1.25.1 (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:57.2394172Z   Using cached yarl-1.25.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (111 kB)
+2026-11-22T08:47:57.2646192Z Collecting pycparser (from cffi>=2.0.0->cryptography<51,>=43->megatoken==0.1.0)
+2026-11-22T08:47:57.2660612Z   Using cached pycparser-3.12-py3-none-any.whl.metadata (9.7 kB)
+2026-11-22T08:47:57.3874911Z Collecting charset_normalizer<4,>=2 (from requests>=2.32.2->datasets<5,>=3->megatoken==0.1.0)
+2026-11-22T08:47:57.3891150Z   Using cached charset_normalizer-3.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (46 kB)
+2026-11-22T08:47:57.4019827Z Requirement already satisfied: mpmath<1.4,>=1.1.0 in /opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages (from sympy>=1.13.3->torch<2.15,>=2.10->megatoken==0.1.0) (1.3.0)
+2026-11-22T08:47:57.4080375Z Requirement already satisfied: MarkupSafe>=2.0 in /opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages (from jinja2->torch<2.15,>=2.10->megatoken==0.1.0) (3.0.3)
+2026-11-22T08:47:57.4168115Z Using cached markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+2026-11-22T08:47:57.4182290Z Using cached tree_sitter-0.25.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (632 kB)
+2026-11-22T08:47:57.4199866Z Using cached tree_sitter_c_sharp-0.23.5-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (358 kB)
+2026-11-22T08:47:57.4215735Z Using cached tree_sitter_embedded_template-0.25.0-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (18 kB)
+2026-11-22T08:47:57.4230215Z Using cached tree_sitter_language_pack-0.13.0-cp310-abi3-manylinux2014_x86_64.whl (20.0 MB)
+2026-11-22T08:47:57.4318561Z Using cached tree_sitter_yaml-0.7.2-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (91 kB)
+2026-11-22T08:47:57.4332825Z Using cached uniseg-0.10.1-py3-none-any.whl (8.2 MB)
+2026-11-22T08:47:57.4396031Z Downloading boto3-1.44.9-py3-none-any.whl (140 kB)
+2026-11-22T08:47:57.4483361Z Downloading botocore-1.44.9-py3-none-any.whl (16.9 MB)
+2026-11-22T08:47:57.5312758Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.9/16.9 MB 216.6 MB/s  0:00:00
+2026-11-22T08:47:57.5330327Z Using cached build-1.6.1-py3-none-any.whl (31 kB)
+2026-11-22T08:47:57.5345943Z Using cached cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl (4.8 MB)
+2026-11-22T08:47:57.5378146Z Using cached datasets-4.8.5-py3-none-any.whl (528 kB)
+2026-11-22T08:47:57.5394428Z Using cached dill-0.4.1-py3-none-any.whl (120 kB)
+2026-11-22T08:47:57.5408644Z Using cached fsspec-2026.2.0-py3-none-any.whl (202 kB)
+2026-11-22T08:47:57.5423462Z Using cached httpx-0.28.1-py3-none-any.whl (73 kB)
+2026-11-22T08:47:57.5437509Z Using cached httpcore-1.0.9-py3-none-any.whl (78 kB)
+2026-11-22T08:47:57.5451943Z Using cached huggingface_hub-1.33.0-py3-none-any.whl (846 kB)
+2026-11-22T08:47:57.5469427Z Using cached click-8.5.1-py3-none-any.whl (126 kB)
+2026-11-22T08:47:57.5484457Z Using cached hf_xet-1.8.0-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.3 MB)
+2026-11-22T08:47:57.5515417Z Using cached jmespath-1.1.0-py3-none-any.whl (20 kB)
+2026-11-22T08:47:57.5529408Z Using cached jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-11-22T08:47:57.5543367Z Using cached mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-11-22T08:47:57.5557158Z Using cached multiprocess-0.70.19-py311-none-any.whl (144 kB)
+2026-11-22T08:47:57.5571830Z Using cached numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.9 MB)
+2026-11-22T08:47:57.5647839Z Using cached pillow-12.3.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (6.9 MB)
+2026-11-22T08:47:57.5686315Z Using cached pyarrow-23.0.1-cp311-cp311-manylinux_2_28_x86_64.whl (47.6 MB)
+2026-11-22T08:47:57.5867095Z Using cached pytest-8.4.2-py3-none-any.whl (365 kB)
+2026-11-22T08:47:57.5881986Z Using cached pluggy-1.7.0-py3-none-any.whl (27 kB)
+2026-11-22T08:47:57.5896213Z Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2026-11-22T08:47:57.5936213Z Downloading pyyaml-6.0.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (828 kB)
+2026-11-22T08:47:57.5993335Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 828.0/828.0 kB 165.2 MB/s  0:00:00
+2026-11-22T08:47:57.6027216Z Downloading ruff-0.17.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (10.6 MB)
+2026-11-22T08:47:57.6336818Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.6/10.6 MB 369.7 MB/s  0:00:00
+2026-11-22T08:47:57.6351746Z Using cached s3transfer-0.19.3-py3-none-any.whl (90 kB)
+2026-11-22T08:47:57.6367049Z Using cached safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (516 kB)
+2026-11-22T08:47:57.6383646Z Using cached soundfile-0.14.0-py2.py3-none-manylinux_2_28_x86_64.whl (1.3 MB)
+2026-11-22T08:47:57.6403108Z Using cached tokenizers-0.23.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.4 MB)
+2026-11-22T08:47:57.6429652Z Using cached urllib3-2.8.0-py3-none-any.whl (135 kB)
+2026-11-22T08:47:57.6444186Z Using cached zstandard-0.25.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.6 MB)
+2026-11-22T08:47:57.6478352Z Using cached aiohttp-3.14.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.9 MB)
+2026-11-22T08:47:57.6499100Z Using cached multidict-7.2.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (510 kB)
+2026-11-22T08:47:57.6514800Z Using cached yarl-1.25.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (117 kB)
+2026-11-22T08:47:57.6528786Z Using cached aiohappyeyeballs-2.7.1-py3-none-any.whl (15 kB)
+2026-11-22T08:47:57.6542689Z Using cached aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+2026-11-22T08:47:57.6556425Z Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-11-22T08:47:57.6570871Z Using cached cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (217 kB)
+2026-11-22T08:47:57.6585636Z Using cached frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (231 kB)
+2026-11-22T08:47:57.6599838Z Using cached h11-0.16.0-py3-none-any.whl (37 kB)
+2026-11-22T08:47:57.6613813Z Using cached idna-3.20-py3-none-any.whl (69 kB)
+2026-11-22T08:47:57.6627702Z Using cached iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+2026-11-22T08:47:57.6641807Z Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-11-22T08:47:57.6674414Z Using cached packaging-26.3-py3-none-any.whl (129 kB)
+2026-11-22T08:47:57.6675593Z Using cached propcache-0.5.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (235 kB)
+2026-11-22T08:47:57.6687488Z Using cached pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-11-22T08:47:57.6706110Z Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-11-22T08:47:57.6746417Z Downloading regex-2026.11.19-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (805 kB)
+2026-11-22T08:47:57.6804409Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 805.9/805.9 kB 153.6 MB/s  0:00:00
+2026-11-22T08:47:57.6817871Z Using cached requests-2.34.2-py3-none-any.whl (73 kB)
+2026-11-22T08:47:57.6833668Z Using cached charset_normalizer-3.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (269 kB)
+2026-11-22T08:47:57.6868441Z Downloading certifi-2026.11.20-py3-none-any.whl (127 kB)
+2026-11-22T08:47:57.6903927Z Using cached rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (375 kB)
+2026-11-22T08:47:57.6919219Z Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-11-22T08:47:57.6932900Z Using cached tqdm-4.70.1-py3-none-any.whl (80 kB)
+2026-11-22T08:47:57.6947036Z Using cached anyio-4.16.0-py3-none-any.whl (134 kB)
+2026-11-22T08:47:57.6961885Z Using cached pandas-3.1.1-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.4 MB)
+2026-11-22T08:47:57.7020408Z Using cached pycparser-3.12-py3-none-any.whl (62 kB)
+2026-11-22T08:47:57.7034321Z Using cached pyproject_hooks-1.3.3-py3-none-any.whl (10 kB)
+2026-11-22T08:47:57.7048555Z Using cached xxhash-4.1.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (471 kB)
+2026-11-22T08:47:58.0034619Z Building wheels for collected packages: megatoken
+2026-11-22T08:47:58.0043262Z   Building editable for megatoken (pyproject.toml): started
+2026-11-22T08:47:58.0374812Z   Building editable for megatoken (pyproject.toml): finished with status 'done'
+2026-11-22T08:47:58.0380214Z   Created wheel for megatoken: filename=megatoken-0.1.0-py3-none-any.whl size=8427 sha256=bc2dbc5409e20920b697ad11c20ba03a48f8ed12d04e429ed8b07f0a425da3a9
+2026-11-22T08:47:58.0381704Z   Stored in directory: /tmp/pip-ephem-wheel-cache-o9fphi3l/wheels/fa/31/45/3830a1dd49ae7ebff86195f1c116e01b8a90460fa42b185214
+2026-11-22T08:47:58.0402275Z Successfully built megatoken
+2026-11-22T08:47:58.1782255Z Installing collected packages: zstandard, xxhash, urllib3, uniseg, tree-sitter-yaml, tree-sitter-embedded-template, tree-sitter-c-sharp, tree-sitter, tqdm, six, safetensors, ruff, rpds-py, regex, pyyaml, pyproject_hooks, pygments, pycparser, pyarrow, propcache, pluggy, pillow, packaging, numpy, multidict, mdurl, jmespath, iniconfig, idna, hf-xet, h11, fsspec, frozenlist, dill, click, charset_normalizer, certifi, attrs, aiohappyeyeballs, yarl, tree-sitter-language-pack, requests, referencing, python-dateutil, pytest, multiprocess, markdown-it-py, httpcore, cffi, build, anyio, aiosignal, soundfile, pandas, jsonschema-specifications, httpx, cryptography, botocore, aiohttp, s3transfer, jsonschema, huggingface-hub, tokenizers, megatoken, datasets, boto3
+2026-11-22T08:48:03.1275734Z   Attempting uninstall: fsspec
+2026-11-22T08:48:03.1297203Z     Found existing installation: fsspec 2026.9.0
+2026-11-22T08:48:03.1347781Z     Uninstalling fsspec-2026.9.0:
+2026-11-22T08:48:03.1360288Z       Successfully uninstalled fsspec-2026.9.0
+2026-11-22T08:48:11.0980965Z 
+2026-11-22T08:48:11.1014536Z Successfully installed aiohappyeyeballs-2.7.1 aiohttp-3.14.5 aiosignal-1.4.0 anyio-4.16.0 attrs-26.1.0 boto3-1.44.9 botocore-1.44.9 build-1.6.1 certifi-2026.11.20 cffi-2.1.1 charset_normalizer-3.5.2 click-8.5.1 cryptography-50.0.2 datasets-4.8.5 dill-0.4.1 frozenlist-1.8.0 fsspec-2026.2.0 h11-0.16.0 hf-xet-1.8.0 httpcore-1.0.9 httpx-0.28.1 huggingface-hub-1.33.0 idna-3.20 iniconfig-2.3.1 jmespath-1.1.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 markdown-it-py-4.0.0 mdurl-0.1.2 megatoken-0.1.0 multidict-7.2.1 multiprocess-0.70.19 numpy-2.4.6 packaging-26.3 pandas-3.1.1 pillow-12.3.0 pluggy-1.7.0 propcache-0.5.4 pyarrow-23.0.1 pycparser-3.12 pygments-2.21.0 pyproject_hooks-1.3.3 pytest-8.4.2 python-dateutil-2.9.0.post0 pyyaml-6.0.4 referencing-0.37.0 regex-2026.11.19 requests-2.34.2 rpds-py-2026.9.1 ruff-0.17.6 s3transfer-0.19.3 safetensors-0.8.0 six-1.17.0 soundfile-0.14.0 tokenizers-0.23.3 tqdm-4.70.1 tree-sitter-0.25.2 tree-sitter-c-sharp-0.23.5 tree-sitter-embedded-template-0.25.0 tree-sitter-language-pack-0.13.0 tree-sitter-yaml-0.7.2 uniseg-0.10.1 urllib3-2.8.0 xxhash-4.1.0 yarl-1.25.1 zstandard-0.25.0
+2026-11-22T08:48:11.5117642Z ##[group]Run semantic_lint_status=0
+2026-11-22T08:48:11.5118347Z [36;1msemantic_lint_status=0[0m
+2026-11-22T08:48:11.5118730Z [36;1mpython -m ruff check src tests scripts || semantic_lint_status=1[0m
+2026-11-22T08:48:11.5119231Z [36;1mpython -m ruff format --diff src tests scripts || semantic_lint_status=1[0m
+2026-11-22T08:48:11.5119752Z [36;1mbash -n src/megatoken/cloud_bootstrap.sh || semantic_lint_status=1[0m
+2026-11-22T08:48:11.5120157Z [36;1mtest "$semantic_lint_status" -eq 0[0m
+2026-11-22T08:48:11.5141160Z shell: /usr/bin/bash -e {0}
+2026-11-22T08:48:11.5141405Z env:
+2026-11-22T08:48:11.5141674Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:11.5142125Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib/pkgconfig
+2026-11-22T08:48:11.5142563Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:11.5142945Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:11.5143366Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:11.5143753Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib
+2026-11-22T08:48:11.5144074Z ##[endgroup]
+2026-11-22T08:48:11.6771996Z All checks passed!
+2026-11-22T08:48:11.8663560Z 600 files already formatted
+2026-11-22T08:48:11.8761891Z ##[group]Run python -m build
+2026-11-22T08:48:11.8762263Z [36;1mpython -m build[0m
+2026-11-22T08:48:11.8762718Z [36;1mpython -m pip install --no-deps --force-reinstall dist/megatoken-0.1.0-py3-none-any.whl[0m
+2026-11-22T08:48:11.8783422Z shell: /usr/bin/bash -e {0}
+2026-11-22T08:48:11.8783688Z env:
+2026-11-22T08:48:11.8783984Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:11.8784443Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib/pkgconfig
+2026-11-22T08:48:11.8784900Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:11.8785318Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:11.8785732Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:11.8786138Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib
+2026-11-22T08:48:11.8786471Z ##[endgroup]
+2026-11-22T08:48:11.9833209Z * Creating isolated environment: venv+pip...
+2026-11-22T08:48:12.0521063Z * Installing packages in isolated environment:
+2026-11-22T08:48:13.1725868Z   - hatchling>=1.26,<2
+2026-11-22T08:48:13.1726315Z * Getting build dependencies for sdist...
+2026-11-22T08:48:13.3064764Z * Installed build dependency versions:
+2026-11-22T08:48:13.3065134Z   - hatchling==1.33.0
+2026-11-22T08:48:13.3065376Z * Building sdist...
+2026-11-22T08:48:18.3394306Z * Building wheel from sdist
+2026-11-22T08:48:18.3457762Z * Creating isolated environment: venv+pip...
+2026-11-22T08:48:18.3478198Z * Installing packages in isolated environment:
+2026-11-22T08:48:18.3479022Z   - hatchling>=1.26,<2
+2026-11-22T08:48:19.2729538Z * Getting build dependencies for wheel...
+2026-11-22T08:48:19.4125890Z * Installed build dependency versions:
+2026-11-22T08:48:19.4126437Z   - hatchling==1.33.0
+2026-11-22T08:48:19.4126806Z * Building wheel...
+2026-11-22T08:48:19.7515339Z Successfully built megatoken-0.1.0.tar.gz and megatoken-0.1.0-py3-none-any.whl
+2026-11-22T08:48:20.0647104Z Processing ./dist/megatoken-0.1.0-py3-none-any.whl
+2026-11-22T08:48:20.0913906Z Installing collected packages: megatoken
+2026-11-22T08:48:20.0915113Z   Attempting uninstall: megatoken
+2026-11-22T08:48:20.0934961Z     Found existing installation: megatoken 0.1.0
+2026-11-22T08:48:20.0949971Z     Uninstalling megatoken-0.1.0:
+2026-11-22T08:48:20.3785495Z       Successfully uninstalled megatoken-0.1.0
+2026-11-22T08:48:21.2919864Z Successfully installed megatoken-0.1.0
+2026-11-22T08:48:21.3427006Z ##[group]Run MEGATOKEN_REQUIRE_INSTALLED_WHEEL=1 python -m pytest -q tests/test_v8_entrypoints_without_legacy.py
+2026-11-22T08:48:21.3427862Z [36;1mMEGATOKEN_REQUIRE_INSTALLED_WHEEL=1 python -m pytest -q tests/test_v8_entrypoints_without_legacy.py[0m
+2026-11-22T08:48:21.3452376Z shell: /usr/bin/bash -e {0}
+2026-11-22T08:48:21.3452629Z env:
+2026-11-22T08:48:21.3452895Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:21.3453337Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib/pkgconfig
+2026-11-22T08:48:21.3453765Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:21.3454152Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:21.3454532Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:21.3454910Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib
+2026-11-22T08:48:21.3455238Z ##[endgroup]
+2026-11-22T08:48:26.4744677Z .                                                                        [100%]
+2026-11-22T08:48:26.4745279Z 1 passed in 1.79s
+2026-11-22T08:48:26.7611828Z ##[group]Run python -m pytest -q --junitxml=validation/cpu-tests.xml
+2026-11-22T08:48:26.7612341Z [36;1mpython -m pytest -q --junitxml=validation/cpu-tests.xml[0m
+2026-11-22T08:48:26.7632838Z shell: /usr/bin/bash -e {0}
+2026-11-22T08:48:26.7633088Z env:
+2026-11-22T08:48:26.7633354Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:26.7633811Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib/pkgconfig
+2026-11-22T08:48:26.7634266Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:26.7634673Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:26.7635062Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T08:48:26.7635452Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib
+2026-11-22T08:48:26.7635774Z ##[endgroup]
+2026-11-22T08:49:31.4409927Z s.................sss................................................... [  1%]
+2026-11-22T08:49:31.7841646Z ........................................................................ [  3%]
+2026-11-22T08:49:32.1239263Z ........................................................................ [  5%]
+2026-11-22T08:49:32.9305482Z ........................................................................ [  7%]
+2026-11-22T08:49:33.3828952Z ........................................................................ [  9%]
+2026-11-22T08:49:33.5275380Z ........................................................................ [ 11%]
+2026-11-22T08:49:33.6782331Z ........................................................................ [ 13%]
+2026-11-22T08:49:33.8180686Z ........................................................................ [ 14%]
+2026-11-22T08:49:33.9618392Z ........................................................................ [ 16%]
+2026-11-22T08:49:34.1224133Z ........................................................................ [ 18%]
+2026-11-22T08:49:34.3375408Z ........................................................................ [ 20%]
+2026-11-22T08:49:39.7298712Z ...............sssssssssssssss.......................................... [ 22%]
+2026-11-22T08:49:50.6403685Z ..................................................................s..... [ 24%]
+2026-11-22T08:49:51.0034363Z ........................................................................ [ 26%]
+2026-11-22T08:49:51.2416849Z ........................................................................ [ 27%]
+2026-11-22T08:49:52.3925360Z ........................................................................ [ 29%]
+2026-11-22T08:49:53.4887345Z ....................................sssss............................... [ 31%]
+2026-11-22T08:50:05.7412049Z ........................................................................ [ 33%]
+2026-11-22T08:50:26.7243629Z ........................................................................ [ 35%]
+2026-11-22T08:52:01.4465967Z ........................................................................ [ 37%]
+2026-11-22T08:52:02.9385950Z ........................................................................ [ 39%]
+2026-11-22T08:52:43.1751349Z .......................................................................s [ 41%]
+2026-11-22T08:55:01.9610481Z .......................................................................s [ 42%]
+2026-11-22T08:55:29.8796038Z ........................................................................ [ 44%]
+2026-11-22T08:55:49.0215651Z ...............................s........................................ [ 46%]
+2026-11-22T08:55:58.9354882Z ...........................ss.ss.s...................................... [ 48%]
+2026-11-22T08:55:59.2459261Z ........................................................................ [ 50%]
+2026-11-22T08:56:10.7384478Z ........................................................................ [ 52%]
+2026-11-22T08:56:26.6227784Z ........................................................................ [ 54%]
+2026-11-22T08:56:31.3672932Z ..........ss............................................................ [ 55%]
+2026-11-22T08:58:13.4839952Z ........................................................................ [ 57%]
+2026-11-22T08:58:22.3778945Z ........................................................................ [ 59%]
+2026-11-22T08:58:47.6360415Z ..............................................ss........................ [ 61%]
+2026-11-22T08:58:54.1354426Z ........................................................................ [ 63%]
+2026-11-22T08:58:58.0258728Z ........................................................................ [ 65%]
+2026-11-22T09:02:21.9251019Z ........................................................................ [ 67%]
+2026-11-22T09:02:24.3286721Z .............................s.......................................... [ 69%]
+2026-11-22T09:02:28.4958352Z .................s.sssss....................s.....................s..... [ 70%]
+2026-11-22T09:02:33.0127235Z ........................................................................ [ 72%]
+2026-11-22T09:03:46.5846594Z ........................................................................ [ 74%]
+2026-11-22T09:09:18.9235739Z ........................................................................ [ 76%]
+2026-11-22T09:11:44.6071361Z ........................................................................ [ 78%]
+2026-11-22T09:12:16.6004803Z ........................................................................ [ 80%]
+2026-11-22T09:12:51.5401853Z .................................................................sssssss [ 82%]
+2026-11-22T09:12:56.6596798Z s....................................................................... [ 83%]
+2026-11-22T09:13:00.7343711Z .................s..................ss........ssssss......s.ssssssss.... [ 85%]
+2026-11-22T09:13:14.7690892Z sss..................................................................... [ 87%]
+2026-11-22T09:14:55.3541628Z ........................................................................ [ 89%]
+2026-11-22T09:20:29.2280273Z ........sssss........................................................... [ 91%]
+2026-11-22T09:21:43.5567086Z .................s.........ss........................................... [ 93%]
+2026-11-22T09:22:00.1954910Z ........................................................................ [ 95%]
+2026-11-22T09:22:23.7124065Z ......................................................s................. [ 97%]
+2026-11-22T09:23:16.3929383Z ........................................................................ [ 98%]
+2026-11-22T09:23:46.1280176Z ...........................................                              [100%]
+2026-11-22T09:23:46.1281221Z =============================== warnings summary ===============================
+2026-11-22T09:23:46.1282479Z tests/test_chunking_tree.py::test_twenty_thousand_nested_regions_do_not_require_quadratic_work
+2026-11-22T09:23:46.1284316Z   tests/test_chunking_tree.py:149: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+2026-11-22T09:23:46.1286095Z     def test_twenty_thousand_nested_regions_do_not_require_quadratic_work(record_property):
+2026-11-22T09:23:46.1286781Z 
+2026-11-22T09:23:46.1287315Z tests/test_knowledge_bases.py::test_weight_zero_unmounts_and_a_bank_with_nothing_mounted_is_the_sink_alone
+2026-11-22T09:23:46.1288911Z   /home/runner/work/megatoken/megatoken/tests/test_knowledge_bases.py:102: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+2026-11-22T09:23:46.1290499Z   Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+2026-11-22T09:23:46.1291631Z     assert empty.pairs == () and float(empty.sink_weight) == 1.0
+2026-11-22T09:23:46.1291946Z 
+2026-11-22T09:23:46.1292097Z tests/test_omni_pocket_codec_state.py: 18 warnings
+2026-11-22T09:23:46.1293460Z   /opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/torch/jit/_script.py:1480: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+2026-11-22T09:23:46.1294493Z     warnings.warn(
+2026-11-22T09:23:46.1294658Z 
+2026-11-22T09:23:46.1294957Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-11-22T09:23:46.1295626Z - generated xml file: /home/runner/work/megatoken/megatoken/validation/cpu-tests.xml -
+2026-11-22T09:23:46.1296231Z =========================== short test summary info ============================
+2026-11-22T09:23:46.1297056Z SKIPPED [1] tests/integration/test_module_namespace_artifact_packing.py:45: Paired namespace artifact gate requires exact source and tokenizer assets
+2026-11-22T09:23:46.1298239Z SKIPPED [1] tests/test_admit_semantic_v8.py:320: set the live producer and pinned tokenizer to check full CLI admission
+2026-11-22T09:23:46.1299038Z SKIPPED [1] tests/test_admit_semantic_v8.py:468: set MEGATOKEN_NATIVE_SOURCE_PRODUCER to run the live V8 authority test
+2026-11-22T09:23:46.1299793Z SKIPPED [1] tests/test_admit_semantic_v8.py:500: set MEGATOKEN_NATIVE_SOURCE_PRODUCER to run the live V8 authority test
+2026-11-22T09:23:46.1300503Z SKIPPED [1] tests/test_algorithm_harness_v7.py:177: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1301162Z SKIPPED [1] tests/test_algorithm_harness_v7.py:193: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1301812Z SKIPPED [1] tests/test_algorithm_harness_v7.py:208: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1302447Z SKIPPED [1] tests/test_algorithm_harness_v7.py:238: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1303294Z SKIPPED [1] tests/test_algorithm_harness_v7.py:252: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1303929Z SKIPPED [1] tests/test_algorithm_harness_v7.py:275: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1304560Z SKIPPED [1] tests/test_algorithm_harness_v7.py:309: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1305199Z SKIPPED [1] tests/test_algorithm_harness_v7.py:317: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1305830Z SKIPPED [1] tests/test_algorithm_harness_v7.py:403: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1306457Z SKIPPED [1] tests/test_algorithm_harness_v7.py:431: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1307084Z SKIPPED [1] tests/test_algorithm_harness_v7.py:465: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1307717Z SKIPPED [1] tests/test_algorithm_harness_v7.py:488: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1308670Z SKIPPED [1] tests/test_algorithm_harness_v7.py:593: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1309317Z SKIPPED [1] tests/test_algorithm_harness_v7.py:612: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1309954Z SKIPPED [1] tests/test_algorithm_harness_v7.py:672: Fresh semantic/7 JavaScript producer is unavailable
+2026-11-22T09:23:46.1310533Z SKIPPED [1] tests/test_checkpoint_async.py:37: pinned device snapshot needs CUDA
+2026-11-22T09:23:46.1311093Z SKIPPED [5] tests/test_chunking_prose.py:443: Optional ICU integration runs in the i18n CI job
+2026-11-22T09:23:46.1311623Z SKIPPED [1] tests/test_diloco.py:277: pinned fragment packing needs CUDA
+2026-11-22T09:23:46.1312218Z SKIPPED [1] tests/test_engram_restore_device.py:18: Explicit CUDA test execution is disabled or CUDA is unavailable
+2026-11-22T09:23:46.1312910Z SKIPPED [1] tests/test_generation_distributions.py:81: CUDA Tensor Core parity requires GPU hardware
+2026-11-22T09:23:46.1313488Z SKIPPED [2] tests/test_kernels_grouped.py:30: CUDA parity gate requires a GPU
+2026-11-22T09:23:46.1314011Z SKIPPED [2] tests/test_kernels_grouped.py:56: CUDA primary-width gate requires a GPU
+2026-11-22T09:23:46.1314539Z SKIPPED [1] tests/test_kernels_grouped.py:94: CUDA backend selection needs a GPU
+2026-11-22T09:23:46.1315181Z SKIPPED [2] tests/test_model_policy_integration.py:10: CUDA unavailable
+2026-11-22T09:23:46.1315919Z SKIPPED [1] tests/test_native_donor_hash.py:206: could not import 'transformers.models.qwen4_exp.modeling_qwen4_exp': No module named 'transformers'
+2026-11-22T09:23:46.1316893Z SKIPPED [1] tests/test_native_donor_hash.py:250: could not import 'transformers.models.qwen4_exp.modeling_qwen4_exp': No module named 'transformers'
+2026-11-22T09:23:46.1317603Z SKIPPED [1] tests/test_omni_pocket_codec_state.py:361: needs a CUDA device
+2026-11-22T09:23:46.1318273Z SKIPPED [1] tests/test_open_media.py:751: needs ffmpeg
+2026-11-22T09:23:46.1318635Z SKIPPED [1] tests/test_open_media.py:815: needs ffmpeg
+2026-11-22T09:23:46.1318980Z SKIPPED [1] tests/test_open_media.py:871: needs ffmpeg
+2026-11-22T09:23:46.1319315Z SKIPPED [1] tests/test_open_media.py:917: needs ffmpeg
+2026-11-22T09:23:46.1319649Z SKIPPED [1] tests/test_open_media.py:969: needs ffmpeg
+2026-11-22T09:23:46.1319988Z SKIPPED [1] tests/test_open_media.py:994: needs ffmpeg
+2026-11-22T09:23:46.1320335Z SKIPPED [1] tests/test_open_media.py:1608: needs ffmpeg
+2026-11-22T09:23:46.1320683Z SKIPPED [1] tests/test_open_media.py:2440: needs ffmpeg
+2026-11-22T09:23:46.1321084Z SKIPPED [4] tests/test_runtime.py:73: CUDA attention gate requires a GPU
+2026-11-22T09:23:46.1321569Z SKIPPED [2] tests/test_runtime.py:112: CUDA masked-source gate requires a GPU
+2026-11-22T09:23:46.1322059Z SKIPPED [2] tests/test_runtime.py:142: CUDA historical-KV gate requires a GPU
+2026-11-22T09:23:46.1322693Z SKIPPED [1] tests/test_semantic_capture_bindings.py:80: Dedicated semantic CI supplies the pinned production tokenizer
+2026-11-22T09:23:46.1323597Z SKIPPED [1] tests/test_semantic_corpus_lifetimes.py:92: Dedicated semantic CI downloads the exact production tokenizer
+2026-11-22T09:23:46.1324374Z SKIPPED [1] tests/test_semantic_corpus_lifetimes.py:143: Dedicated semantic CI downloads the exact production tokenizer
+2026-11-22T09:23:46.1325131Z SKIPPED [1] tests/test_semantic_data_pipeline.py:67: Dedicated semantic CI downloads the exact production tokenizer
+2026-11-22T09:23:46.1325868Z SKIPPED [1] tests/test_semantic_data_pipeline.py:106: Dedicated semantic CI downloads the exact production tokenizer
+2026-11-22T09:23:46.1326609Z SKIPPED [1] tests/test_semantic_data_pipeline.py:121: Dedicated semantic CI downloads the exact production tokenizer
+2026-11-22T09:23:46.1327478Z SKIPPED [1] tests/test_semantic_data_pipeline.py:152: Dedicated semantic CI downloads the exact production tokenizer
+2026-11-22T09:23:46.1328377Z SKIPPED [1] tests/test_semantic_data_pipeline.py:170: Dedicated semantic CI downloads the exact production tokenizer
+2026-11-22T09:23:46.1329213Z SKIPPED [1] tests/test_semantic_data_pipeline.py:201: Dedicated semantic CI downloads the exact production tokenizer
+2026-11-22T09:23:46.1329979Z SKIPPED [1] tests/test_semantic_data_pipeline.py:460: Dedicated semantic CI downloads the exact production tokenizer
+2026-11-22T09:23:46.1330712Z SKIPPED [1] tests/test_semantic_data_pipeline.py:534: Dedicated semantic CI downloads the exact production tokenizer
+2026-11-22T09:23:46.1331448Z SKIPPED [1] tests/test_semantic_family_v7.py:40: Set up the pinned producer checkout for cross-repository fixtures
+2026-11-22T09:23:46.1332151Z SKIPPED [5] tests/test_semantic_family_v7.py:50: Set up the pinned producer checkout for cross-repository fixtures
+2026-11-22T09:23:46.1332847Z SKIPPED [1] tests/test_semantic_family_v7.py:72: Set up the pinned producer checkout for cross-repository fixtures
+2026-11-22T09:23:46.1333590Z SKIPPED [3] tests/test_semantic_graph_immutability.py:65: Dedicated semantic CI supplies the pinned production tokenizer
+2026-11-22T09:23:46.1334401Z SKIPPED [1] tests/test_semantic_v7_pipeline.py:69: Pinned v7 producer and production tokenizer are required by the paired CI gate
+2026-11-22T09:23:46.1335217Z SKIPPED [1] tests/test_semantic_v7_pipeline.py:91: Pinned v7 producer and production tokenizer are required by the paired CI gate
+2026-11-22T09:23:46.1336197Z SKIPPED [1] tests/test_semantic_v7_pipeline.py:102: Pinned v7 producer and production tokenizer are required by the paired CI gate
+2026-11-22T09:23:46.1337029Z SKIPPED [1] tests/test_semantic_v7_pipeline.py:112: Pinned v7 producer and production tokenizer are required by the paired CI gate
+2026-11-22T09:23:46.1337843Z SKIPPED [1] tests/test_semantic_v7_pipeline.py:330: Pinned v7 producer and production tokenizer are required by the paired CI gate
+2026-11-22T09:23:46.1338775Z SKIPPED [1] tests/test_semantic_v8_training_lifecycle.py:203: The separately provisioned pinned tokenizer is unavailable
+2026-11-22T09:23:46.1339546Z SKIPPED [1] tests/test_semantic_v8_training_policy.py:442: The separately provisioned pinned tokenizer is unavailable
+2026-11-22T09:23:46.1340279Z SKIPPED [1] tests/test_semantic_v8_training_policy.py:480: The separately provisioned pinned tokenizer is unavailable
+2026-11-22T09:23:46.1341064Z SKIPPED [1] tests/test_track_context.py:268: CUDA context regression requires an accelerator
+2026-11-22T09:23:48.4653474Z 3775 passed, 84 skipped, 20 warnings in 2118.02s (0:35:18)
+2026-11-22T09:23:50.9236154Z ##[group]Run megatoken --help
+2026-11-22T09:23:50.9236712Z [36;1mmegatoken --help[0m
+2026-11-22T09:23:50.9237243Z [36;1mmegatoken doctor[0m
+2026-11-22T09:23:50.9237808Z [36;1mmegatoken chunks coverage --output validation/parser-coverage.json[0m
+2026-11-22T09:23:50.9260599Z shell: /usr/bin/bash -e {0}
+2026-11-22T09:23:50.9260855Z env:
+2026-11-22T09:23:50.9261125Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T09:23:50.9261579Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib/pkgconfig
+2026-11-22T09:23:50.9262219Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T09:23:50.9262602Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T09:23:50.9262987Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T09:23:50.9273995Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib
+2026-11-22T09:23:50.9274428Z ##[endgroup]
+2026-11-22T09:23:51.2265030Z usage: megatoken [-h] [--version] [--debug] [--json-output JSON_OUTPUT]
+2026-11-22T09:23:51.2267542Z                  {demo,prepare,reconcile,chunks,sources,collect,collection,doctor,codec,cache,inspect,recipes,train-check,prepare-hindsight,train,diloco,pipeline,evaluate,benchmark,export,generate,serve,kb,engram}
+2026-11-22T09:23:51.2270204Z                  ...
+2026-11-22T09:23:51.2270464Z 
+2026-11-22T09:23:51.2270780Z Prepare, train, evaluate, and serve causal faceted models.
+2026-11-22T09:23:51.2271215Z 
+2026-11-22T09:23:51.2271338Z positional arguments:
+2026-11-22T09:23:51.2272762Z   {demo,prepare,reconcile,chunks,sources,collect,collection,doctor,codec,cache,inspect,recipes,train-check,prepare-hindsight,train,diloco,pipeline,evaluate,benchmark,export,generate,serve,kb,engram}
+2026-11-22T09:23:51.2274317Z     demo                Write a deterministic executed smoke corpus
+2026-11-22T09:23:51.2274847Z     prepare             Stream pinned sources into causally valid indexed
+2026-11-22T09:23:51.2275296Z                         shards
+2026-11-22T09:23:51.2275711Z     reconcile           Join shards prepared with --ingest-only: global
+2026-11-22T09:23:51.2276211Z                         duplicates, families and splits
+2026-11-22T09:23:51.2276685Z     chunks              Inspect recursive parsing, grammar coverage, and
+2026-11-22T09:23:51.2277142Z                         parser repair tasks
+2026-11-22T09:23:51.2277588Z     sources             Pin source files/revisions without accepting their
+2026-11-22T09:23:51.2278304Z                         terms
+2026-11-22T09:23:51.2278697Z     collect             Execute a bounded teacher pilot or continue its
+2026-11-22T09:23:51.2279146Z                         durable ledger
+2026-11-22T09:23:51.2279576Z     collection          Source collections: original items of any medium,
+2026-11-22T09:23:51.2280046Z                         found by embedding
+2026-11-22T09:23:51.2280459Z     doctor              Validate the installed runtime and real device
+2026-11-22T09:23:51.2280882Z                         execution
+2026-11-22T09:23:51.2281273Z     codec               Fetch and verify the pinned raw byte codec
+2026-11-22T09:23:51.2281803Z     cache               The key of the encrypted part of the published data:
+2026-11-22T09:23:51.2282198Z                         keygen (see docs/data.md)
+2026-11-22T09:23:51.2282581Z     inspect             Audit actual parameter owners without allocating model
+2026-11-22T09:23:51.2282938Z                         storage
+2026-11-22T09:23:51.2283293Z     recipes             Print canonical data budgets, mixtures, and curriculum
+2026-11-22T09:23:51.2283661Z                         recommendations
+2026-11-22T09:23:51.2284014Z     train-check         Check the actual production inputs without loading a
+2026-11-22T09:23:51.2284373Z                         model
+2026-11-22T09:23:51.2284705Z     prepare-hindsight   Prepare teacher targets for the selected corpus
+2026-11-22T09:23:51.2285135Z     train               Run one supervised stage, under torchrun when
+2026-11-22T09:23:51.2285911Z                         distributed
+2026-11-22T09:23:51.2286256Z     diloco              Initialize or serve a resilient asynchronous DiLoCo
+2026-11-22T09:23:51.2286602Z                         coordinator
+2026-11-22T09:23:51.2286939Z     pipeline            Run complete supervised phases in order; pause when a
+2026-11-22T09:23:51.2287310Z                         phase is incomplete
+2026-11-22T09:23:51.2287653Z     evaluate            Fixed-holdout generated samples through served
+2026-11-22T09:23:51.2288289Z                         sessions
+2026-11-22T09:23:51.2288804Z     benchmark           Measure real end-to-end work, memory, and dispatch
+2026-11-22T09:23:51.2289238Z     export              Create a checksummed served-only safetensors bundle
+2026-11-22T09:23:51.2289676Z     generate            Run one session on the serving runtime: a prompt, then
+2026-11-22T09:23:51.2290043Z                         one answer and its tape
+2026-11-22T09:23:51.2290394Z     serve               Serve stateful text and media sessions over a local
+2026-11-22T09:23:51.2290734Z                         JSONL protocol
+2026-11-22T09:23:51.2291073Z     kb                  Build and inspect knowledge bases that ship apart from
+2026-11-22T09:23:51.2291417Z                         the model
+2026-11-22T09:23:51.2291748Z     engram              Offline donor memory import, token-embedding baseline,
+2026-11-22T09:23:51.2292103Z                         and exact baking
+2026-11-22T09:23:51.2292280Z 
+2026-11-22T09:23:51.2292363Z options:
+2026-11-22T09:23:51.2292610Z   -h, --help            show this help message and exit
+2026-11-22T09:23:51.2292982Z   --version             show program's version number and exit
+2026-11-22T09:23:51.2293347Z   --debug               Show Python tracebacks on errors
+2026-11-22T09:23:51.2293658Z   --json-output JSON_OUTPUT
+2026-11-22T09:23:51.2293930Z                         Also save the command's final JSON result
+2026-11-22T09:23:52.5562011Z {
+2026-11-22T09:23:52.5562340Z   "cuda_build": null,
+2026-11-22T09:23:52.5562660Z   "cudnn": null,
+2026-11-22T09:23:52.5562903Z   "devices": [],
+2026-11-22T09:23:52.5563138Z   "errors": [],
+2026-11-22T09:23:52.5563359Z   "ok": true,
+2026-11-22T09:23:52.5563580Z   "packages": {
+2026-11-22T09:23:52.5563818Z     "numpy": "2.4.6",
+2026-11-22T09:23:52.5564080Z     "safetensors": "0.8.0",
+2026-11-22T09:23:52.5564360Z     "tokenizers": "0.23.3",
+2026-11-22T09:23:52.5564623Z     "torch": "2.10.0+cpu",
+2026-11-22T09:23:52.5564883Z     "triton": null
+2026-11-22T09:23:52.5565108Z   },
+2026-11-22T09:23:52.5565413Z   "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+2026-11-22T09:23:52.5565825Z   "python": "3.11.18",
+2026-11-22T09:23:52.5566072Z   "warnings": [
+2026-11-22T09:23:52.5566467Z     "CPU reference mode: CUDA kernels, memory fit, and throughput are unverified"
+2026-11-22T09:23:52.5566925Z   ]
+2026-11-22T09:23:52.5567122Z }
+2026-11-22T09:23:53.1087258Z {
+2026-11-22T09:23:53.1087546Z   "failures": {},
+2026-11-22T09:23:53.1087830Z   "grammar_count": 173,
+2026-11-22T09:23:53.1088613Z   "output": "/home/runner/work/megatoken/megatoken/validation/parser-coverage.json",
+2026-11-22T09:23:53.1089134Z   "validated": true
+2026-11-22T09:23:53.1089369Z }
+2026-11-22T09:23:53.1515407Z ##[group]Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+2026-11-22T09:23:53.1515831Z with:
+2026-11-22T09:23:53.1516019Z   name: cpu-3.11
+2026-11-22T09:23:53.1516343Z   path: validation/cpu-tests.xml
+validation/parser-coverage.json
+dist/*
+
+2026-11-22T09:23:53.1516729Z   retention-days: 14
+2026-11-22T09:23:53.1516946Z   if-no-files-found: warn
+2026-11-22T09:23:53.1517190Z   compression-level: 6
+2026-11-22T09:23:53.1517411Z   overwrite: false
+2026-11-22T09:23:53.1517629Z   include-hidden-files: false
+2026-11-22T09:23:53.1517860Z   archive: true
+2026-11-22T09:23:53.1518265Z env:
+2026-11-22T09:23:53.1518519Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T09:23:53.1518952Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib/pkgconfig
+2026-11-22T09:23:53.1519366Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T09:23:53.1519738Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T09:23:53.1520159Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.18/x64
+2026-11-22T09:23:53.1520539Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.18/x64/lib
+2026-11-22T09:23:53.1520854Z ##[endgroup]
+2026-11-22T09:23:53.3043436Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-22T09:23:53.3046208Z The least common ancestor is /home/runner/work/megatoken/megatoken. This will be the root directory of the artifact
+2026-11-22T09:23:53.3047733Z With the provided path, there will be 4 files uploaded
+2026-11-22T09:23:53.3052661Z Artifact name is valid!
+2026-11-22T09:23:53.3053071Z Root directory input is valid!
+2026-11-22T09:23:53.6387575Z Uploading artifact: cpu-3.11.zip
+2026-11-22T09:23:53.6430040Z Beginning upload of artifact content to blob storage
+2026-11-22T09:23:54.2770463Z Uploaded bytes 8388608
+2026-11-22T09:23:54.5446257Z Uploaded bytes 16777216
+2026-11-22T09:23:54.6151504Z Uploaded bytes 25165824
+2026-11-22T09:23:54.8464013Z Uploaded bytes 33554432
+2026-11-22T09:23:55.1205011Z Uploaded bytes 41943040
+2026-11-22T09:23:55.3747326Z Uploaded bytes 50331648
+2026-11-22T09:23:55.5629359Z Uploaded bytes 58720256
+2026-11-22T09:23:55.7983148Z Uploaded bytes 67108864
+2026-11-22T09:23:56.0373656Z Uploaded bytes 75497472
+2026-11-22T09:23:56.2520637Z Uploaded bytes 83886080
+2026-11-22T09:23:56.5003151Z Uploaded bytes 92274688
+2026-11-22T09:23:56.5544955Z Uploaded bytes 92599039
+2026-11-22T09:23:56.5810738Z Finished uploading artifact content to blob storage!
+2026-11-22T09:23:56.5865086Z SHA256 digest of uploaded artifact is 7d888ee5b259dd3d8c97a709e8d45185e46853a4db3c1e5d8413552f1d1f7175
+2026-11-22T09:23:56.5867612Z Finalizing artifact upload
+2026-11-22T09:23:56.9823417Z Artifact cpu-3.11 successfully finalized. Artifact ID 14748346818
+2026-11-22T09:23:56.9824190Z Artifact cpu-3.11 has been successfully uploaded! Final size is 92599039 bytes. Artifact ID is 14748346818
+2026-11-22T09:23:56.9832214Z Artifact download URL: https://github.com/werg/megatoken/actions/runs/45004424816/artifacts/14748346818
+2026-11-22T09:23:57.0122558Z Post job cleanup.
+2026-11-22T09:23:57.1341601Z Cache hit occurred on the primary key setup-python-Linux-x64-24.04-Ubuntu-python-3.11.18-pip-462c176a8621ed9f0daf626dfe285d274edbd103dfe5982b762acd78df11973e, not saving cache.
+2026-11-22T09:23:57.1474682Z Post job cleanup.
+2026-11-22T09:23:57.2435122Z [command]/usr/bin/git version
+2026-11-22T09:23:57.2514654Z git version 2.56.1
+2026-11-22T09:23:57.2612669Z Temporarily overriding HOME='/home/runner/work/_temp/90d6d8a6-1bfa-4eeb-b13e-4b215c56a360' before making global git config changes
+2026-11-22T09:23:57.2625520Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T09:23:57.2626706Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/megatoken/megatoken
+2026-11-22T09:23:57.2722704Z Removing SSH command configuration
+2026-11-22T09:23:57.2723566Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T09:23:57.2819536Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T09:23:57.3119241Z Removing HTTP extra header
+2026-11-22T09:23:57.3126969Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T09:23:57.3189810Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T09:23:57.3582363Z Removing includeIf entries pointing to credentials config files
+2026-11-22T09:23:57.3598863Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T09:23:57.3650728Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T09:23:57.4079932Z Cleaning up orphan processes

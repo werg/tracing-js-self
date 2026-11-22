@@ -42,8 +42,10 @@ function expectedChildren(publicData,session,track){
   return children;
 }
 
-export function attachNativeV8OrchestrationTransport(select,{request,identity,epoch,sessions,attempts,stop}){
+export function attachNativeV8OrchestrationTransport(select,{request,identity,epoch,sessions,attempts,stop,
+  ensureIdle=()=>{},durableRequestsEnabled=()=>false}){
   const coordinators=new Map();
+  let locallyVerifiedCommits=new WeakSet();
   const requireIdentity=()=>{demand(identity()!==null,'model has not attested its checkpoint');return identity();};
   const requireCoordinator=input=>{
     requireIdentity();
@@ -68,6 +70,7 @@ export function attachNativeV8OrchestrationTransport(select,{request,identity,ep
     expected.children=copy(state.children);return copy(state);
   };
   select.openOrchestration=async input=>{
+    ensureIdle();
     const captured=copy(input),model=requireIdentity(),capturedEpoch=epoch();
     const {session,public:publicData,maxActive=1,childBudget=128}=captured??{};
     demand(nonempty(session)&&!sessions.has(session)&&!coordinators.has(session),'fresh session identity required');
@@ -86,10 +89,12 @@ export function attachNativeV8OrchestrationTransport(select,{request,identity,ep
     coordinators.set(session,expected);sessions.set(session,{pending:null,evidence:null});return result;
   };
   select.statusOrchestration=async input=>{
+    ensureIdle();
     const captured=copy(input),expected=requireCoordinator(captured);
     return verifyState(await request({op:'status-orchestration',session:captured.session,track:captured.track}),expected);
   };
   select.selectOrchestration=async input=>{
+    ensureIdle();
     const captured=copy(input);requireCoordinator(captured);
     demand(captured.controlledRecord===undefined,'actual coordinator cannot receive controlled decisions');
     demand(!sessions.get(captured.session)?.pending,'previous output needs acknowledgement or rejection');
@@ -135,6 +140,7 @@ export function attachNativeV8OrchestrationTransport(select,{request,identity,ep
     }finally{evidence.elapsedMs=performance.now()-started;}
   };
   select.commitOrchestration=async input=>{
+    ensureIdle();
     demand(select.status().pending===0,'cannot commit while a native request is outstanding');
     const captured=copy(input),expected=requireCoordinator(captured),session=sessions.get(captured.session);
     const previous=attempts.find(row=>row.family==='orchestration'&&row.session===captured.session&&
@@ -143,6 +149,11 @@ export function attachNativeV8OrchestrationTransport(select,{request,identity,ep
     const original=previous??(pending?.family==='orchestration'?pending:null);
     demand(original&&captured.record===original.record&&isDeepStrictEqual(captured.selection,original.selection),
       'acknowledgement changed the original coordinator selection');
+    // An already verified acknowledgement is immutable local evidence. Reuse it
+    // without publishing a new durable intent or asking native to replay it.
+    if(previous&&locallyVerifiedCommits.has(previous))return copy(previous.commitReceipt);
+    if(previous&&durableRequestsEnabled())
+      demand(false,'durable retry of an unverified historical coordinator receipt is refused');
     if(!previous)evidence.status='acknowledging';
     try{
       const receipt=await request({op:'commit-orchestration',session:captured.session,track:captured.track,
@@ -177,6 +188,7 @@ export function attachNativeV8OrchestrationTransport(select,{request,identity,ep
         'lifecycle acknowledgement belongs to another coordinator or disposition');
       if(previous)demand(isDeepStrictEqual(receipt,previous.commitReceipt),'historical acknowledgement changed its receipt');
       else{evidence.status='accepted';evidence.commitReceipt=copy(receipt);session.pending=null;}
+      locallyVerifiedCommits.add(evidence);
       return copy(receipt);
     }catch(error){
       if(!previous){evidence.status=select.status().closed?'acknowledgement-unknown':'commit-failed';
@@ -185,6 +197,7 @@ export function attachNativeV8OrchestrationTransport(select,{request,identity,ep
     }
   };
   select.bootstrapOrchestrationChild=async input=>{
+    ensureIdle();
     const captured=copy(input),expected=requireCoordinator(captured);
     const child=expected.children.find(child=>child.track===captured.childTrack);
     demand(child&&nonempty(captured.childTrack),'child bootstrap requires an acknowledged reservation');
@@ -197,6 +210,7 @@ export function attachNativeV8OrchestrationTransport(select,{request,identity,ep
     return copy(receipt);
   };
   select.cancelOrchestration=async input=>{
+    ensureIdle();
     const captured=copy(input),expected=requireCoordinator(captured);
     demand(nonempty(captured.reason)&&Buffer.byteLength(captured.reason)<=4096,'bounded cancellation reason required');
     const result=verifyState(await request({op:'cancel-orchestration',session:captured.session,
@@ -213,10 +227,17 @@ export function attachNativeV8OrchestrationTransport(select,{request,identity,ep
     return result;
   };
   return {
-    reset:()=>coordinators.clear(),
+    reset:()=>{coordinators.clear();locallyVerifiedCommits=new WeakSet();},
+    rememberRecoveredCommit:attempt=>{
+      demand(attempts.includes(attempt)&&attempt?.family==='orchestration'&&attempt.status==='accepted'&&
+        attempt.commitReceipt?.schema==='semantic-orchestration-commit/8'&&
+        attempt.commitReceipt.committed===true&&attempt.commitReceipt.selectionId===attempt.selection?.selectionId,
+        'recovered coordinator receipt must be an exact native-verified attempt');
+      locallyVerifiedCommits.add(attempt);
+    },
     closed:session=>{const state=coordinators.get(session);if(state)state.closed=true;},
     restore:native=>{
-      coordinators.clear();
+      coordinators.clear();locallyVerifiedCommits=new WeakSet();
       for(const [session,saved] of [...Object.entries(native.sessions??{}),...Object.entries(native.closedSessions??{})]){
         const state=saved?.orchestration;if(!state)continue;
         const expected={session,track:state.track,closed:Object.hasOwn(native.closedSessions??{},session),

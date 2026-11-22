@@ -99,7 +99,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   };
   const request=async body=>{
     if(requestBusy)throw new Error('Native v8 model already has an outstanding request');
-    const captured=copy(body);requestBusy=true;
+    const captured=copy(body);requestBusy=true;let durableIntentStarted=false;
     try{
       if(durable)assertSelectedOrchestrationExecutionLease(durable.lease);
       if(durable&&captured.op==='initialize')demand((await durable.journal.list()).length===0,
@@ -115,24 +115,31 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       const requestBase64=Buffer.from(JSON.stringify({...captured,
         id:'v8-commit-'+journal.sessionGeneration+'-'+ordinal})+'\n').toString('base64');
       const intent={identity:requestIdentity,requestBase64,checkpoint};
-      const receipt=await journal.append(intent);
-      nextOrdinal=ordinal;lastDurableRequest=copy(receipt);
       const evidence=attempts.find(row=>row.session===captured.session&&
         row.selection?.selectionId===captured.selection.selectionId);
+      demand(evidence,'durable commit has no matching native selection attempt');
+      // Once append begins, publication may have reached durable storage even if
+      // its acknowledgement is lost. Preserve identity, never invent a receipt,
+      // and fence this live selector on every later error.
+      evidence.durableRequestIdentity=copy(requestIdentity);
+      durableIntentStarted=true;
+      const receipt=await journal.append(intent);
+      nextOrdinal=ordinal;lastDurableRequest=copy(receipt);
       evidence.durableRequestReceipt=copy(receipt);
       assertSelectedOrchestrationExecutionLease(lease);
       const retained=await journal.read(receipt,{latest:true});
       try{
         const result=await rawRequest({op:'durable-commit',identity:requestIdentity,requestBase64,
           preCheckpointDigest:checkpoint.native.digest});
-        return verifyNativeV8DurableCommit(result,retained).result;
+        const verified=verifyNativeV8DurableCommit(result,retained).result;
+        durableIntentStarted=false;return verified;
       }catch(error){
         // After dispatch, missing durability/poststate proof must fence every
         // later action even when the child returned an explicit error frame.
         stop(error);throw error;
       }
     }catch(error){
-      if(durable&&(error.durabilityFenced||/^NativeRequest/.test(error.category??'')))stop(error);
+      if(durable&&(durableIntentStarted||error.durabilityFenced||/^NativeRequest/.test(error.category??'')))stop(error);
       throw error;
     }finally{requestBusy=false;}
   };
@@ -150,6 +157,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     demand(!sessions.get(input.session)?.pending,'previous native output needs a commit or cancellation');
   };
   const select=async input=>{
+    demand(!requestBusy&&pending.size===0,'cannot record a selection while a native request is outstanding');
     validateRequest(input);
     const capturedEpoch=epoch,capturedIdentity=identity,contextDigest=hashAlgorithmData(input.context);
     const evidence={attempt:attempts.length,session:input.session,invocationId:input.context.invocationId,
@@ -297,8 +305,10 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       const restored=copy(intent.checkpoint.attempts),target=restored.find(row=>row.session===verified.request.session&&
         row.selection?.selectionId===verified.request.selection.selectionId);
       target.status='accepted';target.failure=null;target.durableRequestReceipt=captured;
+      target.durableRequestIdentity=copy(intent.identity);
       if(verified.request.op==='commit-orchestration')target.commitReceipt=copy(verified.result);
       attempts.push(...restored);
+      if(verified.request.op==='commit-orchestration')orchestration.rememberRecoveredCommit(target);
       for(const session of Object.keys(verified.postCheckpoint.sessions))sessions.set(session,{pending:null,evidence:null});
       const costs=intent.checkpoint.runtimeMetrics;
       demand(costs&&['rpcCalls','computeSeconds','peakMemoryBytes'].every(key=>Number.isFinite(costs[key])&&costs[key]>=0),
@@ -397,7 +407,10 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     return shutdownPromise;
   };
   const orchestration=attachNativeV8OrchestrationTransport(select,
-    {request,identity:()=>identity,epoch:()=>epoch,sessions,attempts,stop});
+    {request,identity:()=>identity,epoch:()=>epoch,sessions,attempts,stop,
+      ensureIdle:()=>demand(!requestBusy&&pending.size===0,
+        'cannot mutate orchestration history while a native request is outstanding'),
+      durableRequestsEnabled:()=>Boolean(durable)});
   return select;
 }
 

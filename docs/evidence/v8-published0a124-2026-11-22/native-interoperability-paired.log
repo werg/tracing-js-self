@@ -1,0 +1,1211 @@
+﻿2026-11-22T08:47:16.0021590Z Current runner version: '2.338.2'
+2026-11-22T08:47:16.0045792Z ##[group]Runner Image Provisioner
+2026-11-22T08:47:16.0046847Z Hosted Compute Agent
+2026-11-22T08:47:16.0047541Z Version: 20261111.635
+2026-11-22T08:47:16.0048202Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-22T08:47:16.0049084Z Build Date: 2026-11-11T01:49:01Z
+2026-11-22T08:47:16.0049771Z Worker ID: {1bc989fd-0f99-431e-822e-7a370a64b4f2}
+2026-11-22T08:47:16.0050463Z Region: us-east-1
+2026-11-22T08:47:16.0050992Z Cloud: AWS
+2026-11-22T08:47:16.0051531Z ##[endgroup]
+2026-11-22T08:47:16.0053165Z ##[group]Operating System
+2026-11-22T08:47:16.0053785Z Ubuntu
+2026-11-22T08:47:16.0054313Z 24.04.5
+2026-11-22T08:47:16.0054797Z LTS
+2026-11-22T08:47:16.0055295Z ##[endgroup]
+2026-11-22T08:47:16.0055847Z ##[group]Runner Image
+2026-11-22T08:47:16.0056668Z Image: ubuntu-24.04
+2026-11-22T08:47:16.0057263Z Version: 20261116.133.1
+2026-11-22T08:47:16.0058544Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.133/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-22T08:47:16.0060186Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.133
+2026-11-22T08:47:16.0061152Z ##[endgroup]
+2026-11-22T08:47:16.0062331Z ##[group]GITHUB_TOKEN Permissions
+2026-11-22T08:47:16.0064502Z Contents: read
+2026-11-22T08:47:16.0065311Z Metadata: read
+2026-11-22T08:47:16.0065816Z ##[endgroup]
+2026-11-22T08:47:16.0068299Z Secret source: Actions
+2026-11-22T08:47:16.0069222Z Cache mode: write
+2026-11-22T08:47:16.0069933Z Prepare workflow directory
+2026-11-22T08:47:16.0614980Z Prepare all required actions
+2026-11-22T08:47:16.0668125Z Getting action download info
+2026-11-22T08:47:16.2498142Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-11-22T08:47:17.4477171Z Download action repository 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-22T08:47:17.5444919Z Download action repository 'actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+2026-11-22T08:47:17.7368186Z Download action repository 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9' (SHA:cf430e030ddbb5b0abf93d22962f4752f3646cd9)
+2026-11-22T08:47:17.9292244Z Complete job name: paired-v8 (interoperability)
+2026-11-22T08:47:18.0117613Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-22T08:47:18.0118933Z with:
+2026-11-22T08:47:18.0119671Z   ref: 124fbd0d493c29af6fb7cf7965d06744e4c7bad5
+2026-11-22T08:47:18.0120581Z   path: megatoken
+2026-11-22T08:47:18.0121281Z   persist-credentials: false
+2026-11-22T08:47:18.0122116Z   repository: werg/megatoken
+2026-11-22T08:47:18.0127886Z   token: ***
+2026-11-22T08:47:18.0128536Z   ssh-strict: true
+2026-11-22T08:47:18.0129342Z   ssh-user: git
+2026-11-22T08:47:18.0130008Z   clean: true
+2026-11-22T08:47:18.0130706Z   sparse-checkout-cone-mode: true
+2026-11-22T08:47:18.0131515Z   fetch-depth: 1
+2026-11-22T08:47:18.0132229Z   fetch-tags: false
+2026-11-22T08:47:18.0132943Z   show-progress: true
+2026-11-22T08:47:18.0133620Z   lfs: false
+2026-11-22T08:47:18.0134333Z   submodules: false
+2026-11-22T08:47:18.0135061Z   set-safe-directory: true
+2026-11-22T08:47:18.0135849Z   allow-unsafe-pr-checkout: false
+2026-11-22T08:47:18.0137145Z env:
+2026-11-22T08:47:18.0137891Z   OMP_NUM_THREADS: 1
+2026-11-22T08:47:18.0138653Z   MKL_NUM_THREADS: 1
+2026-11-22T08:47:18.0139567Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T08:47:18.0140882Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:47:18.0142430Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:47:18.0144069Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T08:47:18.0145546Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:47:18.0146771Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:47:18.0148119Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T08:47:18.0149408Z   V8_POPULATION: interoperability
+2026-11-22T08:47:18.0150186Z ##[endgroup]
+2026-11-22T08:47:20.1458262Z Syncing repository: werg/megatoken
+2026-11-22T08:47:20.1459691Z ##[group]Getting Git version info
+2026-11-22T08:47:20.1460110Z Working directory is '/home/runner/work/megatoken/megatoken/megatoken'
+2026-11-22T08:47:20.1460854Z [command]/usr/bin/git version
+2026-11-22T08:47:20.1921779Z git version 2.56.1
+2026-11-22T08:47:20.1936729Z ##[endgroup]
+2026-11-22T08:47:20.1943580Z Temporarily overriding HOME='/home/runner/work/_temp/7f2b439c-dd6c-400d-99da-12cda2dcebe7' before making global git config changes
+2026-11-22T08:47:20.1944926Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T08:47:20.1948021Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:47:20.1991204Z ##[group]Determining repository object format
+2026-11-22T08:47:20.1992863Z ##[endgroup]
+2026-11-22T08:47:20.1993781Z ##[group]Initializing the repository
+2026-11-22T08:47:20.1996468Z [command]/usr/bin/git init /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:47:20.2476828Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T08:47:20.2477489Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T08:47:20.2478023Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T08:47:20.2478408Z hint: call:
+2026-11-22T08:47:20.2478645Z hint:
+2026-11-22T08:47:20.2478972Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T08:47:20.2479305Z hint:
+2026-11-22T08:47:20.2479643Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T08:47:20.2480137Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T08:47:20.2480511Z hint:
+2026-11-22T08:47:20.2480767Z hint: 	git branch -m <name>
+2026-11-22T08:47:20.2481047Z hint:
+2026-11-22T08:47:20.2481403Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T08:47:20.2488160Z Initialized empty Git repository in /home/runner/work/megatoken/megatoken/megatoken/.git/
+2026-11-22T08:47:20.2496528Z [command]/usr/bin/git remote add origin https://github.com/werg/megatoken
+2026-11-22T08:47:20.2544242Z ##[endgroup]
+2026-11-22T08:47:20.2545003Z ##[group]Disabling automatic garbage collection
+2026-11-22T08:47:20.2547036Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T08:47:20.2569608Z ##[endgroup]
+2026-11-22T08:47:20.2570260Z ##[group]Setting up auth
+2026-11-22T08:47:20.2570933Z Removing SSH command configuration
+2026-11-22T08:47:20.2574203Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:47:20.2601370Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:47:20.3295835Z Removing HTTP extra header
+2026-11-22T08:47:20.3305351Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:47:20.3328651Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:47:20.3468121Z Removing includeIf entries pointing to credentials config files
+2026-11-22T08:47:20.3471331Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:47:20.3494693Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:47:20.3640353Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-d5c73665-2159-4fc2-94ad-bdba1781f754.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T08:47:20.3667259Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/megatoken/megatoken/megatoken/.git.path /home/runner/work/_temp/git-credentials-d5c73665-2159-4fc2-94ad-bdba1781f754.config
+2026-11-22T08:47:20.3688395Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/megatoken/megatoken/megatoken/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-d5c73665-2159-4fc2-94ad-bdba1781f754.config
+2026-11-22T08:47:20.3710400Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/megatoken/.git.path /github/runner_temp/git-credentials-d5c73665-2159-4fc2-94ad-bdba1781f754.config
+2026-11-22T08:47:20.3732720Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/megatoken/.git/worktrees/*.path /github/runner_temp/git-credentials-d5c73665-2159-4fc2-94ad-bdba1781f754.config
+2026-11-22T08:47:20.3753425Z ##[endgroup]
+2026-11-22T08:47:20.3754076Z ##[group]Fetching the repository
+2026-11-22T08:47:20.3758414Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 124fbd0d493c29af6fb7cf7965d06744e4c7bad5
+2026-11-22T08:47:22.2981271Z From https://github.com/werg/megatoken
+2026-11-22T08:47:22.2982103Z  * branch            124fbd0d493c29af6fb7cf7965d06744e4c7bad5 -> FETCH_HEAD
+2026-11-22T08:47:22.2990158Z [command]/usr/bin/git rev-parse --verify --quiet 124fbd0d493c29af6fb7cf7965d06744e4c7bad5^{object}
+2026-11-22T08:47:22.3011423Z 124fbd0d493c29af6fb7cf7965d06744e4c7bad5
+2026-11-22T08:47:22.3013370Z ##[endgroup]
+2026-11-22T08:47:22.3013891Z ##[group]Determining the checkout info
+2026-11-22T08:47:22.3014396Z ##[endgroup]
+2026-11-22T08:47:22.3018080Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T08:47:22.3073415Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T08:47:22.3095177Z ##[group]Checking out the ref
+2026-11-22T08:47:22.3098529Z [command]/usr/bin/git checkout --progress --force 124fbd0d493c29af6fb7cf7965d06744e4c7bad5
+2026-11-22T08:47:22.5032270Z Note: switching to '124fbd0d493c29af6fb7cf7965d06744e4c7bad5'.
+2026-11-22T08:47:22.5032565Z 
+2026-11-22T08:47:22.5032735Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T08:47:22.5033497Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T08:47:22.5033912Z state without impacting any branches by switching back to a branch.
+2026-11-22T08:47:22.5034113Z 
+2026-11-22T08:47:22.5034306Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T08:47:22.5034714Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T08:47:22.5034927Z 
+2026-11-22T08:47:22.5035035Z   git switch -c <new-branch-name>
+2026-11-22T08:47:22.5035251Z 
+2026-11-22T08:47:22.5035360Z Or undo this operation with:
+2026-11-22T08:47:22.5035519Z 
+2026-11-22T08:47:22.5035604Z   git switch -
+2026-11-22T08:47:22.5035748Z 
+2026-11-22T08:47:22.5035979Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T08:47:22.5036225Z 
+2026-11-22T08:47:22.5036632Z HEAD is now at 124fbd0 Qualify bounded V8 namespace replay and original-module artifact packing
+2026-11-22T08:47:22.5052623Z ##[endgroup]
+2026-11-22T08:47:22.5087657Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T08:47:22.5117002Z 124fbd0d493c29af6fb7cf7965d06744e4c7bad5
+2026-11-22T08:47:22.5118065Z ##[group]Removing auth
+2026-11-22T08:47:22.5118349Z Removing SSH command configuration
+2026-11-22T08:47:22.5118704Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:47:22.5141768Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:47:22.5289269Z Removing HTTP extra header
+2026-11-22T08:47:22.5292167Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:47:22.5314450Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:47:22.5458217Z Removing includeIf entries pointing to credentials config files
+2026-11-22T08:47:22.5460391Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:47:22.5481794Z includeif.gitdir:/home/runner/work/megatoken/megatoken/megatoken/.git.path
+2026-11-22T08:47:22.5482481Z includeif.gitdir:/home/runner/work/megatoken/megatoken/megatoken/.git/worktrees/*.path
+2026-11-22T08:47:22.5483013Z includeif.gitdir:/github/workspace/megatoken/.git.path
+2026-11-22T08:47:22.5483497Z includeif.gitdir:/github/workspace/megatoken/.git/worktrees/*.path
+2026-11-22T08:47:22.5493986Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/megatoken/megatoken/megatoken/.git.path
+2026-11-22T08:47:22.5515435Z /home/runner/work/_temp/git-credentials-d5c73665-2159-4fc2-94ad-bdba1781f754.config
+2026-11-22T08:47:22.5522309Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/megatoken/megatoken/megatoken/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-d5c73665\-2159\-4fc2\-94ad\-bdba1781f754\.config
+2026-11-22T08:47:22.5546113Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/megatoken/megatoken/megatoken/.git/worktrees/*.path
+2026-11-22T08:47:22.5562603Z /home/runner/work/_temp/git-credentials-d5c73665-2159-4fc2-94ad-bdba1781f754.config
+2026-11-22T08:47:22.5569466Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/megatoken/megatoken/megatoken/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-d5c73665\-2159\-4fc2\-94ad\-bdba1781f754\.config
+2026-11-22T08:47:22.5592942Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/megatoken/.git.path
+2026-11-22T08:47:22.5609923Z /github/runner_temp/git-credentials-d5c73665-2159-4fc2-94ad-bdba1781f754.config
+2026-11-22T08:47:22.5614742Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/megatoken/.git.path \/github\/runner_temp\/git\-credentials\-d5c73665\-2159\-4fc2\-94ad\-bdba1781f754\.config
+2026-11-22T08:47:22.5639533Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/megatoken/.git/worktrees/*.path
+2026-11-22T08:47:22.5656400Z /github/runner_temp/git-credentials-d5c73665-2159-4fc2-94ad-bdba1781f754.config
+2026-11-22T08:47:22.5660949Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/megatoken/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-d5c73665\-2159\-4fc2\-94ad\-bdba1781f754\.config
+2026-11-22T08:47:22.5685225Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:47:22.5825399Z Removing credentials config '/home/runner/work/_temp/git-credentials-d5c73665-2159-4fc2-94ad-bdba1781f754.config'
+2026-11-22T08:47:22.5830269Z ##[endgroup]
+2026-11-22T08:47:22.6015091Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-22T08:47:22.6015412Z with:
+2026-11-22T08:47:22.6015632Z   repository: werg/tracing-js-self
+2026-11-22T08:47:22.6015920Z   ref: 550387918313393b49017397d47bd66e9d4b5e82
+2026-11-22T08:47:22.6016184Z   path: tracing-js-self
+2026-11-22T08:47:22.6016635Z   persist-credentials: false
+2026-11-22T08:47:22.6018452Z   token: ***
+2026-11-22T08:47:22.6018655Z   ssh-strict: true
+2026-11-22T08:47:22.6018884Z   ssh-user: git
+2026-11-22T08:47:22.6019076Z   clean: true
+2026-11-22T08:47:22.6019294Z   sparse-checkout-cone-mode: true
+2026-11-22T08:47:22.6019533Z   fetch-depth: 1
+2026-11-22T08:47:22.6019761Z   fetch-tags: false
+2026-11-22T08:47:22.6019992Z   show-progress: true
+2026-11-22T08:47:22.6020197Z   lfs: false
+2026-11-22T08:47:22.6020398Z   submodules: false
+2026-11-22T08:47:22.6020690Z   set-safe-directory: true
+2026-11-22T08:47:22.6020913Z   allow-unsafe-pr-checkout: false
+2026-11-22T08:47:22.6021190Z env:
+2026-11-22T08:47:22.6021453Z   OMP_NUM_THREADS: 1
+2026-11-22T08:47:22.6021679Z   MKL_NUM_THREADS: 1
+2026-11-22T08:47:22.6021944Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T08:47:22.6022331Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:47:22.6022837Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:47:22.6023297Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T08:47:22.6023715Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:47:22.6024013Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:47:22.6024377Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T08:47:22.6024768Z   V8_POPULATION: interoperability
+2026-11-22T08:47:22.6024991Z ##[endgroup]
+2026-11-22T08:47:22.6639051Z Syncing repository: werg/tracing-js-self
+2026-11-22T08:47:22.6642410Z ##[group]Getting Git version info
+2026-11-22T08:47:22.6642997Z Working directory is '/home/runner/work/megatoken/megatoken/tracing-js-self'
+2026-11-22T08:47:22.6663583Z [command]/usr/bin/git version
+2026-11-22T08:47:22.6689469Z git version 2.56.1
+2026-11-22T08:47:22.6702726Z ##[endgroup]
+2026-11-22T08:47:22.6708862Z Temporarily overriding HOME='/home/runner/work/_temp/532cacc9-2ef8-480d-bf96-5f7ac3895169' before making global git config changes
+2026-11-22T08:47:22.6709957Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T08:47:22.6712604Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:47:22.6737149Z ##[group]Determining repository object format
+2026-11-22T08:47:22.6738727Z ##[endgroup]
+2026-11-22T08:47:22.6739209Z ##[group]Initializing the repository
+2026-11-22T08:47:22.6742495Z [command]/usr/bin/git init /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:47:22.6764536Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T08:47:22.6765377Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T08:47:22.6766979Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T08:47:22.6767528Z hint: call:
+2026-11-22T08:47:22.6767884Z hint:
+2026-11-22T08:47:22.6768192Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T08:47:22.6768530Z hint:
+2026-11-22T08:47:22.6768977Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T08:47:22.6769493Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T08:47:22.6769976Z hint:
+2026-11-22T08:47:22.6770193Z hint: 	git branch -m <name>
+2026-11-22T08:47:22.6770398Z hint:
+2026-11-22T08:47:22.6770701Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T08:47:22.6771401Z Initialized empty Git repository in /home/runner/work/megatoken/megatoken/tracing-js-self/.git/
+2026-11-22T08:47:22.6772483Z [command]/usr/bin/git remote add origin https://github.com/werg/tracing-js-self
+2026-11-22T08:47:22.6794058Z ##[endgroup]
+2026-11-22T08:47:22.6794554Z ##[group]Disabling automatic garbage collection
+2026-11-22T08:47:22.6797858Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T08:47:22.6818827Z ##[endgroup]
+2026-11-22T08:47:22.6819196Z ##[group]Setting up auth
+2026-11-22T08:47:22.6819631Z Removing SSH command configuration
+2026-11-22T08:47:22.6824738Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:47:22.6848363Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:47:22.7025401Z Removing HTTP extra header
+2026-11-22T08:47:22.7029658Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:47:22.7056937Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:47:22.7199340Z Removing includeIf entries pointing to credentials config files
+2026-11-22T08:47:22.7201789Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:47:22.7223346Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:47:22.7383586Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-d87ba965-68f9-4c60-a6ea-b2e63826a328.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T08:47:22.7411045Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/megatoken/megatoken/tracing-js-self/.git.path /home/runner/work/_temp/git-credentials-d87ba965-68f9-4c60-a6ea-b2e63826a328.config
+2026-11-22T08:47:22.7432294Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/megatoken/megatoken/tracing-js-self/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-d87ba965-68f9-4c60-a6ea-b2e63826a328.config
+2026-11-22T08:47:22.7453958Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/tracing-js-self/.git.path /github/runner_temp/git-credentials-d87ba965-68f9-4c60-a6ea-b2e63826a328.config
+2026-11-22T08:47:22.7475568Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/tracing-js-self/.git/worktrees/*.path /github/runner_temp/git-credentials-d87ba965-68f9-4c60-a6ea-b2e63826a328.config
+2026-11-22T08:47:22.7497112Z ##[endgroup]
+2026-11-22T08:47:22.7497604Z ##[group]Fetching the repository
+2026-11-22T08:47:22.7501997Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 550387918313393b49017397d47bd66e9d4b5e82
+2026-11-22T08:47:50.6118368Z From https://github.com/werg/tracing-js-self
+2026-11-22T08:47:50.6118997Z  * branch            550387918313393b49017397d47bd66e9d4b5e82 -> FETCH_HEAD
+2026-11-22T08:47:50.6127701Z [command]/usr/bin/git rev-parse --verify --quiet 550387918313393b49017397d47bd66e9d4b5e82^{object}
+2026-11-22T08:47:50.6149663Z 550387918313393b49017397d47bd66e9d4b5e82
+2026-11-22T08:47:50.6152514Z ##[endgroup]
+2026-11-22T08:47:50.6153036Z ##[group]Determining the checkout info
+2026-11-22T08:47:50.6153689Z ##[endgroup]
+2026-11-22T08:47:50.6156088Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T08:47:50.6184542Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T08:47:50.6208264Z ##[group]Checking out the ref
+2026-11-22T08:47:50.6211503Z [command]/usr/bin/git checkout --progress --force 550387918313393b49017397d47bd66e9d4b5e82
+2026-11-22T08:47:51.6261633Z Updating files:  71% (2650/3703)
+2026-11-22T08:47:51.6273032Z Updating files:  72% (2667/3703)
+2026-11-22T08:47:51.6281319Z Updating files:  73% (2704/3703)
+2026-11-22T08:47:51.6294480Z Updating files:  74% (2741/3703)
+2026-11-22T08:47:51.6310966Z Updating files:  75% (2778/3703)
+2026-11-22T08:47:51.6330759Z Updating files:  76% (2815/3703)
+2026-11-22T08:47:51.6345019Z Updating files:  77% (2852/3703)
+2026-11-22T08:47:51.6374909Z Updating files:  78% (2889/3703)
+2026-11-22T08:47:51.6394097Z Updating files:  79% (2926/3703)
+2026-11-22T08:47:51.6414898Z Updating files:  80% (2963/3703)
+2026-11-22T08:47:51.6441464Z Updating files:  81% (3000/3703)
+2026-11-22T08:47:51.6457064Z Updating files:  82% (3037/3703)
+2026-11-22T08:47:51.6475163Z Updating files:  83% (3074/3703)
+2026-11-22T08:47:51.6492927Z Updating files:  84% (3111/3703)
+2026-11-22T08:47:51.6715208Z Updating files:  85% (3148/3703)
+2026-11-22T08:47:51.6727021Z Updating files:  86% (3185/3703)
+2026-11-22T08:47:51.6738028Z Updating files:  87% (3222/3703)
+2026-11-22T08:47:51.6752087Z Updating files:  88% (3259/3703)
+2026-11-22T08:47:51.6772880Z Updating files:  89% (3296/3703)
+2026-11-22T08:47:51.6789924Z Updating files:  90% (3333/3703)
+2026-11-22T08:47:51.6806048Z Updating files:  91% (3370/3703)
+2026-11-22T08:47:51.6821894Z Updating files:  92% (3407/3703)
+2026-11-22T08:47:51.6832968Z Updating files:  93% (3444/3703)
+2026-11-22T08:47:51.6846743Z Updating files:  94% (3481/3703)
+2026-11-22T08:47:51.6858092Z Updating files:  95% (3518/3703)
+2026-11-22T08:47:51.6874097Z Updating files:  96% (3555/3703)
+2026-11-22T08:47:51.6893532Z Updating files:  97% (3592/3703)
+2026-11-22T08:47:51.6921321Z Updating files:  98% (3629/3703)
+2026-11-22T08:47:51.6932940Z Updating files:  99% (3666/3703)
+2026-11-22T08:47:51.6933333Z Updating files: 100% (3703/3703)
+2026-11-22T08:47:51.6933725Z Updating files: 100% (3703/3703), done.
+2026-11-22T08:47:51.6970760Z Note: switching to '550387918313393b49017397d47bd66e9d4b5e82'.
+2026-11-22T08:47:51.6971241Z 
+2026-11-22T08:47:51.6971544Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T08:47:51.6972250Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T08:47:51.6973012Z state without impacting any branches by switching back to a branch.
+2026-11-22T08:47:51.6973433Z 
+2026-11-22T08:47:51.6973746Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T08:47:51.6974422Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T08:47:51.6974848Z 
+2026-11-22T08:47:51.6975046Z   git switch -c <new-branch-name>
+2026-11-22T08:47:51.6975365Z 
+2026-11-22T08:47:51.6975610Z Or undo this operation with:
+2026-11-22T08:47:51.6975982Z 
+2026-11-22T08:47:51.6976532Z   git switch -
+2026-11-22T08:47:51.6976701Z 
+2026-11-22T08:47:51.6976963Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T08:47:51.6977190Z 
+2026-11-22T08:47:51.6977551Z HEAD is now at 5503879 test(v8): verify namespace artifact standalone refusal and exact paired admission
+2026-11-22T08:47:51.7038237Z ##[endgroup]
+2026-11-22T08:47:51.7072227Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T08:47:51.7093685Z 550387918313393b49017397d47bd66e9d4b5e82
+2026-11-22T08:47:51.7102952Z ##[group]Removing auth
+2026-11-22T08:47:51.7103282Z Removing SSH command configuration
+2026-11-22T08:47:51.7104552Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:47:51.7129445Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:47:51.7282995Z Removing HTTP extra header
+2026-11-22T08:47:51.7286162Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:47:51.7309856Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:47:51.7456444Z Removing includeIf entries pointing to credentials config files
+2026-11-22T08:47:51.7459275Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:47:51.7506463Z includeif.gitdir:/home/runner/work/megatoken/megatoken/tracing-js-self/.git.path
+2026-11-22T08:47:51.7507114Z includeif.gitdir:/home/runner/work/megatoken/megatoken/tracing-js-self/.git/worktrees/*.path
+2026-11-22T08:47:51.7507740Z includeif.gitdir:/github/workspace/tracing-js-self/.git.path
+2026-11-22T08:47:51.7508182Z includeif.gitdir:/github/workspace/tracing-js-self/.git/worktrees/*.path
+2026-11-22T08:47:51.7512593Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/megatoken/megatoken/tracing-js-self/.git.path
+2026-11-22T08:47:51.7530489Z /home/runner/work/_temp/git-credentials-d87ba965-68f9-4c60-a6ea-b2e63826a328.config
+2026-11-22T08:47:51.7537849Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/megatoken/megatoken/tracing-js-self/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-d87ba965\-68f9\-4c60\-a6ea\-b2e63826a328\.config
+2026-11-22T08:47:51.7575574Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/megatoken/megatoken/tracing-js-self/.git/worktrees/*.path
+2026-11-22T08:47:51.7592997Z /home/runner/work/_temp/git-credentials-d87ba965-68f9-4c60-a6ea-b2e63826a328.config
+2026-11-22T08:47:51.7599074Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/megatoken/megatoken/tracing-js-self/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-d87ba965\-68f9\-4c60\-a6ea\-b2e63826a328\.config
+2026-11-22T08:47:51.7623494Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/tracing-js-self/.git.path
+2026-11-22T08:47:51.7641026Z /github/runner_temp/git-credentials-d87ba965-68f9-4c60-a6ea-b2e63826a328.config
+2026-11-22T08:47:51.7646765Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/tracing-js-self/.git.path \/github\/runner_temp\/git\-credentials\-d87ba965\-68f9\-4c60\-a6ea\-b2e63826a328\.config
+2026-11-22T08:47:51.7671617Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/tracing-js-self/.git/worktrees/*.path
+2026-11-22T08:47:51.7688970Z /github/runner_temp/git-credentials-d87ba965-68f9-4c60-a6ea-b2e63826a328.config
+2026-11-22T08:47:51.7693460Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/tracing-js-self/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-d87ba965\-68f9\-4c60\-a6ea\-b2e63826a328\.config
+2026-11-22T08:47:51.7719838Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:47:51.7867032Z Removing credentials config '/home/runner/work/_temp/git-credentials-d87ba965-68f9-4c60-a6ea-b2e63826a328.config'
+2026-11-22T08:47:51.7874908Z ##[endgroup]
+2026-11-22T08:47:51.7999644Z ##[group]Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+2026-11-22T08:47:51.8000015Z with:
+2026-11-22T08:47:51.8000263Z   node-version-file: tracing-js-self/.nvmrc
+2026-11-22T08:47:51.8000559Z   always-auth: false
+2026-11-22T08:47:51.8000793Z   check-latest: false
+2026-11-22T08:47:51.8002520Z   token: ***
+2026-11-22T08:47:51.8002725Z env:
+2026-11-22T08:47:51.8002936Z   OMP_NUM_THREADS: 1
+2026-11-22T08:47:51.8003169Z   MKL_NUM_THREADS: 1
+2026-11-22T08:47:51.8003457Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T08:47:51.8003840Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:47:51.8004258Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:47:51.8004774Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T08:47:51.8005291Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:47:51.8005611Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:47:51.8005953Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T08:47:51.8006544Z   V8_POPULATION: interoperability
+2026-11-22T08:47:51.8006802Z ##[endgroup]
+2026-11-22T08:47:51.9009997Z Node version file is not JSON file
+2026-11-22T08:47:51.9011428Z Resolved tracing-js-self/.nvmrc as 24.22.3
+2026-11-22T08:47:51.9312973Z Found in cache @ /opt/hostedtoolcache/node/24.22.3/x64
+2026-11-22T08:47:51.9315839Z (node:2465) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T08:47:51.9316603Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T08:47:51.9317790Z ##[group]Environment details
+2026-11-22T08:47:55.4963463Z node: v24.22.3
+2026-11-22T08:47:55.4963813Z npm: 11.19.1
+2026-11-22T08:47:55.4964202Z yarn: 1.22.22
+2026-11-22T08:47:55.4964804Z ##[endgroup]
+2026-11-22T08:47:55.5075640Z ##[group]Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+2026-11-22T08:47:55.5076118Z with:
+2026-11-22T08:47:55.5076529Z   python-version: 3.12.14
+2026-11-22T08:47:55.5076802Z   check-latest: false
+2026-11-22T08:47:55.5078495Z   token: ***
+2026-11-22T08:47:55.5078715Z   update-environment: true
+2026-11-22T08:47:55.5078983Z   allow-prereleases: false
+2026-11-22T08:47:55.5079226Z   freethreaded: false
+2026-11-22T08:47:55.5079512Z env:
+2026-11-22T08:47:55.5079712Z   OMP_NUM_THREADS: 1
+2026-11-22T08:47:55.5079925Z   MKL_NUM_THREADS: 1
+2026-11-22T08:47:55.5080231Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T08:47:55.5080625Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:47:55.5081342Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:47:55.5081928Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T08:47:55.5082378Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:47:55.5082697Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:47:55.5083074Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T08:47:55.5083463Z   V8_POPULATION: interoperability
+2026-11-22T08:47:55.5083705Z ##[endgroup]
+2026-11-22T08:47:55.5983625Z ##[group]Installed versions
+2026-11-22T08:47:55.6374305Z Version 3.12.14 was not found in the local cache
+2026-11-22T08:47:56.1263847Z Version 3.12.14 is available for downloading
+2026-11-22T08:47:56.1264776Z Download from "https://github.com/actions/python-versions/releases/download/3.12.14-31661455385/python-3.12.14-linux-24.04-x64.tar.gz"
+2026-11-22T08:47:56.6491171Z Extract downloaded archive
+2026-11-22T08:47:56.6582617Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/52ce2385-ca8e-4eba-be0f-e4f60e525c29 -f /home/runner/work/_temp/d84ea7b8-9f33-44fc-bece-00e2f12763d1
+2026-11-22T08:47:58.3069480Z Execute installation script
+2026-11-22T08:47:58.3143924Z Check if Python hostedtoolcache folder exist...
+2026-11-22T08:47:58.3144699Z Create Python 3.12.14 folder
+2026-11-22T08:47:58.3152659Z Copy Python binaries to hostedtoolcache folder
+2026-11-22T08:47:58.5167374Z Create additional symlinks (Required for the UsePythonVersion Azure Pipelines task and the setup-python GitHub Action)
+2026-11-22T08:47:58.5195728Z Upgrading pip...
+2026-11-22T08:48:00.1561124Z Collecting pip
+2026-11-22T08:48:00.1778829Z Downloading pip-26.3-py3-none-any.whl.metadata (4.6 kB)
+2026-11-22T08:48:00.1826849Z Downloading pip-26.3-py3-none-any.whl (2.0 MB)
+2026-11-22T08:48:00.2177897Z ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 102.8 MB/s eta 0:00:00
+2026-11-22T08:48:00.2178235Z 
+2026-11-22T08:48:00.2317310Z Installing collected packages: pip
+2026-11-22T08:48:00.2318392Z Attempting uninstall: pip
+2026-11-22T08:48:00.2331608Z Found existing installation: pip 25.0.1
+2026-11-22T08:48:00.2515825Z Uninstalling pip-25.0.1:
+2026-11-22T08:48:00.2545276Z Successfully uninstalled pip-25.0.1
+2026-11-22T08:48:00.8630942Z Successfully installed pip-26.3
+2026-11-22T08:48:00.9123978Z Create complete file
+2026-11-22T08:48:00.9149464Z Successfully set up CPython (3.12.14)
+2026-11-22T08:48:00.9150107Z ##[endgroup]
+2026-11-22T08:48:00.9262241Z ##[group]Run npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+2026-11-22T08:48:00.9262826Z [36;1mnpm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund[0m
+2026-11-22T08:48:00.9263355Z [36;1mpython -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock[0m
+2026-11-22T08:48:00.9263826Z [36;1mpython -m pip install --no-deps --no-build-isolation -e ./megatoken[0m
+2026-11-22T08:48:01.0488778Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T08:48:01.0489195Z env:
+2026-11-22T08:48:01.0489434Z   OMP_NUM_THREADS: 1
+2026-11-22T08:48:01.0489648Z   MKL_NUM_THREADS: 1
+2026-11-22T08:48:01.0489956Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T08:48:01.0490530Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:48:01.0491037Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:48:01.0491582Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T08:48:01.0492046Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:48:01.0492355Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:48:01.0492682Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T08:48:01.0493089Z   V8_POPULATION: interoperability
+2026-11-22T08:48:01.0493391Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:48:01.0493752Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:48:01.0494118Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:48:01.0494452Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:48:01.0494817Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:48:01.0495145Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:48:01.0495428Z ##[endgroup]
+2026-11-22T08:48:02.4897357Z 
+2026-11-22T08:48:02.4898346Z added 4 packages in 1s
+2026-11-22T08:48:03.2462721Z Looking in indexes: https://pypi.org/simple, https://download.pytorch.org/whl/cpu
+2026-11-22T08:48:03.3351940Z Collecting anyio==4.16.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 9))
+2026-11-22T08:48:03.3685798Z   Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+2026-11-22T08:48:03.4108888Z Collecting attrs==26.1.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 13))
+2026-11-22T08:48:03.4132350Z   Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-11-22T08:48:03.4288630Z Collecting certifi==2026.10.23 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 19))
+2026-11-22T08:48:03.4312403Z   Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+2026-11-22T08:48:03.4569101Z Collecting click==8.5.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 25))
+2026-11-22T08:48:03.4593979Z   Downloading click-8.5.1-py3-none-any.whl (126 kB)
+2026-11-22T08:48:03.4981371Z Collecting editables==0.6 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 29))
+2026-11-22T08:48:03.5004428Z   Downloading editables-0.6-py3-none-any.whl (5.4 kB)
+2026-11-22T08:48:03.5284936Z Collecting filelock==4.2.12 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 33))
+2026-11-22T08:48:03.5392618Z   Downloading filelock-4.2.12-py3-none-any.whl (222 kB)
+2026-11-22T08:48:03.5730462Z Collecting fsspec==2026.9.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 39))
+2026-11-22T08:48:03.5753011Z   Downloading fsspec-2026.9.0-py3-none-any.whl (221 kB)
+2026-11-22T08:48:03.6048120Z Collecting h11==0.16.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 45))
+2026-11-22T08:48:03.6068492Z   Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2026-11-22T08:48:03.6325998Z Collecting hatchling==1.33.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 49))
+2026-11-22T08:48:03.6350016Z   Downloading hatchling-1.33.0-py3-none-any.whl (78 kB)
+2026-11-22T08:48:03.6770000Z Collecting hf-xet==1.8.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 53))
+2026-11-22T08:48:03.6793648Z   Downloading hf_xet-1.8.0-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.3 MB)
+2026-11-22T08:48:03.6964210Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.3/4.3 MB 297.8 MB/s  0:00:00
+2026-11-22T08:48:03.7225339Z Collecting httpcore==1.0.9 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 72))
+2026-11-22T08:48:03.7248920Z   Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+2026-11-22T08:48:03.7495909Z Collecting httpx==0.28.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 76))
+2026-11-22T08:48:03.7515083Z   Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+2026-11-22T08:48:03.7875787Z Collecting huggingface-hub==1.33.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 80))
+2026-11-22T08:48:03.7898086Z   Downloading huggingface_hub-1.33.0-py3-none-any.whl (846 kB)
+2026-11-22T08:48:03.8010034Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 846.4/846.4 kB 81.3 MB/s  0:00:00
+2026-11-22T08:48:03.8189606Z Collecting idna==3.20 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 86))
+2026-11-22T08:48:03.8210278Z   Downloading idna-3.20-py3-none-any.whl (69 kB)
+2026-11-22T08:48:03.8436636Z Collecting iniconfig==2.3.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 92))
+2026-11-22T08:48:03.8458125Z   Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+2026-11-22T08:48:03.8591420Z Collecting jinja2==3.1.6 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 96))
+2026-11-22T08:48:03.8612333Z   Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-11-22T08:48:03.9007696Z Collecting jsonschema==4.26.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 100))
+2026-11-22T08:48:03.9029267Z   Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-11-22T08:48:03.9409444Z Collecting jsonschema-specifications==2025.9.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 104))
+2026-11-22T08:48:03.9440177Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-11-22T08:48:03.9687676Z Collecting markdown-it-py==4.0.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 108))
+2026-11-22T08:48:03.9708620Z   Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+2026-11-22T08:48:04.0143469Z Collecting markupsafe==3.0.4 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 112))
+2026-11-22T08:48:04.0168256Z   Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2026-11-22T08:48:04.0434253Z Collecting mdurl==0.1.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 265))
+2026-11-22T08:48:04.0457545Z   Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-11-22T08:48:04.0615534Z Collecting mpmath==1.3.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 269))
+2026-11-22T08:48:04.0635857Z   Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+2026-11-22T08:48:04.0670592Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 139.6 MB/s  0:00:00
+2026-11-22T08:48:04.0893415Z Collecting networkx==3.7 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 273))
+2026-11-22T08:48:04.0914857Z   Downloading networkx-3.7-py3-none-any.whl (2.1 MB)
+2026-11-22T08:48:04.0997293Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 309.8 MB/s  0:00:00
+2026-11-22T08:48:04.3875489Z Collecting numpy==2.5.5 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 277))
+2026-11-22T08:48:04.3895386Z   Downloading numpy-2.5.5-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (15.7 MB)
+2026-11-22T08:48:04.4363444Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.7/15.7 MB 340.9 MB/s  0:00:00
+2026-11-22T08:48:04.4646869Z Collecting packaging==26.3 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 345))
+2026-11-22T08:48:04.4669924Z   Downloading packaging-26.3-py3-none-any.whl (129 kB)
+2026-11-22T08:48:04.5027629Z Collecting pathspec==1.1.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 352))
+2026-11-22T08:48:04.5056505Z   Downloading pathspec-1.1.1-py3-none-any.whl (57 kB)
+2026-11-22T08:48:04.5285218Z Collecting pluggy==1.7.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 356))
+2026-11-22T08:48:04.5316460Z   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+2026-11-22T08:48:04.5544030Z Collecting pygments==2.21.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 362))
+2026-11-22T08:48:04.5569866Z   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-11-22T08:48:04.5630630Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 210.0 MB/s  0:00:00
+2026-11-22T08:48:04.5929393Z Collecting pytest==8.4.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 366))
+2026-11-22T08:48:04.5952507Z   Downloading pytest-8.4.2-py3-none-any.whl (365 kB)
+2026-11-22T08:48:04.6453528Z Collecting pyyaml==6.0.3 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 370))
+2026-11-22T08:48:04.6476854Z   Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+2026-11-22T08:48:04.6518101Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 229.1 MB/s  0:00:00
+2026-11-22T08:48:04.6802396Z Collecting referencing==0.37.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 447))
+2026-11-22T08:48:04.6820539Z   Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-11-22T08:48:04.8389365Z Collecting rpds-py==2026.9.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 453))
+2026-11-22T08:48:04.8409562Z   Downloading rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (371 kB)
+2026-11-22T08:48:04.9186859Z Collecting safetensors==0.8.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 585))
+2026-11-22T08:48:04.9208394Z   Downloading safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (516 kB)
+2026-11-22T08:48:04.9443489Z Collecting sympy==1.14.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 604))
+2026-11-22T08:48:04.9473973Z   Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+2026-11-22T08:48:04.9681754Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 313.5 MB/s  0:00:00
+2026-11-22T08:48:05.0862750Z Collecting tokenizers==0.23.3 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 608))
+2026-11-22T08:48:05.0885311Z   Downloading tokenizers-0.23.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.4 MB)
+2026-11-22T08:48:05.1005573Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 296.4 MB/s  0:00:00
+2026-11-22T08:48:05.1234436Z Collecting tomlkit==0.15.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 634))
+2026-11-22T08:48:05.1268433Z   Downloading tomlkit-0.15.2-py3-none-any.whl (52 kB)
+2026-11-22T08:48:05.2059567Z Collecting torch==2.10.0+cpu (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 638))
+2026-11-22T08:48:05.2508614Z   Downloading torch-2.10.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl (188.9 MB)
+2026-11-22T08:48:06.8532262Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 188.9/188.9 MB 118.0 MB/s  0:00:01
+2026-11-22T08:48:07.0412619Z Collecting tqdm==4.70.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 678))
+2026-11-22T08:48:07.0447040Z   Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+2026-11-22T08:48:07.0996518Z Collecting tree-sitter==0.25.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 682))
+2026-11-22T08:48:07.1178903Z   Downloading tree_sitter-0.25.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (635 kB)
+2026-11-22T08:48:07.1214564Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 635.4/635.4 kB 195.1 MB/s  0:00:00
+2026-11-22T08:48:07.1418559Z Collecting tree-sitter-c-sharp==0.23.5 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 722))
+2026-11-22T08:48:07.1452336Z   Downloading tree_sitter_c_sharp-0.23.5-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (358 kB)
+2026-11-22T08:48:07.1858219Z Collecting tree-sitter-embedded-template==0.25.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 735))
+2026-11-22T08:48:07.1880645Z   Downloading tree_sitter_embedded_template-0.25.0-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (18 kB)
+2026-11-22T08:48:07.2203978Z Collecting tree-sitter-language-pack==0.13.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 748))
+2026-11-22T08:48:07.2228423Z   Downloading tree_sitter_language_pack-0.13.0-cp310-abi3-manylinux2014_x86_64.whl (20.0 MB)
+2026-11-22T08:48:07.3425803Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.0/20.0 MB 168.2 MB/s  0:00:00
+2026-11-22T08:48:07.3784219Z Collecting tree-sitter-yaml==0.7.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 756))
+2026-11-22T08:48:07.3805602Z   Downloading tree_sitter_yaml-0.7.2-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (91 kB)
+2026-11-22T08:48:07.4062988Z Collecting trove-classifiers==2026.9.21.13 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 769))
+2026-11-22T08:48:07.4083800Z   Downloading trove_classifiers-2026.9.21.13-py3-none-any.whl (14 kB)
+2026-11-22T08:48:07.4263840Z Collecting typing-extensions==4.16.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 773))
+2026-11-22T08:48:07.4283932Z   Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-11-22T08:48:07.4502578Z Collecting uniseg==0.10.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 781))
+2026-11-22T08:48:07.4532480Z   Downloading uniseg-0.10.1-py3-none-any.whl (8.2 MB)
+2026-11-22T08:48:07.4948199Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.2/8.2 MB 203.2 MB/s  0:00:00
+2026-11-22T08:48:07.5433013Z Collecting setuptools==84.2.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 787))
+2026-11-22T08:48:07.5453227Z   Downloading setuptools-84.2.1-py3-none-any.whl (876 kB)
+2026-11-22T08:48:07.5499341Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 876.3/876.3 kB 210.7 MB/s  0:00:00
+2026-11-22T08:48:07.7677251Z Installing collected packages: trove-classifiers, mpmath, uniseg, typing-extensions, tree-sitter-yaml, tree-sitter-embedded-template, tree-sitter-c-sharp, tree-sitter, tqdm, tomlkit, sympy, setuptools, safetensors, rpds-py, pyyaml, pygments, pluggy, pathspec, packaging, numpy, networkx, mdurl, markupsafe, iniconfig, idna, hf-xet, h11, fsspec, filelock, editables, click, certifi, attrs, tree-sitter-language-pack, referencing, pytest, markdown-it-py, jinja2, httpcore, hatchling, anyio, torch, jsonschema-specifications, httpx, jsonschema, huggingface-hub, tokenizers
+2026-11-22T08:48:24.6975392Z 
+2026-11-22T08:48:24.7001404Z Successfully installed anyio-4.16.0 attrs-26.1.0 certifi-2026.10.23 click-8.5.1 editables-0.6 filelock-4.2.12 fsspec-2026.9.0 h11-0.16.0 hatchling-1.33.0 hf-xet-1.8.0 httpcore-1.0.9 httpx-0.28.1 huggingface-hub-1.33.0 idna-3.20 iniconfig-2.3.1 jinja2-3.1.6 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 markdown-it-py-4.0.0 markupsafe-3.0.4 mdurl-0.1.2 mpmath-1.3.0 networkx-3.7 numpy-2.5.5 packaging-26.3 pathspec-1.1.1 pluggy-1.7.0 pygments-2.21.0 pytest-8.4.2 pyyaml-6.0.3 referencing-0.37.0 rpds-py-2026.9.1 safetensors-0.8.0 setuptools-84.2.1 sympy-1.14.0 tokenizers-0.23.3 tomlkit-0.15.2 torch-2.10.0+cpu tqdm-4.70.1 tree-sitter-0.25.2 tree-sitter-c-sharp-0.23.5 tree-sitter-embedded-template-0.25.0 tree-sitter-language-pack-0.13.0 tree-sitter-yaml-0.7.2 trove-classifiers-2026.9.21.13 typing-extensions-4.16.0 uniseg-0.10.1
+2026-11-22T08:48:25.5378077Z Obtaining file:///home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:48:25.5386696Z   Checking if build backend supports build_editable: started
+2026-11-22T08:48:25.5669185Z   Checking if build backend supports build_editable: finished with status 'done'
+2026-11-22T08:48:25.5673439Z   Preparing editable metadata (pyproject.toml): started
+2026-11-22T08:48:25.6832424Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+2026-11-22T08:48:25.6878069Z Building wheels for collected packages: megatoken
+2026-11-22T08:48:25.6883120Z   Building editable for megatoken (pyproject.toml): started
+2026-11-22T08:48:25.7150184Z   Building editable for megatoken (pyproject.toml): finished with status 'done'
+2026-11-22T08:48:25.7154530Z   Created wheel for megatoken: filename=megatoken-0.1.0-py3-none-any.whl size=8427 sha256=e7ebc3c7f8a1a51ae6f73c62b6918c0d9215358aa527a206e9f2bb5d034e4ea1
+2026-11-22T08:48:25.7155597Z   Stored in directory: /tmp/pip-ephem-wheel-cache-precluu7/wheels/bc/cf/a3/dfbb31d802c709d98e757c75ef1b7c37961ecd2f04ad10b669
+2026-11-22T08:48:25.7175612Z Successfully built megatoken
+2026-11-22T08:48:25.7304122Z Installing collected packages: megatoken
+2026-11-22T08:48:25.7895898Z Successfully installed megatoken-0.1.0
+2026-11-22T08:48:25.8423799Z ##[group]Run python - <<'PY'
+2026-11-22T08:48:25.8424158Z [36;1mpython - <<'PY'[0m
+2026-11-22T08:48:25.8424466Z [36;1mimport hashlib, json, os, re, shutil, subprocess[0m
+2026-11-22T08:48:25.8424769Z [36;1mfrom pathlib import Path[0m
+2026-11-22T08:48:25.8425034Z [36;1mfrom huggingface_hub import hf_hub_download[0m
+2026-11-22T08:48:25.8425450Z [36;1mfrom megatoken.generation.codec import ByteCodec, LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256[0m
+2026-11-22T08:48:25.8425968Z [36;1mproducer = Path(os.environ['TRACING_JS_SELF_ROOT'])[0m
+2026-11-22T08:48:25.8426625Z [36;1mconsumer = Path(os.environ['MEGATOKEN_ROOT'])[0m
+2026-11-22T08:48:25.8426912Z [36;1mdef snapshot(root):[0m
+2026-11-22T08:48:25.8427310Z [36;1m    revision = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()[0m
+2026-11-22T08:48:25.8427955Z [36;1m    changes = subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain', '--untracked-files=all'], text=True).strip()[0m
+2026-11-22T08:48:25.8428488Z [36;1m    if not re.fullmatch('[0-9a-f]{40}', revision) or changes:[0m
+2026-11-22T08:48:25.8428848Z [36;1m        raise ValueError('Paired admission requires exact clean checkouts')[0m
+2026-11-22T08:48:25.8429381Z [36;1m    return {'revision': revision, 'tree': subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD:'], text=True).strip()}[0m
+2026-11-22T08:48:25.8429889Z [36;1midentity = {'producer': snapshot(producer), 'consumer': snapshot(consumer)}[0m
+2026-11-22T08:48:25.8430272Z [36;1mtokenizer = Path(os.environ['MEGATOKEN_TOKENIZER_JSON'])[0m
+2026-11-22T08:48:25.8430771Z [36;1mshutil.copyfile(hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION), tokenizer)[0m
+2026-11-22T08:48:25.8431277Z [36;1mpolicy = json.loads((producer / 'contracts/semantic-native-policy-v8.json').read_text())[0m
+2026-11-22T08:48:25.8431727Z [36;1mdigest = hashlib.sha256(tokenizer.read_bytes()).hexdigest()[0m
+2026-11-22T08:48:25.8432143Z [36;1mcodec = ByteCodec.from_tokenizer_json(tokenizer, expected_sha256=LING_TOKENIZER_SHA256)[0m
+2026-11-22T08:48:25.8432804Z [36;1mif policy['consumerRepository'] != 'werg/megatoken' or policy['tokenizerSha256'] != digest or digest != LING_TOKENIZER_SHA256 or policy['tokenizerIdentity'] != codec.fingerprint:[0m
+2026-11-22T08:48:25.8433475Z [36;1m    raise ValueError('Pinned tokenizer or consumer repository differs')[0m
+2026-11-22T08:48:25.8433868Z [36;1m# Test this exact consumer without altering the clean producer or its[0m
+2026-11-22T08:48:25.8434278Z [36;1m# contract, fixture, interoperability, and tokenizer requirements.[0m
+2026-11-22T08:48:25.8434763Z [36;1mpolicy['consumerRevision'] = identity['consumer']['revision'][0m
+2026-11-22T08:48:25.8435194Z [36;1mPath(os.environ['SEMANTIC_V8_NATIVE_POLICY']).write_text(json.dumps(policy, indent=2) + '\n')[0m
+2026-11-22T08:48:25.8435636Z [36;1midentity['policy'] = policy[0m
+2026-11-22T08:48:25.8436065Z [36;1m(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-identities.json').write_text(json.dumps(identity, indent=2) + '\n')[0m
+2026-11-22T08:48:25.8436618Z [36;1mprint(json.dumps(identity))[0m
+2026-11-22T08:48:25.8436850Z [36;1mPY[0m
+2026-11-22T08:48:25.8464129Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T08:48:25.8464414Z env:
+2026-11-22T08:48:25.8464697Z   OMP_NUM_THREADS: 1
+2026-11-22T08:48:25.8464931Z   MKL_NUM_THREADS: 1
+2026-11-22T08:48:25.8465246Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T08:48:25.8465630Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:48:25.8466051Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:48:25.8466687Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T08:48:25.8467126Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:48:25.8467430Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:48:25.8467923Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T08:48:25.8468286Z   V8_POPULATION: interoperability
+2026-11-22T08:48:25.8468900Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:48:25.8469264Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:48:25.8469708Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:48:25.8470126Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:48:25.8470531Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:48:25.8470951Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:48:25.8471357Z ##[endgroup]
+2026-11-22T08:48:27.4548745Z Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-11-22T08:48:28.8608223Z {"producer": {"revision": "550387918313393b49017397d47bd66e9d4b5e82", "tree": "c2e3ad495c958eabbcf3d516818f9a5d3fde475e"}, "consumer": {"revision": "124fbd0d493c29af6fb7cf7965d06744e4c7bad5", "tree": "fe579e7dd99d74faabb11e0d50ec53d6049eaf96"}, "policy": {"schema": "semantic-native-policy/8", "consumerRepository": "werg/megatoken", "consumerRevision": "124fbd0d493c29af6fb7cf7965d06744e4c7bad5", "contractDigest": "0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47", "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce", "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2", "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60", "interoperabilityDigest": "f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661"}}
+2026-11-22T08:48:28.9353133Z ##[group]Run npm run semantic:v8:contract --prefix tracing-js-self 2>&1 | tee "$RUNNER_TEMP/semantic-v8-contract.log"
+2026-11-22T08:48:28.9353780Z [36;1mnpm run semantic:v8:contract --prefix tracing-js-self 2>&1 | tee "$RUNNER_TEMP/semantic-v8-contract.log"[0m
+2026-11-22T08:48:28.9354402Z [36;1mcmp tracing-js-self/contracts/semantic-execution-v8.json megatoken/src/megatoken/data/contracts/semantic-execution-v8.json[0m
+2026-11-22T08:48:28.9382015Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T08:48:28.9382385Z env:
+2026-11-22T08:48:28.9382638Z   OMP_NUM_THREADS: 1
+2026-11-22T08:48:28.9382870Z   MKL_NUM_THREADS: 1
+2026-11-22T08:48:28.9383169Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T08:48:28.9383557Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:48:28.9384137Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:48:28.9384711Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T08:48:28.9385165Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:48:28.9385489Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:48:28.9385831Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T08:48:28.9386402Z   V8_POPULATION: interoperability
+2026-11-22T08:48:28.9386747Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:48:28.9387105Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:48:28.9387506Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:48:28.9387863Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:48:28.9388217Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:48:28.9388551Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:48:28.9388827Z ##[endgroup]
+2026-11-22T08:48:29.0111279Z 
+2026-11-22T08:48:29.0111778Z > tracing-js-self@0.3.0 semantic:v8:contract
+2026-11-22T08:48:29.0112247Z > node tools/generate-semantic-region-contract.mjs --check
+2026-11-22T08:48:29.0112584Z 
+2026-11-22T08:49:01.1842345Z {"valid":true,"contractDigest":"0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47","interoperabilityDigest":"f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661","examples":[{"id":"ordered-map","compactRegions":1,"detailedRegions":1,"compactRecords":1,"detailedRecords":1,"compactBytes":365,"detailedBytes":48,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"shared-getter","compactRegions":2,"detailedRegions":3,"compactRecords":2,"detailedRecords":11,"compactBytes":234,"detailedBytes":908,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"causal-counter","compactRegions":1,"detailedRegions":2,"compactRecords":1,"detailedRecords":10,"compactBytes":100,"detailedBytes":1099,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"number-callback-cleanup","compactRegions":0,"detailedRegions":1,"compactRecords":0,"detailedRecords":15,"protocolRecords":11,"compactBytes":0,"detailedBytes":1955,"protocolBytes":1267,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"custom-iterator-close","compactRegions":2,"detailedRegions":2,"compactRecords":2,"detailedRecords":52,"protocolRecords":30,"compactBytes":197,"detailedBytes":6681,"protocolBytes":3900,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"iterable-binding-close","compactRegions":2,"detailedRegions":2,"compactRecords":2,"detailedRecords":54,"protocolRecords":30,"compactBytes":197,"detailedBytes":6434,"protocolBytes":3900,"detailTokenShare":null,"tokenMeasurement":"untested"}],"protocolSources":["source-symbol-getter-arithmetic","typed-views-shared-backing","source-derived-private-arithmetic","builtin-iterator-mixed-arithmetic","source-promise-all-reaction-arithmetic","source-promise-join-rejection-finally","source-number-private-arithmetic","source-generator-cleanup-suspension","source-generator-delegated-cleanup","source-proxy-traps-arithmetic","source-base-initializer-throw","source-derived-initializer-throw","source-promise-executor-first-call","source-promise-executor-retained-resolution","source-promise-executor-abrupt","source-ordinary-constructor-prototype","source-enumeration-map-callback","generator-own-symbol-alias","source-logical-left-operands","source-for-in-own-keys"],"protocolHostSources":["join-host-join","join-retained-callback","callback-owned-join","callback-owned-join-awaited"],"mode":"checked"}
+2026-11-22T08:49:01.2493028Z ##[group]Run python -m pytest -q -s tests/integration/test_module_namespace_artifact_packing.py \
+2026-11-22T08:49:01.2493516Z [36;1mpython -m pytest -q -s tests/integration/test_module_namespace_artifact_packing.py \[0m
+2026-11-22T08:49:01.2493961Z [36;1m  --basetemp="$RUNNER_TEMP/v8-namespace-artifact" \[0m
+2026-11-22T08:49:01.2494261Z [36;1m  --junitxml="$RUNNER_TEMP/semantic-v8-namespace-artifact.xml" \[0m
+2026-11-22T08:49:01.2494572Z [36;1m  2>&1 | tee "$RUNNER_TEMP/semantic-v8-namespace-artifact.log"[0m
+2026-11-22T08:49:01.2494809Z [36;1mpython - <<'PY'[0m
+2026-11-22T08:49:01.2494997Z [36;1mimport os, xml.etree.ElementTree as ET[0m
+2026-11-22T08:49:01.2495209Z [36;1mfrom pathlib import Path[0m
+2026-11-22T08:49:01.2495586Z [36;1mcases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-namespace-artifact.xml').getroot().iter('testcase'))[0m
+2026-11-22T08:49:01.2496152Z [36;1mif len(cases) != 1 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):[0m
+2026-11-22T08:49:01.2496900Z [36;1m    raise ValueError('The actual namespace artifact must pass source/native/token/packing checks with zero skips')[0m
+2026-11-22T08:49:01.2497413Z [36;1mprint('One actual namespace artifact passed; six operation kinds packed; zero optimizer updates')[0m
+2026-11-22T08:49:01.2497722Z [36;1mPY[0m
+2026-11-22T08:49:01.2525164Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T08:49:01.2525400Z env:
+2026-11-22T08:49:01.2525535Z   OMP_NUM_THREADS: 1
+2026-11-22T08:49:01.2525683Z   MKL_NUM_THREADS: 1
+2026-11-22T08:49:01.2525893Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T08:49:01.2526207Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:49:01.2526726Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:49:01.2527135Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T08:49:01.2527491Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:49:01.2527736Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:49:01.2528007Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T08:49:01.2528316Z   V8_POPULATION: interoperability
+2026-11-22T08:49:01.2528534Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:49:01.2528943Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:49:01.2529232Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:49:01.2529488Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:49:01.2529751Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:49:01.2530018Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:49:01.2530240Z ##[endgroup]
+2026-11-22T08:49:13.1822107Z NAMESPACE_ARTIFACT_PACK_EVIDENCE_JSON {"consumerRevision":"124fbd0d493c29af6fb7cf7965d06744e4c7bad5","contextsDigest":"04c490cf6fb022ec04975eb94c02d87b67e2471fc349e19a141cb66716c7b449","datasetBinding":{"componentId":"semantic-region-component:b5e42193c92740c5f131070b2af834f9dfd8a307e25a3a42486602838bb5f10a","contextsDigest":"04c490cf6fb022ec04975eb94c02d87b67e2471fc349e19a141cb66716c7b449","coreDigest":null,"episodeDigest":"e9c88fd83a4b11cd266cc70441e691d4ba2d72ba9d6cfbb9d1fa04ae68104807","family":"namespace-public-pack-fixture","registryDigest":"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365","schema":"semantic-region-dataset-binding/1","sourceArtifactDigest":"86071d9e897f6d95551f00ac0860ce0875593e4bbf23e9b60e6248610022dbe0","sourceDigest":"ce3a12821794ba1fedf61aaf5dd182350ad49720a73e244778abddcb73d52c4e","sourceId":"namespace-public-pack-fixture-v1","split":"train","traceFormat":"semantic-trace/8"},"datasetBindingDigest":"935e8991ff7dc29ce72eb0ebd6a5c8351ddd17882d4cbdc6602cf2c407593f33","learnedSuccess":null,"nativeAdmission":{"admitted":true,"checks":{"contexts":"passed","continuation":"passed","masks":"passed","replay":"passed","sourceBinding":"passed","tokenizer":"passed"},"componentGate":"native-consumer-only","consumerRevision":"124fbd0d493c29af6fb7cf7965d06744e4c7bad5","contextFormat":"semantic-context/8","contextsDigest":"04c490cf6fb022ec04975eb94c02d87b67e2471fc349e19a141cb66716c7b449","contractDigest":"0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47","counts":{"algorithmRecords":0,"contexts":42,"detailedRecords":10,"generatedRecords":42,"generatedTokens":1576,"observedTokens":113515,"protocolRecords":32,"records":44,"regionRecords":0},"datasetBindingDigest":"935e8991ff7dc29ce72eb0ebd6a5c8351ddd17882d4cbdc6602cf2c407593f33","fixtureDigest":"56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce","framing":{"eosTokenId":null,"kind":"native-physical-record-boundaries/1","physicalRecords":232,"terminalTokens":0},"interoperabilityDigest":"f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661","learningClaim":null,"nativeTrainingDigest":"5a7217d19b6e48c7f29c808dc262c4f94353c818c32c27b8e510afd64161180b","optimizerSteps":0,"protocolExtensions":["experimental-module-namespace-source/1"],"protocolProfile":"protocol-source-extensions/1","publicDigest":"e9c88fd83a4b11cd266cc70441e691d4ba2d72ba9d6cfbb9d1fa04ae68104807","representation":"mixed","schema":"semantic-native-admission/8","sourceArtifactDigest":"86071d9e897f6d95551f00ac0860ce0875593e4bbf23e9b60e6248610022dbe0","sourceProfile":"compositional-regions/1","sourceVerification":{"artifactSha256":"4057518d4876fa4aca1cb35b3ab368cb9511612e703c44ad9978434ddc6913a9","contextDigest":"04c490cf6fb022ec04975eb94c02d87b67e2471fc349e19a141cb66716c7b449","datasetBindingDigest":"935e8991ff7dc29ce72eb0ebd6a5c8351ddd17882d4cbdc6602cf2c407593f33","familyBindingValidated":true,"producerRevision":"550387918313393b49017397d47bd66e9d4b5e82","producerTreeClean":true,"projectionValidated":true,"publicDigest":"e9c88fd83a4b11cd266cc70441e691d4ba2d72ba9d6cfbb9d1fa04ae68104807","regionRecords":null,"registryDigest":"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365","replayValidated":true,"schema":"semantic-native-source-recheck/1","sourceArtifactDigest":"86071d9e897f6d95551f00ac0860ce0875593e4bbf23e9b60e6248610022dbe0","sourceValidated":true},"tokenizer":{"identity":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","sha256":"40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60","status":"passed"},"traceFormat":"semantic-trace/8"},"optimizerSteps":0,"packedTargetsByKind":{"cell.initialize":{"scoredPositions":66,"targetRecords":2,"tokenAndMaskDigest":"d87b5b19491ce278eb91af7064b2f0a6882b76a3e5e1a30af8d41753a25e96f5","tokenIds":66},"cell.write":{"scoredPositions":33,"targetRecords":1,"tokenAndMaskDigest":"77b47c27b37857243a16f27e8fc046c9e89ac06308d8a483752e4b2d3acedd41","tokenIds":33},"namespace.create":{"scoredPositions":20,"targetRecords":1,"tokenAndMaskDigest":"5947b69dc9e4d00c9facd6250cb1dce20cd94ce98b56f1db91bfd64765f95cb4","tokenIds":20},"namespace.descriptor":{"scoredPositions":51,"targetRecords":1,"tokenAndMaskDigest":"af31df2fae33390dea6815f7f73516d46582e426221cb431fc4ef10e5a70c3ee","tokenIds":51},"namespace.keys":{"scoredPositions":29,"targetRecords":1,"tokenAndMaskDigest":"865207ad390beef19bc3aa94db52f11374716d395c3c3cf20a936a26e25e5e54","tokenIds":29},"namespace.read":{"scoredPositions":26,"targetRecords":1,"tokenAndMaskDigest":"b6e4a6027e22d8d0a04d3cbec2e7bd6dfadbce6db703fdd57cacd468d2005f56","tokenIds":26}},"packedWindowCount":15,"preparedCodecFingerprint":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","preparedManifest":{"behavior_coverage":{"episodes":{"train|semantic_execution|semantic_code_invocation":1,"train|semantic_execution|semantic_v8":1},"original_families":{"train|semantic_execution|semantic_code_invocation":1,"train|semantic_execution|semantic_v8":1},"original_family_ids":{"train|semantic_execution|semantic_code_invocation":["semantic-region-component:b5e42193c92740c5f131070b2af834f9dfd8a307e25a3a42486602838bb5f10a"],"train|semantic_execution|semantic_v8":["semantic-region-component:b5e42193c92740c5f131070b2af834f9dfd8a307e25a3a42486602838bb5f10a"]},"version":2},"census":{"U":115091,"U_definition":"Raw-codec tokens in accepted deduplicated complete transcripts, including shared context.","accepted_episodes":1,"duplicates":0,"executed_transcript_U":0,"filtered_rows":0,"free_position_candidates":1576,"free_position_candidates_definition":"The static masked target inventory: positions that could carry loss.","incomplete_transcript_U":0,"independent_families":1,"parser_review_rows":0,"quarantined":0,"rejected_rows":0,"simulated_transcript_U":0,"strata":[{"U":115091,"eligible_assistant_tokens":1576,"episodes":1,"executed_observation_tokens":113515,"families":1,"free_position_candidates":1576,"source_id":"semantic-execution-v8","split":"train","stream":"semantic_execution","tool_observation_tokens":0}],"verified_success_U":0},"chunking":{"codec_fingerprint":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","config":{"chat_template":"auto","code_tree_scale":1.5,"hard_max_tokens":8192,"limits":{"isolate_native":true,"max_depth":12,"max_injections":2048,"max_nodes":100000,"max_parse_bytes":1048576,"max_parse_milliseconds":0,"max_regions":20000,"max_tree_depth":128,"worker_timeout_ms":5000},"max_bytes":16384,"parser_backend":"tree_sitter","planner_max_edges":64,"soft_max_tokens":768,"target_tokens":512,"tree_distance_budget":4.0,"tree_distance_weight":0.15,"use_icu":false,"version":"recursive-parser-v2"},"config_fingerprint":"02246d76b517454299c35a682576de35f2877e3a14ae011f28a465dda811e82e","fingerprint":"bc5e145e98467c541f480c10a93bb2c7be5ffe2d110cb5a17fba93a99e350e9a","parsers":{"chat":{"templates":{"chatml":{"aliases":["qwen"],"allow_named_tools":false,"body_newlines":0,"channel_markers":[],"ends":["3c7c696d5f656e647c3e"],"format_markers":[],"mode":"delimited","name":"chatml","prefixes":[],"separator":"0a","start":"3c7c696d5f73746172747c3e"},"deepseek":{"aliases":["deepseek-v3","deepseek-r1"],"allow_named_tools":false,"body_newlines":0,"channel_markers":[],"ends":["3cefbd9c656e64e296816f66e2968173656e74656e6365efbd9c3e"],"format_markers":[],"mode":"deepseek","name":"deepseek","prefixes":["3cefbd9c626567696ee296816f66e2968173656e74656e6365efbd9c3e"],"separator":"3cefbd9c417373697374616e74efbd9c3e","start":"3cefbd9c55736572efbd9c3e"},"gemma":{"aliases":["gemma2","gemma3"],"allow_named_tools":false,"body_newlines":0,"channel_markers":[],"ends":["3c656e645f6f665f7475726e3e"],"format_markers":[],"mode":"delimited","name":"gemma","prefixes":["3c626f733e"],"separator":"0a","start":"3c73746172745f6f665f7475726e3e"},"harmony":{"aliases":[],"allow_named_tools":true,"body_newlines":0,"channel_markers":["3c7c6368616e6e656c7c3e"],"ends":["3c7c656e647c3e","3c7c72657475726e7c3e","3c7c63616c6c7c3e"],"format_markers":["3c7c636f6e73747261696e7c3e"],"mode":"delimited","name":"harmony","prefixes":[],"separator":"3c7c6d6573736167657c3e","start":"3c7c73746172747c3e"},"harmony_legacy":{"aliases":[],"allow_named_tools":true,"body_newlines":0,"channel_markers":["3c7c6d6574615f7365707c3e"],"ends":["3c7c696d5f656e647c3e","3c7c66696d5f7375666669787c3e","3c7c676869737375657c3e"],"format_markers":["3c7c6d6574615f73746172747c3e"],"mode":"delimited","name":"harmony_legacy","prefixes":["3c7c656e646f66746578747c3e"],"separator":"3c7c696d5f7365707c3e","start":"3c7c696d5f73746172747c3e"},"inst":{"aliases":["llama2","llama-2","mistral"],"allow_named_tools":false,"body_newlines":0,"channel_markers":[],"ends":["3c2f733e"],"format_markers":[],"mode":"inst","name":"inst","prefixes":["3c733e"],"separator":"5b2f494e53545d","start":"5b494e53545d"},"llama3":{"aliases":["llama-3","llama3.1","llama3.2","llama3.3"],"allow_named_tools":true,"body_newlines":2,"channel_markers":[],"ends":["3c7c656f745f69647c3e","3c7c656f6d5f69647c3e","3c7c656e645f6f665f746578747c3e"],"format_markers":[],"mode":"delimited","name":"llama3","prefixes":["3c7c626567696e5f6f665f746578747c3e"],"separator":"3c7c656e645f6865616465725f69647c3e","start":"3c7c73746172745f6865616465725f69647c3e"},"phi3":{"aliases":["phi-3","phi4"],"allow_named_tools":false,"body_newlines":1,"channel_markers":[],"ends":["3c7c656e647c3e","3c7c656e646f66746578747c3e"],"format_markers":[],"mode":"delimited","name":"phi3","prefixes":[],"separator":"7c3e","start":"3c7c"}},"version":"chat-framing-v1"},"implementation":"bfd48445630387eb441499ae13aafc3315c12e75ffc4795cc6a88bd7c8f993d9","prose":{"icu":null,"rules":"unicode-prose-v1","unicode":"16.0.0","uniseg":"0.10.1"},"syntax":{"backend":"tree_sitter","grammar_dependencies":{"tree-sitter-c-sharp":"0.23.5","tree-sitter-embedded-template":"0.25.0","tree-sitter-yaml":"0.7.2"},"markdown_it_py":"4.0.0","network":"disabled","providers":[],"registry":"offline-grammar-registry-v1","tree_sitter":"0.25.2","tree_sitter_language_pack":"0.13.0"}}},"chunking_stats":{"boundaries":{"end":86,"word":146},"bytes":339613,"diagnostics":{"semantic_boundary_projected":54},"forced_splits":0,"histogram":{"0":0,"1024":7,"128":0,"192":0,"256":0,"32":16,"384":1,"512":2,"64":22,"768":180,"96":4,">1024":0},"histogram_kind":"disjoint buckets, inclusive upper bounds","languages":{"text":232},"max_positions":863,"mean_positions":496.0818965517241,"over_soft_max":7,"positions":115091,"records":232,"reference_tokens":115091,"unversioned_records":0},"codec_fingerprint":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","complete":true,"counts":{"*":1,"split:train":1,"split:train|stream:semantic_execution":1,"stream:semantic_execution":1},"dedup":{"anchor_count":8,"evaluation_after":null,"max_candidates":4096,"max_descendants_per_parent":20000,"min_near_words":40,"near_threshold":0.94,"shingle_words":5,"sketch_size":256,"split_seed":"semantic-region-family-components/1","train_fraction":0.98,"validation_fraction":0.01},"feature_counts":{},"feature_extractors":[],"fingerprint":"cb44799ba12dbdc6488e513d4675cfb6855be844325b46e400c968f2c2093c95","index":{"path":"index.sqlite","sha256":"75559694f78cc7afc2f88d7c9183dc9780dd368314fea6f93bb37ad2dfd0b92d"},"parser_review":{},"pipeline_fingerprint":"0c39245678d7ba87e046aac40280f2453b2d4f5156731f11b77fa996dc526384","schema_version":10,"scored_media_counts":{},"shards":[{"bytes":1734871,"episodes":1,"path":"episodes-000000.jsonl","sha256":"36c254fc1bf644e06ef54eac09093d7f8ad8d460fc075ac7ff34b48a75225f39"}],"sources":[{"consumerRevision":"124fbd0d493c29af6fb7cf7965d06744e4c7bad5","contractDigest":"0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47","fixtureDigest":"56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce","learningClaim":null,"maxHistory":1024,"maxPositions":8192,"optimizerSteps":0,"producerRevision":"550387918313393b49017397d47bd66e9d4b5e82","registryDigest":"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365","representation":"mixed","schema":"semantic-preparation/8","tokenizerIdentity":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","tokenizerSha256":"40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"}],"structured_supply":{"counts":{"train|semantic_execution|episode_views":1,"train|semantic_execution|event_modality:text":232,"train|semantic_execution|group_clock:unknown":232,"train|semantic_execution|group_modalities:text":232,"train|semantic_execution|group_width:1":232,"train|semantic_execution|record_provenance:executed":190,"train|semantic_execution|record_provenance:teacher":42},"denominators":"group_* count committed groups; event_* and availability count events; record_* count physical records; language_pair and episode_views count episodes; original_families deduplicate each dimension","original_families":{"train|semantic_execution|episode_views":1,"train|semantic_execution|event_modality:text":1,"train|semantic_execution|group_clock:unknown":1,"train|semantic_execution|group_modalities:text":1,"train|semantic_execution|group_width:1":1,"train|semantic_execution|record_provenance:executed":1,"train|semantic_execution|record_provenance:teacher":1},"version":1}},"preparedManifestFingerprint":"cb44799ba12dbdc6488e513d4675cfb6855be844325b46e400c968f2c2093c95","preparedManifestRaw":"{\n  \"behavior_coverage\": {\n    \"episodes\": {\n      \"train|semantic_execution|semantic_code_invocation\": 1,\n      \"train|semantic_execution|semantic_v8\": 1\n    },\n    \"original_families\": {\n      \"train|semantic_execution|semantic_code_invocation\": 1,\n      \"train|semantic_execution|semantic_v8\": 1\n    },\n    \"original_family_ids\": {\n      \"train|semantic_execution|semantic_code_invocation\": [\n        \"semantic-region-component:b5e42193c92740c5f131070b2af834f9dfd8a307e25a3a42486602838bb5f10a\"\n      ],\n      \"train|semantic_execution|semantic_v8\": [\n        \"semantic-region-component:b5e42193c92740c5f131070b2af834f9dfd8a307e25a3a42486602838bb5f10a\"\n      ]\n    },\n    \"version\": 2\n  },\n  \"census\": {\n    \"U\": 115091,\n    \"U_definition\": \"Raw-codec tokens in accepted deduplicated complete transcripts, including shared context.\",\n    \"accepted_episodes\": 1,\n    \"duplicates\": 0,\n    \"executed_transcript_U\": 0,\n    \"filtered_rows\": 0,\n    \"free_position_candidates\": 1576,\n    \"free_position_candidates_definition\": \"The static masked target inventory: positions that could carry loss.\",\n    \"incomplete_transcript_U\": 0,\n    \"independent_families\": 1,\n    \"parser_review_rows\": 0,\n    \"quarantined\": 0,\n    \"rejected_rows\": 0,\n    \"simulated_transcript_U\": 0,\n    \"strata\": [\n      {\n        \"U\": 115091,\n        \"eligible_assistant_tokens\": 1576,\n        \"episodes\": 1,\n        \"executed_observation_tokens\": 113515,\n        \"families\": 1,\n        \"free_position_candidates\": 1576,\n        \"source_id\": \"semantic-execution-v8\",\n        \"split\": \"train\",\n        \"stream\": \"semantic_execution\",\n        \"tool_observation_tokens\": 0\n      }\n    ],\n    \"verified_success_U\": 0\n  },\n  \"chunking\": {\n    \"codec_fingerprint\": \"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2\",\n    \"config\": {\n      \"chat_template\": \"auto\",\n      \"code_tree_scale\": 1.5,\n      \"hard_max_tokens\": 8192,\n      \"limits\": {\n        \"isolate_native\": true,\n        \"max_depth\": 12,\n        \"max_injections\": 2048,\n        \"max_nodes\": 100000,\n        \"max_parse_bytes\": 1048576,\n        \"max_parse_milliseconds\": 0,\n        \"max_regions\": 20000,\n        \"max_tree_depth\": 128,\n        \"worker_timeout_ms\": 5000\n      },\n      \"max_bytes\": 16384,\n      \"parser_backend\": \"tree_sitter\",\n      \"planner_max_edges\": 64,\n      \"soft_max_tokens\": 768,\n      \"target_tokens\": 512,\n      \"tree_distance_budget\": 4.0,\n      \"tree_distance_weight\": 0.15,\n      \"use_icu\": false,\n      \"version\": \"recursive-parser-v2\"\n    },\n    \"config_fingerprint\": \"02246d76b517454299c35a682576de35f2877e3a14ae011f28a465dda811e82e\",\n    \"fingerprint\": \"bc5e145e98467c541f480c10a93bb2c7be5ffe2d110cb5a17fba93a99e350e9a\",\n    \"parsers\": {\n      \"chat\": {\n        \"templates\": {\n          \"chatml\": {\n            \"aliases\": [\n              \"qwen\"\n            ],\n            \"allow_named_tools\": false,\n            \"body_newlines\": 0,\n            \"channel_markers\": [],\n            \"ends\": [\n              \"3c7c696d5f656e647c3e\"\n            ],\n            \"format_markers\": [],\n            \"mode\": \"delimited\",\n            \"name\": \"chatml\",\n            \"prefixes\": [],\n            \"separator\": \"0a\",\n            \"start\": \"3c7c696d5f73746172747c3e\"\n          },\n          \"deepseek\": {\n            \"aliases\": [\n              \"deepseek-v3\",\n              \"deepseek-r1\"\n            ],\n            \"allow_named_tools\": false,\n            \"body_newlines\": 0,\n            \"channel_markers\": [],\n            \"ends\": [\n              \"3cefbd9c656e64e296816f66e2968173656e74656e6365efbd9c3e\"\n            ],\n            \"format_markers\": [],\n            \"mode\": \"deepseek\",\n            \"name\": \"deepseek\",\n            \"prefixes\": [\n              \"3cefbd9c626567696ee296816f66e2968173656e74656e6365efbd9c3e\"\n            ],\n            \"separator\": \"3cefbd9c417373697374616e74efbd9c3e\",\n            \"start\": \"3cefbd9c55736572efbd9c3e\"\n          },\n          \"gemma\": {\n            \"aliases\": [\n              \"gemma2\",\n              \"gemma3\"\n            ],\n            \"allow_named_tools\": false,\n            \"body_newlines\": 0,\n            \"channel_markers\": [],\n            \"ends\": [\n              \"3c656e645f6f665f7475726e3e\"\n            ],\n            \"format_markers\": [],\n            \"mode\": \"delimited\",\n            \"name\": \"gemma\",\n            \"prefixes\": [\n              \"3c626f733e\"\n            ],\n            \"separator\": \"0a\",\n            \"start\": \"3c73746172745f6f665f7475726e3e\"\n          },\n          \"harmony\": {\n            \"aliases\": [],\n            \"allow_named_tools\": true,\n            \"body_newlines\": 0,\n            \"channel_markers\": [\n              \"3c7c6368616e6e656c7c3e\"\n            ],\n            \"ends\": [\n              \"3c7c656e647c3e\",\n              \"3c7c72657475726e7c3e\",\n              \"3c7c63616c6c7c3e\"\n            ],\n            \"format_markers\": [\n              \"3c7c636f6e73747261696e7c3e\"\n            ],\n            \"mode\": \"delimited\",\n            \"name\": \"harmony\",\n            \"prefixes\": [],\n            \"separator\": \"3c7c6d6573736167657c3e\",\n            \"start\": \"3c7c73746172747c3e\"\n          },\n          \"harmony_legacy\": {\n            \"aliases\": [],\n            \"allow_named_tools\": true,\n            \"body_newlines\": 0,\n            \"channel_markers\": [\n              \"3c7c6d6574615f7365707c3e\"\n            ],\n            \"ends\": [\n              \"3c7c696d5f656e647c3e\",\n              \"3c7c66696d5f7375666669787c3e\",\n              \"3c7c676869737375657c3e\"\n            ],\n            \"format_markers\": [\n              \"3c7c6d6574615f73746172747c3e\"\n            ],\n            \"mode\": \"delimited\",\n            \"name\": \"harmony_legacy\",\n            \"prefixes\": [\n              \"3c7c656e646f66746578747c3e\"\n            ],\n            \"separator\": \"3c7c696d5f7365707c3e\",\n            \"start\": \"3c7c696d5f73746172747c3e\"\n          },\n          \"inst\": {\n            \"aliases\": [\n              \"llama2\",\n              \"llama-2\",\n              \"mistral\"\n            ],\n            \"allow_named_tools\": false,\n            \"body_newlines\": 0,\n            \"channel_markers\": [],\n            \"ends\": [\n              \"3c2f733e\"\n            ],\n            \"format_markers\": [],\n            \"mode\": \"inst\",\n            \"name\": \"inst\",\n            \"prefixes\": [\n              \"3c733e\"\n            ],\n            \"separator\": \"5b2f494e53545d\",\n            \"start\": \"5b494e53545d\"\n          },\n          \"llama3\": {\n            \"aliases\": [\n              \"llama-3\",\n              \"llama3.1\",\n              \"llama3.2\",\n              \"llama3.3\"\n            ],\n            \"allow_named_tools\": true,\n            \"body_newlines\": 2,\n            \"channel_markers\": [],\n            \"ends\": [\n              \"3c7c656f745f69647c3e\",\n              \"3c7c656f6d5f69647c3e\",\n              \"3c7c656e645f6f665f746578747c3e\"\n            ],\n            \"format_markers\": [],\n            \"mode\": \"delimited\",\n            \"name\": \"llama3\",\n            \"prefixes\": [\n              \"3c7c626567696e5f6f665f746578747c3e\"\n            ],\n            \"separator\": \"3c7c656e645f6865616465725f69647c3e\",\n            \"start\": \"3c7c73746172745f6865616465725f69647c3e\"\n          },\n          \"phi3\": {\n            \"aliases\": [\n              \"phi-3\",\n              \"phi4\"\n            ],\n            \"allow_named_tools\": false,\n            \"body_newlines\": 1,\n            \"channel_markers\": [],\n            \"ends\": [\n              \"3c7c656e647c3e\",\n              \"3c7c656e646f66746578747c3e\"\n            ],\n            \"format_markers\": [],\n            \"mode\": \"delimited\",\n            \"name\": \"phi3\",\n            \"prefixes\": [],\n            \"separator\": \"7c3e\",\n            \"start\": \"3c7c\"\n          }\n        },\n        \"version\": \"chat-framing-v1\"\n      },\n      \"implementation\": \"bfd48445630387eb441499ae13aafc3315c12e75ffc4795cc6a88bd7c8f993d9\",\n      \"prose\": {\n        \"icu\": null,\n        \"rules\": \"unicode-prose-v1\",\n        \"unicode\": \"16.0.0\",\n        \"uniseg\": \"0.10.1\"\n      },\n      \"syntax\": {\n        \"backend\": \"tree_sitter\",\n        \"grammar_dependencies\": {\n          \"tree-sitter-c-sharp\": \"0.23.5\",\n          \"tree-sitter-embedded-template\": \"0.25.0\",\n          \"tree-sitter-yaml\": \"0.7.2\"\n        },\n        \"markdown_it_py\": \"4.0.0\",\n        \"network\": \"disabled\",\n        \"providers\": [],\n        \"registry\": \"offline-grammar-registry-v1\",\n        \"tree_sitter\": \"0.25.2\",\n        \"tree_sitter_language_pack\": \"0.13.0\"\n      }\n    }\n  },\n  \"chunking_stats\": {\n    \"boundaries\": {\n      \"end\": 86,\n      \"word\": 146\n    },\n    \"bytes\": 339613,\n    \"diagnostics\": {\n      \"semantic_boundary_projected\": 54\n    },\n    \"forced_splits\": 0,\n    \"histogram\": {\n      \"0\": 0,\n      \"1024\": 7,\n      \"128\": 0,\n      \"192\": 0,\n      \"256\": 0,\n      \"32\": 16,\n      \"384\": 1,\n      \"512\": 2,\n      \"64\": 22,\n      \"768\": 180,\n      \"96\": 4,\n      \">1024\": 0\n    },\n    \"histogram_kind\": \"disjoint buckets, inclusive upper bounds\",\n    \"languages\": {\n      \"text\": 232\n    },\n    \"max_positions\": 863,\n    \"mean_positions\": 496.0818965517241,\n    \"over_soft_max\": 7,\n    \"positions\": 115091,\n    \"records\": 232,\n    \"reference_tokens\": 115091,\n    \"unversioned_records\": 0\n  },\n  \"codec_fingerprint\": \"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2\",\n  \"complete\": true,\n  \"counts\": {\n    \"*\": 1,\n    \"split:train\": 1,\n    \"split:train|stream:semantic_execution\": 1,\n    \"stream:semantic_execution\": 1\n  },\n  \"dedup\": {\n    \"anchor_count\": 8,\n    \"evaluation_after\": null,\n    \"max_candidates\": 4096,\n    \"max_descendants_per_parent\": 20000,\n    \"min_near_words\": 40,\n    \"near_threshold\": 0.94,\n    \"shingle_words\": 5,\n    \"sketch_size\": 256,\n    \"split_seed\": \"semantic-region-family-components/1\",\n    \"train_fraction\": 0.98,\n    \"validation_fraction\": 0.01\n  },\n  \"feature_counts\": {},\n  \"feature_extractors\": [],\n  \"fingerprint\": \"cb44799ba12dbdc6488e513d4675cfb6855be844325b46e400c968f2c2093c95\",\n  \"index\": {\n    \"path\": \"index.sqlite\",\n    \"sha256\": \"75559694f78cc7afc2f88d7c9183dc9780dd368314fea6f93bb37ad2dfd0b92d\"\n  },\n  \"parser_review\": {},\n  \"pipeline_fingerprint\": \"0c39245678d7ba87e046aac40280f2453b2d4f5156731f11b77fa996dc526384\",\n  \"schema_version\": 10,\n  \"scored_media_counts\": {},\n  \"shards\": [\n    {\n      \"bytes\": 1734871,\n      \"episodes\": 1,\n      \"path\": \"episodes-000000.jsonl\",\n      \"sha256\": \"36c254fc1bf644e06ef54eac09093d7f8ad8d460fc075ac7ff34b48a75225f39\"\n    }\n  ],\n  \"sources\": [\n    {\n      \"consumerRevision\": \"124fbd0d493c29af6fb7cf7965d06744e4c7bad5\",\n      \"contractDigest\": \"0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47\",\n      \"fixtureDigest\": \"56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce\",\n      \"learningClaim\": null,\n      \"maxHistory\": 1024,\n      \"maxPositions\": 8192,\n      \"optimizerSteps\": 0,\n      \"producerRevision\": \"550387918313393b49017397d47bd66e9d4b5e82\",\n      \"registryDigest\": \"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365\",\n      \"representation\": \"mixed\",\n      \"schema\": \"semantic-preparation/8\",\n      \"tokenizerIdentity\": \"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2\",\n      \"tokenizerSha256\": \"40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60\"\n    }\n  ],\n  \"structured_supply\": {\n    \"counts\": {\n      \"train|semantic_execution|episode_views\": 1,\n      \"train|semantic_execution|event_modality:text\": 232,\n      \"train|semantic_execution|group_clock:unknown\": 232,\n      \"train|semantic_execution|group_modalities:text\": 232,\n      \"train|semantic_execution|group_width:1\": 232,\n      \"train|semantic_execution|record_provenance:executed\": 190,\n      \"train|semantic_execution|record_provenance:teacher\": 42\n    },\n    \"denominators\": \"group_* count committed groups; event_* and availability count events; record_* count physical records; language_pair and episode_views count episodes; original_families deduplicate each dimension\",\n    \"original_families\": {\n      \"train|semantic_execution|episode_views\": 1,\n      \"train|semantic_execution|event_modality:text\": 1,\n      \"train|semantic_execution|group_clock:unknown\": 1,\n      \"train|semantic_execution|group_modalities:text\": 1,\n      \"train|semantic_execution|group_width:1\": 1,\n      \"train|semantic_execution|record_provenance:executed\": 1,\n      \"train|semantic_execution|record_provenance:teacher\": 1\n    },\n    \"version\": 1\n  }\n}\n","preparedManifestSha256":"32d21c769a3433ef064c4863db9ec7bda58aa278c6ddecdffc14cf8c71da7408","preparedSemanticV8Report":{"consumerRevision":"124fbd0d493c29af6fb7cf7965d06744e4c7bad5","contractDigest":"0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47","counts":{"admitted":1,"attempted":1},"fixtureDigest":"56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce","learningClaim":null,"maxHistory":1024,"maxPositions":8192,"optimizerSteps":0,"producerRevision":"550387918313393b49017397d47bd66e9d4b5e82","refusals":[],"registryDigest":"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365","representation":"mixed","schema":"semantic-preparation/8","tokenizerIdentity":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","tokenizerSha256":"40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"},"preparedSemanticV8ReportRaw":"{\n  \"consumerRevision\": \"124fbd0d493c29af6fb7cf7965d06744e4c7bad5\",\n  \"contractDigest\": \"0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47\",\n  \"counts\": {\n    \"admitted\": 1,\n    \"attempted\": 1\n  },\n  \"fixtureDigest\": \"56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce\",\n  \"learningClaim\": null,\n  \"maxHistory\": 1024,\n  \"maxPositions\": 8192,\n  \"optimizerSteps\": 0,\n  \"producerRevision\": \"550387918313393b49017397d47bd66e9d4b5e82\",\n  \"refusals\": [],\n  \"registryDigest\": \"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365\",\n  \"representation\": \"mixed\",\n  \"schema\": \"semantic-preparation/8\",\n  \"tokenizerIdentity\": \"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2\",\n  \"tokenizerSha256\": \"40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60\"\n}\n","preparedSemanticV8ReportSha256":"f562b6d0c8350d7dbdd19d4b7a64ccc41a58636a5b36ae33611321d6cd6f0a67","producerRevision":"550387918313393b49017397d47bd66e9d4b5e82","publicDigest":"e9c88fd83a4b11cd266cc70441e691d4ba2d72ba9d6cfbb9d1fa04ae68104807","registryDigest":"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365","schema":"semantic-v8-namespace-artifact-pack-evidence/1","sourceAdmission":{"artifactSha256":"4057518d4876fa4aca1cb35b3ab368cb9511612e703c44ad9978434ddc6913a9","contextDigest":"04c490cf6fb022ec04975eb94c02d87b67e2471fc349e19a141cb66716c7b449","datasetBindingDigest":"935e8991ff7dc29ce72eb0ebd6a5c8351ddd17882d4cbdc6602cf2c407593f33","familyBindingValidated":true,"producerRevision":"550387918313393b49017397d47bd66e9d4b5e82","producerTreeClean":true,"projectionValidated":true,"publicDigest":"e9c88fd83a4b11cd266cc70441e691d4ba2d72ba9d6cfbb9d1fa04ae68104807","regionRecords":null,"registryDigest":"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365","replayValidated":true,"schema":"semantic-native-source-recheck/1","sourceArtifactDigest":"86071d9e897f6d95551f00ac0860ce0875593e4bbf23e9b60e6248610022dbe0","sourceValidated":true},"sourceArtifactDigest":"86071d9e897f6d95551f00ac0860ce0875593e4bbf23e9b60e6248610022dbe0","sourceArtifactSha256":"4057518d4876fa4aca1cb35b3ab368cb9511612e703c44ad9978434ddc6913a9","sourceComponentId":"semantic-region-component:b5e42193c92740c5f131070b2af834f9dfd8a307e25a3a42486602838bb5f10a","sourceDigest":"ce3a12821794ba1fedf61aaf5dd182350ad49720a73e244778abddcb73d52c4e","sourceFamily":"namespace-public-pack-fixture","sourceId":"namespace-public-pack-fixture-v1","split":"train","tokenizerEvidence":{"identity":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","schema":"semantic-tokenizer-admission/1","sha256":"40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60","status":"passed","verification":"pinned-tokenizer-bytes"}}
+2026-11-22T08:49:13.3103530Z .
+2026-11-22T08:49:13.3103998Z - generated xml file: /home/runner/work/_temp/semantic-v8-namespace-artifact.xml -
+2026-11-22T08:49:13.3104378Z 1 passed in 10.88s
+2026-11-22T08:49:13.5297283Z One actual namespace artifact passed; six operation kinds packed; zero optimizer updates
+2026-11-22T08:49:13.5351913Z ##[group]Run node --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \
+2026-11-22T08:49:13.5352752Z [36;1mnode --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \[0m
+2026-11-22T08:49:13.5353236Z [36;1m  test/semantic-selected-orchestration-v8.test.js \[0m
+2026-11-22T08:49:13.5353610Z [36;1m  test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js \[0m
+2026-11-22T08:49:13.5354017Z [36;1m  test/semantic-selected-orchestration-checkpoint-v8.test.js \[0m
+2026-11-22T08:49:13.5354357Z [36;1m  test/semantic-native-orchestration-recovery-v8.test.js \[0m
+2026-11-22T08:49:13.5354679Z [36;1m  test/semantic-native-module-namespace-state-v8.test.js \[0m
+2026-11-22T08:49:13.5354996Z [36;1m  2>&1 | tee "$RUNNER_TEMP/semantic-v8-transport-tests.xml"[0m
+2026-11-22T08:49:13.5355258Z [36;1mpython - <<'PY'[0m
+2026-11-22T08:49:13.5356145Z [36;1mimport os, xml.etree.ElementTree as ET[0m
+2026-11-22T08:49:13.5356556Z [36;1mfrom pathlib import Path[0m
+2026-11-22T08:49:13.5356929Z [36;1mcases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-transport-tests.xml').getroot().iter('testcase'))[0m
+2026-11-22T08:49:13.5357437Z [36;1mif not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):[0m
+2026-11-22T08:49:13.5357929Z [36;1m    raise ValueError('Every paired V8 transport control, including the Python contract check, must run and pass')[0m
+2026-11-22T08:49:13.5358358Z [36;1mprint(f'{len(cases)} paired transport controls passed with zero skips')[0m
+2026-11-22T08:49:13.5358613Z [36;1mPY[0m
+2026-11-22T08:49:13.5385815Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T08:49:13.5386059Z env:
+2026-11-22T08:49:13.5386206Z   OMP_NUM_THREADS: 1
+2026-11-22T08:49:13.5386521Z   MKL_NUM_THREADS: 1
+2026-11-22T08:49:13.5386754Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T08:49:13.5387081Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:49:13.5387462Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:49:13.5387879Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T08:49:13.5388233Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:49:13.5388475Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:49:13.5388751Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T08:49:13.5389059Z   V8_POPULATION: interoperability
+2026-11-22T08:49:13.5389288Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:49:13.5389583Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:49:13.5389879Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:49:13.5390155Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:49:13.5390418Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:49:13.5390791Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:49:13.5391017Z ##[endgroup]
+2026-11-22T08:49:13.5835614Z <?xml version="1.0" encoding="utf-8"?>
+2026-11-22T08:49:13.5857100Z <testsuites>
+2026-11-22T08:52:14.9085809Z 	<testcase name="experimental JS and independent Python namespace cells agree through aliases, TDZ and atomic refusals" time="0.237353" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-module-namespace-state-v8.test.js"/>
+2026-11-22T08:52:14.9087904Z 	<testcase name="actual JavaScript and Python public namespace records preserve the same shared state at every cut" time="0.319874" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-module-namespace-state-v8.test.js"/>
+2026-11-22T08:52:14.9089606Z 	<testcase name="actual Python native automatic history refuses an unacknowledged coordinator selection" time="5.530675" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T08:52:14.9090877Z 	<testcase name="actual Python child execution remains fenced after its completion-cut acknowledgement is lost" time="13.419013" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T08:52:14.9092379Z 	<testcase name="actual Python V8 checkpoint bytes restore through the JS composite driver at mixed cuts" time="18.085085" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T08:52:14.9093884Z 	<testcase name="actual Python shared-runtime automatic history restores a child-complete sparse cut without redispatch" time="42.386740" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T08:52:14.9095227Z 	<testcase name="actual Python track_cancel reconciliation requires the acknowledged same-owner service intent" time="52.703115" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T08:52:14.9096778Z 	<testcase name="actual Python track_complete service intent reconciles without reopening active work" time="49.065555" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T08:52:14.9098119Z 	<testcase name="V8 coordinator JSONL fixture preserves child bindings, original bytes, typed commits and closed retry" time="0.240620" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:52:14.9099409Z 	<testcase name="ordinary V8 orchestration driver uses the native JSONL transport for model and child choices" time="0.177366" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:52:14.9100627Z 	<testcase name="cancellation discards a pending coordinator candidate and retains the exact receipt" time="0.081534" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:52:14.9101767Z 	<testcase name="noninteger or altered coordinator fragment provenance is refused" time="0.067820" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:52:14.9102890Z 	<testcase name="creation acknowledgement cannot substitute another declared child binding" time="0.077725" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:52:14.9104022Z 	<testcase name="Python and JavaScript V8 coordinator contexts and child bindings agree" time="0.297833" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:52:14.9105288Z 	<testcase name="transport refuses altered model/context/payload and forged lifecycle receipts" time="0.400103" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:52:14.9106731Z 	<testcase name="native v8 transport preserves fragmented original output and waits for semantic acknowledgement" time="0.074572" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9107964Z 	<testcase name="native v8 output cannot change checkpoint, causal boundary or original bytes" time="0.411819" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9109492Z 	<testcase name="native malformed semantic output retains original bytes and token evidence as failed cost" time="0.061357" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9110641Z 	<testcase name="native partial binary failures retain authenticated original tokens without inventing a record" time="0.060522" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9111794Z 	<testcase name="native v8 transport rejects current-context leakage, stale prefixes and changed commit bytes" time="0.072659" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9112893Z 	<testcase name="native v8 failed initialization cannot leave an earlier checkpoint active" time="0.055646" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9113986Z 	<testcase name="native ordinary training lineage is bound at initialization, selection and recovery" time="0.342534" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9115063Z 	<testcase name="native v8 malformed UTF-8 and deadlines terminate the transport" time="0.087747" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9116091Z 	<testcase name="native acknowledgement failure does not count an execution as accepted" time="0.050631" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9117540Z 	<testcase name="transport closure during an unreturned native commit preserves unknown acknowledgement through cancellation" time="0.051070" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9118728Z 	<testcase name="stale native candidates can be rejected without closing the session or losing their costs" time="0.049446" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9119831Z 	<testcase name="native completion and close acknowledgments bind the exact invocation and public history" time="0.416437" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9120940Z 	<testcase name="native close receipt preserves the consumer reason and rejects altered or extended fields" time="0.504071" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9122058Z 	<testcase name="native checkpoint transport retains attempts and restores with pending candidates excluded" time="0.067689" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9123299Z 	<testcase name="native restore transport rejects altered checkpoints and false recovery acknowledgements" time="0.227510" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:52:14.9124410Z 	<testcase name="v8 receipt validator requires exact contract, source, contexts, tokenizer and every native gate" time="0.192489" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-v8.test.js"/>
+2026-11-22T08:52:14.9125714Z 	<testcase name="production region admission reruns source checking and refuses missing or fabricated native evidence" time="1.218351" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-v8.test.js"/>
+2026-11-22T08:52:14.9127215Z 	<testcase name="orchestration admission requires one exact transcript across source and native receipts" time="0.534706" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-v8.test.js"/>
+2026-11-22T08:52:14.9128762Z 	<testcase name="direct host receipts bind exactly one verified source identity without a nested artifact" time="0.014268" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-native-v8.test.js"/>
+2026-11-22T08:52:14.9129891Z 	<testcase name="a complete source-qualified child outside the authored work budget is refused" time="5.618688" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T08:52:14.9131099Z 	<testcase name="source-qualified scalar child attaches the canonical ten-event four-target lifecycle without mutation" time="0.022028" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T08:52:14.9132321Z 	<testcase name="the transcript digest cannot bless missing, reordered, or rehashed altered teacher events" time="0.105306" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T08:52:14.9133464Z 	<testcase name="source, input, causal context, ownership, dependency and terminal bytes remain bound" time="0.104120" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T08:52:14.9134617Z 	<testcase name="attachment refuses controlled source origin and artifacts already bound or admitted" time="0.009934" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T08:52:14.9135821Z 	<testcase name="family-bound local diagnostic serialization keeps four flat lifecycle targets loss-masked and source-bound" time="0.431902" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T08:52:14.9137209Z 	<testcase name="restores coordinator-ready after exact create and bootstrap receipts" time="0.344525" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9138367Z 	<testcase name="restores bootstrapped active children within the declared active bound" time="0.252529" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9139454Z 	<testcase name="restored host bridge keeps the caller live clock" time="0.181044" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9140576Z 	<testcase name="restores the exact acknowledged stale child rejection and retries its original selection" time="0.535301" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9141824Z 	<testcase name="restores join-before-run and executes only the acknowledged child" time="0.313775" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9142943Z 	<testcase name="restores the mixed child ledger after exact native child completion" time="0.390015" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9144144Z 	<testcase name="composite verifier rejects mixed-ledger, dependency, and unknown-ack mutations" time="0.560507" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9145258Z 	<testcase name="checkpoint is unavailable before a safe point" time="0.006775" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9146484Z 	<testcase name="two declared children restore from sparse acknowledged cuts without redispatch" time="2.818875" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9147779Z 	<testcase name="durable composite checkpoint requires an independent exact head acknowledgement and restores latest" time="2.150847" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9149019Z 	<testcase name="lost completed-disposition ACK leaves the last external head fenced" time="10.288426" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9150202Z 	<testcase name="unknown native close leaves a completed session fenced without a terminal disposition" time="6.970903" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9151417Z 	<testcase name="automatic composite history acknowledges the join safe point before child dispatch" time="16.134931" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9152657Z 	<testcase name="post-child persistence failure leaves a durable in-flight fence that refuses fresh replay" time="2.599837" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9153865Z 	<testcase name="automatic persistence refuses a journal readback that drops its pending fence" time="0.297461" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9155088Z 	<testcase name="requested child-ready pause stores a complete cut and arms its fence only on resumed dispatch" time="11.211014" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9156403Z 	<testcase name="cancellation during coordinator fence acknowledgement prevents a later selection" time="0.328210" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9157626Z 	<testcase name="requested orchestration safe point is snapshotted before native initialization awaits" time="0.065652" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9158909Z 	<testcase name="failed durable head acknowledgement leaves no reusable history receipt" time="0.182435" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:52:14.9160126Z 	<testcase name="model-only coordinator runs only the exact joined, bootstrapped child before its next choice" time="0.120214" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T08:52:14.9161332Z 	<testcase name="failed original coordinator bytes and one normalized cancellation reason survive cleanup" time="0.015618" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T08:52:14.9162541Z 	<testcase name="a committed create remains counted as acknowledged when bootstrap later fails" time="0.012115" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T08:52:14.9163722Z 	<testcase name="orchestration exposes only safe composite checkpoints and requires explicit durable dependencies" time="0.008189" classname="test" file="/home/runner/work/megatoken/megatoken/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T08:52:14.9164423Z 	<!-- tests 63 -->
+2026-11-22T08:52:14.9164585Z 	<!-- suites 0 -->
+2026-11-22T08:52:14.9164741Z 	<!-- pass 63 -->
+2026-11-22T08:52:14.9164903Z 	<!-- fail 0 -->
+2026-11-22T08:52:14.9165059Z 	<!-- cancelled 0 -->
+2026-11-22T08:52:14.9165223Z 	<!-- skipped 0 -->
+2026-11-22T08:52:14.9165380Z 	<!-- todo 0 -->
+2026-11-22T08:52:14.9165557Z 	<!-- duration_ms 181339.768462 -->
+2026-11-22T08:52:14.9165744Z </testsuites>
+2026-11-22T08:52:14.9317173Z 63 paired transport controls passed with zero skips
+2026-11-22T08:52:14.9373719Z ##[group]Run python -m pytest -q tests/test_*v8*.py tests/test_algorithm_v7.py tests/test_protocol_properties.py tests/test_semantic_launch.py \
+2026-11-22T08:52:14.9374433Z [36;1mpython -m pytest -q tests/test_*v8*.py tests/test_algorithm_v7.py tests/test_protocol_properties.py tests/test_semantic_launch.py \[0m
+2026-11-22T08:52:14.9374966Z [36;1m  --junitxml="$RUNNER_TEMP/semantic-v8-tests.xml" 2>&1 | tee "$RUNNER_TEMP/semantic-v8-tests.log"[0m
+2026-11-22T08:52:14.9375419Z [36;1mpython - <<'PY'[0m
+2026-11-22T08:52:14.9375629Z [36;1mimport os, xml.etree.ElementTree as ET[0m
+2026-11-22T08:52:14.9375852Z [36;1mfrom pathlib import Path[0m
+2026-11-22T08:52:14.9376186Z [36;1msuites = ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-tests.xml').getroot().iter('testsuite')[0m
+2026-11-22T08:52:14.9376874Z [36;1mcounts = {key: 0 for key in ('tests', 'failures', 'errors', 'skipped')}[0m
+2026-11-22T08:52:14.9377142Z [36;1mfor suite in suites:[0m
+2026-11-22T08:52:14.9377374Z [36;1m    for key in counts:[0m
+2026-11-22T08:52:14.9377581Z [36;1m        counts[key] += int(suite.get(key, 0))[0m
+2026-11-22T08:52:14.9377896Z [36;1mif counts['tests'] == 0 or any(counts[key] for key in ('failures', 'errors', 'skipped')):[0m
+2026-11-22T08:52:14.9378326Z [36;1m    raise ValueError(f'Native v8 tests, including live source checks, must all run and pass: {counts}')[0m
+2026-11-22T08:52:14.9378689Z [36;1mPY[0m
+2026-11-22T08:52:14.9404698Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T08:52:14.9404942Z env:
+2026-11-22T08:52:14.9405095Z   OMP_NUM_THREADS: 1
+2026-11-22T08:52:14.9405251Z   MKL_NUM_THREADS: 1
+2026-11-22T08:52:14.9405461Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T08:52:14.9405782Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:52:14.9406146Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T08:52:14.9406699Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T08:52:14.9407168Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T08:52:14.9407422Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:52:14.9407716Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T08:52:14.9408030Z   V8_POPULATION: interoperability
+2026-11-22T08:52:14.9408262Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:52:14.9408563Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:52:14.9408930Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:52:14.9409198Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:52:14.9409460Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:52:14.9409727Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:52:14.9409963Z ##[endgroup]
+2026-11-22T08:53:12.8921848Z ........................................................................ [  8%]
+2026-11-22T08:53:28.9440393Z ........................................................................ [ 17%]
+2026-11-22T08:53:29.2077555Z ........................................................................ [ 25%]
+2026-11-22T08:53:38.1556507Z ........................................................................ [ 34%]
+2026-11-22T08:53:54.4082575Z ........................................................................ [ 42%]
+2026-11-22T08:53:55.5889785Z ........................................................................ [ 51%]
+2026-11-22T08:57:21.6754759Z ........................................................................ [ 59%]
+2026-11-22T08:58:12.1297141Z ........................................................................ [ 68%]
+2026-11-22T09:00:11.0201724Z ........................................................................ [ 76%]
+2026-11-22T09:01:12.8056821Z ........................................................................ [ 85%]
+2026-11-22T09:04:59.6873899Z ........................................................................ [ 93%]
+2026-11-22T09:05:03.7488932Z ......................................................                   [100%]
+2026-11-22T09:05:03.7489717Z ------ generated xml file: /home/runner/work/_temp/semantic-v8-tests.xml -------
+2026-11-22T09:05:03.7490209Z 846 passed in 767.09s (0:12:47)
+2026-11-22T09:05:04.5949485Z ##[group]Run node tools/qualify-semantic-v8.mjs --population "$V8_POPULATION" --inputs all --workers 2 \
+2026-11-22T09:05:04.5950285Z [36;1mnode tools/qualify-semantic-v8.mjs --population "$V8_POPULATION" --inputs all --workers 2 \[0m
+2026-11-22T09:05:04.5950958Z [36;1m  --out "$RUNNER_TEMP/v8-admitted" --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \[0m
+2026-11-22T09:05:04.5951577Z [36;1m  --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \[0m
+2026-11-22T09:05:04.5952080Z [36;1m  2>&1 | tee "$RUNNER_TEMP/semantic-v8-qualification.log"[0m
+2026-11-22T09:05:04.5986036Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T09:05:04.5986460Z env:
+2026-11-22T09:05:04.5986620Z   OMP_NUM_THREADS: 1
+2026-11-22T09:05:04.5986781Z   MKL_NUM_THREADS: 1
+2026-11-22T09:05:04.5987003Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T09:05:04.5987456Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T09:05:04.5987947Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T09:05:04.5988526Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T09:05:04.5989037Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T09:05:04.5989393Z   MEGATOKEN_PYTHON: python
+2026-11-22T09:05:04.5989811Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T09:05:04.5990252Z   V8_POPULATION: interoperability
+2026-11-22T09:05:04.5990565Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:05:04.5991083Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T09:05:04.5991383Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:05:04.5991655Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:05:04.5991921Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:05:04.5992192Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T09:05:04.5992431Z ##[endgroup]
+2026-11-22T09:05:08.3525549Z {"id":"ordered-map","status":"admitted","native":"passed"}
+2026-11-22T09:05:09.3830073Z {"id":"shared-getter","status":"admitted","native":"passed"}
+2026-11-22T09:05:12.4856843Z {"id":"causal-counter","status":"admitted","native":"passed"}
+2026-11-22T09:05:13.1412548Z {"id":"number-callback-cleanup","status":"admitted","native":"passed"}
+2026-11-22T09:05:22.2610122Z {"id":"custom-iterator-close","status":"admitted","native":"passed"}
+2026-11-22T09:05:23.6385996Z {"id":"iterable-binding-close","status":"admitted","native":"passed"}
+2026-11-22T09:05:28.2677016Z {"id":"typed-views-shared-backing","status":"admitted","native":"passed"}
+2026-11-22T09:05:28.3825242Z {"id":"source-symbol-getter-arithmetic","status":"admitted","native":"passed"}
+2026-11-22T09:05:35.4722320Z {"id":"builtin-iterator-mixed-arithmetic","status":"admitted","native":"passed"}
+2026-11-22T09:05:45.1903064Z {"id":"source-promise-all-reaction-arithmetic","status":"admitted","native":"passed"}
+2026-11-22T09:05:46.2640189Z {"id":"source-derived-private-arithmetic","status":"admitted","native":"passed"}
+2026-11-22T09:05:51.1953209Z {"id":"source-promise-join-rejection-finally","status":"admitted","native":"passed"}
+2026-11-22T09:05:57.7534210Z {"id":"source-generator-cleanup-suspension","status":"admitted","native":"passed"}
+2026-11-22T09:05:59.1431094Z {"id":"source-number-private-arithmetic","status":"admitted","native":"passed"}
+2026-11-22T09:06:11.2420854Z {"id":"source-proxy-traps-arithmetic","status":"admitted","native":"passed"}
+2026-11-22T09:06:11.3723210Z {"id":"source-generator-delegated-cleanup","status":"admitted","native":"passed"}
+2026-11-22T09:06:16.7325408Z {"id":"source-base-initializer-throw","status":"admitted","native":"passed"}
+2026-11-22T09:06:20.5075650Z {"id":"source-derived-initializer-throw","status":"admitted","native":"passed"}
+2026-11-22T09:06:23.7499188Z {"id":"source-promise-executor-first-call","status":"admitted","native":"passed"}
+2026-11-22T09:06:24.9677445Z {"id":"source-promise-executor-retained-resolution","status":"admitted","native":"passed"}
+2026-11-22T09:06:27.8328805Z {"id":"source-promise-executor-abrupt","status":"admitted","native":"passed"}
+2026-11-22T09:06:31.0736560Z {"id":"source-ordinary-constructor-prototype","status":"admitted","native":"passed"}
+2026-11-22T09:06:32.6284637Z {"id":"source-enumeration-map-callback","status":"admitted","native":"passed"}
+2026-11-22T09:06:39.3793806Z {"id":"generator-own-symbol-alias","status":"admitted","native":"passed"}
+2026-11-22T09:06:41.4264705Z {"id":"source-logical-left-operands","status":"admitted","native":"passed"}
+2026-11-22T09:06:46.2864294Z {"id":"source-for-in-own-keys","status":"admitted","native":"passed"}
+2026-11-22T09:06:51.1713774Z {"id":"join-host-join","status":"admitted","native":"passed"}
+2026-11-22T09:06:56.7681154Z {"id":"join-retained-callback","status":"admitted","native":"passed"}
+2026-11-22T09:07:09.5487624Z {"id":"callback-owned-join","status":"admitted","native":"passed"}
+2026-11-22T09:07:16.3682431Z {"id":"callback-owned-join-awaited","status":"admitted","native":"passed"}
+2026-11-22T09:07:26.7018254Z {"id":"promise-number-proxy-memory-join","status":"admitted","native":"passed"}
+2026-11-22T09:07:30.3663427Z {"id":"map-callback-finally-throw","status":"admitted","native":"passed"}
+2026-11-22T09:07:37.3992162Z {"id":"map-generator-yield","status":"admitted","native":"passed"}
+2026-11-22T09:07:46.0665274Z {"id":"promise-map-iterator","status":"admitted","native":"passed"}
+2026-11-22T09:07:52.2131807Z {"id":"map-sparse-live-mutation","status":"admitted","native":"passed"}
+2026-11-22T09:07:53.6055670Z {"id":"map-generator-iterator-close","status":"admitted","native":"passed"}
+2026-11-22T09:08:01.6320835Z {"id":"promise-allsettled-mixed-aliases","status":"admitted","native":"passed"}
+2026-11-22T09:08:01.8577254Z {"id":"promise-map-sparse-truncate","status":"admitted","native":"passed"}
+2026-11-22T09:08:05.4924396Z {"id":"promise-allsettled-empty-mutation","status":"admitted","native":"passed"}
+2026-11-22T09:08:09.4326188Z {"id":"promise-allsettled-nested-executor","status":"admitted","native":"passed"}
+2026-11-22T09:08:12.1290971Z {"id":"return-callback-receiver-alias","status":"admitted","native":"passed"}
+2026-11-22T09:08:12.9027731Z {"id":"return-callback-throw","status":"admitted","native":"passed"}
+2026-11-22T09:08:16.5440222Z {"id":"return-callback-async","status":"admitted","native":"passed"}
+2026-11-22T09:08:18.0951037Z {"id":"return-callback-reentrant-host","status":"admitted","native":"passed"}
+2026-11-22T09:08:21.6163537Z {"id":"key-read","status":"admitted","native":"passed"}
+2026-11-22T09:08:24.1821326Z {"id":"key-getter","status":"admitted","native":"passed"}
+2026-11-22T09:08:26.8232338Z {"id":"key-symbol-hook","status":"admitted","native":"passed"}
+2026-11-22T09:08:30.6015003Z {"id":"key-fallback","status":"admitted","native":"passed"}
+2026-11-22T09:08:34.3214127Z {"id":"key-live-fallback","status":"admitted","native":"passed"}
+2026-11-22T09:08:35.5800949Z {"id":"key-getter-throw","status":"admitted","native":"passed"}
+2026-11-22T09:08:39.1656436Z {"id":"key-method-throw-identity","status":"admitted","native":"passed"}
+2026-11-22T09:08:41.0636484Z {"id":"key-number-nested","status":"admitted","native":"passed"}
+2026-11-22T09:08:44.5417856Z {"id":"number-getter","status":"admitted","native":"passed"}
+2026-11-22T09:08:45.4388655Z {"id":"number-existing","status":"admitted","native":"passed"}
+2026-11-22T09:08:50.8571357Z {"id":"key-plain-write","status":"admitted","native":"passed"}
+2026-11-22T09:08:53.1592613Z {"id":"getter-replacement","status":"admitted","native":"passed"}
+2026-11-22T09:09:00.2128289Z {"id":"nested-goals","status":"admitted","native":"passed"}
+2026-11-22T09:09:03.2970318Z {"id":"write-reference-order","status":"admitted","native":"passed"}
+2026-11-22T09:09:09.0592082Z {"id":"computed-class-key","status":"admitted","native":"passed"}
+2026-11-22T09:09:09.3929378Z {"id":"caught-getter-finally","status":"admitted","native":"passed"}
+2026-11-22T09:09:16.6638698Z {"id":"promise-key","status":"admitted","native":"passed"}
+2026-11-22T09:09:17.9270414Z {"id":"mapped-key","status":"admitted","native":"passed"}
+2026-11-22T09:09:23.9694065Z {"id":"builtin-key-leaves","status":"admitted","native":"passed"}
+2026-11-22T09:09:25.6600384Z {"id":"module-namespace-shadow-live","status":"admitted","native":"passed"}
+2026-11-22T09:09:30.0641039Z {"id":"module-scoped-var-isolation","status":"admitted","native":"passed"}
+2026-11-22T09:09:33.3857487Z {"id":"module-destructured-live-cells","status":"admitted","native":"passed"}
+2026-11-22T09:09:33.3881842Z {"output":"/home/runner/work/_temp/v8-admitted","producerRevision":"550387918313393b49017397d47bd66e9d4b5e82","sourceQualified":66,"nativeAdmitted":66,"declared":66}
+2026-11-22T09:09:33.4291063Z ##[group]Run node tools/measure-semantic-v8.mjs --qualification "$RUNNER_TEMP/v8-admitted" \
+2026-11-22T09:09:33.4291578Z [36;1mnode tools/measure-semantic-v8.mjs --qualification "$RUNNER_TEMP/v8-admitted" \[0m
+2026-11-22T09:09:33.4292027Z [36;1m  --out "$RUNNER_TEMP/v8-costs" --tokenizer-module tools/semantic-v8-tokenizer-adapter.mjs \[0m
+2026-11-22T09:09:33.4292392Z [36;1m  2>&1 | tee "$RUNNER_TEMP/semantic-v8-costs.log"[0m
+2026-11-22T09:09:33.4292638Z [36;1mnode --input-type=module <<'JS'[0m
+2026-11-22T09:09:33.4292855Z [36;1mimport {readFileSync} from 'node:fs';[0m
+2026-11-22T09:09:33.4293068Z [36;1mimport {join} from 'node:path';[0m
+2026-11-22T09:09:33.4293424Z [36;1mconst read=directory=>JSON.parse(readFileSync(join(process.env.RUNNER_TEMP,directory,'report.json')));[0m
+2026-11-22T09:09:33.4294096Z [36;1mconst qualification=read('v8-admitted'),costs=read('v8-costs'),declared=qualification.declared;[0m
+2026-11-22T09:09:33.4294578Z [36;1mif(!Number.isSafeInteger(declared)||declared<1||qualification.preparationOnly||[0m
+2026-11-22T09:09:33.4295005Z [36;1m  qualification.sourceQualified!==declared||qualification.nativeAdmitted!==declared)[0m
+2026-11-22T09:09:33.4295423Z [36;1m  throw new Error('Every declared CI case requires fresh source and native admission');[0m
+2026-11-22T09:09:33.4295794Z [36;1mif(!costs.tokenizerEvidence||costs.summary.declared!==declared||[0m
+2026-11-22T09:09:33.4296195Z [36;1m  costs.summary.flat.measured!==declared||costs.summary.flat.tokenMeasuredEpisodes!==declared||[0m
+2026-11-22T09:09:33.4296871Z [36;1m  costs.summary.flat.tokenMeasurement!=='passed'||costs.summary.nativePacking.measuredEpisodes!==declared)[0m
+2026-11-22T09:09:33.4297413Z [36;1m  throw new Error('Every declared CI case requires complete production-tokenizer and native-packing measurements');[0m
+2026-11-22T09:09:33.4297776Z [36;1mJS[0m
+2026-11-22T09:09:33.4324403Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T09:09:33.4324648Z env:
+2026-11-22T09:09:33.4324812Z   OMP_NUM_THREADS: 1
+2026-11-22T09:09:33.4324970Z   MKL_NUM_THREADS: 1
+2026-11-22T09:09:33.4325187Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T09:09:33.4325518Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T09:09:33.4325888Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T09:09:33.4326430Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T09:09:33.4326806Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T09:09:33.4327046Z   MEGATOKEN_PYTHON: python
+2026-11-22T09:09:33.4327323Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T09:09:33.4327631Z   V8_POPULATION: interoperability
+2026-11-22T09:09:33.4327866Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:09:33.4328161Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T09:09:33.4328472Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:09:33.4328839Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:09:33.4329111Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:09:33.4329379Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T09:09:33.4329607Z ##[endgroup]
+2026-11-22T09:09:34.6482697Z {"id":"ordered-map","status":"measured"}
+2026-11-22T09:09:34.7659838Z {"id":"shared-getter","status":"measured"}
+2026-11-22T09:09:34.8470675Z {"id":"causal-counter","status":"measured"}
+2026-11-22T09:09:34.9362072Z {"id":"number-callback-cleanup","status":"measured"}
+2026-11-22T09:09:35.3838006Z {"id":"custom-iterator-close","status":"measured"}
+2026-11-22T09:09:35.8322414Z {"id":"iterable-binding-close","status":"measured"}
+2026-11-22T09:09:36.0527855Z {"id":"source-symbol-getter-arithmetic","status":"measured"}
+2026-11-22T09:09:36.1754322Z {"id":"typed-views-shared-backing","status":"measured"}
+2026-11-22T09:09:37.0749817Z {"id":"source-derived-private-arithmetic","status":"measured"}
+2026-11-22T09:09:37.3170827Z {"id":"builtin-iterator-mixed-arithmetic","status":"measured"}
+2026-11-22T09:09:37.5423518Z {"id":"source-promise-all-reaction-arithmetic","status":"measured"}
+2026-11-22T09:09:37.6966198Z {"id":"source-promise-join-rejection-finally","status":"measured"}
+2026-11-22T09:09:38.3199735Z {"id":"source-number-private-arithmetic","status":"measured"}
+2026-11-22T09:09:38.5615914Z {"id":"source-generator-cleanup-suspension","status":"measured"}
+2026-11-22T09:09:39.1367122Z {"id":"source-generator-delegated-cleanup","status":"measured"}
+2026-11-22T09:09:39.6491388Z {"id":"source-proxy-traps-arithmetic","status":"measured"}
+2026-11-22T09:09:39.8098432Z {"id":"source-base-initializer-throw","status":"measured"}
+2026-11-22T09:09:40.1535723Z {"id":"source-derived-initializer-throw","status":"measured"}
+2026-11-22T09:09:40.3120742Z {"id":"source-promise-executor-first-call","status":"measured"}
+2026-11-22T09:09:40.3998941Z {"id":"source-promise-executor-retained-resolution","status":"measured"}
+2026-11-22T09:09:40.4667123Z {"id":"source-promise-executor-abrupt","status":"measured"}
+2026-11-22T09:09:40.6659049Z {"id":"source-ordinary-constructor-prototype","status":"measured"}
+2026-11-22T09:09:40.7970915Z {"id":"source-enumeration-map-callback","status":"measured"}
+2026-11-22T09:09:41.0982200Z {"id":"generator-own-symbol-alias","status":"measured"}
+2026-11-22T09:09:41.4706580Z {"id":"source-logical-left-operands","status":"measured"}
+2026-11-22T09:09:41.7155780Z {"id":"source-for-in-own-keys","status":"measured"}
+2026-11-22T09:09:42.0058041Z {"id":"join-host-join","status":"measured"}
+2026-11-22T09:09:42.3467176Z {"id":"join-retained-callback","status":"measured"}
+2026-11-22T09:09:42.9521306Z {"id":"callback-owned-join","status":"measured"}
+2026-11-22T09:09:43.6125694Z {"id":"callback-owned-join-awaited","status":"measured"}
+2026-11-22T09:09:44.0284166Z {"id":"promise-number-proxy-memory-join","status":"measured"}
+2026-11-22T09:09:44.8161028Z {"id":"promise-map-iterator","status":"measured"}
+2026-11-22T09:09:44.8880131Z {"id":"map-callback-finally-throw","status":"measured"}
+2026-11-22T09:09:45.1293755Z {"id":"map-generator-yield","status":"measured"}
+2026-11-22T09:09:45.8794217Z {"id":"map-generator-iterator-close","status":"measured"}
+2026-11-22T09:09:46.0864911Z {"id":"map-sparse-live-mutation","status":"measured"}
+2026-11-22T09:09:46.3453173Z {"id":"promise-map-sparse-truncate","status":"measured"}
+2026-11-22T09:09:46.5431381Z {"id":"promise-allsettled-mixed-aliases","status":"measured"}
+2026-11-22T09:09:46.7541242Z {"id":"promise-allsettled-nested-executor","status":"measured"}
+2026-11-22T09:09:46.8022675Z {"id":"promise-allsettled-empty-mutation","status":"measured"}
+2026-11-22T09:09:46.9975850Z {"id":"return-callback-receiver-alias","status":"measured"}
+2026-11-22T09:09:47.0331901Z {"id":"return-callback-throw","status":"measured"}
+2026-11-22T09:09:47.1295395Z {"id":"return-callback-async","status":"measured"}
+2026-11-22T09:09:47.2379310Z {"id":"return-callback-reentrant-host","status":"measured"}
+2026-11-22T09:09:47.3774687Z {"id":"key-read","status":"measured"}
+2026-11-22T09:09:47.5657013Z {"id":"key-getter","status":"measured"}
+2026-11-22T09:09:47.7385586Z {"id":"key-symbol-hook","status":"measured"}
+2026-11-22T09:09:47.9493816Z {"id":"key-fallback","status":"measured"}
+2026-11-22T09:09:48.2252718Z {"id":"key-live-fallback","status":"measured"}
+2026-11-22T09:09:48.3778542Z {"id":"key-getter-throw","status":"measured"}
+2026-11-22T09:09:48.5092399Z {"id":"key-method-throw-identity","status":"measured"}
+2026-11-22T09:09:48.6821336Z {"id":"key-number-nested","status":"measured"}
+2026-11-22T09:09:48.8442346Z {"id":"number-getter","status":"measured"}
+2026-11-22T09:09:48.9502358Z {"id":"number-existing","status":"measured"}
+2026-11-22T09:09:49.1829991Z {"id":"key-plain-write","status":"measured"}
+2026-11-22T09:09:49.4730080Z {"id":"getter-replacement","status":"measured"}
+2026-11-22T09:09:50.0184720Z {"id":"write-reference-order","status":"measured"}
+2026-11-22T09:09:50.2761651Z {"id":"nested-goals","status":"measured"}
+2026-11-22T09:09:50.6388172Z {"id":"computed-class-key","status":"measured"}
+2026-11-22T09:09:50.8330798Z {"id":"caught-getter-finally","status":"measured"}
+2026-11-22T09:09:51.0379420Z {"id":"promise-key","status":"measured"}
+2026-11-22T09:09:51.3582457Z {"id":"mapped-key","status":"measured"}
+2026-11-22T09:09:51.6028954Z {"id":"builtin-key-leaves","status":"measured"}
+2026-11-22T09:09:51.8829906Z {"id":"module-namespace-shadow-live","status":"measured"}
+2026-11-22T09:09:52.0742373Z {"id":"module-scoped-var-isolation","status":"measured"}
+2026-11-22T09:09:52.3672415Z {"id":"module-destructured-live-cells","status":"measured"}
+2026-11-22T09:09:52.3697892Z {"output":"/home/runner/work/_temp/v8-costs","producerRevision":"550387918313393b49017397d47bd66e9d4b5e82","summary":{"declared":66,"sourceQualified":66,"sourceDispositions":{"passed":66},"compactEpisodes":35,"whollyDetailedEpisodes":31,"regionCoverage":{"measuredEpisodes":66,"unmeasuredEpisodes":0,"compact":47,"detailed":315,"compactRecords":47,"detailedRecords":2359},"flat":{"sourceQualified":66,"measured":66,"unmeasured":0,"dispositions":{"passed":66},"bytes":{"generated":266972,"detailed":261857,"detailedShare":0.9808406874129122,"cumulativeContext":12233902,"peakContext":11080},"tokenMeasurement":"passed","tokenMeasuredEpisodes":66,"tokens":{"generated":77765,"detailed":76153,"detailedShare":0.9792708802160355,"terminal":2406,"observedAndContext":3961593,"total":4041764,"peakContext":3604},"scope":"Sums cover measured episodes only; source refusals and measurement limits remain in the declared denominator."},"nativePacking":{"status":"measured","measuredEpisodes":66,"unmeasuredEpisodes":0,"generatedTokens":77765,"observedTokens":4043178,"terminalTokens":0,"physicalRecords":9286,"logicalRecords":2603,"scope":"Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."},"model":{"status":"unmeasured","nextStep":null,"completedExecution":null,"latencyMs":null},"nativeServing":{"status":"unmeasured","latencyMs":null,"cacheSavings":null},"defaultPromotion":"not-qualified"}}
+2026-11-22T09:09:52.4745488Z ##[group]Run node tools/qualify-ordinary-v8-lifecycle.mjs --out "$RUNNER_TEMP/v8-ordinary-lifecycle" \
+2026-11-22T09:09:52.4746577Z [36;1mnode tools/qualify-ordinary-v8-lifecycle.mjs --out "$RUNNER_TEMP/v8-ordinary-lifecycle" \[0m
+2026-11-22T09:09:52.4747211Z [36;1m  --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \[0m
+2026-11-22T09:09:52.4747781Z [36;1m  --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \[0m
+2026-11-22T09:09:52.4748383Z [36;1m  2>&1 | tee "$RUNNER_TEMP/semantic-v8-ordinary-lifecycle.log"[0m
+2026-11-22T09:09:52.4785849Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T09:09:52.4786225Z env:
+2026-11-22T09:09:52.4786666Z   OMP_NUM_THREADS: 1
+2026-11-22T09:09:52.4786908Z   MKL_NUM_THREADS: 1
+2026-11-22T09:09:52.4787259Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T09:09:52.4787792Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T09:09:52.4788459Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T09:09:52.4789110Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T09:09:52.4789689Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T09:09:52.4790079Z   MEGATOKEN_PYTHON: python
+2026-11-22T09:09:52.4790522Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T09:09:52.4791032Z   V8_POPULATION: interoperability
+2026-11-22T09:09:52.4791379Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:09:52.4791858Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T09:09:52.4792341Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:09:52.4792754Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:09:52.4793174Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:09:52.4793596Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T09:09:52.4793948Z ##[endgroup]
+2026-11-22T09:10:51.8593184Z {"output":"/home/runner/work/_temp/v8-ordinary-lifecycle","producerRevision":"550387918313393b49017397d47bd66e9d4b5e82","consumerRevision":"124fbd0d493c29af6fb7cf7965d06744e4c7bad5","selectedId":"promise-number-proxy-memory-join","declared":66,"optimizerUpdates":2,"status":"passed","optimizerTargetExposure":{"schema":"semantic-v8-optimizer-target-exposure/2","registryDigest":"976d50c9cebe05e5bbdfe93b414e13072267eb2e109db9e0d8c3e725d89ef64a","historyContinued":true,"firstCheckpointDigest":"9092776015d58fdba01975432d8b1e8b810114889cb06c18950ee8daa12f910e","resumedCheckpointDigest":"c9c9c6d6404e202038794442aef9caf559ee3671b61a87232697c7ba8d86f6ad","firstCheckpointCounts":{"sourceCount":1,"logicalTargetCount":2,"physicalTargetRecordCount":2,"scoredOccurrences":2,"lossDenominators":{"lexical":67,"reconstruction":67,"structure":8,"terminal":4,"router_z":2}},"resumedCounts":{"sourceCount":1,"logicalTargetCount":4,"physicalTargetRecordCount":4,"scoredOccurrences":4,"lossDenominators":{"lexical":126,"reconstruction":126,"structure":16,"terminal":8,"router_z":4}},"positiveWeightLossDenominators":{"lexical":126,"reconstruction":126,"structure":16,"terminal":8,"router_z":4},"sources":{"promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5":{"split":"train","logicalTargetIds":["semantic:v8:target:3","semantic:v8:target:4","semantic:v8:target:5","semantic:v8:target:6"],"physicalTargetRecords":{"semantic:v8:target:3":{"893aca3a4755e6a19a0464d4f05b5e3206929f584333b5150d831964060d050e":{"windowIndices":[0],"lossDenominators":{"lexical":18,"reconstruction":18,"structure":4,"terminal":2,"router_z":1},"scoredOccurrences":1,"optimizerUpdates":1,"firstGlobalStep":1,"lastGlobalStep":1}},"semantic:v8:target:4":{"4842ceff69278c864bf7279507ae8dd35e544e346e0f8261e780780c4d60306f":{"windowIndices":[0],"lossDenominators":{"lexical":49,"reconstruction":49,"structure":4,"terminal":2,"router_z":1},"scoredOccurrences":1,"optimizerUpdates":1,"firstGlobalStep":1,"lastGlobalStep":1}},"semantic:v8:target:5":{"99cd9182de61bc23ec738d59752a521871175569e1c0099cfbbfac9b213c4324":{"windowIndices":[1],"lossDenominators":{"lexical":18,"reconstruction":18,"structure":4,"terminal":2,"router_z":1},"scoredOccurrences":1,"optimizerUpdates":1,"firstGlobalStep":2,"lastGlobalStep":2}},"semantic:v8:target:6":{"ac4a32d20da0c62f25c93c6bf54f2c26acb79b862469e8b6ae9baf4f02c590a7":{"windowIndices":[1],"lossDenominators":{"lexical":41,"reconstruction":41,"structure":4,"terminal":2,"router_z":1},"scoredOccurrences":1,"optimizerUpdates":1,"firstGlobalStep":2,"lastGlobalStep":2}}}}},"allTargetsExposed":false},"learnedSuccess":null,"fullLaunchQualified":false}
+2026-11-22T09:10:51.8863731Z ##[group]Run node tools/qualify-ordinary-v8-lifecycle.mjs --orchestration-teacher \
+2026-11-22T09:10:51.8864185Z [36;1mnode tools/qualify-ordinary-v8-lifecycle.mjs --orchestration-teacher \[0m
+2026-11-22T09:10:51.8864527Z [36;1m  --out "$RUNNER_TEMP/v8-ordinary-orchestration" \[0m
+2026-11-22T09:10:51.8864828Z [36;1m  --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \[0m
+2026-11-22T09:10:51.8865201Z [36;1m  --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \[0m
+2026-11-22T09:10:51.8865583Z [36;1m  2>&1 | tee "$RUNNER_TEMP/semantic-v8-ordinary-orchestration.log"[0m
+2026-11-22T09:10:51.8892190Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T09:10:51.8892438Z env:
+2026-11-22T09:10:51.8892595Z   OMP_NUM_THREADS: 1
+2026-11-22T09:10:51.8892754Z   MKL_NUM_THREADS: 1
+2026-11-22T09:10:51.8892972Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T09:10:51.8893331Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T09:10:51.8893700Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T09:10:51.8894100Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T09:10:51.8894453Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T09:10:51.8894700Z   MEGATOKEN_PYTHON: python
+2026-11-22T09:10:51.8894983Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T09:10:51.8895290Z   V8_POPULATION: interoperability
+2026-11-22T09:10:51.8895514Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:10:51.8895805Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T09:10:51.8896191Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:10:51.8896645Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:10:51.8896921Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:10:51.8897189Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T09:10:51.8897427Z ##[endgroup]
+2026-11-22T09:12:18.4948555Z {"output":"/home/runner/work/_temp/v8-ordinary-orchestration","producerRevision":"550387918313393b49017397d47bd66e9d4b5e82","consumerRevision":"124fbd0d493c29af6fb7cf7965d06744e4c7bad5","selectedId":"promise-number-proxy-memory-join","declared":66,"optimizerUpdates":2,"status":"passed","optimizerTargetExposure":{"schema":"semantic-v8-optimizer-target-exposure/2","registryDigest":"976d50c9cebe05e5bbdfe93b414e13072267eb2e109db9e0d8c3e725d89ef64a","historyContinued":true,"firstCheckpointDigest":"42f9595ffc111975640683afa013d3fd6087e9341d393816b31843d117a89c76","resumedCheckpointDigest":"44e06a27d6479cb06a80a74a37ea475c324d6b1314f24f1ef0471ad0e0497f1d","firstCheckpointCounts":{"sourceCount":1,"logicalTargetCount":2,"physicalTargetRecordCount":4,"scoredOccurrences":4,"lossDenominators":{"lexical":291,"reconstruction":291,"structure":16,"terminal":8,"router_z":4}},"resumedCounts":{"sourceCount":1,"logicalTargetCount":4,"physicalTargetRecordCount":6,"scoredOccurrences":6,"lossDenominators":{"lexical":358,"reconstruction":358,"structure":24,"terminal":12,"router_z":6}},"positiveWeightLossDenominators":{"lexical":358,"reconstruction":358,"structure":24,"terminal":12,"router_z":6},"sources":{"promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5":{"split":"train","logicalTargetIds":["semantic:v8:orchestration:target:1","semantic:v8:orchestration:target:4","semantic:v8:target:3","semantic:v8:target:4"],"physicalTargetRecords":{"semantic:v8:orchestration:target:1":{"0f8831f25631d0740f8619b801a80ba220fcb705ee11cf2d64ca19af5919de70":{"windowIndices":[0],"lossDenominators":{"lexical":82,"reconstruction":82,"structure":4,"terminal":2,"router_z":1},"scoredOccurrences":1,"optimizerUpdates":1,"firstGlobalStep":1,"lastGlobalStep":1},"202d19f4ada602bce621b640acc9455b0f0990974db19b6c598d15b214f5d05b":{"windowIndices":[0],"lossDenominators":{"lexical":123,"reconstruction":123,"structure":4,"terminal":2,"router_z":1},"scoredOccurrences":1,"optimizerUpdates":1,"firstGlobalStep":1,"lastGlobalStep":1},"e13992b2c44197293f88f41c8db51b1bd3c126819f80ea268b2a02f715cf643b":{"windowIndices":[0],"lossDenominators":{"lexical":31,"reconstruction":31,"structure":4,"terminal":2,"router_z":1},"scoredOccurrences":1,"optimizerUpdates":1,"firstGlobalStep":1,"lastGlobalStep":1}},"semantic:v8:orchestration:target:4":{"4b18d2294d1d16b3a839f599a5697e578732c3935ef95459ba94302d4cca05ad":{"windowIndices":[0],"lossDenominators":{"lexical":55,"reconstruction":55,"structure":4,"terminal":2,"router_z":1},"scoredOccurrences":1,"optimizerUpdates":1,"firstGlobalStep":1,"lastGlobalStep":1}},"semantic:v8:target:3":{"893aca3a4755e6a19a0464d4f05b5e3206929f584333b5150d831964060d050e":{"windowIndices":[1],"lossDenominators":{"lexical":18,"reconstruction":18,"structure":4,"terminal":2,"router_z":1},"scoredOccurrences":1,"optimizerUpdates":1,"firstGlobalStep":2,"lastGlobalStep":2}},"semantic:v8:target:4":{"4842ceff69278c864bf7279507ae8dd35e544e346e0f8261e780780c4d60306f":{"windowIndices":[1],"lossDenominators":{"lexical":49,"reconstruction":49,"structure":4,"terminal":2,"router_z":1},"scoredOccurrences":1,"optimizerUpdates":1,"firstGlobalStep":2,"lastGlobalStep":2}}}}},"allTargetsExposed":false},"learnedSuccess":null,"fullLaunchQualified":false}
+2026-11-22T09:12:18.5402080Z ##[group]Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+2026-11-22T09:12:18.5402385Z with:
+2026-11-22T09:12:18.5402583Z   name: semantic-v8-interoperability-native-evidence
+2026-11-22T09:12:18.5402834Z   if-no-files-found: warn
+2026-11-22T09:12:18.5403008Z   retention-days: 30
+2026-11-22T09:12:18.5405157Z   path: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+/home/runner/work/_temp/semantic-v8-identities.json
+/home/runner/work/_temp/semantic-v8-contract.log
+/home/runner/work/_temp/semantic-v8-tests.xml
+/home/runner/work/_temp/semantic-v8-tests.log
+/home/runner/work/_temp/semantic-v8-transport-tests.xml
+/home/runner/work/_temp/semantic-v8-namespace-artifact.xml
+/home/runner/work/_temp/semantic-v8-namespace-artifact.log
+/home/runner/work/_temp/v8-namespace-artifact/
+/home/runner/work/_temp/semantic-v8-qualification.log
+/home/runner/work/_temp/semantic-v8-costs.log
+/home/runner/work/_temp/v8-admitted/
+/home/runner/work/_temp/v8-costs/
+/home/runner/work/_temp/semantic-v8-ordinary-lifecycle.log
+/home/runner/work/_temp/v8-ordinary-lifecycle/
+/home/runner/work/_temp/semantic-v8-ordinary-orchestration.log
+/home/runner/work/_temp/v8-ordinary-orchestration/
+
+2026-11-22T09:12:18.5407632Z   compression-level: 6
+2026-11-22T09:12:18.5407861Z   overwrite: false
+2026-11-22T09:12:18.5408031Z   include-hidden-files: false
+2026-11-22T09:12:18.5408224Z   archive: true
+2026-11-22T09:12:18.5408373Z env:
+2026-11-22T09:12:18.5408512Z   OMP_NUM_THREADS: 1
+2026-11-22T09:12:18.5408828Z   MKL_NUM_THREADS: 1
+2026-11-22T09:12:18.5409054Z   PYTHONPATH: /home/runner/work/megatoken/megatoken/megatoken/src
+2026-11-22T09:12:18.5409389Z   TRACING_JS_SELF_ROOT: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T09:12:18.5409772Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T09:12:18.5410186Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/megatoken/megatoken/semantic-v8-tokenizer.json
+2026-11-22T09:12:18.5410552Z   MEGATOKEN_ROOT: /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T09:12:18.5410858Z   MEGATOKEN_PYTHON: python
+2026-11-22T09:12:18.5411141Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/megatoken/megatoken/semantic-v8-policy.json
+2026-11-22T09:12:18.5411457Z   V8_POPULATION: interoperability
+2026-11-22T09:12:18.5411690Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:12:18.5411990Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T09:12:18.5412285Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:12:18.5412558Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:12:18.5412821Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T09:12:18.5413089Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T09:12:18.5413319Z ##[endgroup]
+2026-11-22T09:12:18.7345790Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-22T09:12:18.7349461Z The least common ancestor is /home/runner/work. This will be the root directory of the artifact
+2026-11-22T09:12:18.7349999Z With the provided path, there will be 654 files uploaded
+2026-11-22T09:12:18.7352361Z Artifact name is valid!
+2026-11-22T09:12:18.7352713Z Root directory input is valid!
+2026-11-22T09:12:18.9976891Z Uploading artifact: semantic-v8-interoperability-native-evidence.zip
+2026-11-22T09:12:19.0001514Z Beginning upload of artifact content to blob storage
+2026-11-22T09:12:20.5866479Z Uploaded bytes 8388608
+2026-11-22T09:12:21.3415786Z Uploaded bytes 16777216
+2026-11-22T09:12:21.6231989Z Uploaded bytes 25165824
+2026-11-22T09:12:21.8488958Z Uploaded bytes 33554432
+2026-11-22T09:12:22.0408255Z Uploaded bytes 41943040
+2026-11-22T09:12:22.3803010Z Uploaded bytes 50331648
+2026-11-22T09:12:22.6153339Z Uploaded bytes 58720256
+2026-11-22T09:12:22.8018001Z Uploaded bytes 67108864
+2026-11-22T09:12:23.0602441Z Uploaded bytes 75497472
+2026-11-22T09:12:23.3329404Z Uploaded bytes 83886080
+2026-11-22T09:12:23.5784056Z Uploaded bytes 92274688
+2026-11-22T09:12:23.8261733Z Uploaded bytes 100663296
+2026-11-22T09:12:24.1140015Z Uploaded bytes 109051904
+2026-11-22T09:12:24.3312134Z Uploaded bytes 117440512
+2026-11-22T09:12:24.6212419Z Uploaded bytes 125829120
+2026-11-22T09:12:24.9714116Z Uploaded bytes 134217728
+2026-11-22T09:12:25.2811866Z Uploaded bytes 142606336
+2026-11-22T09:12:25.4788699Z Uploaded bytes 150994944
+2026-11-22T09:12:25.7552324Z Uploaded bytes 159383552
+2026-11-22T09:12:26.0530612Z Uploaded bytes 167772160
+2026-11-22T09:12:26.2854140Z Uploaded bytes 176160768
+2026-11-22T09:12:26.4929022Z Uploaded bytes 184549376
+2026-11-22T09:12:26.7611013Z Uploaded bytes 192937984
+2026-11-22T09:12:26.9913062Z Uploaded bytes 201326592
+2026-11-22T09:12:27.2340518Z Uploaded bytes 209715200
+2026-11-22T09:12:27.5586756Z Uploaded bytes 218103808
+2026-11-22T09:12:27.8274271Z Uploaded bytes 226492416
+2026-11-22T09:12:28.0340443Z Uploaded bytes 234881024
+2026-11-22T09:12:28.3857646Z Uploaded bytes 243269632
+2026-11-22T09:12:28.7869915Z Uploaded bytes 251233676
+2026-11-22T09:12:28.8043671Z Finished uploading artifact content to blob storage!
+2026-11-22T09:12:28.8046040Z SHA256 digest of uploaded artifact is a324d1290f25debba92bdd3bec78cc022c531aada7ff3daeb617a9995c403afe
+2026-11-22T09:12:28.8047297Z Finalizing artifact upload
+2026-11-22T09:12:29.1283469Z Artifact semantic-v8-interoperability-native-evidence successfully finalized. Artifact ID 14747532797
+2026-11-22T09:12:29.1284531Z Artifact semantic-v8-interoperability-native-evidence has been successfully uploaded! Final size is 251233676 bytes. Artifact ID is 14747532797
+2026-11-22T09:12:29.1287982Z Artifact download URL: https://github.com/werg/megatoken/actions/runs/45004424809/artifacts/14747532797
+2026-11-22T09:12:29.1465389Z Post job cleanup.
+2026-11-22T09:12:29.2404549Z Post job cleanup.
+2026-11-22T09:12:29.3322685Z (node:17416) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T09:12:29.3323564Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T09:12:29.3500585Z Post job cleanup.
+2026-11-22T09:12:29.4246167Z [command]/usr/bin/git version
+2026-11-22T09:12:29.4282721Z git version 2.56.1
+2026-11-22T09:12:29.4313221Z Temporarily overriding HOME='/home/runner/work/_temp/efe83778-c9e7-425c-8b52-479ed9812c9a' before making global git config changes
+2026-11-22T09:12:29.4314982Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T09:12:29.4319009Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/megatoken/megatoken/tracing-js-self
+2026-11-22T09:12:29.4345792Z Removing SSH command configuration
+2026-11-22T09:12:29.4351082Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T09:12:29.4381387Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T09:12:29.4612360Z Removing HTTP extra header
+2026-11-22T09:12:29.4625829Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T09:12:29.4698253Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T09:12:29.4829801Z Removing includeIf entries pointing to credentials config files
+2026-11-22T09:12:29.4836558Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T09:12:29.4859106Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T09:12:29.5183860Z Post job cleanup.
+2026-11-22T09:12:29.5847090Z [command]/usr/bin/git version
+2026-11-22T09:12:29.5887176Z git version 2.56.1
+2026-11-22T09:12:29.5997571Z Temporarily overriding HOME='/home/runner/work/_temp/9712eefb-5663-4888-9e3e-a25c07654c8a' before making global git config changes
+2026-11-22T09:12:29.5998845Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T09:12:29.5999838Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/megatoken/megatoken/megatoken
+2026-11-22T09:12:29.6001451Z Removing SSH command configuration
+2026-11-22T09:12:29.6002109Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T09:12:29.6004001Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T09:12:29.6123018Z Removing HTTP extra header
+2026-11-22T09:12:29.6127236Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T09:12:29.6153141Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T09:12:29.6360615Z Removing includeIf entries pointing to credentials config files
+2026-11-22T09:12:29.6364693Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T09:12:29.6418246Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T09:12:29.6785647Z Cleaning up orphan processes
+2026-11-22T09:12:29.7088431Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

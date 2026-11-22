@@ -15,7 +15,7 @@ export interface NativeV8RequestDurability {
 }
 export declare class DurableNativeV8RequestJournal {
   constructor(options: {directory: string;sessionId: string;streamId: string;
-    sessionGeneration?: number;maxBytes?: number;maxRequests?: number});
+    sessionGeneration?: number;maxBytes?: number;maxRequests?: number;maxLogBytes?: number});
   readonly directory: string;
   readonly scopeDirectory: string;
   readonly sessionId: string;
@@ -23,6 +23,7 @@ export declare class DurableNativeV8RequestJournal {
   readonly sessionGeneration: number;
   readonly maxBytes: number;
   readonly maxRequests: number;
+  readonly maxLogBytes: number;
   append(input: {identity: unknown;requestBase64: string;checkpoint: unknown}): Promise<NativeV8RequestReceipt>;
   read(receipt: NativeV8RequestReceipt, options?: {latest?: boolean}): Promise<any>;
   inspect(ordinal: number): Promise<{receipt: NativeV8RequestReceipt;intent: any}>;

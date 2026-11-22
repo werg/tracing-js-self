@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,rm,readFile,writeFile,symlink,mkdir,chmod} from 'node:fs/promises';
+import {mkdtemp,rm,readFile,writeFile,symlink,mkdir,chmod,link,lstat} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {DurableNativeV8RequestJournal,decodeNativeV8CommitFrame} from '../src/storage/native-request-journal-v8.js';
@@ -108,4 +109,60 @@ test('only a live original kernel lease can authorize a native transport',async 
     assert.throws(()=>assertSelectedOrchestrationExecutionLease(lease,{sessionId:'other'}),/another session/);
   }finally{await lease.release();}
   assert.throws(()=>assertSelectedOrchestrationExecutionLease(lease),/released/);
+});
+
+
+test('producer journal reconciles a real process exit after intent hardlink publication',async t=>{
+  const root=await directory(t);
+  const moduleUrl=new URL('../src/storage/native-request-journal-v8.js',import.meta.url).href;
+  const payload=intent();
+  const worker=`import {DurableNativeV8RequestJournal} from ${JSON.stringify(moduleUrl)};
+    const input=${JSON.stringify(payload)};
+    class CrashAfterLink extends DurableNativeV8RequestJournal{
+      _afterLinkBeforeTempUnlink(){process.exit(73);}
+    }
+    const journal=new CrashAfterLink({directory:${JSON.stringify(root)},
+      sessionId:'session-a',streamId:'stream-a'});
+    await journal.append(input);
+  `;
+  const child=spawnSync(process.execPath,['--input-type=module','-e',worker],{
+    encoding:'utf8',timeout:15000
+  });
+  assert.equal(child.status,73,child.stderr);
+  const reopened=journal(root);
+  const receipt=await reopened.inspect(1);
+  assert.deepEqual(await reopened.list(),[{ordinal:1}]);
+  assert.equal(receipt.intent.identity.ordinal,1);
+  assert.deepEqual(receipt.intent,payload&&{
+    schema:'semantic-native-producer-request/8',...payload
+  });
+  const entries=await readFile(reopened.path(1));
+  assert(entries.length>0);
+});
+
+test('producer aggregate log bound covers the sum of immutable intents',async t=>{
+  const root=await directory(t),one=intent();
+  const full={schema:'semantic-native-producer-request/8',...one};
+  const oneSize=Buffer.byteLength(JSON.stringify(full));
+  const bounded=journal(root,{maxLogBytes:oneSize*2-1});
+  await bounded.append(intent(1));
+  await assert.rejects(bounded.append(intent(2)),/aggregate byte limit/);
+  assert.deepEqual(await bounded.list(),[{ordinal:1}]);
+});
+
+test('producer cleanup refuses unowned hardlinks and extra aliases without deleting them',async t=>{
+  for(const kind of ['foreign-target','extra-alias']){
+    const root=await directory(t),store=journal(root),receipt=await store.append(intent());
+    const temp=join(store.scopeDirectory,'.tmp-00000000-0000-0000-0000-000000000001');
+    const outside=join(root,'unowned-alias');
+    if(kind==='foreign-target'){
+      await writeFile(temp,'not an admitted record',{mode:0o600});
+      await link(temp,outside);
+    }else{
+      await link(store.path(1),temp);await link(temp,outside);
+    }
+    await assert.rejects(store.read(receipt),/unique official|unsafe temporary/);
+    assert.equal((await lstat(temp)).nlink,kind==='foreign-target'?2:3);
+    assert.equal((await lstat(outside)).ino,(await lstat(temp)).ino);
+  }
 });

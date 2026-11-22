@@ -1,0 +1,79 @@
+{
+  "schema": "v8-published-pair-evidence/1",
+  "recordedOn": "2026-11-22",
+  "producerRevision": "0a6807c876b66ca2297151d1ef8e4e870aca76b5",
+  "nativeRevision": "124fbd0d493c29af6fb7cf7965d06744e4c7bad5",
+  "producer": {
+    "focused": {
+      "run": 45004672385,
+      "job": 137153484070,
+      "individualJunitCases": 183,
+      "skipped": 0
+    },
+    "installed": {
+      "run": 45004672348,
+      "job": 137153483889,
+      "originalSources": 665,
+      "interoperabilitySources": 66,
+      "omissions": 0,
+      "nativeScope": "untested",
+      "modelScope": "untested"
+    },
+    "paired": {
+      "run": 45004672314,
+      "populations": {
+        "gallery": 11,
+        "se-support": 64,
+        "interoperability": 66,
+        "all": 665
+      },
+      "conclusion": "success",
+      "jobs": [
+        137153483660,
+        137153483858,
+        137153483999,
+        137153483884
+      ]
+    }
+  },
+  "native": {
+    "cpu": {
+      "run": 45004424816,
+      "python311": {
+        "job": 137152725445,
+        "passed": 3775,
+        "skipped": 84,
+        "warnings": 20
+      },
+      "python312": {
+        "job": 137152725523,
+        "passed": 3775,
+        "skipped": 84,
+        "warnings": 20
+      }
+    },
+    "reversePaired": {
+      "run": 45004424809,
+      "producerRevision": "550387918313393b49017397d47bd66e9d4b5e82",
+      "gallery": {
+        "job": 137152725515,
+        "sources": 11
+      },
+      "interoperability": {
+        "job": 137152725212,
+        "sources": 66
+      },
+      "nativeControlsPerLane": 846,
+      "pairedJsControlsPerLane": 63,
+      "runtimeSkips": 0
+    }
+  },
+  "notQualifiedByThisEvidence": [
+    "newer durable-commit recovery code",
+    "full optimizer target exposure",
+    "learned quality",
+    "full production launch",
+    "automatic host or successor recovery",
+    "default cutover"
+  ]
+}

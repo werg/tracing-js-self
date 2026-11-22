@@ -52,7 +52,7 @@ function expectedBinding(publicData,track,invocationId){
     completion_target:track};
 }
 
-function fakeServer({meridian='number',tamper='',childRecords=[]}={}){
+function fakeServer({meridian='number',tamper='',childRecords=[],logOps=false}={}){
   const selectionTamper={model:"selection.checkpointIdentity='f'.repeat(64);",
     context:"selection.contextDigest='f'.repeat(64);",payload:"selection.payloadHex='00';"}[tamper]??'';
   const creationTamper={owner:"outcome.track.parent='track:forged';",
@@ -128,6 +128,7 @@ function fakeServer({meridian='number',tamper='',childRecords=[]}={}){
     }
     for await (const line of createInterface({input:process.stdin})){
       const request=JSON.parse(line);let result;
+      ${logOps ? "process.stderr.write(request.op+String.fromCharCode(10));" : ""}
       if(request.op==='initialize'){
         modelIdentity={schema:'semantic-inference-identity/8',adapter:'native-semantic-v8/1',seed:request.seed,
           checkpointIdentity:request.checkpointIdentity,tokenizerIdentity:request.tokenizerIdentity,
@@ -275,7 +276,7 @@ function pythonContract(publicData){
 }
 
 test('V8 coordinator JSONL fixture preserves child bindings, original bytes, typed commits and closed retry',async()=>{
-  const select=selector(),publicData=ingress(),session=publicData.timeline[0].fields.session;
+  const select=selector({logOps:true}),publicData=ingress(),session=publicData.timeline[0].fields.session;
   try{
     await select.initialize(identity);
     const opened=await select.openOrchestration({session,public:publicData,childBudget:64});
@@ -293,8 +294,11 @@ test('V8 coordinator JSONL fixture preserves child bindings, original bytes, typ
     assert.deepEqual(action.arguments.execution,opened.children[0].execution);
     const firstReceipt=await select.commitOrchestration({session,track:opened.track,...chosen});
     assert.equal(firstReceipt.completion_dependency.schema,'semantic-completion-dependency/4');
+    const commitsBefore=select.status().stderr.split('commit-orchestration').length-1;
     assert.deepEqual(await select.commitOrchestration({session,track:opened.track,...chosen}),firstReceipt,
-      'lost coordinator acknowledgement can be retried with the original bytes and evidence');
+      'known coordinator acknowledgement is returned from retained local evidence');
+    assert.equal(select.status().stderr.split('commit-orchestration').length-1,commitsBefore,
+      'known acknowledgement does not publish another native request');
     const childTrack=firstReceipt.track.address;
     assert.equal((await select.bootstrapOrchestrationChild({session,track:opened.track,childTrack})).track.execution.invocation_id,
       opened.children[0].execution.invocation_id);
@@ -403,6 +407,31 @@ test('Python and JavaScript V8 coordinator contexts and child bindings agree',t=
   assert.equal(hashAlgorithmData(jsContext),python.digest);
   assert.deepEqual(expectedBinding(ingress(),python.state.track),python.binding);
   assert.equal(python.state.sourceAdmissionClaim,false);
+});
+
+test('restored coordinator receipt is not cached until a native retry verifies it',async()=>{
+  const original=selector(),publicData=ingress(),session=publicData.timeline[0].fields.session;
+  let checkpoint,chosen,opened;
+  try{
+    await original.initialize(identity);
+    opened=await original.openOrchestration({session,public:publicData,childBudget:64});
+    chosen=await original.selectOrchestration({session,track:opened.track});
+    await original.commitOrchestration({session,track:opened.track,...chosen});
+    checkpoint=await original.checkpoint();
+  }finally{original.close();}
+  const forged=structuredClone(checkpoint);
+  const attempt=forged.attempts.find(row=>row.selection?.selectionId===chosen.selection.selectionId);
+  assert(attempt?.commitReceipt,'accepted receipt retained in transport checkpoint');
+  attempt.commitReceipt.track.address='track:forged';
+  const {digest,...body}=forged;forged.digest=hashAlgorithmData(body);
+  const restored=selector({logOps:true});
+  try{
+    await restored.restore({checkpoint:forged});
+    await assert.rejects(restored.commitOrchestration({session,track:opened.track,...chosen}),
+      /historical acknowledgement changed its receipt/);
+    assert.equal(restored.status().stderr.split('commit-orchestration').length-1,1,
+      'restored caller receipt required an independent native acknowledgement');
+  }finally{restored.close();}
 });
 
 test('transport refuses altered model/context/payload and forged lifecycle receipts',async()=>{

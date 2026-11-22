@@ -91,13 +91,16 @@ async function privateDirectory(path){
 
 /** Immutable ordinal slots retain exact JSONL bytes and the whole transport cut. */
 export class DurableNativeV8RequestJournal {
-  constructor({directory,sessionId,streamId,sessionGeneration=1,maxBytes=64*1024*1024,maxRequests=4096}={}){
+  constructor({directory,sessionId,streamId,sessionGeneration=1,maxBytes=64*1024*1024,
+    maxRequests=4096,maxLogBytes=64*1024*1024}={}){
     if(process.platform!=='linux'||typeof process.getuid!=='function')fail('trusted local Linux storage required');
     if(typeof directory!=='string'||!directory.trim()||!ID.test(sessionId??'')||!ID.test(streamId??'')||
-        !positive(sessionGeneration)||!positive(maxBytes)||!positive(maxRequests))fail('invalid journal scope or bounds');
+        !positive(sessionGeneration)||!positive(maxBytes)||!positive(maxRequests)||!positive(maxLogBytes))
+      fail('invalid journal scope or bounds');
     const root=resolve(directory),scope={session_id:sessionId,stream_id:streamId,session_generation:sessionGeneration};
     Object.defineProperties(this,Object.fromEntries(Object.entries({directory:root,sessionId,streamId,
-      sessionGeneration,maxBytes,maxRequests,scopeDirectory:join(root,'producer-native-requests',sha(canonical(scope)))})
+      sessionGeneration,maxBytes,maxRequests,maxLogBytes,
+      scopeDirectory:join(root,'producer-native-requests',sha(canonical(scope)))})
       .map(([key,value])=>[key,{value,enumerable:true}])));
     issuedJournals.add(this);
   }
@@ -105,6 +108,45 @@ export class DurableNativeV8RequestJournal {
     if(!positive(ordinal)||ordinal>this.maxRequests)fail('invalid request ordinal or request bound');
     return join(this.scopeDirectory,String(ordinal).padStart(20,'0')+'.intent.json');
   }
+  async _cleanTemps(directory){
+    let removed=false;
+    for(const entry of await readdir(directory)){
+      if(!entry.startsWith('.tmp-'))continue;
+      if(!/^\.tmp-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(entry))
+        fail('unrecognized temporary producer journal entry');
+      const temp=join(directory,entry),st=await lstat(temp);
+      if(!st.isFile()||st.isSymbolicLink()||st.uid!==process.getuid()||
+          (st.mode&0o077)!==0||(st.nlink!==1&&st.nlink!==2))
+        fail('unsafe temporary producer journal entry');
+      if(st.nlink===2){
+        const matches=[];
+        for(const candidate of await readdir(directory)){
+          if(candidate.startsWith('.tmp-')||!/^\d{20}\.intent\.json$/.test(candidate))continue;
+          const target=await lstat(join(directory,candidate));
+          if(target.dev===st.dev&&target.ino===st.ino)matches.push(candidate);
+        }
+        if(matches.length!==1)fail('linked temporary has no unique official producer intent');
+        const target=await lstat(join(directory,matches[0]));
+        if(!target.isFile()||target.isSymbolicLink()||target.uid!==process.getuid()||
+            (target.mode&0o077)!==0||target.nlink!==2)fail('unsafe linked producer intent');
+      }
+      await unlink(temp);removed=true;
+    }
+    if(removed)await syncDirectory(directory);
+  }
+
+  async _usedBytes(entries){
+    let total=0;
+    for(const {ordinal} of entries){
+      const info=await lstat(this.path(ordinal));
+      if(!info.isFile()||info.isSymbolicLink()||info.uid!==process.getuid()||
+          (info.mode&0o077)!==0||info.nlink!==1)fail('unsafe retained producer intent');
+      total+=info.size;
+      if(total>this.maxLogBytes)fail('producer request journal exceeds aggregate byte limit');
+    }
+    return total;
+  }
+
   async append({identity,requestBase64,checkpoint}){
     const record=validateIntent(structuredClone({schema:'semantic-native-producer-request/8',
       identity,requestBase64,checkpoint}),this),bytes=canonical(record),ordinal=record.identity.ordinal,
@@ -113,18 +155,21 @@ export class DurableNativeV8RequestJournal {
     await privateDirectory(this.directory);
     await privateDirectory(dirname(this.scopeDirectory));await privateDirectory(this.scopeDirectory);
     const existing=await this.list();
+    const used=await this._usedBytes(existing);
+    if(used+bytes.length>this.maxLogBytes)fail('producer request journal exceeds aggregate byte limit');
     if(existing.length&&ordinal!==existing.at(-1).ordinal+1||!existing.length&&ordinal!==1)
       fail('new request must append to the exact journal sequence');
     const temporary=join(this.scopeDirectory,'.tmp-'+randomUUID());
-    try{
-      const file=await open(temporary,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);
-      try{await file.writeFile(bytes);await file.sync();}finally{await file.close();}
-      try{await link(temporary,target);}catch(error){
-        if(error.code==='EEXIST')fail('existing intent requires explicit reconciliation, never another dispatch');
-        throw error;
-      }
-      await syncDirectory(this.scopeDirectory);
-    }finally{await unlink(temporary).catch(error=>{if(error.code!=='ENOENT')throw error;});}
+    const file=await open(temporary,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);
+    try{await file.writeFile(bytes);await file.sync();}finally{await file.close();}
+    try{await link(temporary,target);}catch(error){
+      await unlink(temporary).catch(unlinkError=>{if(unlinkError.code!=='ENOENT')throw unlinkError;});
+      if(error.code==='EEXIST')fail('existing intent requires explicit reconciliation, never another dispatch');
+      throw error;
+    }
+    await this._afterLinkBeforeTempUnlink(target,temporary);
+    await unlink(temporary).catch(error=>{if(error.code!=='ENOENT')throw error;});
+    await syncDirectory(this.scopeDirectory);
     const receipt={schema:'semantic-native-producer-request-receipt/8',ordinal,
       digest:sha(bytes),bytes:bytes.length,sessionId:this.sessionId,streamId:this.streamId,
       sessionGeneration:this.sessionGeneration};
@@ -137,13 +182,16 @@ export class DurableNativeV8RequestJournal {
         receipt.schema!=='semantic-native-producer-request-receipt/8'||!HASH.test(receipt.digest??'')||
         !positive(receipt.bytes)||receipt.sessionId!==this.sessionId||receipt.streamId!==this.streamId||
         receipt.sessionGeneration!==this.sessionGeneration)fail('invalid exact journal receipt');
+    await privateDirectory(this.directory);await privateDirectory(dirname(this.scopeDirectory));
     await privateDirectory(this.scopeDirectory);
+    await this._cleanTemps(this.scopeDirectory);
     const file=await open(this.path(receipt.ordinal),constants.O_RDONLY|constants.O_NOFOLLOW);let bytes;
     try{
       const stat=await file.stat();
       if(!stat.isFile()||stat.uid!==process.getuid()||(stat.mode&0o077)!==0||stat.nlink!==1||
           stat.size<1||stat.size>this.maxBytes)fail('unsafe intent file or byte bound');
       bytes=await file.readFile();
+      await file.sync();
     }finally{await file.close();}
     if(bytes.length!==receipt.bytes||bytes.length>this.maxBytes||sha(bytes)!==receipt.digest)
       fail('intent differs from its independently retained receipt');
@@ -159,7 +207,9 @@ export class DurableNativeV8RequestJournal {
     return record;
   }
   async inspect(ordinal){
+    await privateDirectory(this.directory);await privateDirectory(dirname(this.scopeDirectory));
     await privateDirectory(this.scopeDirectory);
+    await this._cleanTemps(this.scopeDirectory);
     const file=await open(this.path(ordinal),constants.O_RDONLY|constants.O_NOFOLLOW);let bytes;
     try{
       const stat=await file.stat();
@@ -171,15 +221,22 @@ export class DurableNativeV8RequestJournal {
       sessionId:this.sessionId,streamId:this.streamId,sessionGeneration:this.sessionGeneration};
     return {receipt,intent:await this.read(receipt)};
   }
+  async _afterLinkBeforeTempUnlink(_target,_temporary){}
   async list(){
     let entries;try{entries=await readdir(this.scopeDirectory,{withFileTypes:true});}
     catch(error){if(error.code==='ENOENT')return [];throw error;}
+    await privateDirectory(this.directory);await privateDirectory(dirname(this.scopeDirectory));
+    await privateDirectory(this.scopeDirectory);
+    await this._cleanTemps(this.scopeDirectory);
+    entries=await readdir(this.scopeDirectory,{withFileTypes:true});
     const ordinals=entries.filter(item=>/^\d{20}\.intent\.json$/.test(item.name)).map(item=>{
       if(!item.isFile()||item.isSymbolicLink())fail('unsafe published intent');
       const ordinal=Number(item.name.slice(0,20));this.path(ordinal);return ordinal;
     }).sort((a,b)=>a-b);
     if(ordinals.some((value,index)=>value!==index+1))fail('journal sequence is incomplete');
-    return ordinals.map(ordinal=>({ordinal}));
+    const rows=ordinals.map(ordinal=>({ordinal}));
+    await this._usedBytes(rows);
+    return rows;
   }
 }
 

@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {hashAlgorithmData} from '../src/semantic/program.js';
+import {DurableNativeV8RequestJournal} from '../src/storage/native-request-journal-v8.js';
+import {DurableSelectedOrchestrationExecutionLock} from '../src/storage/selected-orchestration-execution-lock.js';
 import {createNativeV8ProcessSelector} from '../src/semantic/native-process-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {commitCausalLmV8Selection} from '../src/semantic/causal-lm-v8.js';
@@ -10,13 +16,15 @@ const artifact=JSON.parse(readFileSync(new URL('./fixtures/semantic-regions-v8.j
 const row=artifact.public.timeline.find(row=>row.mode==='generated');
 const identity={checkpointIdentity:'c'.repeat(64),tokenizerIdentity:'e'.repeat(64),seed:17};
 const programModule=new URL('../src/semantic/program.js',import.meta.url).href;
-function fakeServer({alter='',initializeAlter='',commitAlter='',completeAlter='',cancelAlter='',restoreAlter='',raw=false,hang=false}={}){
+function fakeServer({alter='',initializeAlter='',commitAlter='',completeAlter='',cancelAlter='',restoreAlter='',
+  raw=false,hang=false,logOps=false}={}){
   return `import {createInterface} from 'node:readline';
     import {hashAlgorithmData} from ${JSON.stringify(programModule)};
     const record=${JSON.stringify(row.fields.line)};
     let modelIdentity=null,nativeAttempts=[],nativeSessions={};
     for await (const line of createInterface({input:process.stdin})) {
       const request=JSON.parse(line);let result;
+      ${logOps ? "process.stderr.write(request.op+String.fromCharCode(10));" : ""}
       if(request.op==='initialize'){
         result={schema:'semantic-inference-identity/8',checkpointIdentity:request.checkpointIdentity,
           tokenizerIdentity:request.tokenizerIdentity,trainingIdentity:request.trainingIdentity??null,
@@ -65,8 +73,76 @@ function boundary(){
   return {harness,input:{session:harness.inner.sessionId,public:harness.exportEpisode(),contexts:[],
     context:harness.modelContext(row.fields.invocationId)}};
 }
-function selector(options={}){return createNativeV8ProcessSelector({command:process.execPath,
-  args:['--input-type=module','-e',fakeServer(options)],timeoutMs:options.timeoutMs??5000});}
+function selector(options={}){
+  const {timeoutMs=5000,logOps=false,...serverOptions}=options;
+  return createNativeV8ProcessSelector({command:process.execPath,
+    args:['--input-type=module','-e',fakeServer({...serverOptions,logOps}),'--'],
+    timeoutMs, ...options.selectorOptions});
+}
+async function durableFixture(t,sessionId,Journal=DurableNativeV8RequestJournal){
+  const root=await mkdtemp(join(tmpdir(),'native-v8-busy-'));
+  const lease=await new DurableSelectedOrchestrationExecutionLock({directory:root,
+    sessionId,streamId:'stream-a',flockPath:process.env.TRACING_TEST_FLOCK??'/usr/bin/flock'}).acquire();
+  const journal=new Journal({directory:root,sessionId,streamId:'stream-a',sessionGeneration:1});
+  t.after(async()=>{await lease.release();await rm(root,{recursive:true,force:true});});
+  return {lease,journal,root};
+}
+
+test('lost producer intent readback fences the selector without inventing an ACK or dispatching native commit',async t=>{
+  class LostReadback extends DurableNativeV8RequestJournal{
+    async read(receipt,options){throw new Error('injected lost producer append readback');}
+  }
+  const {harness,input}=boundary();
+  const {lease,journal}=await durableFixture(t,input.session,LostReadback);
+  const select=selector({logOps:true,selectorOptions:{durableRequests:{journal,executionLease:lease}}});
+  try{
+    await select.initialize(identity);
+    const output=await select(input);
+    commitCausalLmV8Selection(harness,row.fields.invocationId,output.record,{context:input.context});
+    await assert.rejects(select.commit({session:input.session,public:harness.exportEpisode(),contexts:[input.context],
+      invocationId:row.fields.invocationId,...output}),/injected lost producer append readback/);
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(select.status().closed,true);
+    assert.equal(select.metrics().attempts[0].status,'acknowledgement-unknown');
+    assert.equal(select.metrics().attempts[0].durableRequestIdentity.ordinal,1);
+    assert.equal(select.metrics().attempts[0].durableRequestReceipt,undefined);
+    assert.equal((await journal.list()).length,1);
+    assert.equal(select.status().stderr.includes('durable-commit'),false);
+  }finally{select.close();}
+});
+
+test('a second selection during durable intent append cannot mutate attempt history',async t=>{
+  let enteredResolve,releaseResolve;
+  const entered=new Promise(resolve=>{enteredResolve=resolve;});
+  const release=new Promise(resolve=>{releaseResolve=resolve;});
+  class PausedAppend extends DurableNativeV8RequestJournal{
+    async append(intent){
+      const receipt=await super.append(intent);
+      enteredResolve();await release;return receipt;
+    }
+  }
+  const {harness,input}=boundary();
+  const {lease,journal}=await durableFixture(t,input.session,PausedAppend);
+  const select=selector({selectorOptions:{durableRequests:{journal,executionLease:lease}}});
+  try{
+    await select.initialize(identity);
+    const output=await select(input);
+    commitCausalLmV8Selection(harness,row.fields.invocationId,output.record,{context:input.context});
+    const committing=select.commit({session:input.session,public:harness.exportEpisode(),contexts:[input.context],
+      invocationId:row.fields.invocationId,...output});
+    await Promise.race([entered,committing.then(()=>{throw new Error('commit completed before the admission pause');})]);
+    const rejected=assert.rejects(committing);
+    const before=select.metrics().attempts;
+    const other=structuredClone(input);
+    other.session='session-b';
+    other.public.timeline[0].fields.session='session-b';
+    other.context.prefixDigest=hashAlgorithmData(other.public.timeline);
+    await assert.rejects(select(other),/selection while a native request is outstanding/);
+    assert.deepEqual(select.metrics().attempts,before);
+    releaseResolve();
+    await rejected;
+  }finally{releaseResolve();select.close();}
+});
 
 test('native v8 transport preserves fragmented original output and waits for semantic acknowledgement',async()=>{
   const select=selector(),{harness,input}=boundary();

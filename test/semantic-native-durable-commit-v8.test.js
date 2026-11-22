@@ -89,6 +89,12 @@ test('actual Python commit acknowledgement restores exact whole native state and
     await assert.rejects(fresh.select.restore({checkpoint:before}),/explicit commit recovery/);
     const restored=await fresh.select.recoverCommit({receipt});
     assert.deepEqual(restored.result,original);
+    assert.deepEqual(fresh.select.metrics().attempts[0].durableRequestIdentity,
+      (await context.journal.read(receipt)).identity);
+    assert.deepEqual(await fresh.select.commitOrchestration(restored.request),original,
+      'only the independently restored latest receipt is a known acknowledgement');
+    assert.deepEqual(await context.journal.list(),[{ordinal:1}],
+      'repeating a known recovered acknowledgement must not publish a new intent');
     assert.equal(restored.hostDispatches,0);assert.equal(restored.hostRecoveryAuthorized,false);
     const after=await fresh.select.checkpoint();
     assert.deepEqual(after.native,before.native);
@@ -176,7 +182,12 @@ test('durable publication serializes the complete request interval before native
   context.journal.append=async input=>{entered();await gate;return append(input);};
   try{
     const request=await context.choose(first.select),commit=first.select.commitOrchestration(request);
-    await staged;
+    await Promise.race([staged,commit.then(()=>{throw new Error('commit completed before the publication pause');})]);
+    const attemptsBefore=first.select.metrics().attempts;
+    await assert.rejects(first.select.selectOrchestration(request),/request is outstanding/);
+    await assert.rejects(first.select.statusOrchestration(request),/request is outstanding/);
+    assert.deepEqual(first.select.metrics().attempts,attemptsBefore,
+      'a busy coordinator call must not change local attempt history');
     await assert.rejects(first.select.checkpoint(),/outstanding request/);
     await assert.rejects(first.select.initialize(context.identity),/request is outstanding/);
     await assert.rejects(first.select.cancel({session:request.session,reason:'racing cancellation'}),/request is outstanding/);
@@ -203,4 +214,36 @@ test('one kernel lease can start only one native process and cannot be forged or
   }finally{first?.close();await lease.release();}
   const next=await lock.acquire(),second=start(next);
   try{await second.shutdown();}finally{second.close();await next.release();}
+});
+
+test('actual Python cannot recover or retry a producer intent whose append acknowledgement was lost',async t=>{
+  const context=await inputs(t);if(!context)return;
+  const first=await context.open();
+  const append=context.journal.append.bind(context.journal);
+  context.journal.append=async input=>{
+    await append(input);
+    throw new Error('injected lost producer append acknowledgement');
+  };
+  try{
+    await assert.rejects(first.select.commitOrchestration(await context.choose(first.select)),error=>{
+      assert.equal(error.acknowledgementUnknown,true);
+      assert.match(error.message,/lost producer append acknowledgement/);
+      return true;
+    });
+    assert.equal(first.select.status().closed,true);
+    assert.equal(first.select.metrics().unknownAcknowledgements,1);
+    assert.equal(first.select.metrics().attempts[0].durableRequestIdentity.ordinal,1);
+    assert.equal(first.select.durableRequestReceipt(),null,
+      'a request identity is not a completed storage acknowledgement');
+  }finally{
+    context.journal.append=append;
+    await close(first);
+  }
+  const retained=await context.journal.inspect(1),fresh=await replacement(context);
+  try{
+    await assert.rejects(fresh.select.recoverCommit({receipt:retained.receipt}),/never admitted/);
+    assert.equal(fresh.select.metrics().semanticallyAccepted,0);
+    assert.equal(readFileSync(fresh.log,'utf8'),'',
+      'reconciliation must not replay a selection or invent a native commit');
+  }finally{await close(fresh);}
 });
