@@ -48,6 +48,16 @@ and any teacher transcript. These checks preserve honest historical
 correspondence; the separate fresh native preparation remains the authority for
 current semantic admission.
 
+Each prepared source descriptor separately declares its case label, expected
+physical source ID and original source-artifact path. The expected source ID
+comes only from the snapshot's verified original task/registry membership.
+Missing or repeated membership refuses; a case label is never substituted for
+that ID. The native verifier requires exact descriptor/artifact source-ID
+agreement before fresh preparation. A legitimate physical ID may include a
+digest suffix and need not equal its case label. This closes the standalone
+native descriptor boundary while retaining the producer's independent original
+task and recorded-native correspondence checks.
+
 The native verifier rejects unbound packs, donor imports, teacher features,
 text anchors, hindsight inputs, distributed or decoupled routes, stage/effort
 mixtures and archived stage history. Its first profile cannot infer those

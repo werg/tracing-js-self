@@ -12,6 +12,7 @@ import sys
 import tarfile
 import tempfile
 import unittest
+from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
@@ -32,7 +33,11 @@ class DirectV8ReleaseTests(unittest.TestCase):
                 "contractDigest": "1" * 64, "fixtureDigest": "2" * 64, "interoperabilityDigest": "3" * 64,
                 "selectedCaseIds": ["selected"], "cases": [
                     {"id": "selected", "selected": True, "status": "admitted", "source": "passed", "native": "passed",
-                     "sourceArtifact": "selected.source.json", "admittedArtifact": "selected.admitted.json"},
+                     "sourceArtifact": "selected.source.json", "admittedArtifact": "selected.admitted.json",
+                     "taskArtifactBinding": {"schema": "semantic-v8-release-task-artifact-binding/1",
+                                             "caseId": "selected", "kind": "source",
+                                             "membership": {"sourceId": "physical-source:95a869417b705f27c48736609f928aa1f1aaa2c3",
+                                                            "split": "train", "registryDigest": "4" * 64}}},
                     {"id": "untested", "selected": False, "status": "untested", "source": "untested", "native": "untested"},
                 ]}
 
@@ -200,9 +205,34 @@ class DirectV8ReleaseTests(unittest.TestCase):
         snapshot = self.snapshot()
         descriptor = release.descriptor_from_campaign(snapshot, {"revision": "a" * 40}, {"revision": "b" * 40})
         self.assertEqual(descriptor["roles"]["prepared"][0]["sourceArtifacts"], [
-            {"caseId": "selected", "path": "source-qualification/selected.source.json"}])
+            {"caseId": "selected", "sourceId": "physical-source:95a869417b705f27c48736609f928aa1f1aaa2c3",
+             "path": "source-qualification/selected.source.json"}])
         with self.assertRaisesRegex(ValueError, "another source pair"):
             release.descriptor_from_campaign(snapshot, {"revision": "c" * 40}, {"revision": "b" * 40})
+
+    def test_physical_membership_is_required_and_never_inferred_from_case_label(self):
+        snapshot = self.snapshot()
+        binding = snapshot["cases"][0].pop("taskArtifactBinding")
+        for invalid in [None, {}, {**binding, "schema": "unverified"}, {**binding, "caseId": "other"},
+                        {**binding, "membership": None}]:
+            snapshot["cases"][0]["taskArtifactBinding"] = invalid
+            with self.assertRaisesRegex(ValueError, "verified original task membership"):
+                release.descriptor_from_campaign(snapshot, {"revision": "a" * 40}, {"revision": "b" * 40})
+        snapshot["cases"][0]["taskArtifactBinding"] = binding
+        for invalid in [None, "", 0, False, [], {}]:
+            binding["membership"]["sourceId"] = invalid
+            with self.assertRaisesRegex(ValueError, "physical source IDs"):
+                release.descriptor_from_campaign(snapshot, {"revision": "a" * 40}, {"revision": "b" * 40})
+
+    def test_distinct_case_labels_cannot_authorize_duplicate_physical_sources(self):
+        snapshot = self.snapshot()
+        duplicate = deepcopy(snapshot["cases"][0])
+        duplicate.update(id="second", sourceArtifact="second.source.json", admittedArtifact="second.admitted.json")
+        duplicate["taskArtifactBinding"]["caseId"] = "second"
+        snapshot["cases"].insert(1, duplicate)
+        snapshot["selectedCaseIds"].append("second")
+        with self.assertRaisesRegex(ValueError, "physical source IDs"):
+            release.descriptor_from_campaign(snapshot, {"revision": "a" * 40}, {"revision": "b" * 40})
 
     def test_active_writer_and_missing_lock_refuse_without_creating_lock(self):
         qualification = self.root / "campaign"

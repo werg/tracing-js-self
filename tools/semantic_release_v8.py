@@ -209,13 +209,25 @@ def descriptor_from_campaign(snapshot, producer, native):
     require([row["id"] for row in selected] == snapshot["selectedCaseIds"] and selected and
             all(row["status"] == "admitted" and row["source"] == row["native"] == "passed"
                 for row in selected), "Every selected release source must be source-qualified and native-admitted")
+    source_artifacts, source_ids = [], set()
+    for row in selected:
+        binding = row.get("taskArtifactBinding")
+        membership = binding.get("membership") if isinstance(binding, dict) else None
+        require(isinstance(binding, dict) and
+                binding.get("schema") == "semantic-v8-release-task-artifact-binding/1" and
+                binding.get("caseId") == row["id"] and isinstance(membership, dict),
+                "Selected release source has no verified original task membership")
+        source_id = membership.get("sourceId")
+        require(isinstance(source_id, str) and source_id and source_id not in source_ids,
+                "Release physical source IDs must be nonempty and unique")
+        source_ids.add(source_id)
+        # Case labels need not equal physical source IDs. The latter comes only
+        # from original task/registry correspondence, never a label fallback.
+        source_artifacts.append({"caseId": row["id"], "sourceId": source_id,
+                                 "path": ROLES["qualification"] + "/" + row["sourceArtifact"]})
     roles = {key: value for key, value in ROLES.items() if key != "prepared"}
-    roles["prepared"] = [{"path": ROLES["prepared"], "sourceArtifacts": [
-        # Original preparation binds the complete source input bytes. The
-        # admitted copy remains retained evidence, not a substitute source.
-        {"caseId": row["id"], "path": ROLES["qualification"] + "/" + row["sourceArtifact"]}
-        for row in selected
-    ]}]
+    # Original preparation binds source bytes; the admitted copy is evidence.
+    roles["prepared"] = [{"path": ROLES["prepared"], "sourceArtifacts": source_artifacts}]
     return {"schema": "semantic-v8-release-inputs/1", "producerRevision": producer["revision"],
             "consumerRevision": native["revision"], "roles": roles,
             **{name: snapshot[name] for name in ("contractDigest", "fixtureDigest", "interoperabilityDigest")}}
