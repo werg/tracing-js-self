@@ -1,0 +1,323 @@
+name: Exact64 V8 support target inventory and ordinary coverage
+
+on:
+  push:
+    branches:
+      - codex/v8-target-coverage-position-qualification-20261122
+      - codex/v8-expanded-position-qualification-20261122
+    paths-ignore: ['docs/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: semantic-v8-target-inventory-${{ github.ref }}
+  # Every explicitly selected full campaign retains its own complete evidence.
+  cancel-in-progress: false
+
+jobs:
+  exact64-support:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: bash
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      TRACING_JS_SELF_ROOT: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_NATIVE_SOURCE_PRODUCER: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/semantic-v8-tokenizer.json
+      MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+      MEGATOKEN_PYTHON: python
+      SEMANTIC_V8_NATIVE_POLICY: ${{ github.workspace }}/tracing-js-self/contracts/semantic-native-policy-v8.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: tracing-js-self/.nvmrc
+      - id: native-pin
+        name: Read exact native consumer pin from policy
+        working-directory: tracing-js-self
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,appendFileSync} from 'node:fs';
+          const policy=JSON.parse(readFileSync('contracts/semantic-native-policy-v8.json'));
+          if(policy.consumerRepository!=='werg/megatoken'||!/^[0-9a-f]{40}$/.test(policy.consumerRevision))
+            throw new Error('The V8 native policy must pin an exact megatoken commit');
+          appendFileSync(process.env.GITHUB_OUTPUT,
+            'repository='+policy.consumerRepository+'\nrevision='+policy.consumerRevision+'\n');
+          JS
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.native-pin.outputs.repository }}
+          ref: ${{ steps.native-pin.outputs.revision }}
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - name: Install locked native dependencies and producer
+        run: |
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+      - name: Acquire and verify exact production tokenizer
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, shutil
+          from pathlib import Path
+          from huggingface_hub import hf_hub_download
+          from megatoken.generation.codec import ByteCodec, LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256
+          tokenizer = Path(os.environ['MEGATOKEN_TOKENIZER_JSON'])
+          shutil.copyfile(hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION), tokenizer)
+          policy = json.loads(Path(os.environ['SEMANTIC_V8_NATIVE_POLICY']).read_text())
+          digest = hashlib.sha256(tokenizer.read_bytes()).hexdigest()
+          codec = ByteCodec.from_tokenizer_json(tokenizer, expected_sha256=LING_TOKENIZER_SHA256)
+          if digest != LING_TOKENIZER_SHA256 or digest != policy['tokenizerSha256'] or codec.fingerprint != policy['tokenizerIdentity']:
+              raise ValueError('Production tokenizer bytes or identity differ from exact native policy')
+          print(json.dumps({'tokenizerSha256': digest, 'tokenizerIdentity': codec.fingerprint}))
+          PY
+      - name: Compare producer and native contracts
+        run: |
+          npm run semantic:v8:contract --prefix tracing-js-self 2>&1 | tee "$RUNNER_TEMP/semantic-v8-contract.log"
+          cmp tracing-js-self/contracts/semantic-execution-v8.json megatoken/src/megatoken/data/contracts/semantic-execution-v8.json
+      - name: Run support-cohort ownership controls with zero skips
+        working-directory: tracing-js-self
+        run: |
+          node --test --test-reporter=junit test/semantic-region-support-cohort.test.js \
+            test/qualify-support-lifecycle.test.js test/semantic-v8-position-coverage.test.js \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-support-controls.xml"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-support-controls.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('Every exact64 support-cohort control must pass with zero skips')
+          print(f'{len(cases)} support-cohort controls passed with zero skips')
+          PY
+      - id: qualification
+        name: Qualify all 64 original sources and native receipts
+        working-directory: tracing-js-self
+        run: |
+          node tools/qualify-semantic-v8.mjs --population se-support --inputs all --workers 2             --out "$RUNNER_TEMP/v8-admitted" --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON"             --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY"             2>&1 | tee "$RUNNER_TEMP/semantic-v8-support-qualification.log"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          temporary = Path(os.environ['RUNNER_TEMP'])
+          qualification = json.loads((temporary / 'v8-admitted/report.json').read_text())
+          registry = json.loads((temporary / 'v8-admitted/family-registry.json').read_text())
+          rows = qualification['rows']
+          source_ids = [source['id'] for source in registry['sources']]
+          split_by_id = {}
+          for component in registry['components']:
+              for source_id in component['sourceIds']:
+                  if source_id in split_by_id:
+                      raise ValueError('Support registry duplicates a source across split components')
+                  split_by_id[source_id] = component['split']
+          split_counts = {split: sum(value == split for value in split_by_id.values())
+                          for split in ('train', 'validation', 'test')}
+          if (qualification['population'] != 'se-support' or qualification['declared'] != 64
+              or qualification['preparationOnly'] or qualification['sourceQualified'] != 64
+              or qualification['nativeAdmitted'] != 64 or len(rows) != 64
+              or len(set(source_ids)) != 64 or set(split_by_id) != set(source_ids)
+              or {row.get('sourceId') for row in rows} != set(source_ids)
+              or len({row.get('id') for row in rows}) != 64
+              or any(not isinstance(row.get('id'), str) or not row['id'] for row in rows)
+              or split_counts != {'train': 48, 'validation': 12, 'test': 4}
+              or qualification['registryDigest'] != registry['digest']
+              or any(row.get('source') != 'passed' or row.get('native') != 'passed'
+                     or not row.get('sourceArtifact') or not isinstance(row.get('nativeReceipt'), dict)
+                     for row in rows)):
+              raise ValueError('Exact64 support source/native qualification or frozen 48/12/4 split failed')
+          print(json.dumps({'sourceQualified': qualification['sourceQualified'],
+              'nativeAdmitted': qualification['nativeAdmitted'], 'splitCounts': split_counts,
+              'registryDigest': registry['digest']}))
+          PY
+      - name: Measure production-tokenizer sequences and complete native packing
+        if: ${{ !cancelled() && steps.qualification.outcome != 'skipped' }}
+        working-directory: tracing-js-self
+        run: |
+          node tools/measure-semantic-v8.mjs --qualification "$RUNNER_TEMP/v8-admitted"             --out "$RUNNER_TEMP/v8-costs" --tokenizer-module tools/semantic-v8-tokenizer-adapter.mjs             2>&1 | tee "$RUNNER_TEMP/semantic-v8-support-costs.log"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          temporary = Path(os.environ['RUNNER_TEMP'])
+          qualification = json.loads((temporary / 'v8-admitted/report.json').read_text())
+          costs = json.loads((temporary / 'v8-costs/report.json').read_text())
+          declared = qualification['declared']
+          if (declared != 64 or costs.get('tokenizerEvidence') is None
+              or costs['summary']['declared'] != declared
+              or costs['summary']['flat']['measured'] != declared
+              or costs['summary']['flat']['tokenMeasuredEpisodes'] != declared
+              or costs['summary']['flat']['tokenMeasurement'] != 'passed'
+              or costs['summary']['nativePacking']['measuredEpisodes'] != declared):
+              raise ValueError('All 64 support sources require production-tokenizer sequence and native packing measurements')
+          print(json.dumps({'declared': declared,
+              'tokenMeasuredEpisodes': costs['summary']['flat']['tokenMeasuredEpisodes'],
+              'nativePackingMeasuredEpisodes': costs['summary']['nativePacking']['measuredEpisodes']}))
+          PY
+      - name: Prepare exact64 admitted support corpus and require strict source supply
+        working-directory: tracing-js-self
+        run: |
+          python - <<'PY' 2>&1 | tee "$RUNNER_TEMP/semantic-v8-support-preparation.log"
+          import json, os, subprocess
+          from pathlib import Path
+          temporary = Path(os.environ['RUNNER_TEMP'])
+          qualification = temporary / 'v8-admitted'
+          report = json.loads((qualification / 'report.json').read_text())
+          registry = json.loads((qualification / 'family-registry.json').read_text())
+          rows = report['rows']
+          ids = [source['id'] for source in registry['sources']]
+          inventory = temporary / 'v8-support-source-ids.json'
+          inventory.write_text(json.dumps({'schema':'semantic-v8-source-population/1',
+              'registryDigest':registry['digest'],'sourceIds':ids},indent=2)+'\n')
+          consumer = Path(os.environ['MEGATOKEN_ROOT'])
+          policy = json.loads(Path(os.environ['SEMANTIC_V8_NATIVE_POLICY']).read_text())
+          prepared = temporary / 'v8-support-prepared'
+          command = [os.environ['MEGATOKEN_PYTHON'], str(consumer / 'scripts/prepare_semantic_v8.py')]
+          for row in sorted(rows, key=lambda item: item['sourceId']):
+              artifact = (qualification / row['sourceArtifact']).resolve(strict=True)
+              if not artifact.is_relative_to(qualification.resolve()) or not artifact.is_file():
+                  raise ValueError('A retained original source artifact escaped qualification output')
+              command.extend(['--input', str(artifact)])
+          command.extend(['--output', str(prepared),'--producer-root',os.environ['TRACING_JS_SELF_ROOT'],
+              '--producer-revision',report['producerRevision'],'--consumer-revision',policy['consumerRevision'],
+              '--tokenizer-json',os.environ['MEGATOKEN_TOKENIZER_JSON'],'--max-positions','128','--max-history','128'])
+          subprocess.run(command,check=True)
+          subprocess.run([os.environ['MEGATOKEN_PYTHON'],str(consumer/'scripts/qualify_semantic_v8_supply.py'),
+              '--prepared-root',str(prepared),'--expected-source-ids',str(inventory),
+              '--producer-revision',report['producerRevision'],'--consumer-revision',policy['consumerRevision'],
+              '--registry-digest',registry['digest'],'--tokenizer-json',os.environ['MEGATOKEN_TOKENIZER_JSON'],
+              '--max-positions','128','--max-history','128',
+              '--output',str(temporary/'semantic-v8-support-supply.json')],check=True)
+          supply = json.loads((temporary / 'semantic-v8-support-supply.json').read_text())
+          population = supply.get('population', {})
+          if (supply.get('status') != 'passed'
+              or supply.get('sourceRegistryDigest') != registry['digest']
+              or population.get('count') != 64
+              or {split: len(sources) for split, sources in population.get('bySplit', {}).items()}
+                 != {'train': 48, 'validation': 12, 'test': 4}
+              or supply.get('optimizerSteps') != 0
+              or supply.get('learnedSuccess') is not None):
+              raise ValueError('Strict native support supply receipt differs from the exact64 registry and 48/12/4 split')
+          print(json.dumps({'registryDigest':supply['sourceRegistryDigest'],
+              'sourceCount':population['count'],'bySplit':{split:len(sources)
+              for split,sources in population['bySplit'].items()},
+              'preparedManifest':json.loads((prepared/'manifest.json').read_text())['fingerprint']}))
+          PY
+      - name: Run ordinary lifecycle and exact one-pass target coverage
+        working-directory: tracing-js-self
+        run: |
+          python - <<'PY' 2>&1 | tee "$RUNNER_TEMP/semantic-v8-support-lifecycle.log"
+          import json, os, subprocess
+          from pathlib import Path
+          temporary = Path(os.environ['RUNNER_TEMP'])
+          qualification = json.loads((temporary/'v8-admitted/report.json').read_text())
+          registry = json.loads((temporary/'v8-admitted/family-registry.json').read_text())
+          train_ids = {source_id for component in registry['components'] if component['split']=='train'
+                       for source_id in component['sourceIds']}
+          candidates = sorted((row for row in qualification['rows']
+                               if row['sourceId'] in train_ids and row['id'].endswith('-child-teacher')),
+                              key=lambda row: row['id'])
+          if not candidates:
+              raise ValueError('Support serving sample needs a source-qualified training child teacher')
+          sample = (temporary/'v8-admitted'/candidates[0]['sourceArtifact']).resolve(strict=True)
+          if not sample.is_relative_to((temporary/'v8-admitted').resolve()) or not sample.is_file():
+              raise ValueError('Support sample source artifact escaped qualification output')
+          lifecycle = temporary / 'v8-support-lifecycle'
+          subprocess.run(['node','tools/qualify-ordinary-v8-lifecycle.mjs','--full-target-coverage',
+              '--prepared-root',str(temporary/'v8-support-prepared'),
+              '--source-inventory',str(temporary/'v8-support-source-ids.json'),
+              '--sample-source',str(sample),'--out',str(lifecycle),
+              '--megatoken',os.environ['MEGATOKEN_ROOT'],'--python',os.environ['MEGATOKEN_PYTHON'],
+              '--tokenizer',os.environ['MEGATOKEN_TOKENIZER_JSON'],
+              '--native-policy',os.environ['SEMANTIC_V8_NATIVE_POLICY']],check=True)
+          command = json.loads((lifecycle/'command-report.json').read_text())
+          inventory = json.loads((lifecycle/'target-inventory.json').read_text())
+          coverage = json.loads((lifecycle/'target-coverage-evidence.json').read_text())
+          update_counts = command.get('optimizerUpdateCounts',{})
+          inventory_source_ids = inventory.get('sourceIds',[])
+          scored_source_ids = inventory.get('scoredSourceIds',[])
+          expected_coverage_steps = inventory.get('optimizerWindowCount')
+          position_summary = coverage.get('optimizerPositionSummary',{})
+          router_positions = position_summary.get('routerInternalPositionCounts')
+          router_assignments = position_summary.get('routerInternalAssignmentCounts')
+          router_counts_valid = (
+              isinstance(router_positions,dict) and isinstance(router_assignments,dict)
+              and set(router_positions)==set(router_assignments)
+              and all(type(count) is int and count>=0 for count in router_positions.values())
+              and all(type(count) is int and count>=0 for count in router_assignments.values())
+              and sum(router_positions.values())==position_summary.get('routerInternalPositionCount')
+              and sum(router_assignments.values())==position_summary.get('routerInternalAssignmentCount')
+          )
+          if (command.get('status')!='passed' or command.get('populationCount')!=64
+              or command.get('fullTargetCoverageRequested') is not True
+              or command.get('fullTargetCoverageQualified') is not True
+              or command.get('targetCoverageStatus')!='passed'
+              or command.get('registryDigest')!=registry['digest']
+              or command.get('optimizerUpdates')!=2
+              or update_counts.get('lifecycle')!=2
+              or update_counts.get('coverage')!=expected_coverage_steps
+              or update_counts.get('total')!=2+expected_coverage_steps
+              or len(inventory_source_ids)!=48 or len(set(inventory_source_ids))!=48
+              or set(inventory_source_ids)!=train_ids
+              or coverage.get('inventory',{}).get('digest')!=inventory.get('digest')
+              or command.get('targetCoverage',{}).get('digest')!=coverage.get('digest')
+              or len(scored_source_ids)!=48 or set(scored_source_ids)!=set(inventory_source_ids)
+              or inventory.get('positiveWeight',{}).get('sourceCount')!=48
+              or coverage.get('globalStep')!=expected_coverage_steps
+              or coverage.get('comparison',{}).get('allPositiveWeightTargetsExposed') is not True
+              or coverage.get('comparison',{}).get('exactOnePassCensus') is not True
+              or coverage.get('tokenOrMaskPositionCoverage')!='complete-for-prepared-text'
+              or coverage.get('routerInternalPositionCoverage')!='unmeasured'
+              or coverage.get('positionComparison',{}).get('routerInternalPositionCoverage')!='unmeasured'
+              or coverage.get('routerInternalPositionAccounting')!='complete-per-update'
+              or position_summary.get('routerInternalPositionAccounting')!='complete-per-update'
+              or position_summary.get('routerInternalPositionAuditUpdates')!=expected_coverage_steps
+              or coverage.get('positionComparison',{}).get('routerInternalPositionAuditUpdates')!=expected_coverage_steps
+              or not router_counts_valid
+              or position_summary.get('routerInternalPositionCount',0)<=0
+              or position_summary.get('routerInternalAssignmentCount',0)<position_summary.get('routerInternalPositionCount',0)
+              or coverage.get('positionComparison',{}).get('exactOnePassPreparedTextPositions') is not True
+              or coverage.get('positionComparison',{}).get('positiveWeightPositionCountsMatch') is not True
+              or coverage.get('independentPreparedPositionInventory',{}).get('physicalTargetRecordCount')!=inventory.get('positiveWeight',{}).get('physicalTargetRecordCount')
+              or coverage.get('optimizerPositionSummary',{}).get('unmeasuredPhysicalTargets')!=0
+              or coverage.get('learnedSuccess') is not None
+              or command.get('learnedSuccess') is not None
+              or command.get('supportPopulation',{}).get('fullLaunchQualified') is not False):
+              raise ValueError('Ordinary lifecycle failed full exact64 positive-loss target inventory coverage')
+          print(json.dumps({'registryDigest':registry['digest'],'trainingSources':len(inventory_source_ids),
+              'positiveWeightSources':len(scored_source_ids),'targetInventoryDigest':inventory['digest'],
+              'windowCount':inventory['windowCount'],'optimizerWindowCount':expected_coverage_steps,
+              'optimizerUpdateCounts':update_counts,'exactOnePassCensus':True,
+              'tokenOrMaskPositionCoverage':'complete-for-prepared-text',
+              'routerInternalPositionAccounting':position_summary['routerInternalPositionAccounting'],
+              'routerInternalPositionCount':position_summary['routerInternalPositionCount'],
+              'routerInternalAssignmentCount':position_summary['routerInternalAssignmentCount'],
+              'routerInternalPositionCoverage':'unmeasured','learnedSuccess':None}))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semantic-v8-target-inventory-support
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            ${{ runner.temp }}/semantic-v8-contract.log
+            ${{ runner.temp }}/semantic-v8-support-controls.xml
+            ${{ runner.temp }}/semantic-v8-support-qualification.log
+            ${{ runner.temp }}/v8-admitted/
+            ${{ runner.temp }}/semantic-v8-support-costs.log
+            ${{ runner.temp }}/v8-costs/
+            ${{ runner.temp }}/semantic-v8-support-preparation.log
+            ${{ runner.temp }}/v8-support-source-ids.json
+            ${{ runner.temp }}/v8-support-prepared/
+            ${{ runner.temp }}/semantic-v8-support-supply.json
+            ${{ runner.temp }}/semantic-v8-support-lifecycle.log
+            ${{ runner.temp }}/v8-support-lifecycle/

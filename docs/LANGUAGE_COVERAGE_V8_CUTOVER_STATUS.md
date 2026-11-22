@@ -60,11 +60,14 @@ The previous detailed PR narrative is preserved in
   **145 native passes and 166 of 170 producer leaf passes**, four fixture
   argument-mismatch failures and zero skips. Both affected fixture replacements
   are corrected in the current combined candidate; the failed source remains
-  unqualified. [Complete original logs, ZIP and per-file population](evidence/v8-causal-first-hosted-32ef-2026-11-22/README.md). A corrected native tree is being composed from
-  current main, preserving router evidence and all current terminal-close
-  controls. Its measured native population and a new exact paired hosted gate
-  are mandatory; the producer gate requires 170 individual leaf cases with no
-  skips. Local focused refusal of all four spellings is not the final gate.
+  unqualified. [Complete original logs, ZIP and per-file population](evidence/v8-causal-first-hosted-32ef-2026-11-22/README.md).
+  The subsequent `ae5fa0f1/56cce3b8` gate also completed with **151 native passes
+  and 166 of 170 producer leaf passes**, the same four fixture failures and zero
+  skips. Its [original ZIP, complete log and runtime pins](evidence/causal-gate-45030773600-2026-11-22/README.md)
+  are retained. Five passing parent test containers account for the Node
+  reporter's 175-test summary; they are not five additional leaf cases.
+  Fixture-corrected `e5d53e47/56cce3b8` has a separate 151/170 hosted run;
+  that population does not substitute for the larger final composition below.
 - **Terminal close has a separate native foundation and pending history gate.**
   Native main includes terminal-only durable close/recovery and nine native
   close controls. A completed/cancelled coordinator and every owned track must
@@ -82,15 +85,30 @@ The previous detailed PR narrative is preserved in
   Completion, cancellation, lost/altered replies, repeated loss, unknown outcome,
   history acknowledgement races and unresolved intents retain distinct controls.
   [Local observations, corrections and limits](evidence/v8-terminal-close-local-2026-11-22/README.md).
-  The combined candidate [26676d44](https://github.com/werg/tracing-js-self/commit/26676d44e4b5b397f04596f2d5d8539ee446c55e)
-  now includes causal bootstrap, terminal close and same-owner service fencing.
+  The combined candidate [9a69dfc5](https://github.com/werg/tracing-js-self/commit/9a69dfc5b33c5e0eafec737a302e941f869bb5a1)
+  with native [15844c00](https://github.com/werg/megatoken/commit/15844c00c095849755ca6f0e1d207f7db79a9264)
+  includes causal bootstrap, terminal close and same-owner service fencing,
+  preserving the independent exact-create assertions, normalized raw-operation
+  guards, full child-result/RNG checks and exact supersession checks.
   Its **82 structural/builder/history cases passed with zero failures/errors/skips**.
   Review also reproduced and fixed a stale unowned-only builder guard, with five
-  focused builder controls. The final 193-leaf producer gate and reconciled
-  native source are pending; this remains an isolated candidate, not promotion.
+  focused builder controls. Two selected actual-native recovery controls passed
+  separately; that narrow run does not qualify all transport/history paths.
+  [Run 45034849522](https://github.com/werg/tracing-js-self/actions/runs/45034849522)
+  requires **165 native and 193 producer leaf cases**, zero failures/errors/skips,
+  across four parallel groups on this single frozen source pair. Its structural
+  group (165 native and 123 producer cases) has passed. The transport group
+  completed with 28 of 33 passes and five failures, zero skips: four stopped in
+  the controlled peer before intended storage checks because its explicit no-loss
+  mode was refused, and one asserted an obsolete refusal message. The other
+  21 bootstrap-history and 16 terminal-history cases are still running. The
+  original failed output is retained and corrections are under focused review;
+  promotion requires a new exact-pair gate with every group passing.
 
-Local native checks use Python 3.12.14, Torch 2.14.1+cpu and pytest 9.2.0; pytest
-9.2 is outside the repository's declared `>=8.3,<9` range. The local container
+The latest composed local checks and hosted gate use Python 3.12.14, locked
+Torch 2.10.0+cpu and pytest 8.4.2. Separately retained earlier local checks used
+Torch 2.14.1+cpu and pytest 9.2.0; pytest 9.2 is outside the repository's declared
+`>=8.3,<9` range. Their evidence keeps those runtime differences. The local container
 cannot supply the genuine boot/time-namespace authority required by complete
 history recovery. Hosted gates must exercise those controls with zero skips;
 no mocked clock or previous passing run supplies that authority.
@@ -121,17 +139,30 @@ no mocked clock or previous passing run supplies that authority.
   plus 31 producer leaf cases with zero unresolved skips. This is a resolved
   union, not one 192-case run and not the sum of overlapping reruns.
   [Composition, exact denominators and runtime limits](evidence/v8-training-source-composition-2026-11-22/README.md).
-- **Two frozen full-support campaigns remain in progress.**
+- **The router-aware full-support campaign passed and was independently audited.**
+  [Run 45025994295](https://github.com/werg/tracing-js-self/actions/runs/45025994295)
+  freezes `b4157952/2f3e6cf0`. Its original 178,270,704-byte archive contains all
+  593 retained files, including admitted sources, prepared inputs, tokenizer,
+  both trajectories' checkpoints, served weights and per-update logs. A strict
+  read-only audit with native `622c37c2` made zero optimizer updates and matched
+  all **696 logical targets / 720 physical records**, independently reconstructed
+  position masks and all 348 per-update position summaries to the final saved
+  checkpoint. Positive-weight positions were **26,027 lexical, 26,027
+  reconstruction, 2,880 structure, 1,440 terminal and 720 modality**; objective
+  counters overlap and are not additional sources or examples. All 348 updates'
+  balance-recorder rows/assignments reconcile; independent internal-router
+  position coverage remains unmeasured. The separate one-to-two-update lifecycle
+  retains its original resume identity and remains unqualified for full-population
+  coverage. These are two fits, not one 350-update trajectory. Learned success,
+  production assets, GPU behavior and production throughput remain unqualified.
+  [Exact archive inventory, audit, source map and limits](evidence/v8-fullfit-campaign-revalidation-2026-11-22/README-campaign-45025994295.md).
+- **The earlier frozen full-support campaign remains in progress.**
   [Run 45023684906](https://github.com/werg/tracing-js-self/actions/runs/45023684906)
   freezes `9cf091e6/1a69d9d` for exact target and scored-position coverage.
-  [Run 45025994295](https://github.com/werg/tracing-js-self/actions/runs/45025994295)
-  freezes `b4157952/2f3e6cf0` and additionally captures actual router-recorder
-  rows and assignments. Both requalify all 64 original sources and the 48/12/4
-  split before a separate two-update lifecycle fit and a fresh 348-update fit.
-  Final optimizer, position and checkpoint totals remain unclaimed until the
-  final comparisons and retained artifacts succeed. The two fits are not one
-  350-update trajectory. The router-enabled campaign does not independently
-  measure every internal router position.
+  Both campaigns retain their own 64-source population and 48/12/4 split. This
+  earlier schema has no router fields: its original reader and independent
+  target/position reconstruction must be retained, without adding fictional
+  zeros or retrofitting newer receipts. Its final totals remain unclaimed.
 - **Router receipt validation is corrected on native main.** Source `19d01124`
   and retained evidence `c489ff8e` refuse nonempty maps with zero audited
   updates, assignments below rows, backwards counts, dropped selectors and
@@ -143,7 +174,19 @@ no mocked clock or previous passing run supplies that authority.
   Reported rows/assignments are scoped to the existing balance recorder;
   suppressed reconstruction, no-grad paths and later auxiliary work are
   excluded. Neither this stricter audit nor a checkpoint metadata receipt
-  qualifies the still-running full campaigns.
+  substitutes for qualification of a different frozen campaign.
+- **Owned-Promise return jobs are pushed as a separate candidate.** Producer
+  `f9d3363a` / native `a8b2a783` use the shared FIFO for explicit enqueue,
+  subscription and settlement turns while the completed async body and pending
+  result Promise remain distinct. Final focused runs pass six JavaScript and
+  eleven independent Python cases. Future settlement identities are reserved;
+  both subscription and restore reject changed owners/targets, wrong resolution
+  metadata and extra fields on reserved jobs. Throwing a Promise preserves the
+  object as the rejection reason. Earlier raw logs and the independent accepted
+  extra-field reproduction are preserved separately; initial four/ten logs were
+  overwritten and are reported only as historical observations. Original-source
+  projection, observable then-property behavior and wider cross-family/native
+  qualification remain in progress, so this candidate is not promoted.
 
 ### Production routes and language population
 
