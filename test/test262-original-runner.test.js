@@ -130,6 +130,7 @@ test('async uses original doneprintHandle with exact completion and meaningful f
   statuses(both('print("Test262:AsyncTestComplete");',settings),'failed');
   statuses(both('__consolePrintHandle__=function(){};$DONE();print("Test262:AsyncTestComplete");',settings),'failed');
   statuses(both('var done=$DONE;$DONE=function(){};done();',settings),'passed');
+  statuses(both('new $DONE();',settings),'passed');
   statuses(both('var n=0;__consolePrintHandle__=function(){if(++n===1)print("Test262:AsyncTestComplete");};$DONE();$DONE();',settings),'failed');
 });
 
@@ -140,6 +141,7 @@ test('module reference async completion requires the original harness call and i
     ['$DONE=function(){print("Test262:AsyncTestComplete");};$DONE();','failed'],
     ['__consolePrintHandle__=function(){};$DONE();print("Test262:AsyncTestComplete");','failed'],
     ['var done=$DONE;$DONE=function(){};done();','passed'],
+    ['new $DONE();','passed'],
     ['var n=0;__consolePrintHandle__=function(){if(++n===1)print("Test262:AsyncTestComplete");};$DONE();$DONE();','failed']
   ]){
     const [options]=moduleFixture(body,{flags:'module, async'});

@@ -16,6 +16,11 @@ export function createTest262ReferenceCompletion(){
           calls++;depth++;
           try{return Reflect.apply(target,receiver,args);}
           finally{depth--;}
+        },
+        construct(target,args,newTarget){
+          calls++;depth++;
+          try{return Reflect.construct(target,args,newTarget);}
+          finally{depth--;}
         }
       });
       Object.defineProperty(context,'$DONE',{...descriptor,value:observed});

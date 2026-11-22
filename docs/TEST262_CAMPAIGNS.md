@@ -102,6 +102,38 @@ current files. The library's `validateOriginalTest262Report(report)` can inspect
 historical report integrity without claiming that the currently installed code
 produced that historical observation.
 
+## Merge shard observations without dropping missing inputs
+
+Keep each shard's report named `report.json.gz` in its own directory and merge
+against the acquired catalog:
+
+```sh
+node tools/merge-test262-campaigns.mjs \
+  --catalog corpus/out/test262/catalog.json.gz \
+  --directory corpus/out/test262/parts --shard-count 8 \
+  --out corpus/out/test262/summary.json.gz
+```
+
+The merger checks the exact population, expected source-path shard assignment,
+implementation, runtime, policy and attempt history. Duplicate parts, partial
+selections presented as complete shards, changed inputs and mixed policies are
+rejected before any part contributes results. It processes one complete report
+at a time and retains a digest of each input artifact.
+
+Missing shard reports produce an explicit list of missing source variants;
+their stages count as `not_run`. A report for every shard sets
+`allShardsPresent`, while `requestedWorkFinished` also requires that the requested
+stages contain no unrun or interrupted work. Guest errors and resource limits
+remain separate terminal outcomes. Neither flag establishes language conformance,
+native trace admission or data eligibility.
+
+The current inventory workflow acquires and parses the moving upstream tree.
+The manually dispatched native sweep acquires one actual revision for all its
+shards, records the container image and toolchain, retains original inputs, and
+uses the same campaign and merger. Its operator-selected 16 shards divide work;
+they do not cap the source population. The former frozen edition workflow has
+been retired; historical evidence remains unchanged.
+
 ## Evidence boundaries and remaining work
 
 Parsing, owned execution, reference execution, source correspondence, independent
