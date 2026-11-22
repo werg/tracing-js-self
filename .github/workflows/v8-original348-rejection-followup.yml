@@ -1,0 +1,120 @@
+name: Original348 evaluation with complete rejection evidence
+
+on:
+  push:
+    branches: [codex/v8-original348-rejection-followup-20261122]
+    paths-ignore: ['docs/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: v8-original348-rejection-followup-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  evaluate-fixed-rejection-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+      TZ: UTC
+      TRACING_REFERENCE_ISOLATION: trusted-process
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          path: evaluation-driver
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 9cf091e6ccc5add960ef0897576d0c391b199a65
+          path: tracing-js-self
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: werg/megatoken
+          ref: 99f018e045e760d802ff65f69bac1435985068aa
+          fetch-depth: 2
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.22.3'
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.14'
+      - name: Install original packages and verify frozen measurement guards
+        run: |
+          test -L /proc/self/ns/time
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+          python -m unittest discover -s evaluation-driver/tools -p 'test_*original348*.py' -v \
+            2>&1 | tee "$RUNNER_TEMP/original348-followup-controls.log"
+      - name: Verify all seventeen native fragment and acknowledgement controls
+        working-directory: megatoken
+        run: |
+          python -m pytest -q tests/test_semantic_model_v8.py \
+            --junitxml="$RUNNER_TEMP/original348-followup-native-controls.xml" \
+            2>&1 | tee "$RUNNER_TEMP/original348-followup-native-controls.log"
+          python - <<'PY'
+          import os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'original348-followup-native-controls.xml').getroot().iter('testcase'))
+          assert len(cases)==17 and all(all(case.find(tag) is None for tag in ('failure','error','skipped')) for case in cases)
+          PY
+      - name: Download exact original failed evaluation and unmodified serving bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/werg/tracing-js-self/actions/artifacts/14763634179/zip > "$RUNNER_TEMP/original348-failed-evaluation.zip"
+      - name: Freeze identical studies and repeat all sixteen cases
+        run: |
+          python evaluation-driver/tools/replay-v8-original348-rejected-fragments.py \
+            --archive "$RUNNER_TEMP/original348-failed-evaluation.zip" \
+            --producer "$GITHUB_WORKSPACE/tracing-js-self" --native "$GITHUB_WORKSPACE/megatoken" \
+            --work "$RUNNER_TEMP/original348-followup-inputs" \
+            --out "$RUNNER_TEMP/original348-rejection-followup" \
+            2>&1 | tee "$RUNNER_TEMP/original348-followup-live.log"
+      - name: Retain exact inference and training source identities
+        if: always()
+        run: |
+          python - <<'PY'
+          import importlib.metadata,json,os,platform,subprocess
+          from pathlib import Path
+          workspace=Path(os.environ['GITHUB_WORKSPACE'])
+          sources={name:subprocess.check_output(['git','-C',str(workspace/name),'rev-parse','HEAD'],text=True).strip()
+                   for name in ('evaluation-driver','tracing-js-self','megatoken')}
+          packages={}
+          for name in ('torch','numpy','safetensors','tokenizers'):
+              try: packages[name]=importlib.metadata.version(name)
+              except importlib.metadata.PackageNotFoundError: packages[name]=None
+          record={'inferenceSources':sources,'trainingProducer':'9cf091e6ccc5add960ef0897576d0c391b199a65',
+                  'trainingNative':'1a69d9da3254b7568c831d12866a629c206cf4fe','python':platform.python_version(),
+                  'platform':platform.platform(),'node':subprocess.check_output(['node','--version'],text=True).strip(),
+                  'packages':packages,'runId':int(os.environ['GITHUB_RUN_ID']),'runAttempt':int(os.environ['GITHUB_RUN_ATTEMPT'])}
+          (Path(os.environ['RUNNER_TEMP'])/'original348-followup-runtime.json').write_text(json.dumps(record,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v8-original348-rejection-followup
+          if-no-files-found: error
+          retention-days: 90
+          include-hidden-files: true
+          path: |
+            ${{ runner.temp }}/original348-rejection-followup/
+            ${{ runner.temp }}/original348-followup-controls.log
+            ${{ runner.temp }}/original348-followup-native-controls.xml
+            ${{ runner.temp }}/original348-followup-native-controls.log
+            ${{ runner.temp }}/original348-followup-live.log
+            ${{ runner.temp }}/original348-followup-runtime.json
