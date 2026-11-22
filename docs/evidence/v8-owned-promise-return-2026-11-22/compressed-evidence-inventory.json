@@ -1,0 +1,12 @@
+{
+  "schema": "lossless-evidence-storage/1",
+  "originalFile": "nested-async-source-evidence.json",
+  "originalBytes": 3165470,
+  "originalSha256": "cdb0446a38d30da32af5cad7aef8ad97d98960eae6f742dda3131207e5101eb6",
+  "compressedFile": "nested-async-source-evidence.json.gz",
+  "compressedBytes": 203953,
+  "compressedSha256": "ade464be68fc59d31c0aaae299c2139f4009e34bc210dc1eb4d1f5d502a01fc0",
+  "gzipMtime": 0,
+  "gzipFilename": "",
+  "decompressedOriginalBytesVerified": true
+}

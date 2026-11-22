@@ -1,0 +1,47 @@
+✖ owned async Promise returns are explicit while callbacks and thenables stay refused (881.622014ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1328.31548
+
+✖ failing tests:
+
+test at test/semantic-async-call-source-v8.test.js:164:1
+✖ owned async Promise returns are explicit while callbacks and thenables stay refused (881.622014ms)
+  AssertionError [ERR_ASSERTION]: Promise.resolve shadow: [eval]:1
+  const unmodifiedThen=Promise.prototype.then;async function h(Promise){return Promise.resolve(1);}async function run(){const nativeResolve=Promise.resolve;return await h({resolve:function(value){return nativeResolve(value+1);}});};unmodifiedThen.call(run(),value=>process.stdout.write(JSON.stringify(value)))
+                                                                                                                                                                                                           ^
+  
+  TypeError: PromiseResolve called on non-object
+      at resolve (<anonymous>)
+      at Object.resolve ([eval]:1:202)
+      at h ([eval]:1:86)
+      at run ([eval]:1:168)
+      at [eval]:1:251
+      at runScriptInThisContext (node:internal/vm:219:10)
+      at node:internal/process/execution:451:12
+      at [eval]-wrapper:6:24
+      at runScriptInContext (node:internal/process/execution:449:60)
+      at evalFunction (node:internal/process/execution:283:30)
+  
+  Node.js v24.22.3
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/9faed68167fb/async-return-producer/test/semantic-async-call-source-v8.test.js:184:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

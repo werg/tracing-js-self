@@ -1,0 +1,1 @@
+{"source":"async function target(){return 1;}async function run(){let order=\"\";const targetPromise=target();async function outer(){return targetPromise;}const adopted=outer();adopted.then(()=>{order+=\"a\";});targetPromise.then(()=>{order+=\"d\";});targetPromise.then(()=>{order+=\"q\";});await adopted;return order;}","result":"dqa"}

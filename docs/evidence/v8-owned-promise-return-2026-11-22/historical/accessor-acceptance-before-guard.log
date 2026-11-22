@@ -1,0 +1,27 @@
+✖ owned async Promise returns are explicit while callbacks and thenables stay refused (883.927219ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1552.869354
+
+✖ failing tests:
+
+test at test/semantic-async-call-source-v8.test.js:164:1
+✖ owned async Promise returns are explicit while callbacks and thenables stay refused (883.927219ms)
+  AssertionError [ERR_ASSERTION]: own Promise then accessor was accepted without ordinary then lookup
+      at TestContext.<anonymous> (file:///workspace/scratch/9faed68167fb/async-return-producer/test/semantic-async-call-source-v8.test.js:189:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

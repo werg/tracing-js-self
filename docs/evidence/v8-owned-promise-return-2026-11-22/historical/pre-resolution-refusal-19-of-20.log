@@ -1,0 +1,49 @@
+✔ nested async source: immediate fulfillment (871.465858ms)
+✔ nested async source: immediate rejection (718.261794ms)
+✔ nested async source: rejection after suspension (760.215424ms)
+✔ nested async source: rejected await is caught by child (977.803765ms)
+✔ nested async source: sibling FIFO and repeated awaits (1747.281827ms)
+✔ nested async source: detachment inside an existing reaction job (1042.493551ms)
+✔ nested async source: receiver and live capture cells (1433.046697ms)
+✔ nested async source: nested detached children (1250.893367ms)
+✔ nested async source: ordinary reference completion (733.707729ms)
+✔ nested async source: owned Promise return adoption FIFO (2242.496769ms)
+✔ nested async source: generator yields a child execution Promise (1993.636294ms)
+✔ owned async Promise return projects exact source-bound enqueue, subscription and settlement jobs (21.327925ms)
+✔ async resume verifies active-turn ownership, settled input and sibling FIFO atomically (30.114714ms)
+✔ generic operations cannot bypass an attached async call or execution Promise owner (8.651997ms)
+✔ restored async continuation keeps its exact receiver and live capture aliases (7.464908ms)
+✔ a changed async completion cannot acquire fresh source correspondence by rehashing (312.372688ms)
+✔ async event ownership is deterministic and cannot be duplicated before preparation (233.724276ms)
+✔ an async observer failure rolls back detachment, caller scope and continuation identity (43.17972ms)
+✖ async Promise callbacks and assimilation remain explicit refusals (58.0737ms)
+✔ actual native async consumer replays every source context and restored continuation (9893.913635ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 19
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24828.370417
+
+✖ failing tests:
+
+test at test/semantic-async-call-source-v8.test.js:163:1
+✖ async Promise callbacks and assimilation remain explicit refusals (58.0737ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///workspace/scratch/9faed68167fb/async-return-producer/test/semantic-async-call-source-v8.test.js:170:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /adoption|assimilation|thenable|then getter|explicit call protocol|async Promise callbacks/,
+    operator: 'throws',
+    diff: 'simple'
+  }

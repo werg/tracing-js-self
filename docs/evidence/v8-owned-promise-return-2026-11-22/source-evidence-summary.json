@@ -1,0 +1,366 @@
+{
+  "schema": "owned-promise-return-source-evidence-summary/1",
+  "producerCommit": "53b478b76071d0fdc3d5e5dd21de1f7dd2d4c502",
+  "nativeCommit": "c192da5cd55f7a6380a89d497142441df456c04d",
+  "protocolCommits": {
+    "producer": "7cdecaaa7e925b723cffb2fccb295a38059e43eb",
+    "native": "da817b269500d56da9983f22f58ddf1dbb48fc19"
+  },
+  "contract": {
+    "digest": "f8546a803d7b6e1faa696e92d6e4df3e48de34d40475dce7c166a1587a9eb472",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "interoperabilityDigest": "f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661",
+    "producerNativeBytesEqual": true
+  },
+  "nodeVersion": "v24.22.3",
+  "sourceRun": {
+    "rawLog": "source-suite-22-of-22.log",
+    "rawLogSha256": "2bab63466b8d55cca28008990cee15a4aa385e6a4b2fb19f93093a19ef9c6b11",
+    "evidence": "nested-async-source-evidence.json",
+    "evidenceSha256": "cdb0446a38d30da32af5cad7aef8ad97d98960eae6f742dda3131207e5101eb6",
+    "sourceCases": 12,
+    "actualNativeCases": 12,
+    "generatedContexts": 309,
+    "totalRestoredCheckpointCuts": 47,
+    "nativeTotals": {
+      "contexts": 309,
+      "generatedRecords": 309,
+      "algorithmRecords": 0,
+      "regionRecords": 4,
+      "detailedRecords": 193,
+      "protocolRecords": 112
+    },
+    "admitted": false,
+    "trainingAdmission": false,
+    "optimizerUpdates": 0,
+    "testCount": 22,
+    "originalDispositionLog": "original-node-dispositions.jsonl",
+    "originalDispositionLogSha256": "2ac8a5008beb5722973f6b238762ca07440b05185d6235cf1f9f61209f5d48d1",
+    "originalOwnedFifoLog": "original-owned-fifo-dqa.log",
+    "originalOwnedFifoLogSha256": "392fd5e9fe6f91c657e42590cfa0f8afecb2182a9af5cf3d311c407c2d264485"
+  },
+  "positiveOriginalSources": [
+    {
+      "name": "positive Promise.resolve",
+      "sourceSha256": "4a8faf5834ef52428d2cea6c4032fc21150c38aab1f700cfabc8f2308283bc97",
+      "originalOutcome": "qa",
+      "protocolRecords": 9
+    },
+    {
+      "name": "positive owned Promise FIFO",
+      "sourceSha256": "4d6056677027eccff880d73da32df7610d8337e15d329fa1611822c839a79a5a",
+      "originalOutcome": "dqa",
+      "protocolRecords": 14
+    }
+  ],
+  "negativeMutationBaselinesAndRefusals": [
+    {
+      "name": "own then override",
+      "sourceSha256": "464ed4a9fa81f4c370f6a7500d47fcc01120785b1a4f911cba47966e12fc2513",
+      "originalOutcome": "t2",
+      "refusal": "Not a writable guest object"
+    },
+    {
+      "name": "own then accessor",
+      "sourceSha256": "51324b5e39b719d9371a740580a7f9d6ef20e9faf5c87421f9adb5371dd2aead",
+      "originalOutcome": "gt2",
+      "refusal": "Protocol source projection: async Promise return cannot prove its then lookup and resolver are unmodified"
+    },
+    {
+      "name": "Promise.prototype.then override",
+      "sourceSha256": "d6549aa0815084c1d1612bad33fa3fb074ed3e964d688aa31c67639b525aee85",
+      "originalOutcome": "t",
+      "refusal": "Unsupported property receiver (no host fallback)"
+    },
+    {
+      "name": "Promise.resolve override",
+      "sourceSha256": "1c02ec5394f20d39cfa220bed5bfb8bfcf33163c15355269a4d80154f28b8a2e",
+      "originalOutcome": 2,
+      "refusal": "Not a writable guest object"
+    },
+    {
+      "name": "Promise.resolve shadow",
+      "sourceSha256": "d12a73eb5b91b09c00162e2a1a8004619a11052a79205814820489954398f212",
+      "originalOutcome": 2,
+      "refusal": "Protocol source projection: async Promise return cannot prove its then lookup and resolver are unmodified"
+    }
+  ],
+  "sourceCases": [
+    {
+      "name": "immediate fulfillment",
+      "sourceSha256": "27477ffd88b1d0a39c6b1bc90a258c542e9919636337f997e9ce3adb897d90d5",
+      "nativeCounts": {
+        "contexts": 13,
+        "generatedRecords": 13,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 9,
+        "protocolRecords": 4
+      },
+      "restoredCheckpointCuts": 1,
+      "asyncRecordOrder": [
+        "async.complete"
+      ]
+    },
+    {
+      "name": "immediate rejection",
+      "sourceSha256": "1b6d8cbeb16a5643cef1a4f9c34d01dcd51a2f9d1382cc796f2db888a753c5b4",
+      "nativeCounts": {
+        "contexts": 13,
+        "generatedRecords": 13,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 9,
+        "protocolRecords": 4
+      },
+      "restoredCheckpointCuts": 1,
+      "asyncRecordOrder": [
+        "async.complete"
+      ]
+    },
+    {
+      "name": "rejection after suspension",
+      "sourceSha256": "bbb8135c821661cac4f6d26f35084d8b0fd248d6d1683aae6ac351cd24feed0a",
+      "nativeCounts": {
+        "contexts": 17,
+        "generatedRecords": 17,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 11,
+        "protocolRecords": 6
+      },
+      "restoredCheckpointCuts": 3,
+      "asyncRecordOrder": [
+        "async.await",
+        "async.resume",
+        "async.complete"
+      ]
+    },
+    {
+      "name": "rejected await is caught by child",
+      "sourceSha256": "157861153cdae801259ae283481cf1b7d2d03b18910f922e1e1f538f6981ee5d",
+      "nativeCounts": {
+        "contexts": 17,
+        "generatedRecords": 17,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 11,
+        "protocolRecords": 6
+      },
+      "restoredCheckpointCuts": 3,
+      "asyncRecordOrder": [
+        "async.await",
+        "async.resume",
+        "async.complete"
+      ]
+    },
+    {
+      "name": "sibling FIFO and repeated awaits",
+      "sourceSha256": "1ced72ce9cbc6531475db9e1b11d6ff43831443395386ce9e5fc42ee53e2e6a4",
+      "nativeCounts": {
+        "contexts": 37,
+        "generatedRecords": 37,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 23,
+        "protocolRecords": 14
+      },
+      "restoredCheckpointCuts": 10,
+      "asyncRecordOrder": [
+        "async.await",
+        "async.await",
+        "async.resume",
+        "async.await",
+        "async.resume",
+        "async.await",
+        "async.resume",
+        "async.complete",
+        "async.resume",
+        "async.complete"
+      ]
+    },
+    {
+      "name": "detachment inside an existing reaction job",
+      "sourceSha256": "1bc1dd3792186ab1aef013d7f9be3d6407080b23dc3745cad587e7d6c9e8be6d",
+      "nativeCounts": {
+        "contexts": 24,
+        "generatedRecords": 24,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 13,
+        "protocolRecords": 11
+      },
+      "restoredCheckpointCuts": 3,
+      "asyncRecordOrder": [
+        "async.await",
+        "async.resume",
+        "async.complete"
+      ]
+    },
+    {
+      "name": "receiver and live capture cells",
+      "sourceSha256": "150c6784abe7f0dfcaad55197d9c8d188fabdac692599e713ae3414688ed2750",
+      "nativeCounts": {
+        "contexts": 26,
+        "generatedRecords": 26,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 18,
+        "protocolRecords": 6
+      },
+      "restoredCheckpointCuts": 3,
+      "asyncRecordOrder": [
+        "async.await",
+        "async.resume",
+        "async.complete"
+      ]
+    },
+    {
+      "name": "nested detached children",
+      "sourceSha256": "e9f6abc4ab5cb4511f9c3486d33b65b010efee40a8de9a695c4ab77724f811bd",
+      "nativeCounts": {
+        "contexts": 29,
+        "generatedRecords": 29,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 15,
+        "protocolRecords": 14
+      },
+      "restoredCheckpointCuts": 8,
+      "asyncRecordOrder": [
+        "async.await",
+        "async.await",
+        "async.resume",
+        "async.complete",
+        "async.resume",
+        "async.await",
+        "async.resume",
+        "async.complete"
+      ]
+    },
+    {
+      "name": "ordinary reference completion",
+      "sourceSha256": "9610f3dc7bd45fc5e1a0962ff630c29954224b2281b7f8fece3d68677b4a1068",
+      "nativeCounts": {
+        "contexts": 19,
+        "generatedRecords": 19,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 13,
+        "protocolRecords": 6
+      },
+      "restoredCheckpointCuts": 3,
+      "asyncRecordOrder": [
+        "async.await",
+        "async.resume",
+        "async.complete"
+      ]
+    },
+    {
+      "name": "owned Promise.resolve return adoption",
+      "sourceSha256": "45767365322a8f4b54c342817db79ebcedcd386dc9eb80dc7fcfaadb76d5d723",
+      "nativeCounts": {
+        "contexts": 34,
+        "generatedRecords": 34,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 24,
+        "protocolRecords": 9
+      },
+      "restoredCheckpointCuts": 4,
+      "asyncRecordOrder": [
+        "async.complete",
+        "async.resolve.enqueue",
+        "async.resolve.subscribe",
+        "async.resolve.settle"
+      ]
+    },
+    {
+      "name": "owned Promise return adoption FIFO",
+      "sourceSha256": "118b708d8a825060e4a3e889be4896ee183c64b5f61a7ab532e35098e0f0ced2",
+      "nativeCounts": {
+        "contexts": 44,
+        "generatedRecords": 44,
+        "algorithmRecords": 0,
+        "regionRecords": 1,
+        "detailedRecords": 29,
+        "protocolRecords": 14
+      },
+      "restoredCheckpointCuts": 5,
+      "asyncRecordOrder": [
+        "async.complete",
+        "async.complete",
+        "async.resolve.enqueue",
+        "async.resolve.subscribe",
+        "async.resolve.settle"
+      ]
+    },
+    {
+      "name": "generator yields a child execution Promise",
+      "sourceSha256": "272231a15692f461a9be5391b4ef24976c0179c8a29c7cd8836b8e0eaa5c6bc8",
+      "nativeCounts": {
+        "contexts": 36,
+        "generatedRecords": 36,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 18,
+        "protocolRecords": 18
+      },
+      "restoredCheckpointCuts": 3,
+      "asyncRecordOrder": [
+        "async.await",
+        "async.resume",
+        "async.complete"
+      ]
+    }
+  ],
+  "codeHashes": {
+    "producerAsyncSource": "bca84c17c9fa6a50a2d722605b160242c7ae00d6ae08f13573233d52e668c062",
+    "producerProjection": "aba7c29b6a7425bed588364820c9caa711f90b1af82cdd9afd9065c2f54cbfb8",
+    "nativeAsyncEngine": "3a90a5d54f35db40da685983325fe890fbc344feec8197be896684bbfdbd2ef2",
+    "producerContract": "05a1a7fc6b5c072324334f49696ffe4f122d2181ba4c211f6719c401ca365905",
+    "nativeContract": "05a1a7fc6b5c072324334f49696ffe4f122d2181ba4c211f6719c401ca365905"
+  },
+  "protocolControls": {
+    "producer": {
+      "log": "protocol-js-6-of-6.log",
+      "sha256": "8d4f9b92153ea39bbd1dae79fe3742abd4b850e069b5badcfe55a16f42b067f4"
+    },
+    "native": {
+      "log": "native-async-11-of-11.log",
+      "sha256": "0085d2fe770f9c904745927c3e33bba2ea49faad98932efd37127c7ae5f11fd8"
+    },
+    "reservedProducer": {
+      "log": "reserved-identity-js-6-of-6.log",
+      "sha256": "7a118c350203102d67640cf13593a6b7af0ec274830189d1f03caf762d150eaa"
+    },
+    "reservedNative": {
+      "log": "reserved-identity-native-11-of-11.log",
+      "sha256": "0c42ab8123fcb13fb141f85fe1c2ccfba497885db9741e077f51097581cc42ee"
+    }
+  },
+  "contractChecks": {
+    "producerGeneratorSnapshot": "passed",
+    "nativeBytesExact": true,
+    "nativeContractHashRecomputed": "passed",
+    "nativeSourceIdentityTests": "7/7 passed",
+    "historicalEvidencePinsPreserved": [
+      "a952385535b9b5e19d737206286f6f26c149f7301c51b4b106fe3b1cae5ab55a"
+    ]
+  },
+  "historicalAttempts": [
+    {
+      "log": "historical/pre-resolution-refusal-19-of-20.log",
+      "result": "19/20",
+      "disposition": "Obsolete assertion expected plain Promise.resolve return to refuse; source proof later supports the exact owned case."
+    },
+    {
+      "log": "historical/unbound-resolve-harness-error.log",
+      "disposition": "Harness called Promise.resolve without its constructor receiver and received PromiseResolve called on non-object; not a product failure."
+    },
+    {
+      "log": "historical/accessor-acceptance-before-guard.log",
+      "disposition": "Real source-projection gap: runtime accessor handling diverged from original result gt2 and projection accepted it. Final guard refuses before source qualification."
+    }
+  ]
+}
