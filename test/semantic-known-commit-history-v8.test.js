@@ -2,7 +2,7 @@
 // checks establish recovery ordering/identity, not learned execution quality.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {existsSync,readFileSync,readlinkSync,writeFileSync} from 'node:fs';
+import {existsSync,readFileSync,readlinkSync} from 'node:fs';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
@@ -52,9 +52,6 @@ async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}
   };
   async function open(faultAction=null){
     const executionLease=await lock.acquire(),log=join(directory,'decoder-'+(++count)+'.log');
-    // Refusals can complete before the child initializes its decoder log.
-    // Give the observation an empty baseline without waiting for model work.
-    writeFileSync(log,'',{flag:'wx'});
     const args=faultAction?[faultPeer,'--peer',peer,'--fault',fault,'--fault-action',faultAction]:[peer];
     args.push('--decoder-log',log,'--request-journal-dir',requests.directory,'--execution-lock-fd','3',
       '--execution-lock-path',executionLease.lockPath,'--execution-session-id',sessionId,'--execution-stream-id',streamId,
@@ -83,7 +80,8 @@ async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}
     driver.startAutomaticHistory({journal:history,acknowledge,executionClock:createSelectedOrchestrationExecutionClock()});
     result=await driver.run();
     assert.equal(result.status,'failed',JSON.stringify(result.failure));
-    assert.equal(result.coordinatorAttempts.at(-1).status,'acknowledgement-unknown');
+    assert.equal(result.coordinatorAttempts.at(-1)?.status,'acknowledgement-unknown',
+      JSON.stringify({failure:result.failure,transport:first.select.status()}));
     receipt=first.select.durableRequestReceipt();assert(receipt);
   }finally{await close(first);}
   const entries=await history.readLatest(head),tail=entries.at(-1);
@@ -93,6 +91,17 @@ async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}
     head:()=>copy(head),original:result,firstLog:first.log};
 }
 const decoderLines=path=>readFileSync(path,'utf8').split('\n').filter(line=>line.startsWith('ORCH_DECODER '));
+function assertNoRecoveryOrDecoderWork(peer){
+  assert.equal(peer.recoverCalls(),0);assert.equal(peer.select.metrics().runtime.rpcCalls,0);
+  assert.equal(peer.select.metrics().predictionAttempts,0);
+  // The peer exclusively creates its own log. A local refusal can finish
+  // before that initialization; absence is allowed only with zero recovery
+  // entries and zero native replies. Positive paths require the real log.
+  let observed;
+  try{observed=readFileSync(peer.log,'utf8');}
+  catch(error){if(error.code==='ENOENT')return;throw error;}
+  assert.equal(observed,'');
+}
 const options=(context,fresh,overrides={})=>({historyJournal:context.history,historyReceipt:context.head(),
   initialPublic:context.initialPublic,select:fresh.select,policy:context.policy,
   acknowledge:context.acknowledge,executionClock:createSelectedOrchestrationExecutionClock(),
@@ -103,6 +112,7 @@ for(const action of ['track_join','track_progress'])test('actual lost '+action+'
   try{
     const before=copy(c.tail.checkpoint),priorHead=c.head();
     let restored=await RegionSelectedOrchestrationDriver.restoreLatest(before,options(c,fresh));
+    assert.equal(fresh.recoverCalls(),1);
     assert(c.head().position>priorHead.position);
     const retained=(await c.history.readLatest(c.head())).at(-1);
     assert.equal(Object.hasOwn(retained,'pending'),false);
@@ -116,6 +126,7 @@ for(const action of ['track_join','track_progress'])test('actual lost '+action+'
     // the same sealed cut, preserving all earlier reexecution costs and time.
     await c.close(fresh);fresh=await c.replacement();
     restored=await RegionSelectedOrchestrationDriver.restoreLatest(retained.checkpoint,options(c,fresh));
+    assert.equal(fresh.recoverCalls(),1);
     const repeated=(await c.history.readLatest(c.head())).at(-1).checkpoint;
     assert.deepEqual(repeated.bridge,retained.checkpoint.bridge);
     assert.deepEqual(repeated.childAttempts,retained.checkpoint.childAttempts);
@@ -155,9 +166,7 @@ test('wrong request scope or absent live clock refuses before any native recover
     }
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,
       options(c,fresh,{executionClock:{}})),/original live clock/);
-    assert.equal(fresh.select.metrics().predictionAttempts,0);
-    assert.equal(fresh.select.metrics().runtime.rpcCalls,0);assert.equal(fresh.recoverCalls(),0);
-    assert.equal(readFileSync(fresh.log,'utf8'),'');
+    assertNoRecoveryOrDecoderWork(fresh);
   }finally{await c.close(fresh);}
 });
 
@@ -173,9 +182,7 @@ test('lost reconciled-head acknowledgement leaves the old receipt fenced without
   const third=await c.replacement();
   try{
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,options(c,third)),/latest|later|head/);
-    assert.equal(third.select.metrics().predictionAttempts,0);
-    assert.equal(third.select.metrics().runtime.rpcCalls,0);assert.equal(third.recoverCalls(),0);
-    assert.equal(readFileSync(third.log,'utf8'),'');
+    assertNoRecoveryOrDecoderWork(third);
   }finally{await c.close(third);}
 });
 
@@ -186,8 +193,6 @@ test('a real expired pending clock cannot refund time on process replacement',{s
   const fresh=await c.replacement();
   try{
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,options(c,fresh)),/deadline has expired/);
-    assert.equal(fresh.select.metrics().predictionAttempts,0);
-    assert.equal(fresh.select.metrics().runtime.rpcCalls,0);assert.equal(fresh.recoverCalls(),0);
-    assert.equal(readFileSync(fresh.log,'utf8'),'');
+    assertNoRecoveryOrDecoderWork(fresh);
   }finally{await c.close(fresh);}
 });
