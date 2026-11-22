@@ -51,10 +51,14 @@ function facade(bridge,contexts=[],allowHost=false){
     return {sequence:row.sequence,mode,kind,...copy(fields)};
   }
   const host={
-    fork(){return facade(forkBridge(bridge),copy(contexts),allowHost);},
+    // Stored contexts are private snapshots: prepareModelContext clones its
+    // return value before storing it, and exportEpisode clones on exposure.
+    // Copy only the append-only index while staging; no handler can mutate a
+    // previous snapshot through either facade. The live machine still forks.
+    fork(){return facade(forkBridge(bridge),contexts.slice(),allowHost);},
     commitPrepared(staged){
       const prepared=facades.get(staged);if(!prepared)fail('unknown prepared source harness');
-      const nextBridge=prepared.bridge,nextContexts=copy(prepared.contexts);
+      const nextBridge=prepared.bridge,nextContexts=prepared.contexts.slice();
       // All fallible copying finishes before publication. Binding swaps do
       // not spread an arbitrarily large prefix or invoke a post-commit hook.
       bridge=nextBridge;contexts=nextContexts;

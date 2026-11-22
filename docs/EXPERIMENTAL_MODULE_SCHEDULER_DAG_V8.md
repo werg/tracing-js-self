@@ -122,6 +122,24 @@ updated together for this isolated candidate; the six existing interoperability
 example payloads and their digest are unchanged, and production native policy
 pins and training populations remain untouched.
 
+The follow-up engineering probe (`tools/probe-module-async-source.mjs`) also
+compares the unmodified original ESM outcome, the public source records and actual
+independent native replay of all 707 contexts. It correlates each of the ten
+uniquely owned module lifecycle events with one contiguous public source event
+transaction and checks the driver frame, execution Promise, await dependency and
+current async phase. Independent native scheduler replay checks each original
+lifecycle transition, and native public replay compares the full shared state at
+each corresponding cut and after final checkpoint recovery. Its receipt still
+marks source binding, masks and tokenizer qualification untested. Public module
+plan binding and module-state enforcement remain separate outstanding work.
+
+To make this full original-source probe practical, teacher event staging now
+copies the private index of prior context snapshots without repeatedly cloning
+the snapshots themselves. Contexts are cloned when captured and when exported;
+no caller can mutate an earlier stored context. Mutable machine state still
+forks for every event. Isolation and rejected-branch controls exercise both paths,
+and the complete 707-record source projection is unchanged by this optimization.
+
 Still required before public admission: public module scheduler operations and
 active-program plan binding; composition with the shared source compiler; independent
 native replay of those records; actual source/native/token/packing qualification.
