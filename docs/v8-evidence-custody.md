@@ -15,12 +15,13 @@ attempt, name, conclusion and complete log byte identity. The API attempt-job
 inventory must match this complete list with no missing, additional or repeated
 jobs. Original run/job timestamps are checked against the frozen attempt.
 
-The initial plan keeps two observations separate:
+The plan keeps these observations separate:
 
 | Original observation | Custody scope |
 | --- | --- |
 | Failed original348 evaluation, run `45046754653`, source `f4bcf1e0bfde2dee398df3df692246b3e93dadef` | The failed conclusion and original outcomes stay failed. No learned-quality or serving qualification is created by archiving them. |
 | Successful historical task-binding release gate, run `45044587251`, source `790f525c280b34a66ef8269aa7148bd9966b8639` | Exact earlier full64/two-update/package/restoration evidence. This source predates the later native-record and explicit physical-source identity corrections. |
+| Complete installed 665/69 source qualification, run `45047897532`, source `cc0d61e98dc6252749f4a2a4c8b669d79b0f7efa` | All 734 original/composed input rows were attempted and source-qualified without omissions. Native admission and learned-model scopes remain untested. |
 
 The later `7c20124f` and final corrected composed-pair archives are added only
 after their exact completed-run artifact metadata and complete log bytes are

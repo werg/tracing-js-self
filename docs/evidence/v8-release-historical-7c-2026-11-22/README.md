@@ -1,0 +1,9 @@
+# Historical7c original package and restoration proof
+
+Original run [45045811024](https://github.com/werg/tracing-js-self/actions/runs/45045811024), attempt1, completed successfully on producer `7c20124f3d89dfe1a8d5e892238e7b7f92589720` and native `ddda9a7339297e6074765a001743e2bb569e0eb9`. The complete original job log and independently reread Actions metadata are retained here. The corresponding custody plan pins the complete archive and log; adding this plan entry does not itself claim durable draft-asset custody has run.
+
+All64 original support sources were source-qualified and native-admitted, followed by the ordinary two-update lifecycle. Packaging and restoration freshly prepared the original source/native inputs, compared actual checkpoint and served state, and performed zero optimizer updates and zero decoder forward passes. The wrong external archive checksum was refused before extraction, and the original runtime asset locators were absent during successful restoration.
+
+This exact historical pair includes original task and historical native-record correspondence. It predates the explicit physical source identity correction and later invalid-fragment refusal. Its success is not acceptance of later source changes, full target coverage, learned-model quality or serving of checkpoint348. The retained original log preserves all qualifications and limitations.
+
+The complete original Actions ZIP is artifact `14764328184`, 349,499,070 bytes, SHA256 `206268ae9fe75808a0fdadafefbdb395caebb1607db0faa258548551d0c61ae4`. The enclosed evidence tar is 350,205,905 bytes, SHA256 `3ac27c6e32302ed650f3351227f0f44c75fca8c1612d73ac54698390363371d0`. The generated release package is 70,598,096 bytes, SHA256 `f0dbd19dc7906e7573e6da8a61d83b7863afccd5d915b36448e41f6c4ba6046c`. Large archive bytes were not downloaded locally for this metadata and original-log capture.
