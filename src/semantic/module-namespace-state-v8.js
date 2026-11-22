@@ -6,6 +6,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {hashAlgorithmData} from './program.js';
 
 const HASH=/^[a-f0-9]{64}$/;
+const LOWERED_LOCAL=/^__traced_eval_m[1-9][0-9]*_[A-Za-z_$][A-Za-z0-9_$]*$/;
 const copy=structuredClone;
 const own=Object.hasOwn;
 const fail=message=>{throw new TypeError('Experimental module namespace/1: '+message);};
@@ -47,13 +48,16 @@ export function buildExperimentalModuleNamespacePlan({modules,entryModule,namesp
     fail('module graph exceeds bounds or contains an invalid source');
   const cellMap=new Map();
   for(const cell of cells){
-    if(!exact(cell,['file','local','kind','mutable'])||typeof cell.mutable!=='boolean'||!canonicalPath(cell.file)||
+    if(!exact(cell,['file','local','kind','mutable','loweredName'])||typeof cell.mutable!=='boolean'||!canonicalPath(cell.file)||
        !own(modules,cell.file)||!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(cell.local)||
+       typeof cell.loweredName!=='string'||!LOWERED_LOCAL.test(cell.loweredName)||
        !['let','const','function','class','var'].includes(cell.kind)||cell.mutable!==mutableKind(cell.kind))
       fail('canonical source cell record is malformed');
     const id=cellId(cell.file,cell.local);
-    if(cellMap.has(id))fail('duplicate canonical source cell');
-    cellMap.set(id,{id,file:cell.file,local:cell.local,kind:cell.kind,mutable:mutableKind(cell.kind)});
+    if(cellMap.has(id)||[...cellMap.values()].some(row=>row.loweredName===cell.loweredName))
+      fail('duplicate canonical source cell or lowered binding');
+    cellMap.set(id,{id,file:cell.file,local:cell.local,kind:cell.kind,mutable:mutableKind(cell.kind),
+      loweredName:cell.loweredName});
   }
   const namespaceMap=new Map();
   for(const record of namespaces){
@@ -133,13 +137,15 @@ export function verifyExperimentalModuleNamespacePlan(plan){
     prior=row.file;files.add(row.file);
   }
   if(!files.has(plan.entryModule))fail('namespace plan entry is absent');
-  prior=null;const cells=new Set();
+  prior=null;const cells=new Set(),loweredNames=new Set();
   for(const row of plan.cells){
-    if(!exact(row,['id','file','local','kind','mutable'])||!canonicalPath(row.file)||!files.has(row.file)||
+    if(!exact(row,['id','file','local','kind','mutable','loweredName'])||!canonicalPath(row.file)||!files.has(row.file)||
        !/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(row.local)||!['let','const','function','class','var'].includes(row.kind)||
        typeof row.mutable!=='boolean'||row.mutable!==mutableKind(row.kind)||row.id!==cellId(row.file,row.local)||
+       typeof row.loweredName!=='string'||!LOWERED_LOCAL.test(row.loweredName)||
        prior!==null&&prior>=row.id)fail('namespace plan cell table is malformed');
-    prior=row.id;cells.add(row.id);
+    if(loweredNames.has(row.loweredName))fail('namespace plan lowered binding is duplicated');
+    prior=row.id;cells.add(row.id);loweredNames.add(row.loweredName);
   }
   prior=null;const namespaceFiles=new Set();
   for(const row of plan.namespaces){

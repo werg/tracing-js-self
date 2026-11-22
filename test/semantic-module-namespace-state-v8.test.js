@@ -15,8 +15,8 @@ const modules={'main.js':'import * as ns from "./cells.js"; export function run(
 const plan=()=>buildExperimentalModuleNamespacePlan({
   modules,entryModule:'main.js',
   cells:[
-    {file:'cells.js',local:'value',kind:'let',mutable:true},
-    {file:'cells.js',local:'fixed',kind:'const',mutable:false}
+    {file:'cells.js',local:'value',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'},
+    {file:'cells.js',local:'fixed',kind:'const',mutable:false,loweredName:'__traced_eval_m1_fixed'}
   ],
   namespaces:[{file:'cells.js',exports:[
     {name:'alias',file:'cells.js',local:'value'},
@@ -86,12 +86,12 @@ test('experimental plan refuses numeric export names and changed source/link tab
   const base=plan();
   assert.throws(()=>buildExperimentalModuleNamespacePlan({
     modules:{'main.js':'','cells.js':''},entryModule:'main.js',
-    cells:[{file:'cells.js',local:'value',kind:'let',mutable:true}],
+    cells:[{file:'cells.js',local:'value',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'}],
     namespaces:[{file:'cells.js',exports:[{name:'2',file:'cells.js',local:'value'}]}]
   }),/malformed/);
   assert.throws(()=>buildExperimentalModuleNamespacePlan({
     modules,entryModule:'main.js',
-    cells:[{file:'cells.js',local:'fixed',kind:'const',mutable:true}],
+    cells:[{file:'cells.js',local:'fixed',kind:'const',mutable:true,loweredName:'__traced_eval_m1_fixed'}],
     namespaces:[{file:'cells.js',exports:[]}]
   }),/malformed/);
   assert.throws(()=>createExperimentalModuleNamespaceState(plan(),{
@@ -114,4 +114,14 @@ test('experimental plan refuses numeric export names and changed source/link tab
   assert.throws(()=>applyExperimentalModuleNamespaceTransition(base,forged,{
     kind:'namespace.create',namespaceId:'obj1',moduleFile:'cells.js'
   }),/state is not bound|cell state is malformed/);
+});
+
+test('experimental cell records require unique linker-stable lowered names',()=>{
+  const fields={modules,entryModule:'main.js',namespaces:[{file:'cells.js',exports:[]}],
+    cells:[{file:'cells.js',local:'value',kind:'let',mutable:true,loweredName:'value'}]};
+  assert.throws(()=>buildExperimentalModuleNamespacePlan(fields),/cell record is malformed/);
+  assert.throws(()=>buildExperimentalModuleNamespacePlan({...fields,cells:[
+    {file:'cells.js',local:'value',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'},
+    {file:'cells.js',local:'other',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'}
+  ]}),/duplicate canonical source cell or lowered binding/);
 });

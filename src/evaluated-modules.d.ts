@@ -34,7 +34,7 @@ export interface EvaluatedModulesMetadata {
   importMetaPolicy:'empty-null-prototype';
   /** Opt-in experimental linker records; this metadata grants no public/native admission. */
   namespaceSourcePlan?:{
-    cells:Array<{file:string;local:string;kind:'let'|'const'|'var'|'function'|'class';mutable:boolean}>;
+    cells:Array<{file:string;local:string;loweredName:string;kind:'let'|'const'|'var'|'function'|'class';mutable:boolean}>;
     namespaces:Array<{file:string;exports:Array<{name:string;file:string;local:string}>}>;
   };
   /** Parallel TLA branches retain per-module environments and dependency

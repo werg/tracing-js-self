@@ -964,7 +964,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
   catch(error){reject('unowned generated guest syntax: '+error.message);}
   const namespaceSourcePlan=experimentalNamespacePlan&&namespaceTargets.size?{
     cells:order.flatMap(file=>[...get(file).symbols.entries()].map(([local,symbol])=>({
-      file,local,kind:symbol.kind,mutable:symbol.kind!=='const'
+      file,local,loweredName:renamed.get(file).get(local),kind:symbol.kind,mutable:symbol.kind!=='const'
     }))),
     namespaces:[...namespaceTargets].sort((a,b)=>a<b?-1:a>b?1:0).map(file=>({
       file,exports:[...exportedNames(file)].sort((a,b)=>a<b?-1:a>b?1:0).map(name=>{
