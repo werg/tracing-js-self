@@ -125,3 +125,19 @@ test('experimental cell records require unique linker-stable lowered names',()=>
     {file:'cells.js',local:'other',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'}
   ]}),/duplicate canonical source cell or lowered binding/);
 });
+
+test('experimental lowered-name mapping must preserve local suffix and module identity',()=>{
+  const source=plan(),badSuffix=structuredClone(source);
+  badSuffix.cells[0].loweredName='__traced_eval_m1_other';
+  assert.throws(()=>verifyExperimentalModuleNamespacePlan(badSuffix),/malformed/);
+  const mixed=structuredClone(source);
+  mixed.cells.find(row=>row.file==='cells.js'&&row.local==='fixed').loweredName='__traced_eval_m2_fixed';
+  assert.throws(()=>verifyExperimentalModuleNamespacePlan(mixed),/module indices are inconsistent/);
+  assert.throws(()=>buildExperimentalModuleNamespacePlan({
+    modules,entryModule:'main.js',namespaces:[{file:'cells.js',exports:[]}],
+    cells:[
+      {file:'cells.js',local:'value',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'},
+      {file:'main.js',local:'entry',kind:'let',mutable:true,loweredName:'__traced_eval_m1_entry'}
+    ]
+  }),/module indices are inconsistent/);
+});

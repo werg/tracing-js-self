@@ -24,15 +24,36 @@ test('experimental namespace linker cells map to owned runtime allocation and bi
   const owned=executeEvaluatedModulesSync({modules,entryModule:'main.js',exportName:'run'});
   assert.deepEqual(owned.result,{before:1,after:9,alias:9,keys:['alias','fixed','update','value']});
   const {bundle}=owned;
-  const sampleByOperation=new Map();
-  for(const event of bundle.events??[])if(!sampleByOperation.has(event.operation))
-    sampleByOperation.set(event.operation,event);
+  const runtimeNamespaceAllocations=bundle.events.flatMap(event=>(event.stateChanges??[])
+    .filter(change=>change.table==='heap'&&change.before===null&&change.after?.kind==='module-namespace')
+    .map(change=>({event,namespace:change.after})));
+  const captured=runtimeNamespaceAllocations[0];
+  const namespaceId=captured?.namespace?.id;
+  const relevant=bundle.events.map(event=>{
+    const pending=(event.stateChanges??[]).filter(change=>change.table==='frames'&&
+      (change.before?.pendingModuleNamespace?.namespaceId===namespaceId||
+       change.after?.pendingModuleNamespace?.namespaceId===namespaceId)).map(change=>({
+        frameId:change.id,before:change.before?.pendingModuleNamespace??null,
+        after:change.after?.pendingModuleNamespace??null
+      }));
+    const cells=(event.stateChanges??[]).filter(change=>change.table==='envs'&&
+      (Object.hasOwn(change.before?.bindings??{},valueCell.loweredName)||
+       Object.hasOwn(change.after?.bindings??{},valueCell.loweredName))).map(change=>({
+        envId:change.id,before:change.before?.bindings?.[valueCell.loweredName]??null,
+        after:change.after?.bindings?.[valueCell.loweredName]??null
+      }));
+    const reads=(event.readObservations??[]).filter(read=>read.kind==='binding'&&read.name===valueCell.loweredName);
+    return {eventId:event.eventId,sequence:event.sequence,operation:event.operation,siteId:event.siteId,
+      operands:event.operands,result:event.result,causes:event.causes,
+      namespaceAllocations:(event.stateChanges??[]).filter(change=>change.table==='heap'&&
+        change.after?.kind==='module-namespace').map(change=>({id:change.id,kind:change.after.kind,
+          names:change.after.namespaceExportNames,prototype:change.after.prototype,
+          extensible:change.after.extensible})),
+      pending,cells,reads};
+  }).filter(row=>row.namespaceAllocations.length||row.pending.length||row.cells.length||row.reads.length);
   console.log('NAMESPACE_RUNTIME_CAPTURE_JSON '+JSON.stringify({
-    bundleKeys:Object.keys(bundle),eventCount:bundle.events?.length,
-    sourcePlan:plan,spans:linked.metadata.instantiationAndEvaluation,
-    samples:[...sampleByOperation].slice(0,36).map(([operation,event])=>({
-      operation,keys:Object.keys(event),sample:JSON.stringify(event).slice(0,2600)
-    }))
+    bundleKeys:Object.keys(bundle),eventCount:bundle.events.length,sourcePlan:plan,
+    spans:linked.metadata.instantiationAndEvaluation,namespaceId,relevantEvents:relevant.slice(0,80)
   }));
   const namespaceAllocations=bundle.events.flatMap(event=>(event.stateChanges??[])
     .filter(change=>change.table==='heap'&&change.before===null&&change.after?.kind==='module-namespace')
@@ -49,9 +70,19 @@ test('experimental namespace linker cells map to owned runtime allocation and bi
   assert.ok(namespaceSpan);
   assert.ok(allocationSite.start>=namespaceSpan.start&&allocationSite.end<=namespaceSpan.end);
 
-  const getterReads=bundle.events.filter(event=>event.operation==='property.read'&&
-    event.operands?.[0]?.[0]==='ref'&&event.operands[0][1]===namespace.id);
-  assert.ok(getterReads.length>=3,'descriptor, Object.keys and alias reads dispatch live export getters');
+  assert.equal(allocationEvent.operation,'call.enter');
+  const pendingChanges=relevant.flatMap(row=>row.pending.map(change=>({...change,eventId:row.eventId,
+    operation:row.operation})));
+  assert.ok(pendingChanges.some(change=>change.after?.kind==='descriptor'),
+    'descriptor access retains a getter continuation');
+  assert.ok(pendingChanges.some(change=>change.before?.kind==='descriptor'&&!change.after),
+    'descriptor getter completion clears its continuation');
+  assert.ok(pendingChanges.some(change=>change.after?.kind==='namespace-inspection'),
+    'Object.keys retains an own-key inspection continuation');
+  const cellReads=relevant.flatMap(row=>row.reads.map(read=>({...read,eventId:row.eventId,
+    operation:row.operation})));
+  assert.ok(cellReads.some(read=>read.value?.[1]===1),'namespace getter reads the initial live cell value');
+  assert.ok(cellReads.some(read=>read.value?.[1]===9),'namespace getter reads the updated live cell value');
   const cellChanges=bundle.events.filter(event=>
     ['binding.initialize','binding.write','binding.update'].includes(event.operation)&&
     (event.stateChanges??[]).some(change=>change.table==='envs'&&

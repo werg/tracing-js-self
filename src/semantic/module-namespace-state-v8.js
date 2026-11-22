@@ -6,7 +6,8 @@ import {isDeepStrictEqual} from 'node:util';
 import {hashAlgorithmData} from './program.js';
 
 const HASH=/^[a-f0-9]{64}$/;
-const LOWERED_LOCAL=/^__traced_eval_m[1-9][0-9]*_[A-Za-z_$][A-Za-z0-9_$]*$/;
+const LOWERED_LOCAL=/^__traced_eval_m([1-9][0-9]*)_([A-Za-z_$][A-Za-z0-9_$]*)$/;
+const loweredIndex=value=>Number(LOWERED_LOCAL.exec(value)?.[1]);
 const copy=structuredClone;
 const own=Object.hasOwn;
 const fail=message=>{throw new TypeError('Experimental module namespace/1: '+message);};
@@ -46,14 +47,19 @@ export function buildExperimentalModuleNamespacePlan({modules,entryModule,namesp
   if(files.length<1||files.length>64||files.some(file=>!canonicalPath(file)||
       typeof modules[file]!=='string'||modules[file].length>65536))
     fail('module graph exceeds bounds or contains an invalid source');
-  const cellMap=new Map();
+  const cellMap=new Map(),fileIndices=new Map(),indexFiles=new Map();
   for(const cell of cells){
     if(!exact(cell,['file','local','kind','mutable','loweredName'])||typeof cell.mutable!=='boolean'||!canonicalPath(cell.file)||
        !own(modules,cell.file)||!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(cell.local)||
        typeof cell.loweredName!=='string'||!LOWERED_LOCAL.test(cell.loweredName)||
+       !cell.loweredName.endsWith('_'+cell.local)||
        !['let','const','function','class','var'].includes(cell.kind)||cell.mutable!==mutableKind(cell.kind))
       fail('canonical source cell record is malformed');
-    const id=cellId(cell.file,cell.local);
+    const id=cellId(cell.file,cell.local),index=loweredIndex(cell.loweredName);
+    if(fileIndices.has(cell.file)&&fileIndices.get(cell.file)!==index||
+       indexFiles.has(index)&&indexFiles.get(index)!==cell.file)
+      fail('lowered binding module indices are inconsistent');
+    fileIndices.set(cell.file,index);indexFiles.set(index,cell.file);
     if(cellMap.has(id)||[...cellMap.values()].some(row=>row.loweredName===cell.loweredName))
       fail('duplicate canonical source cell or lowered binding');
     cellMap.set(id,{id,file:cell.file,local:cell.local,kind:cell.kind,mutable:mutableKind(cell.kind),
@@ -137,14 +143,20 @@ export function verifyExperimentalModuleNamespacePlan(plan){
     prior=row.file;files.add(row.file);
   }
   if(!files.has(plan.entryModule))fail('namespace plan entry is absent');
-  prior=null;const cells=new Set(),loweredNames=new Set();
+  prior=null;const cells=new Set(),loweredNames=new Set(),fileIndices=new Map(),indexFiles=new Map();
   for(const row of plan.cells){
     if(!exact(row,['id','file','local','kind','mutable','loweredName'])||!canonicalPath(row.file)||!files.has(row.file)||
        !/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(row.local)||!['let','const','function','class','var'].includes(row.kind)||
        typeof row.mutable!=='boolean'||row.mutable!==mutableKind(row.kind)||row.id!==cellId(row.file,row.local)||
        typeof row.loweredName!=='string'||!LOWERED_LOCAL.test(row.loweredName)||
+       !row.loweredName.endsWith('_'+row.local)||
        prior!==null&&prior>=row.id)fail('namespace plan cell table is malformed');
+    const index=loweredIndex(row.loweredName);
+    if(fileIndices.has(row.file)&&fileIndices.get(row.file)!==index||
+       indexFiles.has(index)&&indexFiles.get(index)!==row.file)
+      fail('namespace plan lowered binding module indices are inconsistent');
     if(loweredNames.has(row.loweredName))fail('namespace plan lowered binding is duplicated');
+    fileIndices.set(row.file,index);indexFiles.set(index,row.file);
     prior=row.id;cells.add(row.id);loweredNames.add(row.loweredName);
   }
   prior=null;const namespaceFiles=new Set();
