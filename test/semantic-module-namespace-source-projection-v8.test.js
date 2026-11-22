@@ -14,7 +14,9 @@ test('module namespace opt-in source-projects dynamic reads, keys and live descr
     moduleEntry:'main.js',exportName:'run',modules,args:['value'],experimentalNamespacePlan:true,
     projectionOptions:{maxGenerated:20000}
   });
-  assert.notEqual(result.status,'projection_refused',result.reason);
+  const diagnostic=JSON.stringify({status:result.status,phase:result.phase,reason:result.reason,category:result.category});
+  assert.ok(result.exported,diagnostic);
+  assert.notEqual(result.status,'projection_refused',diagnostic);
   assert.notEqual(result.phase,'module-projection',result.reason);
   assert.equal(result.moduleReference,'passed');
   assert.equal(result.moduleCorrespondence,'passed');

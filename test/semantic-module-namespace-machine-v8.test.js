@@ -140,3 +140,11 @@ test('public program binding and checkpoint replay retain the exact plan across 
   const {integrity,...body}=altered;altered.integrity=hashAlgorithmData(body);
   assert.throws(()=>RegionExecutionHarness.restore(altered),/exact public shared state/);
 });
+
+test('ordinary closure entry cannot redirect a protected live cell through captures',()=>{
+  const c=create(initialize(controller())),{value}=names(c);
+  apply(c,{kind:'bind',name:'shadow',value:['num',1]},
+    {kind:'allocate',name:'o30',objectKind:'closure',length:null,properties:[],code:'helper',
+      captures:[{binding:value.loweredName,cell:'shadow'}],functionKind:'ordinary',lexicalReceiver:null});
+  refuses(c,{kind:'call',child:'guest1',callee:['ref','o30'],receiver:['undefined'],arguments:[]},/source-owned cell mapping/);
+});

@@ -186,6 +186,9 @@ export function assertModuleNamespaceTransitionV8(before,after,record){
   for(const name of logicalNames)demand(resolved(before,name)===resolved(after,name),
     'ordinary transition changed the source-owned cell mapping');
   if(!Object.hasOwn(MODULE_NAMESPACE_RECORD_FIELDS,record.kind)){
+    const beforeNodes=[...before.heap].filter(([,node])=>node.kind==='module-namespace'),
+      afterNodes=[...after.heap].filter(([,node])=>node.kind==='module-namespace');
+    demand(eq(beforeNodes,afterNodes),'ordinary transition changed an exotic namespace heap object');
     const names=new Set([...protectedNames(before,value),...protectedNames(after,value)]);
     for(const name of names)demand(before.locals.has(name)===after.locals.has(name)&&
       eq(before.locals.get(name),after.locals.get(name)),
