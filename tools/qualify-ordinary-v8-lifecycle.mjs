@@ -240,6 +240,13 @@ try{
     throw new Error('Ordinary lifecycle collector did not retain the exact resumed target-exposure and inventory comparison');
   report.qualification='qualification/summary.json';
   report.optimizerTargetExposure=exposure;
+  const positions=measured.optimizerResumeExport?.optimizerPositionExposure;
+  if(positions?.historyContinued!==true||positions.registryDigest!==prepared.registry.digest||
+     positions.firstCheckpointCounts?.lastGlobalStep!==1||positions.resumedCounts?.lastGlobalStep!==2||
+     positions.fullPopulationQualified!==false||positions.routerInternalPositionCoverage!=='unmeasured'||
+     positions.learnedSuccess!==null)
+    throw new Error('Ordinary lifecycle collector lost its bounded executed-position history or scope');
+  report.optimizerPositionExposure=positions;
   report.optimizerUpdateCounts={lifecycle:2,coverage:0,total:2};
   report.optimizerUpdatesScope='optimizerUpdates retains the original two-step lifecycle count; optimizerUpdateCounts reports lifecycle, separate coverage-fit and combined counts';
   if(supportMode){
