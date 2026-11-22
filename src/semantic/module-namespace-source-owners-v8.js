@@ -11,10 +11,11 @@ export function deriveExperimentalModuleNamespaceOwnersV8({source,moduleNamespac
   if(typeof source!=='string'||!bundle||!Array.isArray(bundle.sites)||
      (!bundle.programs||typeof bundle.programs!=='object'||Array.isArray(bundle.programs)))fail('exact generated source and owned archive are required');
   const checked=deriveExperimentalModuleNamespaceSourceSites({source,moduleNamespacePlan});
-  const ast=parse(source,{ecmaVersion:'latest',sourceType:'script'}),declarations=new Map();
+  const ast=parse(source,{ecmaVersion:'latest',sourceType:'script'}),declarations=new Map(),arrows=new Map();
   function visit(node){
     if(!node||typeof node!=='object')return;
     if(Array.isArray(node)){node.forEach(visit);return;}
+    if(node.type==='ArrowFunctionExpression')arrows.set(node.start+':'+node.end,node);
     if(node.type==='VariableDeclarator'&&node.id?.type==='Identifier'&&
        node.init?.type==='CallExpression'&&node.init.callee?.type==='Identifier'&&
        node.init.callee.name==='__traced_eval_create_module_namespace')
@@ -29,12 +30,14 @@ export function deriveExperimentalModuleNamespaceOwnersV8({source,moduleNamespac
     const matches=bundle.sites.filter(row=>row.start===call.start&&row.end===call.end);
     if(matches.length!==1)fail('initializer callsite does not map to one owned source site');
     const exports=site.exports.map(row=>{
-      const getterSites=bundle.sites.filter(candidate=>candidate.start===row.getterStart&&candidate.end===row.getterEnd);
-      // The closure body and generated getter call are different sites. Keep
-      // the AST byte ranges here; the runtime archive's function inventory
-      // later confirms the exact lowered binding read for each getter.
-      if(getterSites.length>1)fail('getter source range maps ambiguously');
-      return {...row,getterSiteId:getterSites[0]?.siteId??null};
+      const getter=arrows.get(row.getterStart+':'+row.getterEnd);
+      if(!getter||getter.async||getter.params.length||getter.body?.type!=='Identifier')
+        fail('namespace getter is not the exact synchronous identifier closure');
+      const getterSites=bundle.sites.filter(candidate=>candidate.start===getter.body.start&&
+        candidate.end===getter.body.end);
+      if(getterSites.length>1)fail('getter body source range maps ambiguously');
+      return {...row,getterBodyStart:getter.body.start,getterBodyEnd:getter.body.end,
+        getterSiteId:getterSites[0]?.siteId??null};
     });
     owners.push({file:site.file,namespaceName:site.namespaceName,
       declarationStart:site.start,declarationEnd:site.end,

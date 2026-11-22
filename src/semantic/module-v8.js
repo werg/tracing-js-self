@@ -17,6 +17,8 @@ export const MODULE_REGION_PROFILE='evaluated-module-regions/1';
 const worker=fileURLToPath(new URL('../../tools/module-region-reference-worker.mjs',import.meta.url));
 const fail=message=>{throw new TypeError('Module regions: '+message);};
 const copy=structuredClone;
+const namespaceHostScalar=value=>value===undefined||value===null||typeof value==='boolean'||
+  typeof value==='string'||typeof value==='number'&&Number.isFinite(value)||typeof value==='bigint';
 
 function normalizedRequest(fixture){
   const input=fixture.modules;
@@ -34,9 +36,12 @@ function normalizedRequest(fixture){
   const originalEntry=fixture.moduleEntry??fixture.entryModule;
   if(typeof originalEntry!=='string')fail('module entry required');
   const entryModule=originalEntry.startsWith('/')?originalEntry.slice(1):originalEntry;
-  const experimentalNamespacePlan=fixture.experimentalNamespacePlan??false;
+  const experimentalNamespacePlan=fixture.experimentalNamespacePlan??false,args=fixture.args??[],
+    calls=fixture.calls??null;
   if(typeof experimentalNamespacePlan!=='boolean')fail('experimentalNamespacePlan must be boolean');
-  return {modules,entryModule,exportName:fixture.exportName??'run',args:fixture.args??[],calls:fixture.calls??null,
+  if(experimentalNamespacePlan&&(!Array.isArray(args)||args.some(value=>!namespaceHostScalar(value))||calls!==null))
+    fail('experimental namespace source profile requires scalar entry args and a single call');
+  return {modules,entryModule,exportName:fixture.exportName??'run',args,calls,
     ...(experimentalNamespacePlan?{experimentalNamespacePlan:true}:{})};
 }
 function prepare(fixture){
@@ -77,9 +82,39 @@ function outcomeAgreement(left,right){
   return left?.kind===right?.kind&&compareObservableGraphs(left.graph,right.graph,
     {leftInputIds:anchors(left.graph),rightInputIds:anchors(right.graph)}).equal;
 }
+function namespaceObservationAgreement(reference,sourceArtifact,moduleNamespacePlan){
+  if(!moduleNamespacePlan)return true;
+  const observed=reference?.namespaceObservations;
+  if(observed?.schema!=='semantic-module-namespace-observations/1'||!Array.isArray(observed.rows))return false;
+  const claims=sourceArtifact?.sidecar?.compiler?.claims;
+  if(!Array.isArray(claims))return false;
+  const records=claims.filter(row=>row.kind==='protocol'&&
+    (row.record?.kind?.startsWith('namespace.')||row.record?.kind?.startsWith('cell.'))).map(row=>row.record);
+  const fileByNamespaceId=new Map();
+  const normalized=[];
+  for(const row of records){
+    if(row.kind==='namespace.create'){
+      fileByNamespaceId.set(row.namespaceId,row.moduleFile);
+      normalized.push({kind:row.kind,moduleFile:row.moduleFile});
+      continue;
+    }
+    if(row.kind==='cell.initialize'||row.kind==='cell.write'){
+      normalized.push({kind:row.kind,cell:row.cell,loweredName:row.loweredName,value:row.value});
+      continue;
+    }
+    const moduleFile=fileByNamespaceId.get(row.namespaceId);
+    if(!moduleFile)return false;
+    if(row.kind==='namespace.keys')normalized.push({kind:row.kind,moduleFile,names:row.names});
+    else if(row.kind==='namespace.read')normalized.push({kind:row.kind,moduleFile,exportName:row.exportName,value:row.value});
+    else if(row.kind==='namespace.descriptor')normalized.push({kind:row.kind,moduleFile,exportName:row.exportName,value:row.value});
+    else return false;
+  }
+  return isDeepStrictEqual(normalized,observed.rows);
+}
 function moduleProjectionRefusal(linked,request={}){
   if(linked.metadata.requiresModuleNamespace===true&&
      !(request.experimentalNamespacePlan===true&&linked.metadata.namespaceSourcePlan&&
+       linked.metadata.namespaceExecutionVariant==='synchronous-no-source-jobs/1'&&
        linked.metadata.evaluationStrategy==='dependency-concatenation'))
     return {status:'projection_refused',phase:'module-projection',
       category:'unsupported.module-namespace-projection',sourceProfile:MODULE_REGION_PROFILE,
@@ -133,14 +168,24 @@ export async function verifyRegionModuleTrainingCase(fixture){
   if(!outcomeAgreement(reference.outcome,result.exported.sidecar.sourceArtifact.sidecar.reference.outcome))
     return {...identity,status:'failed',phase:'module-correspondence',sourceProfile:MODULE_REGION_PROFILE,
       reason:'Native original module graph and owned linked JavaScript differ'};
+  if(namespacePlan&&!namespaceObservationAgreement(reference,result.exported.sidecar.sourceArtifact,namespacePlan))
+    return {...identity,status:'failed',phase:'module-namespace-correspondence',sourceProfile:MODULE_REGION_PROFILE,
+      reason:'Original ESM namespace observations and source-owned namespace actions differ'};
   return {...identity,...result,sourceProfile:MODULE_REGION_PROFILE,moduleReference:'passed',
     moduleCorrespondence:'passed',moduleGraphDigest:graphDigest};
 }
 
 /** Re-run the native ESM reference and linker from source-bound private proof.
  * This is called by production v8 rechecking, never by the model serializer. */
-export async function recheckModuleRegionEvidence(sourceArtifact){
-  const evidence=sourceArtifact?.sidecar?.sourceProvenance?.upstream?.moduleEvidence;
+export async function recheckModuleRegionEvidence(artifact){
+  // Protocol-region callers pass the outer evidence so its actually published
+  // program plan is checked. Legacy module callers may still pass the direct
+  // source artifact; namespace admission requires the outer timeline form.
+  const outerSide=artifact?.sidecar;
+  const sourceArtifact=outerSide?.sourceArtifact?.sidecar?.sourceProvenance?
+    outerSide.sourceArtifact:artifact;
+  const side=sourceArtifact?.sidecar;
+  const evidence=side?.sourceProvenance?.upstream?.moduleEvidence;
   if(evidence===undefined)return {status:'untested',applicable:false};
   if(evidence.schema!=='semantic-module-evidence/1'||evidence.profile!==MODULE_REGION_PROFILE)
     fail('module evidence version');
@@ -148,16 +193,19 @@ export async function recheckModuleRegionEvidence(sourceArtifact){
   const [input]=decodeOwnedGraph(JSON.stringify(evidence.request.inputGraph));
   const request={...evidence.request,args:evidence.request.calls?[]:input.args,
     calls:evidence.request.calls?.map((call,index)=>({...call,args:input.calls[index].args}))??null};
-  const prepared=prepare(request),side=sourceArtifact.sidecar;
-  const publicProgram=sourceArtifact?.public?.timeline?.find(row=>row.kind==='program');
+  const prepared=prepare(request);
+  const publicArtifact=artifact?.public?.timeline?artifact:sourceArtifact;
+  const publicProgram=publicArtifact?.public?.timeline?.find(row=>row.kind==='program');
   const publicPlan=publicProgram?.fields?.regionProgram?.moduleNamespacePlan;
   const expectedPlan=prepared.request.experimentalNamespacePlan&&prepared.linked.metadata.namespaceSourcePlan?
     buildExperimentalModuleNamespacePlanFromLinker(prepared.linked):undefined;
+  if(expectedPlan!==undefined&&!publicProgram)
+    fail('experimental namespace proof requires the published public region program');
   if(expectedPlan!==undefined&&!isDeepStrictEqual(publicPlan,expectedPlan))
     fail('public module namespace plan differs from freshly relinked source');
   if(expectedPlan===undefined&&publicPlan!==undefined)
     fail('public module namespace plan has no explicit source request');
-  const refused=moduleProjectionRefusal(prepared.linked);
+  const refused=moduleProjectionRefusal(prepared.linked,prepared.request);
   if(refused)throw Object.assign(new TypeError('Module regions: '+refused.reason),refused);
   if(evidence.graphDigest!==hashAlgorithmData(prepared.request.modules)||
     evidence.generatedSourceDigest!==hashAlgorithmData(prepared.linked.source)||
@@ -167,5 +215,7 @@ export async function recheckModuleRegionEvidence(sourceArtifact){
   const reference=await independentModuleRegionReference(prepared.referenceInput);
   if(reference.status!=='passed'||!isDeepStrictEqual(reference,evidence.reference)||
     !outcomeAgreement(reference.outcome,side.reference.outcome))fail('independent original-module outcome changed');
+  if(expectedPlan&&!namespaceObservationAgreement(reference,sourceArtifact,expectedPlan))
+    fail('fresh original ESM namespace observations differ from source-owned actions');
   return {status:'passed',applicable:true,graphDigest:evidence.graphDigest};
 }

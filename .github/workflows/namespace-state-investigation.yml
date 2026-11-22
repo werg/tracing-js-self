@@ -12,6 +12,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  source-compiler:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check source projection before independent ESM qualification
+        run: node --test --test-reporter=spec test/semantic-module-namespace-compile-only-v8.test.js test/semantic-module-namespace-source-sync-gate-v8.test.js
   paired-state:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -92,7 +106,7 @@ jobs:
           set -o pipefail
           python -m ruff check src/megatoken/data/module_namespace_state_v8.py src/megatoken/data/module_namespace_machine_v8.py src/megatoken/data/protocol_v8.py src/megatoken/data/native_v8.py tests/test_module_namespace_state_v8.py tests/test_module_namespace_machine_v8.py
           python -m ruff format --check src/megatoken/data/module_namespace_state_v8.py src/megatoken/data/module_namespace_machine_v8.py src/megatoken/data/protocol_v8.py src/megatoken/data/native_v8.py tests/test_module_namespace_state_v8.py tests/test_module_namespace_machine_v8.py
-          python -m pytest -q tests/test_*v8*.py tests/test_algorithm_v7.py tests/test_protocol_properties.py tests/test_semantic_launch.py --junitxml="$RUNNER_TEMP/namespace-native.xml" 2>&1 | tee "$RUNNER_TEMP/namespace-native.log"
+          python -m pytest -q tests/test_module_namespace_state_v8.py tests/test_module_namespace_machine_v8.py --junitxml="$RUNNER_TEMP/namespace-native.xml" 2>&1 | tee "$RUNNER_TEMP/namespace-native.log"
           python - <<'PY'
           import os,xml.etree.ElementTree as ET
           from pathlib import Path

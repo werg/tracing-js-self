@@ -153,6 +153,8 @@ function completionOwners(view,change){
     view.event.stateChanges.filter(row=>row.table==='frames'&&row.after?.generatorId&&
       row.before?.generatorId===row.after.generatorId&&row.before.handlers?.length!==row.after.handlers?.length);
   return [...(change.after?.generatorId||routedGenerator?.length===1?[generator]:[]),
+    ...(enabled(view,moduleNamespace)&&(state(view,moduleNamespace).operations??[]).some(([,operation])=>
+      operation.waitingFrameId===change.id)?[moduleNamespace]:[]),
     ...[[construction,'roles'],[number,'callbacks'],[proxy,'callbacks'],[map,'callbacks']]
       .filter(([id,key])=>has(state(view,id)[key],change.id)).map(([id])=>id)];
 }

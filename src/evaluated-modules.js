@@ -30,6 +30,109 @@ const staticMemberName=node=>node?.type==='MemberExpression'?
     (node.property?.type==='Literal'&&typeof node.property.value==='string'?
       node.property.value:null):
     node.property?.type==='Identifier'?node.property.name:null):null;
+function synchronousNamespaceGraph(order,get,resolve){
+  const allowed=new Set(['Program','ImportDeclaration','ImportSpecifier','ImportNamespaceSpecifier',
+    'ImportDefaultSpecifier','ExportNamedDeclaration','ExportSpecifier','ExportDefaultDeclaration',
+    'FunctionDeclaration','BlockStatement','VariableDeclaration','VariableDeclarator','Identifier',
+    'Literal','ExpressionStatement','ReturnStatement','CallExpression','MemberExpression',
+    'ObjectExpression','Property','AssignmentExpression','ArrayExpression','BinaryExpression',
+    'UnaryExpression','ConditionalExpression','LogicalExpression','IfStatement']);
+  const builtinNames=new Set(['Object','undefined','NaN','Infinity']);
+  const safeObjectMethods=new Set(['keys','getOwnPropertyDescriptor']);
+  for(const file of order){
+    const module=get(file);
+    if(module.hasTLA)return false;
+    const declared=new Set([...module.symbols.keys(),...module.imports.keys(),...module.namespaceImports.keys()]);
+    const localFunctions=new Set(module.functions.filter(item=>!item.anonymous).map(item=>item.local));
+    const functionNames=new Set(localFunctions),shadowSensitive=new Set([
+      ...localFunctions,...module.imports.keys(),...module.namespaceImports.keys()
+    ]);
+    let functionDepth=0;
+    for(const [name,binding]of module.imports){
+      const target=resolve(binding.module,binding.name);
+      if(target?.kind==='function')functionNames.add(name);
+    }
+    function scan(node,parent=null,field=null){
+      if(!node||typeof node!=='object')return true;
+      if(Array.isArray(node))return node.every(item=>scan(item,parent,field));
+      if(!allowed.has(node.type))return false;
+      if(node.type==='ImportDeclaration')return node.source?.type==='Literal'&&
+        typeof node.source.value==='string'&&node.specifiers.every(item=>
+          ['ImportSpecifier','ImportNamespaceSpecifier','ImportDefaultSpecifier'].includes(item.type));
+      if(node.type==='ExportNamedDeclaration'){
+        if(node.source&&node.declaration)return false;
+        return node.declaration?scan(node.declaration,node,'declaration'):
+          node.specifiers.every(item=>item.type==='ExportSpecifier');
+      }
+      if(node.type==='ExportDefaultDeclaration')return scan(node.declaration,node,'declaration');
+      if(node.type==='FunctionDeclaration'){
+        if(node.async||node.generator||node.params.some(param=>param.type!=='Identifier'||
+          shadowSensitive.has(param.name))||functionDepth>0&&shadowSensitive.has(node.id?.name))return false;
+        if(node.id)declared.add(node.id.name);
+        for(const parameter of node.params)declared.add(parameter.name);
+        functionDepth++;
+        const safe=scan(node.body,node,'body');
+        functionDepth--;
+        return safe;
+      }
+      if(node.type==='VariableDeclaration'){
+        if(!['let','const','var'].includes(node.kind))return false;
+        for(const declaration of node.declarations){
+          if(declaration.id.type!=='Identifier'||
+             functionDepth>0&&shadowSensitive.has(declaration.id.name))return false;
+          declared.add(declaration.id.name);
+        }
+      }
+      if(node.type==='CallExpression'){
+        const callee=node.callee;
+        if(callee.type==='MemberExpression'){
+          const object=callee.object,property=staticMemberName(callee);
+          if(object.type!=='Identifier'||object.name!=='Object'||declared.has('Object')||
+             !safeObjectMethods.has(property))return false;
+        }else if(callee.type==='Identifier'){
+          if(!functionNames.has(callee.name))return false;
+        }else return false;
+      }
+      if(node.type==='MemberExpression'){
+        const object=node.object;
+        if(object.type==='Identifier'&&object.name==='Object'){
+          if(declared.has('Object')||!safeObjectMethods.has(staticMemberName(node)))return false;
+        }else if(object.type==='Identifier'&&module.namespaceImports.has(object.name)){
+          // Dynamic namespace reads are allowed only for direct namespace imports.
+        }else if(parent?.type==='MemberExpression'&&field==='object'&&node===parent.object){
+          return false;
+        }else if(node.property?.name!=='value'&&node.property?.value!=='value')return false;
+      }
+      if(node.type==='AssignmentExpression'){
+        if(node.operator!=='='||node.left.type!=='Identifier')return false;
+        const binding=module.symbols.get(node.left.name);
+        if(!binding||!['let','var'].includes(binding.kind))return false;
+      }
+      if(node.type==='Identifier'){
+        const declaration=field==='id'||field==='params'||field==='key'&&parent?.computed!==true||
+          field==='imported'||field==='exported';
+        if(!declaration&&!declared.has(node.name)&&!builtinNames.has(node.name))return false;
+      }
+      if(node.type==='Property'&&(node.kind!=='init'||node.method||node.computed||
+        node.key?.name==='then'||node.key?.value==='then'))return false;
+      for(const [key,value]of Object.entries(node)){
+        if(['start','end','loc','range','raw','regex'].includes(key))continue;
+        if(node.type==='MemberExpression'&&key==='property'&&!node.computed)continue;
+        if(node.type==='Property'&&key==='key')continue;
+        if(node.type==='FunctionDeclaration'&&key==='id')continue;
+        if(node.type==='VariableDeclarator'&&key==='id')continue;
+        if(node.type==='ExportSpecifier')continue;
+        if(node.type.startsWith('Import'))continue;
+        if(value&&typeof value==='object'&&!scan(value,node,key))return false;
+      }
+      return true;
+    }
+    if(!scan(module.ast))return false;
+    // A call target must be a local function or a statically linked imported
+    // function. Parameters, host globals, computed calls and thenables fail.
+  }
+  return true;
+}
 function rejectNamespaceOutput(heap,roots){
   const visited=new Set(),pending=roots.slice();
   while(pending.length){
@@ -820,8 +923,21 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     return 'const '+namespaceName(file)+'=__traced_eval_create_module_namespace(['+
       entries.join(',')+']);';
   }
+  function namespaceCellsAreScalar(){
+    for(const file of namespaceTargets)for(const exported of exportedNames(file)){
+      const binding=resolve(file,exported),symbol=binding&&get(binding.file).symbols.get(binding.local);
+      const init=symbol?.node?.init,literal=init?.type==='Literal'&&
+        (init.value===null||['string','boolean','bigint'].includes(typeof init.value)||
+          typeof init.value==='number'&&Number.isFinite(init.value));
+      if(!binding||!symbol||!['let','const'].includes(symbol.kind)||
+         !literal&&!(init?.type==='Identifier'&&init.name==='undefined'))return false;
+    }
+    return true;
+  }
+  const synchronousNamespaceWrapper=experimentalNamespacePlan&&namespaceTargets.size>0&&
+    namespaceCellsAreScalar()&&synchronousNamespaceGraph(order,get,resolve);
   const entryFunction=evaluateOnly?'__traced_eval_entry':'__traced_evaluated_entry';
-  let source='"use strict";\nasync function '+entryFunction+'(self) {\n';
+  let source='"use strict";\n'+(synchronousNamespaceWrapper?'function ':'async function ')+entryFunction+'(self) {\n';
   const spans=[];
   const append=(file,kind,fragment)=>{
     const start=source.length;
@@ -933,7 +1049,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     // The entry invocation follows completion of graph evaluation, just as
     // the caller awaiting the graph's top-level capability does. This also
     // lets already-enqueued module jobs precede that invocation for sync ESM.
-    append(entryModule,'invoke-after-evaluation','await undefined;');
+    if(!synchronousNamespaceWrapper)append(entryModule,'invoke-after-evaluation','await undefined;');
   }
   if(requested){
     // All calls execute after initialization in a single owned activation;
@@ -943,15 +1059,15 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
         'self.calls['+i+'].args['+j+']').join(',');
       const expression=binding.kind==='function'?
         linkedAccess(binding)+'('+parameters+')':linkedAccess(binding);
-      source+='  const __traced_eval_result_'+i+'=await '+expression+';\n';
+      source+='  const __traced_eval_result_'+i+'='+(synchronousNamespaceWrapper?'':'await ')+expression+';\n';
     });
     source+='  return ['+requested.map((_,i)=>
       '__traced_eval_result_'+i).join(',')+'];\n';
   }else if(evaluateOnly)source+='  return undefined;\n';
   else if(selected.kind==='function'){
     const argumentsText=checkedArgs.map((_,i)=>'self.args['+i+']').join(',');
-    source+='  return await '+linkedAccess(selected)+'('+argumentsText+');\n';
-  }else source+='  return await '+linkedAccess(selected)+';\n';
+    source+='  return '+(synchronousNamespaceWrapper?'':'await ')+linkedAccess(selected)+'('+argumentsText+');\n';
+  }else source+='  return '+(synchronousNamespaceWrapper?'':'await ')+linkedAccess(selected)+';\n';
   source+='}\n';
   if(source.length>262144)
     throw new RangeError('Linked module entry exceeds bounded source limit');
@@ -982,6 +1098,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     profile:'evaluated-module/1',entryModule,exportName:evaluateOnly?null:exportName,
     importMetaPolicy:'empty-null-prototype',
     ...(namespaceSourcePlan?{namespaceSourcePlan}:{}),
+    ...(synchronousNamespaceWrapper?{namespaceExecutionVariant:'synchronous-no-source-jobs/1'}:{}),
     ...(namespaceTargets.size?{requiresModuleNamespace:true}:{}),
     evaluationStrategy:scheduled?'async-dependency-scheduler':'dependency-concatenation',
     evaluationOrder:order.slice(),cycles,linkedBinding:selected?.linked??null,

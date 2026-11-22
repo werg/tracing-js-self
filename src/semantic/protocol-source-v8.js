@@ -28,6 +28,13 @@ function inputFixture(fixture){
   if([maxSteps,maxGenerated,timeoutMs].some(value=>!Number.isSafeInteger(value)||value<1))fail('positive execution bounds required');
   if(fixture.randomSeed!=null||fixture.fixture?.calls?.length)fail('first protocol source profile has no random or external inputs');
   const moduleNamespacePlan=fixture.projectionOptions?.moduleNamespacePlan;
+  if(moduleNamespacePlan){
+    const evidence=fixture.provenance?.moduleEvidence;
+    if(evidence?.schema!=='semantic-module-evidence/1'||evidence.profile!=='evaluated-module-regions/1'||
+      evidence.request?.experimentalNamespacePlan!==true||!evidence.request.modules||
+      evidence.metadata?.namespaceSourcePlan===undefined)
+      fail('experimental namespace plans require original module evidence');
+  }
   return {source:fixture.source,entry:fixture.entry,family:fixture.family,license,trustTier,
     ...(moduleNamespacePlan?{moduleNamespacePlan:copy(moduleNamespacePlan)}:{}),
     ancestorIds:[...new Set([fixture.family,...(fixture.ancestorIds??fixture.ancestors??[])])],
@@ -35,7 +42,8 @@ function inputFixture(fixture){
     limits:{maxSteps,maxGenerated,timeoutMs},args:fixture.args??[]};
 }
 function executeOwned(input){
-  const runtime=createRuntime({maxSteps:input.limits.maxSteps}).startEntry({text:input.source,functionName:input.entry,args:input.args,allowAsync:true});
+  const runtime=createRuntime({maxSteps:input.limits.maxSteps}).startEntry({text:input.source,functionName:input.entry,args:input.args,allowAsync:true,
+    ...(input.moduleNamespacePlan?{moduleNamespaceIntrinsic:true}:{})});
   const progress=runtime.drive(),bundle=runtime.exportRun();
   if(progress.kind!=='terminated'&&!(progress.kind==='runtime.failure'&&runtime.state.control.a0.failure?.kind==='guest-abrupt'))
     fail('owned execution is not a completed source invocation');
@@ -55,6 +63,7 @@ async function buildSourceArtifact(input){
     entry:input.entry,inputGraph:projection.inputGraph,...completionPolicy,claims:projection.claims.map(({kind,line})=>({kind,line}))};
   return clean({public:publicData,sidecar:{schema:PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA,admission:'locally_verified',referenceStatus:'agreed',
     profile:projection.sourceProfile,sourceFamily:input.family,sourceLineage:input.family,ancestorIds:input.ancestorIds,
+    ...(input.moduleNamespacePlan?{moduleNamespacePlan:copy(input.moduleNamespacePlan)}:{}),
     producerRevision:input.producerRevision,license:input.license,trustTier:input.trustTier,
     sourceProvenance:{family:input.family,sourceDigest:hashAlgorithmData(input.source),upstream:input.provenance},
     ...(input.moduleNamespacePlan?{moduleNamespacePlan:copy(input.moduleNamespacePlan)}:{}),
@@ -161,7 +170,15 @@ export async function recheckProtocolRegionEvidence(exported,{nativeConsumer=nul
     producerRevision:source.producerRevision,provenance:source.sourceProvenance.upstream,
     ...(source.moduleNamespacePlan?{projectionOptions:{moduleNamespacePlan:source.moduleNamespacePlan}}:{}),
     maxSteps:source.executionLimits.maxSteps,
-    timeoutMs:source.executionLimits.timeoutMs,projectionOptions:{maxGenerated:source.executionLimits.maxGenerated}});
+    timeoutMs:source.executionLimits.timeoutMs,
+    projectionOptions:{maxGenerated:source.executionLimits.maxGenerated,
+      ...(source.moduleNamespacePlan?{moduleNamespacePlan:source.moduleNamespacePlan}:{})}});
+  if(source.moduleNamespacePlan){
+    const {recheckModuleRegionEvidence}=await import('./module-v8.js');
+    const moduleCheck=await recheckModuleRegionEvidence(exported);
+    if(moduleCheck.status!=='passed'||!moduleCheck.applicable)
+      fail('experimental namespace source requires fresh original-module and ESM recheck');
+  }
   const fresh=await buildSourceArtifact(input);
   if(!eq(fresh,side.sourceArtifact))fail('source, owned archive or independent observations changed');
   const rebuilt=projectProtocolRegionWitness(fresh);

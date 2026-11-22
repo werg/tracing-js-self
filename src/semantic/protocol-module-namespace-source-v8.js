@@ -21,12 +21,13 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
   const namespaceCellIds=new Set(moduleNamespacePlan.namespaces.flatMap(row=>row.exports.map(item=>item.cell)));
   const cells=new Map(moduleNamespacePlan.cells.filter(row=>namespaceCellIds.has(row.id)).map(row=>[row.loweredName,row]));
   const namespaces=new Map(moduleNamespacePlan.namespaces.map(row=>[row.namespaceName,row]));
-  let pendingCreates=new Map(),namespaceFiles=new Map(),operations=new Map(),cellVersions=new Map();
+  let pendingCreates=new Map(),namespaceFiles=new Map(),operations=new Map(),cellVersions=new Map(),syntheticFrames=new Set();
   const snapshot=()=>({ownerSiteIds:owners.map(row=>row.siteId),cellNames:[...cells.keys()],
     namespaceNames:[...namespaces.keys()],pendingCreates:[...pendingCreates],namespaceFiles:[...namespaceFiles],
-    operations:[...operations].map(([id,row])=>[id,copy(row)]),cellVersions:[...cellVersions]});
+    operations:[...operations].map(([id,row])=>[id,copy(row)]),cellVersions:[...cellVersions],syntheticFrames:[...syntheticFrames]});
   const restore=state=>{pendingCreates=new Map(state.pendingCreates);namespaceFiles=new Map(state.namespaceFiles);
-    operations=new Map(state.operations.map(([id,row])=>[id,copy(row)]));cellVersions=new Map(state.cellVersions);};
+    operations=new Map(state.operations.map(([id,row])=>[id,copy(row)]));cellVersions=new Map(state.cellVersions);
+    syntheticFrames=new Set(state.syntheticFrames??[]);};
   const exportCell=(file,name)=>{
     const ns=moduleNamespacePlan.namespaces.find(row=>row.file===file);
     const entry=ns?.exports.find(row=>row.name===name);
@@ -113,6 +114,23 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
     const value=event.result??row?.result;
     return value?.[0]==='ref'?value[1]:null;
   }
+  function checkRuntimeGetters(ctx,node,owner){
+    for(const entry of owner.exports){
+      const accessor=node.accessors[entry.name],getter=accessor?.get?.value;
+      if(getter?.[0]!=='ref')ctx.refuse('namespace export accessor lacks an owned getter closure');
+      const fn=ctx.state.heap[getter[1]],program=fn?.kind==='function'&&ctx.bundle.programs[fn.codeId];
+      if(!fn||fn.async||!program||program.generator)ctx.refuse('namespace getter is not a synchronous owned closure');
+      const reads=program.instructions.filter(instruction=>instruction.op==='GET'&&
+        (typeof instruction.arg==='string'?instruction.arg:instruction.arg?.name)===entry.loweredName);
+      if(reads.length!==1)ctx.refuse('namespace getter does not contain exactly its planned live-cell read');
+      const readSite=ctx.bundle.sites.find(site=>site.siteId===reads[0].siteId);
+      if(!readSite||readSite.start!==entry.getterBodyStart||readSite.end!==entry.getterBodyEnd)
+        ctx.refuse('namespace getter bytecode is not mapped to its exact source identifier');
+      const closure=ctx.state.envs[fn.closureEnvId];
+      if(!closure||!Object.hasOwn(closure.bindings??{},entry.loweredName))
+        ctx.refuse('namespace getter does not close over its source-owned cell');
+    }
+  }
   function beginCreate(ctx,event,row){
     const owner=ownerBySite.get(event.siteId),id=namespaceIdFrom(event,row);
     if(!owner||!id)ctx.refuse('namespace allocation lacks its exact source callsite or identity');
@@ -120,6 +138,7 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
     if(!allocation||!checkNamespaceNode(ctx,allocation)||
        !eq(allocation.namespaceExportNames,owner.exports.map(item=>item.name)))
       ctx.refuse('namespace allocation differs from the exact generated initializer');
+    checkRuntimeGetters(ctx,allocation,owner);
     pendingCreates.set(id,{namespaceId:id,file:owner.file,namespaceName:owner.namespaceName,
       callEventId:event.eventId,sequence:event.sequence,invocationId:event.invocationId,siteId:event.siteId});
     return true;
@@ -171,6 +190,7 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
     }
     if(event.operation!=='call.return'||!operation.value||!eq(operation.value,event.result))
       ctx.refuse('synthetic namespace getter completion differs from its live cell read');
+    syntheticFrames.add(event.invocationId);
     const parentFrame=frameAfter(ctx,event,parent),next=parentFrame?.pendingModuleNamespace;
     if(next){
       if(next.namespaceId!==operation.namespaceId||next.kind!==(operation.kind==='keys'?'namespace-inspection':'descriptor'))
@@ -223,7 +243,9 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
       return !namespaceFiles.has(node.id)||ownedNamespace(ctx,node.id)!==null;
     },
     claims:{event:claimEvent,allocation:(view,node)=>node.kind==='module-namespace'&&
-      (ownerBySite.has(view.event?.siteId)||stateFromView(view).pendingCreates?.some(([id])=>id===node.id))},
+      (ownerBySite.has(view.event?.siteId)||stateFromView(view).pendingCreates?.some(([id])=>id===node.id)),
+      completion:(view,change)=>(stateFromView(view).operations??[]).some(([,operation])=>
+        operation.waitingFrameId===change.id)},
     allocation:(_view,node)=>node.kind==='module-namespace',
     allocate(ctx,node,event){
       const pending=[...pendingCreates.values()].find(item=>item.namespaceId===node.id);
@@ -232,6 +254,11 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
       ctx.emit({kind:'namespace.create',namespaceId:node.id,moduleFile:pending.file},event,
         'source-module-namespace-create/1',{journalEvents:[pending.callEventId,event.eventId]});
       ctx.markPublished(node.id);return true;
+    },
+    completeFrame(ctx,change){
+      if(!syntheticFrames.has(change.id)||change.after?.completion?.type!=='return')
+        ctx.refuse('namespace getter completion lacks its consumed exact source read');
+      syntheticFrames.delete(change.id);return true;
     },
     event(ctx,event,row){
       if(event.operation==='call.enter'&&event.operands?.[0]?.[0]==='builtinfn'&&
