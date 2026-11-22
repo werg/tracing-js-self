@@ -74,16 +74,28 @@ jobs:
         working-directory: producer
         run: |
           node --input-type=module -e '
-            import {readFileSync} from "node:fs";
             import {execFileSync} from "node:child_process";
             const readXz=path=>JSON.parse(execFileSync("xz",["-dc",path],{maxBuffer:1024*1024*1024}));
+            const catalogRun=readXz("../audit-evidence/test262-catalog-run.json.xz");
             const catalog=readXz("../audit-evidence/test262-catalog.json.xz");
             const audit=readXz("../audit-evidence/test262-edition-audit.json.xz");
             const s=audit.report.summary;
             const membership=s.editionMembership??{};
             const sum=object=>Object.values(object).reduce((a,b)=>a+b,0);
             if(catalog.suiteRevision!=="d53ebc8b1931d9f1541e43d59650776e4b766248"||
+              catalogRun.catalog?.digest!==catalog.digest||
+              catalogRun.campaign?.catalogDigest!==catalog.digest||
+              catalogRun.campaign?.implementation?.producerRevision!==process.env.GITHUB_SHA||
+              catalog.profile.edition!=="ECMAScript 2026"||
+              catalog.profile.specification?.uri!=="https://262.ecma-international.org/17.0/index.html"||
+              catalog.profile.specification?.sha256!=="5df49e088c2b5c7a3dfd4a330414b92897fb4535cb62fc5936cad101a6c2304a"||
+              audit.report.specification?.uri!==catalog.profile.specification.uri||
+              audit.report.specification?.sha256!==catalog.profile.specification.sha256||
+              audit.report.suiteRevision!==catalog.suiteRevision||
+              audit.implementation?.producerRevision!==process.env.GITHUB_SHA||audit.implementation?.dirty!==false||
               catalog.summary.testFiles!==53616||catalog.variants.length!==102994||
+              catalogRun.campaign.rows.length!==catalog.variants.length||
+              catalogRun.campaign.selectedIds.length!==catalog.variants.length||
               s.catalogVariants!==catalog.variants.length||s.auditedVariants!==catalog.variants.length||
               s.testFiles!==catalog.summary.testFiles||sum(s.variantModes)!==catalog.variants.length||
               sum(s.sourceFilesByEditionMembership)!==catalog.summary.testFiles||
@@ -93,7 +105,8 @@ jobs:
               audit.report.claims.editionMembershipCertified!==false||
               audit.report.claims.applicabilityCertified!==false||audit.report.claims.conformance!==false)
               throw Error("Full frozen denominator, explicit unresolved classifications, or no-claim guard failed");
-            console.log(JSON.stringify({suiteRevision:catalog.suiteRevision,catalogDigest:catalog.digest,
+            console.log(JSON.stringify({suiteRevision:catalog.suiteRevision,specification:catalog.profile.specification,
+              producerRevision:audit.implementation.producerRevision,producerDirty:audit.implementation.dirty,catalogDigest:catalog.digest,
               auditDigest:audit.digest,testFiles:s.testFiles,variants:s.auditedVariants,
               editionMembership:s.editionMembership,releaseRequirement:s.releaseRequirement,
               modes:s.variantModes,expectedOutcomes:s.expectedOutcomes,claims:audit.report.claims},null,2));

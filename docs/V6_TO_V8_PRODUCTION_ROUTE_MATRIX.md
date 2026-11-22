@@ -6,6 +6,11 @@ code it inspected. The matrix below uses the current producer worktree and the
 paired consumer checkout at `abf4dc6424e3aeaf10f1d2609a2197897c1d42ba`; it does
 not qualify a release or claim that V8 is the production default.
 
+This is a **partial inventory of four major route categories**, not an
+exhaustive mapping of every production entry point, launch recipe, service,
+callback, recovery cut, or release-restoration route. Acceptance package 1
+remains open until that complete mapping is tied to current paired evidence.
+
 | V6 production route | Current V8 replacement | Current implementation evidence | Remaining parity gate |
 | --- | --- | --- | --- |
 | Typed coordinator/child task calls, completion, cancellation, and restoration | The V8 server exposes `open_orchestration`, `select_orchestration`, `commit_orchestration`, `bootstrap_orchestration_child`, `status_orchestration`, and `cancel_orchestration`. The producer binds public actions to acknowledged native V8 child tracks. | Consumer `src/megatoken/semantic_model_v8.py`, `src/megatoken/semantic_orchestration_v8.py`, `scripts/serve_semantic_v8.py`; producer `src/semantic/orchestration-training-v8.js`; focused transport, recovery, and checkpoint tests. Exact recorded paired checks include the 64-source/native lane and the 77-control native orchestration completion-cut run retained in `docs/evidence/v8-composite-terminal-2026-11-22/`. | Current teacher/runtime policy is bounded to declared root children and complete return/throw. Dynamic descendants, callbacks that create children, general concurrent graphs, and a final exact-head production restoration route still need qualification. Historical typed-RPC absence is no longer a current implementation blocker. |
