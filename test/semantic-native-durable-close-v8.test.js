@@ -154,3 +154,22 @@ test('active work cannot be reclassified as a recoverable terminal close',async 
     assert.equal(first.select.status().closed,true);
   }finally{await close(first);}
 });
+
+for(const altered of ['boundary','checkpoint'])
+test('terminal close refuses changed acknowledged '+altered+' before native dispatch',async t=>{
+  const context=await inputs(t);if(!context)return;
+  const first=await context.open();
+  try{
+    const request=await terminal(context,first.select),checkpoint=await first.select.checkpoint(),
+      boundary=first.select.durableRequestBoundary(),before=first.select.metrics().runtime.rpcCalls;
+    const expectedBoundary=structuredClone(boundary);
+    if(altered==='boundary')expectedBoundary.ordinal++;
+    await assert.rejects(first.select.closeTerminal({...request,expectedBoundary,
+      expectedCheckpointDigest:altered==='checkpoint'?'f'.repeat(64):checkpoint.native.digest}),
+    /changed after application acknowledgement/);
+    assert.equal((await context.journal.list()).length,2,'no close intent may be appended for the changed authority');
+    assert.equal(first.select.metrics().runtime.rpcCalls,before+(altered==='checkpoint'?1:0),
+      'only the checkpoint comparison read may run before refusal');
+    assert.equal(first.select.status().closed,true);
+  }finally{await close(first);}
+});

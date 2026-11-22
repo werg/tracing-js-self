@@ -13,6 +13,7 @@ import {assertSelectedOrchestrationExecutionClock} from '../storage/selected-orc
 import {buildRecoveredCoordinatorCheckpointV8,refreshRecoveredCoordinatorCheckpointV8,
   buildRecoveredBootstrapCheckpointV8,refreshRecoveredBootstrapCheckpointV8}
   from './selected-orchestration-commit-recovery-v8.js';
+import {buildRecoveredTerminalCloseV8} from './selected-orchestration-close-recovery-v8.js';
 
 const copy=structuredClone,HASH=/^[a-f0-9]{64}$/;
 function freezeTree(value){
@@ -281,7 +282,8 @@ export class RegionSelectedOrchestrationDriver {
     return driver;
   }
   static async restoreLatest(packet,{historyJournal,historyReceipt,initialPublic,select,policy,harnessOptions={},signal=null,
-      serviceAdmissionCoordinator=null,acknowledge=null,executionClock=null,commitRecovery=null,bootstrapRecovery=null}={}){
+      serviceAdmissionCoordinator=null,acknowledge=null,executionClock=null,commitRecovery=null,bootstrapRecovery=null,
+      closeRecovery=null}={}){
     const checkAbort=()=>{if(signal?.aborted)throw signal.reason instanceof Error?
       signal.reason:new Error(String(signal.reason??'Selected orchestration v8 restore cancelled'));};
     checkAbort();
@@ -289,11 +291,15 @@ export class RegionSelectedOrchestrationDriver {
     policy=copy(policy);harnessOptions={...harnessOptions};
     commitRecovery=copy(commitRecovery);
     bootstrapRecovery=copy(bootstrapRecovery);
+    closeRecovery=copy(closeRecovery);
     demand(commitRecovery===null||commitRecovery&&Object.keys(commitRecovery).length===1&&
       Object.hasOwn(commitRecovery,'receipt'),'commit recovery must name one exact retained request receipt');
     demand(bootstrapRecovery===null||bootstrapRecovery&&Object.keys(bootstrapRecovery).length===1&&
       Object.hasOwn(bootstrapRecovery,'receipt'),'bootstrap recovery must name one exact retained request receipt');
-    demand(commitRecovery===null||bootstrapRecovery===null,'one exact native recovery operation is required');
+    demand(closeRecovery===null||closeRecovery&&Object.keys(closeRecovery).length===1&&
+      Object.hasOwn(closeRecovery,'receipt'),'close recovery must name one exact retained request receipt');
+    demand([commitRecovery,bootstrapRecovery,closeRecovery].filter(value=>value!==null).length<=1,
+      'one exact native recovery operation is required');
     demand(typeof historyJournal?.readLatest==='function','independently verified latest composite history is required');
     validateSelectedHistoryReceipt(historyReceipt);
     const retainedEntries=copy(await historyJournal.readLatest(copy(historyReceipt)));
@@ -309,6 +315,55 @@ export class RegionSelectedOrchestrationDriver {
       verifySelectedOrchestrationCheckpoint(entry.checkpoint,expectedPolicy,{initialPublic});
     }
     const latestEntry=entries.at(-1);
+    if(closeRecovery!==null){
+      const terminal=latestEntry.terminal,snapshot=terminal?.snapshot;
+      demand(terminal?.schema==='semantic-selected-orchestration-terminal-event/8'&&terminal.closeBoundary&&
+        ['requested','completed','cancelled'].includes(terminal.phase)&&terminal.ownerSnapshot===null&&
+        serviceAdmissionCoordinator===null&&typeof acknowledge==='function'&&
+        typeof historyJournal.append==='function'&&typeof select?.recoverClose==='function'&&
+        typeof select.checkpoint==='function'&&select.status?.().closed===false&&select.status().pending===0,
+        'known terminal close requires its exact latest acknowledged intent and a fresh guarded selector');
+      assertSelectedOrchestrationExecutionClock(executionClock);
+      const beforeElapsed=await executionClock.elapsed(snapshot.continuation.clockReceipt,{timeoutMs:policy.timeoutMs});
+      demand(beforeElapsed>=Math.max(snapshot.continuation.elapsedMs,terminal.closeElapsedMs??0),
+        'terminal recovery clock predates its retained consumed budget');
+      const boundary=terminal.closeBoundary;
+      demand(['ordinal','sessionId','streamId','sessionGeneration'].every(key=>closeRecovery.receipt?.[key]===boundary[key])&&
+        (terminal.phase==='requested'||isDeepStrictEqual(closeRecovery.receipt,terminal.closeRequestReceipt)),
+        'close recovery receipt differs from the exact acknowledged terminal boundary');
+      checkAbort();
+      try{
+        const recovered=copy(await select.recoverClose({receipt:closeRecovery.receipt,
+          accountingCheckpoint:terminal.phase!=='requested'?terminal.closedNative:null}));
+        checkAbort();
+        const native=copy(await select.checkpoint()),elapsedMs=await executionClock.elapsed(
+          snapshot.continuation.clockReceipt,{timeoutMs:policy.timeoutMs});
+        const finalTerminal=buildRecoveredTerminalCloseV8({checkpoint:latestEntry.checkpoint,terminal,recovery:recovered,
+          native,elapsedMs,policy,initialPublic});
+        const stillLatest=validateSelectedHistoryChain(copy(await historyJournal.readLatest(copy(historyReceipt))),historyReceipt);
+        demand(isDeepStrictEqual(stillLatest,entries),'acknowledged terminal history changed during native recovery');
+        checkAbort();
+        const previous=copy(historyReceipt),receipt=copy(await historyJournal.append(copy(latestEntry.checkpoint),
+          {previous,terminal:copy(finalTerminal)}));
+        validateSelectedHistoryReceipt(receipt);
+        const recorded=validateSelectedHistoryChain(copy(await historyJournal.readLatest(copy(receipt))),receipt),tail=recorded.at(-1);
+        demand(isDeepStrictEqual(tail?.terminal,finalTerminal)&&isDeepStrictEqual(tail?.previous,previous)&&
+          isDeepStrictEqual(tail?.checkpoint,latestEntry.checkpoint),
+          'terminal recovery journal retained a different closed application outcome');
+        const acknowledged=copy(await acknowledge({receipt:copy(receipt),previous:copy(previous)}));
+        validateSelectedHistoryReceipt(acknowledged);
+        demand(isDeepStrictEqual(acknowledged,receipt),'terminal recovery head acknowledgement differs');
+        checkAbort();
+        return {schema:'semantic-selected-orchestration-disposition/8',status:finalTerminal.phase,resumable:false,
+          session:terminal.session,terminalId:terminal.terminalId,historyReceipt:receipt,snapshotDigest:terminal.snapshotDigest,
+          closeReceipt:copy(finalTerminal.closeReceipt),initialPublic:copy(snapshot.initialPublic),
+          public:copy(snapshot.bridge.public),publicCompleted:finalTerminal.phase==='completed',
+          completionReceipts:copy(snapshot.state.children.map(row=>row.completion)),
+          nativeIdentity:copy(snapshot.native.identity),sourceValidated:false,
+          qualification:{modelMeasurement:'actual-model-selected',sourceCorrespondence:'not-checked-by-public-replay',
+            defaultPromotion:false}};
+      }catch(error){select.close?.();throw error;}
+    }
     if(commitRecovery!==null)demand(!latestEntry.terminal&&
       (latestEntry.pending?.kind==='coordinator-selection'&&latestEntry.pending.clockReceipt&&latestEntry.pending.requestBoundary||
         !latestEntry.pending&&latestEntry.checkpoint.continuation.clockReceipt&&
@@ -326,6 +381,7 @@ export class RegionSelectedOrchestrationDriver {
       'known bootstrap recovery requires its clock-bound startup fence or exact sealed acknowledgement');
     if(latestEntry.terminal?.schema==='semantic-selected-orchestration-terminal-event/8'){
       let terminal=latestEntry.terminal,snapshot=terminal.snapshot,closedOnThisSelector=false;
+      demand(!terminal.closeBoundary,'durable terminal history requires explicit exact close recovery');
       if(terminal.phase==='requested'){
         demand(typeof acknowledge==='function'&&serviceAdmissionCoordinator&&
           isDeepStrictEqual(copy(serviceAdmissionCoordinator.ownerSnapshot()),terminal.ownerSnapshot),
@@ -514,7 +570,8 @@ export class RegionSelectedOrchestrationDriver {
     const abort=new AbortController(),coordinatorAttempts=this.coordinatorAttempts;
     let nativeIdentity=null,initialState=null,state=null,failure=null,cleanupFailure=null,
       closeReceipt=null,cancelReceipt=null,terminalReason=null,terminalCheckpoint=null,cancellationIntent=null,
-      cancellationServiceAdmission=null,serviceTerminalVerified=false,deadlineExceeded=false,opened=false,paused=false;
+      cancellationServiceAdmission=null,serviceTerminalVerified=false,durableCloseRequired=false,
+      deadlineExceeded=false,opened=false,paused=false;
     let timer=null;
     const onExternalAbort=()=>abort.abort(signal.reason??new Error('Selected orchestration v8 cancelled'));
     const checkAbort=()=>{if(abort.signal.aborted)throw abort.signal.reason instanceof Error?
@@ -647,10 +704,12 @@ export class RegionSelectedOrchestrationDriver {
         this.terminalDisposition=copy(terminal);return copy(receipt);
       }catch(error){history.status='failed';history.failure=error;throw error;}
     };
-    const persistServiceTerminalIntent=async(snapshot,reason)=>{
-      const history=this.automaticHistory,ownerSnapshot=this.policy.serviceAdmission;
-      demand(history!==null&&history.status==='ready'&&ownerSnapshot!==null&&
-        this.serviceAdmissionCoordinator,'cancelled terminal intent requires acknowledged history and service owners');
+    const persistServiceTerminalIntent=async(snapshot,reason,{closeBoundary=null}={})=>{
+      const history=this.automaticHistory,ownerSnapshot=this.policy.serviceAdmission??null;
+      demand(history!==null&&history.status==='ready'&&(closeBoundary!==null?
+        ownerSnapshot===null&&this.serviceAdmissionCoordinator===null&&this.#executionClock!==null:
+        ownerSnapshot!==null&&this.serviceAdmissionCoordinator),
+        'terminal intent requires acknowledged history and exact native or service close authority');
       history.status='saving';
       try{
         const previous=copy(history.previous);
@@ -662,7 +721,8 @@ export class RegionSelectedOrchestrationDriver {
         const snapshotDigest=hashAlgorithmData(saved),reasonCopy=String(reason),identity={schema:
           'semantic-selected-orchestration-terminal-event/8',phase:'requested',session:this.session,
           baseCheckpointDigest:base.digest,pendingId:pending.id,snapshotDigest,reason:reasonCopy,
-          ownerSnapshotDigest:hashAlgorithmData(ownerSnapshot)},terminalId=hashAlgorithmData(identity),
+          ownerSnapshotDigest:hashAlgorithmData(ownerSnapshot),...(closeBoundary!==null?
+            {closeBoundary:copy(closeBoundary)}:{})},terminalId=hashAlgorithmData(identity),
           unsigned={...identity,terminalId,snapshot:saved,ownerSnapshot:copy(ownerSnapshot)},
           terminal={...unsigned,digest:hashAlgorithmData(unsigned)};
         const receipt=copy(await history.journal.append(base,{previous:copy(previous),terminal:copy(terminal)}));
@@ -692,12 +752,16 @@ export class RegionSelectedOrchestrationDriver {
         demand(tail?.terminal?.phase==='requested'&&tail.terminal.terminalId===intent.terminal.terminalId&&
           isDeepStrictEqual(tail.terminal,intent.terminal),
           'cancelled disposition differs from the independently acknowledged intent');
+        const closeEvidence=intent.terminal.closeBoundary?{
+          closeBoundary:copy(intent.terminal.closeBoundary),closeRequestReceipt:copy(this.select.durableRequestReceipt()),
+          closeElapsedMs:await this.#executionClock.elapsed(intent.terminal.snapshot.continuation.clockReceipt,
+            {timeoutMs:this.policy.timeoutMs})}:{};
         const unsigned={schema:'semantic-selected-orchestration-terminal-event/8',
           terminalId:intent.terminal.terminalId,phase,session:intent.terminal.session,
           baseCheckpointDigest:intent.terminal.baseCheckpointDigest,pendingId:intent.terminal.pendingId,
           snapshot:intent.terminal.snapshot,snapshotDigest:intent.terminal.snapshotDigest,
           reason:intent.terminal.reason,ownerSnapshot:copy(intent.terminal.ownerSnapshot),
-          serviceAdmission:copy(serviceAdmission),closeReceipt:copy(closeReceipt),
+          serviceAdmission:copy(serviceAdmission),...closeEvidence,closeReceipt:copy(closeReceipt),
           closedNativeDigest:hashAlgorithmData(closedNative),closedNative:copy(closedNative)},
           terminal={...unsigned,digest:hashAlgorithmData(unsigned)};
         const receipt=copy(await history.journal.append(copy(tail.checkpoint),{
@@ -942,6 +1006,12 @@ export class RegionSelectedOrchestrationDriver {
               'service coordinator acknowledged a different completion fence');
             serviceTerminalVerified=true;
             checkAbort();
+          }else if(this.#executionClock!==null&&typeof this.select.closeTerminal==='function'&&
+              typeof this.select.durableRequestBoundary==='function'&&this.select.durableRequestBoundary()!==null){
+            durableCloseRequired=true;
+            cancellationIntent=await persistServiceTerminalIntent(terminalCheckpoint,terminalReason,
+              {closeBoundary:copy(this.select.durableRequestBoundary())});
+            checkAbort();
           }
         }
         if(state.status==='cancelled'&&this.automaticHistory!==null&&this.serviceAdmissionCoordinator){
@@ -954,6 +1024,16 @@ export class RegionSelectedOrchestrationDriver {
           demand(isDeepStrictEqual(verified,cancellationServiceAdmission),
             'service coordinator acknowledged a different cancellation fence');
           serviceTerminalVerified=true;
+          checkAbort();
+        }else if(state.status==='cancelled'&&this.automaticHistory!==null&&
+            this.serviceAdmissionCoordinator===null&&this.#executionClock!==null&&
+            typeof this.select.closeTerminal==='function'&&typeof this.select.durableRequestBoundary==='function'&&
+            this.select.durableRequestBoundary()!==null){
+          // Unsettled host children cannot use this complete-history path.
+          const cancelledSnapshot=await captureCheckpoint({allowCancelled:true});
+          durableCloseRequired=true;
+          cancellationIntent=await persistServiceTerminalIntent(cancelledSnapshot,terminalReason,
+            {closeBoundary:copy(this.select.durableRequestBoundary())});
           checkAbort();
         }
       }
@@ -978,9 +1058,14 @@ export class RegionSelectedOrchestrationDriver {
       }
       const preserveUnacknowledgedTerminalIntent=!paused&&
         ['cancelled','completed'].includes(state?.status)&&this.automaticHistory!==null&&
-        this.serviceAdmissionCoordinator&&(cancellationIntent===null||!serviceTerminalVerified);
+        (this.serviceAdmissionCoordinator&&(cancellationIntent===null||!serviceTerminalVerified)||
+          durableCloseRequired&&cancellationIntent===null);
       if(!paused&&nativeIdentity&&!preserveUnacknowledgedTerminalIntent){
-        try{closeReceipt=copy(await this.select.cancel({session:this.session,
+        try{const close=cancellationIntent?.terminal.closeBoundary?this.select.closeTerminal:this.select.cancel;
+          closeReceipt=copy(await close({session:this.session,
+          ...(cancellationIntent?.terminal.closeBoundary?{
+            expectedBoundary:copy(cancellationIntent.terminal.closeBoundary),
+            expectedCheckpointDigest:cancellationIntent.terminal.snapshot.native.native.digest}:{}),
           reason:terminalReason??(state?.status==='completed'?'Selected orchestration v8 completed':'Selected orchestration v8 finished')}));}
         catch(error){cleanupFailure??=failureOf(error);}
       }
@@ -990,7 +1075,8 @@ export class RegionSelectedOrchestrationDriver {
           await persistCompletedTerminal(terminalCheckpoint,closeReceipt,closedNative);}
         catch(error){cleanupFailure??=failureOf(error);}
       }
-      if(!paused&&failure===null&&cancellationIntent&&cancellationServiceAdmission&&closeReceipt){
+      if(!paused&&failure===null&&cancellationIntent&&(cancellationServiceAdmission||
+          cancellationIntent.terminal.closeBoundary)&&closeReceipt){
         try{const closedNative=copy(await this.select.checkpoint());
           await persistServiceTerminalFinal(cancellationIntent,terminalCheckpoint?'completed':'cancelled',
             cancellationServiceAdmission,closeReceipt,closedNative);}

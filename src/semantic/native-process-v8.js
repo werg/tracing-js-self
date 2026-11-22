@@ -98,7 +98,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       identity:copy(identity),attempts:copy(attempts),runtimeMetrics:copy(runtimeMetrics)};
     return {...packet,digest:hashAlgorithmData(packet)};
   };
-  const request=async(body,{durableClose=false}={})=>{
+  const request=async(body,{durableClose=false,expectedBoundary=null,expectedCheckpointDigest=null}={})=>{
     if(requestBusy)throw new Error('Native v8 model already has an outstanding request');
     const captured=copy(body);requestBusy=true;
     try{
@@ -110,11 +110,18 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       if(!durable||!durableClose&&!['commit','commit-orchestration','bootstrap-orchestration-child'].includes(captured.op))
         return await rawRequest(captured);
       const {journal,lease}=durable;
+      if(durableClose&&expectedBoundary!==null)demand(isDeepStrictEqual(expectedBoundary,{
+        schema:'semantic-native-producer-request-boundary/8',ordinal:nextOrdinal+1,sessionId:journal.sessionId,
+        streamId:journal.streamId,sessionGeneration:journal.sessionGeneration}),
+        'terminal close request boundary changed after application acknowledgement');
       const bootstrap=captured.op==='bootstrap-orchestration-child',
         kind=durableClose?'close':bootstrap?'bootstrap':'commit',
         verify=durableClose?verifyNativeV8DurableClose:bootstrap?verifyNativeV8DurableBootstrap:verifyNativeV8DurableCommit;
       demand(identity!==null&&captured.session===journal.sessionId,'durable commit differs from execution scope');
       const checkpoint=transportPacket(await rawRequest({op:'checkpoint'}));
+      if(durableClose&&expectedCheckpointDigest!==null)demand(HASH.test(expectedCheckpointDigest)&&
+        checkpoint.native.digest===expectedCheckpointDigest,
+        'terminal close native checkpoint changed after application acknowledgement');
       const ordinal=nextOrdinal+1,requestIdentity={schema:'semantic-native-request-identity/1',
         session_id:journal.sessionId,stream_id:journal.streamId,session_generation:journal.sessionGeneration,
         ordinal,operation:captured.op,model_identity:{checkpoint:identity.checkpointIdentity,
@@ -341,6 +348,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       return {schema:'semantic-native-transport-'+kind+'-recovery/8',
         recovered:true,
         request:copy(verified.request),result:verified.result,receipt:captured,
+        ...(kind==='close'?{preCheckpointDigest:intent.checkpoint.native.digest}:{}),
         nativeCheckpointDigest:verified.postCheckpoint.digest,hostDispatches:0,hostRecoveryAuthorized:false};
     }catch(error){stop(error);throw error;}finally{requestBusy=false;}
   };
@@ -399,7 +407,9 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       session.evidence.status='cancelled';session.evidence.failure=input.reason??'selected session cancelled';
     }
     try{
-      const result=await request({op:'cancel',session:input.session,reason:input.reason},{durableClose});
+      const result=await request({op:'cancel',session:input.session,reason:input.reason},{durableClose,
+        expectedBoundary:durableClose?input.expectedBoundary??null:null,
+        expectedCheckpointDigest:durableClose?input.expectedCheckpointDigest??null:null});
       const fields=['schema','session','closed','reason'];
       demand(result&&typeof result==='object'&&!Array.isArray(result)&&
         Object.keys(result).length===fields.length&&fields.every(key=>Object.hasOwn(result,key))&&
