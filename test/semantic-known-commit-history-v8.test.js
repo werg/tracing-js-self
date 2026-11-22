@@ -61,7 +61,10 @@ async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}
       '--execution-session-generation',String(requests.sessionGeneration));
     const select=createNativeV8ProcessSelector({command:python,args,cwd:nativeRoot,env,timeoutMs:120000,
       maxMessageBytes:64*1024*1024,durableRequests:{journal:requests,executionLease}});
-    return {select,lease:executionLease,log};
+    let recoverCalls=0;
+    const recover=select.recoverCommit;
+    select.recoverCommit=(...args)=>{recoverCalls++;return recover(...args);};
+    return {select,lease:executionLease,log,recoverCalls:()=>recoverCalls};
   }
   const close=async value=>{
     if(!value.select.status().closed)await value.select.shutdown();
@@ -153,7 +156,8 @@ test('wrong request scope or absent live clock refuses before any native recover
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,
       options(c,fresh,{executionClock:{}})),/original live clock/);
     assert.equal(fresh.select.metrics().predictionAttempts,0);
-    assert.equal(fresh.select.metrics().rpcCalls,0);assert.equal(readFileSync(fresh.log,'utf8'),'');
+    assert.equal(fresh.select.metrics().runtime.rpcCalls,0);assert.equal(fresh.recoverCalls(),0);
+    assert.equal(readFileSync(fresh.log,'utf8'),'');
   }finally{await c.close(fresh);}
 });
 
@@ -170,7 +174,8 @@ test('lost reconciled-head acknowledgement leaves the old receipt fenced without
   try{
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,options(c,third)),/latest|later|head/);
     assert.equal(third.select.metrics().predictionAttempts,0);
-    assert.equal(third.select.metrics().rpcCalls,0);assert.equal(readFileSync(third.log,'utf8'),'');
+    assert.equal(third.select.metrics().runtime.rpcCalls,0);assert.equal(third.recoverCalls(),0);
+    assert.equal(readFileSync(third.log,'utf8'),'');
   }finally{await c.close(third);}
 });
 
@@ -182,6 +187,7 @@ test('a real expired pending clock cannot refund time on process replacement',{s
   try{
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,options(c,fresh)),/deadline has expired/);
     assert.equal(fresh.select.metrics().predictionAttempts,0);
-    assert.equal(fresh.select.metrics().rpcCalls,0);assert.equal(readFileSync(fresh.log,'utf8'),'');
+    assert.equal(fresh.select.metrics().runtime.rpcCalls,0);assert.equal(fresh.recoverCalls(),0);
+    assert.equal(readFileSync(fresh.log,'utf8'),'');
   }finally{await c.close(fresh);}
 });
