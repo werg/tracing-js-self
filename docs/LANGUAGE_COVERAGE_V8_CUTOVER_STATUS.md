@@ -23,7 +23,13 @@ also froze callback fixture values before graph encoding. The support-only
 worker boundary now materializes the authored values; generic nonextensible
 guest-value refusal is unchanged. A full64 value/encode/JSON/decode control
 preserves every recipe, the cohort digest and48/12/4 split. Full actual collection
-and production-supply evidence remain separate and pending at this correction.
+now passes **64/64 original-source checks** at exact clean committed producer
+`95f0355d43bec09482678fa6187b4e487244d962`, retaining all64 rows and the unchanged
+48/12/4 split. Complete source artifacts, pre-execution inputs, progress and logs
+are archived under `docs/evidence/v8-support-complete95f-2026-11-22/`; every
+artifact hash was checked against its retained bytes. Independent native
+admission, production tokenization/preparation and actual production supply
+remain pending. Source-only native admission is0, not a successful native gate.
 
 New complete hosted evidence is retained in
 `docs/evidence/v8-hosted-recovery3d-source073-2026-11-22/`. Exact producer3d/native9a
