@@ -245,9 +245,9 @@ try{
     report.coverageBudget={kind:'one-train-window-pass',windowCount:targetInventory.windowCount,
       optimizerWindowCount:targetInventory.optimizerWindowCount,phase:coverageConfig.phase,
       phaseMeter:targetInventory.phaseMeter,phaseBudget:targetInventory.phaseBudget,
-      onePassMeterCount:targetInventory.onePassMeterCount,timeoutMs:1800000};
+      onePassMeterCount:targetInventory.onePassMeterCount,timeoutMs:7200000};
     run('train-full-target-window-pass',python,['-m','megatoken','train','--config',coverageConfigPath],
-      {timeoutMs:1800000});
+      {timeoutMs:7200000});
     const latest=JSON.parse(readFileSync(join(out,'fit-coverage/checkpoints/latest.json'),'utf8'));
     const coverageCheckpoint=join(out,'fit-coverage/checkpoints',latest.checkpoint);
     const coverageMetadata=JSON.parse(readFileSync(join(coverageCheckpoint,'metadata.json'),'utf8'));

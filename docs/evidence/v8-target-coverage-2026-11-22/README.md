@@ -48,3 +48,13 @@ instead of serializing the entire model after every window. Its objective and ev
 optimizer update remain unchanged; the original two-step resume test still writes
 both required checkpoints. Failed subprocess stages now include their bounded log
 tail in the job output while preserving the complete stage log in the artifact.
+
+The actual producer `b5345ca` / native `bba8cb0` continuation completed in
+[run 45007358491](https://github.com/werg/tracing-js-self/actions/runs/45007358491).
+It again passed all 64 source/native/token/packing/preparation gates, then failed
+before optimization on the observation-only record/plan distinction described above.
+The complete job log, complete command report and failing native stage are retained
+with the `b534-` prefix. Artifact `14748467994` has archive SHA-256
+`88f620b2e803b59c5804a2d14a32e1a440381b8a522470011d8ffc8de7ca36f8`.
+Producer `e56fcd02b8d716ef60727038ee85ee1ae0aff8a6` pins the corrected and
+admission-reusing native `a1d7f83` for the next complete campaign.

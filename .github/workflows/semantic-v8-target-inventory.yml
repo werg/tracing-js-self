@@ -3,6 +3,7 @@ name: Exact64 V8 support target inventory and ordinary coverage
 on:
   push:
     branches: [codex/v8-target-inventory-validation-20261122, codex/v8-target-coverage-completion-20261122]
+    paths-ignore: ['docs/**']
   workflow_dispatch:
 
 permissions:
@@ -10,12 +11,13 @@ permissions:
 
 concurrency:
   group: semantic-v8-target-inventory-${{ github.ref }}
-  cancel-in-progress: false
+  # Only the isolated continuation replaces obsolete finite-budget attempts.
+  cancel-in-progress: ${{ github.ref == 'refs/heads/codex/v8-target-coverage-completion-20261122' }}
 
 jobs:
   exact64-support:
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 180
     defaults:
       run:
         shell: bash
