@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="original async-only source uses canonical adoption: owned Promise.resolve return adoption" time="2.177692" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/promise-producer/test/semantic-async-return-adoption-composition-source-v8.test.js"/>
+	<testcase name="original async-only source uses canonical adoption: owned Promise return adoption FIFO" time="2.701932" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/promise-producer/test/semantic-async-return-adoption-composition-source-v8.test.js"/>
+	<testcase name="original async return binds one common enqueue, assimilation and forwarding sequence" time="0.037650" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/promise-producer/test/semantic-async-return-adoption-composition-source-v8.test.js"/>
+	<testcase name="native replays both exact original async-only source packets" time="3.904315" classname="test" file="/workspace/scratch/175924c3d3c2/worktrees/promise-producer/test/semantic-async-return-adoption-composition-source-v8.test.js"/>
+	<!-- tests 4 -->
+	<!-- suites 0 -->
+	<!-- pass 4 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 9514.903195 -->
+</testsuites>

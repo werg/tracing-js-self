@@ -1,0 +1,54 @@
+{
+  "schema": "async-return-adoption-composition-local/1",
+  "productSourceRevision": "95907736f46488662bc4f2bb5625abb9459d0f86",
+  "testRevision": "09e99f0a86f1c3568dff02db26a1386d695cf76f",
+  "nativeRevision": "03a9e33866207b5b0c4105297c6050dacadcf85f",
+  "runTreeNote": "The exact test bytes were uncommitted during execution and committed without modification after the successful run; product source is byte-identical to published95907736. This is not a clean whole-checkout hosted qualification.",
+  "runtime": {
+    "node": "24.22.3",
+    "python": "3.12.14",
+    "torch": "2.10.0+cpu",
+    "pytest": "8.4.2"
+  },
+  "counts": {
+    "cases": 4,
+    "failure": 0,
+    "error": 0,
+    "skipped": 0
+  },
+  "sourceCases": 2,
+  "actualNativeCases": 2,
+  "snapshotCuts": 9,
+  "generatedContexts": 78,
+  "optimizerUpdates": 0,
+  "files": [
+    {
+      "path": "local.log",
+      "bytes": 517,
+      "sha256": "769ce9b7b3c2240ec49da9e75d08a93396f477636398fba4eafbbad20a8aff4a"
+    },
+    {
+      "path": "local.xml",
+      "bytes": 1293,
+      "sha256": "11d9c02c5a168283289406780a855eee0e19272d5ba8bdc4f7b5d821a967a8f8"
+    },
+    {
+      "path": "original-source-map.json",
+      "bytes": 574,
+      "sha256": "32db853a87829af6f0637458a818ac5fec39000b44d10248cf1d2368003675cb"
+    },
+    {
+      "path": "producer-composition-map.json",
+      "bytes": 13375,
+      "sha256": "348324c62bea1afcae41ecc70446000ac4dcf9586032eda5b4f1938361ef6936"
+    },
+    {
+      "path": "source-evidence.json.gz.b64",
+      "bytes": 66041,
+      "sha256": "5e2a8096b2c4c607d148ff406b9c1391a26df1c355a3039146db891b55b7e8fb",
+      "originalBytes": 936655,
+      "originalSha256": "3ad428c63a41991353ca4aec18241c207ea2fb3217121563d809b8776e681037",
+      "encoding": "gzip-base64"
+    }
+  ]
+}
