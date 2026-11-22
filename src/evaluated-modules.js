@@ -1037,7 +1037,7 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
     for(const file of order){
       instantiateFunctions(file);
     }
-    const namespaceCreationOrder=request.experimentalNamespacePlan?
+    const namespaceCreationOrder=synchronousNamespaceWrapper?
       [...namespaceTargets].sort():namespaceTargets;
     for(const file of namespaceCreationOrder)
       append(file,'namespace-object',namespaceInitializer(file));

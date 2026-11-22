@@ -79,4 +79,10 @@ test('original ESM namespace worker refuses namespace escapes and non-scalar cel
  const scalarResult=run(nonscalar);
  assert.equal(JSON.parse(scalarResult.stdout).status,'unsupported');
  assert.match(JSON.parse(scalarResult.stdout).reason,/scalar/i);
+ const dynamicUnknownModules={...modules,'entry.mjs':"import * as view from './dep.mjs'; const key='missing'; export function inspect(){return view[key];}"};
+ const dynamicUnknown={...base,modules:dynamicUnknownModules,
+  moduleNamespacePlan:plan(dynamicUnknownModules)};
+ const dynamicResult=run(dynamicUnknown);
+ assert.equal(JSON.parse(dynamicResult.stdout).status,'unsupported');
+ assert.match(JSON.parse(dynamicResult.stdout).reason,/planned string export/i);
 });

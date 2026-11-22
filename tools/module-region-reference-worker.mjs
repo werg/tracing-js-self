@@ -41,6 +41,7 @@ try{
       plan:request.moduleNamespacePlan,observerSpecifier,observerLocal});
     namespacePlan=prepared.plan;
     observations=[];
+    const exportsByFile=new Map(namespacePlan.namespaces.map(row=>[row.file,new Set(row.exports.map(item=>item.name))]));
     const encodeScalar=value=>{
       if(value!==null&&!['undefined','boolean','string','number','bigint'].includes(typeof value))
         throw new TypeError('Original ESM namespace observation returned a non-scalar');
@@ -68,7 +69,8 @@ try{
         record('namespace.read',{moduleFile:file,exportName,value:encodeScalar(value)});return value;}),
       dynamicRead:(file,namespace,exportName)=>observe(()=>{
         requireNamespace(file,namespace);
-        if(typeof exportName!=='string')throw new TypeError('Dynamic namespace key must be a string');
+        if(typeof exportName!=='string'||!exportsByFile.get(file)?.has(exportName))
+          throw new TypeError('Dynamic namespace key is not a planned string export');
         const value=Reflect.get(namespace,exportName);
         record('namespace.read',{moduleFile:file,exportName,value:encodeScalar(value)});return value;
       }),
@@ -82,6 +84,9 @@ try{
           if(typeof name!=='string')throw new TypeError('Namespace own keys are unsupported');
           copied.push(name);
         }
+        const expected=namespacePlan.namespaces.find(row=>row.file===file)?.exports.map(item=>item.name);
+        if(!expected||JSON.stringify(copied)!==JSON.stringify(expected))
+          throw new TypeError('Namespace own keys differ from the source plan');
         record('namespace.keys',{moduleFile:file,names:copied});return names;}),
       descriptor:(file,method,namespace,exportName)=>observe(()=>{requireNamespace(file,namespace);
         if(method!==nativeDescriptor)throw new TypeError('Object descriptor intrinsic changed');
@@ -145,5 +150,7 @@ try{
   if(Buffer.byteLength(JSON.stringify(response),'utf8')>1048576)
     throw new RangeError('Module reference output bound');
   send(response);
-}catch(error){send({schema:'semantic-module-reference/1',status:/deadline|timeout|limit|bound/i.test(error.message)?'resource_limited':'unsupported',
-  authority:'native-v8-module-execution',reason:String(error.message),node:process.version});}
+}catch(error){const resourceLimited=error instanceof RangeError||error?.code==='ERR_SCRIPT_EXECUTION_TIMEOUT'||
+    error?.message==='Module reference deadline exceeded';
+  send({schema:'semantic-module-reference/1',status:resourceLimited?'resource_limited':'unsupported',
+    authority:'native-v8-module-execution',reason:String(error.message),node:process.version});}
