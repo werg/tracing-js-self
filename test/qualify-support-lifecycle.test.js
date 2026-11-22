@@ -36,6 +36,18 @@ const complete=['--prepared-root','/tmp/prepared','--source-inventory','/tmp/inv
 }
 
 {
+  const result=invoke(['--full-target-coverage']);
+  assert.notEqual(result.status,0);
+  assert.match(result.stderr,/Full target coverage requires the explicit prepared support corpus/);
+}
+
+{
+  const result=invoke([...complete,'--full-target-coverage','--full-target-coverage']);
+  assert.notEqual(result.status,0);
+  assert.match(result.stderr,/Duplicate ordinary lifecycle option: --full-target-coverage/);
+}
+
+{
   const result=spawnSync(process.execPath,[runner,'--out','/tmp/prepared/nested-output',
     '--megatoken','/tmp/megatoken','--python','python','--tokenizer','/tmp/tokenizer.json',
     ...complete],{encoding:'utf8'});
