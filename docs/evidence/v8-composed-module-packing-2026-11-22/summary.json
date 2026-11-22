@@ -133,11 +133,13 @@
   },
   "readOnlyRetainedAudit": {
     "result": "passed",
-    "seconds": 21.294183330999658,
+    "seconds": 23.371660860000702,
     "physicalTargetMasksIndependentlyReconstructed": 708,
     "sourceProducerRerun": false,
     "nativeAdmissionRerun": false,
-    "optimizerUpdates": 0
+    "optimizerUpdates": 0,
+    "auditScriptRevision": "447b545f13fffeb2cc791fb7cae73535700580cd",
+    "rawReport": "final-retained-artifact-audit.json"
   },
   "optimizerUpdates": 0,
   "learnedSuccess": null,
