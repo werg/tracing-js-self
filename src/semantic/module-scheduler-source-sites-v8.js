@@ -26,7 +26,7 @@ export function deriveModuleSchedulerSourceSitesV8({source,moduleSchedulerPlan,b
     fail('generated source and source-derived scheduler plan are required');
   verifyModuleSchedulerPlanV8(moduleSchedulerPlan);
   const ast=parse(source,{ecmaVersion:'latest',sourceType:'script'});
-  const functions=new Map(),calls=[],records=[],awaitSites=[];
+  const functions=new Map(),calls=[],records=[],awaitSites=[],completionAwaitSites=[];
   function walk(node,owner=null){
     if(!node)return;
     const name=node.type==='FunctionDeclaration'?helperName(node.id):null;
@@ -39,8 +39,14 @@ export function deriveModuleSchedulerSourceSitesV8({source,moduleSchedulerPlan,b
       functions.set(name,{name,start:node.start,end:node.end,parameter:node.params[0].name});
     }
     if(node.type==='AwaitExpression'){
-      if(owner!=='__traced_eval_async')fail('await site is outside the owned module driver');
-      awaitSites.push({owner,start:node.start,end:node.end,source:source.slice(node.start,node.end)});
+      if(owner==='__traced_eval_async')
+        awaitSites.push({owner,start:node.start,end:node.end,source:source.slice(node.start,node.end)});
+      else if(owner===null&&node.argument?.type==='Identifier'&&
+          node.argument.name==='__traced_eval_completion')
+        completionAwaitSites.push({start:node.start,end:node.end,
+          source:source.slice(node.start,node.end)});
+      // Source async functions have their own awaits. They acquire no module
+      // scheduler ownership merely by appearing in this generated source.
     }
     if(node.type==='CallExpression'){
       const helper=helperName(node.callee);
@@ -85,7 +91,8 @@ export function deriveModuleSchedulerSourceSitesV8({source,moduleSchedulerPlan,b
   if(records.length!==moduleSchedulerPlan.modules.length||
      new Set(records.map(row=>row.index)).size!==records.length)
     fail('generated module record table does not match the source plan');
-  if(awaitSites.length<1)fail('scheduler has no top-level await driver site');
+  if(awaitSites.length!==1||completionAwaitSites.length!==1)
+    fail('scheduler requires its unique module-driver and entry-completion await sites');
   if(bundle){
     if(!Array.isArray(bundle.sites)||!bundle.programs||typeof bundle.programs!=='object'||
        Array.isArray(bundle.programs))fail('owned archive source sites are malformed');
@@ -111,7 +118,8 @@ export function deriveModuleSchedulerSourceSitesV8({source,moduleSchedulerPlan,b
     functions:[...functions.values()].sort((a,b)=>a.start-b.start),
     calls:calls.sort((a,b)=>a.start-b.start),
     records:records.sort((a,b)=>a.index-b.index),
-    awaitSites:awaitSites.sort((a,b)=>a.start-b.start)};
+    awaitSites:awaitSites.sort((a,b)=>a.start-b.start),
+    completionAwaitSites:completionAwaitSites.sort((a,b)=>a.start-b.start)};
   return {...planBody,schema:'semantic-module-scheduler-source-sites/1',
     digest:digest(JSON.stringify(planBody))};
 }

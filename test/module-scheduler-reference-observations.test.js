@@ -20,6 +20,15 @@ function canonical(value){
   if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';
   return '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonical(value[key])).join(',')+'}';
 }
+// Reference-only adversarial cases include source rejected by the owned
+// compiler. This source-hash plan is an observer input, not owned/native admission.
+function referenceOnlyPlan(source){
+  const body={schema:'semantic-module-scheduler-plan/1',entryModule:'main.mjs',
+    modules:[{file:'main.mjs',index:0,
+      sourceDigest:createHash('sha256').update(source).digest('hex'),
+      dependencies:[],hasTLA:false}]};
+  return {...body,digest:createHash('sha256').update(canonical(body)).digest('hex')};
+}
 function reindexPlan(plan){
   const output=copy(plan);
   output.modules.sort((a,b)=>b.file.localeCompare(a.file));
@@ -28,20 +37,35 @@ function reindexPlan(plan){
   output.digest=createHash('sha256').update(canonical(body)).digest('hex');
   return output;
 }
+function scheduledModules(mainSource,extra={}){
+  // A TLA dependency followed by an independent sibling requires the real
+  // dependency scheduler. A simple TLA chain uses the concatenation strategy.
+  return {
+    'gate.mjs':'await 0;',
+    'sibling.mjs':'export const marker=1;',
+    ...extra,
+    'main.mjs':"import './gate.mjs';import './sibling.mjs';"+mainSource
+  };
+}
 function planFor(modules,entryModule,exportName='run'){
-  return buildModuleSchedulerPlanV8(linkEvaluatedModules({modules,entryModule,exportName}).metadata);
+  const metadata=linkEvaluatedModules({modules,entryModule,exportName}).metadata;
+  assert.equal(metadata.evaluationStrategy,'async-dependency-scheduler',
+    'fixture must exercise the actual dependency scheduler');
+  return buildModuleSchedulerPlanV8(metadata);
 }
 
 test('scheduler source sites bind generated helper bodies and module records to the relinked plan',()=>{
   const modules={
     'leaf.mjs':'await 0;export const value=1;',
-    'main.mjs':"import {value} from './leaf.mjs';export function run(){return value;}"
+    'sibling.mjs':'export const sibling=2;',
+    'main.mjs':"import {value} from './leaf.mjs';import './sibling.mjs';export function run(){return value;}"
   };
   const linked=linkEvaluatedModules({modules,entryModule:'main.mjs',exportName:'run'});
   const plan=buildModuleSchedulerPlanV8(linked.metadata);
   const sites=deriveModuleSchedulerSourceSitesV8({source:linked.source,moduleSchedulerPlan:plan});
   assert.equal(sites.schema,'semantic-module-scheduler-source-sites/1');
-  assert.equal(sites.records.length,2);
+  assert.equal(sites.records.length,3);
+  assert.equal(sites.completionAwaitSites.length,1);
   assert(sites.calls.some(row=>row.helper==='__traced_eval_async'));
   assert(sites.calls.some(row=>row.helper==='__traced_eval_failed'));
   assert(sites.awaitSites.some(row=>row.owner==='__traced_eval_async'));
@@ -85,23 +109,23 @@ test('original ESM observer records rejection and lets the already-started sibli
 
 
 test('original ESM observer accepts linker index order independently of file-name order',()=>{
-  const modules={
-    'state.mjs':'export let value=1;',
-    'main.mjs':"import {value} from './state.mjs';export function run(){return value;}"
-  };
+  const modules=scheduledModules(
+    "import {value} from './state.mjs';export function run(){return value;}",
+    {'state.mjs':'export let value=1;'}
+  );
   const plan=reindexPlan(planFor(modules,'main.mjs'));
   assert.notDeepEqual(plan.modules.map(row=>row.file),plan.modules.map(row=>row.file).slice().sort());
   const prepared=prepareOriginalModuleSchedulerModules({
     modules,entryModule:'main.mjs',moduleSchedulerPlan:plan,
     observerSpecifier:'./observer.mjs',observerLocal:'__moduleSchedulerObserver'
   });
-  assert.equal(Object.keys(prepared.modules).length,2);
+  assert.equal(Object.keys(prepared.modules).length,Object.keys(modules).length);
   assert(prepared.modules['main.mjs'].indexOf("import {value}") <
     prepared.modules['main.mjs'].indexOf("import __moduleSchedulerObserver"));
 });
 
 test('original ESM observer refuses nested uncaught rejection sites it cannot own',()=>{
-  const modules={'main.mjs':'if (true) throw new Error("x"); export function run(){return 1;}'};
+  const modules=scheduledModules('if (true) throw new Error("x"); export function run(){return 1;}');
   const plan=planFor(modules,'main.mjs');
   assert.throws(()=>prepareOriginalModuleSchedulerModules({
     modules,entryModule:'main.mjs',moduleSchedulerPlan:plan,
@@ -110,11 +134,10 @@ test('original ESM observer refuses nested uncaught rejection sites it cannot ow
 });
 
 test('original ESM observer refuses a colliding observer module specifier',()=>{
-  const modules={
-    'state.mjs':'export const value=1;',
-    'observer.mjs':'export default {};',
-    'main.mjs':"import './observer.mjs';import {value} from './state.mjs';export function run(){return value;}"
-  };
+  const modules=scheduledModules(
+    "import './observer.mjs';import {value} from './state.mjs';export function run(){return value;}",
+    {'state.mjs':'export const value=1;','observer.mjs':'export default {};'}
+  );
   const plan=planFor(modules,'main.mjs');
   assert.throws(()=>prepareOriginalModuleSchedulerModules({
     modules,entryModule:'main.mjs',moduleSchedulerPlan:plan,
@@ -123,31 +146,28 @@ test('original ESM observer refuses a colliding observer module specifier',()=>{
 });
 
 
-test('original ESM observer refuses dynamic lexical inspection but exposes no global sink',async()=>{
+test('reference-only ESM observer refuses lexical inspection and exposes no global sink',async()=>{
   for(const source of [
     'eval("typeof __moduleSchedulerObserver"); export function run(){return 1;}',
     'export function run(){return import.meta.url;}'
   ]){
-    const modules={'main.mjs':source};
-    const plan=planFor(modules,'main.mjs');
+    const modules={'main.mjs':source},plan=referenceOnlyPlan(source);
     assert.throws(()=>prepareOriginalModuleSchedulerModules({
       modules,entryModule:'main.mjs',moduleSchedulerPlan:plan,
       observerSpecifier:'./observer.mjs',observerLocal:'__moduleSchedulerObserver'
     }),/observer profile/);
   }
-  const modules={'main.mjs':
-    'export function run(){return [globalThis.__moduleSchedulerRows,(()=>{}).constructor("return this")().__moduleSchedulerRows];}'};
-  const plan=planFor(modules,'main.mjs');
-  const result=await originalEsm(modules,'main.mjs',plan);
+  const source=
+    'export function run(){return [globalThis.__moduleSchedulerRows,(()=>{}).constructor("return this")().__moduleSchedulerRows];}';
+  const result=await originalEsm({'main.mjs':source},'main.mjs',referenceOnlyPlan(source));
   assert.equal(result.outcome.status,'fulfilled');
   assert.deepEqual(structuredClone(result.outcome.value),[undefined,undefined]);
 });
 
-
 test('source start marker precedes a first-statement rejection',async()=>{
-  const modules={'main.mjs':'throw "early"; export function run(){return 1;}'};
+  const modules=scheduledModules('throw "early"; export function run(){return 1;}');
   const result=await originalEsm(modules,'main.mjs',planFor(modules,'main.mjs'));
   assert.equal(result.outcome.status,'rejected');
-  assert.deepEqual(result.observations.rows.map(row=>row.kind),
+  assert.deepEqual(result.observations.rows.filter(row=>row.moduleFile==='main.mjs').map(row=>row.kind),
     ['module.start','module.reject']);
 });
