@@ -9,6 +9,7 @@ import {hashAlgorithmData} from '../src/semantic/program.js';
 import {openQualificationProgress} from '../src/corpus/qualification-progress.mjs';
 import {CampaignStore} from '../src/corpus/campaign-store.mjs';
 import {verifyV8ReleaseCampaign} from '../tools/verify-v8-release-campaign.mjs';
+import {buildRegionFamilyRegistry,regionSplitIdentity,regionDatasetBinding} from '../src/semantic/family-registry-v8.js';
 
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'..'),REVISION='a'.repeat(40);
 const CONTRACT='1'.repeat(64),FIXTURE='2'.repeat(64),INTEROP='3'.repeat(64);
@@ -16,15 +17,17 @@ const read=path=>JSON.parse(readFileSync(path,'utf8'));
 const write=(path,value)=>writeFileSync(path,JSON.stringify(value,null,2)+'\n');
 
 function fixture(t,{overwriteHistory=false,admitUnselected=false,mismatchedNativeFile=false,wrongTaskSource=false,
-  nativeMutation=null,admittedMutation=null}={}){
+  nativeMutation=null,admittedMutation=null,withRegistry=false}={}){
   const parent=mkdtempSync(join(tmpdir(),'v8-release-campaign-'));
   t.after(()=>rmSync(parent,{recursive:true,force:true}));
   const directory=join(parent,'campaign'),ids=['accepted','refused','unselected'];
   const tasks=ids.map(id=>({kind:'source',traceVersion:8,producerRevision:REVISION,
     fixture:{id,family:'controlled:'+id,source:'function run(){return 1;}',entry:'run',
       argsGraph:{schema:'owned-graph/1',roots:[],objects:[]}}}));
+  const registry=withRegistry?buildRegionFamilyRegistry(tasks.map(task=>({...task.fixture,ancestors:[]})),{seed:17}):null;
   const inventory={schema:'semantic-v8-qualification-population/1',producerRevision:REVISION,
-    population:'controlled-release-test',inputs:'all',declared:3,selectedCaseIds:ids.slice(0,2),tasks};
+    population:'controlled-release-test',inputs:'all',declared:3,selectedCaseIds:ids.slice(0,2),tasks,
+    ...(registry?{registryDigest:registry.digest}:{})};
   const populationDigest=hashAlgorithmData(inventory),nativePolicy={schema:'semantic-native-policy/8',
     consumerRepository:'werg/megatoken',consumerRevision:'b'.repeat(40),contractDigest:CONTRACT,
     fixtureDigest:FIXTURE,interoperabilityDigest:INTEROP,tokenizerIdentity:'4'.repeat(64),tokenizerSha256:'5'.repeat(64)};
@@ -35,6 +38,7 @@ function fixture(t,{overwriteHistory=false,admitUnselected=false,mismatchedNativ
   const progress=openQualificationProgress(directory,authority),artifacts={};
   const save=(name,value)=>{artifacts[name]=progress.save(name,value);};
   save('population.json',{...inventory,digest:populationDigest});
+  if(registry)save('family-registry.json',registry);
   const historical=overwriteHistory?'accepted.source.json':'accepted.first-failure.json';
   progress.save(historical,{status:'failed',reason:'original failed attempt'});
   progress.complete('accepted',tasks[0],{id:'accepted',status:'failed',source:'failed',native:'untested',
@@ -54,9 +58,16 @@ function fixture(t,{overwriteHistory=false,admitUnselected=false,mismatchedNativ
             license:'repository-fixture',trustTier:'repository-fixture',
             referenceInput:{source:wrongTaskSource&&id==='accepted'?'function run(){return 2;}':tasks[index].fixture.source,entry:'run',
               inputGraph:tasks[index].fixture.argsGraph,fixture:{calls:[],settlementOrder:null},randomSeed:null}}}}};
+      if(registry){
+        const identity=regionSplitIdentity(registry,{...tasks[index].fixture,ancestors:[]});
+        Object.assign(source.sidecar,{splitIdentity:identity,split:identity.split,sourceComponent:identity.componentId,
+          familyRegistryDigest:registry.digest,datasetBinding:regionDatasetBinding(source,identity)});
+        Object.assign(row,{sourceId:id,split:identity.split});
+      }
       row.nativeReceipt={schema:'semantic-native-admission/8',qualifiedRealSource:false,
         publicDigest:hashAlgorithmData(source.public),contextsDigest:hashAlgorithmData(source.contexts),
-        sourceArtifactDigest:hashAlgorithmData(source.sidecar.sourceArtifact),datasetBindingDigest:null,
+        sourceArtifactDigest:hashAlgorithmData(source.sidecar.sourceArtifact),
+        datasetBindingDigest:source.sidecar.datasetBinding?hashAlgorithmData(source.sidecar.datasetBinding):null,
         consumerRevision:nativePolicy.consumerRevision,contractDigest:CONTRACT,fixtureDigest:FIXTURE,
         interoperabilityDigest:INTEROP,tokenizer:{status:'passed',identity:nativePolicy.tokenizerIdentity,sha256:nativePolicy.tokenizerSha256},
         admitted:true,optimizerSteps:0,learningClaim:null,sourceVerification:{schema:'semantic-native-source-recheck/1',
@@ -76,6 +87,7 @@ function fixture(t,{overwriteHistory=false,admitUnselected=false,mismatchedNativ
   });
   const report={schema:'semantic-v8-qualification/1',producerRevision:REVISION,
     population:inventory.population,inputs:'all',populationDigest,declared:3,selectedCaseIds:inventory.selectedCaseIds,
+    ...(registry?{registryDigest:registry.digest,familyRegistryArtifact:'family-registry.json'}:{}),
     contractDigest:CONTRACT,fixtureDigest:FIXTURE,interoperabilityDigest:INTEROP,nativePolicy,
     progressDigest:progress.digest,workers:1,workerBounds:authority.bounds,nativeTimeoutMs:1000,
     preparationOnly:false,rows,artifacts,sourceQualified:rows.filter(row=>row.source==='passed').length,
@@ -129,6 +141,20 @@ test('V8 release snapshot refuses changed completed bytes and missing original f
     else rmSync(join(directory,'accepted.first-failure.json'));
     await assert.rejects(verifyV8ReleaseCampaign(directory),/artifact bytes changed|ENOENT/);
   });
+});
+
+test('V8 release snapshot binds every interpreted artifact to its original read bytes',async t=>{
+  for(const name of ['accepted.source.json','accepted.admitted.json','accepted.native.json','family-registry.json'])
+    await t.test(name,async t=>{
+      const {directory}=fixture(t,{withRegistry:name==='family-registry.json'});
+      const before=await verifyV8ReleaseCampaign(directory);
+      assert.equal(before.nativeAdmitted,1);
+      const path=join(directory,name),value=read(path);
+      appendFileSync(path,' ');
+      assert.deepEqual(read(path),value,'JSON meaning is unchanged; the recorded bytes are different');
+      await assert.rejects(verifyV8ReleaseCampaign(directory),error=>
+        error.message==='V8 release campaign: completed artifact bytes changed before interpretation: '+name);
+    });
 });
 
 test('V8 release snapshot refuses torn and reordered logs without repairing their bytes',async t=>{
