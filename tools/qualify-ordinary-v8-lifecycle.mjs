@@ -8,6 +8,7 @@ import {execFileSync,spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {assertIndependentPositionCoverage} from './semantic-v8-position-coverage.mjs';
+import {verifyLifecycleSourcePopulation,verifyLifecycleTargetPopulation} from './support-lifecycle-inventory.mjs';
 
 const known=new Set(['--out','--producer-root','--megatoken','--python','--tokenizer','--native-policy','--source-id','--prepared-root','--source-inventory','--sample-source']);
 const booleans=new Set(['--orchestration-teacher','--full-target-coverage']);
@@ -67,7 +68,7 @@ const {prepareRegionFamilyRegistry,bindRegionFamilySplit}=await moduleAt('src/se
 const {verifyRegionTrainingCase}=await moduleAt('src/semantic/compiler-v8.js');
 const {encodeGenerationTask}=await moduleAt('src/corpus/generation-process.mjs');
 let candidates=[],prepared,membership,supportRegistry=null,sourceId=selectedId,
-  supportInventoryBytes=null,supportSampleBytes=null;
+  supportInventoryBytes=null,supportSampleBytes=null,supportPopulation=null;
 if(supportMode){
   if(!existsSync(supportPrepared)||!existsSync(supportInventory)||!existsSync(supportSample))
     throw new Error('Support lifecycle inputs must already exist');
@@ -75,17 +76,10 @@ if(supportMode){
   supportSampleBytes=readFileSync(supportSample);
   supportRegistry=JSON.parse(readFileSync(join(supportPrepared,'semantic-v8-families.json'),'utf8'));
   const inventory=JSON.parse(supportInventoryBytes.toString('utf8'));
-  const ids=inventory?.sourceIds;
-  if(inventory?.schema!=='semantic-v8-source-population/1'||inventory.registryDigest!==supportRegistry.digest||
-     !Array.isArray(ids)||ids.length!==64||new Set(ids).size!==64||ids.some(id=>typeof id!=='string'||!id))
-    throw new Error('Support inventory must bind exactly 64 unique sources to the prepared registry');
   const {verifyRegionDatasetBinding,verifyRegionFamilyRegistry}=
     await moduleAt('src/semantic/family-registry-v8.js');
-  const registryCheck=verifyRegionFamilyRegistry(supportRegistry);
-  const registryIds=supportRegistry.sources?.map(row=>row.id);
-  if(!registryCheck.valid||!Array.isArray(registryIds)||registryIds.length!==64||
-     new Set(registryIds).size!==64||registryIds.some(id=>!ids.includes(id))||ids.some(id=>!registryIds.includes(id)))
-    throw new Error('Prepared support registry differs from the immutable source inventory');
+  supportPopulation=verifyLifecycleSourcePopulation(supportRegistry,inventory,{verifyRegistry:verifyRegionFamilyRegistry});
+  const ids=supportPopulation.sourceIds;
   const sample=JSON.parse(supportSampleBytes.toString('utf8'));
   const checked=verifyRegionDatasetBinding(sample,{expectedSplit:'train'});
   if(checked.registryDigest!==supportRegistry.digest||
@@ -113,15 +107,18 @@ if(supportMode){
 const write=(name,value)=>writeFileSync(join(out,name),JSON.stringify(value,null,2)+'\n');
 const env={...process.env,PYTHONPATH:join(consumer,'src'),OMP_NUM_THREADS:'1',MKL_NUM_THREADS:'1'};
 const report={schema:'semantic-ordinary-command-lifecycle/8',status:'running',producerRevision,consumerRevision,
-  selectedId:supportMode?sourceId:selectedId,seed,orchestrationTeacher,populationCount:supportMode?64:candidates.length,registryDigest:prepared.registry.digest,
-  ...(supportMode?{supportPopulation:{count:64,fullLaunchQualified:false,optimizerTargetExposure:'two-step lifecycle plus pending target-inventory comparison'}}:{}),
+  selectedId:supportMode?sourceId:selectedId,seed,orchestrationTeacher,
+  populationCount:supportMode?supportPopulation.populationCount:candidates.length,registryDigest:prepared.registry.digest,
+  ...(supportMode?{supportPopulation:{count:supportPopulation.populationCount,splitCounts:supportPopulation.splitCounts,
+    splitSeed:supportPopulation.splitSeed,fullLaunchQualified:false,
+    optimizerTargetExposure:'two-step lifecycle plus pending target-inventory comparison'}}:{}),
   nativePolicy:settings.policy,runnerSha256:createHash('sha256').update(readFileSync(fileURLToPath(import.meta.url))).digest('hex'),
   optimizerUpdates:0,learnedSuccess:null,stages:[],
   fullTargetCoverageRequested:fullTargetCoverage,fullTargetCoverageQualified:false,
   targetCoverageStatus:fullTargetCoverage?'pending':'not-requested',
   scope:supportMode?(fullTargetCoverage?
-    'Two-step resume/export/service route plus an explicitly selected bounded fresh ordinary training pass over the exact prequalified 64-source SE support corpus. Complete target presence and prepared-text positions require their separate final checkpoint comparisons; hidden routing positions and learned success remain unmeasured.':
-    'Two ordinary optimizer updates, fresh resume, export and real service restoration over the exact prequalified 64-source SE support corpus, with measured partial target presence against the complete planner inventory. Full optimizer target coverage was not requested or qualified.'):
+    `Two-step resume/export/service route plus an explicitly selected bounded fresh ordinary training pass over the exact prequalified ${supportPopulation.populationCount}-source SE support corpus. Complete target presence and prepared-text positions require their separate final checkpoint comparisons; hidden routing positions and learned success remain unmeasured.`:
+    `Two ordinary optimizer updates, fresh resume, export and real service restoration over the exact prequalified ${supportPopulation.populationCount}-source SE support corpus, with measured partial target presence against the complete planner inventory. Full optimizer target coverage was not requested or qualified.`):
     'One predeclared training source, two ordinary optimizer updates, checkpoint resume, export and real service restoration. No held-out, accepted-record recovery or whole-program success claim.'};
 const record=()=>write('command-report.json',report);
 const run=(stage,command,args,{timeoutMs=600000}={})=>{
@@ -209,11 +206,7 @@ try{
     run('inventory-positive-loss-targets',python,[join(consumer,'scripts/qualify_semantic_v8_target_inventory.py'),
       '--config',config,'--expected-source-ids',supportInventoryForRun,'--output',targetInventoryPath]);
     targetInventory=JSON.parse(readFileSync(targetInventoryPath,'utf8'));
-    if(targetInventory.sourceIds.length!==48||targetInventory.trainEpisodeCount!==48||
-       targetInventory.windowCount<1||targetInventory.optimizerWindowCount<1||
-       targetInventory.phaseMeter!=='P'||targetInventory.onePassMeterCount>targetInventory.phaseBudget||
-       targetInventory.registryDigest!==prepared.registry.digest)
-      throw new Error('Positive-loss target inventory differs from exact 64-source support training split');
+    verifyLifecycleTargetPopulation(targetInventory,supportPopulation);
     console.log('V8_TARGET_INVENTORY_EVIDENCE_JSON '+JSON.stringify(targetInventory));
   }
   run('train-first',python,['-m','megatoken','train','--config',config]);
@@ -302,7 +295,7 @@ try{
   report.limits=measured.limits;report.serving=measured.serving;
   report.status='passed';record();
   console.log(JSON.stringify({output:out,producerRevision,consumerRevision,selectedId:supportMode?sourceId:selectedId,
-    declared:supportMode?64:candidates.length,optimizerUpdates:2,optimizerUpdateCounts:report.optimizerUpdateCounts,
+    declared:supportMode?supportPopulation.populationCount:candidates.length,optimizerUpdates:2,optimizerUpdateCounts:report.optimizerUpdateCounts,
     status:report.status,optimizerTargetExposure:report.optimizerTargetExposure,
     fullTargetCoverageRequested:report.fullTargetCoverageRequested,
     fullTargetCoverageQualified:report.fullTargetCoverageQualified,

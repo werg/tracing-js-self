@@ -5,6 +5,7 @@ import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {createServer} from 'node:http';
+import {regionQualificationPopulation} from '../fixtures/semantic-regions/qualification.js';
 import {installedQualificationInventory,installedQualificationOutcome,parseInstalledQualificationOptions} from '../tools/qualify-installed-v8.mjs';
 import {decodeInstalledFixtureTask,executeInstalledV8Task} from '../tools/installed-v8-worker.mjs';
 import {decodeGenerationTask,encodeGenerationTask,generationEnvironment} from '../src/corpus/generation-process.mjs';
@@ -12,11 +13,25 @@ import {prepareInstalledV8Package,restoreInstalledV8Package,verifyInstalledArchi
   LEGACY_V8_CLIENT_FILES,installedSha256} from '../src/corpus/installed-v8-qualification.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-test('installed inventory retains all 665 original and 69 selected inputs including five module graphs',()=>{
+test('installed inventory retains every current declared source and module input with exact input digests',()=>{
   const all=installedQualificationInventory({producerRevision:'test'}),
     smoke=installedQualificationInventory({producerRevision:'test',requested:['interoperability:key-getter']});
-  assert.deepEqual(all.declared,{all:665,interoperability:69});assert.deepEqual(all.selected,all.declared);
-  assert.equal(all.rows.length,734);assert.equal(all.rows.filter(row=>row.kind==='module').length,5);
+  const expected={};
+  for(const name of ['all','interoperability']){
+    const population=regionQualificationPopulation({population:name,allInputs:true}),
+      fixtures=[...population.scripts,...population.modules],rows=all.rows.filter(row=>row.population===name);
+    expected[name]=fixtures.length;
+    assert.equal(rows.length,fixtures.length);
+    for(const [index,fixture]of fixtures.entries()){
+      const task=encodeGenerationTask({kind:fixture.modules?'module':'source',traceVersion:8,
+        fixture,producerRevision:'test'});
+      assert.deepEqual(rows[index].task,task,fixture.id+': exact declared source, input and provenance');
+      assert.equal(rows[index].sourceInputDigest,installedSha256(JSON.stringify(task.fixture)),fixture.id);
+      assert.equal(rows[index].selected,true,fixture.id+': every current declaration is attempted');
+    }
+  }
+  assert.deepEqual(all.declared,expected);assert.deepEqual(all.selected,expected);
+  assert.equal(all.rows.length,Object.values(expected).reduce((sum,count)=>sum+count,0));
   for(const id of ['source-promise-adoption-executor','source-promise-adoption-async-return',
     'source-promise-adoption-reaction-return']){
     const rows=all.rows.filter(row=>row.population==='interoperability'&&row.id===id);
@@ -26,9 +41,6 @@ test('installed inventory retains all 665 original and 69 selected inputs includ
   assert.deepEqual(smoke.selected,{all:0,interoperability:1});
   assert.deepEqual(smoke.rows.map(({selected,...row})=>row),all.rows.map(({selected,...row})=>row));
   for(const row of all.rows)assert.deepEqual(decodeInstalledFixtureTask(JSON.parse(JSON.stringify(row.task))),decodeGenerationTask(row.task));
-  assert.equal(all.rows.filter(row=>row.task.fixture.originalReferenceSource).length,27);
-  assert.equal(all.rows.filter(row=>row.task.fixture.originalReferenceSource&&
-    row.task.fixture.originalReferenceSource!==row.task.fixture.source).length,1);
   assert.throws(()=>installedQualificationInventory({producerRevision:'test',requested:['missing']}),/Unknown/);
   assert.throws(()=>installedQualificationInventory({population:'gallery'}),/Unknown/);
 });
