@@ -8,7 +8,7 @@ import {hashAlgorithmData} from '../../src/semantic/program.js';
 const childRecords=JSON.parse(process.argv.at(-1)),copy=structuredClone;
 const instruction='Emit one JSON object {name,arguments}. Allowed actions are track_create, track_join, track_progress, track_complete and track_cancel. Copy a declared execution binding exactly into track_create, with purpose, completion, capabilities and budget. Join only this coordinator\'s issued child dependency. Progress must contain the exact JSON {kind,value} of a delivered child completion. Complete only after all declared children have delivered and published results. Other lifecycle actions are outside this bounded profile.';
 const completion={kind:'return',value:['num',7]};
-let identity=null,orchestration=null,sessionId=null,dependency=null,currentStatus='active',currentPublic=null,contexts=[],replay=[],completed=[],
+let identity=null,orchestration=null,sessionId=null,dependencies=new Map(),currentStatus='active',currentPublic=null,contexts=[],replay=[],completed=[],
   attempts=[],nextSelection=0,closedSessions={},childStatuses=new Map();
 const pending=new Map();
 
@@ -40,7 +40,7 @@ function status(){
   return {schema:'semantic-orchestration-state/8',session:sessionId,track:orchestration.track,
     origin:'model',sourceAdmissionClaim:false,status:currentStatus,children:copy(orchestration.children),
     decisions:copy(orchestration.decisions),tracks,receipts:orchestration.children.filter(row=>row.completion)
-      .map(child=>({schema:'semantic-completion/4',dependency:copy(dependency),
+      .map(child=>({schema:'semantic-completion/4',dependency:copy(dependencies.get(child.track)),
         kind:child.completion.completion.kind,value:copy(child.completion.completion.value),
         parent:orchestration.track,target:orchestration.track})),published:copy(orchestration.published),
     publicDigest:hashAlgorithmData(currentPublic),pendingSelection:[...pending.keys()][0]??null};
@@ -55,16 +55,17 @@ function reorderedJson(value){
 }
 
 function action(){
-  const child=orchestration.children[0],id=child.execution.invocation_id;
-  switch(orchestration.decisions.length){
-    case 0:return {name:'track_create',arguments:{purpose:'Run the exact declared V8 source',
-      completion:'Deliver its exact result',budget:64,capabilities:['text'],execution:copy(child.execution)}};
-    case 1:return {name:'track_join',arguments:{address:orchestration.track,
-      completion_dependency:copy(dependency)}};
-    case 2:return {name:'track_progress',arguments:{address:orchestration.track,
-      progress:reorderedJson(child.completion.completion)}};
-    default:return {name:'track_complete',arguments:{address:orchestration.track}};
-  }
+  const unpublished=orchestration.children.find(child=>child.completion&&
+    !orchestration.published.includes(child.execution.invocation_id));
+  if(unpublished)return {name:'track_progress',arguments:{address:orchestration.track,
+    progress:reorderedJson(unpublished.completion.completion)}};
+  const uncreated=orchestration.children.find(child=>!child.track);
+  if(uncreated)return {name:'track_create',arguments:{purpose:'Run the exact declared V8 source',
+    completion:'Deliver its exact result',budget:64,capabilities:['text'],execution:copy(uncreated.execution)}};
+  const unfinished=orchestration.children.find(child=>child.track&&!child.completion);
+  if(unfinished)return {name:'track_join',arguments:{address:orchestration.track,
+    completion_dependency:copy(dependencies.get(unfinished.track))}};
+  return {name:'track_complete',arguments:{address:orchestration.track}};
 }
 
 function makeCheckpoint(){
@@ -90,7 +91,7 @@ for await(const line of createInterface({input:process.stdin})){
     sessionId=request.session;
     currentStatus='active';
     currentPublic=copy(request.public);contexts=[];replay=[];completed=[];attempts=[];nextSelection=0;closedSessions={};
-    dependency=null;pending.clear();childStatuses=new Map();
+    dependencies=new Map();pending.clear();childStatuses=new Map();
     orchestration={schema:'semantic-orchestration/8',initialPublic:copy(request.public),maxActive:request.maxActive,
       childBudget:request.childBudget,origin:'model',track,children:request.public.timeline
         .filter(row=>row.kind==='invocation').map(invocation=>({program:copy(program),invocation:copy(invocation),
@@ -119,19 +120,23 @@ for await(const line of createInterface({input:process.stdin})){
     let track,outcome;
     if(name==='track_create'){
       const child=orchestration.children.find(row=>row.execution.invocation_id===item.action.arguments.execution.invocation_id),
-        address='track:1';
+        address='track:'+ (orchestration.children.indexOf(child)+1);
       if(!child||!isDeepStrictEqual(child.execution,item.action.arguments.execution))throw new Error('wrong binding');
       child.track=address;
       childStatuses.set(address,'waiting');
       track={address,purpose:item.action.arguments.purpose,label:'',parent:orchestration.track,
         completion:item.action.arguments.completion,capabilities:['text'],budget:64,revision:0,status:'waiting',
         prerequisites:[],progress:'',execution:copy(child.execution),bootstrap_ready:false};
-      dependency={schema:'semantic-completion-dependency/4',id:'completion:track:1:0',
+      const dependency={schema:'semantic-completion-dependency/4',id:'completion:'+address+':0',
         track:address,revision:0,invocation:child.execution.invocation_id};
+      dependencies.set(address,dependency);
       outcome={schema:'semantic-orchestration-commit/8',selectionId:request.selection.selectionId,committed:true,
         track:copy(track),completion_dependency:copy(dependency)};
     }else if(name==='track_join'){
-      if(!isDeepStrictEqual(item.action.arguments.completion_dependency,dependency))
+      const dependency=item.action.arguments.completion_dependency;
+      if(!isDeepStrictEqual(dependency,dependencies.get(dependency?.track))||
+          !orchestration.children.some(child=>child.track===dependency.track&&
+            child.execution.invocation_id===dependency.invocation))
         throw new Error('wrong dependency');
       currentStatus='waiting';
       for(const candidate of orchestration.children){
@@ -144,7 +149,10 @@ for await(const line of createInterface({input:process.stdin})){
       track=coordinatorTrack();
       outcome={schema:'semantic-orchestration-commit/8',selectionId:request.selection.selectionId,committed:true,track};
     }else if(name==='track_progress'){
-      orchestration.published.push(orchestration.children[0].execution.invocation_id);
+      const publishedChild=orchestration.children.find(child=>child.completion&&
+        !orchestration.published.includes(child.execution.invocation_id));
+      if(!publishedChild)throw new Error('no exact completed child result to publish');
+      orchestration.published.push(publishedChild.execution.invocation_id);
       track=coordinatorTrack();
       outcome={schema:'semantic-orchestration-commit/8',selectionId:request.selection.selectionId,committed:true,track};
     }else{
@@ -206,7 +214,7 @@ for await(const line of createInterface({input:process.stdin})){
         contextsDigest:hashAlgorithmData(request.contexts)};
     child.completion=copy(receipt);currentPublic=copy(request.public);contexts=copy(request.contexts);
     childStatuses.set(child.track,'completed');
-    completed=[request.invocationId];currentStatus='active';
+    if(!completed.includes(request.invocationId))completed.push(request.invocationId);currentStatus='active';
     orchestration.operations.push({kind:'completion',invocationId:request.invocationId,
       acknowledgedThrough:request.public.timeline.length,randomBefore:{}});
     result={schema:'semantic-native-completion/8',session:request.session,invocationId:request.invocationId,
@@ -218,7 +226,8 @@ for await(const line of createInterface({input:process.stdin})){
     sessionId=session;
     currentPublic=copy(saved.public);contexts=copy(saved.contexts);replay=copy(saved.replay);completed=copy(saved.completed);
     orchestration=copy(saved.orchestration);pending.clear();closedSessions=copy(checkpoint.closedSessions??{});
-    dependency=orchestration.decisions.find(row=>row.outcome?.completion_dependency)?.outcome.completion_dependency??null;
+    dependencies=new Map(orchestration.decisions.filter(row=>row.outcome?.completion_dependency)
+      .map(row=>[row.outcome.completion_dependency.track,row.outcome.completion_dependency]));
     currentStatus=orchestration.decisions.at(-1)?.record.includes('track_complete')?'completed':
       orchestration.children.some(row=>row.completion)?'active':
         orchestration.operations.at(-1)?.kind==='coordinator'&&

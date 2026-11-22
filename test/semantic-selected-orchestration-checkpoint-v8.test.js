@@ -27,9 +27,12 @@ const policy={checkpointIdentity:'c'.repeat(64),tokenizerIdentity:'e'.repeat(64)
   generationSettings:{device:'test-runtime',maxTokens:512,maxFragments:64,effort:1},maxActive:1,childBudget:128,
   maxCoordinatorSelections:128,maxPredictions:4096,maxGenerated:16384,maxOutstanding:64,maxStaleRetries:8,
   timeoutMs:15000,automaticDelivery:false};
+// Durable fsync and independent full-chain verification are part of this budget.
+// These controls establish ordering and identity, not a 15-second performance SLA.
+const automaticPolicy={...policy,timeoutMs:60000};
 
-function selector({afterChildSelection=null}={}){
-  const select=createNativeV8ProcessSelector({command:process.execPath,args:[peer,JSON.stringify(childRecords)],timeoutMs:10000});
+function selector({afterChildSelection=null,records=childRecords}={}){
+  const select=createNativeV8ProcessSelector({command:process.execPath,args:[peer,JSON.stringify(records)],timeoutMs:10000});
   if(afterChildSelection===null)return select;
   let injected=false;
   const wrapped=async input=>{
@@ -39,6 +42,16 @@ function selector({afterChildSelection=null}={}){
   };
   for(const [key,value]of Object.entries(select))wrapped[key]=value;
   return wrapped;
+}
+
+
+function twoRootIngress(){
+  const data=structuredClone(initialPublic),first=data.timeline.find(row=>row.kind==='invocation');
+  first.fields.realmPolicy='fresh';first.fields.realmId='realm-one';
+  const second=structuredClone(first);second.sequence=data.timeline.length+1;
+  second.fields.invocationId='invocation-two';second.fields.realmId='realm-two';
+  second.fields.track='worker-two';second.fields.triggerId='trigger-two';second.fields.ingressKey='trigger-two';
+  data.timeline.push(second);return data;
 }
 
 function rehash(packet){
@@ -219,6 +232,54 @@ test('checkpoint is unavailable before a safe point',()=>{
   finally{select.close();}
 });
 
+
+test('two declared children restore from sparse acknowledged cuts without redispatch',async t=>{
+  const publicData=twoRootIngress(),records=[...childRecords,...childRecords],directory=
+    await mkdtemp(join(tmpdir(),'v8-composite-two-child-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory,streamId:'twochild'});
+  let head=null;
+  const acknowledge=async({receipt,previous})=>{
+    assert.deepEqual(previous,head);head=structuredClone(receipt);return structuredClone(head);
+  };
+  const first=selector({records}),firstDriver=new RegionSelectedOrchestrationDriver({
+    initialPublic:publicData,select:first,...policy});
+  let firstPacket;
+  try{
+    const paused=await firstDriver.run({stopAt:{phase:'coordinator-ready',coordinatorSelections:4}});
+    assert.equal(paused.status,'paused',JSON.stringify(paused.failure));
+    firstPacket=firstDriver.checkpoint();
+    assert.equal(firstPacket.initialPublic.timeline.filter(row=>row.kind==='invocation').length,2);
+    assert(firstPacket.state.children[0].track);
+    assert(firstPacket.state.children[1].track);
+    head=await firstDriver.checkpointDurableHistory({journal,acknowledge});
+  }finally{first.close();}
+  const middle=selector({records});
+  let secondPacket;
+  try{
+    const resumed=await RegionSelectedOrchestrationDriver.restore(firstPacket,
+      {initialPublic:publicData,select:middle,policy});
+    const paused=await resumed.run({stopAt:{phase:'coordinator-ready',coordinatorSelections:6}});
+    assert.equal(paused.status,'paused',JSON.stringify(paused.failure));
+    secondPacket=resumed.checkpoint();
+    assert.equal(secondPacket.childAttempts.length,records.length);
+    const ids=new Set(publicData.timeline.filter(row=>row.kind==='invocation').map(row=>row.fields.invocationId));
+    assert(secondPacket.childAttempts.every(row=>ids.has(row.invocationId)));
+    head=await resumed.checkpointDurableHistory({journal,acknowledge,previous:head});
+  }finally{middle.close();}
+  const last=selector({records}),restore=last.restore,priorAttempts=secondPacket.native.attempts.length;
+  last.restore=async request=>{const receipt=await restore(request);assert.equal(receipt.hostDispatches,0);return receipt;};
+  try{
+    const restored=await RegionSelectedOrchestrationDriver.restoreLatest(firstPacket,{historyJournal:journal,
+      historyReceipt:head,initialPublic:publicData,select:last,policy});
+    const result=await restored.run();
+    assert.equal(result.status,'completed',JSON.stringify(result.failure));
+    const newActions=last.metrics().attempts.slice(priorAttempts).map(row=>row.family==='orchestration'?
+      JSON.parse(row.record).name:'child-selection');
+    assert.deepEqual(newActions,['track_complete']);
+  }finally{last.close();}
+});
+
 test('durable composite checkpoint requires an independent exact head acknowledgement and restores latest',async t=>{
   const directory=await mkdtemp(join(tmpdir(),'v8-composite-history-'));
   t.after(()=>rm(directory,{recursive:true,force:true}));
@@ -280,6 +341,7 @@ test('durable composite checkpoint requires an independent exact head acknowledg
 
 
 test('automatic composite history acknowledges the join safe point before child dispatch',async t=>{
+  const policy=automaticPolicy;
   const directory=await mkdtemp(join(tmpdir(),'v8-composite-automatic-'));
   t.after(()=>rm(directory,{recursive:true,force:true}));
   const journal=new DurableSelectedHistoryJournal({directory,streamId:'automatic'});
@@ -305,7 +367,8 @@ test('automatic composite history acknowledges the join safe point before child 
   }});
   try{
     const running=driver.run();
-    await atJoin;
+    await Promise.race([atJoin,running.then(result=>{throw new Error(
+      'automatic history stopped before the child fence: '+JSON.stringify(result.failure));})]);
     assert.equal(driver.bridge.exportEpisode().timeline.filter(row=>row.mode==='generated').length,0);
     release();const result=await running;
     assert.equal(result.status,'completed',JSON.stringify(result.failure));
@@ -338,6 +401,7 @@ test('automatic composite history acknowledges the join safe point before child 
 });
 
 test('post-child persistence failure leaves a durable in-flight fence that refuses fresh replay',async t=>{
+  const policy=automaticPolicy;
   const directory=await mkdtemp(join(tmpdir(),'v8-composite-child-fence-'));
   t.after(()=>rm(directory,{recursive:true,force:true}));
   const journal=new DurableSelectedHistoryJournal({directory,streamId:'childfence'});
@@ -354,6 +418,7 @@ test('post-child persistence failure leaves a durable in-flight fence that refus
   try{
     const result=await driver.run();
     assert.notEqual(result.status,'completed');
+    assert.match(result.failure?.message??'',/simulated lost post-child head acknowledgement/);
     assert(joinPacket,'the child-dispatch intent was durably acknowledged');
     const fresh=selector();
     try{
@@ -366,6 +431,7 @@ test('post-child persistence failure leaves a durable in-flight fence that refus
 
 
 test('automatic persistence refuses a journal readback that drops its pending fence',async t=>{
+  const policy=automaticPolicy;
   const directory=await mkdtemp(join(tmpdir(),'v8-composite-drop-fence-'));
   t.after(()=>rm(directory,{recursive:true,force:true}));
   const journal=new DurableSelectedHistoryJournal({directory,streamId:'dropfence'});
@@ -381,6 +447,7 @@ test('automatic persistence refuses a journal readback that drops its pending fe
   try{
     const result=await driver.run();
     assert.notEqual(result.status,'completed');
+    assert.match(result.failure?.message??'',/different checkpoint, predecessor or pending fence/);
     assert.equal(driver.coordinatorAttempts.length,0,'no coordinator selection follows a missing fence');
     assert.equal(acks,1,'the marker-free lookalike entry is never acknowledged');
   }finally{select.close();}
@@ -388,6 +455,7 @@ test('automatic persistence refuses a journal readback that drops its pending fe
 
 
 test('requested child-ready pause stores a complete cut and arms its fence only on resumed dispatch',async t=>{
+  const policy=automaticPolicy;
   const directory=await mkdtemp(join(tmpdir(),'v8-composite-requested-child-'));
   t.after(()=>rm(directory,{recursive:true,force:true}));
   const journal=new DurableSelectedHistoryJournal({directory,streamId:'requestedchild'});

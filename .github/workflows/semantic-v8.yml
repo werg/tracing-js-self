@@ -7,14 +7,13 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: semantic-v8-${{ github.ref }}
-  # Preserve the running full-population evidence while incremental commits are
-  # published. Later work waits for the active gate instead of discarding it.
-  cancel-in-progress: false
-
 jobs:
   paired-v8:
+    # Preserve each active population's complete evidence independently. A long
+    # all-source run must not hold newer support/interop evidence behind it.
+    concurrency:
+      group: semantic-v8-${{ github.ref }}-${{ matrix.population }}
+      cancel-in-progress: false
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:

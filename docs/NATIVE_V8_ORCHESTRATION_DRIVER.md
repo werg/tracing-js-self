@@ -259,3 +259,21 @@ a second process to resume from a stale independently retained head. Supervisor
 ownership remains required. The new controls use fresh JSONL fixture peers and
 actual durable storage; real native paired replay remains a separate mandatory
 hosted gate.
+
+## Validation scope for the automatic-history increment
+
+The first hosted automatic run exposed two fixture-deadline failures. After
+removing redundant full-cut replay inside already independently checked chains,
+validation candidate `ac85e028b35ce9757186be746b677698a3b4232d` passed all 105
+individual JUnit cases, zero skips, in run 44988575827. The two-child sparse-cut
+control covers two declared fresh roots and zero repeated child selection after
+restore. Durable-storage tests use an explicit 60-second policy to accommodate
+fsync and runner contention; live deadline accounting/defaults are unchanged.
+The public standalone extension validator still fully verifies both cuts, and
+every chain read verifies every entry plus all action/prefix constraints.
+
+Actual Python/shared-runtime controls exercise automatic positive restore and
+lost acknowledgement before coordinator selection and after child completion.
+Their new hosted results remain pending at this commit. Their final lexical
+decoder is an explicit deterministic fixture, so a pass does not qualify learned
+model quality, arbitrary external side effects or distributed ownership.

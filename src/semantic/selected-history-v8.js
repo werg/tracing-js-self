@@ -308,13 +308,21 @@ export function validateSelectedHistoryEntry(entry){
  * native restore. These cross-cut invariants additionally prevent a valid cut
  * on another branch, or a budget rollback, replacing recorded history. */
 export function validateSelectedHistoryExtension(before,after){
+  return validateHistoryExtension(before,after,true);
+}
+
+// The full-chain reader has already independently verified each composite cut.
+// Recheck all cross-cut invariants without replaying those same cuts repeatedly.
+function validateHistoryExtension(before,after,verifyComposite){
   if(before?.schema==='semantic-selected-orchestration-checkpoint/8'||
       after?.schema==='semantic-selected-orchestration-checkpoint/8'){
     demand(before?.schema==='semantic-selected-orchestration-checkpoint/8'&&
       after?.schema==='semantic-selected-orchestration-checkpoint/8',
       'checkpoint history cannot mix semantic and composite cuts');
-    verifySelectedOrchestrationCheckpoint(before,before.policy,{initialPublic:before.initialPublic});
-    verifySelectedOrchestrationCheckpoint(after,after.policy,{initialPublic:after.initialPublic});
+    if(verifyComposite){
+      verifySelectedOrchestrationCheckpoint(before,before.policy,{initialPublic:before.initialPublic});
+      verifySelectedOrchestrationCheckpoint(after,after.policy,{initialPublic:after.initialPublic});
+    }
     demand(eq(before.policy,after.policy)&&eq(before.initialPublic,after.initialPublic)&&
       eq(before.initialState,after.initialState)&&before.session===after.session&&
       before.bridge?.schema===after.bridge?.schema&&before.bridge?.profile===after.bridge?.profile,
@@ -431,7 +439,6 @@ export function validateSelectedHistoryChain(entries,receipt){
     demand(entry.streamId===receipt.streamId&&entry.position===(previous?.position??0)+1&&eq(entry.previous,previous),
       'substituted or reordered acknowledged chain');
     if(pending){
-      validateSelectedHistoryExtension(pendingCheckpoint,entry.checkpoint);
       validatePendingResolution(pending,pendingCheckpoint,entry.checkpoint);
       pending=null;pendingCheckpoint=null;
     }
@@ -447,7 +454,7 @@ export function validateSelectedHistoryChain(entries,receipt){
         'terminal request must anchor the latest validated checkpoint');
       validateTerminalEvent(entry.terminal,entry.checkpoint);
       terminal=entry.terminal;
-    }else if(checkpoint)validateSelectedHistoryExtension(checkpoint,entry.checkpoint);
+    }else if(checkpoint)validateHistoryExtension(checkpoint,entry.checkpoint,false);
     checkpoint=entry.checkpoint;
     if(Object.hasOwn(entry,'pending')){
       demand(entry.checkpoint?.schema==='semantic-selected-orchestration-checkpoint/8'&&!terminal,

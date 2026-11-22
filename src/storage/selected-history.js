@@ -4,8 +4,8 @@ import {mkdir,open,link,unlink} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {isDeepStrictEqual} from 'node:util';
 import {stableAlgorithmJSON} from '../semantic/ir.js';
-import {validateSelectedHistoryEntry,validateSelectedHistoryReceipt,validateSelectedHistoryChain,
-  validateSelectedHistoryExtension} from '../semantic/selected-history-v8.js';
+import {validateSelectedHistoryEntry,validateSelectedHistoryReceipt,validateSelectedHistoryChain} from
+  '../semantic/selected-history-v8.js';
 
 const fail=message=>{throw new TypeError('Durable selected history: '+message);};
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -68,7 +68,6 @@ export class DurableSelectedHistoryJournal {
     if(bytes.length>this.maxBytes)fail('entry exceeds byte bound');
     if(entry.previous){
       const entries=await this.readAll(entry.previous);
-      validateSelectedHistoryExtension(entries.at(-1).checkpoint,entry.checkpoint);
       const receiptForValidation=Object.freeze({schema:'semantic-selected-history-receipt/8',
         streamId:this.streamId,position:entry.position,id:digest(bytes),bytes:bytes.length});
       validateSelectedHistoryChain([...entries,entry],receiptForValidation);

@@ -16,6 +16,41 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Automatic history validation and two-child continuation — 22 November 2026
+
+The initial automatic-history implementation at `ee881819ec01f26830dc8a04a50de19c8dfcb080`
+retained two deadline failures in hosted run 44988133073: the successful automatic
+paths consumed roughly 18 and 22 seconds against their 15-second fixture policy.
+The crash/refusal controls passed. The failure is preserved, not reclassified.
+
+Complete-chain validation now independently verifies each cut once per pass and
+then checks all cross-cut invariants. The public standalone extension checker
+still verifies both complete cuts. The journal no longer performs an extra
+standalone extension replay immediately before its full-chain verification;
+there is no cached or trusted-on-write shortcut. At exact candidate
+`ac85e028b35ce9757186be746b677698a3b4232d`, all **105 individual JUnit cases
+passed with zero skips** in run 44988575827. The two successful automatic cases
+took 7.15 and 7.97 seconds in that run. These different hosted runs are not a
+controlled performance benchmark. The durable-storage controls now have an
+explicit 60-second test policy for runner variability; production deadline
+accounting and defaults are unchanged, and specific failure tests require their
+injected failure message rather than accepting any timeout.
+
+The protocol peer now handles two declared fresh-realm roots. A positive control
+retains sparse cuts after both children have been created and after both complete,
+restores the latest acknowledged cut from an older anchor, verifies zero host
+dispatch at restore and selects only the remaining coordinator completion.
+The same increment adds positive and lost-acknowledgement tests using the actual
+Python/shared runtime with a declared deterministic decoder. **Those new paired
+native tests and final branch-head qualification are still pending.** They are
+controlled engineering evidence, not learned-model quality.
+
+Full-population CI concurrency is now scoped per population. Each active lane
+retains its complete evidence; the long original-665 lane no longer holds newer
+support/interoperability qualification behind the same workflow-wide lock.
+The declared populations and required gates are unchanged. Logs are retained in
+`docs/evidence/v8-composite-history-controls-2026-11-22/`.
+
 ## Automatic durable composite history — pending-action fencing published
 
 The driver can now automatically retain and independently acknowledge complete
