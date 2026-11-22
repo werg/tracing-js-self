@@ -1,5 +1,4 @@
 {
-  "retrievedAt": "2026-11-22T15:51Z",
   "source": "GitHub REST GET responses via GitHub connector",
   "release": {
     "url": "https://api.github.com/repos/werg/tracing-js-self/releases/454557330",
