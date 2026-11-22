@@ -41,6 +41,15 @@ export async function verifyInstalledArchiveIntegrity(path,integrity){
   if(!tokens.some(token=>token[1]===strongest&&token[2]===digest))throw new Error('Locked dependency archive integrity mismatch: '+path);
   return true;
 }
+function lockedDependencyUrl(entry,name){
+  if(typeof entry?.resolved!=='string')throw new TypeError('Locked dependency has no resolved tarball URL: '+name);
+  let value;
+  try{value=new URL(entry.resolved);}catch{throw new TypeError('Locked dependency URL is invalid: '+name);}
+  if(!['http:','https:'].includes(value.protocol)||!value.hostname||value.username||value.password||
+    value.search||value.hash||value.href!==entry.resolved)
+    throw new TypeError('Locked dependency URL must be canonical HTTP(S) without credentials or fragments: '+name);
+  return entry.resolved;
+}
 const inside=(root,path)=>{const rel=relative(root,path);return rel===''||!rel.startsWith('..'+sep)&&rel!=='..'&&!rel.startsWith(sep);};
 function boundedInteger(value,minimum,maximum,name){
   if(!Number.isSafeInteger(value)||value<minimum||value>maximum)throw new TypeError('Invalid '+name);return value;
@@ -88,7 +97,7 @@ export async function prepareInstalledV8Package({root,output,dependencyArchiveDi
     throw new Error('Complete package gate requires lifecycle-free packaging; pack hooks are not executed');
   if(lock.lockfileVersion!==3||lock.packages?.['']?.name!==metadata.name)
     throw new Error('Exact npm shrinkwrap metadata is required');
-  const inheritedCache=dependencyCache??(await command('npm',['config','get','cache'])).stdout.trim();
+  const inheritedCache=resolve(dependencyCache??(await command('npm',['config','get','cache'])).stdout.trim());
   const npmEnv={...generationEnvironment(),npm_config_cache:inheritedCache,npm_config_offline:'true',
     npm_config_ignore_scripts:'true',npm_config_update_notifier:'false',npm_config_audit:'false',npm_config_fund:'false'};
   const packed=await command('npm',['pack','--offline','--ignore-scripts','--json','--pack-destination',archives],
@@ -111,17 +120,21 @@ export async function prepareInstalledV8Package({root,output,dependencyArchiveDi
     if(!/^node_modules\/(?:@[^/]+\/)?[^/]+$/.test(path)||entry.link)
       throw new Error('Dependency archive layout requires an explicit supported top-level package: '+path);
     const name=path.slice('node_modules/'.length),filename=name.replace(/^@/,'').replaceAll('/','-')+'-'+entry.version+'.tgz',
-      archive=join(archives,filename);
-    if(dependencyArchiveDirectory)await cp(join(resolve(dependencyArchiveDirectory),filename),archive);
-    else{
-      const result=await command('npm',['pack',name+'@'+entry.version,'--offline','--ignore-scripts','--json',
-        '--pack-destination',archives],{cwd:application,env:npmEnv});
+      archive=join(archives,filename),resolved=lockedDependencyUrl(entry,name);
+    let source;
+    if(dependencyArchiveDirectory){
+      await cp(join(resolve(dependencyArchiveDirectory),filename),archive);source='provided-locked-archive';
+    }else{
+      const result=await command('npm',['pack',resolved,'--offline',
+        '--ignore-scripts','--json','--pack-destination',archives],{cwd:application,env:npmEnv});
       const packedDependency=JSON.parse(result.stdout);
-      if(packedDependency.length!==1||packedDependency[0].filename!==filename)throw new Error('Unexpected dependency archive identity');
+      if(packedDependency.length!==1||packedDependency[0].filename!==filename)
+        throw new Error('Unexpected dependency archive identity for locked URL: '+name);
+      source='offline-locked-tarball-url';
     }
     await verifyInstalledArchiveIntegrity(archive,entry.integrity);
     dependencies.push({name,version:entry.version,lockIntegrity:entry.integrity,archive:'archives/'+filename,
-      sha256:await installedFileHash(archive),source:dependencyArchiveDirectory?'provided-locked-archive':'offline-npm-cache'});
+      resolved:entry.resolved,sha256:await installedFileHash(archive),source});
   }
   if(!Object.keys(metadata.dependencies??{}).every(name=>dependencies.some(row=>row.name===name)))
     throw new Error('A required production dependency is absent from the locked archive inventory');

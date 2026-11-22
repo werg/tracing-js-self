@@ -4,9 +4,10 @@ import {mkdtemp,mkdir,writeFile,readFile,rm,access} from 'node:fs/promises';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import {createServer} from 'node:http';
 import {installedQualificationInventory,installedQualificationOutcome,parseInstalledQualificationOptions} from '../tools/qualify-installed-v8.mjs';
 import {decodeInstalledFixtureTask,executeInstalledV8Task} from '../tools/installed-v8-worker.mjs';
-import {decodeGenerationTask,encodeGenerationTask} from '../src/corpus/generation-process.mjs';
+import {decodeGenerationTask,encodeGenerationTask,generationEnvironment} from '../src/corpus/generation-process.mjs';
 import {prepareInstalledV8Package,restoreInstalledV8Package,verifyInstalledArchiveIntegrity,runInstalledCommand,
   LEGACY_V8_CLIENT_FILES,installedSha256} from '../src/corpus/installed-v8-qualification.mjs';
 
@@ -105,12 +106,20 @@ test('complete Git package staging includes sparse files and installs exact lock
   const depArchive=join(dependencyDirectory,'installed-gate-dependency-1.0.0.tgz');
   await command('tar',['-czf',depArchive,'-C',dependencyStage,'package']);
   const integrity='sha512-'+createHash('sha512').update(await readFile(depArchive)).digest('base64');
+  const tarball=await readFile(depArchive),server=createServer((request,response)=>{
+    if(request.url!=='/installed-gate-dependency-1.0.0.tgz'){response.writeHead(404);response.end();return;}
+    response.writeHead(200,{'content-type':'application/octet-stream'});response.end(tarball);
+  });
+  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
+  t.after(()=>{server.closeAllConnections();server.close();});
+  const dependencyUrl='http://127.0.0.1:'+server.address().port+'/installed-gate-dependency-1.0.0.tgz',
+    dependencyCache=join(directory,'locked-url-cache');
   const metadata={name:'tracing-js-self',version:'0.0.0',private:true,type:'module',
     exports:{'./semantic/v8':'./src/semantic/index-v8.js'},dependencies:{'installed-gate-dependency':'1.0.0'}};
   await writeFile(join(source,'package.json'),JSON.stringify(metadata)+'\n');
   await writeFile(join(source,'npm-shrinkwrap.json'),JSON.stringify({name:metadata.name,version:metadata.version,lockfileVersion:3,
     packages:{'':metadata,'node_modules/installed-gate-dependency':{version:'1.0.0',
-      resolved:'https://example.invalid/installed-gate-dependency-1.0.0.tgz',integrity}}})+'\n');
+      resolved:dependencyUrl,integrity}}})+'\n');
   const files=['tools/installed-v8-worker.mjs','src/semantic/index-v8.js','fixtures/not-curated/sparse-proof.txt',...LEGACY_V8_CLIENT_FILES];
   for(const file of files){await mkdir(dirname(join(source,file)),{recursive:true});await writeFile(join(source,file),'retained '+file+'\n');}
   await command('git',['init','-q']);await command('git',['config','user.email','installed-test@example.invalid']);
@@ -119,16 +128,28 @@ test('complete Git package staging includes sparse files and installs exact lock
   const sparse='fixtures/not-curated/sparse-proof.txt';
   await command('git',['update-index','--skip-worktree',sparse]);await rm(join(source,sparse));
   assert.equal((await command('git',['status','--porcelain'])).stdout.trim(),'');
-  const install=await prepareInstalledV8Package({root:source,output,dependencyArchiveDirectory:dependencyDirectory});
+  const missingCache=join(directory,'missing-url-cache');
+  await assert.rejects(runInstalledCommand('npm',['pack',dependencyUrl,'--offline','--ignore-scripts','--json',
+    '--pack-destination',dependencyDirectory],{cwd:source,timeoutMs:60000,env:{...generationEnvironment(),npm_config_cache:missingCache,
+      npm_config_offline:'true',npm_config_ignore_scripts:'true',npm_config_audit:'false',npm_config_fund:'false'}}),
+    /ENOTCACHED|cache mode|offline/);
+  await runInstalledCommand('npm',['cache','add',dependencyUrl,'--ignore-scripts','--no-audit','--no-fund'],
+    {cwd:source,timeoutMs:60000,env:{...generationEnvironment(),npm_config_cache:dependencyCache}});
+  await new Promise(resolve=>server.close(resolve));
+  const install=await prepareInstalledV8Package({root:source,output,dependencyCache});
   assert.equal(install.evidence.source.method,'complete-git-archive');assert(install.evidence.source.trackedFiles.includes(sparse));
   assert.equal(await readFile(join(install.installed,sparse),'utf8'),'retained '+sparse+'\n');
   const pack=JSON.parse(await readFile(join(output,'npm-pack.json'),'utf8'));assert(pack.files.some(row=>row.path===sparse));
   assert.equal(install.evidence.dependencies[0].lockIntegrity,integrity);
+  assert.equal(install.evidence.dependencies[0].resolved,dependencyUrl);
+  assert.equal(install.evidence.dependencies[0].source,'offline-locked-tarball-url');
   assert.equal(install.evidence.installation.legacyClientsRemoved.length,LEGACY_V8_CLIENT_FILES.length);
   await assert.rejects(access(join(install.application,'node_modules','installed-gate-dependency','SCRIPT_RAN')),error=>error.code==='ENOENT');
   await restoreInstalledV8Package({output});
   const bad=join(directory,'bad.tgz');await writeFile(bad,Buffer.concat([await readFile(depArchive),Buffer.from('changed')]));
   await assert.rejects(verifyInstalledArchiveIntegrity(bad,integrity),/integrity mismatch/);
+  const truncated=join(directory,'truncated.tgz');await writeFile(truncated,(await readFile(depArchive)).subarray(0,-8));
+  await assert.rejects(verifyInstalledArchiveIntegrity(truncated,integrity),/integrity mismatch/);
   await writeFile(join(install.application,'node_modules','installed-gate-dependency','index.js'),'changed\n');
   await assert.rejects(restoreInstalledV8Package({output}),/dependency or archive changed/);
 });

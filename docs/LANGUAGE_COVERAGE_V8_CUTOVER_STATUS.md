@@ -16,6 +16,29 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Complete original population and installed cache correction — 22 November 2026
+
+The preserved producer `25c8beb` run now passes **665/665** original source,
+native, token and packing gates. It measured 247,731 generated tokens, including
+214,539 detailed tokens (86.6016%), and 7,642 terminal tokens in the flat
+measurement. Native packing retains 23,655 physical / 8,992 logical records,
+9,476,914 observed tokens and zero packed terminal tokens. Every declared case
+was measured. These historical source/data results do not qualify learned
+execution, current-pair correctness or default promotion.
+
+The subsequent installed-package preparation failed before its case populations
+ran: offline npm could not resolve Acorn metadata when retrieving dependency
+archives by package name. The correction uses the exact locked tarball URL via
+npm's supported offline interface and still verifies archive SRI. The complete
+focused tooling selection passes **8/8**, zero skips, including fresh isolated
+cache retrieval with its local server stopped, a separate initially empty-cache
+install, and missing/altered/truncated-byte refusals. The failed
+workflow and complete successful measurements are retained together in
+`docs/evidence/v8-installed-cache-failure-2026-11-22/`. The complete Actions
+archive has a separate 30-day retention; it is not represented as permanently
+archived locally. Fresh installed665/66 proof remains active.
+**0/17 complete acceptance packages are closed.**
+
 ## Production worker isolation and parallel native integration — 22 November 2026
 
 The ordinary native V8 process transport now exposes acknowledged coordinator

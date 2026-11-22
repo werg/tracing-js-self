@@ -1,0 +1,19 @@
+{
+  "schema": "retained-evidence-digests/1",
+  "files": [
+    {
+      "path": "all665-installed-failure.log.gz.b64",
+      "sha256": "b488cd11e81d1299563d53ca74586410b751d1fa0298f40c1ba59dc677e606f0",
+      "decodedFile": "all665-installed-failure.log",
+      "decodedSha256": "f78caa943167472c2b304224b31446f1bfe30afcaa3b55580108910fff44503b",
+      "decodedBytes": 219956
+    },
+    {
+      "path": "installed-cache-fix-8.log.gz.b64",
+      "sha256": "c27e395ea96123fed4b05eb34903df26281d821bf58f4ec3bcc622b5bd80b1d0",
+      "decodedFile": "installed-cache-fix-8.log",
+      "decodedSha256": "46455c9c56043b60a041d09b82e6b54455a34c80744bdabea44acb492b1d9291",
+      "decodedBytes": 1049
+    }
+  ]
+}

@@ -16,14 +16,16 @@ rules still determine the actual publishable archive; the full npm pack
 manifest is retained alongside the exact tarball, package hash, Git revision,
 tree identity and complete tracked-file list.
 
-Production dependencies come from local archives. By default, `npm pack
-<name>@<locked-version> --offline --ignore-scripts` reads archives from the npm
-cache populated by `npm ci`. Alternatively, `--dependency-archives DIRECTORY`
-supplies files named like `acorn-8.15.0.tgz`. Every archive must match the SRI in
-the exact `npm-shrinkwrap.json`; rearchiving arbitrary installed bytes is not an
-integrity substitute. The app installs these archives offline with scripts
-disabled and an initially empty install cache. Its dependency files are then
-compared with the verified archive contents.
+Production dependencies come from the exact `resolved` URLs in
+`npm-shrinkwrap.json`. By default, `npm pack <locked-url> --offline
+--ignore-scripts` retrieves the tarball directly from npm's offline cache; it
+does not resolve `<name>@<version>` through registry package metadata. A
+separate `--dependency-archives DIRECTORY` may supply files named like
+`acorn-8.15.0.tgz`. Each URL must be canonical HTTP(S) without credentials or
+fragments, and every archive must match the lock's SRI; rearchiving arbitrary
+installed bytes is not an integrity substitute. The app installs these
+archives offline with scripts disabled and an initially empty install cache.
+Its dependency files are then compared with the verified archive contents.
 
 Evidence records the publishable lock hash, application lock hash, archive
 hashes, dependency file inventories, complete package file inventories before
