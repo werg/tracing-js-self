@@ -135,6 +135,7 @@ export function attachNativeV8OrchestrationTransport(select,{request,identity,ep
     }finally{evidence.elapsedMs=performance.now()-started;}
   };
   select.commitOrchestration=async input=>{
+    demand(select.status().pending===0,'cannot commit while a native request is outstanding');
     const captured=copy(input),expected=requireCoordinator(captured),session=sessions.get(captured.session);
     const previous=attempts.find(row=>row.family==='orchestration'&&row.session===captured.session&&
       row.selection?.selectionId===captured.selection?.selectionId&&row.status==='accepted');

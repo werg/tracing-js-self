@@ -5,6 +5,10 @@ import {TextDecoder} from 'node:util';
 import {hashAlgorithmData} from './program.js';
 import {decodeCausalLmV8Target,validateRegionContext} from './causal-lm-v8.js';
 import {attachNativeV8OrchestrationTransport} from './native-orchestration-transport-v8.js';
+import {verifyNativeV8DurableCommit} from './native-durable-commit-v8.js';
+import {assertDurableNativeV8RequestJournal} from '../storage/native-request-journal-v8.js';
+import {assertSelectedOrchestrationExecutionLease,claimSelectedOrchestrationExecutionLeaseForNative}
+  from '../storage/selected-orchestration-execution-lock.js';
 
 const HASH=/^[a-f0-9]{64}$/;
 const copy=structuredClone;
@@ -12,14 +16,20 @@ const demand=(condition,message)=>{if(!condition)throw new TypeError('Native v8:
 const bounded=(value,minimum,maximum)=>Number.isSafeInteger(value)&&value>=minimum&&value<=maximum;
 
 export function createNativeV8ProcessSelector({command,args=[],cwd,env,
-    timeoutMs=30000,maxMessageBytes=16*1024*1024}={}){
+    timeoutMs=30000,maxMessageBytes=16*1024*1024,durableRequests=null}={}){
   demand(typeof command==='string'&&command.length>0,'model executable required');
   demand(Array.isArray(args)&&args.every(value=>typeof value==='string'),'invalid executable arguments');
   demand(bounded(timeoutMs,1,300000)&&bounded(maxMessageBytes,1024,64*1024*1024),'invalid transport bounds');
-  const child=spawn(command,args,{cwd,env,stdio:['pipe','pipe','pipe'],shell:false,windowsHide:true});
+  const durable=durableRequests===null?null:{
+    journal:assertDurableNativeV8RequestJournal(durableRequests.journal),
+    lease:assertSelectedOrchestrationExecutionLease(durableRequests.executionLease,{
+      sessionId:durableRequests.journal?.sessionId,streamId:durableRequests.journal?.streamId})};
+  const child=spawn(command,args,{cwd,env,stdio:['pipe','pipe','pipe',
+    ...(durable?[claimSelectedOrchestrationExecutionLeaseForNative(durable.lease)]:[])],shell:false,windowsHide:true});
   const utf8=new TextDecoder('utf-8',{fatal:true}),pending=new Map(),sessions=new Map(),attempts=[];
   const runtimeMetrics={rpcCalls:0,computeSeconds:0,peakMemoryBytes:0};
   let nextId=0,buffer=Buffer.alloc(0),stderr='',closed=false,identity=null,epoch=0,shutdownPromise=null;
+  let requestBusy=false,nextOrdinal=0,lastDurableRequest=null;
   const stop=error=>{
     if(closed)return;
     closed=true;identity=null;epoch++;
@@ -59,12 +69,14 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       if(response.ok===false){
         const error=new Error('Native v8 inference refused: '+String(response.error?.message??'unknown failure'));
         error.category=response.error?.category??'native-inference';
-        error.evidence=copy(response.error?.evidence??null);item.reject(error);
+        error.evidence=copy(response.error?.evidence??null);
+        if(response.error?.durabilityFenced===true)error.durabilityFenced=true;
+        item.reject(error);
       }else if(response.ok!==true)item.reject(new Error('Native v8 response lacks success authority'));
       else item.resolve(response.result);
     }
   });
-  const request=body=>{
+  const rawRequest=body=>{
     if(closed)return Promise.reject(new Error('Native v8 process is closed'));
     if(pending.size)return Promise.reject(new Error('Native v8 model already has an outstanding request'));
     const id='v8-'+(++nextId),line=JSON.stringify({...body,id})+'\n';
@@ -74,6 +86,55 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       pending.set(id,{resolve,reject,timer});
       child.stdin.write(line,error=>{if(error)stop(error);});
     });
+  };
+  const transportPacket=native=>{
+    const {digest,...body}=native??{};
+    demand(native?.schema==='semantic-model-checkpoint/8'&&
+      native.equivalence==='verified-model-reexecution'&&HASH.test(digest??'')&&
+      digest===hashAlgorithmData(body)&&hashAlgorithmData(native.initialization)===hashAlgorithmData(identity),
+      'native session checkpoint is not bound to the attested model');
+    const packet={schema:'semantic-native-transport-checkpoint/8',native:copy(native),
+      identity:copy(identity),attempts:copy(attempts),runtimeMetrics:copy(runtimeMetrics)};
+    return {...packet,digest:hashAlgorithmData(packet)};
+  };
+  const request=async body=>{
+    if(requestBusy)throw new Error('Native v8 model already has an outstanding request');
+    const captured=copy(body);requestBusy=true;
+    try{
+      if(durable)assertSelectedOrchestrationExecutionLease(durable.lease);
+      if(durable&&captured.op==='initialize')demand((await durable.journal.list()).length===0,
+        'existing durable requests require explicit commit recovery before initialization');
+      if(!durable||!['commit','commit-orchestration'].includes(captured.op))return await rawRequest(captured);
+      const {journal,lease}=durable;
+      demand(identity!==null&&captured.session===journal.sessionId,'durable commit differs from execution scope');
+      const checkpoint=transportPacket(await rawRequest({op:'checkpoint'}));
+      const ordinal=nextOrdinal+1,requestIdentity={schema:'semantic-native-request-identity/1',
+        session_id:journal.sessionId,stream_id:journal.streamId,session_generation:journal.sessionGeneration,
+        ordinal,operation:captured.op,model_identity:{checkpoint:identity.checkpointIdentity,
+          tokenizer:identity.tokenizerIdentity,...(identity.trainingIdentity?{training:identity.trainingIdentity}:{})}};
+      const requestBase64=Buffer.from(JSON.stringify({...captured,
+        id:'v8-commit-'+journal.sessionGeneration+'-'+ordinal})+'\n').toString('base64');
+      const intent={identity:requestIdentity,requestBase64,checkpoint};
+      const receipt=await journal.append(intent);
+      nextOrdinal=ordinal;lastDurableRequest=copy(receipt);
+      const evidence=attempts.find(row=>row.session===captured.session&&
+        row.selection?.selectionId===captured.selection.selectionId);
+      evidence.durableRequestReceipt=copy(receipt);
+      assertSelectedOrchestrationExecutionLease(lease);
+      const retained=await journal.read(receipt,{latest:true});
+      try{
+        const result=await rawRequest({op:'durable-commit',identity:requestIdentity,requestBase64,
+          preCheckpointDigest:checkpoint.native.digest});
+        return verifyNativeV8DurableCommit(result,retained).result;
+      }catch(error){
+        // After dispatch, missing durability/poststate proof must fence every
+        // later action even when the child returned an explicit error frame.
+        stop(error);throw error;
+      }
+    }catch(error){
+      if(durable&&(error.durabilityFenced||/^NativeRequest/.test(error.category??'')))stop(error);
+      throw error;
+    }finally{requestBusy=false;}
   };
   const validateRequest=input=>{
     demand(identity!==null,'model has not attested its checkpoint');
@@ -157,6 +218,10 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     finally{evidence.elapsedMs=performance.now()-started;}
   };
   select.initialize=async input=>{
+    demand(!requestBusy&&pending.size===0,'cannot initialize while a native request is outstanding');
+    demand(!durable||identity===null&&attempts.length===0&&sessions.size===0,
+      'durable initialization requires a fresh transport; existing work must be reconciled');
+    input=copy(input);
     const capturedEpoch=++epoch;identity=null;sessions.clear();orchestration.reset();
     demand(input&&HASH.test(input.checkpointIdentity??'')&&HASH.test(input.tokenizerIdentity??'')&&
       (input.trainingIdentity==null||HASH.test(input.trainingIdentity))&&
@@ -171,6 +236,8 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     identity=copy(receipt);return copy(receipt);
   };
   select.commit=async input=>{
+    demand(!requestBusy&&pending.size===0,'cannot commit while a native request is outstanding');
+    input=copy(input);
     const session=sessions.get(input?.session),selected=session?.pending;
     demand(selected&&selected.family!=='orchestration'&&input.record===selected.record&&
       hashAlgorithmData(input.selection)===hashAlgorithmData(selected.selection),'commit changed original model selection');
@@ -213,17 +280,40 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   };
   select.checkpoint=async()=>{
     demand(identity!==null,'model has not attested its checkpoint');
-    const native=await request({op:'checkpoint'}),{digest,...body}=native??{};
-    demand(native?.schema==='semantic-model-checkpoint/8'&&
-      native.equivalence==='verified-model-reexecution'&&HASH.test(digest??'')&&
-      digest===hashAlgorithmData(body)&&hashAlgorithmData(native.initialization)===hashAlgorithmData(identity),
-      'native session checkpoint is not bound to the attested model');
-    const packet={schema:'semantic-native-transport-checkpoint/8',native:copy(native),
-      identity:copy(identity),attempts:copy(attempts),runtimeMetrics:copy(runtimeMetrics)};
-    return {...packet,digest:hashAlgorithmData(packet)};
+    return transportPacket(await request({op:'checkpoint'}));
+  };
+  select.recoverCommit=async({receipt}={})=>{
+    demand(durable&&identity===null&&attempts.length===0&&sessions.size===0&&pending.size===0&&!requestBusy,
+      'durable commit recovery requires a fresh guarded native transport');
+    const captured=copy(receipt);requestBusy=true;
+    try{
+      assertSelectedOrchestrationExecutionLease(durable.lease);
+      const intent=await durable.journal.read(captured,{latest:true});
+      const value=await rawRequest({op:'recover-commit',identity:intent.identity,requestBase64:intent.requestBase64,
+        preCheckpointDigest:intent.checkpoint.native.digest});
+      const verified=verifyNativeV8DurableCommit(value,intent,{recovered:true});
+      identity=copy(intent.checkpoint.identity);epoch++;
+      orchestration.restore(verified.postCheckpoint);
+      const restored=copy(intent.checkpoint.attempts),target=restored.find(row=>row.session===verified.request.session&&
+        row.selection?.selectionId===verified.request.selection.selectionId);
+      target.status='accepted';target.failure=null;target.durableRequestReceipt=captured;
+      if(verified.request.op==='commit-orchestration')target.commitReceipt=copy(verified.result);
+      attempts.push(...restored);
+      for(const session of Object.keys(verified.postCheckpoint.sessions))sessions.set(session,{pending:null,evidence:null});
+      const costs=intent.checkpoint.runtimeMetrics;
+      demand(costs&&['rpcCalls','computeSeconds','peakMemoryBytes'].every(key=>Number.isFinite(costs[key])&&costs[key]>=0),
+        'invalid retained native costs');
+      runtimeMetrics.rpcCalls+=costs.rpcCalls;runtimeMetrics.computeSeconds+=costs.computeSeconds;
+      runtimeMetrics.peakMemoryBytes=Math.max(runtimeMetrics.peakMemoryBytes,costs.peakMemoryBytes);
+      nextOrdinal=intent.identity.ordinal;lastDurableRequest=captured;
+      return {schema:'semantic-native-transport-commit-recovery/8',recovered:true,
+        request:copy(verified.request),result:verified.result,receipt:captured,
+        nativeCheckpointDigest:verified.postCheckpoint.digest,hostDispatches:0,hostRecoveryAuthorized:false};
+    }catch(error){stop(error);throw error;}finally{requestBusy=false;}
   };
   select.restore=async({checkpoint}={})=>{
-    demand(identity===null&&attempts.length===0&&sessions.size===0&&pending.size===0,
+    demand(!durable,'guarded durable transports require explicit commit recovery');
+    demand(identity===null&&attempts.length===0&&sessions.size===0&&pending.size===0&&!requestBusy,
       'restore requires a fresh native transport');
     const {digest,...body}=checkpoint??{};
     demand(checkpoint?.schema==='semantic-native-transport-checkpoint/8'&&HASH.test(digest??'')&&
@@ -260,6 +350,8 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     }catch(error){stop(error);throw error;}
   };
   select.cancel=async input=>{
+    demand(!requestBusy&&pending.size===0,'cannot close a session while a native request is outstanding');
+    input=copy(input);
     demand(typeof input?.session==='string'&&input.session.length>0&&
       typeof input.reason==='string'&&input.reason.length<=4096,'invalid native close request');
     const session=sessions.get(input?.session);
@@ -287,12 +379,13 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     elapsedMs:attempts.reduce((sum,row)=>sum+(row.elapsedMs??0),0),
     runtime:copy(runtimeMetrics),
     nativeAdmissionClaim:false,sourceAdmissionClaim:false});
-  select.status=()=>({closed,pending:pending.size,stderr:stderr.slice(-1000)});
+  select.status=()=>({closed,pending:pending.size||Number(requestBusy),stderr:stderr.slice(-1000)});
+  select.durableRequestReceipt=()=>copy(lastDurableRequest);
   select.close=()=>stop(new Error('Native v8 model process closed'));
   select.shutdown=()=>{
     if(shutdownPromise)return shutdownPromise;
     if(closed)return Promise.reject(new Error('Native v8 process already closed'));
-    if(pending.size)return Promise.reject(new Error('Native v8 request still outstanding'));
+    if(pending.size||requestBusy)return Promise.reject(new Error('Native v8 request still outstanding'));
     closed=true;identity=null;epoch++;
     shutdownPromise=new Promise((resolve,reject)=>{
       const timer=setTimeout(()=>{child.kill('SIGKILL');reject(new Error('Native v8 shutdown deadline exceeded'));},10000);
@@ -313,7 +406,17 @@ export function createNativeV8PythonSelector({python='python3',megatokenReposito
   demand(typeof megatokenRepository==='string'&&megatokenRepository.length>0,'consumer checkout required');
   demand(typeof servedBundle==='string'&&servedBundle.length>0,'existing serving bundle required');
   demand(bounded(maxTokens,1,8192)&&bounded(maxFragments,1,64)&&bounded(effort,1,6),'invalid generation bounds');
+  const durable=options.durableRequests;
+  if(durable){
+    assertDurableNativeV8RequestJournal(durable.journal);
+    assertSelectedOrchestrationExecutionLease(durable.executionLease,{
+      sessionId:durable.journal.sessionId,streamId:durable.journal.streamId});
+  }
   return createNativeV8ProcessSelector({...options,command:python,cwd:megatokenRepository,
     args:['scripts/serve_semantic_v8.py','--served',servedBundle,'--device',device,
-      '--max-tokens',String(maxTokens),'--max-fragments',String(maxFragments),'--effort',String(effort)]});
+      '--max-tokens',String(maxTokens),'--max-fragments',String(maxFragments),'--effort',String(effort),
+      ...(durable?['--request-journal-dir',durable.journal.directory,
+        '--execution-lock-fd','3','--execution-lock-path',durable.executionLease.lockPath,
+        '--execution-session-id',durable.journal.sessionId,'--execution-stream-id',durable.journal.streamId,
+        '--execution-session-generation',String(durable.journal.sessionGeneration)]:[])]});
 }

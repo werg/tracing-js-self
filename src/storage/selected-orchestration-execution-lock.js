@@ -13,6 +13,7 @@ const fail=message=>{throw new TypeError('Selected orchestration execution lock:
 const digest=value=>createHash('sha256').update(stableAlgorithmJSON(value),'utf8').digest('hex');
 const ownUid=()=>typeof process.getuid==='function'?process.getuid():null;
 const issuedLeases=new WeakSet();
+const childLeases=new WeakSet();
 
 /** Only a live lease issued by this implementation can guard a native child. */
 export function assertSelectedOrchestrationExecutionLease(lease,{sessionId,streamId}={}){
@@ -21,6 +22,15 @@ export function assertSelectedOrchestrationExecutionLease(lease,{sessionId,strea
   if(sessionId!==undefined&&lease.sessionId!==sessionId||streamId!==undefined&&lease.streamId!==streamId)
     fail('execution lease belongs to another session or stream');
   return lease;
+}
+
+/** A shared flock open-file description cannot exclude two children that both
+ * inherit it. Consume each lease for at most one child, even after that child
+ * closes; a replacement must release and acquire a fresh kernel description. */
+export function claimSelectedOrchestrationExecutionLeaseForNative(lease){
+  assertSelectedOrchestrationExecutionLease(lease);
+  if(childLeases.has(lease))fail('execution lease already belongs to a native child; acquire a fresh lease');
+  childLeases.add(lease);return lease.fileDescriptor;
 }
 
 async function requirePrivateDirectory(path){
