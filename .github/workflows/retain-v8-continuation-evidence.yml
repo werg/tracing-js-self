@@ -1,0 +1,50 @@
+name: Preserve complete original V8 continuation evidence
+
+on:
+  push:
+    branches: [codex/v8-primary-fit-custody-20261122]
+    paths:
+      - .github/workflows/retain-v8-continuation-evidence.yml
+      - tools/retain-workflow-artifact.py
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: v8-continuation-custody-45043236761-attempt-1
+  cancel-in-progress: false
+
+jobs:
+  preserve-continuation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - name: Preserve the verified original archive and reread its draft asset
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python tools/retain-workflow-artifact.py \
+            --run-id '45043236761' \
+            --run-attempt '1' \
+            --artifact-id '14763057413' \
+            --source-sha '2dd1d31d717e89c2121d0cd8c2de9915464b4e45' \
+            --archive-sha256 'c89b297625afe95bff6b378d4338d31e8f45c766ad86ee28350d08822bf22f1c' \
+            --archive-bytes '374757456' \
+            --out "$RUNNER_TEMP/v8-continuation-custody"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v8-continuation-custody-receipt
+          path: ${{ runner.temp }}/v8-continuation-custody/custody.json
+          retention-days: 90
+          if-no-files-found: error
+
