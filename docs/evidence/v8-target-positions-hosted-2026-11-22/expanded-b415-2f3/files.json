@@ -1,0 +1,40 @@
+{
+  "schema": "semantic-v8-evidence-files/1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5561,
+      "sha256": "226b12da9fa6d055c1e2d1e8ca399701f1b8d4c1c5784db9a547173903da2338"
+    },
+    {
+      "path": "github-metadata.json",
+      "bytes": 22033,
+      "sha256": "b9aad47dadc71afa72f60ef7416f79e985f60e564d57008207782915911066a1"
+    },
+    {
+      "path": "independent-audit.json",
+      "bytes": 148426,
+      "sha256": "70a7eb698fe6d93eefd89aa22f3454fa5da7060edffc0279f4d45fc4ed8b9246"
+    },
+    {
+      "path": "original-artifact-members.json",
+      "bytes": 128408,
+      "sha256": "fb06d8513af90eab2d32bee4cf05027f585ca6a5899cbb2148287a7c4bcfc748"
+    },
+    {
+      "path": "original-reports.tar.xz",
+      "bytes": 1551708,
+      "sha256": "1db6e4408716a5f25e3fbd9f89e4ffe69ffd72bbbe50fb094ccb59971c006876"
+    },
+    {
+      "path": "retained-reports.json",
+      "bytes": 87298,
+      "sha256": "4d26517d02f216756765669f29ae6e24cc0fdbbfa1338ee6c1443bab2713e948"
+    },
+    {
+      "path": "summary.json",
+      "bytes": 9801,
+      "sha256": "f79fb7c3f91b55b24917a44f01ea2c7690b376ce5d7972a4c4a7680024d3ce3c"
+    }
+  ]
+}
