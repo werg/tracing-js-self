@@ -7,6 +7,7 @@ import {resolve,join,dirname,parse,relative} from 'node:path';
 import {TextDecoder,isDeepStrictEqual} from 'node:util';
 import {stableAlgorithmJSON} from '../semantic/ir.js';
 import {hashAlgorithmData} from '../semantic/program.js';
+import {deriveCallbackAdmissionV8} from '../semantic/orchestration-callback-v8.js';
 
 const HASH=/^[a-f0-9]{64}$/,ID=/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const issuedJournals=new WeakSet(),utf8=new TextDecoder('utf-8',{fatal:true});
@@ -30,6 +31,12 @@ function decodeNativeV8RequestFrame(requestBase64){
 
 export function decodeNativeV8CommitFrame(requestBase64){
   const {bytes,request}=decodeNativeV8RequestFrame(requestBase64);
+  if(request?.op==='admit-orchestration-callback'){
+    if(!exact(request,['id','op','session','track','public','contexts'])||!ID.test(request.session??'')||
+      typeof request.id!=='string'||!request.id||typeof request.track!=='string'||!request.track||
+      !request.public||!Array.isArray(request.contexts))fail('only an exact observed callback admission frame may be retained');
+    return {bytes,request};
+  }
   if(!['commit','commit-orchestration'].includes(request?.op)||!ID.test(request?.session??'')||
       typeof request?.id!=='string'||!request.id||typeof request.record!=='string'||
       !request.selection||typeof request.selection.selectionId!=='string')
@@ -60,7 +67,7 @@ function validateIdentity(value,scope){
   if(!exact(value,['schema','session_id','stream_id','session_generation','ordinal','operation','model_identity'])||
       value.schema!=='semantic-native-request-identity/1'||!ID.test(value.session_id??'')||
       !ID.test(value.stream_id??'')||!positive(value.session_generation)||!positive(value.ordinal)||
-      !['commit','commit-orchestration','bootstrap-orchestration-child','cancel'].includes(value.operation))
+      !['commit','commit-orchestration','admit-orchestration-callback','bootstrap-orchestration-child','cancel'].includes(value.operation))
     fail('invalid exact request identity');
   const model=value.model_identity;
   if(!exact(model,['checkpoint','tokenizer'])&&!exact(model,['checkpoint','tokenizer','training']))
@@ -92,6 +99,15 @@ function validateIntent(record,scope){
       (identity.trainingIdentity??null)!==(model.training??null))fail('checkpoint changed request model identity');
   if(request.op==='cancel'){
     assertNativeV8TerminalCloseCheckpoint(native,request.session);
+    return record;
+  }
+  if(request.op==='admit-orchestration-callback'){
+    const saved=native.sessions?.[request.session];
+    if(!saved||saved.orchestration?.track!==request.track||
+      Object.values(native.sessions).some(row=>row.unacknowledgedSelection!==null))
+      fail('callback admission requires its exact quiescent coordinator');
+    deriveCallbackAdmissionV8({session:request.session,state:saved.orchestration,previousPublic:saved.public,
+      previousContexts:saved.contexts,completed:saved.completed,public:request.public,contexts:request.contexts});
     return record;
   }
   if(bootstrap){

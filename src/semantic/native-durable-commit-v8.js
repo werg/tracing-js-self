@@ -3,6 +3,7 @@ import {isDeepStrictEqual,TextDecoder} from 'node:util';
 import {hashAlgorithmData} from './program.js';
 import {stableAlgorithmJSON} from './ir.js';
 import {decodeNativeV8CommitFrame} from '../storage/native-request-journal-v8.js';
+import {verifyCallbackNativeDeltaV8} from './orchestration-callback-v8.js';
 
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const demand=(value,message)=>{if(!value)throw new TypeError('Native v8 durable commit: '+message);};
@@ -28,10 +29,11 @@ export function verifyNativeV8DurableCommit(value,intent,{recovered=false}={}){
     !Array.isArray(post.sessions)&&Array.isArray(post.attempts),'postcheckpoint identity or shape differs');
   for(const key of ['schema','equivalence','contractDigest','initialization','settings','randomState','openings','closedSessions'])
     demand(same(post[key],pre[key]),'commit changed unrelated native '+key);
-  const beforeAttempts=pre.attempts.map(row=>row.selectionId===request.selection.selectionId?
+  const callback=request.op==='admit-orchestration-callback';
+  const beforeAttempts=callback?pre.attempts:pre.attempts.map(row=>row.selectionId===request.selection.selectionId?
     {...row,status:'committed'}:row);
-  demand(pre.attempts.filter(row=>same(row,request.selection)).length===1&&
-    request.selection.status==='awaiting-commit'&&same(post.attempts,beforeAttempts),
+  demand((callback||pre.attempts.filter(row=>same(row,request.selection)).length===1&&
+    request.selection.status==='awaiting-commit')&&same(post.attempts,beforeAttempts),
     'commit changed original selection evidence or a sibling attempt');
   demand(same(Object.keys(post.sessions).sort(),Object.keys(pre.sessions).sort()),'commit changed session population');
   for(const [session,saved] of Object.entries(post.sessions)){
@@ -52,7 +54,9 @@ export function verifyNativeV8DurableCommit(value,intent,{recovered=false}={}){
     sha(responseBytes)===value.responseSha256&&response.id===request.id&&response.ok===true&&
     Object.keys(response).length===3,'stored response changed its original bytes or success authority');
   let expected;
-  if(request.op==='commit'){
+  if(callback){
+    expected=verifyCallbackNativeDeltaV8(pre,post,request);
+  }else if(request.op==='commit'){
     demand(same(committed.public,request.public)&&same(committed.contexts,request.contexts),
       'semantic postcheckpoint differs from the exact committed source cut');
     expected={schema:'semantic-native-commit/8',selectionId:request.selection.selectionId,
