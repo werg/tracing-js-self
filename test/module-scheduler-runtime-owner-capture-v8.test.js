@@ -70,9 +70,65 @@ test('captures scheduler helper, frame, promise, await and consumed-job owners f
   assert(relevant.some(row=>row.operation==='async.await'));
   assert(relevant.some(row=>row.operation==='job.enter'));
   assert(relevant.some(row=>row.helper==='__traced_eval_sync'));
+  const siteById=new Map(bundle.sites.map(site=>[site.siteId,site]));
+  const recordSiteIds=new Set(bundle.sites.filter(site=>
+    sourceSites.records.some(record=>site.start>=record.start&&site.end<=record.end))
+    .map(site=>site.siteId));
+  const instructions=Object.values(bundle.programs).flatMap(program=>program.instructions);
+  const moduleBodyDefinitions=sourceSites.moduleFunctions.map(module=>{
+    const definitions=instructions.filter(instruction=>instruction.op==='DEF_FN'&&
+      instruction.arg?.name===module.name&&instruction.start===module.start&&instruction.end===module.end);
+    assert.equal(definitions.length,1,'module body requires one exact source-bound definition');
+    const definition=definitions[0];
+    assert.equal(bundle.programs[definition.arg.codeId]?.generator,true);
+    return {...module,codeId:definition.arg.codeId,definitionSiteId:definition.siteId};
+  });
+  const moduleBodyCodeIds=new Set(moduleBodyDefinitions.map(row=>row.codeId));
+  assert.equal(moduleBodyCodeIds.size,plan.modules.length);
+  const recordAllocations=sourceSites.records.map(record=>{
+    const allocations=bundle.events.filter(event=>{
+      const site=siteById.get(event.siteId);
+      return event.operation==='object.allocate'&&site?.start===record.start&&site.end===record.end;
+    });
+    assert.equal(allocations.length,1,'module record requires one exact initializer allocation');
+    const allocation=allocations[0];
+    const changes=(allocation.stateChanges??[]).filter(change=>change.table==='heap'&&
+      change.before===null&&change.after?.kind==='object');
+    assert.equal(changes.length,1,'module initializer must allocate exactly one record object');
+    return {index:record.index,file:record.file,objectId:changes[0].id,
+      eventId:allocation.eventId,siteId:allocation.siteId};
+  });
+  const recordIds=new Set(recordAllocations.map(row=>row.objectId));
+  const generatorLifecycleEvents=bundle.events.filter(event=>{
+    const site=siteById.get(event.siteId);
+    const generatorChange=(event.stateChanges??[]).some(change=>
+      change.table==='heap'&&change.after?.kind==='generator'||
+      change.table==='frames'&&change.after?.generatorId);
+    const generatorStart=site&&moduleBodyCodeIds.has(site.codeId)&&
+      bundle.programs[site.codeId]?.instructions?.some(instruction=>
+        instruction.siteId===site.siteId&&instruction.op==='GENERATOR_START');
+    const recordChange=(event.stateChanges??[]).some(change=>
+      change.table==='heap'&&recordIds.has(change.id));
+    return generatorChange||recordChange||recordSiteIds.has(event.siteId)||generatorStart;
+  }).map(event=>({eventId:event.eventId,operation:event.operation,siteId:event.siteId,
+    codeId:siteById.get(event.siteId)?.codeId??null,invocationId:event.invocationId,
+    operands:event.operands,result:event.result,causes:event.causes,
+    stateChanges:event.stateChanges}));
+  assert(generatorLifecycleEvents.length>0);
+  assert(generatorLifecycleEvents.length<1500);
+  assert(generatorLifecycleEvents.some(event=>(event.stateChanges??[]).some(change=>
+    change.table==='heap'&&change.after?.kind==='generator')));
+  assert(generatorLifecycleEvents.some(event=>(event.stateChanges??[]).some(change=>
+    change.table==='frames'&&change.after?.generatorId)));
+  assert(generatorLifecycleEvents.some(event=>{
+    const site=siteById.get(event.siteId);
+    return site&&moduleBodyCodeIds.has(site.codeId)&&
+      bundle.programs[site.codeId]?.instructions?.some(instruction=>
+        instruction.siteId===site.siteId&&instruction.op==='GENERATOR_START');
+  }));
   const evidence={schema:'experimental-module-scheduler-owned-capture/1',
-    publicAdmission:false,plan,sites:sourceSites,events:relevant,result,
-    finalState:bundle.finalState};
+    publicAdmission:false,plan,sites:sourceSites,events:relevant,
+    generatorLifecycleEvents,moduleBodyDefinitions,recordAllocations,result};
   if(process.env.RUNNER_TEMP)writeFileSync(join(process.env.RUNNER_TEMP,
     'module-scheduler-owner-capture.json'),JSON.stringify(evidence)+'\n');
 });
