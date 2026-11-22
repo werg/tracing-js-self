@@ -2,7 +2,9 @@ name: Exact64 V8 support target inventory and ordinary coverage
 
 on:
   push:
-    branches: [codex/v8-target-coverage-position-qualification-20261122]
+    branches:
+      - codex/v8-target-coverage-position-qualification-20261122
+      - codex/v8-expanded-position-qualification-20261122
     paths-ignore: ['docs/**']
   workflow_dispatch:
 
@@ -243,6 +245,17 @@ jobs:
           inventory_source_ids = inventory.get('sourceIds',[])
           scored_source_ids = inventory.get('scoredSourceIds',[])
           expected_coverage_steps = inventory.get('optimizerWindowCount')
+          position_summary = coverage.get('optimizerPositionSummary',{})
+          router_positions = position_summary.get('routerInternalPositionCounts')
+          router_assignments = position_summary.get('routerInternalAssignmentCounts')
+          router_counts_valid = (
+              isinstance(router_positions,dict) and isinstance(router_assignments,dict)
+              and set(router_positions)==set(router_assignments)
+              and all(type(count) is int and count>=0 for count in router_positions.values())
+              and all(type(count) is int and count>=0 for count in router_assignments.values())
+              and sum(router_positions.values())==position_summary.get('routerInternalPositionCount')
+              and sum(router_assignments.values())==position_summary.get('routerInternalAssignmentCount')
+          )
           if (command.get('status')!='passed' or command.get('populationCount')!=64
               or command.get('fullTargetCoverageRequested') is not True
               or command.get('fullTargetCoverageQualified') is not True
@@ -263,6 +276,14 @@ jobs:
               or coverage.get('comparison',{}).get('exactOnePassCensus') is not True
               or coverage.get('tokenOrMaskPositionCoverage')!='complete-for-prepared-text'
               or coverage.get('routerInternalPositionCoverage')!='unmeasured'
+              or coverage.get('positionComparison',{}).get('routerInternalPositionCoverage')!='unmeasured'
+              or coverage.get('routerInternalPositionAccounting')!='complete-per-update'
+              or position_summary.get('routerInternalPositionAccounting')!='complete-per-update'
+              or position_summary.get('routerInternalPositionAuditUpdates')!=expected_coverage_steps
+              or coverage.get('positionComparison',{}).get('routerInternalPositionAuditUpdates')!=expected_coverage_steps
+              or not router_counts_valid
+              or position_summary.get('routerInternalPositionCount',0)<=0
+              or position_summary.get('routerInternalAssignmentCount',0)<position_summary.get('routerInternalPositionCount',0)
               or coverage.get('positionComparison',{}).get('exactOnePassPreparedTextPositions') is not True
               or coverage.get('positionComparison',{}).get('positiveWeightPositionCountsMatch') is not True
               or coverage.get('independentPreparedPositionInventory',{}).get('physicalTargetRecordCount')!=inventory.get('positiveWeight',{}).get('physicalTargetRecordCount')
@@ -276,6 +297,9 @@ jobs:
               'windowCount':inventory['windowCount'],'optimizerWindowCount':expected_coverage_steps,
               'optimizerUpdateCounts':update_counts,'exactOnePassCensus':True,
               'tokenOrMaskPositionCoverage':'complete-for-prepared-text',
+              'routerInternalPositionAccounting':position_summary['routerInternalPositionAccounting'],
+              'routerInternalPositionCount':position_summary['routerInternalPositionCount'],
+              'routerInternalAssignmentCount':position_summary['routerInternalAssignmentCount'],
               'routerInternalPositionCoverage':'unmeasured','learnedSuccess':None}))
           PY
       - uses: actions/upload-artifact@v4

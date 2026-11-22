@@ -7,6 +7,7 @@ export function assertIndependentPositionCoverage(evidence, targetInventory) {
   const comparison=evidence?.positionComparison;
   const state=evidence?.optimizerPositionExposure;
   const targets=targetInventory?.positiveWeight;
+  const globalStep=evidence?.globalStep;
   const failures=[];
   const require=(condition,message)=>{if(!condition)failures.push(message);};
   require(evidence?.tokenOrMaskPositionCoverage==='complete-for-prepared-text','text position status');
@@ -38,6 +39,34 @@ export function assertIndependentPositionCoverage(evidence, targetInventory) {
   require(actual?.learnedSuccess===null&&comparison?.learnedSuccess===null,'position receipts do not claim learned quality');
   require(comparison?.exactOnePassPreparedTextPositions===true&&comparison?.positiveWeightPositionCountsMatch===true,
     'independent exact position comparison');
+  const positions=actual?.routerInternalPositionCounts;
+  const assignments=actual?.routerInternalAssignmentCounts;
+  const validRouterCounts=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&
+    Object.values(value).every(count=>Number.isSafeInteger(count)&&count>=0);
+  const sumRouterCounts=value=>validRouterCounts(value)?Object.values(value).reduce((sum,count)=>sum+count,0):null;
+  require(actual?.routerInternalPositionAccounting==='complete-per-update','actual router accounting status');
+  require(Number.isSafeInteger(globalStep)&&globalStep>0&&
+    actual?.routerInternalPositionAuditUpdates===globalStep&&
+    state?.routerInternalPositionAuditUpdates===globalStep,'per-update router receipt history');
+  require(validRouterCounts(positions)&&validRouterCounts(assignments)&&
+    isDeepStrictEqual(Object.keys(positions??{}).sort(),Object.keys(assignments??{}).sort()),
+    'router position and assignment count maps');
+  require(Number.isSafeInteger(actual?.routerInternalPositionCount)&&actual.routerInternalPositionCount>0&&
+    actual.routerInternalPositionCount===sumRouterCounts(positions)&&
+    actual.routerInternalAssignmentCount===sumRouterCounts(assignments)&&
+    actual.routerInternalAssignmentCount>=actual.routerInternalPositionCount,
+    'router internal count totals');
+  if(validRouterCounts(positions)&&validRouterCounts(assignments)){
+    for(const name of Object.keys(positions))
+      require(assignments[name]>=positions[name],`router assignment count for ${name}`);
+  }
+  require(isDeepStrictEqual(comparison?.routerInternalPositionCounts,positions)&&
+    isDeepStrictEqual(comparison?.routerInternalAssignmentCounts,assignments)&&
+    comparison?.routerInternalPositionCount===actual?.routerInternalPositionCount&&
+    comparison?.routerInternalAssignmentCount===actual?.routerInternalAssignmentCount&&
+    comparison?.routerInternalPositionAuditUpdates===globalStep&&
+    comparison?.routerInternalPositionAccounting==='complete-per-update',
+    'router counts agree across the optimizer history comparison');
   require(comparison?.independentPreparedPhysicalTargets===targets?.physicalTargetRecordCount&&
     comparison?.observedPhysicalTargets===targets?.physicalTargetRecordCount,'physical comparison denominator');
   for(const field of ['missingPhysicalTargets','unexpectedPhysicalTargets','preparedOracleMismatches',
