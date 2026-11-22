@@ -1,0 +1,31 @@
+{
+  "schema": "semantic-v8-task-normalization-controlled-red/1",
+  "producerRevision": "7c20124f3d89dfe1a8d5e892238e7b7f92589720",
+  "helperBlob": "181d6c4dd67e427ea87953a3914c30c0af6127e6",
+  "testBlob": "7d10e3ae4833c99d2557b9445b85020699f74d4a",
+  "leaves": 33,
+  "passed": 12,
+  "failed": 21,
+  "skipped": 0,
+  "allCasesUseActualGeneration": true,
+  "nativeAdmissions": 0,
+  "optimizerUpdates": 0,
+  "files": {
+    "task-normalization-observations.json": {
+      "bytes": 6057,
+      "sha256": "49bed2e3a8776dbde566898c128502b7cedf55fef0ffec60e84700cb8b66bcb1"
+    },
+    "test-source.txt": {
+      "bytes": 8568,
+      "sha256": "75ae7a6fd9768afac9eafca626918cbd764ea86f929ed26ad9a1275b3b05e492"
+    },
+    "tests.log": {
+      "bytes": 22879,
+      "sha256": "90a6f725538879d87321311d7366d7f7e2d0932a3b49e4be070f92a83c7b4929"
+    },
+    "tests.xml": {
+      "bytes": 31884,
+      "sha256": "204b39c2d382bdb3d2d074f43cb78c15c0b09de3993b775aa685af52a6da7834"
+    }
+  }
+}
