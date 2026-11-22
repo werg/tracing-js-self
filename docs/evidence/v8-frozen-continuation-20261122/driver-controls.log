@@ -1,0 +1,19 @@
+test_archive_symlink_refuses (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_archive_symlink_refuses) ... ok
+test_changed_checkpoint_state_refuses (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_changed_checkpoint_state_refuses) ... ok
+test_changed_inventory_refuses (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_changed_inventory_refuses) ... ok
+test_different_checkpoint_step_refuses (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_different_checkpoint_step_refuses) ... ok
+test_different_native_source_refuses (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_different_native_source_refuses) ... ok
+test_different_training_profile_refuses (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_different_training_profile_refuses) ... ok
+test_duplicate_archive_members_refuse (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_duplicate_archive_members_refuse) ... ok
+test_duplicate_json_keys_refuse (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_duplicate_json_keys_refuse) ... ok
+test_missing_duplicate_reordered_metric_steps_refuse (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_missing_duplicate_reordered_metric_steps_refuse) ... ok
+test_nonfinite_json_refuses (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_nonfinite_json_refuses) ... ok
+test_only_invocation_cap_changes_without_mutating_original (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_only_invocation_cap_changes_without_mutating_original) ... ok
+test_original_and_resumed_update_steps_remain_separate (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_original_and_resumed_update_steps_remain_separate) ... ok
+test_safe_archive_names (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_safe_archive_names) ... ok
+test_unsafe_archive_names_refuse (test_resume_v8_frozen_target_coverage.FrozenContinuationTests.test_unsafe_archive_names_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.001s
+
+OK

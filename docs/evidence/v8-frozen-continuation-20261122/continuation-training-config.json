@@ -1,0 +1,36 @@
+{
+  "accumulate_ingested": 1,
+  "accumulate_scored": 1,
+  "checkpoint_every": 348,
+  "codec": "/home/runner/work/tracing-js-self/tracing-js-self/semantic-v8-tokenizer.json",
+  "datasets": [
+    "/home/runner/work/_temp/v8-support-prepared"
+  ],
+  "device": "cpu",
+  "expert_backend": "torch",
+  "generated_capacity": 128,
+  "gradient_checkpointing": false,
+  "keep_checkpoints": 1,
+  "max_accumulation_windows": 1,
+  "max_history_tokens": 16384,
+  "max_steps": 34,
+  "max_window_records": 128,
+  "microbatch_episodes": 1,
+  "model": "tiny",
+  "model_overrides": {
+    "max_capacity": 128,
+    "max_history_chunks": 128,
+    "vocab_size": 157184
+  },
+  "output": "/home/runner/work/_temp/v8-support-lifecycle/fit-coverage",
+  "phase": "SE",
+  "precision": "fp32",
+  "purpose": "diagnostic",
+  "seed": 17,
+  "semantic_v8_policy": {
+    "consumerRevision": "1a69d9da3254b7568c831d12866a629c206cf4fe",
+    "producerRevision": "9cf091e6ccc5add960ef0897576d0c391b199a65",
+    "registryDigest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+    "schema": "semantic-training-policy/8"
+  }
+}
