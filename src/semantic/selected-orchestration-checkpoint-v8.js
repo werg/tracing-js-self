@@ -147,7 +147,7 @@ function withoutChildState(child){
   return immutable;
 }
 
-function checkSelectionLedgers(packet,session,native,transport,allowTerminal=false){
+function checkSelectionLedgers(packet,session,native,transport,allowTerminal=false,allowCancelled=false){
   const all=new Map();
   for(const [kind,rows]of [['coordinator',packet.coordinatorAttempts],['child',packet.childAttempts]]){
     demand(Array.isArray(rows),kind+' attempts are missing');
@@ -567,7 +567,7 @@ export function verifySelectedOrchestrationCheckpoint(packet,policy,{initialPubl
     Object.keys(native.closedSessions).length===0&&
     !native.attempts.some(row=>row.session!==packet.session||!['committed','semantic-rejected'].includes(row.status)),
     'native checkpoint contains another session or an unacknowledged attempt');
-  const all=checkSelectionLedgers(packet,packet.session,native,transport,allowTerminal);
+  const all=checkSelectionLedgers(packet,packet.session,native,transport,allowTerminal,allowCancelled);
   checkCoordinatorHistory(packet,native.sessions[packet.session],all,packet.session);
   checkContinuation(packet,native.sessions[packet.session],allowTerminal,allowCancelled,bridge);
   return returnBridge?bridge:true;
