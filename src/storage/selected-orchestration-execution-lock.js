@@ -12,6 +12,16 @@ const ID=/^[a-z][a-z0-9:_-]{0,255}$/;
 const fail=message=>{throw new TypeError('Selected orchestration execution lock: '+message);};
 const digest=value=>createHash('sha256').update(stableAlgorithmJSON(value),'utf8').digest('hex');
 const ownUid=()=>typeof process.getuid==='function'?process.getuid():null;
+const issuedLeases=new WeakSet();
+
+/** Only a live lease issued by this implementation can guard a native child. */
+export function assertSelectedOrchestrationExecutionLease(lease,{sessionId,streamId}={}){
+  if(!issuedLeases.has(lease))fail('an original kernel execution lease is required');
+  lease.assertHeld();
+  if(sessionId!==undefined&&lease.sessionId!==sessionId||streamId!==undefined&&lease.streamId!==streamId)
+    fail('execution lease belongs to another session or stream');
+  return lease;
+}
 
 async function requirePrivateDirectory(path){
   let info;
@@ -111,6 +121,7 @@ export class DurableSelectedOrchestrationExecutionLock {
       assertHeld(){if(released||handle.fd<0)fail('execution lock lease is released');return true;},
       async release(){if(released)return;released=true;await handle.close();}
     });
+    issuedLeases.add(lease);
     return lease;
   }
 }

@@ -42,3 +42,5 @@ export type {SelectedServiceAdmissionPolicy,SelectedServiceAdmissionFence} from 
 
 export {DurableSelectedOrchestrationExecutionLock} from './selected-orchestration-execution-lock.js';
 export type {SelectedOrchestrationExecutionLease} from './selected-orchestration-execution-lock.js';
+export {DurableNativeV8RequestJournal} from './native-request-journal-v8.js';
+export type {NativeV8RequestReceipt,NativeV8RequestDurability} from './native-request-journal-v8.js';

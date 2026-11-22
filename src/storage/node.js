@@ -194,3 +194,4 @@ export {DurableFencedSelectedServiceJournal} from './selected-service-fence-jour
 export {SelectedServiceAdmissionCoordinator} from './selected-service-coordinator.js';
 
 export {DurableSelectedOrchestrationExecutionLock} from './selected-orchestration-execution-lock.js';
+export {DurableNativeV8RequestJournal} from './native-request-journal-v8.js';

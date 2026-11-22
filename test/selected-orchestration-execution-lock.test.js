@@ -8,15 +8,16 @@ import {fileURLToPath} from 'node:url';
 import {DurableSelectedOrchestrationExecutionLock} from '../src/storage/selected-orchestration-execution-lock.js';
 
 const fixture=fileURLToPath(new URL('./fixtures/selected-orchestration-execution-lock-worker.mjs',import.meta.url));
+const defaultFlockPath=process.env.TRACING_TEST_FLOCK??'/usr/bin/flock';
 async function root(t){
  const path=await mkdtemp(join(tmpdir(),'selected-orchestration-lock-'));
  t.after(()=>rm(path,{recursive:true,force:true}));return path;
 }
-function runOnce(directory,session='session1',stream='history1',flockPath='/usr/bin/flock'){
+function runOnce(directory,session='session1',stream='history1',flockPath=defaultFlockPath){
  return spawnSync(process.execPath,[fixture,directory,session,stream,'once',flockPath],
    {encoding:'utf8',timeout:5000,stdio:['ignore','pipe','pipe'],shell:false});
 }
-function start(directory,session='session1',stream='history1',mode='hold',flockPath='/usr/bin/flock'){
+function start(directory,session='session1',stream='history1',mode='hold',flockPath=defaultFlockPath){
  const child=spawn(process.execPath,[fixture,directory,session,stream,mode,flockPath],
    {stdio:['pipe','pipe','pipe'],shell:false});
  child.__stdoutText='';
@@ -47,7 +48,7 @@ function exited(child,timeout=5000){
 
 test('kernel flock lease excludes a separate process until the parent file descriptor is released',async t=>{
  const directory=await root(t),first=new DurableSelectedOrchestrationExecutionLock({
-   directory,sessionId:'session1',streamId:'history1'}),lease=await first.acquire();
+   directory,sessionId:'session1',streamId:'history1',flockPath:defaultFlockPath}),lease=await first.acquire();
  assert.equal(lease.assertHeld(),true);
  const refused=runOnce(directory);
  assert.equal(refused.status,3,String(refused.error??'')+'\n'+refused.stdout+'\n'+refused.stderr);
@@ -61,7 +62,7 @@ test('kernel flock lease excludes a separate process until the parent file descr
 test('kernel releases the shared open-file-description lock after a crashed holder exits without unlinking it',async t=>{
  const directory=await root(t),worker=start(directory,'session2','history2','crash');
  assert.match(await waitText(worker,/acquired/),/acquired/);
- const lock=new DurableSelectedOrchestrationExecutionLock({directory,sessionId:'session2',streamId:'history2'});
+ const lock=new DurableSelectedOrchestrationExecutionLock({directory,sessionId:'session2',streamId:'history2',flockPath:defaultFlockPath});
  const before=await lstat(lock.lockPath);
  const workerExit=exited(worker);worker.kill('SIGKILL');assert.equal((await workerExit).signal,'SIGKILL');
  const lease=await lock.acquire();
@@ -90,8 +91,8 @@ test('an inherited native-worker descriptor keeps the flock held after superviso
 
 test('different session namespaces do not contend while repeated exact namespaces do',async t=>{
  const directory=await root(t),a=new DurableSelectedOrchestrationExecutionLock({
-   directory,sessionId:'session-a',streamId:'history1'});
- const b=new DurableSelectedOrchestrationExecutionLock({directory,sessionId:'session-b',streamId:'history1'});
+   directory,sessionId:'session-a',streamId:'history1',flockPath:defaultFlockPath});
+ const b=new DurableSelectedOrchestrationExecutionLock({directory,sessionId:'session-b',streamId:'history1',flockPath:defaultFlockPath});
  const aLease=await a.acquire(),bLease=await b.acquire();
  const exactContender=runOnce(directory,'session-a','history1');
  assert.equal(exactContender.status,3,String(exactContender.error??'')+'\n'+exactContender.stderr);
@@ -103,7 +104,7 @@ test('lock refuses an unavailable helper and a symlinked lock inode',async t=>{
  const missing=new DurableSelectedOrchestrationExecutionLock({directory,sessionId:'session3',
    streamId:'history3',flockPath:join(directory,'missing-flock')});
  await assert.rejects(missing.acquire(),/ENOENT|flock/i);
- const lock=new DurableSelectedOrchestrationExecutionLock({directory,sessionId:'session4',streamId:'history4'});
+ const lock=new DurableSelectedOrchestrationExecutionLock({directory,sessionId:'session4',streamId:'history4',flockPath:defaultFlockPath});
  await mkdir(join(directory,'selected-orchestration-execution-locks'),{mode:0o700});
  const target=join(directory,'target');await writeFile(target,'target',{mode:0o600});
  await symlink(target,lock.lockPath);
