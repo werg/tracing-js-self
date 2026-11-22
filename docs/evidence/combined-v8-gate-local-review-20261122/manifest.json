@@ -1,0 +1,28 @@
+{
+  "schema": "combined-v8-gate-local-review/1",
+  "gateRevision": "88fad55d0af478d4dfb6742b589bd7a992d184e7",
+  "nativeBuildRevision": "c91677525f25b9ba05e9d4a856cdad48d48af0ea",
+  "nativeBuildTree": "85245d6cc3c95fb9d339c53bb54e4b66872bd8da",
+  "publishedNativeEquivalent": "eb758da9f1f6e6cca90ba7f4a3c9d4e70753bb0c",
+  "installedPythonFiles": 267,
+  "installedSourceFixtures": 23,
+  "installedGeneratedContexts": 849,
+  "fullComposedPairQualified": false,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3342,
+      "sha256": "2800472e8b5b75041e6dc079b3f342c9d2d5e0320b9a4a914be9075e6f232165"
+    },
+    {
+      "path": "original-installed-wheel-receipt.json",
+      "bytes": 16704,
+      "sha256": "bc8ab556821bc885ae99336bd816a56c76f690e65ca093bebe7a59d70d45e25a"
+    },
+    {
+      "path": "installed-wheel-review.log",
+      "bytes": 8459,
+      "sha256": "3d4436ee5c7362999f1de81762091674bc3ff440f1273d1299a0e66c7bc2936e"
+    }
+  ]
+}
