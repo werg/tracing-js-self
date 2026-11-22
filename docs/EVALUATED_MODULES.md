@@ -37,8 +37,9 @@ No on-disk lookup, `require`, external package resolution, automatic extension
 resolution or native `import()` executes guest source. Host accessor/proxy
 module records are rejected without invoking their traps.
 
-The source is lowered with pinned TypeScript 5.9.3 to ES2022, parsed as modules
-with Acorn, and rewritten into one strict async guest function. The resulting
+JavaScript text is preserved byte for byte; typed TypeScript is lowered with
+pinned TypeScript 5.9.3 to ES2022. The result is parsed as modules with Acorn
+and rewritten into one strict async guest function. The resulting
 function is itself parsed through the owned `training-js/1` frontend **before
 execution**, which rejects unsupported grammar and ambient identifiers.
 There is no fallback that runs the source in the Node `vm`, native
@@ -47,19 +48,78 @@ files, generated spans, import links and TypeScript V3 source-map metadata; the
 authoritative trace uses **executed generated JS** sites, not proven original
 TS semantic sites.
 
-## Namespace-style static reads (not exotic namespace objects)
+## Static namespace reads and observable namespace objects
 
-A bounded `import * as ns from './module.js'` is supported only when every
-runtime use of `ns` is a **statically named property read** (`ns.value` or
-`ns['value']`). The frontend resolves that reference to the original exported
-binding, so mutation through a **separately named-imported** function remains
-visible. Direct `ns.fn()` is rejected because its `this` receiver is a module
-namespace exotic, whereas a bare rewritten `fn()` would have `undefined`
-as its strict receiver.
-Assignments to `ns.value`, dynamic keys (`ns[key]`), escaping `ns` as a
-value, arbitrary reflection, `Object.keys(ns)`, and namespace re-exports are
-not implemented. They fail at linking instead of substituting an ordinary
-mutable JavaScript object for the ECMAScript module namespace exotic.
+A bounded `import * as ns from './module.js'` uses direct live-cell reads when
+only statically named properties are read (`ns.value` or `ns['value']`). If
+the namespace identity or an exotic operation is observable, the linker
+materializes one owned `module-namespace` object per target module. Namespace
+re-exports reuse that same identity. Its string export keys are sorted
+lexically, its prototype is null, it is nonextensible, and its own
+`Symbol.toStringTag` value is `"Module"`. Reads call owned live-cell getters;
+descriptor reads therefore preserve current values, lexical TDZ, and original
+abrupt completions. Namespace exports report data descriptors with
+`writable: true`, `enumerable: true`, and `configurable: false`, while Set
+always fails.
+
+The currently owned namespace operations include dynamic computed reads,
+method receiver calls, `Object.keys`, own-name/symbol reflection,
+`Reflect.ownKeys`, `Object.hasOwn`, `Object.getOwnPropertyDescriptor`,
+`Object.defineProperty`, `Reflect.defineProperty`, `Reflect.set`,
+`Reflect.deleteProperty`, prototype reads/writes, and the bounded
+extensibility/seal/freeze checks. Descriptor value reads and definition checks
+are resumable owned getter calls, so they survive JSON checkpoints and replay.
+`Object.hasOwn`, `Object.keys`, and the seal/freeze integrity operations also
+perform their required live-cell own-descriptor reads in key order. They
+propagate a cyclic export's temporal-dead-zone `ReferenceError`; `Object.freeze`
+and `Object.isFrozen` stop at the first writable export, while seal checks walk
+all exports. `Reflect.ownKeys` and `Object.getOwnPropertyNames` remain
+keys-only and do not read export cells. An empty-export namespace can be
+frozen; a namespace with a writable export cannot.
+
+The runtime's `moduleNamespaceIntrinsic` parser/registered-source/start-entry
+option is internal linker plumbing for the owned continuation above. The
+original Test262 module runner may enable it for its generated module-entry
+source during owned-only evaluation; ordinary scripts and harness sources do
+not receive that capability. Setting the boolean does not establish that
+source came from an original module graph or qualify public, source, or native
+semantics; module-source projection continues to refuse any graph that
+materializes a namespace.
+
+Bounded namespace re-exports (`export * as cells from './leaf.js'` and
+`import * as ns from './leaf.js'; export {ns}`) retain their namespace target
+through named imports and star graphs. Static chained reads such as
+`barrel.cells.value` reach the original live cell without creating a guest
+namespace object. Ambiguity propagates through every star path and is never
+treated as a missing name which a later path may fill. Direct namespace
+re-exports of the same target compare by the target module and namespace
+binding; local namespace bindings keep their own binding identity.
+
+Namespace values returned from the entry through the result codec are refused
+explicitly. `Object.getOwnPropertyDescriptors`, `Object.values`,
+`Object.entries`, `Object.assign`, namespace proxies, `for...in`, object
+spread/destructuring from a namespace, and
+`Object.prototype.toString.call(ns)` still lack owned getter/internal-method
+continuations. The semantic module source gate records `projection_refused`
+for every graph that materializes a namespace, so these owned results do not
+enter the public/native-qualified trace lane. Direct namespace return through
+the selected export is rejected at linking.
+
+Node 24.22.3 places quoted integer-like export names in numeric order during
+`Reflect.ownKeys`, while the retained Module Namespace `[[OwnPropertyKeys]]`
+algorithm orders all export strings lexically. The focused control records this
+native discrepancy rather than counting it as a successful differential.
+
+The lowering resolves each identifier's lexical binding before rewriting it.
+Parameters, default initializers, body variables, block/catch/loop bindings,
+named functions and classes may shadow module/import names without changing
+which cell a read or write addresses. A shadowed `ns` is an ordinary local
+value, so its method calls retain their receiver. Property names such as
+`object.ns` and `{ns: 1}` are not identifier reads.
+Destructuring and loop assignments to actual imported bindings fail before
+execution just as direct assignments do. See
+[namespace resolution evidence](OWNED_MODULE_NAMESPACE_RESOLUTION.md) for the
+specification controls and explicitly recorded native-engine discrepancies.
 
 ## Initialization, mutable bindings and asynchronous results
 
@@ -71,15 +131,22 @@ the importer never receives a value snapshot. Writes to an imported binding
 are rejected before execution. Explicit re-exports and unambiguous `export *`
 resolve by the same original binding identity. Direct/indirect export
 resolution is checked at link time, including unused imports and re-exports.
+Module `var` bindings, including declarations inside top-level blocks and
+loops, are registered and renamed independently for every module. Repeated
+`var` declarations share their own module cell, initialized to `undefined`
+during instantiation; cyclic imports can observe that value before evaluation.
+Module declaration binding patterns remain outside the bounded lowering.
 
 Dependencies are evaluated once per graph in depth-first dependency order,
 and their bounded module-side effects occur before dependent module bodies.
 Synchronous cyclic imports follow DFS dependency initialization, with
 function declarations instantiated before module bodies and mutable lexical
 reads referencing the original owned binding. A cyclic read before
-initialization produces a guest abrupt completion. Cycles with top-level
-`await` fail closed: the current machine has no complete ESM async-dependency
-or deadlock scheduler. Each call to `executeEvaluatedModules` starts a
+initialization produces a guest abrupt completion. Graphs requiring parallel
+top-level-await dependencies or async cycles use retained per-module generator
+environments and the [owned SCC scheduler](OWNED_MODULE_SCHEDULING.md).
+That scheduler remains outside public/native source qualification.
+Each call to `executeEvaluatedModules` starts a
 **fresh** owned realm; state does not persist across separate calls.
 
 A module may `await` an internally owned Promise during initialization;
@@ -229,10 +296,11 @@ roll back an already executed external effect.
 
 ## Known limits and evidence
 
-- **Not general ESM:** first-class module namespace exotic objects, dynamic `import()`,
-  generators, classes, decorators, `import.meta`, CommonJS and package imports
-  fail closed. Namespace and cyclic Module Record semantics, ordered accessors,
-  complete descriptors and all built-ins remain open.
+- **Not general ESM:** dynamic `import()`, generators, classes, decorators,
+  CommonJS and package imports fail closed. Namespace support is the owned
+  internal slice described above; it does not implement the full Module
+  Namespace Object or qualify public/native projection. General ordered
+  accessors and complete descriptors remain open.
 - **Not a persistent realm:** module initialization and exported function
   invocation share a single owned episode. New `executeEvaluatedModules` calls
   do not share binding cells, heap objects or module caches. The data-only

@@ -1,0 +1,31 @@
+✔ Promise object profile refuses prototype-null (252.60564ms)
+✔ Promise object profile refuses prototype-object (145.253689ms)
+✔ Promise object profile refuses prototype-computed (137.964148ms)
+✔ Promise object profile refuses prototype-target-alias (135.460761ms)
+✔ Promise object profile refuses prototype-evaluated-spread (163.543863ms)
+✔ Promise object profile refuses prototype-caught (157.580303ms)
+✔ Promise object profile refuses prototype-read (146.589596ms)
+✔ Promise object profile refuses prototype-read-computed (156.225918ms)
+✔ Promise object profile refuses prototype-read-caught (165.420863ms)
+✔ Promise object profile refuses create-with-promise-prototype (133.369916ms)
+✔ Promise object profile refuses create-computed (129.413198ms)
+✔ Promise object profile refuses promise-as-new-prototype (142.668578ms)
+✔ Promise object profile refuses promise-as-descriptor (618.568521ms)
+✔ Promise object profile refuses prevent-extensions (155.443754ms)
+✔ Promise object profile refuses prevent-extensions-spread (168.102663ms)
+✔ Promise object profile refuses extensibility-read (135.795846ms)
+✔ Promise object profile refuses extensibility-read-computed (119.028325ms)
+✔ Promise object profile preserves promise-identity (968.6478ms)
+✔ Promise object profile preserves promise-not-frozen (1501.273806ms)
+✔ Promise object profile preserves shadowed-extensibility-method (1228.870839ms)
+✔ Promise object profile preserves shadowed-prototype-method (1559.242094ms)
+✔ Promise object profile preserves ordinary-object-prototype (663.979634ms)
+✔ native independently replays every eligible Promise object control (1710.825614ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11502.47068

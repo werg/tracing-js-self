@@ -131,10 +131,11 @@ test('semantic package entry publishes the implemented protocol source profile i
   assert.deepEqual({
     construction:semantic.CONSTRUCTION_SOURCE_PROFILE_V8,
     number:semantic.NUMBER_SOURCE_PROFILE_V8,
+    conversion:semantic.PRIMITIVE_CONVERSION_SOURCE_PROFILE_V8,
     generator:semantic.GENERATOR_SOURCE_PROFILE_V8,
     proxy:semantic.PROXY_SOURCE_PROFILE_V8
   },{
-    construction:'class-private-source/1',number:'number-conversion-source/1',
+    construction:'class-private-source/1',number:'number-conversion-source/1',conversion:'primitive-conversion-source/1',
     generator:'synchronous-generator-source/1',proxy:'ordinary-data-proxy-source/1'
   });
   assert.equal(typeof semantic.verifyProtocolRegionTrainingCase,'function');

@@ -11,6 +11,7 @@ served bundle to emit the exact complete target as a strict v6 record.
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict
 import gc
 import hashlib
 import json
@@ -121,6 +122,15 @@ def capture_training_boundary(model, trained, episode, assets, codec, config,
     from megatoken.training.stream import EpisodeWindow, _WindowPlan
     from megatoken.training.transducer import TransducerTrainer
 
+    capture_admission = None
+    annotation = json.loads(episode.supervision.annotations_json).get("semantic_execution", {})
+    if episode.stream == "semantic_execution" and annotation.get("schema") == "semantic-execution/6":
+        from native_semantic_capture import semantic_v6_capture_config
+
+        # Only this nonoptimizing boundary replay uses the disclosed admission
+        # configuration. Decoder updates and the saved original training config
+        # retain their separately reported diagnostic semantics.
+        config, capture_admission = semantic_v6_capture_config(asdict(config), type(config))
     plan = _WindowPlan(episode, codec, window_config(config))
     require(len(plan) > 0, "Admitted episode has no native scored training window")
     item = EpisodeWindow(episode, plan[0], assets)
@@ -176,6 +186,7 @@ def capture_training_boundary(model, trained, episode, assets, codec, config,
     captured["targetFreeMask"] = list(targets[0].free_mask)
     captured["window"] = {"start": item.window.start, "end": item.window.end}
     captured["seed"] = seed
+    captured["captureAdmission"] = capture_admission
     captured["prefixReplayGradientEnabled"] = False
     return captured
 
@@ -595,6 +606,7 @@ def main() -> int:
         "checkpointStateSha256": base_checkpoint_sha,
         "stateShape": list(train["state"].raw.shape),
         "prefixReplayGradientEnabled": train["prefixReplayGradientEnabled"],
+        "captureAdmission": train["captureAdmission"],
     })
 
     original_payload = trained.payload
@@ -670,6 +682,7 @@ def main() -> int:
         "optimizerResumeClaim": False,
         "changedModelOwners": changed_owners,
         "sourceAdmissionIdentityDigest": packet["sourceAdmission"]["identityDigest"],
+        "captureAdmission": train["captureAdmission"],
         "originalTransducerAttachmentSha256": original_transducer_sha,
         "completeTransducerTrainingStatePreserved": True,
     }
@@ -733,6 +746,7 @@ def main() -> int:
         "actualInitialServiceError": initial_service["error"],
         "actualInitialServiceSampleSha256": initial_service["samples"][0]["sample"]["float32Sha256"],
         "trainerEventIds": train["trainingEventIds"],
+        "captureAdmission": train["captureAdmission"],
         "trainerTracks": train["trainingTracks"],
         "actualServingEventIds": initial_service["samples"][0]["eventIds"],
         "actualServingTracks": initial_service["priors"][0]["tracks"],

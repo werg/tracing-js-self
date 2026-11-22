@@ -382,7 +382,7 @@ export function compile(ast) {
               expr(item.value);emit('INIT',source,item);copyOwn(saved,source,[],item);continue;
             }
             if(spreads)emit('GET',saved,n);else emit('DUP',null,n);
-            if(item.computedKey)expr(item.computedKey);
+            if(item.computedKey){expr(item.computedKey);emit('PROPERTY_KEY',null,item.computedKey);}
             else emit('CONST',{value:['str',item.key]},n);
             expr(item.value,item.kind==='prototype'?null:{stack:true});
             if(item.value.nonConstructible&&containsSuperProperty(item.value))emit('SET_HOME_OBJECT',{offset:2},item);
@@ -439,7 +439,7 @@ export function compile(ast) {
               expr(n.left.property);emit('INIT',property,n.left.property);
               emit('GET',receiver,n.left);
               emit('GET',property,n.left);
-              emit('GET_PROP',null,n.left);
+              emit('GET_PROP',{cachePropertyKey:property},n.left);
               const guard=emit('LOGICAL_JUMP',{operator,to:null},n);
               emit('POP',null,n);
               emit('GET',receiver,n.left);
@@ -459,7 +459,7 @@ export function compile(ast) {
             expr(n.left.object);expr(n.left.property);
             if(n.operator!=='='){
               // Preserve the reference; computed keys and getters run once.
-              emit('DUP2',null,n.left);
+              emit('DUP2',{cachePropertyKey:true},n.left);
               emit('GET_PROP',null,n.left);
             }
             expr(n.right);
@@ -738,7 +738,7 @@ export function compile(ast) {
                 }else{
                   const key=temporary(entry);excluded.push(key);
                   emit('GET',variable,entry);
-                  if(entry.computedKey)expr(entry.computedKey);
+                  if(entry.computedKey){expr(entry.computedKey);emit('PROPERTY_KEY',null,entry.computedKey);}
                   else emit('CONST',{value:['str',entry.key]},entry);
                   emit('DUP',null,entry);emit('INIT',key,entry);
                   emit('GET_PROP',null,entry);emit('INIT',child,entry);

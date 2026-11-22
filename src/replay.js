@@ -65,6 +65,7 @@ function nextInternalAction(runtime) {
   if (active?.status === 'running') return 'step';
   if (active?.status === 'blocked') return 'seal';
   if (control.queue.length) return 'job.enter';
+  if(control.scriptSequence&&control.scriptSequence.nextIndex<control.scriptSequence.sourceIds.length)return 'script.enter';
   if (control.timers?.length) return 'host.task.enter';
   return 'seal';
 }
@@ -73,7 +74,7 @@ function assertSchedulerAction(runtime, event) {
       event.operation === 'external.callback.enqueue' ||
       event.operation === 'external.input.deliver') return;
   const expected = nextInternalAction(runtime);
-  const action = ['effect.dispatch','job.enter','host.task.enter'].includes(event.operation)
+  const action = ['effect.dispatch','job.enter','host.task.enter','script.enter'].includes(event.operation)
     ? event.operation : 'step';
   if (action !== expected)
     fail(`Invalid internal scheduler order: ${action} while ${expected} is required`, event.eventId);
@@ -89,6 +90,7 @@ function exitKind(runtime) {
   if (active?.status === 'running') return null;
   if (active?.status === 'blocked') return 'waiting';
   if (c.queue.length || c.timers?.length) return null;
+  if(c.scriptSequence&&c.scriptSequence.nextIndex<c.scriptSequence.sourceIds.length)return null;
   const pending = Object.values(runtime.state.promises).some(p => p.status === 'pending') ||
     Object.values(runtime.state.effects).some(e => e.external === 'pending'||e.subscription?.state==='active');
   return pending ? 'waiting' : 'terminated';
@@ -120,7 +122,9 @@ export function replayExact(bundle) {
   try {
     for (const src of bundle.sources) {
       const compiled = runtime.registerSource({ text: src.text, url: src.url, goal: src.goal,
-        trainingProfile: src.parser === 'acorn/8.15.0:training-js/1' });
+        trainingProfile: src.parser === 'acorn/8.15.0:training-js/1',
+        scriptProfile:src.parser==='acorn/8.15.0:owned-script/1',
+        moduleNamespaceIntrinsic:src.moduleNamespaceIntrinsic===true });
       if (compiled.entry === entryCode || runtime.programs[entryCode] && entryCode.startsWith(`${compiled.sourceId}:`)) entry = compiled;
     }
     if (!entry) fail('Initial frame has no matching registered source');
@@ -135,10 +139,16 @@ export function replayExact(bundle) {
       // source after the full bytecode comparison; never trust an archive flag.
       const allowAsync=runtime.programs[entry.entry].instructions.some(instruction=>
         instruction.op==='DEF_FN'&&instruction.arg?.async===true);
+      const moduleNamespaceIntrinsic=bundle.entrySpec.moduleNamespaceIntrinsic===true;
       runtime.startEntry({source:entry,functionName,args:realizeGraph(initial.heap,roots),
         allowAsync,
+        moduleNamespaceIntrinsic,
         allowHost:initial.envs?.[initial.control.a0.globalEnvId]?.bindings?.host?.token?.value?.[0]==='host'});
-    } else runtime.start(entry);
+    } else if(bundle.entrySpec?.kind==='scripts'){
+      const sourceIds=bundle.entrySpec.sourceIds;
+      if(!Array.isArray(sourceIds)||sourceIds[0]!==entry.sourceId)fail('Script sequence entry mismatch');
+      runtime.startScriptSequence(sourceIds.map(id=>runtime.sources.find(source=>source.sourceId===id)));
+    }else runtime.start(entry);
     expectSame(runtime.exportRun().manifest,bundle.manifest,'runtime profile manifest');
     expectSame(runtime.initialState, bundle.initialState, 'initial machine state');
   } catch (error) {
@@ -183,7 +193,8 @@ export function replayExact(bundle) {
           if(job?.kind!=='external-callback')
             fail('Missing external callback job',expected.eventId);
           runtime.recordExternalCallback({effectId:causeId(expected,'effect','effectId'),
-            callbackId:job.functionId,args:job.args});
+            callbackId:job.functionId,args:job.args,...(job.returnId?
+              {returnId:job.returnId,inputGraph:job.inputGraph}:{})});
           break;
         }
         case 'external.input.deliver':
@@ -195,6 +206,7 @@ export function replayExact(bundle) {
         case 'host.task.enter':
           runtime.enterTimerTask();
           break;
+        case 'script.enter':runtime.enterNextScript();break;
         default:
           runtime.step();
       }

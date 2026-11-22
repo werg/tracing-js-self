@@ -1,0 +1,37 @@
+{
+  "consumerRevision": "e9817ad637f57ba82e370770420f6f3ef877c7b3",
+  "declaredSources": 64,
+  "fullLaunchQualified": false,
+  "learnedSuccess": null,
+  "optimizerUpdates": 2,
+  "producerRevision": "3cf0e4732290ab07a6f0d1f897e8893df762cc92",
+  "registryDigest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+  "reports": [
+    {
+      "bytes": 17504,
+      "path": "semantic-v8-se-support-native-evidence/v8-support-lifecycle/command-report.json",
+      "sha256": "69a5b3c113ff64deab9e5476d9eaa2298f5c544ba73eab006358930c2311dcda"
+    },
+    {
+      "bytes": 42997,
+      "path": "semantic-v8-se-support-native-evidence/v8-support-lifecycle/qualification/summary.json",
+      "sha256": "25823ae1768714f184595b628b4bfba4bf0217ec2b590f53c7e66cb18220a3f9"
+    },
+    {
+      "bytes": 93804,
+      "path": "semantic-v8-se-support-native-evidence/semantic-v8-support-supply.json",
+      "sha256": "3e4a7d7e8841dc4c1299a33eef5f336f47b0f12744522dd4c5a04ed67c40d83e"
+    },
+    {
+      "bytes": 93822,
+      "path": "semantic-v8-se-support-native-evidence/v8-support-lifecycle/support-supply.json",
+      "sha256": "029c415d1aaac8f042d4cbd20658a84f6f27d0fc541d93769342239f24068f1e"
+    }
+  ],
+  "schema": "retained-v8-support-target-exposure-evidence/1",
+  "scope": "Extracted existing complete-run report bytes; no new training, source admission, or learned-quality claim.",
+  "sourceArtifactId": 14742489071,
+  "sourceRunId": 44991189912,
+  "extractionRunId": 44993769174,
+  "extractionCommit": "32c49c458ed55aff73db402848e59a7628c014f6"
+}

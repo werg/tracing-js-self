@@ -1,0 +1,829 @@
+﻿2026-11-22T14:48:54.5905799Z Current runner version: '2.338.2'
+2026-11-22T14:48:54.5934147Z ##[group]Runner Image Provisioner
+2026-11-22T14:48:54.5935087Z Hosted Compute Agent
+2026-11-22T14:48:54.5935730Z Version: 20261111.635
+2026-11-22T14:48:54.5936623Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-22T14:48:54.5937547Z Build Date: 2026-11-11T01:49:01Z
+2026-11-22T14:48:54.5938257Z Worker ID: {389cda2f-3526-4c42-929b-138cc9c1027c}
+2026-11-22T14:48:54.5939031Z Region: eastus
+2026-11-22T14:48:54.5939625Z Cloud: Azure
+2026-11-22T14:48:54.5940171Z ##[endgroup]
+2026-11-22T14:48:54.5941786Z ##[group]Operating System
+2026-11-22T14:48:54.5942466Z Ubuntu
+2026-11-22T14:48:54.5943079Z 24.04.5
+2026-11-22T14:48:54.5943644Z LTS
+2026-11-22T14:48:54.5944189Z ##[endgroup]
+2026-11-22T14:48:54.5944906Z ##[group]Runner Image
+2026-11-22T14:48:54.5945540Z Image: ubuntu-24.04
+2026-11-22T14:48:54.5946466Z Version: 20261116.376.1
+2026-11-22T14:48:54.5947915Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.376/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-22T14:48:54.5949703Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.376
+2026-11-22T14:48:54.5950701Z ##[endgroup]
+2026-11-22T14:48:54.5951884Z ##[group]GITHUB_TOKEN Permissions
+2026-11-22T14:48:54.5954067Z Contents: read
+2026-11-22T14:48:54.5954780Z Metadata: read
+2026-11-22T14:48:54.5955352Z ##[endgroup]
+2026-11-22T14:48:54.5957908Z Secret source: Actions
+2026-11-22T14:48:54.5958913Z Cache mode: write
+2026-11-22T14:48:54.5960198Z Prepare workflow directory
+2026-11-22T14:48:54.6528445Z Prepare all required actions
+2026-11-22T14:48:54.6578363Z Getting action download info
+2026-11-22T14:48:54.8514536Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-11-22T14:48:55.0079947Z Download action repository 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-22T14:48:55.1047148Z Download action repository 'actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+2026-11-22T14:48:55.1844584Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-22T14:48:55.4198383Z Complete job name: paired-recovery (bootstrap-history, 21)
+2026-11-22T14:48:55.5049424Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-22T14:48:55.5050576Z with:
+2026-11-22T14:48:55.5051066Z   ref: 9a69dfc5b33c5e0eafec737a302e941f869bb5a1
+2026-11-22T14:48:55.5051695Z   path: tracing-js-self
+2026-11-22T14:48:55.5052206Z   persist-credentials: false
+2026-11-22T14:48:55.5052737Z   repository: werg/tracing-js-self
+2026-11-22T14:48:55.5057031Z   token: ***
+2026-11-22T14:48:55.5057481Z   ssh-strict: true
+2026-11-22T14:48:55.5057931Z   ssh-user: git
+2026-11-22T14:48:55.5058363Z   clean: true
+2026-11-22T14:48:55.5058815Z   sparse-checkout-cone-mode: true
+2026-11-22T14:48:55.5059357Z   fetch-depth: 1
+2026-11-22T14:48:55.5059825Z   fetch-tags: false
+2026-11-22T14:48:55.5060283Z   show-progress: true
+2026-11-22T14:48:55.5060745Z   lfs: false
+2026-11-22T14:48:55.5061169Z   submodules: false
+2026-11-22T14:48:55.5061632Z   set-safe-directory: true
+2026-11-22T14:48:55.5062159Z   allow-unsafe-pr-checkout: false
+2026-11-22T14:48:55.5062930Z env:
+2026-11-22T14:48:55.5063614Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T14:48:55.5064390Z   MEGATOKEN_PYTHON: python
+2026-11-22T14:48:55.5065096Z   PYTHONPATH: /home/runner/work/tracing-js-self/tracing-js-self/megatoken/src
+2026-11-22T14:48:55.5065860Z   OMP_NUM_THREADS: 1
+2026-11-22T14:48:55.5066492Z   MKL_NUM_THREADS: 1
+2026-11-22T14:48:55.5066980Z   REQUIRE_KNOWN_COMMIT_RECOVERY: 1
+2026-11-22T14:48:55.5067527Z   REQUIRE_KNOWN_CLOSE_RECOVERY: 1
+2026-11-22T14:48:55.5068086Z   REQUIRE_DURABLE_BOOTSTRAP_RECOVERY: 1
+2026-11-22T14:48:55.5068635Z ##[endgroup]
+2026-11-22T14:48:55.9066048Z Syncing repository: werg/tracing-js-self
+2026-11-22T14:48:55.9069936Z ##[group]Getting Git version info
+2026-11-22T14:48:55.9071589Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self'
+2026-11-22T14:48:55.9073665Z [command]/usr/bin/git version
+2026-11-22T14:48:55.9074574Z git version 2.56.1
+2026-11-22T14:48:55.9078141Z ##[endgroup]
+2026-11-22T14:48:55.9084356Z Temporarily overriding HOME='/home/runner/work/_temp/07ccb5d2-3266-4b60-af34-85d9e5f4b8c5' before making global git config changes
+2026-11-22T14:48:55.9088367Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T14:48:55.9091452Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T14:48:55.9140698Z ##[group]Determining repository object format
+2026-11-22T14:48:55.9142792Z ##[endgroup]
+2026-11-22T14:48:55.9144469Z ##[group]Initializing the repository
+2026-11-22T14:48:55.9147220Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T14:48:55.9274947Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T14:48:55.9277293Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T14:48:55.9278847Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T14:48:55.9280608Z hint: call:
+2026-11-22T14:48:55.9281492Z hint:
+2026-11-22T14:48:55.9282559Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T14:48:55.9283867Z hint:
+2026-11-22T14:48:55.9285010Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T14:48:55.9286627Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T14:48:55.9287621Z hint:
+2026-11-22T14:48:55.9288156Z hint: 	git branch -m <name>
+2026-11-22T14:48:55.9288749Z hint:
+2026-11-22T14:48:55.9289770Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T14:48:55.9291689Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/.git/
+2026-11-22T14:48:55.9299125Z [command]/usr/bin/git remote add origin https://github.com/werg/tracing-js-self
+2026-11-22T14:48:55.9358040Z ##[endgroup]
+2026-11-22T14:48:55.9359392Z ##[group]Disabling automatic garbage collection
+2026-11-22T14:48:55.9362232Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T14:48:55.9399402Z ##[endgroup]
+2026-11-22T14:48:55.9400352Z ##[group]Setting up auth
+2026-11-22T14:48:55.9406827Z Removing SSH command configuration
+2026-11-22T14:48:55.9419286Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T14:48:55.9460746Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T14:48:55.9874840Z Removing HTTP extra header
+2026-11-22T14:48:55.9881982Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T14:48:55.9939714Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T14:48:56.0187525Z Removing includeIf entries pointing to credentials config files
+2026-11-22T14:48:56.0201191Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T14:48:56.0251331Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T14:48:56.0506950Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-0963cf0b-0a1a-4481-be44-e32d0e8bc725.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T14:48:56.0559451Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/.git.path /home/runner/work/_temp/git-credentials-0963cf0b-0a1a-4481-be44-e32d0e8bc725.config
+2026-11-22T14:48:56.0605003Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-0963cf0b-0a1a-4481-be44-e32d0e8bc725.config
+2026-11-22T14:48:56.0650936Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/tracing-js-self/.git.path /github/runner_temp/git-credentials-0963cf0b-0a1a-4481-be44-e32d0e8bc725.config
+2026-11-22T14:48:56.0696966Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/tracing-js-self/.git/worktrees/*.path /github/runner_temp/git-credentials-0963cf0b-0a1a-4481-be44-e32d0e8bc725.config
+2026-11-22T14:48:56.0739908Z ##[endgroup]
+2026-11-22T14:48:56.0740878Z ##[group]Fetching the repository
+2026-11-22T14:48:56.0747530Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 9a69dfc5b33c5e0eafec737a302e941f869bb5a1
+2026-11-22T14:49:26.3256374Z From https://github.com/werg/tracing-js-self
+2026-11-22T14:49:26.3265132Z  * branch            9a69dfc5b33c5e0eafec737a302e941f869bb5a1 -> FETCH_HEAD
+2026-11-22T14:49:26.3278090Z [command]/usr/bin/git rev-parse --verify --quiet 9a69dfc5b33c5e0eafec737a302e941f869bb5a1^{object}
+2026-11-22T14:49:26.3307506Z 9a69dfc5b33c5e0eafec737a302e941f869bb5a1
+2026-11-22T14:49:26.3313014Z ##[endgroup]
+2026-11-22T14:49:26.3313730Z ##[group]Determining the checkout info
+2026-11-22T14:49:26.3314425Z ##[endgroup]
+2026-11-22T14:49:26.3320331Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T14:49:26.3393722Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T14:49:26.3443230Z ##[group]Checking out the ref
+2026-11-22T14:49:26.3443950Z [command]/usr/bin/git checkout --progress --force 9a69dfc5b33c5e0eafec737a302e941f869bb5a1
+2026-11-22T14:49:27.3901773Z Updating files:  38% (1560/4074)
+2026-11-22T14:49:27.3919842Z Updating files:  39% (1589/4074)
+2026-11-22T14:49:27.3993293Z Updating files:  40% (1630/4074)
+2026-11-22T14:49:27.4224544Z Updating files:  41% (1671/4074)
+2026-11-22T14:49:27.4267155Z Updating files:  42% (1712/4074)
+2026-11-22T14:49:27.4498416Z Updating files:  43% (1752/4074)
+2026-11-22T14:49:27.4549168Z Updating files:  44% (1793/4074)
+2026-11-22T14:49:27.4614661Z Updating files:  45% (1834/4074)
+2026-11-22T14:49:27.4740490Z Updating files:  46% (1875/4074)
+2026-11-22T14:49:27.4804646Z Updating files:  47% (1915/4074)
+2026-11-22T14:49:27.4867169Z Updating files:  48% (1956/4074)
+2026-11-22T14:49:27.5100696Z Updating files:  49% (1997/4074)
+2026-11-22T14:49:27.5521778Z Updating files:  50% (2037/4074)
+2026-11-22T14:49:27.5567358Z Updating files:  51% (2078/4074)
+2026-11-22T14:49:27.5621790Z Updating files:  52% (2119/4074)
+2026-11-22T14:49:27.5666971Z Updating files:  53% (2160/4074)
+2026-11-22T14:49:27.5686555Z Updating files:  54% (2200/4074)
+2026-11-22T14:49:27.5721844Z Updating files:  55% (2241/4074)
+2026-11-22T14:49:27.5768048Z Updating files:  56% (2282/4074)
+2026-11-22T14:49:27.5821167Z Updating files:  57% (2323/4074)
+2026-11-22T14:49:27.5867751Z Updating files:  58% (2363/4074)
+2026-11-22T14:49:27.5920691Z Updating files:  59% (2404/4074)
+2026-11-22T14:49:27.5944175Z Updating files:  60% (2445/4074)
+2026-11-22T14:49:27.5962597Z Updating files:  61% (2486/4074)
+2026-11-22T14:49:27.5982959Z Updating files:  62% (2526/4074)
+2026-11-22T14:49:27.6014954Z Updating files:  63% (2567/4074)
+2026-11-22T14:49:27.6034196Z Updating files:  64% (2608/4074)
+2026-11-22T14:49:27.6052953Z Updating files:  65% (2649/4074)
+2026-11-22T14:49:27.6077442Z Updating files:  66% (2689/4074)
+2026-11-22T14:49:27.6104495Z Updating files:  67% (2730/4074)
+2026-11-22T14:49:27.6133605Z Updating files:  68% (2771/4074)
+2026-11-22T14:49:27.6152134Z Updating files:  69% (2812/4074)
+2026-11-22T14:49:27.6183585Z Updating files:  70% (2852/4074)
+2026-11-22T14:49:27.6210288Z Updating files:  71% (2893/4074)
+2026-11-22T14:49:27.6256936Z Updating files:  72% (2934/4074)
+2026-11-22T14:49:27.6276174Z Updating files:  73% (2975/4074)
+2026-11-22T14:49:27.6300221Z Updating files:  74% (3015/4074)
+2026-11-22T14:49:27.6324428Z Updating files:  75% (3056/4074)
+2026-11-22T14:49:27.6352404Z Updating files:  76% (3097/4074)
+2026-11-22T14:49:27.6382126Z Updating files:  77% (3137/4074)
+2026-11-22T14:49:27.6416868Z Updating files:  78% (3178/4074)
+2026-11-22T14:49:27.6454473Z Updating files:  79% (3219/4074)
+2026-11-22T14:49:27.6486641Z Updating files:  80% (3260/4074)
+2026-11-22T14:49:27.6523049Z Updating files:  81% (3300/4074)
+2026-11-22T14:49:27.6558859Z Updating files:  82% (3341/4074)
+2026-11-22T14:49:27.6583432Z Updating files:  83% (3382/4074)
+2026-11-22T14:49:27.6611404Z Updating files:  84% (3423/4074)
+2026-11-22T14:49:27.6782329Z Updating files:  85% (3463/4074)
+2026-11-22T14:49:27.6898125Z Updating files:  86% (3504/4074)
+2026-11-22T14:49:27.6921240Z Updating files:  87% (3545/4074)
+2026-11-22T14:49:27.6947264Z Updating files:  88% (3586/4074)
+2026-11-22T14:49:27.6980176Z Updating files:  89% (3626/4074)
+2026-11-22T14:49:27.7012010Z Updating files:  90% (3667/4074)
+2026-11-22T14:49:27.7045094Z Updating files:  91% (3708/4074)
+2026-11-22T14:49:27.7071855Z Updating files:  92% (3749/4074)
+2026-11-22T14:49:27.7100483Z Updating files:  93% (3789/4074)
+2026-11-22T14:49:27.7125176Z Updating files:  94% (3830/4074)
+2026-11-22T14:49:27.7147944Z Updating files:  95% (3871/4074)
+2026-11-22T14:49:27.7176641Z Updating files:  96% (3912/4074)
+2026-11-22T14:49:27.7204956Z Updating files:  97% (3952/4074)
+2026-11-22T14:49:27.7245750Z Updating files:  98% (3993/4074)
+2026-11-22T14:49:27.7272133Z Updating files:  99% (4034/4074)
+2026-11-22T14:49:27.7272825Z Updating files: 100% (4074/4074)
+2026-11-22T14:49:27.7273437Z Updating files: 100% (4074/4074), done.
+2026-11-22T14:49:27.7318060Z Note: switching to '9a69dfc5b33c5e0eafec737a302e941f869bb5a1'.
+2026-11-22T14:49:27.7318777Z 
+2026-11-22T14:49:27.7319295Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T14:49:27.7320452Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T14:49:27.7321301Z state without impacting any branches by switching back to a branch.
+2026-11-22T14:49:27.7321763Z 
+2026-11-22T14:49:27.7322060Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T14:49:27.7323046Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T14:49:27.7323530Z 
+2026-11-22T14:49:27.7323699Z   git switch -c <new-branch-name>
+2026-11-22T14:49:27.7323977Z 
+2026-11-22T14:49:27.7324139Z Or undo this operation with:
+2026-11-22T14:49:27.7324396Z 
+2026-11-22T14:49:27.7324534Z   git switch -
+2026-11-22T14:49:27.7324725Z 
+2026-11-22T14:49:27.7325068Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T14:49:27.7325576Z 
+2026-11-22T14:49:27.7326078Z HEAD is now at 9a69dfc Gate complete causal and service terminal recovery on exact unified native source
+2026-11-22T14:49:27.7460618Z ##[endgroup]
+2026-11-22T14:49:27.7528064Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T14:49:27.7571444Z 9a69dfc5b33c5e0eafec737a302e941f869bb5a1
+2026-11-22T14:49:27.7581736Z ##[group]Removing auth
+2026-11-22T14:49:27.7582086Z Removing SSH command configuration
+2026-11-22T14:49:27.7586496Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T14:49:27.7632268Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T14:49:27.7907460Z Removing HTTP extra header
+2026-11-22T14:49:27.7912229Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T14:49:27.7963696Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T14:49:27.8240483Z Removing includeIf entries pointing to credentials config files
+2026-11-22T14:49:27.8245104Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T14:49:27.8285207Z includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/.git.path
+2026-11-22T14:49:27.8287114Z includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/.git/worktrees/*.path
+2026-11-22T14:49:27.8288625Z includeif.gitdir:/github/workspace/tracing-js-self/.git.path
+2026-11-22T14:49:27.8289806Z includeif.gitdir:/github/workspace/tracing-js-self/.git/worktrees/*.path
+2026-11-22T14:49:27.8296806Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/.git.path
+2026-11-22T14:49:27.8338976Z /home/runner/work/_temp/git-credentials-0963cf0b-0a1a-4481-be44-e32d0e8bc725.config
+2026-11-22T14:49:27.8349597Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-0963cf0b\-0a1a\-4481\-be44\-e32d0e8bc725\.config
+2026-11-22T14:49:27.8403407Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/.git/worktrees/*.path
+2026-11-22T14:49:27.8443053Z /home/runner/work/_temp/git-credentials-0963cf0b-0a1a-4481-be44-e32d0e8bc725.config
+2026-11-22T14:49:27.8454435Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-0963cf0b\-0a1a\-4481\-be44\-e32d0e8bc725\.config
+2026-11-22T14:49:27.8501409Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/tracing-js-self/.git.path
+2026-11-22T14:49:27.8538057Z /github/runner_temp/git-credentials-0963cf0b-0a1a-4481-be44-e32d0e8bc725.config
+2026-11-22T14:49:27.8547923Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/tracing-js-self/.git.path \/github\/runner_temp\/git\-credentials\-0963cf0b\-0a1a\-4481\-be44\-e32d0e8bc725\.config
+2026-11-22T14:49:27.8600614Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/tracing-js-self/.git/worktrees/*.path
+2026-11-22T14:49:27.8638157Z /github/runner_temp/git-credentials-0963cf0b-0a1a-4481-be44-e32d0e8bc725.config
+2026-11-22T14:49:27.8646874Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/tracing-js-self/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-0963cf0b\-0a1a\-4481\-be44\-e32d0e8bc725\.config
+2026-11-22T14:49:27.8695440Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T14:49:27.8942424Z Removing credentials config '/home/runner/work/_temp/git-credentials-0963cf0b-0a1a-4481-be44-e32d0e8bc725.config'
+2026-11-22T14:49:27.8954876Z ##[endgroup]
+2026-11-22T14:49:27.9217403Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-22T14:49:27.9217806Z with:
+2026-11-22T14:49:27.9218011Z   repository: werg/megatoken
+2026-11-22T14:49:27.9218275Z   ref: 15844c00c095849755ca6f0e1d207f7db79a9264
+2026-11-22T14:49:27.9218552Z   path: megatoken
+2026-11-22T14:49:27.9218759Z   persist-credentials: false
+2026-11-22T14:49:27.9221243Z   token: ***
+2026-11-22T14:49:27.9221436Z   ssh-strict: true
+2026-11-22T14:49:27.9221634Z   ssh-user: git
+2026-11-22T14:49:27.9221820Z   clean: true
+2026-11-22T14:49:27.9222025Z   sparse-checkout-cone-mode: true
+2026-11-22T14:49:27.9222281Z   fetch-depth: 1
+2026-11-22T14:49:27.9222480Z   fetch-tags: false
+2026-11-22T14:49:27.9222684Z   show-progress: true
+2026-11-22T14:49:27.9222892Z   lfs: false
+2026-11-22T14:49:27.9223083Z   submodules: false
+2026-11-22T14:49:27.9223287Z   set-safe-directory: true
+2026-11-22T14:49:27.9223531Z   allow-unsafe-pr-checkout: false
+2026-11-22T14:49:27.9223790Z env:
+2026-11-22T14:49:27.9224339Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T14:49:27.9224743Z   MEGATOKEN_PYTHON: python
+2026-11-22T14:49:27.9225099Z   PYTHONPATH: /home/runner/work/tracing-js-self/tracing-js-self/megatoken/src
+2026-11-22T14:49:27.9225478Z   OMP_NUM_THREADS: 1
+2026-11-22T14:49:27.9225675Z   MKL_NUM_THREADS: 1
+2026-11-22T14:49:27.9225884Z   REQUIRE_KNOWN_COMMIT_RECOVERY: 1
+2026-11-22T14:49:27.9226305Z   REQUIRE_KNOWN_CLOSE_RECOVERY: 1
+2026-11-22T14:49:27.9226575Z   REQUIRE_DURABLE_BOOTSTRAP_RECOVERY: 1
+2026-11-22T14:49:27.9226839Z ##[endgroup]
+2026-11-22T14:49:28.0132685Z Syncing repository: werg/megatoken
+2026-11-22T14:49:28.0133620Z ##[group]Getting Git version info
+2026-11-22T14:49:28.0134423Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self/megatoken'
+2026-11-22T14:49:28.0183240Z [command]/usr/bin/git version
+2026-11-22T14:49:28.0233996Z git version 2.56.1
+2026-11-22T14:49:28.0259475Z ##[endgroup]
+2026-11-22T14:49:28.0270645Z Temporarily overriding HOME='/home/runner/work/_temp/e9a807f3-0524-4bb7-827d-d3d2dc23f2db' before making global git config changes
+2026-11-22T14:49:28.0271824Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T14:49:28.0277336Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T14:49:28.0313764Z ##[group]Determining repository object format
+2026-11-22T14:49:28.0315860Z ##[endgroup]
+2026-11-22T14:49:28.0316679Z ##[group]Initializing the repository
+2026-11-22T14:49:28.0321572Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T14:49:28.0382179Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T14:49:28.0383507Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T14:49:28.0384995Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T14:49:28.0385975Z hint: call:
+2026-11-22T14:49:28.0386761Z hint:
+2026-11-22T14:49:28.0387339Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T14:49:28.0387986Z hint:
+2026-11-22T14:49:28.0388671Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T14:49:28.0389708Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T14:49:28.0390585Z hint:
+2026-11-22T14:49:28.0391098Z hint: 	git branch -m <name>
+2026-11-22T14:49:28.0391616Z hint:
+2026-11-22T14:49:28.0392802Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T14:49:28.0394147Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/megatoken/.git/
+2026-11-22T14:49:28.0407287Z [command]/usr/bin/git remote add origin https://github.com/werg/megatoken
+2026-11-22T14:49:28.0446949Z ##[endgroup]
+2026-11-22T14:49:28.0447417Z ##[group]Disabling automatic garbage collection
+2026-11-22T14:49:28.0452106Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T14:49:28.0488947Z ##[endgroup]
+2026-11-22T14:49:28.0489488Z ##[group]Setting up auth
+2026-11-22T14:49:28.0489953Z Removing SSH command configuration
+2026-11-22T14:49:28.0496903Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T14:49:28.0537626Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T14:49:28.0815358Z Removing HTTP extra header
+2026-11-22T14:49:28.0822690Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T14:49:28.0866739Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T14:49:28.1142473Z Removing includeIf entries pointing to credentials config files
+2026-11-22T14:49:28.1147748Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T14:49:28.1198186Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T14:49:28.1481670Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-f892fa43-705b-4a77-9f02-6b7dd0584ed9.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T14:49:28.1548053Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/megatoken/.git.path /home/runner/work/_temp/git-credentials-f892fa43-705b-4a77-9f02-6b7dd0584ed9.config
+2026-11-22T14:49:28.1600098Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/megatoken/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-f892fa43-705b-4a77-9f02-6b7dd0584ed9.config
+2026-11-22T14:49:28.1652968Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/megatoken/.git.path /github/runner_temp/git-credentials-f892fa43-705b-4a77-9f02-6b7dd0584ed9.config
+2026-11-22T14:49:28.1703359Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/megatoken/.git/worktrees/*.path /github/runner_temp/git-credentials-f892fa43-705b-4a77-9f02-6b7dd0584ed9.config
+2026-11-22T14:49:28.1745671Z ##[endgroup]
+2026-11-22T14:49:28.1746053Z ##[group]Fetching the repository
+2026-11-22T14:49:28.1752793Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 15844c00c095849755ca6f0e1d207f7db79a9264
+2026-11-22T14:49:30.2178373Z From https://github.com/werg/megatoken
+2026-11-22T14:49:30.2179373Z  * branch            15844c00c095849755ca6f0e1d207f7db79a9264 -> FETCH_HEAD
+2026-11-22T14:49:30.2191716Z [command]/usr/bin/git rev-parse --verify --quiet 15844c00c095849755ca6f0e1d207f7db79a9264^{object}
+2026-11-22T14:49:30.2234036Z 15844c00c095849755ca6f0e1d207f7db79a9264
+2026-11-22T14:49:30.2239722Z ##[endgroup]
+2026-11-22T14:49:30.2240177Z ##[group]Determining the checkout info
+2026-11-22T14:49:30.2240935Z ##[endgroup]
+2026-11-22T14:49:30.2245813Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T14:49:30.2305628Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T14:49:30.2352870Z ##[group]Checking out the ref
+2026-11-22T14:49:30.2358354Z [command]/usr/bin/git checkout --progress --force 15844c00c095849755ca6f0e1d207f7db79a9264
+2026-11-22T14:49:30.4990481Z Note: switching to '15844c00c095849755ca6f0e1d207f7db79a9264'.
+2026-11-22T14:49:30.4990989Z 
+2026-11-22T14:49:30.4991304Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T14:49:30.4992084Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T14:49:30.4992866Z state without impacting any branches by switching back to a branch.
+2026-11-22T14:49:30.4993342Z 
+2026-11-22T14:49:30.4993937Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T14:49:30.4994726Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T14:49:30.4995150Z 
+2026-11-22T14:49:30.4995317Z   git switch -c <new-branch-name>
+2026-11-22T14:49:30.4995606Z 
+2026-11-22T14:49:30.4995766Z Or undo this operation with:
+2026-11-22T14:49:30.4996039Z 
+2026-11-22T14:49:30.4996437Z   git switch -
+2026-11-22T14:49:30.4996645Z 
+2026-11-22T14:49:30.4996985Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T14:49:30.4997536Z 
+2026-11-22T14:49:30.4997854Z HEAD is now at 15844c0 Clarify native bootstrap evidence provenance
+2026-11-22T14:49:30.5030064Z ##[endgroup]
+2026-11-22T14:49:30.5089330Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T14:49:30.5127838Z 15844c00c095849755ca6f0e1d207f7db79a9264
+2026-11-22T14:49:30.5137232Z ##[group]Removing auth
+2026-11-22T14:49:30.5137656Z Removing SSH command configuration
+2026-11-22T14:49:30.5141254Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T14:49:30.5188752Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T14:49:30.5437277Z Removing HTTP extra header
+2026-11-22T14:49:30.5442781Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T14:49:30.5491454Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T14:49:30.5737291Z Removing includeIf entries pointing to credentials config files
+2026-11-22T14:49:30.5741547Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T14:49:30.5780666Z includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/megatoken/.git.path
+2026-11-22T14:49:30.5781964Z includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/megatoken/.git/worktrees/*.path
+2026-11-22T14:49:30.5782861Z includeif.gitdir:/github/workspace/megatoken/.git.path
+2026-11-22T14:49:30.5783741Z includeif.gitdir:/github/workspace/megatoken/.git/worktrees/*.path
+2026-11-22T14:49:30.5794270Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/megatoken/.git.path
+2026-11-22T14:49:30.5830565Z /home/runner/work/_temp/git-credentials-f892fa43-705b-4a77-9f02-6b7dd0584ed9.config
+2026-11-22T14:49:30.5842395Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/megatoken/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-f892fa43\-705b\-4a77\-9f02\-6b7dd0584ed9\.config
+2026-11-22T14:49:30.5897114Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/megatoken/.git/worktrees/*.path
+2026-11-22T14:49:30.5937071Z /home/runner/work/_temp/git-credentials-f892fa43-705b-4a77-9f02-6b7dd0584ed9.config
+2026-11-22T14:49:30.5946891Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/megatoken/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-f892fa43\-705b\-4a77\-9f02\-6b7dd0584ed9\.config
+2026-11-22T14:49:30.5993404Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/megatoken/.git.path
+2026-11-22T14:49:30.6028748Z /github/runner_temp/git-credentials-f892fa43-705b-4a77-9f02-6b7dd0584ed9.config
+2026-11-22T14:49:30.6038173Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/megatoken/.git.path \/github\/runner_temp\/git\-credentials\-f892fa43\-705b\-4a77\-9f02\-6b7dd0584ed9\.config
+2026-11-22T14:49:30.6089138Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/megatoken/.git/worktrees/*.path
+2026-11-22T14:49:30.6130993Z /github/runner_temp/git-credentials-f892fa43-705b-4a77-9f02-6b7dd0584ed9.config
+2026-11-22T14:49:30.6142576Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/megatoken/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-f892fa43\-705b\-4a77\-9f02\-6b7dd0584ed9\.config
+2026-11-22T14:49:30.6192710Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T14:49:30.6438924Z Removing credentials config '/home/runner/work/_temp/git-credentials-f892fa43-705b-4a77-9f02-6b7dd0584ed9.config'
+2026-11-22T14:49:30.6450305Z ##[endgroup]
+2026-11-22T14:49:30.6665309Z ##[group]Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+2026-11-22T14:49:30.6665728Z with:
+2026-11-22T14:49:30.6665952Z   node-version-file: tracing-js-self/.nvmrc
+2026-11-22T14:49:30.6666495Z   always-auth: false
+2026-11-22T14:49:30.6666721Z   check-latest: false
+2026-11-22T14:49:30.6669370Z   token: ***
+2026-11-22T14:49:30.6669565Z env:
+2026-11-22T14:49:30.6670081Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T14:49:30.6670491Z   MEGATOKEN_PYTHON: python
+2026-11-22T14:49:30.6670854Z   PYTHONPATH: /home/runner/work/tracing-js-self/tracing-js-self/megatoken/src
+2026-11-22T14:49:30.6671264Z   OMP_NUM_THREADS: 1
+2026-11-22T14:49:30.6671476Z   MKL_NUM_THREADS: 1
+2026-11-22T14:49:30.6671688Z   REQUIRE_KNOWN_COMMIT_RECOVERY: 1
+2026-11-22T14:49:30.6671949Z   REQUIRE_KNOWN_CLOSE_RECOVERY: 1
+2026-11-22T14:49:30.6672214Z   REQUIRE_DURABLE_BOOTSTRAP_RECOVERY: 1
+2026-11-22T14:49:30.6672493Z ##[endgroup]
+2026-11-22T14:49:30.8184206Z Node version file is not JSON file
+2026-11-22T14:49:30.8186304Z Resolved tracing-js-self/.nvmrc as 24.22.3
+2026-11-22T14:49:30.8213694Z Found in cache @ /opt/hostedtoolcache/node/24.22.3/x64
+2026-11-22T14:49:30.8218008Z (node:2666) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T14:49:30.8218991Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T14:49:30.8221380Z ##[group]Environment details
+2026-11-22T14:49:31.2436687Z node: v24.22.3
+2026-11-22T14:49:31.2437319Z npm: 11.19.1
+2026-11-22T14:49:31.2437805Z yarn: 1.22.22
+2026-11-22T14:49:31.2438634Z ##[endgroup]
+2026-11-22T14:49:31.2604373Z ##[group]Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+2026-11-22T14:49:31.2604790Z with:
+2026-11-22T14:49:31.2604989Z   python-version: 3.12.14
+2026-11-22T14:49:31.2605235Z   check-latest: false
+2026-11-22T14:49:31.2608137Z   token: ***
+2026-11-22T14:49:31.2608364Z   update-environment: true
+2026-11-22T14:49:31.2608609Z   allow-prereleases: false
+2026-11-22T14:49:31.2608833Z   freethreaded: false
+2026-11-22T14:49:31.2609040Z env:
+2026-11-22T14:49:31.2609350Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T14:49:31.2609751Z   MEGATOKEN_PYTHON: python
+2026-11-22T14:49:31.2610110Z   PYTHONPATH: /home/runner/work/tracing-js-self/tracing-js-self/megatoken/src
+2026-11-22T14:49:31.2610512Z   OMP_NUM_THREADS: 1
+2026-11-22T14:49:31.2610716Z   MKL_NUM_THREADS: 1
+2026-11-22T14:49:31.2610927Z   REQUIRE_KNOWN_COMMIT_RECOVERY: 1
+2026-11-22T14:49:31.2611192Z   REQUIRE_KNOWN_CLOSE_RECOVERY: 1
+2026-11-22T14:49:31.2611482Z   REQUIRE_DURABLE_BOOTSTRAP_RECOVERY: 1
+2026-11-22T14:49:31.2611751Z ##[endgroup]
+2026-11-22T14:49:31.3855224Z ##[group]Installed versions
+2026-11-22T14:49:31.3882881Z Version 3.12.14 was not found in the local cache
+2026-11-22T14:49:31.9139860Z Version 3.12.14 is available for downloading
+2026-11-22T14:49:31.9141478Z Download from "https://github.com/actions/python-versions/releases/download/3.12.14-31661455385/python-3.12.14-linux-24.04-x64.tar.gz"
+2026-11-22T14:49:32.4089250Z Extract downloaded archive
+2026-11-22T14:49:32.4235928Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/af1f0678-52fd-4f34-b02f-a996bf9e0e8c -f /home/runner/work/_temp/946d3e6b-0bd3-415d-97d3-d6bca8286cf3
+2026-11-22T14:49:34.3736886Z Execute installation script
+2026-11-22T14:49:34.3858130Z Check if Python hostedtoolcache folder exist...
+2026-11-22T14:49:34.3866071Z Create Python 3.12.14 folder
+2026-11-22T14:49:34.3874370Z Copy Python binaries to hostedtoolcache folder
+2026-11-22T14:49:34.8744175Z Create additional symlinks (Required for the UsePythonVersion Azure Pipelines task and the setup-python GitHub Action)
+2026-11-22T14:49:34.8785327Z Upgrading pip...
+2026-11-22T14:49:36.6282807Z Collecting pip
+2026-11-22T14:49:36.6638633Z Downloading pip-26.3-py3-none-any.whl.metadata (4.6 kB)
+2026-11-22T14:49:36.6724205Z Downloading pip-26.3-py3-none-any.whl (2.0 MB)
+2026-11-22T14:49:36.7180779Z ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 62.1 MB/s eta 0:00:00
+2026-11-22T14:49:36.7181440Z 
+2026-11-22T14:49:36.7384221Z Installing collected packages: pip
+2026-11-22T14:49:36.7386120Z Attempting uninstall: pip
+2026-11-22T14:49:36.7408762Z Found existing installation: pip 25.0.1
+2026-11-22T14:49:36.7755747Z Uninstalling pip-25.0.1:
+2026-11-22T14:49:36.7812530Z Successfully uninstalled pip-25.0.1
+2026-11-22T14:49:37.7822402Z Successfully installed pip-26.3
+2026-11-22T14:49:37.8335381Z Create complete file
+2026-11-22T14:49:37.8374766Z Successfully set up CPython (3.12.14)
+2026-11-22T14:49:37.8375658Z ##[endgroup]
+2026-11-22T14:49:37.8550782Z ##[group]Run test -L /proc/self/ns/time
+2026-11-22T14:49:37.8551214Z [36;1mtest -L /proc/self/ns/time[0m
+2026-11-22T14:49:37.8551677Z [36;1mnpm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund[0m
+2026-11-22T14:49:37.8552376Z [36;1mpython -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock[0m
+2026-11-22T14:49:37.8553011Z [36;1mpython -m pip install --no-deps --no-build-isolation -e ./megatoken[0m
+2026-11-22T14:49:37.8553578Z [36;1mtest "$(git -C megatoken rev-parse HEAD)" = 15844c00c095849755ca6f0e1d207f7db79a9264[0m
+2026-11-22T14:49:37.8554383Z [36;1mcmp tracing-js-self/contracts/semantic-execution-v8.json megatoken/src/megatoken/data/contracts/semantic-execution-v8.json[0m
+2026-11-22T14:49:37.8585963Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T14:49:37.8586651Z env:
+2026-11-22T14:49:37.8587001Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T14:49:37.8587472Z   MEGATOKEN_PYTHON: python
+2026-11-22T14:49:37.8587856Z   PYTHONPATH: /home/runner/work/tracing-js-self/tracing-js-self/megatoken/src
+2026-11-22T14:49:37.8588262Z   OMP_NUM_THREADS: 1
+2026-11-22T14:49:37.8588468Z   MKL_NUM_THREADS: 1
+2026-11-22T14:49:37.8588683Z   REQUIRE_KNOWN_COMMIT_RECOVERY: 1
+2026-11-22T14:49:37.8588946Z   REQUIRE_KNOWN_CLOSE_RECOVERY: 1
+2026-11-22T14:49:37.8589211Z   REQUIRE_DURABLE_BOOTSTRAP_RECOVERY: 1
+2026-11-22T14:49:37.8589556Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T14:49:37.8589988Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T14:49:37.8590415Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T14:49:37.8590806Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T14:49:37.8591199Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T14:49:37.8591607Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T14:49:37.8591954Z ##[endgroup]
+2026-11-22T14:49:38.9313023Z 
+2026-11-22T14:49:38.9313789Z added 4 packages in 1s
+2026-11-22T14:49:39.6170752Z Looking in indexes: https://pypi.org/simple, https://download.pytorch.org/whl/cpu
+2026-11-22T14:49:40.0332499Z Collecting anyio==4.16.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 9))
+2026-11-22T14:49:40.0806937Z   Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+2026-11-22T14:49:40.3316532Z Collecting attrs==26.1.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 13))
+2026-11-22T14:49:40.3359901Z   Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-11-22T14:49:40.7709639Z Collecting certifi==2026.10.23 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 19))
+2026-11-22T14:49:40.7753062Z   Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+2026-11-22T14:49:40.8453000Z Collecting click==8.5.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 25))
+2026-11-22T14:49:40.8490739Z   Downloading click-8.5.1-py3-none-any.whl (126 kB)
+2026-11-22T14:49:40.9264927Z Collecting editables==0.6 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 29))
+2026-11-22T14:49:40.9302667Z   Downloading editables-0.6-py3-none-any.whl (5.4 kB)
+2026-11-22T14:49:41.0402579Z Collecting filelock==4.2.12 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 33))
+2026-11-22T14:49:41.0451965Z   Downloading filelock-4.2.12-py3-none-any.whl (222 kB)
+2026-11-22T14:49:41.1793486Z Collecting fsspec==2026.9.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 39))
+2026-11-22T14:49:41.1829426Z   Downloading fsspec-2026.9.0-py3-none-any.whl (221 kB)
+2026-11-22T14:49:41.2871960Z Collecting h11==0.16.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 45))
+2026-11-22T14:49:41.2906654Z   Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2026-11-22T14:49:41.4355697Z Collecting hatchling==1.33.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 49))
+2026-11-22T14:49:41.4386316Z   Downloading hatchling-1.33.0-py3-none-any.whl (78 kB)
+2026-11-22T14:49:41.6700392Z Collecting hf-xet==1.8.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 53))
+2026-11-22T14:49:41.6742241Z   Downloading hf_xet-1.8.0-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.3 MB)
+2026-11-22T14:49:41.7190049Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.3/4.3 MB 104.0 MB/s  0:00:00
+2026-11-22T14:49:41.7840819Z Collecting httpcore==1.0.9 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 72))
+2026-11-22T14:49:41.7879082Z   Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+2026-11-22T14:49:41.8237728Z Collecting httpx==0.28.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 76))
+2026-11-22T14:49:41.8278432Z   Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+2026-11-22T14:49:41.9087983Z Collecting huggingface-hub==1.33.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 80))
+2026-11-22T14:49:41.9123899Z   Downloading huggingface_hub-1.33.0-py3-none-any.whl (846 kB)
+2026-11-22T14:49:41.9183694Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 846.4/846.4 kB 166.4 MB/s  0:00:00
+2026-11-22T14:49:41.9457878Z Collecting idna==3.20 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 86))
+2026-11-22T14:49:41.9512400Z   Downloading idna-3.20-py3-none-any.whl (69 kB)
+2026-11-22T14:49:41.9788128Z Collecting iniconfig==2.3.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 92))
+2026-11-22T14:49:41.9818978Z   Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+2026-11-22T14:49:42.0019832Z Collecting jinja2==3.1.6 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 96))
+2026-11-22T14:49:42.0052804Z   Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-11-22T14:49:42.0400918Z Collecting jsonschema==4.26.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 100))
+2026-11-22T14:49:42.0432406Z   Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-11-22T14:49:42.0729002Z Collecting jsonschema-specifications==2025.9.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 104))
+2026-11-22T14:49:42.0762223Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-11-22T14:49:42.1096073Z Collecting markdown-it-py==4.0.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 108))
+2026-11-22T14:49:42.1130055Z   Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+2026-11-22T14:49:42.1859007Z Collecting markupsafe==3.0.4 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 112))
+2026-11-22T14:49:42.1894479Z   Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2026-11-22T14:49:42.2229383Z Collecting mdurl==0.1.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 265))
+2026-11-22T14:49:42.2261861Z   Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-11-22T14:49:42.2508869Z Collecting mpmath==1.3.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 269))
+2026-11-22T14:49:42.2555939Z   Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+2026-11-22T14:49:42.2602798Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 103.9 MB/s  0:00:00
+2026-11-22T14:49:42.2983452Z Collecting networkx==3.7 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 273))
+2026-11-22T14:49:42.3016903Z   Downloading networkx-3.7-py3-none-any.whl (2.1 MB)
+2026-11-22T14:49:42.3111367Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 282.7 MB/s  0:00:00
+2026-11-22T14:49:42.8147298Z Collecting numpy==2.5.5 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 277))
+2026-11-22T14:49:42.8192478Z   Downloading numpy-2.5.5-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (15.7 MB)
+2026-11-22T14:49:42.8680664Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.7/15.7 MB 336.3 MB/s  0:00:00
+2026-11-22T14:49:42.9079180Z Collecting packaging==26.3 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 345))
+2026-11-22T14:49:42.9111309Z   Downloading packaging-26.3-py3-none-any.whl (129 kB)
+2026-11-22T14:49:42.9399097Z Collecting pathspec==1.1.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 352))
+2026-11-22T14:49:42.9432733Z   Downloading pathspec-1.1.1-py3-none-any.whl (57 kB)
+2026-11-22T14:49:42.9697826Z Collecting pluggy==1.7.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 356))
+2026-11-22T14:49:42.9731586Z   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+2026-11-22T14:49:43.0060186Z Collecting pygments==2.21.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 362))
+2026-11-22T14:49:43.0100441Z   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-11-22T14:49:43.0165026Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 228.0 MB/s  0:00:00
+2026-11-22T14:49:43.0581594Z Collecting pytest==8.4.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 366))
+2026-11-22T14:49:43.0617070Z   Downloading pytest-8.4.2-py3-none-any.whl (365 kB)
+2026-11-22T14:49:43.1297568Z Collecting pyyaml==6.0.3 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 370))
+2026-11-22T14:49:43.1337193Z   Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+2026-11-22T14:49:43.1394446Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 158.9 MB/s  0:00:00
+2026-11-22T14:49:43.1869726Z Collecting referencing==0.37.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 447))
+2026-11-22T14:49:43.1913906Z   Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-11-22T14:49:43.4574198Z Collecting rpds-py==2026.9.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 453))
+2026-11-22T14:49:43.4610935Z   Downloading rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (371 kB)
+2026-11-22T14:49:43.6019170Z Collecting safetensors==0.8.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 585))
+2026-11-22T14:49:43.6060124Z   Downloading safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (516 kB)
+2026-11-22T14:49:43.6401747Z Collecting sympy==1.14.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 604))
+2026-11-22T14:49:43.6437557Z   Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+2026-11-22T14:49:43.6645520Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 332.4 MB/s  0:00:00
+2026-11-22T14:49:43.8555609Z Collecting tokenizers==0.23.3 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 608))
+2026-11-22T14:49:43.8590940Z   Downloading tokenizers-0.23.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.4 MB)
+2026-11-22T14:49:43.8717440Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 315.8 MB/s  0:00:00
+2026-11-22T14:49:43.9083790Z Collecting tomlkit==0.15.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 634))
+2026-11-22T14:49:43.9117882Z   Downloading tomlkit-0.15.2-py3-none-any.whl (52 kB)
+2026-11-22T14:49:44.0508387Z Collecting torch==2.10.0+cpu (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 638))
+2026-11-22T14:49:44.1884501Z   Downloading torch-2.10.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl (188.9 MB)
+2026-11-22T14:49:44.8784790Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 188.9/188.9 MB 276.3 MB/s  0:00:00
+2026-11-22T14:49:45.1128742Z Collecting tqdm==4.70.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 678))
+2026-11-22T14:49:45.1171658Z   Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+2026-11-22T14:49:45.1779378Z Collecting tree-sitter==0.25.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 682))
+2026-11-22T14:49:45.1811069Z   Downloading tree_sitter-0.25.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (635 kB)
+2026-11-22T14:49:45.1864442Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 635.4/635.4 kB 126.8 MB/s  0:00:00
+2026-11-22T14:49:45.2152740Z Collecting tree-sitter-c-sharp==0.23.5 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 722))
+2026-11-22T14:49:45.2191288Z   Downloading tree_sitter_c_sharp-0.23.5-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (358 kB)
+2026-11-22T14:49:45.2521750Z Collecting tree-sitter-embedded-template==0.25.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 735))
+2026-11-22T14:49:45.2559027Z   Downloading tree_sitter_embedded_template-0.25.0-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (18 kB)
+2026-11-22T14:49:45.3038050Z Collecting tree-sitter-language-pack==0.13.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 748))
+2026-11-22T14:49:45.3072062Z   Downloading tree_sitter_language_pack-0.13.0-cp310-abi3-manylinux2014_x86_64.whl (20.0 MB)
+2026-11-22T14:49:45.3645101Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.0/20.0 MB 360.4 MB/s  0:00:00
+2026-11-22T14:49:45.4074441Z Collecting tree-sitter-yaml==0.7.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 756))
+2026-11-22T14:49:45.4111825Z   Downloading tree_sitter_yaml-0.7.2-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (91 kB)
+2026-11-22T14:49:45.4535852Z Collecting trove-classifiers==2026.9.21.13 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 769))
+2026-11-22T14:49:45.4570154Z   Downloading trove_classifiers-2026.9.21.13-py3-none-any.whl (14 kB)
+2026-11-22T14:49:45.4898690Z Collecting typing-extensions==4.16.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 773))
+2026-11-22T14:49:45.4933406Z   Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-11-22T14:49:45.5203492Z Collecting uniseg==0.10.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 781))
+2026-11-22T14:49:45.5491312Z   Downloading uniseg-0.10.1-py3-none-any.whl (8.2 MB)
+2026-11-22T14:49:45.5960617Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.2/8.2 MB 178.4 MB/s  0:00:00
+2026-11-22T14:49:45.6778418Z Collecting setuptools==84.2.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 787))
+2026-11-22T14:49:45.6813970Z   Downloading setuptools-84.2.1-py3-none-any.whl (876 kB)
+2026-11-22T14:49:45.6874972Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 876.3/876.3 kB 176.7 MB/s  0:00:00
+2026-11-22T14:49:45.9755367Z Installing collected packages: trove-classifiers, mpmath, uniseg, typing-extensions, tree-sitter-yaml, tree-sitter-embedded-template, tree-sitter-c-sharp, tree-sitter, tqdm, tomlkit, sympy, setuptools, safetensors, rpds-py, pyyaml, pygments, pluggy, pathspec, packaging, numpy, networkx, mdurl, markupsafe, iniconfig, idna, hf-xet, h11, fsspec, filelock, editables, click, certifi, attrs, tree-sitter-language-pack, referencing, pytest, markdown-it-py, jinja2, httpcore, hatchling, anyio, torch, jsonschema-specifications, httpx, jsonschema, huggingface-hub, tokenizers
+2026-11-22T14:50:10.8351124Z 
+2026-11-22T14:50:10.8398861Z Successfully installed anyio-4.16.0 attrs-26.1.0 certifi-2026.10.23 click-8.5.1 editables-0.6 filelock-4.2.12 fsspec-2026.9.0 h11-0.16.0 hatchling-1.33.0 hf-xet-1.8.0 httpcore-1.0.9 httpx-0.28.1 huggingface-hub-1.33.0 idna-3.20 iniconfig-2.3.1 jinja2-3.1.6 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 markdown-it-py-4.0.0 markupsafe-3.0.4 mdurl-0.1.2 mpmath-1.3.0 networkx-3.7 numpy-2.5.5 packaging-26.3 pathspec-1.1.1 pluggy-1.7.0 pygments-2.21.0 pytest-8.4.2 pyyaml-6.0.3 referencing-0.37.0 rpds-py-2026.9.1 safetensors-0.8.0 setuptools-84.2.1 sympy-1.14.0 tokenizers-0.23.3 tomlkit-0.15.2 torch-2.10.0+cpu tqdm-4.70.1 tree-sitter-0.25.2 tree-sitter-c-sharp-0.23.5 tree-sitter-embedded-template-0.25.0 tree-sitter-language-pack-0.13.0 tree-sitter-yaml-0.7.2 trove-classifiers-2026.9.21.13 typing-extensions-4.16.0 uniseg-0.10.1
+2026-11-22T14:50:11.3434051Z Obtaining file:///home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T14:50:11.3448065Z   Checking if build backend supports build_editable: started
+2026-11-22T14:50:11.3823818Z   Checking if build backend supports build_editable: finished with status 'done'
+2026-11-22T14:50:11.3832812Z   Preparing editable metadata (pyproject.toml): started
+2026-11-22T14:50:11.5478114Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+2026-11-22T14:50:11.5557751Z Building wheels for collected packages: megatoken
+2026-11-22T14:50:11.5566023Z   Building editable for megatoken (pyproject.toml): started
+2026-11-22T14:50:11.5951448Z   Building editable for megatoken (pyproject.toml): finished with status 'done'
+2026-11-22T14:50:11.5958525Z   Created wheel for megatoken: filename=megatoken-0.1.0-py3-none-any.whl size=8443 sha256=ea4c3ba695bb3188f69e88a67ae66f73f2f5b278ffad2b77e5ca6b99c9649272
+2026-11-22T14:50:11.5960557Z   Stored in directory: /tmp/pip-ephem-wheel-cache-964xclhj/wheels/0b/ed/7b/b8468944e64c9e6abb5bf5ba9ba8cb86d84dbb9c76e21fd64a
+2026-11-22T14:50:11.5992462Z Successfully built megatoken
+2026-11-22T14:50:11.6181497Z Installing collected packages: megatoken
+2026-11-22T14:50:11.6275322Z Successfully installed megatoken-0.1.0
+2026-11-22T14:50:11.6824346Z ##[group]Run mkdir -p "$RUNNER_TEMP/composed-recovery-controls"
+2026-11-22T14:50:11.6824934Z [36;1mmkdir -p "$RUNNER_TEMP/composed-recovery-controls"[0m
+2026-11-22T14:50:11.6825651Z [36;1mgit -C tracing-js-self rev-parse HEAD > "$RUNNER_TEMP/composed-recovery-controls/producer-revision.txt"[0m
+2026-11-22T14:50:11.6826791Z [36;1mgit -C megatoken rev-parse HEAD > "$RUNNER_TEMP/composed-recovery-controls/native-revision.txt"[0m
+2026-11-22T14:50:11.6827836Z [36;1m{ node --version; python --version; python -m pip freeze; readlink /proc/self/ns/time; } > "$RUNNER_TEMP/composed-recovery-controls/runtime.txt"[0m
+2026-11-22T14:50:11.6850317Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T14:50:11.6850758Z env:
+2026-11-22T14:50:11.6851269Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T14:50:11.6851861Z   MEGATOKEN_PYTHON: python
+2026-11-22T14:50:11.6852649Z   PYTHONPATH: /home/runner/work/tracing-js-self/tracing-js-self/megatoken/src
+2026-11-22T14:50:11.6914589Z   OMP_NUM_THREADS: 1
+2026-11-22T14:50:11.6914914Z   MKL_NUM_THREADS: 1
+2026-11-22T14:50:11.6915171Z   REQUIRE_KNOWN_COMMIT_RECOVERY: 1
+2026-11-22T14:50:11.6915465Z   REQUIRE_KNOWN_CLOSE_RECOVERY: 1
+2026-11-22T14:50:11.6915760Z   REQUIRE_DURABLE_BOOTSTRAP_RECOVERY: 1
+2026-11-22T14:50:11.6916410Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T14:50:11.6916938Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T14:50:11.6917431Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T14:50:11.6918144Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T14:50:11.6918616Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T14:50:11.6919081Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T14:50:11.6919472Z ##[endgroup]
+2026-11-22T14:50:13.1879040Z ##[group]Run case "bootstrap-history" in
+2026-11-22T14:50:13.1879459Z [36;1mcase "bootstrap-history" in[0m
+2026-11-22T14:50:13.1879751Z [36;1m  structural)[0m
+2026-11-22T14:50:13.1880071Z [36;1m    files=(test/native-request-journal-v8.test.js[0m
+2026-11-22T14:50:13.1880502Z [36;1m      test/selected-orchestration-clock.test.js[0m
+2026-11-22T14:50:13.1880927Z [36;1m      test/semantic-known-commit-builder-v8.test.js[0m
+2026-11-22T14:50:13.1881382Z [36;1m      test/semantic-known-bootstrap-builder-v8.test.js[0m
+2026-11-22T14:50:13.1881903Z [36;1m      test/semantic-selected-orchestration-checkpoint-v8.test.js[0m
+2026-11-22T14:50:13.1882412Z [36;1m      test/semantic-selected-history-tail-v8.test.js[0m
+2026-11-22T14:50:13.1882899Z [36;1m      test/semantic-selected-orchestration-v8.test.js[0m
+2026-11-22T14:50:13.1883336Z [36;1m      test/semantic-selected-history-v8.test.js[0m
+2026-11-22T14:50:13.1883822Z [36;1m      test/semantic-selected-history-automatic-v8.test.js)[0m
+2026-11-22T14:50:13.1884210Z [36;1m    ;;[0m
+2026-11-22T14:50:13.1884425Z [36;1m  transport)[0m
+2026-11-22T14:50:13.1884764Z [36;1m    files=(test/semantic-native-durable-commit-v8.test.js[0m
+2026-11-22T14:50:13.1885245Z [36;1m      test/semantic-native-durable-bootstrap-v8.test.js[0m
+2026-11-22T14:50:13.1885740Z [36;1m      test/semantic-native-orchestration-recovery-v8.test.js[0m
+2026-11-22T14:50:13.1886469Z [36;1m      test/semantic-native-durable-close-v8.test.js)[0m
+2026-11-22T14:50:13.1886826Z [36;1m    ;;[0m
+2026-11-22T14:50:13.1887055Z [36;1m  bootstrap-history)[0m
+2026-11-22T14:50:13.1887413Z [36;1m    files=(test/semantic-known-commit-history-v8.test.js[0m
+2026-11-22T14:50:13.1887888Z [36;1m      test/semantic-known-bootstrap-history-v8.test.js)[0m
+2026-11-22T14:50:13.1888256Z [36;1m    ;;[0m
+2026-11-22T14:50:13.1888453Z [36;1m  terminal-history)[0m
+2026-11-22T14:50:13.1888760Z [36;1m    files=(test/semantic-known-close-builder-v8.test.js[0m
+2026-11-22T14:50:13.1889155Z [36;1m      test/semantic-known-close-history-v8.test.js[0m
+2026-11-22T14:50:13.1889570Z [36;1m      test/semantic-known-service-close-history-v8.test.js)[0m
+2026-11-22T14:50:13.1889929Z [36;1m    ;;[0m
+2026-11-22T14:50:13.1890119Z [36;1m  *) exit 1 ;;[0m
+2026-11-22T14:50:13.1890329Z [36;1mesac[0m
+2026-11-22T14:50:13.1890696Z [36;1mprintf '%s\n' "${files[@]}" > "$RUNNER_TEMP/composed-recovery-controls/test-manifest.txt"[0m
+2026-11-22T14:50:13.1891382Z [36;1mnode --experimental-vm-modules --test --test-concurrency=1 --test-reporter=junit "${files[@]}" \[0m
+2026-11-22T14:50:13.1892023Z [36;1m  2>&1 | tee "$RUNNER_TEMP/composed-recovery-controls/complete-history.xml"[0m
+2026-11-22T14:50:13.1892441Z [36;1mpython - <<'PY'[0m
+2026-11-22T14:50:13.1892702Z [36;1mimport os,xml.etree.ElementTree as ET[0m
+2026-11-22T14:50:13.1893010Z [36;1mfrom pathlib import Path[0m
+2026-11-22T14:50:13.1893646Z [36;1mcases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'composed-recovery-controls/complete-history.xml').getroot().iter('testcase'))[0m
+2026-11-22T14:50:13.1894519Z [36;1mif len(cases)!=21 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):[0m
+2026-11-22T14:50:13.1895331Z [36;1m    raise ValueError('Every selected bootstrap-history recovery control must run and pass; expected 21 leaf cases')[0m
+2026-11-22T14:50:13.1896069Z [36;1mprint('21 bootstrap-history recovery controls passed; zero failures/errors/skips')[0m
+2026-11-22T14:50:13.1896806Z [36;1mPY[0m
+2026-11-22T14:50:13.1918248Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T14:50:13.1918591Z env:
+2026-11-22T14:50:13.1918911Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T14:50:13.1919498Z   MEGATOKEN_PYTHON: python
+2026-11-22T14:50:13.1919876Z   PYTHONPATH: /home/runner/work/tracing-js-self/tracing-js-self/megatoken/src
+2026-11-22T14:50:13.1920282Z   OMP_NUM_THREADS: 1
+2026-11-22T14:50:13.1920486Z   MKL_NUM_THREADS: 1
+2026-11-22T14:50:13.1920876Z   REQUIRE_KNOWN_COMMIT_RECOVERY: 1
+2026-11-22T14:50:13.1921146Z   REQUIRE_KNOWN_CLOSE_RECOVERY: 1
+2026-11-22T14:50:13.1921407Z   REQUIRE_DURABLE_BOOTSTRAP_RECOVERY: 1
+2026-11-22T14:50:13.1921743Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T14:50:13.1922172Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T14:50:13.1922612Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T14:50:13.1923007Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T14:50:13.1923389Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T14:50:13.1923789Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T14:50:13.1924128Z ##[endgroup]
+2026-11-22T14:50:13.2552829Z <?xml version="1.0" encoding="utf-8"?>
+2026-11-22T14:50:13.2554502Z <testsuites>
+2026-11-22T15:17:16.7548433Z 	<testcase name="actual two-child lexical fixture completes through the full native and host history without a clock claim" time="190.590511" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+2026-11-22T15:17:16.7551827Z 	<testcase name="actual later sibling create recovery preserves completed child work across lost reply and repeat loss" time="296.023637" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+2026-11-22T15:17:16.7554719Z 	<testcase name="actual later sibling bootstrap recovery preserves completed child work across lost reply and repeat loss" time="307.294893" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+2026-11-22T15:17:16.7557414Z 	<testcase name="actual lost create reply seals the exact intermediate cut and survives another process loss" time="84.472071" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+2026-11-22T15:17:16.7559712Z 	<testcase name="actual lost bootstrap reply seals the exact intermediate cut and survives another process loss" time="90.894415" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+2026-11-22T15:17:16.7561820Z 	<testcase name="process loss at the acknowledged create cut returns bootstrap-ready before any child initialization" time="76.013443" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+2026-11-22T15:17:16.7564000Z 	<testcase name="unknown create outcome cannot authorize recovery or fall back past pending bootstrap" time="6.696592" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+2026-11-22T15:17:16.7566456Z 	<testcase name="unknown bootstrap outcome cannot authorize recovery or fall back past pending bootstrap" time="11.706093" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+2026-11-22T15:17:16.7569076Z 	<testcase name="a published bootstrap fence before producer intent prevents stale-create fallback and guessed replay" time="9.723429" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+2026-11-22T15:17:16.7572433Z 	<testcase name="bootstrap recovery refuses changed owner scope, absent clock or mixed recovery authority before native RPC" time="13.815752" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js" failure="The input did not match the regular expression /distinct exact native boundaries/. Input:&#10;&#10;'TypeError: Selected orchestration v8: one exact native recovery operation is required'&#10;">
+2026-11-22T15:17:16.7575426Z 		<failure type="testCodeFailure" message="The input did not match the regular expression /distinct exact native boundaries/. Input:&#10;&#10;'TypeError: Selected orchestration v8: one exact native recovery operation is required'">
+2026-11-22T15:17:16.7577350Z [Error [ERR_TEST_FAILURE]: The input did not match the regular expression /distinct exact native boundaries/. Input:
+2026-11-22T15:17:16.7578157Z 
+2026-11-22T15:17:16.7578606Z 'TypeError: Selected orchestration v8: one exact native recovery operation is required'
+2026-11-22T15:17:16.7579044Z ] {
+2026-11-22T15:17:16.7579245Z   code: 'ERR_TEST_FAILURE',
+2026-11-22T15:17:16.7579532Z   failureType: 'testCodeFailure',
+2026-11-22T15:17:16.7580172Z   cause: AssertionError [ERR_ASSERTION]: The input did not match the regular expression /distinct exact native boundaries/. Input:
+2026-11-22T15:17:16.7580731Z   
+2026-11-22T15:17:16.7581129Z   'TypeError: Selected orchestration v8: one exact native recovery operation is required'
+2026-11-22T15:17:16.7581556Z   
+2026-11-22T15:17:16.7582340Z       at async TestContext.&lt;anonymous> (file:///home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js:289:5)
+2026-11-22T15:17:16.7583184Z       at async Test.run (node:internal/test_runner/test:1409:7)
+2026-11-22T15:17:16.7583708Z       at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+2026-11-22T15:17:16.7584139Z     generatedMessage: true,
+2026-11-22T15:17:16.7584383Z     code: 'ERR_ASSERTION',
+2026-11-22T15:17:16.7584856Z     actual: TypeError: Selected orchestration v8: one exact native recovery operation is required
+2026-11-22T15:17:16.7585735Z         at demand (file:///home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/src/semantic/selected-orchestration-v8.js:27:48)
+2026-11-22T15:17:16.7587987Z         at RegionSelectedOrchestrationDriver.restoreLatest (file:///home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/src/semantic/selected-orchestration-v8.js:302:5)
+2026-11-22T15:17:16.7589349Z         at TestContext.&lt;anonymous> (file:///home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js:289:60)
+2026-11-22T15:17:16.7590168Z         at async Test.run (node:internal/test_runner/test:1409:7)
+2026-11-22T15:17:16.7590687Z         at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+2026-11-22T15:17:16.7591172Z     expected: /distinct exact native boundaries/,
+2026-11-22T15:17:16.7591483Z     operator: 'rejects',
+2026-11-22T15:17:16.7591705Z     diff: 'simple'
+2026-11-22T15:17:16.7591897Z   }
+2026-11-22T15:17:16.7592069Z }
+2026-11-22T15:17:16.7592242Z 		</failure>
+2026-11-22T15:17:16.7592432Z 	</testcase>
+2026-11-22T15:17:16.7593627Z 	<testcase name="lost reconstructed-bootstrap head acknowledgement leaves the old history fenced without runnable host work" time="22.085207" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+2026-11-22T15:17:16.7595628Z 	<testcase name="bootstrap replacement cannot refund an actually expired original creation clock" time="31.926424" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-bootstrap-history-v8.test.js"/>
+2026-11-22T15:17:16.7598436Z 	<testcase name="actual lost track_create reply seals history before exact continuation" time="85.190061" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-commit-history-v8.test.js"/>
+2026-11-22T15:17:16.7600269Z 	<testcase name="actual lost track_join reply seals history before exact continuation" time="94.034575" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-commit-history-v8.test.js"/>
+2026-11-22T15:17:16.7602398Z 	<testcase name="actual lost track_progress reply seals history before exact continuation" time="107.903545" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-commit-history-v8.test.js"/>
+2026-11-22T15:17:16.7604296Z 	<testcase name="actual lost bootstrap-orchestration-child reply seals history before exact continuation" time="89.256616" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-commit-history-v8.test.js"/>
+2026-11-22T15:17:16.7606525Z 	<testcase name="unknown native track_join outcome cannot resolve the history fence or authorize replay" time="16.406792" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-commit-history-v8.test.js"/>
+2026-11-22T15:17:16.7608556Z 	<testcase name="unknown native bootstrap-orchestration-child outcome cannot resolve the history fence or authorize replay" time="9.418762" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-commit-history-v8.test.js"/>
+2026-11-22T15:17:16.7610488Z 	<testcase name="wrong request scope or absent live clock refuses before any native recovery RPC" time="19.191762" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-commit-history-v8.test.js"/>
+2026-11-22T15:17:16.7612379Z 	<testcase name="lost reconciled-head acknowledgement leaves the old receipt fenced without another host dispatch" time="28.571366" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-commit-history-v8.test.js"/>
+2026-11-22T15:17:16.7614241Z 	<testcase name="a real expired pending clock cannot refund time on process replacement" time="31.920810" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-commit-history-v8.test.js"/>
+2026-11-22T15:17:16.7615212Z 	<!-- tests 21 -->
+2026-11-22T15:17:16.7615416Z 	<!-- suites 0 -->
+2026-11-22T15:17:16.7615615Z 	<!-- pass 20 -->
+2026-11-22T15:17:16.7615822Z 	<!-- fail 1 -->
+2026-11-22T15:17:16.7616028Z 	<!-- cancelled 0 -->
+2026-11-22T15:17:16.7616481Z 	<!-- skipped 0 -->
+2026-11-22T15:17:16.7616694Z 	<!-- todo 0 -->
+2026-11-22T15:17:16.7616926Z 	<!-- duration_ms 1623513.301003 -->
+2026-11-22T15:17:16.7617181Z </testsuites>
+2026-11-22T15:17:16.7648052Z ##[error]Process completed with exit code 1.
+2026-11-22T15:17:16.7704321Z ##[group]Run test -z "$(git -C tracing-js-self status --porcelain)"
+2026-11-22T15:17:16.7704856Z [36;1mtest -z "$(git -C tracing-js-self status --porcelain)"[0m
+2026-11-22T15:17:16.7705312Z [36;1mtest -z "$(git -C megatoken status --porcelain)"[0m
+2026-11-22T15:17:16.7727191Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T15:17:16.7727575Z env:
+2026-11-22T15:17:16.7727929Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T15:17:16.7728380Z   MEGATOKEN_PYTHON: python
+2026-11-22T15:17:16.7728786Z   PYTHONPATH: /home/runner/work/tracing-js-self/tracing-js-self/megatoken/src
+2026-11-22T15:17:16.7729243Z   OMP_NUM_THREADS: 1
+2026-11-22T15:17:16.7729471Z   MKL_NUM_THREADS: 1
+2026-11-22T15:17:16.7729710Z   REQUIRE_KNOWN_COMMIT_RECOVERY: 1
+2026-11-22T15:17:16.7730001Z   REQUIRE_KNOWN_CLOSE_RECOVERY: 1
+2026-11-22T15:17:16.7730289Z   REQUIRE_DURABLE_BOOTSTRAP_RECOVERY: 1
+2026-11-22T15:17:16.7730686Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T15:17:16.7731155Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T15:17:16.7731635Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T15:17:16.7732054Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T15:17:16.7732642Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T15:17:16.7733071Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T15:17:16.7733435Z ##[endgroup]
+2026-11-22T15:17:18.1818143Z ##[group]Run actions/upload-artifact@v4
+2026-11-22T15:17:18.1818461Z with:
+2026-11-22T15:17:18.1818697Z   name: composed-recovery-bootstrap-history
+2026-11-22T15:17:18.1819001Z   retention-days: 90
+2026-11-22T15:17:18.1819235Z   if-no-files-found: error
+2026-11-22T15:17:18.1819543Z   path: /home/runner/work/_temp/composed-recovery-controls/
+2026-11-22T15:17:18.1819894Z   compression-level: 6
+2026-11-22T15:17:18.1820114Z   overwrite: false
+2026-11-22T15:17:18.1820336Z   include-hidden-files: false
+2026-11-22T15:17:18.1820579Z env:
+2026-11-22T15:17:18.1820898Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T15:17:18.1821317Z   MEGATOKEN_PYTHON: python
+2026-11-22T15:17:18.1821688Z   PYTHONPATH: /home/runner/work/tracing-js-self/tracing-js-self/megatoken/src
+2026-11-22T15:17:18.1822120Z   OMP_NUM_THREADS: 1
+2026-11-22T15:17:18.1822330Z   MKL_NUM_THREADS: 1
+2026-11-22T15:17:18.1822553Z   REQUIRE_KNOWN_COMMIT_RECOVERY: 1
+2026-11-22T15:17:18.1822871Z   REQUIRE_KNOWN_CLOSE_RECOVERY: 1
+2026-11-22T15:17:18.1823148Z   REQUIRE_DURABLE_BOOTSTRAP_RECOVERY: 1
+2026-11-22T15:17:18.1823488Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T15:17:18.1823924Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T15:17:18.1824363Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T15:17:18.1824762Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T15:17:18.1825171Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T15:17:18.1825573Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T15:17:18.1825904Z ##[endgroup]
+2026-11-22T15:17:18.3581654Z (node:3391) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T15:17:18.3582985Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T15:17:18.3666764Z With the provided path, there will be 5 files uploaded
+2026-11-22T15:17:18.3693691Z Artifact name is valid!
+2026-11-22T15:17:18.3694027Z Root directory input is valid!
+2026-11-22T15:17:18.5915777Z Beginning upload of artifact content to blob storage
+2026-11-22T15:17:18.6181575Z (node:3391) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-22T15:17:18.6619871Z Uploaded bytes 2973
+2026-11-22T15:17:18.6798818Z Finished uploading artifact content to blob storage!
+2026-11-22T15:17:18.6800728Z SHA256 digest of uploaded artifact zip is f0cb516823b131aefe84231ff409a8f006fff505ce071be589a75dc1d8ad33ec
+2026-11-22T15:17:18.6802120Z Finalizing artifact upload
+2026-11-22T15:17:18.9840649Z Artifact composed-recovery-bootstrap-history.zip successfully finalized. Artifact ID 14760630501
+2026-11-22T15:17:18.9843521Z Artifact composed-recovery-bootstrap-history has been successfully uploaded! Final size is 2973 bytes. Artifact ID is 14760630501
+2026-11-22T15:17:18.9849998Z Artifact download URL: https://github.com/werg/tracing-js-self/actions/runs/45034849522/artifacts/14760630501
+2026-11-22T15:17:19.0062555Z Post job cleanup.
+2026-11-22T15:17:19.0978833Z [command]/usr/bin/git version
+2026-11-22T15:17:19.1035227Z git version 2.56.1
+2026-11-22T15:17:19.1080310Z Temporarily overriding HOME='/home/runner/work/_temp/674c1479-6961-43f0-9597-0dd2a55b91da' before making global git config changes
+2026-11-22T15:17:19.1081909Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T15:17:19.1085599Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T15:17:19.1130089Z Removing SSH command configuration
+2026-11-22T15:17:19.1138527Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T15:17:19.1185669Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T15:17:19.1489485Z Removing HTTP extra header
+2026-11-22T15:17:19.1490911Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T15:17:19.1560207Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T15:17:19.1948906Z Removing includeIf entries pointing to credentials config files
+2026-11-22T15:17:19.1967376Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T15:17:19.2018315Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T15:17:19.2458536Z Post job cleanup.
+2026-11-22T15:17:19.3342030Z [command]/usr/bin/git version
+2026-11-22T15:17:19.3390708Z git version 2.56.1
+2026-11-22T15:17:19.3433265Z Temporarily overriding HOME='/home/runner/work/_temp/3b061cd7-6b79-4b69-a91d-0c6890b98a12' before making global git config changes
+2026-11-22T15:17:19.3435041Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T15:17:19.3440767Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T15:17:19.3484956Z Removing SSH command configuration
+2026-11-22T15:17:19.3494776Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T15:17:19.3544562Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T15:17:19.3836862Z Removing HTTP extra header
+2026-11-22T15:17:19.3843018Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T15:17:19.3888629Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T15:17:19.4175066Z Removing includeIf entries pointing to credentials config files
+2026-11-22T15:17:19.4197514Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T15:17:19.4256456Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T15:17:19.4705273Z Cleaning up orphan processes
+2026-11-22T15:17:19.5169261Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

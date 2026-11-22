@@ -1,0 +1,285 @@
+﻿2026-11-22T15:12:34.5775916Z Current runner version: '2.338.2'
+2026-11-22T15:12:34.5801161Z ##[group]Runner Image Provisioner
+2026-11-22T15:12:34.5802423Z Hosted Compute Agent
+2026-11-22T15:12:34.5803016Z Version: 20261111.635
+2026-11-22T15:12:34.5803637Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-22T15:12:34.5804383Z Build Date: 2026-11-11T01:49:01Z
+2026-11-22T15:12:34.5805022Z Worker ID: {8310836f-f8ed-41ad-88d0-5edb4a796246}
+2026-11-22T15:12:34.5805701Z Region: eastus3
+2026-11-22T15:12:34.5806228Z Cloud: Azure
+2026-11-22T15:12:34.5806764Z ##[endgroup]
+2026-11-22T15:12:34.5808665Z ##[group]Operating System
+2026-11-22T15:12:34.5809254Z Ubuntu
+2026-11-22T15:12:34.5809765Z 24.04.5
+2026-11-22T15:12:34.5810267Z LTS
+2026-11-22T15:12:34.5810772Z ##[endgroup]
+2026-11-22T15:12:34.5811309Z ##[group]Runner Image
+2026-11-22T15:12:34.5811869Z Image: ubuntu-24.04
+2026-11-22T15:12:34.5812426Z Version: 20261116.376.1
+2026-11-22T15:12:34.5813716Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.376/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-22T15:12:34.5815167Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.376
+2026-11-22T15:12:34.5816063Z ##[endgroup]
+2026-11-22T15:12:34.5817827Z ##[group]GITHUB_TOKEN Permissions
+2026-11-22T15:12:34.5820182Z Actions: read
+2026-11-22T15:12:34.5820712Z Contents: write
+2026-11-22T15:12:34.5821317Z Metadata: read
+2026-11-22T15:12:34.5821826Z ##[endgroup]
+2026-11-22T15:12:34.5824699Z Secret source: Actions
+2026-11-22T15:12:34.5825601Z Cache mode: write
+2026-11-22T15:12:34.5826526Z Prepare workflow directory
+2026-11-22T15:12:34.6144019Z Prepare all required actions
+2026-11-22T15:12:34.6194572Z Getting action download info
+2026-11-22T15:12:34.8872512Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-11-22T15:12:35.0354286Z Download action repository 'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-22T15:12:35.2702252Z Complete job name: archive
+2026-11-22T15:12:35.3473623Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-22T15:12:35.3474619Z with:
+2026-11-22T15:12:35.3475201Z   ref: 7759b2f80dccc836403eb369822447e04509e475
+2026-11-22T15:12:35.3475871Z   persist-credentials: false
+2026-11-22T15:12:35.3476474Z   repository: werg/tracing-js-self
+2026-11-22T15:12:35.3480678Z   token: ***
+2026-11-22T15:12:35.3481202Z   ssh-strict: true
+2026-11-22T15:12:35.3481706Z   ssh-user: git
+2026-11-22T15:12:35.3482200Z   clean: true
+2026-11-22T15:12:35.3482712Z   sparse-checkout-cone-mode: true
+2026-11-22T15:12:35.3483328Z   fetch-depth: 1
+2026-11-22T15:12:35.3483835Z   fetch-tags: false
+2026-11-22T15:12:35.3484337Z   show-progress: true
+2026-11-22T15:12:35.3484849Z   lfs: false
+2026-11-22T15:12:35.3485321Z   submodules: false
+2026-11-22T15:12:35.3485847Z   set-safe-directory: true
+2026-11-22T15:12:35.3486424Z   allow-unsafe-pr-checkout: false
+2026-11-22T15:12:35.3487201Z ##[endgroup]
+2026-11-22T15:12:35.6166343Z Syncing repository: werg/tracing-js-self
+2026-11-22T15:12:35.6169743Z ##[group]Getting Git version info
+2026-11-22T15:12:35.6171170Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self'
+2026-11-22T15:12:35.6173411Z [command]/usr/bin/git version
+2026-11-22T15:12:35.6285991Z git version 2.56.1
+2026-11-22T15:12:35.6310251Z ##[endgroup]
+2026-11-22T15:12:35.6360230Z Temporarily overriding HOME='/home/runner/work/_temp/0c6fdc4e-1c5d-48fb-a6d7-42718561baea' before making global git config changes
+2026-11-22T15:12:35.6363302Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T15:12:35.6375340Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-22T15:12:35.6486622Z Deleting the contents of '/home/runner/work/tracing-js-self/tracing-js-self'
+2026-11-22T15:12:35.6491243Z ##[group]Determining repository object format
+2026-11-22T15:12:35.6493542Z ##[endgroup]
+2026-11-22T15:12:35.6496240Z ##[group]Initializing the repository
+2026-11-22T15:12:35.6498835Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-22T15:12:35.6618116Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T15:12:35.6619421Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T15:12:35.6621069Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T15:12:35.6622002Z hint: call:
+2026-11-22T15:12:35.6622620Z hint:
+2026-11-22T15:12:35.6623675Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T15:12:35.6624712Z hint:
+2026-11-22T15:12:35.6626077Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T15:12:35.6627456Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T15:12:35.6628795Z hint:
+2026-11-22T15:12:35.6629683Z hint: 	git branch -m <name>
+2026-11-22T15:12:35.6630341Z hint:
+2026-11-22T15:12:35.6631148Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T15:12:35.6632634Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/.git/
+2026-11-22T15:12:35.6640933Z [command]/usr/bin/git remote add origin https://github.com/werg/tracing-js-self
+2026-11-22T15:12:35.6694724Z ##[endgroup]
+2026-11-22T15:12:35.6696925Z ##[group]Disabling automatic garbage collection
+2026-11-22T15:12:35.6698638Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T15:12:35.6731530Z ##[endgroup]
+2026-11-22T15:12:35.6733067Z ##[group]Setting up auth
+2026-11-22T15:12:35.6733906Z Removing SSH command configuration
+2026-11-22T15:12:35.6738832Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T15:12:35.6775447Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T15:12:35.7245189Z Removing HTTP extra header
+2026-11-22T15:12:35.7252771Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T15:12:35.7289654Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T15:12:35.7478117Z Removing includeIf entries pointing to credentials config files
+2026-11-22T15:12:35.7483115Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T15:12:35.7526461Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T15:12:35.7718219Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-473c712c-0090-42bc-aeb1-bb1b47e49b9b.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T15:12:35.7756342Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/.git.path /home/runner/work/_temp/git-credentials-473c712c-0090-42bc-aeb1-bb1b47e49b9b.config
+2026-11-22T15:12:35.7787569Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-473c712c-0090-42bc-aeb1-bb1b47e49b9b.config
+2026-11-22T15:12:35.7820488Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-473c712c-0090-42bc-aeb1-bb1b47e49b9b.config
+2026-11-22T15:12:35.7852564Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-473c712c-0090-42bc-aeb1-bb1b47e49b9b.config
+2026-11-22T15:12:35.7882437Z ##[endgroup]
+2026-11-22T15:12:35.7883872Z ##[group]Fetching the repository
+2026-11-22T15:12:35.7890256Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 7759b2f80dccc836403eb369822447e04509e475
+2026-11-22T15:13:08.6487562Z From https://github.com/werg/tracing-js-self
+2026-11-22T15:13:08.6488753Z  * branch            7759b2f80dccc836403eb369822447e04509e475 -> FETCH_HEAD
+2026-11-22T15:13:08.6497558Z [command]/usr/bin/git rev-parse --verify --quiet 7759b2f80dccc836403eb369822447e04509e475^{object}
+2026-11-22T15:13:08.6524738Z 7759b2f80dccc836403eb369822447e04509e475
+2026-11-22T15:13:08.6528417Z ##[endgroup]
+2026-11-22T15:13:08.6529574Z ##[group]Determining the checkout info
+2026-11-22T15:13:08.6530669Z ##[endgroup]
+2026-11-22T15:13:08.6534268Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T15:13:08.6596111Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T15:13:08.6629185Z ##[group]Checking out the ref
+2026-11-22T15:13:08.6633625Z [command]/usr/bin/git checkout --progress --force 7759b2f80dccc836403eb369822447e04509e475
+2026-11-22T15:13:09.7147695Z Updating files:  37% (1540/4071)
+2026-11-22T15:13:09.8068334Z Updating files:  38% (1547/4071)
+2026-11-22T15:13:09.8111855Z Updating files:  39% (1588/4071)
+2026-11-22T15:13:09.8157729Z Updating files:  40% (1629/4071)
+2026-11-22T15:13:09.8380983Z Updating files:  41% (1670/4071)
+2026-11-22T15:13:09.8410171Z Updating files:  42% (1710/4071)
+2026-11-22T15:13:09.8646244Z Updating files:  43% (1751/4071)
+2026-11-22T15:13:09.8691946Z Updating files:  44% (1792/4071)
+2026-11-22T15:13:09.8759582Z Updating files:  45% (1832/4071)
+2026-11-22T15:13:09.8933239Z Updating files:  46% (1873/4071)
+2026-11-22T15:13:09.9011583Z Updating files:  47% (1914/4071)
+2026-11-22T15:13:09.9078578Z Updating files:  48% (1955/4071)
+2026-11-22T15:13:09.9168745Z Updating files:  49% (1995/4071)
+2026-11-22T15:13:09.9955750Z Updating files:  50% (2036/4071)
+2026-11-22T15:13:09.9980990Z Updating files:  51% (2077/4071)
+2026-11-22T15:13:10.0062087Z Updating files:  52% (2117/4071)
+2026-11-22T15:13:10.0108598Z Updating files:  53% (2158/4071)
+2026-11-22T15:13:10.0126457Z Updating files:  54% (2199/4071)
+2026-11-22T15:13:10.0150044Z Updating files:  55% (2240/4071)
+2026-11-22T15:13:10.0200377Z Updating files:  56% (2280/4071)
+2026-11-22T15:13:10.0243523Z Updating files:  57% (2321/4071)
+2026-11-22T15:13:10.0290122Z Updating files:  58% (2362/4071)
+2026-11-22T15:13:10.0354595Z Updating files:  59% (2402/4071)
+2026-11-22T15:13:10.0369042Z Updating files:  60% (2443/4071)
+2026-11-22T15:13:10.0382851Z Updating files:  61% (2484/4071)
+2026-11-22T15:13:10.0394764Z Updating files:  62% (2525/4071)
+2026-11-22T15:13:10.0419998Z Updating files:  63% (2565/4071)
+2026-11-22T15:13:10.0432058Z Updating files:  64% (2606/4071)
+2026-11-22T15:13:10.0442475Z Updating files:  65% (2647/4071)
+2026-11-22T15:13:10.0451987Z Updating files:  66% (2687/4071)
+2026-11-22T15:13:10.0479349Z Updating files:  67% (2728/4071)
+2026-11-22T15:13:10.0498301Z Updating files:  68% (2769/4071)
+2026-11-22T15:13:10.0512139Z Updating files:  69% (2809/4071)
+2026-11-22T15:13:10.0537141Z Updating files:  70% (2850/4071)
+2026-11-22T15:13:10.0548036Z Updating files:  71% (2891/4071)
+2026-11-22T15:13:10.0597186Z Updating files:  72% (2932/4071)
+2026-11-22T15:13:10.0613581Z Updating files:  73% (2972/4071)
+2026-11-22T15:13:10.0630765Z Updating files:  74% (3013/4071)
+2026-11-22T15:13:10.0649302Z Updating files:  75% (3054/4071)
+2026-11-22T15:13:10.0670287Z Updating files:  76% (3094/4071)
+2026-11-22T15:13:10.0692051Z Updating files:  77% (3135/4071)
+2026-11-22T15:13:10.0718081Z Updating files:  78% (3176/4071)
+2026-11-22T15:13:10.0759429Z Updating files:  79% (3217/4071)
+2026-11-22T15:13:10.0787958Z Updating files:  80% (3257/4071)
+2026-11-22T15:13:10.0818897Z Updating files:  81% (3298/4071)
+2026-11-22T15:13:10.0852079Z Updating files:  82% (3339/4071)
+2026-11-22T15:13:10.0871980Z Updating files:  83% (3379/4071)
+2026-11-22T15:13:10.0893848Z Updating files:  84% (3420/4071)
+2026-11-22T15:13:10.0919196Z Updating files:  85% (3461/4071)
+2026-11-22T15:13:10.1194417Z Updating files:  86% (3502/4071)
+2026-11-22T15:13:10.1220772Z Updating files:  87% (3542/4071)
+2026-11-22T15:13:10.1245043Z Updating files:  88% (3583/4071)
+2026-11-22T15:13:10.1279775Z Updating files:  89% (3624/4071)
+2026-11-22T15:13:10.1313397Z Updating files:  90% (3664/4071)
+2026-11-22T15:13:10.1342473Z Updating files:  91% (3705/4071)
+2026-11-22T15:13:10.1364405Z Updating files:  92% (3746/4071)
+2026-11-22T15:13:10.1385778Z Updating files:  93% (3787/4071)
+2026-11-22T15:13:10.1405400Z Updating files:  94% (3827/4071)
+2026-11-22T15:13:10.1423302Z Updating files:  95% (3868/4071)
+2026-11-22T15:13:10.1449756Z Updating files:  96% (3909/4071)
+2026-11-22T15:13:10.1473641Z Updating files:  97% (3949/4071)
+2026-11-22T15:13:10.1512395Z Updating files:  98% (3990/4071)
+2026-11-22T15:13:10.1533952Z Updating files:  99% (4031/4071)
+2026-11-22T15:13:10.1534635Z Updating files: 100% (4071/4071)
+2026-11-22T15:13:10.1535353Z Updating files: 100% (4071/4071), done.
+2026-11-22T15:13:10.1581029Z Note: switching to '7759b2f80dccc836403eb369822447e04509e475'.
+2026-11-22T15:13:10.1581633Z 
+2026-11-22T15:13:10.1582010Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T15:13:10.1583394Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T15:13:10.1584225Z state without impacting any branches by switching back to a branch.
+2026-11-22T15:13:10.1584697Z 
+2026-11-22T15:13:10.1585005Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T15:13:10.1585539Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T15:13:10.1585862Z 
+2026-11-22T15:13:10.1586005Z   git switch -c <new-branch-name>
+2026-11-22T15:13:10.1586259Z 
+2026-11-22T15:13:10.1586402Z Or undo this operation with:
+2026-11-22T15:13:10.1586612Z 
+2026-11-22T15:13:10.1586730Z   git switch -
+2026-11-22T15:13:10.1586915Z 
+2026-11-22T15:13:10.1587175Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T15:13:10.1587817Z 
+2026-11-22T15:13:10.1588349Z HEAD is now at 7759b2f Use correct Actions download header and preserve original full fit log
+2026-11-22T15:13:10.1696369Z ##[endgroup]
+2026-11-22T15:13:10.1747760Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T15:13:10.1778753Z 7759b2f80dccc836403eb369822447e04509e475
+2026-11-22T15:13:10.1787553Z ##[group]Removing auth
+2026-11-22T15:13:10.1788126Z Removing SSH command configuration
+2026-11-22T15:13:10.1791846Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T15:13:10.1824010Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T15:13:10.2018948Z Removing HTTP extra header
+2026-11-22T15:13:10.2022794Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T15:13:10.2057975Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T15:13:10.2250666Z Removing includeIf entries pointing to credentials config files
+2026-11-22T15:13:10.2253538Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T15:13:10.2281030Z includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/.git.path
+2026-11-22T15:13:10.2282128Z includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/.git/worktrees/*.path
+2026-11-22T15:13:10.2282779Z includeif.gitdir:/github/workspace/.git.path
+2026-11-22T15:13:10.2283350Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-22T15:13:10.2290157Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/.git.path
+2026-11-22T15:13:10.2312703Z /home/runner/work/_temp/git-credentials-473c712c-0090-42bc-aeb1-bb1b47e49b9b.config
+2026-11-22T15:13:10.2327500Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-473c712c\-0090\-42bc\-aeb1\-bb1b47e49b9b\.config
+2026-11-22T15:13:10.2363787Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/.git/worktrees/*.path
+2026-11-22T15:13:10.2385516Z /home/runner/work/_temp/git-credentials-473c712c-0090-42bc-aeb1-bb1b47e49b9b.config
+2026-11-22T15:13:10.2392931Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/tracing-js-self/tracing-js-self/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-473c712c\-0090\-42bc\-aeb1\-bb1b47e49b9b\.config
+2026-11-22T15:13:10.2426190Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-11-22T15:13:10.2458683Z /github/runner_temp/git-credentials-473c712c-0090-42bc-aeb1-bb1b47e49b9b.config
+2026-11-22T15:13:10.2468576Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-473c712c\-0090\-42bc\-aeb1\-bb1b47e49b9b\.config
+2026-11-22T15:13:10.2500255Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-22T15:13:10.2524671Z /github/runner_temp/git-credentials-473c712c-0090-42bc-aeb1-bb1b47e49b9b.config
+2026-11-22T15:13:10.2532127Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-473c712c\-0090\-42bc\-aeb1\-bb1b47e49b9b\.config
+2026-11-22T15:13:10.2565829Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T15:13:10.2754417Z Removing credentials config '/home/runner/work/_temp/git-credentials-473c712c-0090-42bc-aeb1-bb1b47e49b9b.config'
+2026-11-22T15:13:10.2765071Z ##[endgroup]
+2026-11-22T15:13:10.2991882Z ##[group]Run python tools/archive-v8-fullfit-evidence.py --publish-draft --work "/home/runner/work/_temp/v8-evidence-archive"
+2026-11-22T15:13:10.2993263Z [36;1mpython tools/archive-v8-fullfit-evidence.py --publish-draft --work "/home/runner/work/_temp/v8-evidence-archive"[0m
+2026-11-22T15:13:10.3010905Z shell: /usr/bin/bash -e {0}
+2026-11-22T15:13:10.3011298Z env:
+2026-11-22T15:13:10.3014081Z   GH_TOKEN: ***
+2026-11-22T15:13:10.3014398Z   GH_REPO: werg/tracing-js-self
+2026-11-22T15:13:10.3014746Z ##[endgroup]
+2026-11-22T15:13:16.6839236Z the response contains terminal escape sequences; pass --allow-escape-sequences to output it anyway
+2026-11-22T15:13:16.7463355Z Traceback (most recent call last):
+2026-11-22T15:13:16.7464505Z   File "/home/runner/work/tracing-js-self/tracing-js-self/tools/archive-v8-fullfit-evidence.py", line 385, in <module>
+2026-11-22T15:13:16.7466683Z     main()
+2026-11-22T15:13:16.7467687Z   File "/home/runner/work/tracing-js-self/tracing-js-self/tools/archive-v8-fullfit-evidence.py", line 377, in main
+2026-11-22T15:13:16.7468355Z     receipt = preserve_draft(root, args.work)
+2026-11-22T15:13:16.7468732Z               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-11-22T15:13:16.7469369Z   File "/home/runner/work/tracing-js-self/tracing-js-self/tools/archive-v8-fullfit-evidence.py", line 248, in preserve_draft
+2026-11-22T15:13:16.7470013Z     download(f"{base}/actions/jobs/{JOB_ID}/logs", job_log)
+2026-11-22T15:13:16.7470610Z   File "/home/runner/work/tracing-js-self/tracing-js-self/tools/archive-v8-fullfit-evidence.py", line 168, in download
+2026-11-22T15:13:16.7471237Z     subprocess.run(
+2026-11-22T15:13:16.7471597Z   File "/usr/lib/python3.12/subprocess.py", line 571, in run
+2026-11-22T15:13:16.7472458Z     raise CalledProcessError(retcode, process.args,
+2026-11-22T15:13:16.7473413Z subprocess.CalledProcessError: Command '['gh', 'api', 'repos/werg/tracing-js-self/actions/jobs/137219026731/logs', '-H', 'Accept: application/json']' returned non-zero exit status 1.
+2026-11-22T15:13:16.7644452Z ##[error]Process completed with exit code 1.
+2026-11-22T15:13:16.7741003Z ##[group]Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+2026-11-22T15:13:16.7741501Z with:
+2026-11-22T15:13:16.7741847Z   name: v8-fullfit-draft-archive-receipt
+2026-11-22T15:13:16.7742261Z   if-no-files-found: warn
+2026-11-22T15:13:16.7742583Z   retention-days: 90
+2026-11-22T15:13:16.7743178Z   path: /home/runner/work/_temp/v8-evidence-archive/archive-receipt.json
+/home/runner/work/_temp/v8-evidence-archive/SHA256SUMS
+
+2026-11-22T15:13:16.7743801Z   compression-level: 6
+2026-11-22T15:13:16.7744110Z   overwrite: false
+2026-11-22T15:13:16.7744428Z   include-hidden-files: false
+2026-11-22T15:13:16.7744774Z ##[endgroup]
+2026-11-22T15:13:16.9393217Z (node:2486) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T15:13:16.9394661Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T15:13:16.9432072Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-22T15:13:16.9433668Z The least common ancestor is /home/runner/work/_temp/v8-evidence-archive. This will be the root directory of the artifact
+2026-11-22T15:13:16.9456007Z ##[warning]No files were found with the provided path: /home/runner/work/_temp/v8-evidence-archive/archive-receipt.json
+/home/runner/work/_temp/v8-evidence-archive/SHA256SUMS. No artifacts will be uploaded.
+2026-11-22T15:13:16.9670423Z Post job cleanup.
+2026-11-22T15:13:17.0616186Z [command]/usr/bin/git version
+2026-11-22T15:13:17.0666247Z git version 2.56.1
+2026-11-22T15:13:17.0707873Z Temporarily overriding HOME='/home/runner/work/_temp/22343134-bc57-421f-83c1-829bf80af660' before making global git config changes
+2026-11-22T15:13:17.0709197Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T15:13:17.0715437Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-22T15:13:17.0748383Z Removing SSH command configuration
+2026-11-22T15:13:17.0755862Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T15:13:17.0793656Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T15:13:17.1054742Z Removing HTTP extra header
+2026-11-22T15:13:17.1061286Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T15:13:17.1095614Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T15:13:17.1374205Z Removing includeIf entries pointing to credentials config files
+2026-11-22T15:13:17.1384263Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T15:13:17.1430920Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T15:13:17.2039601Z Cleaning up orphan processes
+2026-11-22T15:13:17.2429996Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

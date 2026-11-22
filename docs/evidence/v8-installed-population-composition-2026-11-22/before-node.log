@@ -1,0 +1,101 @@
+TAP version 13
+# Subtest: installed inventory retains all 665 original and 66 selected inputs including five module graphs
+not ok 1 - installed inventory retains all 665 original and 66 selected inputs including five module graphs
+  ---
+  duration_ms: 1154.759379
+  type: 'test'
+  location: '/workspace/scratch/175924c3d3c2/worktrees/release-installed/test/semantic-installed-qualification-v8.test.js:15:1'
+  failureType: 'testCodeFailure'
+  error: 'Declared installed population changed: interoperability'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    installedQualificationInventory (file:///workspace/scratch/175924c3d3c2/worktrees/release-installed/tools/qualify-installed-v8.mjs:21:54)
+    TestContext.<anonymous> (file:///workspace/scratch/175924c3d3c2/worktrees/release-installed/test/semantic-installed-qualification-v8.test.js:16:13)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: installed fixture transport preserves holes, cycles, null prototypes, special numbers and bigint
+ok 2 - installed fixture transport preserves holes, cycles, null prototypes, special numbers and bigint
+  ---
+  duration_ms: 4.780899
+  type: 'test'
+  ...
+# Subtest: installed CLI refuses malformed bounds and keeps diagnostic selection explicit
+ok 3 - installed CLI refuses malformed bounds and keeps diagnostic selection explicit
+  ---
+  duration_ms: 0.506718
+  type: 'test'
+  ...
+# Subtest: public worker source, callback and original module controls recheck and continue without a native receipt
+not ok 4 - public worker source, callback and original module controls recheck and continue without a native receipt
+  ---
+  duration_ms: 80.160619
+  type: 'test'
+  location: '/workspace/scratch/175924c3d3c2/worktrees/release-installed/test/semantic-installed-qualification-v8.test.js:49:1'
+  failureType: 'testCodeFailure'
+  error: 'Declared installed population changed: interoperability'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    installedQualificationInventory (file:///workspace/scratch/175924c3d3c2/worktrees/release-installed/tools/qualify-installed-v8.mjs:21:54)
+    TestContext.<anonymous> (file:///workspace/scratch/175924c3d3c2/worktrees/release-installed/test/semantic-installed-qualification-v8.test.js:50:20)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: installed continuation accepts callback-owned joins with ordered handler-close receipts
+not ok 5 - installed continuation accepts callback-owned joins with ordered handler-close receipts
+  ---
+  duration_ms: 76.8555
+  type: 'test'
+  location: '/workspace/scratch/175924c3d3c2/worktrees/release-installed/test/semantic-installed-qualification-v8.test.js:61:1'
+  failureType: 'testCodeFailure'
+  error: 'Declared installed population changed: interoperability'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    installedQualificationInventory (file:///workspace/scratch/175924c3d3c2/worktrees/release-installed/tools/qualify-installed-v8.mjs:21:54)
+    TestContext.<anonymous> (file:///workspace/scratch/175924c3d3c2/worktrees/release-installed/test/semantic-installed-qualification-v8.test.js:63:16)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: public worker checks original source separately and retains a disagreement before projection
+ok 6 - public worker checks original source separately and retains a disagreement before projection
+  ---
+  duration_ms: 233.559011
+  type: 'test'
+  ...
+# Subtest: a refused selected original-population source makes the installed gate fail without dropping its disposition
+ok 7 - a refused selected original-population source makes the installed gate fail without dropping its disposition
+  ---
+  duration_ms: 28.881354
+  type: 'test'
+  ...
+# Subtest: canonical expected results remain an independent gate even when original and transformed sources agree
+ok 8 - canonical expected results remain an independent gate even when original and transformed sources agree
+  ---
+  duration_ms: 213.716999
+  type: 'test'
+  ...
+# Subtest: complete Git package staging includes sparse files and installs exact locked archives without scripts
+ok 9 - complete Git package staging includes sparse files and installs exact locked archives without scripts
+  ---
+  duration_ms: 1962.346119
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 6
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4509.09642

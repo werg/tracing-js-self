@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" time="4.261254" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-22T17:22:25.049Z" hostname="07bf85b14210">
+		<testcase name="pure" time="0.714087" classname="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="callbacks-recovery" time="1.324175" classname="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="repeated-two-calls" time="1.420993" classname="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="child-teacher" time="0.800042" classname="original source, callback fixture, ordered session and teacher requests bind actual source artifacts" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testcase name="individually valid source artifacts cannot be swapped between original frozen task IDs" time="0.493416" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+	<testsuite name="coherent original-task substitutions cannot retain another artifact source or inputs" time="0.003254" disabled="0" errors="0" tests="11" failures="0" skipped="0" timestamp="2026-11-22T17:22:29.824Z" hostname="07bf85b14210">
+		<testcase name="source" time="0.000411" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="entry" time="0.000186" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="argument" time="0.000254" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="boolean-versus-number" time="0.000224" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="family" time="0.000135" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="ancestry" time="0.000133" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="producer-revision" time="0.000094" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="task-id" time="0.000100" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="random-seed" time="0.000144" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="host-fixture" time="0.000144" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="teacher-requirement" time="0.000188" classname="coherent original-task substitutions cannot retain another artifact source or inputs" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testsuite name="ordered session request binds every component including arguments and callback outcomes" time="0.001403" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-22T17:22:29.827Z" hostname="07bf85b14210">
+		<testcase name="order" time="0.000219" classname="ordered session request binds every component including arguments and callback outcomes" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="omitted" time="0.000156" classname="ordered session request binds every component including arguments and callback outcomes" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="argument" time="0.000265" classname="ordered session request binds every component including arguments and callback outcomes" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="callback-outcome" time="0.000245" classname="ordered session request binds every component including arguments and callback outcomes" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testcase name="relabeling a valid artifact and resealing its dataset hashes cannot replace frozen registry membership" time="0.002709" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+	<testsuite name="actual source membership keeps the case label separate from its digest-suffixed physical identity" time="0.421327" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-22T17:22:29.818Z" hostname="07bf85b14210">
+		<testcase name="absent" time="0.000390" classname="actual source membership keeps the case label separate from its digest-suffixed physical identity" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="case-label" time="0.000257" classname="actual source membership keeps the case label separate from its digest-suffixed physical identity" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="another-physical-source" time="0.000135" classname="actual source membership keeps the case label separate from its digest-suffixed physical identity" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="changed-split" time="0.002228" classname="actual source membership keeps the case label separate from its digest-suffixed physical identity" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testcase name="original ancestry uses the existing normalized set identity without weakening different-ancestor refusal" time="0.003061" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+	<testcase name="the original host settlement schedule remains part of the request" time="0.000408" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+	<testsuite name="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" time="1.744600" disabled="0" errors="0" tests="7" failures="0" skipped="0" timestamp="2026-11-22T17:22:30.226Z" hostname="07bf85b14210">
+		<testcase name="explicit-zero" time="0.334559" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="guest-zero" time="0.325876" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="omitted-random-with-guest-seed" time="0.334201" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="explicit-null" time="0.328476" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="matching-null" time="0.418928" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="conflicting-guest-seed-with-null" time="0.000777" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="conflicting-guest-seed-with-0" time="0.000266" classname="actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<testsuite name="original module graph, entry, export, aliases and ordered calls bind actual module evidence" time="1.494391" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-22T17:22:32.106Z" hostname="07bf85b14210">
+		<testsuite name="release-module-alias" time="0.654311" disabled="0" errors="0" tests="5" failures="0" skipped="0" timestamp="2026-11-22T17:22:31.963Z" hostname="07bf85b14210">
+			<testcase name="graph" time="0.000588" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+			<testcase name="entry" time="0.000132" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+			<testcase name="export" time="0.000306" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+			<testcase name="plan-boolean" time="0.000243" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+			<testcase name="input" time="0.000231" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-alias" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		</testsuite>
+		<testsuite name="release-module-calls" time="0.839672" disabled="0" errors="0" tests="5" failures="0" skipped="0" timestamp="2026-11-22T17:22:32.760Z" hostname="07bf85b14210">
+			<testcase name="graph" time="0.000567" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+			<testcase name="entry" time="0.000109" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+			<testcase name="export" time="0.000298" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+			<testcase name="plan-boolean" time="0.000139" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+			<testcase name="input" time="0.000216" classname="original module graph, entry, export, aliases and ordered calls bind actual module evidence.release-module-calls" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		</testsuite>
+	</testsuite>
+	<testsuite name="direct protocol and mixed host protocol requests bind their actual source evidence" time="2.097922" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-22T17:22:33.452Z" hostname="07bf85b14210">
+		<testcase name="release-protocol-source" time="0.493783" classname="direct protocol and mixed host protocol requests bind their actual source evidence" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+		<testcase name="join-host-join" time="1.602623" classname="direct protocol and mixed host protocol requests bind their actual source evidence" file="/workspace/scratch/05d92519587f/producer-v8-package-gate/test/v8-release-task-binding.test.js"/>
+	</testsuite>
+	<!-- tests 55 -->
+	<!-- suites 0 -->
+	<!-- pass 55 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 11256.589952 -->
+</testsuites>

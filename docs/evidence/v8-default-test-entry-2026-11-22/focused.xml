@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="already-settled rejection is caught, a sibling finishes, and the synchronous parent has no execution Promise" time="4.215226" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="shared asynchronous dependency, nested awaits and catch/finally retain actual driver identity" time="8.079384" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="uncaught async failure rejects its parent while an already-started sibling completes" time="2.451625" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="synchronous shared dependency completes once before two async children" time="5.359650" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="syntactic TLA without suspension still retains its async completion job" time="3.536840" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="failure before the first await is separated from already-started sibling work" time="2.507501" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="source ownership refuses a different source graph, changed dependency and changed instruction" time="3.799732" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="the dedicated source/native gate requires its paired consumer" time="3.755836" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="scheduler DAG plan comes from linker and ESM observation; shared dependency is evaluated once" time="5.786656" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-state-v8.test.js"/>
+	<testcase name="TLA resumes bind to existing Promise and reaction job identities; sibling order is accepted dynamically" time="0.014651" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-state-v8.test.js"/>
+	<testcase name="rejection propagates through a dependency while an independent sibling settles" time="0.006321" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-state-v8.test.js"/>
+	<testcase name="original ESM settles an independent sibling after a dependency rejects" time="0.001942" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-state-v8.test.js"/>
+	<testcase name="scheduler refuses early and duplicate completion without mutating prior state" time="0.008324" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-state-v8.test.js"/>
+	<testcase name="executor, join and ordinary event owners compose independently of registry order" time="1.616065" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-source-composition-v8.test.js"/>
+	<testcase name="missing and ambiguous event owners fail before preparation and preserve the live prefix" time="0.373732" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-source-composition-v8.test.js"/>
+	<testcase name="a claimed handler cannot publish its Promise prelude or component mutation before success" time="0.090240" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-source-composition-v8.test.js"/>
+	<testcase name="all applicable observers run and a rejected postcondition leaves the current event unpublished" time="0.095880" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-source-composition-v8.test.js"/>
+	<testcase name="one owned throw independently assigns helper, executor and ordinary completion slots" time="0.226958" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-source-composition-v8.test.js"/>
+	<testcase name="component discovery reads static source syntax without looking at future owned events" time="0.001087" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-source-composition-v8.test.js"/>
+	<testcase name="source handlers require explicit success and observer applicability requires a boolean" time="0.757052" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-source-composition-v8.test.js"/>
+	<testcase name="a failed context index copy cannot partially publish a prepared source event" time="0.006773" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-source-composition-v8.test.js"/>
+	<!-- tests 21 -->
+	<!-- suites 0 -->
+	<!-- pass 21 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 43707.253098 -->
+</testsuites>

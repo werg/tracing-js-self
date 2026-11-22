@@ -16,6 +16,7 @@ export declare function executeWithNativeServices(options:{
   /** Acorn strict profile function entry with a recorded, owned host binding. */
   entry?:{text:string;url?:string;functionName:string;args?:unknown[]};
   services?:Record<string,NativeHostService>;
+  /** Bounds all committed work across native/owned microtask yields. */
   maxSteps?:number;
   /** Declared deterministic Math.random fixture, separate from dataset split seeds. */
   randomSeed?:number|null;

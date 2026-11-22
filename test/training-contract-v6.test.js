@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
+import {hashAlgorithmData} from '../src/semantic/program.js';
 import {SelectedExecutionHarness} from '../src/training/harness-v4.js';
 import {encodeWitness as w,validateHarnessRecord} from '../src/training/format.js';
 import {analyzeSemanticProgram} from '../src/training/semantic-program.js';
@@ -14,7 +14,7 @@ const finish=(h,id,value)=>{
 };
 const rehash=packet=>{
   const {integrity,...body}=packet;
-  packet.integrity=createHash('sha256').update(JSON.stringify(body)).digest('hex');
+  packet.integrity=hashAlgorithmData(body);
   return packet;
 };
 

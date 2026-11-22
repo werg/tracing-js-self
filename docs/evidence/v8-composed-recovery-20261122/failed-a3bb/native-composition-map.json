@@ -1,0 +1,68 @@
+{
+  "before": "622c37c23f93c4cc58ff226eb4805c766fee3166",
+  "candidate": "15844c00c095849755ca6f0e1d207f7db79a9264",
+  "paths": [
+    {
+      "path": "scripts/serve_semantic_v8.py",
+      "beforeBlob": "17a5e68cece8fcdce437effa9ae785d06104f693",
+      "afterBlob": "3a0472c542322a89f57c951baf25f03f380fa0db",
+      "afterSha256": "5fcdb9c2e1289345c9381d25a78b8316b868dec59fb51c4af031707cb73e733a",
+      "removedTestFunctions": [],
+      "addedTestFunctions": []
+    },
+    {
+      "path": "src/megatoken/semantic_commit_recovery_v8.py",
+      "beforeBlob": "1a557d1cd96478c9462544f83609d676812b56bd",
+      "afterBlob": "cd273e5983b02df717964f98995c3690a98554ac",
+      "afterSha256": "08b1b1d5b373e5fbb3b53023a2c376a0d9bf868276fe8d92125d01215422950c",
+      "removedTestFunctions": [],
+      "addedTestFunctions": []
+    },
+    {
+      "path": "src/megatoken/semantic_request_journal_v8.py",
+      "beforeBlob": "04eec398d32ee910ecc436115f30dbc8597f349e",
+      "afterBlob": "e759613eb8526fba74b45abe95c8136d5b4a5dee",
+      "afterSha256": "31c481b56327873c47d5974895d39ffbe9473db8cfa32ea65c5aa119b77f59ed",
+      "removedTestFunctions": [],
+      "addedTestFunctions": []
+    },
+    {
+      "path": "tests/test_semantic_bootstrap_recovery_v8.py",
+      "beforeBlob": "207d6e52c62120500cdc00bb8c1b25655e1bb99f",
+      "afterBlob": "d8ae61108a3a95683f3143837c6a39a5090479a7",
+      "afterSha256": "612d50e237806c75fa05a5881d1acf6ae9b3783d726c2d024cb0336b7aeafbd1",
+      "removedTestFunctions": [],
+      "addedTestFunctions": [
+        "test_live_child_mismatch_fences_later_duplicate_before_journal_read"
+      ]
+    },
+    {
+      "path": "tests/test_semantic_commit_recovery_v8.py",
+      "beforeBlob": "32c8034d659ab7e951e000cb75c513752b8cd6f3",
+      "afterBlob": "a9dfa61a83e9ab63b8cf4d30cd8c06a6c11e3614",
+      "afterSha256": "cbb4d0e1a8c3ba7dd96a72e15bd066822f44a3bb02136717891f7485cc2310ed",
+      "removedTestFunctions": [],
+      "addedTestFunctions": [
+        "test_bootstrap_recovery_refuses_independent_reexecution_mismatch",
+        "test_bootstrap_refuses_mutating_an_unrelated_session",
+        "test_bootstrap_rejects_wrong_owner_model_generation_ordinal_and_create_frame",
+        "test_completed_bootstrap_replay_is_blocked_after_later_mutation",
+        "test_durable_bootstrap_child_recovers_lost_reply_by_full_reexecution",
+        "test_guarded_session_cannot_raw_dispatch_child_bootstrap",
+        "test_invalid_child_bootstrap_is_rejected_before_admission",
+        "test_previously_superseded_create_is_not_bootstrap_authority",
+        "test_unknown_bootstrap_intent_is_never_redispatched_or_create_recovered"
+      ]
+    },
+    {
+      "path": "tests/test_semantic_request_journal_v8.py",
+      "beforeBlob": "a1512b225bacb5f815a914c3801863ed3ae3a537",
+      "afterBlob": "09e5adbb04cda1820319aa2a8523a3cac3fc91aa",
+      "afterSha256": "c279ec1b505a335db7bc2ab8f630e7fe037bd7dee816b395cc559f8a7bbad849",
+      "removedTestFunctions": [],
+      "addedTestFunctions": [
+        "test_supersession_authority_binds_the_exact_later_mutation"
+      ]
+    }
+  ]
+}

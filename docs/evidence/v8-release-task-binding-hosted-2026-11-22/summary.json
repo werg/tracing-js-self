@@ -1,0 +1,116 @@
+{
+  "schema": "v8-release-frozen-task-binding-hosted-result/1",
+  "run": 45044587251,
+  "job": 137276290532,
+  "conclusion": "success",
+  "qualification": {
+    "acceptedHistoryRecovery": "unmeasured",
+    "archiveBytes": 70594952,
+    "archiveSha256": "a2b07698da11347d3883eef7c8ec99dd2f9c8c292144a2ed5326cdde7395b12d",
+    "consumerRevision": "d4afac5bb7261aa7ef85c1d65d3ae6dcaf6caeef",
+    "declaredSources": 64,
+    "defaultPromotion": false,
+    "freshSourceNativePreparationAtPackageAndRestore": true,
+    "fullTargetCoverageQualified": false,
+    "learnedSuccess": null,
+    "manifestIdentity": "980def971bd438855c1b3c01c635152d70df8b1d74fd632dbf3130db8f57a92e",
+    "nativeAdmitted": 64,
+    "ordinaryLifecycleOptimizerUpdates": 2,
+    "originalRuntimeAssetLocatorsAbsentAtRestore": true,
+    "originalTaskArtifactBindingsVerified": true,
+    "packageOptimizerUpdates": 0,
+    "producerRevision": "790f525c280b34a66ef8269aa7148bd9966b8639",
+    "registryDigest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+    "releaseDecoderForwardPasses": 0,
+    "restoreOptimizerUpdates": 0,
+    "schema": "semantic-v8-release-qualification/1",
+    "sourceQualified": 64,
+    "splitCounts": {
+      "test": 4,
+      "train": 48,
+      "validation": 12
+    },
+    "status": "passed",
+    "wrongExternalChecksumRefusedBeforeExtraction": true
+  },
+  "restore": {
+    "acceptedHistoryRecovery": "unmeasured",
+    "actualCheckpointAndServedStateCompared": true,
+    "archiveSha256": "a2b07698da11347d3883eef7c8ec99dd2f9c8c292144a2ed5326cdde7395b12d",
+    "decoderForwardPassesPerformed": 0,
+    "defaultPromotion": false,
+    "freshSourceNativePreparation": true,
+    "learnedSuccess": null,
+    "manifestIdentity": "980def971bd438855c1b3c01c635152d70df8b1d74fd632dbf3130db8f57a92e",
+    "optimizerUpdatesPerformed": 0,
+    "restoredFiles": {
+      "bytes": 303190811,
+      "files": 351,
+      "status": "verified"
+    },
+    "schema": "semantic-v8-release-restore-result/1",
+    "sourcePair": {
+      "consumer": {
+        "clean": true,
+        "revision": "d4afac5bb7261aa7ef85c1d65d3ae6dcaf6caeef",
+        "tree": "3e6d58624f5557bb5b4877a260e504a572dd90a4"
+      },
+      "producer": {
+        "clean": true,
+        "revision": "790f525c280b34a66ef8269aa7148bd9966b8639",
+        "tree": "704836c11a16ce49350157b2813c5c0677c4cd24"
+      }
+    },
+    "status": "verified"
+  },
+  "stages": [
+    {
+      "name": "qualify-64",
+      "status": "passed",
+      "exitCode": 0,
+      "seconds": 186.051800269
+    },
+    {
+      "name": "bind-original-64-source-tasks",
+      "status": "passed",
+      "exitCode": 0,
+      "seconds": 0.9170195009999702
+    },
+    {
+      "name": "prepare-64",
+      "status": "passed",
+      "exitCode": 0,
+      "seconds": 152.07211535200003
+    },
+    {
+      "name": "ordinary-two-update-lifecycle",
+      "status": "passed",
+      "exitCode": 0,
+      "seconds": 595.627800509
+    },
+    {
+      "name": "package",
+      "status": "passed",
+      "exitCode": 0,
+      "seconds": 258.86029825900005
+    },
+    {
+      "name": "refuse-wrong-external-checksum",
+      "status": "refused-as-required",
+      "exitCode": 1,
+      "seconds": 0.11416423600007874
+    },
+    {
+      "name": "restore-with-original-locators-absent",
+      "status": "passed",
+      "exitCode": 0,
+      "seconds": 247.81387433600003
+    }
+  ],
+  "originalEvidenceTar": {
+    "archive": "v8-release-qualification-original.tar.gz",
+    "bytes": 350152477,
+    "sha256": "e577c7c1d14cad07f3e808219d511c672193c53f387a7bdc3dc5a0df85a58773"
+  },
+  "scope": "Historical task-to-source binding candidate790/d4; includes actual64 source/native admission and2-update ordinary package/restoration. Predates later historical native-record correspondence and explicit descriptor sourceId corrections; not acceptance of the final composed source."
+}

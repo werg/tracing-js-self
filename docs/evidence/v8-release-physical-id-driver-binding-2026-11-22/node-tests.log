@@ -1,0 +1,72 @@
+▶ original source, callback fixture, ordered session and teacher requests bind actual source artifacts
+  ✔ pure (714.087436ms)
+  ✔ callbacks-recovery (1324.174631ms)
+  ✔ repeated-two-calls (1420.993086ms)
+  ✔ child-teacher (800.041729ms)
+✔ original source, callback fixture, ordered session and teacher requests bind actual source artifacts (4261.254162ms)
+✔ individually valid source artifacts cannot be swapped between original frozen task IDs (493.416186ms)
+▶ coherent original-task substitutions cannot retain another artifact source or inputs
+  ✔ source (0.410867ms)
+  ✔ entry (0.186245ms)
+  ✔ argument (0.253575ms)
+  ✔ boolean-versus-number (0.22351ms)
+  ✔ family (0.134749ms)
+  ✔ ancestry (0.132616ms)
+  ✔ producer-revision (0.093879ms)
+  ✔ task-id (0.100458ms)
+  ✔ random-seed (0.144173ms)
+  ✔ host-fixture (0.144264ms)
+  ✔ teacher-requirement (0.187828ms)
+✔ coherent original-task substitutions cannot retain another artifact source or inputs (3.253946ms)
+▶ ordered session request binds every component including arguments and callback outcomes
+  ✔ order (0.219154ms)
+  ✔ omitted (0.156ms)
+  ✔ argument (0.265191ms)
+  ✔ callback-outcome (0.244972ms)
+✔ ordered session request binds every component including arguments and callback outcomes (1.403093ms)
+✔ relabeling a valid artifact and resealing its dataset hashes cannot replace frozen registry membership (2.709182ms)
+▶ actual source membership keeps the case label separate from its digest-suffixed physical identity
+  ✔ absent (0.390277ms)
+  ✔ case-label (0.25727ms)
+  ✔ another-physical-source (0.134629ms)
+  ✔ changed-split (2.227771ms)
+✔ actual source membership keeps the case label separate from its digest-suffixed physical identity (421.32657ms)
+✔ original ancestry uses the existing normalized set identity without weakening different-ancestor refusal (3.060791ms)
+✔ the original host settlement schedule remains part of the request (0.407522ms)
+▶ actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations
+  ✔ explicit-zero (334.559462ms)
+  ✔ guest-zero (325.876335ms)
+  ✔ omitted-random-with-guest-seed (334.201133ms)
+  ✔ explicit-null (328.475995ms)
+  ✔ matching-null (418.927547ms)
+  ✔ conflicting-guest-seed-with-null (0.776607ms)
+  ✔ conflicting-guest-seed-with-0 (0.265862ms)
+✔ actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations (1744.600191ms)
+▶ original module graph, entry, export, aliases and ordered calls bind actual module evidence
+  ▶ release-module-alias
+    ✔ graph (0.588048ms)
+    ✔ entry (0.132386ms)
+    ✔ export (0.305722ms)
+    ✔ plan-boolean (0.242548ms)
+    ✔ input (0.230501ms)
+  ✔ release-module-alias (654.310658ms)
+  ▶ release-module-calls
+    ✔ graph (0.566586ms)
+    ✔ entry (0.108931ms)
+    ✔ export (0.29779ms)
+    ✔ plan-boolean (0.139235ms)
+    ✔ input (0.215809ms)
+  ✔ release-module-calls (839.672311ms)
+✔ original module graph, entry, export, aliases and ordered calls bind actual module evidence (1494.390831ms)
+▶ direct protocol and mixed host protocol requests bind their actual source evidence
+  ✔ release-protocol-source (493.782744ms)
+  ✔ join-host-join (1602.623423ms)
+✔ direct protocol and mixed host protocol requests bind their actual source evidence (2097.922016ms)
+ℹ tests 55
+ℹ suites 0
+ℹ pass 55
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11256.589952

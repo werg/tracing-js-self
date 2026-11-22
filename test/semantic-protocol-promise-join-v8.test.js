@@ -134,3 +134,52 @@ test('restored join observations agree with completed jobs and the original inpu
   const falseValue=restore(c);falseValue.heap.get('joined').join.values[0]=['num',99];
   assert.throws(()=>restorePromiseJoinStateV8(falseValue,api),/observed value differs/);
 });
+
+test('allSettled retains input order, rejection reasons, duplicate snapshots and mid-join recovery',()=>{
+  let c=controller();promise(c,'slow');promise(c,'rejected','rejected',['str','no']);promise(c,'joined');
+  join(c,'allSettled','joined',['slow','rejected','rejected'],['j0','j1','j2']);
+  step(c,{result:'joined',job:'j1',entry:'entry1',status:'pending',value:null});
+  assert.equal(c.heap.get('joined').state,'pending');
+  assert.deepEqual(c.heap.get('entry1').properties,new Map([['status',['str','rejected']],['reason',['str','no']]]));
+  c=restore(c);
+  step(c,{result:'joined',job:'j2',entry:'entry2',status:'pending',value:null});
+  c.settlePromise('slow','fulfilled',['undefined']);
+  step(c,{result:'joined',job:'j0',entry:'entry0',output:'out',status:'fulfilled',value:['ref','out']});
+  assert.deepEqual(c.heap.get('out').properties,new Map([
+    ['0',['ref','entry0']],['1',['ref','entry1']],['2',['ref','entry2']],['length',['num',3]]
+  ]));
+  assert.deepEqual(c.heap.get('entry0').properties,new Map([['status',['str','fulfilled']],['value',['undefined']]]));
+  assert.equal(restorePromiseJoinStateV8(restore(c),api).valid,true);
+  // The snapshots become ordinary mutable guest objects after fulfillment.
+  c.heap.get('entry1').properties.set('status',['str','changed']);
+  c.heap.get('out').properties.set('length',['num',0]);
+  assert.equal(restorePromiseJoinStateV8(restore(c),api).valid,true);
+});
+
+test('allSettled refuses missing or reused entries and false early settlement without committing',()=>{
+  const c=controller();promise(c,'first','rejected',['num',7]);promise(c,'later');promise(c,'joined');
+  join(c,'allSettled','joined',['first','later'],['j0','j1']);
+  const record={result:'joined',job:'j0',entry:'entry0',status:'pending',value:null};
+  for(const changed of [{entry:null},{entry:'j1'},{output:'out',status:'fulfilled',value:['ref','out']},
+    {status:'rejected',value:['num',7]}]){
+    const before=snapshot(c);
+    assert.throws(()=>step(c,{...record,...changed}),/entry|identity|settlement|output/);
+    assert.deepEqual(snapshot(c),before);
+  }
+  step(c,record);
+  const changed=restore(c);changed.heap.get('entry0').properties.set('reason',['num',8]);
+  assert.throws(()=>restorePromiseJoinStateV8(changed,api),/entry differs/);
+  const premature=restore(c);Object.assign(premature.heap.get('joined'),{state:'fulfilled',result:['ref','entry0']});
+  premature.heap.get('joined').join.settled=true;
+  assert.throws(()=>restorePromiseJoinStateV8(premature,api),/allSettled/);
+});
+
+test('collecting joins share the property budget and empty mutable result semantics',()=>{
+  for(const mode of ['all','allSettled']){
+    const c=controller();promise(c,'joined');join(c,mode,'joined',[],[],'out');
+    c.heap.get('out').properties.set('0',['num',8]);c.heap.get('out').properties.set('length',['num',1]);
+    assert.equal(restorePromiseJoinStateV8(restore(c),api).valid,true);
+    assert.throws(()=>validatePromiseJoinRecordV8({kind:'promise.join',mode,result:'joined',
+      inputs:Array(4096).fill('input'),jobs:Array.from({length:4096},(_,i)=>'j'+i),output:null,error:null}),/array length/);
+  }
+});

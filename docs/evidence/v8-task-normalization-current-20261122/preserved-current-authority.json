@@ -1,0 +1,28 @@
+{
+  "schema": "semantic-v8-task-authority-preservation/1",
+  "baseline": "cc0d61e98dc6252749f4a2a4c8b669d79b0f7efa",
+  "sourceRevision": "182c3f0fa9cce1065d9c4ef6ed10942b6ca2c30b",
+  "checks": [
+    {
+      "function": "checkRegistry",
+      "unchanged": true,
+      "sha256": "349db43138ebb73cc3073cb2e03c46b4b6f76c04895801ba5c910d85f5535c04"
+    },
+    {
+      "function": "verifyV8RecordedAdmissionBinding",
+      "unchanged": true,
+      "sha256": "8232a89e8930cfcf709acc87ac076f13855da7ad0ad9c6fe7038026e52aa0211"
+    },
+    {
+      "path": "test/v8-release-task-binding.test.js",
+      "unchanged": true,
+      "sha256": "67a8c73b9a107f24f1b881fa80fcf33fb66ea067bb7e12f1aba3a2bc790a334d"
+    },
+    {
+      "path": "test/qualification-progress.test.js",
+      "unchanged": true,
+      "sha256": "6ce42f023a82892f09112975210b56b6d75771725451c1b910e7775a190ef30d"
+    }
+  ],
+  "expectedSourceIdCaller": "The caller continues to pass result.row.sourceId into original-task binding, and checkRegistry requires that explicit identity."
+}

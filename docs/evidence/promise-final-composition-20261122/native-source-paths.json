@@ -1,0 +1,137 @@
+{
+  "schema": "promise-final-native-composition/1",
+  "candidateRevision": "6a8c27e0afb3b038d0f1431e87a821ca4f4c7dc7",
+  "candidateTree": "2dc26bd1c1fd57d98c8bf7136bf56e30a0898c4e",
+  "baselineRevision": "063860b172c6974e496b3ac189a023d57c3c501d",
+  "comparedTargetRevision": "622c37c23f93c4cc58ff226eb4805c766fee3166",
+  "pathCount": 14,
+  "paths": [
+    {
+      "path": "src/megatoken/data/async_call_v8.py",
+      "baseBlob": "36dd537f8a3c547d1e50b53fc454aa1e696cbb11",
+      "initialQualifiedBlob": "9348bc0998cdde3d555f68bb088d06a4ec609698",
+      "candidateBlob": "9348bc0998cdde3d555f68bb088d06a4ec609698",
+      "targetBlob": "36dd537f8a3c547d1e50b53fc454aa1e696cbb11",
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "src/megatoken/data/contracts/semantic-execution-v8.json",
+      "baseBlob": "c0b26ecd930ce33784e02bd2c769f52731e6cada",
+      "initialQualifiedBlob": "2ffe4bebded927a0ccd8171774f2d83716c3e648",
+      "candidateBlob": "2ffe4bebded927a0ccd8171774f2d83716c3e648",
+      "targetBlob": "c0b26ecd930ce33784e02bd2c769f52731e6cada",
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "src/megatoken/data/native_v8.py",
+      "baseBlob": "ac8803e729a1e40b5b97b73b5f56a188b5bf1356",
+      "initialQualifiedBlob": "fb3d3ec8f3c78492ec0a374cb558ee3f31c2c0a3",
+      "candidateBlob": "fb3d3ec8f3c78492ec0a374cb558ee3f31c2c0a3",
+      "targetBlob": "ac8803e729a1e40b5b97b73b5f56a188b5bf1356",
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "src/megatoken/data/promise_adoption_v8.py",
+      "baseBlob": null,
+      "initialQualifiedBlob": "2c6f52906e1d83e7dd00bb809015f19883ffd174",
+      "candidateBlob": "2c6f52906e1d83e7dd00bb809015f19883ffd174",
+      "targetBlob": null,
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "src/megatoken/data/promise_executor_v8.py",
+      "baseBlob": "d94e4f488db928505400facf8020182e4f6b677c",
+      "initialQualifiedBlob": "b2b4b686e8472278b70e6603dd1da496b31b735c",
+      "candidateBlob": "b2b4b686e8472278b70e6603dd1da496b31b735c",
+      "targetBlob": "d94e4f488db928505400facf8020182e4f6b677c",
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "src/megatoken/data/promise_scheduler_v8.py",
+      "baseBlob": "c4985a7c05853476c4ee0009a97230b377f5301e",
+      "initialQualifiedBlob": "7cefc8a0bebaa678a203c7843f9f030cf5cd8eb6",
+      "candidateBlob": "7cefc8a0bebaa678a203c7843f9f030cf5cd8eb6",
+      "targetBlob": "c4985a7c05853476c4ee0009a97230b377f5301e",
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "src/megatoken/data/protocol_v8.py",
+      "baseBlob": "86e6c0abb02ea7699a1b63a214e53f83d00011ea",
+      "initialQualifiedBlob": "427bbbf316b84e41d784a14c0603bb28cf93398e",
+      "candidateBlob": "427bbbf316b84e41d784a14c0603bb28cf93398e",
+      "targetBlob": "86e6c0abb02ea7699a1b63a214e53f83d00011ea",
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
+      "baseBlob": "83a4fb38173b42c6807f04aee31b3de6fd32257f",
+      "initialQualifiedBlob": "010c083817f999b90f70371fc52c7cb48a9ca95f",
+      "candidateBlob": "010c083817f999b90f70371fc52c7cb48a9ca95f",
+      "targetBlob": "83a4fb38173b42c6807f04aee31b3de6fd32257f",
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "tests/fixtures/semantic-protocol-source-v8.json",
+      "baseBlob": "5ac15b79398976ca7643e32e25c8806ec89514cb",
+      "initialQualifiedBlob": "0dfb20c028c698774874c84352458bf32c1a360f",
+      "candidateBlob": "0dfb20c028c698774874c84352458bf32c1a360f",
+      "targetBlob": "5ac15b79398976ca7643e32e25c8806ec89514cb",
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "tests/fixtures/semantic-regions-v8.json.gz.b64",
+      "baseBlob": "05b936f5b92b9c348bc4494441d91c15dde10b1e",
+      "initialQualifiedBlob": "efcf07ec6f7d042509a57332cf4319f370c28e3d",
+      "candidateBlob": "efcf07ec6f7d042509a57332cf4319f370c28e3d",
+      "targetBlob": "05b936f5b92b9c348bc4494441d91c15dde10b1e",
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "tests/test_async_call_v8.py",
+      "baseBlob": "2312c08bb31ae88a8d9467f916c5d98c77257c96",
+      "initialQualifiedBlob": "5f5283e05e5b0fc0313272d09166805f1b9007c7",
+      "candidateBlob": "dbfaaca2330b8c856b70eff3be46e6718f4686dc",
+      "targetBlob": "2312c08bb31ae88a8d9467f916c5d98c77257c96",
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "tests/test_promise_executor_boundaries_v8.py",
+      "baseBlob": "b039b666219e4a44e75e4de62bf67d7b196d2910",
+      "initialQualifiedBlob": "b9e2849dcad97ded52aeecf1c12b7e0626cfdef6",
+      "candidateBlob": "b9e2849dcad97ded52aeecf1c12b7e0626cfdef6",
+      "targetBlob": "b039b666219e4a44e75e4de62bf67d7b196d2910",
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "tests/test_promise_executor_v8.py",
+      "baseBlob": "4e0b3a69606d96b887b53129b99c4a46740252e0",
+      "initialQualifiedBlob": "72382824ad13c2405ba6919188eb130a048de03a",
+      "candidateBlob": "72382824ad13c2405ba6919188eb130a048de03a",
+      "targetBlob": "4e0b3a69606d96b887b53129b99c4a46740252e0",
+      "targetMatchesBaseline": true
+    },
+    {
+      "path": "tests/test_protocol_v8.py",
+      "baseBlob": "d9913bfaff02df4460af96f62b85e0eb8dac9c97",
+      "initialQualifiedBlob": "b170d7579a671e1f8673eb7ebb2eaa69b4fa029f",
+      "candidateBlob": "b170d7579a671e1f8673eb7ebb2eaa69b4fa029f",
+      "targetBlob": "d9913bfaff02df4460af96f62b85e0eb8dac9c97",
+      "targetMatchesBaseline": true
+    }
+  ],
+  "qualification": {
+    "canonicalProducer": "90756c533ee04afc2a41d8890d979e94456f9243",
+    "canonicalNative": "03a9e33866207b5b0c4105297c6050dacadcf85f",
+    "objectGuardSource": "95907736f46488662bc4f2bb5625abb9459d0f86",
+    "objectGuardHostedRun": 45042386283,
+    "objectGuardHostedProducer": "132b1d10b4de69d766ebc7969c6d4f0a9ed9b668",
+    "objectGuardHostedNativeCases": 104,
+    "objectGuardHostedProducerCases": 167,
+    "additionalOriginalSourceTests": 4,
+    "additionalPublicBoundaryTestsPerImplementation": 2,
+    "plannedFinalPromiseProducerCases": 173,
+    "plannedFinalPromiseNativeCases": 106,
+    "finalCombinedPairQualified": false
+  },
+  "instruction": "Apply only these mapped blobs after rechecking every target. Preserve independent recovery/release work and existing evidence. Update paired policy to the finally composed native commit; run the exact combined pair. This source map is not proof of final-pair qualification."
+}

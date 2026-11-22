@@ -1,0 +1,1989 @@
+{
+  "behaviorCensus": {
+    "test": {
+      "behaviors": {
+        "semantic_async": {
+          "families": [
+            "semantic-region-component:bb10df829d8d3bc8a2effef2407dd35ee8a63b69a579377656a880a802b6a380"
+          ],
+          "familyCount": 1,
+          "sourceCount": 2,
+          "sourceIds": [
+            "se-support-flag-intersection-callbacks-recovery",
+            "se-support-flag-intersection-repeated-2calls"
+          ]
+        },
+        "semantic_callback": {
+          "families": [
+            "semantic-region-component:bb10df829d8d3bc8a2effef2407dd35ee8a63b69a579377656a880a802b6a380"
+          ],
+          "familyCount": 1,
+          "sourceCount": 1,
+          "sourceIds": [
+            "se-support-flag-intersection-callbacks-recovery"
+          ]
+        },
+        "semantic_child": {
+          "families": [
+            "semantic-region-component:bb10df829d8d3bc8a2effef2407dd35ee8a63b69a579377656a880a802b6a380"
+          ],
+          "familyCount": 1,
+          "sourceCount": 1,
+          "sourceIds": [
+            "se-support-flag-intersection-child-teacher"
+          ]
+        },
+        "semantic_code_invocation": {
+          "families": [
+            "semantic-region-component:bb10df829d8d3bc8a2effef2407dd35ee8a63b69a579377656a880a802b6a380"
+          ],
+          "familyCount": 1,
+          "sourceCount": 4,
+          "sourceIds": [
+            "se-support-flag-intersection-callbacks-recovery",
+            "se-support-flag-intersection-child-teacher",
+            "se-support-flag-intersection-pure",
+            "se-support-flag-intersection-repeated-2calls"
+          ]
+        },
+        "semantic_recovery": {
+          "families": [
+            "semantic-region-component:bb10df829d8d3bc8a2effef2407dd35ee8a63b69a579377656a880a802b6a380"
+          ],
+          "familyCount": 1,
+          "sourceCount": 1,
+          "sourceIds": [
+            "se-support-flag-intersection-callbacks-recovery"
+          ]
+        },
+        "semantic_repeated_invocation": {
+          "families": [
+            "semantic-region-component:bb10df829d8d3bc8a2effef2407dd35ee8a63b69a579377656a880a802b6a380"
+          ],
+          "familyCount": 1,
+          "sourceCount": 1,
+          "sourceIds": [
+            "se-support-flag-intersection-repeated-2calls"
+          ]
+        },
+        "semantic_source_reread": {
+          "families": [
+            "semantic-region-component:bb10df829d8d3bc8a2effef2407dd35ee8a63b69a579377656a880a802b6a380"
+          ],
+          "familyCount": 1,
+          "sourceCount": 1,
+          "sourceIds": [
+            "se-support-flag-intersection-callbacks-recovery"
+          ]
+        },
+        "semantic_tool_feedback": {
+          "families": [
+            "semantic-region-component:bb10df829d8d3bc8a2effef2407dd35ee8a63b69a579377656a880a802b6a380"
+          ],
+          "familyCount": 1,
+          "sourceCount": 2,
+          "sourceIds": [
+            "se-support-flag-intersection-callbacks-recovery",
+            "se-support-flag-intersection-repeated-2calls"
+          ]
+        },
+        "semantic_v8": {
+          "families": [
+            "semantic-region-component:bb10df829d8d3bc8a2effef2407dd35ee8a63b69a579377656a880a802b6a380"
+          ],
+          "familyCount": 1,
+          "sourceCount": 4,
+          "sourceIds": [
+            "se-support-flag-intersection-callbacks-recovery",
+            "se-support-flag-intersection-child-teacher",
+            "se-support-flag-intersection-pure",
+            "se-support-flag-intersection-repeated-2calls"
+          ]
+        }
+      },
+      "episodes": 4,
+      "sourceIds": [
+        "se-support-flag-intersection-callbacks-recovery",
+        "se-support-flag-intersection-child-teacher",
+        "se-support-flag-intersection-pure",
+        "se-support-flag-intersection-repeated-2calls"
+      ]
+    },
+    "train": {
+      "behaviors": {
+        "semantic_async": {
+          "families": [
+            "semantic-region-component:10b3ed9f238f0f5c6a55e9fac2eae3cbce6cc3c0f2508e394bcebaa2892acf15",
+            "semantic-region-component:278ce1dd6454dd873ca1ddfa7cd8bd9b0b49a7077414be03d04ffa97467b20f5",
+            "semantic-region-component:2810225bd39ee29fc9b520821929ad4fd10279e3ce7f04c6333f1e3f856f5d10",
+            "semantic-region-component:4cac2df9aa81d53fa13aa676b4ecf6fcf509eacf16976c47039358f5ce9c0d59",
+            "semantic-region-component:58e0cba4da8f26193545567e8bfc4052d7a85f8220d4ed6b5ea4cc7fe97d611d",
+            "semantic-region-component:630db314e6b45b923df2230af632535c66aec8bee94a1eff727fd18c3a7b558f",
+            "semantic-region-component:9276c1e104f01ee35734cb872aaee2736eafb92c92fcf22a2c5e26a9b61ba582",
+            "semantic-region-component:adbd4924f7475bda7ec4355bd5323f5ce22d6563da8133c44f91815240b205d2",
+            "semantic-region-component:d0731a55049068fa6f23e8021b54ee3765549bff8f14ed52e80ed5f9c36fd322",
+            "semantic-region-component:d1b0424751b2577185e7dce0c5488b29519958ffb694a59086191b7c66a46953",
+            "semantic-region-component:e83b724c843457462d769a737ddfded2585d716c9fa223011bbc929ea3de65ce",
+            "semantic-region-component:e993a107df0c8e00e34da9e8d49e3cfb985a416c58191d884f17e6f3fbc110ee"
+          ],
+          "familyCount": 12,
+          "sourceCount": 24,
+          "sourceIds": [
+            "se-support-capped-budget-callbacks-recovery",
+            "se-support-capped-budget-repeated-2calls",
+            "se-support-flag-union-callbacks-recovery",
+            "se-support-flag-union-repeated-2calls",
+            "se-support-inventory-shortfall-callbacks-recovery",
+            "se-support-inventory-shortfall-repeated-2calls",
+            "se-support-midpoint-callbacks-recovery",
+            "se-support-midpoint-repeated-2calls",
+            "se-support-modular-clock-callbacks-recovery",
+            "se-support-modular-clock-repeated-2calls",
+            "se-support-overtime-rate-callbacks-recovery",
+            "se-support-overtime-rate-repeated-2calls",
+            "se-support-parity-adjustment-callbacks-recovery",
+            "se-support-parity-adjustment-repeated-2calls",
+            "se-support-rectangle-perimeter-callbacks-recovery",
+            "se-support-rectangle-perimeter-repeated-2calls",
+            "se-support-rectangular-capacity-callbacks-recovery",
+            "se-support-rectangular-capacity-repeated-2calls",
+            "se-support-relative-growth-callbacks-recovery",
+            "se-support-relative-growth-repeated-2calls",
+            "se-support-triangular-series-callbacks-recovery",
+            "se-support-triangular-series-repeated-2calls",
+            "se-support-weighted-average-callbacks-recovery",
+            "se-support-weighted-average-repeated-2calls"
+          ]
+        },
+        "semantic_callback": {
+          "families": [
+            "semantic-region-component:10b3ed9f238f0f5c6a55e9fac2eae3cbce6cc3c0f2508e394bcebaa2892acf15",
+            "semantic-region-component:278ce1dd6454dd873ca1ddfa7cd8bd9b0b49a7077414be03d04ffa97467b20f5",
+            "semantic-region-component:2810225bd39ee29fc9b520821929ad4fd10279e3ce7f04c6333f1e3f856f5d10",
+            "semantic-region-component:4cac2df9aa81d53fa13aa676b4ecf6fcf509eacf16976c47039358f5ce9c0d59",
+            "semantic-region-component:58e0cba4da8f26193545567e8bfc4052d7a85f8220d4ed6b5ea4cc7fe97d611d",
+            "semantic-region-component:630db314e6b45b923df2230af632535c66aec8bee94a1eff727fd18c3a7b558f",
+            "semantic-region-component:9276c1e104f01ee35734cb872aaee2736eafb92c92fcf22a2c5e26a9b61ba582",
+            "semantic-region-component:adbd4924f7475bda7ec4355bd5323f5ce22d6563da8133c44f91815240b205d2",
+            "semantic-region-component:d0731a55049068fa6f23e8021b54ee3765549bff8f14ed52e80ed5f9c36fd322",
+            "semantic-region-component:d1b0424751b2577185e7dce0c5488b29519958ffb694a59086191b7c66a46953",
+            "semantic-region-component:e83b724c843457462d769a737ddfded2585d716c9fa223011bbc929ea3de65ce",
+            "semantic-region-component:e993a107df0c8e00e34da9e8d49e3cfb985a416c58191d884f17e6f3fbc110ee"
+          ],
+          "familyCount": 12,
+          "sourceCount": 12,
+          "sourceIds": [
+            "se-support-capped-budget-callbacks-recovery",
+            "se-support-flag-union-callbacks-recovery",
+            "se-support-inventory-shortfall-callbacks-recovery",
+            "se-support-midpoint-callbacks-recovery",
+            "se-support-modular-clock-callbacks-recovery",
+            "se-support-overtime-rate-callbacks-recovery",
+            "se-support-parity-adjustment-callbacks-recovery",
+            "se-support-rectangle-perimeter-callbacks-recovery",
+            "se-support-rectangular-capacity-callbacks-recovery",
+            "se-support-relative-growth-callbacks-recovery",
+            "se-support-triangular-series-callbacks-recovery",
+            "se-support-weighted-average-callbacks-recovery"
+          ]
+        },
+        "semantic_child": {
+          "families": [
+            "semantic-region-component:10b3ed9f238f0f5c6a55e9fac2eae3cbce6cc3c0f2508e394bcebaa2892acf15",
+            "semantic-region-component:278ce1dd6454dd873ca1ddfa7cd8bd9b0b49a7077414be03d04ffa97467b20f5",
+            "semantic-region-component:2810225bd39ee29fc9b520821929ad4fd10279e3ce7f04c6333f1e3f856f5d10",
+            "semantic-region-component:4cac2df9aa81d53fa13aa676b4ecf6fcf509eacf16976c47039358f5ce9c0d59",
+            "semantic-region-component:58e0cba4da8f26193545567e8bfc4052d7a85f8220d4ed6b5ea4cc7fe97d611d",
+            "semantic-region-component:630db314e6b45b923df2230af632535c66aec8bee94a1eff727fd18c3a7b558f",
+            "semantic-region-component:9276c1e104f01ee35734cb872aaee2736eafb92c92fcf22a2c5e26a9b61ba582",
+            "semantic-region-component:adbd4924f7475bda7ec4355bd5323f5ce22d6563da8133c44f91815240b205d2",
+            "semantic-region-component:d0731a55049068fa6f23e8021b54ee3765549bff8f14ed52e80ed5f9c36fd322",
+            "semantic-region-component:d1b0424751b2577185e7dce0c5488b29519958ffb694a59086191b7c66a46953",
+            "semantic-region-component:e83b724c843457462d769a737ddfded2585d716c9fa223011bbc929ea3de65ce",
+            "semantic-region-component:e993a107df0c8e00e34da9e8d49e3cfb985a416c58191d884f17e6f3fbc110ee"
+          ],
+          "familyCount": 12,
+          "sourceCount": 12,
+          "sourceIds": [
+            "se-support-capped-budget-child-teacher",
+            "se-support-flag-union-child-teacher",
+            "se-support-inventory-shortfall-child-teacher",
+            "se-support-midpoint-child-teacher",
+            "se-support-modular-clock-child-teacher",
+            "se-support-overtime-rate-child-teacher",
+            "se-support-parity-adjustment-child-teacher",
+            "se-support-rectangle-perimeter-child-teacher",
+            "se-support-rectangular-capacity-child-teacher",
+            "se-support-relative-growth-child-teacher",
+            "se-support-triangular-series-child-teacher",
+            "se-support-weighted-average-child-teacher"
+          ]
+        },
+        "semantic_code_invocation": {
+          "families": [
+            "semantic-region-component:10b3ed9f238f0f5c6a55e9fac2eae3cbce6cc3c0f2508e394bcebaa2892acf15",
+            "semantic-region-component:278ce1dd6454dd873ca1ddfa7cd8bd9b0b49a7077414be03d04ffa97467b20f5",
+            "semantic-region-component:2810225bd39ee29fc9b520821929ad4fd10279e3ce7f04c6333f1e3f856f5d10",
+            "semantic-region-component:4cac2df9aa81d53fa13aa676b4ecf6fcf509eacf16976c47039358f5ce9c0d59",
+            "semantic-region-component:58e0cba4da8f26193545567e8bfc4052d7a85f8220d4ed6b5ea4cc7fe97d611d",
+            "semantic-region-component:630db314e6b45b923df2230af632535c66aec8bee94a1eff727fd18c3a7b558f",
+            "semantic-region-component:9276c1e104f01ee35734cb872aaee2736eafb92c92fcf22a2c5e26a9b61ba582",
+            "semantic-region-component:adbd4924f7475bda7ec4355bd5323f5ce22d6563da8133c44f91815240b205d2",
+            "semantic-region-component:d0731a55049068fa6f23e8021b54ee3765549bff8f14ed52e80ed5f9c36fd322",
+            "semantic-region-component:d1b0424751b2577185e7dce0c5488b29519958ffb694a59086191b7c66a46953",
+            "semantic-region-component:e83b724c843457462d769a737ddfded2585d716c9fa223011bbc929ea3de65ce",
+            "semantic-region-component:e993a107df0c8e00e34da9e8d49e3cfb985a416c58191d884f17e6f3fbc110ee"
+          ],
+          "familyCount": 12,
+          "sourceCount": 48,
+          "sourceIds": [
+            "se-support-capped-budget-callbacks-recovery",
+            "se-support-capped-budget-child-teacher",
+            "se-support-capped-budget-pure",
+            "se-support-capped-budget-repeated-2calls",
+            "se-support-flag-union-callbacks-recovery",
+            "se-support-flag-union-child-teacher",
+            "se-support-flag-union-pure",
+            "se-support-flag-union-repeated-2calls",
+            "se-support-inventory-shortfall-callbacks-recovery",
+            "se-support-inventory-shortfall-child-teacher",
+            "se-support-inventory-shortfall-pure",
+            "se-support-inventory-shortfall-repeated-2calls",
+            "se-support-midpoint-callbacks-recovery",
+            "se-support-midpoint-child-teacher",
+            "se-support-midpoint-pure",
+            "se-support-midpoint-repeated-2calls",
+            "se-support-modular-clock-callbacks-recovery",
+            "se-support-modular-clock-child-teacher",
+            "se-support-modular-clock-pure",
+            "se-support-modular-clock-repeated-2calls",
+            "se-support-overtime-rate-callbacks-recovery",
+            "se-support-overtime-rate-child-teacher",
+            "se-support-overtime-rate-pure",
+            "se-support-overtime-rate-repeated-2calls",
+            "se-support-parity-adjustment-callbacks-recovery",
+            "se-support-parity-adjustment-child-teacher",
+            "se-support-parity-adjustment-pure",
+            "se-support-parity-adjustment-repeated-2calls",
+            "se-support-rectangle-perimeter-callbacks-recovery",
+            "se-support-rectangle-perimeter-child-teacher",
+            "se-support-rectangle-perimeter-pure",
+            "se-support-rectangle-perimeter-repeated-2calls",
+            "se-support-rectangular-capacity-callbacks-recovery",
+            "se-support-rectangular-capacity-child-teacher",
+            "se-support-rectangular-capacity-pure",
+            "se-support-rectangular-capacity-repeated-2calls",
+            "se-support-relative-growth-callbacks-recovery",
+            "se-support-relative-growth-child-teacher",
+            "se-support-relative-growth-pure",
+            "se-support-relative-growth-repeated-2calls",
+            "se-support-triangular-series-callbacks-recovery",
+            "se-support-triangular-series-child-teacher",
+            "se-support-triangular-series-pure",
+            "se-support-triangular-series-repeated-2calls",
+            "se-support-weighted-average-callbacks-recovery",
+            "se-support-weighted-average-child-teacher",
+            "se-support-weighted-average-pure",
+            "se-support-weighted-average-repeated-2calls"
+          ]
+        },
+        "semantic_recovery": {
+          "families": [
+            "semantic-region-component:10b3ed9f238f0f5c6a55e9fac2eae3cbce6cc3c0f2508e394bcebaa2892acf15",
+            "semantic-region-component:278ce1dd6454dd873ca1ddfa7cd8bd9b0b49a7077414be03d04ffa97467b20f5",
+            "semantic-region-component:2810225bd39ee29fc9b520821929ad4fd10279e3ce7f04c6333f1e3f856f5d10",
+            "semantic-region-component:4cac2df9aa81d53fa13aa676b4ecf6fcf509eacf16976c47039358f5ce9c0d59",
+            "semantic-region-component:58e0cba4da8f26193545567e8bfc4052d7a85f8220d4ed6b5ea4cc7fe97d611d",
+            "semantic-region-component:630db314e6b45b923df2230af632535c66aec8bee94a1eff727fd18c3a7b558f",
+            "semantic-region-component:9276c1e104f01ee35734cb872aaee2736eafb92c92fcf22a2c5e26a9b61ba582",
+            "semantic-region-component:adbd4924f7475bda7ec4355bd5323f5ce22d6563da8133c44f91815240b205d2",
+            "semantic-region-component:d0731a55049068fa6f23e8021b54ee3765549bff8f14ed52e80ed5f9c36fd322",
+            "semantic-region-component:d1b0424751b2577185e7dce0c5488b29519958ffb694a59086191b7c66a46953",
+            "semantic-region-component:e83b724c843457462d769a737ddfded2585d716c9fa223011bbc929ea3de65ce",
+            "semantic-region-component:e993a107df0c8e00e34da9e8d49e3cfb985a416c58191d884f17e6f3fbc110ee"
+          ],
+          "familyCount": 12,
+          "sourceCount": 12,
+          "sourceIds": [
+            "se-support-capped-budget-callbacks-recovery",
+            "se-support-flag-union-callbacks-recovery",
+            "se-support-inventory-shortfall-callbacks-recovery",
+            "se-support-midpoint-callbacks-recovery",
+            "se-support-modular-clock-callbacks-recovery",
+            "se-support-overtime-rate-callbacks-recovery",
+            "se-support-parity-adjustment-callbacks-recovery",
+            "se-support-rectangle-perimeter-callbacks-recovery",
+            "se-support-rectangular-capacity-callbacks-recovery",
+            "se-support-relative-growth-callbacks-recovery",
+            "se-support-triangular-series-callbacks-recovery",
+            "se-support-weighted-average-callbacks-recovery"
+          ]
+        },
+        "semantic_repeated_invocation": {
+          "families": [
+            "semantic-region-component:10b3ed9f238f0f5c6a55e9fac2eae3cbce6cc3c0f2508e394bcebaa2892acf15",
+            "semantic-region-component:278ce1dd6454dd873ca1ddfa7cd8bd9b0b49a7077414be03d04ffa97467b20f5",
+            "semantic-region-component:2810225bd39ee29fc9b520821929ad4fd10279e3ce7f04c6333f1e3f856f5d10",
+            "semantic-region-component:4cac2df9aa81d53fa13aa676b4ecf6fcf509eacf16976c47039358f5ce9c0d59",
+            "semantic-region-component:58e0cba4da8f26193545567e8bfc4052d7a85f8220d4ed6b5ea4cc7fe97d611d",
+            "semantic-region-component:630db314e6b45b923df2230af632535c66aec8bee94a1eff727fd18c3a7b558f",
+            "semantic-region-component:9276c1e104f01ee35734cb872aaee2736eafb92c92fcf22a2c5e26a9b61ba582",
+            "semantic-region-component:adbd4924f7475bda7ec4355bd5323f5ce22d6563da8133c44f91815240b205d2",
+            "semantic-region-component:d0731a55049068fa6f23e8021b54ee3765549bff8f14ed52e80ed5f9c36fd322",
+            "semantic-region-component:d1b0424751b2577185e7dce0c5488b29519958ffb694a59086191b7c66a46953",
+            "semantic-region-component:e83b724c843457462d769a737ddfded2585d716c9fa223011bbc929ea3de65ce",
+            "semantic-region-component:e993a107df0c8e00e34da9e8d49e3cfb985a416c58191d884f17e6f3fbc110ee"
+          ],
+          "familyCount": 12,
+          "sourceCount": 12,
+          "sourceIds": [
+            "se-support-capped-budget-repeated-2calls",
+            "se-support-flag-union-repeated-2calls",
+            "se-support-inventory-shortfall-repeated-2calls",
+            "se-support-midpoint-repeated-2calls",
+            "se-support-modular-clock-repeated-2calls",
+            "se-support-overtime-rate-repeated-2calls",
+            "se-support-parity-adjustment-repeated-2calls",
+            "se-support-rectangle-perimeter-repeated-2calls",
+            "se-support-rectangular-capacity-repeated-2calls",
+            "se-support-relative-growth-repeated-2calls",
+            "se-support-triangular-series-repeated-2calls",
+            "se-support-weighted-average-repeated-2calls"
+          ]
+        },
+        "semantic_source_reread": {
+          "families": [
+            "semantic-region-component:10b3ed9f238f0f5c6a55e9fac2eae3cbce6cc3c0f2508e394bcebaa2892acf15",
+            "semantic-region-component:278ce1dd6454dd873ca1ddfa7cd8bd9b0b49a7077414be03d04ffa97467b20f5",
+            "semantic-region-component:2810225bd39ee29fc9b520821929ad4fd10279e3ce7f04c6333f1e3f856f5d10",
+            "semantic-region-component:4cac2df9aa81d53fa13aa676b4ecf6fcf509eacf16976c47039358f5ce9c0d59",
+            "semantic-region-component:58e0cba4da8f26193545567e8bfc4052d7a85f8220d4ed6b5ea4cc7fe97d611d",
+            "semantic-region-component:630db314e6b45b923df2230af632535c66aec8bee94a1eff727fd18c3a7b558f",
+            "semantic-region-component:9276c1e104f01ee35734cb872aaee2736eafb92c92fcf22a2c5e26a9b61ba582",
+            "semantic-region-component:adbd4924f7475bda7ec4355bd5323f5ce22d6563da8133c44f91815240b205d2",
+            "semantic-region-component:d0731a55049068fa6f23e8021b54ee3765549bff8f14ed52e80ed5f9c36fd322",
+            "semantic-region-component:d1b0424751b2577185e7dce0c5488b29519958ffb694a59086191b7c66a46953",
+            "semantic-region-component:e83b724c843457462d769a737ddfded2585d716c9fa223011bbc929ea3de65ce",
+            "semantic-region-component:e993a107df0c8e00e34da9e8d49e3cfb985a416c58191d884f17e6f3fbc110ee"
+          ],
+          "familyCount": 12,
+          "sourceCount": 12,
+          "sourceIds": [
+            "se-support-capped-budget-callbacks-recovery",
+            "se-support-flag-union-callbacks-recovery",
+            "se-support-inventory-shortfall-callbacks-recovery",
+            "se-support-midpoint-callbacks-recovery",
+            "se-support-modular-clock-callbacks-recovery",
+            "se-support-overtime-rate-callbacks-recovery",
+            "se-support-parity-adjustment-callbacks-recovery",
+            "se-support-rectangle-perimeter-callbacks-recovery",
+            "se-support-rectangular-capacity-callbacks-recovery",
+            "se-support-relative-growth-callbacks-recovery",
+            "se-support-triangular-series-callbacks-recovery",
+            "se-support-weighted-average-callbacks-recovery"
+          ]
+        },
+        "semantic_tool_feedback": {
+          "families": [
+            "semantic-region-component:10b3ed9f238f0f5c6a55e9fac2eae3cbce6cc3c0f2508e394bcebaa2892acf15",
+            "semantic-region-component:278ce1dd6454dd873ca1ddfa7cd8bd9b0b49a7077414be03d04ffa97467b20f5",
+            "semantic-region-component:2810225bd39ee29fc9b520821929ad4fd10279e3ce7f04c6333f1e3f856f5d10",
+            "semantic-region-component:4cac2df9aa81d53fa13aa676b4ecf6fcf509eacf16976c47039358f5ce9c0d59",
+            "semantic-region-component:58e0cba4da8f26193545567e8bfc4052d7a85f8220d4ed6b5ea4cc7fe97d611d",
+            "semantic-region-component:630db314e6b45b923df2230af632535c66aec8bee94a1eff727fd18c3a7b558f",
+            "semantic-region-component:9276c1e104f01ee35734cb872aaee2736eafb92c92fcf22a2c5e26a9b61ba582",
+            "semantic-region-component:adbd4924f7475bda7ec4355bd5323f5ce22d6563da8133c44f91815240b205d2",
+            "semantic-region-component:d0731a55049068fa6f23e8021b54ee3765549bff8f14ed52e80ed5f9c36fd322",
+            "semantic-region-component:d1b0424751b2577185e7dce0c5488b29519958ffb694a59086191b7c66a46953",
+            "semantic-region-component:e83b724c843457462d769a737ddfded2585d716c9fa223011bbc929ea3de65ce",
+            "semantic-region-component:e993a107df0c8e00e34da9e8d49e3cfb985a416c58191d884f17e6f3fbc110ee"
+          ],
+          "familyCount": 12,
+          "sourceCount": 24,
+          "sourceIds": [
+            "se-support-capped-budget-callbacks-recovery",
+            "se-support-capped-budget-repeated-2calls",
+            "se-support-flag-union-callbacks-recovery",
+            "se-support-flag-union-repeated-2calls",
+            "se-support-inventory-shortfall-callbacks-recovery",
+            "se-support-inventory-shortfall-repeated-2calls",
+            "se-support-midpoint-callbacks-recovery",
+            "se-support-midpoint-repeated-2calls",
+            "se-support-modular-clock-callbacks-recovery",
+            "se-support-modular-clock-repeated-2calls",
+            "se-support-overtime-rate-callbacks-recovery",
+            "se-support-overtime-rate-repeated-2calls",
+            "se-support-parity-adjustment-callbacks-recovery",
+            "se-support-parity-adjustment-repeated-2calls",
+            "se-support-rectangle-perimeter-callbacks-recovery",
+            "se-support-rectangle-perimeter-repeated-2calls",
+            "se-support-rectangular-capacity-callbacks-recovery",
+            "se-support-rectangular-capacity-repeated-2calls",
+            "se-support-relative-growth-callbacks-recovery",
+            "se-support-relative-growth-repeated-2calls",
+            "se-support-triangular-series-callbacks-recovery",
+            "se-support-triangular-series-repeated-2calls",
+            "se-support-weighted-average-callbacks-recovery",
+            "se-support-weighted-average-repeated-2calls"
+          ]
+        },
+        "semantic_v8": {
+          "families": [
+            "semantic-region-component:10b3ed9f238f0f5c6a55e9fac2eae3cbce6cc3c0f2508e394bcebaa2892acf15",
+            "semantic-region-component:278ce1dd6454dd873ca1ddfa7cd8bd9b0b49a7077414be03d04ffa97467b20f5",
+            "semantic-region-component:2810225bd39ee29fc9b520821929ad4fd10279e3ce7f04c6333f1e3f856f5d10",
+            "semantic-region-component:4cac2df9aa81d53fa13aa676b4ecf6fcf509eacf16976c47039358f5ce9c0d59",
+            "semantic-region-component:58e0cba4da8f26193545567e8bfc4052d7a85f8220d4ed6b5ea4cc7fe97d611d",
+            "semantic-region-component:630db314e6b45b923df2230af632535c66aec8bee94a1eff727fd18c3a7b558f",
+            "semantic-region-component:9276c1e104f01ee35734cb872aaee2736eafb92c92fcf22a2c5e26a9b61ba582",
+            "semantic-region-component:adbd4924f7475bda7ec4355bd5323f5ce22d6563da8133c44f91815240b205d2",
+            "semantic-region-component:d0731a55049068fa6f23e8021b54ee3765549bff8f14ed52e80ed5f9c36fd322",
+            "semantic-region-component:d1b0424751b2577185e7dce0c5488b29519958ffb694a59086191b7c66a46953",
+            "semantic-region-component:e83b724c843457462d769a737ddfded2585d716c9fa223011bbc929ea3de65ce",
+            "semantic-region-component:e993a107df0c8e00e34da9e8d49e3cfb985a416c58191d884f17e6f3fbc110ee"
+          ],
+          "familyCount": 12,
+          "sourceCount": 48,
+          "sourceIds": [
+            "se-support-capped-budget-callbacks-recovery",
+            "se-support-capped-budget-child-teacher",
+            "se-support-capped-budget-pure",
+            "se-support-capped-budget-repeated-2calls",
+            "se-support-flag-union-callbacks-recovery",
+            "se-support-flag-union-child-teacher",
+            "se-support-flag-union-pure",
+            "se-support-flag-union-repeated-2calls",
+            "se-support-inventory-shortfall-callbacks-recovery",
+            "se-support-inventory-shortfall-child-teacher",
+            "se-support-inventory-shortfall-pure",
+            "se-support-inventory-shortfall-repeated-2calls",
+            "se-support-midpoint-callbacks-recovery",
+            "se-support-midpoint-child-teacher",
+            "se-support-midpoint-pure",
+            "se-support-midpoint-repeated-2calls",
+            "se-support-modular-clock-callbacks-recovery",
+            "se-support-modular-clock-child-teacher",
+            "se-support-modular-clock-pure",
+            "se-support-modular-clock-repeated-2calls",
+            "se-support-overtime-rate-callbacks-recovery",
+            "se-support-overtime-rate-child-teacher",
+            "se-support-overtime-rate-pure",
+            "se-support-overtime-rate-repeated-2calls",
+            "se-support-parity-adjustment-callbacks-recovery",
+            "se-support-parity-adjustment-child-teacher",
+            "se-support-parity-adjustment-pure",
+            "se-support-parity-adjustment-repeated-2calls",
+            "se-support-rectangle-perimeter-callbacks-recovery",
+            "se-support-rectangle-perimeter-child-teacher",
+            "se-support-rectangle-perimeter-pure",
+            "se-support-rectangle-perimeter-repeated-2calls",
+            "se-support-rectangular-capacity-callbacks-recovery",
+            "se-support-rectangular-capacity-child-teacher",
+            "se-support-rectangular-capacity-pure",
+            "se-support-rectangular-capacity-repeated-2calls",
+            "se-support-relative-growth-callbacks-recovery",
+            "se-support-relative-growth-child-teacher",
+            "se-support-relative-growth-pure",
+            "se-support-relative-growth-repeated-2calls",
+            "se-support-triangular-series-callbacks-recovery",
+            "se-support-triangular-series-child-teacher",
+            "se-support-triangular-series-pure",
+            "se-support-triangular-series-repeated-2calls",
+            "se-support-weighted-average-callbacks-recovery",
+            "se-support-weighted-average-child-teacher",
+            "se-support-weighted-average-pure",
+            "se-support-weighted-average-repeated-2calls"
+          ]
+        }
+      },
+      "episodes": 48,
+      "sourceIds": [
+        "se-support-capped-budget-callbacks-recovery",
+        "se-support-capped-budget-child-teacher",
+        "se-support-capped-budget-pure",
+        "se-support-capped-budget-repeated-2calls",
+        "se-support-flag-union-callbacks-recovery",
+        "se-support-flag-union-child-teacher",
+        "se-support-flag-union-pure",
+        "se-support-flag-union-repeated-2calls",
+        "se-support-inventory-shortfall-callbacks-recovery",
+        "se-support-inventory-shortfall-child-teacher",
+        "se-support-inventory-shortfall-pure",
+        "se-support-inventory-shortfall-repeated-2calls",
+        "se-support-midpoint-callbacks-recovery",
+        "se-support-midpoint-child-teacher",
+        "se-support-midpoint-pure",
+        "se-support-midpoint-repeated-2calls",
+        "se-support-modular-clock-callbacks-recovery",
+        "se-support-modular-clock-child-teacher",
+        "se-support-modular-clock-pure",
+        "se-support-modular-clock-repeated-2calls",
+        "se-support-overtime-rate-callbacks-recovery",
+        "se-support-overtime-rate-child-teacher",
+        "se-support-overtime-rate-pure",
+        "se-support-overtime-rate-repeated-2calls",
+        "se-support-parity-adjustment-callbacks-recovery",
+        "se-support-parity-adjustment-child-teacher",
+        "se-support-parity-adjustment-pure",
+        "se-support-parity-adjustment-repeated-2calls",
+        "se-support-rectangle-perimeter-callbacks-recovery",
+        "se-support-rectangle-perimeter-child-teacher",
+        "se-support-rectangle-perimeter-pure",
+        "se-support-rectangle-perimeter-repeated-2calls",
+        "se-support-rectangular-capacity-callbacks-recovery",
+        "se-support-rectangular-capacity-child-teacher",
+        "se-support-rectangular-capacity-pure",
+        "se-support-rectangular-capacity-repeated-2calls",
+        "se-support-relative-growth-callbacks-recovery",
+        "se-support-relative-growth-child-teacher",
+        "se-support-relative-growth-pure",
+        "se-support-relative-growth-repeated-2calls",
+        "se-support-triangular-series-callbacks-recovery",
+        "se-support-triangular-series-child-teacher",
+        "se-support-triangular-series-pure",
+        "se-support-triangular-series-repeated-2calls",
+        "se-support-weighted-average-callbacks-recovery",
+        "se-support-weighted-average-child-teacher",
+        "se-support-weighted-average-pure",
+        "se-support-weighted-average-repeated-2calls"
+      ]
+    },
+    "validation": {
+      "behaviors": {
+        "semantic_async": {
+          "families": [
+            "semantic-region-component:3f52269c68d73cca4941733ef8493060227f73e5513725e1be4bb9f9bd6e5033",
+            "semantic-region-component:a892c5ffd02a0afa836ba12c56de9df13e3f01c2fe6c88f0eac880dfd0c50076",
+            "semantic-region-component:d623b5662703c9c5e9aa0a0798acffed3ee62c103a5e8c05cb5c87e2e18df8a6"
+          ],
+          "familyCount": 3,
+          "sourceCount": 6,
+          "sourceIds": [
+            "se-support-absolute-distance-callbacks-recovery",
+            "se-support-absolute-distance-repeated-2calls",
+            "se-support-squared-distance-callbacks-recovery",
+            "se-support-squared-distance-repeated-2calls",
+            "se-support-unit-conversion-callbacks-recovery",
+            "se-support-unit-conversion-repeated-2calls"
+          ]
+        },
+        "semantic_callback": {
+          "families": [
+            "semantic-region-component:3f52269c68d73cca4941733ef8493060227f73e5513725e1be4bb9f9bd6e5033",
+            "semantic-region-component:a892c5ffd02a0afa836ba12c56de9df13e3f01c2fe6c88f0eac880dfd0c50076",
+            "semantic-region-component:d623b5662703c9c5e9aa0a0798acffed3ee62c103a5e8c05cb5c87e2e18df8a6"
+          ],
+          "familyCount": 3,
+          "sourceCount": 3,
+          "sourceIds": [
+            "se-support-absolute-distance-callbacks-recovery",
+            "se-support-squared-distance-callbacks-recovery",
+            "se-support-unit-conversion-callbacks-recovery"
+          ]
+        },
+        "semantic_child": {
+          "families": [
+            "semantic-region-component:3f52269c68d73cca4941733ef8493060227f73e5513725e1be4bb9f9bd6e5033",
+            "semantic-region-component:a892c5ffd02a0afa836ba12c56de9df13e3f01c2fe6c88f0eac880dfd0c50076",
+            "semantic-region-component:d623b5662703c9c5e9aa0a0798acffed3ee62c103a5e8c05cb5c87e2e18df8a6"
+          ],
+          "familyCount": 3,
+          "sourceCount": 3,
+          "sourceIds": [
+            "se-support-absolute-distance-child-teacher",
+            "se-support-squared-distance-child-teacher",
+            "se-support-unit-conversion-child-teacher"
+          ]
+        },
+        "semantic_code_invocation": {
+          "families": [
+            "semantic-region-component:3f52269c68d73cca4941733ef8493060227f73e5513725e1be4bb9f9bd6e5033",
+            "semantic-region-component:a892c5ffd02a0afa836ba12c56de9df13e3f01c2fe6c88f0eac880dfd0c50076",
+            "semantic-region-component:d623b5662703c9c5e9aa0a0798acffed3ee62c103a5e8c05cb5c87e2e18df8a6"
+          ],
+          "familyCount": 3,
+          "sourceCount": 12,
+          "sourceIds": [
+            "se-support-absolute-distance-callbacks-recovery",
+            "se-support-absolute-distance-child-teacher",
+            "se-support-absolute-distance-pure",
+            "se-support-absolute-distance-repeated-2calls",
+            "se-support-squared-distance-callbacks-recovery",
+            "se-support-squared-distance-child-teacher",
+            "se-support-squared-distance-pure",
+            "se-support-squared-distance-repeated-2calls",
+            "se-support-unit-conversion-callbacks-recovery",
+            "se-support-unit-conversion-child-teacher",
+            "se-support-unit-conversion-pure",
+            "se-support-unit-conversion-repeated-2calls"
+          ]
+        },
+        "semantic_recovery": {
+          "families": [
+            "semantic-region-component:3f52269c68d73cca4941733ef8493060227f73e5513725e1be4bb9f9bd6e5033",
+            "semantic-region-component:a892c5ffd02a0afa836ba12c56de9df13e3f01c2fe6c88f0eac880dfd0c50076",
+            "semantic-region-component:d623b5662703c9c5e9aa0a0798acffed3ee62c103a5e8c05cb5c87e2e18df8a6"
+          ],
+          "familyCount": 3,
+          "sourceCount": 3,
+          "sourceIds": [
+            "se-support-absolute-distance-callbacks-recovery",
+            "se-support-squared-distance-callbacks-recovery",
+            "se-support-unit-conversion-callbacks-recovery"
+          ]
+        },
+        "semantic_repeated_invocation": {
+          "families": [
+            "semantic-region-component:3f52269c68d73cca4941733ef8493060227f73e5513725e1be4bb9f9bd6e5033",
+            "semantic-region-component:a892c5ffd02a0afa836ba12c56de9df13e3f01c2fe6c88f0eac880dfd0c50076",
+            "semantic-region-component:d623b5662703c9c5e9aa0a0798acffed3ee62c103a5e8c05cb5c87e2e18df8a6"
+          ],
+          "familyCount": 3,
+          "sourceCount": 3,
+          "sourceIds": [
+            "se-support-absolute-distance-repeated-2calls",
+            "se-support-squared-distance-repeated-2calls",
+            "se-support-unit-conversion-repeated-2calls"
+          ]
+        },
+        "semantic_source_reread": {
+          "families": [
+            "semantic-region-component:3f52269c68d73cca4941733ef8493060227f73e5513725e1be4bb9f9bd6e5033",
+            "semantic-region-component:a892c5ffd02a0afa836ba12c56de9df13e3f01c2fe6c88f0eac880dfd0c50076",
+            "semantic-region-component:d623b5662703c9c5e9aa0a0798acffed3ee62c103a5e8c05cb5c87e2e18df8a6"
+          ],
+          "familyCount": 3,
+          "sourceCount": 3,
+          "sourceIds": [
+            "se-support-absolute-distance-callbacks-recovery",
+            "se-support-squared-distance-callbacks-recovery",
+            "se-support-unit-conversion-callbacks-recovery"
+          ]
+        },
+        "semantic_tool_feedback": {
+          "families": [
+            "semantic-region-component:3f52269c68d73cca4941733ef8493060227f73e5513725e1be4bb9f9bd6e5033",
+            "semantic-region-component:a892c5ffd02a0afa836ba12c56de9df13e3f01c2fe6c88f0eac880dfd0c50076",
+            "semantic-region-component:d623b5662703c9c5e9aa0a0798acffed3ee62c103a5e8c05cb5c87e2e18df8a6"
+          ],
+          "familyCount": 3,
+          "sourceCount": 6,
+          "sourceIds": [
+            "se-support-absolute-distance-callbacks-recovery",
+            "se-support-absolute-distance-repeated-2calls",
+            "se-support-squared-distance-callbacks-recovery",
+            "se-support-squared-distance-repeated-2calls",
+            "se-support-unit-conversion-callbacks-recovery",
+            "se-support-unit-conversion-repeated-2calls"
+          ]
+        },
+        "semantic_v8": {
+          "families": [
+            "semantic-region-component:3f52269c68d73cca4941733ef8493060227f73e5513725e1be4bb9f9bd6e5033",
+            "semantic-region-component:a892c5ffd02a0afa836ba12c56de9df13e3f01c2fe6c88f0eac880dfd0c50076",
+            "semantic-region-component:d623b5662703c9c5e9aa0a0798acffed3ee62c103a5e8c05cb5c87e2e18df8a6"
+          ],
+          "familyCount": 3,
+          "sourceCount": 12,
+          "sourceIds": [
+            "se-support-absolute-distance-callbacks-recovery",
+            "se-support-absolute-distance-child-teacher",
+            "se-support-absolute-distance-pure",
+            "se-support-absolute-distance-repeated-2calls",
+            "se-support-squared-distance-callbacks-recovery",
+            "se-support-squared-distance-child-teacher",
+            "se-support-squared-distance-pure",
+            "se-support-squared-distance-repeated-2calls",
+            "se-support-unit-conversion-callbacks-recovery",
+            "se-support-unit-conversion-child-teacher",
+            "se-support-unit-conversion-pure",
+            "se-support-unit-conversion-repeated-2calls"
+          ]
+        }
+      },
+      "episodes": 12,
+      "sourceIds": [
+        "se-support-absolute-distance-callbacks-recovery",
+        "se-support-absolute-distance-child-teacher",
+        "se-support-absolute-distance-pure",
+        "se-support-absolute-distance-repeated-2calls",
+        "se-support-squared-distance-callbacks-recovery",
+        "se-support-squared-distance-child-teacher",
+        "se-support-squared-distance-pure",
+        "se-support-squared-distance-repeated-2calls",
+        "se-support-unit-conversion-callbacks-recovery",
+        "se-support-unit-conversion-child-teacher",
+        "se-support-unit-conversion-pure",
+        "se-support-unit-conversion-repeated-2calls"
+      ]
+    }
+  },
+  "codec": {
+    "bytes": 12205732,
+    "fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "path": "/home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json",
+    "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "vocabularySize": 157184
+  },
+  "consumer": {
+    "clean": true,
+    "revision": "e9817ad637f57ba82e370770420f6f3ef877c7b3",
+    "root": "/home/runner/work/tracing-js-self/tracing-js-self/megatoken"
+  },
+  "contractDigest": "75b4b47cccd0b137e00f477e45572d9d160acbb63f70af4f506e8003359e32cc",
+  "corpusIdentity": "1622c16b93138e7d6332fe0fced086c6ec7d75688bab3afeebe4466c581d249a",
+  "expectedSourceIds": [
+    "se-support-absolute-distance-callbacks-recovery",
+    "se-support-absolute-distance-child-teacher",
+    "se-support-absolute-distance-pure",
+    "se-support-absolute-distance-repeated-2calls",
+    "se-support-capped-budget-callbacks-recovery",
+    "se-support-capped-budget-child-teacher",
+    "se-support-capped-budget-pure",
+    "se-support-capped-budget-repeated-2calls",
+    "se-support-flag-intersection-callbacks-recovery",
+    "se-support-flag-intersection-child-teacher",
+    "se-support-flag-intersection-pure",
+    "se-support-flag-intersection-repeated-2calls",
+    "se-support-flag-union-callbacks-recovery",
+    "se-support-flag-union-child-teacher",
+    "se-support-flag-union-pure",
+    "se-support-flag-union-repeated-2calls",
+    "se-support-inventory-shortfall-callbacks-recovery",
+    "se-support-inventory-shortfall-child-teacher",
+    "se-support-inventory-shortfall-pure",
+    "se-support-inventory-shortfall-repeated-2calls",
+    "se-support-midpoint-callbacks-recovery",
+    "se-support-midpoint-child-teacher",
+    "se-support-midpoint-pure",
+    "se-support-midpoint-repeated-2calls",
+    "se-support-modular-clock-callbacks-recovery",
+    "se-support-modular-clock-child-teacher",
+    "se-support-modular-clock-pure",
+    "se-support-modular-clock-repeated-2calls",
+    "se-support-overtime-rate-callbacks-recovery",
+    "se-support-overtime-rate-child-teacher",
+    "se-support-overtime-rate-pure",
+    "se-support-overtime-rate-repeated-2calls",
+    "se-support-parity-adjustment-callbacks-recovery",
+    "se-support-parity-adjustment-child-teacher",
+    "se-support-parity-adjustment-pure",
+    "se-support-parity-adjustment-repeated-2calls",
+    "se-support-rectangle-perimeter-callbacks-recovery",
+    "se-support-rectangle-perimeter-child-teacher",
+    "se-support-rectangle-perimeter-pure",
+    "se-support-rectangle-perimeter-repeated-2calls",
+    "se-support-rectangular-capacity-callbacks-recovery",
+    "se-support-rectangular-capacity-child-teacher",
+    "se-support-rectangular-capacity-pure",
+    "se-support-rectangular-capacity-repeated-2calls",
+    "se-support-relative-growth-callbacks-recovery",
+    "se-support-relative-growth-child-teacher",
+    "se-support-relative-growth-pure",
+    "se-support-relative-growth-repeated-2calls",
+    "se-support-squared-distance-callbacks-recovery",
+    "se-support-squared-distance-child-teacher",
+    "se-support-squared-distance-pure",
+    "se-support-squared-distance-repeated-2calls",
+    "se-support-triangular-series-callbacks-recovery",
+    "se-support-triangular-series-child-teacher",
+    "se-support-triangular-series-pure",
+    "se-support-triangular-series-repeated-2calls",
+    "se-support-unit-conversion-callbacks-recovery",
+    "se-support-unit-conversion-child-teacher",
+    "se-support-unit-conversion-pure",
+    "se-support-unit-conversion-repeated-2calls",
+    "se-support-weighted-average-callbacks-recovery",
+    "se-support-weighted-average-child-teacher",
+    "se-support-weighted-average-pure",
+    "se-support-weighted-average-repeated-2calls"
+  ],
+  "expectedSourceInventory": {
+    "bytes": 3219,
+    "path": "/home/runner/work/_temp/v8-support-lifecycle/support-source-ids.json",
+    "sha256": "3db278164cd910d3b0357ecb938f7a150926092cccc54b624a3b0f5e07ea398e"
+  },
+  "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+  "fullLaunchQualified": false,
+  "geometry": {
+    "maxHistory": 128,
+    "maxPositions": 128
+  },
+  "interoperabilityDigest": "f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661",
+  "learnedSuccess": null,
+  "modelConstructed": false,
+  "optimizerAllocated": false,
+  "optimizerSteps": 0,
+  "phase": "SE",
+  "policy": {
+    "consumerRevision": "e9817ad637f57ba82e370770420f6f3ef877c7b3",
+    "producerRevision": "3cf0e4732290ab07a6f0d1f897e8893df762cc92",
+    "registryDigest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+    "schema": "semantic-training-policy/8"
+  },
+  "population": {
+    "bySplit": {
+      "test": [
+        "se-support-flag-intersection-callbacks-recovery",
+        "se-support-flag-intersection-child-teacher",
+        "se-support-flag-intersection-pure",
+        "se-support-flag-intersection-repeated-2calls"
+      ],
+      "train": [
+        "se-support-capped-budget-callbacks-recovery",
+        "se-support-capped-budget-child-teacher",
+        "se-support-capped-budget-pure",
+        "se-support-capped-budget-repeated-2calls",
+        "se-support-flag-union-callbacks-recovery",
+        "se-support-flag-union-child-teacher",
+        "se-support-flag-union-pure",
+        "se-support-flag-union-repeated-2calls",
+        "se-support-inventory-shortfall-callbacks-recovery",
+        "se-support-inventory-shortfall-child-teacher",
+        "se-support-inventory-shortfall-pure",
+        "se-support-inventory-shortfall-repeated-2calls",
+        "se-support-midpoint-callbacks-recovery",
+        "se-support-midpoint-child-teacher",
+        "se-support-midpoint-pure",
+        "se-support-midpoint-repeated-2calls",
+        "se-support-modular-clock-callbacks-recovery",
+        "se-support-modular-clock-child-teacher",
+        "se-support-modular-clock-pure",
+        "se-support-modular-clock-repeated-2calls",
+        "se-support-overtime-rate-callbacks-recovery",
+        "se-support-overtime-rate-child-teacher",
+        "se-support-overtime-rate-pure",
+        "se-support-overtime-rate-repeated-2calls",
+        "se-support-parity-adjustment-callbacks-recovery",
+        "se-support-parity-adjustment-child-teacher",
+        "se-support-parity-adjustment-pure",
+        "se-support-parity-adjustment-repeated-2calls",
+        "se-support-rectangle-perimeter-callbacks-recovery",
+        "se-support-rectangle-perimeter-child-teacher",
+        "se-support-rectangle-perimeter-pure",
+        "se-support-rectangle-perimeter-repeated-2calls",
+        "se-support-rectangular-capacity-callbacks-recovery",
+        "se-support-rectangular-capacity-child-teacher",
+        "se-support-rectangular-capacity-pure",
+        "se-support-rectangular-capacity-repeated-2calls",
+        "se-support-relative-growth-callbacks-recovery",
+        "se-support-relative-growth-child-teacher",
+        "se-support-relative-growth-pure",
+        "se-support-relative-growth-repeated-2calls",
+        "se-support-triangular-series-callbacks-recovery",
+        "se-support-triangular-series-child-teacher",
+        "se-support-triangular-series-pure",
+        "se-support-triangular-series-repeated-2calls",
+        "se-support-weighted-average-callbacks-recovery",
+        "se-support-weighted-average-child-teacher",
+        "se-support-weighted-average-pure",
+        "se-support-weighted-average-repeated-2calls"
+      ],
+      "validation": [
+        "se-support-absolute-distance-callbacks-recovery",
+        "se-support-absolute-distance-child-teacher",
+        "se-support-absolute-distance-pure",
+        "se-support-absolute-distance-repeated-2calls",
+        "se-support-squared-distance-callbacks-recovery",
+        "se-support-squared-distance-child-teacher",
+        "se-support-squared-distance-pure",
+        "se-support-squared-distance-repeated-2calls",
+        "se-support-unit-conversion-callbacks-recovery",
+        "se-support-unit-conversion-child-teacher",
+        "se-support-unit-conversion-pure",
+        "se-support-unit-conversion-repeated-2calls"
+      ]
+    },
+    "count": 64
+  },
+  "preflight": {
+    "episodes": {
+      "test": 4,
+      "train": 48,
+      "validation": 12
+    },
+    "optimizerSteps": 0,
+    "registryDigest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+    "schema": "semantic-stage-supply/8"
+  },
+  "preparedRoots": [
+    {
+      "bytes": 44416,
+      "fingerprint": "5465ed7da880c28a9f55134ebefb771d25084dbb16e9bdb554c1dfffd7413103",
+      "root": "/home/runner/work/_temp/v8-support-prepared",
+      "sha256": "4662f570eb844eefebb48f912f57077d9cd82881fd9157476d489712d0086500"
+    }
+  ],
+  "producerRevision": "3cf0e4732290ab07a6f0d1f897e8893df762cc92",
+  "qualification": "ordinary-prepared-source-supply-only",
+  "schema": "semantic-v8-production-supply-qualification/1",
+  "scope": "Every prepared episode was rebuilt and checked against its native V8/source receipts; the exact 64-source population and both ordinary SE splits passed the existing stage-supply gate. No learner, optimizer, donor, or full launch was qualified.",
+  "sourceRegistry": {
+    "components": [
+      {
+        "holdout": null,
+        "id": "semantic-region-component:10b3ed9f238f0f5c6a55e9fac2eae3cbce6cc3c0f2508e394bcebaa2892acf15",
+        "members": [
+          "semantic-recipe:parity-adjustment",
+          "source-template:parity-adjustment"
+        ],
+        "sourceIds": [
+          "se-support-parity-adjustment-callbacks-recovery",
+          "se-support-parity-adjustment-child-teacher",
+          "se-support-parity-adjustment-pure",
+          "se-support-parity-adjustment-repeated-2calls"
+        ],
+        "split": "train"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:278ce1dd6454dd873ca1ddfa7cd8bd9b0b49a7077414be03d04ffa97467b20f5",
+        "members": [
+          "semantic-recipe:rectangle-perimeter",
+          "source-template:rectangle-perimeter"
+        ],
+        "sourceIds": [
+          "se-support-rectangle-perimeter-callbacks-recovery",
+          "se-support-rectangle-perimeter-child-teacher",
+          "se-support-rectangle-perimeter-pure",
+          "se-support-rectangle-perimeter-repeated-2calls"
+        ],
+        "split": "train"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:2810225bd39ee29fc9b520821929ad4fd10279e3ce7f04c6333f1e3f856f5d10",
+        "members": [
+          "semantic-recipe:modular-clock",
+          "source-template:modular-clock"
+        ],
+        "sourceIds": [
+          "se-support-modular-clock-callbacks-recovery",
+          "se-support-modular-clock-child-teacher",
+          "se-support-modular-clock-pure",
+          "se-support-modular-clock-repeated-2calls"
+        ],
+        "split": "train"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:3f52269c68d73cca4941733ef8493060227f73e5513725e1be4bb9f9bd6e5033",
+        "members": [
+          "semantic-recipe:squared-distance",
+          "source-template:squared-distance"
+        ],
+        "sourceIds": [
+          "se-support-squared-distance-callbacks-recovery",
+          "se-support-squared-distance-child-teacher",
+          "se-support-squared-distance-pure",
+          "se-support-squared-distance-repeated-2calls"
+        ],
+        "split": "validation"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:4cac2df9aa81d53fa13aa676b4ecf6fcf509eacf16976c47039358f5ce9c0d59",
+        "members": [
+          "semantic-recipe:inventory-shortfall",
+          "source-template:inventory-shortfall"
+        ],
+        "sourceIds": [
+          "se-support-inventory-shortfall-callbacks-recovery",
+          "se-support-inventory-shortfall-child-teacher",
+          "se-support-inventory-shortfall-pure",
+          "se-support-inventory-shortfall-repeated-2calls"
+        ],
+        "split": "train"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:58e0cba4da8f26193545567e8bfc4052d7a85f8220d4ed6b5ea4cc7fe97d611d",
+        "members": [
+          "semantic-recipe:midpoint",
+          "source-template:midpoint"
+        ],
+        "sourceIds": [
+          "se-support-midpoint-callbacks-recovery",
+          "se-support-midpoint-child-teacher",
+          "se-support-midpoint-pure",
+          "se-support-midpoint-repeated-2calls"
+        ],
+        "split": "train"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:630db314e6b45b923df2230af632535c66aec8bee94a1eff727fd18c3a7b558f",
+        "members": [
+          "semantic-recipe:weighted-average",
+          "source-template:weighted-average"
+        ],
+        "sourceIds": [
+          "se-support-weighted-average-callbacks-recovery",
+          "se-support-weighted-average-child-teacher",
+          "se-support-weighted-average-pure",
+          "se-support-weighted-average-repeated-2calls"
+        ],
+        "split": "train"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:9276c1e104f01ee35734cb872aaee2736eafb92c92fcf22a2c5e26a9b61ba582",
+        "members": [
+          "semantic-recipe:flag-union",
+          "source-template:flag-union"
+        ],
+        "sourceIds": [
+          "se-support-flag-union-callbacks-recovery",
+          "se-support-flag-union-child-teacher",
+          "se-support-flag-union-pure",
+          "se-support-flag-union-repeated-2calls"
+        ],
+        "split": "train"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:a892c5ffd02a0afa836ba12c56de9df13e3f01c2fe6c88f0eac880dfd0c50076",
+        "members": [
+          "semantic-recipe:unit-conversion",
+          "source-template:unit-conversion"
+        ],
+        "sourceIds": [
+          "se-support-unit-conversion-callbacks-recovery",
+          "se-support-unit-conversion-child-teacher",
+          "se-support-unit-conversion-pure",
+          "se-support-unit-conversion-repeated-2calls"
+        ],
+        "split": "validation"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:adbd4924f7475bda7ec4355bd5323f5ce22d6563da8133c44f91815240b205d2",
+        "members": [
+          "semantic-recipe:overtime-rate",
+          "source-template:overtime-rate"
+        ],
+        "sourceIds": [
+          "se-support-overtime-rate-callbacks-recovery",
+          "se-support-overtime-rate-child-teacher",
+          "se-support-overtime-rate-pure",
+          "se-support-overtime-rate-repeated-2calls"
+        ],
+        "split": "train"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:bb10df829d8d3bc8a2effef2407dd35ee8a63b69a579377656a880a802b6a380",
+        "members": [
+          "semantic-recipe:flag-intersection",
+          "source-template:flag-intersection"
+        ],
+        "sourceIds": [
+          "se-support-flag-intersection-callbacks-recovery",
+          "se-support-flag-intersection-child-teacher",
+          "se-support-flag-intersection-pure",
+          "se-support-flag-intersection-repeated-2calls"
+        ],
+        "split": "test"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:d0731a55049068fa6f23e8021b54ee3765549bff8f14ed52e80ed5f9c36fd322",
+        "members": [
+          "semantic-recipe:triangular-series",
+          "source-template:triangular-series"
+        ],
+        "sourceIds": [
+          "se-support-triangular-series-callbacks-recovery",
+          "se-support-triangular-series-child-teacher",
+          "se-support-triangular-series-pure",
+          "se-support-triangular-series-repeated-2calls"
+        ],
+        "split": "train"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:d1b0424751b2577185e7dce0c5488b29519958ffb694a59086191b7c66a46953",
+        "members": [
+          "semantic-recipe:capped-budget",
+          "source-template:capped-budget"
+        ],
+        "sourceIds": [
+          "se-support-capped-budget-callbacks-recovery",
+          "se-support-capped-budget-child-teacher",
+          "se-support-capped-budget-pure",
+          "se-support-capped-budget-repeated-2calls"
+        ],
+        "split": "train"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:d623b5662703c9c5e9aa0a0798acffed3ee62c103a5e8c05cb5c87e2e18df8a6",
+        "members": [
+          "semantic-recipe:absolute-distance",
+          "source-template:absolute-distance"
+        ],
+        "sourceIds": [
+          "se-support-absolute-distance-callbacks-recovery",
+          "se-support-absolute-distance-child-teacher",
+          "se-support-absolute-distance-pure",
+          "se-support-absolute-distance-repeated-2calls"
+        ],
+        "split": "validation"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:e83b724c843457462d769a737ddfded2585d716c9fa223011bbc929ea3de65ce",
+        "members": [
+          "semantic-recipe:rectangular-capacity",
+          "source-template:rectangular-capacity"
+        ],
+        "sourceIds": [
+          "se-support-rectangular-capacity-callbacks-recovery",
+          "se-support-rectangular-capacity-child-teacher",
+          "se-support-rectangular-capacity-pure",
+          "se-support-rectangular-capacity-repeated-2calls"
+        ],
+        "split": "train"
+      },
+      {
+        "holdout": null,
+        "id": "semantic-region-component:e993a107df0c8e00e34da9e8d49e3cfb985a416c58191d884f17e6f3fbc110ee",
+        "members": [
+          "semantic-recipe:relative-growth",
+          "source-template:relative-growth"
+        ],
+        "sourceIds": [
+          "se-support-relative-growth-callbacks-recovery",
+          "se-support-relative-growth-child-teacher",
+          "se-support-relative-growth-pure",
+          "se-support-relative-growth-repeated-2calls"
+        ],
+        "split": "train"
+      }
+    ],
+    "coreSchema": "semantic-algorithm/2",
+    "diagnostics": {
+      "connectedComponents": 16,
+      "declaredFamilies": 16,
+      "exactSourceVariants": 48,
+      "normalizedCores": 16,
+      "sourceMembers": 64,
+      "splitComponents": {
+        "test": 1,
+        "train": 12,
+        "validation": 3
+      },
+      "withoutNormalizedCore": 32
+    },
+    "digest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+    "holdouts": {
+      "coreDigests": [],
+      "families": [],
+      "sourceDigests": []
+    },
+    "policy": "semantic-region-family-components/1",
+    "schema": "semantic-region-family-registry/1",
+    "seed": 17,
+    "sources": [
+      {
+        "ancestors": [
+          "source-template:absolute-distance"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:absolute-distance",
+        "id": "se-support-absolute-distance-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a>b?a-b:b-a;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "2f7e25b4c1d9eee3153a8bc9c2ae8474a41701fb35c03ce4c6629c9e9582f5b1"
+      },
+      {
+        "ancestors": [
+          "source-template:absolute-distance"
+        ],
+        "coreDigest": "310a7aa989d4f4092c0a629ecf0a186e1845e79b6f5ff871fd244748d567061d",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:absolute-distance",
+        "id": "se-support-absolute-distance-child-teacher",
+        "source": "\"use strict\";function run(a,b){return a>b?a-b:b-a;}",
+        "sourceDigest": "6ebb08e268abde80ad393777b3f1e1100efd014e016c524bb238d8c2d84ee793"
+      },
+      {
+        "ancestors": [
+          "source-template:absolute-distance"
+        ],
+        "coreDigest": "310a7aa989d4f4092c0a629ecf0a186e1845e79b6f5ff871fd244748d567061d",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:absolute-distance",
+        "id": "se-support-absolute-distance-pure",
+        "source": "\"use strict\";function run(a,b){return a>b?a-b:b-a;}",
+        "sourceDigest": "6ebb08e268abde80ad393777b3f1e1100efd014e016c524bb238d8c2d84ee793"
+      },
+      {
+        "ancestors": [
+          "source-template:absolute-distance"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:absolute-distance",
+        "id": "se-support-absolute-distance-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a>b?a-b:b-a;host.store(key,answer);return answer;}",
+        "sourceDigest": "8abb65e6a28af310c7bfa2ca8e5d2770fa8a292fbea7a482737a523751f9c1c9"
+      },
+      {
+        "ancestors": [
+          "source-template:capped-budget"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:capped-budget",
+        "id": "se-support-capped-budget-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a+b>10?10:a+b;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "d5d5a812176c04b64a5b99681c3c9ddb036a921279390e53562bf87469251718"
+      },
+      {
+        "ancestors": [
+          "source-template:capped-budget"
+        ],
+        "coreDigest": "a1a3da81d45136ed56348b04c5c631a2cd5803b0e2390ddbf8abeeed380d3db1",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:capped-budget",
+        "id": "se-support-capped-budget-child-teacher",
+        "source": "\"use strict\";function run(a,b){return a+b>10?10:a+b;}",
+        "sourceDigest": "9762a652a4c45214968bf173b5b37bfbffd8962794655495ff31eb0cb057f272"
+      },
+      {
+        "ancestors": [
+          "source-template:capped-budget"
+        ],
+        "coreDigest": "a1a3da81d45136ed56348b04c5c631a2cd5803b0e2390ddbf8abeeed380d3db1",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:capped-budget",
+        "id": "se-support-capped-budget-pure",
+        "source": "\"use strict\";function run(a,b){return a+b>10?10:a+b;}",
+        "sourceDigest": "9762a652a4c45214968bf173b5b37bfbffd8962794655495ff31eb0cb057f272"
+      },
+      {
+        "ancestors": [
+          "source-template:capped-budget"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:capped-budget",
+        "id": "se-support-capped-budget-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a+b>10?10:a+b;host.store(key,answer);return answer;}",
+        "sourceDigest": "f950a6341c807d7f549dde1fe8d1c0c776409520e326d93abbeb08aa987d47a3"
+      },
+      {
+        "ancestors": [
+          "source-template:flag-intersection"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:flag-intersection",
+        "id": "se-support-flag-intersection-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a&b;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "45b48c2a8862b061fb038d2245ee5abf0800da922400cbd8e6512c28d132fc9e"
+      },
+      {
+        "ancestors": [
+          "source-template:flag-intersection"
+        ],
+        "coreDigest": "25dd78568573b5bbed9d15ab4c92ef650385a666936fd00aa281b442cebfa43f",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:flag-intersection",
+        "id": "se-support-flag-intersection-child-teacher",
+        "source": "\"use strict\";function run(a,b){return a&b;}",
+        "sourceDigest": "32c484b3a60791d47f34d9043803e9a830ee69b88e1fe8e218517d3bf79486a9"
+      },
+      {
+        "ancestors": [
+          "source-template:flag-intersection"
+        ],
+        "coreDigest": "25dd78568573b5bbed9d15ab4c92ef650385a666936fd00aa281b442cebfa43f",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:flag-intersection",
+        "id": "se-support-flag-intersection-pure",
+        "source": "\"use strict\";function run(a,b){return a&b;}",
+        "sourceDigest": "32c484b3a60791d47f34d9043803e9a830ee69b88e1fe8e218517d3bf79486a9"
+      },
+      {
+        "ancestors": [
+          "source-template:flag-intersection"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:flag-intersection",
+        "id": "se-support-flag-intersection-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a&b;host.store(key,answer);return answer;}",
+        "sourceDigest": "7d0ca086a4522a089ab1e550dc084eb6b85f444ea7a9cc8456476896ad9bb0a2"
+      },
+      {
+        "ancestors": [
+          "source-template:flag-union"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:flag-union",
+        "id": "se-support-flag-union-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a|b;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "88b9e9326ba34dee8fbd4b31c280180e42ca57a21c847f6a62d46bfbc133c0f4"
+      },
+      {
+        "ancestors": [
+          "source-template:flag-union"
+        ],
+        "coreDigest": "24e7c7ee9dc4c7914e2acb0497d635429f8a73827d33030ce4f9b032be1fafa2",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:flag-union",
+        "id": "se-support-flag-union-child-teacher",
+        "source": "\"use strict\";function run(a,b){return a|b;}",
+        "sourceDigest": "52d50e3cbb20b2da94e81e6fdde4d8605e981066c6a946569a7f1726004e459a"
+      },
+      {
+        "ancestors": [
+          "source-template:flag-union"
+        ],
+        "coreDigest": "24e7c7ee9dc4c7914e2acb0497d635429f8a73827d33030ce4f9b032be1fafa2",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:flag-union",
+        "id": "se-support-flag-union-pure",
+        "source": "\"use strict\";function run(a,b){return a|b;}",
+        "sourceDigest": "52d50e3cbb20b2da94e81e6fdde4d8605e981066c6a946569a7f1726004e459a"
+      },
+      {
+        "ancestors": [
+          "source-template:flag-union"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:flag-union",
+        "id": "se-support-flag-union-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a|b;host.store(key,answer);return answer;}",
+        "sourceDigest": "980c0da74f32f305987a3aae85b1dac19b13ce59df163ae808c8fc74df3d804b"
+      },
+      {
+        "ancestors": [
+          "source-template:inventory-shortfall"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:inventory-shortfall",
+        "id": "se-support-inventory-shortfall-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a>b?a-b:0;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "9f6a0d5e4128f1a0813b1411d437d213b1c84620b6d69bd263145245ab749436"
+      },
+      {
+        "ancestors": [
+          "source-template:inventory-shortfall"
+        ],
+        "coreDigest": "9ab412088a34abac10d38d938b17f4fb7bccc64410ccf512b941a0bfbe650d07",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:inventory-shortfall",
+        "id": "se-support-inventory-shortfall-child-teacher",
+        "source": "\"use strict\";function run(a,b){return a>b?a-b:0;}",
+        "sourceDigest": "d1557fced0f9ff92d03010d380e379f2fb2f3baeaca502c6f3c5595e2815ba37"
+      },
+      {
+        "ancestors": [
+          "source-template:inventory-shortfall"
+        ],
+        "coreDigest": "9ab412088a34abac10d38d938b17f4fb7bccc64410ccf512b941a0bfbe650d07",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:inventory-shortfall",
+        "id": "se-support-inventory-shortfall-pure",
+        "source": "\"use strict\";function run(a,b){return a>b?a-b:0;}",
+        "sourceDigest": "d1557fced0f9ff92d03010d380e379f2fb2f3baeaca502c6f3c5595e2815ba37"
+      },
+      {
+        "ancestors": [
+          "source-template:inventory-shortfall"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:inventory-shortfall",
+        "id": "se-support-inventory-shortfall-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a>b?a-b:0;host.store(key,answer);return answer;}",
+        "sourceDigest": "39faf7f77739d0d169d8fce06da0b1cfd1c1eb2ecbc276d2e32aefe6c55f0737"
+      },
+      {
+        "ancestors": [
+          "source-template:midpoint"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:midpoint",
+        "id": "se-support-midpoint-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=(a+b)/2;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "529327ddd15f69c9bc972c1ed1c09dfad1673fd5c6a2468eaaa094041cf180c7"
+      },
+      {
+        "ancestors": [
+          "source-template:midpoint"
+        ],
+        "coreDigest": "ad546e7f4b0323547ac812fefad92535e17e303c4e1c743fb59a0a1f198ab29c",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:midpoint",
+        "id": "se-support-midpoint-child-teacher",
+        "source": "\"use strict\";function run(a,b){return (a+b)/2;}",
+        "sourceDigest": "db67df3f7c4198834b35ded82ff5521864f16f195ebc17258d35f7d0584eb06f"
+      },
+      {
+        "ancestors": [
+          "source-template:midpoint"
+        ],
+        "coreDigest": "ad546e7f4b0323547ac812fefad92535e17e303c4e1c743fb59a0a1f198ab29c",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:midpoint",
+        "id": "se-support-midpoint-pure",
+        "source": "\"use strict\";function run(a,b){return (a+b)/2;}",
+        "sourceDigest": "db67df3f7c4198834b35ded82ff5521864f16f195ebc17258d35f7d0584eb06f"
+      },
+      {
+        "ancestors": [
+          "source-template:midpoint"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:midpoint",
+        "id": "se-support-midpoint-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=(a+b)/2;host.store(key,answer);return answer;}",
+        "sourceDigest": "8094c02b78d0b0b78dba55ab65dc112e19b9f7833e855ef6f644f7b343aa18b4"
+      },
+      {
+        "ancestors": [
+          "source-template:modular-clock"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:modular-clock",
+        "id": "se-support-modular-clock-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=(a*60+b)%24;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "fed29607fe803c43fc59e871d37803259f001c701df53be477a0bef29048cdf1"
+      },
+      {
+        "ancestors": [
+          "source-template:modular-clock"
+        ],
+        "coreDigest": "895bbb5b4ffd3a284700483ea0e773ee1efe8e11d8d3b7e28c3f3e27cbe69dfd",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:modular-clock",
+        "id": "se-support-modular-clock-child-teacher",
+        "source": "\"use strict\";function run(a,b){return (a*60+b)%24;}",
+        "sourceDigest": "c4bbc0f051d3cb75fb1fff56d4a92f83fc55b995fefb9d71de3673ca680445d2"
+      },
+      {
+        "ancestors": [
+          "source-template:modular-clock"
+        ],
+        "coreDigest": "895bbb5b4ffd3a284700483ea0e773ee1efe8e11d8d3b7e28c3f3e27cbe69dfd",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:modular-clock",
+        "id": "se-support-modular-clock-pure",
+        "source": "\"use strict\";function run(a,b){return (a*60+b)%24;}",
+        "sourceDigest": "c4bbc0f051d3cb75fb1fff56d4a92f83fc55b995fefb9d71de3673ca680445d2"
+      },
+      {
+        "ancestors": [
+          "source-template:modular-clock"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:modular-clock",
+        "id": "se-support-modular-clock-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=(a*60+b)%24;host.store(key,answer);return answer;}",
+        "sourceDigest": "39c4b921634d20a9873f8e8720820d3dff66f3e15372b2c1143e9630e2c7a432"
+      },
+      {
+        "ancestors": [
+          "source-template:overtime-rate"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:overtime-rate",
+        "id": "se-support-overtime-rate-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a>6?6*b+(a-6)*b*2:a*b;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "ec88e6516d3abe132bf16c4d98c79453c9d84a3d12eca1110c46788c1eb5412c"
+      },
+      {
+        "ancestors": [
+          "source-template:overtime-rate"
+        ],
+        "coreDigest": "4cf11d2796a21db6dab196e66c429e740638dde7327bcce9451d9b3215b1410d",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:overtime-rate",
+        "id": "se-support-overtime-rate-child-teacher",
+        "source": "\"use strict\";function run(a,b){return a>6?6*b+(a-6)*b*2:a*b;}",
+        "sourceDigest": "32e78ef7a584a11d659ea4b442ab086446824e57357687e423aed392de72ce77"
+      },
+      {
+        "ancestors": [
+          "source-template:overtime-rate"
+        ],
+        "coreDigest": "4cf11d2796a21db6dab196e66c429e740638dde7327bcce9451d9b3215b1410d",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:overtime-rate",
+        "id": "se-support-overtime-rate-pure",
+        "source": "\"use strict\";function run(a,b){return a>6?6*b+(a-6)*b*2:a*b;}",
+        "sourceDigest": "32e78ef7a584a11d659ea4b442ab086446824e57357687e423aed392de72ce77"
+      },
+      {
+        "ancestors": [
+          "source-template:overtime-rate"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:overtime-rate",
+        "id": "se-support-overtime-rate-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a>6?6*b+(a-6)*b*2:a*b;host.store(key,answer);return answer;}",
+        "sourceDigest": "0bbceb8b770c8e4a8193c97532bf499f30ee9d21b6e2318b84a34c601972530c"
+      },
+      {
+        "ancestors": [
+          "source-template:parity-adjustment"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:parity-adjustment",
+        "id": "se-support-parity-adjustment-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a%2===0?a+b:a-b;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "cd694cb5be899e8055388ddfd4ae5c60512f1fcb859c513ba22bc5ec691f3e86"
+      },
+      {
+        "ancestors": [
+          "source-template:parity-adjustment"
+        ],
+        "coreDigest": "cba449a3a124c49f5f185ee18d78e7ee2551f4a8ac31c6fb99fdb546d172b44a",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:parity-adjustment",
+        "id": "se-support-parity-adjustment-child-teacher",
+        "source": "\"use strict\";function run(a,b){return a%2===0?a+b:a-b;}",
+        "sourceDigest": "c9ff5e3aa12e2169222d912c11000f82468480ca6120000b058cab472f97dee4"
+      },
+      {
+        "ancestors": [
+          "source-template:parity-adjustment"
+        ],
+        "coreDigest": "cba449a3a124c49f5f185ee18d78e7ee2551f4a8ac31c6fb99fdb546d172b44a",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:parity-adjustment",
+        "id": "se-support-parity-adjustment-pure",
+        "source": "\"use strict\";function run(a,b){return a%2===0?a+b:a-b;}",
+        "sourceDigest": "c9ff5e3aa12e2169222d912c11000f82468480ca6120000b058cab472f97dee4"
+      },
+      {
+        "ancestors": [
+          "source-template:parity-adjustment"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:parity-adjustment",
+        "id": "se-support-parity-adjustment-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a%2===0?a+b:a-b;host.store(key,answer);return answer;}",
+        "sourceDigest": "07304e7268100b2fefbb1c27097a12e127779a1cba116ec796491f02ad19555c"
+      },
+      {
+        "ancestors": [
+          "source-template:rectangle-perimeter"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:rectangle-perimeter",
+        "id": "se-support-rectangle-perimeter-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=(a+b)*2;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "597c1c9038f5b7bcd821eb77d4f827d6f13c38d4dee4639b898a7bb36abe5c65"
+      },
+      {
+        "ancestors": [
+          "source-template:rectangle-perimeter"
+        ],
+        "coreDigest": "714945d554e53a3aa145b159fae139e6cad7175d603dfff09c1e3784faf3c244",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:rectangle-perimeter",
+        "id": "se-support-rectangle-perimeter-child-teacher",
+        "source": "\"use strict\";function run(a,b){return (a+b)*2;}",
+        "sourceDigest": "73a3dc03e34b11280a8d583407dcd8e6f437712fae25ed24bf9a1e6ee46b52e7"
+      },
+      {
+        "ancestors": [
+          "source-template:rectangle-perimeter"
+        ],
+        "coreDigest": "714945d554e53a3aa145b159fae139e6cad7175d603dfff09c1e3784faf3c244",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:rectangle-perimeter",
+        "id": "se-support-rectangle-perimeter-pure",
+        "source": "\"use strict\";function run(a,b){return (a+b)*2;}",
+        "sourceDigest": "73a3dc03e34b11280a8d583407dcd8e6f437712fae25ed24bf9a1e6ee46b52e7"
+      },
+      {
+        "ancestors": [
+          "source-template:rectangle-perimeter"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:rectangle-perimeter",
+        "id": "se-support-rectangle-perimeter-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=(a+b)*2;host.store(key,answer);return answer;}",
+        "sourceDigest": "28f6d5f529813078f3d06f96b6c46435eb4cc77df701cd2efe6a1ca2eefa625d"
+      },
+      {
+        "ancestors": [
+          "source-template:rectangular-capacity"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:rectangular-capacity",
+        "id": "se-support-rectangular-capacity-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a*b;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "962e2739677a36ad2b46166c1ba20792812d2728291d72e4b1a6e1915518993d"
+      },
+      {
+        "ancestors": [
+          "source-template:rectangular-capacity"
+        ],
+        "coreDigest": "035192bd3baac38f436b524a1a3f40074c4e56f66d656b017691f0367bc7b498",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:rectangular-capacity",
+        "id": "se-support-rectangular-capacity-child-teacher",
+        "source": "\"use strict\";function run(a,b){return a*b;}",
+        "sourceDigest": "67b2b6a8aaa8577d204e1417250d9bea123767ee6a19a9ccb647799d03627d82"
+      },
+      {
+        "ancestors": [
+          "source-template:rectangular-capacity"
+        ],
+        "coreDigest": "035192bd3baac38f436b524a1a3f40074c4e56f66d656b017691f0367bc7b498",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:rectangular-capacity",
+        "id": "se-support-rectangular-capacity-pure",
+        "source": "\"use strict\";function run(a,b){return a*b;}",
+        "sourceDigest": "67b2b6a8aaa8577d204e1417250d9bea123767ee6a19a9ccb647799d03627d82"
+      },
+      {
+        "ancestors": [
+          "source-template:rectangular-capacity"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:rectangular-capacity",
+        "id": "se-support-rectangular-capacity-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a*b;host.store(key,answer);return answer;}",
+        "sourceDigest": "d5f2832ab7a8cca8c245fded329dbac50554bd48988c2661a15329c71a3a61a1"
+      },
+      {
+        "ancestors": [
+          "source-template:relative-growth"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:relative-growth",
+        "id": "se-support-relative-growth-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=(a-b)/b;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "883cc3fd654bae6b3c36de220cfce4c5f3aa04db80fdd5727c3c4ed8a8efb3ae"
+      },
+      {
+        "ancestors": [
+          "source-template:relative-growth"
+        ],
+        "coreDigest": "c44570b1f14a251d848abde90db40613ea9db678e64c35a3dac3dc7459db8498",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:relative-growth",
+        "id": "se-support-relative-growth-child-teacher",
+        "source": "\"use strict\";function run(a,b){return (a-b)/b;}",
+        "sourceDigest": "6c7e83db2ed6d3a14da35df5f590ad8a5d3fe6ddcdf800f59a37f656b81d4174"
+      },
+      {
+        "ancestors": [
+          "source-template:relative-growth"
+        ],
+        "coreDigest": "c44570b1f14a251d848abde90db40613ea9db678e64c35a3dac3dc7459db8498",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:relative-growth",
+        "id": "se-support-relative-growth-pure",
+        "source": "\"use strict\";function run(a,b){return (a-b)/b;}",
+        "sourceDigest": "6c7e83db2ed6d3a14da35df5f590ad8a5d3fe6ddcdf800f59a37f656b81d4174"
+      },
+      {
+        "ancestors": [
+          "source-template:relative-growth"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:relative-growth",
+        "id": "se-support-relative-growth-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=(a-b)/b;host.store(key,answer);return answer;}",
+        "sourceDigest": "9d8657d2a5bd9ec36e6f14d728b7b634e1030b2ba3fba05217b79454228f4c53"
+      },
+      {
+        "ancestors": [
+          "source-template:squared-distance"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:squared-distance",
+        "id": "se-support-squared-distance-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a*a+b*b;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "4078231834f51c60e20b1d34c2d3da67a8bb86276556343ed33e3ca8196c3914"
+      },
+      {
+        "ancestors": [
+          "source-template:squared-distance"
+        ],
+        "coreDigest": "daf601ad3447e6e7a75cf20d129c0089d1988e7ab67eab66981eb2b43dc53ef2",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:squared-distance",
+        "id": "se-support-squared-distance-child-teacher",
+        "source": "\"use strict\";function run(a,b){return a*a+b*b;}",
+        "sourceDigest": "244898329a2da447cd23d8b1532ffdc34495c0d27b351917f0a6d853a1f12e1a"
+      },
+      {
+        "ancestors": [
+          "source-template:squared-distance"
+        ],
+        "coreDigest": "daf601ad3447e6e7a75cf20d129c0089d1988e7ab67eab66981eb2b43dc53ef2",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:squared-distance",
+        "id": "se-support-squared-distance-pure",
+        "source": "\"use strict\";function run(a,b){return a*a+b*b;}",
+        "sourceDigest": "244898329a2da447cd23d8b1532ffdc34495c0d27b351917f0a6d853a1f12e1a"
+      },
+      {
+        "ancestors": [
+          "source-template:squared-distance"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:squared-distance",
+        "id": "se-support-squared-distance-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a*a+b*b;host.store(key,answer);return answer;}",
+        "sourceDigest": "799931ce12f5803006f8dfb5f07582e03284d6fcb4092d61d0355d9cd86e465a"
+      },
+      {
+        "ancestors": [
+          "source-template:triangular-series"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:triangular-series",
+        "id": "se-support-triangular-series-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a*(a+1)/2+b;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "135257bfba1d80353bfccc30fca505280d1a5d33fb6f877fcd7addcdb589db51"
+      },
+      {
+        "ancestors": [
+          "source-template:triangular-series"
+        ],
+        "coreDigest": "718cde138c82277d864a79f1a55a58b2d55503ac3c915a157f97fc63946ef548",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:triangular-series",
+        "id": "se-support-triangular-series-child-teacher",
+        "source": "\"use strict\";function run(a,b){return a*(a+1)/2+b;}",
+        "sourceDigest": "5a2f731f0196f40d6b6ef7c106814989c5c3aa265d5ae551aae0b4312fad8ded"
+      },
+      {
+        "ancestors": [
+          "source-template:triangular-series"
+        ],
+        "coreDigest": "718cde138c82277d864a79f1a55a58b2d55503ac3c915a157f97fc63946ef548",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:triangular-series",
+        "id": "se-support-triangular-series-pure",
+        "source": "\"use strict\";function run(a,b){return a*(a+1)/2+b;}",
+        "sourceDigest": "5a2f731f0196f40d6b6ef7c106814989c5c3aa265d5ae551aae0b4312fad8ded"
+      },
+      {
+        "ancestors": [
+          "source-template:triangular-series"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:triangular-series",
+        "id": "se-support-triangular-series-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a*(a+1)/2+b;host.store(key,answer);return answer;}",
+        "sourceDigest": "9c4bfb5cb77db5beea4cb789b8e5804bbf822ab6288cf41e1f907d94e8df83a6"
+      },
+      {
+        "ancestors": [
+          "source-template:unit-conversion"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:unit-conversion",
+        "id": "se-support-unit-conversion-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=a*1000/b;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "50d38925ae8f3cb9e48eefc972e9e0efd944ee6e83f96648d58f33c6d9d02128"
+      },
+      {
+        "ancestors": [
+          "source-template:unit-conversion"
+        ],
+        "coreDigest": "9831f0e1e35e9d20d40ddf356ce453488495000b21b09154ad48c11e00200af2",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:unit-conversion",
+        "id": "se-support-unit-conversion-child-teacher",
+        "source": "\"use strict\";function run(a,b){return a*1000/b;}",
+        "sourceDigest": "86575fe564c8569f4ddaa481b4e9c08d40bd1e362b26681eb64b878e3a098c85"
+      },
+      {
+        "ancestors": [
+          "source-template:unit-conversion"
+        ],
+        "coreDigest": "9831f0e1e35e9d20d40ddf356ce453488495000b21b09154ad48c11e00200af2",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:unit-conversion",
+        "id": "se-support-unit-conversion-pure",
+        "source": "\"use strict\";function run(a,b){return a*1000/b;}",
+        "sourceDigest": "86575fe564c8569f4ddaa481b4e9c08d40bd1e362b26681eb64b878e3a098c85"
+      },
+      {
+        "ancestors": [
+          "source-template:unit-conversion"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:unit-conversion",
+        "id": "se-support-unit-conversion-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=a*1000/b;host.store(key,answer);return answer;}",
+        "sourceDigest": "caf00115a09aeb949515bb6fe21d4ae19895b7cfaacd83549439eac37274fb66"
+      },
+      {
+        "ancestors": [
+          "source-template:weighted-average"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:weighted-average",
+        "id": "se-support-weighted-average-callbacks-recovery",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);let answer=(a*2+b*3)/5;await host.withCallback(key,function(delta){answer=answer+delta;host.store(key,answer);});return answer;}",
+        "sourceDigest": "341a94cc409daf935c8a6429ec7fb97d38f200d5cf771983ea05363c6b54c536"
+      },
+      {
+        "ancestors": [
+          "source-template:weighted-average"
+        ],
+        "coreDigest": "0f7bc98f7a0987256a1826eff4b409b10b19cea3517715b9ab1137c0c9b75489",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:weighted-average",
+        "id": "se-support-weighted-average-child-teacher",
+        "source": "\"use strict\";function run(a,b){return (a*2+b*3)/5;}",
+        "sourceDigest": "8197d3db15cbe316a60a41bd7adc2b21a0cb233c33cc7c1ccdc7c6dd7166c40b"
+      },
+      {
+        "ancestors": [
+          "source-template:weighted-average"
+        ],
+        "coreDigest": "0f7bc98f7a0987256a1826eff4b409b10b19cea3517715b9ab1137c0c9b75489",
+        "coreStatus": "algorithm",
+        "entry": "run",
+        "family": "semantic-recipe:weighted-average",
+        "id": "se-support-weighted-average-pure",
+        "source": "\"use strict\";function run(a,b){return (a*2+b*3)/5;}",
+        "sourceDigest": "8197d3db15cbe316a60a41bd7adc2b21a0cb233c33cc7c1ccdc7c6dd7166c40b"
+      },
+      {
+        "ancestors": [
+          "source-template:weighted-average"
+        ],
+        "coreDigest": null,
+        "coreStatus": "detailed",
+        "entry": "run",
+        "family": "semantic-recipe:weighted-average",
+        "id": "se-support-weighted-average-repeated-2calls",
+        "source": "\"use strict\";async function run(key,b){const a=await host.readAsync(key);const answer=(a*2+b*3)/5;host.store(key,answer);return answer;}",
+        "sourceDigest": "6ddadf6cffeebe96829d6e5bbb947047ac9f16752cc397815f9e376faec60a48"
+      }
+    ],
+    "traceFormat": "semantic-trace/8"
+  },
+  "sourceRegistryDigest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+  "stageSupply": {
+    "train": {
+      "requiredBehaviors": {
+        "semantic_async": 1,
+        "semantic_callback": 1,
+        "semantic_child": 1,
+        "semantic_code_invocation": 1,
+        "semantic_recovery": 1,
+        "semantic_repeated_invocation": 1,
+        "semantic_source_reread": 1,
+        "semantic_tool_feedback": 1
+      },
+      "status": "passed"
+    },
+    "validation": {
+      "requiredBehaviors": {
+        "semantic_async": 1,
+        "semantic_callback": 1,
+        "semantic_child": 1,
+        "semantic_code_invocation": 1,
+        "semantic_recovery": 1,
+        "semantic_repeated_invocation": 1,
+        "semantic_source_reread": 1,
+        "semantic_tool_feedback": 1
+      },
+      "status": "passed"
+    }
+  },
+  "status": "passed"
+}

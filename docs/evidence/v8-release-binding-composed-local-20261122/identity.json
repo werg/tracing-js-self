@@ -1,0 +1,22 @@
+{
+  "schema": "v8-release-binding-composition-local-identity/1",
+  "publishedProducer": "69c4b92db31056b8b2a26461207f7358e523b720",
+  "localProducer": "6b9defa02b382b03eb2b7547547d3e4ac649953d",
+  "producerTree": "6834462b2c0917619154bb82ea42ddfe59e8cf5f",
+  "producerStatus": "",
+  "native": "33031866fc7e2d20156a454064aeafd4ef79ccf3",
+  "nativeTree": "443d7b3699da44d21fb6381ad325330aaedeff62",
+  "nativeStatus": "",
+  "node": "v24.22.3",
+  "npm": "11.19.1",
+  "pythonRuntime": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "torch": "2.10.0+cpu",
+    "pytest": "9.2.0"
+  },
+  "limitations": [
+    "Local pytest9.2 differs from hosted locked pytest8.4.2; npm11.19.1 differs from hosted11.9.0.",
+    "This focused local run does not perform64 source replays, package/restore, decoder work or a learned evaluation.",
+    "The existing native controlled training fixture performs its own previously declared optimization; no global zero-update total is inferred from mixed controls."
+  ]
+}

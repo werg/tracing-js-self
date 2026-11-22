@@ -1,0 +1,24 @@
+✔ known close produces only an exact closed disposition and preserves complete history (13208.6928ms)
+✔ known service close preserves the exact owner snapshot and independently supplied terminal fence (291.79033ms)
+✔ known service close refuses a missing, substituted or changed terminal fence (479.862794ms)
+✔ repeated closed reconstruction retains consumed costs and cannot become active history (2049.614092ms)
+✔ known close refuses changed request authority, original outcome, attempts or elapsed budget (1227.063946ms)
+✔ a normally closed acknowledged head is returned only as a nonresumable disposition (70179.8801ms)
+✔ lost or altered close reply after-native-outcome recovers only the known native close (54267.261166ms)
+✔ lost or altered close reply alter-reply recovers only the known native close (54637.681895ms)
+✔ repeated terminal close recovery preserves its original attempts, costs and elapsed time (80649.538174ms)
+✔ an unknown native close outcome is never retried as a host close (38489.245534ms)
+✔ an acknowledged close intent without its producer request cannot trigger close recovery (37364.880799ms)
+✔ lost terminal head acknowledgement makes its older close intent stale before native recovery (53915.144568ms)
+✔ selector close racing terminal-head acknowledgement cannot dispatch a second close (54734.827678ms)
+✔ a fully settled cancellation recovers as a nonresumable close without host work (54134.569552ms)
+✔ service-owned known close recovers only after exact same-owner authority and preserves it across process loss (95291.963202ms)
+✔ service-owned settled cancellation preserves its exact owner and terminal fence (66701.570085ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 678016.638896

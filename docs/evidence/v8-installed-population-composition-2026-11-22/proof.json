@@ -1,0 +1,77 @@
+{
+  "schema": "v8-installed-population-composition/1",
+  "sourceRevision": "71466c0da708e32bfa1ae476bde5d2c874df11c5",
+  "baseRevision": "296e011610b278a1a814bb85c7417ff5846de690",
+  "hostedFailure": {
+    "run": 45045726764,
+    "job": 137279808325,
+    "producerRevision": "99be4d64842e1eed09ba21543f696320cd1b3245",
+    "error": "Declared installed population changed: interoperability",
+    "phase": "inventory before package installation and source execution"
+  },
+  "protocolComposition": {
+    "commit": "bcc7f839dc9f651ad259ca91648c52d5dc1403dd",
+    "previous": 20,
+    "current": 23,
+    "added": [
+      "source-promise-adoption-async-return",
+      "source-promise-adoption-executor",
+      "source-promise-adoption-reaction-return"
+    ],
+    "removed": [],
+    "changedPreviousFixtures": []
+  },
+  "currentDeclaredPopulation": {
+    "all": {
+      "scripts": 663,
+      "modules": 2,
+      "total": 665
+    },
+    "interoperability": {
+      "scripts": 66,
+      "modules": 3,
+      "total": 69
+    },
+    "totalSeparateRows": 734
+  },
+  "localControls": {
+    "before": {
+      "tests": 9,
+      "passed": 6,
+      "failed": 3,
+      "skipped": 0
+    },
+    "after": {
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "scope": "Population accounting and bounded installed harness controls. Full actual complete-package734-row source qualification remains a separate hosted gate. No native admission, model quality or optimizer-update claim.",
+  "files": {
+    "original-hosted-job.log": {
+      "bytes": 22754,
+      "sha256": "74b963feaebb2fcd3590cafbf0d7898844da8ed07e4592757a3d323400697bec"
+    },
+    "before-node.log": {
+      "bytes": 5161,
+      "sha256": "266d5f4eacdca8edbda6b8e728471152eaed60538062dcb1d0cf8f1639e8ab34"
+    },
+    "after-node.log": {
+      "bytes": 2540,
+      "sha256": "282872706241214266836b01053389b30b4e5512880f337e80d4323ee103ce15"
+    },
+    "final-pair-7c-original-hosted-job.log": {
+      "bytes": 23006,
+      "sha256": "9c94011ab018b349917c6e55eee78563c11d4cf96edd0a32f712dbd2150993c2"
+    }
+  },
+  "repeatedHostedFailure": {
+    "run": 45045817948,
+    "job": 137280068568,
+    "producerRevision": "7c20124f3d89dfe1a8d5e892238e7b7f92589720",
+    "error": "Declared installed population changed: interoperability",
+    "phase": "inventory before package installation and source execution"
+  }
+}

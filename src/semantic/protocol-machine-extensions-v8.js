@@ -12,6 +12,7 @@ import {ENUMERATION_PROFILE_V8,ENUMERATION_RECORD_FIELDS,validateEnumerationReco
 import {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_RECORD_FIELDS,validatePromiseJoinRecordV8,
   applyPromiseJoinRecordV8,restorePromiseJoinStateV8,assertPromiseJoinNextV8,
   allowsPromiseJoinInternalSchedulerV8,allowsPromiseJoinWithoutStackV8,allowsPromiseJoinDetailedCallV8} from './protocol-promise-join-v8.js';
+import {PRIMITIVE_CONVERSION_PROFILE_V8,PRIMITIVE_CONVERSION_RECORD_FIELDS,validatePrimitiveConversionRecordV8,applyPrimitiveConversionRecordV8,restorePrimitiveConversionStateV8,assertPrimitiveConversionNextV8} from './protocol-primitive-conversion-v8.js';
 import {NUMBER_RECORD_FIELDS,validateNumberRecordV8,applyNumberRecordV8,restoreNumberStateV8,assertNumberNextV8} from './protocol-number-v8.js';
 import {GENERATOR_PROFILE_V8,GENERATOR_RECORD_FIELDS,GENERATOR_INTRINSICS_V8,validateGeneratorRecordV8,
   applyGeneratorRecordV8,restoreGeneratorStateV8,hasGeneratorStateV8,assertGeneratorCallV8,
@@ -20,7 +21,35 @@ import {PROXY_PROFILE_V8,PROXY_RECORD_FIELDS,validateProxyRecordV8,applyProxyRec
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_RECORD_FIELDS,validatePromiseExecutorRecordV8,applyPromiseExecutorRecordV8,
   restorePromiseExecutorStateV8,assertPromiseExecutorNextV8,assertPromiseExecutorCallV8,
   allowsPromiseExecutorInternalSchedulerV8,allowsPromiseExecutorDetailedCallV8} from './protocol-promise-executor-v8.js';
+import {MODULE_NAMESPACE_PROFILE_V8,MODULE_NAMESPACE_RECORD_FIELDS,validateModuleNamespaceRecordV8,
+  applyModuleNamespaceRecordV8,restoreModuleNamespaceStateV8,assertModuleNamespaceNextV8,
+  assertModuleNamespaceTransitionV8} from './protocol-module-namespace-v8.js';
+import {ASYNC_CALL_PROFILE_V8,ASYNC_CALL_RECORD_FIELDS,validateAsyncCallRecordV8,applyAsyncCallRecordV8,
+  restoreAsyncCallStateV8,assertAsyncCallV8,assertAsyncCallNextV8,
+  allowsAsyncCallInternalSchedulerV8,allowsAsyncCallWithoutStackV8} from './protocol-async-call-v8.js';
+import {MODULE_SCHEDULER_PROFILE_V8,MODULE_SCHEDULER_RECORD_FIELDS,validateModuleSchedulerRecordV8,applyModuleSchedulerRecordV8,
+  validateBoundModuleSchedulerStateV8,assertBoundModuleSchedulerNextV8} from './protocol-module-scheduler-v8.js';
+import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_RECORD_FIELDS,validatePromiseAdoptionRecordV8,applyPromiseAdoptionRecordV8,
+  restorePromiseAdoptionStateV8,assertPromiseAdoptionNextV8,allowsPromiseAdoptionInternalSchedulerV8,
+  allowsPromiseAdoptionWithoutStackV8} from './protocol-promise-adoption-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
+  id:MODULE_SCHEDULER_PROFILE_V8,recordFields:MODULE_SCHEDULER_RECORD_FIELDS,
+  validateRecord:validateModuleSchedulerRecordV8,applyRecord:applyModuleSchedulerRecordV8,
+  restoreState:controller=>validateBoundModuleSchedulerStateV8(controller),
+  assertNext:assertBoundModuleSchedulerNextV8,hasRichState:node=>node.kind==='module-scheduler',
+  allowsInternalScheduler:controller=>Boolean(controller.moduleSchedulerPlan)
+}),Object.freeze({
+  id:ASYNC_CALL_PROFILE_V8,recordFields:ASYNC_CALL_RECORD_FIELDS,validateRecord:validateAsyncCallRecordV8,
+  applyRecord:applyAsyncCallRecordV8,restoreState:(controller,_snapshot,api)=>restoreAsyncCallStateV8(controller,api),
+  assertNext:assertAsyncCallNextV8,assertCall:assertAsyncCallV8,
+  hasRichState:node=>node.asyncFunction!==undefined||node.asyncCall!==undefined,
+  allowsInternalScheduler:allowsAsyncCallInternalSchedulerV8,allowsWithoutStack:allowsAsyncCallWithoutStackV8
+}),Object.freeze({
+  id:MODULE_NAMESPACE_PROFILE_V8,recordFields:MODULE_NAMESPACE_RECORD_FIELDS,
+  validateRecord:validateModuleNamespaceRecordV8,applyRecord:applyModuleNamespaceRecordV8,
+  hasRichState:node=>node.kind==='module-namespace',restoreState:restoreModuleNamespaceStateV8,
+  assertNext:assertModuleNamespaceNextV8,assertTransition:assertModuleNamespaceTransitionV8
+}),Object.freeze({
   id:MEMORY_PROFILE_V8,recordFields:MEMORY_RECORD_FIELDS,validateRecord:validateMemoryRecordV8,applyRecord:applyMemoryRecordV8,
   hasRichState:node=>isBinaryMemoryKind(node.kind),
   restoreState:(controller,_snapshot,api)=>restoreMemoryStateV8(controller,api)
@@ -45,6 +74,9 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   allowsDetailedCall:allowsPromiseJoinDetailedCallV8,
   restoreState:(controller,_snapshot,api)=>restorePromiseJoinStateV8(controller,api)
 }),Object.freeze({
+  id:PRIMITIVE_CONVERSION_PROFILE_V8,recordFields:PRIMITIVE_CONVERSION_RECORD_FIELDS,validateRecord:validatePrimitiveConversionRecordV8,
+  applyRecord:applyPrimitiveConversionRecordV8,stateField:'primitiveConversions',restoreState:restorePrimitiveConversionStateV8,assertNext:assertPrimitiveConversionNextV8
+}),Object.freeze({
   id:'number-conversion/1',recordFields:NUMBER_RECORD_FIELDS,validateRecord:validateNumberRecordV8,
   applyRecord:applyNumberRecordV8,stateField:'numberConversions',restoreState:restoreNumberStateV8,assertNext:assertNumberNextV8
 }),Object.freeze({
@@ -63,4 +95,9 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   assertNext:assertPromiseExecutorNextV8,assertCall:assertPromiseExecutorCallV8,
   hasRichState:node=>node.promiseResolver!==undefined,
   allowsInternalScheduler:allowsPromiseExecutorInternalSchedulerV8,allowsDetailedCall:allowsPromiseExecutorDetailedCallV8
+}),Object.freeze({
+  id:PROMISE_ADOPTION_PROFILE_V8,recordFields:PROMISE_ADOPTION_RECORD_FIELDS,validateRecord:validatePromiseAdoptionRecordV8,
+  applyRecord:applyPromiseAdoptionRecordV8,restoreState:(controller,_snapshot,api)=>restorePromiseAdoptionStateV8(controller,api),
+  assertNext:assertPromiseAdoptionNextV8,hasRichState:node=>node.adoption!==undefined,
+  allowsInternalScheduler:allowsPromiseAdoptionInternalSchedulerV8,allowsWithoutStack:allowsPromiseAdoptionWithoutStackV8
 })]);

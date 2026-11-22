@@ -1,0 +1,11 @@
+{
+  "contexts": 708,
+  "nativeAdmission": false,
+  "optimizerUpdates": 0,
+  "productionPopulationChanged": false,
+  "projectionValidated": true,
+  "replayValidated": true,
+  "schema": "bound-module-source-admission-controls/1",
+  "sourceCases": 1,
+  "sourceValidated": true
+}

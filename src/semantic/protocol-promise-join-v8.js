@@ -1,4 +1,4 @@
-// Bounded Promise.all/race protocol transitions. The controller's existing
+// Bounded Promise.all/allSettled/race transitions. The controller's existing
 // Promise heap, job table, ready queue and scheduler remain authoritative.
 import {analyzeSemanticProgram} from '../training/semantic-program.js';
 export const PROMISE_JOIN_PROFILE_V8='promise-join/1';
@@ -7,7 +7,7 @@ export const PROMISE_JOIN_RECORD_FIELDS=Object.freeze({
   'promise.join':Object.freeze(['kind','mode','result','inputs','jobs','output','error']),
   'promise.join.step':Object.freeze(['kind','result','job','entry','output','error','status','value'])
 });
-const modes=new Set(['all','race']);
+const modes=new Set(['all','allSettled','race']);
 const fail=message=>{const error=new TypeError('Promise join: '+message);error.category='unsupported.promise-join';throw error;};
 const copy=structuredClone;
 const ident=value=>{if(typeof value!=='string'||!value||value.length>256)fail('identity');};
@@ -23,10 +23,11 @@ export function validatePromiseJoinRecordV8(record,{value}={}){
     if(!modes.has(record.mode))fail('unsupported mode');
     list(record.inputs,'inputs');list(record.jobs,'jobs');
     if(record.inputs.length!==record.jobs.length)fail('input/job count');
+    if(record.mode!=='race'&&record.inputs.length>=4096)fail('join output must reserve a property for array length');
     record.inputs.forEach(ident);record.jobs.forEach(ident);
     if(new Set(record.jobs).size!==record.jobs.length)fail('duplicate join job');
     for(const id of [record.output,record.error])if(id!==null)ident(id);
-    if(record.mode==='all'&&record.inputs.length===0){if(record.output===null||record.error!==null)fail('empty all allocation identity');}
+    if(record.mode!=='race'&&record.inputs.length===0){if(record.output===null||record.error!==null)fail('empty collecting join allocation identity');}
     else if(record.output!==null||record.error!==null)fail('join registration leaks a future allocation identity');
   }else{
     ident(record.job);
@@ -50,11 +51,23 @@ function registerJob(controller,id,input,result,index){
     reaction:'join',closure:null,rejectionClosure:null,target:null,sequence:++controller.scheduler.registration,
     joinResult:result,joinIndex:index});
 }
+function freshAllocation(controller,id,api){
+  api.fresh(controller,id);
+  if(controller.jobs.has(id)||controller.continuations.has(id))fail('join allocation identity is reserved');
+}
 function outputArray(controller,id,values,api){
-  api.fresh(controller,id);const properties=new Map();
+  freshAllocation(controller,id,api);const properties=new Map();
   values.forEach((value,index)=>properties.set(String(index),copy(value)));
   properties.set('length',['num',values.length]);
   controller.heap.set(id,{kind:'array',code:null,captures:[],prototype:'ordinary',properties});
+}
+function settlementEntry(controller,id,input,api){
+  if(id===null)fail('Promise.allSettled requires a fresh entry identity for each input');
+  freshAllocation(controller,id,api);
+  controller.heap.set(id,{kind:'object',code:null,captures:[],prototype:'ordinary',properties:new Map([
+    ['status',['str',input.state]],[input.state==='fulfilled'?'value':'reason',copy(input.result)]
+  ])});
+  return ['ref',id];
 }
 function status(controller,node){return {status:node.state,value:node.state==='pending'?null:copy(node.result)};}
 function normalizeClaim(controller,node,record,api){
@@ -78,11 +91,11 @@ export function applyPromiseJoinRecordV8(controller,record,api){
     if(record.output!==null)api.fresh(controller,record.output);
     if(record.error!==null)api.fresh(controller,record.error);
     if(record.output!==null&&record.error!==null&&record.output===record.error)fail('duplicate result allocation identity');
-    result.join={schema:PROMISE_JOIN_STATE_V8,mode:record.mode,inputs:copy(record.inputs),jobs:copy(record.jobs),
+    result.join={schema:PROMISE_JOIN_STATE_V8,owner:controller.rootInvocation,mode:record.mode,inputs:copy(record.inputs),jobs:copy(record.jobs),
       observed:record.inputs.map(()=>false),values:record.inputs.map(()=>null),output:record.output,error:record.error,
       settled:false};
     if(record.inputs.length===0){
-      if(record.mode==='all'){
+      if(record.mode!=='race'){
         outputArray(controller,record.output,[],api);controller.settlePromise(record.result,'fulfilled',['ref',record.output]);result.join.settled=true;
       }
       return true;
@@ -90,24 +103,29 @@ export function applyPromiseJoinRecordV8(controller,record,api){
     record.jobs.forEach((job,index)=>registerJob(controller,job,record.inputs[index],record.result,index));
     controller.refreshReady();return true;
   }
-  if(record.entry!==null||record.error!==null)fail('unused entry/error allocation identity');
+  if(record.error!==null)fail('unused error allocation identity');
   const result=promise(controller,record.result),join=result.join;
   if(!join||join.schema!==PROMISE_JOIN_STATE_V8||!modes.has(join.mode))fail('unknown join result');
+  if(join.owner!==controller.rootInvocation)fail('join belongs to another invocation');
   const index=join.jobs.indexOf(record.job);if(index<0)fail('job is not registered with result Promise');
   const job=controller.jobs.get(record.job);
-  if(!job||job.reaction!=='join'||job.joinResult!==record.result||job.joinIndex!==index||job.promise!==join.inputs[index])fail('join scheduler job linkage');
+  if(!job||job.owner!==join.owner||job.reaction!=='join'||job.joinResult!==record.result||job.joinIndex!==index||job.promise!==join.inputs[index])fail('join scheduler job linkage');
   if(controller.stack.length||controller.activeJob||[...controller.jobs.values()].some(row=>row.status==='running')||
     controller.ready[0]!==record.job||job.status!=='queued')fail('join step violates FIFO or stack turn');
   const input=promise(controller,join.inputs[index]);if(input.state==='pending')fail('join step before input settlement');
-  controller.ready.shift();job.status='completed';join.observed[index]=true;join.values[index]=copy(input.result);
+  // Entries are allocated by the actual reaction, never during registration.
+  // Repeated dependencies receive distinct snapshots even when they share a value.
+  if(join.mode!=='allSettled'&&record.entry!==null)fail('unused entry allocation identity');
+  const value=join.mode==='allSettled'?settlementEntry(controller,record.entry,input,api):copy(input.result);
+  controller.ready.shift();job.status='completed';join.observed[index]=true;join.values[index]=value;
   let expectedOutput=null;
   if(!join.settled){
     if(join.mode==='race'){
       controller.settlePromise(record.result,input.state,copy(input.result));join.settled=true;
-    }else if(input.state==='rejected'){
+    }else if(join.mode==='all'&&input.state==='rejected'){
       controller.settlePromise(record.result,'rejected',copy(input.result));join.settled=true;
     }else if(join.observed.every(Boolean)){
-      if(record.output===null)fail('final Promise.all fulfillment requires an output allocation identity');
+      if(record.output===null)fail('final collecting join fulfillment requires an output allocation identity');
       outputArray(controller,record.output,join.values,api);expectedOutput=record.output;join.output=record.output;
       controller.settlePromise(record.result,'fulfilled',['ref',record.output]);join.settled=true;
     }
@@ -124,6 +142,9 @@ export function assertPromiseJoinNextV8(controller,record){
   // The callback's return empties its JS stack before the existing scheduler
   // commits its result Promise. Completing that turn precedes the next job.
   if(record.kind==='job'&&fields.action==='complete'&&selected?.status==='running'&&selected.reaction!=='join')return true;
+  if(record.kind==='promise.reaction.complete'&&selected?.status==='running'&&selected.reaction!=='join')return true;
+  if(['promise.adopt.enqueue','promise.adopt.self'].includes(record.kind)&&
+    controller.heap.get(fields.promise)?.adoption?.phase==='intent')return true;
   const head=controller.ready?.[0],job=head&&controller.jobs?.get(head);
   if(controller.stack?.length===0&&job?.reaction==='join')
     return record.kind==='promise.join.step'&&record.job===head;
@@ -138,7 +159,7 @@ export function allowsPromiseJoinInternalSchedulerV8(controller,record){
 export function allowsPromiseJoinWithoutStackV8(controller,record){
   if(record?.kind!=='promise.join.step'||controller.stack?.length!==0)return false;
   const result=controller.heap?.get(record.result),join=result?.join;
-  return result?.kind==='promise'&&join?.schema===PROMISE_JOIN_STATE_V8&&join.jobs?.includes(record.job)===true&&
+  return result?.kind==='promise'&&join?.schema===PROMISE_JOIN_STATE_V8&&join.owner===controller.rootInvocation&&join.jobs?.includes(record.job)===true&&
     controller.ready?.[0]===record.job;
 }
 export function allowsPromiseJoinDetailedCallV8(controller,record){
@@ -148,7 +169,7 @@ export function allowsPromiseJoinDetailedCallV8(controller,record){
   if(typeof identity!=='string'||!identity||identity.length>256)return false;
   const callee=controller.heap?.get(identity);
   if(callee)return callee.kind==='closure'&&(callee.functionKind===undefined||callee.functionKind==='ordinary')&&
-    callee.callable==null&&callee.constructorKind==null&&!callee.generatorFunction&&!callee.promiseResolver;
+    callee.callable==null&&callee.constructorKind==null&&!callee.generatorFunction&&!callee.promiseResolver&&!callee.asyncFunction;
   // Detailed-source lifecycle carries immutable source callable names. Match
   // them against this invocation's analyzed source rather than accepting
   // arbitrary names or any class constructor.
@@ -170,30 +191,52 @@ export function restorePromiseJoinStateV8(controller,api){
     const join=node.join;
     if(join===undefined||join===null)continue;
     if(node.external!==null||node.adopted!==null)fail('restored join must own its internal settlement');
-    if(!join||join.schema!==PROMISE_JOIN_STATE_V8||!modes.has(join.mode)||!Array.isArray(join.inputs)||!Array.isArray(join.jobs)||
-      !Array.isArray(join.observed)||!Array.isArray(join.values)||join.inputs.length!==join.jobs.length||
+    if(!join||join.schema!==PROMISE_JOIN_STATE_V8||!isId(join.owner)||!modes.has(join.mode)||!Array.isArray(join.inputs)||!Array.isArray(join.jobs)||
+      !Array.isArray(join.observed)||!Array.isArray(join.values)||join.inputs.length>4096||
+      join.mode!=='race'&&join.inputs.length>=4096||join.inputs.length!==join.jobs.length||
       join.inputs.length!==join.observed.length||join.inputs.length!==join.values.length||typeof join.settled!=='boolean')fail('restored join metadata');
     if(join.settled!==(node.state!=='pending'))fail('join settled flag differs from result Promise');
-    const jobs=new Set();
+    const jobs=new Set(),entries=new Set();
     for(let i=0;i<join.inputs.length;i++){
       ident(join.inputs[i]);ident(join.jobs[i]);if(jobs.has(join.jobs[i]))fail('restored duplicate join job');jobs.add(join.jobs[i]);
       if(typeof join.observed[i]!=='boolean')fail('restored join observation flag');
       const value=join.values[i];if(join.observed[i])api.known(controller,value,id);else if(value!==null)fail('unobserved join input has value');
-      const job=controller.jobs.get(join.jobs[i]);if(!job||job.reaction!=='join'||job.joinResult!==id||job.joinIndex!==i||job.promise!==join.inputs[i])fail('restored join scheduler linkage');
-      if((job.status==='completed')!==join.observed[i])fail('restored join observation/job lifecycle');
       const input=promise(controller,join.inputs[i]);
-      if(join.observed[i]&&(input.state==='pending'||!api.eq(value,input.result)))fail('restored join observed value differs from input settlement');
+      if(join.observed[i]){
+        if(input.state==='pending')fail('observed join input is pending');
+        if(join.mode==='allSettled'){
+          const entry=value?.[0]==='ref'&&controller.heap.get(value[1]);
+          if(entry?.kind!=='object'||entries.has(value[1]))fail('restored settlement entry identity');
+          entries.add(value[1]);
+          // Until the aggregate fulfills these entries are private. Afterwards
+          // ordinary guest writes may legitimately change their properties.
+          if(!join.settled&&!api.eq(entry.properties,new Map([
+            ['status',['str',input.state]],[input.state==='fulfilled'?'value':'reason',input.result]
+          ])))fail('restored pending settlement entry differs from input');
+        }else if(!api.eq(value,input.result))fail('restored join observed value differs from input settlement');
+      }
+      const job=controller.jobs.get(join.jobs[i]);if(join.owner!==controller.rootInvocation){
+        if(job)fail('foreign join job in invocation scheduler');
+        continue;
+      }
+      if(!job||job.owner!==join.owner||job.reaction!=='join'||job.joinResult!==id||job.joinIndex!==i||job.promise!==join.inputs[i])fail('restored join scheduler linkage');
+      if((job.status==='completed')!==join.observed[i])fail('restored join observation/job lifecycle');
     }
-    if(join.mode==='all'&&join.inputs.length===0){
+    if(join.mode!=='race'&&join.inputs.length===0){
       if(node.state!=='fulfilled'||!isId(join.output)||join.error!==null||node.result[0]!=='ref'||node.result[1]!==join.output)fail('restored empty all');
-      const output=controller.heap.get(join.output);if(output?.kind!=='array'||output.properties.get('length')?.[1]!==0)fail('restored empty all output');
+      if(controller.heap.get(join.output)?.kind!=='array')fail('restored empty collecting output');
+    }
+    if(join.mode==='allSettled'){
+      if(join.settled!==join.observed.every(Boolean)||node.state==='rejected')fail('restored allSettled completion');
+      if(join.settled&&(node.result?.[0]!=='ref'||node.result[1]!==join.output||
+        controller.heap.get(join.output)?.kind!=='array'))fail('restored allSettled output');
     }
     if(join.mode==='race'&&join.inputs.length===0&&(join.output!==null||join.error!==null||node.state!=='pending'))fail('restored empty race');
     if(join.inputs.length>0&&join.output!==null&&join.output!==undefined&&node.state!=='fulfilled')fail('premature join output');
     if(join.error!==null&&join.error!==undefined)fail('unsupported join error storage');
   }
   for(const [id,job]of controller.jobs)if(job.reaction==='join'){
-    const result=controller.heap.get(job.joinResult);if(result?.kind!=='promise'||!result.join?.jobs.includes(id))fail('orphan join job');
+    const result=controller.heap.get(job.joinResult);if(result?.kind!=='promise'||!result.join?.jobs.includes(id)||result.join.owner!==controller.rootInvocation||job.owner!==controller.rootInvocation)fail('orphan join job');
     if(!['waiting','queued','completed'].includes(job.status))fail('join job lifecycle');
     if(job.status==='queued'&&!controller.ready.includes(id))fail('queued join job missing from ready queue');
   }

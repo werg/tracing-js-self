@@ -64,9 +64,9 @@ export function objectPrototype(obj) {
   return Object.hasOwn(obj,'prototype')?obj.prototype:
     obj.kind==='array'?'Array.prototype':obj.kind==='function'?'Function.prototype':'Object.prototype';
 }
-export function ordinaryGet(heap, receiver, name) {
+export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
   const original=receiver[0]==='ref'?heap[receiver[1]]:null;
-  if(!original||!['object','array'].includes(original.kind))return null;
+  if(!original||!['object','array','module-namespace'].includes(original.kind))return null;
   const observation=value=>({
     kind:'property',objectId:original.id,key:name,
     version:Object.hasOwn(original.propertyVersions??{},name)?original.propertyVersions[name]:0,shapeVersion:original.shapeVersion??0,
@@ -80,7 +80,11 @@ export function ordinaryGet(heap, receiver, name) {
     visited.add(current.id);
     // Accessor [[Get]] needs a guest callback continuation, never silently
     // skip a getter and fall back to an inherited/default conversion method.
-    if(Object.hasOwn(current.accessors??{},name))return null;
+    if(Object.hasOwn(current.accessors??{},name)){
+      const accessor=current.accessors[name];
+      return accessors&&accessor?.get?.value?
+        {accessor,observation:observation(accessor.get)}:null;
+    }
     if(Object.hasOwn(current.properties,name)){
       const method=current.properties[name];
       if(!method||!Array.isArray(method.value))return null;
@@ -127,7 +131,7 @@ export function ordinaryGet(heap, receiver, name) {
 }
 export function ordinaryBuiltin(heap, receiver, name) {
   const obj=receiver[0]==='ref'?heap[receiver[1]]:null;
-  if(!obj||!['object','array'].includes(obj.kind))return null;
+  if(!obj||!['object','array','module-namespace'].includes(obj.kind))return null;
   if(name==='Object.valueOf')return receiver;
   if(name==='Object.toString'){
     const tag=ordinaryGet(heap,receiver,symbolPropertyKey('well-known:toStringTag'));
@@ -135,7 +139,12 @@ export function ordinaryBuiltin(heap, receiver, name) {
     return ['str','[object '+(tag.method.value[0]==='str'?tag.method.value[1]:obj.kind==='array'?'Array':'Object')+']'];
   }
   if(name==='Array.toString') {
-    if(obj.kind!=='array'||Object.hasOwn(obj.properties,'join'))return null;
+    if(obj.kind!=='array')return null;
+    // Array::toString performs Get(join). This primitive data leaf may only
+    // stand in for the default method; never skip an own/inherited getter or
+    // an overridden join whose call would have observable guest effects.
+    const join=ordinaryGet(heap,receiver,'join');
+    if(!join||join.method.value[0]!=='builtinfn'||join.method.value[1]!=='Array.prototype.join')return null;
     const length=decode(obj.properties.length.value);
     // The implemented Array::join leaf covers dense primitive data arrays.
     // Accessors, sparse/inherited indices and nested objects fail closed.

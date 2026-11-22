@@ -1,0 +1,26 @@
+{
+  "schema": "semantic-v8-bounded-archive/1",
+  "status": "native-admission-failed",
+  "archive": "conversion-real-tokenizer-c3a81e4-5ea3eb3-failed.tar.gz",
+  "bytes": 953508,
+  "sha256": "9acd1f1eac199c204724a4930ec96b45610d68e562f471d0a24cdd928b56cc7f",
+  "attemptManifest": "conversion-real-tokenizer-smoke/attempt-manifest.json",
+  "attemptManifestSha256": "5b3fea5509919e2b4bfe7e2e4ae12811710319df8e9935150af5b0ae444d9b09",
+  "retainedFiles": 348,
+  "payloadBytes": 12069680,
+  "deterministicRebuild": "verified twice: sorted paths; tar uid/gid/mtime=0, normalized modes; gzip filename empty and mtime=0",
+  "producerRevision": "c3a81e44284870ad9cae889edd8a229ad9ce6bde",
+  "consumerRevision": "5ea3eb36ae18e109f0f988a47eb58a71f7c4ff85",
+  "declared": 66,
+  "selectedCaseIds": [
+    "getter-replacement",
+    "nested-goals",
+    "promise-key",
+    "mapped-key"
+  ],
+  "sourceQualified": 4,
+  "nativeAdmitted": 0,
+  "flatTokenMeasuredEpisodes": 4,
+  "nativePackingMeasuredEpisodes": 0,
+  "scope": "Retained failed four-case engineering attempt; 62 cases untested, native admission failed, no model/optimizer success claim."
+}

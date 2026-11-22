@@ -1,0 +1,29 @@
+{
+  "schema": "semantic-v8-request-field-source-map/1",
+  "baseline": "882375df2068571b9f29df08068d44ced1374f37",
+  "baselineTree": "4c76e4f21e23d73e93ead2dd934091029574e3fd",
+  "sourceRevision": "31b2379ae5f23e13b1e8309878cadffef742657a",
+  "localSourceRevision": "9e24aa7245a2a9504e85c59bbd1fe489f26c6736",
+  "sourceTree": "32f72f100e91b5a347bbdbc0d08b4c7d2b65be13",
+  "paths": [
+    {
+      "path": "src/corpus/release-task-binding-v8.mjs",
+      "baselineBlob": "80cbc1a52b66a9158eb17f6994d87939f10adf77",
+      "sourceBlob": "1898e10715b696b896e4897763e0bb9763fbcaa1"
+    },
+    {
+      "path": "test/v8-release-campaign.test.js",
+      "baselineBlob": "946c3a879a6ed96500275e7a43bcb21a4e99be51",
+      "sourceBlob": "c60d570ce02ee1051bd22a981724513224c850fe"
+    },
+    {
+      "path": "test/v8-release-request-fields.test.js",
+      "baselineBlob": null,
+      "sourceBlob": "b7d83f20f9b5ad5d7001984429b251dec5c3e86c"
+    }
+  ],
+  "deletions": [],
+  "sourcePolicyChanges": 0,
+  "contractChanges": 0,
+  "semanticCompilerImportsAdded": 0
+}

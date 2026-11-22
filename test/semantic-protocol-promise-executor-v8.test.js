@@ -59,14 +59,18 @@ test('restoration rejects invented first-call state after an executor throws',()
     assert.throws(()=>restoreProtocolStateV8(c,c.protocol),/first-call state contradicts|must consume its resolving pair/);
   }
 });
-test('executor adoption refuses missing assimilation jobs without consuming the first-call cell',()=>{
-  const h=setup();enter(h);
+test('executor adoption consumes its first-call cell and refuses progress until its exact enqueue',()=>{
   for(const settled of [false,true]){
+    const h=setup();enter(h);
     if(settled)h.select('invocation1',encodeDetailedRecord({kind:'promise',fields:{action:'resolve',promise:'p2',value:['num',8]}},{role:'generated'}));
+    call(h,'resolve',['ref','p2']);assert.equal(h.controller.protocol.promiseExecutors.capabilities[0].called,true);
     const before=sharedRegionState(h.controller);
-    assert.throws(()=>call(h,'resolve',['ref','p2']),/adoption.*job protocol/);
+    assert.throws(()=>finish(h),/guard/);
     assert.deepEqual(sharedRegionState(h.controller),before);
+    select(h,{kind:'promise.adopt.enqueue',promise:'p1',target:'p2',job:'adopt1'});finish(h);
+    assert.equal(h.controller.heap.get('p1').state,'pending');
   }
+  const h=setup();enter(h);
   call(h,'resolve',['num',4]);call(h,'resolve',['ref','p2']);finish(h);
   assert.deepEqual(h.controller.heap.get('p1').result,['num',4]);
   assert.deepEqual(RegionExecutionHarness.restore(h.checkpoint()).controller.heap.get('p1').result,['num',4]);
@@ -75,7 +79,7 @@ test('executor protocol rejects bypasses, stale calls, bad identities and unavai
   const h=setup();enter(h);
   for(const record of [
     {kind:'promise.resolver.call',resolver:['ref','o1'],value:['num',1]},
-    {kind:'promise.resolver.call',resolver:['ref','p1resolve'],value:['ref','p1']},
+    {kind:'promise.adopt.enqueue',promise:'p1',target:'p2',job:'stolen'},
     {kind:'promise.resolver.call',resolver:['ref','p1resolve'],value:['ref','o1']},
     {kind:'return',invocation:'guest1',value:['undefined']},
     {kind:'promise.executor.finish',promise:'p1',invocation:'invocation1',completion:{kind:'return',value:['undefined']}},
@@ -134,7 +138,7 @@ test('restoration rejects an executor capability claiming independent join owner
   const h=setup();enter(h);finish(h);
   const c=Object.assign(Object.create(Object.getPrototypeOf(h.controller)),h.controller);
   for(const key of ['heap','protocol','stack'])c[key]=structuredClone(c[key]);
-  c.heap.get('p1').join={schema:'semantic-promise-join-state/1',mode:'race',inputs:[],jobs:[],
+  c.heap.get('p1').join={schema:'semantic-promise-join-state/1',owner:c.rootInvocation,mode:'race',inputs:[],jobs:[],
     observed:[],values:[],output:null,error:null,settled:false};
   assert.throws(()=>restoreProtocolStateV8(c,c.protocol),/capability cannot own a join/);
 });

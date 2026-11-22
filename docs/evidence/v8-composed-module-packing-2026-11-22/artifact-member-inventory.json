@@ -1,0 +1,128 @@
+[
+  {
+    "path": "module-artifact-admission-controls.log",
+    "bytes": 187,
+    "sha256": "9baefd8519c3876baeb2d1b039a7331abce207726829a41340c0ba9f2a181494",
+    "extractedForAudit": true
+  },
+  {
+    "path": "module-artifact-admission-controls.xml",
+    "bytes": 73050,
+    "sha256": "b896cf20f930dcf0b7a3d853029d8af4053b451c1727bc7094142220d617dbdc",
+    "extractedForAudit": true
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_scheduler0/prepared-module-scheduler/episodes-000000.jsonl",
+    "bytes": 104295939,
+    "sha256": "12304fabe7a491e9c4f1524c4745e2722efa0d71f6f38a5df2e3e1a99d927987",
+    "extractedForAudit": true
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_scheduler0/module-scheduler-source-artifact.json",
+    "bytes": 29521433,
+    "sha256": "b206c883e8f665af5ff1e959b035f4f009a22aad5dabc2cf6be4cffae13e5615",
+    "extractedForAudit": true
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_scheduler0/prepared-module-scheduler/index.sqlite",
+    "bytes": 53248,
+    "sha256": "8ace7c5182d15e4a8719b283f5151f1b1ca1e9f52ce28b4fd823c88ebbaef358",
+    "extractedForAudit": true
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_scheduler0/prepared-module-scheduler/manifest.json",
+    "bytes": 12797,
+    "sha256": "919a014a1ff4a64e0edda9f17ec03cc79a8a808a20c60e92886970f4700f1bda",
+    "extractedForAudit": true
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_scheduler0/prepared-module-scheduler/semantic-v8-dedup.sqlite",
+    "bytes": 209182720,
+    "sha256": "b9b4726f614574f997f9ea084cf3a085a4f6d79d79ae89f5ea813e3be0ec8f38",
+    "extractedForAudit": false
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_scheduler0/prepared-module-scheduler/semantic-v8-families.json",
+    "bytes": 8943,
+    "sha256": "6b2359c65880a965f2249df88cc8289aa810f02e88602a0e2ea106169ea47e2a",
+    "extractedForAudit": true
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_scheduler0/prepared-module-scheduler/semantic-v8-report.json",
+    "bytes": 814,
+    "sha256": "aaaf44e346ca3a5a4eb1aa21ca07b8b4259f97a1060606ec42aeb38a1e30ae2c",
+    "extractedForAudit": true
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_schedulercurrent/module-scheduler-source-artifact.json",
+    "bytes": 29521433,
+    "sha256": "b206c883e8f665af5ff1e959b035f4f009a22aad5dabc2cf6be4cffae13e5615",
+    "extractedForAudit": false
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_schedulercurrent/prepared-module-scheduler/episodes-000000.jsonl",
+    "bytes": 104295939,
+    "sha256": "12304fabe7a491e9c4f1524c4745e2722efa0d71f6f38a5df2e3e1a99d927987",
+    "extractedForAudit": false
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_schedulercurrent/prepared-module-scheduler/index.sqlite",
+    "bytes": 53248,
+    "sha256": "8ace7c5182d15e4a8719b283f5151f1b1ca1e9f52ce28b4fd823c88ebbaef358",
+    "extractedForAudit": false
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_schedulercurrent/prepared-module-scheduler/manifest.json",
+    "bytes": 12797,
+    "sha256": "919a014a1ff4a64e0edda9f17ec03cc79a8a808a20c60e92886970f4700f1bda",
+    "extractedForAudit": false
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_schedulercurrent/prepared-module-scheduler/semantic-v8-dedup.sqlite",
+    "bytes": 209182720,
+    "sha256": "b9b4726f614574f997f9ea084cf3a085a4f6d79d79ae89f5ea813e3be0ec8f38",
+    "extractedForAudit": false
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_schedulercurrent/prepared-module-scheduler/semantic-v8-report.json",
+    "bytes": 814,
+    "sha256": "aaaf44e346ca3a5a4eb1aa21ca07b8b4259f97a1060606ec42aeb38a1e30ae2c",
+    "extractedForAudit": false
+  },
+  {
+    "path": "module-artifact-packed-data/test_original_module_schedulercurrent/prepared-module-scheduler/semantic-v8-families.json",
+    "bytes": 8943,
+    "sha256": "6b2359c65880a965f2249df88cc8289aa810f02e88602a0e2ea106169ea47e2a",
+    "extractedForAudit": false
+  },
+  {
+    "path": "module-artifact-packing-evidence.json",
+    "bytes": 32856,
+    "sha256": "5990fd7137f306e91533b1a4d65190ea867e02e31296045a504e3dcf36db27b1",
+    "extractedForAudit": true
+  },
+  {
+    "path": "module-artifact-packing.log",
+    "bytes": 31575,
+    "sha256": "36cac8c03d6551074f35d95a8f3a02eb89b84ea821d23bef7c955f4478534d66",
+    "extractedForAudit": true
+  },
+  {
+    "path": "module-artifact-source-controls.json",
+    "bytes": 29510731,
+    "sha256": "714119329f3b6e50dd6af26137a83d972a44c20657a912158a4d5020751a568f",
+    "extractedForAudit": true
+  },
+  {
+    "path": "module-artifact-packing.xml",
+    "bytes": 431,
+    "sha256": "59b4c413ee940ecc3da1c3a1e5b101f8a4fa353b6938733d15be2bd1553fba1d",
+    "extractedForAudit": true
+  },
+  {
+    "path": "module-artifact-source-controls.xml",
+    "bytes": 2480,
+    "sha256": "cfe20217eeefad5ab60c704d50cccbc97e2b9b8f5498b2e30de1f07804eeb78d",
+    "extractedForAudit": true
+  }
+]

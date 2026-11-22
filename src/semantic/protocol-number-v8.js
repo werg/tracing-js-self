@@ -27,11 +27,15 @@ function lookup(controller,input,key,api){
   let current=input[1];const seen=new Set();
   for(;;){
     api.require(!seen.has(current),'cyclic Number conversion prototype');seen.add(current);
-    const node=api.heapNode(controller,current),descriptor=api.ownDescriptor(node,key);
+    const node=api.heapNode(controller,current);api.require(['object','array','closure'].includes(node.kind),'ordinary Number conversion prototype');
+    const descriptor=api.ownDescriptor(node,key);
     if(descriptor){api.require(descriptor.kind==='data','conversion method accessor needs its getter continuation');return {method:descriptor.value,builtin:null};}
     const prototype=node.prototype??'ordinary';
     if(node.prototype===null)return {method:['undefined'],builtin:null};
     if(prototype==='ordinary'){
+      api.require(node.kind!=='closure'||!(key[0]==='str'&&key[1]==='toString'||
+        key[0]==='symbol'&&key[1]==='well-known:toStringTag'),
+        'function intrinsic prototype requires its own conversion profile');
       if(key[0]==='str'&&key[1]==='valueOf')return {method:['undefined'],builtin:'Object.valueOf'};
       if(key[0]==='str'&&key[1]==='toString'){
         api.require(node.kind!=='array','array stringification needs its array protocol');return {method:['undefined'],builtin:'Object.toString'};

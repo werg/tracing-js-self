@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="automatic history waits for a durable acknowledged head before dispatch and retains completed recovery" time="2.282922" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testsuite name="automatic history stops on append, independent-read or head-acknowledgement failure before external work" time="0.357288" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-22T10:03:23.703Z" hostname="07bf85b14210">
+		<testcase name="append" time="0.068646" classname="automatic history stops on append, independent-read or head-acknowledgement failure before external work" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+		<testcase name="read" time="0.101581" classname="automatic history stops on append, independent-read or head-acknowledgement failure before external work" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+		<testcase name="acknowledge" time="0.090029" classname="automatic history stops on append, independent-read or head-acknowledgement failure before external work" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+		<testcase name="wrong-head" time="0.095819" classname="automatic history stops on append, independent-read or head-acknowledgement failure before external work" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	</testsuite>
+	<testcase name="a lost head acknowledgement leaves an independently recoverable accepted request with no dispatch" time="0.124618" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testcase name="cancellation during a pending durable acknowledgement cannot dispatch after that acknowledgement arrives" time="0.423781" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testcase name="a lost acknowledgement of the active checkpoint cannot be followed by guessed terminal authority" time="0.099464" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testcase name="cancellation waits for an in-flight native commit and preserves a late positive acknowledgement" time="0.194719" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testcase name="a late unknown native commit remains unknown in the terminal suffix and never dispatches" time="0.243365" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testcase name="cancellation waits for a pending original selection and retains its actual bytes without committing it" time="0.180514" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testcase name="cancellation cannot close native state before a consumed stale attempt is rejected" time="0.188215" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testcase name="lost terminal-head acknowledgement cannot close, and a fresh process returns the retained request disposition" time="0.476742" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testcase name="consumer-shaped native close reason is retained and malformed close evidence is rejected before native restore" time="0.224719" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testcase name="native close failure is retained as unknown without a positive close receipt" time="0.185629" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testsuite name="terminal recovery retains anchored native costs and original attempt bytes even under a rehashed head" time="0.727311" disabled="0" errors="0" tests="3" failures="0" skipped="0" timestamp="2026-11-22T10:03:26.403Z" hostname="07bf85b14210">
+		<testcase name="missing native metrics" time="0.053795" classname="terminal recovery retains anchored native costs and original attempt bytes even under a rehashed head" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+		<testcase name="rolled-back native costs" time="0.051299" classname="terminal recovery retains anchored native costs and original attempt bytes even under a rehashed head" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+		<testcase name="changed original native bytes" time="0.022177" classname="terminal recovery retains anchored native costs and original attempt bytes even under a rehashed head" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	</testsuite>
+	<testcase name="consumed stale attempts are acknowledged durably before another prediction is requested" time="0.780023" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testcase name="manual flushing saves later observed state and capability arguments cannot mutate the retained head" time="0.076388" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testcase name="automatic storage bounds stop execution and are never bypassed by returning a successful model record" time="0.067326" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+	<testcase name="fsynced complete cuts survive a new reader process and read only the retained head" time="0.155283" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+	<testcase name="competing writers can reacknowledge identical bytes but cannot replace a position" time="0.020813" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+	<testcase name="latest recovery refuses later unacknowledged history without discovering a new head" time="0.016866" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+	<testcase name="latest history is checked again after an asynchronous chain read" time="0.023988" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+	<testcase name="latest history refuses unexplained positions and snapshots the caller receipt" time="0.018090" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+	<testcase name="append captures caller bytes synchronously and does not change their checkpoint" time="0.008574" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+	<testcase name="changed files, omitted entries and reordered chains cannot match the retained receipt" time="0.024222" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+	<testcase name="history bounds refuse the append before publishing another immutable position" time="0.019814" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+	<testcase name="a branch or an older public checkpoint cannot extend an already retained cut" time="0.009680" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+	<testsuite name="even a single authenticated cut rejects malformed native costs before opening model state" time="0.248509" disabled="0" errors="0" tests="8" failures="0" skipped="0" timestamp="2026-11-22T10:03:28.652Z" hostname="07bf85b14210">
+		<testcase name="rpcCalls=-1" time="0.041551" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+		<testcase name="rpcCalls=1.5" time="0.021052" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+		<testcase name="rpcCalls=true" time="0.023281" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+		<testcase name="computeSeconds=-1" time="0.019616" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+		<testcase name="computeSeconds=&quot;0&quot;" time="0.019351" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+		<testcase name="computeSeconds=false" time="0.019798" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+		<testcase name="peakMemoryBytes=-1" time="0.020308" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+		<testcase name="peakMemoryBytes=null" time="0.019190" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+	</testsuite>
+	<testcase name="restoration refuses checkpoint accessors without executing them" time="0.008440" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+	<testcase name="an active driver refuses cancelled native-session authority before opening model state" time="0.014586" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+	<testcase name="fresh-process recovery selects the later acknowledged cut without repeating a completed host effect" time="0.551908" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js" failure="file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:10&#10;const fail=message=>{throw new TypeError('Durable selected history: '+message);};&#10;                           ^&#10;&#10;TypeError: Durable selected history: later durable history exists; stale history recovery is refused&#10;    at fail (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:10:28)&#10;    at verifyHead (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:73:11)&#10;    at async DurableSelectedHistoryJournal.readLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:78:5)&#10;    at async RegionSelectedModelDriver.restoreLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/semantic/selected-execution-v8.js:640:53)&#10;    at async file:///workspace/scratch/05d92519587f/tracing-js-self/[eval1]:9:18&#10;&#10;Node.js v24.22.3&#10;&#10;&#10;1 !== 0&#10;">
+		<failure type="testCodeFailure" message="file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:10&#10;const fail=message=>{throw new TypeError('Durable selected history: '+message);};&#10;                           ^&#10;&#10;TypeError: Durable selected history: later durable history exists; stale history recovery is refused&#10;    at fail (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:10:28)&#10;    at verifyHead (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:73:11)&#10;    at async DurableSelectedHistoryJournal.readLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:78:5)&#10;    at async RegionSelectedModelDriver.restoreLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/semantic/selected-execution-v8.js:640:53)&#10;    at async file:///workspace/scratch/05d92519587f/tracing-js-self/[eval1]:9:18&#10;&#10;Node.js v24.22.3&#10;&#10;&#10;1 !== 0">
+[Error [ERR_TEST_FAILURE]: file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:10
+const fail=message=>{throw new TypeError('Durable selected history: '+message);};
+                           ^
+
+TypeError: Durable selected history: later durable history exists; stale history recovery is refused
+    at fail (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:10:28)
+    at verifyHead (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:73:11)
+    at async DurableSelectedHistoryJournal.readLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:78:5)
+    at async RegionSelectedModelDriver.restoreLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/semantic/selected-execution-v8.js:640:53)
+    at async file:///workspace/scratch/05d92519587f/tracing-js-self/[eval1]:9:18
+
+Node.js v24.22.3
+
+
+1 !== 0
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:10
+  const fail=message=>{throw new TypeError('Durable selected history: '+message);};
+                             ^
+  
+  TypeError: Durable selected history: later durable history exists; stale history recovery is refused
+      at fail (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:10:28)
+      at verifyHead (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:73:11)
+      at async DurableSelectedHistoryJournal.readLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:78:5)
+      at async RegionSelectedModelDriver.restoreLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/semantic/selected-execution-v8.js:640:53)
+      at async file:///workspace/scratch/05d92519587f/tracing-js-self/[eval1]:9:18
+  
+  Node.js v24.22.3
+  
+  
+  1 !== 0
+  
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js:124:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="an authenticated later cut restores its private callback snapshot before model state opens" time="0.724912" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+	<testcase name="history validates each recorded ingress head and then admits an independently retained later input tail" time="0.551062" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+	<testcase name="an older recorded cut recovers later accepted and stale attempts with one host dispatch and no redispatch" time="0.868581" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+	<testsuite name="every recorded cut and all three consumed-attempt prefixes validate before native restore" time="0.736578" disabled="0" errors="0" tests="14" failures="0" skipped="0" timestamp="2026-11-22T10:03:31.736Z" hostname="07bf85b14210">
+		<testcase name="driver evidence rewrite" time="0.020659" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="transport evidence rewrite" time="0.021769" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="native evidence rewrite" time="0.021640" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="driver budget rollback" time="0.024904" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="native runtime cost rollback" time="0.031059" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="causal context rewrite" time="0.019881" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="native acknowledged prefix rollback" time="0.022678" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="native reconstruction omission" time="0.023264" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="native completion rollback" time="0.026443" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="policy substitution" time="0.023884" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="invalid middle host continuation" time="0.041468" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="invalid later host integrity" time="0.057164" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="omitted cut" time="0.002085" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+		<testcase name="reordered cuts" time="0.008123" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+	</testsuite>
+	<testcase name="a valid same-session branch or an unrecorded checkpoint cannot replace acknowledged history" time="0.282324" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js" failure="The input did not match the regular expression /absent/. Input:&#10;&#10;'TypeError: Durable selected history: later durable history exists; stale history recovery is refused'&#10;">
+		<failure type="testCodeFailure" message="The input did not match the regular expression /absent/. Input:&#10;&#10;'TypeError: Durable selected history: later durable history exists; stale history recovery is refused'">
+[Error [ERR_TEST_FAILURE]: The input did not match the regular expression /absent/. Input:
+
+'TypeError: Durable selected history: later durable history exists; stale history recovery is refused'
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: The input did not match the regular expression /absent/. Input:
+  
+  'TypeError: Durable selected history: later durable history exists; stale history recovery is refused'
+  
+      at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js:199:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: TypeError: Durable selected history: later durable history exists; stale history recovery is refused
+        at fail (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:10:28)
+        at verifyHead (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:73:11)
+        at async DurableSelectedHistoryJournal.readLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:78:5)
+        at async RegionSelectedModelDriver.restoreLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/semantic/selected-execution-v8.js:640:53)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js:199:3)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: /absent/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="a later recorded observed boundary admits durable ingress but an unsaved later boundary still refuses" time="0.565120" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+	<testcase name="a later ingress head must extend the earlier recorded chain, not just increase its position" time="0.096700" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+	<testcase name="a journal write failure or substituted acknowledgement never returns a successful durable cut" time="0.024732" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+	<testcase name="backend argument mutation cannot replace the separately captured expected history head" time="0.032379" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js" failure="Selected v8: durable checkpoint history requires append and independent reads">
+		<failure type="testCodeFailure" message="Selected v8: durable checkpoint history requires append and independent reads">
+[Error [ERR_TEST_FAILURE]: Selected v8: durable checkpoint history requires append and independent reads] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: TypeError [Error]: Selected v8: durable checkpoint history requires append and independent reads
+      at demand (file:///workspace/scratch/05d92519587f/tracing-js-self/src/semantic/selected-execution-v8.js:17:48)
+      at historyUnlocked (file:///workspace/scratch/05d92519587f/tracing-js-self/src/semantic/selected-execution-v8.js:445:7)
+      at RegionSelectedModelDriver.checkpointDurableHistory (file:///workspace/scratch/05d92519587f/tracing-js-self/src/semantic/selected-execution-v8.js:468:22)
+      at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-history-v8.test.js:292:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+}
+		</failure>
+	</testcase>
+	<testcase name="restores coordinator-ready after exact create and bootstrap receipts" time="0.365326" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="restores bootstrapped active children within the declared active bound" time="0.339372" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="restored host bridge keeps the caller live clock" time="0.228357" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="restores the exact acknowledged stale child rejection and retries its original selection" time="0.505446" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="restores join-before-run and executes only the acknowledged child" time="0.308170" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="restores the mixed child ledger after exact native child completion" time="0.382670" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="composite verifier rejects mixed-ledger, dependency, and unknown-ack mutations" time="0.769786" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="checkpoint is unavailable before a safe point" time="0.005946" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="two declared children restore from sparse acknowledged cuts without redispatch" time="2.781358" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="rejects an older acknowledged composite head after a later durable pending marker" time="0.313997" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="durable composite checkpoint requires an independent exact head acknowledgement and restores latest" time="2.241497" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="lost completed-disposition ACK leaves the last external head fenced" time="12.996067" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js" failure="The input did not match the regular expression /unresolved in-flight work/i. Input:&#10;&#10;'TypeError: Durable selected history: later durable history exists; stale history recovery is refused'&#10;">
+		<failure type="testCodeFailure" message="The input did not match the regular expression /unresolved in-flight work/i. Input:&#10;&#10;'TypeError: Durable selected history: later durable history exists; stale history recovery is refused'">
+[Error [ERR_TEST_FAILURE]: The input did not match the regular expression /unresolved in-flight work/i. Input:
+
+'TypeError: Durable selected history: later durable history exists; stale history recovery is refused'
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: The input did not match the regular expression /unresolved in-flight work/i. Input:
+  
+  'TypeError: Durable selected history: later durable history exists; stale history recovery is refused'
+  
+      at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js:403:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: TypeError: Durable selected history: later durable history exists; stale history recovery is refused
+        at fail (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:10:28)
+        at verifyHead (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:73:11)
+        at async DurableSelectedHistoryJournal.readLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:78:5)
+        at async RegionSelectedOrchestrationDriver.restoreLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/semantic/selected-orchestration-v8.js:257:32)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js:403:7)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: /unresolved in-flight work/i,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="unknown native close leaves a completed session fenced without a terminal disposition" time="10.049480" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="automatic composite history acknowledges the join safe point before child dispatch" time="22.545828" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="post-child persistence failure leaves a durable in-flight fence that refuses fresh replay" time="3.582604" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js" failure="The input did not match the regular expression /unresolved in-flight work/i. Input:&#10;&#10;'TypeError: Durable selected history: later durable history exists; stale history recovery is refused'&#10;">
+		<failure type="testCodeFailure" message="The input did not match the regular expression /unresolved in-flight work/i. Input:&#10;&#10;'TypeError: Durable selected history: later durable history exists; stale history recovery is refused'">
+[Error [ERR_TEST_FAILURE]: The input did not match the regular expression /unresolved in-flight work/i. Input:
+
+'TypeError: Durable selected history: later durable history exists; stale history recovery is refused'
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: The input did not match the regular expression /unresolved in-flight work/i. Input:
+  
+  'TypeError: Durable selected history: later durable history exists; stale history recovery is refused'
+  
+      at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js:589:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: TypeError: Durable selected history: later durable history exists; stale history recovery is refused
+        at fail (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:10:28)
+        at verifyHead (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:73:11)
+        at async DurableSelectedHistoryJournal.readLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/storage/selected-history.js:78:5)
+        at async RegionSelectedOrchestrationDriver.restoreLatest (file:///workspace/scratch/05d92519587f/tracing-js-self/src/semantic/selected-orchestration-v8.js:257:32)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js:589:7)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: /unresolved in-flight work/i,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+}
+		</failure>
+	</testcase>
+	<testcase name="automatic persistence refuses a journal readback that drops its pending fence" time="0.405544" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="requested child-ready pause stores a complete cut and arms its fence only on resumed dispatch" time="15.781847" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="cancellation during coordinator fence acknowledgement prevents a later selection" time="0.470284" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="requested orchestration safe point is snapshotted before native initialization awaits" time="0.109473" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="failed durable head acknowledgement leaves no reusable history receipt" time="0.299405" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="driver waits for every service fence before terminal history and native close" time="0.364549" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-service-history-v8.test.js"/>
+	<testcase name="partial fence failure cannot publish terminal history or reopen native state; exact live retry completes" time="0.459341" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-service-history-v8.test.js"/>
+	<testcase name="terminal cancellation bounds UTF-8 reason bytes and carries the normalized reason through retry" time="0.417720" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-service-history-v8.test.js"/>
+	<testcase name="lost terminal-head acknowledgement retains service fences and cannot use the service-failure retry" time="0.129755" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-service-history-v8.test.js"/>
+	<testcase name="terminal recovery requires independent live service authority before acknowledging a disposition" time="0.284684" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-service-history-v8.test.js"/>
+	<testcase name="rehashed forged service receipts still refuse against actual service logs" time="0.208392" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-service-history-v8.test.js"/>
+	<testcase name="missing service proof is rejected even when the full history chain is rehashed" time="0.204614" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-service-history-v8.test.js"/>
+	<!-- tests 94 -->
+	<!-- suites 0 -->
+	<!-- pass 89 -->
+	<!-- fail 5 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 89138.610042 -->
+</testsuites>

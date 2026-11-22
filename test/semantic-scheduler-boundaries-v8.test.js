@@ -1,7 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SemanticController} from '../src/training/controller.js';
-import {encodeWitness} from '../src/training/format.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {sharedRegionState} from '../src/semantic/regions.js';
 
@@ -14,7 +12,7 @@ function fresh(){
 }
 const step=(h,kind,fields)=>h.select('root',{kind,fields});
 const create=(h,promise)=>step(h,'promise',{action:'create',promise});
-const commit=(c,kind,fields)=>c.commit(encodeWitness(kind,fields));
+const commit=(c,kind,fields)=>c.commitRecord({kind,fields});
 
 test('bare v8 adoption cannot invent settlement or queue order before assimilation jobs',()=>{
   for(const settled of [false,true])for(const action of ['adopt','resolve']){
@@ -32,9 +30,9 @@ test('bare v8 adoption cannot invent settlement or queue order before assimilati
 
 test('controller adoption locks and Promise target requirements survive restored state',()=>{
   const h=fresh(),c=h.controller;for(const id of ['left','right'])create(h,id);
-  // This legacy controller operation is deliberately not a v8 admission.
+  // This internal typed operation is deliberately not a public V8 admission.
   commit(c,'promise',{action:'adopt',promise:'left',target:'right'});
-  const restored=SemanticController.fromPacket(JSON.parse(JSON.stringify(c.segmentPacket())));
+  const restored=c.constructor.fromPacket(JSON.parse(JSON.stringify(c.segmentPacket())));
   for(const current of [c,restored])for(const action of ['resolve','reject','adopt']){
     const before=current.segmentPacket();
     assert.throws(()=>commit(current,'promise',{action,promise:'left',

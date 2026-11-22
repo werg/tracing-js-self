@@ -313,6 +313,21 @@
       "operationId": "intrinsic.number.resume",
       "version": 1,
       "kind": "algorithm"
+    },
+    {
+      "operationId": "property.key.convert",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
+      "operationId": "property.key.resume",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
+      "operationId": "script.enter",
+      "version": 1,
+      "kind": "algorithm"
     }
   ]
 }

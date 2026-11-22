@@ -1,0 +1,154 @@
+{
+  "schema": "semantic-v8-request-field-controls/1",
+  "observations": [
+    {
+      "name": "source session identity",
+      "expected": "old artifact refused",
+      "changedQualified": true,
+      "changedStatus": "locally_verified",
+      "changedReason": null,
+      "publicChanged": true
+    },
+    {
+      "name": "module session identity",
+      "expected": "old artifact refused",
+      "changedQualified": true,
+      "changedStatus": "detailed-fallback",
+      "changedReason": null,
+      "publicChanged": true
+    },
+    {
+      "name": "source record cap",
+      "expected": "old artifact refused",
+      "changedQualified": false,
+      "changedStatus": "resource_limited",
+      "changedReason": "Protocol source record bound",
+      "publicChanged": null
+    },
+    {
+      "name": "module record cap",
+      "expected": "old artifact refused",
+      "changedQualified": false,
+      "changedStatus": "resource_limited",
+      "changedReason": "Effectful teacher record budget",
+      "publicChanged": null
+    },
+    {
+      "name": "direct protocol record cap",
+      "expected": "old artifact refused",
+      "changedQualified": false,
+      "changedStatus": "resource_limited",
+      "changedReason": "Protocol source record bound",
+      "publicChanged": null
+    },
+    {
+      "name": "source instruction cap",
+      "expected": "old artifact refused",
+      "changedQualified": false,
+      "changedStatus": "profile_limit",
+      "changedReason": "Driver safety limit (1 steps); no chunk has been misreported as complete",
+      "publicChanged": null
+    },
+    {
+      "name": "source deadline refusal",
+      "expected": "old artifact refused",
+      "changedQualified": false,
+      "changedStatus": "threw",
+      "changedReason": "Teacher step and deadline limits must be positive safe integers",
+      "publicChanged": null
+    },
+    {
+      "name": "source recorded deadline",
+      "expected": "old artifact refused",
+      "changedQualified": true,
+      "changedStatus": "locally_verified",
+      "changedReason": null,
+      "publicChanged": false
+    },
+    {
+      "name": "source operator bound",
+      "expected": "old artifact refused",
+      "changedQualified": true,
+      "changedStatus": "locally_verified",
+      "changedReason": null,
+      "publicChanged": false
+    },
+    {
+      "name": "source private seeds",
+      "expected": "old artifact refused",
+      "changedQualified": true,
+      "changedStatus": "locally_verified",
+      "changedReason": null,
+      "publicChanged": false
+    },
+    {
+      "name": "source original split",
+      "expected": "old artifact refused",
+      "changedQualified": true,
+      "changedStatus": "locally_verified",
+      "changedReason": null,
+      "publicChanged": false
+    },
+    {
+      "name": "session component record cap",
+      "expected": "old artifact refused",
+      "changedQualified": false,
+      "changedStatus": "source-unqualified",
+      "changedReason": "Every declared component must independently qualify before collection",
+      "publicChanged": null
+    },
+    {
+      "name": "session component private seeds",
+      "expected": "old artifact refused",
+      "changedQualified": true,
+      "changedStatus": "locally_verified",
+      "changedReason": null,
+      "publicChanged": false
+    },
+    {
+      "name": "session ignored outer options",
+      "expected": "same artifact accepted",
+      "changedQualified": true,
+      "wholeArtifactUnchanged": true
+    },
+    {
+      "name": "session overridden ownership",
+      "expected": "same artifact accepted",
+      "changedQualified": true,
+      "wholeArtifactUnchanged": true
+    },
+    {
+      "name": "protocol ignored projection",
+      "expected": "same artifact accepted",
+      "changedQualified": true,
+      "wholeArtifactUnchanged": true
+    },
+    {
+      "name": "protocol ignored seed metadata",
+      "expected": "same artifact accepted",
+      "changedQualified": true,
+      "wholeArtifactUnchanged": true
+    },
+    {
+      "name": "protocol null record default",
+      "expected": "same artifact accepted",
+      "changedQualified": true,
+      "wholeArtifactUnchanged": true
+    },
+    {
+      "name": "module stripped plans",
+      "expected": "same artifact accepted",
+      "changedQualified": true,
+      "wholeArtifactUnchanged": true
+    },
+    {
+      "name": "namespace ignored ownership",
+      "expected": "same artifact accepted",
+      "changedQualified": true,
+      "wholeArtifactUnchanged": true
+    }
+  ],
+  "actualProducerGeneration": true,
+  "nativeAdmissions": 0,
+  "optimizerUpdates": 0
+}

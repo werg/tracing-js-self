@@ -3,6 +3,8 @@
 import {readFileSync} from 'node:fs';
 import {hashAlgorithmData} from './program.js';
 import {SEMANTIC_V8_DEFINITION} from './contract-v8.js';
+import {identityDigest} from './source-identity.js';
+import {validateOrchestrationTranscriptV8} from './orchestration-training-v8.js';
 
 const contract=JSON.parse(readFileSync(new URL('../../contracts/semantic-execution-v8.json',import.meta.url),'utf8'));
 if(contract.schema!=='semantic-execution-contract/8'||contract.digest!==hashAlgorithmData(contract.definition)||
@@ -30,15 +32,46 @@ export function loadV8NativePolicy(path=new URL('../../contracts/semantic-native
 
 export function validateV8NativeReceipt(exported,receipt,policy){
   validateV8NativePolicy(policy);
+  const direct=exported?.sidecar?.schema==='semantic-protocol-host-region-evidence/1';
   if(exported?.public?.schema!=='semantic-execution/8'||exported.public.traceFormat!=='semantic-trace/8'||
-    !Array.isArray(exported.contexts)||!['semantic-region-evidence/1','semantic-protocol-region-evidence/1'].includes(exported.sidecar?.schema))
+    !Array.isArray(exported.contexts)||!['semantic-region-evidence/1','semantic-protocol-region-evidence/1',
+      'semantic-protocol-host-region-evidence/1','semantic-session-region-evidence/1'].includes(exported.sidecar?.schema))
     fail('exact v8 source-bound artifact required');
+  const side=exported.sidecar,identity=side.identity;
+  let sourceArtifactDigest;
+  if(direct){
+    const execution=identity?.execution,certification=identity?.certification;
+    if(Object.hasOwn(side,'sourceArtifact')||side.sourceArtifactDigest!=null||
+      !identity||identity.schema!=='semantic-source-candidate-identity/8'||
+      !HASH.test(side.identityDigest??'')||side.identityDigest!==identityDigest(identity)||
+      execution?.execution!=='semantic-execution/8'||execution.trace!=='semantic-trace/8'||
+      execution.context!=='semantic-context/8'||execution.harness!=='compositional-regions/1'||
+      execution.representation!=='mixed'||certification?.schemaDigest!==V8_CONTRACT_DIGEST||
+      certification.fixtureDigest!==V8_FIXTURE_DIGEST||certification.evidenceKind!=='deterministic-engineering'||
+      certification.optimizerSteps!==0||certification.learnedSuccess!==null)
+      fail('direct source identity is missing or incompatible');
+    sourceArtifactDigest=null;
+  }else{
+    if(!side.sourceArtifact||typeof side.sourceArtifact!=='object'||Array.isArray(side.sourceArtifact)||
+      side.sourceArtifactDigest!==hashAlgorithmData(side.sourceArtifact))fail('source artifact digest is missing or altered');
+    if(side.schema==='semantic-session-region-evidence/1'&&
+      (side.sourceArtifact.public?.schema!=='semantic-session-source-target/1'||
+       side.sourceArtifact.sidecar?.schema!=='semantic-session-source-evidence/1'))
+      fail('source session evidence has an incompatible original collection');
+    sourceArtifactDigest=side.sourceArtifactDigest;
+  }
   const generated=exported.public.timeline.filter(row=>row.mode==='generated').length;
+  const hasOrchestration=Object.hasOwn(side,'orchestrationTranscript'),
+    orchestrationDigest=hasOrchestration?hashAlgorithmData(side.orchestrationTranscript):null;
+  if(hasOrchestration)validateOrchestrationTranscriptV8(exported);
   if(receipt?.schema!=='semantic-native-admission/8'||receipt.componentGate!=='native-consumer-only'||
     receipt.traceFormat!=='semantic-trace/8'||receipt.contextFormat!=='semantic-context/8'||
     receipt.representation!=='mixed'||receipt.admitted!==true||receipt.optimizerSteps!==0||receipt.learningClaim!==null||
     receipt.publicDigest!==hashAlgorithmData(exported.public)||receipt.contextsDigest!==hashAlgorithmData(exported.contexts)||
-    receipt.sourceArtifactDigest!==exported.sidecar.sourceArtifactDigest||
+    receipt.sourceArtifactDigest!==sourceArtifactDigest||
+    (hasOrchestration?receipt.orchestrationTranscriptDigest!==orchestrationDigest:
+      Object.hasOwn(receipt,'orchestrationTranscriptDigest'))||
+    (direct?receipt.sourceIdentityDigest!==side.identityDigest:Object.hasOwn(receipt,'sourceIdentityDigest'))||
     receipt.datasetBindingDigest!==(exported.sidecar.datasetBinding?hashAlgorithmData(exported.sidecar.datasetBinding):null)||
     !HASH.test(receipt.nativeTrainingDigest??''))fail('receipt is missing, stale, unadmitted, or bound to another artifact');
   for(const key of ['consumerRevision','contractDigest','fixtureDigest','interoperabilityDigest'])
@@ -48,7 +81,12 @@ export function validateV8NativeReceipt(exported,receipt,policy){
   if(source?.schema!=='semantic-native-source-recheck/1'||source.producerTreeClean!==true||
     !REVISION.test(source.producerRevision??'')||source.sourceValidated!==true||
     source.projectionValidated!==true||source.replayValidated!==true||
-    !HASH.test(source.artifactSha256??'')||source.sourceArtifactDigest!==hashAlgorithmData(exported.sidecar.sourceArtifact)||
+    (hasOrchestration?source.orchestrationTranscriptDigest!==orchestrationDigest||
+      source.orchestrationValidated!==true:Object.hasOwn(source,'orchestrationTranscriptDigest')||
+      Object.hasOwn(source,'orchestrationValidated'))||
+    !HASH.test(source.artifactSha256??'')||source.sourceArtifactDigest!==sourceArtifactDigest||
+    (direct?source.sourceIdentityDigest!==side.identityDigest||source.identityValidated!==true:
+      Object.hasOwn(source,'sourceIdentityDigest'))||
     source.publicDigest!==hashAlgorithmData(exported.public)||source.contextDigest!==hashAlgorithmData(exported.contexts))
     fail('receipt is missing fresh independent source correspondence verification');
   if(receipt.tokenizer?.status!=='passed'||receipt.tokenizer.identity!==policy.tokenizerIdentity||
@@ -59,5 +97,9 @@ export function validateV8NativeReceipt(exported,receipt,policy){
     !Number.isSafeInteger(counts.generatedTokens)||counts.generatedTokens<1||
     !Number.isSafeInteger(counts.observedTokens)||counts.observedTokens<1)
     fail('physical supervision counts do not describe this execution');
+  if(hasOrchestration&&(receipt.checks.orchestration!=='passed'||counts.orchestrationRecords!==4))
+    fail('the four source-qualified lifecycle targets were not independently admitted');
+  if(!hasOrchestration&&(Object.hasOwn(receipt.checks,'orchestration')||Object.hasOwn(counts,'orchestrationRecords')))
+    fail('orchestration admission claims require the exact source-qualified transcript');
   return true;
 }

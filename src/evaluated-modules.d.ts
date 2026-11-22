@@ -1,4 +1,5 @@
-/** Acyclic, bounded ES-module source-graph evaluator; not a native ESM loader. */
+/** Bounded ES-module evaluator with synchronous cycles and acyclic async
+ * dependency scheduling; not a native ESM loader. */
 export interface EvaluatedModuleCall {
   /** Named/default export to invoke after the graph is evaluated. */
   exportName:string;
@@ -27,12 +28,33 @@ export interface EvaluatedModulesMetadata {
   profile:'evaluated-module/1';
   entryModule:string;
   exportName:string;
+  /** Every module gets one stable, distinct, extensible null-prototype object
+   * with no host-supplied properties, matching the default Node
+   * SourceTextModule import-meta hook used by the differential controls. */
+  importMetaPolicy:'empty-null-prototype';
+  /** Opt-in experimental linker records; this metadata grants no public/native admission. */
+  namespaceSourcePlan?:{
+    cells:Array<{file:string;local:string;kind:'let'|'const'|'var'|'function'|'class';mutable:boolean}>;
+    namespaces:Array<{file:string;namespaceName:string;exports:Array<{name:string;file:string;local:string}>}>;
+  };
+  /** Parallel TLA branches retain per-module environments and dependency
+   * records. This strategy is owned-runtime evidence, not public qualification. */
+  evaluationStrategy:'dependency-concatenation'|'async-dependency-scheduler';
   evaluationOrder:string[];
+  cycles:Array<{path:string;members:string[]}>;
+  asyncDependencies?:Array<{
+    file:string;
+    index:number;
+    hasTLA:boolean;
+    dependencies:string[];
+  }>;
   linkedBinding:string;
   calls?:Array<{exportName:string;binding:string}>;
   instantiationAndEvaluation:Array<{
-    file:string;
-    kind:'instantiate'|'evaluate';
+    file:string|null;
+    kind:'instantiate'|'evaluate'|'scheduler-state'|'environment'|'bindings'|
+      'module-record'|'instantiate-environment'|'async-scheduler'|
+      'async-completion'|'invoke-after-evaluation';
     start:number;
     end:number;
   }>;
@@ -52,7 +74,10 @@ export interface EvaluatedModulesMetadata {
     sourceMap:unknown;
   }>;
 }
-export function linkEvaluatedModules(options:EvaluatedModulesOptions):{
+export function linkEvaluatedModules(options:EvaluatedModulesOptions&{
+  /** Build bounded source-cell records for the unregistered namespace experiment. */
+  experimentalNamespacePlan?:boolean;
+}):{
   profile:'evaluated-module/1';
   source:string;
   entryFunction:string;

@@ -184,3 +184,17 @@ export function createDurableTraceStore(options) {
 
 export {DurableRetainedModuleStore,DurableRetainedModuleStorageError,
   createDurableRetainedModuleStore} from './retained-session.js';
+
+export {DurableHostIngressStore,createDurableHostIngressStore} from './host-ingress.js';
+export {DurableHostIngressJournal} from './host-ingress-journal.js';
+export {DurableHostIngressBroker} from '../semantic/host-ingress-journal-v8.js';
+export {DurableSelectedHistoryJournal} from './selected-history.js';
+export {DurableSelectedServiceJournal} from './selected-service-journal.js';
+export {DurableFencedSelectedServiceJournal} from './selected-service-fence-journal.js';
+export {SelectedServiceAdmissionCoordinator} from './selected-service-coordinator.js';
+
+export {DurableSelectedOrchestrationExecutionLock} from './selected-orchestration-execution-lock.js';
+export {DurableNativeV8RequestJournal} from './native-request-journal-v8.js';
+export {createSelectedOrchestrationExecutionClock,assertSelectedOrchestrationExecutionClock,
+  validateSelectedOrchestrationClockReceipt}
+  from './selected-orchestration-clock.js';

@@ -110,10 +110,12 @@ test('restoration preserves uncertain intent and does not replay native side eff
     realmId:'r1',triggerId:'call1',args:['counter']});
   h.selected('i',req('i','fx','demo.readAsync',[['str','counter']],'["counter"]'));
   const pending=h.dispatch('i','fx');
-  const restored=SelectedExecutionHarness.restore(h.checkpoint(),{services:service});
-  assert.throws(()=>restored.dispatch('i','fx'),/uncertain/);
+  assert.throws(()=>h.checkpoint(),/acknowledgement/);
   assert.equal(invoked,0);
   await Promise.resolve();assert.equal(invoked,1);
+  const restored=SelectedExecutionHarness.restore(h.checkpoint(),{services:service});
+  assert.throws(()=>restored.dispatch('i','fx'),/uncertain/);
+  assert.equal(invoked,1);
   restored.deliverResult('i','fx',{status:'fulfilled',value:5});
   selectedValue(restored,'i',5);
   assert.equal(invoked,1);
@@ -144,7 +146,9 @@ test('exact replay verifies public causal selected records without invoking any 
   assert.equal(replay.exportEpisode().sidecar.admission,'locally_verified');
   const forbidden=structuredClone(exported);
   forbidden.public.timeline.find(x=>x.kind==='semantic').mode='observed';
-  assert.throws(()=>SelectedExecutionHarness.replay(forbidden),/Replay|observed|sequence/i);
+  assert.throws(()=>SelectedExecutionHarness.replay(forbidden),{
+    name:'TypeError',message:'Invalid semantic-execution/6 record schema, authority or fields'
+  });
   const reorder=structuredClone(exported);
   const index=reorder.public.timeline.findIndex(x=>x.kind==='result');
   [reorder.public.timeline[index],reorder.public.timeline[index-1]]=[

@@ -1,9 +1,9 @@
 {
   "schema": "semantic-native-policy/7",
-  "consumerRevision": "d2abb1e83e3237bb851e38920326960357605c66",
+  "consumerRevision": "3a0eb90e3e7282e9b3cb2ca0da27454451b50e21",
   "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
   "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
   "contractDigest": "a8a05569d1ace3600afd77070274fd1295e1d1c0cb1c4f78f0b5a04a3e04244d",
-  "schemaDigest": "55e7be0a4287be57a4165eaab106d131dcda027a65ed175d98f1a7ad8b47303c",
+  "schemaDigest": "3b5a818c93f78d5982650229e92eefd791edb8cdd0f4e04d4ec0b5c9bb23c1f1",
   "fixtureDigest": "2f34d35060fde7e15fdf8bb0f5fcc25429b0697fcc02df3d45b26968aad0e196"
 }

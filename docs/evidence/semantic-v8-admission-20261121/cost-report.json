@@ -1,0 +1,1875 @@
+{
+  "schema": "semantic-v8-population-costs/1",
+  "producerRevision": "6888ca122460d3456f275dee4add9b61ba56b6f9",
+  "population": "interoperability",
+  "inputs": "all",
+  "qualification": {
+    "reportSha256": "60679da2d6d120d53a55b2ce6441d3dce60aa2fa7381413a0817a6c70849c0bd",
+    "populationDigest": "e96791a34054ba856e1477f3afa0f88505e427cb49dfba66b202fcbeb67fdc89",
+    "contractDigest": "15f330f8bc5038d9bccd65f6b9594e9a97b1e621a4920c042b0db403b3d244b0",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "interoperabilityDigest": "d74f0ad0e25093303d8b06e2a274d338fc026cc0134678c11282159a29472e30",
+    "nativePolicy": {
+      "schema": "semantic-native-policy/8",
+      "consumerRepository": "werg/megatoken",
+      "consumerRevision": "c0ac528a5db70de51fb77f38ead88974c0fa386c",
+      "contractDigest": "15f330f8bc5038d9bccd65f6b9594e9a97b1e621a4920c042b0db403b3d244b0",
+      "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+      "interoperabilityDigest": "d74f0ad0e25093303d8b06e2a274d338fc026cc0134678c11282159a29472e30"
+    }
+  },
+  "progressDigest": "1116e2eaec2c5636631acb6192d2c9e045c3a89c51c8c5148f1b12051656a5c7",
+  "tokenizerEvidence": {
+    "identity": {
+      "name": "inclusionAI/Ling-3.0-tiny",
+      "revision": "9a98e35fe1c9ee255f78dd64771c7ae15a799481",
+      "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+      "fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "codecVersion": "raw-byte-bpe-v2;binary=single-byte-v1;special-merges=masked",
+      "vocabSize": 157184
+    },
+    "qualification": {
+      "schema": "semantic-codec-meter/1",
+      "status": "qualified",
+      "scope": "byte-exact-token-meter-only",
+      "consumerRevision": "c0ac528a5db70de51fb77f38ead88974c0fa386c",
+      "consumerClean": true,
+      "codecSourceSha256": "98de7394ae3c4f47fe86d2767aaa103b8569de446913135a89de914af7182200",
+      "pythonVersion": "3.12.14",
+      "tokenizersVersion": "0.23.3",
+      "nativeAdmission": false
+    }
+  },
+  "serializer": "semantic-causal-lm/4",
+  "maxContextTokens": 1048576,
+  "artifactDigestEncoding": "sha256 of exact UTF-8 file bytes",
+  "summary": {
+    "declared": 30,
+    "sourceQualified": 30,
+    "sourceDispositions": {
+      "passed": 30
+    },
+    "compactEpisodes": 15,
+    "whollyDetailedEpisodes": 15,
+    "regionCoverage": {
+      "measuredEpisodes": 30,
+      "unmeasuredEpisodes": 0,
+      "compact": 27,
+      "detailed": 273,
+      "compactRecords": 27,
+      "detailedRecords": 1124
+    },
+    "flat": {
+      "sourceQualified": 30,
+      "measured": 28,
+      "unmeasured": 2,
+      "dispositions": {
+        "passed": 28,
+        "measurement-failed": 2
+      },
+      "bytes": {
+        "generated": 109708,
+        "detailed": 106636,
+        "detailedShare": 0.9719983957414227,
+        "cumulativeContext": 5059609,
+        "peakContext": 9556
+      },
+      "tokenMeasurement": "partial",
+      "tokenMeasuredEpisodes": 28,
+      "tokens": {
+        "generated": 32278,
+        "detailed": 31299,
+        "detailedShare": 0.9696697440981473,
+        "terminal": 1015,
+        "observedAndContext": 1630975,
+        "total": 1664268,
+        "peakContext": 3083
+      },
+      "scope": "Sums cover measured episodes only; source refusals and measurement limits remain in the declared denominator."
+    },
+    "nativePacking": {
+      "status": "measured",
+      "measuredEpisodes": 30,
+      "unmeasuredEpisodes": 0,
+      "generatedTokens": 36541,
+      "observedTokens": 1999675,
+      "terminalTokens": 0,
+      "physicalRecords": 4534,
+      "logicalRecords": 1245,
+      "scope": "Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."
+    },
+    "model": {
+      "status": "unmeasured",
+      "nextStep": null,
+      "completedExecution": null,
+      "latencyMs": null
+    },
+    "nativeServing": {
+      "status": "unmeasured",
+      "latencyMs": null,
+      "cacheSavings": null
+    },
+    "defaultPromotion": "not-qualified"
+  },
+  "rows": [
+    {
+      "id": "ordered-map",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "compositional-regions/1",
+      "protocolExtensions": [],
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 1,
+        "compactRecords": 1,
+        "detailedRecords": 1,
+        "compactBytes": 365,
+        "detailedBytes": 48,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 2,
+        "bytes": {
+          "generated": 413,
+          "detailed": 48,
+          "detailedShare": 0.1162227602905569,
+          "peakContext": 2386,
+          "cumulativeContext": 4525,
+          "cumulativePublicSnapshots": 4335
+        },
+        "tokens": {
+          "generated": 143,
+          "terminal": 2,
+          "observedAndContext": 1613,
+          "peakContext": 849,
+          "cumulativeContext": 1613,
+          "total": 1758,
+          "detailedShare": 0.09090909090909091
+        },
+        "measurement": "passed",
+        "detailedTokens": 13,
+        "artifact": "serving-ordered-map.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 143,
+        "observedTokens": 2649,
+        "terminalTokens": 0,
+        "physicalRecords": 6,
+        "logicalRecords": 4,
+        "nativeTrainingDigest": "1d99a28e01f80d30b4dc9659a285f2bf4e4def741be9c28c6cc5c12bfdd7c65f"
+      },
+      "durationMs": 204.99451099999987,
+      "peakRssBytes": null
+    },
+    {
+      "id": "shared-getter",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "compositional-regions/1",
+      "protocolExtensions": [],
+      "regionCoverage": {
+        "compactRegions": 2,
+        "detailedRegions": 3,
+        "compactRecords": 2,
+        "detailedRecords": 11,
+        "compactBytes": 234,
+        "detailedBytes": 908,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 13,
+        "bytes": {
+          "generated": 1142,
+          "detailed": 908,
+          "detailedShare": 0.7950963222416813,
+          "peakContext": 4019,
+          "cumulativeContext": 48487,
+          "cumulativePublicSnapshots": 47252
+        },
+        "tokens": {
+          "generated": 349,
+          "terminal": 13,
+          "observedAndContext": 17325,
+          "peakContext": 1431,
+          "cumulativeContext": 17325,
+          "total": 17687,
+          "detailedShare": 0.7736389684813754
+        },
+        "measurement": "passed",
+        "detailedTokens": 270,
+        "artifact": "serving-shared-getter.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 349,
+        "observedTokens": 19365,
+        "terminalTokens": 0,
+        "physicalRecords": 44,
+        "logicalRecords": 15,
+        "nativeTrainingDigest": "7c957edac237a1800f9918a4d615d477c2bbdc63e1873782a4fc811a6ce39da2"
+      },
+      "durationMs": 239.80806299999995,
+      "peakRssBytes": null
+    },
+    {
+      "id": "causal-counter",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "compositional-regions/1",
+      "protocolExtensions": [],
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 2,
+        "compactRecords": 1,
+        "detailedRecords": 10,
+        "compactBytes": 100,
+        "detailedBytes": 1099,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 11,
+        "bytes": {
+          "generated": 1199,
+          "detailed": 1099,
+          "detailedShare": 0.9165971643035863,
+          "peakContext": 5346,
+          "cumulativeContext": 43634,
+          "cumulativePublicSnapshots": 42589
+        },
+        "tokens": {
+          "generated": 343,
+          "terminal": 11,
+          "observedAndContext": 15092,
+          "peakContext": 1823,
+          "cumulativeContext": 15092,
+          "total": 15446,
+          "detailedShare": 0.9096209912536443
+        },
+        "measurement": "passed",
+        "detailedTokens": 312,
+        "artifact": "serving-causal-counter.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 343,
+        "observedTokens": 16675,
+        "terminalTokens": 0,
+        "physicalRecords": 40,
+        "logicalRecords": 17,
+        "nativeTrainingDigest": "4cc10305939d60da44cfe04d0542bbfaeb223b188f48451d0873a1fbf655b70e"
+      },
+      "durationMs": 148.8079859999998,
+      "peakRssBytes": null
+    },
+    {
+      "id": "number-callback-cleanup",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "class-private-source/1",
+        "number-conversion-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 15,
+        "protocolRecords": 11,
+        "compactBytes": 0,
+        "detailedBytes": 1858,
+        "protocolBytes": 1170,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 15,
+        "bytes": {
+          "generated": 1858,
+          "detailed": 1858,
+          "detailedShare": 1,
+          "peakContext": 3720,
+          "cumulativeContext": 47742,
+          "cumulativePublicSnapshots": 46317
+        },
+        "tokens": {
+          "generated": 519,
+          "terminal": 15,
+          "observedAndContext": 14952,
+          "peakContext": 1156,
+          "cumulativeContext": 14952,
+          "total": 15486,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 519,
+        "artifact": "serving-number-callback-cleanup.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 519,
+        "observedTokens": 15598,
+        "terminalTokens": 0,
+        "physicalRecords": 43,
+        "logicalRecords": 17,
+        "nativeTrainingDigest": "0b4338182b7b918f8a090363e8819101cc5813faa622ee41b47560055c1dcd30"
+      },
+      "durationMs": 149.76074800000015,
+      "peakRssBytes": null
+    },
+    {
+      "id": "custom-iterator-close",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 2,
+        "detailedRegions": 2,
+        "compactRecords": 2,
+        "detailedRecords": 52,
+        "protocolRecords": 30,
+        "compactBytes": 197,
+        "detailedBytes": 6681,
+        "protocolBytes": 3900,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 54,
+        "bytes": {
+          "generated": 6878,
+          "detailed": 6681,
+          "detailedShare": 0.971357952893283,
+          "peakContext": 6256,
+          "cumulativeContext": 285809,
+          "cumulativePublicSnapshots": 280679
+        },
+        "tokens": {
+          "generated": 1986,
+          "terminal": 54,
+          "observedAndContext": 91783,
+          "peakContext": 2006,
+          "cumulativeContext": 91783,
+          "total": 93823,
+          "detailedShare": 0.9687814702920443
+        },
+        "measurement": "passed",
+        "detailedTokens": 1924,
+        "artifact": "serving-custom-iterator-close.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 1986,
+        "observedTokens": 92448,
+        "terminalTokens": 0,
+        "physicalRecords": 208,
+        "logicalRecords": 56,
+        "nativeTrainingDigest": "c67c59c0733b5c9e5e491b1531b18a41f5c00dc44b57363663b7de7ee1fe8dc0"
+      },
+      "durationMs": 709.0187610000003,
+      "peakRssBytes": null
+    },
+    {
+      "id": "iterable-binding-close",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "builtin-iterator/1",
+        "class-private-source/1",
+        "custom-iterator-source/1",
+        "ordinary-completions-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 2,
+        "detailedRegions": 2,
+        "compactRecords": 2,
+        "detailedRecords": 54,
+        "protocolRecords": 30,
+        "compactBytes": 197,
+        "detailedBytes": 6434,
+        "protocolBytes": 3900,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 56,
+        "bytes": {
+          "generated": 6631,
+          "detailed": 6434,
+          "detailedShare": 0.9702910571557835,
+          "peakContext": 6374,
+          "cumulativeContext": 301378,
+          "cumulativePublicSnapshots": 296058
+        },
+        "tokens": {
+          "generated": 1926,
+          "terminal": 56,
+          "observedAndContext": 96620,
+          "peakContext": 2045,
+          "cumulativeContext": 96620,
+          "total": 98602,
+          "detailedShare": 0.9678089304257529
+        },
+        "measurement": "passed",
+        "detailedTokens": 1864,
+        "artifact": "serving-iterable-binding-close.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 1926,
+        "observedTokens": 97277,
+        "terminalTokens": 0,
+        "physicalRecords": 216,
+        "logicalRecords": 58,
+        "nativeTrainingDigest": "242a9d720c2de8eea25725faf3c58547e7a34304e0a81eb699af6a7009073893"
+      },
+      "durationMs": 704.7354469999996,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-symbol-getter-arithmetic",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "symbols-ordinary-properties/1",
+      "protocolExtensions": [],
+      "regionCoverage": {
+        "compactRegions": 3,
+        "detailedRegions": 4,
+        "compactRecords": 3,
+        "detailedRecords": 19,
+        "protocolRecords": 11,
+        "compactBytes": 304,
+        "detailedBytes": 2144,
+        "protocolBytes": 1423,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 22,
+        "bytes": {
+          "generated": 2448,
+          "detailed": 2144,
+          "detailedShare": 0.8758169934640523,
+          "peakContext": 6187,
+          "cumulativeContext": 118878,
+          "cumulativePublicSnapshots": 116788
+        },
+        "tokens": {
+          "generated": 720,
+          "terminal": 22,
+          "observedAndContext": 40621,
+          "peakContext": 2088,
+          "cumulativeContext": 40621,
+          "total": 41363,
+          "detailedShare": 0.8694444444444445
+        },
+        "measurement": "passed",
+        "detailedTokens": 626,
+        "artifact": "serving-source-symbol-getter-arithmetic.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 720,
+        "observedTokens": 42666,
+        "terminalTokens": 0,
+        "physicalRecords": 90,
+        "logicalRecords": 24,
+        "nativeTrainingDigest": "25ec11b4a850c4c73a95c3a4e2e3455b4775611181ff607f7bc42a28cc4a20e9"
+      },
+      "durationMs": 437.0547569999999,
+      "peakRssBytes": null
+    },
+    {
+      "id": "typed-views-shared-backing",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "owned-binary-memory/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 21,
+        "protocolRecords": 13,
+        "compactBytes": 0,
+        "detailedBytes": 2077,
+        "protocolBytes": 1466,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 21,
+        "bytes": {
+          "generated": 2077,
+          "detailed": 2077,
+          "detailedShare": 1,
+          "peakContext": 3494,
+          "cumulativeContext": 61812,
+          "cumulativePublicSnapshots": 59817
+        },
+        "tokens": {
+          "generated": 639,
+          "terminal": 21,
+          "observedAndContext": 20417,
+          "peakContext": 1153,
+          "cumulativeContext": 20417,
+          "total": 21077,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 639,
+        "artifact": "serving-typed-views-shared-backing.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 639,
+        "observedTokens": 21649,
+        "terminalTokens": 0,
+        "physicalRecords": 62,
+        "logicalRecords": 23,
+        "nativeTrainingDigest": "7197c1e2da3b077d804f76f15bb96fd4c775c26edf511c3d079fdf9228c7e69c"
+      },
+      "durationMs": 185.25697300000047,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-derived-private-arithmetic",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "class-private-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 2,
+        "detailedRegions": 3,
+        "compactRecords": 2,
+        "detailedRecords": 85,
+        "protocolRecords": 64,
+        "compactBytes": 202,
+        "detailedBytes": 9493,
+        "protocolBytes": 7785,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 87,
+        "bytes": {
+          "generated": 9695,
+          "detailed": 9493,
+          "detailedShare": 0.9791645177926767,
+          "peakContext": 9168,
+          "cumulativeContext": 610577,
+          "cumulativePublicSnapshots": 602312
+        },
+        "tokens": {
+          "generated": 2832,
+          "terminal": 87,
+          "observedAndContext": 195132,
+          "peakContext": 2933,
+          "cumulativeContext": 195132,
+          "total": 198051,
+          "detailedShare": 0.9781073446327684
+        },
+        "measurement": "passed",
+        "detailedTokens": 2770,
+        "artifact": "serving-source-derived-private-arithmetic.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 2832,
+        "observedTokens": 195840,
+        "terminalTokens": 0,
+        "physicalRecords": 413,
+        "logicalRecords": 89,
+        "nativeTrainingDigest": "72f6872460ad524caf173872526bfaf080bf72620e5e4cee32ba80d0e8fdccef"
+      },
+      "durationMs": 1445.0340370000004,
+      "peakRssBytes": null
+    },
+    {
+      "id": "builtin-iterator-mixed-arithmetic",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "builtin-iterator/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 2,
+        "detailedRegions": 3,
+        "compactRecords": 2,
+        "detailedRecords": 28,
+        "protocolRecords": 16,
+        "compactBytes": 222,
+        "detailedBytes": 2608,
+        "protocolBytes": 1721,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 30,
+        "bytes": {
+          "generated": 2830,
+          "detailed": 2608,
+          "detailedShare": 0.9215547703180212,
+          "peakContext": 5390,
+          "cumulativeContext": 139254,
+          "cumulativePublicSnapshots": 136404
+        },
+        "tokens": {
+          "generated": 859,
+          "terminal": 30,
+          "observedAndContext": 46224,
+          "peakContext": 1791,
+          "cumulativeContext": 46224,
+          "total": 47113,
+          "detailedShare": 0.9185098952270081
+        },
+        "measurement": "passed",
+        "detailedTokens": 789,
+        "artifact": "serving-builtin-iterator-mixed-arithmetic.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 859,
+        "observedTokens": 48371,
+        "terminalTokens": 0,
+        "physicalRecords": 114,
+        "logicalRecords": 32,
+        "nativeTrainingDigest": "d64aeed182093230999d245dda5b9abbd3888ea65ceaa93ad92b6f0ece2d3417"
+      },
+      "durationMs": 399.9225029999998,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-promise-all-reaction-arithmetic",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "promise-joins-source/1",
+      "protocolExtensions": [
+        "promise-join/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 2,
+        "detailedRegions": 3,
+        "compactRecords": 2,
+        "detailedRecords": 32,
+        "protocolRecords": 3,
+        "compactBytes": 203,
+        "detailedBytes": 3282,
+        "protocolBytes": 428,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 34,
+        "bytes": {
+          "generated": 3485,
+          "detailed": 3282,
+          "detailedShare": 0.9417503586800574,
+          "peakContext": 6285,
+          "cumulativeContext": 159170,
+          "cumulativePublicSnapshots": 155940
+        },
+        "tokens": {
+          "generated": 1042,
+          "terminal": 34,
+          "observedAndContext": 53346,
+          "peakContext": 2071,
+          "cumulativeContext": 53346,
+          "total": 54422,
+          "detailedShare": 0.9404990403071017
+        },
+        "measurement": "passed",
+        "detailedTokens": 980,
+        "artifact": "serving-source-promise-all-reaction-arithmetic.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 1042,
+        "observedTokens": 54903,
+        "terminalTokens": 0,
+        "physicalRecords": 123,
+        "logicalRecords": 36,
+        "nativeTrainingDigest": "532a24d12288224df086b398b5b3056e8756d1393af0d8e9a304099f729022db"
+      },
+      "durationMs": 333.1643809999996,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-promise-join-rejection-finally",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "promise-joins-source/1",
+      "protocolExtensions": [
+        "promise-join/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 2,
+        "compactRecords": 1,
+        "detailedRecords": 27,
+        "protocolRecords": 3,
+        "compactBytes": 103,
+        "detailedBytes": 2548,
+        "protocolBytes": 424,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 28,
+        "bytes": {
+          "generated": 2651,
+          "detailed": 2548,
+          "detailedShare": 0.961146737080347,
+          "peakContext": 4823,
+          "cumulativeContext": 100856,
+          "cumulativePublicSnapshots": 98196
+        },
+        "tokens": {
+          "generated": 786,
+          "terminal": 28,
+          "observedAndContext": 33780,
+          "peakContext": 1574,
+          "cumulativeContext": 33780,
+          "total": 34594,
+          "detailedShare": 0.9592875318066157
+        },
+        "measurement": "passed",
+        "detailedTokens": 754,
+        "artifact": "serving-source-promise-join-rejection-finally.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 786,
+        "observedTokens": 34687,
+        "terminalTokens": 0,
+        "physicalRecords": 84,
+        "logicalRecords": 30,
+        "nativeTrainingDigest": "0eb43277f4dc6246c7aefa4dee351e95ca740a399f764eeebcc2b56bbf0c0327"
+      },
+      "durationMs": 225.22281100000055,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-number-private-arithmetic",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "class-private-source/1",
+        "number-conversion-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 2,
+        "detailedRegions": 2,
+        "compactRecords": 2,
+        "detailedRecords": 66,
+        "protocolRecords": 51,
+        "compactBytes": 203,
+        "detailedBytes": 7211,
+        "protocolBytes": 5826,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 68,
+        "bytes": {
+          "generated": 7414,
+          "detailed": 7211,
+          "detailedShare": 0.972619368761802,
+          "peakContext": 7768,
+          "cumulativeContext": 433340,
+          "cumulativePublicSnapshots": 426880
+        },
+        "tokens": {
+          "generated": 2149,
+          "terminal": 68,
+          "observedAndContext": 137850,
+          "peakContext": 2478,
+          "cumulativeContext": 137850,
+          "total": 140067,
+          "detailedShare": 0.9706840390879479
+        },
+        "measurement": "passed",
+        "detailedTokens": 2086,
+        "artifact": "serving-source-number-private-arithmetic.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 2149,
+        "observedTokens": 138489,
+        "terminalTokens": 0,
+        "physicalRecords": 294,
+        "logicalRecords": 70,
+        "nativeTrainingDigest": "519bae4e2542c14c50411359419777e2c0107182c5e4dd1993d8c45e7bc0ae7a"
+      },
+      "durationMs": 845.1449790000006,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-generator-cleanup-suspension",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "synchronous-generator-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 36,
+        "protocolRecords": 30,
+        "compactBytes": 0,
+        "detailedBytes": 3483,
+        "protocolBytes": 3088,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 36,
+        "bytes": {
+          "generated": 3483,
+          "detailed": 3483,
+          "detailedShare": 1,
+          "peakContext": 4764,
+          "cumulativeContext": 142957,
+          "cumulativePublicSnapshots": 139537
+        },
+        "tokens": {
+          "generated": 1024,
+          "terminal": 36,
+          "observedAndContext": 45091,
+          "peakContext": 1523,
+          "cumulativeContext": 45091,
+          "total": 46151,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 1024,
+        "artifact": "serving-source-generator-cleanup-suspension.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 1024,
+        "observedTokens": 46099,
+        "terminalTokens": 0,
+        "physicalRecords": 112,
+        "logicalRecords": 38,
+        "nativeTrainingDigest": "e022aab2eb709526d46b9e17532bef6a5f83cbadde4b3eff288b6146779d4168"
+      },
+      "durationMs": 427.0430690000012,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-generator-delegated-cleanup",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "synchronous-generator-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 78,
+        "protocolRecords": 48,
+        "compactBytes": 0,
+        "detailedBytes": 7993,
+        "protocolBytes": 4834,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 78,
+        "bytes": {
+          "generated": 7993,
+          "detailed": 7993,
+          "detailedShare": 1,
+          "peakContext": 5590,
+          "cumulativeContext": 389795,
+          "cumulativePublicSnapshots": 382385
+        },
+        "tokens": {
+          "generated": 2287,
+          "terminal": 78,
+          "observedAndContext": 120987,
+          "peakContext": 1729,
+          "cumulativeContext": 120987,
+          "total": 123352,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 2287,
+        "artifact": "serving-source-generator-delegated-cleanup.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 2287,
+        "observedTokens": 121064,
+        "terminalTokens": 0,
+        "physicalRecords": 295,
+        "logicalRecords": 80,
+        "nativeTrainingDigest": "9915ab8493745e8d6f0ae2c4da7139a5ca4214965bc50eb653e8de3adf0344ec"
+      },
+      "durationMs": 790.3377929999988,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-proxy-traps-arithmetic",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "ordinary-data-proxy-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 3,
+        "detailedRegions": 3,
+        "compactRecords": 3,
+        "detailedRecords": 47,
+        "protocolRecords": 22,
+        "compactBytes": 342,
+        "detailedBytes": 5660,
+        "protocolBytes": 2966,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 50,
+        "bytes": {
+          "generated": 6002,
+          "detailed": 5660,
+          "detailedShare": 0.9430189936687771,
+          "peakContext": 7339,
+          "cumulativeContext": 331483,
+          "cumulativePublicSnapshots": 326733
+        },
+        "tokens": {
+          "generated": 1787,
+          "terminal": 50,
+          "observedAndContext": 108295,
+          "peakContext": 2429,
+          "cumulativeContext": 108295,
+          "total": 110132,
+          "detailedShare": 0.9395635142697258
+        },
+        "measurement": "passed",
+        "detailedTokens": 1679,
+        "artifact": "serving-source-proxy-traps-arithmetic.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 1787,
+        "observedTokens": 111488,
+        "terminalTokens": 0,
+        "physicalRecords": 246,
+        "logicalRecords": 52,
+        "nativeTrainingDigest": "b230c97abe1818d7ce5bc21076e6819d9cb405c11a988b2d4a062d4e04a78ad5"
+      },
+      "durationMs": 719.1395569999986,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-base-initializer-throw",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "class-private-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 30,
+        "protocolRecords": 22,
+        "compactBytes": 0,
+        "detailedBytes": 3314,
+        "protocolBytes": 2782,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 30,
+        "bytes": {
+          "generated": 3314,
+          "detailed": 3314,
+          "detailedShare": 1,
+          "peakContext": 4969,
+          "cumulativeContext": 114536,
+          "cumulativePublicSnapshots": 111686
+        },
+        "tokens": {
+          "generated": 951,
+          "terminal": 30,
+          "observedAndContext": 34965,
+          "peakContext": 1514,
+          "cumulativeContext": 34965,
+          "total": 35946,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 951,
+        "artifact": "serving-source-base-initializer-throw.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 951,
+        "observedTokens": 35313,
+        "terminalTokens": 0,
+        "physicalRecords": 87,
+        "logicalRecords": 32,
+        "nativeTrainingDigest": "47255a1d3a5e7186d24ec8b091d575a49910923b318b88ef57f28cab448665bc"
+      },
+      "durationMs": 218.66325399999914,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-derived-initializer-throw",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "class-private-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 53,
+        "protocolRecords": 38,
+        "compactBytes": 0,
+        "detailedBytes": 5908,
+        "protocolBytes": 4893,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 53,
+        "bytes": {
+          "generated": 5908,
+          "detailed": 5908,
+          "detailedShare": 1,
+          "peakContext": 6659,
+          "cumulativeContext": 249753,
+          "cumulativePublicSnapshots": 244718
+        },
+        "tokens": {
+          "generated": 1708,
+          "terminal": 53,
+          "observedAndContext": 77433,
+          "peakContext": 2066,
+          "cumulativeContext": 77433,
+          "total": 79194,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 1708,
+        "artifact": "serving-source-derived-initializer-throw.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 1708,
+        "observedTokens": 77419,
+        "terminalTokens": 0,
+        "physicalRecords": 181,
+        "logicalRecords": 55,
+        "nativeTrainingDigest": "0c12679cc865d18b0c61865fe30642c4fcde6c39be1cc93a0a37f9aa99c7e346"
+      },
+      "durationMs": 587.6966620000003,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-promise-executor-first-call",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "promise-executors-source/1",
+      "protocolExtensions": [
+        "promise-executor/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 2,
+        "detailedRegions": 3,
+        "compactRecords": 2,
+        "detailedRecords": 21,
+        "protocolRecords": 5,
+        "compactBytes": 195,
+        "detailedBytes": 2108,
+        "protocolBytes": 635,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 23,
+        "bytes": {
+          "generated": 2303,
+          "detailed": 2108,
+          "detailedShare": 0.915327833260964,
+          "peakContext": 5598,
+          "cumulativeContext": 112408,
+          "cumulativePublicSnapshots": 110223
+        },
+        "tokens": {
+          "generated": 671,
+          "terminal": 23,
+          "observedAndContext": 36694,
+          "peakContext": 1814,
+          "cumulativeContext": 36694,
+          "total": 37388,
+          "detailedShare": 0.9061102831594635
+        },
+        "measurement": "passed",
+        "detailedTokens": 608,
+        "artifact": "serving-source-promise-executor-first-call.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 671,
+        "observedTokens": 38105,
+        "terminalTokens": 0,
+        "physicalRecords": 90,
+        "logicalRecords": 25,
+        "nativeTrainingDigest": "6fa4802d8c53f3026bc992eead1073203161083c1bf8a39a6702d03b491473df"
+      },
+      "durationMs": 258.12702999999965,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-promise-executor-retained-resolution",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "promise-executors-source/1",
+      "protocolExtensions": [
+        "promise-executor/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 2,
+        "compactRecords": 1,
+        "detailedRecords": 15,
+        "protocolRecords": 5,
+        "compactBytes": 104,
+        "detailedBytes": 1504,
+        "protocolBytes": 668,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 16,
+        "bytes": {
+          "generated": 1608,
+          "detailed": 1504,
+          "detailedShare": 0.9353233830845771,
+          "peakContext": 4716,
+          "cumulativeContext": 62920,
+          "cumulativePublicSnapshots": 61400
+        },
+        "tokens": {
+          "generated": 451,
+          "terminal": 16,
+          "observedAndContext": 19954,
+          "peakContext": 1477,
+          "cumulativeContext": 19954,
+          "total": 20421,
+          "detailedShare": 0.9334811529933481
+        },
+        "measurement": "passed",
+        "detailedTokens": 421,
+        "artifact": "serving-source-promise-executor-retained-resolution.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 451,
+        "observedTokens": 20900,
+        "terminalTokens": 0,
+        "physicalRecords": 48,
+        "logicalRecords": 18,
+        "nativeTrainingDigest": "171aff8a309e9c24981606473ffaf143a4cf7f28b1bc98af03210649590c26f2"
+      },
+      "durationMs": 130.0754880000004,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-promise-executor-abrupt",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "promise-executors-source/1",
+      "protocolExtensions": [
+        "promise-executor/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 14,
+        "protocolRecords": 3,
+        "compactBytes": 0,
+        "detailedBytes": 1349,
+        "protocolBytes": 451,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 14,
+        "bytes": {
+          "generated": 1349,
+          "detailed": 1349,
+          "detailedShare": 1,
+          "peakContext": 4145,
+          "cumulativeContext": 48570,
+          "cumulativePublicSnapshots": 47240
+        },
+        "tokens": {
+          "generated": 380,
+          "terminal": 14,
+          "observedAndContext": 15187,
+          "peakContext": 1290,
+          "cumulativeContext": 15187,
+          "total": 15581,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 380,
+        "artifact": "serving-source-promise-executor-abrupt.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 380,
+        "observedTokens": 15952,
+        "terminalTokens": 0,
+        "physicalRecords": 40,
+        "logicalRecords": 16,
+        "nativeTrainingDigest": "ef48ab178a34ab41e55a40bd46e17bf7459461ed0acd60a1fb8259dffc356f8a"
+      },
+      "durationMs": 96.0724169999994,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-ordinary-constructor-prototype",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "class-private-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 33,
+        "protocolRecords": 25,
+        "compactBytes": 0,
+        "detailedBytes": 3823,
+        "protocolBytes": 3122,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 33,
+        "bytes": {
+          "generated": 3823,
+          "detailed": 3823,
+          "detailedShare": 1,
+          "peakContext": 4992,
+          "cumulativeContext": 133303,
+          "cumulativePublicSnapshots": 130168
+        },
+        "tokens": {
+          "generated": 1153,
+          "terminal": 33,
+          "observedAndContext": 41118,
+          "peakContext": 1549,
+          "cumulativeContext": 41118,
+          "total": 42304,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 1153,
+        "artifact": "serving-source-ordinary-constructor-prototype.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 1153,
+        "observedTokens": 41864,
+        "terminalTokens": 0,
+        "physicalRecords": 99,
+        "logicalRecords": 35,
+        "nativeTrainingDigest": "79d2d25322b840e4735bf4f5d1942b270b0a39b114aae86decd2e8010577c4d0"
+      },
+      "durationMs": 276.5627320000003,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-enumeration-map-callback",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "ordinary-array-map-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 24,
+        "protocolRecords": 18,
+        "compactBytes": 0,
+        "detailedBytes": 2724,
+        "protocolBytes": 2341,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 24,
+        "bytes": {
+          "generated": 2724,
+          "detailed": 2724,
+          "detailedShare": 1,
+          "peakContext": 4073,
+          "cumulativeContext": 76804,
+          "cumulativePublicSnapshots": 74524
+        },
+        "tokens": {
+          "generated": 845,
+          "terminal": 24,
+          "observedAndContext": 24987,
+          "peakContext": 1334,
+          "cumulativeContext": 24987,
+          "total": 25856,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 845,
+        "artifact": "serving-source-enumeration-map-callback.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 845,
+        "observedTokens": 25786,
+        "terminalTokens": 0,
+        "physicalRecords": 66,
+        "logicalRecords": 26,
+        "nativeTrainingDigest": "b0009d8c9675d36085670df49798f67bf8bd78cd16b924473c1d4fc1b800b9d3"
+      },
+      "durationMs": 190.55967000000055,
+      "peakRssBytes": null
+    },
+    {
+      "id": "generator-own-symbol-alias",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "synchronous-generator-source/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 39,
+        "protocolRecords": 27,
+        "compactBytes": 0,
+        "detailedBytes": 4004,
+        "protocolBytes": 2788,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 39,
+        "bytes": {
+          "generated": 4004,
+          "detailed": 4004,
+          "detailedShare": 1,
+          "peakContext": 5240,
+          "cumulativeContext": 179766,
+          "cumulativePublicSnapshots": 176061
+        },
+        "tokens": {
+          "generated": 1202,
+          "terminal": 39,
+          "observedAndContext": 58680,
+          "peakContext": 1699,
+          "cumulativeContext": 58680,
+          "total": 59921,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 1202,
+        "artifact": "serving-generator-own-symbol-alias.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 1202,
+        "observedTokens": 60389,
+        "terminalTokens": 0,
+        "physicalRecords": 144,
+        "logicalRecords": 41,
+        "nativeTrainingDigest": "c72759b5d2b3ea16634eb2b4918b606f1a87b57456294df0ca501715ace6b5ba"
+      },
+      "durationMs": 424.45490900000004,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-logical-left-operands",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "symbols-ordinary-properties/1",
+      "protocolExtensions": [],
+      "regionCoverage": {
+        "compactRegions": 1,
+        "detailedRegions": 2,
+        "compactRecords": 1,
+        "detailedRecords": 48,
+        "protocolRecords": 29,
+        "compactBytes": 101,
+        "detailedBytes": 5059,
+        "protocolBytes": 3611,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 49,
+        "bytes": {
+          "generated": 5160,
+          "detailed": 5059,
+          "detailedShare": 0.9804263565891473,
+          "peakContext": 5773,
+          "cumulativeContext": 223917,
+          "cumulativePublicSnapshots": 219262
+        },
+        "tokens": {
+          "generated": 1546,
+          "terminal": 49,
+          "observedAndContext": 74069,
+          "peakContext": 1924,
+          "cumulativeContext": 74069,
+          "total": 75664,
+          "detailedShare": 0.9799482535575679
+        },
+        "measurement": "passed",
+        "detailedTokens": 1515,
+        "artifact": "serving-source-logical-left-operands.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 1546,
+        "observedTokens": 75971,
+        "terminalTokens": 0,
+        "physicalRecords": 171,
+        "logicalRecords": 51,
+        "nativeTrainingDigest": "d467c22cc2dcde0c80dcfc73a11c061400974ea0d971616775406d9b86cfa89a"
+      },
+      "durationMs": 633.3782259999989,
+      "peakRssBytes": null
+    },
+    {
+      "id": "source-for-in-own-keys",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "protocol-source-extensions/1",
+      "protocolExtensions": [
+        "ordinary-for-in/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 1,
+        "compactRecords": 0,
+        "detailedRecords": 40,
+        "protocolRecords": 21,
+        "compactBytes": 0,
+        "detailedBytes": 4045,
+        "protocolBytes": 2393,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 40,
+        "bytes": {
+          "generated": 4045,
+          "detailed": 4045,
+          "detailedShare": 1,
+          "peakContext": 4631,
+          "cumulativeContext": 157525,
+          "cumulativePublicSnapshots": 153725
+        },
+        "tokens": {
+          "generated": 1231,
+          "terminal": 40,
+          "observedAndContext": 51964,
+          "peakContext": 1529,
+          "cumulativeContext": 51964,
+          "total": 53235,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 1231,
+        "artifact": "serving-source-for-in-own-keys.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 1231,
+        "observedTokens": 52741,
+        "terminalTokens": 0,
+        "physicalRecords": 121,
+        "logicalRecords": 42,
+        "nativeTrainingDigest": "fa4283871abfd6a600e2d782c3a6c098037b8b1b6ff9a14d6e4e2b2257df7aeb"
+      },
+      "durationMs": 355.35573900000054,
+      "peakRssBytes": null
+    },
+    {
+      "id": "join-host-join",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "compositional-regions/1",
+      "protocolExtensions": [
+        "promise-join/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 46,
+        "compactRecords": 0,
+        "detailedRecords": 46,
+        "protocolRecords": 6,
+        "compactBytes": 0,
+        "detailedBytes": 4773,
+        "protocolBytes": 856,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 46,
+        "bytes": {
+          "generated": 4773,
+          "detailed": 4773,
+          "detailedShare": 1,
+          "peakContext": 7258,
+          "cumulativeContext": 226205,
+          "cumulativePublicSnapshots": 221835
+        },
+        "tokens": {
+          "generated": 1427,
+          "terminal": 46,
+          "observedAndContext": 73094,
+          "peakContext": 2342,
+          "cumulativeContext": 73094,
+          "total": 74567,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 1427,
+        "artifact": "serving-join-host-join.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 1427,
+        "observedTokens": 74326,
+        "terminalTokens": 0,
+        "physicalRecords": 171,
+        "logicalRecords": 50,
+        "nativeTrainingDigest": "21cdf409f2d61de7125064fb757ab766dd9eb40e84aec6eec6ce0f0aedb0c246"
+      },
+      "durationMs": 401.15162600000076,
+      "peakRssBytes": null
+    },
+    {
+      "id": "join-retained-callback",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "compositional-regions/1",
+      "protocolExtensions": [
+        "promise-join/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 43,
+        "compactRecords": 0,
+        "detailedRecords": 43,
+        "protocolRecords": 4,
+        "compactBytes": 0,
+        "detailedBytes": 4498,
+        "protocolBytes": 544,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measured",
+      "cost": {
+        "status": "passed",
+        "predictions": 43,
+        "bytes": {
+          "generated": 4498,
+          "detailed": 4498,
+          "detailedShare": 1,
+          "peakContext": 9556,
+          "cumulativeContext": 254205,
+          "cumulativePublicSnapshots": 250120
+        },
+        "tokens": {
+          "generated": 1322,
+          "terminal": 43,
+          "observedAndContext": 83702,
+          "peakContext": 3083,
+          "cumulativeContext": 83702,
+          "total": 85067,
+          "detailedShare": 1
+        },
+        "measurement": "passed",
+        "detailedTokens": 1322,
+        "artifact": "serving-join-retained-callback.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 1322,
+        "observedTokens": 85971,
+        "terminalTokens": 0,
+        "physicalRecords": 195,
+        "logicalRecords": 57,
+        "nativeTrainingDigest": "6736f54898a35b59ae9e6ad90eea2092b80abfe7cf64a1e0597d709e7f3d5af8"
+      },
+      "durationMs": 575.5844560000005,
+      "peakRssBytes": null
+    },
+    {
+      "id": "callback-owned-join",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "compositional-regions/1",
+      "protocolExtensions": [
+        "promise-join/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 66,
+        "compactRecords": 0,
+        "detailedRecords": 66,
+        "protocolRecords": 7,
+        "compactBytes": 0,
+        "detailedBytes": 6938,
+        "protocolBytes": 979,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measurement-failed",
+      "cost": {
+        "status": "measurement-failed",
+        "reason": "Causal LM v8: public row differs from checked replay",
+        "artifact": "serving-callback-owned-join.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 2076,
+        "observedTokens": 160877,
+        "terminalTokens": 0,
+        "physicalRecords": 354,
+        "logicalRecords": 76,
+        "nativeTrainingDigest": "42c6d1c6e055b79030ef17121c3c145cad65a64dd8e0ab9b9775c7dd0ebe97ef"
+      },
+      "durationMs": 268.2389779999994,
+      "peakRssBytes": null
+    },
+    {
+      "id": "callback-owned-join-awaited",
+      "source": "passed",
+      "sourceReason": null,
+      "native": "passed",
+      "sourceProfile": "training-js/1",
+      "executionProfile": "compositional-regions/1",
+      "protocolExtensions": [
+        "promise-join/1"
+      ],
+      "regionCoverage": {
+        "compactRegions": 0,
+        "detailedRegions": 70,
+        "compactRecords": 0,
+        "detailedRecords": 70,
+        "protocolRecords": 7,
+        "compactBytes": 0,
+        "detailedBytes": 7366,
+        "protocolBytes": 979,
+        "detailTokenShare": null,
+        "tokenMeasurement": "untested"
+      },
+      "status": "measurement-failed",
+      "cost": {
+        "status": "measurement-failed",
+        "reason": "Causal LM v8: public row differs from checked replay",
+        "artifact": "serving-callback-owned-join-awaited.json"
+      },
+      "nativePacking": {
+        "status": "passed",
+        "generatedTokens": 2187,
+        "observedTokens": 174793,
+        "terminalTokens": 0,
+        "physicalRecords": 377,
+        "logicalRecords": 80,
+        "nativeTrainingDigest": "41ec208bea5120483c3bc6b280121b6c2543ecbec001e214aa923780dbc7d591"
+      },
+      "durationMs": 325.113437,
+      "peakRssBytes": null
+    }
+  ],
+  "artifacts": {
+    "serving-ordered-map.json": "4a12d641134956b53b78d7a39aed3013545680eb5c8c78510fbf2709fbf163ee",
+    "serving-shared-getter.json": "3ad2025a8aa5c9fccb1fe4e0bb8cec275cdfb13e92a2c20682bb5abfef4bdf08",
+    "serving-causal-counter.json": "58082a0088bb0dde73974118de147aee87f149e5104922a52a4924e49a3628c5",
+    "serving-number-callback-cleanup.json": "46340798e50f9f9598a58948d344c74fd093dca62a87014f87103b6777aba3ae",
+    "serving-custom-iterator-close.json": "5365826f61fc98ee4331bc36a85923034fe044ae0a537dfc02857d859ff0dc3c",
+    "serving-iterable-binding-close.json": "876940e03e8b4ad4a05aa5e06f3b7fcd7cefa9cb5d7921b7ad7cab75350e6ace",
+    "serving-source-symbol-getter-arithmetic.json": "0c05b094807a853c6c4b6a5cb146498dba5e3fad9868ed96badd43210a1a3efb",
+    "serving-typed-views-shared-backing.json": "ba75a3157fee6e855d875b4b1bc9ed07d7855956d4d743edca01994e9d7779fb",
+    "serving-source-derived-private-arithmetic.json": "f285a1a4dd03f2ae04931a873a489352aac02726154acd27d29c4a06e1d31aef",
+    "serving-builtin-iterator-mixed-arithmetic.json": "c84c454b61dd96d5332014878b85add86470d4e3ad7c43134abf804df211e363",
+    "serving-source-promise-all-reaction-arithmetic.json": "c21f21480c38443334eaacf3f19afc0c00d436079a2861c319e3ccb9b0e9b7b4",
+    "serving-source-promise-join-rejection-finally.json": "3f0d83df94c0c1acc88fa622effb33bc9797b2af0dae6e6cc8b0c88cc4a40d50",
+    "serving-source-number-private-arithmetic.json": "335318c796094559c36497c2488c9bebf6fc92623fa7e1171cc762d985bf3169",
+    "serving-source-generator-cleanup-suspension.json": "256a71fa4372ee62f0730ada94c5e942b3c7ee63cc2b1d4d256a6792e9b848e1",
+    "serving-source-generator-delegated-cleanup.json": "ee01dc10a8a7db92d19ca625a115b86874e99a137af41624cf7bba0e494f1cf8",
+    "serving-source-proxy-traps-arithmetic.json": "f848a587baf795eb378dbba6995fcfaa9e0c50220f2c7b23c066dd022987c98b",
+    "serving-source-base-initializer-throw.json": "b75cf06ac4447ed68475438953d99615ca97c13993e3f817af5658be68fa8fb9",
+    "serving-source-derived-initializer-throw.json": "c785cebbf91b2b3db85508a2ef860c7cc52a6609410db34da297e71025a168d8",
+    "serving-source-promise-executor-first-call.json": "eca1b806a340b89ffe848ca0acb730230d756c10dd12a9e695b13efe7a447a44",
+    "serving-source-promise-executor-retained-resolution.json": "b879649dc433dc6fdc05eab0a68c56c11aaf26dffe69cc985f84143ca73feaf2",
+    "serving-source-promise-executor-abrupt.json": "05afd4e8dd03f3b953b3c02f1c21125efc8e9c4d5cb9391ca99354ca0e4f8146",
+    "serving-source-ordinary-constructor-prototype.json": "874f7d201c967278c8c5a3d19a18616a0a0ac17e2039c1e000ffa13841296b6c",
+    "serving-source-enumeration-map-callback.json": "2117a293a0385fe4cd9c641531a459f712c5dc03610c24fbc05c756351840b32",
+    "serving-generator-own-symbol-alias.json": "85af405e8c8d97780187956b1d5177855471df3c8cd2110c075803775e3ca7e4",
+    "serving-source-logical-left-operands.json": "7c2cee691d580ff5d5cc78c79233ffe908a720870c329b26d3bd9a588d0fe7e0",
+    "serving-source-for-in-own-keys.json": "eba7f3cb16ab8fd26d231a992248340e0b2259a10deaa87e740185571e892320",
+    "serving-join-host-join.json": "d60226ad42cb9b044376accd12bf5b27d3f31cc7d82b0c6fa2427cc1f9e33c9d",
+    "serving-join-retained-callback.json": "df30e35f8c435184360c1776198375bc0629c39c4e435a2f698fe4554e16f7a5",
+    "serving-callback-owned-join.json": "d913d91d5d77291cbdf87994c4db6476b97d0f11441907695b69c2386465835c",
+    "serving-callback-owned-join-awaited.json": "d913d91d5d77291cbdf87994c4db6476b97d0f11441907695b69c2386465835c"
+  }
+}

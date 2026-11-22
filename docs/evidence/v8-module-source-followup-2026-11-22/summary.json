@@ -1,0 +1,94 @@
+{
+  "schema": "semantic-module-source-followup/1",
+  "executionLocalCommit": "52d9073b33173ce1caf8830558df01c4e5d052df",
+  "publishedEquivalentCommit": "55f5f59a4c9676281992ebba902f7748ae3ee1dc",
+  "executionTree": "20a06e1050b6c696a5ebcb46a27f6ea35a660da1",
+  "results": [
+    {
+      "id": "unhandled-dependency-rejection",
+      "status": "source-verified",
+      "producerRevision": "52d9073b33173ce1caf8830558df01c4e5d052df",
+      "contexts": 553,
+      "ownedModuleCuts": 9,
+      "artifactBytes": 22299595,
+      "artifactSha256": "9d1aabbf07c07ee57b0c6759639c5ca6b6cdc05ba8d2b3eb20fc87f00d27af16",
+      "originalEsm": "passed",
+      "originalCorrespondence": "passed",
+      "sourceValidated": true,
+      "projectionValidated": true,
+      "replayValidated": true,
+      "nativeAdmission": false,
+      "outcome": "throw",
+      "withinSourceRecheckByteLimit": true,
+      "elapsedMs": 146047.00224499998,
+      "productionPopulationChanged": false,
+      "optimizerUpdates": 0
+    },
+    {
+      "id": "syntactic-tla-without-executed-await",
+      "status": "source-verified",
+      "producerRevision": "52d9073b33173ce1caf8830558df01c4e5d052df",
+      "contexts": 690,
+      "ownedModuleCuts": 8,
+      "artifactBytes": 28394538,
+      "artifactSha256": "5a3af79ec0ac82a06368ac8002b09cd7be5cd4f7b0397fc030493b1568258b11",
+      "originalEsm": "passed",
+      "originalCorrespondence": "passed",
+      "sourceValidated": true,
+      "projectionValidated": true,
+      "replayValidated": true,
+      "nativeAdmission": false,
+      "outcome": "return",
+      "withinSourceRecheckByteLimit": true,
+      "elapsedMs": 203441.606067,
+      "productionPopulationChanged": false,
+      "optimizerUpdates": 0
+    },
+    {
+      "id": "diamond-shared-synchronous-dependency",
+      "status": "refused",
+      "phase": "owned-and-independent-source",
+      "reason": "Unexpected end of JSON input"
+    }
+  ],
+  "nativeAdmissionRun": false,
+  "productionPopulationChanged": false,
+  "optimizerUpdates": 0,
+  "diamondCause": {
+    "mode": "completions",
+    "exitCode": 1,
+    "stdoutBytes": 0,
+    "message": "Independent protocol metadata observation bound",
+    "limits": {
+      "snapshots": 8192,
+      "bytes": 4194304,
+      "snapshotBytes": 1048576
+    },
+    "capChanged": false
+  },
+  "diagnosticFollowup": {
+    "localCommit": "8f576d510cb456e824523c071a4bb6b4a17f3c13",
+    "publishedCommit": "ac6d393e28e8bc73307b6b20659ad4cae7cfe18d",
+    "tree": "87b9339394ef1c350320ddfa6f6db2ff8479e82a",
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "scope": "Only bounded worker failure diagnostics; no source/native admission policy change"
+  },
+  "artifacts": [
+    {
+      "file": "unhandled-dependency-rejection.json.xz.b64",
+      "artifactBytes": 22299595,
+      "artifactSha256": "9d1aabbf07c07ee57b0c6759639c5ca6b6cdc05ba8d2b3eb20fc87f00d27af16",
+      "xzBytes": 152852,
+      "xzSha256": "0b87033b2ce17cf7ba15befdb643cd8b69e0aad13fd747512fb57942e8e8ebe7"
+    },
+    {
+      "file": "syntactic-tla-without-executed-await.json.xz.b64",
+      "artifactBytes": 28394538,
+      "artifactSha256": "5a3af79ec0ac82a06368ac8002b09cd7be5cd4f7b0397fc030493b1568258b11",
+      "xzBytes": 178316,
+      "xzSha256": "7f4c7c5d29e9cd76c1dc163f157d060b7dce4a0bb8b451ce04af4ee8e019571e"
+    }
+  ]
+}

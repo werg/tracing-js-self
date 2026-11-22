@@ -6,232 +6,64 @@ import argparse
 import fcntl
 import gzip
 import hashlib
-import io
+import importlib.util
 import json
 import os
-import re
 import shutil
 import sqlite3
-import stat
 import subprocess
 import sys
-import tarfile
 from contextlib import contextmanager
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
-CHUNK_BYTES = 1024 * 1024
-MAX_MANIFEST_BYTES = 64 * 1024 * 1024
-MAX_OBJECT_BYTES = 256 * 1024 * 1024
-SHA256 = re.compile(r"^[a-f0-9]{64}$")
+# Resolve the adjacent implementation explicitly, including when this command
+# is loaded by importlib rather than executed as a script.
+ARCHIVE_IMPLEMENTATION_SHA256 = "d841fd8493f798870b21bc82bd8902c2f411e945fed6dd6de59dd176d46e465c"
+_archive_path = Path(__file__).with_name("release_archive.py")
+with _archive_path.open("rb") as _archive_stream:
+    _archive_source = _archive_stream.read(1024 * 1024 + 1)
+if len(_archive_source) > 1024 * 1024 or hashlib.sha256(_archive_source).hexdigest() != ARCHIVE_IMPLEMENTATION_SHA256:
+    raise ValueError("Pinned release archive implementation changed")
+_archive_spec = importlib.util.spec_from_file_location("release_archive", _archive_path)
+_archive = importlib.util.module_from_spec(_archive_spec)
+# Compile exactly the checked source, without a second read or cached bytecode.
+exec(compile(_archive_source, str(_archive_path), "exec", dont_inherit=True), _archive.__dict__)  # noqa: S102 - exact source bytes were bounded and pinned above
 
-
-def digest(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
-def canonical(value) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()
-
-
-def archive_name(name: str) -> str:
-    if (not isinstance(name, str) or not name or name == "." or "\\" in name or "\x00" in name
-            or PurePosixPath(name).is_absolute() or ".." in PurePosixPath(name).parts
-            or PurePosixPath(name).as_posix() != name):
-        raise ValueError("Release paths must be canonical relative descendants")
-    return name
-
-
-def inside(root: Path, name: str) -> Path:
-    archive_name(name)
-    path = root / name
-    cursor = root
-    for part in PurePosixPath(name).parts:
-        cursor = cursor / part
-        if cursor.is_symlink():
-            raise ValueError("Release path escapes its source directory or uses a symbolic link")
-    if not path.resolve().is_relative_to(root.resolve()):
-        raise ValueError("Release path escapes its source directory")
-    return path
+CHUNK_BYTES = _archive.CHUNK_BYTES
+MAX_MANIFEST_BYTES = _archive.MAX_MANIFEST_BYTES
+MAX_OBJECT_BYTES = _archive.MAX_OBJECT_BYTES
+SHA256 = _archive.SHA256
+digest = _archive.digest
+canonical = _archive.canonical
+archive_name = _archive.archive_name
+inside = _archive.inside
+hash_stream = _archive.hash_stream
+file_identity = _archive.file_identity
+file_receipt = _archive.file_receipt
+HashingReader = _archive.HashingReader
+validate_inventory = _archive.validate_inventory
+inventory = _archive.inventory
+read_bounded = _archive.read_bounded
+read_json = _archive.read_json
+write_json = _archive.write_json
 
 
-def hash_stream(stream) -> dict:
-    checksum, size = hashlib.sha256(), 0
-    while block := stream.read(CHUNK_BYTES):
-        size += len(block)
-        checksum.update(block)
-    return {"bytes": size, "sha256": checksum.hexdigest()}
-
-
-def file_identity(metadata) -> tuple:
-    return (metadata.st_dev, metadata.st_ino, metadata.st_size, metadata.st_mtime_ns, metadata.st_ctime_ns)
-
-
-def file_receipt(path: Path) -> dict:
-    with path.open("rb") as stream:
-        before = os.fstat(stream.fileno())
-        if not stat.S_ISREG(before.st_mode) or path.is_symlink():
-            raise ValueError("Release inputs must be regular files without symbolic links")
-        receipt = hash_stream(stream)
-        after = os.fstat(stream.fileno())
-        if file_identity(before) != file_identity(after) or receipt["bytes"] != after.st_size:
-            raise ValueError("Release input changed while hashing: " + str(path))
-        return receipt
-
-
-class HashingReader:
-    """Hash exactly the bytes handed to tarfile, keeping reads bounded."""
-
-    def __init__(self, stream):
-        self.stream, self.checksum, self.size = stream, hashlib.sha256(), 0
-
-    def read(self, size):
-        if size < 0 or size > CHUNK_BYTES:
-            raise ValueError("Unbounded archive read requested")
-        block = self.stream.read(size)
-        self.checksum.update(block)
-        self.size += len(block)
-        return block
-
-
-def validate_inventory(rows) -> dict:
-    if not isinstance(rows, list):
-        raise ValueError("Release inventory must be an array")
-    expected = {}
-    for row in rows:
-        if not isinstance(row, dict):
-            raise ValueError("Malformed release inventory row")
-        name = archive_name(row.get("path"))
-        if name == "release-manifest.json" or name in expected:
-            raise ValueError("Repeated or reserved release inventory path")
-        if (type(row.get("bytes")) is not int or row["bytes"] < 0 or not isinstance(row.get("sha256"), str)
-                or not SHA256.fullmatch(row["sha256"])):
-            raise ValueError("Malformed release file size or checksum")
-        expected[name] = row
-    return expected
-
-
-def inventory(roots: dict[str, Path]) -> tuple[list[dict], dict[str, Path]]:
-    rows, sources = [], {}
-    for prefix, root in sorted(roots.items()):
-        archive_name(prefix)
-        if not root.exists() or root.is_symlink():
-            raise ValueError("Release inputs must exist without symbolic links")
-        paths = [root] if root.is_file() else sorted(root.rglob("*"))
-        for path in paths:
-            if path.is_symlink():
-                raise ValueError("Release inputs must not contain symbolic links")
-            if path.is_dir():
-                continue
-            if not path.is_file():
-                raise ValueError("Release inputs contain a special file")
-            relative = path.name if root.is_file() else path.relative_to(root).as_posix()
-            name = prefix if root.is_file() else prefix + "/" + relative
-            if name in sources:
-                raise ValueError("Repeated release archive path")
-            rows.append({"path": archive_name(name), **file_receipt(path)})
-            sources[name] = path
-    return sorted(rows, key=lambda row: row["path"]), sources
+def archive_implementation_receipts() -> dict:
+    """Retain the dependency bound by this wrapper's independently pinned bytes."""
+    receipt = file_receipt(_archive_path)
+    if receipt["sha256"] != ARCHIVE_IMPLEMENTATION_SHA256:
+        raise ValueError("Pinned release archive implementation changed")
+    return {_archive_path.name: receipt}
 
 
 def write_archive(destination: Path, payload: dict, sources: dict[str, Path]) -> dict:
-    """Normalize tar/gzip metadata and detect changed bytes after inventory."""
-    expected = validate_inventory(payload["files"])
-    if set(expected) != set(sources):
-        raise ValueError("Release source paths differ from the inventory")
-    manifest = {**payload, "identityDigest": digest(canonical(payload))}
-    manifest_bytes = json.dumps(manifest, indent=2, sort_keys=True, allow_nan=False).encode() + b"\n"
-    if len(manifest_bytes) > MAX_MANIFEST_BYTES:
-        raise ValueError("Release manifest exceeds its bounded metadata limit")
-    temporary = destination.with_suffix(destination.suffix + ".partial")
-    try:
-        with temporary.open("xb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", filename="", mtime=0) as compressed:
-            with tarfile.open(fileobj=compressed, mode="w|", format=tarfile.PAX_FORMAT) as archive:
-                for row in payload["files"]:
-                    path = sources[row["path"]]
-                    with path.open("rb") as stream:
-                        before = os.fstat(stream.fileno())
-                        if not stat.S_ISREG(before.st_mode) or path.is_symlink() or before.st_size != row["bytes"]:
-                            raise ValueError("Release input changed after inventory: " + row["path"])
-                        reader = HashingReader(stream)
-                        info = tarfile.TarInfo(row["path"])
-                        info.size, info.mode, info.mtime = row["bytes"], 0o644, 0
-                        archive.addfile(info, reader)
-                        after = os.fstat(stream.fileno())
-                        if (reader.size != row["bytes"] or reader.checksum.hexdigest() != row["sha256"]
-                                or stream.read(1) or file_identity(before) != file_identity(after)):
-                            raise ValueError("Release input changed after inventory: " + row["path"])
-                info = tarfile.TarInfo("release-manifest.json")
-                info.size, info.mode, info.mtime = len(manifest_bytes), 0o644, 0
-                archive.addfile(info, io.BytesIO(manifest_bytes))
-            compressed.close()
-            raw.flush()
-            os.fsync(raw.fileno())
-        temporary.replace(destination)
-    except BaseException:
-        temporary.unlink(missing_ok=True)
-        raise
-    destination.with_name("release-manifest.json").write_bytes(manifest_bytes)
-    return manifest
+    """Preserve this command's bounded-manifest setting and archive interface."""
+    return _archive.write_archive(destination, payload, sources, max_manifest_bytes=MAX_MANIFEST_BYTES)
 
 
 def verify_archive(path: Path, *, opener=None) -> dict:
-    """Read and hash every archive member without extracting any paths."""
-    observed, seen, manifest = {}, set(), None
-    before = path.stat()
-    with (opener(path) if opener else tarfile.open(path, "r|gz")) as archive:
-        for member in archive:
-            name = archive_name(member.name)
-            if name in seen or not member.isfile() or member.issparse():
-                raise ValueError("Unexpected duplicate, link or special archive member")
-            seen.add(name)
-            stream = archive.extractfile(member)
-            if name == "release-manifest.json":
-                if member.size > MAX_MANIFEST_BYTES:
-                    raise ValueError("Release manifest exceeds its bounded metadata limit")
-                data = bytearray()
-                while block := stream.read(CHUNK_BYTES):
-                    data.extend(block)
-                    if len(data) > MAX_MANIFEST_BYTES:
-                        raise ValueError("Release manifest exceeds its bounded metadata limit")
-                manifest = json.loads(data)
-            else:
-                observed[name] = hash_stream(stream)
-    if manifest is None:
-        raise ValueError("Archive has no release manifest")
-    identity = manifest.pop("identityDigest", None)
-    if identity != digest(canonical(manifest)):
-        raise ValueError("Release identity digest changed")
-    expected = validate_inventory(manifest["files"])
-    if set(observed) != set(expected):
-        raise ValueError("Release inventory differs from archive contents")
-    for name, row in expected.items():
-        if observed[name] != {"bytes": row["bytes"], "sha256": row["sha256"]}:
-            raise ValueError("Release member checksum changed: " + name)
-    archive_receipt = file_receipt(path)
-    if file_identity(before) != file_identity(path.stat()):
-        raise ValueError("Archive changed during verification")
-    return {"schema": "semantic-release-verification/1", "status": "verified", "files": len(expected),
-            "identityDigest": identity, "archiveSha256": archive_receipt["sha256"]}
-
-
-def read_bounded(stream, maximum: int) -> bytes:
-    data = bytearray()
-    while block := stream.read(min(CHUNK_BYTES, maximum - len(data) + 1)):
-        data.extend(block)
-        if len(data) > maximum:
-            raise ValueError("Release JSON exceeds its bounded object limit")
-    return bytes(data)
-
-
-def read_json(path: Path, maximum: int = MAX_MANIFEST_BYTES):
-    with path.open("rb") as stream:
-        return json.loads(read_bounded(stream, maximum))
-
-
-def write_json(path: Path, value):
-    with path.open("x") as stream:
-        json.dump(value, stream, indent=2, sort_keys=True, allow_nan=False)
-        stream.write("\n")
+    """Preserve this command's bounded-manifest setting and verification interface."""
+    return _archive.verify_archive(path, opener=opener, max_manifest_bytes=MAX_MANIFEST_BYTES)
 
 
 @contextmanager
@@ -669,10 +501,11 @@ def package_release(args) -> dict:
     if git(consumer, "rev-parse", "HEAD") != policy["consumerRevision"]:
         raise ValueError("Consumer differs from the producer release policy")
     packager_root = Path(__file__).resolve().parents[1]
+    archive_implementation_receipts()
     packaging_tool = {"revision": git(packager_root, "rev-parse", "HEAD"),
         "trackedWorktreeClean": not bool(git(packager_root, "status", "--porcelain", "--untracked-files=no")),
         "files": [{"path": name, **file_receipt(packager_root / name)} for name in
-                  ("tools/package-semantic-release.py", "tools/verify-release-campaign.mjs",
+                  ("tools/package-semantic-release.py", "tools/release_archive.py", "tools/verify-release-campaign.mjs",
                    "tools/select-release-training.mjs", "src/corpus/campaign-store.mjs", "src/corpus/source-registry.mjs")]}
     output.mkdir(parents=True)
     campaign_path = output / "campaign-verification.json"
@@ -693,7 +526,12 @@ def package_release(args) -> dict:
     recheck_environment(tracer, consumer, args.tokenizer.resolve(), args.environment_receipt.resolve(),
                         actual_environment, policy)
     from megatoken.data.semantic_admission import native_admission
-    from megatoken.data.semantic_corpus import prepare_semantic_corpus, public_digest, source_verifier_for_checkout, verify_admission
+    from megatoken.data.semantic_corpus import (
+        prepare_semantic_corpus,
+        public_digest,
+        source_verifier_for_checkout,
+        verify_admission,
+    )
     from megatoken.data.semantic_harness_v6 import adapt_selected_harness_v6
     from megatoken.generation.codec import ByteCodec
     codec = ByteCodec.from_tokenizer_json(args.tokenizer, expected_sha256=policy["tokenizerSha256"])
@@ -748,7 +586,7 @@ def package_release(args) -> dict:
              "locks/environment.json": tracer / "profiles/release-environment.lock.json",
              "locks/native-policy.json": tracer / "contracts/native-admission-policy-v6.json",
              "locks/requirements.lock": tracer / "tools/native-consumer/requirements.lock",
-             "locks/producer-package-lock.json": tracer / "package-lock.json",
+             "locks/producer-npm-shrinkwrap.json": tracer / "npm-shrinkwrap.json",
              "locks/oracle-package-lock.json": tracer / "tools/spec-oracle/package-lock.json"}
     if materialization:
         roots["materialized"] = document_root

@@ -1,0 +1,117 @@
+{
+  "schema": "actual-closed-session-evidence/1",
+  "runs": [
+    {
+      "directory": "exploratory-1a6f03e",
+      "producer": {
+        "revision": "1a6f03e4dcbcbf25002fbd4b0366014e60f398cf",
+        "tree": "3cf2c666575706da527e4e54b845ac4740266441"
+      },
+      "consumer": {
+        "revision": "1ddcc6110d70703f6b08244d53ec461047677bec",
+        "tree": "c5dd2b212fc82c1d18c3852a0be6a10ec12f9128"
+      },
+      "status": "passed",
+      "acknowledgedModelRecords": 1,
+      "cancelledSiblingEmittedTokens": 18,
+      "cancelledSiblingAcknowledgedRecords": 0,
+      "nativeActiveAndClosedCutsExact": true,
+      "nextAOutputDisposition": "refused",
+      "nextAAcknowledged": false,
+      "hostDispatches": 0,
+      "reportedRuntimeCosts": {
+        "savedInherited": {
+          "rpcCalls": 6,
+          "computeSeconds": 5.317207728992798,
+          "peakMemoryBytes": 528662528
+        },
+        "original": {
+          "rpcCalls": 7,
+          "computeSeconds": 6.198689246994036,
+          "peakMemoryBytes": 528662528
+        },
+        "restoredCumulative": {
+          "rpcCalls": 11,
+          "computeSeconds": 10.409853338976973,
+          "peakMemoryBytes": 528662528
+        },
+        "newRestoreProcess": {
+          "rpcCalls": 5,
+          "computeSeconds": 5.092645609984174
+        },
+        "combinedWithoutInheritedDuplication": {
+          "rpcCalls": 12,
+          "computeSeconds": 11.29133485697821,
+          "peakMemoryBytes": 528662528
+        }
+      },
+      "costScope": "Reported native RPC compute and peak process bytes through the last saved metrics, including restore work and unacknowledged probes, excluding model training. Shutdown occurs after those metrics. Cumulative native attempt token costs include inherited history."
+    },
+    {
+      "directory": "published-dc7595e-1ddcc61",
+      "producer": {
+        "revision": "dc7595e9a4764a3f6fceb4218fd01aa3192222e4",
+        "tree": "ee558234987e0697b40ff0081ead1a43ce97eae7"
+      },
+      "consumer": {
+        "revision": "1ddcc6110d70703f6b08244d53ec461047677bec",
+        "tree": "c5dd2b212fc82c1d18c3852a0be6a10ec12f9128"
+      },
+      "status": "passed",
+      "acknowledgedModelRecords": 1,
+      "cancelledSiblingEmittedTokens": 18,
+      "cancelledSiblingAcknowledgedRecords": 0,
+      "nativeActiveAndClosedCutsExact": true,
+      "nextAOutputDisposition": "refused",
+      "nextAAcknowledged": false,
+      "hostDispatches": 0,
+      "reportedRuntimeCosts": {
+        "savedInherited": {
+          "rpcCalls": 6,
+          "computeSeconds": 4.06275988699781,
+          "peakMemoryBytes": 528011264
+        },
+        "original": {
+          "rpcCalls": 7,
+          "computeSeconds": 6.095455919996311,
+          "peakMemoryBytes": 528011264
+        },
+        "restoredCumulative": {
+          "rpcCalls": 11,
+          "computeSeconds": 8.305933559997356,
+          "peakMemoryBytes": 528011264
+        },
+        "newRestoreProcess": {
+          "rpcCalls": 5,
+          "computeSeconds": 4.243173672999546
+        },
+        "combinedWithoutInheritedDuplication": {
+          "rpcCalls": 12,
+          "computeSeconds": 10.338629592995858,
+          "peakMemoryBytes": 528011264
+        }
+      },
+      "costScope": "Reported native RPC compute and peak process bytes through the last saved metrics, including restore work and unacknowledged probes, excluding model training. Shutdown occurs after those metrics. Cumulative native attempt token costs include inherited history."
+    }
+  ],
+  "consumerSuite": {
+    "revision": "1ddcc6110d70703f6b08244d53ec461047677bec",
+    "tree": "c5dd2b212fc82c1d18c3852a0be6a10ec12f9128",
+    "producer": "19eba4f4ef273e15c126d6a35cb38db05156e2d1",
+    "passed": 625,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 623.17,
+    "command": "python -m pytest -q tests/test_*v8*.py tests/test_algorithm_v7.py tests/test_protocol_properties.py",
+    "log": "logs/consumer-1ddcc61.log",
+    "junit": "logs/consumer-1ddcc61.xml"
+  },
+  "limits": [
+    "One actual acknowledged training-prefix record, no complete program, held-out result or generalization claim.",
+    "B emitted original model bytes that were refused and cancelled; zero B records were acknowledged.",
+    "Next A output remains an original provenance-bound refusal in both lifetimes; it is not acknowledged.",
+    "No host dispatch and no model training occurs in either run.",
+    "Terminal cancellation outside an acknowledged checkpoint head and distributed ownership remain separate work.",
+    "Native attempt profiles include inherited attempt costs. Do not add cumulative profiles as new token generation."
+  ]
+}

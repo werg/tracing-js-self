@@ -1,0 +1,41 @@
+✔ task normalization preserves omitted source defaults (612.231263ms)
+✔ task normalization preserves explicit null guest RNG (504.221772ms)
+✔ task normalization preserves inherited guest RNG (399.412803ms)
+✔ task normalization preserves false seed metadata (376.348142ms)
+✔ task normalization preserves zero seed metadata (327.554915ms)
+✔ task normalization preserves false empty fixture (358.850927ms)
+✔ task normalization preserves zero empty fixture (418.181882ms)
+✔ task normalization preserves empty-string fixture (339.109874ms)
+✔ task normalization preserves ordinary source ignores the protocol-only ancestry alias (367.409757ms)
+✔ task normalization preserves the direct protocol ancestry alias (327.894883ms)
+✔ task normalization preserves the direct protocol null ancestry default (301.893153ms)
+✔ task normalization refuses explicit null fixture rejected by ordinary source generation (1.163328ms)
+✔ task normalization refuses explicit null license rejected by ordinary source generation (0.227857ms)
+✔ task normalization refuses explicit null trustTier rejected by ordinary source generation (0.175989ms)
+✔ task normalization refuses explicit null ancestorIds rejected by ordinary source generation (318.389211ms)
+✔ task normalization refuses explicit null seeds rejected by ordinary source generation (0.570142ms)
+✔ task normalization refuses explicit null seed rejected by ordinary source generation (0.237761ms)
+✔ task normalization refuses conflicting explicit-null and inherited guest RNG declarations (0.323688ms)
+✔ task normalization preserves omitted ordered-session defaults (898.708237ms)
+✔ task normalization refuses explicit null session seed (0.667295ms)
+✔ task normalization refuses explicit null session sessionId (95.852676ms)
+✔ task normalization preserves explicit ordered-session seed and identity (763.097967ms)
+✔ task normalization takes session source and entry from its ordered components (855.54436ms)
+✔ task normalization ignores session outer source metadata not passed to components (733.527617ms)
+✔ task normalization applies the session seed before component defaults (708.76003ms)
+✔ task normalization derives session ancestry from its actual ordered components (724.148225ms)
+✔ task normalization preserves the module null default for experimentalNamespacePlan (507.762971ms)
+✔ task normalization preserves the module null default for experimentalSchedulerPlan (464.965638ms)
+✔ task normalization preserves module null host-fixture default (549.949185ms)
+✔ task normalization preserves actual namespace-profile nullable custody defaults (416.136474ms)
+✔ task normalization preserves actual namespace-profile unused seed metadata (409.089688ms)
+✔ task normalization refuses null custody for a statically lowered namespace import (505.50811ms)
+✔ task normalization refuses null custody rejected by mixed host-protocol generation (1434.190474ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14479.557363

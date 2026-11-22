@@ -1,0 +1,27 @@
+{
+  "workflowRevision": "132b1d10b4de69d766ebc7969c6d4f0a9ed9b668",
+  "requiredNativeCases": 104,
+  "requiredProducerCases": 167,
+  "sourceCases": 15,
+  "sourceRestoreCuts": 65,
+  "sourceGeneratedContexts": 423,
+  "sharedRealmContexts": 19,
+  "objectSourceCases": 22,
+  "objectRefusedSources": 17,
+  "objectEligibleSources": 5,
+  "objectNativeContexts": 51,
+  "mutationSourceCases": 24,
+  "mutationRefusedSources": 19,
+  "mutationEligibleSources": 5,
+  "mutationNativeContexts": 96,
+  "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+  "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+  "tracing-js-self": {
+    "revision": "132b1d10b4de69d766ebc7969c6d4f0a9ed9b668",
+    "tree": "cf34cb3d65e9f0dc748e5c85c8cffc506b3d028a"
+  },
+  "megatoken": {
+    "revision": "03a9e33866207b5b0c4105297c6050dacadcf85f",
+    "tree": "0531e702beb88c5421907d6c41d078169ccd00b5"
+  }
+}

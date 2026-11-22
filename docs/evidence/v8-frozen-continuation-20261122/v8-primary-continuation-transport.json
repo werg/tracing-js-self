@@ -1,0 +1,9 @@
+{
+  "schema": "frozen-v8-continuation-transport/1",
+  "archive": "v8-primary-continuation-original-evidence.tar.gz",
+  "bytes": 374086580,
+  "sha256": "dae1c7c6e0e90cb926368df7c99ac6670a5bb5c8879f42962956debcaee10791",
+  "driverRevision": "2dd1d31d717e89c2121d0cd8c2de9915464b4e45",
+  "producerRevision": "9cf091e6ccc5add960ef0897576d0c391b199a65",
+  "consumerRevision": "1a69d9da3254b7568c831d12866a629c206cf4fe"
+}

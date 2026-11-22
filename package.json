@@ -15,6 +15,7 @@
     "./causal": "./src/causal.js",
     "./training": "./src/training/index.js",
     "./semantic": "./src/semantic/index.js",
+    "./semantic/v8": "./src/semantic/index-v8.js",
     "./natlang-selected": {
       "types": "./src/natlang-selected.d.ts",
       "default": "./src/natlang-selected.js"
@@ -62,7 +63,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test test/*.test.js && node fixtures/reference/reference-fixture.mjs",
+    "test": "node --experimental-vm-modules --test test/*.test.js && node fixtures/reference/reference-fixture.mjs",
     "audit:engine": "node scripts/audit-engine262.mjs",
     "test:arithmetic": "node scripts/run-owned-arithmetic-probes.mjs",
     "test:test262-runtime": "node scripts/run-runtime-conformance.mjs --oracle",
@@ -103,7 +104,7 @@
     "semantic:v7:export": "node tools/export-algorithm-training.mjs",
     "semantic:v7:recheck": "node tools/verify-algorithm-admission.mjs",
     "semantic:v8:contract": "node tools/generate-semantic-region-contract.mjs --check",
-    "test:semantic-v8": "node --test --test-concurrency=1 test/semantic-*v8*.test.js test/semantic-region-*.test.js",
+    "test:semantic-v8": "node --experimental-vm-modules --test --test-concurrency=1 test/semantic-*v8*.test.js test/semantic-region-*.test.js",
     "test:semantic-algorithm": "node --test test/semantic-algorithm-*.test.js",
     "coverage:current": "node tools/generate-capability-ledger.mjs",
     "oracle:install": "npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund",

@@ -4,10 +4,12 @@ import {stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
 export const PROXY_SOURCE_PROFILE_V8='ordinary-data-proxy-source/1';
 const fields=['targetId','handlerId','properties','propertyVersions','shapeVersion'];
 export function createProxySourceAdapterV8(){
-  const active=new Map(),callbacks=new Map();let next=0;
+  let active=new Map(),callbacks=new Map(),next=0;
   const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('Proxy source: '+message);};
   const emit=(ctx,record,event)=>ctx.emit(record,event,'owned-proxy-operation/1');
   return {id:PROXY_SOURCE_PROFILE_V8,
+  captureState:()=>({active:[...active],callbacks:[...callbacks],next}),
+  restoreState(state){active=new Map(state.active);callbacks=new Map(state.callbacks);next=state.next;},
   syntax(node){return node.type==='NewExpression'&&node.callee.type==='Identifier'&&node.callee.name==='Proxy';},
   heapFields(node){return node.kind==='proxy'?fields:null;},
   frameFields(node){return node.pendingProperty?.proxy?['pendingProperty']:null;},

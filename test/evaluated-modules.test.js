@@ -27,6 +27,14 @@ test('evaluated modules run dependency initialization once and share mutable liv
   assert.match(run.bundle.sources[0].text,/__traced_eval_m1_count/);
 });
 
+test('evaluate-only mode has a private entry name while exported calls preserve their entry name',()=>{
+  const modules={'main.js':'export function main(){return 1;}'};
+  assert.equal(linkEvaluatedModules({modules,entryModule:'main.js',exportName:'main'}).entryFunction,
+    '__traced_evaluated_entry');
+  assert.equal(linkEvaluatedModules({modules,entryModule:'main.js',evaluateOnly:true}).entryFunction,
+    '__traced_eval_entry');
+});
+
 test('module side effects use dependency ordering even with import elision',async()=>{
   const modules={
     'a.ts':'export let result = 2;',
@@ -101,6 +109,22 @@ test('expression default exports and value exports evaluate once',async()=>{
   assert.equal(run.result,12);
 });
 
+test('anonymous default class and generator expressions receive the source-level name',async()=>{
+  const cases=[
+    {source:`export default (class { static observed=this.name; });\n`+
+      `import C from './main.js';\n`+
+      `export function read(){return [C.name,C.observed];}`,expected:['default','default']},
+    {source:`export default (function* () { return 24601; });\n`+
+      `import g from './main.js';\n`+
+      `export function read(){return g.name;}`,expected:'default'}
+  ];
+  for(const {source,expected} of cases){
+    const run=await verified({modules:{'main.js':source},entryModule:'main.js',exportName:'read'});
+    assert.deepEqual(run.result,expected);
+    assert.match(run.bundle.sources[0].text,/\(\{default:/);
+  }
+});
+
 test('module linker rejects cycles, unknown dependencies, and native packages',()=>{
   const requests=[
     {modules:{'a.js':"import {x} from './missing.js';export const y=x;"},entryModule:'a.js',exportName:'y'},
@@ -125,13 +149,24 @@ test('imports are read-only and unknown named exports fail at link time',()=>{
     assert.throws(()=>linkEvaluatedModules(request),/Unsupported evaluated-module/);
 });
 
-test('module namespace objects and exotic syntax do not silently delegate to Node',()=>{
-  const invalid=[
-    {modules:{'a.js':"export class C {}"},entryModule:'a.js',exportName:'C'},
-    {modules:{'a.js':"export function * f(){yield 1;}"},entryModule:'a.js',exportName:'f'}
-  ];
-  for(const request of invalid)
-    assert.throws(()=>linkEvaluatedModules(request),/Unsupported evaluated-module/);
+test('exported classes and synchronous generators execute owned declarations with original ESM semantics',async()=>{
+  for(const source of [
+    'export class C{static observed=this.name;value(){return 7;}}'+
+      'export function run(){return [C.name,C.observed,new C().value()];}',
+    'export function* values(){yield 1;yield 2;}'+
+      'export function run(){const iterator=values();return [values.name,iterator.next().value,'+
+        'iterator.next().value,iterator.next().done];}'
+  ]){
+    const native=await import('data:text/javascript,'+encodeURIComponent(source)),expected=native.run(),
+      run=await verified({modules:{'main.js':source},entryModule:'main.js',exportName:'run'});
+    assert.deepEqual(run.result,expected);
+  }
+});
+
+test('module async-generator declarations retain their explicit owned frontend boundary',()=>{
+  assert.throws(()=>linkEvaluatedModules({modules:{
+    'main.js':'export async function* values(){yield 1;}export function run(){return 0;}'
+  },entryModule:'main.js',exportName:'run'}),/Unsupported evaluated-module.*async generator/);
 });
 
 test('diamond dependencies initialize once, with two distinct module side effects',async()=>{
@@ -397,14 +432,16 @@ test('cycles that observe an uninitialized lexical binding throw like native ESM
   }),/Owned module evaluation rejected:|not defined|before initialization/);
 });
 
-test('cycles with top-level await fail link before native effects dispatch',()=>{
+test('cycles with top-level await use the owned SCC scheduler',async()=>{
   const modules={
     'a.js':"import {value} from './b.js';export const x=await Promise.resolve(3);",
     'b.js':"import {x} from './a.js';export const value=4;"
   };
-  assert.throws(()=>linkEvaluatedModules({
+  const run=await verified({
     modules,entryModule:'a.js',exportName:'x'
-  }),/cyclic module initialization with await/);
+  });
+  assert.equal(run.result,3);
+  assert.equal(run.metadata.evaluationStrategy,'async-dependency-scheduler');
 });
 
 test('same-origin cyclic ESM function behavior agrees with independent native Node ESM',async()=>{
@@ -463,18 +500,23 @@ test('namespace reads agree with independent Node ESM loader for mutable exports
   assert.equal(run.result,oracle);
 });
 
-test('namespace mutation and unsupported first-class/dynamic namespace exotics fail closed',()=>{
+test('namespace operations retain guest TypeErrors and dynamic reads while namespace outputs refuse',async()=>{
   const leaf='export let x=1;';
-  for(const code of [
-    "import * as ns from './leaf.js';export function main(){ns.x=3;}",
-    "import * as ns from './leaf.js';export function main(){return ns;}",
-    "import * as ns from './leaf.js';export function main(k){return ns[k];}",
-    "import * as ns from './leaf.js';export function main(){return Object.keys(ns);}",
-    "import * as ns from './leaf.js';export function main(){return ns.x();}"
-  ])assert.throws(()=>linkEvaluatedModules({
-    modules:{'leaf.js':leaf,'main.js':code},
-    entryModule:'main.js',exportName:'main'
-  }),/Unsupported evaluated-module/);
+  const body=`export function main(k){let assignment,call;
+    try{ns.x=3;}catch(error){assignment=error.name;}
+    try{ns.x();}catch(error){call=error.name;}
+    return [assignment,call,ns[k],Object.keys(ns)];}`;
+  const nativeSource='import * as ns from '+JSON.stringify('data:text/javascript,'+encodeURIComponent(leaf))+';'+body;
+  const native=await import('data:text/javascript,'+encodeURIComponent(nativeSource));
+  const run=await verified({modules:{'leaf.js':leaf,
+    'main.js':"import * as ns from './leaf.js';"+body},
+    entryModule:'main.js',exportName:'main',args:['x']});
+  assert.deepEqual(run.result,native.main('x'));
+  assert.deepEqual(run.result,['TypeError','TypeError',1,['x']]);
+  await assert.rejects(()=>executeEvaluatedModules({modules:{'leaf.js':leaf,
+    'main.js':"import * as ns from './leaf.js';export function main(){return ns;}"},
+    entryModule:'main.js',exportName:'main'}),
+  /Module namespace values are not supported by the evaluated-module result codec/);
 });
 
 test('ESM production-style initialization creates one owned shared closure with live state',async()=>{

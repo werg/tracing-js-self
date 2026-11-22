@@ -254,8 +254,51 @@ test('frozen execution deadlines bound initialization, native acknowledgement an
   const result=await runSelectedRegionExecution({initialPublic:input(verified.exported),fixture:fixture.fixture,
     select:adapter.select,...pin,origin:'engineering',timeoutMs:300});
   assert.equal(result.status,'resource_limited');assert.equal(result.publicCompleted,false);
-  assert.equal(result.attempts.at(-1).status,'commit-failed');assert.equal(result.costs.hostDispatches,0);
+  // A deadline cannot decide whether an unreturned native acknowledgement
+  // committed. A later positive receipt must still be recorded truthfully.
+  assert.equal(result.attempts.at(-1).status,'acknowledgement-unknown');assert.equal(result.costs.hostDispatches,0);
   assert.equal(adapter.requests.length,adapter.commits.length);
+});
+
+test('runner cleanup shares pending commit cancellation and closes a transport when graceful shutdown expires',
+  {timeout:10000},async()=>{
+    const fixture=SEMANTIC_GALLERY_FIXTURES.find(row=>row.id==='counter-0'),verified=await verifyRegionTrainingCase(fixture);
+    let rejectCommit,entered,closedResolve,cancellations=0,transportCloses=0;
+    const reached=new Promise(resolve=>{entered=resolve;}),closed=new Promise(resolve=>{closedResolve=resolve;});
+    const adapter=fixtureSelector(verified.exported,{commit:request=>{
+      if(!request.record.includes('"kind":"request"'))return {committed:true};
+      entered();return new Promise((_,reject)=>{rejectCommit=reject;});
+    }});
+    adapter.select.cancel=async()=>{cancellations++;closedResolve();return {cancelled:true};};
+    adapter.select.close=()=>{transportCloses++;
+      assert.equal(cancellations,0,'Outer cleanup must not bypass the in-flight barrier');
+      rejectCommit(new Error('Transport closed with native commit unresolved'));
+    };
+    const running=runSelectedRegionExecution({initialPublic:input(verified.exported),fixture:fixture.fixture,
+      select:adapter.select,...pin,origin:'engineering',timeoutMs:300});
+    await reached;const result=await running;
+    assert.equal(result.status,'resource_limited');assert.equal(result.costs.hostDispatches,0);
+    assert.equal(result.attempts.at(-1).status,'acknowledgement-unknown');
+    assert.match(result.cleanupFailure.message,/cleanup deadline/);
+    assert.equal(transportCloses,1);await closed;
+    assert.equal(cancellations,1,'Failure and final cleanup share one native cancellation');
+    assert.equal(result.costs.unknownAcknowledgements,1);assert.equal(result.costs.rejected,0);
+    assert.equal(result.costs.hostDispatches,0);
+  });
+
+test('initialization timeout closes the transport without racing cancellation against a late initialization',async()=>{
+  const artifact=golden.examples.find(row=>row.id==='ordered-map');
+  let rejectInitialization,initializationSettled=false,transportCloses=0,earlyCancellations=0;
+  const select=async()=>{throw Error('No selection is permitted');};
+  select.initialize=()=>new Promise((_,reject)=>{rejectInitialization=reject;})
+    .finally(()=>{initializationSettled=true;});
+  select.cancel=async()=>{if(!initializationSettled)earlyCancellations++;return {cancelled:true};};
+  select.close=()=>{transportCloses++;rejectInitialization(new Error('Transport closed'));};
+  const result=await runSelectedRegionExecution({initialPublic:input(artifact),select,...pin,
+    origin:'engineering',timeoutMs:30});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(result.status,'resource_limited');assert.match(result.cleanupFailure.message,/cleanup deadline/);
+  assert.equal(earlyCancellations,0);assert.equal(transportCloses,1);assert.equal(result.attempts.length,0);
 });
 
 test('automatically started callbacks share the execution deadline while awaiting completion acknowledgement',

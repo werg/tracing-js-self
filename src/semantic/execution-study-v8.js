@@ -32,7 +32,7 @@ export function prepareRegionExecutionCase({id,artifact,exported,fixture=null}={
 }
 
 export function freezeRegionExecutionStudy(cases,{id='semantic-v8-execution',model,settings,
-    checkpointIdentity,tokenizerIdentity,seeds=[17],origin='model',maxPredictions=4096,
+    checkpointIdentity,tokenizerIdentity,trainingIdentity=null,seeds=[17],origin='model',maxPredictions=4096,
     maxGenerated=16384,maxOutstanding=64,maxStaleRetries=8,timeoutMs=15000}={}){
   demand(Array.isArray(cases)&&cases.length>0&&cases.length<=20000&&new Set(cases.map(row=>row.id)).size===cases.length,
     'nonempty distinct case inventory required');
@@ -41,6 +41,7 @@ export function freezeRegionExecutionStudy(cases,{id='semantic-v8-execution',mod
     'model revision and generation settings must be frozen');
   demand(HASH.test(checkpointIdentity??'')&&HASH.test(tokenizerIdentity??'')&&['model','engineering'].includes(origin),
     'checkpoint/tokenizer hashes and execution origin required');
+  demand(trainingIdentity===null||HASH.test(trainingIdentity),'training lineage must be a digest or explicit null');
   demand(Array.isArray(seeds)&&seeds.length>0&&seeds.length<=32&&new Set(seeds).size===seeds.length&&
     seeds.every(seed=>bounded(seed,0,Number.MAX_SAFE_INTEGER)),'distinct fixed seeds required');
   demand(bounded(maxPredictions,1,100000)&&bounded(maxGenerated,1,1000000)&&bounded(maxOutstanding,1,1024)&&
@@ -52,7 +53,7 @@ export function freezeRegionExecutionStudy(cases,{id='semantic-v8-execution',mod
       expectedArtifactDigest:row.expectedArtifactDigest};
   });
   const body={schema:'semantic-execution-study/8',id,model:copy(model),settings:copy(settings),
-    checkpointIdentity,tokenizerIdentity,seeds:copy(seeds),origin,
+    checkpointIdentity,tokenizerIdentity,trainingIdentity,seeds:copy(seeds),origin,
     limits:{maxPredictions,maxGenerated,maxOutstanding,maxStaleRetries,timeoutMs},cases:inventory,
     declared:cases.length*seeds.length,
     scoring:{source:'exact-source-certified-projection/1',alternatives:'source-unqualified; never silently marked correct',
@@ -78,6 +79,7 @@ export function validateRegionExecutionStudy(study){
     new Set(study.seeds).size===study.seeds.length&&
     study.seeds.every(seed=>bounded(seed,0,Number.MAX_SAFE_INTEGER))&&
     HASH.test(study.checkpointIdentity??'')&&HASH.test(study.tokenizerIdentity??'')&&
+    (study.trainingIdentity==null||HASH.test(study.trainingIdentity))&&
     ['model','engineering'].includes(study.origin),'study identity or seed population changed');
   const limits=study.limits;
   demand(bounded(limits?.maxPredictions,1,100000)&&bounded(limits.maxGenerated,1,1000000)&&
@@ -133,7 +135,8 @@ export async function runFrozenRegionExecutionStudy(study,{cases,select,caseIds=
     sourceValidated:false,completedExecution:false,result:null})));
   const report=()=>({schema:'semantic-execution-study-results/8',studyDigest:study.digest,origin:study.origin,
     model:copy(study.model),settings:copy(study.settings),checkpointIdentity:study.checkpointIdentity,
-    tokenizerIdentity:study.tokenizerIdentity,declared:study.declared,rows:copy(rows),
+    tokenizerIdentity:study.tokenizerIdentity,trainingIdentity:study.trainingIdentity??null,
+    declared:study.declared,rows:copy(rows),
     summary:{attempted:rows.filter(row=>row.status!=='untested').length,
       untested:rows.filter(row=>row.status==='untested').length,
       publicCompleted:rows.filter(row=>row.result?.publicCompleted).length,
@@ -167,6 +170,7 @@ export async function runFrozenRegionExecutionStudy(study,{cases,select,caseIds=
     try{
       const raw=await runSelectedRegionExecution({...copy(item.request),...study.limits,select,
         checkpointIdentity:study.checkpointIdentity,tokenizerIdentity:study.tokenizerIdentity,
+        trainingIdentity:study.trainingIdentity??null,
         seed:row.seed,origin:study.origin,generationSettings:study.origin==='model'?copy(study.settings):null});
       row.result=raw;row.status=raw.status;
       row.result=await scoreSelectedRegionExecution(raw,privateCase.expectedArtifact);

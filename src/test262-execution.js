@@ -115,8 +115,15 @@ export function runOwnedScript(source) {
   return {phase:'normal'};
 }
 
-export function matchesTest262Expectation(actual, negative) {
-  if (negative) return actual.phase === negative.phase && actual.errorName === negative.type;
+export function matchesTest262Expectation(actual, negative, {requireOwnedEvidence=false}={}) {
+  if(actual.evidence==='host-interpreter-diagnostic')return false;
+  if (negative){
+    if(negative.phase==='runtime'&&requireOwnedEvidence&&
+      (actual.evidence!=='owned-terminal-completion'||actual.completion?.type!=='throw'||
+       actual.completion.errorType!==negative.type||actual.verification?.validated!==true||
+       actual.verification?.replayed!==true))return false;
+    return actual.phase === negative.phase && actual.errorName === negative.type;
+  }
   return actual.phase === 'normal';
 }
 
@@ -136,7 +143,7 @@ export function classifyExecutionCase(entry, source, referenceRun, ownedRun = ru
   row.owned = ownedRun(source);
   row.reference = referenceRun(source, {url:'test262/test/' + entry.path});
   row.referencePass = matchesTest262Expectation(row.reference, meta.negative);
-  row.status = matchesTest262Expectation(row.owned, meta.negative) ? 'pass' : 'xfail';
+  row.status = matchesTest262Expectation(row.owned, meta.negative,{requireOwnedEvidence:true}) ? 'pass' : 'xfail';
   const reasons = [];
   if (!row.referencePass) reasons.push('Reference engine disagrees with official Test262 expectation');
   if (row.status !== entry.baseline)

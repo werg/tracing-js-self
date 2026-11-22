@@ -2,8 +2,10 @@ import {REGION_LIMITS,REGION_PROGRAM_VERSION,REGION_EXECUTION_VERSION,REGION_TRA
   REGION_CONTEXT_VERSION,REGION_CONTINUATION_VERSION,REGION_PROFILE} from './regions.js';
 import {ALGORITHM_V8_SCHEMA,ALGORITHM_V8_PROFILE,ALGORITHM_V8_LIMITS,ALGORITHM_V8_INPUT_TYPES,
   ALGORITHM_V8_OPERATION_METADATA,TRAVERSAL_MODES} from './algorithm-v8.js';
-import {WITNESS_SCHEMA} from '../training/format.js';
+import {SEMANTIC_RECORD_SCHEMA as WITNESS_SCHEMA} from './record-schema.js';
 import {hashAlgorithmData} from './program.js';
+import {V8_LIFECYCLE_CONTRACT} from './lifecycle-v8.js';
+import {LIFECYCLE_RECORD_SCHEMAS,SELECTED_STATE_FIELDS} from './lifecycle-schema.js';
 import {PROTOCOL_RECORD_V8_SCHEMA,PROTOCOL_RECORD_V8_FIELDS} from './protocol-codec-v8.js';
 import {PROTOCOL_STATE_V8_SCHEMA,PROTOCOL_STATE_V8_FIELDS,PROTOCOL_V8_LIMITS} from './protocol-state-v8.js';
 import {MEMORY_PROFILE_V8,MEMORY_HEAP_FIELDS_V8} from './protocol-memory-v8.js';
@@ -12,11 +14,16 @@ import {CONSTRUCTION_STATE_V8_SCHEMA,CONSTRUCTION_STATE_V8_FIELDS,CALLABLE_STATE
 import {ITERATOR_PROFILE_V8,ITERATOR_HEAP_FIELDS} from './protocol-iterator-v8.js';
 import {ENUMERATION_PROFILE_V8,ENUMERATION_HEAP_FIELDS,ENUMERATION_LIMITS_V8} from './protocol-enumeration-v8.js';
 import {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_STATE_V8} from './protocol-promise-join-v8.js';
+import {PRIMITIVE_CONVERSION_PROFILE_V8,PRIMITIVE_CONVERSION_STATE_V8_SCHEMA,PRIMITIVE_CONVERSION_OPERATION_FIELDS,PRIMITIVE_CONVERSION_PHASES_V8,PRIMITIVE_CONVERSION_FAULTS_V8} from './protocol-primitive-conversion-v8.js';
 import {NUMBER_STATE_V8_SCHEMA,NUMBER_OPERATION_FIELDS} from './protocol-number-v8.js';
 import {GENERATOR_PROFILE_V8,GENERATOR_HEAP_FIELDS,GENERATOR_INTRINSICS_V8} from './protocol-generator-v8.js';
 import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIELDS} from './protocol-proxy-v8.js';
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8} from './protocol-promise-executor-v8.js';
+import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_STATE_V8} from './protocol-promise-adoption-v8.js';
+import {ASYNC_CALL_PROFILE_V8,ASYNC_CALL_STATE_V8,ASYNC_CALL_FIELDS_V8} from './protocol-async-call-v8.js';
+import {BOUND_MODULE_SCHEDULER_PLAN_V8} from './module-scheduler-plan-v8.js';
+import {MODULE_SCHEDULER_PROFILE_V8,MODULE_SCHEDULER_LEDGER_FIELDS_V8} from './protocol-module-scheduler-v8.js';
 
 export const SEMANTIC_V8_DEFINITION=Object.freeze({
   execution:REGION_EXECUTION_VERSION,trace:REGION_TRACE_VERSION,context:REGION_CONTEXT_VERSION,
@@ -24,6 +31,7 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
   publicFields:['schema','traceFormat','contextFormat','representation','profile','timeline'],
   envelopeFields:['sequence','mode','kind','fields'],
   program:{schema:REGION_PROGRAM_VERSION,fields:['schema','traceFormat','profile','source','entry','sourceDigest','regions','algorithm','definitionDigest'],
+    optionalFields:['moduleNamespacePlan','moduleSchedulerPlan'],
     sourceCorrespondence:'Independently rechecked producer evidence; public hashes alone do not certify source truth.'},
   entry:{fields:['definition','region','regionDigest','visibleThrough','stateDigest'],
     authority:'trusted-host-envelope',supervised:false,state:'entire shared continuation'},
@@ -33,22 +41,35 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
     algorithm:{prefix:'algorithm ',fields:['claims','allocations','completion'],profile:'pure-algorithm-region/1',
       allocationMapping:'Retain all input identities. Map new core identities in allocation order to the first unused oN identity. Preserve aliases and ECMAScript own-key order.'},
     detail:{prefix:'detail ',fields:['kind','fields'],witnessSchema:WITNESS_SCHEMA,
-      meaning:'Existing checked selected-detailed/1 transitions, committed into the same shared machine.'},
+      meaning:'Direct V8 detail codec over version-neutral typed selected transitions; no legacy wire conversion.'},
     protocol:{schema:PROTOCOL_RECORD_V8_SCHEMA,prefix:'protocol ',fieldsByKind:PROTOCOL_RECORD_V8_FIELDS,
       expressionKinds:['literal','local','unary','binary','logical-test'],
       logicalTest:{fields:['op','operator','arg'],operators:['&&','||','??'],
         decision:'Boolean derived only from the current operand: && tests falsiness, || tests truthiness, ?? tests non-nullishness. No future right operand is included.',
         logicalPaths:{true:'use-left',false:'evaluate-right'},optionalGuardPaths:{true:'then',false:'else'}},
       profile:'symbols-ordinary-properties/1',extensions:PROTOCOL_MACHINE_ADAPTERS_V8.map(adapter=>adapter.id),limits:PROTOCOL_V8_LIMITS,
-      meaning:'Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, ordinary enumeration, generators, Number conversion, Promise joins and executors, Proxy traps and binary memory in the same authoritative heap.'}
+      meaning:'Checked Symbol identities, descriptors, receiver-aware access, scoped calls, construction, iterators, ordinary enumeration, generators, Number and PropertyKey conversion, Promise joins and executors, Proxy traps and binary memory in the same authoritative heap.'}
   },
   algorithm:{schema:ALGORITHM_V8_SCHEMA,profile:ALGORITHM_V8_PROFILE,limits:ALGORITHM_V8_LIMITS,
     inputTypes:ALGORITHM_V8_INPUT_TYPES,traversalModes:TRAVERSAL_MODES,operations:ALGORITHM_V8_OPERATION_METADATA},
+  lifecycle:{...V8_LIFECYCLE_CONTRACT,records:LIFECYCLE_RECORD_SCHEMAS,selectedStateFields:SELECTED_STATE_FIELDS,
+    intentRecord:'Original canonical V8 detail bytes',
+    mixedReceipts:'Intent result sequence and owner sequence refer to the mixed public timeline and its owner track. Unjournaled native arrivals are absent from causal contexts.',
+    recovery:'Replay acknowledged lifecycle records; restored dispatched work is uncertain and is never redispatched without explicit reconciliation.'},
   contextFields:['schema','representation','profile','invocationId','programs','input','state','regionCursor','obligations','visibleThrough','prefixDigest'],
   sharedStateFields:['heap','locals','stack','effects','jobs','ready','randomState','pending','lastReturn','completion',
     'receiver','captureAliases','continuations','reactionSequence','blockedSync','callReturn','activeJob','scheduler','frameFunctions','jobErrors','protocol'],
   protocolState:{schema:PROTOCOL_STATE_V8_SCHEMA,fields:PROTOCOL_STATE_V8_FIELDS,initial:null,
     heap:'Existing heap nodes with property, descriptor and private-element Maps serialized as entry arrays; Symbol keys remain tagged pairs.',
+    asyncCalls:{profile:ASYNC_CALL_PROFILE_V8,schema:ASYNC_CALL_STATE_V8,fields:ASYNC_CALL_FIELDS_V8,
+      storage:'Retained asyncCall metadata belongs to its internal execution Promise; asyncFunction marks its callable closure.',
+      capabilities:'First await detaches the child and restores its caller scope. Later continuations resume in the realm FIFO with the same receiver, live capture cells, and execution Promise. Child completion settles that Promise or stages its exact owned-Promise adoption intent without completing its parent invocation.',
+      boundaries:'Async Promise callbacks, callable thenables and implicit scheduler completion require separate profiles.'},
+    moduleScheduler:{profile:MODULE_SCHEDULER_PROFILE_V8,planSchema:BOUND_MODULE_SCHEDULER_PLAN_V8,heapFields:MODULE_SCHEDULER_LEDGER_FIELDS_V8,
+      storage:'One logical module-scheduler heap node bound to the active observed program source, entry, acyclic module plan, exact driver functions and completion reaction source offsets.',
+      initialization:'The first generated record initializes the fresh entry ledger using its exact active plan digest. The logical ledger cannot escape into guest values.',
+      transitions:'Validated scoped calls, owned async awaits and resumes, exact completion reaction dispatch and synchronous driver completion derive module starts, dependency scheduling, settlement and failure propagation from the same shared frames, Promises, jobs and source record objects. No selected record supplies lifecycle facts.',
+      boundaries:'Compact and algorithm routes, cyclic evaluation, namespace composition, dynamic import, cross-invocation retained ledgers and general production module admission require separate qualification. End requires every bounded module lifecycle to settle.'},
     construction:{schema:CONSTRUCTION_STATE_V8_SCHEMA,fields:CONSTRUCTION_STATE_V8_FIELDS,initial:null,
       callableFields:CALLABLE_STATE_V8_FIELDS,frameFields:CONSTRUCTION_FRAME_V8_FIELDS,
       privateElementFields:['kind','value','version'],
@@ -68,10 +89,15 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
     enumeration:{profile:ENUMERATION_PROFILE_V8,heapFields:ENUMERATION_HEAP_FIELDS,limits:ENUMERATION_LIMITS_V8,
       chainFields:['id','prototype','keys'],
       capabilities:'Stable ordinary for-in snapshots preserve own-key order, prototype walks, nonenumerable shadowing and fresh per-step result identities. Value writes are live; changed key/prototype structure is refused on the next step.'},
-    promiseJoins:{profile:PROMISE_JOIN_PROFILE_V8,schema:PROMISE_JOIN_STATE_V8,modes:['all','race'],
-      fields:['schema','mode','inputs','jobs','observed','values','settled','output','error'],
+    promiseJoins:{profile:PROMISE_JOIN_PROFILE_V8,schema:PROMISE_JOIN_STATE_V8,modes:['all','allSettled','race'],
+      fields:['schema','owner','mode','inputs','jobs','observed','values','settled','output','error'],
       jobFields:['status','owner','promise','reaction','closure','rejectionClosure','target','sequence','joinResult','joinIndex','readySequence'],
-      capabilities:'Ordered Promise dependencies, FIFO internal jobs, first settlement and explicit late no-op steps; fresh result arrays are named only when allocated.'},
+      capabilities:'Invocation-owned Promise joins share the realm heap. A settlement publishes eligible dependencies across all retained invocations in registration order; an explicit queueMicrotask preserves enqueue order. Steps require the realm FIFO head and no competing active turn. First settlement and explicit late no-op steps preserve result identity. allSettled allocates one distinct ordinary status/value-or-reason object per input reaction, waits for every input and preserves input order and value aliases. Entries become ordinary mutable guest objects after fulfillment. Collecting joins reserve one array property for length.'},
+    primitiveConversions:{profile:PRIMITIVE_CONVERSION_PROFILE_V8,schema:PRIMITIVE_CONVERSION_STATE_V8_SCHEMA,fields:['schema','operations'],initial:null,
+      operationFields:PRIMITIVE_CONVERSION_OPERATION_FIELDS,phases:PRIMITIVE_CONVERSION_PHASES_V8,goals:['Number','PropertyKey'],
+      faults:PRIMITIVE_CONVERSION_FAULTS_V8,
+      capabilities:'Goal-derived live method order and hint, retained getter results, shared nested callback scopes, original abrupt identities, bounded ordinary builtin leaves and checked scalar conversion.',
+      boundaries:'Intrinsic fault records are independently derived by replay; original-source admission still refuses them until its complete fault observation authority is qualified. Proxy conversion, dynamic builtin callbacks, compound/logical/update object keys and unbounded stringification remain explicit refusals.'},
     numberConversions:{profile:'number-conversion/1',schema:NUMBER_STATE_V8_SCHEMA,fields:['schema','operations'],initial:null,
       operationFields:NUMBER_OPERATION_FIELDS,phases:['select','call','builtin','waiting','convert','complete','abrupt'],
       capabilities:'Live data-method selection, original receiver and number hint, shared callback scopes, ordered ordinary fallback and checked primitive conversion. Synchronous callback throws preserve their completion through catch/finally and suppress fallback. Accessor selection, intrinsic TypeErrors and exotic conversion remain separate profiles.'},
@@ -87,14 +113,38 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       fields:['schema','capabilities','executors'],capabilityFields:['promise','resolve','reject','called','resolution'],
       executorFields:['promise','parent','child','phase','completion'],
       resolverFields:['promise','mode'],
-      capabilities:'Synchronous source executor calls, stable resolving function identities, a shared first-call cell, retained resolvers, primitive or owned Promise resolution, and executor throw rejection. Thenables, self resolution and async executor bodies require separate profiles.'},
+      capabilities:'Synchronous source executor calls, stable resolving function identities, a shared first-call cell, retained resolvers, primitive settlement or an exact owned-Promise adoption intent, and executor throw rejection. The first resolve consumes authority before either adoption job. Callable thenables and async executor bodies require separate profiles.'},
+    promiseAdoption:{profile:PROMISE_ADOPTION_PROFILE_V8,schema:PROMISE_ADOPTION_STATE_V8,
+      fields:['schema','owner','target','phase','cause','job','forwarding','error'],
+      phases:['intent','queued','observing','completed','self'],causes:['resolver','async','reaction','source'],
+      assimilationJobFields:['status','owner','closure','reaction','adoptionPromise','adoptionTarget','readySequence'],
+      forwardingJobFields:['status','owner','promise','reaction','closure','rejectionClosure','target','sequence','adoptionPromise','adoptionTarget','readySequence'],
+      capabilities:'Owned internal Promises with unchanged intrinsic then lookup use one existing realm FIFO. The original resolver or completed async/reaction frame binds an immediate resolution intent. Enqueue consumes that intent before any further record. The first job registers a forwarding dependency in registration order; a separate FIFO job forwards the settled target. First-call authority remains consumed throughout. Distinct mutual adoption cycles remain pending. Direct self resolution allocates a fresh declared TypeError identity at the self step, without either job. Source admission independently rebuilds each identity and source event.',
+      boundaries:'Callable thenables, then getters, proxies, changed Promise properties/prototypes, async reaction activation and general Error reflection are outside this slice. A declared self error has ordinary name/message data properties; native Error descriptors, stack and prototype are not claimed equivalent. Original-source checks refuse any observable mismatch.'},
     binaryMemory:{profile:MEMORY_PROFILE_V8,heapFields:MEMORY_HEAP_FIELDS_V8,maxBufferBytes:1024,
       typedArrayByteOrder:'little-endian',dataViewByteOrder:'explicit per operation',
       capabilities:'Fixed ordinary buffers and fixed/growable shared buffers; scalar conversions; shared view identities; bounded single-agent atomic operations. No detach, transfer, host buffers or cross-agent scheduling.'},
-    lifecycle:'One fresh invocation without external host work. Declared ordinary catch/finally and loop cleanup use checked transfer detail. Declared Promise joins and executors may use internal Promise, await, resume, job and transfer detail; join steps require an empty stack and the FIFO ready head. External observations remain outside protocol profiles.'},
-  checkpoint:{fields:['schema','profile','public','regionCursor','selected','integrity'],
-    protocolSelected:{schema:'semantic-protocol-continuation/1',fields:['schema','invocations'],
-      meaning:'Exact shared states and activation statuses independently reconstructed from the complete public v8 history.'},
+    lifecycle:'Protocol and ordinary detail share retained invocations, heap, locals and realm scheduler. Host requests, callbacks and observed results use the same checked lifecycle. Declared catch/finally, loop cleanup and Promise scheduler detail retain their independent profile boundaries. Join steps require an empty stack, the globally next ready owner and the owning invocation.'},
+  checkpoint:{fields:['schema','profile','public','regionCursor','ingressCursor','selected','integrity'],
+    optionalFields:['ingress','ingressLog'],
+    ingressLogReceipt:{schema:'semantic-host-ingress-log-receipt/8',fields:['schema','streamId','position','id','bytes'],
+      meaning:'Private write-ahead arrival chain head. Each registered or return-value callback arrival is captured before yielding, persisted and read back before queue mutation or delivery. Checkpoints refuse unresolved/failed writes and retain their acknowledged head. Restore requires an independently retained equal or later head; validates every source, public prefix, graph and arrival order before applying absent inputs. Delivered/discarded inputs are reconciled without redispatch; a later public boundary than the checkpoint refuses.'},
+    callbackArrival:{schema:'semantic-callback-return-arrival/8',
+      fields:['schema','sessionId','visibleThrough','prefixDigest','binding','event'],
+      bindingFields:['ownerInvocationId','parentEffectId','programId','sourceDigest','realmId','trackId','taskRevision','deadline','closureId','closureCode','closureCaptures','effectDigest','retainedIds'],
+      eventFields:['invocationId','arrivalSequence','inputGraph','receiverValue'],
+      meaning:'Private return-value callback input bound to its original source, public prefix, supplied closure/captures and committed external parent. Receiver and arguments share one alias-preserving graph; introduced objects cannot overwrite retained identities. Queued arrivals reconstruct from the independent journal with shared registered-event/callback FIFO. Active and completed children must match public history. Neither an adapter Promise nor an external parent result is reconstructed or inferred.'},
+    ingressReceipt:{schema:'semantic-host-ingress-receipt/8',fields:['schema','id','bytes'],
+      meaning:'Private reference to immutable canonical pending-ingress snapshot bytes. Its SHA-256 content digest checks integrity against an independently retained expected receipt; it is not broker authentication.'},
+    ingressSnapshot:{schema:'semantic-pending-host-ingress/8',
+      fields:['schema','sessionId','visibleThrough','prefixDigest','nextIngressSequence','queues'],
+      queueFields:['subscriptionId','binding','events'],
+      eventFields:['eventId','arrivalSequence','completionPolicy','inputGraph'],
+      meaning:'Private, bounded registered-event inputs bound to one exact public prefix and source-owned handler. Monotonic arrival sequences preserve eligible callback order within a retained realm; different realms remain independent. The sequence cursor and event graphs never enter model context.'},
+    ingressCursor:'Private next host-event arrival sequence, persisted in generic selected-state and region checkpoints even when no pending snapshot is present.',
+    protocolSelected:{schema:'semantic-protocol-continuation/1',fields:['schema','invocations','policy'],
+      policyFields:['maxGenerated','maxOutstanding','automaticDelivery'],
+      meaning:'Exact shared states, activation statuses and host policy are independently reconstructed from the complete public V8 history. Pending registered events require the separately retained private ingress receipt and snapshot. Queued return-value callbacks require their independently retained journal and exact original input/parent binding. Pending unjournaled native ingress refuses checkpoint creation. Restore marks acknowledged outstanding work uncertain and existing subscriptions lost; only explicitly supplied services and reattachment may recover them. Completed callback return/throw is available for explicit parent reconciliation without recreating adapter continuations or redispatching effects.'},
     restore:'Validate public mixed replay and exact shared state. Restore existing intent/handler lifecycle without invoking adapters.'},
   supervision:{generated:'Only exact generated semantic line bytes and framing EOS.',
     observed:'Definitions, entry envelopes, inputs, dispatch receipts and external results have zero prediction loss.',

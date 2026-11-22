@@ -1,0 +1,191 @@
+{
+  "schema": "v8-installed-entry-evidence/1",
+  "publishedApi": "455b44d06e3b6fddb5f3ed39b5a3f3be0a1c91a9",
+  "publishedPackaging": "9d85e301e6674b97a1ac960d5efb87e572e4137e",
+  "publishedIntegration": "39ac1657b8905739bf11e1d55adb63b20d936043",
+  "integrationTree": "a013e5f598401f50fefcadea96f214332e057cd2",
+  "testedLocalApi": "3c5a1b6a756af2a6d3534ea5765e17c9a3db02ae",
+  "testedLocalPackaging": "ce8118d327eb865cd8270c2578528e81b7254bce",
+  "bundlePrerequisite": "19eba4f4ef273e15c126d6a35cb38db05156e2d1",
+  "archive": {
+    "bytes": 8513773,
+    "sha256": "639e237126ceb0ee55c6c4c7d03408d891c8ce0b1b0413c3810658f4c4cae275",
+    "parts": [
+      {
+        "path": "complete-run.tar.gz.part-001",
+        "bytes": 2097152,
+        "sha256": "958a70f2e6a03bedc3dd39a9e96e5b68c00893d3306cac931f8af9c2d04718b4",
+        "gitBlobSha": "7226533aafe306af2cc95285eb85b2c17cf14a7a"
+      },
+      {
+        "path": "complete-run.tar.gz.part-002",
+        "bytes": 2097152,
+        "sha256": "5d60e4104215a070bf731938e93b8ddfaddb0bbb7695e8464b0fe4352938cb12",
+        "gitBlobSha": "2840a3f83935524c4b795444b3bd6190cd85d7dd"
+      },
+      {
+        "path": "complete-run.tar.gz.part-003",
+        "bytes": 2097152,
+        "sha256": "4acf4d41415d60966bbe0a5dfb806ea5d743852ccf6a9ccd6d0bd1c41d7bf590",
+        "gitBlobSha": "411657e33ea1250dd20ce0e0542e59ba9133d57a"
+      },
+      {
+        "path": "complete-run.tar.gz.part-004",
+        "bytes": 2097152,
+        "sha256": "e08cf934ec495cc82ef29e2f8c69ba60916685e267e6c3096c8b01fbb61fe81d",
+        "gitBlobSha": "474266c52d92d8396cc03397f749866815d5ced7"
+      },
+      {
+        "path": "complete-run.tar.gz.part-005",
+        "bytes": 125165,
+        "sha256": "72171b22d7f5eda24e84b5bd64bb00d3cb4ea20b82ef7ca858ea6993a8327fb3",
+        "gitBlobSha": "5575eb38c3973794f6b17db7eeacc95726cbed8c"
+      }
+    ]
+  },
+  "members": [
+    {
+      "path": "checks/before.json",
+      "bytes": 2886,
+      "sha256": "61a6e074f20950e4a1356d9d933eae74d3ed18a8aabb4ebeb16cdfbd721769ee"
+    },
+    {
+      "path": "checks/bounded-gate-first.log",
+      "bytes": 4595,
+      "sha256": "c7e4c734b8768565b7c08fef3ce2950930eb5a368322b790ae7042401c62e000"
+    },
+    {
+      "path": "checks/entry-test-first.log",
+      "bytes": 1653,
+      "sha256": "b2293c9e0fd55e2f1cd00126716dde69db29fb60f799d7e10a8b66b5a7110e48"
+    },
+    {
+      "path": "checks/entry-test-second.log",
+      "bytes": 2114,
+      "sha256": "2b5c8f2df593dbd9c590b1ad944b6d283fb361a3b46485a17106029264222023"
+    },
+    {
+      "path": "checks/entry-test-third.log",
+      "bytes": 2768,
+      "sha256": "aaa6a7838d7fd23b60ce14a1fa831f391bd60deee3a42295e624f1d504b73312"
+    },
+    {
+      "path": "checks/evidence-build-first.log",
+      "bytes": 288,
+      "sha256": "35df5bf0d008b1fb6930e31a7e6d1b895e0ed00e29c7f87c26cd3a7248c5231f"
+    },
+    {
+      "path": "checks/npm-ci-offline-first.log",
+      "bytes": 501,
+      "sha256": "9c5894aac3c59228f6c264013785f92be231fb007aed952c94713b6027aae056"
+    },
+    {
+      "path": "checks/npm-ci-offline-warm.log",
+      "bytes": 177,
+      "sha256": "1a71c6ae775fb027ae4c137c60533d5afa88d65f976a9433d623771dd4771924"
+    },
+    {
+      "path": "checks/npm-ci-online.log",
+      "bytes": 174,
+      "sha256": "9d385d410c141a3ef6fb2fdad2064e3ecd59f1cd605b3b6309f49f248c268b61"
+    },
+    {
+      "path": "checks/pack-lock-semantics.json",
+      "bytes": 4261,
+      "sha256": "a8609cd261fddfe5c87e6beb9d42fc5a0d1866c676c1f7dc37bc694c5f997ced"
+    },
+    {
+      "path": "checks/packaging-bounded-node.log",
+      "bytes": 8315,
+      "sha256": "8fd759a6c16ce1f565505a037992323b7c8ba506377c0f03646574631fd4dbcc"
+    },
+    {
+      "path": "checks/packaging-bounded-python.log",
+      "bytes": 6179,
+      "sha256": "f268ebf491adc6208b41e1977fdd08456864f4f5bfa0cdb63c52b81748f8d2ce"
+    },
+    {
+      "path": "checks/packaging-gate-first.log",
+      "bytes": 2561,
+      "sha256": "29dac5601d297b2ee30b0d054bdc0b2c59617b34325d4eaebbfa7cacd413d243"
+    },
+    {
+      "path": "checks/published-integration-first.log",
+      "bytes": 2052,
+      "sha256": "88c6606db5acb010a2dfe1ae5b84128df2fd3a2cea32f6e6e312ea966ea1daf3"
+    },
+    {
+      "path": "checks/published-integration.log",
+      "bytes": 2547,
+      "sha256": "b27acc5fe309a0580922143cf00962350f251a2574550395ca3c570d9ab12bff"
+    },
+    {
+      "path": "checks/source-check-first.log",
+      "bytes": 635,
+      "sha256": "3b2cca2b4b58410c1172abdf9d8c76733b0795065c40710722c4cc171ad886d9"
+    },
+    {
+      "path": "checks/verification-api.json",
+      "bytes": 1723,
+      "sha256": "7c90743d1dd4281710d392806e3b0cf42d5bd3aed3ff59b89f57601acab7c22c"
+    },
+    {
+      "path": "checks/verification-packaging.json",
+      "bytes": 5233,
+      "sha256": "1898b0a487875673164dd1c10b355d28ba7ee3e225f658dba2892a6494a845fe"
+    },
+    {
+      "path": "checks/verification-published.json",
+      "bytes": 1989,
+      "sha256": "0f57d2754e5f72b1d1bf1cffe591471c933a6a29aaa45b87c4558dafe1dfd166"
+    },
+    {
+      "path": "registry/acorn-8.15.0.tgz",
+      "bytes": 130851,
+      "sha256": "e46eae89bd9761f16d1d25563b837b55b4b78f3ece06ee0b9789cb2644f523b3"
+    },
+    {
+      "path": "registry/dependencies.json",
+      "bytes": 1819,
+      "sha256": "904e9e3fab5b3bf22e1291f92f79ef56d4b84a7dcf26b3cd4454958195a03e25"
+    },
+    {
+      "path": "registry/playwright-1.62.1.tgz",
+      "bytes": 895775,
+      "sha256": "1982556a882b246ccb7c16337fab5e4e790292b69f835a2db1011dddc440ed98"
+    },
+    {
+      "path": "registry/playwright-core-1.62.1.tgz",
+      "bytes": 3070300,
+      "sha256": "954be1e183d0ddb9748fe0d2d08b0b66a9210c74dd75c397aeb70303b9f08a00"
+    },
+    {
+      "path": "registry/typescript-5.9.3.tgz",
+      "bytes": 4377468,
+      "sha256": "10e108c9cf7d5f2879053dff18515fb405abf2ccef63eaaf017d9c571687a1d3"
+    },
+    {
+      "path": "source/bundle-verification.log",
+      "bytes": 330,
+      "sha256": "02f7d511e438adfe6d37608f4a3877f18aecbc20889d66833238ee38b53c0e90"
+    },
+    {
+      "path": "source/implementation.bundle",
+      "bytes": 21816,
+      "sha256": "ee9db6776c44588d87e8d0d41a50745d7cf755656fd4e1f020631a639dfd3328"
+    },
+    {
+      "path": "source/npm-shrinkwrap.json",
+      "bytes": 2742,
+      "sha256": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88"
+    },
+    {
+      "path": "source/package-evidence.py",
+      "bytes": 10493,
+      "sha256": "e2b0ec3729efd33244946fb5e0bb0bdcda093812fcd998ecc45c8d457510c528"
+    }
+  ],
+  "memberCount": 28,
+  "uncompressedBytes": 8562245,
+  "verification": "Every compressed part and restored archive member verified against exact bytes and SHA-256; bundle prerequisites verified; all four registry archives independently match lock SRI."
+}

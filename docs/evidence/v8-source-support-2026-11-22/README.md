@@ -1,0 +1,9 @@
+# Source-session and frozen support-cohort implementation evidence
+
+The complete producer selection passes **37/37 with zero skips** across source-session authority/reconstruction, worker input and metadata serialization, actual source workers, the fixed support registry, native receipt validation, source-qualified orchestration teacher and the unchanged original 665/selected 66 populations. Smaller focused selections overlap these tests and are not additive.
+
+The initial run attempted the environment's nonexistent default `/tmp` and failed to create test directories. It is retained in full as a setup failure. The corrected run supplies the workspace temporary directory and passes all 37 tests. It includes the original worker/campaign serialization tests, not only the new helpers.
+
+The new local source cases are independently verified and restore/replay checked. Receipt-validator controls explicitly inject native receipts; they do not claim real tokenizer or independent Python admission. The supporting cohort freezes 64 cases from 16 families at seed17 (48 training, 12 validation, 4 test members). Full new-cohort source/native collection, ordinary preparation and production behavior supply are pending and mandatory in the new paired matrix member. Original665 and selected66 remain unchanged.
+
+See `docs/V8_SOURCE_SESSIONS_AND_SUPPORT_COHORT.md` for exact provenance, bounded refusal and production-gate semantics. The source verifier retains every original selected byte and verifies every component before composition; it rejects changed or controlled source provenance, ID collisions and incomplete declared calls. Native policy points to b276dc3, which supports the new private source envelope and an ordinary production SE supply checker without weakening data, recipe or launch gates.

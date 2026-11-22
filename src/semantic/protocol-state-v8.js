@@ -362,13 +362,19 @@ function apply(controller,record){
 /** Commit exactly the supplied claim after all preconditions pass on a copy. */
 export function applyProtocolRecordV8(controller,record){
   validateProtocolRecordV8(record);
-  if(!controller.protocol)require(controller.stack.length===1,'first protocol transition cannot inherit an unmodeled nested call scope');
+  if(!controller.protocol)require(controller.stack.length===1||record.kind==='promise.reaction.complete'&&
+    controller.stack.length===0&&controller.activeJob,
+    'first protocol transition cannot inherit an unmodeled nested call scope');
   const fields=['heap','locals','receiver','captureAliases','stack','frameFunctions','pending','lastReturn','completion','protocol',
-    'jobs','ready','scheduler','continuations'];
+    'jobs','ready','scheduler','continuations','activeJob'];
   const staged=Object.assign(Object.create(Object.getPrototypeOf(controller)),controller);
   for(const field of fields)staged[field]=copy(field==='protocol'?controller.protocol??createProtocolStateV8():controller[field]);
   require(staged.protocol.sequence<PROTOCOL_V8_LIMITS.steps,'protocol step bound');
-  apply(staged,record);staged.protocol.sequence++;
+  apply(staged,record);
+  for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.assertTransition)
+    require(adapter.assertTransition(controller,staged,record,PROTOCOL_MACHINE_API_V8)===true,
+      'extension transition guard: '+adapter.id);
+  staged.protocol.sequence++;
   for(const field of fields)controller[field]=staged[field];
   return {status:'committed',kind:record.kind,sequence:controller.protocol.sequence,completion:copy(controller.completion??null)};
 }

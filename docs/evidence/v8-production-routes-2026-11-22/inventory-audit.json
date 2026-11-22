@@ -1,0 +1,14 @@
+{
+  "schema": "semantic-production-route-audit/1",
+  "inventoryDigest": "425d791e634503545ad73fbeef4f9449e977b06db1ab317bd786c6c0d0a4f75e",
+  "registrations": 205,
+  "catalogFiles": {
+    "producer": 191,
+    "native": 155
+  },
+  "missingOrUnexpectedRegistrations": 0,
+  "semanticParityQualified": false,
+  "defaultCutoverQualified": false,
+  "reviewedGroups": 23,
+  "classifiedRegistrations": 205
+}

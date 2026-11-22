@@ -9,7 +9,7 @@ Record implementation.
 
 ```js
 import {verifyRegionModuleTrainingCase,recheckRegionEvidence}
-  from 'tracing-js-self/semantic';
+  from 'tracing-js-self/semantic/v8';
 
 const checked=await verifyRegionModuleTrainingCase({
   id:'live-counter',family:'live-counter',entryModule:'main.js',exportName:'run',
@@ -59,11 +59,81 @@ The evidence certifies the JavaScript actually executed. It does not claim that
 successful transpilation proves ownership or that source-map anchors prove all
 TypeScript semantics.
 
+## Owned declaration and binding semantics
+
+The owned linker accepts module-level class and synchronous generator declarations, named
+and anonymous default declarations, and destructured `let`, `const`, and `var`
+bindings. Exported names and imported reads refer to the resulting live module
+cells. Shorthand pattern keys remain source property names even when their
+local cells are renamed; default initializers execute only when the original
+property value requires them.
+
+Class evaluation creates the outer mutable module binding separately from the
+immutable inner class name. The outer binding stays in its temporal dead zone
+until class initialization completes. Imported heritage, private fields, and
+static initialization use the owned runtime's existing class implementation.
+Anonymous class/generator values keep their source-inferred names during
+initialization and assignment, before class static fields execute. This does
+not introduce an inner lexical name for an anonymous class.
+
+Generator and anonymous default function declarations are instantiated before
+the graph starts evaluating, including cyclic dependencies. Generator names
+and references to mutable module bindings survive lowering. Original-ESM
+differentials and JSON suspension/replay controls cover these behaviors in
+both the shared-cell and scheduled environment paths.
+
+These are owned execution guarantees. A graph using class/private behavioral
+state or unqualified constructor/prototype observations can still receive an
+explicit public projection refusal after passing the independent original
+module reference. The declaration tests do not grant public/native/data
+admission to those graphs.
+
+The recurring source population includes `module-destructured-live-cells`,
+which retains an object-pattern live export and an array-pattern constant across
+an imported mutation. Its original-source/public check and fresh recheck are
+explicit controls; independent consumer admission and cost qualification still
+require their own exact-revision run. Async generator declarations remain
+refused by the owned frontend. Reading the `name` of an ordinary or async
+non-generator function also remains an explicit owned runtime reflection
+boundary; the name controls above cover classes and synchronous generators.
+
+## Namespace export origins
+
+The source-only Test262 resolver and owned evaluated linker both follow the
+retained ECMA-262 17.0 `ParseModule` step 10.a.ii: `import * as local from
+"./leaf.js"; export {local as cells}` resolves `cells` to the namespace of
+`leaf.js`, just as `export * as cells from "./leaf.js"` does. Multiple star paths
+to that same namespace are unambiguous. Namespaces of different modules remain
+distinct even when both modules have identical source bytes. Static reads
+through the resolved namespace continue to observe live exported cells in both
+evaluation strategies.
+
+`typeof` on a source-owned namespace binding or a pure static namespace path
+returns `"object"` without manufacturing a namespace object in the owned heap.
+Namespace bindings initialize during module instantiation, so this also works
+inside a synchronous dependency cycle. Lexical shadows keep their ordinary
+semantics; reads of ordinary exported cells still observe temporal dead zones.
+Surrounding expressions retain their effects. Dynamic computed paths and
+effectful expressions whose result would escape as a namespace remain refused.
+
+The two original Test262 namespace-alias tests and their four dependency files
+are retained unchanged with Git blob identities under
+`fixtures/test262-namespace-reexports`. Their source-only resolution and original
+owned test bodies pass with archive validation and exact replay. Node 24.22.3 /
+V8 13.6 still reports a linking `SyntaxError`, which remains an explicit failed
+independent reference. Native-agreeing namespace `typeof` graphs have separate
+source/public and fresh-recheck controls; an original-module reference failure
+blocks that export path. None of these controls grants native-consumer or
+dataset admission to the original cases.
+
 ## Boundaries
 
-The existing linker refuses async dependency cycles, dynamic imports, escaping
-module namespace objects, namespace method receivers, import writes, and other
-unowned syntax. Its explicit refusals are retained. The reference data boundary
+The owned linker supports bounded async dependency cycles through retained
+DFS/SCC scheduling. That scheduler, including parallel top-level await, remains
+explicitly refused by this public/native module-source adapter. Owned execution
+and original-ESM differential tests are distinct from source/data admission.
+The linker still refuses dynamic imports, escaping module namespace objects,
+namespace method receivers, import writes, and other unowned syntax. The reference data boundary
 accepts ordinary returned graphs and primitive completions; custom prototypes,
 accessors, Symbols, and other exotic return values remain separate profiles.
 Ambient/native services are not supplied by this source-graph reference.

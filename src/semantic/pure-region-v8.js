@@ -4,7 +4,6 @@
 import {isDeepStrictEqual} from 'node:util';
 import {evaluateAlgorithmV8,validateAlgorithmV8} from './algorithm-v8.js';
 import {assertAlgorithmFields,assertAlgorithmValue,assertAlgorithmDataArray,stableAlgorithmJSON} from './ir.js';
-import {encodeWitness} from '../training/format.js';
 import {algorithmHeapNode} from './operations.js';
 import {hashAlgorithmData} from './program.js';
 import {regionEntry} from './regions.js';
@@ -46,10 +45,10 @@ export function evaluatePureRegion(program,controller){
   const records=[];
   for(const node of allocations){
     const properties=node.properties.filter(property=>node.kind!=='array'||property.key!=='length');
-    records.push(encodeWitness('allocate',{name:node.id,kind:node.kind,properties:copy(properties),
-      ...(node.kind==='array'?{length:node.properties.find(property=>property.key==='length').value[1]}:{})}));
+    records.push({kind:'allocate',fields:{name:node.id,kind:node.kind,properties:copy(properties),
+      ...(node.kind==='array'?{length:node.properties.find(property=>property.key==='length').value[1]}:{})}});
   }
-  records.push(encodeWitness(completion.kind,{value:completion.value,invocation:controller.rootInvocation}));
+  records.push({kind:completion.kind,fields:{value:completion.value,invocation:controller.rootInvocation}});
   return {record:{claims,allocations:copy(allocations),completion},
     records,graph,allocator:result.allocator,identityMap:[...mapping],work:result.work};
 }

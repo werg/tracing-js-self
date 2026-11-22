@@ -1,0 +1,41 @@
+✔ actual native bootstrap preserves the accepted create and supports a second process loss without another selection (28115.235921ms)
+✔ actual native bootstrap after-native-outcome preserves its known outcome for exact recovery (16701.335655ms)
+✔ actual native bootstrap alter-reply preserves its known outcome for exact recovery (16650.504291ms)
+✔ unknown bootstrap refuses replay, stale create recovery and a bootstrap receipt passed to commit recovery (7225.142216ms)
+✔ durable bootstrap intent is immutable while publication serializes all native operations (8798.773459ms)
+✔ actual commit producer intent publication-acknowledgement ambiguity fences every later native action (4351.354105ms)
+✔ actual commit producer intent independent-readback ambiguity fences every later native action (4382.562056ms)
+✔ actual bootstrap producer intent publication-acknowledgement ambiguity fences every later native action (5553.617133ms)
+✔ actual bootstrap producer intent independent-readback ambiguity fences every later native action (5560.421519ms)
+✔ actual Python terminal close restores a closed outcome: null (27035.126625ms)
+✔ actual Python terminal close restores a closed outcome: after-native-outcome (24791.998955ms)
+✔ actual Python terminal close restores a closed outcome: alter-reply (24566.596371ms)
+✔ a producer close intent without a native outcome cannot close or restore the session (10219.559021ms)
+✔ active work cannot be reclassified as a recoverable terminal close (5307.932038ms)
+✔ terminal close refuses changed acknowledged boundary before native dispatch (8553.943ms)
+✔ terminal close refuses changed acknowledged checkpoint before native dispatch (8676.698074ms)
+✔ actual Python commit acknowledgement restores exact whole native state and original fragments (13275.219621ms)
+✔ actual Python lost reply after durable outcome preserves unknown status then recovers exact acknowledgement (10896.501915ms)
+✔ actual Python missing native intent cannot turn a saved producer request into a retry (5862.475039ms)
+✔ actual Python altered durable reply cannot be accepted while its independently retained result can be recovered (10773.333231ms)
+✔ actual Python later child bootstrap fences recovery of the earlier native commit (8830.577438ms)
+✔ actual Python bootstrap has an independent durable outcome: null (16777.940472ms)
+✔ actual Python bootstrap has an independent durable outcome: after-native-outcome (16439.303033ms)
+✔ actual Python bootstrap has an independent durable outcome: alter-reply (16347.477164ms)
+✔ missing native bootstrap outcome never authorizes replay or retry (7091.111241ms)
+✔ durable publication serializes the complete request interval before native dispatch (5643.215532ms)
+✔ one kernel lease can start only one native process and cannot be forged or reused after close (67.252836ms)
+✔ actual Python native automatic history refuses an unacknowledged coordinator selection (5889.672755ms)
+✔ actual Python child execution remains fenced after its completion-cut acknowledgement is lost (22168.650316ms)
+✔ actual Python V8 checkpoint bytes restore through the JS composite driver at mixed cuts (30876.062775ms)
+✔ actual Python shared-runtime automatic history restores a child-complete sparse cut without redispatch (74455.420317ms)
+✔ actual Python track_cancel reconciliation requires the acknowledged same-owner service intent (92207.494422ms)
+✔ actual Python track_complete service intent reconciles without reopening active work (85636.928793ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 630370.201403

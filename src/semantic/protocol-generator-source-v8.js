@@ -11,7 +11,7 @@ const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('generator: '+m
 
 export function createGeneratorSourceAdapterV8({bundle}){
   if(!Object.values(bundle.programs).some(program=>program.generator))return null;
-  const creations=new Map(),yields=new Map(),completed=new Set(),handlerDefinitions=new Map(),delegations=new Map(),delegateSites=new Set();let handlerCounter=0;
+  let creations=new Map(),yields=new Map(),completed=new Set(),handlerDefinitions=new Map(),delegations=new Map(),delegateSites=new Set(),handlerCounter=0;
   const emit=(ctx,record,event)=>ctx.emit(record,event,'owned-generator-protocol/1');
   const instruction=(ctx,event)=>{const frame=ctx.getOwnedFrame(event.invocationId),candidate=bundle.programs[event.codeId]?.instructions[frame?.pc];
     return candidate?.siteId===event.siteId?candidate:null;};
@@ -57,6 +57,11 @@ export function createGeneratorSourceAdapterV8({bundle}){
     if(result)ctx.markPublished(result.id);completed.add(event.eventId+':'+change.id);settleDelegatedThrow(ctx,event);return true;
   }
   return {id:GENERATOR_SOURCE_PROFILE_V8,
+    captureState:()=>({creations:[...creations],yields:[...yields],completed:[...completed],
+      handlerDefinitions:[...handlerDefinitions],delegations:[...delegations],delegateSites:[...delegateSites],handlerCounter}),
+    restoreState(state){creations=new Map(state.creations);yields=new Map(state.yields);completed=new Set(state.completed);
+      handlerDefinitions=new Map(state.handlerDefinitions);delegations=new Map(state.delegations);
+      delegateSites=new Set(state.delegateSites);handlerCounter=state.handlerCounter;},
     syntax(node){if(node.type!=='YieldExpression')return false;
       if(node.delegate)delegateSites.add(node.start+':'+node.end);return true;},
     program(program){return program.generator===true&&program.strict&&!program.async&&!program.parameterExpressions&&program.restIndex<0;},
@@ -224,7 +229,22 @@ export function createGeneratorSourceAdapterV8({bundle}){
       }
       return true;
     },
-    completeFrame:finish,
+    completeFrame(ctx,change,event){
+      if(change.after.generatorId)return finish(ctx,change,event);
+      if(change.after.completion?.type!=='throw'||event.operation!=='completion.throw')return false;
+      const affected=event.stateChanges.filter(row=>row.table==='frames'&&row.after?.generatorId&&
+        row.before?.generatorId===row.after.generatorId&&row.before.handlers?.length!==row.after.handlers?.length);
+      require(ctx,affected.length===1,'abrupt iterator callback must change one retained generator completion');
+      const generatorId=affected[0].after.generatorId,completion=change.after.completion,value=ctx.tag(completion.value.value,event),
+        invocation=ctx.frame(change.id);
+      require(ctx,invocation===ctx.controller.stack.at(-1)&&ctx.controller.heap.get(generatorId)?.kind==='generator',
+        'abrupt iterator callback must unwind before its generator completion');
+      emit(ctx,{kind:'throw',invocation,value},event,'owned-generator-callback-throw/1');
+      const generator=ctx.controller.heap.get(generatorId);
+      require(ctx,ctx.controller.stack.at(-1)===generator.invocation,'throwing callback did not restore the generator continuation');
+      emit(ctx,{kind:'generator.handler.route',object:generatorId,completion:{kind:'throw',value}},event);
+      return true;
+    },
     checkHeap(ctx,node){
       const actual=ctx.controller.heap.get(node.id);require(ctx,actual,'generator-owned heap identity is absent');
       if(node.generatorFunction)require(ctx,actual.generatorFunction===true&&node.nonConstructible===true&&!node.async&&

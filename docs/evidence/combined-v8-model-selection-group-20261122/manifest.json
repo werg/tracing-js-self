@@ -1,0 +1,28 @@
+{
+  "schema": "semantic-v8-required-model-selection-group/1",
+  "gateRevision": "dd23d343bbd9608b6816769cb7782608d88c2095",
+  "originalNativeSource": "6d5ea69109ce26c2baa04a24575f675174066480",
+  "publishedNativeSource": "9bbc534211297aa6fa58c59f09bc83a67362b99f",
+  "publishedNativeEvidence": "5f9ddd14",
+  "actualModelTestLeaves": 17,
+  "structuralNativeLeaves": 182,
+  "requiredTotalLeaves": 666,
+  "fullExpandedGateRerun": false,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 1900,
+      "sha256": "65d7ae01f9e497b3fb5c9a1e43bb36f53bffc4051f106d02a76968193c59090b"
+    },
+    {
+      "path": "original-native-controls.xml",
+      "bytes": 3001,
+      "sha256": "7240e3c46a8f5a1c9cd140f5937f9c7f083b7e8347a0ca72dee9a3fe42fca84c"
+    },
+    {
+      "path": "validation.json",
+      "bytes": 523,
+      "sha256": "73d38314d1925d6857a4d18466e29eff29ca8d2dbacee65e781d91d62c322c07"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "reviewedProducerIncrement": "381a4dc9f02c459534440c7403e155a13790f790",
+  "reviewedNativeSnapshot": "6ef4794048a4d2ab0e732ccfd61c5cc3e7c3c822",
+  "canonicalV8OperationNames": 22,
+  "acceptedUnenumeratedWireSpellings": {
+    "bootstrap_orchestration-child": "bootstrap_orchestration_child",
+    "bootstrap-orchestration_child": "bootstrap_orchestration_child",
+    "bootstrap-orchestration-child": "bootstrap_orchestration_child",
+    "cancel-orchestration": "cancel_orchestration",
+    "commit-orchestration": "commit_orchestration",
+    "open-orchestration": "open_orchestration",
+    "select-orchestration": "select_orchestration",
+    "status-orchestration": "status_orchestration"
+  },
+  "dispatchScope": "Exact frozen _dispatch AST with fake adapter; no runtime/model/host work",
+  "unknownRegistrationFormControls": {
+    "conditional-helper": {
+      "status": "accepted",
+      "commands": [
+        [
+          "megatoken",
+          "train"
+        ]
+      ]
+    },
+    "loop-helper": {
+      "status": "accepted",
+      "commands": [
+        [
+          "megatoken",
+          "train"
+        ]
+      ]
+    },
+    "try-registration": {
+      "status": "accepted",
+      "commands": [
+        [
+          "megatoken",
+          "train"
+        ]
+      ]
+    }
+  }
+}

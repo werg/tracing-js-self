@@ -51,13 +51,30 @@ test('freeze binds complete source/input inventory, model settings, seeds and ev
   assert(study.cases[0].request.initialPublic.timeline.every(row=>row.mode==='observed'));
   assert(!JSON.stringify(study).includes('sourceArtifact'));
   for(const mutate of [row=>{row.settings.temperature=1;},row=>{row.limits.maxPredictions++;},
-    row=>{row.seeds.push(18);},row=>{row.cases.pop();}]){
+    row=>{row.seeds.push(18);},row=>{row.cases.pop();},row=>{row.trainingIdentity='a'.repeat(64);}]){
     const changed=structuredClone(study);mutate(changed);
     assert.throws(()=>validateRegionExecutionStudy(changed),/changed after freeze/);
   }
   const changed=structuredClone(cases);changed[0].expectedArtifact.contexts[0].visibleThrough++;
   assert.throws(()=>freezeRegionExecutionStudy(changed,configuration),/source or environment changed/);
   assert.throws(()=>freezeRegionExecutionStudy([cases[0],cases[0]],configuration),/distinct case/);
+});
+
+test('frozen training lineage reaches runtime attestation and cannot silently downgrade',async()=>{
+  const trainingIdentity='b'.repeat(64),study=freezeRegionExecutionStudy([cases[0]],{...configuration,trainingIdentity});
+  const adapter=engineeringSelector([cases[0]]),seen=[];
+  adapter.select.initialize=async request=>{seen.push(structuredClone(request));return request;};
+  const report=await runFrozenRegionExecutionStudy(study,{cases:[cases[0]],select:adapter.select});
+  assert.equal(report.trainingIdentity,trainingIdentity);
+  assert.equal(report.summary.completedExecution,1);
+  assert.equal(seen[0].trainingIdentity,trainingIdentity);
+  assert.equal(report.rows[0].result.inferenceIdentity.trainingIdentity,trainingIdentity);
+  const missing=engineeringSelector([cases[0]]);
+  missing.select.initialize=async({trainingIdentity,...request})=>request;
+  const refused=await runFrozenRegionExecutionStudy(study,{cases:[cases[0]],select:missing.select});
+  assert.equal(refused.summary.completedExecution,0);
+  assert.equal(missing.calls.length,0);
+  assert.match(refused.rows[0].result.failure.message,/attestation/);
 });
 
 test('private source scoring follows emissions and distinguishes exact source success from public completion',async()=>{

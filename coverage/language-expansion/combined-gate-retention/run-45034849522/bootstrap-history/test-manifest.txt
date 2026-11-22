@@ -1,0 +1,2 @@
+test/semantic-known-commit-history-v8.test.js
+test/semantic-known-bootstrap-history-v8.test.js

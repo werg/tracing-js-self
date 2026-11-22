@@ -1,0 +1,57 @@
+{
+  "schema": "test262-membership-pilot-root-recheck/1",
+  "producerLocal": "a15fdd3d9c07547f4f5c0275ccbcd18d9c4f0dd5",
+  "catalogDigest": "71b499d1025c9e295e86946f2e3b039de2ed26cdf35fc493c661b04a99bc2db2",
+  "auditDigest": "fa8258b19341536f0e1dfd92f99a9dc6544bfe4a9cebbc2245d6e5ba8d92ce48",
+  "summary": {
+    "catalogVariants": 2,
+    "auditedVariants": 2,
+    "testFiles": 1,
+    "referenceDispositions": {
+      "resolved_anchor": 2
+    },
+    "scopeReview": {
+      "core-or-extension-review": 2
+    },
+    "featureTags": 0,
+    "editionMembership": {
+      "edition": 2
+    },
+    "releaseRequirement": {
+      "required": 0,
+      "notRequired": 2
+    },
+    "scopeReviewByEditionMembership": {
+      "core-or-extension-review": {
+        "edition": 2
+      }
+    },
+    "unresolvedEditionMembership": 0,
+    "sourceFilesByEditionMembership": {
+      "edition": 1
+    },
+    "variantModes": {
+      "sloppy": 1,
+      "strict": 1
+    },
+    "expectedOutcomes": {
+      "normal": 2,
+      "negativePhases": {}
+    },
+    "sections": 2264,
+    "sectionsReferenced": 1,
+    "sectionsWithoutDirectTestReference": 2263
+  },
+  "claims": {
+    "editionMembershipCertified": false,
+    "applicabilityCertified": false,
+    "conformance": false
+  },
+  "verifiedOriginalSourceFiles": 3,
+  "producerPublished": "a9591311e13d6c3fadad8ad43557eaf7962f372a",
+  "producerTree": "895ad7f21bb7339d71292e73c989f8acaf60af41",
+  "focusedCases": 22,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0
+}

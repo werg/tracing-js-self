@@ -11,8 +11,7 @@ test('callback arguments bind once and owner completion policy survives native p
   for(const policy of ['call-return','owned-quiescence','await-returned-promise']){
     const episode=structuredClone(original.public);
     for(const row of episode.timeline)if(row.kind==='invocation'){
-      if(row.fields.activation==='callback')row.fields.bindings={n:0};
-      else row.fields.completionPolicy=policy;
+      if(row.fields.activation!=='callback')row.fields.completionPolicy=policy;
     }
     const harness=RegionExecutionHarness.replay(episode),expected={kind:'return',
       value:policy==='await-returned-promise'?['num',7]:['ref','p1']};
@@ -22,5 +21,9 @@ test('callback arguments bind once and owner completion policy survives native p
       assert.equal(aliases.filter(([name])=>name==='n').length,1);
     }
     assert.deepEqual(RegionExecutionHarness.restore(JSON.parse(JSON.stringify(harness.checkpoint()))).controller.completion,expected);
+    const forged=structuredClone(episode);
+    forged.timeline.find(row=>row.kind==='invocation'&&row.fields.activation==='callback').fields.bindings={n:0};
+    assert.throws(()=>RegionExecutionHarness.replay(forged),/registered handler delivery/,
+      'event inputs cannot introduce separate binding aliases');
   }
 });

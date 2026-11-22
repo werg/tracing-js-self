@@ -1,0 +1,69 @@
+▶ original source, callback fixture, ordered session and teacher requests bind actual source artifacts
+  ✔ pure (714.269791ms)
+  ✔ callbacks-recovery (1354.629015ms)
+  ✔ repeated-two-calls (1509.235803ms)
+  ✔ child-teacher (804.06444ms)
+✔ original source, callback fixture, ordered session and teacher requests bind actual source artifacts (4384.392409ms)
+✔ individually valid source artifacts cannot be swapped between original frozen task IDs (437.605159ms)
+▶ coherent original-task substitutions cannot retain another artifact source or inputs
+  ✔ source (0.354313ms)
+  ✔ entry (0.180887ms)
+  ✔ argument (0.204291ms)
+  ✔ boolean-versus-number (0.170582ms)
+  ✔ family (0.143171ms)
+  ✔ ancestry (0.125055ms)
+  ✔ producer-revision (0.113989ms)
+  ✔ task-id (0.10859ms)
+  ✔ random-seed (0.138976ms)
+  ✔ host-fixture (0.141008ms)
+  ✔ teacher-requirement (0.083373ms)
+✔ coherent original-task substitutions cannot retain another artifact source or inputs (3.00024ms)
+▶ ordered session request binds every component including arguments and callback outcomes
+  ✔ order (0.213004ms)
+  ✔ omitted (0.108901ms)
+  ✔ argument (0.212604ms)
+  ✔ callback-outcome (0.296438ms)
+✔ ordered session request binds every component including arguments and callback outcomes (1.178771ms)
+✔ relabeling a valid artifact and resealing its dataset hashes cannot replace frozen registry membership (2.938388ms)
+▶ original module graph, entry, export, aliases and ordered calls bind actual module evidence
+  ✖ release-module-alias (555.39371ms)
+  ✖ release-module-calls (1045.808126ms)
+✖ original module graph, entry, export, aliases and ordered calls bind actual module evidence (1602.287489ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 24
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6902.48247
+
+✖ failing tests:
+
+test at test/v8-release-task-binding.test.js:100:41
+✖ release-module-alias (555.39371ms)
+  Error: V8 release task binding: artifact family or ancestry differs from the original task
+      at fail (file:///workspace/scratch/175924c3d3c2/worktrees/release-producer/src/corpus/release-task-binding-v8.mjs:8:28)
+      at demand (file:///workspace/scratch/175924c3d3c2/worktrees/release-producer/src/corpus/release-task-binding-v8.mjs:9:50)
+      at checkSource (file:///workspace/scratch/175924c3d3c2/worktrees/release-producer/src/corpus/release-task-binding-v8.mjs:46:3)
+      at verifyV8TaskArtifactBinding (file:///workspace/scratch/175924c3d3c2/worktrees/release-producer/src/corpus/release-task-binding-v8.mjs:155:5)
+      at TestContext.<anonymous> (file:///workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js:105:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js:100:33)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/v8-release-task-binding.test.js:100:41
+✖ release-module-calls (1045.808126ms)
+  Error: V8 release task binding: artifact family or ancestry differs from the original task
+      at fail (file:///workspace/scratch/175924c3d3c2/worktrees/release-producer/src/corpus/release-task-binding-v8.mjs:8:28)
+      at demand (file:///workspace/scratch/175924c3d3c2/worktrees/release-producer/src/corpus/release-task-binding-v8.mjs:9:50)
+      at checkSource (file:///workspace/scratch/175924c3d3c2/worktrees/release-producer/src/corpus/release-task-binding-v8.mjs:46:3)
+      at verifyV8TaskArtifactBinding (file:///workspace/scratch/175924c3d3c2/worktrees/release-producer/src/corpus/release-task-binding-v8.mjs:155:5)
+      at TestContext.<anonymous> (file:///workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js:105:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (file:///workspace/scratch/175924c3d3c2/worktrees/release-producer/test/v8-release-task-binding.test.js:100:33)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

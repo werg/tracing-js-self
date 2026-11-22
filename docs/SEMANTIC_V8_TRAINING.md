@@ -58,7 +58,7 @@ its original `source`, `entry`, `family`, and status. Preserve the fixture
 metadata when collecting verification results:
 
 ```js
-import { verifyRegionTrainingCase } from '../src/semantic/compiler-v8.js';
+import { verifyRegionTrainingCase } from 'tracing-js-self/semantic/v8';
 
 const fixture = {
   id: 'ordered-map',

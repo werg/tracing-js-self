@@ -1,0 +1,77 @@
+{
+  "publishedProducer": "76a06f88b744e121f0ce406bcc4a5496929f0da4",
+  "publishedTree": "100e9ece346e14fd65899f073cc20009b1b40b4b",
+  "node": "v24.22.3",
+  "fullProducerSuite": "running separately; excluded from this archive",
+  "test262Campaign": "not rerun; original module initialization still refuses observed namespaces",
+  "publicNativeNamespaceAdmission": false,
+  "tests": [
+    {
+      "log": "namespace-core-integrated.log",
+      "base": "a8ca2f6",
+      "total": 136,
+      "passed": 134,
+      "failed": 2,
+      "status": "failed: stale link-refusal assertions"
+    },
+    {
+      "log": "namespace-population-integrated.log",
+      "base": "a8ca2f6",
+      "total": 5,
+      "passed": 4,
+      "failed": 1,
+      "status": "failed: stale phase assertion"
+    },
+    {
+      "log": "namespace-population-integrated-rerun.log",
+      "base": "a8ca2f6 plus retained namespace-typeof assertion patch",
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "log": "namespace-boundary-regressions.log",
+      "testedTreeCommit": "3661d23",
+      "runState": "working tree before commit; exact assertion patches retained",
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "log": "namespace-integrity-exotics-after.log",
+      "testedCorrectionCommit": "a66bb6504f7a9dc6501e19556e3535305e03e8a1",
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "log": "namespace-final-integration.log",
+      "producer": "0683bd37ac497a039c91656c3e79ec3692e5fff9",
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "milliseconds": 64844.892709
+    },
+    {
+      "log": "namespace-freeze-uncaught-integrated.log",
+      "producer": "79cd4205fa0d832a141207eec2950adc56ca9bc0",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "milliseconds": 1002.415988
+    },
+    {
+      "log": "public-entry-shrinkwrap-9d85e30.log",
+      "producer": "9d85e301e6674b97a1ac960d5efb87e572e4137e",
+      "status": "environment failure: missing /tmp"
+    },
+    {
+      "log": "public-entry-shrinkwrap-9d85e30-rerun.log",
+      "producer": "9d85e301e6674b97a1ac960d5efb87e572e4137e",
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "probeBefore": "real cyclic TDZ disagreement, preserved without relabeling",
+  "probeAfter": "all six TDZ operations agree with original native modules; names/ownKeys remain read-free",
+  "numericKeyOrder": "Node24 reference disagreement retained in test source; not promoted to native admission",
+  "caveat": "Overlapping test selections are not additive. Exact before/after probe source graphs and git identities are retained."
+}

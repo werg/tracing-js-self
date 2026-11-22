@@ -18,7 +18,7 @@ source validation. For example, `verifyRegionTrainingCase` can prepare a small
 owned source case:
 
 ```js
-import {verifyRegionTrainingCase} from './src/semantic/compiler-v8.js';
+import {verifyRegionTrainingCase} from 'tracing-js-self/semantic/v8';
 
 const verified = await verifyRegionTrainingCase({
   id: 'literal-seven',

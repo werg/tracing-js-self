@@ -1,0 +1,121 @@
+{
+  "schema": "known-commit-module-ledger-composition/1",
+  "producer": "2896ccaccbe4166597e4dd80bafef844b472ae1a",
+  "producerLocal": "fee8fd541e08745ded8829870695a2e088c2a894",
+  "producerTree": "d09af51185c84f5355a3f5d3bd50af6098c48694",
+  "native": "10d1f5fd611fbe4fbc3f19b6463f597d90946f7c",
+  "contractDigest": "a952385535b9b5e19d737206286f6f26c149f7301c51b4b106fe3b1cae5ab55a",
+  "workflowRun": 45021618083,
+  "job": 137205582404,
+  "leafCases": 62,
+  "nodeAggregateIncludingParent": 63,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "rawLogBytes": 86014,
+  "rawLogSha256": "80c4d73d365536d4244438f808d2e65cdbea76dc54a627d22781dfc0a9456b7d",
+  "scopedFiles": [
+    {
+      "path": ".github/workflows/v8-known-commit-history-investigation.yml",
+      "blob": "5f4fe76150d336ad380994316bfd9863ede7c3f9"
+    },
+    {
+      "path": ".github/workflows/v8-monotonic-recovery-investigation.yml",
+      "blob": "ce2532ca0791984d54293b01b5ee5b443a4c56eb"
+    },
+    {
+      "path": "docs/KNOWN_COORDINATOR_COMMIT_RECOVERY_V8.md",
+      "blob": "63bb58668de2ac884eafedfa4460145835804470"
+    },
+    {
+      "path": "docs/SELECTED_ORCHESTRATION_MONOTONIC_CLOCK.md",
+      "blob": "6c18ba58adc90488e97926e637ad3c3a3ddbca99"
+    },
+    {
+      "path": "docs/evidence/v8-known-commit-history-2026-11-22/README.md",
+      "blob": "8dc5b046b642db554257cbf83e6ab9326751ad3e"
+    },
+    {
+      "path": "docs/evidence/v8-known-commit-history-2026-11-22/complete-success.log.gz",
+      "blob": "b8df1756f09060251110fcf39dc7c50e12e1f9b0"
+    },
+    {
+      "path": "docs/evidence/v8-known-commit-history-2026-11-22/first-failure.log.gz",
+      "blob": "830d0537df56be0fe14bf61621e1e87438ef2d8c"
+    },
+    {
+      "path": "docs/evidence/v8-known-commit-history-2026-11-22/first-failure.xml",
+      "blob": "fc7d19def785c2820f826ca02455df50e341962f"
+    },
+    {
+      "path": "docs/evidence/v8-known-commit-history-2026-11-22/known-commit-history-success.xml",
+      "blob": "f392d2667d9b17adb74c3c128fcd8656d6e68237"
+    },
+    {
+      "path": "docs/evidence/v8-known-commit-history-2026-11-22/log-owner-failure.log.gz",
+      "blob": "689bbe977499797b9f6f8e57c66e56391fe9665f"
+    },
+    {
+      "path": "docs/evidence/v8-known-commit-history-2026-11-22/log-owner-failure.xml",
+      "blob": "eb22e57688eddff57c0195b3ed29f977161a93db"
+    },
+    {
+      "path": "docs/evidence/v8-known-commit-history-2026-11-22/qualification.json",
+      "blob": "5d25cabbf7c188da0b9099a87ad285a5bbc2d05a"
+    },
+    {
+      "path": "src/semantic/native-process-v8.js",
+      "blob": "662eb3e91f40ce93e8076c40c75cb03c164249fe"
+    },
+    {
+      "path": "src/semantic/selected-history-v8.js",
+      "blob": "f500a7f1f0d9b04fc650a470accf3c945cdde64f"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-checkpoint-v8.js",
+      "blob": "d73cf880266959cdf1cd8d808a3121e812dcdf1d"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-commit-recovery-v8.js",
+      "blob": "db51979c7adbf84269647277cca2768b16d28f88"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-v8.js",
+      "blob": "cb0f950580675824dd31f76880509e9df58395af"
+    },
+    {
+      "path": "src/storage/node.d.ts",
+      "blob": "a469e38e936d6d8da854090f22dbb10fcfefc773"
+    },
+    {
+      "path": "src/storage/node.js",
+      "blob": "a07b710fd99aed5678fbca9a1e7d97d52df1a86a"
+    },
+    {
+      "path": "src/storage/selected-orchestration-clock.d.ts",
+      "blob": "af85d9d73735c964ec9dc07981f6081a9c25f397"
+    },
+    {
+      "path": "src/storage/selected-orchestration-clock.js",
+      "blob": "5fd82809ff5dbe154ae71a284b45a9409dacdd68"
+    },
+    {
+      "path": "test/fixtures/semantic-v8-durable-commit-peer.py",
+      "blob": "9590db8c7e3a3a2c582bcb22fcd1aa0f3a81affb"
+    },
+    {
+      "path": "test/selected-orchestration-clock.test.js",
+      "blob": "836c36aeb30f2c97fbe7fc239e2e067e9c3f0058"
+    },
+    {
+      "path": "test/semantic-known-commit-builder-v8.test.js",
+      "blob": "3eb095d49052e8c305f531720c757b8e626e00d4"
+    },
+    {
+      "path": "test/semantic-known-commit-history-v8.test.js",
+      "blob": "c413412c5495ca473468f0e7fdab3f07de3f7e73"
+    }
+  ],
+  "learnedSuccess": null,
+  "productionDefaultChanged": false
+}

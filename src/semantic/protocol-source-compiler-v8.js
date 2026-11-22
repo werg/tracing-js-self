@@ -9,50 +9,26 @@ import {normalizeJournal} from './normalize.js';
 import {propertyKeyValue,symbolPropertyKey,stringPropertyKey} from '../property-keys.js';
 import {decode,encode,truthy} from '../values.js';
 import {describeOwnedGraph} from '../training/graph.js';
-import {ownedEffectfulOutcome} from '../training/effectful-compiler.js';
-import {encodeWitness} from '../training/format.js';
-import {encodeDetailedRecord} from './detailed-v7.js';
+import {ownedEffectfulOutcome} from './source-projection.js';
+import {compilePromiseSourceProjectionV8} from './protocol-promise-join-source-v8.js';
+import {encodeDetailedRecord} from './detail-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
-import {encodeProtocolRecordV8,validateProtocolValueV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
+import {cloneRegionController} from './regions.js';
+import {createSourceClaimCoordinatorV8} from './source-claim-coordinator-v8.js';
+import {ORDINARY_PROTOCOL_SOURCE_V8,protocolSourceClaimsV8} from './protocol-source-claims-v8.js';
+import {encodeProtocolRecordV8,validateProtocolValueV8} from './protocol-codec-v8.js';
+import {guardHeap,prototype,descriptor,orderedKeys,frameFields} from './protocol-source-shapes-v8.js';
 import {PROTOCOL_SOURCE_ADAPTERS_V8} from './protocol-source-extensions-v8.js';
+import {createExperimentalModuleNamespaceSourceAdapterV8} from './protocol-module-namespace-source-v8.js';
+import {createSharedProtocolSourceComponentsV8} from './protocol-source-bridge-v8.js';
+import {createPromiseExecutorTeacherV8} from './protocol-promise-executor-source-v8.js';
+import {assertPromiseSourceObjectProfileV8} from './protocol-promise-adoption-source-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
+import {bindModuleSchedulerSourceProjectionV8} from './module-scheduler-source-bridge-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual,lit=value=>({op:'literal',value:copy(value)});
 function refuse(message){const error=new TypeError('Protocol source projection: '+message);error.category='unsupported.protocol-source';throw error;}
 const valueTag=value=>Array.isArray(value)&&['undefined','null','bool','str','num','bigint','ref','symbol'].includes(value[0]);
-const ordinaryFields=new Set(['id','kind','properties','propertyVersions','shapeVersion','version','propertyOrder','prototype','accessors','dataAttributes','extensible']);
-const functionFields=new Set([...ordinaryFields,'codeId','closureEnvId','async','arrow','lexicalThis','nonConstructible']);
-const symbolFields=new Set(['id','kind','description','registeredKey','properties','propertyVersions','shapeVersion','version']);
-const frameFields=new Set(['id','codeId','pc','stack','envId','callerFrameId','asyncPromiseId','status','blockedOn','awaiting','operationId','pendingCoercionThrow','handlers','loops','thisValue','version','pendingProperty','completion']);
-function guardHeap(node,{extraFields=[],allowUnknown=false,allowFunctionMetadata=false}={}){
-  const fields=node.kind==='symbol'?symbolFields:node.kind==='function'?functionFields:
-    ['object','array'].includes(node.kind)?ordinaryFields:null;
-  const allowed=fields?new Set([...fields,...extraFields]):allowUnknown?new Set(['id','kind','version',...extraFields]):null;
-  if(!allowed||Object.keys(node).some(key=>!allowed.has(key)))refuse('heap kind or metadata needs a declared protocol: '+node.kind);
-  if(node.nonConstructible===true&&!node.arrow&&!allowFunctionMetadata)refuse('method construction capability requires explicit function metadata');
-  if(node.kind==='function'&&node.async)refuse('async function state needs the scheduler protocol');
-}
-function prototype(node){const p=node.prototype;
-  if(p===undefined||['Object.prototype','Array.prototype','Function.prototype'].includes(p))return 'ordinary';
-  if(PROTOCOL_INTRINSIC_PROTOTYPES_V8.includes(p))return p;
-  if(p===null)return null;if(typeof p==='string')return ['ref',p];
-  refuse('unrecognized owned prototype representation');
-}
-function descriptor(node,key){
-  const accessor=Object.hasOwn(node.accessors??{},key)?node.accessors[key]:null;
-  if(accessor)return {kind:'accessor',get:copy(accessor.get?.value??['undefined']),set:copy(accessor.set?.value??['undefined']),
-    enumerable:accessor.enumerable,configurable:accessor.configurable};
-  const value=node.properties?.[key]?.value;if(!value)return null;
-  return {kind:'data',value:copy(value),...(node.kind==='array'&&key==='length'?
-    {writable:true,enumerable:false,configurable:false}:{writable:true,enumerable:true,configurable:true}),...copy(node.dataAttributes?.[key]??{})};
-}
-function orderedKeys(node){
-  const keys=[...new Set([...(node.propertyOrder??[]),...Object.keys(node.properties??{}),...Object.keys(node.accessors??{})])]
-    .filter(key=>descriptor(node,key)!==null);
-  const integer=key=>/^(0|[1-9][0-9]*)$/.test(key)&&Number(key)<4294967295;
-  return [...keys.filter(integer).sort((a,b)=>Number(a)-Number(b)),
-    ...keys.filter(key=>!integer(key)&&propertyKeyValue(key)[0]==='str'),...keys.filter(key=>propertyKeyValue(key)[0]==='symbol')];
-}
 function sourceInventory(source,admitSyntax=()=>false){const functions=new Map(),nodes=new Map();
   function visit(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(visit);return;}
     if(typeof node.type==='string')nodes.set(node.start+':'+node.end,node);
@@ -80,20 +56,59 @@ function referencedNames(node){const names=new Set();
   }
   node.params?.forEach(bound);return names;
 }
-export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROTOCOL_SOURCE_ADAPTERS_V8}={}){
+export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROTOCOL_SOURCE_ADAPTERS_V8,
+  moduleNamespacePlan=null,moduleSchedulerPlan=null,moduleSchedulerRequest=null}={}){
   if(validateBundle(bundle).valid!==true||replayExact(bundle).valid!==true)refuse('invalid owned archive');
+  assertPromiseSourceObjectProfileV8(bundle);
   const entry=bundle.entrySpec;if(entry?.kind!=='function')refuse('explicit function entry required');
   const source=bundle.sources.find(row=>row.sourceId===entry.sourceId)?.text;
+  if(moduleSchedulerPlan){
+    if(moduleNamespacePlan)refuse('module scheduler/namespace composition requires its own profile');
+    const projection=compileProtocolSourceV8(bundle,{maxGenerated:maxGenerated-1,adapters});
+    return bindModuleSchedulerSourceProjectionV8({bundle,projection,plan:moduleSchedulerPlan,request:moduleSchedulerRequest,maxGenerated});
+  }
   adapters=adapters.map(adapter=>typeof adapter==='function'?adapter({bundle,source}):adapter).filter(Boolean);
+  // Nested async bodies still call ordinary source helpers. The existing
+  // synchronous callable peer retains those scopes even without new Promise.
+  if(adapters.some(adapter=>adapter.id==='async-scoped-call-source/1')&&!adapters.some(adapter=>adapter.id==='promise-executor/1'))
+    adapters.push({id:'promise-executor/1',sourceComponent:createPromiseExecutorTeacherV8()});
+  if(moduleNamespacePlan)adapters.push(createExperimentalModuleNamespaceSourceAdapterV8({source,moduleNamespacePlan,bundle}));
   if(adapters.some(adapter=>typeof adapter.id!=='string'||!adapter.id||adapter.id.length>128)||
     new Set(adapters.map(adapter=>adapter.id)).size!==adapters.length)refuse('distinct versioned extension identities required');
-  const projectors=adapters.filter(adapter=>typeof adapter.compile==='function');
-  if(projectors.length>1)refuse('source profile selects more than one complete event projector');
-  if(projectors.length)return projectors[0].compile({bundle,source,maxGenerated});
-  const usedAdapters=new Set(),heapOwners=new Map(),frameOwners=new Map();
+  adapters.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
+  const components=adapters.filter(adapter=>adapter.sourceComponent).sort((a,b)=>a.id.localeCompare(b.id));
+  if(moduleNamespacePlan&&components.length)refuse('experimental module namespaces cannot yet compose with shared source components');
+  if(components.length){
+    const shared=createSharedProtocolSourceComponentsV8({source,bundle,adapters}),
+      extensions=[...components.map(adapter=>adapter.sourceComponent),...shared].sort((a,b)=>a.id.localeCompare(b.id));
+    return compilePromiseSourceProjectionV8(bundle,{maxGenerated,extensions,extensionIds:extensions.map(component=>component.id),
+      sourceProfile:shared.length?'composed-protocol-source/1':components.some(adapter=>adapter.id==='promise-executor/1')?
+        'promise-executors-source/1':components.some(adapter=>adapter.id==='promise-adoption/1')?
+        'promise-adoption-source/1':'promise-joins-source/1'});
+  }
+  for(const adapter of adapters){
+    const stateful=typeof adapter.captureState==='function'&&typeof adapter.restoreState==='function';
+    if((adapter.captureState!==undefined||adapter.restoreState!==undefined)&&!stateful)
+      refuse('source adapter state requires both capture and restore: '+adapter.id);
+    if(['event','allocate','completeFrame','beforeEvent','afterEvent'].some(name=>typeof adapter[name]==='function')&&
+      adapter.stateless!==true&&!stateful)refuse('source adapter must declare retained state or be stateless: '+adapter.id);
+  }
+  const componentRegistry=[{id:ORDINARY_PROTOCOL_SOURCE_V8,claims:protocolSourceClaimsV8(ORDINARY_PROTOCOL_SOURCE_V8)},
+    ...adapters.map(adapter=>({id:adapter.id,claims:adapter.claims??protocolSourceClaimsV8(adapter.id)??{},
+      event:adapter.event,allocation:adapter.allocate,completion:adapter.completeFrame,prepare:adapter.prepare}))]
+    .map(component=>({...component,prepare:Object.fromEntries(Object.keys(component.claims).map(kind=>[
+      kind,component.prepare?.[kind]??((_view,input)=>({kind,identity:input.id??input.event?.eventId??null}))]))}));
+  const coordinator=createSourceClaimCoordinatorV8(componentRegistry),adapterById=new Map(adapters.map(adapter=>[adapter.id,adapter]));
+  let usedAdapters=new Set(),heapOwners=new Map(),frameOwners=new Map();
   const use=adapter=>{if(typeof adapter.id!=='string'||!adapter.id)refuse('extension requires a stable profile identity');usedAdapters.add(adapter.id);};
-  function extension(method,...args){for(const adapter of adapters){const result=adapter[method]?.(...args);
-    if(result!==undefined&&result!==null&&result!==false){use(adapter);return result;}}return null;}
+  function extension(method,...args){
+    const results=[];
+    for(const adapter of adapters){const result=adapter[method]?.(...args);
+      if(result!==undefined&&result!==null&&result!==false){use(adapter);results.push(result);}}
+    if(method==='syntax'||method==='program')return results.length?true:null;
+    if(results.length>1)refuse('ambiguous static source declaration: '+method);
+    return results[0]??null;
+  }
   function guardedHeap(node){const owners=adapters.filter(adapter=>adapter.heapFields?.(node)!=null),extraFields=[];
     for(const adapter of owners){const fields=adapter.heapFields(node);if(!Array.isArray(fields)||typeof adapter.checkHeap!=='function')refuse('heap extension requires fields and a complete state check');
       extraFields.push(...fields);use(adapter);}
@@ -109,11 +124,13 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   const inputGraph={roots:copy(ownedInitial.roots),objects:ownedInitial.objects.map(node=>({id:node.id,kind:node.kind,
     ...(node.prototype===null?{prototype:null}:{}),properties:node.properties.map(({key,value})=>({key,value}))}))};
   const harness=new RegionExecutionHarness({sessionId:'protocol-source',automaticDelivery:false,now:()=>-Infinity,maxGenerated});
-  harness.publishProgram({programId:'program1',source,entry:entry.functionName,capabilities:[]});
+  harness.publishProgram({programId:'program1',source,entry:entry.functionName,capabilities:[],
+    ...(moduleNamespacePlan?{moduleNamespacePlan}: {})});
   harness.admitInvocation({programId:'program1',invocationId:'invocation1',trackId:'worker1',realmId:'realm1',
     triggerId:'protocol-entry',inputGraph,realmPolicy:'fresh',completionPolicy:'call-return'});
-  const controller=harness.controller,claims=[],state=copy(bundle.initialState),names=new Map(),used=new Set(),frames=new Map([[semantic.rootInvocation,'invocation1']]),
-    functionCodes=new Map(),functionNodes=new Map(),pendingAccessors=new Map(),published=new Set(controller.heap.keys()),publishing=new Set();
+  let controller=harness.controller,claims=[],consumedJournalEvents=[],state=copy(bundle.initialState),names=new Map(),used=new Set(),frames=new Map([[semantic.rootInvocation,'invocation1']]),
+    pendingAccessors=new Map(),published=new Set(controller.heap.keys()),publishing=new Set(),extensionState=new Map();
+  const functionCodes=new Map(),functionNodes=new Map();
   let cellCounter=0,frameCounter=0,accessorCounter=0;
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
     if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op)){
@@ -128,14 +145,22 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     while(used.has(result))result=stem+'_'+(++cellCounter);used.add(result);names.set(key,result);
   }return names.get(key);};
   const codeFor=node=>functionCodes.get(node.codeId)??refuse('owned function has no exact source definition');
-  function emit(record,event=null,rule='owned-protocol-transition/1',{detail=false}={}){
+  function emit(record,event=null,rule='owned-protocol-transition/1',{detail=false,journalEvents=null}={}){
     if(claims.length>=maxGenerated)throw new RangeError('Protocol source record bound');
-    if(detail){assertProtocolDetailCompatible(controller,record);controller.commit(encodeWitness(record.kind,record.fields),{mode:'generated',track:'worker1'});
+    const selectedEvents=journalEvents??(event?[event.eventId]:[]),positions=selectedEvents.map(id=>consumedJournalEvents.indexOf(id));
+    if(selectedEvents.some(id=>typeof id!=='string')||new Set(selectedEvents).size!==selectedEvents.length||
+      positions.some(index=>index<0)||positions.some((index,offset)=>offset>0&&index<=positions[offset-1])||
+      (event&&selectedEvents.at(-1)!==event.eventId)||(!event&&selectedEvents.length))
+      refuse('source transition journal events must be an ordered unique subset of the consumed prefix ending at the current event');
+    if(detail){assertProtocolDetailCompatible(controller,record);controller.commitRecord(record,{mode:'generated',track:'worker1'});
       if(controller.firstWitnessViolation)refuse('incorrect selected primitive claim');}
     else applyProtocolRecordV8(controller,record);
-    const source=event?bundle.sites.find(site=>site.siteId===event.siteId):null;
+    const source=event?bundle.sites.find(site=>site.siteId===event.siteId):null,
+      eventSites=selectedEvents.map(id=>{const observed=bundle.events.find(row=>row.eventId===id),site=observed&&bundle.sites.find(item=>item.siteId===observed.siteId);
+        return {eventId:id,site:site?{start:site.start,end:site.end}:null};});
     claims.push({kind:detail?'detail':'protocol',record:copy(record),line:detail?encodeDetailedRecord(record,{role:'generated'}):encodeProtocolRecordV8(record),
-      certificate:{rule,journalEvents:event?[event.eventId]:[],source:source?{start:source.start,end:source.end}:null}});
+      certificate:{rule,journalEvents:selectedEvents,source:source?{start:source.start,end:source.end}:null,
+        ...(selectedEvents.length>1?{sourceEvents:eventSites}:{})}});
   }
   function tag(value,event=null){if(!valueTag(value))refuse('value requires an explicit callable/protocol interface: '+JSON.stringify(value));
     if(value[0]==='ref'&&!published.has(value[1])){
@@ -148,7 +173,13 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     value=tag(value,event);emit(value[0]==='symbol'?{kind:'bind',name,value}:{kind:'bind',fields:{name,value}},event,'owned-source-cell/1',{detail:value[0]!=='symbol'});
   };
   function publish(node,event){
-    guardedHeap(node);if(extension('allocate',context,node,event)){published.add(node.id);return;}return baseAllocate(node,event);
+    guardedHeap(node);if(published.has(node.id))return;
+    const owner=prepared('allocation:'+node.id);
+    if(owner.owner===ORDINARY_PROTOCOL_SOURCE_V8)return baseAllocate(node,event);
+    const adapter=adapterById.get(owner.owner);
+    if(adapter?.allocate?.(context,node,event,owner.prepared)!==true)
+      refuse('claimed source allocation handler declined: '+owner.owner);
+    use(adapter);published.add(node.id);
   }
   function baseAllocate(node,event){
     guardedHeap(node);if(published.has(node.id))return;if(publishing.has(node.id))refuse('recursive unpublished closure capture');publishing.add(node.id);
@@ -308,19 +339,83 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     }
     refuse('builtin call needs a declared protocol operation: '+name);
   }
-  const context={bundle,source,inventory,state,beforeState:state,controller,claims,
+  let activePlan=null;
+  function prepared(id){const selected=activePlan?.get(id);if(!selected)refuse('unreserved current source slot: '+id);return selected;}
+  function planEvent(event,row){
+    const ownedFrame=event&&state.frames[event.invocationId],candidate=ownedFrame&&bundle.programs[ownedFrame.codeId]?.instructions[ownedFrame.pc],
+      instruction=candidate?.siteId===event?.siteId?candidate:null,
+      site=event&&bundle.sites.find(item=>item.siteId===event.siteId),sourceNode=site?inventory.nodes.get(site.start+':'+site.end)??null:null,
+      view={source,owned:state,event,row:row??null,instruction,sourceNode:copy(sourceNode),
+        components:Object.fromEntries(adapters.map(adapter=>[adapter.id,adapter.captureState?.()??{}]))},slots=[],allocations=new Map();
+    for(const node of Object.values(state.heap))if(!published.has(node.id))allocations.set(node.id,node);
+    for(const change of event?.stateChanges??[])if(change.table==='heap'&&change.before===null)allocations.set(change.id,change.after);
+    for(const node of allocations.values())slots.push({id:'allocation:'+node.id,kind:'allocation',input:node});
+    if(event)slots.push({id:'event',kind:'event',input:{event,row:row??null}});
+    for(const change of event?.stateChanges??[])if(change.table==='frames'&&change.before&&change.after&&
+      !['completed','thrown'].includes(change.before.status)&&['completed','thrown'].includes(change.after.status))
+      slots.push({id:'completion:'+change.id,kind:'completion',input:change});
+    activePlan=new Map(coordinator.plan({view,slots}).map(slot=>[slot.id,slot]));
+  }
+  const context={bundle,source,inventory,
+    get state(){return state;},get beforeState(){return state;},get controller(){return controller;},get claims(){return claims;},
     emit,bind,tag,cell,frame,codeFor,publish,baseAllocate,baseCheckHeap,
-    functionCodes,functionNodes,published,pendingAccessors,
+    functionCodes,functionNodes,get published(){return published;},get pendingAccessors(){return pendingAccessors;},
     key,descriptor,prototype,orderedKeys,refuse,copy,eq,
     markPublished(id){published.add(id);},
     get publicInvocation(){return controller.stack.at(-1);},
     getOwnedFrame(id){return state.frames[id];},
-    extensionState:new Map()};
+    get extensionState(){return extensionState;},delegateEvent};
+  function delegateEvent(adapterId,event,row=null){
+    const adapter=adapterById.get(adapterId);if(!adapter?.event)refuse('unknown compositional source subtransition: '+adapterId);
+    const ownedFrame=event&&state.frames[event.invocationId],candidate=ownedFrame&&bundle.programs[ownedFrame.codeId]?.instructions[ownedFrame.pc],
+      instruction=candidate?.siteId===event?.siteId?candidate:null,
+      site=event&&bundle.sites.find(item=>item.siteId===event.siteId),sourceNode=site?inventory.nodes.get(site.start+':'+site.end)??null:null,
+      view={source,owned:state,event,row:row??null,instruction,sourceNode:copy(sourceNode),
+        components:Object.fromEntries(adapters.map(item=>[item.id,item.captureState?.()??{}]))},
+      [selected]=coordinator.plan({view,slots:[{id:'delegated-event',kind:'event',input:{event,row:row??null}}]});
+    if(selected.owner!==adapterId)refuse('compositional subtransition has a different unique owner: '+selected.owner);
+    if(adapter.event(context,event,row,selected.prepared)!==true)refuse('compositional source subtransition declined: '+adapterId);
+    use(adapter);return true;
+  }
   for(const adapter of adapters)adapter.setup?.(context);
+  function observe(method,event,row){
+    let failure;
+    for(const adapter of [...adapters].sort((a,b)=>a.id.localeCompare(b.id))){
+      try{if(adapter[method]?.(context,event,row)===false)refuse('source observer rejected '+method+': '+adapter.id);}
+      catch(error){failure??=error;}
+    }
+    if(failure)throw failure;
+  }
+  const projectionState=()=>({controller,claims,state,names,used,frames,pendingAccessors,published,publishing,activePlan,
+    extensionState,usedAdapters,heapOwners,frameOwners,cellCounter,frameCounter,accessorCounter});
+  function selectProjectionState(selected){
+    ({controller,claims,state,names,used,frames,pendingAccessors,published,publishing,activePlan,
+      extensionState,usedAdapters,heapOwners,frameOwners,cellCounter,frameCounter,accessorCounter}=selected);
+  }
+  function transaction(run){
+    const live=projectionState(),adapterStates=adapters.map(adapter=>adapter.captureState?.()),
+      stagedAdapterStates=copy(adapterStates),detached=copy({state,names,used,frames,pendingAccessors,published,publishing,extensionState});
+    selectProjectionState({...live,...detached,controller:cloneRegionController(controller),claims:[...claims],
+      usedAdapters:new Set(usedAdapters),heapOwners:new Map(heapOwners),frameOwners:new Map(frameOwners)});
+    try{
+      for(const [index,adapter]of adapters.entries())if(adapter.captureState)adapter.restoreState(stagedAdapterStates[index]);
+      return run();
+    }
+    catch(error){
+      selectProjectionState(live);
+      for(const [index,adapter]of adapters.entries())if(adapter.captureState)adapter.restoreState(adapterStates[index]);
+      throw error;
+    }
+  }
   const entryEnv=state.frames[semantic.rootInvocation].envId;
-  for(const [name,binding]of Object.entries(state.envs[entryEnv]?.bindings??{}))if(binding.initialized)bind(cell(entryEnv,name),binding.token.value);
-  for(const event of bundle.events){
+  transaction(()=>{planEvent(null,null);for(const [name,binding]of Object.entries(state.envs[entryEnv]?.bindings??{}))
+    if(binding.initialized)bind(cell(entryEnv,name),binding.token.value);});
+  function projectEvent(event){
+    if(consumedJournalEvents.includes(event.eventId))refuse('duplicate source journal event');
+    consumedJournalEvents.push(event.eventId);
     const row=rows.get(event.eventId),heapChanges=event.stateChanges.filter(change=>change.table==='heap');
+    planEvent(event,row);
+    observe('beforeEvent',event,row);
     for(const change of heapChanges)if(change.after)guardedHeap(change.after);else refuse('heap deletion needs a protocol');
     for(const change of event.stateChanges)if(change.table==='frames'&&change.after){
       const owners=adapters.filter(adapter=>adapter.frameFields?.(change.after)!=null),allowed=new Set(frameFields);
@@ -330,7 +425,12 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       if(Object.keys(change.after).some(key=>!allowed.has(key))||
         !owners.length&&(change.after.asyncPromiseId||change.after.awaiting||change.after.handlers?.length))refuse('frame continuation needs its declared protocol');
     }
-    const handled=extension('event',context,event,row);
+    const eventOwner=prepared('event'),eventAdapter=adapterById.get(eventOwner.owner),handled=eventOwner.owner!==ORDINARY_PROTOCOL_SOURCE_V8;
+    if(handled){
+      if(eventAdapter?.event?.(context,event,row,eventOwner.prepared)!==true)
+        refuse('claimed source event handler declined: '+eventOwner.owner);
+      use(eventAdapter);
+    }
     if(!row&&!handled&&heapChanges.length)refuse('unprojected owned heap transition: '+event.operation);
     if(row&&!handled){
       if(row.child){
@@ -452,7 +552,13 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       !['completed','thrown'].includes(change.before.status)&&['completed','thrown'].includes(change.after.status));
     finished.sort((a,b)=>controller.stack.indexOf(frame(b.id))-controller.stack.indexOf(frame(a.id)));
     for(const change of finished){
-      if(extension('completeFrame',context,change,event))continue;
+      const completionOwner=prepared('completion:'+change.id);
+      if(completionOwner.owner!==ORDINARY_PROTOCOL_SOURCE_V8){
+        const adapter=adapterById.get(completionOwner.owner);
+        if(adapter?.completeFrame?.(context,change,event,completionOwner.prepared)!==true)
+          refuse('claimed source completion handler declined: '+completionOwner.owner);
+        use(adapter);continue;
+      }
       const invocation=frame(change.id),completion=change.after.completion;
       if(!completion?.value?.value)refuse('completed frame lacks a value');
       const kind=completion.type==='throw'?'throw':'return',value=tag(completion.value.value,event);
@@ -463,14 +569,15 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
         emit({kind:'property.finish',id:pending.id,completion:{kind:kind==='throw'?'throw':'normal',value:kind==='throw'||pending.operation==='get'?value:pending.value}},event,'owned-source-accessor-completion/1');pendingAccessors.delete(invocation);
       }
     }
-    for(const adapter of adapters)if(adapter.afterEvent)adapter.afterEvent(context,event,row);
+    observe('afterEvent',event,row);
     for(const change of heapChanges)if(published.has(change.id))checkNode(change.after);
     for(const change of event.stateChanges.filter(change=>change.table==='frames'&&change.after))
-      for(const adapter of frameOwners.get(change.id)??[])if(adapter.checkFrame(context,change.after,event)!==true)refuse('extension failed its complete frame comparison: '+adapter.id);
+      for(const adapter of frameOwners.get(change.id)??[])if(adapter.checkFrame(context,change.after,event,change.id,row)!==true)refuse('extension failed its complete frame comparison: '+adapter.id);
     for(const change of event.stateChanges)if(state[change.table]){
       if(change.after===null)delete state[change.table][change.id];else if(change.after!==undefined)state[change.table][change.id]=copy(change.after);
     }
   }
+  for(const event of bundle.events)transaction(()=>projectEvent(event));
   if(pendingAccessors.size||controller.stack.length)refuse('incomplete source protocol execution');
   emit({kind:'end',completion:controller.pending.kind},null,'owned-source-terminal/1');
   const outcome=ownedEffectfulOutcome(bundle);

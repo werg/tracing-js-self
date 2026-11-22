@@ -4,12 +4,17 @@ An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstra
 
 This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [current semantic-execution scope](docs/SEMANTIC_REASONING_TRACE.md) and [coverage ledger](coverage/required.json).
 
-## Current pre-release candidate
+## Current work: V8 data preparation
 
 This repository and its companion, `werg/megatoken`, are pre-release. APIs and
 saved formats change in place; affected producers, consumers and fixtures are
 updated together. Existing numeric labels identify implementation paths and
 do not promise compatibility. See the [development instructions](AGENTS.md).
+
+The root `npm-shrinkwrap.json` is the single dependency lock for both `npm ci`
+and packed installations. It preserves exact dependency versions and integrity
+pins and ships the dependency evidence needed by original-source certification.
+The optional specification oracle keeps its separate lock in `tools/spec-oracle`.
 
 The [compositional v8 candidate](docs/SEMANTIC_REGIONS_V8.md) combines compact
 calculations with checked property access, calls, cleanup and suspension in one
@@ -22,23 +27,20 @@ the candidate does not claim unrestricted ECMAScript coverage. The
 [Promise scheduling profile](docs/V8_PROMISE_SCHEDULER.md) documents the resolution
 and cleanup jobs that require separate checked protocols.
 
-The [complete-population engineering qualification](coverage/language-expansion/native-v8-012c9fe-all/README.md)
-passes all 665 expansion cases, 26 interoperability cases and 11 original-gallery
-cases through source/native admission and exact token metering at producer
-`012c9fe` / consumer `39c4036`. The
-[latest verified dataset](coverage/language-expansion/dataset-v8-012c9fe/README.md)
-contains 37 freshly admitted episodes and 1,021 complete examples at the same
-pair, with exact prompt/target tokens, masks and frozen component splits checked.
-An [independent export](coverage/language-expansion/dataset-v8-012c9fe-independent/README.md)
-reproduced the complete dataset and all 37 native input/receipt pairs byte for byte.
-The [completion ledger](docs/LANGUAGE_COVERAGE_STATUS.md) links the full producer,
-native and integration regressions, current profile evidence and bounded actual
-model diagnostics. External comprehension, general learned execution, controlled
-serving-efficiency studies and default promotion are outside this bounded
-candidate's completion scope; their unmeasured status remains explicit.
+The current work prepares verified V8 data: original-source correspondence,
+independent native admission, causal contexts and targets, frozen source-family
+splits, and exact tokenizer, loss-mask and physical-packing checks. The
+[V8 data-preparation status](docs/LANGUAGE_COVERAGE_V8_CUTOVER_STATUS.md)
+defines the completion criteria, records validation and links all deferred work.
+Model performance and production cutover are later milestones.
+
+Earlier [qualification](coverage/language-expansion/native-v8-012c9fe-all/README.md)
+and [dataset results](coverage/language-expansion/dataset-v8-012c9fe/README.md)
+remain evidence for their recorded source revisions. Current checks use the
+producer and native consumer selected by the V8 policy.
 
 ```js
-import {verifyRegionTrainingCase} from 'tracing-js-self/semantic';
+import {verifyRegionTrainingCase} from 'tracing-js-self/semantic/v8';
 
 const checked = await verifyRegionTrainingCase({
   id: 'double-elements', family: 'ordered-map', entry: 'run',
@@ -47,6 +49,12 @@ const checked = await verifyRegionTrainingCase({
 });
 console.log(checked.status, checked.exported?.sidecar.regionCoverage);
 ```
+
+The explicit `tracing-js-self/semantic/v8` entry exposes the V8 runtime, source
+verification, native-admission and dataset APIs without loading historical wire
+clients. The existing `tracing-js-self/semantic` and `tracing-js-self/training`
+entries keep their current exports. This package boundary does not promote V8
+command defaults or establish whole-population parity.
 
 ```sh
 npm run test:semantic-v8

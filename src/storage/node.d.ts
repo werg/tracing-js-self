@@ -23,3 +23,29 @@ export declare function createDurableTraceStore(options: DurableTraceStoreOption
 
 export {DurableRetainedModuleStore,DurableRetainedModuleStorageError,
   createDurableRetainedModuleStore} from './retained-session.js';
+
+export {DurableHostIngressStore,createDurableHostIngressStore} from './host-ingress.js';
+export type {HostIngressReceipt,DurableHostIngressStoreOptions} from './host-ingress.js';
+export {DurableHostIngressJournal,DurableHostIngressBroker} from './host-ingress-journal.js';
+export type {HostIngressLogReceipt,DurableHostIngressJournalOptions} from './host-ingress-journal.js';
+export {DurableSelectedHistoryJournal} from './selected-history.js';
+export type {SelectedHistoryReceipt,DurableSelectedHistoryJournalOptions,SelectedTerminalSnapshot,
+  SelectedTerminalCloseReceipt,SelectedHistoryTerminalEvent,SelectedTerminalDisposition} from './selected-history.js';
+export {DurableSelectedServiceJournal} from './selected-service-journal.js';
+export type {SelectedServiceAction,SelectedServiceOutcome,SelectedServiceJournalReceipt,
+  DurableSelectedServiceJournalOptions} from './selected-service-journal.js';
+export {DurableFencedSelectedServiceJournal} from './selected-service-fence-journal.js';
+export type {SelectedServiceFenceReceipt,SelectedServiceFenceState,DurableFencedSelectedServiceJournalOptions}
+  from './selected-service-fence-journal.js';
+export {SelectedServiceAdmissionCoordinator} from './selected-service-coordinator.js';
+export type {SelectedServiceAdmissionPolicy,SelectedServiceAdmissionFence} from './selected-service-coordinator.js';
+
+export {DurableSelectedOrchestrationExecutionLock} from './selected-orchestration-execution-lock.js';
+export type {SelectedOrchestrationExecutionLease} from './selected-orchestration-execution-lock.js';
+export {DurableNativeV8RequestJournal} from './native-request-journal-v8.js';
+export type {NativeV8RequestReceipt,NativeV8RequestDurability} from './native-request-journal-v8.js';
+export {createSelectedOrchestrationExecutionClock,assertSelectedOrchestrationExecutionClock,
+  validateSelectedOrchestrationClockReceipt}
+  from './selected-orchestration-clock.js';
+export type {SelectedOrchestrationClock,SelectedOrchestrationClockReceipt}
+  from './selected-orchestration-clock.js';

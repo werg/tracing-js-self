@@ -1,0 +1,30 @@
+[
+  {
+    "journal": "basic",
+    "readReturned": false,
+    "readError": {
+      "code": "EIO",
+      "message": "Injected recovered outcome directory fsync failure"
+    },
+    "readerSynchronizations": 1,
+    "publisher": {
+      "status": "unacknowledged",
+      "code": "EIO",
+      "message": "Injected outcome directory fsync failure"
+    }
+  },
+  {
+    "journal": "fenced",
+    "readReturned": false,
+    "readError": {
+      "code": "EIO",
+      "message": "Injected recovered outcome directory fsync failure"
+    },
+    "readerSynchronizations": 1,
+    "publisher": {
+      "status": "unacknowledged",
+      "code": "EIO",
+      "message": "Injected outcome directory fsync failure"
+    }
+  }
+]

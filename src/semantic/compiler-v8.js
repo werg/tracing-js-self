@@ -1,16 +1,15 @@
 // Teacher-only projection into the compositional contract. Every accepted local
 // replacement agrees on the entire shared continuation, not just its result.
 import {isDeepStrictEqual} from 'node:util';
-import {verifyEffectfulTrainingCase,recheckEffectfulAdmission} from '../training/effectful-admit.js';
-import {decodeWitness} from '../training/format.js';
-import {SemanticController} from '../training/controller.js';
-import {encodeDetailedRecord} from './detailed-v7.js';
+import {verifySourceTrainingCaseV8,recheckSourceAdmissionV8} from './source-admission-v8.js';
+import {encodeDetailedRecord,decodeDetailedRecord} from './detail-v8.js';
 import {RegionExecutionHarness} from './region-harness.js';
-import {defineRegionProgram,sharedRegionState,evaluateLocalRegion,REGION_TRACE_VERSION} from './regions.js';
+import {defineRegionProgram,sharedRegionState,cloneRegionController,evaluateLocalRegion,REGION_TRACE_VERSION} from './regions.js';
 import {hashAlgorithmData} from './program.js';
 import {evaluatePureRegion} from './pure-region-v8.js';
 import {compareObservableGraphs} from './observables.js';
 import {validateV8NativePolicy,validateV8NativeReceipt} from './native-v8.js';
+import {validateOrchestrationTranscriptV8} from './orchestration-training-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual;
 const clean=value=>JSON.parse(JSON.stringify(value));
@@ -21,7 +20,7 @@ const localKinds=new Set(['compute','choose','bind','return']);
 function observedRow(row){
   const {schema,sequence,ownerSequence,mode,kind,traceFormat,...fields}=copy(row);
   if(kind==='program')fields.regionProgram=defineRegionProgram({source:fields.source,entry:fields.entry}).program;
-  if(kind==='result')fields.line=encodeDetailedRecord(decodeWitness(fields.line),{role:'observed'});
+  if(kind==='result')decodeDetailedRecord(fields.line,{role:'observed'});
   return clean({mode,kind,fields});
 }
 function sourceLocations(sourceArtifact){
@@ -70,6 +69,9 @@ function projectWholePureWitness(sourceArtifact){
 
 export function projectRegionWitness(sourceArtifact){
   if(!sourceArtifact?.sidecar?.archive||!sourceArtifact?.public?.timeline)fail('owned source evidence missing');
+  if(sourceArtifact.public.schema!=='semantic-lifecycle/8'||sourceArtifact.public.traceFormat!=='semantic-trace/8'||
+    sourceArtifact.public.contextFormat!=='semantic-context/8'||sourceArtifact.sidecar.compiler?.schema!=='semantic-source-compiler/8')
+    fail('direct V8 source detail required; legacy source episodes are not accepted');
   if(sourceArtifact.sidecar.referenceStatus!=='agreed'||!['locally_verified','admitted'].includes(sourceArtifact.sidecar.admission))
     fail('independently checked source evidence is required');
   const pure=projectWholePureWitness(sourceArtifact);if(pure)return pure;
@@ -102,17 +104,17 @@ export function projectRegionWitness(sourceArtifact){
         if(item.kind==='model-context'){end++;continue;}
         const itemPoints=locate(item);
         if(item.kind!=='semantic'||item.invocationId!==row.invocationId||
-          !localKinds.has(decodeWitness(item.line).kind)||!itemPoints.length||
+          !localKinds.has(decodeDetailedRecord(item.line,{role:'generated'}).kind)||!itemPoints.length||
           !itemPoints.every(point=>point.start>=location.start&&point.end<=location.end))break;
         consumed.push(item);end++;
       }
       if(!consumed.length)continue;
       try{
         const candidate=harness.preview(row.invocationId,region.id);
-        const expected=SemanticController.fromPacket(controller.segmentPacket());
-        for(const item of consumed)expected.commit(item.line,{mode:'generated',track:activation.trackId});
-        const actual=SemanticController.fromPacket(controller.segmentPacket());
-        for(const witness of evaluateLocalRegion(region,controller).records)actual.commit(witness,{mode:'generated',track:activation.trackId});
+        const expected=cloneRegionController(controller);
+        for(const item of consumed)expected.commitRecord(decodeDetailedRecord(item.line,{role:'generated'}),{mode:'generated',track:activation.trackId});
+        const actual=cloneRegionController(controller);
+        for(const witness of evaluateLocalRegion(region,controller).records)actual.commitRecord(witness,{mode:'generated',track:activation.trackId});
         if(expected.firstWitnessViolation||!sameState(actual,expected))throw new TypeError('shared locals, aliases, heap, completion or obligations differ');
         const context=harness.modelContext(row.invocationId);
         harness.select(row.invocationId,candidate);contexts.push(context);
@@ -126,7 +128,7 @@ export function projectRegionWitness(sourceArtifact){
     }
     if(compact)continue;
     contexts.push(harness.modelContext(row.invocationId));
-    const record=decodeWitness(row.line),line=encodeDetailedRecord(record,{role:'generated'});
+    const record=decodeDetailedRecord(row.line,{role:'generated'}),line=encodeDetailedRecord(record,{role:'generated'});
     harness.select(row.invocationId,line);detailedRecords++;detailedBytes+=Buffer.byteLength(line);
     receipts.push({sequence:harness.timeline.at(-1).sequence,rule:'checked-detailed-boundary/1',sourceSequences:[row.sequence]});index++;
   }
@@ -148,6 +150,12 @@ const projectionAttempt=(profile,result)=>({profile,status:result.status,phase:r
   category:result.category??null,reason:result.reason??null,
   failureDigest:result.failure?.failureDigest??null});
 async function tryDirectProtocolSource(fixture,prior){
+  if(fixture.fixture?.calls?.length){
+    const {verifyProtocolHostTrainingCaseV8}=await import('./protocol-host-source-v8.js');
+    const mixed=await verifyProtocolHostTrainingCaseV8(fixture);
+    return {...mixed,regionAttempts:[projectionAttempt('selected-detailed/1',prior),
+      projectionAttempt('protocol-host-source/1',mixed)]};
+  }
   const {verifyProtocolRegionTrainingCase}=await import('./protocol-source-v8.js');
   const protocol=await verifyProtocolRegionTrainingCase(fixture),regionAttempts=[
     projectionAttempt('selected-detailed/1',prior),projectionAttempt('direct-protocol-source/1',protocol)];
@@ -155,9 +163,20 @@ async function tryDirectProtocolSource(fixture,prior){
   return {...prior,regionAttempts,protocolRefusal:projectionAttempt('direct-protocol-source/1',protocol)};
 }
 export async function verifyRegionTrainingCase(fixture){
+  // Namespace source authority is established by the explicit original-module
+  // gate. The generic teacher cannot execute the reserved generated intrinsic.
+  if(fixture?.projectionOptions?.moduleNamespacePlan||fixture?.projectionOptions?.moduleSchedulerPlan){
+    const {verifyProtocolRegionTrainingCase}=await import('./protocol-source-v8.js');
+    return verifyProtocolRegionTrainingCase(fixture);
+  }
+
+  if(Object.hasOwn(fixture??{},'sessionCases')){
+    const {verifyRegionSourceSessionV8}=await import('./source-session-v8.js');
+    return verifyRegionSourceSessionV8({...fixture,cases:fixture.sessionCases});
+  }
   const identity=Object.fromEntries(['id','family','source','entry','ancestorIds','ancestors']
     .filter(key=>Object.hasOwn(fixture,key)).map(key=>[key,copy(fixture[key])]));
-  const source=await verifyEffectfulTrainingCase({...fixture,nativeConsumer:null,nativePolicy:null,
+  const source=await verifySourceTrainingCaseV8({...fixture,nativeConsumer:null,nativePolicy:null,
     projectionOptions:{...fixture.projectionOptions,semanticRegions:false,localStateCompaction:false}});
   if(!['locally_verified','admitted'].includes(source.status)){
     const refused={...identity,...source,regionDisposition:'source-unqualified',exported:undefined};
@@ -179,15 +198,29 @@ export async function verifyRegionTrainingCase(fixture){
 }
 
 export async function recheckRegionEvidence(exported,{nativeConsumer=null,nativePolicy=null,requireNative=false}={}){
-  const side=exported?.sidecar;
+  const side=exported?.sidecar,orchestration=side&&Object.hasOwn(side,'orchestrationTranscript')?
+    validateOrchestrationTranscriptV8(exported):{};
+  if(side?.schema==='semantic-session-region-evidence/1'){
+    const {recheckRegionSourceSessionV8}=await import('./source-session-v8.js');
+    return {...await recheckRegionSourceSessionV8(exported,{nativeConsumer,nativePolicy,requireNative}),...orchestration};
+  }
+  if(side?.schema==='semantic-protocol-host-region-evidence/1'){
+    const {recheckProtocolHostEvidenceV8}=await import('./protocol-host-source-v8.js');
+    return {...await recheckProtocolHostEvidenceV8(exported,{nativeConsumer,nativePolicy,requireNative}),...orchestration};
+  }
   if(side?.schema==='semantic-protocol-region-evidence/1'){
     const {recheckProtocolRegionEvidence}=await import('./protocol-source-v8.js');
-    return recheckProtocolRegionEvidence(exported,{nativeConsumer,nativePolicy,requireNative});
+    return {...await recheckProtocolRegionEvidence(exported,{nativeConsumer,nativePolicy,requireNative}),...orchestration};
   }
   if(side?.schema!=='semantic-region-evidence/1'||side.representation!==REGION_TRACE_VERSION||
     side.referenceStatus!=='agreed'||side.sourceArtifactDigest!==digest(side.sourceArtifact)||
     side.optimizerSteps!==0||side.learningClaim!==null)fail('incompatible or altered source evidence');
-  const source=await recheckEffectfulAdmission(side.sourceArtifact,{requireAdmitted:false});
+  const publicNamespacePlan=side.sourceArtifact.public?.timeline?.find(row=>row.kind==='program')
+    ?.fields?.regionProgram?.moduleNamespacePlan;
+  const moduleEvidence=side.sourceArtifact.sidecar?.sourceProvenance?.upstream?.moduleEvidence;
+  if(publicNamespacePlan!==undefined&&!moduleEvidence)
+    fail('public module namespace plan lacks exact original-module source evidence');
+  const source=await recheckSourceAdmissionV8(side.sourceArtifact,{requireAdmitted:false});
   let moduleReference={status:'untested',applicable:false};
   if(side.sourceArtifact.sidecar?.sourceProvenance?.upstream?.moduleEvidence){
     const {recheckModuleRegionEvidence}=await import('./module-v8.js');
@@ -204,7 +237,7 @@ export async function recheckRegionEvidence(exported,{nativeConsumer=null,native
     validateV8NativeReceipt(exported,native,nativePolicy);
   }else if(requireNative)fail('exact v8 native admission must be rechecked by the pinned consumer');
   return {valid:true,sourceValidated:true,projectionValidated:true,replayValidated:true,
-    source,moduleReference,native,regionCoverage:copy(side.regionCoverage),completed:replay.invocations.size};
+    source,moduleReference,native,regionCoverage:copy(side.regionCoverage),completed:replay.invocations.size,...orchestration};
 }
 
 export async function admitRegionEvidence(exported,{nativeConsumer,nativePolicy}={}){

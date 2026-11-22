@@ -1,0 +1,6 @@
+{
+  "firstLintAttempt": "log redirection path typo prevented formatter invocation; partial original log retained",
+  "diagnostic": "/bin/bash: line 4: /workspace/scratch/175924c3d3c3/session/native-source-authority-composition/lint.log: No such file or directory",
+  "correctedRequiredLint": "passed all three CI commands; full output in required-lint.log",
+  "testTemporaryDirectory": "Generated pytest-of-agent outputs moved from worktree to session/native-source-authority-composition/pytest-temporary after the successful test run; no tracked source changes"
+}

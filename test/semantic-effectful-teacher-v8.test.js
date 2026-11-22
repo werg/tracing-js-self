@@ -5,6 +5,7 @@ import {compileEffectfulWitness} from '../src/training/effectful-compiler.js';
 import {compileEffectfulRegionWitnessV8,createEffectfulRegionAdapterV8} from '../src/semantic/effectful-teacher-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {sharedRegionState} from '../src/semantic/regions.js';
+import {createPromiseExecutorTeacherV8} from '../src/semantic/protocol-promise-executor-source-v8.js';
 import {encodeNativeGraph} from '../src/host/graph-codec.js';
 import {independentEffectfulReference} from '../src/training/effectful-admit.js';
 
@@ -38,11 +39,14 @@ test('versioned teacher selection leaves historical projection unchanged and ret
   assert.throws(()=>compileEffectfulWitness(bundle,{regionAdapter:createEffectfulRegionAdapterV8()}),/explicit detailed source projection/);
 });
 test('teacher extensions must emit checked public operations rather than mutate a public-state target',()=>{
-  const bundle=owned('"use strict";function run(){return 1;}');let attempted=false;
-  assert.throws(()=>compileEffectfulRegionWitnessV8(bundle,{extensions:[{id:'false-computation/1',event(ctx,event,row){
-    if(attempted||!row)return false;attempted=true;
+  const bundle=owned('"use strict";async function run(){return await new Promise(resolve=>resolve(1));}');let attempted=false;
+  const extension=createPromiseExecutorTeacherV8(),original=extension.event;
+  extension.event=(ctx,event,row)=>{
+    if(attempted||event.operation!=='object.construct')return original(ctx,event,row);
+    attempted=true;
     ctx.emitProtocol(ctx.rootInvocation,{kind:'compute',expr:{op:'literal',value:['num',1]},result:['num',2],bind:null},event);
     return true;
-  }}]}),/computation|result|claim/);
+  };
+  assert.throws(()=>compileEffectfulRegionWitnessV8(bundle,{extensions:[extension]}),/computation|result|claim/);
   assert(attempted);
 });

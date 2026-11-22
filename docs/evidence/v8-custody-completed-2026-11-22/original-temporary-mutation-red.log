@@ -1,0 +1,15 @@
+test_log_changed_after_original_download_cannot_be_rebound_as_new_authority (test_release_evidence_custody.ReleaseEvidenceCustodyTests.test_log_changed_after_original_download_cannot_be_rebound_as_new_authority) ... FAIL
+
+======================================================================
+FAIL: test_log_changed_after_original_download_cannot_be_rebound_as_new_authority (test_release_evidence_custody.ReleaseEvidenceCustodyTests.test_log_changed_after_original_download_cannot_be_rebound_as_new_authority)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/175924c3d3c2/session/release-custody-original-control/tools/native-consumer/test_release_evidence_custody.py", line 199, in test_log_changed_after_original_download_cannot_be_rebound_as_new_authority
+    with self.assertRaisesRegex(ValueError, "independently pinned bytes"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 1 test in 0.004s
+
+FAILED (failures=1)

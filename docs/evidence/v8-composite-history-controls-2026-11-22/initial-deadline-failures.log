@@ -1,0 +1,459 @@
+﻿2026-11-22T05:09:11.7610108Z Current runner version: '2.338.2'
+2026-11-22T05:09:11.7640597Z ##[group]Runner Image Provisioner
+2026-11-22T05:09:11.7642268Z Hosted Compute Agent
+2026-11-22T05:09:11.7643493Z Version: 20261111.635
+2026-11-22T05:09:11.7644674Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-22T05:09:11.7645931Z Build Date: 2026-11-11T01:49:01Z
+2026-11-22T05:09:11.7647228Z Worker ID: {6c30283c-dd21-4a4e-abee-30a35b481c64}
+2026-11-22T05:09:11.7648492Z Region: eastus
+2026-11-22T05:09:11.7649528Z Cloud: Azure
+2026-11-22T05:09:11.7650471Z ##[endgroup]
+2026-11-22T05:09:11.7653043Z ##[group]Operating System
+2026-11-22T05:09:11.7654274Z Ubuntu
+2026-11-22T05:09:11.7655328Z 24.04.5
+2026-11-22T05:09:11.7656268Z LTS
+2026-11-22T05:09:11.7656903Z ##[endgroup]
+2026-11-22T05:09:11.7657477Z ##[group]Runner Image
+2026-11-22T05:09:11.7658298Z Image: ubuntu-24.04
+2026-11-22T05:09:11.7658932Z Version: 20261116.376.1
+2026-11-22T05:09:11.7660323Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.376/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-22T05:09:11.7662354Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.376
+2026-11-22T05:09:11.7663488Z ##[endgroup]
+2026-11-22T05:09:11.7664666Z ##[group]GITHUB_TOKEN Permissions
+2026-11-22T05:09:11.7666964Z Contents: read
+2026-11-22T05:09:11.7667603Z Metadata: read
+2026-11-22T05:09:11.7668300Z ##[endgroup]
+2026-11-22T05:09:11.7670774Z Secret source: Actions
+2026-11-22T05:09:11.7672206Z Cache mode: write
+2026-11-22T05:09:11.7673292Z Prepare workflow directory
+2026-11-22T05:09:11.8009149Z Prepare all required actions
+2026-11-22T05:09:11.8058251Z Getting action download info
+2026-11-22T05:09:12.0403602Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-22T05:09:12.1976590Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-22T05:09:12.3023355Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-22T05:09:12.5086081Z Complete job name: producer-controls
+2026-11-22T05:09:12.5997330Z ##[group]Run actions/checkout@v4
+2026-11-22T05:09:12.5998268Z with:
+2026-11-22T05:09:12.5998767Z   ref: ee881819ec01f26830dc8a04a50de19c8dfcb080
+2026-11-22T05:09:12.5999394Z   persist-credentials: false
+2026-11-22T05:09:12.5999935Z   repository: werg/tracing-js-self
+2026-11-22T05:09:12.6003875Z   token: ***
+2026-11-22T05:09:12.6004332Z   ssh-strict: true
+2026-11-22T05:09:12.6004781Z   ssh-user: git
+2026-11-22T05:09:12.6005213Z   clean: true
+2026-11-22T05:09:12.6005669Z   sparse-checkout-cone-mode: true
+2026-11-22T05:09:12.6006206Z   fetch-depth: 1
+2026-11-22T05:09:12.6006643Z   fetch-tags: false
+2026-11-22T05:09:12.6007105Z   show-progress: true
+2026-11-22T05:09:12.6007560Z   lfs: false
+2026-11-22T05:09:12.6007984Z   submodules: false
+2026-11-22T05:09:12.6008448Z   set-safe-directory: true
+2026-11-22T05:09:12.6008965Z   allow-unsafe-pr-checkout: false
+2026-11-22T05:09:12.6009781Z ##[endgroup]
+2026-11-22T05:09:12.8938356Z Syncing repository: werg/tracing-js-self
+2026-11-22T05:09:12.8941470Z ##[group]Getting Git version info
+2026-11-22T05:09:12.8942484Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self'
+2026-11-22T05:09:12.8943747Z [command]/usr/bin/git version
+2026-11-22T05:09:12.9052109Z git version 2.56.1
+2026-11-22T05:09:12.9084447Z ##[endgroup]
+2026-11-22T05:09:12.9112929Z Temporarily overriding HOME='/home/runner/work/_temp/4861abf0-2828-4d56-9a0f-637d2616fa91' before making global git config changes
+2026-11-22T05:09:12.9115702Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T05:09:12.9122539Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-22T05:09:12.9157487Z Deleting the contents of '/home/runner/work/tracing-js-self/tracing-js-self'
+2026-11-22T05:09:12.9167754Z ##[group]Initializing the repository
+2026-11-22T05:09:12.9179459Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-22T05:09:12.9310410Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T05:09:12.9312449Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T05:09:12.9313960Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T05:09:12.9315158Z hint: call:
+2026-11-22T05:09:12.9315783Z hint:
+2026-11-22T05:09:12.9316571Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T05:09:12.9317531Z hint:
+2026-11-22T05:09:12.9318456Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T05:09:12.9319944Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T05:09:12.9321296Z hint:
+2026-11-22T05:09:12.9321999Z hint: 	git branch -m <name>
+2026-11-22T05:09:12.9322741Z hint:
+2026-11-22T05:09:12.9323724Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T05:09:12.9325521Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/.git/
+2026-11-22T05:09:12.9343499Z [command]/usr/bin/git remote add origin https://github.com/werg/tracing-js-self
+2026-11-22T05:09:12.9393207Z ##[endgroup]
+2026-11-22T05:09:12.9394700Z ##[group]Disabling automatic garbage collection
+2026-11-22T05:09:12.9401940Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T05:09:12.9445951Z ##[endgroup]
+2026-11-22T05:09:12.9447313Z ##[group]Setting up auth
+2026-11-22T05:09:12.9448101Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T05:09:12.9488102Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T05:09:12.9922493Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T05:09:12.9967838Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T05:09:13.0226553Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T05:09:13.0271830Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T05:09:13.0517603Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T05:09:13.0577121Z ##[endgroup]
+2026-11-22T05:09:13.0588892Z ##[group]Fetching the repository
+2026-11-22T05:09:13.0590140Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin ee881819ec01f26830dc8a04a50de19c8dfcb080
+2026-11-22T05:09:42.0625044Z From https://github.com/werg/tracing-js-self
+2026-11-22T05:09:42.0625828Z  * branch            ee881819ec01f26830dc8a04a50de19c8dfcb080 -> FETCH_HEAD
+2026-11-22T05:09:42.0629439Z ##[endgroup]
+2026-11-22T05:09:42.0629942Z ##[group]Determining the checkout info
+2026-11-22T05:09:42.0637950Z ##[endgroup]
+2026-11-22T05:09:42.0638690Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T05:09:42.0710042Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T05:09:42.0751691Z ##[group]Checking out the ref
+2026-11-22T05:09:42.0752255Z [command]/usr/bin/git checkout --progress --force ee881819ec01f26830dc8a04a50de19c8dfcb080
+2026-11-22T05:09:43.0924991Z Updating files:  42% (1549/3608)
+2026-11-22T05:09:43.1077536Z Updating files:  43% (1552/3608)
+2026-11-22T05:09:43.1097665Z Updating files:  44% (1588/3608)
+2026-11-22T05:09:43.1152303Z Updating files:  45% (1624/3608)
+2026-11-22T05:09:43.1220697Z Updating files:  46% (1660/3608)
+2026-11-22T05:09:43.1424772Z Updating files:  47% (1696/3608)
+2026-11-22T05:09:43.1472763Z Updating files:  48% (1732/3608)
+2026-11-22T05:09:43.1498922Z Updating files:  49% (1768/3608)
+2026-11-22T05:09:43.1528801Z Updating files:  50% (1804/3608)
+2026-11-22T05:09:43.1563421Z Updating files:  51% (1841/3608)
+2026-11-22T05:09:43.1625462Z Updating files:  52% (1877/3608)
+2026-11-22T05:09:43.1657631Z Updating files:  53% (1913/3608)
+2026-11-22T05:09:43.1712397Z Updating files:  54% (1949/3608)
+2026-11-22T05:09:43.1775017Z Updating files:  55% (1985/3608)
+2026-11-22T05:09:43.1805722Z Updating files:  56% (2021/3608)
+2026-11-22T05:09:43.1838179Z Updating files:  57% (2057/3608)
+2026-11-22T05:09:43.1865239Z Updating files:  58% (2093/3608)
+2026-11-22T05:09:43.1892520Z Updating files:  59% (2129/3608)
+2026-11-22T05:09:43.1935482Z Updating files:  60% (2165/3608)
+2026-11-22T05:09:43.1968162Z Updating files:  61% (2201/3608)
+2026-11-22T05:09:43.1987484Z Updating files:  62% (2237/3608)
+2026-11-22T05:09:43.2092965Z Updating files:  63% (2274/3608)
+2026-11-22T05:09:43.2110420Z Updating files:  64% (2310/3608)
+2026-11-22T05:09:43.2111250Z Updating files:  65% (2346/3608)
+2026-11-22T05:09:43.2111808Z Updating files:  66% (2382/3608)
+2026-11-22T05:09:43.2120591Z Updating files:  67% (2418/3608)
+2026-11-22T05:09:43.2151513Z Updating files:  68% (2454/3608)
+2026-11-22T05:09:43.2165583Z Updating files:  69% (2490/3608)
+2026-11-22T05:09:43.2208088Z Updating files:  70% (2526/3608)
+2026-11-22T05:09:43.2234766Z Updating files:  71% (2562/3608)
+2026-11-22T05:09:43.2255908Z Updating files:  72% (2598/3608)
+2026-11-22T05:09:43.2275006Z Updating files:  73% (2634/3608)
+2026-11-22T05:09:43.2296218Z Updating files:  74% (2670/3608)
+2026-11-22T05:09:43.2322091Z Updating files:  75% (2706/3608)
+2026-11-22T05:09:43.2345678Z Updating files:  76% (2743/3608)
+2026-11-22T05:09:43.2370652Z Updating files:  77% (2779/3608)
+2026-11-22T05:09:43.2411598Z Updating files:  78% (2815/3608)
+2026-11-22T05:09:43.2439813Z Updating files:  79% (2851/3608)
+2026-11-22T05:09:43.2471039Z Updating files:  80% (2887/3608)
+2026-11-22T05:09:43.2505444Z Updating files:  81% (2923/3608)
+2026-11-22T05:09:43.2526651Z Updating files:  82% (2959/3608)
+2026-11-22T05:09:43.2551239Z Updating files:  83% (2995/3608)
+2026-11-22T05:09:43.2573539Z Updating files:  84% (3031/3608)
+2026-11-22T05:09:43.2823656Z Updating files:  85% (3067/3608)
+2026-11-22T05:09:43.2843988Z Updating files:  86% (3103/3608)
+2026-11-22T05:09:43.2865919Z Updating files:  87% (3139/3608)
+2026-11-22T05:09:43.2889027Z Updating files:  88% (3176/3608)
+2026-11-22T05:09:43.2918220Z Updating files:  89% (3212/3608)
+2026-11-22T05:09:43.2945992Z Updating files:  90% (3248/3608)
+2026-11-22T05:09:43.2972092Z Updating files:  91% (3284/3608)
+2026-11-22T05:09:43.2997450Z Updating files:  92% (3320/3608)
+2026-11-22T05:09:43.3017271Z Updating files:  93% (3356/3608)
+2026-11-22T05:09:43.3040042Z Updating files:  94% (3392/3608)
+2026-11-22T05:09:43.3060607Z Updating files:  95% (3428/3608)
+2026-11-22T05:09:43.3085898Z Updating files:  96% (3464/3608)
+2026-11-22T05:09:43.3114754Z Updating files:  97% (3500/3608)
+2026-11-22T05:09:43.3151899Z Updating files:  98% (3536/3608)
+2026-11-22T05:09:43.3173635Z Updating files:  99% (3572/3608)
+2026-11-22T05:09:43.3174190Z Updating files: 100% (3608/3608)
+2026-11-22T05:09:43.3174630Z Updating files: 100% (3608/3608), done.
+2026-11-22T05:09:43.3216175Z Note: switching to 'ee881819ec01f26830dc8a04a50de19c8dfcb080'.
+2026-11-22T05:09:43.3216708Z 
+2026-11-22T05:09:43.3216949Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T05:09:43.3217470Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T05:09:43.3217970Z state without impacting any branches by switching back to a branch.
+2026-11-22T05:09:43.3218246Z 
+2026-11-22T05:09:43.3218595Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T05:09:43.3219073Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T05:09:43.3219345Z 
+2026-11-22T05:09:43.3219453Z   git switch -c <new-branch-name>
+2026-11-22T05:09:43.3219634Z 
+2026-11-22T05:09:43.3219738Z Or undo this operation with:
+2026-11-22T05:09:43.3219903Z 
+2026-11-22T05:09:43.3220293Z   git switch -
+2026-11-22T05:09:43.3220428Z 
+2026-11-22T05:09:43.3220657Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T05:09:43.3221368Z 
+2026-11-22T05:09:43.3221733Z HEAD is now at ee88181 Fence automatic coordinator and child work with independently acknowledged durable history
+2026-11-22T05:09:43.3355386Z ##[endgroup]
+2026-11-22T05:09:43.3413950Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T05:09:43.3450687Z ee881819ec01f26830dc8a04a50de19c8dfcb080
+2026-11-22T05:09:43.3460728Z ##[group]Removing auth
+2026-11-22T05:09:43.3465184Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T05:09:43.3505778Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T05:09:43.3758589Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T05:09:43.3797394Z http.https://github.com/.extraheader
+2026-11-22T05:09:43.3806793Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-22T05:09:43.3853614Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T05:09:43.4105599Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T05:09:43.4148869Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T05:09:43.4395339Z ##[endgroup]
+2026-11-22T05:09:43.4669355Z ##[group]Run actions/setup-node@v4
+2026-11-22T05:09:43.4669789Z with:
+2026-11-22T05:09:43.4670002Z   node-version-file: .nvmrc
+2026-11-22T05:09:43.4670255Z   always-auth: false
+2026-11-22T05:09:43.4670472Z   check-latest: false
+2026-11-22T05:09:43.4673282Z   token: ***
+2026-11-22T05:09:43.4673505Z ##[endgroup]
+2026-11-22T05:09:43.6176543Z Node version file is not JSON file
+2026-11-22T05:09:43.6179275Z Resolved .nvmrc as 24.22.3
+2026-11-22T05:09:43.6218081Z Found in cache @ /opt/hostedtoolcache/node/24.22.3/x64
+2026-11-22T05:09:43.6224063Z (node:2542) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T05:09:43.6225014Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T05:09:43.6227801Z ##[group]Environment details
+2026-11-22T05:09:44.0456959Z node: v24.22.3
+2026-11-22T05:09:44.0457302Z npm: 11.19.1
+2026-11-22T05:09:44.0457509Z yarn: 1.22.22
+2026-11-22T05:09:44.0458794Z ##[endgroup]
+2026-11-22T05:09:44.0659353Z ##[group]Run npm ci --ignore-scripts --no-audit --no-fund
+2026-11-22T05:09:44.0659883Z [36;1mnpm ci --ignore-scripts --no-audit --no-fund[0m
+2026-11-22T05:09:44.0691980Z shell: /usr/bin/bash -e {0}
+2026-11-22T05:09:44.0692287Z ##[endgroup]
+2026-11-22T05:09:45.9752481Z 
+2026-11-22T05:09:46.0164727Z added 4 packages in 2s
+2026-11-22T05:09:46.0213886Z ##[group]Run set -o pipefail
+2026-11-22T05:09:46.0214245Z [36;1mset -o pipefail[0m
+2026-11-22T05:09:46.0214600Z [36;1mnode --test --test-concurrency=1 --test-reporter=junit \[0m
+2026-11-22T05:09:46.0215034Z [36;1m  test/semantic-selected-orchestration*.test.js \[0m
+2026-11-22T05:09:46.0215408Z [36;1m  test/semantic-selected-history*.test.js \[0m
+2026-11-22T05:09:46.0215731Z [36;1m  test/semantic-module*.test.js \[0m
+2026-11-22T05:09:46.0216055Z [36;1m  test/semantic-source-session-v8.test.js \[0m
+2026-11-22T05:09:46.0216415Z [36;1m  test/semantic-region-support-cohort.test.js \[0m
+2026-11-22T05:09:46.0216778Z [36;1m  test/qualify-support-lifecycle.test.js \[0m
+2026-11-22T05:09:46.0217136Z [36;1m  2>&1 | tee "$RUNNER_TEMP/v8-continuation-tests.xml"[0m
+2026-11-22T05:09:46.0217459Z [36;1mpython - <<'PY'[0m
+2026-11-22T05:09:46.0217684Z [36;1mimport os[0m
+2026-11-22T05:09:46.0218108Z [36;1mimport xml.etree.ElementTree as ET[0m
+2026-11-22T05:09:46.0218459Z [36;1mfrom pathlib import Path[0m
+2026-11-22T05:09:46.0218998Z [36;1mcases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'v8-continuation-tests.xml').getroot().iter('testcase'))[0m
+2026-11-22T05:09:46.0219781Z [36;1mif not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):[0m
+2026-11-22T05:09:46.0220425Z [36;1m    raise ValueError('Every focused continuation control must run and pass')[0m
+2026-11-22T05:09:46.0221416Z [36;1mprint(f'{len(cases)} focused continuation controls passed with zero skips')[0m
+2026-11-22T05:09:46.0221864Z [36;1mPY[0m
+2026-11-22T05:09:46.0245141Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T05:09:46.0245517Z ##[endgroup]
+2026-11-22T05:09:46.0858614Z <?xml version="1.0" encoding="utf-8"?>
+2026-11-22T05:09:46.0859893Z <testsuites>
+2026-11-22T05:11:27.8360332Z 	<testcase name="test/qualify-support-lifecycle.test.js" time="0.251206" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/qualify-support-lifecycle.test.js"/>
+2026-11-22T05:11:27.8363939Z 	<testcase name="native-agreeing namespace typeof passes source/public checks and a fresh module recheck" time="1.297897" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-module-namespace-typeof-v8.test.js"/>
+2026-11-22T05:11:27.8367724Z 	<testcase name="namespace typeof cannot bypass an original-module graph rejected by the native reference" time="0.057549" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-module-namespace-typeof-v8.test.js"/>
+2026-11-22T05:11:27.8370692Z 	<!-- {"node":"v24.22.3","v8":"13.6.233.17-node.63","nativeModuleReference":"unsupported","publicStatus":"projection_refused","publicExported":false,"nativeConsumerAdmitted":false} -->
+2026-11-22T05:11:27.8375448Z 	<testcase name="native ESM independently agrees with owned live cells, a synchronous cycle and acyclic top-level await" time="2.392531" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-module-v8.test.js"/>
+2026-11-22T05:11:27.8378432Z 	<testcase name="ordered exports preserve module-cell state and input/returned aliases in one episode" time="1.576981" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-module-v8.test.js"/>
+2026-11-22T05:11:27.8381534Z 	<testcase name="destructured live module cells pass original-source/public checks and fresh module rechecking" time="1.552814" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-module-v8.test.js"/>
+2026-11-22T05:11:27.8384612Z 	<testcase name="static namespace re-export reads keep live-cell public projection without admitting namespace escape" time="1.574783" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-module-v8.test.js"/>
+2026-11-22T05:11:27.8387984Z 	<testcase name="owned module declarations do not bypass public class and generator observation boundaries" time="0.322351" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-module-v8.test.js"/>
+2026-11-22T05:11:27.8391182Z 	<testcase name="erased TypeScript and runtime-emitting enum declarations are separately source-qualified" time="1.400264" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-module-v8.test.js"/>
+2026-11-22T05:11:27.8394280Z 	<testcase name="module proof tampering, exotic namespace receivers and asynchronous cycles cannot be relabeled as qualified" time="0.547560" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-module-v8.test.js"/>
+2026-11-22T05:11:27.8396259Z 	<testcase name="parallel TLA links and runs in owned state while public/native module projection stays unqualified" time="6.733597" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-module-v8.test.js"/>
+2026-11-22T05:11:27.8398253Z 	<testcase name="module rechecking derives the scheduler refusal from source even when proof metadata lies" time="0.014962" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-module-v8.test.js"/>
+2026-11-22T05:11:27.8399998Z 	<testcase name="fixed support cohort keeps all 16 templates and four declared variants before execution" time="0.123971" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+2026-11-22T05:11:27.8402753Z 	<testcase name="support registry rejects changed split, membership and source-derived core relations" time="0.154129" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+2026-11-22T05:11:27.8405770Z 	<testcase name="support-only mutable materialization round-trips all 64 authored fixtures" time="0.093557" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+2026-11-22T05:11:27.8408282Z 	<testcase name="generic generation encoding still refuses genuinely frozen guest values" time="0.000337" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+2026-11-22T05:11:27.8410131Z 	<testcase name="automatic history waits for a durable acknowledged head before dispatch and retains completed recovery" time="2.162460" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8412725Z 	<testsuite name="automatic history stops on append, independent-read or head-acknowledgement failure before external work" time="0.398438" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-22T05:10:07.407Z" hostname="runnervmeozm8">
+2026-11-22T05:11:27.8414865Z 		<testcase name="append" time="0.076645" classname="automatic history stops on append, independent-read or head-acknowledgement failure before external work" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8417001Z 		<testcase name="read" time="0.115561" classname="automatic history stops on append, independent-read or head-acknowledgement failure before external work" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8419152Z 		<testcase name="acknowledge" time="0.106570" classname="automatic history stops on append, independent-read or head-acknowledgement failure before external work" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8421695Z 		<testcase name="wrong-head" time="0.098466" classname="automatic history stops on append, independent-read or head-acknowledgement failure before external work" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8422953Z 	</testsuite>
+2026-11-22T05:11:27.8424408Z 	<testcase name="a lost head acknowledgement leaves an independently recoverable accepted request with no dispatch" time="0.153350" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8426568Z 	<testcase name="cancellation during a pending durable acknowledgement cannot dispatch after that acknowledgement arrives" time="0.466488" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8428609Z 	<testcase name="a lost acknowledgement of the active checkpoint cannot be followed by guessed terminal authority" time="0.113633" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8430580Z 	<testcase name="cancellation waits for an in-flight native commit and preserves a late positive acknowledgement" time="0.210784" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8434023Z 	<testcase name="a late unknown native commit remains unknown in the terminal suffix and never dispatches" time="0.231121" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8436228Z 	<testcase name="cancellation waits for a pending original selection and retains its actual bytes without committing it" time="0.183597" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8438138Z 	<testcase name="cancellation cannot close native state before a consumed stale attempt is rejected" time="0.204026" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8440074Z 	<testcase name="lost terminal-head acknowledgement cannot close, and a fresh process returns the retained request disposition" time="0.353309" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8442783Z 	<testcase name="consumer-shaped native close reason is retained and malformed close evidence is rejected before native restore" time="0.246961" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8444704Z 	<testcase name="native close failure is retained as unknown without a positive close receipt" time="0.199350" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8446477Z 	<testsuite name="terminal recovery retains anchored native costs and original attempt bytes even under a rehashed head" time="0.602357" disabled="0" errors="0" tests="3" failures="0" skipped="0" timestamp="2026-11-22T05:10:10.169Z" hostname="runnervmeozm8">
+2026-11-22T05:11:27.8448428Z 		<testcase name="missing native metrics" time="0.020580" classname="terminal recovery retains anchored native costs and original attempt bytes even under a rehashed head" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8450487Z 		<testcase name="rolled-back native costs" time="0.021840" classname="terminal recovery retains anchored native costs and original attempt bytes even under a rehashed head" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8452985Z 		<testcase name="changed original native bytes" time="0.020955" classname="terminal recovery retains anchored native costs and original attempt bytes even under a rehashed head" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8454321Z 	</testsuite>
+2026-11-22T05:11:27.8455434Z 	<testcase name="consumed stale attempts are acknowledged durably before another prediction is requested" time="0.878948" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8457353Z 	<testcase name="manual flushing saves later observed state and capability arguments cannot mutate the retained head" time="0.084229" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8459271Z 	<testcase name="automatic storage bounds stop execution and are never bypassed by returning a successful model record" time="0.067488" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-automatic-v8.test.js"/>
+2026-11-22T05:11:27.8461442Z 	<testcase name="fsynced complete cuts survive a new reader process and read only the retained head" time="0.132141" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+2026-11-22T05:11:27.8463593Z 	<testcase name="competing writers can reacknowledge identical bytes but cannot replace a position" time="0.020564" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+2026-11-22T05:11:27.8465351Z 	<testcase name="append captures caller bytes synchronously and does not change their checkpoint" time="0.004993" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+2026-11-22T05:11:27.8467171Z 	<testcase name="changed files, omitted entries and reordered chains cannot match the retained receipt" time="0.011893" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+2026-11-22T05:11:27.8468946Z 	<testcase name="history bounds refuse the append before publishing another immutable position" time="0.005453" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+2026-11-22T05:11:27.8470664Z 	<testcase name="a branch or an older public checkpoint cannot extend an already retained cut" time="0.011802" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-storage-v8.test.js"/>
+2026-11-22T05:11:27.8472626Z 	<testsuite name="even a single authenticated cut rejects malformed native costs before opening model state" time="0.272898" disabled="0" errors="0" tests="8" failures="0" skipped="0" timestamp="2026-11-22T05:10:12.275Z" hostname="runnervmeozm8">
+2026-11-22T05:11:27.8474451Z 		<testcase name="rpcCalls=-1" time="0.029459" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8476582Z 		<testcase name="rpcCalls=1.5" time="0.027666" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8478510Z 		<testcase name="rpcCalls=true" time="0.025956" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8481783Z 		<testcase name="computeSeconds=-1" time="0.023569" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8485011Z 		<testcase name="computeSeconds=&quot;0&quot;" time="0.024068" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8487036Z 		<testcase name="computeSeconds=false" time="0.023624" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8488978Z 		<testcase name="peakMemoryBytes=-1" time="0.023648" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8491355Z 		<testcase name="peakMemoryBytes=null" time="0.023675" classname="even a single authenticated cut rejects malformed native costs before opening model state" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8493028Z 	</testsuite>
+2026-11-22T05:11:27.8494246Z 	<testcase name="restoration refuses checkpoint accessors without executing them" time="0.010127" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8496148Z 	<testcase name="an active driver refuses cancelled native-session authority before opening model state" time="0.018136" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8498009Z 	<testcase name="fresh-process recovery selects the later acknowledged cut without repeating a completed host effect" time="1.126671" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8499862Z 	<testcase name="an authenticated later cut restores its private callback snapshot before model state opens" time="0.804845" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8502018Z 	<testcase name="history validates each recorded ingress head and then admits an independently retained later input tail" time="0.585973" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-tail-v8.test.js"/>
+2026-11-22T05:11:27.8503909Z 	<testcase name="an older recorded cut recovers later accepted and stale attempts with one host dispatch and no redispatch" time="0.912107" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8505707Z 	<testsuite name="every recorded cut and all three consumed-attempt prefixes validate before native restore" time="0.833669" disabled="0" errors="0" tests="14" failures="0" skipped="0" timestamp="2026-11-22T05:10:16.103Z" hostname="runnervmeozm8">
+2026-11-22T05:11:27.8507605Z 		<testcase name="driver evidence rewrite" time="0.024832" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8509588Z 		<testcase name="transport evidence rewrite" time="0.025780" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8511859Z 		<testcase name="native evidence rewrite" time="0.026545" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8514163Z 		<testcase name="driver budget rollback" time="0.023055" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8516262Z 		<testcase name="native runtime cost rollback" time="0.028026" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8518184Z 		<testcase name="causal context rewrite" time="0.024267" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8520213Z 		<testcase name="native acknowledged prefix rollback" time="0.025733" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8522715Z 		<testcase name="native reconstruction omission" time="0.026152" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8524707Z 		<testcase name="native completion rollback" time="0.025776" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8526651Z 		<testcase name="policy substitution" time="0.024908" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8528584Z 		<testcase name="invalid middle host continuation" time="0.046816" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8530551Z 		<testcase name="invalid later host integrity" time="0.061531" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8532699Z 		<testcase name="omitted cut" time="0.001599" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8534538Z 		<testcase name="reordered cuts" time="0.006268" classname="every recorded cut and all three consumed-attempt prefixes validate before native restore" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8535536Z 	</testsuite>
+2026-11-22T05:11:27.8536664Z 	<testcase name="a valid same-session branch or an unrecorded checkpoint cannot replace acknowledged history" time="0.314026" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8538475Z 	<testcase name="a later recorded observed boundary admits durable ingress but an unsaved later boundary still refuses" time="0.594781" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8540267Z 	<testcase name="a later ingress head must extend the earlier recorded chain, not just increase its position" time="0.099876" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8542569Z 	<testcase name="a journal write failure or substituted acknowledgement never returns a successful durable cut" time="0.029262" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8544386Z 	<testcase name="backend argument mutation cannot replace the separately captured expected history head" time="0.174167" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-history-v8.test.js"/>
+2026-11-22T05:11:27.8546250Z 	<testcase name="restores coordinator-ready after exact create and bootstrap receipts" time="0.366698" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8548047Z 	<testcase name="restores bootstrapped active children within the declared active bound" time="0.317522" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8549756Z 	<testcase name="restored host bridge keeps the caller live clock" time="0.226229" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8552093Z 	<testcase name="restores the exact acknowledged stale child rejection and retries its original selection" time="0.513282" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8553977Z 	<testcase name="restores join-before-run and executes only the acknowledged child" time="0.306333" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8555755Z 	<testcase name="restores the mixed child ledger after exact native child completion" time="0.384880" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8557680Z 	<testcase name="composite verifier rejects mixed-ledger, dependency, and unknown-ack mutations" time="0.746027" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8559417Z 	<testcase name="checkpoint is unavailable before a safe point" time="0.007350" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8561511Z 	<testcase name="durable composite checkpoint requires an independent exact head acknowledgement and restores latest" time="3.066532" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8564361Z 	<testcase name="automatic composite history acknowledges the join safe point before child dispatch" time="18.238626" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js" failure="{&quot;category&quot;:&quot;Error&quot;,&quot;message&quot;:&quot;Selected orchestration v8 deadline exceeded&quot;}&#10;+ actual - expected&#10;&#10;+ 'resource_limited'&#10;- 'completed'&#10;">
+2026-11-22T05:11:27.8566794Z 		<failure type="testCodeFailure" message="{&quot;category&quot;:&quot;Error&quot;,&quot;message&quot;:&quot;Selected orchestration v8 deadline exceeded&quot;}&#10;+ actual - expected&#10;&#10;+ 'resource_limited'&#10;- 'completed'">
+2026-11-22T05:11:27.8568004Z [Error [ERR_TEST_FAILURE]: {"category":"Error","message":"Selected orchestration v8 deadline exceeded"}
+2026-11-22T05:11:27.8568501Z + actual - expected
+2026-11-22T05:11:27.8568637Z 
+2026-11-22T05:11:27.8568744Z + 'resource_limited'
+2026-11-22T05:11:27.8568962Z - 'completed'
+2026-11-22T05:11:27.8569155Z ] {
+2026-11-22T05:11:27.8569352Z   code: 'ERR_TEST_FAILURE',
+2026-11-22T05:11:27.8569632Z   failureType: 'testCodeFailure',
+2026-11-22T05:11:27.8570218Z   cause: AssertionError [ERR_ASSERTION]: {"category":"Error","message":"Selected orchestration v8 deadline exceeded"}
+2026-11-22T05:11:27.8571219Z   + actual - expected
+2026-11-22T05:11:27.8571548Z   
+2026-11-22T05:11:27.8571742Z   + 'resource_limited'
+2026-11-22T05:11:27.8571969Z   - 'completed'
+2026-11-22T05:11:27.8572164Z   
+2026-11-22T05:11:27.8572927Z       at TestContext.&lt;anonymous> (file:///home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js:311:12)
+2026-11-22T05:11:27.8573863Z       at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+2026-11-22T05:11:27.8574409Z       at async Test.run (node:internal/test_runner/test:1409:7)
+2026-11-22T05:11:27.8574927Z       at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+2026-11-22T05:11:27.8575364Z     generatedMessage: false,
+2026-11-22T05:11:27.8575615Z     code: 'ERR_ASSERTION',
+2026-11-22T05:11:27.8575870Z     actual: 'resource_limited',
+2026-11-22T05:11:27.8576124Z     expected: 'completed',
+2026-11-22T05:11:27.8576553Z     operator: 'strictEqual',
+2026-11-22T05:11:27.8576788Z     diff: 'simple'
+2026-11-22T05:11:27.8576990Z   }
+2026-11-22T05:11:27.8577160Z }
+2026-11-22T05:11:27.8577334Z 		</failure>
+2026-11-22T05:11:27.8577519Z 	</testcase>
+2026-11-22T05:11:27.8578642Z 	<testcase name="post-child persistence failure leaves a durable in-flight fence that refuses fresh replay" time="6.952044" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8580538Z 	<testcase name="automatic persistence refuses a journal readback that drops its pending fence" time="0.511928" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8583507Z 	<testcase name="requested child-ready pause stores a complete cut and arms its fence only on resumed dispatch" time="21.554138" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js" failure="{&quot;category&quot;:&quot;Error&quot;,&quot;message&quot;:&quot;Selected orchestration v8 deadline exceeded&quot;}&#10;+ actual - expected&#10;&#10;+ 'resource_limited'&#10;- 'completed'&#10;">
+2026-11-22T05:11:27.8585944Z 		<failure type="testCodeFailure" message="{&quot;category&quot;:&quot;Error&quot;,&quot;message&quot;:&quot;Selected orchestration v8 deadline exceeded&quot;}&#10;+ actual - expected&#10;&#10;+ 'resource_limited'&#10;- 'completed'">
+2026-11-22T05:11:27.8587137Z [Error [ERR_TEST_FAILURE]: {"category":"Error","message":"Selected orchestration v8 deadline exceeded"}
+2026-11-22T05:11:27.8587630Z + actual - expected
+2026-11-22T05:11:27.8587758Z 
+2026-11-22T05:11:27.8587865Z + 'resource_limited'
+2026-11-22T05:11:27.8588086Z - 'completed'
+2026-11-22T05:11:27.8588283Z ] {
+2026-11-22T05:11:27.8588477Z   code: 'ERR_TEST_FAILURE',
+2026-11-22T05:11:27.8588770Z   failureType: 'testCodeFailure',
+2026-11-22T05:11:27.8589365Z   cause: AssertionError [ERR_ASSERTION]: {"category":"Error","message":"Selected orchestration v8 deadline exceeded"}
+2026-11-22T05:11:27.8589899Z   + actual - expected
+2026-11-22T05:11:27.8590105Z   
+2026-11-22T05:11:27.8590290Z   + 'resource_limited'
+2026-11-22T05:11:27.8590508Z   - 'completed'
+2026-11-22T05:11:27.8590693Z   
+2026-11-22T05:11:27.8591639Z       at TestContext.&lt;anonymous> (file:///home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js:416:12)
+2026-11-22T05:11:27.8592562Z       at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+2026-11-22T05:11:27.8593089Z       at async Test.run (node:internal/test_runner/test:1409:7)
+2026-11-22T05:11:27.8593602Z       at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+2026-11-22T05:11:27.8594024Z     generatedMessage: false,
+2026-11-22T05:11:27.8594275Z     code: 'ERR_ASSERTION',
+2026-11-22T05:11:27.8594531Z     actual: 'resource_limited',
+2026-11-22T05:11:27.8594783Z     expected: 'completed',
+2026-11-22T05:11:27.8595400Z     operator: 'strictEqual',
+2026-11-22T05:11:27.8595684Z     diff: 'simple'
+2026-11-22T05:11:27.8595884Z   }
+2026-11-22T05:11:27.8596052Z }
+2026-11-22T05:11:27.8596228Z 		</failure>
+2026-11-22T05:11:27.8596415Z 	</testcase>
+2026-11-22T05:11:27.8597521Z 	<testcase name="requested orchestration safe point is snapshotted before native initialization awaits" time="0.090974" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8599389Z 	<testcase name="failed durable head acknowledgement leaves no reusable history receipt" time="0.263964" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T05:11:27.8601477Z 	<testcase name="model-only coordinator runs only the exact joined, bootstrapped child before its next choice" time="0.114057" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T05:11:27.8603522Z 	<testcase name="failed original coordinator bytes and one normalized cancellation reason survive cleanup" time="0.013186" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T05:11:27.8605337Z 	<testcase name="a committed create remains counted as acknowledged when bootstrap later fails" time="0.011956" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T05:11:27.8607157Z 	<testcase name="orchestration exposes only safe composite checkpoints and requires explicit durable dependencies" time="0.007658" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T05:11:27.8608979Z 	<testcase name="source sessions retain both independently checked fresh roots and every original target byte" time="1.588385" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:11:27.8610719Z 	<testcase name="session source recheck independently reruns both components after a JSON round trip" time="1.230029" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:11:27.8612760Z 	<testcase name="source session remains one exact member of the registry frozen before collection" time="1.542734" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:11:27.8614388Z 	<testcase name="rehashing an altered original source cannot certify a source session" time="0.144983" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:11:27.8616175Z 	<testcase name="rehashed changes to the composition plan, public bytes and component authority refuse" time="2.633689" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:11:27.8639690Z 	<testcase name="colliding callback identities retain both source dispositions and refuse session composition" time="2.658754" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:11:27.8641909Z 	<testcase name="a failed declared source call stays in the denominator and prevents partial session export" time="0.731787" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:11:27.8643751Z 	<testcase name="the bounded session profile refuses changed sources and out-of-range root counts before collection" time="0.000539" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:11:27.8645838Z 	<testcase name="native session receipts must bind the complete source collection and exact native gates" time="4.941084" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T05:11:27.8646841Z 	<!-- tests 108 -->
+2026-11-22T05:11:27.8647071Z 	<!-- suites 0 -->
+2026-11-22T05:11:27.8647284Z 	<!-- pass 106 -->
+2026-11-22T05:11:27.8647542Z 	<!-- fail 2 -->
+2026-11-22T05:11:27.8647896Z 	<!-- cancelled 0 -->
+2026-11-22T05:11:27.8648137Z 	<!-- skipped 0 -->
+2026-11-22T05:11:27.8648343Z 	<!-- todo 0 -->
+2026-11-22T05:11:27.8648578Z 	<!-- duration_ms 101769.166442 -->
+2026-11-22T05:11:27.8648836Z </testsuites>
+2026-11-22T05:11:27.8659499Z ##[error]Process completed with exit code 1.
+2026-11-22T05:11:27.8769171Z ##[group]Run actions/upload-artifact@v4
+2026-11-22T05:11:27.8769488Z with:
+2026-11-22T05:11:27.8769703Z   name: v8-continuation-controls
+2026-11-22T05:11:27.8769967Z   retention-days: 30
+2026-11-22T05:11:27.8770391Z   if-no-files-found: error
+2026-11-22T05:11:27.8770689Z   path: /home/runner/work/_temp/v8-continuation-tests.xml
+2026-11-22T05:11:27.8771246Z   compression-level: 6
+2026-11-22T05:11:27.8771475Z   overwrite: false
+2026-11-22T05:11:27.8771692Z   include-hidden-files: false
+2026-11-22T05:11:27.8771938Z ##[endgroup]
+2026-11-22T05:11:28.0785612Z (node:4353) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T05:11:28.0786521Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T05:11:28.0819297Z With the provided path, there will be 1 file uploaded
+2026-11-22T05:11:28.0820743Z Artifact name is valid!
+2026-11-22T05:11:28.0833500Z Root directory input is valid!
+2026-11-22T05:11:28.2919014Z Beginning upload of artifact content to blob storage
+2026-11-22T05:11:28.3209341Z (node:4353) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-22T05:11:28.3516421Z Uploaded bytes 5169
+2026-11-22T05:11:28.3685903Z Finished uploading artifact content to blob storage!
+2026-11-22T05:11:28.3686872Z SHA256 digest of uploaded artifact zip is 35ba9f05a2428b56b5c92c328f7b6151468a3df77200df30895bae2d8ffe18f6
+2026-11-22T05:11:28.3688446Z Finalizing artifact upload
+2026-11-22T05:11:28.6788321Z Artifact v8-continuation-controls.zip successfully finalized. Artifact ID 14741060084
+2026-11-22T05:11:28.6789970Z Artifact v8-continuation-controls has been successfully uploaded! Final size is 5169 bytes. Artifact ID is 14741060084
+2026-11-22T05:11:28.6795427Z Artifact download URL: https://github.com/werg/tracing-js-self/actions/runs/44988133073/artifacts/14741060084
+2026-11-22T05:11:28.7030131Z Post job cleanup.
+2026-11-22T05:11:28.7897132Z [command]/usr/bin/git version
+2026-11-22T05:11:28.7978102Z git version 2.56.1
+2026-11-22T05:11:28.8023811Z Temporarily overriding HOME='/home/runner/work/_temp/856c9ed3-cee1-438e-9ddc-fec25ff5d881' before making global git config changes
+2026-11-22T05:11:28.8025666Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T05:11:28.8029477Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-22T05:11:28.8073460Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T05:11:28.8115947Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T05:11:28.8396070Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T05:11:28.8438469Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T05:11:28.8730686Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T05:11:28.8781949Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T05:11:28.9212139Z Cleaning up orphan processes
+2026-11-22T05:11:28.9620245Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

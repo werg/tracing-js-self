@@ -1,0 +1,10 @@
+{
+  "schema": "module-scheduler-source-ownership-evidence/1",
+  "sourceCases": 6,
+  "actualNativeCases": 6,
+  "ownedTransitions": 64,
+  "publicAdmission": false,
+  "trainingAdmission": false,
+  "optimizerUpdates": 0,
+  "completeLocalReportSha256": "accc60f4081e6e220546bdbe8c916930d5889c129f660592a190c219e6253437"
+}

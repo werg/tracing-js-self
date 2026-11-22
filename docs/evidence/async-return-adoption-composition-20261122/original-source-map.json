@@ -1,0 +1,18 @@
+{
+  "originalRevision": "7fe5a9d57fbf456f0165534f089116b4b5db7279",
+  "originalPath": "test/semantic-async-call-source-v8.test.js",
+  "sourceCases": [
+    {
+      "name": "owned Promise.resolve return adoption",
+      "sourceSha256": "45767365322a8f4b54c342817db79ebcedcd386dc9eb80dc7fcfaadb76d5d723",
+      "expected": "qa",
+      "byteIdentical": true
+    },
+    {
+      "name": "owned Promise return adoption FIFO",
+      "sourceSha256": "118b708d8a825060e4a3e889be4896ee183c64b5f61a7ab532e35098e0f0ced2",
+      "expected": "dqa",
+      "byteIdentical": true
+    }
+  ]
+}

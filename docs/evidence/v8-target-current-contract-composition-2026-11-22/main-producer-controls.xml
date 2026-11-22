@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="test/qualify-support-lifecycle.test.js" time="0.738446" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/qualify-support-lifecycle.test.js"/>
+	<testcase name="fixed support cohort keeps all 16 templates and four declared variants before execution" time="0.112398" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+	<testcase name="support registry rejects changed split, membership and source-derived core relations" time="0.122327" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+	<testcase name="support-only mutable materialization round-trips all 64 authored fixtures" time="0.108619" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+	<testcase name="generic generation encoding still refuses genuinely frozen guest values" time="0.000445" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+	<!-- tests 5 -->
+	<!-- suites 0 -->
+	<!-- pass 5 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 749.112163 -->
+</testsuites>

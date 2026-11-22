@@ -41,7 +41,7 @@ const report={schema:'semantic-v6-baseline/1',producerRevision:git('rev-parse','
   producerTree:git('rev-parse','HEAD^{tree}'),workingTreeClean:git('status','--porcelain','--untracked-files=no')==='',
   environment:admissionEnvironment(),executionEnvironment:{timezone:env.TZ,locale:env.LC_ALL},
   executionLimits:{checkTimeoutMs,testConcurrency:jobs},
-  lockDigests:Object.fromEntries(['package-lock.json','tools/spec-oracle/package-lock.json',
+  lockDigests:Object.fromEntries(['npm-shrinkwrap.json','tools/spec-oracle/package-lock.json',
     'tools/native-consumer/requirements.lock','profiles/release-environment.lock.json',
     'contracts/native-admission-policy-v6.json','contracts/semantic-harness-v6.json',
     'contracts/host-operations-v4.json'].map(path=>[path,existsSync(join(root,path))?sha(readFileSync(join(root,path))):null])),

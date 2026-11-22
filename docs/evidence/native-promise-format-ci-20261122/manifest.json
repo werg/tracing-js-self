@@ -1,0 +1,83 @@
+{
+  "schema": "native-promise-format-ci/1",
+  "failedRun": 45045095235,
+  "failedJobs": [
+    137277861885,
+    137277862180
+  ],
+  "failedRevision": "ddda9a7339297e6074765a001743e2bb569e0eb9",
+  "localBaseRevision": "6f64ce0a26644c39079f7be71c841ee6d551f5b4",
+  "localFixRevision": "38305a3c1dff10a860e11a102bd9c3b2909104ea",
+  "localFixTree": "6133665850b80b40adb7e4682e24d0aea3032101",
+  "formatter": "ruff0.17.6",
+  "formattedFiles": 8,
+  "astChangedFiles": 0,
+  "requiredLocalLint": "passed",
+  "fullCpuSuiteRunAfterFormatting": false,
+  "oldWheelAndCombinedGateScope": "pre-format",
+  "files": [
+    {
+      "name": "original-run.json",
+      "path": "original-run.json",
+      "bytes": 11883,
+      "sha256": "23e560fb7afbdbe6478d2279037fa08ee37f6fd52f20e1e26835a0289e8495f3",
+      "storedBytes": 11883,
+      "storedSha256": "23e560fb7afbdbe6478d2279037fa08ee37f6fd52f20e1e26835a0289e8495f3",
+      "encoding": "identity"
+    },
+    {
+      "name": "original-jobs.json",
+      "path": "original-jobs.json",
+      "bytes": 10038,
+      "sha256": "66b3b4964d24c707c75556caa5b66192c28b5c8c5f467ce05937642fa44b6652",
+      "storedBytes": 10038,
+      "storedSha256": "66b3b4964d24c707c75556caa5b66192c28b5c8c5f467ce05937642fa44b6652",
+      "encoding": "identity"
+    },
+    {
+      "name": "python-3.11-job.log",
+      "path": "python-3.11-job.log.gz.b64",
+      "bytes": 133479,
+      "sha256": "b9640f1df14bad9c0217aa2159654211ded7ac8d6803376541ce962b84edd353",
+      "storedBytes": 31821,
+      "storedSha256": "f5af6c2f314140501117abe0735fdf68def648b48ef9334b04d6c64d79a94a79",
+      "encoding": "gzip-base64"
+    },
+    {
+      "name": "python-3.12-job.log",
+      "path": "python-3.12-job.log.gz.b64",
+      "bytes": 136648,
+      "sha256": "6840c887cd82c7d688539bc638ee0ec36021a11438c02cb0bbf012996a503df1",
+      "storedBytes": 32541,
+      "storedSha256": "c3e6a68657cbc9200acc3c7a491b5e62dca4b0e99e1858fce3f01dc0789cbb8c",
+      "encoding": "gzip-base64"
+    },
+    {
+      "name": "format.log",
+      "path": "format.log",
+      "bytes": 20,
+      "sha256": "e403cb4a6d2ddd145072064fd2716a3f6647ed81696b66b7d729b53cd05f60a8",
+      "storedBytes": 20,
+      "storedSha256": "e403cb4a6d2ddd145072064fd2716a3f6647ed81696b66b7d729b53cd05f60a8",
+      "encoding": "identity"
+    },
+    {
+      "name": "format-ast-proof.json",
+      "path": "format-ast-proof.json",
+      "bytes": 2643,
+      "sha256": "8eaf76e58fb64d48a318829afc03942bd26fb8c4a9939ee6e6abadf7f8d45c01",
+      "storedBytes": 2643,
+      "storedSha256": "8eaf76e58fb64d48a318829afc03942bd26fb8c4a9939ee6e6abadf7f8d45c01",
+      "encoding": "identity"
+    },
+    {
+      "name": "required-lint.log",
+      "path": "required-lint.log",
+      "bytes": 59,
+      "sha256": "23ec8f3f4d5bde12021f272588ba1b675d6767d68394ca4ae1ea661964f9d7bf",
+      "storedBytes": 59,
+      "storedSha256": "23ec8f3f4d5bde12021f272588ba1b675d6767d68394ca4ae1ea661964f9d7bf",
+      "encoding": "identity"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schema": "semantic-engineering-test-evidence/1",
+  "scope": "26 ordinary process, coordinator transport and host driver controls; deterministic protocol peers, not learned execution",
+  "producerParent": "347c0ec2c36651c7b1dd58f331034240dd4a9144",
+  "consumerHead": "b865b5f25f07b437075cc66e38c5bbfd14c5ae1c",
+  "consumerWorkingTreeNote": "The Python/JavaScript context comparison used the shared working consumer with a concurrent instruction-helper refactor. Its context bytes are asserted equal; this is not exact-pair executable qualification. Hosted gates check the committed policy pin separately.",
+  "tests": 26,
+  "passed": 26,
+  "failed": 0,
+  "skipped": 0,
+  "log": {
+    "path": "driver-26.log.gz.b64",
+    "encoding": "base64 of gzip of complete UTF-8 log",
+    "decodedBytes": 6381,
+    "decodedSha256": "bad01e75260aaf1e73172ea880f899c42f6726fef5d196afc5773cb18e532e58",
+    "encodedSha256": "51e95701b64f931f90f94795d21bd4de1e618e2137ea74d945f62f8a7c7ecf4d"
+  }
+}

@@ -99,13 +99,18 @@ test('receiver aliases and idempotent ingress remain explicit',()=>{
 });
 
 test('durable intent acknowledgment precedes native action; JSON recovery never reexecutes an uncertain write',async()=>{
-  let allowPersistence,resolveNative,calls=0;
-  const service={'demo.readAsync':()=>{calls++;return new Promise(resolve=>{resolveNative=resolve;});}};
-  const journal={append:()=>new Promise(resolve=>{allowPersistence=resolve;})};
+  let allowPersistence,resolveNative,claimEntered,nativeEntered,calls=0;
+  const claimStarted=new Promise(resolve=>{claimEntered=resolve;}),
+    nativeStarted=new Promise(resolve=>{nativeEntered=resolve;});
+  const service={'demo.readAsync':()=>{calls++;nativeEntered();return new Promise(resolve=>{resolveNative=resolve;});}};
+  const journal={append:async()=>{},
+    readIntent:async()=>{throw Object.assign(Error('missing'),{code:'ENOENT'});},
+    claim:()=>{claimEntered();return new Promise(resolve=>{allowPersistence=()=>resolve({claimed:true});});}};
   const h=new SelectedExecutionHarness({services:service,journal});begin(h);
   request(h,'first','a','a');const pending=h.dispatch('first','a');
-  await Promise.resolve();assert.equal(calls,0);assert.equal(h.timeline.some(event=>event.kind==='dispatch'),false);
-  allowPersistence();await Promise.resolve();await Promise.resolve();assert.equal(calls,1);
+  await claimStarted;assert.equal(calls,0);assert.equal(h.timeline.some(event=>event.kind==='dispatch'),false);
+  assert.throws(()=>h.checkpoint(),/acknowledgement/);
+  allowPersistence();await nativeStarted;assert.equal(calls,1);
   h.selected('first',w('await',{promise:'pa',continuation:'ca',invocation:'first'}));
   const packet=JSON.parse(JSON.stringify(h.checkpoint()));
   const restored=SelectedExecutionHarness.restore(packet,{services:service});
@@ -281,7 +286,7 @@ test('Promise readiness across two retained tracks uses one legal delivery order
 test('private queued arrivals survive closing registration and deliver only at an authorized checkpoint',async()=>{
   const h=new SelectedExecutionHarness({automaticDelivery:false});begin(h);
   h.registerEventHandler({subscriptionId:'subscription',programId:'p',realmId:'shared',
-    trackId:'worker',entry:'update',lifetime:'call',ownerInvocationId:'first'});
+    trackId:'worker:first',entry:'update',lifetime:'call',ownerInvocationId:'first'});
   const receipt=h.postEvent({subscriptionId:'subscription',eventId:'arrival',args:[{n:1}],deliver:false});
   assert.equal(receipt.status,'buffered');assert.equal(h.timeline.some(item=>item.kind==='event'),false);
   finish(h,'first',num(1));

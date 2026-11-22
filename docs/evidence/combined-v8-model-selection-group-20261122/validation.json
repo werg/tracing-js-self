@@ -1,0 +1,27 @@
+{
+  "actualModelGroup": {
+    "cases": 17,
+    "files": {
+      "tests/test_semantic_model_v8.py": 17
+    },
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "7240e3c46a8f5a1c9cd140f5937f9c7f083b7e8347a0ca72dee9a3fe42fca84c"
+  },
+  "structuralNative": 182,
+  "requiredGroups": {
+    "recovery": {
+      "native": 165,
+      "producer": 193
+    },
+    "promise": {
+      "native": 106,
+      "producer": 185
+    },
+    "modelSelectionEvidence": {
+      "native": 17
+    }
+  },
+  "requiredTotal": 666
+}

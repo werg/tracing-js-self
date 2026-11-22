@@ -1,0 +1,131 @@
+name: Full pinned Test262 edition audit
+on:
+  push:
+    branches: [codex/v8-edition-inventory-20261122]
+    paths:
+      - '.github/workflows/test262-frozen-edition-audit.yml'
+      - 'tools/catalog-test262.mjs'
+      - 'tools/audit-test262-edition.mjs'
+      - 'src/conformance/test262-*.js'
+      - 'src/conformance/ecma262-html-inventory.py'
+      - 'src/test262-baseline.js'
+      - 'artifacts/conformance/ecma262-17.0*'
+      - 'corpus/extension/snapshots/test262/**'
+      - 'npm-shrinkwrap.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: producer
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: tc39/test262
+          ref: d53ebc8b1931d9f1541e43d59650776e4b766248
+          path: test262
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Prepare external report directory
+        run: mkdir -p audit-evidence
+      - name: Verify toolchain and install locked dependencies
+        working-directory: producer
+        run: |
+          node --version | tee ../audit-evidence/toolchain.log
+          npm --version | tee -a ../audit-evidence/toolchain.log
+          python3 --version | tee -a ../audit-evidence/toolchain.log
+          xz --version | head -1 | tee -a ../audit-evidence/toolchain.log
+          npm ci 2>&1 | tee ../audit-evidence/npm-ci.log
+      - name: Build catalog from the exact upstream Git tree and retained edition bytes
+        working-directory: producer
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/catalog-test262.mjs \
+            --suite-root ../test262 \
+            --revision d53ebc8b1931d9f1541e43d59650776e4b766248 \
+            --out ../audit-evidence/test262-catalog-run.json 2>&1 | tee ../audit-evidence/catalog.log
+          node --input-type=module -e '
+            import {readFileSync,writeFileSync} from "node:fs";
+            const report=JSON.parse(readFileSync("../audit-evidence/test262-catalog-run.json","utf8"));
+            if(!report.catalog||report.catalog.suiteRevision!=="d53ebc8b1931d9f1541e43d59650776e4b766248")
+              throw Error("Catalog runner output is missing the exact frozen catalog");
+            writeFileSync("../audit-evidence/test262-catalog.json",JSON.stringify(report.catalog)+"\n");
+          '
+          xz -6 ../audit-evidence/test262-catalog-run.json ../audit-evidence/test262-catalog.json
+      - name: Reconcile all original source files and execution variants
+        working-directory: producer
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/audit-test262-edition.mjs \
+            --catalog ../audit-evidence/test262-catalog.json.xz \
+            --suite-root ../test262 \
+            --python python3 \
+            --out ../audit-evidence/test262-edition-audit.json.xz 2>&1 | tee ../audit-evidence/audit.log
+      - name: Verify exact denominator reconciliation and retained pins
+        working-directory: producer
+        run: |
+          node --input-type=module -e '
+            import {execFileSync} from "node:child_process";
+            const readXz=path=>JSON.parse(execFileSync("xz",["-dc",path],{maxBuffer:1024*1024*1024}));
+            const catalogRun=readXz("../audit-evidence/test262-catalog-run.json.xz");
+            const catalog=readXz("../audit-evidence/test262-catalog.json.xz");
+            const audit=readXz("../audit-evidence/test262-edition-audit.json.xz");
+            const s=audit.report.summary;
+            const membership=s.editionMembership??{};
+            const sum=object=>Object.values(object).reduce((a,b)=>a+b,0);
+            if(catalog.suiteRevision!=="d53ebc8b1931d9f1541e43d59650776e4b766248"||
+              catalogRun.catalog?.digest!==catalog.digest||
+              catalogRun.campaign?.catalogDigest!==catalog.digest||
+              catalogRun.campaign?.implementation?.producerRevision!==process.env.GITHUB_SHA||
+              catalog.profile.edition!=="ECMAScript 2026"||
+              catalog.profile.specification?.uri!=="https://262.ecma-international.org/17.0/index.html"||
+              catalog.profile.specification?.sha256!=="5df49e088c2b5c7a3dfd4a330414b92897fb4535cb62fc5936cad101a6c2304a"||
+              audit.report.specification?.uri!==catalog.profile.specification.uri||
+              audit.report.specification?.sha256!==catalog.profile.specification.sha256||
+              audit.report.suiteRevision!==catalog.suiteRevision||
+              audit.implementation?.producerRevision!==process.env.GITHUB_SHA||audit.implementation?.dirty!==false||
+              catalog.summary.testFiles!==53616||catalog.variants.length!==102994||
+              catalogRun.campaign.rows.length!==catalog.variants.length||
+              catalogRun.campaign.selectedIds.length!==catalog.variants.length||
+              s.catalogVariants!==catalog.variants.length||s.auditedVariants!==catalog.variants.length||
+              s.testFiles!==catalog.summary.testFiles||sum(s.variantModes)!==catalog.variants.length||
+              sum(s.sourceFilesByEditionMembership)!==catalog.summary.testFiles||
+              sum(s.expectedOutcomes.negativePhases)+s.expectedOutcomes.normal!==catalog.variants.length||
+              membership.unclassified!==catalog.variants.length||s.unresolvedEditionMembership!==catalog.variants.length||
+              s.releaseRequirement.required!==0||s.releaseRequirement.notRequired!==catalog.variants.length||
+              audit.report.claims.editionMembershipCertified!==false||
+              audit.report.claims.applicabilityCertified!==false||audit.report.claims.conformance!==false)
+              throw Error("Full frozen denominator, explicit unresolved classifications, or no-claim guard failed");
+            console.log(JSON.stringify({suiteRevision:catalog.suiteRevision,specification:catalog.profile.specification,
+              producerRevision:audit.implementation.producerRevision,producerDirty:audit.implementation.dirty,catalogDigest:catalog.digest,
+              auditDigest:audit.digest,testFiles:s.testFiles,variants:s.auditedVariants,
+              editionMembership:s.editionMembership,releaseRequirement:s.releaseRequirement,
+              modes:s.variantModes,expectedOutcomes:s.expectedOutcomes,claims:audit.report.claims},null,2));
+          ' | tee ../audit-evidence/denominator-check.log
+      - name: Hash retained audit evidence
+        working-directory: producer
+        run: cd ../audit-evidence && sha256sum test262-catalog-run.json.xz test262-catalog.json.xz test262-edition-audit.json.xz catalog.log audit.log denominator-check.log toolchain.log npm-ci.log > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test262-edition-audit-d53ebc8-${{ github.sha }}
+          path: |
+            audit-evidence/test262-catalog-run.json.xz
+            audit-evidence/test262-catalog.json.xz
+            audit-evidence/test262-edition-audit.json.xz
+            audit-evidence/catalog.log
+            audit-evidence/audit.log
+            audit-evidence/denominator-check.log
+            audit-evidence/toolchain.log
+            audit-evidence/npm-ci.log
+            audit-evidence/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 90

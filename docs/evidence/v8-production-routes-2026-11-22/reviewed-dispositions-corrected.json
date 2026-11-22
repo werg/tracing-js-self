@@ -1,0 +1,421 @@
+{
+  "schema": "semantic-production-route-review/1",
+  "inventoryDigest": "1b18357fd97cd960f662321f4aa679ef2cdb0c21eee435724b4ecd1081565c50",
+  "scope": "Every discovered registration has one reviewed disposition. This does not assert symbol-level, behavioral, deployment or semantic parity. File catalogs retain additional review candidates rather than declaring every tool a production service.",
+  "semanticParityQualified": false,
+  "defaultCutoverQualified": false,
+  "groups": [
+    {
+      "id": "owned-runtime",
+      "disposition": "shared-retain",
+      "purpose": "Owned execution, validation, replay, causal slicing and the five general CLI commands are shared runtime surfaces.",
+      "remainingGate": "Exercise all public entries from installed packages with semantic legacy readers absent; do not replace neutral trace APIs with a different format.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:cli:causal",
+        "producer:cli:demo",
+        "producer:cli:replay",
+        "producer:cli:run",
+        "producer:cli:validate",
+        "producer:npm:demo",
+        "producer:npm:trace",
+        "producer:package:/bin/tracing-js-self",
+        "producer:package:/exports/./browser",
+        "producer:package:/exports/./default",
+        "producer:package:/exports/.~1browser/default",
+        "producer:package:/exports/.~1browser/types",
+        "producer:package:/exports/.~1causal",
+        "producer:package:/exports/.~1replay",
+        "producer:package:/exports/.~1runtime",
+        "producer:package:/exports/.~1validation",
+        "producer:package:/main"
+      ]
+    },
+    {
+      "id": "legacy-selected-training",
+      "disposition": "legacy-active",
+      "purpose": "The public training entry still exports the V6 witness, selected harness, model driver and older compiler candidate.",
+      "remainingGate": "Map every fresh/retained invocation, callback, child, cancellation and restore behavior to V8; switch the public entry only after complete parity.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:package:/exports/.~1training"
+      ]
+    },
+    {
+      "id": "mixed-semantic-entry",
+      "disposition": "mixed-active",
+      "purpose": "The general semantic barrel exposes both V7 and explicit V8 APIs.",
+      "remainingGate": "Choose one canonical production semantic contract and qualify every exported replacement before retiring older exports.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:package:/exports/.~1semantic"
+      ]
+    },
+    {
+      "id": "explicit-v8-entry",
+      "disposition": "v8-opt-in",
+      "purpose": "The separate semantic/v8 public entry exposes direct V8 source, protocol, training, selected execution and service APIs.",
+      "remainingGate": "Repeat final-pair source/native/installed proof and complete all lifecycle/host parity; an explicit import does not change defaults.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:package:/exports/.~1semantic~1v8"
+      ]
+    },
+    {
+      "id": "selected-natlang",
+      "disposition": "legacy-active",
+      "purpose": "The selected Natlang environment imports the V6 harness and selected model driver.",
+      "remainingGate": "Implement and qualify the corresponding V8 selected environment for fresh and retained calls, result callbacks, errors, identities and durable restart.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:package:/exports/.~1natlang-selected/default",
+        "producer:package:/exports/.~1natlang-selected/types"
+      ]
+    },
+    {
+      "id": "owned-modules-natlang",
+      "disposition": "shared-retain",
+      "purpose": "Owned static/evaluated modules, retained module sessions, module facade and non-selected Natlang execution remain public.",
+      "remainingGate": "Preserve their exact APIs and source behavior; qualify broad V8 source/native projections, live bindings, dynamic imports and persistent recovery before cutover claims.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:package:/exports/.~1evaluated-module-facade/default",
+        "producer:package:/exports/.~1evaluated-module-facade/types",
+        "producer:package:/exports/.~1evaluated-module-session/default",
+        "producer:package:/exports/.~1evaluated-module-session/types",
+        "producer:package:/exports/.~1evaluated-modules/default",
+        "producer:package:/exports/.~1evaluated-modules/types",
+        "producer:package:/exports/.~1modules/default",
+        "producer:package:/exports/.~1modules/types",
+        "producer:package:/exports/.~1natlang/default",
+        "producer:package:/exports/.~1natlang/types"
+      ]
+    },
+    {
+      "id": "host-adapters",
+      "disposition": "shared-retain",
+      "purpose": "Native services, Node/browser capabilities and graph serialization are shared host boundaries.",
+      "remainingGate": "Run protocol to host to callback to protocol parity for every existing adapter, including cleanup and alias preservation, with legacy selected harness absent.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:package:/exports/.~1capabilities~1browser",
+        "producer:package:/exports/.~1capabilities~1graph",
+        "producer:package:/exports/.~1capabilities~1node",
+        "producer:package:/exports/.~1native/default",
+        "producer:package:/exports/.~1native/types",
+        "producer:package:/imports/#owned-proxy-check/browser",
+        "producer:package:/imports/#owned-proxy-check/default"
+      ]
+    },
+    {
+      "id": "durable-storage",
+      "disposition": "shared-retain",
+      "purpose": "The Node storage entry exports trace, module, ingress, selected-service and orchestration persistence.",
+      "remainingGate": "Bind each store to its owning V8 lifecycle; prove acknowledged recovery, no duplicate external work and explicit unknown outcomes across all supported cuts.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:package:/exports/.~1storage~1node/default",
+        "producer:package:/exports/.~1storage~1node/types"
+      ]
+    },
+    {
+      "id": "agent-reference-profiles",
+      "disposition": "shared-retain",
+      "purpose": "Virtual bounded agents and real native-worker references are distinct execution profiles.",
+      "remainingGate": "Retain their scope and identities; do not relabel a virtual scheduler as general agents or shared-memory semantic coverage.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:package:/exports/.~1agent-model",
+        "producer:package:/exports/.~1native-worker-agents"
+      ]
+    },
+    {
+      "id": "legacy-data-evaluation",
+      "disposition": "legacy-active",
+      "purpose": "Default training generation, selected evaluation, recheck, inspection and session campaigns still use legacy semantic tooling.",
+      "remainingGate": "Provide equivalent original-source V8 generation, split-bound admission, full target exposure, frozen evaluation and fresh release restoration before changing commands.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:npm:baseline:v6",
+        "producer:npm:semantic:compare",
+        "producer:npm:semantic:compare-costs",
+        "producer:npm:semantic:retained-costs",
+        "producer:npm:training:evaluate",
+        "producer:npm:training:freeze",
+        "producer:npm:training:generate",
+        "producer:npm:training:inspect",
+        "producer:npm:training:recheck",
+        "producer:npm:training:session-campaign"
+      ]
+    },
+    {
+      "id": "v7-tools",
+      "disposition": "legacy-active",
+      "purpose": "The explicitly named V7 admission/export/recheck tools and the default capability ledger retain their recorded version.",
+      "remainingGate": "Retire active legacy semantic commands after replacement population and final-head proof; preserve historical readers outside installed production dependencies.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:npm:coverage:current",
+        "producer:npm:semantic:v7:admit",
+        "producer:npm:semantic:v7:export",
+        "producer:npm:semantic:v7:recheck"
+      ]
+    },
+    {
+      "id": "v8-tools",
+      "disposition": "v8-opt-in",
+      "purpose": "Explicit V8 export/admission/cost/experiment commands and coverage:v8 have an implemented V8 route.",
+      "remainingGate": "Qualify complete final populations, production tokenizer costs, full optimizer exposure and held-out learned behavior; do not infer those from command availability.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:npm:coverage:v8",
+        "producer:npm:semantic:v8:admit",
+        "producer:npm:semantic:v8:costs",
+        "producer:npm:semantic:v8:experiment",
+        "producer:npm:semantic:v8:export"
+      ]
+    },
+    {
+      "id": "contract-checks",
+      "disposition": "mixed-active",
+      "purpose": "Contract checking still covers legacy and V8 generated definitions.",
+      "remainingGate": "Freeze and verify the final paired contract and remove active legacy generation only after replacement parity.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:npm:contracts:check",
+        "producer:npm:semantic:contract",
+        "producer:npm:semantic:v8:contract"
+      ]
+    },
+    {
+      "id": "research-and-regression-commands",
+      "disposition": "shared-retain",
+      "purpose": "Corpus acquisition, reference, differential, browser and ordinary test commands retain their complete populations.",
+      "remainingGate": "Keep failures/refusals/skips visible and preserve non-semantic tools; map any semantic output used for production to the final V8 admission policy.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "producer:npm:audit:engine",
+        "producer:npm:corpus:adversarial",
+        "producer:npm:corpus:adversarial:audit",
+        "producer:npm:corpus:ajv:reference",
+        "producer:npm:corpus:audit",
+        "producer:npm:corpus:exercism:owned",
+        "producer:npm:corpus:external",
+        "producer:npm:corpus:full:disposition",
+        "producer:npm:corpus:generate",
+        "producer:npm:corpus:owned-coverage",
+        "producer:npm:corpus:owned-merge",
+        "producer:npm:corpus:owned:novelty",
+        "producer:npm:corpus:production:owned",
+        "producer:npm:corpus:stateful",
+        "producer:npm:corpus:stateful:audit",
+        "producer:npm:corpus:stateful:differential",
+        "producer:npm:corpus:structured:reference",
+        "producer:npm:corpus:test262:reference",
+        "producer:npm:corpus:test262:reference:modules",
+        "producer:npm:corpus:test262:scalar",
+        "producer:npm:oracle:install",
+        "producer:npm:test",
+        "producer:npm:test:arithmetic",
+        "producer:npm:test:browser",
+        "producer:npm:test:selected-test262",
+        "producer:npm:test:semantic-algorithm",
+        "producer:npm:test:semantic-v8",
+        "producer:npm:test:test262-runtime"
+      ]
+    },
+    {
+      "id": "native-training-lifecycle",
+      "disposition": "mixed-active",
+      "purpose": "Ordinary train/check/evaluate/export/pipeline and distributed coordinator commands share the trainer, with explicit V8 policy and lineage paths.",
+      "remainingGate": "Qualify real production recipes and assets, resume/stage/distributed lineage, complete scored positions, installed export and service reload on the final pair.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "native:cli:megatoken diloco",
+        "native:cli:megatoken diloco export",
+        "native:cli:megatoken diloco init",
+        "native:cli:megatoken diloco serve",
+        "native:cli:megatoken evaluate",
+        "native:cli:megatoken export",
+        "native:cli:megatoken pipeline",
+        "native:cli:megatoken train",
+        "native:cli:megatoken train-check"
+      ]
+    },
+    {
+      "id": "native-general-commands",
+      "disposition": "shared-retain",
+      "purpose": "General codec, data, collection, media, retrieval, serving and infrastructure commands are not all semantic witness routes.",
+      "remainingGate": "Preserve unrelated formats and model versioning; verify common bundle/asset checks when used by V8 rather than removing whole general commands.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "native:cli:megatoken benchmark",
+        "native:cli:megatoken cache",
+        "native:cli:megatoken chunks",
+        "native:cli:megatoken chunks coverage",
+        "native:cli:megatoken chunks inspect",
+        "native:cli:megatoken chunks review",
+        "native:cli:megatoken chunks review claim",
+        "native:cli:megatoken chunks review export",
+        "native:cli:megatoken chunks review list",
+        "native:cli:megatoken chunks review release",
+        "native:cli:megatoken chunks review renew",
+        "native:cli:megatoken chunks review replay",
+        "native:cli:megatoken codec",
+        "native:cli:megatoken collect",
+        "native:cli:megatoken collection",
+        "native:cli:megatoken collection add",
+        "native:cli:megatoken collection build",
+        "native:cli:megatoken collection info",
+        "native:cli:megatoken demo",
+        "native:cli:megatoken doctor",
+        "native:cli:megatoken engram",
+        "native:cli:megatoken engram bake",
+        "native:cli:megatoken engram extract",
+        "native:cli:megatoken engram extract-native",
+        "native:cli:megatoken generate",
+        "native:cli:megatoken inspect",
+        "native:cli:megatoken kb",
+        "native:cli:megatoken kb build",
+        "native:cli:megatoken kb inspect",
+        "native:cli:megatoken prepare",
+        "native:cli:megatoken prepare-hindsight",
+        "native:cli:megatoken recipes",
+        "native:cli:megatoken reconcile",
+        "native:cli:megatoken serve",
+        "native:cli:megatoken sources",
+        "native:cli:megatoken sources pin-hf",
+        "native:cli:megatoken sources pin-local",
+        "native:console:megatoken"
+      ]
+    },
+    {
+      "id": "native-module-entrypoints",
+      "disposition": "shared-retain",
+      "purpose": "Python module launchers include CLI, cloud, preparation, publication, cache and worker entrypoints.",
+      "remainingGate": "Inspect every semantic launch/configuration passed through these entrypoints; qualify source identity, asset isolation and operational restore without assuming module presence is parity.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "native:module:megatoken.__main__",
+        "native:module:megatoken.cache",
+        "native:module:megatoken.cli",
+        "native:module:megatoken.cloud",
+        "native:module:megatoken.cloud_diloco",
+        "native:module:megatoken.cloud_prepare",
+        "native:module:megatoken.data.parsing.workers",
+        "native:module:megatoken.engram_prepare",
+        "native:module:megatoken.publish"
+      ]
+    },
+    {
+      "id": "native-v6-selected-service",
+      "disposition": "legacy-active",
+      "purpose": "The original JSONL selected semantic service still exposes twelve registered operations.",
+      "remainingGate": "Map all twelve to acknowledged V8 equivalents, including retained requests and closure, then switch callers and retire the old server after end-to-end proof.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "native:rpc:scripts/serve_selected_semantic.py:cancel",
+        "native:rpc:scripts/serve_selected_semantic.py:cancel-orchestration",
+        "native:rpc:scripts/serve_selected_semantic.py:checkpoint",
+        "native:rpc:scripts/serve_selected_semantic.py:commit-request",
+        "native:rpc:scripts/serve_selected_semantic.py:complete",
+        "native:rpc:scripts/serve_selected_semantic.py:initialize",
+        "native:rpc:scripts/serve_selected_semantic.py:open-orchestration",
+        "native:rpc:scripts/serve_selected_semantic.py:restore",
+        "native:rpc:scripts/serve_selected_semantic.py:select",
+        "native:rpc:scripts/serve_selected_semantic.py:select-controlled",
+        "native:rpc:scripts/serve_selected_semantic.py:status-orchestration",
+        "native:rpc:scripts/serve_selected_semantic.py:step-orchestration"
+      ]
+    },
+    {
+      "id": "native-v8-selected-service",
+      "disposition": "v8-opt-in",
+      "purpose": "The snapshot V8 server exposes twenty-two canonical operation names and eight additional accepted separator spellings, including candidate bootstrap and terminal-close recovery.",
+      "remainingGate": "Qualify complete producer history, exact recovery bytes, every child and terminal cut, unknown-outcome refusals and final installed service; later causal-bootstrap names require a refreshed inventory.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "native:rpc:scripts/serve_semantic_v8.py:bootstrap_orchestration_child",
+        "native:rpc:scripts/serve_semantic_v8.py:cancel",
+        "native:rpc:scripts/serve_semantic_v8.py:cancel_orchestration",
+        "native:rpc:scripts/serve_semantic_v8.py:checkpoint",
+        "native:rpc:scripts/serve_semantic_v8.py:commit",
+        "native:rpc:scripts/serve_semantic_v8.py:commit_orchestration",
+        "native:rpc:scripts/serve_semantic_v8.py:complete",
+        "native:rpc:scripts/serve_semantic_v8.py:durable-bootstrap",
+        "native:rpc:scripts/serve_semantic_v8.py:durable-close",
+        "native:rpc:scripts/serve_semantic_v8.py:durable-commit",
+        "native:rpc:scripts/serve_semantic_v8.py:initialize",
+        "native:rpc:scripts/serve_semantic_v8.py:metrics",
+        "native:rpc:scripts/serve_semantic_v8.py:open_orchestration",
+        "native:rpc:scripts/serve_semantic_v8.py:recover-bootstrap",
+        "native:rpc:scripts/serve_semantic_v8.py:recover-close",
+        "native:rpc:scripts/serve_semantic_v8.py:recover-commit",
+        "native:rpc:scripts/serve_semantic_v8.py:reject",
+        "native:rpc:scripts/serve_semantic_v8.py:restore",
+        "native:rpc:scripts/serve_semantic_v8.py:select",
+        "native:rpc:scripts/serve_semantic_v8.py:select_orchestration",
+        "native:rpc:scripts/serve_semantic_v8.py:status",
+        "native:rpc:scripts/serve_semantic_v8.py:status_orchestration"
+      ]
+    },
+    {
+      "id": "native-default-semantic-stream",
+      "disposition": "legacy-active",
+      "purpose": "The default semantic_execution stream still resolves to the older semantic corpus producer.",
+      "remainingGate": "Make V8 the sole active semantic producer only after original-source supply, recipe and lifecycle parity; explicit V8 selection does not change this default.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "native:stream:default:semantic_execution"
+      ]
+    },
+    {
+      "id": "native-v8-semantic-stream",
+      "disposition": "v8-opt-in",
+      "purpose": "The explicit v8 semantic_execution registry resolves to the strict V8 corpus producer.",
+      "remainingGate": "Bind final source/registry/tokenizer/contract identities, complete source supply and fresh ordinary preparation; retain every rejection disposition.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "native:stream:v8:semantic_execution"
+      ]
+    },
+    {
+      "id": "native-other-streams",
+      "disposition": "shared-retain",
+      "purpose": "Other registered data streams are unrelated semantic-version contracts and remain part of the general trainer.",
+      "remainingGate": "Preserve their existing preparation and stage supply; do not remove them as part of a semantic V6/V7 cutover.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "native:stream:default:av_understanding",
+        "native:stream:default:context_management",
+        "native:stream:default:cross_track_evidence",
+        "native:stream:default:duplex_execution",
+        "native:stream:default:dynamic_execution",
+        "native:stream:default:endpoint_conditioned_video",
+        "native:stream:default:endpoints",
+        "native:stream:default:speech_counterfactual",
+        "native:stream:default:streaming_translation",
+        "native:stream:default:timed_conversation"
+      ]
+    },
+    {
+      "id": "native-training-stages",
+      "disposition": "shared-retain",
+      "purpose": "All ten canonical raw stage definitions and their shared training defaults are retained; effective configuration also depends on the ordinary configuration loader and caller overrides.",
+      "remainingGate": "Qualify semantic-bearing stages with actual final V8 supply, exact stage-scoped exposure, production assets and cost; keep unrelated mixtures unchanged.",
+      "semanticParityQualified": false,
+      "registrationIds": [
+        "native:stage:B0",
+        "native:stage:D",
+        "native:stage:LC",
+        "native:stage:M1",
+        "native:stage:M2",
+        "native:stage:MB",
+        "native:stage:P1",
+        "native:stage:S",
+        "native:stage:SC",
+        "native:stage:SE"
+      ]
+    }
+  ]
+}

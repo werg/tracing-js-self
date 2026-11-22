@@ -62,6 +62,8 @@ export function regionFamilyMembership(candidate,index=0){
   const status=candidate?.status??side?.admission??'unqualified';
   const candidateId=candidate?.id??side?.taskId??side?.sourceArtifact?.sidecar?.taskId??null;
   const episodeDigest=hasArtifact?digest(artifact.public):null;
+  const orchestrationTranscriptDigest=hasArtifact&&Object.hasOwn(side,'orchestrationTranscript')?
+    digest(side.orchestrationTranscript):null;
   let id;
   if(existingIdentity!==undefined){
     if(existingIdentity?.schema!==REGION_FAMILY_SPLIT_SCHEMA)fail('pre-bound candidate has a legacy or unknown split');
@@ -69,11 +71,12 @@ export function regionFamilyMembership(candidate,index=0){
     verifyRegionSplitIdentity(existingIdentity,{id,family,ancestors,source,entry,coreDigest});
   }else if(exactSource){
     const label=text(candidateId)?candidateId:family;
-    id=label.slice(0,180)+':'+digest({source,entry,family,episodeDigest}).slice(0,40);
+    id=label.slice(0,180)+':'+digest({source,entry,family,episodeDigest,
+      ...(orchestrationTranscriptDigest===null?{}:{orchestrationTranscriptDigest})}).slice(0,40);
   }else id='unregistered:'+index;
   return {index,id,candidateId:text(candidateId)?candidateId:null,family:text(family)?family:null,
     source:text(source)?source:null,entry:text(entry)?entry:null,ancestors,coreDigest,
-    exactSource,episodeDigest,qualified:hasArtifact&&exactSource&&sourceAccepted(status),status,
+    exactSource,episodeDigest,orchestrationTranscriptDigest,qualified:hasArtifact&&exactSource&&sourceAccepted(status),status,
     reason:candidate?.reason??(!exactSource?'Exact source, entry or original family is missing':null),
     category:candidate?.category??null,phase:candidate?.phase??null,
     splitIdentity:existingIdentity??null,artifact:hasArtifact?artifact:null,candidate};
@@ -120,7 +123,7 @@ export function prepareRegionFamilyRegistry(candidates,options={}){
   const seen=new Map(),members=candidates.map((candidate,index)=>{
     const member=regionFamilyMembership(candidate,index),prior=seen.get(member.id);
     if(prior){
-      for(const key of ['family','source','entry','ancestors','episodeDigest','splitIdentity'])
+      for(const key of ['family','source','entry','ancestors','episodeDigest','orchestrationTranscriptDigest','splitIdentity'])
         if(!isDeepStrictEqual(member[key],prior[key]))fail('duplicate source identity has different evidence');
       member.duplicateOf=prior.index+1;
     }else seen.set(member.id,member);

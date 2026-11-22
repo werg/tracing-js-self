@@ -1,0 +1,53 @@
+{
+  "sourceHelper": "/workspace/scratch/175924c3d3c2/worktrees/promise-combined-gate/tools/verify-combined-v8-gate.py",
+  "originalProof": "/workspace/scratch/175924c3d3c2/session/combined-gate-position-proof/pytest-temp/test_full_controlled_corpus_ex0/position-proof.json",
+  "verified": {
+    "file": "position-proof.json",
+    "sha256": "e613a6a7300d26360db231ca2ada727911286ffe3b81605e542a6435d97ff580",
+    "sourceCommit": "a8cf158882913fcf920f71b4f1efa85270d13e41",
+    "boundaries": {
+      "sourceAdmission": "injected fixture receipt",
+      "tokenizerAdmission": "injected byte-fallback fixture",
+      "sourcePopulation": "one controlled prepared fixture, not the 64-source support population"
+    },
+    "firstPhaseOptimizerUpdates": 3,
+    "phaseTransitionOptimizerUpdates": 1,
+    "totalOptimizerUpdatesExecuted": 4,
+    "routerInternalPositionCoverage": "unmeasured",
+    "learnedSuccess": null
+  },
+  "negativeControls": [
+    {
+      "case": "another-native-revision",
+      "status": "refused",
+      "reason": "Controlled position evidence belongs to another native checkout"
+    },
+    {
+      "case": "unsupported-global-zero",
+      "status": "refused",
+      "reason": "Controlled optimizer update counts differ from the executed two-phase test"
+    },
+    {
+      "case": "missing-fixture-boundary",
+      "status": "refused",
+      "reason": "Controlled fixture evidence cannot grant production admission"
+    },
+    {
+      "case": "boolean-first-phase-count",
+      "status": "refused",
+      "reason": "Controlled optimizer update counts differ from the executed two-phase test"
+    },
+    {
+      "case": "missing-transition-update",
+      "status": "refused",
+      "reason": "Controlled position exposure does not match actual optimizer steps"
+    },
+    {
+      "case": "learned-quality-inference",
+      "status": "refused",
+      "reason": "Controlled fixture cannot infer learned quality or router coverage"
+    }
+  ],
+  "semanticTestCasesUnchanged": 637,
+  "fullCombinedGateRerun": false
+}

@@ -1,0 +1,70 @@
+{
+  "schema": "native-source-authority-composition/1",
+  "sourceRevision": "a8cf158882913fcf920f71b4f1efa85270d13e41",
+  "sourceTree": "8698f34329ae2827aff090c05bdfdc2941974d10",
+  "originalPublishedSource": "c253a1e7770ee569d1b2022efadb471a1cc98da2",
+  "originalPublishedProof": "200da926eef6c90670e5837797c1e72028912741",
+  "counts": {
+    "cases": 69,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "previousCases": 62,
+    "addedCases": 7
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "torch": "2.10.0+cpu",
+    "pytest": "8.4.2",
+    "ruff": "0.17.6"
+  },
+  "controlledActualOptimizerUpdates": 1,
+  "newIdentityControlOptimizerUpdates": 0,
+  "freshSourceReplays": 0,
+  "fullPairedReleaseQualified": false,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3779,
+      "sha256": "c9afabc9d8f1c47183688baf02099272c46abe7312cc6317d8b062774ec33688"
+    },
+    {
+      "path": "composition-map.json",
+      "bytes": 5641,
+      "sha256": "45b521c114145b7479168e2ec97ff48c06818c7048653f2d3d3fbace5afc11fa"
+    },
+    {
+      "path": "lint-path-error-attempt.log",
+      "bytes": 31,
+      "sha256": "373d35bc45a1b44a1084fd3c183c70cb48ce6debd91a48b4819727e85b2d3df5"
+    },
+    {
+      "path": "local-invocation-note.json",
+      "bytes": 565,
+      "sha256": "43a3a78d83ba17a7c8bd5f74597db1cedc011c2d5a29ca5a4504c7331faa2568"
+    },
+    {
+      "path": "required-lint.log",
+      "bytes": 59,
+      "sha256": "23ec8f3f4d5bde12021f272588ba1b675d6767d68394ca4ae1ea661964f9d7bf"
+    },
+    {
+      "path": "verifier.log",
+      "bytes": 213,
+      "sha256": "f1356a33f3e2e2032cc0704c53baba81cafc8cc28a1682d35bb629e436c46f28"
+    },
+    {
+      "path": "verifier.xml",
+      "bytes": 10895,
+      "sha256": "1531c37f08ad2cc06c53e6368fe031dd81f2552a84b5e65fae4dd8f9cfb330f6"
+    },
+    {
+      "path": "published-source-change.patch.gz.b64",
+      "bytes": 4237,
+      "sha256": "275e696132147e7a389f817d7ecebe8a29064ea35b3cca369408bb6e583627d8",
+      "encoding": "gzip-base64",
+      "originalBytes": 10924,
+      "originalSha256": "8714de972e524e038e2b5236a97e945293e5470d5f9912ba5e0ab733232f1ea2"
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+{
+  "fixtureTestImports": "Exact source checkout; wheel module and contract bytes independently matched",
+  "github": {
+    "GITHUB_JOB": "paired",
+    "GITHUB_RUN_ATTEMPT": "1",
+    "GITHUB_RUN_ID": "45047889597",
+    "GITHUB_SHA": "cc0d61e98dc6252749f4a2a4c8b669d79b0f7efa",
+    "GITHUB_WORKFLOW_REF": "werg/tracing-js-self/.github/workflows/v8-combined-recovery-promise.yml@refs/heads/codex/language-coverage-v8-cutover"
+  },
+  "installed": {
+    "contractSha256": "ad09b9ad4f777165c00763b42519c152de7c0f5b02964a19821d3b22667ef58b",
+    "importMode": "isolated-installed-wheel",
+    "packageFilesSha256": "3419a32978ef7d71cf4e29665725f12023bffb0af78d2caa1af3cbdc4005448d",
+    "root": "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/megatoken",
+    "sourceReceipts": [],
+    "verifiedPythonFiles": 267
+  },
+  "lane": "commit-history",
+  "pair": {
+    "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "gateSpecSha256": "432fb031331297cf16e820b28a25d72c86a63567831bc18732099af04a1a33c4",
+    "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+    "native": {
+      "revision": "cdd01ac0dcd65d92e948cec39f7b5c156800206e",
+      "tree": "8698f34329ae2827aff090c05bdfdc2941974d10"
+    },
+    "policySha256": "b79963ff2ad6b0c3c34f36de623079bc350e020b56398a9b708df5e6278fb8fa",
+    "producer": {
+      "revision": "cc0d61e98dc6252749f4a2a4c8b669d79b0f7efa",
+      "tree": "c10c3dc89361c443583955fab0a8a37a22ac092a"
+    }
+  },
+  "payloads": [
+    {
+      "encoding": "copy",
+      "native": "src/megatoken/data/contracts/semantic-execution-v8.json",
+      "nativeSha256": "ad09b9ad4f777165c00763b42519c152de7c0f5b02964a19821d3b22667ef58b",
+      "source": "contracts/semantic-execution-v8.json",
+      "sourceBytes": 82585,
+      "sourceSha256": "ad09b9ad4f777165c00763b42519c152de7c0f5b02964a19821d3b22667ef58b"
+    },
+    {
+      "encoding": "gzip-base64",
+      "native": "tests/fixtures/semantic-regions-v8.json.gz.b64",
+      "nativeSha256": "f3e5225516e4db740665e746226c76be65dff4fcb73d0aae545e0d4f215393ca",
+      "source": "test/fixtures/semantic-regions-v8.json",
+      "sourceBytes": 2045603,
+      "sourceSha256": "eae00662b5d38381facbf31543f01756308e2cb12afad44088ad5ae02cced89c"
+    },
+    {
+      "encoding": "copy",
+      "native": "tests/fixtures/semantic-protocol-v8.json",
+      "nativeSha256": "704dcb2f7a34d7bd2089391020b1686a0e9ef118def323ed1db99227e05e5d58",
+      "source": "test/fixtures/semantic-protocol-v8.json",
+      "sourceBytes": 29227,
+      "sourceSha256": "704dcb2f7a34d7bd2089391020b1686a0e9ef118def323ed1db99227e05e5d58"
+    },
+    {
+      "encoding": "copy",
+      "native": "tests/fixtures/semantic-iterator-v8.json",
+      "nativeSha256": "f124dba091c3fa36463fd0c6b79b98e5566c14cc0807938b25954d68f8d1db69",
+      "source": "test/fixtures/semantic-iterator-v8.json",
+      "sourceBytes": 32084,
+      "sourceSha256": "f124dba091c3fa36463fd0c6b79b98e5566c14cc0807938b25954d68f8d1db69"
+    },
+    {
+      "encoding": "copy",
+      "native": "tests/fixtures/semantic-protocol-source-v8.json",
+      "nativeSha256": "8d4943e57e4033a1a4dfc3649d53ae9e1b8d42039375c618b35a6664c040f382",
+      "source": "test/fixtures/semantic-protocol-source-v8.json",
+      "sourceBytes": 171870,
+      "sourceSha256": "8d4943e57e4033a1a4dfc3649d53ae9e1b8d42039375c618b35a6664c040f382"
+    },
+    {
+      "encoding": "gzip-base64",
+      "native": "tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
+      "nativeSha256": "f6f5e37868bc0350d6901a7a8df0140d7f7ad6b4c5608675cdec1eaed8838b04",
+      "source": "test/fixtures/semantic-protocol-region-v8.json",
+      "sourceBytes": 9187898,
+      "sourceSha256": "6afc19c9a25d27be91849b330a4d300bcc7a3d0160c4414bf4c40c7811871a98"
+    },
+    {
+      "encoding": "copy",
+      "native": "tests/fixtures/semantic-host-protocol-v8.json.gz.b64",
+      "nativeSha256": "d55fb40d10b582e861b2099e03c10a95e04213a09fca404e2367ee1489a0f5ab",
+      "source": "test/fixtures/semantic-host-protocol-v8.json.gz.b64",
+      "sourceBytes": 60565,
+      "sourceSha256": "d55fb40d10b582e861b2099e03c10a95e04213a09fca404e2367ee1489a0f5ab"
+    }
+  ],
+  "runtime": {
+    "clockIdentity": "time:[4026531834]",
+    "node": "24.22.3",
+    "packages": {
+      "anyio": "4.16.0",
+      "attrs": "26.1.0",
+      "certifi": "2026.10.23",
+      "click": "8.5.1",
+      "editables": "0.6",
+      "filelock": "4.2.12",
+      "fsspec": "2026.9.0",
+      "h11": "0.16.0",
+      "hatchling": "1.33.0",
+      "hf-xet": "1.8.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "huggingface-hub": "1.33.0",
+      "idna": "3.20",
+      "iniconfig": "2.3.1",
+      "jinja2": "3.1.6",
+      "jsonschema": "4.26.0",
+      "jsonschema-specifications": "2025.9.1",
+      "markdown-it-py": "4.0.0",
+      "markupsafe": "3.0.4",
+      "mdurl": "0.1.2",
+      "mpmath": "1.3.0",
+      "networkx": "3.7",
+      "numpy": "2.5.5",
+      "packaging": "26.3",
+      "pathspec": "1.1.1",
+      "pluggy": "1.7.0",
+      "pygments": "2.21.0",
+      "pytest": "8.4.2",
+      "pyyaml": "6.0.3",
+      "referencing": "0.37.0",
+      "rpds-py": "2026.9.1",
+      "safetensors": "0.8.0",
+      "setuptools": "84.2.1",
+      "sympy": "1.14.0",
+      "tokenizers": "0.23.3",
+      "tomlkit": "0.15.2",
+      "torch": "2.10.0+cpu",
+      "tqdm": "4.70.1",
+      "tree-sitter": "0.25.2",
+      "tree-sitter-c-sharp": "0.23.5",
+      "tree-sitter-embedded-template": "0.25.0",
+      "tree-sitter-language-pack": "0.13.0",
+      "tree-sitter-yaml": "0.7.2",
+      "trove-classifiers": "2026.9.21.13",
+      "typing-extensions": "4.16.0",
+      "uniseg": "0.10.1"
+    },
+    "python": "3.12.14",
+    "requirementsLockSha256": "233ce2065a5eebb85472eb2bdab714bedc26aa74536c6c0df73ea0081f204135"
+  },
+  "schema": "semantic-v8-combined-pair/1"
+}

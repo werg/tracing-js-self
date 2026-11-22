@@ -1,0 +1,133 @@
+{
+  "schema": "semantic-v8-combined-gate/1",
+  "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+  "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+  "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+  "sourceExamples": 23,
+  "payloads": [
+    {
+      "source": "contracts/semantic-execution-v8.json",
+      "native": "src/megatoken/data/contracts/semantic-execution-v8.json",
+      "encoding": "copy",
+      "nativeSha256": "ad09b9ad4f777165c00763b42519c152de7c0f5b02964a19821d3b22667ef58b"
+    },
+    {
+      "source": "test/fixtures/semantic-regions-v8.json",
+      "native": "tests/fixtures/semantic-regions-v8.json.gz.b64",
+      "encoding": "gzip-base64",
+      "nativeSha256": "f3e5225516e4db740665e746226c76be65dff4fcb73d0aae545e0d4f215393ca"
+    },
+    {
+      "source": "test/fixtures/semantic-protocol-v8.json",
+      "native": "tests/fixtures/semantic-protocol-v8.json",
+      "encoding": "copy",
+      "nativeSha256": "704dcb2f7a34d7bd2089391020b1686a0e9ef118def323ed1db99227e05e5d58"
+    },
+    {
+      "source": "test/fixtures/semantic-iterator-v8.json",
+      "native": "tests/fixtures/semantic-iterator-v8.json",
+      "encoding": "copy",
+      "nativeSha256": "f124dba091c3fa36463fd0c6b79b98e5566c14cc0807938b25954d68f8d1db69"
+    },
+    {
+      "source": "test/fixtures/semantic-protocol-source-v8.json",
+      "native": "tests/fixtures/semantic-protocol-source-v8.json",
+      "encoding": "copy",
+      "nativeSha256": "8d4943e57e4033a1a4dfc3649d53ae9e1b8d42039375c618b35a6664c040f382"
+    },
+    {
+      "source": "test/fixtures/semantic-protocol-region-v8.json",
+      "native": "tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
+      "encoding": "gzip-base64",
+      "nativeSha256": "f6f5e37868bc0350d6901a7a8df0140d7f7ad6b4c5608675cdec1eaed8838b04"
+    },
+    {
+      "source": "test/fixtures/semantic-host-protocol-v8.json.gz.b64",
+      "native": "tests/fixtures/semantic-host-protocol-v8.json.gz.b64",
+      "encoding": "copy",
+      "nativeSha256": "d55fb40d10b582e861b2099e03c10a95e04213a09fca404e2367ee1489a0f5ab"
+    }
+  ],
+  "lanes": {
+    "structural": {
+      "producer": {
+        "test/native-request-journal-v8.test.js": 8,
+        "test/selected-orchestration-clock.test.js": 5,
+        "test/semantic-known-bootstrap-builder-v8.test.js": 26,
+        "test/semantic-known-commit-builder-v8.test.js": 6,
+        "test/semantic-selected-history-automatic-v8.test.js": 21,
+        "test/semantic-selected-history-tail-v8.test.js": 13,
+        "test/semantic-selected-history-v8.test.js": 20,
+        "test/semantic-selected-orchestration-checkpoint-v8.test.js": 20,
+        "test/semantic-selected-orchestration-v8.test.js": 4
+      },
+      "native": {
+        "tests/test_semantic_commit_recovery_v8.py": 42,
+        "tests/test_semantic_bootstrap_recovery_v8.py": 30,
+        "tests/test_semantic_close_recovery_v8.py": 9,
+        "tests/test_semantic_request_journal_v8.py": 13,
+        "tests/test_semantic_launch_v8.py": 16,
+        "tests/test_semantic_v8_position_receipts.py": 55
+      }
+    },
+    "transport": {
+      "producer": {
+        "test/semantic-native-durable-bootstrap-v8.test.js": 9,
+        "test/semantic-native-durable-close-v8.test.js": 7,
+        "test/semantic-native-durable-commit-v8.test.js": 11,
+        "test/semantic-native-orchestration-recovery-v8.test.js": 6
+      },
+      "native": {}
+    },
+    "commit-history": {
+      "producer": {
+        "test/semantic-known-commit-history-v8.test.js": 9
+      },
+      "native": {}
+    },
+    "bootstrap-history": {
+      "producer": {
+        "test/semantic-known-bootstrap-history-v8.test.js": 12
+      },
+      "native": {}
+    },
+    "terminal-history": {
+      "producer": {
+        "test/semantic-known-close-builder-v8.test.js": 5,
+        "test/semantic-known-close-history-v8.test.js": 9,
+        "test/semantic-known-service-close-history-v8.test.js": 2
+      },
+      "native": {}
+    },
+    "promise": {
+      "producer": {
+        "test/semantic-async-call-source-v8.test.js": 18,
+        "test/semantic-promise-mutation-profile-source-v8.test.js": 25,
+        "test/semantic-promise-object-profile-source-v8.test.js": 23,
+        "test/semantic-protocol-iterator-v8.test.js": 9,
+        "test/semantic-protocol-promise-adoption-source-v8.test.js": 21,
+        "test/semantic-protocol-promise-adoption-v8.test.js": 20,
+        "test/semantic-protocol-promise-executor-source-v8.test.js": 10,
+        "test/semantic-protocol-promise-executor-v8.test.js": 11,
+        "test/semantic-protocol-promise-join-v8.test.js": 10,
+        "test/semantic-protocol-v8.test.js": 14,
+        "test/semantic-shared-protocol-source-v8.test.js": 8,
+        "test/semantic-async-return-adoption-composition-source-v8.test.js": 4
+      },
+      "native": {
+        "tests/test_promise_executor_v8.py": 11,
+        "tests/test_async_call_v8.py": 10,
+        "tests/test_promise_scheduler_v8.py": 10,
+        "tests/test_promise_executor_boundaries_v8.py": 13,
+        "tests/test_promise_join_v8.py": 12,
+        "tests/test_protocol_v8.py": 22,
+        "tests/test_protocol_host_v8.py": 13,
+        "tests/test_protocol_host_composition_v8.py": 15
+      }
+    }
+  },
+  "expectationEvidence": {
+    "recovery": "GitHub Actions45042073863 original downloaded JUnit per-file leaves",
+    "promise": "GitHub Actions45042386283 plus exact local original-source4 and public/native boundary20/10 groups; required final173/106 is not qualified until this workflow succeeds."
+  }
+}

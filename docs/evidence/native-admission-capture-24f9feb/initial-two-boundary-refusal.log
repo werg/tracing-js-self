@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/63af2ef40c2d/tracing-qualification/tools/native_two_boundary_probe.py", line 660, in <module>
+    main()
+  File "/workspace/scratch/63af2ef40c2d/tracing-qualification/tools/native_two_boundary_probe.py", line 611, in main
+    training = _training_at(
+               ^^^^^^^^^^^^^
+  File "/workspace/scratch/63af2ef40c2d/tracing-qualification/tools/native_two_boundary_probe.py", line 394, in _training_at
+    batches = prepare_batches(model, [item], config)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/63af2ef40c2d/megatoken-v6-qualification/src/megatoken/training/engine.py", line 150, in prepare_batches
+    raise ValueError("V6 semantic training requires its explicit admission policy")
+ValueError: V6 semantic training requires its explicit admission policy

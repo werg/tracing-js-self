@@ -1,0 +1,66 @@
+{
+  "controlledTraining": null,
+  "files": [
+    {
+      "bytes": 744,
+      "path": "attestation.log",
+      "sha256": "07a93fe229d5f3a8183e5f7b6e97dd8274536e1c279ef26ed3c64d312b0dd36d"
+    },
+    {
+      "bytes": 1397321,
+      "path": "native-wheel/megatoken-0.1.0-py3-none-any.whl",
+      "sha256": "79b060be3b3b5b7fdf91e5faf4669944b5784b356f4f06ecd7044f6b32255f06"
+    },
+    {
+      "bytes": 148,
+      "path": "native-wheel.sha256",
+      "sha256": "37196a759aa38ea13ca78fdb480a564e04aa08592bb8fd2f912b0e57f505f272"
+    },
+    {
+      "bytes": 5945,
+      "path": "pair-identity.json",
+      "sha256": "4e00bd84c0c53e90daadf54f0784fb8de9ae28f44444ab99575808426b4956a8"
+    },
+    {
+      "bytes": 1539,
+      "path": "producer.log",
+      "sha256": "954eae885a5cbd84379f927e474ba5a58fe0154a22bced79150921f647970956"
+    },
+    {
+      "bytes": 3513,
+      "path": "producer.xml",
+      "sha256": "428c44d476b07fdb72cab0385345686d3d3e0eeb8b6eed411f3117bc1d41f90f"
+    }
+  ],
+  "lane": "bootstrap-history",
+  "pair": {
+    "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "gateSpecSha256": "432fb031331297cf16e820b28a25d72c86a63567831bc18732099af04a1a33c4",
+    "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+    "native": {
+      "revision": "cdd01ac0dcd65d92e948cec39f7b5c156800206e",
+      "tree": "8698f34329ae2827aff090c05bdfdc2941974d10"
+    },
+    "policySha256": "b79963ff2ad6b0c3c34f36de623079bc350e020b56398a9b708df5e6278fb8fa",
+    "producer": {
+      "revision": "cc0d61e98dc6252749f4a2a4c8b669d79b0f7efa",
+      "tree": "c10c3dc89361c443583955fab0a8a37a22ac092a"
+    }
+  },
+  "schema": "semantic-v8-combined-lane/1",
+  "sourcePopulations": [],
+  "status": "passed",
+  "tests": {
+    "producer": {
+      "cases": 12,
+      "errors": 0,
+      "failures": 0,
+      "files": {
+        "test/semantic-known-bootstrap-history-v8.test.js": 12
+      },
+      "skipped": 0,
+      "xmlSha256": "428c44d476b07fdb72cab0385345686d3d3e0eeb8b6eed411f3117bc1d41f90f"
+    }
+  }
+}

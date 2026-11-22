@@ -38,7 +38,7 @@ const loadNative={6:loadNativeSettings,7:loadNativeV7Settings,8:loadNativeV8Sett
 const native=requested?loadNative[traceVersion](nativeOptions):null;
 if(flags.has('--require-native')&&!native)throw new Error('--require-native needs a pinned native consumer');
 const report=await buildCapabilityLedger({producerRevision,traceVersion,population,
-  cases:cases.filter(row=>selected.includes(row.id)),
+  cases,selectedCaseIds:selected,
   verifyCase:traceVersion===8?verifyRegionTrainingCase:null,
   contracts:traceVersion===8?Object.fromEntries(['execution','trace','context','continuation'].map(key=>[key,SEMANTIC_V8_DEFINITION[key]])):null,
   nativeConsumer:native?createNative[traceVersion](native):null,

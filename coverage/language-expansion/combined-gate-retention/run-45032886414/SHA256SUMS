@@ -1,0 +1,9 @@
+8a81a5a54a2ded3c52ba07acaed7ec1e1ebd31173aa8800dcc354f9f7e9fe7d0  ./README.md
+2b310cc854d043d962257871de0d2aa39ec7e688f74f0323885e84987f63d90c  ./artifact-metadata.json
+4c37d12e2e213620cc8294b377eb49aad2a0ec990659a4104445ac025b8d6d8a  ./complete-job-log.txt
+a55a5f35dbc344097afc07e524d5e3fd4dc9911855070b99ebc49538ed8295a8  ./durable-bootstrap-history-controls.zip
+816bea9fdbc68043c165233eb51d0930497b93eae30d08fbb5c8fec75fa965e5  ./native-revision.txt
+d66869fe89f38173a8f0c8261a9f3876a6186cedc8a33a05017a4317f1703093  ./producer-revision.txt
+3fff342c77a4f19d7eb929822375a104b884d4aaa02f66165b7133d15aefbcc5  ./retained/host-bootstrap-history.xml
+344d535d05a6a43166737805ce4d74cb435c93c9d638b921d67d9bccc925a232  ./retained/native-bootstrap.xml
+2bae04efea956b7b6b0918d4124a43b5abcb3ef8acef926873f30bd11323a219  ./runtime.txt

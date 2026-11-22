@@ -26,9 +26,16 @@ if(checked.valid!==true||checked.sourceValidated!==true||checked.projectionValid
 const after=execFileSync('git',['status','--porcelain','--untracked-files=all'],{cwd:root,encoding:'utf8'}).trim();
 if(after)fail('producer checkout changed during source recheck');
 const sha=value=>hashAlgorithmData(JSON.parse(JSON.stringify(value)));
+const direct=exported.sidecar.schema==='semantic-protocol-host-region-evidence/1';
+if(direct&&checked.source?.identityValidated!==true)fail('direct source identity was not independently verified');
 const receipt={schema:'semantic-native-source-recheck/1',producerRevision:revision,producerTreeClean:true,
   artifactSha256:createHash('sha256').update(bytes).digest('hex'),
-  sourceArtifactDigest:sha(exported.sidecar.sourceArtifact),publicDigest:sha(exported.public),
+  sourceArtifactDigest:direct?null:sha(exported.sidecar.sourceArtifact),
+  ...(direct?{sourceIdentityDigest:exported.sidecar.identityDigest,identityValidated:true}:{}),
+  publicDigest:sha(exported.public),
   contextDigest:sha(exported.contexts),sourceValidated:true,projectionValidated:true,replayValidated:true,
+  ...(Object.hasOwn(exported.sidecar,'orchestrationTranscript')?{
+    orchestrationTranscriptDigest:sha(exported.sidecar.orchestrationTranscript),
+    orchestrationValidated:checked.orchestrationValidated===true}:{}),
   regionRecords:checked.regionCoverage?.records??null};
 process.stdout.write(JSON.stringify(receipt)+'\n');

@@ -1,0 +1,22 @@
+{
+  "command": [
+    "/opt/hostedtoolcache/Python/3.12.14/x64/bin/python",
+    "/home/runner/work/tracing-js-self/tracing-js-self/megatoken/scripts/qualify_semantic_v8_target_coverage.py",
+    "--checkpoint",
+    "/home/runner/work/_temp/v8-support-lifecycle/fit-coverage/checkpoints",
+    "--prepared",
+    "/home/runner/work/_temp/v8-support-prepared",
+    "--expected-source-ids",
+    "/home/runner/work/_temp/v8-support-source-ids.json",
+    "--inventory",
+    "/home/runner/work/_temp/v8-support-lifecycle/target-inventory.json",
+    "--output",
+    "/home/runner/work/_temp/v8-primary-continuation/target-position-coverage.json"
+  ],
+  "error": null,
+  "exitCode": 0,
+  "seconds": 134.338607197,
+  "stage": "independent-complete-coverage",
+  "streamErrors": [],
+  "timedOut": false
+}

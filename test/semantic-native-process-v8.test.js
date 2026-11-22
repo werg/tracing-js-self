@@ -10,30 +10,48 @@ const artifact=JSON.parse(readFileSync(new URL('./fixtures/semantic-regions-v8.j
 const row=artifact.public.timeline.find(row=>row.mode==='generated');
 const identity={checkpointIdentity:'c'.repeat(64),tokenizerIdentity:'e'.repeat(64),seed:17};
 const programModule=new URL('../src/semantic/program.js',import.meta.url).href;
-function fakeServer({alter='',initializeAlter='',commitAlter='',completeAlter='',cancelAlter='',raw=false,hang=false}={}){
+function fakeServer({alter='',initializeAlter='',commitAlter='',completeAlter='',cancelAlter='',restoreAlter='',raw=false,hang=false}={}){
   return `import {createInterface} from 'node:readline';
     import {hashAlgorithmData} from ${JSON.stringify(programModule)};
     const record=${JSON.stringify(row.fields.line)};
+    let modelIdentity=null,nativeAttempts=[],nativeSessions={};
     for await (const line of createInterface({input:process.stdin})) {
       const request=JSON.parse(line);let result;
       if(request.op==='initialize'){
         result={schema:'semantic-inference-identity/8',checkpointIdentity:request.checkpointIdentity,
-          tokenizerIdentity:request.tokenizerIdentity,seed:request.seed};${initializeAlter}
+          tokenizerIdentity:request.tokenizerIdentity,trainingIdentity:request.trainingIdentity??null,
+          seed:request.seed};${initializeAlter}
+        modelIdentity=result;
       }else if(request.op==='select'){
         ${hang?'continue;':''}
         const payloadHex=Buffer.from(record).toString('hex');
         result={schema:'semantic-model-output/8',record,selection:{modelSelected:true,selectionId:'selection:'+request.id,
           origin:'actual-model-selected',checkpointIdentity:${JSON.stringify(identity.checkpointIdentity)},
           tokenizerIdentity:${JSON.stringify(identity.tokenizerIdentity)},prefixDigest:request.context.prefixDigest,
+          trainingIdentity:modelIdentity.trainingIdentity??null,
           contextDigest:hashAlgorithmData(request.context),payloadHex,
           fragments:[{tokenIds:[...Buffer.from(record)],payloadHex}]}};${alter}
+        nativeAttempts.push({...result.selection,status:'awaiting-commit'});
+        nativeSessions[request.session]={replay:[]};
       }else if(request.op==='commit'){result={schema:'semantic-native-commit/8',committed:true,
-        selectionId:request.selection.selectionId,publicDigest:hashAlgorithmData(request.public)};${commitAlter}}
+        selectionId:request.selection.selectionId,publicDigest:hashAlgorithmData(request.public)};${commitAlter}
+        if(result.committed)nativeAttempts.at(-1).status='committed';}
       else if(request.op==='reject')result={schema:'semantic-native-rejection/8',rejected:true,selectionId:request.selectionId};
       else if(request.op==='complete'){result={schema:'semantic-native-completion/8',completed:true,
         session:request.session,invocationId:request.invocationId,sessionRetained:true,
         publicDigest:hashAlgorithmData(request.public)};${completeAlter}}
-      else {result={schema:'semantic-native-close/8',closed:true,session:request.session};${cancelAlter}}
+      else if(request.op==='checkpoint'){
+        result={schema:'semantic-model-checkpoint/8',equivalence:'verified-model-reexecution',
+          initialization:modelIdentity,attempts:nativeAttempts,sessions:nativeSessions};
+        result.digest=hashAlgorithmData(result);
+      }else if(request.op==='restore'){
+        modelIdentity=request.checkpoint.initialization;nativeAttempts=request.checkpoint.attempts;
+        nativeSessions=request.checkpoint.sessions;
+        result={schema:'semantic-model-restore/8',checkpointDigest:request.checkpoint.digest,
+          equivalence:'verified-model-reexecution',restored:true,restoredSessions:Object.keys(nativeSessions).length,
+          consumedAttempts:nativeAttempts.length,reexecutedSelections:0,hostDispatches:0};${restoreAlter}
+      }else {result={schema:'semantic-native-close/8',closed:true,session:request.session,
+        reason:request.reason};${cancelAlter}}
       ${raw?"process.stdout.write(Buffer.from([0xff,10]));":`
         const output=JSON.stringify({id:request.id,ok:true,result})+'\\n';
         process.stdout.write(output.slice(0,7));
@@ -151,6 +169,31 @@ test('native v8 failed initialization cannot leave an earlier checkpoint active'
   }finally{select.close();}
 });
 
+test('native ordinary training lineage is bound at initialization, selection and recovery',async()=>{
+  const expected={...identity,trainingIdentity:'b'.repeat(64)},select=selector();
+  let checkpoint;
+  try{
+    assert.equal((await select.initialize(expected)).trainingIdentity,expected.trainingIdentity);
+    const selected=await select(boundary().input);
+    assert.equal(selected.selection.trainingIdentity,expected.trainingIdentity);
+    checkpoint=await select.checkpoint();
+    assert.equal(checkpoint.identity.trainingIdentity,expected.trainingIdentity);
+  }finally{select.close();}
+  const restored=selector();
+  try{assert.equal((await restored.restore({checkpoint})).restored,true);}
+  finally{restored.close();}
+  for(const initializeAlter of ["delete result.trainingIdentity;","result.trainingIdentity='f'.repeat(64);"]){
+    const wrong=selector({initializeAlter});
+    try{await assert.rejects(wrong.initialize(expected),/loaded model identity/);}
+    finally{wrong.close();}
+  }
+  for(const alter of ["delete result.selection.trainingIdentity;","result.selection.trainingIdentity='f'.repeat(64);"]){
+    const wrong=selector({alter});
+    try{await wrong.initialize(expected);await assert.rejects(wrong(boundary().input),/frozen checkpoint/);}
+    finally{wrong.close();}
+  }
+});
+
 test('native v8 malformed UTF-8 and deadlines terminate the transport',async t=>{
   const malformed=selector({raw:true});
   try{await assert.rejects(malformed.initialize(identity),/UTF-8/);assert.equal(malformed.status().closed,true);}
@@ -175,6 +218,21 @@ test('native acknowledgement failure does not count an execution as accepted',as
     await assert.rejects(select.commit({session:input.session,public:input.public,...output}),/acknowledge/);
     assert.equal(select.metrics().semanticallyAccepted,0);
     assert.equal(select.metrics().failedAttempts,1);
+  }finally{select.close();}
+});
+
+test('transport closure during an unreturned native commit preserves unknown acknowledgement through cancellation',async()=>{
+  const select=selector({commitAlter:'continue;'}),{input}=boundary();
+  try{
+    await select.initialize(identity);const output=await select(input);
+    const committing=select.commit({session:input.session,public:input.public,...output});
+    assert.equal(select.status().pending,1);select.close();
+    assert.equal(select.metrics().unknownAcknowledgements,1,'The immediate forced-close accounting cutoff must be exact');
+    await assert.rejects(committing,error=>error.acknowledgementUnknown===true);
+    await assert.rejects(select.cancel({session:input.session,reason:'cleanup'}),/closed/);
+    assert.equal(select.metrics().attempts[0].status,'acknowledgement-unknown');
+    assert.equal(select.metrics().semanticallyAccepted,0);assert.equal(select.metrics().unknownAcknowledgements,1);
+    assert.equal(select.metrics().failedAttempts,0);
   }finally{select.close();}
 });
 
@@ -213,4 +271,77 @@ test('native completion and close acknowledgments bind the exact invocation and 
     await select.initialize(identity);
     await assert.rejects(select.cancel({session:input.session,reason:'completed'}),/closing this session/);
   }finally{select.close();}
+});
+
+test('native close receipt preserves the consumer reason and rejects altered or extended fields',async()=>{
+  const reason='application cancelled the selected session',
+    select=selector();
+  try{
+    await select.initialize(identity);
+    const receipt=await select.cancel({session:'consumer-session',reason});
+    assert.deepEqual(receipt,{schema:'semantic-native-close/8',session:'consumer-session',
+      closed:true,reason});
+    await select.shutdown();
+  }finally{select.close();}
+  for(const cancelAlter of [
+    'delete result.reason;',
+    'result.reason=17;',
+    "result.reason='different reason';",
+    'result.closed=1;',
+    'result.session=17;',
+    "result.schema='semantic-native-close/7';",
+    "result.extra='unbound';"
+  ]){
+    const altered=selector({cancelAlter});
+    try{
+      await altered.initialize(identity);
+      await assert.rejects(altered.cancel({session:'consumer-session',reason}),/exact close receipt/);
+    }finally{altered.close();}
+  }
+  const malformed=selector();
+  try{
+    await malformed.initialize(identity);
+    await assert.rejects(malformed.cancel({session:'consumer-session',reason:17}),/invalid native close request/);
+    assert.equal(malformed.metrics().predictionAttempts,0);
+  }finally{malformed.close();}
+});
+
+test('native checkpoint transport retains attempts and restores with pending candidates excluded',async()=>{
+  const original=selector(),restored=selector(),{input}=boundary();
+  try{
+    await original.initialize(identity);await original(input);
+    const packet=await original.checkpoint();
+    assert.equal(packet.native.attempts.length,1);
+    assert.equal(packet.attempts[0].status,'decoded');
+    const receipt=await restored.restore({checkpoint:JSON.parse(JSON.stringify(packet))});
+    assert.equal(receipt.transportCheckpointDigest,packet.digest);
+    assert.equal(restored.metrics().predictionAttempts,1);
+    assert.equal(restored.metrics().failedAttempts,1);
+    assert.equal(restored.metrics().attempts[0].status,'abandoned-on-restore');
+    assert.equal(restored.metrics().semanticallyAccepted,0);
+    const next=await restored(input);
+    assert.equal(next.record,row.fields.line);
+    assert.equal(restored.metrics().predictionAttempts,2);
+    await assert.rejects(restored.restore({checkpoint:packet}),/fresh native transport/);
+  }finally{original.close();restored.close();}
+});
+
+test('native restore transport rejects altered checkpoints and false recovery acknowledgements',async()=>{
+  const original=selector();let packet;
+  try{await original.initialize(identity);packet=await original.checkpoint();}
+  finally{original.close();}
+  const malformed=selector();
+  try{
+    const changed=structuredClone(packet);changed.identity.tokenizerIdentity='0'.repeat(64);
+    await assert.rejects(malformed.restore({checkpoint:changed}),/invalid native transport checkpoint/);
+    assert.equal(malformed.status().closed,false);
+  }finally{malformed.close();}
+  for(const restoreAlter of ["result.checkpointDigest='0'.repeat(64);",'result.hostDispatches=1;',
+    'result.consumedAttempts=9;','result.restored=false;']){
+    const restored=selector({restoreAlter});
+    try{
+      await assert.rejects(restored.restore({checkpoint:packet}),/exact checkpoint restoration/);
+      assert.equal(restored.status().closed,true);
+    }finally{restored.close();}
+  }
 });

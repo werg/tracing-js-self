@@ -167,7 +167,8 @@ export function validateRegionFamilyAssignments(registry,rows,{expectedSplit=nul
 
 /** Extract the family and lineage carried by independently checked source data. */
 export function regionArtifactSource(artifact){
-  const side=artifact?.sidecar,sourceSide=side?.sourceArtifact?.sidecar,reference=sourceSide?.referenceInput;
+  const side=artifact?.sidecar,direct=side?.schema==='semantic-protocol-host-region-evidence/1',
+    sourceSide=direct?side:side?.sourceArtifact?.sidecar,reference=sourceSide?.referenceInput;
   if(artifact?.public?.schema!=='semantic-execution/8'||artifact.public.traceFormat!==REGION_TRACE_VERSION||
     !Array.isArray(artifact.contexts)||!reference||!text(reference.source)||!text(reference.entry)||
     !text(sourceSide.sourceFamily)||side.sourceFamily!==sourceSide.sourceFamily||side.family!==sourceSide.sourceFamily)
@@ -182,9 +183,14 @@ export function regionDatasetBinding(artifact,identity){
   // Source evidence may contain in-memory optional undefined fields. Bind the
   // exact JSON representation that survives transport, as the compiler does.
   const digest=value=>hashAlgorithmData(JSON.parse(JSON.stringify(value)));
+  const direct=artifact.sidecar.schema==='semantic-protocol-host-region-evidence/1';
+  if(direct&&!HASH.test(artifact.sidecar.identityDigest??''))fail('direct source identity is missing');
   return {schema:REGION_DATASET_BINDING_SCHEMA,traceFormat:REGION_TRACE_VERSION,
     episodeDigest:digest(artifact.public),contextsDigest:digest(artifact.contexts),
-    sourceArtifactDigest:digest(artifact.sidecar.sourceArtifact),
+    sourceArtifactDigest:direct?null:digest(artifact.sidecar.sourceArtifact),
+    ...(direct?{sourceIdentityDigest:artifact.sidecar.identityDigest}:{}),
+    ...(Object.hasOwn(artifact.sidecar,'orchestrationTranscript')?
+      {orchestrationTranscriptDigest:digest(artifact.sidecar.orchestrationTranscript)}:{}),
     registryDigest:identity.registryDigest,componentId:identity.componentId,split:identity.split,
     sourceId:identity.sourceId,family:identity.family,sourceDigest:identity.sourceDigest,
     coreDigest:identity.coreDigest};

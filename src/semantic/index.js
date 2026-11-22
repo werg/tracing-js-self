@@ -46,8 +46,12 @@ export {verifyRegionTrainingCase,projectRegionWitness,recheckRegionEvidence,admi
 export {CAUSAL_LM_V8_BRIDGE_VERSION,validateRegionContext,decodeCausalLmV8Target,causalLmV8Prompt,
   encodeCausalLmV8Example,validateRegionTrainingContexts,buildCausalLmV8Examples,createCausalLmV8Selector,
   commitCausalLmV8Selection,auditRegionServingCosts} from './causal-lm-v8.js';
+export {causalLmV8OrchestrationPrompt,encodeCausalLmV8OrchestrationExample} from './causal-lm-v8.js';
+export {V8_ORCHESTRATION_TRAINING_POLICY,buildOrchestrationTranscriptV8,
+  validateOrchestrationTranscriptV8,attachSourceQualifiedOrchestrationV8} from './orchestration-training-v8.js';
 export {createNativeV8ProcessSelector,createNativeV8PythonSelector} from './native-process-v8.js';
-export {runSelectedRegionExecution} from './selected-execution-v8.js';
+export {RegionSelectedModelDriver,runSelectedRegionExecution} from './selected-execution-v8.js';
+export {RegionSelectedOrchestrationDriver,runSelectedRegionOrchestrationV8} from './selected-orchestration-v8.js';
 export {prepareRegionExecutionCase,freezeRegionExecutionStudy,validateRegionExecutionStudy,
   scoreSelectedRegionExecution,runFrozenRegionExecutionStudy} from './execution-study-v8.js';
 export {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_INTEROPERABILITY_DIGEST,V8_NATIVE_CHECKS,validateV8NativePolicy,
@@ -83,3 +87,5 @@ export {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8,PROMISE_EXECUTOR_R
 export {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_RECORD_FIELDS,PROXY_HEAP_FIELDS} from './protocol-proxy-v8.js';
 export {PROXY_SOURCE_PROFILE_V8} from './protocol-proxy-source-v8.js';
 export {ARRAY_MAP_SOURCE_PROFILE_V8} from './protocol-array-map-source-v8.js';
+
+export {PRIMITIVE_CONVERSION_SOURCE_PROFILE_V8} from './protocol-primitive-conversion-source-v8.js';

@@ -1,0 +1,117 @@
+{
+  "campaign_pair": {
+    "native": {
+      "files": {
+        "docs/SEMANTIC_V8_TARGET_EXPOSURE.md": {
+          "bytes": 8882,
+          "sha256": "eb9ae0126f84c255783fbf67e9cf2d374818cf972640fe1ee871bfb61cc455b9"
+        },
+        "docs/v8-target-position-audit.md": {
+          "bytes": 6463,
+          "sha256": "bafa5eaebffabd315e69570e4d9e27e9ab824ef2939ae47e34b312cd7f912a63"
+        },
+        "scripts/qualify_semantic_v8_target_coverage.py": {
+          "bytes": 8558,
+          "sha256": "f455e8011ea3037e26e7f7bad99850e32c28029cefb88ce67fe89a6e2caff2e1"
+        },
+        "src/megatoken/training/engine.py": {
+          "bytes": 71811,
+          "sha256": "ea6c4ff8927c76334d6fe3b861b3301f39ab0e49cfca28a3042d5ba96ebe230d"
+        },
+        "src/megatoken/training/positions_v8.py": {
+          "bytes": 62736,
+          "sha256": "b6a6da3050d319ce0f2ad14d6b7a9f29464db5b247055b7fbe85338c2273ee09"
+        },
+        "src/megatoken/training/router_balance.py": {
+          "bytes": 7906,
+          "sha256": "511e2d3f3dfa59179d003eda05fc28f75049d86c449ff8468147c556a5421c52"
+        },
+        "tests/test_adapters.py": {
+          "bytes": 18331,
+          "sha256": "a590ae7fc696583348e0a7d56169c953bdaad5df819c17b1acab1505c096f462"
+        },
+        "tests/test_model_core.py": {
+          "bytes": 35431,
+          "sha256": "12fe1fca0bbf13098339a5be35d4743bc2b5b8b57b26ba2caeb40b8d9c6da039"
+        },
+        "tests/test_semantic_v8_position_receipts.py": {
+          "bytes": 31816,
+          "sha256": "6710e122c56342d4b5214562c0ce12284fcdc238c1acf8b2b6f240919ef453e0"
+        },
+        "tests/test_semantic_v8_training_lifecycle.py": {
+          "bytes": 23705,
+          "sha256": "cef1651e2217a3f21f71b6a0c6205fb55a09c0d5023713313bfd09b94627927c"
+        }
+      },
+      "revision": "2f3e6cf04aad60473e8ecc67e846e81e5b9dec83"
+    },
+    "producer": {
+      "files": {
+        ".github/workflows/semantic-v8-target-inventory.yml": {
+          "bytes": 21330,
+          "sha256": "22e55f8541ed206bc06f0eec5ee29d3c3d801758316a517f2b2d391251b9835e"
+        },
+        "contracts/semantic-native-policy-v8.json": {
+          "bytes": 602,
+          "sha256": "0ae67943df373eab408611d189d288c2df4991567c6dc5b5de14345afa7e4202"
+        },
+        "test/semantic-v8-position-coverage.test.js": {
+          "bytes": 4822,
+          "sha256": "19e9eb4b1e741402b504320cd04ea752e780daae89dcbefa81cecf9b444cbb82"
+        },
+        "tools/qualify-ordinary-v8-lifecycle.mjs": {
+          "bytes": 23063,
+          "sha256": "56f03c003886af86b97176cd8938ae9254924fa21199b50552ce1c0a29c06fe9"
+        },
+        "tools/semantic-v8-position-coverage.mjs": {
+          "bytes": 5936,
+          "sha256": "a95c0f158fd8a62006f12935b4503d0d95df1ab7564c815099eaae68f75e0b40"
+        }
+      },
+      "revision": "b4157952ed0fc28c5ae1eb8893cd9035ce25bbdb"
+    }
+  },
+  "strict_reader": {
+    "files": {
+      "scripts/qualify_semantic_v8_target_coverage.py": {
+        "bytes": 8558,
+        "sha256": "f455e8011ea3037e26e7f7bad99850e32c28029cefb88ce67fe89a6e2caff2e1"
+      },
+      "scripts/qualify_semantic_v8_target_inventory.py": {
+        "bytes": 13409,
+        "sha256": "744d2b09bfc6fa1554202209d692e1e7400b0faeafd6d71fb8aeb97bbd997442"
+      },
+      "src/megatoken/data/__init__.py": {
+        "bytes": 2894,
+        "sha256": "2a443b40c8aada45e57c518a3d2953d3891ab34ad027f7282ee409d306925a86"
+      },
+      "src/megatoken/generation/codec.py": {
+        "bytes": 12891,
+        "sha256": "98de7394ae3c4f47fe86d2767aaa103b8569de446913135a89de914af7182200"
+      },
+      "src/megatoken/loading.py": {
+        "bytes": 7273,
+        "sha256": "5a5be18045f0c42792e6af390ab610b24b074733d450bea5538dbbf28327241e"
+      },
+      "src/megatoken/training/checkpoint.py": {
+        "bytes": 12744,
+        "sha256": "2c4eaed08927aab130378f899de424db75560213e4fb61c972cec505bcb939aa"
+      },
+      "src/megatoken/training/positions_v8.py": {
+        "bytes": 64924,
+        "sha256": "6058b5a04f3bd0fb614b88a6b86377f37d2ca2a5ed2452ae3df59b52d4e509a2"
+      },
+      "src/megatoken/training/semantic_v8.py": {
+        "bytes": 40403,
+        "sha256": "94b99b17f0346463ad71d7c8a000908633b8f27d5e6620b8ae147c93fea29056"
+      },
+      "src/megatoken/training/target_inventory_v8.py": {
+        "bytes": 11773,
+        "sha256": "1667a4fcc7f3cb0774e535d233ba4ec7fb83a7b77c8a5e2e3b6f453a4cb74f4d"
+      }
+    },
+    "parent_revision": "7f0de371c44add866f463a493ae8f2edbbf372e0",
+    "repository": "werg/megatoken",
+    "revision": "622c37c23f93c4cc58ff226eb4805c766fee3166"
+  }
+}

@@ -6,8 +6,6 @@ import {isDeepStrictEqual} from 'node:util';
 import {atomicWrite} from '../src/corpus/campaign-store.mjs';
 import {identityHash} from '../src/corpus/campaign-store.mjs';
 import {createNativeConsumer} from '../src/corpus/native-admission-client.mjs';
-import {verifyEffectfulTrainingCase,independentEffectfulReference} from '../src/training/effectful-admit.js';
-import {verifyEffectfulSession} from '../src/training/effectful-session.js';
 import {encodeNativeGraph,decodeOwnedGraph} from '../src/host/graph-codec.js';
 import {decodeGenerationTask} from '../src/corpus/generation-process.mjs';
 import {canonicalJavaScriptExpected} from '../src/corpus/owned-exercism.mjs';
@@ -23,6 +21,12 @@ try{
   const nativeConsumer=createNativeConsumer(task.native),options={...task.fixture,
     producerRevision:task.producerRevision,nativeConsumer,nativePolicy:task.native?.policy??null,
     taskId:task.fixture.id};
+  if(Object.hasOwn(options,'orchestrationTeacher')){
+    if(typeof options.orchestrationTeacher!=='boolean')
+      throw new TypeError('orchestrationTeacher must be a boolean');
+    if(options.orchestrationTeacher&&(task.kind!=='source'||task.traceVersion!==8))
+      throw new TypeError('orchestrationTeacher requires a V8 source task');
+  }
   if(options.preflightFailure)result={...options.preflightFailure,
     failure:{source:options.source,originalSource:options.originalReferenceSource,
       inputGraph:encodeNativeGraph(options.args??[]),provenance:options.provenance}};
@@ -32,8 +36,11 @@ try{
       const referenceInput={source:options.originalReferenceSource,entry:options.entry,
         inputGraph:encodeNativeGraph(options.args??[]),fixture:options.fixture,
         randomSeed:options.randomSeed??options.seeds?.guestRng??null};
-      const original=await independentEffectfulReference(referenceInput,{timeoutMs:options.timeoutMs??10000});
-      const transformed=await independentEffectfulReference({...referenceInput,source:options.source},
+      const reference=task.traceVersion===8?
+        (await import('../src/semantic/index-v8.js')).independentSourceReferenceV8:
+        (await import('../src/training/effectful-admit.js')).independentEffectfulReference;
+      const original=await reference(referenceInput,{timeoutMs:options.timeoutMs??10000});
+      const transformed=await reference({...referenceInput,source:options.source},
         {timeoutMs:options.timeoutMs??10000});
       if(!isDeepStrictEqual(original,transformed))result={status:'original_source_mismatch',
         reason:'Pinned original and transformed source observations disagree',
@@ -82,15 +89,35 @@ try{
         result=await verifyRegionTrainingCase(options);}
       else if(task.traceVersion===7){const {verifyAlgorithmTrainingCase}=await import('../src/semantic/compiler.js');
         result=await verifyAlgorithmTrainingCase(options);}
-      else if(task.traceVersion===undefined||task.traceVersion===6)result=await verifyEffectfulTrainingCase(options);
+      else if(task.traceVersion===undefined||task.traceVersion===6){
+        const {verifyEffectfulTrainingCase}=await import('../src/training/effectful-admit.js');
+        result=await verifyEffectfulTrainingCase(options);}
       else throw new Error('Unknown generation trace version');
+    }
+    if(options.orchestrationTeacher===true&&result.exported){
+      phase='orchestration-teacher';
+      const sourceArtifact=result.exported;
+      try{
+        const {attachSourceQualifiedOrchestrationV8}=await import('../src/semantic/orchestration-training-v8.js');
+        result={...result,exported:await attachSourceQualifiedOrchestrationV8(sourceArtifact)};
+      }catch(error){
+        // Preserve the independently qualified source as failure evidence, but
+        // never let a failed authored teacher attach look source-qualified.
+        result={id:options.id,family:options.family,status:'orchestration_teacher_failed',phase,
+          reason:String(error.message??error),sourceArtifact,
+          failure:{source:options.source,originalSource:options.originalReferenceSource,
+            inputGraph:encodeNativeGraph(options.args??[]),provenance:options.provenance,
+            sourceEvidenceDigest:identityHash(sourceArtifact)}};
+      }
     }
   }
   else if(task.kind==='module'&&task.traceVersion===8){
     phase='module-verification';const {verifyRegionModuleTrainingCase}=await import('../src/semantic/module-v8.js');
     result=await verifyRegionModuleTrainingCase(options);
   }
-  else if(task.kind==='session')result=await verifyEffectfulSession(options);
+  else if(task.kind==='session'){
+    const {verifyEffectfulSession}=await import('../src/training/effectful-session.js');
+    result=await verifyEffectfulSession(options);}
   else throw new Error('Unknown generation task kind');
 }catch(error){result={status:phase==='original-reference'?'original_reference_failure':'collection_failed',
   phase,reason:String(error.message??error),failure:{source:task.fixture.source,originalSource:task.fixture.originalReferenceSource,

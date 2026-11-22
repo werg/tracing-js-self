@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="known close produces only an exact closed disposition and preserves complete history" time="13.208693" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-builder-v8.test.js"/>
+	<testcase name="known service close preserves the exact owner snapshot and independently supplied terminal fence" time="0.291790" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-builder-v8.test.js"/>
+	<testcase name="known service close refuses a missing, substituted or changed terminal fence" time="0.479863" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-builder-v8.test.js"/>
+	<testcase name="repeated closed reconstruction retains consumed costs and cannot become active history" time="2.049614" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-builder-v8.test.js"/>
+	<testcase name="known close refuses changed request authority, original outcome, attempts or elapsed budget" time="1.227064" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-builder-v8.test.js"/>
+	<testcase name="a normally closed acknowledged head is returned only as a nonresumable disposition" time="70.179880" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-history-v8.test.js"/>
+	<testcase name="lost or altered close reply after-native-outcome recovers only the known native close" time="54.267261" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-history-v8.test.js"/>
+	<testcase name="lost or altered close reply alter-reply recovers only the known native close" time="54.637682" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-history-v8.test.js"/>
+	<testcase name="repeated terminal close recovery preserves its original attempts, costs and elapsed time" time="80.649538" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-history-v8.test.js"/>
+	<testcase name="an unknown native close outcome is never retried as a host close" time="38.489246" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-history-v8.test.js"/>
+	<testcase name="an acknowledged close intent without its producer request cannot trigger close recovery" time="37.364881" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-history-v8.test.js"/>
+	<testcase name="lost terminal head acknowledgement makes its older close intent stale before native recovery" time="53.915145" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-history-v8.test.js"/>
+	<testcase name="selector close racing terminal-head acknowledgement cannot dispatch a second close" time="54.734828" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-history-v8.test.js"/>
+	<testcase name="a fully settled cancellation recovers as a nonresumable close without host work" time="54.134570" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-close-history-v8.test.js"/>
+	<testcase name="service-owned known close recovers only after exact same-owner authority and preserves it across process loss" time="95.291963" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-service-close-history-v8.test.js"/>
+	<testcase name="service-owned settled cancellation preserves its exact owner and terminal fence" time="66.701570" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-known-service-close-history-v8.test.js"/>
+	<!-- tests 16 -->
+	<!-- suites 0 -->
+	<!-- pass 16 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 678016.638896 -->
+</testsuites>

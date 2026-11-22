@@ -1,0 +1,161 @@
+{
+  "schema": "promise-mutation-local-evidence/1",
+  "source": {
+    "publishedRevision": "b31d3de5e4a30260d98c0a619efb3c62fe343523",
+    "localRevision": "2975668f773f0f3ba68f9f652adfe67dbc1bd880",
+    "tree": "07ca352d9607068cba23fe181cd9b6e8f36a0001"
+  },
+  "nativeRevision": "03a9e33866207b5b0c4105297c6050dacadcf85f",
+  "junit": {
+    "producer144.xml": {
+      "cases": 144,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "promise-mutation-profile-focused.xml": {
+      "cases": 25,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "promise-mutation-profile-initial.xml": {
+      "cases": 25,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+  "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+  "originalSourceCases": 15,
+  "originalSourceCuts": 65,
+  "originalSourceContexts": 423,
+  "originalSourcePacketUnchanged": true,
+  "mutationSources": 24,
+  "mutationRefusals": 19,
+  "eligibleMutationControls": 5,
+  "actualNativeMutationControls": 5,
+  "actualNativeMutationContexts": 96,
+  "optimizerUpdates": 0,
+  "trainingAdmission": false,
+  "files": [
+    {
+      "originalName": "producer144.log",
+      "storedPath": "producer144.log",
+      "encoding": "identity",
+      "bytes": 14463,
+      "sha256": "71ed5bb7dd8da6b0966521d3d06a083c7c0aaf74f9160c6f6b785aea23f6f2a5",
+      "storedBytes": 14463,
+      "storedSha256": "71ed5bb7dd8da6b0966521d3d06a083c7c0aaf74f9160c6f6b785aea23f6f2a5"
+    },
+    {
+      "originalName": "producer144.xml",
+      "storedPath": "producer144.xml",
+      "encoding": "identity",
+      "bytes": 36705,
+      "sha256": "ba86b6c5b612b250ea303289cac61fe5be09a4033a1b20a2eef4ea89aba55bd9",
+      "storedBytes": 36705,
+      "storedSha256": "ba86b6c5b612b250ea303289cac61fe5be09a4033a1b20a2eef4ea89aba55bd9"
+    },
+    {
+      "originalName": "contract.log",
+      "storedPath": "contract.log",
+      "encoding": "identity",
+      "bytes": 2497,
+      "sha256": "b7ed0d772b4fe90f7f03aed19c77d783450453e46de9f076c2ab5074396f2b6d",
+      "storedBytes": 2497,
+      "storedSha256": "b7ed0d772b4fe90f7f03aed19c77d783450453e46de9f076c2ab5074396f2b6d"
+    },
+    {
+      "originalName": "promise-mutation-profile-focused.log",
+      "storedPath": "promise-mutation-profile-focused.log",
+      "encoding": "identity",
+      "bytes": 2245,
+      "sha256": "b2100a35e7695d0afc3d2ec2f43163e08c3e236fdb0ec07c3a06cc0da63b01f2",
+      "storedBytes": 2245,
+      "storedSha256": "b2100a35e7695d0afc3d2ec2f43163e08c3e236fdb0ec07c3a06cc0da63b01f2"
+    },
+    {
+      "originalName": "promise-mutation-profile-focused.xml",
+      "storedPath": "promise-mutation-profile-focused.xml",
+      "encoding": "identity",
+      "bytes": 6365,
+      "sha256": "2ee27e7aeb5be1d602a98e175a7c5f66b98cd248078038930641e4d477922d0b",
+      "storedBytes": 6365,
+      "storedSha256": "2ee27e7aeb5be1d602a98e175a7c5f66b98cd248078038930641e4d477922d0b"
+    },
+    {
+      "originalName": "promise-mutation-profile-initial.log",
+      "storedPath": "promise-mutation-profile-initial.log",
+      "encoding": "identity",
+      "bytes": 7439,
+      "sha256": "73c6187a9423aad948cbd0cf05923a1e6ab44f19c376a09fcc9d1383441dfbd0",
+      "storedBytes": 7439,
+      "storedSha256": "73c6187a9423aad948cbd0cf05923a1e6ab44f19c376a09fcc9d1383441dfbd0"
+    },
+    {
+      "originalName": "promise-mutation-profile-initial.xml",
+      "storedPath": "promise-mutation-profile-initial.xml",
+      "encoding": "identity",
+      "bytes": 16858,
+      "sha256": "9e2d67b0c3d1dc90c7ca604492906b249202623ab618b0e8f88217f4638529f8",
+      "storedBytes": 16858,
+      "storedSha256": "9e2d67b0c3d1dc90c7ca604492906b249202623ab618b0e8f88217f4638529f8"
+    },
+    {
+      "originalName": "promise-mutation-profile-initial.test.js",
+      "storedPath": "promise-mutation-profile-initial.test.js",
+      "encoding": "identity",
+      "bytes": 15940,
+      "sha256": "4de570ae2fe229c94cc1f848ee5170d995b8e8743a62300c1e0625b061b06781",
+      "storedBytes": 15940,
+      "storedSha256": "4de570ae2fe229c94cc1f848ee5170d995b8e8743a62300c1e0625b061b06781"
+    },
+    {
+      "originalName": "promise-mutation-profile-initial-evidence.json",
+      "storedPath": "promise-mutation-profile-initial-evidence.json.gz.b64",
+      "encoding": "gzip-base64",
+      "bytes": 738188,
+      "sha256": "b8576f3d3a6cb1227ff33d6c3db53448486ce026115dff4a55641876b0b8d7b1",
+      "storedBytes": 75717,
+      "storedSha256": "5d6fd05fc918704b4515567733b3cf7ce70a1c081c49982395904aa92733a939"
+    },
+    {
+      "originalName": "promise-mutation-added-baseline-refusals.json",
+      "storedPath": "promise-mutation-added-baseline-refusals.json",
+      "encoding": "identity",
+      "bytes": 1624,
+      "sha256": "fe677aca6a6089e7f46a387d774225fa2b5d45b356ed1549c3bf193685070090",
+      "storedBytes": 1624,
+      "storedSha256": "fe677aca6a6089e7f46a387d774225fa2b5d45b356ed1549c3bf193685070090"
+    },
+    {
+      "originalName": "promise-mutation-profile-evidence.json",
+      "storedPath": "promise-mutation-profile-evidence.json.gz.b64",
+      "encoding": "gzip-base64",
+      "bytes": 878288,
+      "sha256": "2c39f43011b7d93f878c9af9fb5e209b6bbe09b929b5c2d91dd8dde3a141af0b",
+      "storedBytes": 90933,
+      "storedSha256": "042d8c67300a974bdea1b4425c5c7ba29fa81305bf8db30203b246444a671b19"
+    },
+    {
+      "originalName": "promise-adoption-source-evidence.json",
+      "storedPath": "promise-adoption-source-evidence.json.gz.b64",
+      "encoding": "gzip-base64",
+      "bytes": 4399825,
+      "sha256": "b4f0d99ecdccc50e60361a2c6286a6faf8d421fac8d4d278cd8d1fd3e01a4252",
+      "storedBytes": 359177,
+      "storedSha256": "37682e73f32b6f6dd203dea5739e17bbc6c6eef4899fdb67e5c35cd46b803259"
+    },
+    {
+      "originalName": "promise-adoption-shared-realm-public.json",
+      "storedPath": "promise-adoption-shared-realm-public.json.gz.b64",
+      "encoding": "gzip-base64",
+      "bytes": 75721,
+      "sha256": "01adf6e2f6b65f63634f5c02f33443613dbf7b6001b7170a315aadde586d4db6",
+      "storedBytes": 5689,
+      "storedSha256": "01e58193a543ec9e4a04a73f4b6dca753e7ec797dc358a72d407d07ee47df2c2"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "schema": "shared-generator-source-evidence/1",
+  "sourceCases": 6,
+  "actualNativeCases": 6,
+  "generatedContexts": 189,
+  "nativeReceipts": [
+    {
+      "name": "initial declaration, suspension, completion and reaction",
+      "counts": {
+        "contexts": 33,
+        "generatedRecords": 33,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 16,
+        "protocolRecords": 17
+      }
+    },
+    {
+      "name": "injected rejection is caught before cleanup suspends",
+      "counts": {
+        "contexts": 47,
+        "generatedRecords": 47,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 19,
+        "protocolRecords": 28
+      }
+    },
+    {
+      "name": "live capture remains shared across Promise suspension",
+      "counts": {
+        "contexts": 32,
+        "generatedRecords": 32,
+        "algorithmRecords": 0,
+        "regionRecords": 2,
+        "detailedRecords": 14,
+        "protocolRecords": 16
+      }
+    },
+    {
+      "name": "generator without yield and already completed next",
+      "counts": {
+        "contexts": 29,
+        "generatedRecords": 29,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 15,
+        "protocolRecords": 14
+      }
+    },
+    {
+      "name": "abrupt return before first resume",
+      "counts": {
+        "contexts": 22,
+        "generatedRecords": 22,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 12,
+        "protocolRecords": 10
+      }
+    },
+    {
+      "name": "uncaught generator rejection unwinds the exact executor",
+      "counts": {
+        "contexts": 26,
+        "generatedRecords": 26,
+        "algorithmRecords": 0,
+        "regionRecords": 0,
+        "detailedRecords": 12,
+        "protocolRecords": 14
+      }
+    }
+  ],
+  "moduleAdmission": false,
+  "trainingAdmission": false,
+  "optimizerUpdates": 0,
+  "completeLocalReportSha256": "e807e30b3f28dca8f64f9fa3cabbe720d4dbb9f66046ff6793b9526f382ecd21"
+}

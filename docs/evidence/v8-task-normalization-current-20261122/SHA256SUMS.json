@@ -1,0 +1,38 @@
+{
+  "README.md": {
+    "bytes": 4483,
+    "sha256": "f38290213c073c62cc4bfb20d8a88d1c1b54cd9a2b96bad354f10f10cc75aa50"
+  },
+  "count-report.json": {
+    "bytes": 977,
+    "sha256": "a118a432683318c77c4142dcb4761103ed52b0a1e60d5cb21e7192d51201c256"
+  },
+  "observe-original64.mjs": {
+    "bytes": 2840,
+    "sha256": "23de8d65ca2fdc2aa1b85a1938958cf59f6805b632f45d9a7713f8ebfbbbe565"
+  },
+  "original64-observation.json": {
+    "bytes": 64974,
+    "sha256": "44b30d18347813eff4a98980064934e22eae2139f36d63c17cf1efb1b4f4188f"
+  },
+  "preserved-current-authority.json": {
+    "bytes": 1039,
+    "sha256": "e40f7d226d166202c2c5b51fe5a396ee7addf9406a93230987dec8dc9ced6681"
+  },
+  "source-map.json": {
+    "bytes": 1538,
+    "sha256": "8f6e21a2bad37add8f3a11203bcd5a97fa823be5b7f8f114b8c0d31450bdfdff"
+  },
+  "task-normalization-observations.json": {
+    "bytes": 8755,
+    "sha256": "dbea203491044368adada2e6b4b1994347f6c4d5ec9ea3d09cec5b52874f6a3d"
+  },
+  "tests.log": {
+    "bytes": 9880,
+    "sha256": "42b28bce23da3bcbb4e74778e7d236ae2e11baa954bbc3774d42bc074563623d"
+  },
+  "tests.xml": {
+    "bytes": 33923,
+    "sha256": "e10adf375d64217c25d89c45ce75642b7d525493034153bc55143d6f046262f3"
+  }
+}

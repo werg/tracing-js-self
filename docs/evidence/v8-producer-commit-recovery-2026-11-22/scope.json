@@ -1,0 +1,73 @@
+{
+  "schema": "v8-producer-native-commit-recovery-evidence/1",
+  "runKind": "local",
+  "producerRevision": "e7f8fd60b6f286a667ddf708e17a0963aec78211",
+  "producerLocalEquivalent": "bc0f8b4fe820e1e72eea903bf3a58af0a658c7aa",
+  "nativeRevision": "350c1e69efd30ef59d5de5115b9ba60e7009ff23",
+  "testCases": 43,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "newDurableCommitControls": 7,
+  "optimizerUpdates": 0,
+  "automaticHostRecoveryAuthorized": false,
+  "fullPackagesClosed": 0,
+  "reportSha256": "33013fb1fe0696ef6de101d337238f81d4ee348365535aead1736248447a9a28",
+  "files": [
+    {
+      "path": "src/semantic/native-process-v8.js",
+      "gitBlob": "94a8b36164debdd079ae6ef9f989b7e92c6352cd",
+      "sha256": "b7382392ef26d8e92f6f3061243e71d2f8fc7fd676e64caa101238c753d1b36f"
+    },
+    {
+      "path": "src/semantic/native-durable-commit-v8.js",
+      "gitBlob": "4c54edb396d2585f6bb03822fed1065ba867729f",
+      "sha256": "b448b758425ca67faeb281255ecea5d7db32f1dbc4b55af3aa599b1e1dd0661d"
+    },
+    {
+      "path": "src/semantic/native-orchestration-transport-v8.js",
+      "gitBlob": "466efef1c542faeadfa6911ff427abffa64c79f3",
+      "sha256": "643bdc9551ecefe239d828e15dd1c1ab88f75bfa92957cb6abc2808910d2196b"
+    },
+    {
+      "path": "src/storage/native-request-journal-v8.js",
+      "gitBlob": "a5c84ab73fb0ca88fde1687ac3fd1c7be3ecf0f7",
+      "sha256": "3f4d2750116a9b10ac044ca1c2c91702585f4749937fe572f1bc014d06633a47"
+    },
+    {
+      "path": "src/storage/selected-orchestration-execution-lock.js",
+      "gitBlob": "340224557e588318fc42fcfc5b7ff09885c22ed0",
+      "sha256": "c2d9190291e172dacb539b19347c04988ad76d4f295603c27925f6637798975d"
+    },
+    {
+      "path": "test/semantic-native-durable-commit-v8.test.js",
+      "gitBlob": "234903c5c8ced59443673108c8991d5d9ae214d3",
+      "sha256": "03d9bcfb9f3e5ae07fde330015fea76a71be8d26f76810f3ccb44a7d5069d87f"
+    },
+    {
+      "path": "test/fixtures/semantic-v8-durable-commit-peer.py",
+      "gitBlob": "99e89dd973bf7be0e04ac8e748858eba79dee697",
+      "sha256": "5c55760e8e0949d4b88c96b1489cd4d5665e038734aa9f0d5b98ea52f9c822aa"
+    },
+    {
+      "path": "test/semantic-native-process-v8.test.js",
+      "gitBlob": "946236eec9a8ee1f579b8bbd7ecbbfc16fb4e7ed",
+      "sha256": "f5c8fb9bb724b77bc5bbbefaed2b31bd303744405f3a9288ec4b32acccf93a48"
+    },
+    {
+      "path": "test/semantic-native-orchestration-transport-v8.test.js",
+      "gitBlob": "c5b14312cf16c7bffbf1f1bb2e1188f4976d5211",
+      "sha256": "c4f19f70828897e2a14be73104516cbb23b3a1e417c1f59edaae2a31ec302863"
+    },
+    {
+      "path": "test/native-request-journal-v8.test.js",
+      "gitBlob": "d9399beca33b46873499a7ca49711734a40232c2",
+      "sha256": "ef74d71470e37d7e84e8360d97e0bfb2a6f7072febdcbb69de2c0f63a08e3c4f"
+    },
+    {
+      "path": "test/selected-orchestration-execution-lock.test.js",
+      "gitBlob": "cf0be088988c1174827e18775858bc26b012627f",
+      "sha256": "91c76da24edfbf768f9f3a2a4d05fc47b7c7a14c463bfaf72f70380e2e99c307"
+    }
+  ]
+}

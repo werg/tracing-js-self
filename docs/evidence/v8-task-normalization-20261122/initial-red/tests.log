@@ -1,0 +1,284 @@
+✔ task normalization preserves omitted source defaults (568.901255ms)
+✔ task normalization preserves explicit null guest RNG (426.029824ms)
+✔ task normalization preserves inherited guest RNG (400.463408ms)
+✖ task normalization preserves false empty fixture (385.009947ms)
+✖ task normalization preserves zero empty fixture (385.847478ms)
+✖ task normalization preserves empty-string fixture (367.666043ms)
+✖ task normalization preserves ordinary source ignores the protocol-only ancestry alias (347.607165ms)
+✔ task normalization preserves the direct protocol ancestry alias (347.405792ms)
+✖ task normalization refuses explicit null fixture rejected by ordinary source generation (2.610283ms)
+✖ task normalization refuses explicit null license rejected by ordinary source generation (1.252599ms)
+✖ task normalization refuses explicit null trustTier rejected by ordinary source generation (1.971981ms)
+✖ task normalization refuses explicit null ancestorIds rejected by ordinary source generation (308.458255ms)
+✖ task normalization refuses explicit null seeds rejected by ordinary source generation (1.917981ms)
+✖ task normalization refuses explicit null seed rejected by ordinary source generation (1.283605ms)
+✖ task normalization refuses conflicting explicit-null and inherited guest RNG declarations (1.312057ms)
+✔ task normalization preserves omitted ordered-session defaults (790.118302ms)
+✖ task normalization refuses explicit null session seed (3.848952ms)
+✖ task normalization refuses explicit null session sessionId (167.593953ms)
+✔ task normalization preserves explicit ordered-session seed and identity (796.853103ms)
+✖ task normalization derives session ancestry from its actual ordered components (785.836575ms)
+✖ task normalization preserves the module null default for experimentalNamespacePlan (527.81468ms)
+✖ task normalization preserves the module null default for experimentalSchedulerPlan (562.578486ms)
+✔ task normalization preserves module null host-fixture default (536.647409ms)
+✖ task normalization preserves explicit namespace-profile nullable custody defaults (66.370943ms)
+✖ task normalization refuses null custody rejected by mixed host-protocol generation (1754.514188ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 7
+ℹ fail 18
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10141.362331
+
+✖ failing tests:
+
+test at test/v8-release-task-normalization.test.js:64:3
+✖ task normalization preserves false empty fixture (385.009947ms)
+  Error: V8 release task binding: source, entry, argument graph, host fixture or RNG seed differs from the original task
+      at fail (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:8:28)
+      at demand (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:9:50)
+      at checkSource (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:66:5)
+      at verifyV8TaskArtifactBinding (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:170:17)
+      at accepts (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:42:17)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/v8-release-task-normalization.test.js:64:3
+✖ task normalization preserves zero empty fixture (385.847478ms)
+  Error: V8 release task binding: source, entry, argument graph, host fixture or RNG seed differs from the original task
+      at fail (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:8:28)
+      at demand (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:9:50)
+      at checkSource (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:66:5)
+      at verifyV8TaskArtifactBinding (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:170:17)
+      at accepts (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:42:17)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/v8-release-task-normalization.test.js:64:3
+✖ task normalization preserves empty-string fixture (367.666043ms)
+  Error: V8 release task binding: source, entry, argument graph, host fixture or RNG seed differs from the original task
+      at fail (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:8:28)
+      at demand (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:9:50)
+      at checkSource (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:66:5)
+      at verifyV8TaskArtifactBinding (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:170:17)
+      at accepts (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:42:17)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/v8-release-task-normalization.test.js:64:3
+✖ task normalization preserves ordinary source ignores the protocol-only ancestry alias (347.607165ms)
+  Error: V8 release task binding: artifact family or ancestry differs from the original task
+      at fail (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:8:28)
+      at demand (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:9:50)
+      at checkSource (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:45:3)
+      at verifyV8TaskArtifactBinding (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:170:17)
+      at accepts (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:42:17)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/v8-release-task-normalization.test.js:72:3
+✖ task normalization refuses explicit null fixture rejected by ordinary source generation (2.610283ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at refusesChangedTask (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:53:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /V8 release task binding:/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test/v8-release-task-normalization.test.js:72:3
+✖ task normalization refuses explicit null license rejected by ordinary source generation (1.252599ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at refusesChangedTask (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:53:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /V8 release task binding:/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test/v8-release-task-normalization.test.js:72:3
+✖ task normalization refuses explicit null trustTier rejected by ordinary source generation (1.971981ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at refusesChangedTask (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:53:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /V8 release task binding:/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test/v8-release-task-normalization.test.js:72:3
+✖ task normalization refuses explicit null ancestorIds rejected by ordinary source generation (308.458255ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at refusesChangedTask (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:53:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /V8 release task binding:/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test/v8-release-task-normalization.test.js:72:3
+✖ task normalization refuses explicit null seeds rejected by ordinary source generation (1.917981ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at refusesChangedTask (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:53:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /V8 release task binding:/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test/v8-release-task-normalization.test.js:72:3
+✖ task normalization refuses explicit null seed rejected by ordinary source generation (1.283605ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at refusesChangedTask (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:53:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /V8 release task binding:/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test/v8-release-task-normalization.test.js:74:1
+✖ task normalization refuses conflicting explicit-null and inherited guest RNG declarations (1.312057ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at refusesChangedTask (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:53:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /V8 release task binding:/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test/v8-release-task-normalization.test.js:81:3
+✖ task normalization refuses explicit null session seed (3.848952ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at refusesChangedTask (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:53:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /V8 release task binding:/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test/v8-release-task-normalization.test.js:81:3
+✖ task normalization refuses explicit null session sessionId (167.593953ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at refusesChangedTask (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:53:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /V8 release task binding:/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at test/v8-release-task-normalization.test.js:85:1
+✖ task normalization derives session ancestry from its actual ordered components (785.836575ms)
+  Error: V8 release task binding: original ordered source-session plan differs
+      at fail (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:8:28)
+      at demand (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:9:50)
+      at verifyV8TaskArtifactBinding (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:158:5)
+      at accepts (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:42:17)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/v8-release-task-normalization.test.js:92:3
+✖ task normalization preserves the module null default for experimentalNamespacePlan (527.81468ms)
+  Error: V8 release task binding: module plan switch must be boolean
+      at fail (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:8:28)
+      at demand (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:9:50)
+      at moduleRequest (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:90:5)
+      at verifyV8TaskArtifactBinding (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:148:13)
+      at accepts (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:42:17)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/v8-release-task-normalization.test.js:92:3
+✖ task normalization preserves the module null default for experimentalSchedulerPlan (562.578486ms)
+  Error: V8 release task binding: module plan switch must be boolean
+      at fail (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:8:28)
+      at demand (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:9:50)
+      at moduleRequest (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:90:5)
+      at verifyV8TaskArtifactBinding (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/src/corpus/release-task-binding-v8.mjs:148:13)
+      at accepts (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:42:17)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at test/v8-release-task-normalization.test.js:96:1
+✖ task normalization preserves explicit namespace-profile nullable custody defaults (66.370943ms)
+  AssertionError [ERR_ASSERTION]: Effectful admission requires source family, license and declared trusted source tier
+      at file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:34:49
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async accepts (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:40:33)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test/v8-release-task-normalization.test.js:104:1
+✖ task normalization refuses null custody rejected by mixed host-protocol generation (1754.514188ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at refusesChangedTask (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:53:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js:108:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /V8 release task binding:/,
+    operator: 'throws',
+    diff: 'simple'
+  }
