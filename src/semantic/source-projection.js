@@ -2,7 +2,7 @@
 // teacher authority only: serving never imports this module or its private
 // archive. Public replay uses the same selected controller with adapters off.
 import {isDeepStrictEqual} from 'node:util';
-import {assertPromiseSourceMutationProfileV8,prepareSourcePromiseAdoptionV8,publishSourcePromiseAdoptionV8} from './protocol-promise-adoption-source-v8.js';
+import {assertPromiseSourceObjectProfileV8,prepareSourcePromiseAdoptionV8,publishSourcePromiseAdoptionV8} from './protocol-promise-adoption-source-v8.js';
 import {createHash} from 'node:crypto';
 import {parse} from 'acorn';
 import {validateBundle} from '../validation.js';
@@ -127,7 +127,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
   if(!Number.isInteger(maxOperators)||maxOperators<1||maxOperators>8)
     refuse('compact expressions require an operator bound from 1 through 8');
   validateBundle(bundle);replayExact(bundle);
-  assertPromiseSourceMutationProfileV8(bundle);
+  assertPromiseSourceObjectProfileV8(bundle);
   checkEffectfulProjectionState(bundle,{protocolProfiles:regionAdapter?.projectionStateProfiles??[]});
   const semantic=normalizeJournal(bundle);validateSemantic(bundle,semantic);
   const entry=bundle.entrySpec;
