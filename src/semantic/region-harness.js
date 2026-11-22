@@ -14,6 +14,7 @@ import {encodeProtocolRecordV8,decodeProtocolRecordV8} from './protocol-codec-v8
 import {applyProtocolRecordV8,assertProtocolDetailCompatible,restoreProtocolStateV8,allowsProtocolInternalSchedulerV8,allowsProtocolCompletionDetailV8} from './protocol-state-v8.js';
 import {assertPlainPromiseResolutionV8,assertObservedPromiseResolutionV8} from './scheduler-boundaries-v8.js';
 import {capturePendingIngress,restorePendingIngress} from './pending-ingress-v8.js';
+import {assertModuleNamespaceNextV8} from './protocol-module-namespace-v8.js';
 import {DurableHostIngressBroker,validateHostIngressLogChain,validateHostIngressLogReceipt} from './host-ingress-journal-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual;
@@ -88,6 +89,13 @@ export class RegionExecutionHarness {
   append(mode,kind,fields){
     const row=clean({sequence:this.timeline.length+1,mode,kind,fields});this.timeline.push(row);return copy(row);
   }
+  bindModuleNamespacePlans(){
+    for(const activation of this.inner.invocations.values()){
+      const plan=this.programs.get(activation.programId)?.moduleNamespacePlan;
+      if(plan===undefined)delete activation.controller.moduleNamespacePlan;
+      else activation.controller.moduleNamespacePlan=copy(plan);
+    }
+  }
   sync(){
     for(const raw of this.inner.timeline.slice(this.innerCursor)){
       if(raw.kind==='model-context')continue; // V8 publishes its own checked context.
@@ -102,7 +110,7 @@ export class RegionExecutionHarness {
       }
       this.append(mode,kind,fields);
     }
-    this.innerCursor=this.inner.timeline.length;
+    this.innerCursor=this.inner.timeline.length;this.bindModuleNamespacePlans();
   }
   activation(invocationId){const item=this.inner.invocations.get(invocationId);if(!item)fail('unknown invocation');return item;}
   program(invocationId){return this.programs.get(this.activation(invocationId).programId);}
@@ -130,6 +138,7 @@ export class RegionExecutionHarness {
     if(line.startsWith('detail ')){
       const record=decodeDetailedRecord(line,{role:'generated'});
       const controller=this.activation(invocationId).controller,completionDetail=allowsProtocolCompletionDetailV8(controller,record);
+      assertModuleNamespaceNextV8(controller,record);
       if(controller.protocol){
         if(!protocolDetailKinds.has(record.kind)&&!completionDetail&&!(internalSchedulerDetailKinds.has(record.kind)&&
           allowsProtocolInternalSchedulerV8(controller,record)))fail('asynchronous or external work requires an extended protocol profile');
@@ -143,6 +152,7 @@ export class RegionExecutionHarness {
     }
     if(line.startsWith('protocol '))return this.selectProtocol(invocationId,line);
     if(line.startsWith('algorithm '))return this.selectAlgorithm(invocationId,line,providedEntry);
+    if(this.program(invocationId)?.moduleNamespacePlan)fail('module namespace profile requires explicit protocol cell transitions');
     const record=decodeRegionRecord(line),activation=this.activation(invocationId),controller=activation.controller;
     const region=this.region(invocationId,record.region),entry=this.entry(invocationId,record.region);
     if(!eq(providedEntry,entry))fail('stale region entry, live state, identity, or causal cutoff');
@@ -222,6 +232,7 @@ export class RegionExecutionHarness {
     return {...result,state:sharedRegionState(controller)};
   }
   selectAlgorithm(invocationId,line,providedEntry){
+    if(this.program(invocationId)?.moduleNamespacePlan)fail('module namespace profile requires explicit protocol cell transitions');
     const record=decodePureRegionRecord(line),activation=this.activation(invocationId),controller=activation.controller;
     const program=this.program(invocationId),entry=pureRegionEntry(program,controller,this.timeline.length);
     if(!eq(entry,providedEntry))fail('stale pure region entry');
@@ -478,7 +489,7 @@ export class RegionExecutionHarness {
     replayed.inner=SelectedExecutionLifecycleV8.restore(body.selected,options);
     if(replayed.inner.nextIngressSequence!==body.ingressCursor)
       fail('generic host ingress sequence cursor differs from the checkpoint');
-    replayed.bindRealmReadiness();
+    replayed.bindRealmReadiness();replayed.bindModuleNamespacePlans();
     replayed.innerCursor=replayed.inner.timeline.length;return replayed;
   }
 }

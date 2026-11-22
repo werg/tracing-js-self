@@ -368,7 +368,11 @@ export function applyProtocolRecordV8(controller,record){
   const staged=Object.assign(Object.create(Object.getPrototypeOf(controller)),controller);
   for(const field of fields)staged[field]=copy(field==='protocol'?controller.protocol??createProtocolStateV8():controller[field]);
   require(staged.protocol.sequence<PROTOCOL_V8_LIMITS.steps,'protocol step bound');
-  apply(staged,record);staged.protocol.sequence++;
+  apply(staged,record);
+  for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.assertTransition)
+    require(adapter.assertTransition(controller,staged,record,PROTOCOL_MACHINE_API_V8)===true,
+      'extension transition guard: '+adapter.id);
+  staged.protocol.sequence++;
   for(const field of fields)controller[field]=staged[field];
   return {status:'committed',kind:record.kind,sequence:controller.protocol.sequence,completion:copy(controller.completion??null)};
 }
