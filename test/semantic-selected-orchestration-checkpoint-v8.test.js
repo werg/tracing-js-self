@@ -464,6 +464,15 @@ test('automatic composite history acknowledges the join safe point before child 
     expectTamper(value=>{value.baseCheckpointDigest='f'.repeat(64);},/composite terminal event identity or digest differs/i);
     expectTamper(value=>{value.pendingId='0'.repeat(64);},/pending completion|pending marker/i);
     expectTamper(value=>{value.closeReceipt.reason='forged close';},/positive native close/i);
+    expectTamper(value=>{value.closeReceipt.session='forged-session';},/positive native close/i);
+    expectTamper(value=>{
+      value.closedNative.native.attempts[0].selectionId='forged-selection';
+      value.closedNative.attempts[0].selectionId='forged-selection';
+      const seal=packet=>{const {digest,...body}=packet;return {...body,digest:hashAlgorithmData(body)};};
+      value.closedNative.native=seal(value.closedNative.native);
+      value.closedNative=seal(value.closedNative);
+      value.closedNativeDigest=hashAlgorithmData(value.closedNative);
+    },/closed-native checkpoint|attempts/i);
     expectTamper(value=>{
       value.snapshot.coordinatorAttempts.at(-1).record='{"name":"track_complete","arguments":{}}';
       rehash(value.snapshot);value.snapshotDigest=hashAlgorithmData(value.snapshot);
@@ -488,6 +497,21 @@ test('automatic composite history acknowledges the join safe point before child 
       assert.equal(tombstoneReceipt.hostDispatches,0);
       assert.equal(tombstoneReceipt.consumedAttempts,terminal.closedNative.native.attempts.length);
     }finally{fresh.close();}
+
+    const cancelled=new AbortController(),cancelledSelect=selector();let restoreCalls=0;
+    const restoreCancelled=cancelledSelect.restore;
+    cancelledSelect.restore=async request=>{restoreCalls++;return restoreCancelled(request);};
+    try{
+      await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(terminalEntry.checkpoint,{
+        historyJournal:{readAll:async receipt=>{
+          const retained=await journal.readAll(receipt);
+          cancelled.abort(new Error('cancelled while reading the terminal history'));
+          return retained;
+        }},historyReceipt:head,initialPublic,select:cancelledSelect,policy:automaticPolicy,
+        signal:cancelled.signal
+      }),/cancelled while reading the terminal history/);
+      assert.equal(restoreCalls,0,'cancellation after durable read cannot start native reexecution');
+    }finally{cancelledSelect.close();}
 
     const afterTerminal=rechain([...entries,structuredClone(terminalEntry)]);
     assert.throws(()=>validateSelectedHistoryChain(afterTerminal.entries,afterTerminal.receipt),

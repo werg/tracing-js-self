@@ -219,6 +219,9 @@ export class RegionSelectedOrchestrationDriver {
     }catch(error){select.close?.();throw error;}
   }
   static async restoreLatest(packet,{historyJournal,historyReceipt,initialPublic,select,policy,harnessOptions={},signal=null}={}){
+    const checkAbort=()=>{if(signal?.aborted)throw signal.reason instanceof Error?
+      signal.reason:new Error(String(signal.reason??'Selected orchestration v8 restore cancelled'));};
+    checkAbort();
     packet=copy(packet);historyReceipt=copy(historyReceipt);initialPublic=copy(initialPublic);
     policy=copy(policy);harnessOptions={...harnessOptions};
     demand(typeof historyJournal?.readAll==='function','independently retained composite history is required');
@@ -231,7 +234,11 @@ export class RegionSelectedOrchestrationDriver {
     if(latestEntry.terminal?.schema==='semantic-selected-orchestration-terminal-event/8'){
       const terminal=latestEntry.terminal,snapshot=terminal.snapshot;
       checkAbort();
+      demand(typeof select==='function'&&typeof select.restore==='function'&&
+        typeof select.status==='function'&&select.status().closed===false&&select.status().pending===0,
+        'terminal verification requires a fresh native process selector');
       const closedRestore=copy(await select.restore({checkpoint:copy(terminal.closedNative)}));
+      checkAbort();
       const {digest:closedTransportDigest,...closedTransportBody}=terminal.closedNative;
       demand(closedRestore?.schema==='semantic-model-restore/8'&&closedRestore.restored===true&&
         closedRestore.restoredSessions===0&&closedRestore.consumedAttempts===terminal.closedNative.native.attempts.length&&
