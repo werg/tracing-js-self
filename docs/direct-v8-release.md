@@ -164,3 +164,31 @@ checksum refusal, hostile paths and links, and fresh-process wrapper imports
 with every legacy release file absent. The native verifier's controlled model
 checks and the hosted real package/restore gate are separately counted; these
 archive controls do not execute source admission or optimization.
+
+## Fresh paired package and restore gate
+
+`tools/qualify-v8-release.py` creates a new complete qualification of all 64
+frozen support sources (48 training, 12 validation and four test), prepares
+their original source documents and runs the ordinary two-update resume/export
+lifecycle. It packages that two-update checkpoint with its matching served
+weights, moves the original runtime asset paths and temporary package payload
+out of the way, then restores using only the archive, its separately retained
+checksum and the exact trusted source checkouts. It also requires a wrong
+external checksum to refuse before any restoration destination is created.
+
+The `Direct V8 source model package and restore` workflow freezes native
+`d4afac5bb7261aa7ef85c1d65d3ae6dcaf6caeef` and the triggering producer commit.
+It runs the 17 producer archive, 25 campaign history and 62 native verifier controls without skips,
+then the full paired gate in the exact release runtime. Every subprocess streams
+progress and retains its original stdout/stderr. A complete tar archive retains
+hidden campaign locks, immutable history, original inputs, package, restoration
+and logs even on failure. The original bytes remain distinct from the newly
+restored bytes. Completion requires `qualification-result.json` with status
+`passed`; the presence of a workflow or a partial archive does not qualify the
+release.
+
+This gate measures actual production-tokenizer release mechanics. Its two
+optimizer updates belong to the ordinary lifecycle; package and restore each
+perform zero optimizer updates and zero decoder forward passes. Complete
+training exposure, learned quality, accepted application-history recovery and
+default cutover remain separate gates.
