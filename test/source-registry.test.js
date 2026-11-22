@@ -63,3 +63,23 @@ test('only verified deeply immutable registry snapshots can reuse authenticated 
   assert.throws(()=>verifySourceRegistry(forged),/changed/);
   assert.equal(verifySourceRegistry(immutable).valid,true);
 });
+
+test('registry retains exact clone audit budgets and rejects forged accounting',()=>{
+  const sources=[row('a','function f(x){return x+1;}'),row('b','function f(x){return x*x;}')];
+  const registry=buildSourceRegistry(sources,{cloneBudget:{maxComparisons:100,maxIndexEntries:100}});
+  assert.equal(registry.cloneBudget.maxComparisons,100);
+  assert.equal(registry.diagnostics.cloneAudit.complete,true);
+  assert.equal(verifySourceRegistry(registry).valid,true);
+  const forged=structuredClone(registry);forged.diagnostics.cloneAudit.costs.comparisons++;
+  assert.throws(()=>verifySourceRegistry(forged),/changed/);
+  assert.throws(()=>buildSourceRegistry(sources,{cloneBudget:{maxIndexEntries:0}}),
+    error=>error.code==='SOURCE_CLONE_RESOURCE_EXHAUSTED'&&error.complete===false);
+});
+
+test('source registry can grow beyond the former inventory ceiling',()=>{
+  const registry=buildSourceRegistry(Array.from({length:10001},(_,i)=>
+    row('source-'+i,'function f(x){return x+1;}')));
+  assert.equal(registry.sources.length,10001);
+  assert.equal(registry.components.length,1);
+  assert.equal(verifySourceRegistry(registry).valid,true);
+});

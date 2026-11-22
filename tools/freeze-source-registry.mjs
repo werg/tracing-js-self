@@ -8,10 +8,12 @@ import {execFileSync} from 'node:child_process';
 import {atomicWrite} from '../src/corpus/campaign-store.mjs';
 import {trainingCandidateTasks,candidateSourceInventory,SOURCE_RECIPES} from '../src/corpus/training-candidates.mjs';
 import {buildSourceRegistry,verifySourceRegistry,canonicalHash} from '../src/corpus/source-registry.mjs';
+import {SourceCloneResourceError} from '../src/corpus/source-clusters.mjs';
 
 const options=new Map(),allowed=new Set(['--out','--recipes','--source-stream','--per-family',
   '--generated-families','--generation-seed','--input-seed','--split-seed',
-  '--holdout-projects','--holdout-compositions','--prior-registry']);
+  '--holdout-projects','--holdout-compositions','--prior-registry',
+  '--clone-max-comparisons','--clone-max-candidate-visits','--clone-max-index-entries']);
 for(let index=2;index<process.argv.length;index++){
   const key=process.argv[index],value=process.argv[++index];
   if(!allowed.has(key)||options.has(key)||!value||value.startsWith('--'))throw new Error('Invalid option '+key);
@@ -35,9 +37,24 @@ if(options.has('--prior-registry')){
   const existing=new Set(sources.map(row=>row.id));
   sources.push(...previous.sources.filter(row=>!existing.has(row.id)));
 }
-const registry=buildSourceRegistry(sources,{seed:Number(options.get('--split-seed')??17),
+const cloneBudget=Object.fromEntries([
+  ['--clone-max-comparisons','maxComparisons'],['--clone-max-candidate-visits','maxCandidateVisits'],
+  ['--clone-max-index-entries','maxIndexEntries']].filter(([flag])=>options.has(flag))
+  .map(([flag,key])=>[key,Number(options.get(flag))]));
+const policy={seed:Number(options.get('--split-seed')??17),cloneBudget,
   holdoutProjects:(options.get('--holdout-projects')??'').split(',').filter(Boolean),
-  holdoutCompositions:(options.get('--holdout-compositions')??'').split(',').filter(Boolean)});
+  holdoutCompositions:(options.get('--holdout-compositions')??'').split(',').filter(Boolean)};
+let registry;
+try{registry=buildSourceRegistry(sources,policy);}
+catch(error){
+  if(error instanceof SourceCloneResourceError)atomicWrite(resolve(options.get('--out'))+'.failure.json',
+    JSON.stringify({status:error.status,complete:false,reason:error.message,resource:error.resource,
+      budget:error.budget,costs:error.costs,sources,policy,producerRevision,
+      sourceInventoryDigest:canonicalHash(sources),command:process.argv.slice(1),
+      runtime:{node:process.version,v8:process.versions.v8},
+      retry:'Rerun these original sources with an increased resource budget; no partial registry was admitted.'},null,2)+'\n');
+  throw error;
+}
 if(previous)for(const component of previous.components)for(const family of component.members){
   const current=registry.components.find(row=>row.members.includes(family));
   if(!current||current.split!==component.split)throw new Error('Registry extension would reassign frozen split for '+family+'; retain stable family IDs or quarantine the conflicting release');
