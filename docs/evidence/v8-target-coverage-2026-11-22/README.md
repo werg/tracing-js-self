@@ -82,3 +82,17 @@ the repository archive preserves the complete reports without duplicating those 
 The replacement [run 45009024141](https://github.com/werg/tracing-js-self/actions/runs/45009024141)
 must complete its actual optimizer pass and checkpoint comparison before it earns
 full target-exposure credit.
+
+`verify-retained-policy-targets.py` is the supplemental audit procedure for that
+completed campaign. It requires the original passed inventory, coverage report
+and training configuration; performs complete native admission of the retained
+prepared episodes with the pinned tokenizer; and independently derives every
+canonical policy-target identity. Every prepared policy target must occur in both
+the original inventory and actual optimizer census. It also directly compares all
+retained window, occurrence and denominator rows. It does not substitute the
+supplied inventory for a fresh planner rederivation or claim additional optimization.
+Its report preserves original report/config bytes and their digests, and separately
+records any local input-path relocation. The original objective digest includes
+absolute paths, so relocated reruns must not be presented as identical original
+configuration bytes. The procedure is retained before execution; actual supplemental
+results will only be added after the complete optimizer campaign is available.
