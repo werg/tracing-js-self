@@ -270,3 +270,29 @@ test('restored async adoption binds its original body and completion through the
     for(const key of ['heap','protocol','jobs','ready','scheduler'])c[key]=structuredClone(c[key]);mutate(c);
     assert.throws(()=>restoreProtocolStateV8(c,c.protocol));}
 });
+test('async throws preserve an owned Promise as an opaque rejection across restoration',()=>{
+  let h=asyncSetup({completed:false});
+  select(h,{kind:'async.complete',promise:'p1',invocation:'body1',completion:{kind:'throw',value:['ref','p2']}});
+  h=roundtrip(h);
+  const rejected=h.controller.heap.get('p1');
+  assert.equal(rejected.state,'rejected');assert.deepEqual(rejected.result,['ref','p2']);
+  assert.equal(rejected.adoption??null,null);assert.equal(h.controller.jobs.size,0);
+  refuses(h,{kind:'promise.adopt.enqueue',promise:'p1',target:'p2',job:'invented-adoption'});
+  assert.deepEqual(h.controller.heap.get('p2').result,['num',8]);
+});
+test('async forwarding identities cannot collide with ordinary jobs or another adopter',()=>{
+  let h=asyncSetup();enqueue(h);
+  detail(h,'job',{action:'enqueue',job:'ordinary',owner:'invocation1'});
+  select(h,{kind:'async.call',promise:'p3',child:'body2',callee:['ref','helper'],receiver:['undefined'],arguments:[]});
+  select(h,{kind:'async.complete',promise:'p3',invocation:'body2',completion:{kind:'return',value:['ref','p2']}});
+  select(h,{kind:'promise.adopt.enqueue',promise:'p3',target:'p2',job:'adopt2'});rootReturn(h);
+  assert.deepEqual(h.controller.ready,['adopt1','ordinary','adopt2']);
+  for(const forwarding of ['ordinary','adopt2','adopt1'])
+    refuses(h,{kind:'promise.adopt.enter',promise:'p1',target:'p2',job:'adopt1',forwarding});
+  enter(h);h=roundtrip(h);complete(h,'ordinary');
+  refuses(h,{kind:'promise.adopt.enter',promise:'p3',target:'p2',job:'adopt2',forwarding:'forward1'});
+  select(h,{kind:'promise.adopt.enter',promise:'p3',target:'p2',job:'adopt2',forwarding:'forward2'});h=roundtrip(h);
+  assert.deepEqual(h.controller.ready,['forward1','forward2']);
+  assert.equal(h.controller.heap.get('p1').adoption.forwarding,'forward1');
+  assert.equal(h.controller.heap.get('p3').adoption.forwarding,'forward2');
+});

@@ -1,0 +1,157 @@
+{
+  "schema": "promise-object-profile-local-evidence/1",
+  "source": {
+    "publishedSourceRevision": "95907736f46488662bc4f2bb5625abb9459d0f86",
+    "localSourceRevision": "0a8276245743a86e6eeb2d1911fe88f9a63b2183",
+    "sourceTree": "221cceb4067adb2efe05451546b763be3fff4640",
+    "workflowRevision": "132b1d10b4de69d766ebc7969c6d4f0a9ed9b668",
+    "nativeRevision": "03a9e33866207b5b0c4105297c6050dacadcf85f"
+  },
+  "executionSourceNote": "The complete union launched from local0a827624. Only the new workflow file was committed during execution. The worktree was then aligned with its source-identical published commits. All implementation/test/native blobs stayed unchanged. Untracked evidence and the shared node_modules symlink were present.",
+  "runtime": {
+    "node": "24.22.3",
+    "python": "3.12.14",
+    "torch": "2.10.0+cpu",
+    "pytest": "8.4.2",
+    "ompThreads": 1,
+    "mklThreads": 1
+  },
+  "counts": {
+    "red": {
+      "cases": 23,
+      "failure": 17,
+      "error": 0,
+      "skipped": 1
+    },
+    "green": {
+      "cases": 23,
+      "failure": 0,
+      "error": 0,
+      "skipped": 0
+    },
+    "producer167": {
+      "cases": 167,
+      "failure": 0,
+      "error": 0,
+      "skipped": 0
+    },
+    "native104": {
+      "cases": 104,
+      "failure": 0,
+      "error": 0,
+      "skipped": 0
+    }
+  },
+  "newSourceCases": 22,
+  "newRefusedSources": 17,
+  "newEligibleSources": 5,
+  "newNativeContexts": 51,
+  "optimizerUpdates": 0,
+  "files": [
+    {
+      "path": "contract.log",
+      "bytes": 2962,
+      "sha256": "1641458b00e96aaf114c5af1f3b1689d8403701dbccede256336162a242833f1"
+    },
+    {
+      "path": "green.log",
+      "bytes": 1797,
+      "sha256": "af00688600de4b4241f1b4cbb31fda294003e2ba7413259c6c3e5c5d62370294"
+    },
+    {
+      "path": "green.xml",
+      "bytes": 5475,
+      "sha256": "0053622c27021777fd5b28c5c21e62da1a60f9da59e0cad558388f5613f9f8a3"
+    },
+    {
+      "path": "native-composition-map.json",
+      "bytes": 14156,
+      "sha256": "ddb63aff07dea301fa6295fd6ad011024281f755fca769bca7d6ee1e56f14dc4"
+    },
+    {
+      "path": "native104.log",
+      "bytes": 335,
+      "sha256": "109ee142f48c31c1be41ba04239eed5a5a588d6643c1b8133c7491d26f272e3b"
+    },
+    {
+      "path": "native104.xml",
+      "bytes": 16978,
+      "sha256": "f9b6544b42248c1718cb076f255485d366c9a8434b4421766c85935c41536641"
+    },
+    {
+      "path": "nested-async-source-evidence.json.gz.b64",
+      "bytes": 207501,
+      "sha256": "4d86e62107bcbd12c4c24fd70bedbfc6a5ffec4d947d05c179f6bf8f86113e4b",
+      "originalBytes": 2215067,
+      "originalSha256": "3213b68f03113bec366bfc232595095ef5d0f507cd06d4ecb741dd8b355dbe47",
+      "encoding": "gzip-base64"
+    },
+    {
+      "path": "producer-composition-map.json",
+      "bytes": 13045,
+      "sha256": "bc3a026accd987e627c7277e051a8d03e55ed7c0c160d881cbc7ab0bd41120a4"
+    },
+    {
+      "path": "producer167.log",
+      "bytes": 16131,
+      "sha256": "e50e7388af002f684d85a047c09fa686cc8a318098701fa26d1bbd3f0aee7089"
+    },
+    {
+      "path": "producer167.xml",
+      "bytes": 41516,
+      "sha256": "bccd1ca3f29bcb8e5d6dd4a1278b5efc5c974e47de183332c24a9a3a0bd04979"
+    },
+    {
+      "path": "promise-adoption-shared-realm-public.json.gz.b64",
+      "bytes": 5689,
+      "sha256": "01e58193a543ec9e4a04a73f4b6dca753e7ec797dc358a72d407d07ee47df2c2",
+      "originalBytes": 75721,
+      "originalSha256": "01adf6e2f6b65f63634f5c02f33443613dbf7b6001b7170a315aadde586d4db6",
+      "encoding": "gzip-base64"
+    },
+    {
+      "path": "promise-adoption-source-evidence.json.gz.b64",
+      "bytes": 359177,
+      "sha256": "37682e73f32b6f6dd203dea5739e17bbc6c6eef4899fdb67e5c35cd46b803259",
+      "originalBytes": 4399825,
+      "originalSha256": "b4f0d99ecdccc50e60361a2c6286a6faf8d421fac8d4d278cd8d1fd3e01a4252",
+      "encoding": "gzip-base64"
+    },
+    {
+      "path": "promise-mutation-profile-evidence.json.gz.b64",
+      "bytes": 90897,
+      "sha256": "45b9bab59ee8542ba8178cfe43556b32b009b16982092b41ce9c982c14127736",
+      "originalBytes": 878418,
+      "originalSha256": "e6a55c1bba0b4dde48fcf89fc2e4b5da19c73c5a7e5cf77aaff039dab19706a8",
+      "encoding": "gzip-base64"
+    },
+    {
+      "path": "promise-object-profile-evidence.json.gz.b64",
+      "bytes": 60705,
+      "sha256": "df42e094194bfca3dd5cae7950ec65d2b93a424f4a43153eb50e77baee4e39c2",
+      "originalBytes": 493033,
+      "originalSha256": "27b3b832ead672d828d8024cd58aeb20341d26abc5d794e60eef4d3d0c227a44",
+      "encoding": "gzip-base64"
+    },
+    {
+      "path": "promise-prototype-probe.jsonl",
+      "bytes": 11068,
+      "sha256": "50ce36e295a91880f48ecb5dc145a79474c902fe1e612ebe97c48039f96d93df"
+    },
+    {
+      "path": "promise-prototype-probe.mjs",
+      "bytes": 2546,
+      "sha256": "509e47e51bb2de37957f10d4bdbfb06ef7be8221754dd0b862831323e6468637"
+    },
+    {
+      "path": "red.log",
+      "bytes": 17050,
+      "sha256": "d6fec74fa94fb12f0f7d02d2c1f60f8eaedf33df00f3b3f3f8abd1f3021c47c9"
+    },
+    {
+      "path": "red.xml",
+      "bytes": 23682,
+      "sha256": "267521df286a60743bcc8ba007434e74246a980ccf34fc59afd6671427443b47"
+    }
+  ]
+}

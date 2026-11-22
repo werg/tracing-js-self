@@ -6,9 +6,19 @@ import {PROMISE_ADOPTION_COMPONENT_V8 as id,sourcePromiseAdoptionEventV8,sourceH
 // An unsupported intrinsic can leave a valid owned guest-throw event with no
 // operands. The validated CALL's before-stack still binds the actual callable
 // and evaluated arguments. Do not certify that implementation limit as a guest
-// TypeError: Promise own descriptors require a separate source profile. This
-// is independent of source spellings, computed keys and local shadowed names.
-export function assertPromiseSourceMutationProfileV8(bundle){
+// TypeError or primitive result: Promise object storage requires a separate
+// source profile. These positions cover the intrinsics that currently complete
+// without modeling that storage. Other object reflection/mutation intrinsics
+// already refuse during execution. Object.is is identity-only, and isFrozen is
+// correct for an intact, extensible Promise; neither needs object storage here.
+// Argument positions matter: a Promise can be the new prototype or descriptor
+// of an ordinary object, not just the operation's first operand.
+const promiseObjectArguments=new Map([
+  ['Object.defineProperty',[0,2]],['Object.create',[0,1]],
+  ['Object.setPrototypeOf',[0,1]],['Object.getPrototypeOf',[0]],
+  ['Object.preventExtensions',[0]],['Object.isExtensible',[0]]
+]);
+export function assertPromiseSourceObjectProfileV8(bundle){
   for(const event of bundle.events){
     if(event.operation!=='call.enter')continue;
     const frame=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId)?.before,
@@ -18,7 +28,7 @@ export function assertPromiseSourceMutationProfileV8(bundle){
     if(!Number.isSafeInteger(count)||count<1||frame.stack.length<count+1)continue;
     const inputs=frame.stack.slice(-count-1),raw=inputs[0]?.value,
       callee=raw?.[0]==='method'?raw[1]:raw;
-    if(callee?.[0]!=='builtinfn'||callee[1]!=='Object.defineProperty')continue;
+    if(callee?.[0]!=='builtinfn'||!promiseObjectArguments.has(callee[1]))continue;
     const args=[];
     for(let index=0;index<count;index++){
       const value=inputs[index+1]?.value;
@@ -28,9 +38,13 @@ export function assertPromiseSourceMutationProfileV8(bundle){
         args.push(...value[1]);
       }else args.push(value);
     }
-    if(args[0]?.[0]==='promise'){
+    if(callee[1]==='Object.defineProperty'&&args[0]?.[0]==='promise'){
       const error=new TypeError('Protocol source projection: Promise own-property mutation requires its declared source profile');
       error.category='unsupported.promise-source-mutation';throw error;
+    }
+    if(promiseObjectArguments.get(callee[1]).some(index=>args[index]?.[0]==='promise')){
+      const error=new TypeError('Protocol source projection: Promise object operation '+callee[1]+' requires its declared source profile');
+      error.category='unsupported.promise-source-object-operation';throw error;
     }
   }
 }

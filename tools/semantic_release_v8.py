@@ -200,7 +200,122 @@ def campaign_snapshot(producer, qualification, evidence, name):
     return snapshot, output
 
 
-def descriptor_from_campaign(snapshot, producer, native):
+def original_source_members(snapshot, qualification):
+    """Bind each selected case to its declared original inputs before replay.
+
+    The journal proves custody, not task/artifact correspondence. This first
+    release profile supports explicit original source tasks, including ordered
+    repeated invocations; module-task correspondence requires another profile.
+    """
+    files = {row["path"]: row for row in snapshot["files"]}
+
+    def retained_json(name):
+        require(name in files, "Original source input is outside the complete campaign inventory")
+        path = archive.no_symlinks(archive.inside(qualification, name))
+        with path.open("rb") as stream:
+            data = archive.read_bounded(stream, MAX_JSON)
+        require(len(data) == files[name]["bytes"] and hashlib.sha256(data).hexdigest() == files[name]["sha256"],
+                "Original source input differs from the complete campaign inventory")
+        return strict_json(data)
+
+    population, report = retained_json("population.json"), retained_json("report.json")
+    tasks = {task["fixture"]["id"]: task for task in population["tasks"]}
+    rows = {row["id"]: row for row in report["rows"]}
+    require(len(tasks) == len(population["tasks"]) and len(rows) == len(report["rows"]) and
+            list(tasks) == list(rows) == [case["id"] for case in snapshot["cases"]] and
+            set(snapshot["selectedCaseIds"]) <= tasks.keys(),
+            "Original source tasks and committed case membership differ")
+    require(report.get("familyRegistryArtifact") == "family-registry.json",
+            "Release source tasks require their explicit frozen family registry")
+    registry = retained_json("family-registry.json")
+    require(registry.get("schema") == "semantic-region-family-registry/1" and
+            registry.get("digest") == population.get("registryDigest") == report.get("registryDigest"),
+            "Original source registry differs from the frozen campaign")
+    registered = {row["id"]: row for row in registry["sources"]}
+    require(len(registered) == len(registry["sources"]), "Original source registry repeats a physical source ID")
+
+    def ancestry(values, family):
+        require(isinstance(values, list) and len(values) <= 1024 and
+                all(isinstance(value, str) and 0 < len(value) <= 256 for value in values),
+                "Original source ancestry is outside the declared profile")
+        return sorted(set(values) - {family})
+
+    def original_call(fixture, reference):
+        require(isinstance(reference, dict) and isinstance(fixture.get("source"), str) and
+                isinstance(fixture.get("entry"), str) and isinstance(fixture.get("argsGraph"), dict) and
+                reference.get("source") == fixture["source"] and reference.get("entry") == fixture["entry"] and
+                same_json(reference.get("inputGraph"), fixture["argsGraph"]),
+                "Original source text, entry or argument graph differs from its frozen task")
+        expected_fixture = fixture.get("fixture", {"calls": [], "settlementOrder": None})
+        # Direct protocol references omit an empty host plan. A nonempty plan
+        # must always be represented and compared, including settlement order.
+        actual_fixture = reference.get("fixture", {"calls": [], "settlementOrder": None})
+        require(same_json(actual_fixture, expected_fixture), "Original source host fixture differs from its frozen task")
+        seeds = fixture.get("seeds")
+        require(seeds is None or isinstance(seeds, dict), "Original source RNG settings are undeclared")
+        expected_seed = fixture.get("randomSeed")
+        if expected_seed is None:
+            expected_seed = (seeds or {}).get("guestRng")
+        require(same_json(reference.get("randomSeed"), expected_seed),
+                "Original source RNG seed differs from its frozen task")
+
+    members = []
+    for case in snapshot["cases"]:
+        if not case["selected"]:
+            continue
+        task, row = tasks[case["id"]], rows[case["id"]]
+        fixture = task["fixture"]
+        require(task.get("kind") == "source" and task.get("traceVersion") == 8,
+                "This release profile requires original source tasks; module-task correspondence is undeclared")
+        document = retained_json(case["sourceArtifact"])
+        side = document.get("sidecar", {})
+        original = side if side.get("schema") == "semantic-protocol-host-region-evidence/1" else \
+            side.get("sourceArtifact", {}).get("sidecar", {})
+        reference, binding, identity = original.get("referenceInput"), side.get("datasetBinding", {}), side.get("splitIdentity", {})
+        source_id, family = row.get("sourceId"), fixture.get("family")
+        require(isinstance(source_id, str) and source_id in registered and isinstance(family, str) and bool(family) and
+                document.get("public", {}).get("schema") == "semantic-execution/8" and
+                binding.get("sourceId") == identity.get("sourceId") == source_id and
+                binding.get("registryDigest") == identity.get("registryDigest") == registry["digest"] and
+                same_json(identity.get("registry"), registry) and
+                row.get("split") == binding.get("split") == identity.get("split") and
+                row.get("split") in {"train", "validation", "test"},
+                "Original task physical source, registry or split differs from its artifact")
+        registered_source = registered[source_id]
+        require(row.get("family") == side.get("family") == side.get("sourceFamily") ==
+                original.get("sourceFamily") == registered_source.get("family") == family and
+                original.get("sourceLineage", family) == family and
+                ancestry(original.get("ancestorIds", []), family) == ancestry(fixture.get("ancestorIds", []), family) ==
+                ancestry(registered_source.get("ancestors", []), family),
+                "Original source family or ancestry differs from its frozen task")
+        require(original.get("producerRevision") == task.get("producerRevision") == snapshot["producerRevision"] and
+                original.get("taskId", fixture["id"]) == fixture["id"],
+                "Original source producer or task identity differs from its frozen task")
+        require(isinstance(reference, dict) and reference.get("source") == fixture.get("source") ==
+                registered_source.get("source") and reference.get("entry") == fixture.get("entry") ==
+                registered_source.get("entry"), "Original source reference differs from its registered frozen task")
+        if "sessionCases" in fixture:
+            calls = fixture["sessionCases"]
+            require(isinstance(calls, list) and calls and isinstance(reference.get("invocations"), list) and
+                    len(calls) == len(reference["invocations"]),
+                    "Original source invocation count differs from its frozen task")
+            for call, observed in zip(calls, reference["invocations"], strict=True):
+                require(isinstance(call, dict) and "sessionCases" not in call and call.get("family") == family and
+                        call.get("source") == fixture["source"] and call.get("entry") == fixture["entry"],
+                        "Original repeated source call is outside its declared family")
+                original_call(call, observed)
+        else:
+            require("invocations" not in reference, "Original source gained undeclared repeated invocations")
+            original_call(fixture, reference)
+        teacher = fixture.get("orchestrationTeacher", False)
+        require(type(teacher) is bool and ("orchestrationTranscript" in side) == teacher,
+                "Original source orchestration teacher differs from its frozen task")
+        members.append({"caseId": case["id"], "sourceId": source_id,
+                        "path": ROLES["qualification"] + "/" + case["sourceArtifact"]})
+    return members
+
+
+def descriptor_from_campaign(snapshot, producer, native, qualification):
     policy = snapshot["nativePolicy"]
     require(snapshot["producerRevision"] == producer["revision"] and
             policy["consumerRevision"] == native["revision"], "Qualification belongs to another source pair")
@@ -209,12 +324,10 @@ def descriptor_from_campaign(snapshot, producer, native):
             all(row["status"] == "admitted" and row["source"] == row["native"] == "passed"
                 for row in selected), "Every selected release source must be source-qualified and native-admitted")
     roles = {key: value for key, value in ROLES.items() if key != "prepared"}
-    roles["prepared"] = [{"path": ROLES["prepared"], "sourceArtifacts": [
-        # Original preparation binds the complete source input bytes. The
-        # admitted copy remains retained evidence, not a substitute source.
-        {"caseId": row["id"], "path": ROLES["qualification"] + "/" + row["sourceArtifact"]}
-        for row in selected
-    ]}]
+    # Original preparation binds the complete source input bytes. The admitted
+    # copy remains retained evidence, not a substitute for the declared task.
+    roles["prepared"] = [{"path": ROLES["prepared"],
+                          "sourceArtifacts": original_source_members(snapshot, qualification)}]
     return {"schema": "semantic-v8-release-inputs/1", "producerRevision": producer["revision"],
             "consumerRevision": native["revision"], "roles": roles,
             **{name: snapshot[name] for name in ("contractDigest", "fixtureDigest", "interoperabilityDigest")}}
@@ -395,7 +508,7 @@ def package_release(args):
     evidence.mkdir(mode=0o700)
     with locked_campaign(inputs[ROLES["qualification"]]):
         snapshot, snapshot_file = campaign_snapshot(producer_root, inputs[ROLES["qualification"]], evidence, "original-campaign")
-        descriptor = descriptor_from_campaign(snapshot, producer, native)
+        descriptor = descriptor_from_campaign(snapshot, producer, native, inputs[ROLES["qualification"]])
         rows, sources = inventory(inputs)
         copy_inputs(rows, sources, stage)
         (stage / "proofs").mkdir(exist_ok=True)
@@ -407,6 +520,8 @@ def package_release(args):
         with locked_campaign(stage / ROLES["qualification"]):
             copied, _ = campaign_snapshot(producer_root, stage / ROLES["qualification"], evidence, "copied-campaign")
             require(same_json(copied, snapshot), "Copied qualification journal differs from original")
+            require(same_json(descriptor_from_campaign(copied, producer, native, stage / ROLES["qualification"]), descriptor),
+                    "Copied original task/source membership differs")
             verify_recipe(stage)
             result, native_file, environment_file = native_checks(
                 stage, descriptor, producer_root, native_root, args.python, evidence,
@@ -468,7 +583,7 @@ def restore_release(args):
         snapshot, _ = campaign_snapshot(producer_root, destination / ROLES["qualification"], evidence, "restored-campaign")
         original_snapshot = read_json(destination / CAMPAIGN)
         require(same_json(snapshot, original_snapshot) and same_json(provenance(snapshot), manifest["qualification"]) and
-                same_json(descriptor, descriptor_from_campaign(snapshot, producer, native)),
+                same_json(descriptor, descriptor_from_campaign(snapshot, producer, native, destination / ROLES["qualification"])),
                 "Restored descriptor/selection differs from the complete qualification journal")
         verify_recipe(destination)
         previous = read_json(destination / NATIVE)

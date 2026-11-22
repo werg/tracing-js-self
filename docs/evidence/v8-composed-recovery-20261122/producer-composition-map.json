@@ -1,0 +1,163 @@
+{
+  "main": "69ff5edd4dc23c1d0f62a393b39269018e61a003",
+  "candidate": "9b2e5faef467e962f919aa3b6f2baebca71441a9",
+  "paths": [
+    {
+      "path": "src/semantic/native-durable-bootstrap-v8.js",
+      "beforeBlob": null,
+      "candidateBlob": "32e37123db7b2751501e192992e64f8bc79d4996",
+      "sha256": "f5ef84ad576242066e21c7263d26c1636fb17d898a7b3df01a7af629bd240410"
+    },
+    {
+      "path": "src/semantic/native-durable-close-v8.js",
+      "beforeBlob": null,
+      "candidateBlob": "70030841ce865fa305257e7ef352832988430b4c",
+      "sha256": "1ccb8116691c57bf3f6e6589ef3876bc348a22fc3eea2bdfb8ccc5d5e1495a75"
+    },
+    {
+      "path": "src/semantic/native-durable-commit-v8.js",
+      "beforeBlob": "600486c1420991cad301f8033cbd548bff2b64f2",
+      "candidateBlob": "4c54edb396d2585f6bb03822fed1065ba867729f",
+      "sha256": "b448b758425ca67faeb281255ecea5d7db32f1dbc4b55af3aa599b1e1dd0661d"
+    },
+    {
+      "path": "src/semantic/native-process-v8.js",
+      "beforeBlob": "91c94adc6f23172d2154d1dba32ecf9d134b76f5",
+      "candidateBlob": "6dcbd75582f1935f05b419b468affe9f2f336615",
+      "sha256": "f033df0629f7acf50d15296ffbb9becab5cd88e5124f20b929cdb65e3f06c068"
+    },
+    {
+      "path": "src/semantic/selected-history-v8.js",
+      "beforeBlob": "9a4612c88a73863b04d07e663996b2ca0fb54150",
+      "candidateBlob": "82ab298b17cc9a9a2d36aa971a00dc4dee0b3edb",
+      "sha256": "370c0901261c7b122e34a7dd48195626867657c2daa6d636f7154c002f80984a"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-bootstrap-recovery-v8.js",
+      "beforeBlob": null,
+      "candidateBlob": "0736b929fb424346b7b795e066c8c9f2c52e5539",
+      "sha256": "bc3bcc00bbe6bc6ec3e1ffacd4d026dd2156505db1287f47f41c785199bb7ffd"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-checkpoint-v8.js",
+      "beforeBlob": "261e9f0359b728d2c77d3ce6e1750bba08938514",
+      "candidateBlob": "32cc0aab1531c22884ffc1998ae8c4fd2301b4da",
+      "sha256": "5ac97cd6b793e393dcd46f7e2d8ed89df04f532aafc022987ef38e9894786958"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-close-recovery-v8.js",
+      "beforeBlob": null,
+      "candidateBlob": "395c129cd8cc7b09a9ab30d13ed1835a148cb00a",
+      "sha256": "7dd4b31d2c6658cbe36bb7e71786bba2415982b327428dfa74ed1918058015ff"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-commit-recovery-v8.js",
+      "beforeBlob": "4c216b112f940a64e91d6f73469dcdef3ae85f3d",
+      "candidateBlob": "2bde2b7005fb8c8d591504671d763dafd8efa4e3",
+      "sha256": "87495a4a8f0e0d16fb660e3cf54caffddb7d957b559f18fac76502093a53112c"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-v8.js",
+      "beforeBlob": "88f432ffee3aa25f7681964607f7c3f3c6c333cb",
+      "candidateBlob": "77646fd37b78cdac8cd2a25c0675fb29f673b7c6",
+      "sha256": "472690d2583fcfc2688fcb80ff76ed16d8dde1430cf16ddde4ec828d9ecec82d"
+    },
+    {
+      "path": "src/storage/native-request-journal-v8.d.ts",
+      "beforeBlob": "91c9b0994dfe0fcb739cc632b14b008f31ae1b45",
+      "candidateBlob": "a10b1b5cca95f8a520e944c23a9837061a33b9ca",
+      "sha256": "85180c13e39534a3319665735be1425d12f5b362884d2ab941825e635a20babb"
+    },
+    {
+      "path": "src/storage/native-request-journal-v8.js",
+      "beforeBlob": "52a1eb81dc4a77e648dd738798f9242c1ce39b0c",
+      "candidateBlob": "c682dca62f06deba824cc40615ab0b6a28a0bf20",
+      "sha256": "417173eb72d97699a91792c9b13c86adf9937c1be57e2058d68393b6525c7e23"
+    },
+    {
+      "path": "test/fixtures/semantic-v8-durable-commit-peer.py",
+      "beforeBlob": "a1e1c42160ea26f854d83b718ed18c8143f5f8ea",
+      "candidateBlob": "0c4242196854cd0881828f01fe498a04d6773457",
+      "sha256": "322dea8db409928083ec2a396db046e847039c22c1e55786db9e2241adc7d2e3"
+    },
+    {
+      "path": "test/fixtures/semantic-v8-track-cancel-recovery-peer.py",
+      "beforeBlob": "3e61288f2ff033b30e85b4eb4bf70a7d0af377ef",
+      "candidateBlob": "14f2a9458c46c0f071a8e0104a24ae1c1d67bbf3",
+      "sha256": "8dab07121dd620c93448cf17f7fecd951e69885c58cf26a9477027d06f75227a"
+    },
+    {
+      "path": "test/helpers/native-bootstrap-fixture-v8.js",
+      "beforeBlob": null,
+      "candidateBlob": "ec29971a4d5278f8560db9613987072e6ff3a93e",
+      "sha256": "99d80032dcada9c3ef9a395c47ec724006c954e3ec148a867e27715ba82d5503"
+    },
+    {
+      "path": "test/native-request-journal-v8.test.js",
+      "beforeBlob": "0f7616c2a717a950c88039aa9d30a86759494a4f",
+      "candidateBlob": "d9399beca33b46873499a7ca49711734a40232c2",
+      "sha256": "ef74d71470e37d7e84e8360d97e0bfb2a6f7072febdcbb69de2c0f63a08e3c4f"
+    },
+    {
+      "path": "test/semantic-known-bootstrap-builder-v8.test.js",
+      "beforeBlob": null,
+      "candidateBlob": "63d6409219308f7e18565fd504c221a0061932ee",
+      "sha256": "7c448fce6715bee0d25ffdaf1cb2763dd3410c92da97c13134638f7b84fed197"
+    },
+    {
+      "path": "test/semantic-known-bootstrap-history-v8.test.js",
+      "beforeBlob": null,
+      "candidateBlob": "f995e532066263048bf1bd8aeabed6fd65603511",
+      "sha256": "f41a49e6db3a191cfa6a3d888b9e3334b150aef39b87061b17efb5774cac15c6"
+    },
+    {
+      "path": "test/semantic-known-close-builder-v8.test.js",
+      "beforeBlob": null,
+      "candidateBlob": "a235299a555573eb2dc785ea21bf1c2b53884f4e",
+      "sha256": "7784cfef49daa4c71e5a0c44b0e028404e593200406afcab21f314d43705a89e"
+    },
+    {
+      "path": "test/semantic-known-close-history-v8.test.js",
+      "beforeBlob": null,
+      "candidateBlob": "e83223293183c3fb3cc83dafbdef971c0a1b3a2a",
+      "sha256": "3d0728d8e18e887ab27df976bc47fcbf1d57714792b90b9a6b57df95ec292dce"
+    },
+    {
+      "path": "test/semantic-known-commit-builder-v8.test.js",
+      "beforeBlob": "d1f7f5a577b21a043b50ce5e8fcc3c7686a32d56",
+      "candidateBlob": "7bc4964724a4c32026c54ec0d51ee854b6e0c612",
+      "sha256": "1f91d9ee4364967acad8f6db892afcd1d08773f3963ef614a903415d4e228d24"
+    },
+    {
+      "path": "test/semantic-known-commit-history-v8.test.js",
+      "beforeBlob": "f7c78aab5618c3c455f0b1a400810203a74a5ed8",
+      "candidateBlob": "c7076a9381eb59b33279a78e82b32c5f8d391747",
+      "sha256": "aee588cfd96fc60c54578cb2366c68bf227d5db04b5cd76ce61974c3c5a388eb"
+    },
+    {
+      "path": "test/semantic-known-service-close-history-v8.test.js",
+      "beforeBlob": null,
+      "candidateBlob": "1505e97994a2e47b00f578964015c84c8f9ca2fa",
+      "sha256": "f98a4a22adf2b03517adb4d4cad150c472a8fbbd4e506c4ee61bdf75680f7fef"
+    },
+    {
+      "path": "test/semantic-native-durable-bootstrap-v8.test.js",
+      "beforeBlob": null,
+      "candidateBlob": "6abf52992407cdc4d66d927fcbb41c90fe0abd56",
+      "sha256": "4e62f1c170b582b2ba8483b64672c462cfd9089715998cfcd715f7367286aad0"
+    },
+    {
+      "path": "test/semantic-native-durable-close-v8.test.js",
+      "beforeBlob": null,
+      "candidateBlob": "a3b889517d5e2183fe5d568558604e9c0b46a0e2",
+      "sha256": "0011c918b40f8cebeb3328c3353753e85fffd5e89c9e3989fc62b2dce7346369"
+    },
+    {
+      "path": "test/semantic-native-durable-commit-v8.test.js",
+      "beforeBlob": "be9db685b37d5408077bb630caa40e1b762e46f4",
+      "candidateBlob": "44d9c33f81a7c754fe68373dd80a80eea5c4fb4f",
+      "sha256": "73cd5d135589036cd8caf7feb5bfcd8bbdc90bf3cc70eb199f3ed85a174fc07c"
+    }
+  ],
+  "policy": "Retain current main policy until combined native source is committed and its exact candidate gate configured. Do not overwrite later main evidence/tooling by merging the stale candidate wholesale."
+}

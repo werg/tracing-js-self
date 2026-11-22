@@ -1,5 +1,37 @@
 # Combined causal/bootstrap/service terminal recovery — 22 November 2026
 
+## Corrected complete gate passed
+
+[Run 45042073863](https://github.com/werg/tracing-js-self/actions/runs/45042073863)
+completed successfully on producer `9b2e5faef467e962f919aa3b6f2baebca71441a9`
+and native `15844c00c095849755ca6f0e1d207f7db79a9264`. All five required jobs
+completed successfully. Independent verification of all original ZIP hashes,
+checkout/runtime files and JUnit documents confirms **165 native and 193 producer
+leaf cases, zero failures, errors or skips**. Producer counts are 123 structural,
+33 transport, nine commit-history, 12 bootstrap-history and 16 terminal-history.
+Native counts are 42 commit, 30 bootstrap, nine close, 13 journal, 16 launch and
+55 position-receipt cases.
+
+`corrected-9b/` retains every byte-original ZIP, all five complete job logs
+losslessly compressed, original run/job/artifact metadata and the independent
+summary. Both service-owned cases pass the new exact reconstruction checks,
+including repeated process loss and settled cancellation. The runtime remains
+Node 24.22.3, Python 3.12.14, locked Torch 2.10.0+cpu and pytest 8.4.2, with genuine
+hosted clock authority. This source-only recovery proof has zero optimizer work;
+it is not learned execution or complete production qualification.
+
+Reproduce the byte, identity, completed-job and population checks with:
+
+```sh
+python docs/evidence/v8-composed-recovery-20261122/audit.py \
+  docs/evidence/v8-composed-recovery-20261122/corrected-9b
+python docs/evidence/v8-composed-recovery-20261122/audit.py \
+  docs/evidence/v8-composed-recovery-20261122/failed-a3bb --expect-producer-failures 2
+```
+
+The first explicitly reports `completeGatePassed: true`; the preserved failed
+run explicitly reports `false`. Historical populations are not added together.
+
 ## Preserved failed gate
 
 [Run 45038208676](https://github.com/werg/tracing-js-self/actions/runs/45038208676)
@@ -68,8 +100,8 @@ correction. The published corrected producer is
 `fc0ad0c11277e3a640afba41b7d5335bf20fb39f` tree. Production code, native source,
 model deadlines, fixture outputs, test populations and the five-lane workflow
 are unchanged. [Run 45042073863](https://github.com/werg/tracing-js-self/actions/runs/45042073863)
-is the separate corrected qualification; its final result is not inferred from
-the preceding failed run.
+is the separate corrected qualification reported above; its successful result
+comes from its own complete artifacts, not from the preceding failed run.
 
 ## Composition audit
 
@@ -86,6 +118,17 @@ evidence and training-archive tooling. A wholesale checkout of the candidate
 would delete unrelated later records. A passing candidate does not automatically
 qualify an independently composed later tree.
 
+`producer-composition-map.json` binds the 26 source/test files that differ from
+producer main `69ff5edd`. Prepared local integration `9d3f8787` contains exactly
+those paths on that main base, and its complete `src` and `test` scopes match
+the corrected hosted source. Prepared native integration `38cede01` contains
+the six native paths on main `622c37c2`; its complete source, scripts, tests,
+runtime manifests and workflows match `15844c00`. No later main evidence or
+training archive tooling is removed. These prepared commits are source maps for
+reviewed integration, not a claim that unrelated concurrent changes have been
+qualified. Producer native-policy selection and final paired integration remain
+explicit publication steps.
+
 ## Local validation limits
 
 Syntax and whitespace checks passed. An attempted broader local structural run
@@ -99,8 +142,9 @@ complete proof remains the hosted 165-native/193-producer gate with zero skips.
 
 ## Remaining acceptance
 
-After the corrected exact gate succeeds, compose the source/test maps into both
-main PR branches and verify the resulting paired source. Recovery of unknown
+The corrected exact gate has succeeded. Compose the source/test maps into both
+main PR branches, reconcile any concurrent changes, and verify the resulting
+paired source. Recovery of unknown
 external effects, unsettled or failed child work, dynamic descendants, successor
 or distributed ownership, and generic remote atomicity remain distinct open
 work. This bounded completed-close proof does not authorize them and does not

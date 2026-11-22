@@ -1,0 +1,414 @@
+{
+  "schema": "native-promise-promotion-readonly/1",
+  "baseRevision": "063860b172c6974e496b3ac189a023d57c3c501d",
+  "qualifiedRevision": "03a9e33866207b5b0c4105297c6050dacadcf85f",
+  "qualifiedTree": "0531e702beb88c5421907d6c41d078169ccd00b5",
+  "paths": [
+    {
+      "status": "M",
+      "path": "src/megatoken/data/async_call_v8.py",
+      "baseBlob": "36dd537f8a3c547d1e50b53fc454aa1e696cbb11",
+      "qualifiedBlob": "9348bc0998cdde3d555f68bb088d06a4ec609698"
+    },
+    {
+      "status": "M",
+      "path": "src/megatoken/data/contracts/semantic-execution-v8.json",
+      "baseBlob": "c0b26ecd930ce33784e02bd2c769f52731e6cada",
+      "qualifiedBlob": "2ffe4bebded927a0ccd8171774f2d83716c3e648"
+    },
+    {
+      "status": "M",
+      "path": "src/megatoken/data/native_v8.py",
+      "baseBlob": "ac8803e729a1e40b5b97b73b5f56a188b5bf1356",
+      "qualifiedBlob": "fb3d3ec8f3c78492ec0a374cb558ee3f31c2c0a3"
+    },
+    {
+      "status": "A",
+      "path": "src/megatoken/data/promise_adoption_v8.py",
+      "baseBlob": null,
+      "qualifiedBlob": "2c6f52906e1d83e7dd00bb809015f19883ffd174"
+    },
+    {
+      "status": "M",
+      "path": "src/megatoken/data/promise_executor_v8.py",
+      "baseBlob": "d94e4f488db928505400facf8020182e4f6b677c",
+      "qualifiedBlob": "b2b4b686e8472278b70e6603dd1da496b31b735c"
+    },
+    {
+      "status": "M",
+      "path": "src/megatoken/data/promise_scheduler_v8.py",
+      "baseBlob": "c4985a7c05853476c4ee0009a97230b377f5301e",
+      "qualifiedBlob": "7cefc8a0bebaa678a203c7843f9f030cf5cd8eb6"
+    },
+    {
+      "status": "M",
+      "path": "src/megatoken/data/protocol_v8.py",
+      "baseBlob": "86e6c0abb02ea7699a1b63a214e53f83d00011ea",
+      "qualifiedBlob": "427bbbf316b84e41d784a14c0603bb28cf93398e"
+    },
+    {
+      "status": "M",
+      "path": "tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
+      "baseBlob": "83a4fb38173b42c6807f04aee31b3de6fd32257f",
+      "qualifiedBlob": "010c083817f999b90f70371fc52c7cb48a9ca95f"
+    },
+    {
+      "status": "M",
+      "path": "tests/fixtures/semantic-protocol-source-v8.json",
+      "baseBlob": "5ac15b79398976ca7643e32e25c8806ec89514cb",
+      "qualifiedBlob": "0dfb20c028c698774874c84352458bf32c1a360f"
+    },
+    {
+      "status": "M",
+      "path": "tests/fixtures/semantic-regions-v8.json.gz.b64",
+      "baseBlob": "05b936f5b92b9c348bc4494441d91c15dde10b1e",
+      "qualifiedBlob": "efcf07ec6f7d042509a57332cf4319f370c28e3d"
+    },
+    {
+      "status": "M",
+      "path": "tests/test_async_call_v8.py",
+      "baseBlob": "2312c08bb31ae88a8d9467f916c5d98c77257c96",
+      "qualifiedBlob": "5f5283e05e5b0fc0313272d09166805f1b9007c7"
+    },
+    {
+      "status": "M",
+      "path": "tests/test_promise_executor_boundaries_v8.py",
+      "baseBlob": "b039b666219e4a44e75e4de62bf67d7b196d2910",
+      "qualifiedBlob": "b9e2849dcad97ded52aeecf1c12b7e0626cfdef6"
+    },
+    {
+      "status": "M",
+      "path": "tests/test_promise_executor_v8.py",
+      "baseBlob": "4e0b3a69606d96b887b53129b99c4a46740252e0",
+      "qualifiedBlob": "72382824ad13c2405ba6919188eb130a048de03a"
+    },
+    {
+      "status": "M",
+      "path": "tests/test_protocol_v8.py",
+      "baseBlob": "d9913bfaff02df4460af96f62b85e0eb8dac9c97",
+      "qualifiedBlob": "b170d7579a671e1f8673eb7ebb2eaa69b4fa029f"
+    }
+  ],
+  "comparisons": {
+    "main": {
+      "revision": "622c37c23f93c4cc58ff226eb4805c766fee3166",
+      "available": true,
+      "counts": {
+        "base": 14
+      },
+      "diverged": [],
+      "paths": [
+        {
+          "path": "src/megatoken/data/async_call_v8.py",
+          "targetBlob": "36dd537f8a3c547d1e50b53fc454aa1e696cbb11",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/contracts/semantic-execution-v8.json",
+          "targetBlob": "c0b26ecd930ce33784e02bd2c769f52731e6cada",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/native_v8.py",
+          "targetBlob": "ac8803e729a1e40b5b97b73b5f56a188b5bf1356",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/promise_adoption_v8.py",
+          "targetBlob": null,
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/promise_executor_v8.py",
+          "targetBlob": "d94e4f488db928505400facf8020182e4f6b677c",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/promise_scheduler_v8.py",
+          "targetBlob": "c4985a7c05853476c4ee0009a97230b377f5301e",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/protocol_v8.py",
+          "targetBlob": "86e6c0abb02ea7699a1b63a214e53f83d00011ea",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
+          "targetBlob": "83a4fb38173b42c6807f04aee31b3de6fd32257f",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/fixtures/semantic-protocol-source-v8.json",
+          "targetBlob": "5ac15b79398976ca7643e32e25c8806ec89514cb",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/fixtures/semantic-regions-v8.json.gz.b64",
+          "targetBlob": "05b936f5b92b9c348bc4494441d91c15dde10b1e",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_async_call_v8.py",
+          "targetBlob": "2312c08bb31ae88a8d9467f916c5d98c77257c96",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_promise_executor_boundaries_v8.py",
+          "targetBlob": "b039b666219e4a44e75e4de62bf67d7b196d2910",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_promise_executor_v8.py",
+          "targetBlob": "4e0b3a69606d96b887b53129b99c4a46740252e0",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_protocol_v8.py",
+          "targetBlob": "d9913bfaff02df4460af96f62b85e0eb8dac9c97",
+          "comparison": "base"
+        }
+      ]
+    },
+    "combined": {
+      "revision": "15844c00c095849755ca6f0e1d207f7db79a9264",
+      "available": true,
+      "counts": {
+        "base": 14
+      },
+      "diverged": [],
+      "paths": [
+        {
+          "path": "src/megatoken/data/async_call_v8.py",
+          "targetBlob": "36dd537f8a3c547d1e50b53fc454aa1e696cbb11",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/contracts/semantic-execution-v8.json",
+          "targetBlob": "c0b26ecd930ce33784e02bd2c769f52731e6cada",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/native_v8.py",
+          "targetBlob": "ac8803e729a1e40b5b97b73b5f56a188b5bf1356",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/promise_adoption_v8.py",
+          "targetBlob": null,
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/promise_executor_v8.py",
+          "targetBlob": "d94e4f488db928505400facf8020182e4f6b677c",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/promise_scheduler_v8.py",
+          "targetBlob": "c4985a7c05853476c4ee0009a97230b377f5301e",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/protocol_v8.py",
+          "targetBlob": "86e6c0abb02ea7699a1b63a214e53f83d00011ea",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
+          "targetBlob": "83a4fb38173b42c6807f04aee31b3de6fd32257f",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/fixtures/semantic-protocol-source-v8.json",
+          "targetBlob": "5ac15b79398976ca7643e32e25c8806ec89514cb",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/fixtures/semantic-regions-v8.json.gz.b64",
+          "targetBlob": "05b936f5b92b9c348bc4494441d91c15dde10b1e",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_async_call_v8.py",
+          "targetBlob": "2312c08bb31ae88a8d9467f916c5d98c77257c96",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_promise_executor_boundaries_v8.py",
+          "targetBlob": "b039b666219e4a44e75e4de62bf67d7b196d2910",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_promise_executor_v8.py",
+          "targetBlob": "4e0b3a69606d96b887b53129b99c4a46740252e0",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_protocol_v8.py",
+          "targetBlob": "d9913bfaff02df4460af96f62b85e0eb8dac9c97",
+          "comparison": "base"
+        }
+      ]
+    },
+    "relocation": {
+      "revision": "b85a3301b6482bdf5a5a9ba79f7f356c5f824681",
+      "available": true,
+      "counts": {
+        "base": 14
+      },
+      "diverged": [],
+      "paths": [
+        {
+          "path": "src/megatoken/data/async_call_v8.py",
+          "targetBlob": "36dd537f8a3c547d1e50b53fc454aa1e696cbb11",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/contracts/semantic-execution-v8.json",
+          "targetBlob": "c0b26ecd930ce33784e02bd2c769f52731e6cada",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/native_v8.py",
+          "targetBlob": "ac8803e729a1e40b5b97b73b5f56a188b5bf1356",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/promise_adoption_v8.py",
+          "targetBlob": null,
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/promise_executor_v8.py",
+          "targetBlob": "d94e4f488db928505400facf8020182e4f6b677c",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/promise_scheduler_v8.py",
+          "targetBlob": "c4985a7c05853476c4ee0009a97230b377f5301e",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/protocol_v8.py",
+          "targetBlob": "86e6c0abb02ea7699a1b63a214e53f83d00011ea",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
+          "targetBlob": "83a4fb38173b42c6807f04aee31b3de6fd32257f",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/fixtures/semantic-protocol-source-v8.json",
+          "targetBlob": "5ac15b79398976ca7643e32e25c8806ec89514cb",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/fixtures/semantic-regions-v8.json.gz.b64",
+          "targetBlob": "05b936f5b92b9c348bc4494441d91c15dde10b1e",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_async_call_v8.py",
+          "targetBlob": "2312c08bb31ae88a8d9467f916c5d98c77257c96",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_promise_executor_boundaries_v8.py",
+          "targetBlob": "b039b666219e4a44e75e4de62bf67d7b196d2910",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_promise_executor_v8.py",
+          "targetBlob": "4e0b3a69606d96b887b53129b99c4a46740252e0",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_protocol_v8.py",
+          "targetBlob": "d9913bfaff02df4460af96f62b85e0eb8dac9c97",
+          "comparison": "base"
+        }
+      ]
+    },
+    "verifierBase": {
+      "revision": "7741c003c8887da0000f7912ab6d6cdbee9ec3a1",
+      "available": true,
+      "counts": {
+        "base": 14
+      },
+      "diverged": [],
+      "paths": [
+        {
+          "path": "src/megatoken/data/async_call_v8.py",
+          "targetBlob": "36dd537f8a3c547d1e50b53fc454aa1e696cbb11",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/contracts/semantic-execution-v8.json",
+          "targetBlob": "c0b26ecd930ce33784e02bd2c769f52731e6cada",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/native_v8.py",
+          "targetBlob": "ac8803e729a1e40b5b97b73b5f56a188b5bf1356",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/promise_adoption_v8.py",
+          "targetBlob": null,
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/promise_executor_v8.py",
+          "targetBlob": "d94e4f488db928505400facf8020182e4f6b677c",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/promise_scheduler_v8.py",
+          "targetBlob": "c4985a7c05853476c4ee0009a97230b377f5301e",
+          "comparison": "base"
+        },
+        {
+          "path": "src/megatoken/data/protocol_v8.py",
+          "targetBlob": "86e6c0abb02ea7699a1b63a214e53f83d00011ea",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
+          "targetBlob": "83a4fb38173b42c6807f04aee31b3de6fd32257f",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/fixtures/semantic-protocol-source-v8.json",
+          "targetBlob": "5ac15b79398976ca7643e32e25c8806ec89514cb",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/fixtures/semantic-regions-v8.json.gz.b64",
+          "targetBlob": "05b936f5b92b9c348bc4494441d91c15dde10b1e",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_async_call_v8.py",
+          "targetBlob": "2312c08bb31ae88a8d9467f916c5d98c77257c96",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_promise_executor_boundaries_v8.py",
+          "targetBlob": "b039b666219e4a44e75e4de62bf67d7b196d2910",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_promise_executor_v8.py",
+          "targetBlob": "4e0b3a69606d96b887b53129b99c4a46740252e0",
+          "comparison": "base"
+        },
+        {
+          "path": "tests/test_protocol_v8.py",
+          "targetBlob": "d9913bfaff02df4460af96f62b85e0eb8dac9c97",
+          "comparison": "base"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "path": "controls.stderr.log",
+    "bytes": 6315,
+    "sha256": "644ca6692e38c83f0222a7e7cf3a55ad0874af86cb08c95c2bc5e4fb47fdad43"
+  },
+  {
+    "path": "controls.stdout.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "native-release-case-source-review.json",
+    "bytes": 1518,
+    "sha256": "81f1bd92942b177593b46db6af00b57f853ef885b64dc30d5975218ca8f8b371"
+  },
+  {
+    "path": "original-64-source-observation.json",
+    "bytes": 40240,
+    "sha256": "17aa0bf56f1394cbb7f7f8a0d636a430a9ef892ee1ee74991e5bc092472b83db"
+  },
+  {
+    "path": "summary.json",
+    "bytes": 942,
+    "sha256": "2530b2f40af31bbef609ca5f59a054c458b4f7953d1f99c72ec6b9ec5d36d64d"
+  },
+  {
+    "path": "v8-release-source-inputs-map.json",
+    "bytes": 2078,
+    "sha256": "75cb1a67f5024f47a0bcf2cc60a6244898b6de09df3aff4f25dcd2e980198f0e"
+  }
+]

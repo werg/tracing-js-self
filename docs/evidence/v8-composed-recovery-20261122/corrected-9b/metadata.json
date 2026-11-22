@@ -1,0 +1,855 @@
+{
+  "run": {
+    "id": 45042073863,
+    "name": "Unified causal bootstrap and service-owned terminal recovery",
+    "node_id": "WFR_kwLOVTikac8AAAAKfLeBBw",
+    "head_branch": "codex/v8-causal-terminal-composed-20261122",
+    "head_sha": "9b2e5faef467e962f919aa3b6f2baebca71441a9",
+    "path": ".github/workflows/v8-causal-terminal-composed-investigation.yml",
+    "display_title": "Verify exact retained replay in service-owned terminal recovery",
+    "run_number": 3,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "workflow_id": 426889735,
+    "check_suite_id": 121894824103,
+    "check_suite_node_id": "CS_kwDOVTikac8AAAAcYX9opw",
+    "url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/45042073863",
+    "html_url": "https://github.com/werg/tracing-js-self/actions/runs/45042073863",
+    "pull_requests": [],
+    "created_at": "2026-11-22T16:07:43Z",
+    "updated_at": "2026-11-22T16:21:41Z",
+    "actor": {
+      "login": "werg",
+      "id": 603348,
+      "node_id": "MDQ6VXNlcjYwMzM0OA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/603348?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/werg",
+      "html_url": "https://github.com/werg",
+      "followers_url": "https://api.github.com/users/werg/followers",
+      "following_url": "https://api.github.com/users/werg/following{/other_user}",
+      "gists_url": "https://api.github.com/users/werg/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/werg/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/werg/subscriptions",
+      "organizations_url": "https://api.github.com/users/werg/orgs",
+      "repos_url": "https://api.github.com/users/werg/repos",
+      "events_url": "https://api.github.com/users/werg/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/werg/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "run_attempt": 1,
+    "referenced_workflows": [],
+    "run_started_at": "2026-11-22T16:07:43Z",
+    "triggering_actor": {
+      "login": "werg",
+      "id": 603348,
+      "node_id": "MDQ6VXNlcjYwMzM0OA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/603348?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/werg",
+      "html_url": "https://github.com/werg",
+      "followers_url": "https://api.github.com/users/werg/followers",
+      "following_url": "https://api.github.com/users/werg/following{/other_user}",
+      "gists_url": "https://api.github.com/users/werg/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/werg/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/werg/subscriptions",
+      "organizations_url": "https://api.github.com/users/werg/orgs",
+      "repos_url": "https://api.github.com/users/werg/repos",
+      "events_url": "https://api.github.com/users/werg/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/werg/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "jobs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/45042073863/jobs",
+    "logs_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/45042073863/logs",
+    "check_suite_url": "https://api.github.com/repos/werg/tracing-js-self/check-suites/121894824103",
+    "artifacts_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/45042073863/artifacts",
+    "cancel_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/45042073863/cancel",
+    "rerun_url": "https://api.github.com/repos/werg/tracing-js-self/actions/runs/45042073863/rerun",
+    "previous_attempt_url": null,
+    "workflow_url": "https://api.github.com/repos/werg/tracing-js-self/actions/workflows/426889735",
+    "head_commit": {
+      "id": "9b2e5faef467e962f919aa3b6f2baebca71441a9",
+      "tree_id": "763c5629e88c6665e2bdc82f71c175519b7baafc",
+      "message": "Verify exact retained replay in service-owned terminal recovery",
+      "timestamp": "2026-11-22T16:07:34Z",
+      "author": {
+        "name": "Gabriel Pickard",
+        "email": "wergomat@gmail.com"
+      },
+      "committer": {
+        "name": "Gabriel Pickard",
+        "email": "wergomat@gmail.com"
+      }
+    },
+    "repository": {
+      "id": 1429775465,
+      "node_id": "R_kgDOVTikaQ",
+      "name": "tracing-js-self",
+      "full_name": "werg/tracing-js-self",
+      "private": false,
+      "owner": {
+        "login": "werg",
+        "id": 603348,
+        "node_id": "MDQ6VXNlcjYwMzM0OA==",
+        "avatar_url": "https://avatars.githubusercontent.com/u/603348?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/werg",
+        "html_url": "https://github.com/werg",
+        "followers_url": "https://api.github.com/users/werg/followers",
+        "following_url": "https://api.github.com/users/werg/following{/other_user}",
+        "gists_url": "https://api.github.com/users/werg/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/werg/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/werg/subscriptions",
+        "organizations_url": "https://api.github.com/users/werg/orgs",
+        "repos_url": "https://api.github.com/users/werg/repos",
+        "events_url": "https://api.github.com/users/werg/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/werg/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/werg/tracing-js-self",
+      "description": "a tracing self hosted interpreter for JS",
+      "fork": false,
+      "url": "https://api.github.com/repos/werg/tracing-js-self",
+      "forks_url": "https://api.github.com/repos/werg/tracing-js-self/forks",
+      "keys_url": "https://api.github.com/repos/werg/tracing-js-self/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/werg/tracing-js-self/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/werg/tracing-js-self/teams",
+      "hooks_url": "https://api.github.com/repos/werg/tracing-js-self/hooks",
+      "issue_events_url": "https://api.github.com/repos/werg/tracing-js-self/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/werg/tracing-js-self/events",
+      "assignees_url": "https://api.github.com/repos/werg/tracing-js-self/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/werg/tracing-js-self/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/werg/tracing-js-self/tags",
+      "blobs_url": "https://api.github.com/repos/werg/tracing-js-self/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/werg/tracing-js-self/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/werg/tracing-js-self/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/werg/tracing-js-self/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/werg/tracing-js-self/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/werg/tracing-js-self/languages",
+      "stargazers_url": "https://api.github.com/repos/werg/tracing-js-self/stargazers",
+      "contributors_url": "https://api.github.com/repos/werg/tracing-js-self/contributors",
+      "subscribers_url": "https://api.github.com/repos/werg/tracing-js-self/subscribers",
+      "subscription_url": "https://api.github.com/repos/werg/tracing-js-self/subscription",
+      "commits_url": "https://api.github.com/repos/werg/tracing-js-self/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/werg/tracing-js-self/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/werg/tracing-js-self/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/werg/tracing-js-self/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/werg/tracing-js-self/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/werg/tracing-js-self/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/werg/tracing-js-self/merges",
+      "archive_url": "https://api.github.com/repos/werg/tracing-js-self/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/werg/tracing-js-self/downloads",
+      "issues_url": "https://api.github.com/repos/werg/tracing-js-self/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/werg/tracing-js-self/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/werg/tracing-js-self/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/werg/tracing-js-self/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/werg/tracing-js-self/labels{/name}",
+      "releases_url": "https://api.github.com/repos/werg/tracing-js-self/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/werg/tracing-js-self/deployments"
+    },
+    "head_repository": {
+      "id": 1429775465,
+      "node_id": "R_kgDOVTikaQ",
+      "name": "tracing-js-self",
+      "full_name": "werg/tracing-js-self",
+      "private": false,
+      "owner": {
+        "login": "werg",
+        "id": 603348,
+        "node_id": "MDQ6VXNlcjYwMzM0OA==",
+        "avatar_url": "https://avatars.githubusercontent.com/u/603348?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/werg",
+        "html_url": "https://github.com/werg",
+        "followers_url": "https://api.github.com/users/werg/followers",
+        "following_url": "https://api.github.com/users/werg/following{/other_user}",
+        "gists_url": "https://api.github.com/users/werg/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/werg/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/werg/subscriptions",
+        "organizations_url": "https://api.github.com/users/werg/orgs",
+        "repos_url": "https://api.github.com/users/werg/repos",
+        "events_url": "https://api.github.com/users/werg/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/werg/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/werg/tracing-js-self",
+      "description": "a tracing self hosted interpreter for JS",
+      "fork": false,
+      "url": "https://api.github.com/repos/werg/tracing-js-self",
+      "forks_url": "https://api.github.com/repos/werg/tracing-js-self/forks",
+      "keys_url": "https://api.github.com/repos/werg/tracing-js-self/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/werg/tracing-js-self/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/werg/tracing-js-self/teams",
+      "hooks_url": "https://api.github.com/repos/werg/tracing-js-self/hooks",
+      "issue_events_url": "https://api.github.com/repos/werg/tracing-js-self/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/werg/tracing-js-self/events",
+      "assignees_url": "https://api.github.com/repos/werg/tracing-js-self/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/werg/tracing-js-self/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/werg/tracing-js-self/tags",
+      "blobs_url": "https://api.github.com/repos/werg/tracing-js-self/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/werg/tracing-js-self/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/werg/tracing-js-self/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/werg/tracing-js-self/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/werg/tracing-js-self/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/werg/tracing-js-self/languages",
+      "stargazers_url": "https://api.github.com/repos/werg/tracing-js-self/stargazers",
+      "contributors_url": "https://api.github.com/repos/werg/tracing-js-self/contributors",
+      "subscribers_url": "https://api.github.com/repos/werg/tracing-js-self/subscribers",
+      "subscription_url": "https://api.github.com/repos/werg/tracing-js-self/subscription",
+      "commits_url": "https://api.github.com/repos/werg/tracing-js-self/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/werg/tracing-js-self/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/werg/tracing-js-self/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/werg/tracing-js-self/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/werg/tracing-js-self/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/werg/tracing-js-self/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/werg/tracing-js-self/merges",
+      "archive_url": "https://api.github.com/repos/werg/tracing-js-self/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/werg/tracing-js-self/downloads",
+      "issues_url": "https://api.github.com/repos/werg/tracing-js-self/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/werg/tracing-js-self/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/werg/tracing-js-self/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/werg/tracing-js-self/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/werg/tracing-js-self/labels{/name}",
+      "releases_url": "https://api.github.com/repos/werg/tracing-js-self/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/werg/tracing-js-self/deployments"
+    }
+  },
+  "jobs": [
+    {
+      "id": 137268509072,
+      "name": "paired-recovery (bootstrap-history, 12)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 45042073863,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install exact paired runtime and require kernel clock authority",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Retain exact source and runtime identities",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify native commit, bootstrap and terminal-close boundaries",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8
+        },
+        {
+          "name": "Verify complete reconstruction, real native recovery and refusal boundaries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Preserve exact candidate checkouts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 137268509218,
+      "name": "paired-recovery (terminal-history, 16)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 45042073863,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install exact paired runtime and require kernel clock authority",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Retain exact source and runtime identities",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify native commit, bootstrap and terminal-close boundaries",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8
+        },
+        {
+          "name": "Verify complete reconstruction, real native recovery and refusal boundaries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Preserve exact candidate checkouts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 137268509223,
+      "name": "paired-recovery (structural, 123)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 45042073863,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install exact paired runtime and require kernel clock authority",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Retain exact source and runtime identities",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify native commit, bootstrap and terminal-close boundaries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Verify complete reconstruction, real native recovery and refusal boundaries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Preserve exact candidate checkouts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 137268509241,
+      "name": "paired-recovery (transport, 33)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 45042073863,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install exact paired runtime and require kernel clock authority",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Retain exact source and runtime identities",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify native commit, bootstrap and terminal-close boundaries",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8
+        },
+        {
+          "name": "Verify complete reconstruction, real native recovery and refusal boundaries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Preserve exact candidate checkouts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 137268509312,
+      "name": "paired-recovery (commit-history, 9)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 45042073863,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install exact paired runtime and require kernel clock authority",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Retain exact source and runtime identities",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify native commit, bootstrap and terminal-close boundaries",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8
+        },
+        {
+          "name": "Verify complete reconstruction, real native recovery and refusal boundaries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Preserve exact candidate checkouts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 14762810454,
+      "name": "composed-recovery-transport",
+      "size_in_bytes": 4285,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14762810454",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14762810454/zip",
+      "expired": false,
+      "created_at": "2026-11-22T16:15:40Z",
+      "expires_at": "2027-02-20T16:07:43Z",
+      "updated_at": "2026-11-22T16:15:40Z",
+      "digest": "sha256:5feac334d6731178c2bbba2562ae8f9ddff7e91405276da17ff4a040709feacf",
+      "workflow_run": {
+        "id": 45042073863,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/v8-causal-terminal-composed-20261122",
+        "head_sha": "9b2e5faef467e962f919aa3b6f2baebca71441a9"
+      }
+    },
+    {
+      "id": 14762545838,
+      "name": "composed-recovery-structural",
+      "size_in_bytes": 14340,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14762545838",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14762545838/zip",
+      "expired": false,
+      "created_at": "2026-11-22T16:14:17Z",
+      "expires_at": "2027-02-20T16:07:43Z",
+      "updated_at": "2026-11-22T16:14:17Z",
+      "digest": "sha256:6ae24f8fff7a6651a141b4e74d1cc37f193288f08435f98d2398462d5b35e9c9",
+      "workflow_run": {
+        "id": 45042073863,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/v8-causal-terminal-composed-20261122",
+        "head_sha": "9b2e5faef467e962f919aa3b6f2baebca71441a9"
+      }
+    },
+    {
+      "id": 14762306874,
+      "name": "composed-recovery-bootstrap-history",
+      "size_in_bytes": 3004,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14762306874",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14762306874/zip",
+      "expired": false,
+      "created_at": "2026-11-22T16:21:38Z",
+      "expires_at": "2027-02-20T16:07:43Z",
+      "updated_at": "2026-11-22T16:21:38Z",
+      "digest": "sha256:aa1758f5c2ea745b6f28e70f732bf9f94d037cdff427a7df80c1a564b7994c3d",
+      "workflow_run": {
+        "id": 45042073863,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/v8-causal-terminal-composed-20261122",
+        "head_sha": "9b2e5faef467e962f919aa3b6f2baebca71441a9"
+      }
+    },
+    {
+      "id": 14762296668,
+      "name": "composed-recovery-terminal-history",
+      "size_in_bytes": 3245,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14762296668",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14762296668/zip",
+      "expired": false,
+      "created_at": "2026-11-22T16:20:16Z",
+      "expires_at": "2027-02-20T16:07:43Z",
+      "updated_at": "2026-11-22T16:20:16Z",
+      "digest": "sha256:73aedde057989dbce4f754f33fb64cc2007d19c4a9f470bf22d75b267eb6bc1d",
+      "workflow_run": {
+        "id": 45042073863,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/v8-causal-terminal-composed-20261122",
+        "head_sha": "9b2e5faef467e962f919aa3b6f2baebca71441a9"
+      }
+    },
+    {
+      "id": 14762286161,
+      "name": "composed-recovery-commit-history",
+      "size_in_bytes": 2557,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14762286161",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14762286161/zip",
+      "expired": false,
+      "created_at": "2026-11-22T16:15:29Z",
+      "expires_at": "2027-02-20T16:07:43Z",
+      "updated_at": "2026-11-22T16:15:29Z",
+      "digest": "sha256:76f84b5ee2ca40375aa008f7bbf2c8eadd41741ef9f4d5b0912900f66bfa8d61",
+      "workflow_run": {
+        "id": 45042073863,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/v8-causal-terminal-composed-20261122",
+        "head_sha": "9b2e5faef467e962f919aa3b6f2baebca71441a9"
+      }
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+name: Direct V8 package and restore qualification
+
+# Deliberately manual-only. Do not trigger from the branch that publishes this
+# candidate; root composition chooses the exact producer/native pair first.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v8-package-restore-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package-and-restore:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    defaults:
+      run:
+        shell: bash
+    env:
+      TZ: UTC
+      LC_ALL: C.UTF-8
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      TRACING_JS_SELF_ROOT: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+      MEGATOKEN_PYTHON: python
+      MEGATOKEN_TOKENIZER_JSON: ${{ runner.temp }}/semantic-v8-production-tokenizer.json
+      SEMANTIC_V8_NATIVE_POLICY: ${{ github.workspace }}/tracing-js-self/contracts/semantic-native-policy-v8.json
+      V8_GATE_ROOT: ${{ runner.temp }}/v8-package-restore-gate
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - name: Read exact native source revision from producer policy
+        id: native-pin
+        working-directory: tracing-js-self
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,appendFileSync} from 'node:fs';
+          const policy=JSON.parse(readFileSync('contracts/semantic-native-policy-v8.json','utf8'));
+          if(policy.consumerRepository!=='werg/megatoken'||!/^[0-9a-f]{40}$/.test(policy.consumerRevision))
+            throw new Error('Producer V8 policy must pin an exact werg/megatoken revision');
+          if(policy.consumerRevision==='2f3e6cf04aad60473e8ecc67e846e81e5b9dec83')
+            throw new Error('Refusing stale pre-composition 2f3 policy; compose the final native pin first');
+          appendFileSync(process.env.GITHUB_OUTPUT,
+            `repository=${policy.consumerRepository}\nrevision=${policy.consumerRevision}\n`);
+          JS
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.native-pin.outputs.repository }}
+          ref: ${{ steps.native-pin.outputs.revision }}
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.3'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - name: Install exact producer and native dependencies
+        run: |
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+          python --version
+          node --version
+          npm --version
+      - name: Acquire and verify the pinned production tokenizer
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, shutil
+          from pathlib import Path
+          from huggingface_hub import hf_hub_download
+          from megatoken.generation.codec import ByteCodec, LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256
+          producer = Path(os.environ['TRACING_JS_SELF_ROOT'])
+          policy = json.loads(Path(os.environ['SEMANTIC_V8_NATIVE_POLICY']).read_text())
+          target = Path(os.environ['MEGATOKEN_TOKENIZER_JSON'])
+          shutil.copyfile(hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION), target)
+          digest = hashlib.sha256(target.read_bytes()).hexdigest()
+          codec = ByteCodec.from_tokenizer_json(target, expected_sha256=LING_TOKENIZER_SHA256)
+          if digest != LING_TOKENIZER_SHA256 or digest != policy['tokenizerSha256'] or codec.fingerprint != policy['tokenizerIdentity']:
+              raise ValueError('Production tokenizer bytes or identity differ from exact V8 native policy')
+          print(json.dumps({'sha256': digest, 'identity': codec.fingerprint,
+                            'producerRevision': __import__('subprocess').check_output(['git','rev-parse','HEAD'],cwd=producer,text=True).strip(),
+                            'consumerRevision': policy['consumerRevision']}))
+          PY
+      - name: Qualify and package, then remove original inputs and restore
+        run: |
+          mkdir -p "$V8_GATE_ROOT"
+          node tracing-js-self/tools/qualify-semantic-v8.mjs \
+            --population se-support --inputs all --workers 2 \
+            --out "$RUNNER_TEMP/v8-admitted" \
+            --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \
+            --tokenizer "$MEGATOKEN_TOKENIZER_JSON" \
+            --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \
+            2>&1 | tee "$V8_GATE_ROOT/qualification.log"
+          python tracing-js-self/tools/run-v8-package-restore-gate.py \
+            --producer-root "$TRACING_JS_SELF_ROOT" \
+            --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \
+            --tokenizer "$MEGATOKEN_TOKENIZER_JSON" \
+            --qualification "$RUNNER_TEMP/v8-admitted" \
+            --prepared "$V8_GATE_ROOT/prepared" \
+            --source-inventory "$V8_GATE_ROOT/source-inventory.json" \
+            --lifecycle "$V8_GATE_ROOT/lifecycle" \
+            --package "$V8_GATE_ROOT/package" \
+            --restore "$V8_GATE_ROOT/restored" \
+            --restore-evidence "$V8_GATE_ROOT/restore-evidence" \
+            --summary "$V8_GATE_ROOT/gate-summary.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v8-package-restore-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/v8-package-restore-gate/
+            ${{ runner.temp }}/v8-admitted/
+            ${{ runner.temp }}/semantic-v8-production-tokenizer.json
+          if-no-files-found: warn
+          retention-days: 90
+          include-hidden-files: true
