@@ -1,0 +1,132 @@
+{
+  "schema": "durable-bootstrap-source-composition/1",
+  "qualification": "pending unified native paired gate",
+  "originalBaseline": "2896ccaccbe4166597e4dd80bafef844b472ae1a",
+  "combinedBaseline": "2cb668c233be139e37d3e5a78c8d4ab8a544cd62",
+  "publishedCandidate": "a5f3f42ab4abc2ed7d9d36550687358843933129",
+  "localCandidate": "ab98ca28cbef511e962a371cfd4cded69ab505dc",
+  "candidateTree": "889bc16e240ca0df5f9adc3f9284e5d55a965cb3",
+  "allSeventeenBaselineBlobsMatch": true,
+  "paths": [
+    {
+      "path": ".github/workflows/v8-durable-bootstrap-history-investigation.yml",
+      "originalBaselineBlob": null,
+      "combinedBaselineBlob": null,
+      "candidateBlob": "13c5043977ffc540adb82eaec0e07e6733510976"
+    },
+    {
+      "path": "src/semantic/native-durable-bootstrap-v8.js",
+      "originalBaselineBlob": null,
+      "combinedBaselineBlob": null,
+      "candidateBlob": "32e37123db7b2751501e192992e64f8bc79d4996"
+    },
+    {
+      "path": "src/semantic/native-process-v8.js",
+      "originalBaselineBlob": "662eb3e91f40ce93e8076c40c75cb03c164249fe",
+      "combinedBaselineBlob": "662eb3e91f40ce93e8076c40c75cb03c164249fe",
+      "candidateBlob": "381b4fe22296cb773594968647d897af88db60b4"
+    },
+    {
+      "path": "src/semantic/selected-history-v8.js",
+      "originalBaselineBlob": "f500a7f1f0d9b04fc650a470accf3c945cdde64f",
+      "combinedBaselineBlob": "f500a7f1f0d9b04fc650a470accf3c945cdde64f",
+      "candidateBlob": "493f6ffa01675a3bfa78fb51e96696831837e38d"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-bootstrap-recovery-v8.js",
+      "originalBaselineBlob": null,
+      "combinedBaselineBlob": null,
+      "candidateBlob": "0736b929fb424346b7b795e066c8c9f2c52e5539"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-checkpoint-v8.js",
+      "originalBaselineBlob": "d73cf880266959cdf1cd8d808a3121e812dcdf1d",
+      "combinedBaselineBlob": "d73cf880266959cdf1cd8d808a3121e812dcdf1d",
+      "candidateBlob": "32cc0aab1531c22884ffc1998ae8c4fd2301b4da"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-commit-recovery-v8.js",
+      "originalBaselineBlob": "db51979c7adbf84269647277cca2768b16d28f88",
+      "combinedBaselineBlob": "db51979c7adbf84269647277cca2768b16d28f88",
+      "candidateBlob": "2bde2b7005fb8c8d591504671d763dafd8efa4e3"
+    },
+    {
+      "path": "src/semantic/selected-orchestration-v8.js",
+      "originalBaselineBlob": "cb0f950580675824dd31f76880509e9df58395af",
+      "combinedBaselineBlob": "cb0f950580675824dd31f76880509e9df58395af",
+      "candidateBlob": "7b32b044018fc1bb599ef53507c6c234ad63fd0a"
+    },
+    {
+      "path": "src/storage/native-request-journal-v8.d.ts",
+      "originalBaselineBlob": "91c9b0994dfe0fcb739cc632b14b008f31ae1b45",
+      "combinedBaselineBlob": "91c9b0994dfe0fcb739cc632b14b008f31ae1b45",
+      "candidateBlob": "a10b1b5cca95f8a520e944c23a9837061a33b9ca"
+    },
+    {
+      "path": "src/storage/native-request-journal-v8.js",
+      "originalBaselineBlob": "a5c84ab73fb0ca88fde1687ac3fd1c7be3ecf0f7",
+      "combinedBaselineBlob": "a5c84ab73fb0ca88fde1687ac3fd1c7be3ecf0f7",
+      "candidateBlob": "a1e709b24b080613c73db67989e638a2211b4131"
+    },
+    {
+      "path": "test/fixtures/semantic-v8-durable-commit-peer.py",
+      "originalBaselineBlob": "9590db8c7e3a3a2c582bcb22fcd1aa0f3a81affb",
+      "combinedBaselineBlob": "9590db8c7e3a3a2c582bcb22fcd1aa0f3a81affb",
+      "candidateBlob": "8244f2ff99b07a6e63e68315840cac38779da142"
+    },
+    {
+      "path": "test/helpers/native-bootstrap-fixture-v8.js",
+      "originalBaselineBlob": null,
+      "combinedBaselineBlob": null,
+      "candidateBlob": "ec29971a4d5278f8560db9613987072e6ff3a93e"
+    },
+    {
+      "path": "test/semantic-known-bootstrap-builder-v8.test.js",
+      "originalBaselineBlob": null,
+      "combinedBaselineBlob": null,
+      "candidateBlob": "63d6409219308f7e18565fd504c221a0061932ee"
+    },
+    {
+      "path": "test/semantic-known-bootstrap-history-v8.test.js",
+      "originalBaselineBlob": null,
+      "combinedBaselineBlob": null,
+      "candidateBlob": "6a8be4046cf0a1246922575be6a4118db214c109"
+    },
+    {
+      "path": "test/semantic-known-commit-builder-v8.test.js",
+      "originalBaselineBlob": "3eb095d49052e8c305f531720c757b8e626e00d4",
+      "combinedBaselineBlob": "3eb095d49052e8c305f531720c757b8e626e00d4",
+      "candidateBlob": "7bc4964724a4c32026c54ec0d51ee854b6e0c612"
+    },
+    {
+      "path": "test/semantic-native-durable-bootstrap-v8.test.js",
+      "originalBaselineBlob": null,
+      "combinedBaselineBlob": null,
+      "candidateBlob": "c99499b2ed1fe18b65739d58c838737e25b3f8d3"
+    },
+    {
+      "path": "test/semantic-native-durable-commit-v8.test.js",
+      "originalBaselineBlob": "234903c5c8ced59443673108c8991d5d9ae214d3",
+      "combinedBaselineBlob": "234903c5c8ced59443673108c8991d5d9ae214d3",
+      "candidateBlob": "d2c46c263bfc35622a5a764b0d17214356166c33"
+    }
+  ],
+  "localEvidence": [
+    {
+      "path": "bootstrap-reconciled-producer-controls.xml",
+      "leafCases": 42,
+      "failures": 0,
+      "skips": 0,
+      "native": "97cfd78c886e039b9cff6b9e677ec01265896235",
+      "scope": "focused source controls; old native integrity correction remains required"
+    },
+    {
+      "path": "bootstrap-later-sibling-300s-baseline.log",
+      "leafCases": 1,
+      "failures": 0,
+      "skips": 0,
+      "scope": "two-child full-history baseline without genuine clock claim; no fault recovery proof"
+    }
+  ],
+  "expectedCombinedProducerLeaves": 155
+}

@@ -1,0 +1,110 @@
+{
+  "schema": "v8-bootstrap-historical-evidence/1",
+  "status": "Historical exact-pair evidence; corrected unified gate pending",
+  "historicalRuns": [
+    {
+      "runId": 45025181568,
+      "jobId": 137216565066,
+      "producerRevision": "95bcaf60c73c8a47e48e4ef65736c09fe0756665",
+      "nativeRevision": "97cfd78c886e039b9cff6b9e677ec01265896235",
+      "conclusion": "success",
+      "nativeLeaves": 54,
+      "producerLeaves": 146,
+      "failures": 0,
+      "skips": 0,
+      "artifactId": 14755654644,
+      "artifactSha256": "370207a1d08ccc5eee88602cab4b1f12b7a9ed0dfa5f01d101234e424a070503",
+      "supersededByPendingCorrections": [
+        "native returned-child/RNG/live-state binding",
+        "producer intent-publication ambiguity fencing",
+        "later-sibling lost-reply/repeated-loss cohort"
+      ]
+    },
+    {
+      "runId": 45025448089,
+      "jobId": 137217357931,
+      "producerRevision": "86b1ecc633cd2be324c4cac2cb990d409195a1f5",
+      "nativeRevision": "8cdec19dbac9af0ba7968ac3b1adb84e53ce0dbc",
+      "conclusion": "success",
+      "producerLeaves": 72,
+      "failures": 0,
+      "skips": 0,
+      "artifactId": 14755912709,
+      "artifactSha256": "fbef5a9c4564bee3f6b5fa8fbc8be05da2571b910bc69be991e5aa2d9a8e33ce",
+      "scope": "Separate superseded three-argument bootstrap API; useful assertions ported to explicit predecessor-bound implementation"
+    }
+  ],
+  "followupSource": {
+    "publishedRevision": "a5f3f42ab4abc2ed7d9d36550687358843933129",
+    "localRevision": "ab98ca28cbef511e962a371cfd4cded69ab505dc",
+    "tree": "889bc16e240ca0df5f9adc3f9284e5d55a965cb3",
+    "storageFixPublishedRevision": "20bdc7147610b4ffd9a55cd844ad325c82b7d486",
+    "nativeUsedForLocalControls": "97cfd78c886e039b9cff6b9e677ec01265896235",
+    "focusedProducerLeaves": 42,
+    "focusedFailures": 0,
+    "focusedSkips": 0,
+    "twoChildBaselineLeaves": 1,
+    "twoChildBaselineMilliseconds": 170930.021542,
+    "twoChildBaselineClockClaim": false,
+    "laterSiblingRecoveryHostedQualification": "pending",
+    "expectedCombinedProducerLeaves": 155
+  },
+  "rawLogs": [
+    {
+      "file": "original-45025181568.log.gz.b64",
+      "decodedBytes": 116967,
+      "decodedSha256": "06114695c335ed19f31c4bdd97e876a6a9d4b22d7f1a59ee7d54b56a4611a08f"
+    },
+    {
+      "file": "alternate-45025448089.log.gz.b64",
+      "decodedBytes": 88339,
+      "decodedSha256": "e2a91422090d1fc610d3d2406caa73af5830d23307a052c2a95fce6584f6a14c"
+    }
+  ],
+  "files": {
+    "alternate-45025448089.log.gz.b64": {
+      "bytes": 22141,
+      "sha256": "910c123ccd57e12a5ac3ff5b9c7b0d38cd118c15b596afc6a87b7dee9ac0005c"
+    },
+    "alternate-producer72.xml": {
+      "bytes": 19369,
+      "sha256": "a79493c897b84faf84f6148ad1cc8096250f7e4f1cab4c07d9db889e45e6f1d5"
+    },
+    "followup-producer42.xml": {
+      "bytes": 12403,
+      "sha256": "8a23d5bc0ce192afba86650cfed0e6b52b0ac6e32fd66eff6b97ff547708462d"
+    },
+    "followup-source-map17.json": {
+      "bytes": 5514,
+      "sha256": "463ac8a09bd43e6457d9dcbf01bb525329cfa993a31995418e8d33f4524bd48a"
+    },
+    "later-sibling-baseline300s.log": {
+      "bytes": 246,
+      "sha256": "35a8fd03127f74d7e5435401f8760cc04784553649c2c8b3f91a7d0350ac3f36"
+    },
+    "later-sibling-initial120s-refusal.log": {
+      "bytes": 1400,
+      "sha256": "47ef00e677e8b0e1907996082e5dd71b52d1d6e5fde4965494ba8b8ba8783fca"
+    },
+    "original-45025181568.log.gz.b64": {
+      "bytes": 26941,
+      "sha256": "22f45801698a60120b1fa6cb330aca6ce921d0b519b417738eb7626fc066546b"
+    },
+    "original-native54.xml": {
+      "bytes": 8227,
+      "sha256": "af26a86218bb16b96181e20e5a74cb1fb3f9fee824509ba3ea008e8ff1c1188a"
+    },
+    "original-producer146.xml": {
+      "bytes": 41396,
+      "sha256": "4535c3e05e9c62f251aefaa21c209a2b4a7e858ecfb75e65ecfc0e21ef6a977a"
+    },
+    "storage-ambiguity-green4.xml": {
+      "bytes": 1327,
+      "sha256": "3d900489053a16212ca577986193187bb8fbe705746c94a376769783e1ba7ae9"
+    },
+    "storage-ambiguity-red.log": {
+      "bytes": 4603,
+      "sha256": "c3ab4aa0c5d96a1971e4f06a8ee327503a1d21f3413082e52f4dc52b15aeb7ff"
+    }
+  }
+}

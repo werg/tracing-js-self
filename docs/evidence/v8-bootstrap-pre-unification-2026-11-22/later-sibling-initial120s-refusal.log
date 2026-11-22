@@ -1,0 +1,32 @@
+✖ actual two-child lexical fixture completes through the full native and host history without a clock claim (124312.724427ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 124528.962974
+
+✖ failing tests:
+
+test at test/semantic-known-bootstrap-history-v8.test.js:134:1
+✖ actual two-child lexical fixture completes through the full native and host history without a clock claim (124312.724427ms)
+  AssertionError [ERR_ASSERTION]: {"category":"TypeError","message":"Selected orchestration v8: cooperative orchestration deadline expired before checkpoint"}
+  + actual - expected
+  
+  + 'resource_limited'
+  - 'completed'
+  
+      at setup (file:///workspace/scratch/05d92519587f/producer-bootstrap-continuations/test/semantic-known-bootstrap-history-v8.test.js:107:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-bootstrap-continuations/test/semantic-known-bootstrap-history-v8.test.js:138:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'resource_limited',
+    expected: 'completed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
