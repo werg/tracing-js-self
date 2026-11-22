@@ -39,7 +39,7 @@ jobs:
           const report=JSON.parse(readFileSync(join(process.env.RUNNER_TEMP,'v8-installed','report.json')));
           if(report.status!=='completed'||report.coverageComplete!==true||report.sourcePopulationQualified!==true)
             throw new Error('Installed qualification requires every declared source/public case to pass');
-          for(const [name,declared]of [['all',665],['interoperability',66]]){
+          for(const [name,declared]of [['all',665],['interoperability',69]]){
             const count=report.totals[name];
             if(count?.declared!==declared||count.attempted!==declared||count.sourceQualified!==declared||
               count.sourceUnqualified!==0||count.untested!==0)

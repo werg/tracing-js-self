@@ -12,11 +12,17 @@ import {prepareInstalledV8Package,restoreInstalledV8Package,verifyInstalledArchi
   LEGACY_V8_CLIENT_FILES,installedSha256} from '../src/corpus/installed-v8-qualification.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-test('installed inventory retains all 665 original and 66 selected inputs including five module graphs',()=>{
+test('installed inventory retains all 665 original and 69 selected inputs including five module graphs',()=>{
   const all=installedQualificationInventory({producerRevision:'test'}),
     smoke=installedQualificationInventory({producerRevision:'test',requested:['interoperability:key-getter']});
-  assert.deepEqual(all.declared,{all:665,interoperability:66});assert.deepEqual(all.selected,all.declared);
-  assert.equal(all.rows.length,731);assert.equal(all.rows.filter(row=>row.kind==='module').length,5);
+  assert.deepEqual(all.declared,{all:665,interoperability:69});assert.deepEqual(all.selected,all.declared);
+  assert.equal(all.rows.length,734);assert.equal(all.rows.filter(row=>row.kind==='module').length,5);
+  for(const id of ['source-promise-adoption-executor','source-promise-adoption-async-return',
+    'source-promise-adoption-reaction-return']){
+    const rows=all.rows.filter(row=>row.population==='interoperability'&&row.id===id);
+    assert.equal(rows.length,1,id+': composed Promise source remains in the installed population');
+    assert.equal(rows[0].selected,true,id+': composed Promise source must be attempted');
+  }
   assert.deepEqual(smoke.selected,{all:0,interoperability:1});
   assert.deepEqual(smoke.rows.map(({selected,...row})=>row),all.rows.map(({selected,...row})=>row));
   for(const row of all.rows)assert.deepEqual(decodeInstalledFixtureTask(JSON.parse(JSON.stringify(row.task))),decodeGenerationTask(row.task));
@@ -46,10 +52,11 @@ test('installed CLI refuses malformed bounds and keeps diagnostic selection expl
     assert.throws(()=>parseInstalledQualificationOptions(args));
 });
 
-test('public worker source, callback and original module controls recheck and continue without a native receipt',async()=>{
+test('public worker source, callback, Promise adoption and original module controls recheck and continue without a native receipt',async()=>{
   const population=installedQualificationInventory({producerRevision:'worker-control',population:'interoperability'}),
     lock=installedSha256(await readFile(join(root,'npm-shrinkwrap.json')));
-  for(const id of ['key-getter','return-callback-receiver-alias','module-scoped-var-isolation']){
+  for(const id of ['key-getter','return-callback-receiver-alias','module-scoped-var-isolation',
+    'source-promise-adoption-executor','source-promise-adoption-async-return','source-promise-adoption-reaction-return']){
     const row=population.rows.find(row=>row.id===id);assert(row,id);
     const result=await executeInstalledV8Task(row.task,{producerRevision:'worker-control',packageLockSha256:lock});
     assert.equal(result.installedChecks?.source,'passed',id+': '+result.reason);

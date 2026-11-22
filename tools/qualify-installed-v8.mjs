@@ -18,7 +18,7 @@ export function installedQualificationInventory({producerRevision,population='bo
   const names=population==='both'?['all','interoperability']:[population],rows=[];
   for(const name of names){
     const selected=regionQualificationPopulation({population:name,allInputs:true}),fixtures=[...selected.scripts,...selected.modules];
-    if(fixtures.length!==(name==='all'?665:66))throw new Error('Declared installed population changed: '+name);
+    if(fixtures.length!==(name==='all'?665:69))throw new Error('Declared installed population changed: '+name);
     if(new Set(fixtures.map(fixture=>fixture.id)).size!==fixtures.length)throw new Error('Duplicate installed population input');
     for(const [index,fixture]of fixtures.entries()){
       const task=encodeGenerationTask({kind:fixture.modules?'module':'source',traceVersion:8,fixture,producerRevision});
