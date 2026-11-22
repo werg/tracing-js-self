@@ -272,6 +272,10 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     }))});
   };
   const controller=owner=>harness.invocations.get(owner).controller;
+  const isOwnedAsyncResolution=(promiseId,targetId)=>regionAdapter&&[...harness.invocations.values()].some(({controller})=>{
+    const call=controller.heap.get(promiseId)?.asyncCall;
+    return call?.resolution?.target===targetId&&call.resolution.phase!=='enqueue-pending';
+  });
   function publicScope(frame,owner){
     const selected=controller(owner),locals=selected.visibleLocals();
     return {
@@ -826,6 +830,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       if(!['adoption','finally-pass'].includes(observer.kind))return;
       const key=observer.kind+':'+observer.resultId;
       if(forwardingJobs.has(key))return;
+      if(regionAdapter&&observer.kind==='adoption'&&isOwnedAsyncResolution(observer.resultId,promiseId))return;
       if(regionAdapter)refuse(observer.kind==='adoption'?
         'Promise adoption requires explicit assimilation jobs':'Normal Promise finally completion requires explicit cleanup jobs');
       const job='forward'+(++jobOrdinal);
@@ -1105,6 +1110,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       if(['fulfilled','rejected'].includes(change.after?.status)&&publicPromise?.state===change.after.status&&
         isDeepStrictEqual(publicPromise.result,tag(change.after.value.value))){settledPromises.add(change.id);continue;}
       if(change.after?.adopting&&change.before?.adopting!==change.after.adopting&&publicPromise?.adopted!==change.after.adopting){
+        if(isOwnedAsyncResolution(change.id,change.after.adopting))continue;
         if(regionAdapter)refuse('Promise adoption requires explicit assimilation jobs');
         // The operation queues an adoption job; it does not yet observe or
         // settle its target. Publish that job after any same-event settlements
@@ -1119,6 +1125,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     const previousQueue=event.stateChanges.find(change=>change.table==='control')?.before?.queue??[],
       currentQueue=event.stateChanges.find(change=>change.table==='control')?.after?.queue??[];
     for(const job of currentQueue)if(job.kind==='promise-adopt'&&!adoptionJobs.has(job.promiseId)){
+      if(isOwnedAsyncResolution(job.promiseId,job.targetId))continue;
       if(previousQueue.some(prior=>prior.kind==='promise-adopt'&&prior.promiseId===job.promiseId))
         refuse('adoption job appeared without its source enqueue event');
       if(regionAdapter)refuse('Promise adoption requires explicit assimilation jobs');

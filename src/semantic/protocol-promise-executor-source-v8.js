@@ -104,8 +104,13 @@ export function createPromiseExecutorTeacherV8(){
     for(const change of event.stateChanges){
       const completed=change.after;
       if(change.table==='frames'&&completed?.status==='completed'&&completed.completion?.type==='return'&&
-        completed.completion.value?.value?.[0]==='promise'&&(completed.asyncPromiseId||completed.reactionPromiseId))
-        ctx.refuse('Promise return adoption requires its resolving-function job protocol');
+        completed.completion.value?.value?.[0]==='promise'&&(completed.asyncPromiseId||completed.reactionPromiseId)){
+        const call=completed.asyncPromiseId&&controller.heap.get(completed.asyncPromiseId)?.asyncCall,
+          ownedAsyncReturn=call?.invocation===ctx.frameId(change.id)&&call.phase==='completed'&&
+            call.completion?.kind==='return'&&call.completion.value?.[0]==='ref'&&
+            call.resolution?.target===call.completion.value[1];
+        if(!ownedAsyncReturn)ctx.refuse('Promise return adoption requires its resolving-function job protocol');
+      }
       if(change.table==='frames'&&change.after?.status==='running'&&
         ctx.frameId(change.id)===controller.stack.at(-1)&&
         !eq(controller.receiver??['undefined'],ctx.tag(change.after.thisValue)))

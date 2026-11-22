@@ -11,10 +11,16 @@ export const PROMISE_JOIN_COMPONENT_V8='promise-join/1';
 export const ASYNC_CALL_COMPONENT_V8='async-scoped-call-source/1';
 export function sourceAsyncCallEventV8(view,{event,row}){
   const data=view.components[ASYNC_CALL_COMPONENT_V8];if(!data)return false;
-  const owns=frame=>data.calls.some(([id])=>id===frame),raw=event.operands?.[0],callee=raw?.[0]==='method'?raw[1]:raw;
+  const owns=frame=>data.calls.some(([id])=>id===frame),queue=view.owned.control.a0.queue?.[0],
+    asyncResolution=queue?.kind==='promise-adopt'?
+      data.calls.some(([,call])=>call.promise===queue.promiseId&&call.resolution?.phase==='queued'&&
+        call.resolution.target===queue.targetId):queue?.kind==='adoption'?
+        data.calls.some(([,call])=>call.promise===queue.resultId&&call.resolution?.phase==='subscribed'&&
+          call.resolution.target===queue.promiseId):false,
+    raw=event.operands?.[0],callee=raw?.[0]==='method'?raw[1]:raw;
   return event.operation==='call.enter'&&row?.child&&callee?.[0]==='ref'&&view.owned.heap[callee[1]]?.async===true||
     event.operation==='async.await'&&owns(event.invocationId)||
-    event.operation==='job.enter'&&view.owned.control.a0.queue?.[0]?.kind==='await'&&owns(view.owned.control.a0.queue[0].frameId);
+    event.operation==='job.enter'&&(queue?.kind==='await'&&owns(queue.frameId)||asyncResolution);
 }
 export function sourceAsyncCallAllocationV8(view,input){
   return Object.hasOwn(view.components,ASYNC_CALL_COMPONENT_V8)&&input.kind==='closure'&&input.node?.async===true;

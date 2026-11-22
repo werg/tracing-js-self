@@ -84,6 +84,14 @@ test('wrong targets, missing turns, FIFO bypasses and self-resolution refuse ato
       completion:{kind:'return',value:['ref','p1']}}),/resolution cycle|distinct owned target/);
     assert.deepEqual(sharedRegionState(harness.controller),before);
   }
+  {
+    const {harness,protocol}=fixture({settled:false,complete:false});
+    harness.controller.heap.get('p2').external='effect1';
+    const before=sharedRegionState(harness.controller);
+    assert.throws(()=>protocol({kind:'async.complete',promise:'p1',invocation:'outer-body',
+      completion:{kind:'return',value:['ref','p2']}}),/distinct owned target/);
+    assert.deepEqual(sharedRegionState(harness.controller),before);
+  }
   const {harness,detail,protocol}=fixture();
   const afterComplete=sharedRegionState(harness.controller);
   assert.throws(()=>protocol({kind:'async.resolve.enqueue',promise:'p1',invocation:'outer-body',target:'p3',
