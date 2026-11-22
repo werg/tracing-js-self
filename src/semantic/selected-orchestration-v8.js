@@ -10,9 +10,10 @@ import {hashAlgorithmData} from './program.js';
 import {validateSelectedHistoryReceipt,validateSelectedHistoryChain} from './selected-history-v8.js';
 import {validateServiceAdmissionOwnerSnapshot} from './service-admission-v8.js';
 import {assertSelectedOrchestrationExecutionClock} from '../storage/selected-orchestration-clock.js';
-import {buildRecoveredCoordinatorCheckpointV8,refreshRecoveredCoordinatorCheckpointV8,
-  buildRecoveredBootstrapCheckpointV8,refreshRecoveredBootstrapCheckpointV8}
+import {buildRecoveredCoordinatorCheckpointV8,refreshRecoveredCoordinatorCheckpointV8}
   from './selected-orchestration-commit-recovery-v8.js';
+import {buildRecoveredBootstrapCheckpointV8,refreshRecoveredBootstrapCheckpointV8}
+  from './selected-orchestration-bootstrap-recovery-v8.js';
 
 const copy=structuredClone,HASH=/^[a-f0-9]{64}$/;
 function freezeTree(value){
@@ -287,13 +288,13 @@ export class RegionSelectedOrchestrationDriver {
     checkAbort();
     packet=copy(packet);historyReceipt=copy(historyReceipt);initialPublic=copy(initialPublic);
     policy=copy(policy);harnessOptions={...harnessOptions};
-    commitRecovery=copy(commitRecovery);
-    bootstrapRecovery=copy(bootstrapRecovery);
+    commitRecovery=copy(commitRecovery);bootstrapRecovery=copy(bootstrapRecovery);
     demand(commitRecovery===null||commitRecovery&&Object.keys(commitRecovery).length===1&&
       Object.hasOwn(commitRecovery,'receipt'),'commit recovery must name one exact retained request receipt');
     demand(bootstrapRecovery===null||bootstrapRecovery&&Object.keys(bootstrapRecovery).length===1&&
       Object.hasOwn(bootstrapRecovery,'receipt'),'bootstrap recovery must name one exact retained request receipt');
-    demand(commitRecovery===null||bootstrapRecovery===null,'one exact native recovery operation is required');
+    demand(commitRecovery===null||bootstrapRecovery===null,
+      'commit and bootstrap recovery are distinct exact native boundaries');
     demand(typeof historyJournal?.readLatest==='function','independently verified latest composite history is required');
     validateSelectedHistoryReceipt(historyReceipt);
     const retainedEntries=copy(await historyJournal.readLatest(copy(historyReceipt)));
@@ -313,8 +314,8 @@ export class RegionSelectedOrchestrationDriver {
       (latestEntry.pending?.kind==='coordinator-selection'&&latestEntry.pending.clockReceipt&&latestEntry.pending.requestBoundary||
         !latestEntry.pending&&latestEntry.checkpoint.continuation.clockReceipt&&
         (['track_join','track_progress'].includes(latestEntry.checkpoint.coordinatorAttempts.at(-1)?.action?.name)||
-          latestEntry.checkpoint.continuation.phase==='bootstrap-ready'&&
-          latestEntry.checkpoint.coordinatorAttempts.at(-1)?.action?.name==='track_create')&&
+          latestEntry.checkpoint.coordinatorAttempts.at(-1)?.action?.name==='track_create'&&
+          latestEntry.checkpoint.continuation.phase==='bootstrap-ready')&&
         latestEntry.checkpoint.native.attempts.at(-1)?.durableRequestReceipt),
       'known commit recovery requires its clock-bound coordinator fence or exact sealed acknowledgement');
     if(bootstrapRecovery!==null)demand(!latestEntry.terminal&&
@@ -322,8 +323,8 @@ export class RegionSelectedOrchestrationDriver {
         !latestEntry.pending&&latestEntry.checkpoint.continuation.clockReceipt&&
         latestEntry.checkpoint.continuation.phase==='coordinator-ready'&&
         latestEntry.checkpoint.coordinatorAttempts.at(-1)?.action?.name==='track_create'&&
-        latestEntry.checkpoint.coordinatorAttempts.at(-1)?.bootstrapRequestReceipt),
-      'known bootstrap recovery requires its clock-bound startup fence or exact sealed acknowledgement');
+        latestEntry.checkpoint.native.attempts.at(-1)?.durableBootstrap),
+      'known bootstrap recovery requires its clock-bound child-bootstrap fence or exact sealed acknowledgement');
     if(latestEntry.terminal?.schema==='semantic-selected-orchestration-terminal-event/8'){
       let terminal=latestEntry.terminal,snapshot=terminal.snapshot,closedOnThisSelector=false;
       if(terminal.phase==='requested'){
@@ -425,16 +426,16 @@ export class RegionSelectedOrchestrationDriver {
     const latest=latestEntry.checkpoint;
     demand(!latestEntry.terminal,'terminal orchestration disposition cannot be restored as active work');
     if(commitRecovery!==null||bootstrapRecovery!==null){
-      const unresolved=Boolean(latestEntry.pending);
+      const unresolved=Boolean(latestEntry.pending),bootstrap=bootstrapRecovery!==null,
+        recover=bootstrap?select?.recoverBootstrapChild:select?.recoverCommit;
       demand(typeof acknowledge==='function'&&typeof historyJournal.append==='function'&&
-        typeof select?.[bootstrapRecovery?'recoverBootstrap':'recoverCommit']==='function'&&
-        typeof select?.durableRequestBoundary==='function',
+        typeof recover==='function'&&typeof select?.durableRequestBoundary==='function',
         'known commit recovery requires exact native restoration and independent new-head acknowledgement');
       assertSelectedOrchestrationExecutionClock(executionClock);
-      const boundary=unresolved?latestEntry.pending.requestBoundary:bootstrapRecovery?
-        latest.coordinatorAttempts.at(-1).bootstrapRequestReceipt:latest.native.attempts.at(-1).durableRequestReceipt,
+      const boundary=unresolved?latestEntry.pending.requestBoundary:bootstrap?
+          latest.native.attempts.at(-1).durableBootstrap.receipt:latest.native.attempts.at(-1).durableRequestReceipt,
         clockReceipt=unresolved?latestEntry.pending.clockReceipt:latest.continuation.clockReceipt,
-        receipt=(bootstrapRecovery??commitRecovery).receipt,
+        receipt=(bootstrap?bootstrapRecovery:commitRecovery).receipt,
         liveBoundary=select.durableRequestBoundary();
       demand(receipt&&['sessionId','streamId','sessionGeneration','ordinal'].every(key=>receipt[key]===boundary[key])&&
         liveBoundary&&['sessionId','streamId','sessionGeneration'].every(key=>liveBoundary[key]===boundary[key]),
@@ -449,7 +450,7 @@ export class RegionSelectedOrchestrationDriver {
           'known commit recovery service owners changed or are terminal');
       }else demand(serviceAdmissionCoordinator===null,'unfenced history cannot acquire service authority during recovery');
       try{
-        const recovered=copy(await select[bootstrapRecovery?'recoverBootstrap':'recoverCommit']({receipt:copy(receipt),
+        const recovered=copy(await recover.call(select,{receipt:copy(receipt),
           ...(unresolved?{}:{accountingCheckpoint:copy(latest.native)})}));checkAbort();
         demand(isDeepStrictEqual(recovered.receipt,receipt),'recovered native request receipt changed');
         const state=copy(await select.statusOrchestration({session:latest.session,track:latest.state.track})),
@@ -457,9 +458,9 @@ export class RegionSelectedOrchestrationDriver {
           elapsedMs=await executionClock.elapsed(clockReceipt,{timeoutMs:policy.timeoutMs});
         const expectedPolicy={...policy,...(Object.hasOwn(latest.policy,'serviceAdmission')?
           {serviceAdmission:copy(latest.policy.serviceAdmission)}:{})};
-        const build=bootstrapRecovery?(unresolved?buildRecoveredBootstrapCheckpointV8:refreshRecoveredBootstrapCheckpointV8):
+        const builder=bootstrap?(unresolved?buildRecoveredBootstrapCheckpointV8:refreshRecoveredBootstrapCheckpointV8):
           (unresolved?buildRecoveredCoordinatorCheckpointV8:refreshRecoveredCoordinatorCheckpointV8);
-        const reconciled=build({
+        const reconciled=builder({
           checkpoint:latest,pending:latestEntry.pending,recovery:recovered,native,state,elapsedMs,
           policy:expectedPolicy,initialPublic});
         checkAbort();
@@ -794,34 +795,41 @@ export class RegionSelectedOrchestrationDriver {
       while(state.status!=='completed'&&state.status!=='cancelled'){
         checkAbort();
         if(this.continuation.phase==='bootstrap-ready'){
-          const attempt=coordinatorAttempts.at(-1),childTrack=attempt?.commitReceipt?.track?.address,
-            child=state.children.find(row=>row.track===childTrack);
-          demand(attempt?.action?.name==='track_create'&&attempt.status==='committed'&&
-            attempt.bootstrapReceipt===undefined&&child&&
-            state.tracks.find(row=>row.address===childTrack)?.bootstrap_ready===false,
-            'startup requires the exact acknowledged unbootstrapped child');
+          const attempt=coordinatorAttempts.at(-1),receipt=attempt?.commitReceipt,
+            child=state.children.find(row=>row.track===receipt?.track?.address),
+            durableBoundary=this.select.durableRequestBoundary?.()??null;
+          demand(attempt?.status==='committed'&&attempt.action?.name==='track_create'&&child&&
+            !Object.hasOwn(attempt,'bootstrapReceipt')&&receipt.track.bootstrap_ready===false,
+            'child bootstrap requires the exact latest acknowledged reserved create');
           if(this.automaticHistory!==null){
-            const checkpoint=await captureCheckpoint(),clockFields=this.continuation.clockReceipt?
-              {clockReceipt:copy(this.continuation.clockReceipt),requestBoundary:copy(this.select.durableRequestBoundary())}:{};
-            await persistAutomaticCheckpoint(checkpoint,pendingMarker(checkpoint,'child-bootstrap',{
-              attempt:attempt.attempt,track:state.track,childTrack,...clockFields}));
+            const beforeBootstrap=await captureCheckpoint();
+            let clockFields={};
+            if(this.automaticHistory.executionClock!==null){
+              const original=beforeBootstrap.native.attempts.at(-1),
+                requestBoundary=copy(this.select.durableRequestBoundary());
+              demand(this.continuation.clockReceipt&&original?.durableRequestReceipt&&
+                original.selection.selectionId===attempt.selection.selectionId&&
+                requestBoundary?.ordinal===original.durableRequestReceipt.ordinal+1,
+                'durable bootstrap lacks its original create request and unchanged execution clock');
+              clockFields={clockReceipt:copy(this.continuation.clockReceipt),requestBoundary,
+                createReceipt:copy(original.durableRequestReceipt)};
+            }
+            await persistAutomaticCheckpoint(beforeBootstrap,pendingMarker(beforeBootstrap,'child-bootstrap',{
+              attempt:attempt.attempt,track:state.track,childTrack:child.track,...clockFields}));
             checkAbort();
           }
           try{
             const bootstrap=await this.select.bootstrapOrchestrationChild({session:this.session,
-              track:state.track,childTrack});
-            attempt.bootstrapReceipt=copy(bootstrap);
-            const requestReceipt=this.select.durableRequestReceipt?.();
-            if(requestReceipt)attempt.bootstrapRequestReceipt=copy(requestReceipt);
-            state=await readState();
-            const bound=state.tracks.find(row=>row.address===childTrack);
+              track:state.track,childTrack:child.track});
+            attempt.bootstrapReceipt=copy(bootstrap);state=await readState();
+            const bound=state.tracks.find(row=>row.address===child.track);
             demand(bound?.bootstrap_ready===true&&isDeepStrictEqual(bound.execution,child.execution),
               'native child is not ready under the exact bootstrapped execution binding');
           }catch(error){
-            // The reservation was acknowledged even when its separate startup
-            // outcome is unknown. Keep its exact receipt and accepted count.
-            attempt.status='post-commit-failed';attempt.failure=String(error?.message??error);
-            if(error?.evidence!==undefined)attempt.failureEvidence=copy(error.evidence);
+            // Unguarded callers retain the existing failure accounting. A
+            // guarded create stays committed: bootstrap has its own request
+            // outcome and pending history, never another model attempt.
+            if(durableBoundary===null){attempt.status='post-commit-failed';attempt.failure=String(error?.message??error);}
             throw error;
           }
           this.continuation={...this.continuation,phase:'coordinator-ready'};
@@ -888,9 +896,6 @@ export class RegionSelectedOrchestrationDriver {
               'native create receipt changed its original declared child binding');
             this.createdDependencies.set(child.track,copy(receipt.completion_dependency));
             this.continuation={...this.continuation,phase:'bootstrap-ready'};
-            if(await maybePause())throw Object.assign(new Error('orchestration paused at requested checkpoint boundary'),
-              {selectedOrchestrationPause:true});
-            continue;
           }else if(action.name==='track_join'){
             this.continuation={...this.continuation,phase:'child-ready',joinedAttempt:attempt.attempt,
               joinedDependency:copy(action.arguments.completion_dependency)};

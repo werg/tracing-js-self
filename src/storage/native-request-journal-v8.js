@@ -1,4 +1,4 @@
-// Producer-owned exact commit and bootstrap frames. This journal alone never authorizes a
+// Producer-owned exact commit frames. This journal alone never authorizes a
 // native retry or host replay; the native side must independently own its outcome.
 import {createHash,randomUUID} from 'node:crypto';
 import {constants} from 'node:fs';
@@ -17,7 +17,7 @@ const exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&
   Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
 const canonical=value=>Buffer.from(stableAlgorithmJSON(value),'utf8');
 
-export function decodeNativeV8RequestFrame(requestBase64){
+function decodeNativeV8RequestFrame(requestBase64){
   if(typeof requestBase64!=='string'||!requestBase64.length)fail('exact base64 request bytes required');
   const bytes=Buffer.from(requestBase64,'base64');
   if(bytes.toString('base64')!==requestBase64)fail('noncanonical request base64');
@@ -25,15 +25,24 @@ export function decodeNativeV8RequestFrame(requestBase64){
   try{text=utf8.decode(bytes);request=JSON.parse(text);}catch{fail('request must be exact UTF-8 JSON');}
   if(!text.endsWith('\n')||text.slice(0,-1).includes('\n')||JSON.stringify(request)+'\n'!==text)
     fail('request must be one original JSONL frame without duplicate fields');
-  if(!ID.test(request?.session??'')||typeof request?.id!=='string'||!request.id)
-    fail('exact request session and identifier required');
-  if(request.op==='bootstrap-orchestration-child'){
-    if(!exact(request,['op','session','track','childTrack','id'])||
-        !ID.test(request.track??'')||!ID.test(request.childTrack??'')||request.track===request.childTrack)
-      fail('only an exact reserved child bootstrap frame may be retained');
-  }else if(!['commit','commit-orchestration'].includes(request.op)||typeof request.record!=='string'||
+  return {bytes,request};
+}
+
+export function decodeNativeV8CommitFrame(requestBase64){
+  const {bytes,request}=decodeNativeV8RequestFrame(requestBase64);
+  if(!['commit','commit-orchestration'].includes(request?.op)||!ID.test(request?.session??'')||
+      typeof request?.id!=='string'||!request.id||typeof request.record!=='string'||
       !request.selection||typeof request.selection.selectionId!=='string')
-    fail('only an exact semantic, orchestration commit or child bootstrap frame may be retained');
+    fail('only an exact semantic or orchestration commit frame may be retained');
+  return {bytes,request};
+}
+
+export function decodeNativeV8BootstrapFrame(requestBase64){
+  const {bytes,request}=decodeNativeV8RequestFrame(requestBase64);
+  if(!exact(request,['id','op','session','track','childTrack'])||request.op!=='bootstrap-orchestration-child'||
+      !ID.test(request.session??'')||typeof request.id!=='string'||!request.id||
+      typeof request.track!=='string'||!request.track||typeof request.childTrack!=='string'||!request.childTrack)
+    fail('only an exact reserved child-bootstrap frame may be retained');
   return {bytes,request};
 }
 
@@ -52,10 +61,11 @@ function validateIdentity(value,scope){
 }
 
 function validateIntent(record,scope){
-  if(!exact(record,['schema','identity','requestBase64','checkpoint'])||
-      record.schema!=='semantic-native-producer-request/8')fail('invalid intent fields');
+  const bootstrap=record?.schema==='semantic-native-producer-bootstrap-request/8';
+  if(!exact(record,['schema','identity','requestBase64','checkpoint',...(bootstrap?['createReceipt']:[])])||
+      !bootstrap&&record.schema!=='semantic-native-producer-request/8')fail('invalid intent fields');
   validateIdentity(record.identity,scope);
-  const {request}=decodeNativeV8RequestFrame(record.requestBase64),packet=record.checkpoint;
+  const {request}=(bootstrap?decodeNativeV8BootstrapFrame:decodeNativeV8CommitFrame)(record.requestBase64),packet=record.checkpoint;
   if(request.session!==record.identity.session_id||request.op!==record.identity.operation)
     fail('request bytes differ from their immutable identity');
   const {digest,...body}=packet??{},native=packet?.native,{digest:nativeDigest,...nativeBody}=native??{};
@@ -68,21 +78,20 @@ function validateIntent(record,scope){
   const model=record.identity.model_identity,identity=packet.identity;
   if(identity.checkpointIdentity!==model.checkpoint||identity.tokenizerIdentity!==model.tokenizer||
       (identity.trainingIdentity??null)!==(model.training??null))fail('checkpoint changed request model identity');
-  if(request.op==='bootstrap-orchestration-child'){
-    const session=native.sessions?.[request.session],state=session?.orchestration,
-      child=state?.children?.find(row=>row.track===request.childTrack),last=packet.attempts.at(-1),
-      decision=state?.decisions?.at(-1),operation=state?.operations?.at(-1);
-    let action;try{action=JSON.parse(last?.record);}catch{fail('bootstrap requires an original create decision');}
-    if(!session||session.unacknowledgedSelection!==null||state.track!==request.track||!child||
-        child.completion!==null||state.operations.some(row=>row.kind==='bootstrap'&&row.track===request.childTrack)||
-        last?.family!=='orchestration'||last.status!=='accepted'||last.session!==request.session||
-        action?.name!=='track_create'||!isDeepStrictEqual(action.arguments?.execution,child.execution)||
-        last.commitReceipt?.committed!==true||last.commitReceipt.track?.address!==request.childTrack||
-        last.commitReceipt.track?.bootstrap_ready!==false||decision?.selectionId!==last.selection?.selectionId||
-        decision?.record!==last.record||!isDeepStrictEqual(decision.outcome,last.commitReceipt)||
-        operation?.kind!=='coordinator'||operation.attempt!==last.attempt||
-        Object.values(native.sessions).some(row=>row.unacknowledgedSelection!==null))
-      fail('bootstrap does not follow its exact acknowledged unbootstrapped reservation');
+  if(bootstrap){
+    const receipt=record.createReceipt;
+    if(!exact(receipt,['schema','ordinal','digest','bytes','sessionId','streamId','sessionGeneration'])||
+        receipt.schema!=='semantic-native-producer-request-receipt/8'||!HASH.test(receipt.digest??'')||
+        !positive(receipt.bytes)||receipt.ordinal!==record.identity.ordinal-1||
+        receipt.sessionId!==record.identity.session_id||receipt.streamId!==record.identity.stream_id||
+        receipt.sessionGeneration!==record.identity.session_generation)
+      fail('bootstrap requires its exact immediately preceding create receipt');
+    const creates=packet.attempts.filter(item=>item.family==='orchestration'&&item.status==='accepted'&&
+      isDeepStrictEqual(item.durableRequestReceipt,receipt)&&item.commitReceipt?.track?.address===request.childTrack);
+    if(creates.length!==1||creates[0]!==packet.attempts.at(-1)||
+        creates[0].commitReceipt?.track?.parent!==request.track||
+        creates[0].commitReceipt?.track?.bootstrap_ready!==false||Object.hasOwn(creates[0],'durableBootstrap'))
+      fail('bootstrap is not the exact accepted create before any child initialization');
     return record;
   }
   const matching=packet.attempts.filter(item=>item.session===request.session&&
@@ -90,6 +99,28 @@ function validateIntent(record,scope){
   if(matching.length!==1||matching[0].status!=='acknowledging'||matching[0].record!==request.record||
       !isDeepStrictEqual(matching[0].selection,request.selection))fail('commit does not name the exact pending attempt');
   return record;
+}
+
+function validateBootstrapCreate(record,create){
+  if(create.schema!=='semantic-native-producer-request/8')fail('bootstrap predecessor is not a selected create');
+  const {request}=decodeNativeV8BootstrapFrame(record.requestBase64),
+    {request:original}=decodeNativeV8CommitFrame(create.requestBase64),identity=record.identity;
+  let action;try{action=JSON.parse(original.record);}catch{fail('bootstrap create record is not JSON');}
+  if(original.op!=='commit-orchestration'||action?.name!=='track_create'||
+      original.session!==request.session||original.track!==request.track||
+      create.identity.ordinal+1!==identity.ordinal||
+      !isDeepStrictEqual({...create.identity,ordinal:identity.ordinal,operation:identity.operation},identity))
+    fail('bootstrap changed its create request, owner, generation or adjacent ordinal');
+  const attempt=record.checkpoint.attempts.at(-1),receipt=attempt.commitReceipt;
+  if(attempt.record!==original.record||!isDeepStrictEqual(attempt.selection,original.selection)||
+      receipt?.selectionId!==original.selection.selectionId||receipt?.committed!==true||
+      receipt?.track?.address!==request.childTrack||
+      !isDeepStrictEqual(receipt.track.execution,action.arguments?.execution))
+    fail('bootstrap create selection or reserved child binding changed');
+  for(const key of ['rpcCalls','computeSeconds','peakMemoryBytes'])
+    if(!Number.isFinite(record.checkpoint.runtimeMetrics?.[key])||
+        record.checkpoint.runtimeMetrics[key]<create.checkpoint.runtimeMetrics?.[key])
+      fail('bootstrap checkpoint refunded create accounting');
 }
 
 async function syncDirectory(path){
@@ -128,10 +159,13 @@ export class DurableNativeV8RequestJournal {
     if(!positive(ordinal)||ordinal>this.maxRequests)fail('invalid request ordinal or request bound');
     return join(this.scopeDirectory,String(ordinal).padStart(20,'0')+'.intent.json');
   }
-  async append({identity,requestBase64,checkpoint}){
-    const record=validateIntent(structuredClone({schema:'semantic-native-producer-request/8',
-      identity,requestBase64,checkpoint}),this),bytes=canonical(record),ordinal=record.identity.ordinal,
+  async append({identity,requestBase64,checkpoint,createReceipt}){
+    const bootstrap=identity?.operation==='bootstrap-orchestration-child';
+    const record=validateIntent(structuredClone({schema:bootstrap?'semantic-native-producer-bootstrap-request/8':
+      'semantic-native-producer-request/8',identity,requestBase64,checkpoint,
+      ...(bootstrap?{createReceipt}:{})}),this),bytes=canonical(record),ordinal=record.identity.ordinal,
       target=this.path(ordinal);
+    if(bootstrap)validateBootstrapCreate(record,await this.read(record.createReceipt,{latest:true}));
     if(bytes.length>this.maxBytes)fail('intent exceeds configured byte limit');
     await privateDirectory(this.directory);
     await privateDirectory(dirname(this.scopeDirectory));await privateDirectory(this.scopeDirectory);
@@ -173,6 +207,8 @@ export class DurableNativeV8RequestJournal {
     let record;try{record=JSON.parse(utf8.decode(bytes));}catch{fail('intent is not exact UTF-8 JSON');}
     if(!canonical(record).equals(bytes))fail('noncanonical intent bytes');
     validateIntent(record,this);
+    if(record.schema==='semantic-native-producer-bootstrap-request/8')
+      validateBootstrapCreate(record,await this.read(record.createReceipt));
     if(record.identity.ordinal!==receipt.ordinal)fail('ordinal slot changed');
     // Visible bytes after a lost directory-sync acknowledgement require a new
     // independent durability acknowledgement; visibility alone is not one.
