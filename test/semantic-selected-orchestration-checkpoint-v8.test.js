@@ -7,6 +7,8 @@ import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {DurableSelectedHistoryJournal} from '../src/storage/selected-history.js';
+import {validateSelectedHistoryChain} from '../src/semantic/selected-history-v8.js';
+import {stableAlgorithmJSON} from '../src/semantic/ir.js';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createNativeV8ProcessSelector} from '../src/semantic/native-process-v8.js';
@@ -79,6 +81,16 @@ async function pauseAndResume(stopAt,overrides={}){
 }
 
 function packetAttemptCount(packet){return packet.native.attempts.length;}
+function rechain(entries){
+  let previous=null;
+  const chained=entries.map((entry,index)=>{
+    const row={...structuredClone(entry),position:index+1,previous:structuredClone(previous)};
+    previous={schema:'semantic-selected-history-receipt/8',streamId:row.streamId,position:row.position,
+      id:hashAlgorithmData(row),bytes:Buffer.byteLength(stableAlgorithmJSON(row))};
+    return row;
+  });
+  return {entries:chained,receipt:previous};
+}
 
 test('restores coordinator-ready after exact create and bootstrap receipts',async()=>{
   const packet=await pauseAndResume({phase:'coordinator-ready',coordinatorSelections:1});
@@ -264,6 +276,162 @@ test('durable composite checkpoint requires an independent exact head acknowledg
       historyReceipt:head,initialPublic,select:tamperedSelector,policy}),/absent from|digest|checkpoint/i);
   }finally{tamperedSelector.close();}
   await assert.rejects(journal.append(packet.first,{previous:head}),/extension|rolled back|changed/i);
+});
+
+
+test('automatic composite history acknowledges the join safe point before child dispatch',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'v8-composite-automatic-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory,streamId:'automatic'});
+  let head=null,release,arrive;
+  const gate=new Promise(resolve=>{release=resolve;}),atJoin=new Promise(resolve=>{arrive=resolve;});
+  const select=selector(),driver=new RegionSelectedOrchestrationDriver({initialPublic,select,...policy});
+  driver.startAutomaticHistory({journal,acknowledge:async({receipt,previous})=>{
+    assert.deepEqual(previous,head);
+    const entry=await journal.read(receipt);
+    if(entry.checkpoint.continuation.phase==='child-ready'){
+      assert.equal(entry.pending?.kind,'child-dispatch');
+      assert.equal(driver.bridge.exportEpisode().timeline.filter(row=>row.mode==='generated').length,0,
+        'child host dispatch must wait for its durable join cut');
+      head=structuredClone(receipt);arrive();await gate;
+      const fresh=selector();
+      try{
+        await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(entry.checkpoint,{historyJournal:journal,
+          historyReceipt:head,initialPublic,select:fresh,policy}),/unresolved in-flight work/i);
+      }finally{fresh.close();}
+      return structuredClone(head);
+    }
+    head=structuredClone(receipt);return structuredClone(head);
+  }});
+  try{
+    const running=driver.run();
+    await atJoin;
+    assert.equal(driver.bridge.exportEpisode().timeline.filter(row=>row.mode==='generated').length,0);
+    release();const result=await running;
+    assert.equal(result.status,'completed',JSON.stringify(result.failure));
+    const entries=await journal.readAll(head);
+    assert(entries.some(row=>row.checkpoint.continuation.phase==='child-ready'));
+    assert(entries.some(row=>row.checkpoint.continuation.phase==='coordinator-ready'&&
+      row.checkpoint.childAttempts.length>0));
+    const completedJoin=entries.find(row=>row.checkpoint.coordinatorAttempts.some(attempt=>
+      attempt.childCompletion));
+    const joinAttempt=completedJoin.checkpoint.coordinatorAttempts.find(attempt=>attempt.childCompletion);
+    assert.equal(joinAttempt.childCompletion.track,'track:1');
+    assert.equal(joinAttempt.childCompletion.invocationId,initialPublic.timeline.find(row=>row.kind==='invocation')
+      .fields.invocationId);
+    assert.deepEqual(joinAttempt.childOutcome.completion,joinAttempt.childCompletion.completion);
+    assert.equal(entries.at(-1).position,head.position);
+    assert.equal(entries.at(-1).pending?.kind,'coordinator-selection',
+      'the unqualified terminal coordinator action remains explicitly fenced');
+    const firstCoordinatorFence=entries.find(row=>row.pending?.kind==='coordinator-selection'&&
+      row.pending.attempt===0),skippedCoordinator=entries.find(row=>row.checkpoint.coordinatorAttempts.length>=2);
+    const skipped=rechain([firstCoordinatorFence,skippedCoordinator]);
+    assert.throws(()=>validateSelectedHistoryChain(skipped.entries,skipped.receipt),
+      /exactly one committed selection/i);
+    const childFence=entries.find(row=>row.pending?.kind==='child-dispatch'),
+      interleavedCoordinator=entries.find(row=>row.checkpoint.coordinatorAttempts.length>
+        childFence.checkpoint.coordinatorAttempts.length&&row.checkpoint.continuation.phase==='coordinator-ready');
+    const interleaved=rechain([childFence,interleavedCoordinator]);
+    assert.throws(()=>validateSelectedHistoryChain(interleaved.entries,interleaved.receipt),
+      /only the joined invocation/i);
+  }finally{release();select.close();}
+});
+
+test('post-child persistence failure leaves a durable in-flight fence that refuses fresh replay',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'v8-composite-child-fence-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory,streamId:'childfence'});
+  let head=null,joinPacket=null;
+  const select=selector(),driver=new RegionSelectedOrchestrationDriver({initialPublic,select,...policy});
+  driver.startAutomaticHistory({journal,acknowledge:async({receipt,previous})=>{
+    assert.deepEqual(previous,head);
+    const entry=await journal.read(receipt);
+    if(entry.pending?.kind==='child-dispatch'){joinPacket=structuredClone(entry.checkpoint);}
+    if(entry.checkpoint.continuation.phase==='coordinator-ready'&&entry.checkpoint.childAttempts.length>0)
+      throw new Error('simulated lost post-child head acknowledgement');
+    head=structuredClone(receipt);return structuredClone(head);
+  }});
+  try{
+    const result=await driver.run();
+    assert.notEqual(result.status,'completed');
+    assert(joinPacket,'the child-dispatch intent was durably acknowledged');
+    const fresh=selector();
+    try{
+      await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(joinPacket,{historyJournal:journal,
+        historyReceipt:head,initialPublic,select:fresh,policy}),/unresolved in-flight work/i);
+    }finally{fresh.close();}
+  }finally{select.close();}
+});
+
+
+
+test('automatic persistence refuses a journal readback that drops its pending fence',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'v8-composite-drop-fence-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory,streamId:'dropfence'});
+  const select=selector(),driver=new RegionSelectedOrchestrationDriver({initialPublic,select,...policy});
+  let head=null,acks=0;
+  const droppingJournal={append:(checkpoint,options)=>{
+      const {pending,...withoutPending}=options;
+      return journal.append(checkpoint,withoutPending);
+    },readAll:receipt=>journal.readAll(receipt)};
+  driver.startAutomaticHistory({journal:droppingJournal,acknowledge:async({receipt,previous})=>{
+    assert.deepEqual(previous,head);head=structuredClone(receipt);acks++;return structuredClone(head);
+  }});
+  try{
+    const result=await driver.run();
+    assert.notEqual(result.status,'completed');
+    assert.equal(driver.coordinatorAttempts.length,0,'no coordinator selection follows a missing fence');
+    assert.equal(acks,1,'the marker-free lookalike entry is never acknowledged');
+  }finally{select.close();}
+});
+
+
+test('requested child-ready pause stores a complete cut and arms its fence only on resumed dispatch',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'v8-composite-requested-child-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory,streamId:'requestedchild'});
+  let head=null;
+  const acknowledge=async({receipt,previous})=>{
+    assert.deepEqual(previous,head);head=structuredClone(receipt);return structuredClone(head);
+  };
+  const first=selector(),driver=new RegionSelectedOrchestrationDriver({initialPublic,select:first,...policy});
+  driver.startAutomaticHistory({journal,acknowledge});
+  let packet;
+  try{
+    const result=await driver.run({stopAt:{phase:'child-ready',coordinatorSelections:2}});
+    assert.equal(result.status,'paused',JSON.stringify(result.failure));
+    packet=driver.checkpoint();
+    const entry=(await journal.readAll(head)).at(-1);
+    assert.equal(entry.checkpoint.continuation.phase,'child-ready');
+    assert.equal(Object.hasOwn(entry,'pending'),false);
+  }finally{first.close();}
+  const second=selector(),restore=second.restore;
+  second.restore=async request=>{const receipt=await restore(request);assert.equal(receipt.hostDispatches,0);return receipt;};
+  try{
+    const resumed=await RegionSelectedOrchestrationDriver.restoreLatest(packet,{historyJournal:journal,
+      historyReceipt:head,initialPublic,select:second,policy});
+    resumed.startAutomaticHistory({journal,acknowledge});
+    const result=await resumed.run();
+    assert.equal(result.status,'completed',JSON.stringify(result.failure));
+    assert.equal((await journal.readAll(head)).some(row=>row.pending?.kind==='child-dispatch'),true);
+  }finally{second.close();}
+});
+
+test('requested orchestration safe point is snapshotted before native initialization awaits',async()=>{
+  const select=selector(),stopAt={phase:'coordinator-ready',coordinatorSelections:0},
+    initialize=select.initialize;
+  select.initialize=async request=>{
+    stopAt.phase='child-ready';stopAt.coordinatorSelections=99;
+    return initialize(request);
+  };
+  const driver=new RegionSelectedOrchestrationDriver({initialPublic,select,...policy});
+  try{
+    const result=await driver.run({stopAt});
+    assert.equal(result.status,'paused',JSON.stringify(result.failure));
+    assert.equal(driver.checkpoint().continuation.phase,'coordinator-ready');
+    assert.equal(driver.checkpoint().continuation.coordinatorSelections,0);
+  }finally{select.close();}
 });
 
 test('failed durable head acknowledgement leaves no reusable history receipt',async t=>{

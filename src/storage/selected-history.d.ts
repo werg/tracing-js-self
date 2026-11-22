@@ -61,7 +61,7 @@ export declare class DurableSelectedHistoryJournal {
   readonly maxEntries: number;
   entryPath(position: number): string;
   append(checkpoint: unknown, options?: {previous?: SelectedHistoryReceipt | null;
-    terminal?: SelectedHistoryTerminalEvent}): Promise<SelectedHistoryReceipt>;
+    terminal?: SelectedHistoryTerminalEvent; pending?: Record<string, unknown>}): Promise<SelectedHistoryReceipt>;
   read(receipt: SelectedHistoryReceipt): Promise<any>;
   readAll(receipt: SelectedHistoryReceipt): Promise<any[]>;
 }

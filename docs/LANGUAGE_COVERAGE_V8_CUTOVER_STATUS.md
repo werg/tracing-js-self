@@ -16,6 +16,31 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Automatic durable composite history — pending-action fencing published
+
+The driver can now automatically retain and independently acknowledge complete
+coordinator/child cuts. Before selecting another coordinator action or dispatching
+a joined child, it durably records the exact pending action. If execution or
+acknowledgement stops before a matching completed cut is retained, restore refuses
+the unresolved head before any native restoration or host dispatch. A successor
+cut must resolve exactly the marked action; skipped selections, interleaved
+children and a journal that strips the marker refuse.
+
+Explicit child-ready pauses remain complete, restorable cuts; their pending
+marker is armed only when resumed dispatch actually begins. Caller mutation of
+the requested pause cannot change it after native initialization awaits, and
+elapsed runtime is accumulated from a fixed run-entry baseline. The application's
+current independently acknowledged head and sole supervisor ownership remain
+required; the journal does not discover an unacknowledged filesystem tail.
+
+These new automatic-history controls are committed with **hosted validation
+pending**. Terminal completion/cancellation is left behind an unresolved fence
+until independently verified terminal reconciliation exists. Automatic history
+therefore refuses uncertain replay; it is not arbitrary in-flight continuation
+or distributed transactionality. Multi-child sparse history and exact paired
+native automatic recovery need their own next controls. The explicit-history
+98-control result below remains scoped to `c640f2b`.
+
 ## Explicit durable composite history — 98 focused controls passed
 
 The coordinator/child driver now appends verified quiescent cuts through the

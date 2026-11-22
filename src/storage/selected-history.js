@@ -54,12 +54,13 @@ export class DurableSelectedHistoryJournal {
     }
     return validateSelectedHistoryChain(entries.reverse(),receipt);
   }
-  async append(checkpoint,{previous=null,terminal=undefined}={}){
+  async append(checkpoint,{previous=null,terminal=undefined,pending=undefined}={}){
     if(previous!==null)validateSelectedHistoryReceipt(previous);
     // Capture complete caller bytes before the first storage await.
     const entry={schema:'semantic-selected-history-entry/8',streamId:this.streamId,
       position:(previous?.position??0)+1,previous:structuredClone(previous),checkpoint:structuredClone(checkpoint),
-      ...(terminal===undefined?{}:{terminal:structuredClone(terminal)})};
+      ...(terminal===undefined?{}:{terminal:structuredClone(terminal)}),
+      ...(pending===undefined?{}:{pending:structuredClone(pending)})};
     validateSelectedHistoryEntry(entry);this.entryPath(entry.position);
     const bytes=Buffer.from(stableAlgorithmJSON(entry),'utf8');
     const receipt=Object.freeze({schema:'semantic-selected-history-receipt/8',streamId:this.streamId,

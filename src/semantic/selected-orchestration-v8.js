@@ -143,7 +143,7 @@ export class RegionSelectedOrchestrationDriver {
       maxGenerated,maxOutstanding,maxStaleRetries,timeoutMs,automaticDelivery:bridge.inner.automaticDelivery});
     this.coordinatorAttempts=[];this.state=null;this.initialState=null;this.nativeIdentity=null;
     this.continuation={phase:'unopened',coordinatorSelections:0,joinedAttempt:null,joinedDependency:null,elapsedMs:0};
-    this.createdDependencies=new Map();this.pausedCheckpoint=null;this.historyReceipt=null;this.restored=false;this.running=false;this.used=false;
+    this.createdDependencies=new Map();this.pausedCheckpoint=null;this.historyReceipt=null;this.automaticHistory=null;this.restored=false;this.running=false;this.used=false;
   }
 
   checkpoint(){
@@ -169,7 +169,18 @@ export class RegionSelectedOrchestrationDriver {
       'independent durable head acknowledgement differs from the recorded composite checkpoint');
     this.historyReceipt=copy(receipt);return copy(receipt);
   }
-  startAutomaticHistory(){throw new Error('Selected orchestration v8: automatic composite history is not available');}
+  startAutomaticHistory({journal,acknowledge,previous=this.historyReceipt??null}={}){
+    demand(!this.running&&!this.used,'automatic history must be configured before execution starts');
+    demand(this.automaticHistory===null,'automatic history is already configured');
+    demand(typeof journal?.append==='function'&&typeof journal?.readAll==='function'&&
+      typeof acknowledge==='function','automatic history requires a durable journal and independent head acknowledgement');
+    const head=previous===null?null:copy(previous);
+    if(head!==null)validateSelectedHistoryReceipt(head);
+    if(this.historyReceipt!==null)demand(isDeepStrictEqual(head,this.historyReceipt),
+      'automatic history must continue the exact already acknowledged composite head');
+    this.automaticHistory={journal,acknowledge,previous:head,status:'ready',failure:null};
+    return this;
+  }
   static async restore(packet,{initialPublic,select,policy,harnessOptions={},signal=null}={}){
     packet=copy(packet);initialPublic=copy(initialPublic);policy=copy(policy);harnessOptions={...harnessOptions};
     demand(initialPublic&&typeof select==='function'&&typeof select.restore==='function'&&
@@ -218,6 +229,7 @@ export class RegionSelectedOrchestrationDriver {
     for(const entry of entries)verifySelectedOrchestrationCheckpoint(entry.checkpoint,policy,{initialPublic});
     const latest=entries.at(-1).checkpoint;
     demand(!entries.at(-1).terminal,'terminal orchestration disposition cannot be restored as active work');
+    demand(!entries.at(-1).pending,'latest composite history head has unresolved in-flight work and cannot be replayed');
     const restored=await this.restore(latest,{initialPublic,select,policy,harnessOptions,signal});
     restored.historyReceipt=copy(historyReceipt);return restored;
   }
@@ -229,15 +241,16 @@ export class RegionSelectedOrchestrationDriver {
       ['coordinator-ready','child-ready'].includes(stopAt.phase)&&
       Number.isSafeInteger(stopAt.coordinatorSelections)&&stopAt.coordinatorSelections>=0,
       'checkpoint stop point must name an explicit safe continuation phase and selection count');
+    stopAt=stopAt===null?null:copy(stopAt);
     this.running=true;this.used=true;
-    const started=performance.now(),abort=new AbortController(),coordinatorAttempts=this.coordinatorAttempts;
+    const started=performance.now(),baseElapsed=this.continuation.elapsedMs,abort=new AbortController(),coordinatorAttempts=this.coordinatorAttempts;
     let nativeIdentity=null,initialState=null,state=null,failure=null,cleanupFailure=null,
       closeReceipt=null,cancelReceipt=null,terminalReason=null,deadlineExceeded=false,opened=false,paused=false;
     let timer=null;
     const onExternalAbort=()=>abort.abort(signal.reason??new Error('Selected orchestration v8 cancelled'));
     const checkAbort=()=>{if(abort.signal.aborted)throw abort.signal.reason instanceof Error?
       abort.signal.reason:new Error(String(abort.signal.reason??'Selected orchestration v8 cancelled'));};
-    const elapsed=()=>this.continuation.elapsedMs+performance.now()-started;
+    const elapsed=()=>baseElapsed+performance.now()-started;
     const readState=async()=>{
       state=await this.select.statusOrchestration({session:this.session,track:state.track});
       this.state=copy(state);return state;
@@ -297,10 +310,50 @@ export class RegionSelectedOrchestrationDriver {
       verifySelectedOrchestrationCheckpoint(packet,this.policy,{initialPublic:this.initialPublic});
       return packet;
     };
+    const pendingMarker=(checkpoint,kind,details)=>{
+      const body={schema:'semantic-selected-orchestration-pending/8',kind,session:this.session,
+        checkpointDigest:checkpoint.digest,...copy(details)};
+      return {...body,id:hashAlgorithmData(body)};
+    };
+    const persistAutomaticCheckpoint=async(checkpoint,pending=null)=>{
+      const history=this.automaticHistory;
+      if(history===null)return null;
+      demand(history.status==='ready','automatic history head acknowledgement is uncertain');
+      history.status='saving';
+      try{
+        const previous=copy(history.previous),saved=copy(checkpoint);
+        const receipt=copy(await history.journal.append(saved,{previous:copy(previous),
+          ...(pending===null?{}:{pending:copy(pending)})}));
+        validateSelectedHistoryReceipt(receipt);
+        const entries=validateSelectedHistoryChain(copy(await history.journal.readAll(copy(receipt))),copy(receipt)),
+          latest=entries.at(-1);
+        demand(isDeepStrictEqual(latest?.checkpoint,saved)&&isDeepStrictEqual(latest?.previous,previous)&&
+          (pending===null?!Object.hasOwn(latest??{},'pending'):
+            Object.hasOwn(latest??{},'pending')&&isDeepStrictEqual(latest.pending,pending)),
+          'automatic history journal retained a different checkpoint, predecessor or pending fence');
+        const acknowledged=copy(await history.acknowledge({receipt:copy(receipt),previous:copy(previous)}));
+        validateSelectedHistoryReceipt(acknowledged);
+        demand(isDeepStrictEqual(acknowledged,receipt),
+          'automatic history head acknowledgement differs from the recorded checkpoint');
+        history.previous=copy(receipt);history.status='ready';this.historyReceipt=copy(receipt);
+        return copy(receipt);
+      }catch(error){this.pausedCheckpoint=null;history.status='failed';history.failure=error;throw error;}
+    };
     const maybePause=async()=>{
-      if(!stopAt||stopAt.phase!==this.continuation.phase||
-        stopAt.coordinatorSelections!==this.continuation.coordinatorSelections)return false;
-      checkAbort();this.pausedCheckpoint=await captureCheckpoint();checkAbort();
+      const requested=Boolean(stopAt&&stopAt.phase===this.continuation.phase&&
+        stopAt.coordinatorSelections===this.continuation.coordinatorSelections);
+      if(!requested&&this.automaticHistory===null)return false;
+      checkAbort();
+      this.pausedCheckpoint=await captureCheckpoint();
+      if(this.automaticHistory!==null){
+        const pending=!requested&&this.continuation.phase==='child-ready'?pendingMarker(this.pausedCheckpoint,
+          'child-dispatch',{attempt:this.continuation.joinedAttempt,invocationId:
+            this.continuation.joinedDependency.invocation,track:this.continuation.joinedDependency.track,
+            dependency:this.continuation.joinedDependency}):null;
+        await persistAutomaticCheckpoint(this.pausedCheckpoint,pending);
+      }
+      checkAbort();
+      if(!requested){this.pausedCheckpoint=null;return false;}
       this.state=copy(state);paused=true;return true;
     };
     try{
@@ -359,6 +412,12 @@ export class RegionSelectedOrchestrationDriver {
           'native coordinator is waiting without an acknowledged child continuation');
         demand(this.continuation.coordinatorSelections<this.maxCoordinatorSelections,
           'Selected orchestration v8 coordinator selection budget exhausted');
+        if(this.automaticHistory!==null){
+          const beforeSelection=await captureCheckpoint();
+          await persistAutomaticCheckpoint(beforeSelection,pendingMarker(beforeSelection,'coordinator-selection',{
+            attempt:coordinatorAttempts.length,coordinatorSelections:this.continuation.coordinatorSelections,
+            track:state.track}));
+        }
         const context=nativeV8OrchestrationContext(state),attempt={attempt:coordinatorAttempts.length,
           family:'orchestration',session:this.session,track:state.track,contextDigest:hashAlgorithmData(context),
           publicDigest:state.publicDigest,status:'submitted',record:null,selection:null,commitReceipt:null,

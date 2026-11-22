@@ -190,8 +190,9 @@ budget. The timer is stopped while the caller holds a paused packet.
 An in-flight or unknown acknowledgement, running child, unsettled host intent,
 terminal coordinator, or unsupported ingress cannot be checkpointed. The
 ordinary semantic-only checkpoint is not used as a substitute. Explicit durable
-history and `restoreLatest` are supported as described below. Automatic history
-and completed or failed terminal sessions remain outside this increment.
+history, automatic pre-action fences and `restoreLatest` are supported as
+described below. Completed or failed terminal restoration remains outside this
+increment.
 
 The JSONL protocol-peer integration test exercises the JavaScript driver and
 transport contract with generated fixture records. It validates binding,
@@ -223,15 +224,38 @@ historyReceipt,initialPublic,select,policy,harnessOptions})` requires an
 independently retained expected head. It reads the complete chain, finds the
 supplied packet in that chain, validates every cut against the external source
 and policy, then restores its latest acknowledged cut. A matching older packet
-is only an anchor; it never authorizes replay of work acknowledged later. Native
+is only an anchor; it never authorizes replay of work acknowledged later. The
+application must supply its current independently acknowledged head under sole
+supervisor ownership. Supplying an older valid receipt verifies only that older
+prefix; this API cannot discover that the application's external head is stale. Native
 restoration must still report zero host dispatch. A partial chain, altered
 predecessor, absent packet, changed policy or terminal entry is refused before
 native restoration. Caller-owned data arguments are snapshotted before storage
 awaits; live host clock/service functions remain supplied through `harnessOptions`.
 
-This is explicit quiescent history, not in-flight recovery or distributed
-transactionality. It does not coordinate service owners, restore a terminal
-coordinator, discover unacknowledged files, or permit a second process to resume
-from a stale independently retained head. Supervisor ownership remains required.
-The new controls use fresh JSONL fixture peers and actual durable storage; real
-native paired replay remains a separate mandatory hosted gate.
+Automatic history can be started before execution with
+`driver.startAutomaticHistory({journal,acknowledge,previous})`. At each
+quiescent coordinator boundary the driver writes and rereads the full composite
+cut, then waits for the independent head acknowledgement before taking another
+coordinator action. Before every coordinator selection it also acknowledges a
+`coordinator-selection` pending marker. Before a joined child starts
+host execution, it acknowledges a `child-dispatch` marker bound to
+that exact join dependency. An explicitly requested `child-ready` pause writes
+a complete cut without arming the child marker; resumed execution must first
+acknowledge the marker before dispatch. A later verified cut seals the marker
+only when it contains exactly one committed coordinator action, or only the
+joined child's completed result without another coordinator selection. The
+journal's independent readback must contain the exact pending marker before
+that head can be acknowledged. A lost or mismatched acknowledgement stops the live driver.
+
+A latest pending marker means the action may have started after the saved cut.
+`restoreLatest` refuses that head before native restoration, so it
+cannot replay a possibly dispatched child. Coordinator completion and
+cancellation remain fenced at their pending selection marker; terminal restore
+and external reconciliation are not implemented. This provides a durable
+no-replay boundary, not in-flight continuation or distributed transactionality.
+It does not coordinate service owners, discover unacknowledged files, or permit
+a second process to resume from a stale independently retained head. Supervisor
+ownership remains required. The new controls use fresh JSONL fixture peers and
+actual durable storage; real native paired replay remains a separate mandatory
+hosted gate.

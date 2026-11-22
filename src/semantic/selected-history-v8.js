@@ -213,9 +213,69 @@ export function validateSelectedHistoryReceipt(receipt){
   return receipt;
 }
 
+function validateCompositePending(pending,checkpoint){
+  demand(pending&&pending.schema==='semantic-selected-orchestration-pending/8'&&
+    HASH.test(pending.checkpointDigest??'')&&pending.checkpointDigest===checkpoint.digest&&
+    pending.session===checkpoint.session,'pending marker is not bound to this composite checkpoint');
+  const {id,...body}=pending;
+  demand(HASH.test(id??'')&&id===hashAlgorithmData(body),'pending marker integrity differs');
+  if(pending.kind==='coordinator-selection'){
+    assertAlgorithmFields(pending,['schema','kind','session','checkpointDigest','attempt',
+      'coordinatorSelections','track','id'],'composite coordinator pending marker');
+    demand(checkpoint.continuation.phase==='coordinator-ready'&&checkpoint.state.status==='active'&&
+      pending.attempt===checkpoint.coordinatorAttempts.length&&
+      pending.coordinatorSelections===checkpoint.continuation.coordinatorSelections&&
+      pending.track===checkpoint.state.track,'coordinator selection fence differs from its safe cut');
+  }else if(pending.kind==='child-dispatch'){
+    assertAlgorithmFields(pending,['schema','kind','session','checkpointDigest','attempt',
+      'invocationId','track','dependency','id'],'composite child pending marker');
+    const child=checkpoint.state.children.find(row=>row.track===pending.track);
+    demand(checkpoint.continuation.phase==='child-ready'&&checkpoint.state.status==='waiting'&&
+      pending.attempt===checkpoint.continuation.joinedAttempt&&
+      child?.execution.invocation_id===pending.invocationId&&
+      isDeepStrictEqual(pending.dependency,checkpoint.continuation.joinedDependency),
+      'child dispatch fence differs from the exact waiting join dependency');
+  }else fail('unknown composite pending marker kind');
+  return pending;
+}
+
+function validatePendingResolution(pending,before,after){
+  demand(after?.schema==='semantic-selected-orchestration-checkpoint/8',
+    'pending composite work cannot resolve into a semantic-only cut');
+  const attempt=after.coordinatorAttempts[pending.attempt];
+  if(pending.kind==='coordinator-selection'){
+    demand(attempt?.attempt===pending.attempt&&attempt.status==='committed'&&
+      attempt.selection?.modelSelected===true&&attempt.commitReceipt?.committed===true&&attempt.action&&
+      after.coordinatorAttempts.length===pending.attempt+1&&
+      after.continuation.coordinatorSelections===pending.coordinatorSelections+1,
+      'coordinator selection fence must resolve exactly one committed selection in the next cut');
+  }else{
+    demand(before.continuation.phase==='child-ready'&&before.continuation.joinedAttempt===pending.attempt&&
+      before.continuation.joinedDependency?.track===pending.track&&
+      before.continuation.joinedDependency?.invocation===pending.invocationId&&
+      after.continuation.phase==='coordinator-ready'&&attempt?.action?.name==='track_join'&&
+      attempt.childCompletion?.schema==='semantic-child-completion/8'&&
+      attempt.childCompletion.session===pending.session&&attempt.childCompletion.track===pending.track&&
+      attempt.childCompletion.invocationId===pending.invocationId&&
+      attempt.action.arguments.completion_dependency?.track===pending.track&&
+      attempt.action.arguments.completion_dependency?.invocation===pending.invocationId&&
+      isDeepStrictEqual(attempt.childOutcome?.completion,attempt.childCompletion.completion)&&
+      isDeepStrictEqual(after.state.children.find(row=>row.track===pending.track)?.completion,
+        attempt.childCompletion)&&
+      after.state.status==='active'&&
+      after.coordinatorAttempts.length===before.coordinatorAttempts.length&&
+      after.continuation.coordinatorSelections===before.continuation.coordinatorSelections&&
+      after.childAttempts.length>before.childAttempts.length&&
+      after.childAttempts.slice(before.childAttempts.length).every(row=>row.invocationId===pending.invocationId),
+      'child dispatch fence must resolve only the joined invocation before another coordinator action');
+  }
+}
+
 export function validateSelectedHistoryEntry(entry){
   stableAlgorithmJSON(entry);
-  const fields=['schema','streamId','position','previous','checkpoint',...(Object.hasOwn(entry??{},'terminal')?['terminal']:[])];
+  const fields=['schema','streamId','position','previous','checkpoint',
+    ...(Object.hasOwn(entry??{},'terminal')?['terminal']:[]),
+    ...(Object.hasOwn(entry??{},'pending')?['pending']:[])];
   assertAlgorithmFields(entry,fields,'selected history entry');
   demand(entry.schema==='semantic-selected-history-entry/8'&&ID.test(entry.streamId??'')&&
     Number.isSafeInteger(entry.position)&&entry.position>0&&entry.position<=65536,'invalid entry');
@@ -229,8 +289,11 @@ export function validateSelectedHistoryEntry(entry){
   if(packet?.schema==='semantic-selected-orchestration-checkpoint/8'){
     demand(!Object.hasOwn(entry,'terminal'),
       'composite terminal history is unsupported until its terminal disposition is independently verified');
+    if(Object.hasOwn(entry,'pending'))validateCompositePending(entry.pending,packet);
     verifySelectedOrchestrationCheckpoint(packet,packet.policy,{initialPublic:packet.initialPublic});
   }else{
+    demand(!Object.hasOwn(entry,'pending'),
+      'pending composite markers cannot be attached to semantic-only history');
     assertAlgorithmFields(packet,['schema','policy','bridge','contexts','attempts','staleRetries','native','digest'],
       'selected history checkpoint');
     const {digest,...body}=packet;
@@ -362,11 +425,16 @@ export function validateSelectedHistoryChain(entries,receipt){
   validateSelectedHistoryReceipt(receipt);
   demand(Array.isArray(entries)&&entries.length===receipt.position&&entries.length<=65536,
     'incomplete acknowledged chain');
-  let previous=null,checkpoint=null,terminal=null;
+  let previous=null,checkpoint=null,terminal=null,pending=null,pendingCheckpoint=null;
   for(const entry of entries){
     validateSelectedHistoryEntry(entry);
     demand(entry.streamId===receipt.streamId&&entry.position===(previous?.position??0)+1&&eq(entry.previous,previous),
       'substituted or reordered acknowledged chain');
+    if(pending){
+      validateSelectedHistoryExtension(pendingCheckpoint,entry.checkpoint);
+      validatePendingResolution(pending,pendingCheckpoint,entry.checkpoint);
+      pending=null;pendingCheckpoint=null;
+    }
     if(terminal?.phase==='requested'){
       demand(Object.hasOwn(entry,'terminal')&&['closed','unknown'].includes(entry.terminal.phase)&&
         eq(entry.checkpoint,checkpoint),'terminal request must be followed only by its final disposition');
@@ -381,6 +449,11 @@ export function validateSelectedHistoryChain(entries,receipt){
       terminal=entry.terminal;
     }else if(checkpoint)validateSelectedHistoryExtension(checkpoint,entry.checkpoint);
     checkpoint=entry.checkpoint;
+    if(Object.hasOwn(entry,'pending')){
+      demand(entry.checkpoint?.schema==='semantic-selected-orchestration-checkpoint/8'&&!terminal,
+        'pending markers are restricted to active composite history');
+      pending=entry.pending;pendingCheckpoint=entry.checkpoint;
+    }
     previous={schema:'semantic-selected-history-receipt/8',streamId:entry.streamId,position:entry.position,
       id:hashAlgorithmData(entry),bytes:Buffer.byteLength(stableAlgorithmJSON(entry))};
   }
