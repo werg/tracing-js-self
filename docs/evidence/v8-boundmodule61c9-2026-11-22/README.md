@@ -37,9 +37,18 @@ The native implementation derives these transitions independently.
 
 Retained-state validation checks active plan ownership, source module-record
 properties and dependencies, driver frame identity, promise call ownership,
-pending awaits and exact settlement authority. Compact routes are refused for
+pending awaits and exact reaction settlement authority. Compact routes are refused for
 this profile until they have equivalent lifecycle evidence. Graph completion
 cannot bypass unsettled module obligations.
+
+The standalone retained-state invariant checker is not a substitute for causal
+replay. In particular, it checks a synchronous historical completion's module
+and frame identity, while verified causal replay establishes its actual value.
+A subsequent probe could change that value and pass the standalone helper;
+that is not evidence of source or native artifact admission. Checkpoint restore
+requires exact equality with an independently verified replay boundary. The
+public plan does not constrain every synchronous driver body to a fixed return
+value, so no inferred `undefined` constraint has been added.
 
 ## Exact test populations
 
