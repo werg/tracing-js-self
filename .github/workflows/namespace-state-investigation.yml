@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          ref: 29321ef01d51116e92d0775204cf733fbfbe54b4
+          ref: 3ca04ef05f05b89d05464f1b0534045efb6106a4
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -72,6 +72,7 @@ jobs:
           print(f'{len(cases)} experimental native state controls passed with zero skips')
           PY
       - name: Compare source-derived state, native ESM and owned module behavior
+        if: ${{ !cancelled() }}
         working-directory: tracing-js-self
         shell: bash
         run: |

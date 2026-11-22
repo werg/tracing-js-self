@@ -198,7 +198,7 @@ function verifyState(plan,state){
   }
   const namespaceFiles=new Set();
   for(const [id,row] of Object.entries(state.namespaces)){
-    if(!/^o[1-9][0-9]*$/.test(id)||!exact(row,['file','exports'])||
+    if(!/^o[1-9][0-9]*$/.test(id)||!exact(row,['file','namespaceName','exports'])||
        !isDeepStrictEqual(plan.namespaces.find(item=>item.file===row.file),row))
       fail('namespace identity state is malformed');
   }

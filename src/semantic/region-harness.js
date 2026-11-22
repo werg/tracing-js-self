@@ -45,7 +45,7 @@ export class RegionExecutionHarness {
   constructor(options={}){
     this.inner=new SelectedExecutionLifecycleV8(options);
     this.bindRealmReadiness();
-    this.programs=new Map();this.timeline=[];this.innerCursor=0;this.consumed=[];this.active=null;
+    this.programs=new Map();this.moduleNamespacePlans=new Map();this.timeline=[];this.innerCursor=0;this.consumed=[];this.active=null;
   }
   bindRealmReadiness(){this.inner.refreshRealmReady=(realmId,cutoff)=>this.refreshRealmReady(realmId,cutoff);}
   get invocations(){return this.inner.invocations;}
@@ -79,7 +79,11 @@ export class RegionExecutionHarness {
     scheduler.ready=cutoff;
     for(const {controller,identity,item}of dependency){item.readySequence=++scheduler.ready;controller.ready.push(identity);}
   }
-  publishProgram(options){this.inner.publishProgram(options);this.sync();return this.timeline.at(-1);}
+  publishProgram(options){
+    const {moduleNamespacePlan,...ownedOptions}=options;
+    if(moduleNamespacePlan!==undefined)this.moduleNamespacePlans.set(options.programId,copy(moduleNamespacePlan));
+    this.inner.publishProgram(ownedOptions);this.sync();return this.timeline.at(-1);
+  }
   admitInvocation(options){this.inner.admitInvocation(options);this.sync();return this.timeline.at(-1);}
   append(mode,kind,fields){
     const row=clean({sequence:this.timeline.length+1,mode,kind,fields});this.timeline.push(row);return copy(row);
@@ -89,7 +93,8 @@ export class RegionExecutionHarness {
       if(raw.kind==='model-context')continue; // V8 publishes its own checked context.
       const {schema,sequence,ownerSequence,mode,kind,traceFormat,...fields}=raw;
       if(kind==='program'){
-        const program=defineRegionProgram({source:fields.source,entry:fields.entry}).program;
+        const program=defineRegionProgram({source:fields.source,entry:fields.entry,
+          moduleNamespacePlan:this.moduleNamespacePlans.get(fields.programId)}).program;
         this.programs.set(fields.programId,program);fields.regionProgram=program;
       }
       if(kind==='semantic'||kind==='result'){
@@ -282,8 +287,10 @@ export class RegionExecutionHarness {
     this.sync();const fields=copy(row.fields),kind=row.kind;
     if(kind==='program'){
       validateRegionProgram(fields.regionProgram);
-      const expected=defineRegionProgram({source:fields.source,entry:fields.entry}).program;
+      const moduleNamespacePlan=fields.regionProgram.moduleNamespacePlan;
+      const expected=defineRegionProgram({source:fields.source,entry:fields.entry,moduleNamespacePlan}).program;
       if(!eq(fields.regionProgram,expected))fail('program publication changed');delete fields.regionProgram;
+      if(moduleNamespacePlan!==undefined)this.moduleNamespacePlans.set(fields.programId,copy(moduleNamespacePlan));
       this.inner.publishProgram(fields);this.sync();return;
     }
     if(kind==='result'){const record=decodeDetailedRecord(fields.line,{role:'observed'});

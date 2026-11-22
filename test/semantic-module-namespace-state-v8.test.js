@@ -9,6 +9,7 @@ import {
   verifyExperimentalModuleNamespacePlan
 } from '../src/semantic/module-namespace-state-v8.js';
 import {linkEvaluatedModules} from '../src/evaluated-modules.js';
+import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 
 const modules={'main.js':'import * as ns from "./cells.js"; export function run(){ return Object.keys(ns); }',
   'cells.js':'export let value=1; export {value as alias}; export const fixed=2;'};
@@ -23,6 +24,19 @@ const plan=()=>buildExperimentalModuleNamespacePlan({
     {name:'fixed',file:'cells.js',local:'fixed'},
     {name:'value',file:'cells.js',local:'value'}
   ]}]
+});
+
+
+test('public region program carries the immutable normalized experimental namespace plan',()=>{
+  const modulePlan=plan(),source='"use strict"; function entry(){return 1;}';
+  const harness=new RegionExecutionHarness({sessionId:'namespace-plan'});
+  harness.publishProgram({programId:'program1',source,entry:'entry',moduleNamespacePlan:modulePlan});
+  const row=harness.exportEpisode().timeline.find(item=>item.kind==='program');
+  assert.deepEqual(row.fields.regionProgram.moduleNamespacePlan,modulePlan);
+  const changed=structuredClone(harness.exportEpisode());
+  const program=changed.timeline.find(item=>item.kind==='program');
+  program.fields.regionProgram.moduleNamespacePlan.namespaces[0].namespaceName='__traced_eval_namespace_7';
+  assert.throws(()=>RegionExecutionHarness.replay(changed),/integrity differs|definition changed|program publication changed/);
 });
 
 test('experimental namespace plan is derived from canonical linker source records',()=>{

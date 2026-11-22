@@ -12,6 +12,7 @@ import {normalizeCompletionFacts} from '../training/completion-facts.js';
 import {validateExpression} from './record-schema.js';
 import {hostOperation,SUBSCRIPTION_CLOSERS} from '../host/operations.js';
 import {analyzeSemanticProgram} from '../training/semantic-program.js';
+import {verifyExperimentalModuleNamespacePlan} from './module-namespace-state-v8.js';
 import {sourceLinkedComputation,sourceLinkedDecision} from '../training/semantic-source.js';
 import {DECLARED_EXCEPTION_PROFILE} from '../training/exception-profile.js';
 import {inspectSemanticRegion,evaluateSemanticRegion,checkSemanticRegionClaim} from '../training/semantic-regions.js';
@@ -103,12 +104,17 @@ export function ownedEffectfulOutcome(bundle){
 export function compileSourceProjection(bundle,{sessionId='teacher1',programId='program1',
     invocationId='invocation1',trackId='worker1',realmId='realm1',sourceLineage=null,
     maxGenerated=16384,realmPolicy='retained',triggerId='teacher-entry',checkpointAtFirstAwait=false,
-    representation='compact',maxOperators=8,localStateCompaction=true,semanticRegions=true,regionAdapter=null,projectionClient=null}={}){
+    representation='compact',maxOperators=8,localStateCompaction=true,semanticRegions=true,regionAdapter=null,projectionClient=null,
+    moduleNamespacePlan}={}){
   if(projectionClient?.schema!=='semantic-source-projection-client/1'||
     ['createHarness','restore','replay','encodeRecord','decodeRecord'].some(key=>typeof projectionClient[key]!=='function')||
     typeof projectionClient.compilerSchema!=='string')refuse('a static source projection client is required');
   const encodeRecord=projectionClient.encodeRecord,decodeRecord=projectionClient.decodeRecord;
   if(typeof checkpointAtFirstAwait!=='boolean')refuse('checkpointAtFirstAwait must be boolean');
+  if(moduleNamespacePlan!==undefined){
+    verifyExperimentalModuleNamespacePlan(moduleNamespacePlan);
+    if(moduleNamespacePlan.namespaces.length===0)refuse('module namespace source plan cannot be empty');
+  }
   if(typeof localStateCompaction!=='boolean')refuse('localStateCompaction must be boolean');
   if(typeof semanticRegions!=='boolean')refuse('semanticRegions must be boolean');
   if(regionAdapter!==null&&(regionAdapter.schema!=='semantic-region-teacher-adapter/1'||
@@ -137,7 +143,8 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
   let harness=regionAdapter?regionAdapter.createHarness({sessionId,maxGenerated,automaticDelivery:false}):
     projectionClient.createHarness({sessionId,maxGenerated,automaticDelivery:false});
   harness.publishProgram({programId,source,entry:entry.functionName,capabilities,
-    randomSeed:bundle.initialState.control.a0.randomSeed??null});
+    randomSeed:bundle.initialState.control.a0.randomSeed??null,
+    ...(moduleNamespacePlan!==undefined?{moduleNamespacePlan}:{})});
   // Rest parameters are ordinary arrays already created at the *entry*
   // boundary. They are neither source-provided positional arguments nor
   // later guest allocations. Include their descriptor-inspected identities

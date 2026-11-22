@@ -208,6 +208,11 @@ export async function recheckRegionEvidence(exported,{nativeConsumer=null,native
   if(side?.schema!=='semantic-region-evidence/1'||side.representation!==REGION_TRACE_VERSION||
     side.referenceStatus!=='agreed'||side.sourceArtifactDigest!==digest(side.sourceArtifact)||
     side.optimizerSteps!==0||side.learningClaim!==null)fail('incompatible or altered source evidence');
+  const publicNamespacePlan=side.sourceArtifact.public?.timeline?.find(row=>row.kind==='program')
+    ?.fields?.regionProgram?.moduleNamespacePlan;
+  const moduleEvidence=side.sourceArtifact.sidecar?.sourceProvenance?.upstream?.moduleEvidence;
+  if(publicNamespacePlan!==undefined&&!moduleEvidence)
+    fail('public module namespace plan lacks exact original-module source evidence');
   const source=await recheckSourceAdmissionV8(side.sourceArtifact,{requireAdmitted:false});
   let moduleReference={status:'untested',applicable:false};
   if(side.sourceArtifact.sidecar?.sourceProvenance?.upstream?.moduleEvidence){

@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {posix} from 'node:path';
 import {types,isDeepStrictEqual} from 'node:util';
 import {linkEvaluatedModules} from '../evaluated-modules.js';
+import {buildExperimentalModuleNamespacePlanFromLinker} from './module-namespace-state-v8.js';
 import {compileBoundedTypeScript} from '../typescript.js';
 import {encodeNativeGraph} from '../host/graph-codec.js';
 import {generationEnvironment} from '../corpus/generation-process.mjs';
@@ -33,7 +34,10 @@ function normalizedRequest(fixture){
   const originalEntry=fixture.moduleEntry??fixture.entryModule;
   if(typeof originalEntry!=='string')fail('module entry required');
   const entryModule=originalEntry.startsWith('/')?originalEntry.slice(1):originalEntry;
-  return {modules,entryModule,exportName:fixture.exportName??'run',args:fixture.args??[],calls:fixture.calls??null};
+  const experimentalNamespacePlan=fixture.experimentalNamespacePlan??false;
+  if(typeof experimentalNamespacePlan!=='boolean')fail('experimentalNamespacePlan must be boolean');
+  return {modules,entryModule,exportName:fixture.exportName??'run',args:fixture.args??[],calls:fixture.calls??null,
+    ...(experimentalNamespacePlan?{experimentalNamespacePlan:true}:{})};
 }
 function prepare(fixture){
   const request=normalizedRequest(fixture),linked=linkEvaluatedModules(request);
@@ -106,16 +110,22 @@ export async function verifyRegionModuleTrainingCase(fixture){
   if(reference.status!=='passed')return {...identity,status:reference.status,phase:'module-reference',
     sourceProfile:MODULE_REGION_PROFILE,reason:reference.reason};
   const {request,linked,referenceInput}=prepared,graphDigest=hashAlgorithmData(request.modules);
+  const namespacePlan=linked.metadata.namespaceSourcePlan?
+    buildExperimentalModuleNamespacePlanFromLinker(linked):undefined;
   const moduleEvidence={schema:'semantic-module-evidence/1',profile:MODULE_REGION_PROFILE,
     request:{modules:request.modules,entryModule:request.entryModule,exportName:request.exportName,
-      inputGraph:referenceInput.inputGraph,calls:referenceInput.calls},graphDigest,
+      inputGraph:referenceInput.inputGraph,calls:referenceInput.calls,
+      ...(request.experimentalNamespacePlan?{experimentalNamespacePlan:true}:{})},graphDigest,
     generatedSourceDigest:hashAlgorithmData(linked.source),metadata:linked.metadata,referenceInput,reference,
     originalTypeScriptClaim:'provenance only; generated JavaScript semantics are checked',
     adapterMeaning:'native ESM outcome compared with owned linked code; no native guest execution in the producer'};
   const ancestorIds=[...new Set([...(fixture.ancestorIds??[]),'module-graph:'+graphDigest,
     ...Object.values(request.modules).map(source=>'module-source:'+hashAlgorithmData(source))])];
+  const {moduleNamespacePlan:_untrustedNamespacePlan,...callerProjectionOptions}=fixture.projectionOptions??{};
   const result=await verifyRegionTrainingCase({...fixture,source:linked.source,entry:linked.entryFunction,
     args:[linked.entryInput],fixture:fixture.fixture??{calls:[]},ancestorIds,
+    projectionOptions:{...callerProjectionOptions,
+      ...(namespacePlan?{moduleNamespacePlan:namespacePlan}:{})},
     provenance:{...fixture.provenance,moduleEvidence}});
   if(!result.exported)return {...identity,...result,sourceProfile:MODULE_REGION_PROFILE,moduleReference:'passed'};
   if(!outcomeAgreement(reference.outcome,result.exported.sidecar.sourceArtifact.sidecar.reference.outcome))
@@ -137,6 +147,14 @@ export async function recheckModuleRegionEvidence(sourceArtifact){
   const request={...evidence.request,args:evidence.request.calls?[]:input.args,
     calls:evidence.request.calls?.map((call,index)=>({...call,args:input.calls[index].args}))??null};
   const prepared=prepare(request),side=sourceArtifact.sidecar;
+  const publicProgram=sourceArtifact?.public?.timeline?.find(row=>row.kind==='program');
+  const publicPlan=publicProgram?.fields?.regionProgram?.moduleNamespacePlan;
+  const expectedPlan=prepared.request.experimentalNamespacePlan&&prepared.linked.metadata.namespaceSourcePlan?
+    buildExperimentalModuleNamespacePlanFromLinker(prepared.linked):undefined;
+  if(expectedPlan!==undefined&&!isDeepStrictEqual(publicPlan,expectedPlan))
+    fail('public module namespace plan differs from freshly relinked source');
+  if(expectedPlan===undefined&&publicPlan!==undefined)
+    fail('public module namespace plan has no explicit source request');
   const refused=moduleProjectionRefusal(prepared.linked);
   if(refused)throw Object.assign(new TypeError('Module regions: '+refused.reason),refused);
   if(evidence.graphDigest!==hashAlgorithmData(prepared.request.modules)||
