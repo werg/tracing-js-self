@@ -1,0 +1,28 @@
+✔ ordinary source projection ownership binds actual changed public records and contexts (1216.067755ms)
+✔ ordinary module projection ownership binds actual changed public records and contexts (1247.319193ms)
+✔ source generated-record cap cannot borrow a successful artifact from another bound (118.375421ms)
+✔ module generated-record cap cannot borrow a successful artifact from another bound (281.711505ms)
+✔ direct protocol generated-record cap cannot borrow a successful artifact from another bound (325.713661ms)
+✔ ordinary source instruction cap must match actual bounded generation (3.963212ms)
+✔ ordinary source invalid deadline cannot borrow a prior successful artifact (1.841089ms)
+✔ ordinary source retained deadline is bound even when both executions finish (418.877245ms)
+✔ ordinary source operator bound is tied to its recorded options and execution limits (396.368577ms)
+✔ ordinary source non-guest seeds bind private source identity without claiming a public semantic difference (401.729889ms)
+✔ ordinary source split seed binds its original split identity (384.893197ms)
+✔ ordered-session component record caps remain material after session ownership overrides (1353.955859ms)
+✔ ordered-session component private seeds remain bound after the outer split seed override (883.464075ms)
+✔ ordered-session outer projection options and limits remain genuinely ignored (883.328674ms)
+✔ ordered-session component ownership options retain the actual forced identities (966.522651ms)
+✔ direct protocol ignores ownership and operator options outside its actual profile (229.06357ms)
+✔ direct protocol ignores valid non-guest seed metadata discarded by that profile (245.774296ms)
+✔ direct protocol preserves its nullable generated-record default (283.806406ms)
+✔ module caller still strips untrusted projection plans before source admission (573.711796ms)
+✔ explicit namespace module profile ignores ownership options and nullable source limit defaults (772.867058ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11709.598366
