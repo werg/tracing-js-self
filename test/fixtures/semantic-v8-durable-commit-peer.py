@@ -55,7 +55,12 @@ def main():
     sys.modules[spec.name] = peer
     spec.loader.exec_module(peer)
     if fixture_records is not None:
-        peer._fixture_records = lambda: list(fixture_records)
+        def exact_fixture_records(final_action="track_complete"):
+            if final_action != "track_complete":
+                raise ValueError("The explicit lexical sequence fixes its terminal action")
+            return list(fixture_records)
+
+        peer._fixture_records = exact_fixture_records
     original = peer.dispatch
 
     def dispatch(adapter, request, **kwargs):
