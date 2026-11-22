@@ -1,0 +1,54 @@
+name: Composite history implementation controls
+
+on:
+  push:
+    branches: [codex/v8-composite-history-validation-20261122]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: composite-history-validation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  producer-controls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check coordinator history, namespace boundaries and exact source supply
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout 300s node --test --test-concurrency=1 --test-reporter=junit \
+            test/semantic-selected-orchestration*.test.js \
+            test/semantic-selected-history*.test.js \
+            test/semantic-module*.test.js \
+            test/semantic-source-session-v8.test.js \
+            test/semantic-region-support-cohort.test.js \
+            test/qualify-support-lifecycle.test.js \
+            2>&1 | tee "$RUNNER_TEMP/v8-continuation-tests.xml"
+          python - <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'v8-continuation-tests.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('Every focused continuation control must run and pass')
+          print(f'{len(cases)} focused continuation controls passed with zero skips')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v8-continuation-controls
+          retention-days: 30
+          if-no-files-found: error
+          path: ${{ runner.temp }}/v8-continuation-tests.xml
