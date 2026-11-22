@@ -1,0 +1,14 @@
+✔ known close produces only an exact closed disposition and preserves complete history (17421.560904ms)
+✔ known service close preserves the exact owner snapshot and independently supplied terminal fence (336.855102ms)
+✔ known service close refuses a missing, substituted or changed terminal fence (567.792279ms)
+✔ repeated closed reconstruction retains consumed costs and cannot become active history (2494.081813ms)
+✔ known close refuses changed request authority, original outcome, attempts or elapsed budget (1663.68218ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22730.745959
+exit_code=0

@@ -1,0 +1,155 @@
+name: Unified causal bootstrap and service-owned terminal recovery
+
+on:
+  push:
+    branches: [codex/v8-causal-terminal-composed-20261122]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: composed-recovery-history-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  paired-recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lane: structural
+            expected: 123
+          - lane: transport
+            expected: 33
+          - lane: commit-history
+            expected: 9
+          - lane: bootstrap-history
+            expected: 12
+          - lane: terminal-history
+            expected: 16
+    defaults:
+      run:
+        shell: bash
+    env:
+      MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+      MEGATOKEN_PYTHON: python
+      PYTHONPATH: ${{ github.workspace }}/megatoken/src
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      REQUIRE_KNOWN_COMMIT_RECOVERY: '1'
+      REQUIRE_KNOWN_CLOSE_RECOVERY: '1'
+      REQUIRE_DURABLE_BOOTSTRAP_RECOVERY: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: werg/megatoken
+          ref: 15844c00c095849755ca6f0e1d207f7db79a9264
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: tracing-js-self/.nvmrc
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.14'
+      - name: Install exact paired runtime and require kernel clock authority
+        run: |
+          test -L /proc/self/ns/time
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+          test "$(git -C megatoken rev-parse HEAD)" = 15844c00c095849755ca6f0e1d207f7db79a9264
+          cmp tracing-js-self/contracts/semantic-execution-v8.json megatoken/src/megatoken/data/contracts/semantic-execution-v8.json
+      - name: Retain exact source and runtime identities
+        run: |
+          mkdir -p "$RUNNER_TEMP/composed-recovery-controls"
+          git -C tracing-js-self rev-parse HEAD > "$RUNNER_TEMP/composed-recovery-controls/producer-revision.txt"
+          git -C megatoken rev-parse HEAD > "$RUNNER_TEMP/composed-recovery-controls/native-revision.txt"
+          { node --version; python --version; python -m pip freeze; readlink /proc/self/ns/time; } > "$RUNNER_TEMP/composed-recovery-controls/runtime.txt"
+      - name: Verify native commit, bootstrap and terminal-close boundaries
+        if: matrix.lane == 'structural'
+        working-directory: megatoken
+        run: |
+          python -m pytest -q \
+            tests/test_semantic_commit_recovery_v8.py \
+            tests/test_semantic_bootstrap_recovery_v8.py \
+            tests/test_semantic_close_recovery_v8.py \
+            tests/test_semantic_request_journal_v8.py \
+            tests/test_semantic_launch_v8.py \
+            tests/test_semantic_v8_position_receipts.py \
+            --junitxml="$RUNNER_TEMP/composed-recovery-controls/native-recovery.xml" \
+            2>&1 | tee "$RUNNER_TEMP/composed-recovery-controls/native-recovery.log"
+          python - <<'PY_NATIVE'
+          import os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'composed-recovery-controls/native-recovery.xml').getroot().iter('testcase'))
+          if len(cases)!=165 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('Every one of the 165 native recovery controls must run and pass')
+          print('165 native recovery controls passed; zero skips')
+          PY_NATIVE
+      - name: Verify complete reconstruction, real native recovery and refusal boundaries
+        working-directory: tracing-js-self
+        run: |
+          case "${{ matrix.lane }}" in
+            structural)
+              files=(test/native-request-journal-v8.test.js
+                test/selected-orchestration-clock.test.js
+                test/semantic-known-commit-builder-v8.test.js
+                test/semantic-known-bootstrap-builder-v8.test.js
+                test/semantic-selected-orchestration-checkpoint-v8.test.js
+                test/semantic-selected-history-tail-v8.test.js
+                test/semantic-selected-orchestration-v8.test.js
+                test/semantic-selected-history-v8.test.js
+                test/semantic-selected-history-automatic-v8.test.js)
+              ;;
+            transport)
+              files=(test/semantic-native-durable-commit-v8.test.js
+                test/semantic-native-durable-bootstrap-v8.test.js
+                test/semantic-native-orchestration-recovery-v8.test.js
+                test/semantic-native-durable-close-v8.test.js)
+              ;;
+            commit-history)
+              files=(test/semantic-known-commit-history-v8.test.js)
+              ;;
+            bootstrap-history)
+              files=(test/semantic-known-bootstrap-history-v8.test.js)
+              ;;
+            terminal-history)
+              files=(test/semantic-known-close-builder-v8.test.js
+                test/semantic-known-close-history-v8.test.js
+                test/semantic-known-service-close-history-v8.test.js)
+              ;;
+            *) exit 1 ;;
+          esac
+          printf '%s\n' "${files[@]}" > "$RUNNER_TEMP/composed-recovery-controls/test-manifest.txt"
+          node --experimental-vm-modules --test --test-concurrency=1 --test-timeout=600000 \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=junit --test-reporter-destination="$RUNNER_TEMP/composed-recovery-controls/complete-history.xml" \
+            "${files[@]}" 2>&1 | tee "$RUNNER_TEMP/composed-recovery-controls/host-recovery.log"
+          python - <<'PY'
+          import os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'composed-recovery-controls/complete-history.xml').getroot().iter('testcase'))
+          if len(cases)!=${{ matrix.expected }} or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('Every selected ${{ matrix.lane }} recovery control must run and pass; expected ${{ matrix.expected }} leaf cases')
+          print('${{ matrix.expected }} ${{ matrix.lane }} recovery controls passed; zero failures/errors/skips')
+          PY
+      - name: Preserve exact candidate checkouts
+        if: ${{ !cancelled() }}
+        run: |
+          test -z "$(git -C tracing-js-self status --porcelain)"
+          test -z "$(git -C megatoken status --porcelain)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: composed-recovery-${{ matrix.lane }}
+          retention-days: 90
+          if-no-files-found: error
+          path: ${{ runner.temp }}/composed-recovery-controls/

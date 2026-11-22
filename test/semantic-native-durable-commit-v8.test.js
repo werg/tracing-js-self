@@ -44,7 +44,8 @@ async function inputs(t){
   async function open(fault=null,action=null){
     const executionLease=await lock.acquire(),log=join(directory,'decoder-'+(++count)+'.log');
     const args=fault?[faultPeer,'--peer',peer,'--fault',fault]:[peer];
-    if(fault&&action)args.push('--fault-action',action);
+    if(fault&&action)args.push(...(action==='bootstrap-orchestration-child'?
+      ['--fault-operation','durable-bootstrap-child']:['--fault-action',action]));
     args.push('--decoder-log',log,'--request-journal-dir',journal.directory,'--execution-lock-fd','3',
       '--execution-lock-path',executionLease.lockPath,'--execution-session-id',sessionId,'--execution-stream-id',streamId,
       '--execution-session-generation',String(journal.sessionGeneration));
@@ -190,7 +191,7 @@ test('actual Python bootstrap has an independent durable outcome: '+String(fault
   }finally{await close(first);}
   const fresh=await replacement(context);
   try{
-    const recovered=await fresh.select.recoverBootstrap({receipt});
+    const recovered=await fresh.select.recoverBootstrapChild({receipt});
     assert.equal(recovered.result.bootstrapped,true);assert.equal(recovered.result.track.bootstrap_ready,true);
     assert.equal(recovered.hostDispatches,0);assert.equal(recovered.hostRecoveryAuthorized,false);
     const after=await fresh.select.checkpoint();
@@ -215,7 +216,7 @@ test('missing native bootstrap outcome never authorizes replay or retry',async t
   }finally{await close(first);}
   const fresh=await replacement(context);
   try{
-    await assert.rejects(fresh.select.recoverBootstrap({receipt}),/never admitted/);
+    await assert.rejects(fresh.select.recoverBootstrapChild({receipt}),/never admitted/);
     assert.equal(fresh.select.metrics().predictionAttempts,0);
     assert.equal(readFileSync(fresh.log,'utf8'),'');
   }finally{await close(fresh);}
