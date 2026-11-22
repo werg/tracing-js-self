@@ -7,6 +7,46 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Branches and baseline
 
+### Continuation on 22 November 2026: exact commit recovery and module ownership
+
+The complete original PR narrative is retained in
+[`progress/PR47_NARRATIVE_2026_11_22_BEFORE_COMMIT_RECOVERY.md`](progress/PR47_NARRATIVE_2026_11_22_BEFORE_COMMIT_RECOVERY.md).
+The PR description carries the current exact published heads and the full
+17-package remaining-work tally. **No full package is complete.**
+
+- Producer `e7f8fd6` and native `350c1e6` implement explicit recovery of a known
+  committed request using immutable original request/reply bytes, the complete
+  immediate pre/post native state, one inherited execution owner and a fixed
+  generation. Later application mutation durably supersedes the old recovery
+  point before it runs. Missing/unknown outcomes, ordinary restore over journal
+  history and reused execution leases refuse. Automatic host/history recovery
+  remains open. [Paired local evidence](evidence/v8-producer-commit-recovery-2026-11-22/README.md):
+  43 cases, zero failures/errors/skips, including seven new recovery controls.
+  The companion retains 83 native cases plus eight pytest subtests; a separate
+  46-case focused run overlaps that population and is not additive.
+- The source-owned async-module state foundation is adopted from the exact
+  isolated `83e0475/385b830` pair: 40 JavaScript and six Python tests passed in
+  [hosted run 45007870400](https://github.com/werg/tracing-js-self/actions/runs/45007870400),
+  with six original module sources and 64 uniquely owned lifecycle transitions.
+  Main paired CI now requires all of those original/native comparisons with zero
+  skips. This foundation does not grant public artifact or training admission.
+  The shared generator/Promise composition and nested async-call protocol remain
+  separate work. [Scope and limits](EXPERIMENTAL_MODULE_SCHEDULER_DAG_V8.md).
+- The separate frozen-support inventory now measures 48 training sources,
+  348 optimizer-bearing windows, 696 logical targets and 720 physical target
+  records/occurrences. Inventory construction performs zero optimizer updates.
+  A bounded complete fit is running on its own exact pair; only a completed
+  checkpoint census matching every independently prepared target can establish
+  full exposure. The earlier completed two-update run still exposed only one
+  training source and four targets. Neither result is a learned-quality study.
+
+Lessons: synchronous modules do not have execution Promises; a rejected await
+can be caught; source-file eligibility does not prove optimizer exposure; a
+later noncommit mutation can invalidate an earlier committed recovery point;
+and duplicated descriptors for one process lock do not create independent
+owners. These distinctions now have explicit checks rather than inferred
+success claims.
+
 - Producer: `werg/tracing-js-self`, `codex/language-coverage-v8-cutover`, based on
   `f32c6fcf4e11ef2c18592a04d9ff108ad74913dc` (merged producer PR 46).
 - Consumer: `werg/megatoken`, `codex/language-coverage-v8-cutover`, based on

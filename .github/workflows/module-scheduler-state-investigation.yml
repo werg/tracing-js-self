@@ -1,0 +1,131 @@
+name: Source-owned module scheduler lifecycle and native parity
+
+on:
+  push:
+    branches: [codex/v8-module-scheduler-state-20261122, codex/v8-scheduler-source-ownership-20261122]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: module-scheduler-${{ github.ref }}-${{ github.sha }}
+  # Preserve the running full-population evidence during incremental delivery.
+  cancel-in-progress: false
+
+jobs:
+  scheduler-state:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      PYTHONPATH: ${{ github.workspace }}/megatoken/src
+      TRACING_JS_SELF_ROOT: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+      MEGATOKEN_PYTHON: python
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: werg/megatoken
+          ref: 385b830b8744d39fa5847b58f82dd0eceb3656ee
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: werg/tracing-js-self
+          ref: ${{ github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: tracing-js-self/.nvmrc
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12.14'
+      - name: Install locked dependencies and the checked consumer
+        run: |
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+      - name: Emit canonical formatting without changing the checkout
+        working-directory: megatoken
+        shell: bash
+        run: |
+          python -m pip install ruff
+          python - <<'PY'
+          import json,subprocess,sys
+          from pathlib import Path
+          paths=["src/megatoken/data/module_scheduler_state_v8.py","tests/test_module_scheduler_state_v8.py"]
+          for name in paths:
+              path=Path(name)
+              original=path.read_text()
+              fixed=subprocess.run([sys.executable,'-m','ruff','check','--fix-only','--stdin-filename',name,'-'],input=original,text=True,capture_output=True,check=False)
+              candidate=fixed.stdout if fixed.stdout else original
+              formatted=subprocess.run([sys.executable,'-m','ruff','format','--stdin-filename',name,'-'],input=candidate,text=True,capture_output=True,check=True).stdout
+              if formatted!=original:
+                  print('FORMATTED_SOURCE_JSON '+json.dumps({'path':name,'content':formatted}))
+          PY
+          python -m ruff check src/megatoken/data/module_scheduler_state_v8.py tests/test_module_scheduler_state_v8.py
+          python -m ruff format --check src/megatoken/data/module_scheduler_state_v8.py tests/test_module_scheduler_state_v8.py
+          git diff --exit-code --
+      - name: Check independent native scheduler state
+        if: ${{ !cancelled() }}
+        working-directory: megatoken
+        run: |
+          python -m pytest -q tests/test_module_scheduler_state_v8.py \
+            --junitxml="$RUNNER_TEMP/module-scheduler-native.xml" 2>&1 | tee "$RUNNER_TEMP/module-scheduler-native.log"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'module-scheduler-native.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('Every native scheduler-state control must run and pass')
+          print(f'{len(cases)} native scheduler-state controls passed, zero skips')
+          PY
+      - name: Compare original ESM, owned scheduling and actual Python state
+        if: ${{ !cancelled() }}
+        working-directory: tracing-js-self
+        run: |
+          node --experimental-vm-modules --test --test-concurrency=1 --test-reporter=junit \
+            test/evaluated-module-scheduler.test.js \
+            test/semantic-module-scheduler-state-v8.test.js \
+            test/semantic-native-module-scheduler-state-v8.test.js \
+            test/semantic-module-scheduler-source-v8.test.js \
+            2>&1 | tee "$RUNNER_TEMP/module-scheduler-js.xml"
+          python - <<'PY'
+          import json, os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          cases=list(ET.parse(root/'module-scheduler-js.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('Every source/owned/cross-language scheduler control must run and pass')
+          evidence=json.loads((root/'module-scheduler-state-evidence.json').read_text())
+          if evidence['publicAdmission'] is not False or evidence['acceptedCuts']<1 or evidence['refusedCuts']<1:
+              raise ValueError('Standalone scheduler comparison must retain both accepted and refused cuts without claiming admission')
+          source=json.loads((root/'module-scheduler-source-evidence.json').read_text())
+          if source['sourceCases']!=6 or source['actualNativeCases']!=6 or source['ownedTransitions']<1:
+              raise ValueError('Every original source lifecycle must pass actual native transition replay')
+          if source['publicAdmission'] is not False or source['trainingAdmission'] is not False or source['optimizerUpdates']!=0:
+              raise ValueError('Source ownership alone cannot grant public/data admission or optimizer exposure')
+          print(f'{len(cases)} original ESM and shared scheduler controls passed, zero skips')
+          print('SCHEDULER_STATE_EVIDENCE_JSON '+json.dumps(evidence,separators=(',',':')))
+          print('SCHEDULER_SOURCE_EVIDENCE_JSON '+json.dumps(source,separators=(',',':')))
+          PY
+      - name: Verify both candidate checkouts remained exact
+        if: ${{ !cancelled() }}
+        run: |
+          test -z "$(git -C megatoken status --porcelain --untracked-files=all)"
+          test -z "$(git -C tracing-js-self status --porcelain --untracked-files=all)"
+          git -C megatoken rev-parse HEAD
+          git -C tracing-js-self rev-parse HEAD
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: module-scheduler-state-evidence
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            ${{ runner.temp }}/module-scheduler-*

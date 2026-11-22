@@ -136,6 +136,33 @@ jobs:
               raise ValueError('Every paired V8 transport control, including the Python contract check, must run and pass')
           print(f'{len(cases)} paired transport controls passed with zero skips')
           PY
+      - name: Bind original module scheduling to actual native lifecycle state
+        if: ${{ matrix.population == 'interoperability' }}
+        working-directory: tracing-js-self
+        run: |
+          node --experimental-vm-modules --test --test-concurrency=1 --test-reporter=junit \
+            test/evaluated-module-scheduler.test.js \
+            test/semantic-module-scheduler-state-v8.test.js \
+            test/semantic-native-module-scheduler-state-v8.test.js \
+            test/semantic-module-scheduler-source-v8.test.js \
+            2>&1 | tee "$RUNNER_TEMP/module-scheduler-js.xml"
+          python - <<'PY'
+          import json, os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          cases = list(ET.parse(root / 'module-scheduler-js.xml').getroot().iter('testcase'))
+          if len(cases) != 40 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('All 40 source, owned scheduler and actual native controls must run and pass')
+          state = json.loads((root / 'module-scheduler-state-evidence.json').read_text())
+          source = json.loads((root / 'module-scheduler-source-evidence.json').read_text())
+          if state['publicAdmission'] is not False or state['acceptedCuts'] < 1 or state['refusedCuts'] < 1:
+              raise ValueError('Standalone lifecycle checks must retain accepted and refused states without claiming admission')
+          if source['sourceCases'] != 6 or source['actualNativeCases'] != 6 or source['ownedTransitions'] != 64:
+              raise ValueError('Every original module case and all 64 owned lifecycle transitions require native replay')
+          if source['publicAdmission'] is not False or source['trainingAdmission'] is not False or source['optimizerUpdates'] != 0:
+              raise ValueError('Source ownership alone cannot grant artifact admission or optimizer exposure')
+          print('40 module scheduler controls passed, zero skips; 6 original sources and 64 native lifecycle transitions')
+          PY
       - id: qualification
         name: Recollect exact source and native admission receipts
         working-directory: tracing-js-self
@@ -266,6 +293,7 @@ jobs:
             ${{ runner.temp }}/semantic-v8-tests.xml
             ${{ runner.temp }}/semantic-v8-tests.log
             ${{ runner.temp }}/semantic-v8-transport-tests.xml
+            ${{ runner.temp }}/module-scheduler-*
             ${{ runner.temp }}/semantic-v8-namespace-artifact.xml
             ${{ runner.temp }}/semantic-v8-namespace-artifact.log
             ${{ runner.temp }}/v8-namespace-artifact/

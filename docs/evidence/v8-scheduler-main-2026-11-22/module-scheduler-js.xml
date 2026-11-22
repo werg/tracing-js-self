@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="independent TLA siblings start before either await resumes, including a sync sibling" time="13.216142" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="a shared async dependency evaluates once and releases both async parents" time="12.300390" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="ready synchronous ancestors run in DFS async order without per-edge jobs" time="21.713590" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="syntactic TLA gets a completion job even when no await executes" time="4.493810" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="single-chain and synchronous graphs retain their qualified path with native completion-job timing" time="0.276752" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="then getters, assimilation and competing microtasks retain native module job order" time="8.013454" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="nested await operands, caught rejection and finally keep their generator continuations" time="6.386892" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="module getters retain live imported cells, namespaces, closures and strict call receivers" time="9.893743" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="module environments keep lexical TDZ and hoisted functions while another module is suspended" time="6.078638" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="async throws before and after await reject parents while already-started siblings finish" time="8.933657" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="a synchronous initial throw prevents later siblings starting without cancelling earlier async work" time="3.284140" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="a throwing ready parent skips its ancestors but not unrelated ready siblings" time="19.212779" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="module instantiation, await suspension and ready-parent work restore exactly from JSON" time="23.153772" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="parallel module execution journals each external read once and replay does not redispatch it" time="9.084002" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="pending sibling host reads restore retained module state without executing initializers or dispatch twice" time="12.897927" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="self-import and cyclic graphs retain separate DFS and body completion state" time="22.110939" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="an outside import of an already-executed non-root cycle member waits for the cycle root" time="8.964378" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="cyclic synchronous bodies retain hoisted functions, live cells and lexical TDZ with TLA" time="5.715627" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="untaken awaits in an SCC retain async completion jobs and sibling order" time="9.506765" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="async SCC errors before and after await retain one rejection and allow started siblings to finish" time="14.202522" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="a failed cycle root prevents waiting members starting without suppressing unrelated ready work" time="14.187505" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="a synchronous DFS failure in an open SCC preserves its error while started async members finish" time="4.160617" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="an unresolved cyclic evaluation stays pending across JSON restore without inventing an error" time="3.633530" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="open DFS components, closed cycles and ancestor release restore exact retained execution" time="24.400959" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="two pending host reads inside one SCC restore in both result orders without redispatch" time="35.481577" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="for-await iteration and generated scheduler identifiers remain explicit boundaries" time="0.005536" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/evaluated-module-scheduler.test.js"/>
+	<testcase name="already-settled rejection is caught, a sibling finishes, and the synchronous parent has no execution Promise" time="4.496563" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="shared asynchronous dependency, nested awaits and catch/finally retain actual driver identity" time="11.524881" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="uncaught async failure rejects its parent while an already-started sibling completes" time="3.036802" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="synchronous shared dependency completes once before two async children" time="5.435338" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="syntactic TLA without suspension still retains its async completion job" time="4.485220" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="failure before the first await is separated from already-started sibling work" time="3.286202" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="source ownership refuses a different source graph, changed dependency and changed instruction" time="3.915067" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="the dedicated source/native gate requires its paired consumer" time="4.269933" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-source-v8.test.js"/>
+	<testcase name="scheduler DAG plan comes from linker and ESM observation; shared dependency is evaluated once" time="6.458883" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-state-v8.test.js"/>
+	<testcase name="TLA resumes bind to existing Promise and reaction job identities; sibling order is accepted dynamically" time="0.010805" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-state-v8.test.js"/>
+	<testcase name="rejection propagates through a dependency while an independent sibling settles" time="0.007000" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-state-v8.test.js"/>
+	<testcase name="original ESM settles an independent sibling after a dependency rejects" time="0.001608" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-state-v8.test.js"/>
+	<testcase name="scheduler refuses early and duplicate completion without mutating prior state" time="0.008261" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-module-scheduler-state-v8.test.js"/>
+	<testcase name="standalone source-derived scheduler state agrees with actual Python at every accepted and refused cut" time="0.324068" classname="test" file="/workspace/scratch/05d92519587f/tracing-js-self/test/semantic-native-module-scheduler-state-v8.test.js"/>
+	<!-- tests 40 -->
+	<!-- suites 0 -->
+	<!-- pass 40 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 350503.751149 -->
+</testsuites>
