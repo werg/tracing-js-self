@@ -7,6 +7,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
+import {assertIndependentPositionCoverage} from './semantic-v8-position-coverage.mjs';
 
 const known=new Set(['--out','--producer-root','--megatoken','--python','--tokenizer','--native-policy','--source-id','--prepared-root','--source-inventory','--sample-source']);
 const booleans=new Set(['--orchestration-teacher','--full-target-coverage']);
@@ -276,14 +277,15 @@ try{
        coverageEvidence.inventory?.digest!==targetInventory.digest||
        coverageEvidence.comparison?.allPositiveWeightTargetsExposed!==true||
        coverageEvidence.comparison?.exactOnePassCensus!==true||
-       coverageEvidence.tokenOrMaskPositionCoverage!=='unmeasured'||coverageEvidence.learnedSuccess!==null)
+       coverageEvidence.learnedSuccess!==null)
       throw new Error('Ordinary one-pass route did not prove exact target-presence coverage');
+    assertIndependentPositionCoverage(coverageEvidence,targetInventory);
     report.targetCoverage=coverageEvidence;
     report.targetCoverageStatus='passed';
     report.fullTargetCoverageQualified=true;
     report.optimizerUpdateCounts={lifecycle:2,coverage:coverageMetadata.global_step,
       total:2+coverageMetadata.global_step};
-    report.supportPopulation.optimizerTargetExposure='verified positive-weight target presence across all inventory keys';
+    report.supportPopulation.optimizerTargetExposure='verified positive-weight target presence and independently reconstructed plain-text loss positions across all inventory keys';
     console.log('V8_TARGET_COVERAGE_EVIDENCE_JSON '+JSON.stringify(coverageEvidence));
   }
   report.limits=measured.limits;report.serving=measured.serving;
