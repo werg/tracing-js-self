@@ -23,10 +23,12 @@ const faultPeer=join(root,'test/fixtures/semantic-v8-durable-commit-peer.py');
 const env={...process.env,PYTHONPATH:[join(nativeRoot,'src'),nativeRoot,process.env.PYTHONPATH].filter(Boolean).join(delimiter)};
 let namespaceAvailable=false,described;
 try{namespaceAvailable=/^time:\[[1-9][0-9]*\]$/.test(readlinkSync('/proc/self/ns/time'));}catch{}
-const skip=namespaceAvailable?false:'Linux time namespace identity is unavailable; hosted positive gate is mandatory';
+const paired=Object.hasOwn(process.env,'MEGATOKEN_ROOT')&&existsSync(peer);
+const skip=!paired?'Exact paired native recovery runtime is unconfigured; hosted gate is mandatory':
+  namespaceAvailable?false:'Actual Linux time namespace identity is unavailable; hosted gate is mandatory';
 if(process.env.REQUIRE_KNOWN_COMMIT_RECOVERY==='1'){
   assert(namespaceAvailable,'Mandatory recovery gate requires the actual Linux time namespace identity');
-  assert(existsSync(peer),'Mandatory recovery gate requires its exact native peer');
+  assert(paired,'Mandatory recovery gate requires its exact native peer');
 }
 
 async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}){
@@ -52,14 +54,16 @@ async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}
   };
   async function open(faultAction=null){
     const executionLease=await lock.acquire(),log=join(directory,'decoder-'+(++count)+'.log');
-    const args=faultAction?[faultPeer,'--peer',peer,'--fault',fault,'--fault-action',faultAction]:[peer];
+    const args=faultAction?[faultPeer,'--peer',peer,'--fault',fault,
+      ...(faultAction==='bootstrap-orchestration-child'?['--fault-operation','durable-bootstrap-child']:
+        ['--fault-action',faultAction])]:[peer];
     args.push('--decoder-log',log,'--request-journal-dir',requests.directory,'--execution-lock-fd','3',
       '--execution-lock-path',executionLease.lockPath,'--execution-session-id',sessionId,'--execution-stream-id',streamId,
       '--execution-session-generation',String(requests.sessionGeneration));
     const select=createNativeV8ProcessSelector({command:python,args,cwd:nativeRoot,env,timeoutMs:120000,
       maxMessageBytes:64*1024*1024,durableRequests:{journal:requests,executionLease}});
     let recoverCalls=0;
-    for(const method of ['recoverCommit','recoverBootstrap']){
+    for(const method of ['recoverCommit','recoverBootstrapChild']){
       const recover=select[method];
       select[method]=(...args)=>{recoverCalls++;return recover(...args);};
     }
@@ -83,7 +87,7 @@ async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}
     result=await driver.run();
     assert.equal(result.status,'failed',JSON.stringify(result.failure));
     assert.equal(result.coordinatorAttempts.at(-1)?.status,
-      action==='bootstrap-orchestration-child'?'post-commit-failed':'acknowledgement-unknown',
+      action==='bootstrap-orchestration-child'?'committed':'acknowledgement-unknown',
       JSON.stringify({failure:result.failure,transport:first.select.status()}));
     receipt=first.select.durableRequestReceipt();assert(receipt);
   }finally{await close(first);}

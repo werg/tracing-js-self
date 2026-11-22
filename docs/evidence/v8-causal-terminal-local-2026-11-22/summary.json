@@ -1,0 +1,58 @@
+{
+  "schema": "recovery-composition-local-evidence/1",
+  "promotionQualified": false,
+  "currentPureSource": "4196057a",
+  "runtime": {
+    "node": "v24.22.3",
+    "python": "3.12.14",
+    "torch": "2.10.0+cpu",
+    "pytest": "8.4.2"
+  },
+  "currentPureControls": {
+    "file": "unified-pure-corrected.xml",
+    "total": 82,
+    "passed": 82,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "durationMs": 122582.950986,
+    "nativePeer": "controlled Node structural fixture; not the independent Python runtime"
+  },
+  "interruptedInitialInvocation": {
+    "file": "unified-pure-initial.xml",
+    "completeJUnit": false,
+    "claimedCases": null,
+    "source": "a7413f0a",
+    "note": "Interrupted before a complete JUnit report; trusted flock path was omitted. No case result or root-cause inference is assigned to the incomplete output."
+  },
+  "separateEarlierNativeTransport": {
+    "sourceLocal": "2429dbe8a6066a08b5fb0587ccd92303f5f06c04",
+    "sourcePublishedEquivalent": "ab247b3737a72351cac9013fbc2199ea9c5f3d81",
+    "native": "622c37c23f93c4cc58ff226eb4805c766fee3166",
+    "total": 18,
+    "passed": 18,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "qualifiesCurrentAPI": false
+  },
+  "separateEarlierLaterChild": {
+    "source": "0cd9fa3b",
+    "native": "622c37c23f93c4cc58ff226eb4805c766fee3166",
+    "total": 14,
+    "passed": 12,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 2,
+    "scope": "11 builder leaves and one actual two-child baseline passed; two real-clock lost-reply controls explicitly skipped"
+  },
+  "serviceCorrection": {
+    "implementation": "70643ebf4fe73ec4c4c3cd8f31da5d2284971220",
+    "guardCorrection": "b820fb85f29c4eb06fcf4b97134efb25360312ad",
+    "directBuilderCases": 5,
+    "directBuilderPassed": 5,
+    "liveServiceCasesLocallySkipped": 2,
+    "externalEffectsExecuted": 0
+  },
+  "learnedSuccess": null
+}

@@ -1,0 +1,102 @@
+[
+  {
+    "path": "README.md",
+    "bytes": 3478,
+    "sha256": "d1d7473d7b92fd130fc91fcbf5b8cb9fc135e99d51d5fc39d37d20e0806e2591"
+  },
+  {
+    "path": "command.txt",
+    "bytes": 645,
+    "sha256": "0e9d55f64ea87e3ede2ab6d03c0e1927cb80e3d3a753a975d35ec7cdb9762c6f"
+  },
+  {
+    "path": "composed-later-child-initial.xml",
+    "bytes": 4042,
+    "sha256": "3597de73223b9c626475aed1ea461a447c993f403237293e97f2a1cd75d32e47"
+  },
+  {
+    "path": "composed-native-transport.xml",
+    "bytes": 4678,
+    "sha256": "47cdb749c3cbbf1133c974c955e109e777aaf9a4bd26db6962cbaef404e5958c"
+  },
+  {
+    "path": "service/legacy-track-cancel-initial-peer-crash.log",
+    "bytes": 3378,
+    "sha256": "41a22a4c90dee74e9b51da68e6f0bf6999a54ce168b7dcb0a420b1d602a2d2d6"
+  },
+  {
+    "path": "service/producer-close-regression-focused.log",
+    "bytes": 2735,
+    "sha256": "ff4a469dcf71d62bf53cf492152382cf44d14271b3cc60e27ed0a3b5935755d3"
+  },
+  {
+    "path": "service/service-cancel-debug.log",
+    "bytes": 997,
+    "sha256": "e86d0580557ca45447827825b1a81933ce3659de74c3e5063de9363a3c7f788d"
+  },
+  {
+    "path": "service/service-close-builder-corrected.log",
+    "bytes": 665,
+    "sha256": "303be627e646d9c4ad06c76c582e003fad2b2ca18630f685b7c16d230adf2ad1"
+  },
+  {
+    "path": "service/service-close-builder-dependency-error.log",
+    "bytes": 1404,
+    "sha256": "a9376efd09d3589e103030656f22253007573669e1ff6a4aa12e82ce628389c9"
+  },
+  {
+    "path": "service/service-close-builder-initial-failure.log",
+    "bytes": 1167,
+    "sha256": "fcf4815df1b6b8138c2c9a70a99fea116f952a3c5cb984ef589c8f7364574e89"
+  },
+  {
+    "path": "service/service-close-local-focused.log",
+    "bytes": 515,
+    "sha256": "e52a3c6450a1de9c9e1e93d340717b6ddfa9cb5313eaa5f27f8a82576203dd18"
+  },
+  {
+    "path": "service/service-close-optional-discovery.log",
+    "bytes": 505,
+    "sha256": "80a498c315ed0d71a6c9ae352ac45e3fd51e8a9b0a42d909ed0accd3ea69cd3e"
+  },
+  {
+    "path": "service/service-close-pure-regressions.log",
+    "bytes": 2077,
+    "sha256": "25ad90eb9b0b4723350d887e56fbedf48aa12d6396a1622a37e96635d4fb3c36"
+  },
+  {
+    "path": "service/service-close-required-local-failure.log",
+    "bytes": 1040,
+    "sha256": "9fdc4a0c7e2a4a02f1a3a98279d75c95cdf5cc4d204056836ec5e2825fe63e25"
+  },
+  {
+    "path": "service/service-legacy-controls.log",
+    "bytes": 1105,
+    "sha256": "7789178cf0ab92580bbe15bd9855b23068e3b9fb7326dee9bb1105c6695bd341"
+  },
+  {
+    "path": "summary.json",
+    "bytes": 1874,
+    "sha256": "87724162f03f6b931012009ea81153cf11ecf2bfebc5b97e27a890003906c9d8"
+  },
+  {
+    "path": "unified-journal-diagnostic.log",
+    "bytes": 893,
+    "sha256": "11181603b0e8d7fd8897e2995951e5d7d7ad9b2f08e4b9c22249aee47148c79f"
+  },
+  {
+    "path": "unified-pure-corrected.log",
+    "bytes": 7045,
+    "sha256": "eb1560ab1008eab2f77c3ec79ce8fd58eb9efeeb7c62cd5a12514d138346c7f1"
+  },
+  {
+    "path": "unified-pure-corrected.xml",
+    "bytes": 22324,
+    "sha256": "681957b5527cd3f858efd04286015f5a7659d350526568f05a1fb46c99f856aa"
+  },
+  {
+    "path": "unified-pure-initial.xml",
+    "bytes": 23249,
+    "sha256": "9cdcee6efc1bb86ce2247c8841163d6bc4a2a2a3e5e93693d53cde01aea11a9e"
+  }
+]
