@@ -19,6 +19,29 @@ export interface SelectedServiceFenceState {
     receipt: SelectedServiceFenceReceipt}>;
   bytes: number;
 }
+export type SelectedServiceOutcomeReadback =
+  | {schema: 'semantic-service-outcome-readback/8'; status: 'unknown'}
+  | {schema: 'semantic-service-outcome-readback/8'; status: 'observed'; digest: string;
+      bytes: number; record: SelectedServiceOutcome};
+export interface SelectedServiceRecoveryAdmission {
+  key: string;
+  action: SelectedServiceAction;
+  actionDigest: string;
+  owner: SelectedServiceFenceReceipt;
+  fenceClaimReceipt: SelectedServiceFenceReceipt;
+  outcome: SelectedServiceOutcomeReadback;
+}
+export interface SelectedServiceRecoveryListing {
+  schema: 'semantic-service-recovery-listing/8';
+  serviceId: string;
+  sessionId: string;
+  head: SelectedServiceFenceReceipt;
+  owner: {generation: number; ownerId: string; receipt: SelectedServiceFenceReceipt};
+  terminal: {owner: SelectedServiceFenceReceipt; reason: string; receipt: SelectedServiceFenceReceipt};
+  actions: SelectedServiceRecoveryAdmission[];
+  allOutcomesKnown: boolean;
+  digest: string;
+}
 export interface DurableFencedSelectedServiceJournalOptions {
   /** One trusted service-owned POSIX namespace shared by all workers. */
   directory: string;
@@ -50,4 +73,7 @@ export declare class DurableFencedSelectedServiceJournal {
     receipt: SelectedServiceJournalReceipt): Promise<SelectedServiceJournalReceipt>;
   /** Replays every slot and synchronizes the directory before returning retained authority. */
   inspect(): Promise<SelectedServiceFenceState>;
+  /** Reads each admitted action's immutable outcome; missing outcomes remain unknown. */
+  inspectRecovery(options: {owner: SelectedServiceFenceReceipt; terminal: SelectedServiceFenceReceipt;
+    reason: string}): Promise<SelectedServiceRecoveryListing>;
 }

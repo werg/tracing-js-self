@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,writeFile,rm,readdir,symlink} from 'node:fs/promises';
+import {mkdtemp,readFile,writeFile,rm,readdir,symlink,mkdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fork} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {DurableFencedSelectedServiceJournal as Journal} from '../src/storage/selected-service-fence-journal.js';
-import {createDurableSelectedService,SelectedServiceBoundaryError,selectedServiceActionDigest}
+import {createDurableSelectedService,SelectedServiceBoundaryError,selectedServiceActionDigest,selectedServiceActionKey}
   from '../src/host/selected-service.js';
 import {SelectedExecutionLifecycleV8 as Lifecycle} from '../src/semantic/lifecycle-v8.js';
 import {analyzeSemanticProgram} from '../src/training/semantic-program.js';
@@ -293,4 +293,119 @@ test('selected lifecycle propagates stale admission as a boundary failure withou
   await assert.rejects(h.dispatch('call','effect'),code('stale-owner'));
   assert.equal(calls,0);assert.equal(h.intents.get('call/effect').status,'uncertain');
   assert.equal(h.timeline.filter(row=>row.kind==='result').length,0);
+});
+
+
+test('service recovery listing links exact admissions to independently read outcomes and preserves unknowns',async t=>{
+  const path=await directory(t),journal=new Journal(options(path)),
+    oldOwner=await journal.advanceOwner({ownerId:'previous'}),
+    owner=await journal.advanceOwner({previous:oldOwner,ownerId:'owner'}),
+    settledAction=action(context('settled',11)),unknownAction=action(context('uncertain',13)),
+    settledClaim=await journal.claim(settledAction,{owner}),
+    unknownClaim=await journal.claim(unknownAction,{owner}),
+    settledOutcome=outcome(settledAction,11);
+  await journal.complete(settledAction,settledOutcome,settledClaim);
+  const reason='bounded terminal fence after child settlement',
+    terminal=await journal.terminate({owner,reason}),
+    listing=await journal.inspectRecovery({owner,terminal,reason});
+  assert.equal(listing.schema,'semantic-service-recovery-listing/8');
+  assert.equal(listing.serviceId,'fenced-store');assert.equal(listing.sessionId,'session');
+  assert.deepEqual(listing.head,terminal);assert.deepEqual(listing.terminal.receipt,terminal);
+  assert.deepEqual(listing.owner.receipt,owner);assert.equal(listing.terminal.reason,reason);
+  assert.equal(listing.allOutcomesKnown,false);
+  const settled=listing.actions.find(row=>row.key===selectedServiceActionDigest(settledAction)||
+    row.action.effectId==='settled');
+  const unknown=listing.actions.find(row=>row.action.effectId==='uncertain');
+  assert(settled&&unknown);assert.deepEqual(settled.action,settledAction);
+  assert.deepEqual(settled.fenceClaimReceipt,(await journal.inspect()).admissions
+    .find(row=>row.actionDigest===selectedServiceActionDigest(settledAction)).receipt);
+  assert.deepEqual(settled.owner,owner);
+  assert.equal(settled.outcome.status,'observed');
+  assert.deepEqual(settled.outcome.record,settledOutcome);
+  assert.equal(settled.outcome.digest,digest(stableAlgorithmJSON(settledOutcome)));
+  assert.equal(settled.outcome.bytes,Buffer.byteLength(stableAlgorithmJSON(settledOutcome)));
+  assert.deepEqual(unknown.action,unknownAction);
+  assert.deepEqual(unknown.fenceClaimReceipt,(await journal.inspect()).admissions
+    .find(row=>row.actionDigest===selectedServiceActionDigest(unknownAction)).receipt);
+  assert.deepEqual(unknown.outcome,{schema:'semantic-service-outcome-readback/8',status:'unknown'},
+    'a claim with no durable result remains explicitly unknown');
+  assert.equal(listing.digest,digest(stableAlgorithmJSON(Object.fromEntries(
+    Object.entries(listing).filter(([key])=>key!=='digest')))));
+  await assert.rejects(journal.inspectRecovery({owner:oldOwner,terminal,reason}),
+    /exact current owner, terminal fence and head/,
+    'a prior owner receipt cannot substitute for the exact current terminal owner');
+  await assert.rejects(journal.inspectRecovery({owner,terminal:owner,reason}),
+    /exact current owner, terminal fence and head/);
+  const changedReason='different terminal reason';
+  await assert.rejects(journal.inspectRecovery({owner,terminal,reason:changedReason}),
+    /exact current owner, terminal fence and head/);
+  await journal.complete(unknownAction,outcome(unknownAction,13),unknownClaim);
+  const retried=await journal.inspectRecovery({owner,terminal,reason});
+  assert.equal(retried.allOutcomesKnown,true);
+  assert.equal(retried.actions.find(row=>row.action.effectId==='uncertain').outcome.status,'observed',
+    'a later exact outcome read becomes observable without re-executing the action');
+});
+
+
+test('service recovery listing rejects altered action chains and outcome bindings',async t=>{
+  const actionPath=await directory(t),actionJournal=new Journal(options(actionPath)),
+    owner=await actionJournal.advanceOwner({ownerId:'owner'}),
+    selected=action(context('effect-action',17)),claim=await actionJournal.claim(selected,{owner}),
+    reason='service reconciliation',
+    terminal=await actionJournal.terminate({owner,reason}),
+    admission=(await actionJournal.inspect()).admissions[0],
+    entryPath=actionJournal.entryPath(admission.receipt.position),
+    entry=JSON.parse(await readFile(entryPath,'utf8'));
+  entry.command.claim.action.witness='substituted action witness';
+  await writeFile(entryPath,stableAlgorithmJSON(entry));
+  await assert.rejects(actionJournal.inspectRecovery({owner,terminal,reason}),
+    /digest|predecessor|chain|action/i,
+    'an action replacement cannot survive the retained fence chain');
+
+  const outcomePath=await directory(t),outcomeJournal=new Journal(options(outcomePath)),
+    outcomeOwner=await outcomeJournal.advanceOwner({ownerId:'owner'}),
+    outcomeAction=action(context('effect-outcome',19)),
+    outcomeClaim=await outcomeJournal.claim(outcomeAction,{owner:outcomeOwner}),
+    outcomeTerminal=await outcomeJournal.terminate({owner:outcomeOwner,reason}),
+    outcomeKey=selectedServiceActionKey(outcomeAction),
+    outcomeFilename=join(outcomeJournal.scopeDirectory,'outcomes',outcomeKey+'.outcome.json');
+  const tampered=outcome(outcomeAction,19);
+  tampered.actionDigest='0'.repeat(64);
+  await mkdir(join(outcomeJournal.scopeDirectory,'outcomes'),{recursive:true,mode:0o700});
+  await writeFile(outcomeFilename,stableAlgorithmJSON(tampered),{mode:0o600});
+  await assert.rejects(outcomeJournal.inspectRecovery({owner:outcomeOwner,
+    terminal:outcomeTerminal,reason}),/outcome action identity|outcome/i,
+    'an outcome bound to a different action is never recovery evidence');
+  assert(claim&&outcomeClaim);
+});
+
+test('an outcome published during recovery inspection remains unknown in that read',async t=>{
+  const path=await directory(t);
+  class RacedJournal extends Journal{
+    syncs=0;race=null;
+    async _synchronize(){
+      await super._synchronize();
+      if(this.race&&++this.syncs===2){
+        const {action,record}=this.race,key=selectedServiceActionKey(action),
+          outcomeDirectory=join(this.scopeDirectory,'outcomes');
+        await mkdir(outcomeDirectory,{recursive:true,mode:0o700});
+        await writeFile(join(outcomeDirectory,key+'.outcome.json'),stableAlgorithmJSON(record),{mode:0o600});
+        this.race=null;
+      }
+    }
+  }
+  const journal=new RacedJournal(options(path)),owner=await journal.advanceOwner({ownerId:'owner'}),
+    selected=action(context('race',23)),claim=await journal.claim(selected,{owner}),
+    reason='terminal reconciliation',terminal=await journal.terminate({owner,reason});
+  journal.syncs=0;
+  journal.race={action:selected,record:outcome(selected,23)};
+  const first=await journal.inspectRecovery({owner,terminal,reason});
+  assert.equal(first.allOutcomesKnown,false);
+  assert.deepEqual(first.actions[0].outcome,{schema:'semantic-service-outcome-readback/8',status:'unknown'},
+    'a result that appears after the read cannot change unknown into settled mid-snapshot');
+  const next=await journal.inspectRecovery({owner,terminal,reason});
+  assert.equal(next.allOutcomesKnown,true);
+  assert.equal(next.actions[0].outcome.status,'observed');
+  assert.deepEqual(next.actions[0].outcome.record,outcome(selected,23));
+  assert(claim);
 });

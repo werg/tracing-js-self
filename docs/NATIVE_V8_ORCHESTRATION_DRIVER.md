@@ -331,6 +331,9 @@ are retained in git.
 
 The application must still provide its independently retained current journal head
 under sole supervisor ownership. This API cannot discover a newer head in another
-owner's store. Failed, cancelled and uncertain completion, dynamic descendants,
-external service reconciliation, takeover and distributed ownership remain separate
-acceptance work. A two-process deterministic test is not a learned-program result.
+owner's store. Settled `track_cancel` is supported only with the exact configured
+service-owner set, an acknowledged intent, independently verified service fences,
+and no running or unsettled host work. Failed host actions, cancellation of an
+unsettled child, unknown acknowledgements, dynamic descendants, successor-owner
+handoff, takeover and distributed ownership remain separate acceptance work. A
+two-process deterministic test is not a learned-program result.

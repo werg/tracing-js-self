@@ -217,6 +217,17 @@ before the wrapper returns an observed completion. Outcome publication failure
 leaves unknown work; a lost acknowledgement after successful publication allows
 later result recovery without another service call.
 
+`inspectRecovery({owner, terminal, reason})` is a read-only, terminal-only view
+for supervised reconciliation. It requires the exact current owner and terminal
+fence receipt, snapshots the service admission head, and links each full admitted
+action to its fence claim receipt. It independently reads each immutable outcome
+file and returns a content readback digest and byte count when present; this
+readback is not the original publisher's acknowledgement. Missing outcomes are
+reported as `unknown`, never as permission to invoke again. The method rereads
+the admission chain before returning and refuses if its head, owner, terminal
+fence, or action set changed during inspection. A caller must refuse reconciliation
+while any action remains unknown.
+
 ### Required supervisor and selected-history ordering
 
 The service admission log and `DurableSelectedHistoryJournal` are separate

@@ -445,9 +445,12 @@ test('actual Python track_cancel reconciliation requires the acknowledged same-o
       serviceAdmissionCoordinator:partiallyFencedCoordinator,acknowledge}),/service sync unavailable/i);
     assert.equal(partialRestores,0,'partial service fence remains ahead of every native restore');
     assert.equal((await services[0].journal.inspect()).terminal.reason,requestCut.terminal.reason);
-    const betaObserver=new DurableFencedSelectedServiceJournal({directory:root,serviceId:'beta',sessionId});
-    assert.equal((await betaObserver.inspect()).terminal,null,
-      'independent journal inspection confirms the unavailable beta fence did not persist');
+    const betaObserver=new DurableFencedSelectedServiceJournal({directory:root,serviceId:'beta',sessionId}),
+      betaState=await betaObserver.inspect();
+    assert.equal(betaState.terminal.reason,requestCut.terminal.reason,
+      'the fence bytes may be visible even though its writer lost the directory-sync acknowledgement');
+    assert.deepEqual(betaState.head,betaState.terminal.receipt,
+      'the independent read synchronizes the exact retained fence before any native restore');
   }finally{await partialSelector.shutdown();}
 
   unavailableBeta.unavailable=false;
