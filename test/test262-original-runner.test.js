@@ -126,8 +126,39 @@ test('async uses original doneprintHandle with exact completion and meaningful f
   statuses(both('$DONE(new Error("bad"));',settings),'failed');
   statuses(both('$DONE();$DONE();',settings),'failed');
   statuses(both('Promise.resolve(1);',settings),'resource_limited');
-  for(const options of fixture('function $DONE(){print("Test262:AsyncTestComplete");}$DONE();',settings))
-    assert.equal(executeOfficialTest262Variant(options).status,'resource_limited');
+  statuses(both('function $DONE(){print("Test262:AsyncTestComplete");}$DONE();',settings),'failed');
+  statuses(both('print("Test262:AsyncTestComplete");',settings),'failed');
+  statuses(both('__consolePrintHandle__=function(){};$DONE();print("Test262:AsyncTestComplete");',settings),'failed');
+  statuses(both('var done=$DONE;$DONE=function(){};done();',settings),'passed');
+  statuses(both('var n=0;__consolePrintHandle__=function(){if(++n===1)print("Test262:AsyncTestComplete");};$DONE();$DONE();',settings),'failed');
+});
+
+test('module reference async completion requires the original harness call and its output',()=>{
+  for(const [body,status] of [
+    ['await Promise.resolve();$DONE();','passed'],
+    ['print("Test262:AsyncTestComplete");','failed'],
+    ['$DONE=function(){print("Test262:AsyncTestComplete");};$DONE();','failed'],
+    ['__consolePrintHandle__=function(){};$DONE();print("Test262:AsyncTestComplete");','failed'],
+    ['var done=$DONE;$DONE=function(){};done();','passed'],
+    ['var n=0;__consolePrintHandle__=function(){if(++n===1)print("Test262:AsyncTestComplete");};$DONE();$DONE();','failed']
+  ]){
+    const [options]=moduleFixture(body,{flags:'module, async'});
+    const result=executeOfficialTest262Reference(options);
+    assert.equal(result.status,status,body+': '+result.reason);
+  }
+});
+
+test('raw async metadata has no declared completion facility and cannot yield successful evidence',()=>{
+  // The current routing contract rejects raw+async: raw does not install the
+  // original doneprintHandle harness. Keep that gap visible before execution.
+  const [options]=fixture('print("Test262:AsyncTestComplete");',{metadata:'flags: [raw, async]\n'});
+  assert.equal(options.variant.mode,'unclassified');
+  assert.match(options.variant.metadataError,/Conflicting or unknown/);
+  for(const execute of [executeOfficialTest262Variant,executeOfficialTest262Reference]){
+    const result=execute(options);
+    assert.equal(result.status,'infrastructure_error');
+    assert.equal(result.executionPerformed,false);
+  }
 });
 
 test('fresh machine and realm prevent script globals leaking between variants or retries',()=>{

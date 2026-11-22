@@ -251,15 +251,37 @@ function asyncCompletion(bundle,variant){
   const doneSource=bundle.sources.find(source=>source.url==='harness/doneprintHandle.js');
   const definition=doneSource&&bundle.programs[doneSource.entry].instructions.find(inst=>inst.op==='DEF_FN'&&inst.arg.name==='$DONE');
   const calls=definition?Object.values(bundle.finalState.frames).filter(frame=>frame.codeId===definition.arg.codeId).length:null;
+  // Completed frames have cleared caller links. Inspect their retained state
+  // at each print event, not the final heap, to establish original call ownership.
+  const frames=new Map(Object.entries(bundle.initialState.frames));
+  const wanted=new Set(completions.map(item=>item.origin));let originalCompletionPrints=0;
+  if(definition&&wanted.size)for(const event of bundle.events){
+    if(wanted.has(event.eventId)){
+      let frame=frames.get(event.invocationId);const seen=new Set();
+      while(frame&&!seen.has(frame.id)){
+        if(frame.codeId===definition.arg.codeId){originalCompletionPrints++;break;}
+        seen.add(frame.id);frame=frames.get(frame.callerFrameId);
+      }
+    }
+    for(const patch of event.stateChanges??[])if(patch.table==='frames'){
+      if(patch.after)frames.set(patch.id,patch.after);else frames.delete(patch.id);
+    }
+  }
   if(failures.length)return outcome('failed','Original async harness reported failure',
     {completionCalls:calls,completionPrints:completions.length,failurePrints:failures.length});
   if(completions.length>1||calls!==null&&calls>1)return outcome('failed','Async completion occurred more than once',
     {completionCalls:calls,completionPrints:completions.length});
+  if(completions.length&&definition&&calls!==1)return outcome('failed',
+    'Async completion output was printed without the original harness $DONE call',
+    {completionCalls:calls,completionPrints:completions.length});
   if(completions.length!==1||!variant.metadata.flags.includes('raw')&&calls!==1)
     return outcome('resource_limited','No original async completion before the bounded owned turn became quiescent',
       {completionCalls:calls,completionPrints:completions.length});
+  if(definition&&originalCompletionPrints!==1)return outcome('failed',
+    'Async completion output did not originate in the original harness $DONE call',
+    {completionCalls:calls,completionPrints:completions.length,originalCompletionPrints});
   return outcome('passed','Original async completion protocol completed exactly once',
-    {completionCalls:calls,completionPrints:1});
+    {completionCalls:calls,completionPrints:1,originalCompletionPrints});
 }
 function executeOwnedTest262Module({options,prepared,profile,result,includeBundle=false}){
   const {variant,sources}=options;
