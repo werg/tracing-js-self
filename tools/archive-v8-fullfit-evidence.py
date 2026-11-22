@@ -170,6 +170,7 @@ def download(endpoint: str, path: Path, *, release_asset: bool = False) -> None:
                 "gh",
                 "api",
                 endpoint,
+                "--allow-escape-sequences",
                 "-H",
                 "Accept: application/octet-stream"
                 if release_asset
