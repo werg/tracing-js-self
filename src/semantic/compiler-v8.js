@@ -165,7 +165,7 @@ async function tryDirectProtocolSource(fixture,prior){
 export async function verifyRegionTrainingCase(fixture){
   // Namespace source authority is established by the explicit original-module
   // gate. The generic teacher cannot execute the reserved generated intrinsic.
-  if(fixture?.projectionOptions?.moduleNamespacePlan){
+  if(fixture?.projectionOptions?.moduleNamespacePlan||fixture?.projectionOptions?.moduleSchedulerPlan){
     const {verifyProtocolRegionTrainingCase}=await import('./protocol-source-v8.js');
     return verifyProtocolRegionTrainingCase(fixture);
   }

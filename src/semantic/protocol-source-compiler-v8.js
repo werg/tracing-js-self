@@ -23,6 +23,7 @@ import {createExperimentalModuleNamespaceSourceAdapterV8} from './protocol-modul
 import {createSharedProtocolSourceComponentsV8} from './protocol-source-bridge-v8.js';
 import {createPromiseExecutorTeacherV8} from './protocol-promise-executor-source-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
+import {bindModuleSchedulerSourceProjectionV8} from './module-scheduler-source-bridge-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual,lit=value=>({op:'literal',value:copy(value)});
 function refuse(message){const error=new TypeError('Protocol source projection: '+message);error.category='unsupported.protocol-source';throw error;}
@@ -55,10 +56,15 @@ function referencedNames(node){const names=new Set();
   node.params?.forEach(bound);return names;
 }
 export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROTOCOL_SOURCE_ADAPTERS_V8,
-  moduleNamespacePlan=null}={}){
+  moduleNamespacePlan=null,moduleSchedulerPlan=null,moduleSchedulerRequest=null}={}){
   if(validateBundle(bundle).valid!==true||replayExact(bundle).valid!==true)refuse('invalid owned archive');
   const entry=bundle.entrySpec;if(entry?.kind!=='function')refuse('explicit function entry required');
   const source=bundle.sources.find(row=>row.sourceId===entry.sourceId)?.text;
+  if(moduleSchedulerPlan){
+    if(moduleNamespacePlan)refuse('module scheduler/namespace composition requires its own profile');
+    const projection=compileProtocolSourceV8(bundle,{maxGenerated:maxGenerated-1,adapters});
+    return bindModuleSchedulerSourceProjectionV8({bundle,projection,plan:moduleSchedulerPlan,request:moduleSchedulerRequest,maxGenerated});
+  }
   adapters=adapters.map(adapter=>typeof adapter==='function'?adapter({bundle,source}):adapter).filter(Boolean);
   // Nested async bodies still call ordinary source helpers. The existing
   // synchronous callable peer retains those scopes even without new Promise.
