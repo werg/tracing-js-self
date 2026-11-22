@@ -40,6 +40,14 @@ and verifies generated source, metadata and the independently observed original
 ESM outcome. Snapshot agreement alone cannot replace that second check; both
 boundaries are required at package and restore.
 
+Recorded native admission is also checked against that exact source. Its
+admitted copy may change only the admission label and attach its matching
+native receipt. The receipt must bind the original compact transport bytes,
+public/context/source/dataset identities, producer and consumer pins, tokenizer,
+and any teacher transcript. These checks preserve honest historical
+correspondence; the separate fresh native preparation remains the authority for
+current semantic admission.
+
 The native verifier rejects unbound packs, donor imports, teacher features,
 text anchors, hindsight inputs, distributed or decoupled routes, stage/effort
 mixtures and archived stage history. Its first profile cannot infer those
@@ -199,7 +207,7 @@ The `Direct V8 source model package and restore` workflow freezes the triggering
 producer commit and reads its exact 40-character native consumer revision from
 the committed policy before checking out that native source. It verifies that
 the resulting source pair still matches the frozen policy before qualification.
-It runs the 17 producer archive, 59 task-binding/campaign-history and 62 native verifier controls without skips,
+It runs the 17 producer archive, 69 task-binding/campaign-history and 62 native verifier controls without skips,
 then the full paired gate in the exact release runtime. Every subprocess streams
 progress and retains its original stdout/stderr. A complete tar archive retains
 hidden campaign locks, immutable history, original inputs, package, restoration

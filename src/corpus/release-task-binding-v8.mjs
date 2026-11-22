@@ -173,3 +173,46 @@ export function verifyV8TaskArtifactBinding(task,artifact,{registry=null}={}){
     taskDigest:digest(clean(task)),requestDigest:digest(request),
     sourceEvidenceDigest:digest(side),membership,orchestrationTeacher:fixture.orchestrationTeacher===true};
 }
+
+export function verifyV8RecordedAdmissionBinding(source,admitted,receipt,policy,producerRevision){
+  demand(record(source?.sidecar)&&record(receipt)&&record(policy),
+    'recorded native admission has no source, receipt or frozen policy');
+  // This is the complete mutation performed by admitRegionEvidence. A native
+  // copy for a different source cannot become this source by renaming a file.
+  const expected={...source,sidecar:{...source.sidecar,admission:'admitted',nativeAdmission:receipt}};
+  demand(equal(admitted,expected),'recorded admitted artifact differs from the original task source');
+  const direct=source.sidecar.schema==='semantic-protocol-host-region-evidence/1',
+    teacher=Object.hasOwn(source.sidecar,'orchestrationTranscript'),
+    publicDigest=digest(source.public),contextsDigest=digest(source.contexts),
+    sourceArtifactDigest=direct?null:digest(source.sidecar.sourceArtifact),
+    transportSha256=digest(JSON.stringify(source)+'\n');
+  const links={publicDigest,contextsDigest,sourceArtifactDigest,
+    datasetBindingDigest:source.sidecar.datasetBinding?digest(source.sidecar.datasetBinding):null,
+    ...(direct?{sourceIdentityDigest:source.sidecar.identityDigest}:{}),
+    ...(teacher?{orchestrationTranscriptDigest:digest(source.sidecar.orchestrationTranscript)}:{})};
+  demand(receipt.schema==='semantic-native-admission/8'&&receipt.admitted===true&&
+    receipt.optimizerSteps===0&&receipt.learningClaim===null&&
+    Object.entries(links).every(([key,value])=>equal(receipt[key],value))&&
+    (direct||!Object.hasOwn(receipt,'sourceIdentityDigest'))&&
+    (teacher||!Object.hasOwn(receipt,'orchestrationTranscriptDigest')),
+  'recorded native receipt is bound to another source or claim');
+  for(const key of ['consumerRevision','contractDigest','fixtureDigest','interoperabilityDigest'])
+    demand(receipt[key]===policy[key],'recorded native receipt differs from the frozen '+key);
+  demand(receipt.tokenizer?.status==='passed'&&receipt.tokenizer.identity===policy.tokenizerIdentity&&
+    receipt.tokenizer.sha256===policy.tokenizerSha256,'recorded native tokenizer differs from frozen policy');
+  const verification=receipt.sourceVerification;
+  demand(verification?.schema==='semantic-native-source-recheck/1'&&verification.producerRevision===producerRevision&&
+    verification.producerTreeClean===true&&verification.sourceValidated===true&&
+    verification.projectionValidated===true&&verification.replayValidated===true&&
+    verification.artifactSha256===transportSha256&&verification.publicDigest===publicDigest&&
+    verification.contextDigest===contextsDigest&&verification.sourceArtifactDigest===sourceArtifactDigest&&
+    (direct?verification.sourceIdentityDigest===source.sidecar.identityDigest&&verification.identityValidated===true:
+      !Object.hasOwn(verification,'sourceIdentityDigest'))&&
+    (teacher?verification.orchestrationTranscriptDigest===links.orchestrationTranscriptDigest&&
+      verification.orchestrationValidated===true:!Object.hasOwn(verification,'orchestrationTranscriptDigest')&&
+      !Object.hasOwn(verification,'orchestrationValidated')),
+  'recorded native source verification differs from the original task source and transport bytes');
+  return {schema:'semantic-v8-release-recorded-native-binding/1',transportSha256,
+    nativeReceiptDigest:digest(receipt),admittedArtifactDigest:digest(admitted),
+    authority:'Recorded correspondence only; independent fresh native admission remains required'};
+}

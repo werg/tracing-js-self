@@ -149,6 +149,7 @@ def qualify(args):
     require(binding_snapshot["status"] == "verified" and
             binding_snapshot["taskArtifactBindings"]["checkedAttempts"] == 64 and
             binding_snapshot["taskArtifactBindings"]["checkedCurrentSources"] == 64 and
+            binding_snapshot["taskArtifactBindings"]["checkedNativeRecords"] == 64 and
             all(row["taskArtifactBinding"]["membership"]["sourceId"] == row["id"]
                 for row in binding_snapshot["cases"]),
             "Original task to artifact binding did not cover the complete frozen campaign")

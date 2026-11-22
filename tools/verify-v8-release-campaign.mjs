@@ -7,7 +7,7 @@ import {join,resolve,relative,dirname,posix} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {isDeepStrictEqual} from 'node:util';
 import {CampaignStore,sha256} from '../src/corpus/campaign-store.mjs';
-import {verifyV8TaskArtifactBinding} from '../src/corpus/release-task-binding-v8.mjs';
+import {verifyV8TaskArtifactBinding,verifyV8RecordedAdmissionBinding} from '../src/corpus/release-task-binding-v8.mjs';
 
 const HASH=/^[a-f0-9]{64}$/,REVISION=/^[a-f0-9]{40}$/;
 const ID=/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,199}$/;
@@ -158,7 +158,8 @@ export async function verifyV8ReleaseCampaign(directory){
   try{
     require(store.identityDigest===report.progressDigest&&store.latest.size===ids.length,
       'report does not cover the complete committed journal');
-    const requiredArtifacts=new Map(),attempts=[],referencedObjects=new Set(),cases=[],taskBindings=new Map();
+    const requiredArtifacts=new Map(),attempts=[],referencedObjects=new Set(),cases=[],
+      taskBindings=new Map(),nativeBindings=new Map();
     const retain=ref=>{
       if(!ref)return;
       inputPath(root,'progress/'+ref.path);referencedObjects.add('progress/'+ref.path);
@@ -190,11 +191,21 @@ export async function verifyV8ReleaseCampaign(directory){
           'source-qualified attempt has no original source artifact');
         // A hash-linked journal can consistently name the wrong safe artifact.
         // Bind the encoded task's request before fresh source/native replay.
-        const binding=verifyV8TaskArtifactBinding(task,readJSON(root,name,MAX_OBJECT).value,{registry});
+        const sourceArtifact=readJSON(root,name,MAX_OBJECT).value,
+          binding=verifyV8TaskArtifactBinding(task,sourceArtifact,{registry});
         require(result.row.family===task.fixture.family,'reported family differs from original task');
         if(registry!==null)require(result.row.sourceId===binding.membership.sourceId&&
           result.row.split===binding.membership.split,'reported source membership differs from original task');
         taskBindings.set(entry.entryDigest,binding);
+        if(result.row.native==='passed'){
+          const admitted=entry.id+'.admitted.json',native=entry.id+'.native.json';
+          require(Object.hasOwn(result.artifacts,admitted)&&Object.hasOwn(result.artifacts,native),
+            'native-qualified attempt has no original admitted copy or native receipt');
+          const receipt=readJSON(root,native,MAX_OBJECT).value;
+          require(isDeepStrictEqual(receipt,result.row.nativeReceipt),'recorded native receipt differs from its journal');
+          nativeBindings.set(entry.entryDigest,verifyV8RecordedAdmissionBinding(sourceArtifact,
+            readJSON(root,admitted,MAX_OBJECT).value,receipt,authority.nativePolicy,authority.producerRevision));
+        }
       }
       for(const ref of [entry.candidate,entry.result,...(task.inputs??[]).flatMap(input=>
         [input.source,input.input,input.fixture])])retain(ref);
@@ -232,6 +243,7 @@ export async function verifyV8ReleaseCampaign(directory){
         require(isDeepStrictEqual(readJSON(root,row.id+'.native.json').value,row.nativeReceipt),
           'native artifact differs from its committed result: '+row.id);
         item.admittedArtifact=row.id+'.admitted.json';item.nativeArtifact=row.id+'.native.json';
+        item.nativeRecordBinding=nativeBindings.get(entry.entryDigest);
       }
       cases.push(item);
     }
@@ -266,6 +278,7 @@ export async function verifyV8ReleaseCampaign(directory){
       counts:counts(cases),attemptCounts:counts(attempts),cases,attempts,files,
       auxiliaryFiles:files.filter(row=>!authorityFiles.has(row.path)).map(row=>row.path),
       taskArtifactBindings:{checkedAttempts:taskBindings.size,checkedCurrentSources:sourceQualified,
+        checkedNativeRecords:nativeBindings.size,
         authority:'Original encoded task request and frozen family registry; checked before source/native replay'},
       limits:{metadataBytes:MAX_METADATA,objectBytes:MAX_OBJECT,fileBytes:MAX_FILE_BYTES,
         totalBytes:MAX_TOTAL_BYTES,files:MAX_FILES},

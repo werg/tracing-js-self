@@ -15,7 +15,8 @@ const CONTRACT='1'.repeat(64),FIXTURE='2'.repeat(64),INTEROP='3'.repeat(64);
 const read=path=>JSON.parse(readFileSync(path,'utf8'));
 const write=(path,value)=>writeFileSync(path,JSON.stringify(value,null,2)+'\n');
 
-function fixture(t,{overwriteHistory=false,admitUnselected=false,mismatchedNativeFile=false,wrongTaskSource=false}={}){
+function fixture(t,{overwriteHistory=false,admitUnselected=false,mismatchedNativeFile=false,wrongTaskSource=false,
+  nativeMutation=null,admittedMutation=null}={}){
   const parent=mkdtempSync(join(tmpdir(),'v8-release-campaign-'));
   t.after(()=>rmSync(parent,{recursive:true,force:true}));
   const directory=join(parent,'campaign'),ids=['accepted','refused','unselected'];
@@ -46,18 +47,29 @@ function fixture(t,{overwriteHistory=false,admitUnselected=false,mismatchedNativ
     const names=[];
     if(admitted){
       row.sourceArtifact=id+'.source.json';
-      row.nativeReceipt={schema:'controlled-fixture-only/1',id,kind:'native',qualifiedRealSource:false};
+      const source={public:{schema:'semantic-execution/8'},contexts:[],qualifiedRealSource:false,
+        sidecar:{family:tasks[index].fixture.family,sourceFamily:tasks[index].fixture.family,
+          sourceArtifact:{sidecar:{schema:'semantic-supervision/8',producerRevision:REVISION,
+            sourceFamily:tasks[index].fixture.family,ancestorIds:[],taskId:id,
+            license:'repository-fixture',trustTier:'repository-fixture',
+            referenceInput:{source:wrongTaskSource&&id==='accepted'?'function run(){return 2;}':tasks[index].fixture.source,entry:'run',
+              inputGraph:tasks[index].fixture.argsGraph,fixture:{calls:[],settlementOrder:null},randomSeed:null}}}}};
+      row.nativeReceipt={schema:'semantic-native-admission/8',qualifiedRealSource:false,
+        publicDigest:hashAlgorithmData(source.public),contextsDigest:hashAlgorithmData(source.contexts),
+        sourceArtifactDigest:hashAlgorithmData(source.sidecar.sourceArtifact),datasetBindingDigest:null,
+        consumerRevision:nativePolicy.consumerRevision,contractDigest:CONTRACT,fixtureDigest:FIXTURE,
+        interoperabilityDigest:INTEROP,tokenizer:{status:'passed',identity:nativePolicy.tokenizerIdentity,sha256:nativePolicy.tokenizerSha256},
+        admitted:true,optimizerSteps:0,learningClaim:null,sourceVerification:{schema:'semantic-native-source-recheck/1',
+          producerRevision:REVISION,producerTreeClean:true,sourceValidated:true,projectionValidated:true,replayValidated:true,
+          artifactSha256:hashAlgorithmData(JSON.stringify(source)+'\n'),publicDigest:hashAlgorithmData(source.public),
+          contextDigest:hashAlgorithmData(source.contexts),sourceArtifactDigest:hashAlgorithmData(source.sidecar.sourceArtifact)}};
+      if(nativeMutation)nativeMutation(row.nativeReceipt);
+      const admittedSource=structuredClone({...source,sidecar:{...source.sidecar,admission:'admitted',nativeAdmission:row.nativeReceipt}});
+      if(admittedMutation)admittedMutation(admittedSource);
       for(const kind of ['source','admitted','native']){
         const name=id+'.'+kind+'.json';names.push(name);
-        save(name,kind==='native'?{schema:'controlled-fixture-only/1',id,kind,qualifiedRealSource:false,
-          ...(mismatchedNativeFile?{changed:true}:{})}:{
-          public:{schema:'semantic-execution/8'},qualifiedRealSource:false,
-          sidecar:{family:tasks[index].fixture.family,sourceFamily:tasks[index].fixture.family,
-            sourceArtifact:{sidecar:{schema:'semantic-supervision/8',producerRevision:REVISION,
-              sourceFamily:tasks[index].fixture.family,ancestorIds:[],taskId:id,
-              license:'repository-fixture',trustTier:'repository-fixture',
-              referenceInput:{source:wrongTaskSource&&id==='accepted'?'function run(){return 2;}':tasks[index].fixture.source,entry:'run',
-                inputGraph:tasks[index].fixture.argsGraph,fixture:{calls:[],settlementOrder:null},randomSeed:null}}}}});
+        save(name,kind==='native'?{...row.nativeReceipt,...(mismatchedNativeFile?{changed:true}:{})}:
+          kind==='source'?source:admittedSource);
       }
     }else{const name=id+'.result.json';names.push(name);save(name,{status});}
     progress.complete(id,tasks[index],row,names);return row;
@@ -158,13 +170,38 @@ test('V8 release snapshot cannot hide overwritten historical artifact bytes',asy
 
 test('V8 release snapshot binds native artifact bytes to the exact committed receipt',async t=>{
   const {directory}=fixture(t,{mismatchedNativeFile:true});
-  await assert.rejects(verifyV8ReleaseCampaign(directory),/native artifact differs from its committed result/);
+  await assert.rejects(verifyV8ReleaseCampaign(directory),/native.*differs/);
 });
 
 test('V8 release snapshot refuses a coherently resealed journal returning another source for the original task',async t=>{
   const {directory}=fixture(t,{wrongTaskSource:true}),before=readFileSync(join(directory,'progress/campaign.jsonl'));
   await assert.rejects(verifyV8ReleaseCampaign(directory),/V8 release task binding: source, entry, argument graph/);
   assert.deepEqual(readFileSync(join(directory,'progress/campaign.jsonl')),before);
+});
+
+test('V8 release snapshot refuses a resealed admitted copy from another source',async t=>{
+  const {directory}=fixture(t,{admittedMutation:artifact=>{
+    artifact.sidecar.sourceArtifact.sidecar.referenceInput.source='function run(){return 900;}';}});
+  await assert.rejects(verifyV8ReleaseCampaign(directory),/recorded admitted artifact differs/);
+});
+
+test('V8 release snapshot binds historical native receipt claims to exact original input and policy',async t=>{
+  const mutations={
+    public:receipt=>{receipt.publicDigest='9'.repeat(64);},
+    source:receipt=>{receipt.sourceArtifactDigest='9'.repeat(64);},
+    dataset:receipt=>{receipt.datasetBindingDigest='9'.repeat(64);},
+    'source-input-bytes':receipt=>{receipt.sourceVerification.artifactSha256='9'.repeat(64);},
+    producer:receipt=>{receipt.sourceVerification.producerRevision='9'.repeat(40);},
+    consumer:receipt=>{receipt.consumerRevision='9'.repeat(40);},
+    tokenizer:receipt=>{receipt.tokenizer.sha256='9'.repeat(64);},
+    'validation-boolean':receipt=>{receipt.sourceVerification.sourceValidated=1;},
+    'unrequested-teacher':receipt=>{receipt.orchestrationTranscriptDigest='9'.repeat(64);},
+  };
+  for(const [name,nativeMutation] of Object.entries(mutations))await t.test(name,async t=>{
+    const {directory}=fixture(t,{nativeMutation}),before=readFileSync(join(directory,'progress/campaign.jsonl'));
+    await assert.rejects(verifyV8ReleaseCampaign(directory),/recorded native/);
+    assert.deepEqual(readFileSync(join(directory,'progress/campaign.jsonl')),before);
+  });
 });
 
 test('uncommitted orphan files remain explicit auxiliary bytes and never gain admission',async t=>{
