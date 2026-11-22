@@ -16,6 +16,30 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Installed callback continuation correction — 22 November 2026
+
+The independent installed gate at producer `347c0ec` now completes the full
+population: **665/665 original cases pass and 64/66 selected cases pass**. The
+locked-dependency cache correction works. The two failed selected cases are
+`callback-owned-join` and `callback-owned-join-awaited`; their original failure
+and complete hosted log remain retained under
+`docs/evidence/v8-installed-callbacks-2026-11-22/`.
+
+Reproduction found a qualifier assumption, not an incorrect callback order:
+one live generated callback end can emit its consequent observed handler-close
+receipt synchronously. The restored continuation check now compares every row
+in that complete batch against the exact saved suffix and advances only after
+all match. It still uses ordinary live public APIs, without private replay
+flags. The focused tooling suite passes **9/9**, zero skips, including both
+original failed cases. A fresh full installed665/66 run is required before the
+complete gate is credited. No source population was removed or narrowed.
+
+Both general native CPU lanes at exact `b865b5f` have now passed: Python 3.11 and
+Python 3.12 each report **3,673 passed, 83 declared skips, 20 warnings**. The paired
+V8 gallery and interoperability lanes also pass at native `b865b5f` / producer
+`14e3c07`. These results retain their exact revisions and do not qualify newer
+teacher/materializer or composite recovery work. **0/17 packages are closed.**
+
 ## Source-qualified orchestration teacher — 22 November 2026
 
 A separate source-bound transcript now authors four lifecycle targets without

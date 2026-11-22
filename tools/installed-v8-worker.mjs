@@ -129,10 +129,20 @@ export async function executeInstalledV8Task(encodedTask,{producerRevision,packa
     const cutoff=first+1,prefix=v8.RegionExecutionHarness.replay({...artifact.public,
       timeline:artifact.public.timeline.slice(0,cutoff)},{requireTerminal:false}),
       continuation=v8.RegionExecutionHarness.restore(JSON.parse(JSON.stringify(prefix.checkpoint())));
-    for(const row of artifact.public.timeline.slice(cutoff)){
+    const expectedContinuation=artifact.public.timeline.slice(cutoff);
+    for(let offset=0;offset<expectedContinuation.length;){
+      const row=expectedContinuation[offset],before=continuation.timeline.length;
       if(row.mode==='generated')continuation.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
       else continuation.importObserved(row);
-      assert.deepEqual(continuation.timeline.at(-1),row);
+      // A public selection can publish a checked observed lifecycle receipt
+      // after its selected record (for example, closing a callback handler
+      // after the callback's end record). Compare the whole synchronous batch
+      // from that public action, then continue after the rows it consumed.
+      const emitted=continuation.timeline.slice(before);
+      assert(emitted.length>0,'continued public action must publish a timeline row');
+      assert(emitted.length<=expectedContinuation.length-offset,'continued public action exceeded saved timeline');
+      assert.deepEqual(emitted,expectedContinuation.slice(offset,offset+emitted.length));
+      offset+=emitted.length;
     }
     assert.deepEqual(continuation.exportEpisode(),artifact.public);
     return {...result,...(originalSourceEvidence?{originalSourceEvidence}:{}),installedChecks:{

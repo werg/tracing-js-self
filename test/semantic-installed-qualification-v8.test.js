@@ -58,6 +58,24 @@ test('public worker source, callback and original module controls recheck and co
   }
 });
 
+test('installed continuation accepts callback-owned joins with ordered handler-close receipts',async()=>{
+  const ids=['callback-owned-join','callback-owned-join-awaited'],
+    population=installedQualificationInventory({producerRevision:'worker-control',population:'interoperability',requested:ids}),
+    lock=installedSha256(await readFile(join(root,'npm-shrinkwrap.json')));
+  for(const id of ids){
+    const row=population.rows.find(row=>row.id===id);assert(row,id);
+    const result=await executeInstalledV8Task(row.task,{producerRevision:'worker-control',packageLockSha256:lock});
+    assert.equal(result.installedChecks?.source,'passed',id+': '+result.reason);
+    assert.equal(result.installedChecks.continuedFromPrefix,true,id);
+    const timeline=result.exported.public.timeline,close=timeline.findIndex(item=>item.kind==='handler-close');
+    assert(close>0,id+': callback handler close receipt is retained');
+    const callbackEnd=timeline[close-1];
+    assert.equal(callbackEnd.mode,'generated',id+': callback completion precedes handler close');
+    assert.equal(callbackEnd.fields.invocationId,'event1',id+': callback completion owner');
+    assert(callbackEnd.fields.line.includes('"kind":"end"'),id+': callback end record');
+  }
+});
+
 test('public worker checks original source separately and retains a disagreement before projection',async()=>{
   const fixture={id:'original',family:'installed-original-control',entry:'run',args:[],fixture:{calls:[]},
     source:'"use strict";function run(){return 7;}',originalReferenceSource:'"use strict";function run(){return 9;}'};

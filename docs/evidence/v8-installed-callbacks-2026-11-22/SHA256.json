@@ -1,0 +1,60 @@
+{
+  "schema": "semantic-installed-evidence/1",
+  "failedProducer": "347c0ec2c36651c7b1dd58f331034240dd4a9144",
+  "failedJob": "https://github.com/werg/tracing-js-self/actions/runs/44968411106/job/137042550801",
+  "totals": {
+    "all": {
+      "declared": 665,
+      "attempted": 665,
+      "passed": 665
+    },
+    "interoperability": {
+      "declared": 66,
+      "attempted": 66,
+      "passed": 64
+    }
+  },
+  "failedCases": [
+    "callback-owned-join",
+    "callback-owned-join-awaited"
+  ],
+  "archive": {
+    "artifactId": 14732713446,
+    "bytes": 644556518,
+    "uploadReportedSha256": "685abd6a21661ea6eca46937cc3d03123ff21175f0234aab7c19353b6d9a8532",
+    "localDownloadVerified": false,
+    "retentionDays": 30
+  },
+  "correctionTests": {
+    "tests": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0
+  },
+  "logs": [
+    {
+      "path": "full-installed-347-failure.log.gz.b64",
+      "decodedBytes": 125360,
+      "decodedSha256": "2340c77139587907d5792169ed75f77c38251c09c4aabc31c61014195fdf9519",
+      "encodedSha256": "875429b33cd0e8b73b87c9921cf5125c4f672ff3df2f20fdfa2feedcbcb5e6f1"
+    },
+    {
+      "path": "callback-before-fix.log.gz.b64",
+      "decodedBytes": 1134,
+      "decodedSha256": "42ea3fafdf63454eb7cce36de9decfda7d641d780f3c7b0a2cc8681a351f23f2",
+      "encodedSha256": "10e178e1750d07f71e603ceaa01204f4f9b33a7010e37ec1a813733f4b44badc"
+    },
+    {
+      "path": "callback-fix-9.log.gz.b64",
+      "decodedBytes": 2504,
+      "decodedSha256": "2b6f4aa19441ec2a4b9f4ae85e8bbd6d3e61bb14196bd1bbd404128e7b399d4d",
+      "encodedSha256": "af48e37eb2e62556446a1b4cbac701a300b7a441a2114da31e601d115946c116"
+    },
+    {
+      "path": "reproduction-setup-error.log.gz.b64",
+      "decodedBytes": 827,
+      "decodedSha256": "bb3459618666f889a7f0b44ac0db89377c37e3a479990e902f68f2606ebfe4c8",
+      "encodedSha256": "fe4b01daacbf82871e286b00428fdf293d33b7e1687a9227aab9f96d76e715f6"
+    }
+  ]
+}
