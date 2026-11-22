@@ -9,6 +9,9 @@ import {verifySelectedOrchestrationCheckpoint} from './selected-orchestration-ch
 import {hashAlgorithmData} from './program.js';
 import {validateSelectedHistoryReceipt,validateSelectedHistoryChain} from './selected-history-v8.js';
 import {validateServiceAdmissionOwnerSnapshot} from './service-admission-v8.js';
+import {assertSelectedOrchestrationExecutionClock} from '../storage/selected-orchestration-clock.js';
+import {buildRecoveredCoordinatorCheckpointV8,refreshRecoveredCoordinatorCheckpointV8}
+  from './selected-orchestration-commit-recovery-v8.js';
 
 const copy=structuredClone,HASH=/^[a-f0-9]{64}$/;
 function freezeTree(value){
@@ -109,6 +112,7 @@ function failureOf(error){
 
 export class RegionSelectedOrchestrationDriver {
   #childDriver=null;
+  #executionClock=null;
   // timeoutMs aborts host child execution cooperatively. In-flight native RPCs
   // remain bounded by the selector's own request deadline so their ack state
   // is observed before cleanup starts.
@@ -186,7 +190,7 @@ export class RegionSelectedOrchestrationDriver {
       'independent durable head acknowledgement differs from the recorded composite checkpoint');
     this.historyReceipt=copy(receipt);return copy(receipt);
   }
-  startAutomaticHistory({journal,acknowledge,previous=this.historyReceipt??null}={}){
+  startAutomaticHistory({journal,acknowledge,previous=this.historyReceipt??null,executionClock=null}={}){
     demand(!this.running&&!this.used,'automatic history must be configured before execution starts');
     demand(this.automaticHistory===null,'automatic history is already configured');
     demand(typeof journal?.append==='function'&&typeof journal?.readAll==='function'&&
@@ -195,10 +199,19 @@ export class RegionSelectedOrchestrationDriver {
     if(head!==null)validateSelectedHistoryReceipt(head);
     if(this.historyReceipt!==null)demand(isDeepStrictEqual(head,this.historyReceipt),
       'automatic history must continue the exact already acknowledged composite head');
-    this.automaticHistory={journal,acknowledge,previous:head,status:'ready',failure:null};
+    if(executionClock!==null){
+      assertSelectedOrchestrationExecutionClock(executionClock);
+      demand(typeof this.select.durableRequestBoundary==='function'&&this.select.durableRequestBoundary()!==null,
+        'clock-bound recovery requires a guarded durable native request journal');
+    }
+    demand(!this.continuation.clockReceipt||executionClock!==null,
+      'retained execution clock must continue with automatic history');
+    this.#executionClock=executionClock;
+    this.automaticHistory={journal,acknowledge,previous:head,status:'ready',failure:null,executionClock};
     return this;
   }
-  static async restore(packet,{initialPublic,select,policy,harnessOptions={},signal=null,serviceAdmissionCoordinator=null}={}){
+  static async restore(packet,{initialPublic,select,policy,harnessOptions={},signal=null,serviceAdmissionCoordinator=null,
+      executionClock=null}={}){
     packet=copy(packet);initialPublic=copy(initialPublic);policy=copy(policy);harnessOptions={...harnessOptions};
     demand(initialPublic&&typeof select==='function'&&typeof select.restore==='function'&&
       typeof select.checkpoint==='function'&&typeof select.status==='function',
@@ -206,6 +219,11 @@ export class RegionSelectedOrchestrationDriver {
     const expectedPolicy={...policy,...(Object.hasOwn(packet.policy??{},'serviceAdmission')?
       {serviceAdmission:copy(packet.policy.serviceAdmission)}:{})};
     verifySelectedOrchestrationCheckpoint(packet,expectedPolicy,{initialPublic});
+    if(packet.continuation.clockReceipt){
+      assertSelectedOrchestrationExecutionClock(executionClock);
+      const consumed=await executionClock.elapsed(packet.continuation.clockReceipt,{timeoutMs:policy.timeoutMs});
+      demand(consumed>=packet.continuation.elapsedMs,'live clock predates the retained consumed budget');
+    }
     if(packet.policy.serviceAdmission!=null){
       demand(serviceAdmissionCoordinator&&
         isDeepStrictEqual(copy(serviceAdmissionCoordinator.ownerSnapshot()),packet.policy.serviceAdmission),
@@ -227,31 +245,50 @@ export class RegionSelectedOrchestrationDriver {
         'native restore did not acknowledge the exact checkpoint without host dispatch');
       const state=await select.statusOrchestration({session:packet.session,track:packet.state.track});
       demand(isDeepStrictEqual(state,packet.state),'restored coordinator state differs from the composite cut');
-      const ingressHarness=RegionExecutionHarness.replay(copy(packet.initialPublic),{...harnessOptions,
-        requireTerminal:false,automaticDelivery:policy.automaticDelivery});
-      const driver=new RegionSelectedOrchestrationDriver({initialPublic:copy(packet.initialPublic),select,
-        ...policy,serviceAdmissionCoordinator,automaticDelivery:policy.automaticDelivery,harness:ingressHarness});
-      driver.bridge=bridge;
-      driver.state=copy(state);driver.initialState=copy(packet.initialState);
-      driver.nativeIdentity=copy(packet.native.identity);driver.continuation=copy(packet.continuation);
-      driver.coordinatorAttempts=copy(packet.coordinatorAttempts);driver.restored=true;
-      for(const attempt of driver.coordinatorAttempts)if(attempt.action?.name==='track_create'){
-        const dependency=attempt.commitReceipt?.completion_dependency;
-        demand(dependency,'restored create has no exact dependency receipt');
-        driver.createdDependencies.set(dependency.track,copy(dependency));
-      }
-      driver.#childDriver=await restoreSelectedOrchestrationChildDriver({packet,policy,
-        initialPublic:driver.initialPublic,bridge,select,childSelect:childSelector(select)});
-      return driver;
+      return await this.#adoptRestoredNative(packet,{select,policy,harnessOptions,serviceAdmissionCoordinator,
+        executionClock,bridge,state});
     }catch(error){select.close?.();throw error;}
   }
+  static async #adoptRestoredNative(packet,{select,policy,harnessOptions,serviceAdmissionCoordinator,
+      executionClock,bridge=null,state=null}){
+    bridge??=RegionExecutionHarness.restore(copy(packet.bridge),{...harnessOptions,
+      maxGenerated:policy.maxGenerated,maxOutstanding:policy.maxOutstanding});
+    demand(hashAlgorithmData(bridge.checkpoint())===hashAlgorithmData(packet.bridge),
+      'restored host bridge differs from the independently verified cut');
+    state??=await select.statusOrchestration({session:packet.session,track:packet.state.track});
+    demand(isDeepStrictEqual(state,packet.state),'restored coordinator state differs from the composite cut');
+    const ingressHarness=RegionExecutionHarness.replay(copy(packet.initialPublic),{...harnessOptions,
+      requireTerminal:false,automaticDelivery:policy.automaticDelivery});
+    const driver=new RegionSelectedOrchestrationDriver({initialPublic:copy(packet.initialPublic),select,
+      ...policy,serviceAdmissionCoordinator,automaticDelivery:policy.automaticDelivery,harness:ingressHarness});
+    driver.bridge=bridge;driver.state=copy(state);driver.initialState=copy(packet.initialState);
+    driver.nativeIdentity=copy(packet.native.identity);driver.continuation=copy(packet.continuation);
+    driver.coordinatorAttempts=copy(packet.coordinatorAttempts);driver.restored=true;
+    for(const attempt of driver.coordinatorAttempts)if(attempt.action?.name==='track_create'){
+      const dependency=attempt.commitReceipt?.completion_dependency;
+      demand(dependency,'restored create has no exact dependency receipt');
+      driver.createdDependencies.set(dependency.track,copy(dependency));
+    }
+    driver.#childDriver=await restoreSelectedOrchestrationChildDriver({packet,policy,
+      initialPublic:driver.initialPublic,bridge,select,childSelect:childSelector(select)});
+    if(packet.continuation.clockReceipt){
+      assertSelectedOrchestrationExecutionClock(executionClock);driver.#executionClock=executionClock;
+      const consumed=await executionClock.elapsed(packet.continuation.clockReceipt,{timeoutMs:policy.timeoutMs});
+      demand(consumed>=packet.continuation.elapsedMs,'live clock predates the retained consumed budget');
+      driver.continuation.elapsedMs=consumed;
+    }
+    return driver;
+  }
   static async restoreLatest(packet,{historyJournal,historyReceipt,initialPublic,select,policy,harnessOptions={},signal=null,
-      serviceAdmissionCoordinator=null,acknowledge=null}={}){
+      serviceAdmissionCoordinator=null,acknowledge=null,executionClock=null,commitRecovery=null}={}){
     const checkAbort=()=>{if(signal?.aborted)throw signal.reason instanceof Error?
       signal.reason:new Error(String(signal.reason??'Selected orchestration v8 restore cancelled'));};
     checkAbort();
     packet=copy(packet);historyReceipt=copy(historyReceipt);initialPublic=copy(initialPublic);
     policy=copy(policy);harnessOptions={...harnessOptions};
+    commitRecovery=copy(commitRecovery);
+    demand(commitRecovery===null||commitRecovery&&Object.keys(commitRecovery).length===1&&
+      Object.hasOwn(commitRecovery,'receipt'),'commit recovery must name one exact retained request receipt');
     demand(typeof historyJournal?.readLatest==='function','independently verified latest composite history is required');
     validateSelectedHistoryReceipt(historyReceipt);
     const retainedEntries=copy(await historyJournal.readLatest(copy(historyReceipt)));
@@ -267,6 +304,12 @@ export class RegionSelectedOrchestrationDriver {
       verifySelectedOrchestrationCheckpoint(entry.checkpoint,expectedPolicy,{initialPublic});
     }
     const latestEntry=entries.at(-1);
+    if(commitRecovery!==null)demand(!latestEntry.terminal&&
+      (latestEntry.pending?.kind==='coordinator-selection'&&latestEntry.pending.clockReceipt&&latestEntry.pending.requestBoundary||
+        !latestEntry.pending&&latestEntry.checkpoint.continuation.clockReceipt&&
+        ['track_join','track_progress'].includes(latestEntry.checkpoint.coordinatorAttempts.at(-1)?.action?.name)&&
+        latestEntry.checkpoint.native.attempts.at(-1)?.durableRequestReceipt),
+      'known commit recovery requires its clock-bound coordinator fence or exact sealed acknowledgement');
     if(latestEntry.terminal?.schema==='semantic-selected-orchestration-terminal-event/8'){
       let terminal=latestEntry.terminal,snapshot=terminal.snapshot,closedOnThisSelector=false;
       if(terminal.phase==='requested'){
@@ -367,6 +410,61 @@ export class RegionSelectedOrchestrationDriver {
     }
     const latest=latestEntry.checkpoint;
     demand(!latestEntry.terminal,'terminal orchestration disposition cannot be restored as active work');
+    if(commitRecovery!==null){
+      const unresolved=Boolean(latestEntry.pending);
+      demand(typeof acknowledge==='function'&&typeof historyJournal.append==='function'&&
+        typeof select?.recoverCommit==='function'&&typeof select?.durableRequestBoundary==='function',
+        'known commit recovery requires exact native restoration and independent new-head acknowledgement');
+      assertSelectedOrchestrationExecutionClock(executionClock);
+      const boundary=unresolved?latestEntry.pending.requestBoundary:latest.native.attempts.at(-1).durableRequestReceipt,
+        clockReceipt=unresolved?latestEntry.pending.clockReceipt:latest.continuation.clockReceipt,
+        receipt=commitRecovery.receipt,
+        liveBoundary=select.durableRequestBoundary();
+      demand(receipt&&['sessionId','streamId','sessionGeneration','ordinal'].every(key=>receipt[key]===boundary[key])&&
+        liveBoundary&&['sessionId','streamId','sessionGeneration'].every(key=>liveBoundary[key]===boundary[key]),
+        'known commit receipt or live owner differs from the retained request scope');
+      await executionClock.elapsed(clockReceipt,{timeoutMs:policy.timeoutMs});
+      checkAbort();
+      if(latest.policy.serviceAdmission!=null){
+        demand(serviceAdmissionCoordinator&&
+          isDeepStrictEqual(copy(serviceAdmissionCoordinator.ownerSnapshot()),latest.policy.serviceAdmission),
+          'known commit recovery requires the retained service owner snapshot');
+        demand(isDeepStrictEqual(await serviceAdmissionCoordinator.assertActive(),latest.policy.serviceAdmission.policy),
+          'known commit recovery service owners changed or are terminal');
+      }else demand(serviceAdmissionCoordinator===null,'unfenced history cannot acquire service authority during recovery');
+      try{
+        const recovered=copy(await select.recoverCommit({receipt:copy(receipt),
+          ...(unresolved?{}:{accountingCheckpoint:copy(latest.native)})}));checkAbort();
+        demand(isDeepStrictEqual(recovered.receipt,receipt),'recovered native request receipt changed');
+        const state=copy(await select.statusOrchestration({session:latest.session,track:latest.state.track})),
+          native=copy(await select.checkpoint()),
+          elapsedMs=await executionClock.elapsed(clockReceipt,{timeoutMs:policy.timeoutMs});
+        const expectedPolicy={...policy,...(Object.hasOwn(latest.policy,'serviceAdmission')?
+          {serviceAdmission:copy(latest.policy.serviceAdmission)}:{})};
+        const reconciled=(unresolved?buildRecoveredCoordinatorCheckpointV8:refreshRecoveredCoordinatorCheckpointV8)({
+          checkpoint:latest,pending:latestEntry.pending,recovery:recovered,native,state,elapsedMs,
+          policy:expectedPolicy,initialPublic});
+        checkAbort();
+        const stillLatest=validateSelectedHistoryChain(copy(await historyJournal.readLatest(copy(historyReceipt))),historyReceipt);
+        demand(isDeepStrictEqual(stillLatest.at(-1),latestEntry),'latest coordinator fence changed during native recovery');
+        const previous=copy(historyReceipt),nextReceipt=copy(await historyJournal.append(copy(reconciled),{previous}));
+        validateSelectedHistoryReceipt(nextReceipt);
+        const recorded=validateSelectedHistoryChain(copy(await historyJournal.readLatest(copy(nextReceipt))),nextReceipt),tail=recorded.at(-1);
+        demand(isDeepStrictEqual(tail?.checkpoint,reconciled)&&isDeepStrictEqual(tail?.previous,previous)&&
+          !Object.hasOwn(tail??{},'pending')&&!Object.hasOwn(tail??{},'terminal'),
+          'reconciled history differs from the exact recovered safe cut');
+        const acknowledged=copy(await acknowledge({receipt:copy(nextReceipt),previous:copy(previous)}));
+        validateSelectedHistoryReceipt(acknowledged);
+        demand(isDeepStrictEqual(acknowledged,nextReceipt),'reconciled history head acknowledgement differs');
+        checkAbort();
+        const restored=await this.#adoptRestoredNative(reconciled,{select,policy,harnessOptions,
+          serviceAdmissionCoordinator,executionClock,state});
+        checkAbort();
+        restored.historyReceipt=copy(nextReceipt);
+        restored.startAutomaticHistory({journal:historyJournal,acknowledge,previous:nextReceipt,executionClock});
+        return restored;
+      }catch(error){select.close?.();throw error;}
+    }
     demand(!latestEntry.pending,'latest composite history head has unresolved in-flight work and cannot be replayed');
     if(latest.policy.serviceAdmission!=null){
       demand(serviceAdmissionCoordinator&&
@@ -378,7 +476,8 @@ export class RegionSelectedOrchestrationDriver {
       checkAbort();
     }else demand(serviceAdmissionCoordinator===null,
       'unfenced composite history cannot acquire service admission authority during recovery');
-    const restored=await this.restore(latest,{initialPublic,select,policy,harnessOptions,signal,serviceAdmissionCoordinator});
+    const restored=await this.restore(latest,{initialPublic,select,policy,harnessOptions,signal,serviceAdmissionCoordinator,
+      executionClock});
     restored.historyReceipt=copy(historyReceipt);return restored;
   }
 
@@ -393,7 +492,8 @@ export class RegionSelectedOrchestrationDriver {
       'checkpoint stop point must name an explicit safe continuation phase and selection count');
     stopAt=stopAt===null?null:copy(stopAt);
     this.running=true;this.used=true;
-    const started=performance.now(),baseElapsed=this.continuation.elapsedMs,abort=new AbortController(),coordinatorAttempts=this.coordinatorAttempts;
+    let started=process.hrtime.bigint(),baseElapsed=this.continuation.elapsedMs;
+    const abort=new AbortController(),coordinatorAttempts=this.coordinatorAttempts;
     let nativeIdentity=null,initialState=null,state=null,failure=null,cleanupFailure=null,
       closeReceipt=null,cancelReceipt=null,terminalReason=null,terminalCheckpoint=null,cancellationIntent=null,
       cancellationServiceAdmission=null,serviceTerminalVerified=false,deadlineExceeded=false,opened=false,paused=false;
@@ -401,7 +501,7 @@ export class RegionSelectedOrchestrationDriver {
     const onExternalAbort=()=>abort.abort(signal.reason??new Error('Selected orchestration v8 cancelled'));
     const checkAbort=()=>{if(abort.signal.aborted)throw abort.signal.reason instanceof Error?
       abort.signal.reason:new Error(String(abort.signal.reason??'Selected orchestration v8 cancelled'));};
-    const elapsed=()=>baseElapsed+performance.now()-started;
+    const elapsed=()=>baseElapsed+Number(process.hrtime.bigint()-started)/1_000_000;
     const readState=async()=>{
       state=await this.select.statusOrchestration({session:this.session,track:state.track});
       this.state=copy(state);return state;
@@ -616,7 +716,17 @@ export class RegionSelectedOrchestrationDriver {
     };
     try{
       if(signal){if(signal.aborted)onExternalAbort();else signal.addEventListener('abort',onExternalAbort,{once:true});}
-      const remainingMs=this.timeoutMs-this.continuation.elapsedMs;
+      if(this.continuation.clockReceipt){
+        assertSelectedOrchestrationExecutionClock(this.#executionClock);
+        const consumed=await this.#executionClock.elapsed(this.continuation.clockReceipt,{timeoutMs:this.timeoutMs});
+        demand(consumed>=this.continuation.elapsedMs,'live clock predates the retained execution budget');
+        this.continuation.elapsedMs=consumed;
+        // Keep the retained clock origin. Rebasing after the asynchronous read
+        // would silently refund the interval between sampling and resumption.
+        baseElapsed=this.continuation.clockReceipt.consumedElapsedMs;
+        started=BigInt(this.continuation.clockReceipt.issuedMonotonicNs);
+      }
+      const remainingMs=this.timeoutMs-elapsed();
       if(remainingMs<=0){deadlineExceeded=true;abort.abort(new Error('Selected orchestration v8 deadline exceeded'));}
       else timer=setTimeout(()=>{deadlineExceeded=true;
         abort.abort(new Error('Selected orchestration v8 deadline exceeded'));},remainingMs);
@@ -680,9 +790,19 @@ export class RegionSelectedOrchestrationDriver {
           'Selected orchestration v8 coordinator selection budget exhausted');
         if(this.automaticHistory!==null){
           const beforeSelection=await captureCheckpoint();
+          let clockFields={};
+          if(this.automaticHistory.executionClock!==null){
+            const clockReceipt=await this.automaticHistory.executionClock.capture({timeoutMs:this.timeoutMs,
+              elapsedMs:sample=>baseElapsed+Number(sample-started)/1_000_000});
+            const requestBoundary=copy(this.select.durableRequestBoundary());
+            demand(requestBoundary?.sessionId===this.session,
+              'durable request boundary belongs to another coordinator session');
+            clockFields={clockReceipt,requestBoundary};
+          }
           await persistAutomaticCheckpoint(beforeSelection,pendingMarker(beforeSelection,'coordinator-selection',{
             attempt:coordinatorAttempts.length,coordinatorSelections:this.continuation.coordinatorSelections,
-            track:state.track}));
+            track:state.track,...clockFields}));
+          if(clockFields.clockReceipt)this.continuation.clockReceipt=copy(clockFields.clockReceipt);
           checkAbort();
         }
         const context=nativeV8OrchestrationContext(state),attempt={attempt:coordinatorAttempts.length,

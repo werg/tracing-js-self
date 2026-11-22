@@ -1,0 +1,51 @@
+name: Same-boot orchestration clock investigation
+
+on:
+  push:
+    branches: [codex/v8-monotonic-recovery-20261122]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monotonic-recovery-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  monotonic-clock:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: Require the Linux time namespace identity
+        run: test -L /proc/self/ns/time
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Run clock recovery controls
+        run: node --test --test-reporter=tap --test-reporter-destination="$RUNNER_TEMP/clock-tests.tap" --test-reporter=junit --test-reporter-destination="$RUNNER_TEMP/clock-tests.xml" test/selected-orchestration-clock.test.js
+      - name: Require all five clock controls with zero skips
+        run: |
+          python - <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+          root = ET.parse(os.path.join(os.environ["RUNNER_TEMP"], "clock-tests.xml")).getroot()
+          cases = list(root.iter("testcase"))
+          tests = len(cases)
+          skipped = sum(any(child.tag == "skipped" for child in case) for case in cases)
+          failures = sum(any(child.tag == "failure" for child in case) for case in cases)
+          errors = sum(any(child.tag == "error" for child in case) for case in cases)
+          if (tests, skipped, failures, errors) != (5, 0, 0, 0):
+              raise SystemExit(f"clock controls require 5 tests and zero skips/failures; got tests={tests}, skipped={skipped}, failures={failures}, errors={errors}")
+          print("All five same-boot clock controls passed with zero skips")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: same-boot-orchestration-clock-evidence
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            ${{ runner.temp }}/clock-tests.tap
+            ${{ runner.temp }}/clock-tests.xml
