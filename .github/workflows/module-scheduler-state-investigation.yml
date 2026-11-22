@@ -2,7 +2,7 @@ name: Source-owned module scheduler lifecycle and native parity
 
 on:
   push:
-    branches: [codex/v8-module-scheduler-state-20261122, codex/v8-scheduler-source-ownership-20261122, codex/v8-nested-async-calls-20261122]
+    branches: [codex/v8-module-scheduler-state-20261122, codex/v8-scheduler-source-ownership-20261122, codex/v8-nested-async-calls-20261122, codex/v8-bound-module-ledger-20261122]
 
 permissions:
   contents: read
@@ -15,7 +15,7 @@ concurrency:
 jobs:
   scheduler-state:
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 45
     defaults:
       run:
         shell: bash
@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: werg/megatoken
-          ref: fe563c1fa8e11a73f59af53c59da97e553b26fa3
+          ref: 4fd7b561774f4dcda7d08b985909cd08a882df71
           path: megatoken
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -72,6 +72,8 @@ jobs:
           python -m ruff format --check src/megatoken/data/module_scheduler_state_v8.py tests/test_module_scheduler_state_v8.py
           python -m ruff check src/megatoken/data/async_call_v8.py src/megatoken/data/protocol_v8.py src/megatoken/data/promise_scheduler_v8.py src/megatoken/data/native_v8.py tests/test_async_call_v8.py
           python -m ruff format --check src/megatoken/data/async_call_v8.py src/megatoken/data/protocol_v8.py src/megatoken/data/promise_scheduler_v8.py src/megatoken/data/native_v8.py tests/test_async_call_v8.py
+          python -m ruff check src/megatoken/data/module_scheduler_machine_v8.py tests/test_module_scheduler_machine_v8.py
+          python -m ruff format --check src/megatoken/data/module_scheduler_machine_v8.py tests/test_module_scheduler_machine_v8.py
           git diff --exit-code --
       - name: Verify the paired contract and unchanged existing fixture population
         working-directory: tracing-js-self
@@ -91,7 +93,7 @@ jobs:
         if: ${{ !cancelled() }}
         working-directory: megatoken
         run: |
-          python -m pytest -q tests/test_module_scheduler_state_v8.py tests/test_async_call_v8.py \
+          python -m pytest -q tests/test_module_scheduler_state_v8.py tests/test_module_scheduler_machine_v8.py tests/test_async_call_v8.py \
             tests/test_protocol_v8.py tests/test_protocol_boundaries_v8.py tests/test_promise_scheduler_v8.py \
             tests/test_promise_join_v8.py tests/test_promise_executor_v8.py tests/test_promise_executor_boundaries_v8.py \
             tests/test_generator_boundaries_v8.py \
@@ -201,6 +203,29 @@ jobs:
               raise ValueError('Every original-module public context must pass actual native replay without claiming admission')
           print('All 707 original-module public contexts and ten uniquely owned lifecycle cuts passed actual native replay')
           PY
+      - name: Enforce original-module lifecycle in the active public and native ledger
+        if: ${{ !cancelled() }}
+        working-directory: tracing-js-self
+        env:
+          BOUND_MODULE_SOURCE_EVIDENCE: ${{ runner.temp }}/bound-module-source-evidence.json
+        run: |
+          node --test --test-concurrency=1 --test-reporter=junit test/semantic-bound-module-scheduler-v8.test.js \
+            2>&1 | tee "$RUNNER_TEMP/bound-module-source.xml"
+          python - <<'PY'
+          import json,os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          cases=list(ET.parse(root/'bound-module-source.xml').getroot().iter('testcase'))
+          if len(cases)!=11 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('Every source-bound ledger and independent native control must run and pass')
+          summary=json.loads((root/'bound-module-source-evidence.json').read_text())['summary']
+          required={'cases':4,'modules':13,'contexts':2838,'moduleCuts':39,'nativeCases':4,'nativeContexts':2838,
+              'nativeModuleCuts':39,'refusedStates':10,'refusedPlans':6,'moduleAdmission':False,'trainingAdmission':False,'optimizerUpdates':0}
+          if any(summary[key]!=value for key,value in required.items()):
+              raise ValueError('Source-bound ledger population, independent state parity or admission boundary changed')
+          print('BOUND_MODULE_SOURCE_EVIDENCE_SUMMARY_JSON '+json.dumps(summary,separators=(',',':')))
+          print('All 2838 source-bound public contexts and all 39 module-cut checkpoints passed independent native replay')
+          PY
       - name: Verify both candidate checkouts remained exact
         if: ${{ !cancelled() }}
         run: |
@@ -218,3 +243,4 @@ jobs:
             ${{ runner.temp }}/module-scheduler-*
             ${{ runner.temp }}/shared-generator-*
             ${{ runner.temp }}/nested-async-*
+            ${{ runner.temp }}/bound-module-*

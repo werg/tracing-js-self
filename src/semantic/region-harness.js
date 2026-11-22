@@ -15,6 +15,7 @@ import {applyProtocolRecordV8,assertProtocolDetailCompatible,restoreProtocolStat
 import {assertPlainPromiseResolutionV8,assertObservedPromiseResolutionV8} from './scheduler-boundaries-v8.js';
 import {capturePendingIngress,restorePendingIngress} from './pending-ingress-v8.js';
 import {assertModuleNamespaceNextV8} from './protocol-module-namespace-v8.js';
+import {assertBoundModuleSchedulerNextV8,advanceBoundModuleSchedulerV8} from './protocol-module-scheduler-v8.js';
 import {DurableHostIngressBroker,validateHostIngressLogChain,validateHostIngressLogReceipt} from './host-ingress-journal-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual;
@@ -46,7 +47,7 @@ export class RegionExecutionHarness {
   constructor(options={}){
     this.inner=new SelectedExecutionLifecycleV8(options);
     this.bindRealmReadiness();
-    this.programs=new Map();this.moduleNamespacePlans=new Map();this.timeline=[];this.innerCursor=0;this.consumed=[];this.active=null;
+    this.programs=new Map();this.moduleNamespacePlans=new Map();this.moduleSchedulerPlans=new Map();this.timeline=[];this.innerCursor=0;this.consumed=[];this.active=null;
   }
   bindRealmReadiness(){this.inner.refreshRealmReady=(realmId,cutoff)=>this.refreshRealmReady(realmId,cutoff);}
   get invocations(){return this.inner.invocations;}
@@ -81,8 +82,9 @@ export class RegionExecutionHarness {
     for(const {controller,identity,item}of dependency){item.readySequence=++scheduler.ready;controller.ready.push(identity);}
   }
   publishProgram(options){
-    const {moduleNamespacePlan,...ownedOptions}=options;
+    const {moduleNamespacePlan,moduleSchedulerPlan,...ownedOptions}=options;
     if(moduleNamespacePlan!==undefined)this.moduleNamespacePlans.set(options.programId,copy(moduleNamespacePlan));
+    if(moduleSchedulerPlan!==undefined)this.moduleSchedulerPlans.set(options.programId,copy(moduleSchedulerPlan));
     this.inner.publishProgram(ownedOptions);this.sync();return this.timeline.at(-1);
   }
   admitInvocation(options){this.inner.admitInvocation(options);this.sync();return this.timeline.at(-1);}
@@ -94,6 +96,9 @@ export class RegionExecutionHarness {
       const plan=this.programs.get(activation.programId)?.moduleNamespacePlan;
       if(plan===undefined)delete activation.controller.moduleNamespacePlan;
       else activation.controller.moduleNamespacePlan=copy(plan);
+      const schedulerPlan=this.programs.get(activation.programId)?.moduleSchedulerPlan;
+      if(schedulerPlan===undefined)delete activation.controller.moduleSchedulerPlan;
+      else activation.controller.moduleSchedulerPlan=copy(schedulerPlan);
     }
   }
   sync(){
@@ -102,7 +107,8 @@ export class RegionExecutionHarness {
       const {schema,sequence,ownerSequence,mode,kind,traceFormat,...fields}=raw;
       if(kind==='program'){
         const program=defineRegionProgram({source:fields.source,entry:fields.entry,
-          moduleNamespacePlan:this.moduleNamespacePlans.get(fields.programId)}).program;
+          moduleNamespacePlan:this.moduleNamespacePlans.get(fields.programId),
+          moduleSchedulerPlan:this.moduleSchedulerPlans.get(fields.programId)}).program;
         this.programs.set(fields.programId,program);fields.regionProgram=program;
       }
       if(kind==='semantic'||kind==='result'){
@@ -139,20 +145,35 @@ export class RegionExecutionHarness {
       const record=decodeDetailedRecord(line,{role:'generated'});
       const controller=this.activation(invocationId).controller,completionDetail=allowsProtocolCompletionDetailV8(controller,record);
       assertModuleNamespaceNextV8(controller,record);
+      assertBoundModuleSchedulerNextV8(controller,record);
       if(controller.protocol){
         if(!protocolDetailKinds.has(record.kind)&&!completionDetail&&!(internalSchedulerDetailKinds.has(record.kind)&&
           allowsProtocolInternalSchedulerV8(controller,record)))fail('asynchronous or external work requires an extended protocol profile');
         assertProtocolDetailCompatible(controller,record);
       }
       assertSchedulerDetail(controller,record);
+      // Bound module lifecycle checks run before any live detail commits.
+      // Only the logical ledger is copied back after the ordinary selected
+      // record succeeds; the underlying shared scope/Promise transition is
+      // still committed through the same existing lifecycle.
+      let moduleLedger=null;
+      if(controller.moduleSchedulerPlan){
+        const staged=cloneRegionController(controller);
+        staged.commitRecord(record,{mode:'generated',track:this.activation(invocationId).trackId});
+        if(staged.firstWitnessViolation)fail('module detail contradicts the selected source state');
+        advanceBoundModuleSchedulerV8(controller,staged,record);sharedRegionState(staged);
+        moduleLedger=[...staged.heap].find(([,node])=>node.kind==='module-scheduler');
+      }
       const realmId=this.activation(invocationId).realmId,readyCutoff=controller.scheduler.ready;
       const result=this.inner.selected(invocationId,line);
+      if(moduleLedger)controller.heap.set(moduleLedger[0],moduleLedger[1]);
       this.refreshRealmReady(realmId,readyCutoff);
       this.sync();return result;
     }
     if(line.startsWith('protocol '))return this.selectProtocol(invocationId,line);
     if(line.startsWith('algorithm '))return this.selectAlgorithm(invocationId,line,providedEntry);
     if(this.program(invocationId)?.moduleNamespacePlan)fail('module namespace profile requires explicit protocol cell transitions');
+    if(this.program(invocationId)?.moduleSchedulerPlan)fail('bound module scheduler requires explicit source records');
     const record=decodeRegionRecord(line),activation=this.activation(invocationId),controller=activation.controller;
     const region=this.region(invocationId,record.region),entry=this.entry(invocationId,record.region);
     if(!eq(providedEntry,entry))fail('stale region entry, live state, identity, or causal cutoff');
@@ -215,6 +236,7 @@ export class RegionExecutionHarness {
     if(controller.generated>=controller.maxGenerated)fail('protocol generated record bound');
     const readyCutoff=controller.scheduler.ready;
     const staged=cloneRegionController(controller),result=applyProtocolRecordV8(staged,record);staged.generated++;
+    advanceBoundModuleSchedulerV8(controller,staged,record);
     const state=sharedRegionState(staged); // Full descriptor/Symbol size is checked before mutation.
     // Retained callbacks share these exact objects. Replacing one controller's
     // maps would silently split the realm when a callback creates a join.
@@ -233,6 +255,7 @@ export class RegionExecutionHarness {
   }
   selectAlgorithm(invocationId,line,providedEntry){
     if(this.program(invocationId)?.moduleNamespacePlan)fail('module namespace profile requires explicit protocol cell transitions');
+    if(this.program(invocationId)?.moduleSchedulerPlan)fail('bound module scheduler requires explicit source records');
     const record=decodePureRegionRecord(line),activation=this.activation(invocationId),controller=activation.controller;
     const program=this.program(invocationId),entry=pureRegionEntry(program,controller,this.timeline.length);
     if(!eq(entry,providedEntry))fail('stale pure region entry');
@@ -298,10 +321,11 @@ export class RegionExecutionHarness {
     this.sync();const fields=copy(row.fields),kind=row.kind;
     if(kind==='program'){
       validateRegionProgram(fields.regionProgram);
-      const moduleNamespacePlan=fields.regionProgram.moduleNamespacePlan;
-      const expected=defineRegionProgram({source:fields.source,entry:fields.entry,moduleNamespacePlan}).program;
+      const moduleNamespacePlan=fields.regionProgram.moduleNamespacePlan,moduleSchedulerPlan=fields.regionProgram.moduleSchedulerPlan;
+      const expected=defineRegionProgram({source:fields.source,entry:fields.entry,moduleNamespacePlan,moduleSchedulerPlan}).program;
       if(!eq(fields.regionProgram,expected))fail('program publication changed');delete fields.regionProgram;
       if(moduleNamespacePlan!==undefined)this.moduleNamespacePlans.set(fields.programId,copy(moduleNamespacePlan));
+      if(moduleSchedulerPlan!==undefined)this.moduleSchedulerPlans.set(fields.programId,copy(moduleSchedulerPlan));
       this.inner.publishProgram(fields);this.sync();return;
     }
     if(kind==='result'){const record=decodeDetailedRecord(fields.line,{role:'observed'});

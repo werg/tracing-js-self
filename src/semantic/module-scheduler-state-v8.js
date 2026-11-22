@@ -164,6 +164,9 @@ function verifyState(plan, state) {
   if (new Set(orders).size !== orders.length || orders.length !== state.nextStartOrder)
     fail('noncanonical start order');
 }
+export function validateModuleSchedulerStateV8(plan,state){
+  verifyModuleSchedulerPlanV8(plan);verifyState(plan,state);return {valid:true};
+}
 function existingPromise(facts, promiseId) {
   const promise = facts?.promises?.[promiseId];
   if (!promise || promise.id !== promiseId || !['pending','fulfilled','rejected'].includes(promise.status))
