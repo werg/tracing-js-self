@@ -1,0 +1,19 @@
+{
+  "workflowRevision": "90756c533ee04afc2a41d8890d979e94456f9243",
+  "requiredNativeCases": 104,
+  "requiredProducerCases": 119,
+  "sourceCases": 15,
+  "sourceRestoreCuts": 65,
+  "sourceGeneratedContexts": 423,
+  "sharedRealmContexts": 19,
+  "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+  "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+  "tracing-js-self": {
+    "revision": "90756c533ee04afc2a41d8890d979e94456f9243",
+    "tree": "1652a93ff2e99d02a962d95f0c856317c02bb2fe"
+  },
+  "megatoken": {
+    "revision": "03a9e33866207b5b0c4105297c6050dacadcf85f",
+    "tree": "0531e702beb88c5421907d6c41d078169ccd00b5"
+  }
+}

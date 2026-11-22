@@ -1,0 +1,52 @@
+{
+  "executedProducerLocalCommit": "e17410b681b3753a4acbe1468dc860eb1edca511",
+  "nativeRevision": "15844c00c095849755ca6f0e1d207f7db79a9264",
+  "selectedLeafCases": 5,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "explicitFilter": "unknown bootstrap refuses|producer intent .* ambiguity",
+  "cases": [
+    {
+      "name": "unknown bootstrap refuses replay, stale create recovery and a bootstrap receipt passed to commit recovery",
+      "seconds": "8.409009"
+    },
+    {
+      "name": "actual commit producer intent publication-acknowledgement ambiguity fences every later native action",
+      "seconds": "4.481215"
+    },
+    {
+      "name": "actual commit producer intent independent-readback ambiguity fences every later native action",
+      "seconds": "3.582505"
+    },
+    {
+      "name": "actual bootstrap producer intent publication-acknowledgement ambiguity fences every later native action",
+      "seconds": "4.843522"
+    },
+    {
+      "name": "actual bootstrap producer intent independent-readback ambiguity fences every later native action",
+      "seconds": "4.352039"
+    }
+  ],
+  "runtime": {
+    "node": "v24.22.3",
+    "python": "Python 3.12.14"
+  },
+  "sourceFiles": [
+    {
+      "path": "test/fixtures/semantic-v8-durable-commit-peer.py",
+      "sha256": "322dea8db409928083ec2a396db046e847039c22c1e55786db9e2241adc7d2e3",
+      "bytes": 4459
+    },
+    {
+      "path": "test/semantic-native-durable-bootstrap-v8.test.js",
+      "sha256": "4e62f1c170b582b2ba8483b64672c462cfd9089715998cfcd715f7367286aad0",
+      "bytes": 13809
+    },
+    {
+      "path": "src/semantic/native-process-v8.js",
+      "sha256": "f033df0629f7acf50d15296ffbb9becab5cd88e5124f20b929cdb65e3f06c068",
+      "bytes": 36449
+    }
+  ]
+}

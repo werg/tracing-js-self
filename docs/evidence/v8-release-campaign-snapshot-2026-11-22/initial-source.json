@@ -1,0 +1,13 @@
+{
+  "scope": "Initial environment failure before fixture setup; TMPDIR was not configured",
+  "files": [
+    {
+      "path": "tools/verify-v8-release-campaign.mjs",
+      "sha256": "453956b51c76e962521ac5bac70b3eaaa7f92be48126fb48eae90cd56d5b0473"
+    },
+    {
+      "path": "test/v8-release-campaign.test.js",
+      "sha256": "b7d5275c01842e5915d03181fea8bf4f2006a3a11b12b4d47ffeae7339c60cef"
+    }
+  ]
+}

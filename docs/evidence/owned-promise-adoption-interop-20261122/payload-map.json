@@ -1,0 +1,104 @@
+{
+  "schema": "promise-adoption-interop-payloads/1",
+  "definition": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+  "interoperability": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+  "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+  "sourceExamples": 23,
+  "fixturePayloads": 6,
+  "contractFiles": 1,
+  "productionDenominatorChanged": false,
+  "files": [
+    {
+      "source": "contracts/semantic-execution-v8.json",
+      "native": "src/megatoken/data/contracts/semantic-execution-v8.json",
+      "encoding": "copy",
+      "sourceBytes": 82585,
+      "sourceGitBlob": "2ffe4bebded927a0ccd8171774f2d83716c3e648",
+      "nativeBytes": 82585,
+      "nativeGitBlob": "2ffe4bebded927a0ccd8171774f2d83716c3e648",
+      "nativeSha256": "ad09b9ad4f777165c00763b42519c152de7c0f5b02964a19821d3b22667ef58b"
+    },
+    {
+      "source": "test/fixtures/semantic-regions-v8.json",
+      "native": "tests/fixtures/semantic-regions-v8.json.gz.b64",
+      "encoding": "gzip-base64",
+      "sourceBytes": 2045603,
+      "sourceGitBlob": "fffdea770e825268fd50a3b93e07957e197da50e",
+      "nativeBytes": 66329,
+      "nativeGitBlob": "efcf07ec6f7d042509a57332cf4319f370c28e3d",
+      "nativeSha256": "f3e5225516e4db740665e746226c76be65dff4fcb73d0aae545e0d4f215393ca"
+    },
+    {
+      "source": "test/fixtures/semantic-protocol-v8.json",
+      "native": "tests/fixtures/semantic-protocol-v8.json",
+      "encoding": "copy",
+      "sourceBytes": 29227,
+      "sourceGitBlob": "f9af0626a916efb8929ff93bb95eee4fc78652d4",
+      "nativeBytes": 29227,
+      "nativeGitBlob": "f9af0626a916efb8929ff93bb95eee4fc78652d4",
+      "nativeSha256": "704dcb2f7a34d7bd2089391020b1686a0e9ef118def323ed1db99227e05e5d58"
+    },
+    {
+      "source": "test/fixtures/semantic-iterator-v8.json",
+      "native": "tests/fixtures/semantic-iterator-v8.json",
+      "encoding": "copy",
+      "sourceBytes": 32084,
+      "sourceGitBlob": "938c21b6866c712d8ea44f553b5e7c595aa6e9c9",
+      "nativeBytes": 32084,
+      "nativeGitBlob": "938c21b6866c712d8ea44f553b5e7c595aa6e9c9",
+      "nativeSha256": "f124dba091c3fa36463fd0c6b79b98e5566c14cc0807938b25954d68f8d1db69"
+    },
+    {
+      "source": "test/fixtures/semantic-protocol-source-v8.json",
+      "native": "tests/fixtures/semantic-protocol-source-v8.json",
+      "encoding": "copy",
+      "sourceBytes": 171870,
+      "sourceGitBlob": "0dfb20c028c698774874c84352458bf32c1a360f",
+      "nativeBytes": 171870,
+      "nativeGitBlob": "0dfb20c028c698774874c84352458bf32c1a360f",
+      "nativeSha256": "8d4943e57e4033a1a4dfc3649d53ae9e1b8d42039375c618b35a6664c040f382"
+    },
+    {
+      "source": "test/fixtures/semantic-protocol-region-v8.json",
+      "native": "tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
+      "encoding": "gzip-base64",
+      "sourceBytes": 9187898,
+      "sourceGitBlob": "7c0fefc8b53184df50e1720c21d656b18b336f72",
+      "nativeBytes": 695341,
+      "nativeGitBlob": "010c083817f999b90f70371fc52c7cb48a9ca95f",
+      "nativeSha256": "f6f5e37868bc0350d6901a7a8df0140d7f7ad6b4c5608675cdec1eaed8838b04"
+    },
+    {
+      "source": "test/fixtures/semantic-host-protocol-v8.json.gz.b64",
+      "native": "tests/fixtures/semantic-host-protocol-v8.json.gz.b64",
+      "encoding": "copy",
+      "sourceBytes": 60565,
+      "sourceGitBlob": "3f0b769b67bcf9a4b45de6321e017c3863bfd4ba",
+      "nativeBytes": 60565,
+      "nativeGitBlob": "3f0b769b67bcf9a4b45de6321e017c3863bfd4ba",
+      "nativeSha256": "d55fb40d10b582e861b2099e03c10a95e04213a09fca404e2367ee1489a0f5ab"
+    }
+  ],
+  "expectedNewCounts": {
+    "source-promise-adoption-executor": [
+      12,
+      1,
+      14
+    ],
+    "source-promise-adoption-async-return": [
+      9,
+      0,
+      12
+    ],
+    "source-promise-adoption-reaction-return": [
+      9,
+      0,
+      17
+    ]
+  },
+  "expectedNewCountsOrder": [
+    "protocolRecords",
+    "regionRecords",
+    "semanticDetailedRecords"
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "schema": "neutral-release-archive-control-evidence/1",
+  "baselineRevision": "28dcdbaba8c59ececba4c62de98baeb6cce551b3",
+  "executedLocalRevision": "56841b15dc8440dc015495d8e681c851774696c3",
+  "publishedEquivalentRevision": "99472fc4461fa0d37cea75fc62b40ae593b788a6",
+  "executedTree": "1de8415391f6a5a904cce52f0f5bbd9d5f663fb6",
+  "runtime": {
+    "python": "3.12.14",
+    "pytest": "9.2.0",
+    "node": "v24.22.3",
+    "npm": "11.19.1"
+  },
+  "inputDependencyReceipts": {
+    "producerShrinkwrap": {
+      "bytes": 2742,
+      "sha256": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88"
+    },
+    "installedDependencyLock": {
+      "bytes": 912,
+      "sha256": "36b639d33bb685979a98cd1f00fb992298cc4ba4f118039583cf377616d922a7"
+    },
+    "acornPackage": {
+      "bytes": 1061,
+      "sha256": "9e422c8225c9cc4c774e9a9392d0ecac7f766b46122ef2db99db0fc4bbedc247"
+    }
+  },
+  "attempts": [
+    {
+      "name": "initial-environment",
+      "scope": "Development-only attempt during editing; source not frozen; acorn unavailable",
+      "junitCountsIncludingSubtests": {
+        "tests": 65,
+        "failures": 7,
+        "errors": 0,
+        "skipped": 0
+      },
+      "rawConsoleSummary": "7 failed, 31 passed, 27 subtests passed in 1.62s"
+    },
+    {
+      "name": "frozen-baseline-environment",
+      "scope": "Exact28dc baseline with acorn unavailable",
+      "junitCountsIncludingSubtests": {
+        "tests": 65,
+        "failures": 7,
+        "errors": 0,
+        "skipped": 0
+      },
+      "rawConsoleSummary": "7 failed, 31 passed, 27 subtests passed in 1.61s"
+    },
+    {
+      "name": "frozen-baseline-ready",
+      "scope": "Exact28dc baseline with installed producer dependencies",
+      "junitCountsIncludingSubtests": {
+        "tests": 65,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "rawConsoleSummary": "33 passed, 32 subtests passed in 1.62s"
+    },
+    {
+      "name": "intermediate-extraction",
+      "scope": "Development-only extraction before final source freeze; no exact source qualification",
+      "junitCountsIncludingSubtests": {
+        "tests": 65,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "rawConsoleSummary": "33 passed, 32 subtests passed in 1.35s"
+    },
+    {
+      "name": "final-source-controls",
+      "scope": "Exact local56841b15 / published99472fc source with installed producer dependencies",
+      "junitCountsIncludingSubtests": {
+        "tests": 70,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "rawConsoleSummary": "38 passed, 32 subtests passed in 1.75s"
+    }
+  ],
+  "qualifiedBaselineCases": 33,
+  "qualifiedBaselineSubtests": 32,
+  "qualifiedFinalCases": 38,
+  "qualifiedFinalSubtests": 32,
+  "optimizerUpdates": 0,
+  "semanticAdmissionPerformed": false,
+  "learnedSuccess": null
+}

@@ -1,0 +1,36 @@
+{
+  "schema": "direct-v8-release-boundary-proof/1",
+  "source": "b4ee5e8645606f91002d10e4953618365fe7746c",
+  "tree": "cf44943f50acb47df97eaa7cad247224ce4c8aaa",
+  "tests": 17,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "python": "3.12.14",
+  "commands": [
+    {
+      "name": "controls",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tools/native-consumer",
+        "-p",
+        "test_release_v8.py",
+        "-v"
+      ],
+      "returncode": 0
+    }
+  ],
+  "optimizerUpdates": 0,
+  "sourceNativeAdmissions": 0,
+  "productionTokenizerProof": false,
+  "fullPackageRestoreQualified": false,
+  "learnedSuccess": null,
+  "defaultPromotion": false,
+  "sourceClaim": "Exact published source HEAD and clean tree checked before and after",
+  "actualHeadAtStart": "b4ee5e8645606f91002d10e4953618365fe7746c",
+  "actualHeadAtFinish": "b4ee5e8645606f91002d10e4953618365fe7746c"
+}

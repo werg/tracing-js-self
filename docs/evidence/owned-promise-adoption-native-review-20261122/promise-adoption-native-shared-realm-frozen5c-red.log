@@ -1,0 +1,48 @@
+✖ typed adoption forwarding cannot overtake another invocation in the shared realm FIFO (477.17894ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 882.606869
+
+✖ failing tests:
+
+test at test/semantic-protocol-promise-adoption-v8.test.js:159:1
+✖ typed adoption forwarding cannot overtake another invocation in the shared realm FIFO (477.17894ms)
+  AssertionError [ERR_ASSERTION]: Traceback (most recent call last):
+    File "/workspace/scratch/05d92519587f/native-promise-adoption-initial-review/src/megatoken/data/native_v8.py", line 201, in validate_v8_artifact
+      validate_protocol_state(state["protocol"], state["heap"], state)
+    File "/workspace/scratch/05d92519587f/native-promise-adoption-initial-review/src/megatoken/data/protocol_v8.py", line 1719, in validate_protocol_state
+      validate_promise_adoption_state(memory_machine)
+    File "/workspace/scratch/05d92519587f/native-promise-adoption-initial-review/src/megatoken/data/promise_adoption_v8.py", line 412, in validate_state
+      _fail("retained adoption owner differs from its root invocation")
+    File "/workspace/scratch/05d92519587f/native-promise-adoption-initial-review/src/megatoken/data/promise_adoption_v8.py", line 22, in _fail
+      raise ProtocolV8Error("Invalid owned Promise adoption: " + message)
+  megatoken.data.protocol_v8.ProtocolV8Error: Invalid owned Promise adoption: retained adoption owner differs from its root invocation
+  
+  The above exception was the direct cause of the following exception:
+  
+  Traceback (most recent call last):
+    File "<string>", line 5, in <module>
+    File "/workspace/scratch/05d92519587f/native-promise-adoption-initial-review/src/megatoken/data/native_v8.py", line 203, in validate_v8_artifact
+      raise NativeV8Error(f"Malformed shared protocol state: {e}") from e
+  megatoken.data.native_v8.NativeV8Error: Malformed shared protocol state: Invalid owned Promise adoption: retained adoption owner differs from its root invocation
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-v8.test.js:193:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

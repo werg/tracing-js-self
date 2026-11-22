@@ -1,0 +1,881 @@
+{
+  "schema": "promise-then-lookup-frozen-review/1",
+  "identities": {
+    "producer": {
+      "localRevision": "a9a2df84d81da5106a4c39258f46324e1c2b04e9",
+      "tree": "1652a93ff2e99d02a962d95f0c856317c02bb2fe",
+      "status": "",
+      "publishedRevision": "90756c533ee04afc2a41d8890d979e94456f9243"
+    },
+    "native": {
+      "revision": "03a9e33866207b5b0c4105297c6050dacadcf85f",
+      "tree": "0531e702beb88c5421907d6c41d078169ccd00b5",
+      "status": ""
+    }
+  },
+  "externalSourceRevision": "7fe5a9d57fbf456f0165534f089116b4b5db7279",
+  "note": "Literal accessor source follows the published external test. Derived computed/alias variants are separately labeled; no later unpublished exact regression is assumed.",
+  "rows": [
+    {
+      "name": "positive-async-owned-return",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){const p=target();async function outer(){return p;}return await outer();}",
+      "sourceSha256": "b74d0b1710c27de508bb2e64a4161cbead90103aae38232dc479d8d744889aca",
+      "expectedRefusal": false,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":1}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": 1
+        }
+      },
+      "ownedDrive": {
+        "kind": "terminated",
+        "waitingOn": [],
+        "pendingEffects": []
+      },
+      "directProjection": {
+        "accepted": true,
+        "outcome": {
+          "kind": "return",
+          "graph": {
+            "roots": [
+              [
+                "num",
+                1
+              ]
+            ],
+            "objects": []
+          }
+        },
+        "protocolRecords": 11
+      },
+      "sourceAdmission": {
+        "exported": true,
+        "status": "detailed-fallback",
+        "phase": null,
+        "category": null,
+        "reason": null,
+        "sourceValidated": true,
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            1
+          ]
+        }
+      },
+      "native": {
+        "exit": 0,
+        "stderr": "",
+        "error": null,
+        "receipt": {
+          "schema": "semantic-native-admission/8",
+          "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+          "checks": {
+            "replay": "passed",
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "counts": {
+            "contexts": 21,
+            "generatedRecords": 21,
+            "algorithmRecords": 0,
+            "regionRecords": 0,
+            "detailedRecords": 10,
+            "protocolRecords": 11
+          },
+          "admitted": false
+        }
+      }
+    },
+    {
+      "name": "external-published-literal-own-then-accessor",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();Object.defineProperty(p,\"then\",{get:function(){order+=\"g\";return function(resolve){order+=\"t\";resolve(2);};}});async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "296de2d90268a170b752b22c5fdbb733b3ceba3b28579ee0d95c622ce6b003a0",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"gt2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "gt2"
+        }
+      },
+      "ownedDrive": {
+        "kind": "terminated",
+        "waitingOn": [],
+        "pendingEffects": []
+      },
+      "directProjection": {
+        "accepted": true,
+        "outcome": {
+          "kind": "throw",
+          "graph": {
+            "roots": [
+              [
+                "ref",
+                "o0"
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "object",
+                "properties": [
+                  [
+                    "name",
+                    [
+                      "str",
+                      "TypeError"
+                    ]
+                  ],
+                  [
+                    "message",
+                    [
+                      "str",
+                      "Object.defineProperty requires an owned ordinary object"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        "protocolRecords": 7
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.protocol-reference",
+        "reason": "Protocol metadata observation: Promise subclass or modified own state requires its declared profile"
+      }
+    },
+    {
+      "name": "computed-binding-own-then-accessor",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();const key=\"then\";Object.defineProperty(p,key,{get:function(){order+=\"g\";return function(resolve){order+=\"t\";resolve(2);};}});async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "b25c40e5c18266656fa3e7d36a027d726d1a408107fc89ee8cb04becc4e1aeef",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"gt2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "gt2"
+        }
+      },
+      "ownedDrive": {
+        "kind": "terminated",
+        "waitingOn": [],
+        "pendingEffects": []
+      },
+      "directProjection": {
+        "accepted": true,
+        "outcome": {
+          "kind": "throw",
+          "graph": {
+            "roots": [
+              [
+                "ref",
+                "o0"
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "object",
+                "properties": [
+                  [
+                    "name",
+                    [
+                      "str",
+                      "TypeError"
+                    ]
+                  ],
+                  [
+                    "message",
+                    [
+                      "str",
+                      "Object.defineProperty requires an owned ordinary object"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        "protocolRecords": 7
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.protocol-reference",
+        "reason": "Protocol metadata observation: Promise subclass or modified own state requires its declared profile"
+      }
+    },
+    {
+      "name": "computed-expression-own-then-accessor",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();Object.defineProperty(p,\"th\"+\"en\",{get:function(){order+=\"g\";return function(resolve){order+=\"t\";resolve(2);};}});async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "ec710529c859b3ca5e70758520c1bce2b11dad2c280abe78252b85a88755d2e6",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"gt2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "gt2"
+        }
+      },
+      "ownedDrive": {
+        "kind": "terminated",
+        "waitingOn": [],
+        "pendingEffects": []
+      },
+      "directProjection": {
+        "accepted": true,
+        "outcome": {
+          "kind": "throw",
+          "graph": {
+            "roots": [
+              [
+                "ref",
+                "o0"
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "object",
+                "properties": [
+                  [
+                    "name",
+                    [
+                      "str",
+                      "TypeError"
+                    ]
+                  ],
+                  [
+                    "message",
+                    [
+                      "str",
+                      "Object.defineProperty requires an owned ordinary object"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        "protocolRecords": 7
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.protocol-reference",
+        "reason": "Protocol metadata observation: Promise subclass or modified own state requires its declared profile"
+      }
+    },
+    {
+      "name": "literal-own-then-assignment",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();p.then=function(resolve){order+=\"t\";resolve(2);};async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "04aece5255b4d4aecb9d4b087adf8b1149723213eab225ee45c4a9c95b529e72",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"t2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "t2"
+        }
+      },
+      "directProjection": {
+        "accepted": false,
+        "error": "Not a writable guest object",
+        "category": null
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.protocol-source",
+        "reason": "Not a writable guest object"
+      }
+    },
+    {
+      "name": "computed-binding-own-then-assignment",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();const key=\"then\";p[key]=function(resolve){order+=\"t\";resolve(2);};async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "b55ca2c6ec70a1b02528772221d183f9157905f9d4b40860de781df9acc58155",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"t2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "t2"
+        }
+      },
+      "directProjection": {
+        "accepted": false,
+        "error": "Not a writable guest object",
+        "category": null
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.protocol-source",
+        "reason": "Not a writable guest object"
+      }
+    },
+    {
+      "name": "computed-expression-own-then-assignment",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();p[\"th\"+\"en\"]=function(resolve){order+=\"t\";resolve(2);};async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "34d9aff88a8948bbafe4fb808f0fb07b11c69ac1e3b7ec0805ec6823336107fa",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"t2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "t2"
+        }
+      },
+      "directProjection": {
+        "accepted": false,
+        "error": "Not a writable guest object",
+        "category": null
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.protocol-source",
+        "reason": "Not a writable guest object"
+      }
+    },
+    {
+      "name": "aliased-promise-own-then-accessor",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();const alias=p;Object.defineProperty(alias,\"then\",{get:function(){order+=\"g\";return function(resolve){order+=\"t\";resolve(2);};}});async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "a9cab389b42837696ea6dceaae02ad8c572b7b46acaa73fa97eec5d31d9591a3",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"gt2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "gt2"
+        }
+      },
+      "ownedDrive": {
+        "kind": "terminated",
+        "waitingOn": [],
+        "pendingEffects": []
+      },
+      "directProjection": {
+        "accepted": true,
+        "outcome": {
+          "kind": "throw",
+          "graph": {
+            "roots": [
+              [
+                "ref",
+                "o0"
+              ]
+            ],
+            "objects": [
+              {
+                "id": "o0",
+                "kind": "object",
+                "properties": [
+                  [
+                    "name",
+                    [
+                      "str",
+                      "TypeError"
+                    ]
+                  ],
+                  [
+                    "message",
+                    [
+                      "str",
+                      "Object.defineProperty requires an owned ordinary object"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        "protocolRecords": 7
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.protocol-reference",
+        "reason": "Protocol metadata observation: Promise subclass or modified own state requires its declared profile"
+      }
+    },
+    {
+      "name": "aliased-object-defineProperty",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();const O=Object;O.defineProperty(p,\"then\",{get:function(){order+=\"g\";return function(resolve){order+=\"t\";resolve(2);};}});async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "596f6ca0ffe3a83cf6d68bb94fa2e61a2ed87ec0ea0234bfdb061d692d5ba5e3",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"gt2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "gt2"
+        }
+      },
+      "ownedDrive": {
+        "kind": "terminated",
+        "waitingOn": [],
+        "pendingEffects": []
+      },
+      "directProjection": {
+        "accepted": false,
+        "error": "Effectful teacher projection: unrepresentable captured cell",
+        "category": "unsupported.witness-projection"
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.witness-projection",
+        "reason": "Effectful teacher projection: unrepresentable captured cell"
+      }
+    },
+    {
+      "name": "aliased-method-defineProperty",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();const define=Object.defineProperty;define(p,\"then\",{get:function(){order+=\"g\";return function(resolve){order+=\"t\";resolve(2);};}});async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "7981efd941c22f9ca47bca5a5a4490aaf2f632a4274a755ad40eca2b520fd6c6",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"gt2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "gt2"
+        }
+      },
+      "ownedDrive": {
+        "kind": "terminated",
+        "waitingOn": [],
+        "pendingEffects": []
+      },
+      "directProjection": {
+        "accepted": false,
+        "error": "Effectful teacher projection: unrepresentable captured cell",
+        "category": "unsupported.witness-projection"
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.witness-projection",
+        "reason": "Effectful teacher projection: unrepresentable captured cell"
+      }
+    },
+    {
+      "name": "destructured-method-defineProperty",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();const {defineProperty:define}=Object;define(p,\"then\",{get:function(){order+=\"g\";return function(resolve){order+=\"t\";resolve(2);};}});async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "3df431d4a6ae81988bff2a364eb883e7368930ecb339673c0c4fe65d1aef29a1",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"gt2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "gt2"
+        }
+      },
+      "ownedDrive": {
+        "kind": "terminated",
+        "waitingOn": [],
+        "pendingEffects": []
+      },
+      "directProjection": {
+        "accepted": false,
+        "error": "Effectful teacher projection: unrepresentable captured cell",
+        "category": "unsupported.witness-projection"
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.witness-projection",
+        "reason": "Effectful teacher projection: unrepresentable captured cell"
+      }
+    },
+    {
+      "name": "computed-object-assign-then",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();const key=\"then\";Object.assign(p,{[key]:function(resolve){order+=\"t\";resolve(2);}});async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "813307cf9afc1606cf58e2133903c5d8247a14a2e98375b422106aa47e6d65e7",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"t2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "t2"
+        }
+      },
+      "directProjection": {
+        "accepted": false,
+        "error": "Object.assign needs a bounded ordinary data target",
+        "category": null
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.protocol-source",
+        "reason": "Object.assign needs a bounded ordinary data target"
+      }
+    },
+    {
+      "name": "computed-reflect-set-then",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();const key=\"then\";Reflect.set(p,key,function(resolve){order+=\"t\";resolve(2);});async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "8f42a316f820fe8e08af2775982d7543c9c31667f15ea10be44d755c3ba241f3",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"t2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "t2"
+        }
+      },
+      "directProjection": {
+        "accepted": false,
+        "error": "Reflect.set currently requires an owned module namespace",
+        "category": null
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.protocol-source",
+        "reason": "Reflect.set currently requires an owned module namespace"
+      }
+    },
+    {
+      "name": "computed-defineProperties-then",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();const key=\"then\";Object.defineProperties(p,{[key]:{get:function(){order+=\"g\";return function(resolve){order+=\"t\";resolve(2);};}}});async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "b3b43a68d9a3155b292dff9b2a35615c5f6b87f85febd4ea7a97d3dfded05e71",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"gt2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "gt2"
+        }
+      },
+      "directProjection": {
+        "accepted": false,
+        "error": "Unsupported property receiver (no host fallback)",
+        "category": null
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.protocol-source",
+        "reason": "Unsupported property receiver (no host fallback)"
+      }
+    },
+    {
+      "name": "aliased-setPrototypeOf",
+      "source": "\"use strict\";async function target(){return 1;}async function run(){let order=\"\";const p=target();const set=Object.setPrototypeOf;set(p,{then:function(resolve){order+=\"t\";resolve(2);}});async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}",
+      "sourceSha256": "d1878054632e7ce4102f6567305019b41d44536b73018c449fc8d039d190f0ee",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"t2\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "t2"
+        }
+      },
+      "ownedDrive": {
+        "kind": "terminated",
+        "waitingOn": [],
+        "pendingEffects": []
+      },
+      "directProjection": {
+        "accepted": false,
+        "error": "Effectful teacher projection: unrepresentable captured cell",
+        "category": "unsupported.witness-projection"
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.witness-projection",
+        "reason": "Effectful teacher projection: unrepresentable captured cell"
+      }
+    },
+    {
+      "name": "prototype-computed-then",
+      "source": "\"use strict\";async function h(){return Promise.resolve(1);}async function run(){let order=\"\";const original=Promise.prototype.then;const key=\"then\";Promise.prototype[key]=function(resolve,reject){order+=\"t\";return original.call(this,resolve,reject);};const adopted=h();await adopted;return order;}",
+      "sourceSha256": "4dee7eb5561a38aeafcbd82d049e2ff4e61d21a80861ee27c6079cc9b2e906a5",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":\"t\"}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": "t"
+        }
+      },
+      "directProjection": {
+        "accepted": false,
+        "error": "Unsupported property receiver (no host fallback)",
+        "category": null
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.protocol-source",
+        "reason": "Unsupported property receiver (no host fallback)"
+      }
+    },
+    {
+      "name": "aliased-promise-resolve-override",
+      "source": "\"use strict\";async function h(){return Promise.resolve(1);}async function run(){const P=Promise;P.resolve=function(value){return {then:function(resolve){resolve(value+1);}};};return await h();}",
+      "sourceSha256": "3b6f974cfd8e7f05ffa8f2570c71515f56d196b0d9d88b54add91bdbf1b315df",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":2}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": 2
+        }
+      },
+      "directProjection": {
+        "accepted": false,
+        "error": "Not a writable guest object",
+        "category": null
+      },
+      "sourceAdmission": {
+        "exported": false,
+        "status": "unsupported",
+        "phase": "owned-and-independent-source",
+        "category": "unsupported.protocol-source",
+        "reason": "Not a writable guest object"
+      }
+    },
+    {
+      "name": "shadowed-promise-resolve",
+      "source": "\"use strict\";async function h(Promise){return Promise.resolve(1);}async function run(){return await h({resolve:function(value){return Promise.resolve(value+1);}});}",
+      "sourceSha256": "06db42684df44878637d13a953fddfe06c8e74bb01e6a84157708450f052433a",
+      "expectedRefusal": true,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":2}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": 2
+        }
+      },
+      "ownedDrive": {
+        "kind": "terminated",
+        "waitingOn": [],
+        "pendingEffects": []
+      },
+      "directProjection": {
+        "accepted": true,
+        "outcome": {
+          "kind": "return",
+          "graph": {
+            "roots": [
+              [
+                "num",
+                2
+              ]
+            ],
+            "objects": []
+          }
+        },
+        "protocolRecords": 10
+      },
+      "sourceAdmission": {
+        "exported": true,
+        "status": "detailed-fallback",
+        "phase": null,
+        "category": null,
+        "reason": null,
+        "sourceValidated": true,
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            2
+          ]
+        }
+      },
+      "native": {
+        "exit": 0,
+        "stderr": "",
+        "error": null,
+        "receipt": {
+          "schema": "semantic-native-admission/8",
+          "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+          "checks": {
+            "replay": "passed",
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "counts": {
+            "contexts": 25,
+            "generatedRecords": 25,
+            "algorithmRecords": 0,
+            "regionRecords": 0,
+            "detailedRecords": 15,
+            "protocolRecords": 10
+          },
+          "admitted": false
+        }
+      }
+    },
+    {
+      "name": "positive-unrelated-object-write",
+      "source": "\"use strict\";async function h(o){o.x=2;return Promise.resolve(o.x);}async function run(){return await h({x:1});}",
+      "sourceSha256": "02545c17b67eef2ea3ba56ce402ec856d123658f32535502623f6284faa29b6a",
+      "expectedRefusal": false,
+      "original": {
+        "exit": 0,
+        "stdout": "{\"kind\":\"return\",\"value\":2}",
+        "stderr": "",
+        "error": null,
+        "outcome": {
+          "kind": "return",
+          "value": 2
+        }
+      },
+      "ownedDrive": {
+        "kind": "terminated",
+        "waitingOn": [],
+        "pendingEffects": []
+      },
+      "directProjection": {
+        "accepted": true,
+        "outcome": {
+          "kind": "return",
+          "graph": {
+            "roots": [
+              [
+                "num",
+                2
+              ]
+            ],
+            "objects": []
+          }
+        },
+        "protocolRecords": 7
+      },
+      "sourceAdmission": {
+        "exported": true,
+        "status": "detailed-fallback",
+        "phase": null,
+        "category": null,
+        "reason": null,
+        "sourceValidated": true,
+        "completion": {
+          "kind": "return",
+          "value": [
+            "num",
+            2
+          ]
+        }
+      },
+      "native": {
+        "exit": 0,
+        "stderr": "",
+        "error": null,
+        "receipt": {
+          "schema": "semantic-native-admission/8",
+          "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+          "checks": {
+            "replay": "passed",
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "counts": {
+            "contexts": 21,
+            "generatedRecords": 21,
+            "algorithmRecords": 0,
+            "regionRecords": 0,
+            "detailedRecords": 14,
+            "protocolRecords": 7
+          },
+          "admitted": false
+        }
+      }
+    }
+  ],
+  "finalStatus": {
+    "producer": "",
+    "native": ""
+  },
+  "counts": {
+    "cases": 19,
+    "negativeCases": 17,
+    "negativeSourceRefusals": 16,
+    "negativeDirectProjectionAccepted": 5,
+    "positiveNativePassed": 2
+  }
+}

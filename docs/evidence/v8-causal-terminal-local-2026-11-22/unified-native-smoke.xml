@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="actual native bootstrap preserves the accepted create and supports a second process loss without another selection" time="23.532099" classname="test" file="/workspace/scratch/9faed68167fb/producer-unified-recovery/test/semantic-native-durable-bootstrap-v8.test.js"/>
+	<testcase name="actual Python terminal close restores a closed outcome: null" time="23.283648" classname="test" file="/workspace/scratch/9faed68167fb/producer-unified-recovery/test/semantic-native-durable-close-v8.test.js"/>
+	<!-- tests 2 -->
+	<!-- suites 0 -->
+	<!-- pass 2 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 47103.019605 -->
+</testsuites>

@@ -1,0 +1,29 @@
+✔ independent original source and public adoption: settled-executor (903.749852ms)
+✔ independent original source and public adoption: pending-executor (1221.668383ms)
+✔ independent original source and public adoption: source-fifo-microtask (2678.825302ms)
+✔ independent original source and public adoption: pending-forwarding-before-microtask-settlement (2342.488107ms)
+✔ independent original source and public adoption: rejected-executor (1084.797376ms)
+✔ independent original source and public adoption: root-async-result (592.897213ms)
+✔ independent original source and public adoption: nested-async-result (545.558831ms)
+✔ independent original source and public adoption: reaction-result (902.019541ms)
+✔ independent original source and public adoption: reaction-fifo-chain (3193.296153ms)
+✔ independent original source and public adoption: late-resolver-and-throw (1402.186395ms)
+✔ independent original source and public adoption: executor-self-ignored-error (1144.780989ms)
+✔ independent original source and public adoption: reaction-self-ignored-error (985.856292ms)
+✔ independent original source and public adoption: reaction-join-result (1568.686ms)
+✔ independent original source and public adoption: nested-async-receiver (1138.496115ms)
+✔ independent original source and public adoption: rejected-async-result (1092.984945ms)
+✔ source ownership and identities are independent of registry order (966.429482ms)
+✔ every source adoption, original completion and first-call cut restores exact public continuation (1869.589853ms)
+✔ source recheck refuses changed adoption targets, original source and an invented current-event certificate (30.063405ms)
+✔ independent native queueMicrotask order changes with actual source scheduling and retains its process deadline (1188.528178ms)
+✔ unqualified then lookup, async callback activation, reflected self Error and pending cycles remain source refusals (864.708542ms)
+✔ actual native adoption consumer independently replays every source context and restored cut (17751.985096ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44237.631885

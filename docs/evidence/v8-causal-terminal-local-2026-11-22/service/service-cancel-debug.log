@@ -1,0 +1,20 @@
+✖ actual Python track_cancel reconciliation requires the acknowledged same-owner service intent (3668.767742ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3846.90751
+
+✖ failing tests:
+
+test at test/semantic-native-orchestration-recovery-v8.test.js:371:1
+✖ actual Python track_cancel reconciliation requires the acknowledged same-owner service intent (3668.767742ms)
+  Error: Native v8 process already closed
+      at select.shutdown (file:///workspace/scratch/9faed68167fb/producer-service-close/src/semantic/native-process-v8.js:449:37)
+      at TestContext.<anonymous> (file:///workspace/scratch/9faed68167fb/producer-service-close/test/semantic-native-orchestration-recovery-v8.test.js:418:24)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

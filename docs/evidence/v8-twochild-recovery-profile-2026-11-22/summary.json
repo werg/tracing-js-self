@@ -1,0 +1,18 @@
+{
+  "producerRevision": "90cc10a87814c4dd75e84dc1846d0f56453c83b8",
+  "nativeRevision": "15844c00c095849755ca6f0e1d207f7db79a9264",
+  "selectedCases": 1,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "caseSeconds": 174.560247,
+  "claim": "unclocked two-child baseline only; no live-clock recovery or whole-gate claim",
+  "profile": {
+    "file": "CPU.20261122.161813.13.0.001.cpuprofile",
+    "sha256": "5cd994b3df8b929cd17070cfe02915e0ce791e3715a26378d5264c36a2f8bd12",
+    "bytes": 3844740,
+    "samplingIntervalMicroseconds": 10000,
+    "elapsedSeconds": 174.825307
+  },
+  "command": "Node 24.22.3 --cpu-prof --cpu-prof-interval=10000 --test --test-timeout=600000 --test-name-pattern=actual two-child lexical fixture completes; spec and JUnit reporters retained separately"
+}

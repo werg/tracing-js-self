@@ -1,0 +1,66 @@
+{
+  "baseCommit": "4af548906cdd889451128353a9f53c1739e23c52",
+  "baseTree": "e56cc4ba037b10bebdd36abe137e3b424c9a1c33",
+  "branch": "codex/v8-release-currentpair-20261122",
+  "currentBaseNativePolicy": {
+    "consumerRevision": "c253a1e7770ee569d1b2022efadb471a1cc98da2",
+    "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+    "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+    "reasonNotRunnable": "Unlaunched composition candidate; final native source task/guard and pair review remain pending."
+  },
+  "files": [
+    {
+      "bytes": 5974,
+      "path": ".github/workflows/v8-release-package-restore.yml",
+      "sha256": "3ae283e0bac68c9d6645d0998cc39f0611dd3f21fe5ab978019671fe99c16c3c"
+    },
+    {
+      "bytes": 19606,
+      "path": "tools/run-v8-package-restore-gate.py",
+      "sha256": "16c78b7e2024109be107f5ce6819554aceac69d3868b6d8389bd247dd7f9e3d3"
+    },
+    {
+      "bytes": 10807,
+      "path": "docs/direct-v8-release.md",
+      "sha256": "f4f663e0e93d97588a30571512c593eb30b361b3926cb6a8776efcee3141b685"
+    }
+  ],
+  "localValidation": {
+    "gitDiffCheck": "passed",
+    "pythonDriverSyntax": "passed",
+    "workflowExecution": "not run"
+  },
+  "repository": "werg/tracing-js-self",
+  "schema": "semantic-v8-package-restore-workflow-candidate/1",
+  "status": "candidate composed, not launched; final pair source review pending",
+  "workflow": {
+    "claims": {
+      "completeTrainingPassQualified": false,
+      "defaultPromotion": false,
+      "learnedSuccess": null
+    },
+    "hiddenJournal": "assert source-qualification/progress/.campaign.lock in sealed package inventory; artifact upload includes hidden files",
+    "lifecycle": {
+      "checkpoint": "SE-000000002-periodic",
+      "fullTargetCoverageRequested": false,
+      "optimizerUpdates": 2
+    },
+    "negativeControl": "modify served/model.safetensors, recompute outer SHA, require inner archive inventory refusal before native restore",
+    "packageAndRestoreVerificationOptimizerUpdates": 0,
+    "relocation": "remove original qualification, prepared corpus, tokenizer, lifecycle assets and package staging before restore",
+    "runtime": {
+      "locale": "C.UTF-8",
+      "node": "24.22.3",
+      "python": "3.12.14",
+      "timezone": "UTC"
+    },
+    "sourcePopulation": {
+      "declared": 64,
+      "test": 4,
+      "train": 48,
+      "validation": 12
+    },
+    "trigger": "workflow_dispatch only; no push trigger"
+  },
+  "compositionBaseCommit": "47cec9faff35046acc79c3d83c617738fa0c1da6"
+}

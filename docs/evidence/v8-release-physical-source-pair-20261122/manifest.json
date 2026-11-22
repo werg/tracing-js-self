@@ -1,0 +1,46 @@
+{
+  "schema": "paired-v8-release-physical-membership-controls/1",
+  "producerPublishedSource": "12969e5306e4a6ca4f5cfc9c9d6090269ca27c91",
+  "producerTestedLocalRevision": "88689782f486409e44eec30916ee9c5e43646b2f",
+  "producerSourceTree": "5a14e3931e17021716a4a882f909f819760e90eb",
+  "producerControls": {
+    "tests": 19,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "optimizerUpdates": 0,
+    "freshSourceReplays": 0,
+    "freshNativeAdmissions": 0
+  },
+  "nativePublishedSource": "74cb4c5117d554b40882a2bf415f1863fd1c32a7",
+  "nativeProofRevision": "72ee95a302859fcbdca0cd556f65a8688f1a4308",
+  "nativeControls": {
+    "tests": 69,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "controlledByteCodecFixtureOptimizerUpdates": 1,
+    "runtimeDeviation": "pytest9.2.0; final locked pytest8.4.2 hosted qualification still required"
+  },
+  "actualPairedPackageRestore": "not-qualified-by-these-controls",
+  "learnedSuccess": null,
+  "defaultPromotion": false,
+  "files": {
+    "controls.stderr.log": {
+      "bytes": 3463,
+      "sha256": "bd4b1e311ce0a172c461c3631d12091428e15cd34fe0cb3529ab5984def22132"
+    },
+    "controls.stdout.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-ddda-vs-200-readonly-map.json": {
+      "bytes": 39374,
+      "sha256": "7f1b2fd779598e9caf94252750874b7b078cff9c82da8ab178a57d6dcbbd2e41"
+    },
+    "native-source-id-main-promotion-map.json": {
+      "bytes": 3627,
+      "sha256": "735a7772bf8388f3a24da939ee1f944582329e10a72795b6251680608ce500a8"
+    }
+  }
+}

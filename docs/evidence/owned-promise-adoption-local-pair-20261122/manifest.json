@@ -1,0 +1,128 @@
+{
+  "schema": "owned-promise-local-pair/1",
+  "producerFeatureRevision": "c20b70e23565bd413394a7193bf596b10bf244ab",
+  "producerFeatureScope": "source implementation and canonical23-case fixture bytes; current additional tests/policy/docs are frozen by their containing commit",
+  "nativeRevision": "03a9e33866207b5b0c4105297c6050dacadcf85f",
+  "nativeTree": "0531e702beb88c5421907d6c41d078169ccd00b5",
+  "nativeCases": 104,
+  "nativeSubtestsLocalPytest9": 84,
+  "nativeSkips": 0,
+  "producerUnionBeforeAddedSourceCases": 118,
+  "producerUnionSkips": 0,
+  "sourceCohortAfterAddedFamilyCases": 21,
+  "sourceCohortSkips": 0,
+  "plannedHostedProducerCases": 119,
+  "source": {
+    "sourceCases": 15,
+    "actualNativeCases": 15,
+    "snapshotCuts": 65,
+    "generatedContexts": 423,
+    "moduleAdmission": false,
+    "trainingAdmission": false,
+    "optimizerUpdates": 0
+  },
+  "sharedRealmOwners": 2,
+  "sharedRealmContexts": 19,
+  "sourceFamilies": [
+    {
+      "name": "settled-executor",
+      "family": "promise-adoption:settled-executor",
+      "sourceSha256": "0526856957e554df92a8fe1a17faf72946b8f48e80d650736ee82e2db7bd5492",
+      "contexts": 18
+    },
+    {
+      "name": "pending-executor",
+      "family": "promise-adoption:pending-executor",
+      "sourceSha256": "a68388c38d0678255084a0f8847569db9a2c101a83be089b87340399e1c5ff8c",
+      "contexts": 25
+    },
+    {
+      "name": "source-fifo-microtask",
+      "family": "promise-adoption:source-fifo-microtask",
+      "sourceSha256": "19455ae19e1cd2bc24e49016c2ceea33221b36511e918deb54313084b01d9b31",
+      "contexts": 46
+    },
+    {
+      "name": "pending-forwarding-before-microtask-settlement",
+      "family": "promise-adoption:pending-forwarding-before-microtask-settlement",
+      "sourceSha256": "c8750f9b72949daa5c4e6757352fbbda405624aa6f041f2bc06bcf5a3f664238",
+      "contexts": 46
+    },
+    {
+      "name": "rejected-executor",
+      "family": "promise-adoption:rejected-executor",
+      "sourceSha256": "ba7ea7059f575616ca3cf741076e0b7232e0f59bf5e01890c61a9ec4916cc56b",
+      "contexts": 26
+    },
+    {
+      "name": "root-async-result",
+      "family": "promise-adoption:root-async-result",
+      "sourceSha256": "e84ef2d41ff14d1b333456272e5d4a30be1a7f2f6914c9246ff666373b2e6ded",
+      "contexts": 12
+    },
+    {
+      "name": "nested-async-result",
+      "family": "promise-adoption:nested-async-result",
+      "sourceSha256": "f5f0cec15a4fa7b20e9fad50ea4a457f7a2d739c4f0feaf3921c9c07b06f548f",
+      "contexts": 17
+    },
+    {
+      "name": "reaction-result",
+      "family": "promise-adoption:reaction-result",
+      "sourceSha256": "0a1b6d005dbc38add3f8f765f898b8349dbd018afed63c9755a375159bad2204",
+      "contexts": 25
+    },
+    {
+      "name": "reaction-fifo-chain",
+      "family": "promise-adoption:reaction-fifo-chain",
+      "sourceSha256": "43e079019766530708f9da28ffd46ab5be4290e47db8f1efa5adca9820031676",
+      "contexts": 56
+    },
+    {
+      "name": "late-resolver-and-throw",
+      "family": "promise-adoption:late-resolver-and-throw",
+      "sourceSha256": "aa84f908cab83cdd8c54c9538f7b3081b5b75a6fc53347e1e9ae090cfdb1757f",
+      "contexts": 28
+    },
+    {
+      "name": "executor-self-ignored-error",
+      "family": "promise-adoption:executor-self-ignored-error",
+      "sourceSha256": "f6a45a972f23e3195803a3300e058a3e74150e11942d53248596045e16dd3754",
+      "contexts": 21
+    },
+    {
+      "name": "reaction-self-ignored-error",
+      "family": "promise-adoption:reaction-self-ignored-error",
+      "sourceSha256": "58b95bcbb351e66429d902f4d1168a0bec04ff63fb982db01a9ef873108d6d13",
+      "contexts": 21
+    },
+    {
+      "name": "reaction-join-result",
+      "family": "promise-adoption:reaction-join-result",
+      "sourceSha256": "bd85861d666d6c738e016a6acae863f264e16f2ea8723e0873607c46af3d752f",
+      "contexts": 28
+    },
+    {
+      "name": "nested-async-receiver",
+      "family": "promise-adoption:nested-async-receiver",
+      "sourceSha256": "e10fe2735563dd6e00bf07d85c050b366a75d3304fb15ddda7a9d052298d5e58",
+      "contexts": 30
+    },
+    {
+      "name": "rejected-async-result",
+      "family": "promise-adoption:rejected-async-result",
+      "sourceSha256": "a5c5890a52f541b4f9f3f3e45b7ff74190863cac18cd133710e3352e43486691",
+      "contexts": 24
+    }
+  ],
+  "files": {
+    "native.log": "73a6dec27096640e83d105b2899ee382b5dfce1d268d4c6c8730cc286e5ae420",
+    "native.xml": "3480577f59ad15a17b4aefc55e49bd1f3373e1052c58e244ffdc2e91e867ea20",
+    "producer.log": "18b22320f64aaec61ec32286f31971159e3dfd25e352a8ef5f8cdef6726ae44c",
+    "producer.xml": "f39d78b3da704c5b3a4c7983c9f8c982e8b83de960f42a157f925061afb76eec",
+    "promise-adoption-shared-realm-public.json.gz.b64": "01e58193a543ec9e4a04a73f4b6dca753e7ec797dc358a72d407d07ee47df2c2",
+    "promise-adoption-source-evidence.json.gz.b64": "37682e73f32b6f6dd203dea5739e17bbc6c6eef4899fdb67e5c35cd46b803259",
+    "source15.log": "1fd3dc74e3fd7472e5a3c26161bb0b0ad0a4c278479273a37dda19ba75b3eddf",
+    "source15.xml": "272b4f0543840361ae506be03c0769bc97b22ebf315201c7a00e8ccc8fc0c257"
+  }
+}
