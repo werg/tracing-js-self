@@ -61,6 +61,7 @@ export function buildTest262EditionAudit({catalog,sources,specification,bytes,py
   verifyEcma262SpecificationBytes(bytes,specification);
   const inventory=extractEcma262HtmlInventory(bytes,{python});
   const anchors=new Map(inventory.anchors.map(row=>[row.id,row]));
+  const catalogPaths=new Set(catalog.files.map(file=>file.path));
   const references=new Map(),routing=new Map(),fileIdentities=new Map();
   for(const file of catalog.files.filter(file=>file.kind==='test')){
     const value=sources?.[file.path],source=typeof value==='string'?Buffer.from(value):value;
@@ -79,14 +80,35 @@ export function buildTest262EditionAudit({catalog,sources,specification,bytes,py
     fileIdentities.set(file.path,file.sha256);
   }
   const modes=new Map();
+  const reviewedInputs=new Set();
   for(const variant of catalog.variants){
     const {id,...identity}=variant,metadata=routing.get(variant.path);
+    const expectedHarness=metadata&&!metadata.flags.includes('raw')?[...new Set(['assert.js','sta.js',
+      ...(metadata.flags.includes('async')?['doneprintHandle.js']:[]),...metadata.includes])]
+      .map(name=>({path:'harness/'+name,sha256:catalogPaths.has('harness/'+name)?
+        sha(sources['harness/'+name]):null})):[];
     if(!references.has(variant.path)||variant.sourceDigest!==fileIdentities.get(variant.path)||
        id!==conformanceDigest({suiteRevision:catalog.suiteRevision,profile:catalog.profile,...identity})||
-       (metadata?conformanceDigest(metadata)!==conformanceDigest(variant.metadata):variant.metadata!==null))
+       (metadata?conformanceDigest(metadata)!==conformanceDigest(variant.metadata):variant.metadata!==null)||
+       conformanceDigest(variant.harness)!==conformanceDigest(expectedHarness))
       throw new TypeError('Edition audit variant contradicts its pinned source or profile: '+variant.path);
     if(!modes.has(variant.path))modes.set(variant.path,[]);
     modes.get(variant.path).push(variant.mode);
+    const evidence=variant.classification.evidence;
+    for(const input of evidence?.sourceInputs??[]){
+      if(reviewedInputs.has(input.path))continue;
+      const value=sources?.[input.path],source=typeof value==='string'?Buffer.from(value):value;
+      if(!(source instanceof Uint8Array)||sha(source)!==input.sha256)
+        throw new TypeError('Membership audit requires the exact reviewed source input bytes: '+input.path);
+      reviewedInputs.add(input.path);
+    }
+    if(evidence&&(evidence.editionSpecification.uri!==specification.uri||
+      evidence.editionSpecification.sha256!==specification.sha256))
+      throw new TypeError('Membership review names a different pinned edition specification: '+variant.path);
+    for(const obligation of evidence?.normativeObligations??[]){
+      if(obligation.basis==='edition'&&obligation.clauseIds.some(id=>!inventory.sections.some(section=>section.id===id)))
+        throw new TypeError('Membership review cites a clause absent from the exact pinned edition: '+variant.path);
+    }
   }
   for(const path of references.keys()){
     const expected=routing.has(path)?test262VariantModes(routing.get(path)):['unclassified'];

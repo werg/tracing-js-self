@@ -23,6 +23,8 @@ const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const hex40=/^[0-9a-f]{40}$/;
 const hex64=/^[0-9a-f]{64}$/;
 const own=(object,key)=>Object.hasOwn(object,key);
+const exactFields=(value,keys)=>!!value&&typeof value==='object'&&!Array.isArray(value)&&
+  Object.keys(value).length===keys.length&&keys.every(key=>own(value,key));
 const canonical=value=>{
   if(value===null||typeof value==='string'||typeof value==='boolean')return JSON.stringify(value);
   if(typeof value==='number'&&Number.isFinite(value))return JSON.stringify(value);
@@ -40,6 +42,8 @@ export const safeTest262Path=path=>typeof path==='string'&&/^(?:test|harness)\//
   !/[\\\x00-\x1f\x7f]/.test(path)&&!path.split('/').some(part=>part==='.'||part==='..'||part==='');
 const safeInclude=name=>typeof name==='string'&&/^[A-Za-z0-9_-][A-Za-z0-9_./-]*\.js$/.test(name)&&
   !name.split('/').some(part=>part==='..'||part==='.'||part==='');
+const membershipValues=new Set(['edition','extension','outside_profile','unclassified']);
+const membershipReviewSchema='test262-edition-membership-review/1';
 const decode=source=>{
   if(typeof source==='string')return source;
   if(source instanceof Uint8Array)return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(source);
@@ -123,6 +127,66 @@ export function test262VariantModes(metadata){
     flags.includes('onlyStrict')?['strict']:flags.includes('noStrict')?['sloppy']:['sloppy','strict'];
 }
 
+function validateMembershipClassification(classification,{suiteRevision,profile,sourceInputs,sourceDigest,
+  metadataResolved=true,dependencies={status:'not_required',unresolved:[]}}={}){
+  if(!classification||!membershipValues.has(classification.membership)||
+    typeof classification.requiredForThisRelease!=='boolean'||
+    classification.membership==='outside_profile'&&
+      (typeof classification.reason!=='string'||!classification.reason.trim()||classification.requiredForThisRelease))
+    throw new TypeError('Invalid Test262 edition/release classification');
+  const classificationKeys=classification.membership==='unclassified'?['membership','requiredForThisRelease']:
+    classification.membership==='outside_profile'?['membership','requiredForThisRelease','reason','evidence']:
+      ['membership','requiredForThisRelease','evidence'];
+  if(!exactFields(classification,classificationKeys))throw new TypeError('Invalid Test262 classification fields');
+  if(classification.membership==='unclassified'){
+    if(Object.hasOwn(classification,'evidence'))throw new TypeError('Unclassified Test262 membership cannot carry a decision');
+    return true;
+  }
+  if(!metadataResolved||!['complete','not_required'].includes(dependencies?.status)||
+    !Array.isArray(dependencies?.unresolved)||dependencies.unresolved.length)
+    throw new TypeError('Membership review requires resolved metadata and complete source dependency closure');
+  const evidence=classification.evidence;
+  const evidenceProblem=!exactFields(evidence,['schema','reviewer','method','rationale','suiteRevision','sourceDigest','profileDigest',
+      'hostProfileDigest','editionSpecification','sourceInputs','normativeObligations'])?'evidence fields':
+    evidence.schema!==membershipReviewSchema?'evidence schema':!exactFields(evidence.reviewer,['kind','identity'])?'reviewer fields':
+    !['human','assistant','tool-assisted'].includes(evidence.reviewer?.kind)?'reviewer kind':
+    typeof evidence.reviewer?.identity!=='string'||!evidence.reviewer.identity.trim()?'reviewer identity':
+    typeof evidence.method!=='string'||!evidence.method.trim()?'review method':
+    typeof evidence.rationale!=='string'||!evidence.rationale.trim()?'review rationale':
+    evidence.suiteRevision!==suiteRevision?'suite revision':evidence.sourceDigest!==sourceDigest?'test source digest':
+    evidence.profileDigest!==conformanceDigest(profile)?'profile digest':
+    evidence.hostProfileDigest!==conformanceDigest(profile.hostProfile)?'host profile digest':
+    !exactFields(evidence.editionSpecification,['uri','sha256'])||
+      typeof evidence.editionSpecification?.uri!=='string'||!evidence.editionSpecification.uri||
+      !hex64.test(evidence.editionSpecification.sha256??'')?'edition specification fields':
+    !Array.isArray(evidence.sourceInputs)?'source input list':
+    conformanceDigest(evidence.sourceInputs)!==conformanceDigest(sourceInputs)?'source input closure':
+    evidence.sourceInputs.some(row=>!exactFields(row,['path','sha256','kind'])||
+      !['test','harness','module-dependency'].includes(row.kind)||!hex64.test(row.sha256??''))?'source input fields':
+    !Array.isArray(evidence.normativeObligations)||!evidence.normativeObligations.length?'normative obligations':null;
+  if(evidenceProblem)throw new TypeError('Non-unclassified Test262 membership requires exact evidence: '+evidenceProblem);
+  let editionObligation=false,externalObligation=false;
+  for(const obligation of evidence.normativeObligations){
+    if(!exactFields(obligation,['basis','uri','sha256','clauseIds'])||
+      !['edition','addition','profile'].includes(obligation.basis)||
+      typeof obligation.uri!=='string'||!obligation.uri||!hex64.test(obligation.sha256??'')||
+      !Array.isArray(obligation.clauseIds)||!obligation.clauseIds.length||
+      obligation.clauseIds.some(id=>typeof id!=='string'||!id.trim()))
+      throw new TypeError('Membership review must cite exact normative obligations');
+    const isEdition=obligation.uri===evidence.editionSpecification.uri&&
+      obligation.sha256===evidence.editionSpecification.sha256;
+    if(obligation.basis==='edition'&&!isEdition||obligation.basis!=='edition'&&isEdition)
+      throw new TypeError('Membership obligation basis differs from its pinned specification');
+    if(isEdition)editionObligation=true;else externalObligation=true;
+  }
+  if(classification.membership==='edition'&&!editionObligation||
+    classification.membership==='extension'&&!externalObligation)
+    throw new TypeError('Membership review lacks a normative obligation for its declared membership');
+  if(classification.membership==='edition'&&externalObligation)
+    throw new TypeError('Edition membership cannot require addition or external profile obligations');
+  return true;
+}
+
 /** Snapshot pins, not directory search or execution success, define the files.
  * All source bytes must be present and verified before the denominator freezes.
  * Module dependency maps are explicit acquisition inputs, never guessed by regex. */
@@ -183,21 +247,24 @@ export function buildTest262Catalog({snapshot,sources,profile,moduleDependencies
       if(file.sourceError)throw new TypeError(file.sourceError);
       metadata=parseTest262Header(texts.get(file.path));
     }catch(error){metadataError=error.message;}
-    const classification=classifications[file.path]??{membership:'unclassified',requiredForThisRelease:false};
-    if(!['edition','extension','outside_profile','unclassified'].includes(classification.membership)||
-      typeof classification.requiredForThisRelease!=='boolean'||
-      classification.membership==='outside_profile'&&(typeof classification.reason!=='string'||!classification.reason.trim())||
-      classification.membership==='outside_profile'&&classification.requiredForThisRelease)
-      throw new TypeError('Invalid Test262 edition/release classification');
     const modes=metadata?test262VariantModes(metadata):['unclassified'];
     for(const mode of modes){
       const harness=metadata&&!metadata.flags.includes('raw')?[...new Set(['assert.js','sta.js',
         ...(metadata.flags.includes('async')?['doneprintHandle.js']:[]),...metadata.includes])]:[];
+      const dependencies=mode==='module'?closure(file.path):{status:'not_required',unresolved:[],files:[]},
+        moduleFiles=dependencies.files.filter(row=>row.path!==file.path),
+        sourceInputs=[{path:file.path,sha256:file.sha256,kind:'test'},
+          ...harness.map(name=>({path:'harness/'+name,sha256:byPath.get('harness/'+name)?.sha256??null,kind:'harness'})),
+          ...moduleFiles.map(row=>({path:row.path,sha256:row.sha256,kind:'module-dependency'}))]
+          .sort((a,b)=>a.path.localeCompare(b.path)||a.kind.localeCompare(b.kind));
+      const classification=classifications[file.path]??{membership:'unclassified',requiredForThisRelease:false};
+      validateMembershipClassification(classification,{suiteRevision:snapshot.revision,profile:boundProfile,
+        sourceInputs,sourceDigest:file.sha256,metadataResolved:metadata!==null&&metadataError===null,dependencies});
       const row={path:file.path,sourceDigest:file.sha256,gitBlobSha:file.gitBlobSha,mode,
         metadata,metadataError,classification:JSON.parse(canonical(classification)),
         expectedOutcome:metadata?.negative?{kind:'error',...metadata.negative}:{kind:'normal'},
         harness:harness.map(name=>({path:'harness/'+name,sha256:byPath.get('harness/'+name)?.sha256??null})),
-        dependencies:mode==='module'?closure(file.path):{status:'not_required',unresolved:[],files:[]},
+        dependencies,
         requiredHostCapabilities:metadata?[...(metadata.flags.includes('async')?['async-completion']:[]),
           ...(mode==='module'?['module-linker']:[]),
           ...(metadata.features.some(feature=>/^(?:Atomics|SharedArrayBuffer)/.test(feature))?['agent-cluster']:[])]:[]};
@@ -227,6 +294,28 @@ export function validateTest262Catalog(catalog){
   if(conformanceDigest(identity)!==digest)throw new TypeError('Test262 catalog digest mismatch');
   if(!Array.isArray(catalog.variants)||new Set(catalog.variants.map(row=>row.id)).size!==catalog.variants.length)
     throw new TypeError('Duplicate or missing Test262 variants');
+  const files=new Map((catalog.files??[]).map(file=>[file.path,file]));
+  const classifications=new Map();
+  for(const row of catalog.variants){
+    const sourceInputs=[{path:row.path,sha256:row.sourceDigest,kind:'test'},
+      ...(row.harness??[]).map(file=>({path:file.path,sha256:file.sha256,kind:'harness'})),
+      ...(row.dependencies?.files??[]).filter(file=>file.path!==row.path)
+        .map(file=>({path:file.path,sha256:file.sha256,kind:'module-dependency'}))]
+      .sort((a,b)=>a.path.localeCompare(b.path)||a.kind.localeCompare(b.kind));
+    validateMembershipClassification(row.classification,{suiteRevision:catalog.suiteRevision,profile:catalog.profile,
+      sourceInputs,sourceDigest:row.sourceDigest,metadataResolved:row.metadata!==null&&row.metadataError===null,
+      dependencies:row.dependencies});
+    const sourceFile=files.get(row.path);
+    if(!sourceFile||sourceFile.kind!=='test'||sourceFile.sha256!==row.sourceDigest||
+      row.classification.membership!=='unclassified'&&row.classification.evidence.sourceInputs.some(input=>{
+        const file=files.get(input.path);return !file||file.sha256!==input.sha256||
+          input.kind==='harness'&&file.kind!=='harness'||
+          input.kind==='module-dependency'&&!['test','fixture'].includes(file.kind);
+      }))throw new TypeError('Membership review source bytes do not match the frozen catalog: '+row.path);
+    if(classifications.has(row.path)&&conformanceDigest(classifications.get(row.path))!==
+      conformanceDigest(row.classification))throw new TypeError('Test262 variants disagree on file membership review: '+row.path);
+    classifications.set(row.path,row.classification);
+  }
   return true;
 }
 
