@@ -16,7 +16,168 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
-## Current paired checkpoint and optimizer exposure — 22 November 2026
+## Same-owner service terminal recovery promoted — 22 November 2026
+
+Exact candidate `5e8b987f13b43aff6b7084828646e2a3c258185b`, paired with native
+`e9817ad637f57ba82e370770420f6f3ef877c7b3`, passed **141 focused individual
+JUnit cases and 79 actual Python/shared-runtime paired cases, zero skips**.
+The exact 15 qualified implementation/documentation blobs are now on this branch.
+[Complete success and prior failure logs, exact file map and scope](evidence/v8-service-terminal5e8-2026-11-22/README.md)
+are permanently retained. Main-head CI remains a separate pending observation.
+
+The driver independently acknowledges terminal intent before service fences or
+native close. Settled completion and cancellation bind the same exact service
+owners, terminal reason, selected record, host completion cut and native checkpoint.
+Requested-intent recovery restores one terminal session only to close it, with
+zero host dispatch and no new model selection. Final tombstone recovery restores
+zero active sessions. The actual Python test compares every original/recovered
+decoder fragment, including the final selected cancellation record.
+
+Active and terminal service listings independently validate each admitted action
+and outcome, recheck stable owner/head/action snapshots, and report missing outcomes
+as unknown. They do not grant retry, exclusive execution ownership or takeover.
+The last failed probes are retained: a correct tampered-chain refusal with an
+outdated error expectation, and an expected trace that omitted selected cancellation.
+Readback of a published fence after lost directory-sync ACK remains distinct from
+that missing original acknowledgement.
+
+**Still open:** unsettled child replay, unknown/failed outcomes, successor or
+distributed ownership, and learned-quality/production launch qualification.
+The namespace candidate remains isolated; original-ESM observation, source authority,
+whole-artifact native replay and packing must pass before namespace admission.
+**0/17 complete acceptance packages are closed; both main PRs remain drafts.**
+Historical sections below retain the pending status at their recorded checkpoints.
+
+## Previous paired campaign and isolated hard-boundary checkpoint — 22 November 2026
+
+The complete `8dad4e6/e9817ad` four-population campaign passed: 665 original,
+66 interoperability, 11 gallery and 64 support source/native/token/packing cases.
+Each lane retains its own denominator. The native suite ran 801 controls and the
+paired transport suite 77, zero skips. Support and interoperability also passed
+their actual prepared-corpus optimizer/resume/export/service-restoration routes.
+Producer `134a832` passed 108 focused controls, installed 665+66 source checks and
+general CI. [Full logs and exact scope index](evidence/v8-paired8dad-main134-2026-11-22/README.md)
+are permanently retained. These results do not expand the separately measured
+optimizer census or claim learned success.
+
+The hardest current changes remain isolated until their complete gates pass:
+
+- Service candidate `5e8b987f13b43aff6b7084828646e2a3c258185b` on
+  `codex/v8-service-terminal-recovery-20261122`: acknowledged terminal intent,
+  exact same-owner service fences, settled complete/cancel reconciliation, and
+  read-only terminal/active-owner outcome listings. Prior runs passed 140/141
+  focused cases and 78/79 actual Python cases; remaining assertions were corrected
+  for the exact tampered-chain error and the selected cancellation decoder record.
+  Latest tests also compare original/restored decoder fragments and distinguish
+  one terminal session reexecution from zero-session final tombstone restoration.
+  Promotion remains pending. Missing outcomes, unsettled children, successor and
+  distributed ownership are not authorized for recovery.
+- Namespace producer `c6d88f69fe466a984173a634644c31d032a70d74` / native
+  `642d792aa6bac62b62e9384870e0be5e8e883be7` on paired
+  `codex/v8-namespace-state-validation-20261122`: the generated contract and
+  fixtures are committed, seven public-machine controls passed, and actual JS
+  and Python shared protocol states agreed at all 23 accepted/refused transition
+  cuts. The run passed 33/34 JS and 44/45 native cases, zero skips; the remaining
+  native failure is a missing fixture frame table, while source integration still
+  needs the reserved generated intrinsic and real original-ESM observation path.
+  The first source profile is restricted to a proved synchronous scalar subset,
+  with shadowing/thenable exclusions. Main namespace refusal remains intact.
+
+Recovery lesson: a published fence file can be visible when its writer loses
+its directory-sync acknowledgement. Independent synchronization/readback proves
+current retained bytes, not the missing original ACK. Native restore must remain
+behind verification of every service fence. Active recovery listings are
+point-in-time observations, not exclusive ownership or permission to retry.
+
+**0/17 complete acceptance packages are closed.** Both main PRs remain drafts.
+
+## Full support-corpus census measured — 22 November 2026
+
+Exact producer `3cf0e4732290ab07a6f0d1f897e8893df762cc92` / native
+`e9817ad637f57ba82e370770420f6f3ef877c7b3` passed the complete 64-source support
+route through source/native/token/packing/preparation, all eight source-supply
+requirements in both splits, and ordinary two-update training, fresh resume,
+export and real service restoration. [Run 44991189912 / support job137112388330](https://github.com/werg/tracing-js-self/actions/runs/44991189912/job/137112388330).
+All 75 paired JavaScript and 801 native controls passed, zero skips. Other
+superseded pending lanes are not credited as passes.
+
+The actual census advanced from 1 source / 2 logical targets / 2 physical records /
+2 occurrences to 1 source / 4 logical targets / 4 physical records / 4 occurrences.
+Only `se-support-inventory-shortfall-callbacks-recovery` was scored: 1 of the 48
+training sources. Cumulative positive-weight denominators were lexical125,
+reconstruction125, structure16, terminal8 and router_z4; these distinct loss
+normalizations must not be summed. The exact step-one digest is retained as the
+step-two parent. Complete behavior-target exposure remains unqualified.
+
+The serving sample `se-support-capped-budget-child-teacher` is canonically bound
+to training but differs from the scored source. Its trained weights preserve the
+exact next selection after restore, with zero host dispatches, and zero model
+selections acknowledged. No accepted-record recovery or learned-program result
+is claimed. Full launch, all-target exposure and learned success remain false,
+false and null respectively.
+
+[Full original reports, complete logs, exact source-supply counts and provenance](evidence/v8-support-census3cf-e981-2026-11-22/README.md)
+are now retained in git. An independent artifact-reading job verified exact
+revisions/registry/status before extracting them; no training was rerun for
+extraction. The ordinary command now retains and prints the complete census
+instead of hiding it only in the native subcommand report.
+
+New native general CI passed Python3.11 and3.12 at `e9817ad`: 3,730 passed,
+83 skipped,20 warnings each; Blackwell was skipped. The native paired66/11
+campaign against producer`c640f2b` passed47 JS/801 native controls per lane,
+all source/token/packing gates, and the66-source ordinary plus teacher lifecycle.
+Producer`8dad4e6` passed108 focused cases and installed665/66 source checks.
+The entire prior`10c3016/a886fb8` matrix also passed all four populations,
+including665 original sources. Each result retains its exact executable heads.
+
+Remaining training work: target-level behavior attribution and coverage, qualified
+production recipes and full launch assets, distributed optimizer failure recovery
+and checkpoint lineage, held-out model quality/cost, then operational cutover.
+The namespace state foundation is qualified only in isolation (31 Python and16
+JS/ESM/cross-language cases); owning source events/public/native integration are
+still under construction. Service-aware terminal intent and same-owner
+cancellation reconciliation are also isolated work. All17 broad packages remain
+open; these new results advance their evidence without shrinking their scope.
+
+## Successful completed orchestration recovery — 22 November 2026
+
+The exact implementation tested at producer
+`e32b412e86e8ececf2e025c8ccaffd23e1f17c53`, paired with native
+`e9817ad637f57ba82e370770420f6f3ef877c7b3`, is now promoted from its isolated
+validation branch. [Focused run 44991390200](https://github.com/werg/tracing-js-self/actions/runs/44991390200)
+passed 108 individual JUnit cases with zero skips; [real Python paired run
+44991390261](https://github.com/werg/tracing-js-self/actions/runs/44991390261)
+passed 77 cases with zero skips. [Full success/failure evidence](evidence/v8-composite-terminal-2026-11-22/README.md)
+and [API scope](NATIVE_V8_ORCHESTRATION_DRIVER.md) are retained.
+
+Successful `track_complete` now binds the verified completed host/native cut,
+the exact positive close receipt, and the actual closed-session native checkpoint
+to the latest pending coordinator action. `restoreLatest` independently reexecutes
+the closed checkpoint and requires zero restored active sessions and zero host
+dispatches before returning a nonresumable completed disposition. Original
+attempts, contexts, children, receipts and costs remain bound. Cancellation during
+asynchronous history reading is checked before native work. Lost close or history
+acknowledgement remains unresolved and refuses replay.
+
+The first terminal attempts are retained: correct malformed-base refusal but an
+outdated expected error string, followed by a missing locally scoped cancellation
+helper. Both are corrected and the zero-RPC cancellation test prevents recurrence.
+The reported 108 focused cases exclude Node's four suite-container summary entries.
+
+The complete 64-source optimizer route at exact producer `10c3016` / native
+`a886fb8` has now passed source/native/token/packing, strict behavior supply,
+actual ordinary two-update training, fresh resume, export and service restoration.
+Its [full log and JSON lines](evidence/v8-support-optimizer10c-2026-11-22/README.md)
+are permanently retained. The newer scored-target census still awaits full
+exact-pair execution. Learned success remains unmeasured.
+
+Still open: cancelled/failed/unknown terminal reconciliation, dynamic descendants,
+external service reconciliation, current-head discovery and coordinated successor
+or distributed ownership. The native test's final lexical decoder is controlled;
+it does not qualify learned program success. Source validation and default
+promotion remain false. All 17 broad acceptance packages remain open.
+
+## Previous paired checkpoint and optimizer exposure — 22 November 2026
 
 This increment pins native `e9817ad637f57ba82e370770420f6f3ef877c7b3`, which records the actual
 positive-weight source targets used by ordinary optimizer updates and carries

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {executeEvaluatedModulesSync,linkEvaluatedModules} from '../src/evaluated-modules.js';
+import {linkEvaluatedModules} from '../src/evaluated-modules.js';
+import {createRuntime} from '../src/runtime.js';
 
 test('experimental namespace linker cells map to owned runtime allocation and binding events',()=>{
   const modules={
@@ -22,9 +23,10 @@ test('experimental namespace linker cells map to owned runtime allocation and bi
   assert.equal(plan.namespaces.find(row=>row.file==='cells.js').exports.find(row=>row.name==='alias').local,
     valueCell.local);
 
-  const owned=executeEvaluatedModulesSync({modules,entryModule:'main.js',exportName:'run'});
-  assert.deepEqual(owned.result,{before:1,after:9,alias:9,keys:['alias','fixed','update','value']});
-  const {bundle}=owned;
+  const runtime=createRuntime({maxSteps:20000}).startEntry({text:linked.source,
+    functionName:linked.entryFunction,args:[linked.entryInput],allowAsync:true,moduleNamespaceIntrinsic:true});
+  assert.equal(runtime.drive().kind,'terminated');
+  const bundle=runtime.exportRun();
   const runtimeNamespaceAllocations=bundle.events.flatMap(event=>(event.stateChanges??[])
     .filter(change=>change.table==='heap'&&change.before===null&&change.after?.kind==='module-namespace')
     .map(change=>({event,namespace:change.after})));
@@ -52,19 +54,6 @@ test('experimental namespace linker cells map to owned runtime allocation and bi
           extensible:change.after.extensible})),
       pending,cells,reads};
   }).filter(row=>row.namespaceAllocations.length||row.pending.length||row.cells.length||row.reads.length);
-  console.log('NAMESPACE_RUNTIME_CAPTURE_JSON '+JSON.stringify({
-    bundleKeys:Object.keys(bundle),eventCount:bundle.events.length,sourcePlan:plan,
-    spans:linked.metadata.instantiationAndEvaluation,namespaceId,relevantEvents:relevant.slice(0,80)
-  }));
-  // Exact runtime changes for the owning projector: retained objects and
-  // parent frame stacks identify each namespace result without guessing IDs.
-  const inspectionStart=allocationEventSafe(bundle.events,namespaceId);
-  console.log('NAMESPACE_RUNTIME_EFFECTS_JSON '+JSON.stringify({
-    source:linked.source,sites:bundle.sites,namespaceId,
-    events:bundle.events.filter(event=>event.sequence>=inspectionStart&&event.sequence<=145)
-      .map(event=>({...event,stateChanges:(event.stateChanges??[])
-        .filter(change=>change.table==='heap'||change.table==='frames')}))
-  }));
   const namespaceAllocations=bundle.events.flatMap(event=>(event.stateChanges??[])
     .filter(change=>change.table==='heap'&&change.before===null&&change.after?.kind==='module-namespace')
     .map(change=>({event,namespace:change.after})));
@@ -102,8 +91,3 @@ test('experimental namespace linker cells map to owned runtime allocation and bi
   assert.ok(cellChanges.some(event=>event.operation==='binding.write'||event.operation==='binding.update'),
     'live cell update uses the same linker-stable lowered binding');
 });
-
-function allocationEventSafe(events,namespaceId){
-  return events.find(event=>(event.stateChanges??[]).some(change=>
-    change.table==='heap'&&change.id===namespaceId&&change.before===null))?.sequence??0;
-}

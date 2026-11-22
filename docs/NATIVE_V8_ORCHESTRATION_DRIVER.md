@@ -188,11 +188,12 @@ the consumed `elapsedMs`, and restored execution receives only the remaining
 budget. The timer is stopped while the caller holds a paused packet.
 
 An in-flight or unknown acknowledgement, running child, unsettled host intent,
-terminal coordinator, or unsupported ingress cannot be checkpointed. The
-ordinary semantic-only checkpoint is not used as a substitute. Explicit durable
-history, automatic pre-action fences and `restoreLatest` are supported as
-described below. Completed or failed terminal restoration remains outside this
-increment.
+terminal coordinator, or unsupported ingress cannot produce an active checkpoint.
+Successful coordinator completion has a separate, nonresumable disposition described
+below. The ordinary semantic-only checkpoint is not used as a substitute. Explicit
+durable history, automatic pre-action fences and `restoreLatest` preserve this
+distinction. Failed or cancelled orchestration reconciliation remains outside this
+profile.
 
 The JSONL protocol-peer integration test exercises the JavaScript driver and
 transport contract with generated fixture records. It validates binding,
@@ -229,8 +230,9 @@ application must supply its current independently acknowledged head under sole
 supervisor ownership. Supplying an older valid receipt verifies only that older
 prefix; this API cannot discover that the application's external head is stale. Native
 restoration must still report zero host dispatch. A partial chain, altered
-predecessor, absent packet, changed policy or terminal entry is refused before
-native restoration. Caller-owned data arguments are snapshotted before storage
+predecessor, absent packet or changed policy is refused before native restoration.
+A valid completed terminal head follows the separate closed-session verification
+path below; it cannot become active work. Caller-owned data arguments are snapshotted before storage
 awaits; live host clock/service functions remain supplied through `harnessOptions`.
 
 Automatic history can be started before execution with
@@ -250,15 +252,16 @@ that head can be acknowledged. A lost or mismatched acknowledgement stops the li
 
 A latest pending marker means the action may have started after the saved cut.
 `restoreLatest` refuses that head before native restoration, so it
-cannot replay a possibly dispatched child. Coordinator completion and
-cancellation remain fenced at their pending selection marker; terminal restore
-and external reconciliation are not implemented. This provides a durable
-no-replay boundary, not in-flight continuation or distributed transactionality.
+cannot replay a possibly dispatched child. Successful coordinator completion may
+seal its exact pending selection with the independently verified closed-session
+disposition below. Cancellation, failed or unknown outcomes remain fenced at the
+pending selection marker. In-flight continuation, external reconciliation and
+distributed transactionality are not implemented.
 It does not coordinate service owners, discover unacknowledged files, or permit
 a second process to resume from a stale independently retained head. Supervisor
 ownership remains required. The new controls use fresh JSONL fixture peers and
-actual durable storage; real native paired replay remains a separate mandatory
-hosted gate.
+actual durable storage. The successful real-native result is recorded below;
+new executable revisions still require their own paired qualification.
 
 ## Validation scope for the automatic-history increment
 
@@ -274,6 +277,70 @@ every chain read verifies every entry plus all action/prefix constraints.
 
 Actual Python/shared-runtime controls exercise automatic positive restore and
 lost acknowledgement before coordinator selection and after child completion.
-Their new hosted results remain pending at this commit. Their final lexical
-decoder is an explicit deterministic fixture, so a pass does not qualify learned
-model quality, arbitrary external side effects or distributed ownership.
+At candidate `e32b412e86e8ececf2e025c8ccaffd23e1f17c53`, paired with native
+`e9817ad637f57ba82e370770420f6f3ef877c7b3`, all 77 paired transport controls passed
+with zero skips in [run 44991390261](https://github.com/werg/tracing-js-self/actions/runs/44991390261).
+This includes positive automatic restore, closed-session completion, and lost
+acknowledgements. Their final lexical decoder is an explicit deterministic fixture,
+so a pass does not qualify learned model quality, arbitrary external side effects
+or distributed ownership.
+
+
+### Composite terminal disposition
+
+Automatic composite history supports a nonresumable terminal disposition for
+`track_complete`, and a service-aware terminal disposition for a committed
+`track_cancel` only when every declared host invocation is already completed and
+the composite is at a quiescent boundary. The service-aware path records an intent
+with the exact configured service-owner snapshot and reason, verifies the intent's
+independent history acknowledgement, fences and rereads the same service set, then
+closes native state and records a final disposition. The no-coordinator successful
+`track_complete` path retains its existing behavior.
+
+After native close, the final history event contains the transport checkpoint with
+no open session and the exact closed-session tombstone from the validated terminal
+snapshot. `restoreLatest` reexecutes that tombstone and requires zero restored active
+sessions, zero host dispatches, and exact attempt consumption. It returns a terminal
+disposition; it does not restore completed or cancelled orchestration as active work.
+
+An acknowledged service-aware intent that is interrupted remains nonresumable. A
+reconciliation attempt must present the same retained owner snapshot and reason.
+It may repeat the same service fence idempotently and close only the validator-proved
+terminal native snapshot; it performs no new selection or host dispatch. A partial
+service fence or lost acknowledgement remains fenced until the same owner can verify
+it. Owner substitution, running host work, unknown acknowledgements, failed host
+actions, and unsettled cancellation are refused. This does not provide successor
+takeover or distributed ownership.
+
+A terminal disposition records coordinator completion or committed cancellation and
+the native closed-session tombstone. It does not assert source correspondence, source
+validation, or promotion: `sourceValidated` remains false and
+`qualification.defaultPromotion` remains false.
+
+### Terminal evidence and failure boundaries
+
+The exact promoted implementation passed 108 individual JUnit test cases with zero
+skips in [focused run 44991390200](https://github.com/werg/tracing-js-self/actions/runs/44991390200).
+Node's outer summary also counts four test-suite containers; the 108-case count
+excludes those containers. Controls cover changed base/pending identity, completed
+host state, completion receipts, closed-session contents, consumed native attempts,
+lost close and history acknowledgements, and cancellation after journal reading
+before any native RPC. The paired gate above includes the actual Python checkpoint
+reexecution. [Complete success and failure logs](evidence/v8-composite-terminal-2026-11-22/README.md)
+are retained in git.
+
+The application must still provide its independently retained current journal head
+under sole supervisor ownership. This API cannot discover a newer head in another
+owner's store. Settled `track_cancel` is supported only with the exact configured
+service-owner set, an acknowledged intent, independently verified service fences,
+and no running or unsettled host work. Failed host actions, cancellation of an
+unsettled child, unknown acknowledgements, dynamic descendants, successor-owner
+handoff, takeover and distributed ownership remain separate acceptance work. A
+two-process deterministic test is not a learned-program result.
+
+
+The fault-injection gate distinguishes retained bytes from a returned fence acknowledgement.
+A directory synchronization failure can occur after the terminal transition file is visible.
+The driver still refuses every native restore until the full service-fence set is independently
+verified. A fresh journal reader synchronizes and validates those exact bytes; this establishes
+current durable readback, without inventing an acknowledgement from the failed writer.

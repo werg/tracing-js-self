@@ -1,0 +1,403 @@
+{
+  "consumerRevision": "e9817ad637f57ba82e370770420f6f3ef877c7b3",
+  "learnedSuccess": null,
+  "limits": [
+    "Two optimizer steps do not qualify learned execution quality or prove exposure of every source target.",
+    "Fresh-process recovery retained original failed/unacknowledged selections; accepted-record recovery was not exercised.",
+    "Artifact hashes identify local complete bundles. Durable external bundle publication is a separate recorded step."
+  ],
+  "nativePolicy": {
+    "consumerRepository": "werg/megatoken",
+    "consumerRevision": "e9817ad637f57ba82e370770420f6f3ef877c7b3",
+    "contractDigest": "75b4b47cccd0b137e00f477e45572d9d160acbb63f70af4f506e8003359e32cc",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "interoperabilityDigest": "f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661",
+    "schema": "semantic-native-policy/8",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "optimizerUpdates": 2,
+  "orchestrationTeacher": false,
+  "populationCount": 64,
+  "producerRevision": "3cf0e4732290ab07a6f0d1f897e8893df762cc92",
+  "qualification": "qualification/summary.json",
+  "registryDigest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+  "runnerSha256": "a6c6a105e2d946a7cb69262000a851bf42511ef7eba164bef4dd5e56df9edb2b",
+  "schema": "semantic-ordinary-command-lifecycle/8",
+  "scope": "Qualification of two ordinary optimizer updates, resume, export and real service restoration using the exact prequalified 64-source SE support corpus. Two updates do not establish exposure of every target or learned success.",
+  "seed": 17,
+  "selectedId": "se-support-capped-budget-child-teacher",
+  "serving": {
+    "acknowledgedModelSelections": 0,
+    "firstSelection": {
+      "adapter": "native-semantic-v8/1",
+      "checkpointIdentity": "e5afbf959ca1ce9ef280a7dd8b606a52d4f313bcd03e7c3aca4b189a3856231f",
+      "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "contextAfter": {
+        "archived_events": 45,
+        "cache_bytes": 31744,
+        "cache_storage_bytes_including_snapshots": 31744,
+        "event_budget": 128,
+        "host_payload_bytes": 13964,
+        "last_cache_evictions": [],
+        "policy": {
+          "cross_events": 16,
+          "local_events": 256,
+          "max_pins": 8,
+          "pins": [],
+          "version": 1,
+          "windows": [
+            [
+              "track:0",
+              128,
+              0
+            ]
+          ]
+        },
+        "resident_events": 62,
+        "visible_events": [
+          "observed:0:0",
+          "context:1:0",
+          "c0de1ce5acf2e3c1f7f4b2952d64f553c404ac76883f9c5c2648d5bc0f37a119",
+          "bcc79679b1201ae97b8335687ea1886297524426ce96815d98d9ee1868c35f79",
+          "718b5ca6b6bff4bc26ecd3a2bb9009d0d0b10ed43567fddcf4946325c8dbefd8",
+          "8e344d3ff899acfcf7344878c573db706a7785aee503e935e4eec80b5a7050c8",
+          "e23b137c358629bafdde6b79623410364b7359b2296e7767a7658eca33b26f65",
+          "029d99837550ed0ec70566ef1712a5c8a802965a83f6989b118d285bce7164b7",
+          "3443794029635e4e24a1db2374238e52983f37759bd834f67bbafe6d44e1f3cc",
+          "04dada27964f48d857d8247ac10ea8f89abda215e0d0e71f9d3c2677cc4ab97a",
+          "ee857a4160111ce9e99769fb6fc2afc3f9903887b07db2d8d82c88f418951724",
+          "256fabc8108d2d3a77f5fff1209cc7238c8319a61701a371fac527d203e5f746",
+          "524addeba9f8e729a32c8a6ae22fd79fda3fccdfb3e92eea22fa10101e3e72ff",
+          "e3b58e62fc82faab514ec75e00d44d5236d33008a371dcc0ee7c16174a3073e6",
+          "ede3e94d8436ead24d9710e0737d500e0560a9143d6a9cffcf14f2483e2861d1",
+          "8b773be68a2935c4b315afda7fd5cc0fbb38da072e1d4025205803dede1475c0",
+          "e6f42d22eb50b176d47c696ee179fb0a9cda09b95ae5e55101c8d80415e12a8e",
+          "960aad291ba4d28177fd5d388d642d043377300ed7c25c520fdd251f2a59e9a1",
+          "1ade236b0380778987efb2c7ca4dcaf4e6be1ef95b2e91b452e7da812a7e7a48",
+          "e01fdde4d38d881859bc743d13e3dffb42f1f65469a30e76c929cff02ecc278e",
+          "d0a85a28bb9aa349409dd8604a7c68bafbba4378668d5be5a634262f7ba9c3e0",
+          "72d5a7a1d93d4cc266d532ad2cae7ec338a053ffb595e22889e1d46c7ac66a0b",
+          "66c50100ffa035992edb027af90aa90002ddbb1f386b7e2900a9019f1cc4a2d5",
+          "7b0a224568bd8318fd4f712f6a73e0eda696e1c65a634d2e45d3ae354a974974",
+          "38451a7cc0e6f3748ba1b1bd0dbb9cdd8b5c3b7d8109f29ce0144f36fd1002c4",
+          "1ca67cffe5d3f7e643df1505dbbaf25e894579dccbf502a327148822d5c654f1",
+          "c692f1ee6bdd6e76199a7c97fd161732fcd9ac25e6980b5f3a6b8297595c9b8a",
+          "dd4c8fce7cf2124f5a9e192da1884618346e4a01353cec61447f9b9e4ae52c2b",
+          "47518c972d79e875362c25f2cf97392a72b365506da4ce71777122b27e27b1b9",
+          "160cad9dcc9d1d5dc7e588439fc4a5ace7fecf3e2da10d83fb65028f524c3f24",
+          "f32540b9e1f9fad0843dfca71ebf7b31a57fe8e6f0580c9767d77b5f7a16b99c",
+          "3f14fb43995249cc2656d98468c625d174e443d8c7e9ad67e6b5ff99b4fed6ac",
+          "8efc5710742ab32f27ecd7a45ec921487fad11753262ef22714aa1f922d20780",
+          "1ae233747406c2f9c37074bddd3a52887072d4f51f20f7f471cf9f2165eecb94",
+          "49eb3682fcceb73cfabd176d76dc99b2f3ababf67c7f13a7fc5a5f9bf33e0506",
+          "5ef1b86a928b3460acde2eb1a70f5e0b1dc5a10fbe59e3b100c55297504b502f",
+          "9117cafd18cbf31a9d3baa1bf2e14dd466e693c694bc5c79d3ed2d485714639e",
+          "f01406a080411683f6d8035260ed9ece0b0eb08f57e91599f374ac6a752df1e7",
+          "56cb8062f993347dd48a7f095b92bd99f4ed03862b155591a1c2ae16bbdb19ec",
+          "7eded1119da18fbcfb557e9bf3d2b8c29bc2885c0f4d99c3421ced60e8e5ed0a",
+          "a6f11dc55490e8239ffaf9c5f5b17fdd2e2448962814b4549edf5ce7e6c7380f",
+          "08009321919b891e680d5b38df7de96a1ed495a1e65cad242d2635cc8c3c3ca4",
+          "c50714b124875f45b3e70f33a139767753a3ef8d9805ea63436bf51d51269a76",
+          "8f55aa38eed94b5847913037d259d4ac68c82803a4c1b253f58dd3cc62424dd8",
+          "v8:0:fragment:0"
+        ]
+      },
+      "contextBefore": {
+        "archived_events": 44,
+        "cache_bytes": 30208,
+        "cache_storage_bytes_including_snapshots": 30208,
+        "event_budget": 128,
+        "host_payload_bytes": 13952,
+        "last_cache_evictions": [],
+        "policy": {
+          "cross_events": 16,
+          "local_events": 256,
+          "max_pins": 8,
+          "pins": [],
+          "version": 1,
+          "windows": [
+            [
+              "track:0",
+              128,
+              0
+            ]
+          ]
+        },
+        "resident_events": 59,
+        "visible_events": [
+          "observed:0:0",
+          "context:1:0",
+          "c0de1ce5acf2e3c1f7f4b2952d64f553c404ac76883f9c5c2648d5bc0f37a119",
+          "bcc79679b1201ae97b8335687ea1886297524426ce96815d98d9ee1868c35f79",
+          "718b5ca6b6bff4bc26ecd3a2bb9009d0d0b10ed43567fddcf4946325c8dbefd8",
+          "8e344d3ff899acfcf7344878c573db706a7785aee503e935e4eec80b5a7050c8",
+          "e23b137c358629bafdde6b79623410364b7359b2296e7767a7658eca33b26f65",
+          "029d99837550ed0ec70566ef1712a5c8a802965a83f6989b118d285bce7164b7",
+          "3443794029635e4e24a1db2374238e52983f37759bd834f67bbafe6d44e1f3cc",
+          "04dada27964f48d857d8247ac10ea8f89abda215e0d0e71f9d3c2677cc4ab97a",
+          "ee857a4160111ce9e99769fb6fc2afc3f9903887b07db2d8d82c88f418951724",
+          "256fabc8108d2d3a77f5fff1209cc7238c8319a61701a371fac527d203e5f746",
+          "524addeba9f8e729a32c8a6ae22fd79fda3fccdfb3e92eea22fa10101e3e72ff",
+          "e3b58e62fc82faab514ec75e00d44d5236d33008a371dcc0ee7c16174a3073e6",
+          "ede3e94d8436ead24d9710e0737d500e0560a9143d6a9cffcf14f2483e2861d1",
+          "8b773be68a2935c4b315afda7fd5cc0fbb38da072e1d4025205803dede1475c0",
+          "e6f42d22eb50b176d47c696ee179fb0a9cda09b95ae5e55101c8d80415e12a8e",
+          "960aad291ba4d28177fd5d388d642d043377300ed7c25c520fdd251f2a59e9a1",
+          "1ade236b0380778987efb2c7ca4dcaf4e6be1ef95b2e91b452e7da812a7e7a48",
+          "e01fdde4d38d881859bc743d13e3dffb42f1f65469a30e76c929cff02ecc278e",
+          "d0a85a28bb9aa349409dd8604a7c68bafbba4378668d5be5a634262f7ba9c3e0",
+          "72d5a7a1d93d4cc266d532ad2cae7ec338a053ffb595e22889e1d46c7ac66a0b",
+          "66c50100ffa035992edb027af90aa90002ddbb1f386b7e2900a9019f1cc4a2d5",
+          "7b0a224568bd8318fd4f712f6a73e0eda696e1c65a634d2e45d3ae354a974974",
+          "38451a7cc0e6f3748ba1b1bd0dbb9cdd8b5c3b7d8109f29ce0144f36fd1002c4",
+          "1ca67cffe5d3f7e643df1505dbbaf25e894579dccbf502a327148822d5c654f1",
+          "c692f1ee6bdd6e76199a7c97fd161732fcd9ac25e6980b5f3a6b8297595c9b8a",
+          "dd4c8fce7cf2124f5a9e192da1884618346e4a01353cec61447f9b9e4ae52c2b",
+          "47518c972d79e875362c25f2cf97392a72b365506da4ce71777122b27e27b1b9",
+          "160cad9dcc9d1d5dc7e588439fc4a5ace7fecf3e2da10d83fb65028f524c3f24",
+          "f32540b9e1f9fad0843dfca71ebf7b31a57fe8e6f0580c9767d77b5f7a16b99c",
+          "3f14fb43995249cc2656d98468c625d174e443d8c7e9ad67e6b5ff99b4fed6ac",
+          "8efc5710742ab32f27ecd7a45ec921487fad11753262ef22714aa1f922d20780",
+          "1ae233747406c2f9c37074bddd3a52887072d4f51f20f7f471cf9f2165eecb94",
+          "49eb3682fcceb73cfabd176d76dc99b2f3ababf67c7f13a7fc5a5f9bf33e0506",
+          "5ef1b86a928b3460acde2eb1a70f5e0b1dc5a10fbe59e3b100c55297504b502f",
+          "9117cafd18cbf31a9d3baa1bf2e14dd466e693c694bc5c79d3ed2d485714639e",
+          "f01406a080411683f6d8035260ed9ece0b0eb08f57e91599f374ac6a752df1e7",
+          "56cb8062f993347dd48a7f095b92bd99f4ed03862b155591a1c2ae16bbdb19ec",
+          "7eded1119da18fbcfb557e9bf3d2b8c29bc2885c0f4d99c3421ced60e8e5ed0a",
+          "a6f11dc55490e8239ffaf9c5f5b17fdd2e2448962814b4549edf5ce7e6c7380f",
+          "08009321919b891e680d5b38df7de96a1ed495a1e65cad242d2635cc8c3c3ca4",
+          "c50714b124875f45b3e70f33a139767753a3ef8d9805ea63436bf51d51269a76",
+          "8f55aa38eed94b5847913037d259d4ac68c82803a4c1b253f58dd3cc62424dd8"
+        ]
+      },
+      "contextBytes": 5265,
+      "contextDigest": "154f260541b0d35e013662e2790dcf44985d5e10c362c9f9ea730b141599f4cb",
+      "contextPhysicalRecords": 16,
+      "contextTokens": 1852,
+      "family": "orchestration",
+      "fragments": [
+        {
+          "emittedTokenIds": [
+            93864,
+            28086
+          ],
+          "meridian": 59,
+          "modelTrack": "track:0",
+          "payloadHex": "e5aebde79a84e99da2e58c85",
+          "selectedEventId": "v8:0:fragment:0",
+          "terminal": true,
+          "tokenIds": [
+            93864,
+            28086
+          ]
+        }
+      ],
+      "generatedTokens": 2,
+      "generationSeconds": 0.14836837200004993,
+      "instructionBytes": 547,
+      "instructionTokens": 101,
+      "invocationId": null,
+      "modelSelected": true,
+      "observedBytes": 0,
+      "observedPhysicalRecords": 0,
+      "observedTokens": 0,
+      "origin": "actual-model-selected",
+      "payloadHex": "e5aebde79a84e99da2e58c85",
+      "preparationSeconds": 0.6493787780000275,
+      "publicDigest": "a5036c4742bf105d1a14569c2dfe8da5e2ccad9fc662183af6c74a4f27b8c760",
+      "selectionId": "v8:0",
+      "session": "teacher1",
+      "status": "awaiting-commit",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "totalSeconds": 0.7978588880000643,
+      "trainingIdentity": "4c17f8664a59eca3cf930ea70b929f758c4df6eba029bad206bd0d378fee8f6d"
+    },
+    "firstSelectionError": null,
+    "identityRefusals": [
+      {
+        "error": {
+          "category": "NativeSelectionV8Error",
+          "evidence": null,
+          "message": "Loaded v8 checkpoint, tokenizer or training-lineage identity differs"
+        },
+        "kind": "omitted"
+      },
+      {
+        "error": {
+          "category": "NativeSelectionV8Error",
+          "evidence": null,
+          "message": "Loaded v8 checkpoint, tokenizer or training-lineage identity differs"
+        },
+        "kind": "null"
+      },
+      {
+        "error": {
+          "category": "NativeSelectionV8Error",
+          "evidence": null,
+          "message": "Loaded v8 checkpoint, tokenizer or training-lineage identity differs"
+        },
+        "kind": "substituted"
+      }
+    ],
+    "initialization": {
+      "adapter": "native-semantic-v8/1",
+      "checkpointIdentity": "e5afbf959ca1ce9ef280a7dd8b606a52d4f313bcd03e7c3aca4b189a3856231f",
+      "generationSettings": {
+        "device": "cpu",
+        "effort": 1,
+        "maxFragments": 1,
+        "maxTokens": 4
+      },
+      "nativeAdmissionClaim": false,
+      "schema": "semantic-inference-identity/8",
+      "seed": 17,
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "trainingIdentity": "4c17f8664a59eca3cf930ea70b929f758c4df6eba029bad206bd0d378fee8f6d"
+    },
+    "learnedSuccess": null,
+    "nextSelectionComparedFields": [
+      "selectionId",
+      "fragments",
+      "payloadHex",
+      "generatedTokens",
+      "checkpointIdentity",
+      "tokenizerIdentity",
+      "trainingIdentity"
+    ],
+    "nextSelectionExact": true,
+    "restoration": {
+      "checkpointDigest": "5bf5cb955c4ba0831ccd039943d92b32019f2fe67c6caed6901fba7637f3a930",
+      "consumedAttempts": 1,
+      "equivalence": "verified-model-reexecution",
+      "hostDispatches": 0,
+      "reexecutedSelections": 0,
+      "restored": true,
+      "restoredSessions": 1,
+      "schema": "semantic-model-restore/8"
+    },
+    "scope": "Actual trained CPU weights and pinned tokenizer; original token selection and fresh-process initial-state/RNG continuation. No semantic record was acknowledged.",
+    "selectionFamily": "orchestration"
+  },
+  "stages": [
+    {
+      "command": [
+        "python",
+        "/home/runner/work/tracing-js-self/tracing-js-self/megatoken/scripts/qualify_semantic_v8_supply.py",
+        "--prepared-root",
+        "/home/runner/work/_temp/v8-support-prepared",
+        "--expected-source-ids",
+        "/home/runner/work/_temp/v8-support-lifecycle/support-source-ids.json",
+        "--producer-revision",
+        "3cf0e4732290ab07a6f0d1f897e8893df762cc92",
+        "--consumer-revision",
+        "e9817ad637f57ba82e370770420f6f3ef877c7b3",
+        "--registry-digest",
+        "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+        "--tokenizer-json",
+        "/home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json",
+        "--max-positions",
+        "128",
+        "--max-history",
+        "128",
+        "--output",
+        "/home/runner/work/_temp/v8-support-lifecycle/support-supply.json"
+      ],
+      "durationMs": 63864,
+      "error": null,
+      "exitCode": 0,
+      "log": "requalify-support-supply.log",
+      "signal": null,
+      "stage": "requalify-support-supply"
+    },
+    {
+      "command": [
+        "python",
+        "-m",
+        "megatoken",
+        "train",
+        "--config",
+        "/home/runner/work/_temp/v8-support-lifecycle/training-config.json"
+      ],
+      "durationMs": 71718,
+      "error": null,
+      "exitCode": 0,
+      "log": "train-first.log",
+      "signal": null,
+      "stage": "train-first"
+    },
+    {
+      "command": [
+        "python",
+        "-m",
+        "megatoken",
+        "train",
+        "--config",
+        "/home/runner/work/_temp/v8-support-lifecycle/training-config.json",
+        "--resume",
+        "/home/runner/work/_temp/v8-support-lifecycle/first-checkpoint"
+      ],
+      "durationMs": 72409,
+      "error": null,
+      "exitCode": 0,
+      "log": "train-resume.log",
+      "signal": null,
+      "stage": "train-resume"
+    },
+    {
+      "command": [
+        "python",
+        "-m",
+        "megatoken",
+        "export",
+        "--checkpoint",
+        "/home/runner/work/_temp/v8-support-lifecycle/fit/checkpoints/SE-000000002-periodic",
+        "--output",
+        "/home/runner/work/_temp/v8-support-lifecycle/served",
+        "--codec",
+        "/home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json"
+      ],
+      "durationMs": 2733,
+      "error": null,
+      "exitCode": 0,
+      "log": "export.log",
+      "signal": null,
+      "stage": "export"
+    },
+    {
+      "command": [
+        "python",
+        "/home/runner/work/tracing-js-self/tracing-js-self/megatoken/scripts/qualify_semantic_v8_lifecycle.py",
+        "--consumer-root",
+        "/home/runner/work/tracing-js-self/tracing-js-self/megatoken",
+        "--prepared",
+        "/home/runner/work/_temp/v8-support-prepared",
+        "--source",
+        "/home/runner/work/_temp/v8-support-lifecycle/source.json",
+        "--first-checkpoint",
+        "/home/runner/work/_temp/v8-support-lifecycle/first-checkpoint",
+        "--resumed-checkpoint",
+        "/home/runner/work/_temp/v8-support-lifecycle/fit/checkpoints/SE-000000002-periodic",
+        "--served",
+        "/home/runner/work/_temp/v8-support-lifecycle/served",
+        "--output",
+        "/home/runner/work/_temp/v8-support-lifecycle/qualification",
+        "--expected-source-ids",
+        "/home/runner/work/_temp/v8-support-lifecycle/support-source-ids.json"
+      ],
+      "durationMs": 13150,
+      "error": null,
+      "exitCode": 0,
+      "log": "qualify-lifecycle.log",
+      "signal": null,
+      "stage": "qualify-lifecycle"
+    }
+  ],
+  "status": "passed",
+  "supportPopulation": {
+    "count": 64,
+    "fullLaunchQualified": false,
+    "optimizerTargetExposure": "bounded-two-updates; not all targets qualified"
+  }
+}

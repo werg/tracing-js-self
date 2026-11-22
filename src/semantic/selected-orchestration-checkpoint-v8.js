@@ -5,6 +5,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {RegionExecutionHarness} from './region-harness.js';
 import {hashAlgorithmData} from './program.js';
 import {stableAlgorithmJSON} from './ir.js';
+import {validateServiceAdmissionOwnerSnapshot} from './service-admission-v8.js';
 
 const HASH=/^[a-f0-9]{64}$/;
 const copy=structuredClone;
@@ -13,7 +14,8 @@ const keys=(value,expected)=>value&&typeof value==='object'&&!Array.isArray(valu
   Object.keys(value).length===expected.length&&expected.every(key=>Object.hasOwn(value,key));
 const policyKeys=['checkpointIdentity','tokenizerIdentity','trainingIdentity','seed','generationSettings',
   'maxActive','childBudget','maxCoordinatorSelections','maxPredictions','maxGenerated','maxOutstanding',
-  'maxStaleRetries','timeoutMs','automaticDelivery'];
+  'maxStaleRetries','timeoutMs','automaticDelivery'],
+  policyKeysWithService=[...policyKeys,'serviceAdmission'];
 const nativeStateKeys=['schema','initialPublic','maxActive','childBudget','origin','track','children','decisions',
   'operations','published','cancelled'];
 const nativeStatusKeys=['schema','session','track','origin','sourceAdmissionClaim','status','children','decisions',
@@ -79,7 +81,7 @@ function parseStrictJSON(text){
 }
 
 function validPolicy(policy){
-  return keys(policy,policyKeys)&&HASH.test(policy.checkpointIdentity??'')&&HASH.test(policy.tokenizerIdentity??'')&&
+  return (keys(policy,policyKeys)||keys(policy,policyKeysWithService))&&HASH.test(policy.checkpointIdentity??'')&&HASH.test(policy.tokenizerIdentity??'')&&
     (policy.trainingIdentity===null||HASH.test(policy.trainingIdentity))&&Number.isSafeInteger(policy.seed)&&policy.seed>=0&&
     policy.generationSettings&&typeof policy.generationSettings==='object'&&!Array.isArray(policy.generationSettings)&&
     Number.isSafeInteger(policy.maxActive)&&policy.maxActive>=1&&policy.maxActive<=16&&
@@ -90,7 +92,8 @@ function validPolicy(policy){
     policy.maxGenerated<=1000000&&Number.isSafeInteger(policy.maxOutstanding)&&policy.maxOutstanding>=1&&
     policy.maxOutstanding<=1024&&Number.isSafeInteger(policy.maxStaleRetries)&&policy.maxStaleRetries>=0&&
     policy.maxStaleRetries<=1000&&Number.isSafeInteger(policy.timeoutMs)&&policy.timeoutMs>=1&&
-    policy.timeoutMs<=300000&&typeof policy.automaticDelivery==='boolean';
+    policy.timeoutMs<=300000&&typeof policy.automaticDelivery==='boolean'&&
+    (policy.serviceAdmission==null||validateServiceAdmissionOwnerSnapshot(policy.serviceAdmission)===policy.serviceAdmission);
 }
 
 function nativeIndex(id){
@@ -144,7 +147,7 @@ function withoutChildState(child){
   return immutable;
 }
 
-function checkSelectionLedgers(packet,session,native,transport){
+function checkSelectionLedgers(packet,session,native,transport,allowTerminal=false,allowCancelled=false){
   const all=new Map();
   for(const [kind,rows]of [['coordinator',packet.coordinatorAttempts],['child',packet.childAttempts]]){
     demand(Array.isArray(rows),kind+' attempts are missing');
@@ -161,7 +164,10 @@ function checkSelectionLedgers(packet,session,native,transport){
           row.commitReceipt?.schema==='semantic-orchestration-commit/8'&&row.commitReceipt.committed===true&&
           row.commitReceipt.selectionId===row.selection.selectionId&&row.action&&
           isDeepStrictEqual(row.action,action),'coordinator commit evidence is not an exact positive receipt');
-        demand(!['track_complete','track_cancel'].includes(action.name),
+        const terminalAction=action.name==='track_complete'&&allowTerminal||
+          action.name==='track_cancel'&&allowCancelled;
+        demand(!['track_complete','track_cancel'].includes(action.name)||
+          terminalAction&&kind==='coordinator'&&expectedLocal===rows.length-1,
           'terminal orchestration cannot be restored as active work');
       }else{
         demand(!Object.hasOwn(row,'family')&&['accepted','stale'].includes(row.status)&&
@@ -380,7 +386,7 @@ function checkCoordinatorHistory(packet,nativeSession,all,session){
   else demand(!joined||joined.completed,'coordinator-ready continuation has an incomplete join');
 }
 
-function checkContinuation(packet,nativeSession){
+function checkContinuation(packet,nativeSession,allowTerminal=false,allowCancelled=false,bridge=null){
   const continuation=packet.continuation,state=packet.state,policy=packet.policy;
   demand(keys(continuation,['phase','coordinatorSelections','joinedAttempt','joinedDependency','elapsedMs'])&&
     ['coordinator-ready','child-ready'].includes(continuation.phase)&&
@@ -391,7 +397,8 @@ function checkContinuation(packet,nativeSession){
     'explicit active continuation phase or consumed coordinator budget differs');
   demand(keys(state,nativeStatusKeys)&&state.schema==='semantic-orchestration-state/8'&&state.session===packet.session&&
     state.origin==='model'&&state.sourceAdmissionClaim===false&&
-    ['active','waiting'].includes(state.status)&&
+    (['active','waiting'].includes(state.status)||allowTerminal&&state.status==='completed'||
+      allowCancelled&&state.status==='cancelled')&&
     state.pendingSelection===null&&state.publicDigest===hashAlgorithmData(packet.bridge.public)&&
     isDeepStrictEqual(state.children,nativeSession.orchestration.children)&&
     isDeepStrictEqual(state.decisions,nativeSession.orchestration.decisions)&&
@@ -410,6 +417,7 @@ function checkContinuation(packet,nativeSession){
     if(child.track===null)return child.completion===null&&!track;
     if(!track||!isDeepStrictEqual(track.execution,child.execution)||track.bootstrap_ready!==true)return false;
     if(child.completion!==null)return track.status==='completed';
+    if(allowCancelled)return track.status==='cancelled';
     return ['active','waiting'].includes(track.status);
   })&&activeChildren.every(track=>{
     const child=state.children.find(row=>row.track===track.address),create=packet.coordinatorAttempts.find(row=>
@@ -425,6 +433,25 @@ function checkContinuation(packet,nativeSession){
         row.execution?.invocation_id===dependency.invocation)&&
       !packet.childAttempts.some(row=>row.invocationId===dependency.invocation),
       'joined child is not at the exact runnable pre-execution boundary');
+  }else if(allowTerminal){
+    demand(continuation.joinedAttempt===null&&continuation.joinedDependency===null&&state.status==='completed'&&
+      activeChildren.length===0&&state.children.every(child=>child.completion?.schema==='semantic-child-completion/8')&&
+      state.published.length===state.children.length&&state.children.every(child=>
+        state.published.includes(child.execution.invocation_id)),
+      'completed coordinator cut still has unpublished or incomplete children');
+    const latest=packet.coordinatorAttempts.at(-1);
+    demand(latest?.status==='committed'&&latest.action?.name==='track_complete'&&
+      latest.commitReceipt?.committed===true&&
+      coordinatorTrack?.status==='completed',
+      'completed cut has no exact final coordinator commit');
+  }else if(allowCancelled){
+    const latest=packet.coordinatorAttempts.at(-1);
+    demand(continuation.joinedAttempt===null&&continuation.joinedDependency===null&&state.status==='cancelled'&&
+      activeChildren.length===0&&
+      state.children.every(child=>child.track===null||child.completion?.schema==='semantic-child-completion/8')&&
+      latest?.status==='committed'&&latest.action?.name==='track_cancel'&&latest.commitReceipt?.committed===true&&
+      coordinatorTrack?.status==='cancelled',
+      'cancelled cut is not the exact settled track_cancel boundary');
   }else{
     demand(continuation.joinedAttempt===null&&continuation.joinedDependency===null&&state.status==='active'&&
       activeChildren.every(row=>row.bootstrap_ready===true),'coordinator-ready continuation contains an unbootstrapped child');
@@ -438,14 +465,15 @@ function checkContinuation(packet,nativeSession){
 }
 
 /** Verify a complete mixed native/host cut before any native restoration RPC. */
-export function verifySelectedOrchestrationCheckpoint(packet,policy,{initialPublic}={}){
+export function verifySelectedOrchestrationCheckpoint(packet,policy,{initialPublic,allowTerminal=false,allowCancelled=false,returnBridge=false}={}){
   stableAlgorithmJSON(packet);
   demand(keys(packet,['schema','policy','session','initialPublic','initialState','state','bridge','contexts',
     'coordinatorAttempts','childAttempts','childRejections','staleRetries','continuation','native','digest'])&&
     packet.schema==='semantic-selected-orchestration-checkpoint/8'&&
     HASH.test(packet.digest??'')&&packet.digest===hashAlgorithmData(Object.fromEntries(Object.entries(packet)
       .filter(([key])=>key!=='digest'))),'composite checkpoint fields or digest differ');
-  demand(validPolicy(policy)&&isDeepStrictEqual(packet.policy,policy),
+  demand(validPolicy(policy)&&isDeepStrictEqual(packet.policy,policy)&&
+    (policy.serviceAdmission==null||policy.serviceAdmission.policy.sessionId===packet.session),
     'external orchestration identity, host policy or work budgets differ');
   demand(packet.session===packet.initialPublic?.timeline?.[0]?.fields?.session&&
     packet.session===packet.bridge?.public?.timeline?.[0]?.fields?.session&&
@@ -539,8 +567,8 @@ export function verifySelectedOrchestrationCheckpoint(packet,policy,{initialPubl
     Object.keys(native.closedSessions).length===0&&
     !native.attempts.some(row=>row.session!==packet.session||!['committed','semantic-rejected'].includes(row.status)),
     'native checkpoint contains another session or an unacknowledged attempt');
-  const all=checkSelectionLedgers(packet,packet.session,native,transport);
+  const all=checkSelectionLedgers(packet,packet.session,native,transport,allowTerminal,allowCancelled);
   checkCoordinatorHistory(packet,native.sessions[packet.session],all,packet.session);
-  checkContinuation(packet,native.sessions[packet.session]);
-  return true;
+  checkContinuation(packet,native.sessions[packet.session],allowTerminal,allowCancelled,bridge);
+  return returnBridge?bridge:true;
 }

@@ -207,9 +207,14 @@ try{
   if(supportMode)lifecycleArgs.push('--expected-source-ids',supportInventoryForRun);
   run('qualify-lifecycle',python,lifecycleArgs);
   const measured=JSON.parse(readFileSync(join(out,'qualification/summary.json'),'utf8'));
+  const exposure=measured.optimizerResumeExport?.optimizerTargetExposure;
+  if(exposure?.historyContinued!==true||exposure.registryDigest!==prepared.registry.digest||
+     exposure.allTargetsExposed!==false||!exposure.firstCheckpointCounts||!exposure.resumedCounts)
+    throw new Error('Ordinary lifecycle collector did not retain the exact resumed target-exposure census');
   report.status='passed';report.qualification='qualification/summary.json';
+  report.optimizerTargetExposure=exposure;
   report.limits=measured.limits;report.serving=measured.serving;record();
   console.log(JSON.stringify({output:out,producerRevision,consumerRevision,selectedId:supportMode?sourceId:selectedId,
-    declared:supportMode?64:candidates.length,optimizerUpdates:2,status:report.status,learnedSuccess:null,
-    fullLaunchQualified:false}));
+    declared:supportMode?64:candidates.length,optimizerUpdates:2,status:report.status,
+    optimizerTargetExposure:report.optimizerTargetExposure,learnedSuccess:null,fullLaunchQualified:false}));
 }catch(error){report.status='failed';report.reason=error.message;record();throw error;}
