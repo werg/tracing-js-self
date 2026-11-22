@@ -16,7 +16,7 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
-## Explicit durable composite history — implementation awaiting hosted qualification
+## Explicit durable composite history — 98 focused controls passed
 
 The coordinator/child driver now appends verified quiescent cuts through the
 existing durable selected-history journal, independently rereads the complete
@@ -29,10 +29,44 @@ refuse. Async data arguments are isolated from caller mutation while live host
 clock/service functions retain their handles. New tests cover sparse restore,
 failed acknowledgements, stale predecessors and mutation while storage waits.
 
-These are newly committed implementations and **hosted results are pending**.
+The exact implementation at `c640f2b1dfed112d5e2bc5f60195234a40c3dec1`
+passed all **98 focused continuation controls, zero skips**, in hosted run
+[44986959001](https://github.com/werg/tracing-js-self/actions/runs/44986959001).
+This focused set includes fixture-based history, namespace and source-supply
+controls; it does not replace paired native or learned-execution qualification.
+The full log is retained in `docs/evidence/v8-durable-history-c640-2026-11-22/`.
 Automatic persistence, terminal recovery, dynamic descendants and coordinated
 successor/service ownership remain open. No learned-execution claim follows.
 See `docs/NATIVE_V8_ORCHESTRATION_DRIVER.md` for the API and explicit limits.
+
+## Actual support-corpus optimizer route — implementation published, qualification pending
+
+The ordinary lifecycle command now accepts the exact already-prepared 64-source
+support directory, immutable inventory and a canonical admitted training sample.
+It requalifies all production supply requirements, then runs the normal trainer,
+fresh-process resume, export and real serving restoration. Sample identity uses
+the complete canonical registry/source/dataset binding and exact prepared
+public/context bytes; text containing an expected source ID is insufficient.
+Inputs are snapshotted before commands and cannot be mixed with a synthetic
+source or a separately attached teacher.
+
+The native collector is pinned at `a886fb8fd80c7a117d0b212aa6a142a75e52ee2c`. Its 11 focused source-binding
+and supply controls passed with zero skips in validation run 44987781224; Ruff
+checks passed and the formatter left the tested sources unchanged. The producer
+paired workflow now runs the actual support corpus through two optimizer updates
+and saves the command report, model/checkpoint/served artifacts and full logs.
+**That new end-to-end result remains pending until its exact-pair workflow passes.**
+Two updates cannot establish exposure to every target, learned execution quality
+or full launch qualification. See the native
+[support lifecycle guide](https://github.com/werg/megatoken/blob/a886fb8fd80c7a117d0b212aa6a142a75e52ee2c/docs/SEMANTIC_V8_SUPPORT_LIFECYCLE.md).
+
+The isolated namespace probe `6884abf4e9ad59e31ec72ae6d55bb366f996fedb`
+ran 11 original-module controls: 7 passed and 4 failed, zero skipped. Reflection
+returning ordinary values still encountered missing public guest identity;
+namespace escapes do not acquire a passed original-module reference. This
+failure is retained under `docs/evidence/v8-namespace-probe-2026-11-22/`.
+The main implementation continues to refuse namespace projection until actual
+source-bound live-cell and independent native authority is implemented.
 
 ## Complete source-qualified production support — verified 22 November 2026
 

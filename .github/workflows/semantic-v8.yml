@@ -109,7 +109,7 @@ jobs:
             test/semantic-native-orchestration-recovery-v8.test.js \
             test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js \
             test/semantic-source-session-v8.test.js test/semantic-region-support-cohort.test.js \
-            test/semantic-qualification-population-v8.test.js \
+            test/semantic-qualification-population-v8.test.js test/qualify-support-lifecycle.test.js \
             2>&1 | tee "$RUNNER_TEMP/semantic-v8-transport-tests.xml"
           python - <<'PY'
           import os, xml.etree.ElementTree as ET
@@ -203,6 +203,41 @@ jobs:
               '--max-positions', '128', '--max-history', '128',
               '--output', str(temporary / 'semantic-v8-support-supply.json')], check=True)
           PY
+      - name: Train and restore the exact prepared support corpus
+        if: ${{ matrix.population == 'se-support' }}
+        working-directory: tracing-js-self
+        run: |
+          python - <<'PY' 2>&1 | tee "$RUNNER_TEMP/semantic-v8-support-lifecycle.log"
+          import json, os, subprocess
+          from pathlib import Path
+          temporary = Path(os.environ['RUNNER_TEMP'])
+          qualification = temporary / 'v8-admitted'
+          report = json.loads((qualification / 'report.json').read_text())
+          registry = json.loads((qualification / 'family-registry.json').read_text())
+          train_ids = {source for component in registry['components'] if component['split'] == 'train'
+                       for source in component['sourceIds']}
+          candidates = sorted((row for row in report['rows']
+                               if row['sourceId'] in train_ids and row['id'].endswith('-child-teacher')),
+                              key=lambda row: row['id'])
+          if not candidates:
+              raise ValueError('The frozen support corpus must contain a source-qualified training child teacher')
+          sample = (qualification / candidates[0]['sourceArtifact']).resolve(strict=True)
+          if not sample.is_relative_to(qualification.resolve()) or not sample.is_file():
+              raise ValueError('The support serving sample must be a retained qualification artifact')
+          subprocess.run(['node', 'tools/qualify-ordinary-v8-lifecycle.mjs',
+              '--prepared-root', str(temporary / 'v8-support-prepared'),
+              '--source-inventory', str(temporary / 'v8-support-source-ids.json'),
+              '--sample-source', str(sample),
+              '--out', str(temporary / 'v8-support-lifecycle'),
+              '--megatoken', os.environ['MEGATOKEN_ROOT'], '--python', os.environ['MEGATOKEN_PYTHON'],
+              '--tokenizer', os.environ['MEGATOKEN_TOKENIZER_JSON'],
+              '--native-policy', os.environ['SEMANTIC_V8_NATIVE_POLICY']], check=True)
+          result = json.loads((temporary / 'v8-support-lifecycle' / 'command-report.json').read_text())
+          if (result['status'] != 'passed' or result['populationCount'] != 64
+              or result['registryDigest'] != registry['digest'] or result['optimizerUpdates'] != 2
+              or result['learnedSuccess'] is not None):
+              raise ValueError('Support optimizer qualification changed corpus identity or completion evidence')
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -226,3 +261,5 @@ jobs:
             ${{ runner.temp }}/semantic-v8-support-supply.json
             ${{ runner.temp }}/v8-support-source-ids.json
             ${{ runner.temp }}/v8-support-prepared/
+            ${{ runner.temp }}/semantic-v8-support-lifecycle.log
+            ${{ runner.temp }}/v8-support-lifecycle/

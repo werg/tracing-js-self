@@ -41,6 +41,7 @@ jobs:
             test/semantic-module*.test.js \
             test/semantic-source-session-v8.test.js \
             test/semantic-region-support-cohort.test.js \
+            test/qualify-support-lifecycle.test.js \
             2>&1 | tee "$RUNNER_TEMP/v8-continuation-tests.xml"
           python - <<'PY'
           import os
