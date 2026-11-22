@@ -1,6 +1,6 @@
 import {createHash,randomUUID} from 'node:crypto';
 import {constants} from 'node:fs';
-import {mkdir,open,link,unlink} from 'node:fs/promises';
+import {mkdir,open,link,unlink,readdir} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {isDeepStrictEqual} from 'node:util';
 import {stableAlgorithmJSON} from '../semantic/ir.js';
@@ -53,6 +53,34 @@ export class DurableSelectedHistoryJournal {
       entries.push(entry);current=entry.previous;
     }
     return validateSelectedHistoryChain(entries.reverse(),receipt);
+  }
+  async readLatest(receipt){
+    validateSelectedHistoryReceipt(receipt);receipt=structuredClone(receipt);
+    if(receipt.streamId!==this.streamId||receipt.position>this.maxEntries)
+      fail('latest history receipt differs from stream or entry bound');
+    const verifyHead=async()=>{
+      const entries=await readdir(join(this.directory,'selected-checkpoint-history',this.streamId),
+        {withFileTypes:true});
+      let positions=0;
+      for(const entry of entries){
+        // An unpublished temporary file never authorized execution. Do not
+        // discover it or a later published record as an acknowledged new head.
+        if(entry.name.startsWith('.tmp-')&&entry.isFile())continue;
+        if(!entry.isFile()||!/^([1-9][0-9]*)\.json$/.test(entry.name))
+          fail('latest history contains an unexpected entry');
+        const position=Number(entry.name.slice(0,-5));
+        if(!Number.isSafeInteger(position)||position>receipt.position)
+          fail('later durable history exists; stale history recovery is refused');
+        positions++;
+      }
+      if(positions!==receipt.position)fail('latest history head has missing or extra positions');
+    };
+    await verifyHead();
+    const entries=await this.readAll(receipt);
+    await verifyHead();
+    // The embedding must still exclude concurrent execution owners. This read
+    // proves freshness during verification, not a lease against future writers.
+    return entries;
   }
   async append(checkpoint,{previous=null,terminal=undefined,pending=undefined}={}){
     if(previous!==null)validateSelectedHistoryReceipt(previous);

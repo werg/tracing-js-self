@@ -633,11 +633,11 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
   }
   static async restoreLatest(packet,{historyJournal,historyReceipt,select,policy,harnessOptions={},signal=null,
       serviceAdmissionCoordinator=null}={}){
-    demand(typeof historyJournal?.readAll==='function','independently read checkpoint history is required');
+    demand(typeof historyJournal?.readLatest==='function','independently verified latest checkpoint history is required');
     stableAlgorithmJSON(packet);
     const saved=copy(packet),retainedHead=copy(historyReceipt);
     validateSelectedHistoryReceipt(retainedHead);
-    const entries=validateSelectedHistoryChain(copy(await historyJournal.readAll(copy(retainedHead))),retainedHead);
+    const entries=validateSelectedHistoryChain(copy(await historyJournal.readLatest(copy(retainedHead))),retainedHead);
     demand(entries.some(entry=>isDeepStrictEqual(entry.checkpoint,saved)),
       'supplied checkpoint is absent from the independently retained history');
     await verifyRecordedHistoryCuts(entries,policy,harnessOptions);

@@ -53,6 +53,38 @@ test('competing writers can reacknowledge identical bytes but cannot replace a p
   assert.deepEqual(await readdir(join(journal.directory,'selected-checkpoint-history','cuts')),['1.json','2.json']);
 });
 
+test('latest recovery refuses later unacknowledged history without discovering a new head',async t=>{
+  const journal=await fixture(t),first=await journal.append(cut());
+  assert.deepEqual(await journal.readLatest(first),await journal.readAll(first));
+  const later=await journal.append(cut(1),{previous:first});
+  await assert.rejects(journal.readLatest(first),/later durable history.*stale history/);
+  assert.equal((await journal.readAll(first)).length,1,'historical inspection remains available');
+  assert.deepEqual(await journal.readLatest(later),await journal.readAll(later));
+});
+
+test('latest history is checked again after an asynchronous chain read',async t=>{
+  const journal=await fixture(t),first=await journal.append(cut()),read=journal.readAll.bind(journal);
+  let inject=true;
+  journal.readAll=async receipt=>{
+    const entries=await read(receipt);
+    if(inject){inject=false;await journal.append(cut(1),{previous:first});}
+    return entries;
+  };
+  await assert.rejects(journal.readLatest(first),/later durable history/);
+});
+
+test('latest history refuses unexplained positions and snapshots the caller receipt',async t=>{
+  const journal=await fixture(t),first=await journal.append(cut()),aliased=structuredClone(first);
+  const reading=journal.readLatest(aliased);aliased.position=19;aliased.id='0'.repeat(64);
+  assert.equal((await reading).length,1);
+  const extra=join(journal.directory,'selected-checkpoint-history','cuts','01.json');
+  await writeFile(extra,'{}');
+  await assert.rejects(journal.readLatest(first),/unexpected entry/);
+  await rm(extra);
+  await writeFile(journal.entryPath(3),'{}');
+  await assert.rejects(journal.readLatest(first),/later durable history/);
+});
+
 test('append captures caller bytes synchronously and does not change their checkpoint',async t=>{
   const journal=await fixture(t),packet=cut(),expected=structuredClone(packet);
   const saving=journal.append(packet);packet.policy.maxSelections=999;

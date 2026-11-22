@@ -193,7 +193,7 @@ test('actual Python child execution remains fenced after its completion-cut ackn
     fresh.restore=async request=>{restoreCalls++;return restore(request);};
     try{
       await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(childFence,{historyJournal:journal,
-        historyReceipt:head,initialPublic,select:fresh,policy}),/unresolved in-flight work/i);
+        historyReceipt:head,initialPublic,select:fresh,policy}),/later durable history.*stale history/i);
       assert.equal(restoreCalls,0,'fenced work is refused before native restore or any host dispatch');
     }finally{await fresh.shutdown();}
   }finally{await select.shutdown();}

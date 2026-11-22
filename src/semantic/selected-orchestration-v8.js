@@ -252,9 +252,9 @@ export class RegionSelectedOrchestrationDriver {
     checkAbort();
     packet=copy(packet);historyReceipt=copy(historyReceipt);initialPublic=copy(initialPublic);
     policy=copy(policy);harnessOptions={...harnessOptions};
-    demand(typeof historyJournal?.readAll==='function','independently retained composite history is required');
+    demand(typeof historyJournal?.readLatest==='function','independently verified latest composite history is required');
     validateSelectedHistoryReceipt(historyReceipt);
-    const retainedEntries=copy(await historyJournal.readAll(copy(historyReceipt)));
+    const retainedEntries=copy(await historyJournal.readLatest(copy(historyReceipt)));
     checkAbort();
     const entries=validateSelectedHistoryChain(retainedEntries,copy(historyReceipt));
     demand(entries.some(entry=>isDeepStrictEqual(entry.checkpoint,packet)),

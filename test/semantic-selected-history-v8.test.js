@@ -124,7 +124,7 @@ test('an older recorded cut recovers later accepted and stale attempts with one 
     changed[2].checkpoint.attempts[0].failure='rewritten stale rejection';
     const rewritten=rechain(changed),denied=suppliedHistorySelector(returnChoice);
     await assert.rejects(RegionSelectedModelDriver.restoreLatest(first.checkpoint,{select:denied,policy,
-      historyJournal:{readAll:async()=>rewritten.rows},historyReceipt:rewritten.receipt}),/consumed driver attempts/);
+      historyJournal:{readLatest:async()=>rewritten.rows},historyReceipt:rewritten.receipt}),/consumed driver attempts/);
     assert.equal(denied.controls().restoreCalls,0,'stale attempts are immutable consumed work too');
   }finally{restored.close();resolveHost(7);}
 });
@@ -160,7 +160,7 @@ test('every recorded cut and all three consumed-attempt prefixes validate before
       const changed=copy(original);mutate(changed);const {rows,receipt}=rechain(changed);
       const select=suppliedHistorySelector(returnChoice);
       await assert.rejects(RegionSelectedModelDriver.restoreLatest(first.checkpoint,{select,policy,
-        historyJournal:{readAll:async()=>rows},historyReceipt:receipt}));
+        historyJournal:{readLatest:async()=>rows},historyReceipt:receipt}));
       assert.equal(select.controls().restoreCalls,0);
     });
   }
@@ -168,7 +168,7 @@ test('every recorded cut and all three consumed-attempt prefixes validate before
     await t.test(name,async()=>{
       const select=suppliedHistorySelector(returnChoice);
       await assert.rejects(RegionSelectedModelDriver.restoreLatest(first.checkpoint,{select,policy,
-        historyJournal:{readAll:async()=>rows},historyReceipt:third.receipt}));
+        historyJournal:{readLatest:async()=>rows},historyReceipt:third.receipt}));
       assert.equal(select.controls().restoreCalls,0);
     });
   }
@@ -197,7 +197,7 @@ test('a valid same-session branch or an unrecorded checkpoint cannot replace ack
   assert.equal(select.controls().restoreCalls,0);
   const secondReader=suppliedHistorySelector(returnChoice);
   await assert.rejects(RegionSelectedModelDriver.restoreLatest(second.checkpoint,{select:secondReader,policy,
-    historyJournal:journal,historyReceipt:first.receipt}),/absent/);
+    historyJournal:journal,historyReceipt:first.receipt}),/later durable history/);
   assert.equal(secondReader.controls().restoreCalls,0,'an older head cannot authorize a later supplied checkpoint');
 });
 
@@ -255,7 +255,7 @@ test('a later ingress head must extend the earlier recorded chain, not just incr
   const rows=await journal.readAll(head);rows[1].checkpoint.bridge.ingressCursor=1;resealBridge(rows[1].checkpoint);
   const changed=rechain(rows),other=suppliedHistorySelector(returnChoice);
   await assert.rejects(RegionSelectedModelDriver.restoreLatest(left.checkpoint,{select:other,policy,
-    historyJournal:{readAll:async()=>changed.rows},historyReceipt:changed.receipt,
+    historyJournal:{readLatest:async()=>changed.rows},historyReceipt:changed.receipt,
     harnessOptions:{ingressStore,ingressJournal}}),/ingress cursor rolled back/);
   assert.equal(other.controls().restoreCalls,0);
 });
@@ -286,6 +286,7 @@ test('backend argument mutation cannot replace the separately captured expected 
   const first=await driver.checkpointDurableHistory({journal});await finish(driver);
   const mutating={
     readAll:async receipt=>{const saved=copy(receipt);receipt.id='0'.repeat(64);return journal.readAll(saved);},
+    readLatest:async receipt=>{const saved=copy(receipt);receipt.id='0'.repeat(64);return journal.readLatest(saved);},
     append:async(checkpoint,{previous})=>{const saved=copy(previous);previous.id='0'.repeat(64);
       return journal.append(checkpoint,{previous:saved});}
   };

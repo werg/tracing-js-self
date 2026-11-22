@@ -99,4 +99,6 @@ export declare class DurableSelectedHistoryJournal {
     terminal?: SelectedHistoryTerminalEvent | SelectedCompositeTerminalEvent; pending?: Record<string, unknown>}): Promise<SelectedHistoryReceipt>;
   read(receipt: SelectedHistoryReceipt): Promise<any>;
   readAll(receipt: SelectedHistoryReceipt): Promise<any[]>;
+  /** Refuse later durable positions, including unacknowledged ones; never adopt a new head. */
+  readLatest(receipt: SelectedHistoryReceipt): Promise<any[]>;
 }

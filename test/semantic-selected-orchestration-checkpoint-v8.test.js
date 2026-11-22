@@ -288,6 +288,36 @@ test('two declared children restore from sparse acknowledged cuts without redisp
   }finally{last.close();}
 });
 
+test('rejects an older acknowledged composite head after a later durable pending marker',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'v8-composite-stale-head-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const journal=new DurableSelectedHistoryJournal({directory,streamId:'composite'});
+  const first=selector(),driver=new RegionSelectedOrchestrationDriver({initialPublic,select:first,...policy});
+  let checkpoint;
+  try{
+    const paused=await driver.run({stopAt:{phase:'coordinator-ready',coordinatorSelections:0}});
+    assert.equal(paused.status,'paused');checkpoint=driver.checkpoint();
+  }finally{first.close();}
+  const acknowledged=await journal.append(checkpoint),body={
+    schema:'semantic-selected-orchestration-pending/8',kind:'coordinator-selection',
+    session:checkpoint.session,checkpointDigest:checkpoint.digest,attempt:0,
+    coordinatorSelections:0,track:checkpoint.state.track};
+  await journal.append(checkpoint,{previous:acknowledged,pending:{...body,id:hashAlgorithmData(body)}});
+  // The later append can survive even when its independent acknowledgement is
+  // lost. Historical inspection remains valid, but the old head cannot resume.
+  assert.equal((await journal.readAll(acknowledged)).length,1);
+  const fresh=selector();let restores=0;
+  const restore=fresh.restore;
+  fresh.restore=async request=>{restores++;return restore(request);};
+  try{
+    await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(checkpoint,{
+      historyJournal:journal,historyReceipt:acknowledged,initialPublic,select:fresh,policy}),
+    /later.*history|stale.*history|latest.*head/i);
+    assert.equal(restores,0,'stale history must refuse before native reconstruction');
+    assert.equal(fresh.metrics().attempts.length,0);
+  }finally{fresh.close();}
+});
+
 test('durable composite checkpoint requires an independent exact head acknowledgement and restores latest',async t=>{
   const directory=await mkdtemp(join(tmpdir(),'v8-composite-history-'));
   t.after(()=>rm(directory,{recursive:true,force:true}));
@@ -328,8 +358,8 @@ test('durable composite checkpoint requires an independent exact head acknowledg
       JSON.parse(row.record).name:'child-selection');
     assert.deepEqual(operations,['track_complete']);
   }finally{second.close();}
-  const aliased=structuredClone(packet.first),aliasRead=journal.readAll.bind(journal);
-  const blockedJournal={readAll:async receipt=>{
+  const aliased=structuredClone(packet.first),aliasRead=journal.readLatest.bind(journal);
+  const blockedJournal={readLatest:async receipt=>{
     await Promise.resolve();aliased.coordinatorAttempts[0].record='{}';return aliasRead(receipt);
   }};
   const aliasSelector=selector();
@@ -372,7 +402,7 @@ test('lost completed-disposition ACK leaves the last external head fenced',async
     try{
       await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(tail.checkpoint,
         {historyJournal:journal,historyReceipt:head,initialPublic,select:fresh,policy:automaticPolicy}),
-      /unresolved in-flight work/i);
+      /later durable history.*stale history/i);
       assert.equal(restoreCalls,0);
     }finally{fresh.close();}
   }finally{select.close();}
@@ -503,7 +533,7 @@ test('automatic composite history acknowledges the join safe point before child 
     cancelledSelect.restore=async request=>{restoreCalls++;return restoreCancelled(request);};
     try{
       await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(terminalEntry.checkpoint,{
-        historyJournal:{readAll:async receipt=>{
+        historyJournal:{readLatest:async receipt=>{
           const retained=await journal.readAll(receipt);
           cancelled.abort(new Error('cancelled while reading the terminal history'));
           return retained;
@@ -557,7 +587,7 @@ test('post-child persistence failure leaves a durable in-flight fence that refus
     const fresh=selector();
     try{
       await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(joinPacket,{historyJournal:journal,
-        historyReceipt:head,initialPublic,select:fresh,policy}),/unresolved in-flight work/i);
+        historyReceipt:head,initialPublic,select:fresh,policy}),/later durable history.*stale history/i);
     }finally{fresh.close();}
   }finally{select.close();}
 });

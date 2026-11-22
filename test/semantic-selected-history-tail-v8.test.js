@@ -53,7 +53,7 @@ test('even a single authenticated cut rejects malformed native costs before open
         id:hashAlgorithmData(entry),bytes:Buffer.byteLength(stableAlgorithmJSON(entry))};
       const other=suppliedSelector(choose);
       await assert.rejects(Driver.restoreLatest(altered,{select:other,policy,
-        historyJournal:{readAll:async()=>[entry]},historyReceipt:receipt}),/cost accounting/);
+        historyJournal:{readLatest:async()=>[entry]},historyReceipt:receipt}),/cost accounting/);
       assert.equal(other.controls().restoreCalls,0);
     });
 });
@@ -66,7 +66,7 @@ test('restoration refuses checkpoint accessors without executing them',async()=>
     Object.defineProperty(packet,'native',{enumerable:true,get(){reads++;return original.native;}});
     const next=suppliedSelector(choose);
     await assert.rejects(Driver[mode](packet,{select:next,policy,
-      historyJournal:{readAll:async()=>{throw Error('should refuse before storage reads');}},historyReceipt:{}}));
+      historyJournal:{readLatest:async()=>{throw Error('should refuse before storage reads');}},historyReceipt:{}}));
     assert.equal(reads,0);assert.equal(next.controls().restoreCalls,0);
   }
 });
@@ -98,12 +98,9 @@ test('fresh-process recovery selects the later acknowledged cut without repeatin
   const first=await driver.checkpointDurableHistory({journal:historyJournal});
   await finish(driver,'call');
   const latest=await driver.checkpointDurableHistory({journal:historyJournal,previous:first.receipt});
-  // A later durable file without this reader's retained receipt has no authority.
-  driver.bridge.publishProgram({programId:'unacknowledged',source,entry:'run'});
-  await driver.checkpointDurableHistory({journal:historyJournal,previous:latest.receipt});driver.close();
   const input=join(directory,'restore.json');
   await writeFile(input,JSON.stringify({packet:first.checkpoint,head:latest.receipt,policy}));
-  const child=spawnSync(process.execPath,['--input-type=module','--eval',`
+  const recover=()=>spawnSync(process.execPath,['--input-type=module','--eval',`
     import assert from 'node:assert/strict';
     import {readFile,appendFile} from 'node:fs/promises';
     import {DurableSelectedHistoryJournal as Journal} from './src/storage/selected-history.js';
@@ -121,11 +118,20 @@ test('fresh-process recovery selects the later acknowledged cut without repeatin
     process.stdout.write(JSON.stringify({packet,metrics:driver.metrics(),restores:select.controls().restoreCalls}));
     driver.close();
   `,input,directory,effects],{cwd:process.cwd(),encoding:'utf8'});
+  const child=recover();
   assert.equal(child.status,0,child.stderr);
   const recovered=JSON.parse(child.stdout);
   assert.deepEqual(recovered.packet.bridge.public,latest.checkpoint.bridge.public);
   assert.deepEqual(recovered.packet.attempts,latest.checkpoint.attempts);
   assert.equal(recovered.metrics.predictionAttempts,3);assert.equal(recovered.restores,1);
+  assert.equal(await readFile(effects,'utf8'),'stored\n');
+  // A later durable file is not authority to adopt a new head. Its existence
+  // nevertheless prevents replaying the stale acknowledged prefix.
+  driver.bridge.publishProgram({programId:'unacknowledged',source,entry:'run'});
+  await driver.checkpointDurableHistory({journal:historyJournal,previous:latest.receipt});driver.close();
+  const refused=recover();
+  assert.equal(refused.status,1);
+  assert.match(refused.stderr,/later durable history.*stale history recovery/);
   assert.equal(await readFile(effects,'utf8'),'stored\n');
 });
 

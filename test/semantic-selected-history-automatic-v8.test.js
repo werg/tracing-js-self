@@ -328,7 +328,7 @@ test('lost terminal-head acknowledgement cannot close, and a fresh process retur
 
   const rows=await f.journal.readAll(retainedHead),omitted=suppliedHistorySelector(choice());
   await assert.rejects(Driver.restoreLatest(first.checkpoint,{select:omitted,policy,
-    historyJournal:{readAll:async()=>rows.slice(0,1)},historyReceipt:retainedHead}),/incomplete acknowledged chain/);
+    historyJournal:{readLatest:async()=>rows.slice(0,1)},historyReceipt:retainedHead}),/incomplete acknowledged chain/);
   assert.equal(omitted.controls().restoreCalls,0,'An omitted terminal suffix is refused before native state opens');
   const forged=suppliedHistorySelector(choice()),base=rows.at(-1),event={...base.terminal,phase:'closed',
     closeReceipt:{schema:'forged-close/8',closed:true,session:base.terminal.session,
@@ -338,7 +338,7 @@ test('lost terminal-head acknowledgement cannot close, and a fresh process retur
     head={schema:'semantic-selected-history-receipt/8',streamId:'automatic',position:3,
       id:hashAlgorithmData(entry),bytes};
   await assert.rejects(Driver.restoreLatest(first.checkpoint,{select:forged,policy,
-    historyJournal:{readAll:async()=>[...rows,entry]},historyReceipt:head}),/native close receipt/);
+    historyJournal:{readLatest:async()=>[...rows,entry]},historyReceipt:head}),/native close receipt/);
   assert.equal(forged.controls().restoreCalls,0,'A forged close receipt cannot open native state');
 });
 
@@ -377,7 +377,7 @@ test('consumer-shaped native close reason is retained and malformed close eviden
         bytes:Buffer.byteLength(stableAlgorithmJSON(badEntry))},
       selector=suppliedHistorySelector(choice());
     await assert.rejects(Driver.restoreLatest(first.checkpoint,{select:selector,policy,
-      historyJournal:{readAll:async()=>[...entries.slice(0,-1),badEntry]},historyReceipt:receipt}),
+      historyJournal:{readLatest:async()=>[...entries.slice(0,-1),badEntry]},historyReceipt:receipt}),
       /native close receipt/);
     assert.equal(selector.controls().restoreCalls,0,'Invalid close evidence cannot open native state');
   }
@@ -431,7 +431,7 @@ test('terminal recovery retains anchored native costs and original attempt bytes
     }
     const select=suppliedHistorySelector(()=>{throw Error('Invalid terminal history cannot sample');});
     await assert.rejects(Driver.restoreLatest(first.checkpoint,{select,policy,
-      historyJournal:{readAll:async()=>entries},historyReceipt:head}),message);
+      historyJournal:{readLatest:async()=>entries},historyReceipt:head}),message);
     assert.equal(select.controls().restoreCalls,0,'Invalid terminal evidence cannot open native state');
   });
 });

@@ -161,7 +161,7 @@ test('rehashed forged service receipts still refuse against actual service logs'
     previous={schema:'semantic-selected-history-receipt/8',streamId:row.streamId,position:row.position,
       id:hashAlgorithmData(row),bytes:Buffer.byteLength(stableAlgorithmJSON(row))};
   }
-  await assert.rejects(f.restore({historyJournal:{readAll:async()=>rows},historyReceipt:previous}),
+  await assert.rejects(f.restore({historyJournal:{readLatest:async()=>rows},historyReceipt:previous}),
     /independent service journal/);
 });
 
@@ -174,5 +174,5 @@ test('missing service proof is rejected even when the full history chain is reha
     previous={schema:'semantic-selected-history-receipt/8',streamId:row.streamId,position:row.position,
       id:hashAlgorithmData(row),bytes:Buffer.byteLength(stableAlgorithmJSON(row))};
   }
-  await assert.rejects(f.restore({historyJournal:{readAll:async()=>rows},historyReceipt:previous}),/fields|serviceAdmission/);
+  await assert.rejects(f.restore({historyJournal:{readLatest:async()=>rows},historyReceipt:previous}),/fields|serviceAdmission/);
 });
