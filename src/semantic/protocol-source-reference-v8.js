@@ -30,8 +30,15 @@ export function independentProtocolSourceReference(input,{timeoutMs=10000,maxOut
     child.stdout.on('data',chunk=>{bytes+=chunk.length;if(bytes>maxOutputBytes)finish(new RangeError('Independent protocol source output bound'));else chunks.push(chunk);});
     child.stderr.on('data',chunk=>{stderr=(stderr+chunk.toString()).slice(-4096);});
     child.stdin.on('error',error=>finish(error));
-    child.once('close',code=>{if(finished)return;
-      try{const value=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    child.once('close',(code,signal)=>{if(finished)return;
+      try{let value;
+        try{value=JSON.parse(Buffer.concat(chunks).toString('utf8'));}
+        catch(cause){
+          const status=signal?'signal '+signal:'exit '+code;
+          const error=new TypeError('Independent protocol source worker produced invalid JSON ('+status+
+            ', mode '+(input.mode??'original')+')'+(stderr?': '+stderr:''),{cause});
+          error.category='reference_process_failure';throw error;
+        }
         if(code!==0||value.error||value.schema!=='protocol-source-reference/1'){
           const error=new TypeError(value.error??'Malformed independent result: '+stderr);
           error.category=value.category??'reference_process_failure';throw error;
