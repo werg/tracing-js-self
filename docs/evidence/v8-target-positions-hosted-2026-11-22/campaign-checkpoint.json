@@ -1,0 +1,47 @@
+{
+  "schema": "semantic-v8-hosted-position-campaign-checkpoint/1",
+  "observedAt": "2026-11-22T13:46:12Z",
+  "status": "hosted-runs-in-progress",
+  "contractSha256": "a952385535b9b5e19d737206286f6f26c149f7301c51b4b106fe3b1cae5ab55a",
+  "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+  "campaigns": [
+    {
+      "runId": 45023684906,
+      "jobId": 137211919487,
+      "producerRevision": "9cf091e6ccc5add960ef0897576d0c391b199a65",
+      "nativeOptimizerRevision": "1a69d9da3254b7568c831d12866a629c206cf4fe",
+      "status": "in_progress",
+      "currentStep": "Run ordinary lifecycle and exact one-pass target coverage",
+      "completedResult": null,
+      "optimizerUpdatesObserved": null,
+      "sourceAndPackingSteps": "passed",
+      "recordsRouterCounts": false
+    },
+    {
+      "runId": 45025994295,
+      "jobId": 137219026731,
+      "producerRevision": "b4157952ed0fc28c5ae1eb8893cd9035ce25bbdb",
+      "nativeOptimizerRevision": "2f3e6cf04aad60473e8ecc67e846e81e5b9dec83",
+      "status": "in_progress",
+      "currentStep": "Run ordinary lifecycle and exact one-pass target coverage",
+      "completedResult": null,
+      "optimizerUpdatesObserved": null,
+      "sourceAndPackingSteps": "passed",
+      "recordsRouterCounts": true
+    }
+  ],
+  "requiredGate": {
+    "originalSources": 64,
+    "trainingSources": 48,
+    "trainingLogicalTargets": 696,
+    "trainingPhysicalTargets": 720,
+    "lifecycleUpdates": 2,
+    "separateFullPassUpdates": 348,
+    "combinedUpdates": 350,
+    "exactIndependentPreparedTextPositionCoverage": true
+  },
+  "readOnlyAuditScriptStatus": "prepared-not-executed",
+  "routerInternalPositionCoverage": "unmeasured",
+  "learnedSuccess": null,
+  "frozenCampaignsModified": false
+}
