@@ -8,6 +8,21 @@ import {sharedProtocolSourceEventV8,sharedProtocolSourceCompletionV8,
 export const BASE_SOURCE_COMPONENT_V8='ordinary-source/1';
 export const PROMISE_EXECUTOR_COMPONENT_V8='promise-executor/1';
 export const PROMISE_JOIN_COMPONENT_V8='promise-join/1';
+export const ASYNC_CALL_COMPONENT_V8='async-scoped-call-source/1';
+export function sourceAsyncCallEventV8(view,{event,row}){
+  const data=view.components[ASYNC_CALL_COMPONENT_V8];if(!data)return false;
+  const owns=frame=>data.calls.some(([id])=>id===frame),raw=event.operands?.[0],callee=raw?.[0]==='method'?raw[1]:raw;
+  return event.operation==='call.enter'&&row?.child&&callee?.[0]==='ref'&&view.owned.heap[callee[1]]?.async===true||
+    event.operation==='async.await'&&owns(event.invocationId)||
+    event.operation==='job.enter'&&view.owned.control.a0.queue?.[0]?.kind==='await'&&owns(view.owned.control.a0.queue[0].frameId);
+}
+export function sourceAsyncCallAllocationV8(view,input){
+  return Object.hasOwn(view.components,ASYNC_CALL_COMPONENT_V8)&&input.kind==='closure'&&input.node?.async===true;
+}
+export function sourceAsyncCallCompletionV8(view,exit){
+  return ['return','throw','unhandled-throw'].includes(exit.operation)&&
+    (view.components[ASYNC_CALL_COMPONENT_V8]?.calls??[]).some(([id])=>id===exit.invocation);
+}
 export const ordinarySourceValueV8=value=>Array.isArray(value)&&
   ['undefined','null','bool','str','num','bigint','ref','promise'].includes(value[0]);
 export const sourcePromiseResolverV8=value=>value?.[0]==='builtinfn'?
@@ -23,7 +38,8 @@ export function sourcePromiseJoinEventV8(view,{event,row}){
 export function sourcePromiseExecutorEventV8(view,{event,row}){
   const callee=row?.operands?.[0],method=callee?.[0]==='method'?callee[1]:callee;
   return sourcePromiseConstructorV8(event)||event.operation==='call.enter'&&sourcePromiseResolverV8(method)!==null||
-    row?.op==='call'&&event.operation!=='job.enter'&&!sharedProtocolSourceEventV8(view,{event,row});
+    row?.op==='call'&&event.operation!=='job.enter'&&!sharedProtocolSourceEventV8(view,{event,row})&&
+      !sourceAsyncCallEventV8(view,{event,row});
 }
 export function sourceExecutorCompletionV8(view,exit){
   const state=view.components[PROMISE_EXECUTOR_COMPONENT_V8];
@@ -41,16 +57,18 @@ export function createBaseSourceComponentV8(){return {id:BASE_SOURCE_COMPONENT_V
     value:(_view,value)=>ordinarySourceValueV8(value),
     allocation:(view,fields)=>['object','array','closure','promise'].includes(fields.kind)&&!sourceJoinAllocationV8(view,fields)&&
       !sharedProtocolSourceAllocationV8(view,fields)&&
+      !sourceAsyncCallAllocationV8(view,fields)&&
       !(fields.kind==='closure'&&Object.hasOwn(view.components,PROMISE_EXECUTOR_COMPONENT_V8)),
     event(view,input){
       if(sharedProtocolSourceEventV8(view,input))return false;
+      if(sourceAsyncCallEventV8(view,input))return false;
       if(sourcePromiseConstructorV8(input.event)||sourcePromiseJoinEventV8(view,input))return false;
       const callee=input.row?.operands?.[0],method=callee?.[0]==='method'?callee[1]:callee;
       if(input.event.operation==='call.enter'&&sourcePromiseResolverV8(method))return false;
       if(Object.hasOwn(view.components,PROMISE_EXECUTOR_COMPONENT_V8)&&sourcePromiseExecutorEventV8(view,input))return false;
       return !input.row||ordinaryFamilies.has(input.row.op);
     },
-    completion:(view,exit)=>!sharedProtocolSourceCompletionV8(view,exit)&&
+    completion:(view,exit)=>!sharedProtocolSourceCompletionV8(view,exit)&&!sourceAsyncCallCompletionV8(view,exit)&&
       (!['return','throw','unhandled-throw'].includes(exit.operation)||!sourceExecutorCompletionV8(view,exit))
   },
   prepare:{

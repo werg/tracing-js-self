@@ -48,8 +48,8 @@ The corrected JavaScript and Python controllers preserve these distinctions and
 refuse invented synchronous Promises or mismatched synchronous frame completions.
 
 **This is a source-ownership qualification, not public artifact admission.** The
-general source compiler does not yet compose nested async module-driver calls,
-namespace source cells and the shared controller. The source owner
+general source compiler does not yet bind module lifecycle records and namespace
+source cells to the shared controller. The source owner
 refuses incomplete/unsettled module graphs and unsupported failure ownership.
 Reports explicitly retain `publicAdmission:false`, `trainingAdmission:false` and
 zero optimizer updates. No production denominator changes.
@@ -73,14 +73,54 @@ observer-failure rollback. The actual Python public consumer replays every
 generated context and compares the complete final shared state. This new
 foundation does not add fixtures to a production corpus or change its denominator.
 
-Original linked module execution now reaches the next explicit boundary:
+At the qualified shared-generator revision, original linked module execution reached:
 `Promise source helper requires a synchronous owned closure`. The public scoped
 call engine needs an explicit nested async call protocol that detaches the child
 at its first await, restores caller aliases and receiver, binds the actual
 execution Promise, and later resumes/completes the same child independently.
 Treating an async helper as an ordinary synchronous call would retain the wrong
-call scope and permit false completion/FIFO evidence. Shared yield delegation
-also remains refused; existing direct synchronous delegation stays supported.
+call scope and permit false completion/FIFO evidence. The nested async foundation
+below addresses that boundary. Shared yield delegation remains refused; existing
+direct synchronous delegation stays supported.
+
+## Nested async source calls
+
+The new public protocol attaches a retained source call to the actual execution
+Promise. Its first await removes only the child call frame and restores the
+parent receiver and captured-cell aliases. The caller immediately receives the
+execution Promise and keeps its own active Promise job. Later resumptions require
+the same child's latest continuation and the next turn in both the invocation
+and shared-realm ready queues. Repeated awaits detach that turn again. Immediate
+and later child completion settle the execution Promise without overwriting the
+parent's return or exception.
+
+The independent Python evaluator implements the same transitions directly.
+Snapshot validation checks execution-Promise ownership, frame identity, phase,
+receiver, captured cells, continuation order and settled completion. Generic
+call, return, await, resume and Promise settlement cannot bypass this owner.
+Execution state is retained on the Promise node; existing protocol snapshots do
+not gain a redundant global state table.
+
+Ten original source cases compare independent execution, fresh source projection,
+public replay, JSON checkpoint continuation and actual native replay of all 231
+generated contexts. They include immediate and delayed rejection, caught rejected
+awaits, repeated sibling awaits, nested children, live capture mutation, method
+receivers, detachment inside an existing Promise reaction, ordinary reference
+completion and a generator yielding a child execution Promise. Negative controls
+check active-turn/FIFO authority, wrong Promise or settled input, duplicate event
+ownership before preparation, observer-failure rollback and rehashed source
+completion forgery. Async Promise callbacks, Promise-return adoption and thenable
+assimilation retain explicit refusals.
+
+An initial original three-module probe containing caught rejected TLA and a
+sibling TLA now compiles its full 2,012-event owned execution into 707 public
+records (112 protocol and 595 detailed). This compiler result is a prerequisite,
+not module admission: original ESM/public/native module lifecycle binding still
+requires its own exact evidence. The production module admission gate continues
+to refuse async scheduler graphs. The public contract and paired native copy are
+updated together for this isolated candidate; the six existing interoperability
+example payloads and their digest are unchanged, and production native policy
+pins and training populations remain untouched.
 
 Still required before public admission: public module scheduler operations and
 active-program plan binding; composition with the shared source compiler; independent

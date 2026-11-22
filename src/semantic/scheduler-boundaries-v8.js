@@ -3,25 +3,10 @@
 // The shared legacy controller does not implement those observable jobs.
 import {PROTOCOL_MACHINE_API_V8} from './protocol-state-v8.js';
 import {validateSemanticRecord as validateWitness} from './record-schema.js';
-
-const fail=message=>{const error=new TypeError('Region execution: '+message);error.category='region-authority';throw error;};
-const primitiveKinds=new Set(['undefined','null','bool','num','str','bigint','symbol']);
+import {assertPlainPromiseResolutionWithApiV8} from './promise-resolution-shape-v8.js';
 
 export function assertPlainPromiseResolutionV8(controller,value){
-  if(value?.[0]!=='ref')return;
-  if(controller.heap.get(value[1])?.kind==='promise')
-    fail('Promise adoption requires explicit assimilation jobs');
-  // This lookup inspects owned descriptors and known prototype chains. It
-  // neither reads a native property nor enters a getter or Proxy trap.
-  const {descriptor}=PROTOCOL_MACHINE_API_V8.resolveProperty(controller,value[1],['str','then']);
-  if(descriptor===null)return;
-  if(descriptor.kind!=='data')fail('Promise then getter requires an explicit resolution protocol');
-  const method=descriptor.value;
-  if(method[0]==='ref'){
-    const node=controller.heap.get(method[1]);
-    if(!node||['closure','proxy'].includes(node.kind))
-      fail('Callable Promise then requires explicit assimilation jobs');
-  }else if(!primitiveKinds.has(method[0]))fail('Unmodeled Promise then requires an explicit resolution protocol');
+  return assertPlainPromiseResolutionWithApiV8(controller,value,PROTOCOL_MACHINE_API_V8);
 }
 
 export function assertObservedPromiseResolutionV8(controller,{effect,status,result,graph}){

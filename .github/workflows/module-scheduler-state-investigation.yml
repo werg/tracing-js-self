@@ -2,7 +2,7 @@ name: Source-owned module scheduler lifecycle and native parity
 
 on:
   push:
-    branches: [codex/v8-module-scheduler-state-20261122, codex/v8-scheduler-source-ownership-20261122]
+    branches: [codex/v8-module-scheduler-state-20261122, codex/v8-scheduler-source-ownership-20261122, codex/v8-nested-async-calls-20261122]
 
 permissions:
   contents: read
@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: werg/megatoken
-          ref: 385b830b8744d39fa5847b58f82dd0eceb3656ee
+          ref: fe563c1fa8e11a73f59af53c59da97e553b26fa3
           path: megatoken
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -70,20 +70,39 @@ jobs:
           PY
           python -m ruff check src/megatoken/data/module_scheduler_state_v8.py tests/test_module_scheduler_state_v8.py
           python -m ruff format --check src/megatoken/data/module_scheduler_state_v8.py tests/test_module_scheduler_state_v8.py
+          python -m ruff check src/megatoken/data/async_call_v8.py src/megatoken/data/protocol_v8.py src/megatoken/data/promise_scheduler_v8.py src/megatoken/data/native_v8.py tests/test_async_call_v8.py
+          python -m ruff format --check src/megatoken/data/async_call_v8.py src/megatoken/data/protocol_v8.py src/megatoken/data/promise_scheduler_v8.py src/megatoken/data/native_v8.py tests/test_async_call_v8.py
           git diff --exit-code --
+      - name: Verify the paired contract and unchanged existing fixture population
+        working-directory: tracing-js-self
+        run: |
+          node tools/generate-semantic-region-contract.mjs --check
+          cmp contracts/semantic-execution-v8.json ../megatoken/src/megatoken/data/contracts/semantic-execution-v8.json
+          python - <<'PY'
+          import base64,gzip,json
+          from pathlib import Path
+          producer=json.loads(Path('test/fixtures/semantic-regions-v8.json').read_text())
+          native=json.loads(gzip.decompress(base64.b64decode(Path('../megatoken/tests/fixtures/semantic-regions-v8.json.gz.b64').read_bytes())))
+          if producer!=native or len(producer['examples'])!=6 or producer['interoperabilityDigest']!='f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661':
+              raise ValueError('Existing interoperability population or exact paired fixture changed')
+          print('Paired public contract and all six existing interoperability payloads agree')
+          PY
       - name: Check independent native scheduler state
         if: ${{ !cancelled() }}
         working-directory: megatoken
         run: |
-          python -m pytest -q tests/test_module_scheduler_state_v8.py \
+          python -m pytest -q tests/test_module_scheduler_state_v8.py tests/test_async_call_v8.py \
+            tests/test_protocol_v8.py tests/test_protocol_boundaries_v8.py tests/test_promise_scheduler_v8.py \
+            tests/test_promise_join_v8.py tests/test_promise_executor_v8.py tests/test_promise_executor_boundaries_v8.py \
+            tests/test_generator_boundaries_v8.py \
             --junitxml="$RUNNER_TEMP/module-scheduler-native.xml" 2>&1 | tee "$RUNNER_TEMP/module-scheduler-native.log"
           python - <<'PY'
           import os, xml.etree.ElementTree as ET
           from pathlib import Path
           cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'module-scheduler-native.xml').getroot().iter('testcase'))
           if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
-              raise ValueError('Every native scheduler-state control must run and pass')
-          print(f'{len(cases)} native scheduler-state controls passed, zero skips')
+              raise ValueError('Every native scheduler and async composition control must run and pass')
+          print(f'{len(cases)} native scheduler and async composition controls passed, zero skips')
           PY
       - name: Compare original ESM, owned scheduling and actual Python state
         if: ${{ !cancelled() }}
@@ -139,6 +158,27 @@ jobs:
           print(f'{len(cases)} shared generator and Promise controls passed, zero skips')
           print('SHARED_GENERATOR_EVIDENCE_SUMMARY_JSON '+json.dumps({key:value for key,value in evidence.items() if key!='cases'},separators=(',',':')))
           PY
+      - name: Check nested async scopes against original source and actual native replay
+        if: ${{ !cancelled() }}
+        working-directory: tracing-js-self
+        run: |
+          node --test --test-concurrency=1 --test-reporter=junit test/semantic-async-call-source-v8.test.js \
+            2>&1 | tee "$RUNNER_TEMP/nested-async-js.xml"
+          python - <<'PY'
+          import json,os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          cases=list(ET.parse(root/'nested-async-js.xml').getroot().iter('testcase'))
+          if len(cases)!=18 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('Every original-source async call and adversarial control must run and pass')
+          evidence=json.loads((root/'nested-async-source-evidence.json').read_text())
+          if evidence['sourceCases']!=10 or evidence['actualNativeCases']!=10 or evidence['generatedContexts']!=231:
+              raise ValueError('Every original async source case requires actual native replay of every context')
+          if evidence['moduleAdmission'] is not False or evidence['trainingAdmission'] is not False or evidence['optimizerUpdates']!=0:
+              raise ValueError('Async helper composition cannot grant module/data admission or optimizer exposure')
+          print(f'{len(cases)} nested async source and independent native controls passed, zero skips')
+          print('NESTED_ASYNC_EVIDENCE_SUMMARY_JSON '+json.dumps({key:value for key,value in evidence.items() if key!='cases'},separators=(',',':')))
+          PY
       - name: Verify both candidate checkouts remained exact
         if: ${{ !cancelled() }}
         run: |
@@ -155,3 +195,4 @@ jobs:
           path: |
             ${{ runner.temp }}/module-scheduler-*
             ${{ runner.temp }}/shared-generator-*
+            ${{ runner.temp }}/nested-async-*

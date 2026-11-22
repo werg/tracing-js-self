@@ -204,10 +204,10 @@ export class RegionExecutionHarness {
     if(activation.deadline!==null&&activation.deadline<=this.inner.now())fail('protocol invocation deadline expired');
     if(realm.running!==null&&realm.running!==invocationId)
       fail('another invocation owns the active realm turn');
-    if(record.kind==='promise.join.step'){
+    if(['promise.join.step','async.resume'].includes(record.kind)){
       this.inner.assertNoOtherActiveJob(invocationId);
       if(this.inner.nextReadyInvocation(activation.realmId)!==invocationId)
-        fail('join step violates shared realm global ready order');
+        fail('protocol scheduler step violates shared realm global ready order');
     }
     if((controller.jobs.size||controller.continuations.size||controller.activeJob)&&
       !allowsProtocolInternalSchedulerV8(controller,record))fail('protocol profile requires a declared internal scheduler');

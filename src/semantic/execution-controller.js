@@ -123,8 +123,8 @@ export class SemanticExecutionController {
   schedulerClosure(identity){
     const closure=this.heap.get(identity);
     if(closure?.kind!=='closure')fail('capture','Scheduler requires an owned closure');
-    if(closure.generatorFunction||closure.promiseResolver)
-      fail('capture','Generator and resolving functions require their explicit call protocol');
+    if(closure.generatorFunction||closure.promiseResolver||closure.asyncFunction)
+      fail('capture','Generator, async and resolving functions require their explicit call protocol');
     return closure;
   }
   refreshReady(){

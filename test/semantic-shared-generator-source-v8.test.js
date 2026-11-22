@@ -127,10 +127,9 @@ test('a generator observer failure rolls back its frame, descriptor state and Pr
   for(const {id}of extensions)assert.deepEqual(adapter.componentState(id),states[id],id);
 });
 
-test('composition refuses undeclared delegation and nested async helper suspension',()=>{
+test('composition refuses undeclared delegation',()=>{
   const bodies=[
-    ['function* inner(){yield 1;}function* outer(){yield* inner();}function run(){const p=new Promise(r=>r(1));const it=outer();return it.next().value;}',/yield delegation/],
-    ['async function helper(){await 0;return 1;}async function run(){function* g(){yield 1;}const it=g();it.next();const p=new Promise(r=>r(1));return (await helper())+(await p);}',/synchronous owned closure/]
+    ['function* inner(){yield 1;}function* outer(){yield* inner();}function run(){const p=new Promise(r=>r(1));const it=outer();return it.next().value;}',/yield delegation/]
   ];
   for(const [body,reason]of bodies)assert.throws(()=>compileProtocolSourceV8(archive('"use strict";'+body)),reason);
 });
