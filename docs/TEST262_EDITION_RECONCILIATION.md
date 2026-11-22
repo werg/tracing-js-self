@@ -65,6 +65,33 @@ requires every source's declared mode set to be present, so dropping or
 duplicating a variant cannot reduce the audited denominator. Every test file is
 read and SHA-256 checked against the catalog before it is included.
 
+## Full hosted audit — 22 November 2026
+
+The push-triggered [full audit run](https://github.com/werg/tracing-js-self/actions/runs/45011367784)
+checked exact Test262 revision `d53ebc8b1931d9f1541e43d59650776e4b766248`
+against the retained ECMA-262 17th edition HTML (`8,348,904` bytes; SHA-256
+`5df49e088c2b5c7a3dfd4a330414b92897fb4535cb62fc5936cad101a6c2304a`). The
+clean producer revision was `d1b35fa850b8ef72b5eb664755cbf76233b05cc0`.
+Catalog digest: `87554d6d1c4f5f2fa1f4108501148a0b6adfd2fab357383594ea3ea60aca5045`.
+Audit digest: `e4538babc0ec161e1774cadfc6e53e3b2ccbcdaefbc1ba9edcaf3bd431bcec96`.
+
+The acquired tree contains **53,616 test files and 102,994 strict/sloppy/raw/
+module variants**. The mode totals are sloppy 52,065, strict 50,056, raw 30, and
+module 843. Expected outcomes are 94,235 normal and 8,759 negative variants:
+8,659 parse, 66 runtime, and 34 resolution. All 102,994 variants remain
+unclassified for edition membership; zero are marked required for this release.
+The audit leaves edition membership, applicability, and conformance claims
+false. Reference review reports 58,589 exact resolved anchors, 23,474 absent
+anchors, and 20,931 missing `esid` values. Scope-review labels count 1,377
+Annex B, 94,853 core-or-extension, and 6,764 separate-ECMA-402 variants. These
+are review counts, not exclusions or applicability findings.
+
+The complete compressed catalog runner output, bare catalog, full audit report,
+logs, toolchain record, and `SHA256SUMS` are retained in [workflow artifact
+14750355381](https://github.com/werg/tracing-js-self/actions/runs/45011367784/artifacts/14750355381)
+for 90 days. Artifact ZIP SHA-256:
+`b1120a4da1a9227c7c1f93449f3da12b0a345fa0da1a564c3787459fd1cc631a`.
+
 Implementation source hashes, exact producer revision, tracked and untracked
 dirty status, Node version and Python version accompany the complete report.
 The complete wrapper is hashed, and the deterministic reconciliation content

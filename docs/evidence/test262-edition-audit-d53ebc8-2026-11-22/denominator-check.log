@@ -1,0 +1,40 @@
+{
+  "suiteRevision": "d53ebc8b1931d9f1541e43d59650776e4b766248",
+  "specification": {
+    "bytes": 8348904,
+    "sha256": "5df49e088c2b5c7a3dfd4a330414b92897fb4535cb62fc5936cad101a6c2304a",
+    "uri": "https://262.ecma-international.org/17.0/index.html"
+  },
+  "producerRevision": "d1b35fa850b8ef72b5eb664755cbf76233b05cc0",
+  "producerDirty": false,
+  "catalogDigest": "87554d6d1c4f5f2fa1f4108501148a0b6adfd2fab357383594ea3ea60aca5045",
+  "auditDigest": "e4538babc0ec161e1774cadfc6e53e3b2ccbcdaefbc1ba9edcaf3bd431bcec96",
+  "testFiles": 53616,
+  "variants": 102994,
+  "editionMembership": {
+    "unclassified": 102994
+  },
+  "releaseRequirement": {
+    "required": 0,
+    "notRequired": 102994
+  },
+  "modes": {
+    "sloppy": 52065,
+    "strict": 50056,
+    "raw": 30,
+    "module": 843
+  },
+  "expectedOutcomes": {
+    "normal": 94235,
+    "negativePhases": {
+      "runtime": 66,
+      "parse": 8659,
+      "resolution": 34
+    }
+  },
+  "claims": {
+    "editionMembershipCertified": false,
+    "applicabilityCertified": false,
+    "conformance": false
+  }
+}
