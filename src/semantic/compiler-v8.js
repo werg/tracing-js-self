@@ -163,6 +163,13 @@ async function tryDirectProtocolSource(fixture,prior){
   return {...prior,regionAttempts,protocolRefusal:projectionAttempt('direct-protocol-source/1',protocol)};
 }
 export async function verifyRegionTrainingCase(fixture){
+  // Namespace source authority is established by the explicit original-module
+  // gate. The generic teacher cannot execute the reserved generated intrinsic.
+  if(fixture?.projectionOptions?.moduleNamespacePlan){
+    const {verifyProtocolRegionTrainingCase}=await import('./protocol-source-v8.js');
+    return verifyProtocolRegionTrainingCase(fixture);
+  }
+
   if(Object.hasOwn(fixture??{},'sessionCases')){
     const {verifyRegionSourceSessionV8}=await import('./source-session-v8.js');
     return verifyRegionSourceSessionV8({...fixture,cases:fixture.sessionCases});
@@ -208,6 +215,11 @@ export async function recheckRegionEvidence(exported,{nativeConsumer=null,native
   if(side?.schema!=='semantic-region-evidence/1'||side.representation!==REGION_TRACE_VERSION||
     side.referenceStatus!=='agreed'||side.sourceArtifactDigest!==digest(side.sourceArtifact)||
     side.optimizerSteps!==0||side.learningClaim!==null)fail('incompatible or altered source evidence');
+  const publicNamespacePlan=side.sourceArtifact.public?.timeline?.find(row=>row.kind==='program')
+    ?.fields?.regionProgram?.moduleNamespacePlan;
+  const moduleEvidence=side.sourceArtifact.sidecar?.sourceProvenance?.upstream?.moduleEvidence;
+  if(publicNamespacePlan!==undefined&&!moduleEvidence)
+    fail('public module namespace plan lacks exact original-module source evidence');
   const source=await recheckSourceAdmissionV8(side.sourceArtifact,{requireAdmitted:false});
   let moduleReference={status:'untested',applicable:false};
   if(side.sourceArtifact.sidecar?.sourceProvenance?.upstream?.moduleEvidence){

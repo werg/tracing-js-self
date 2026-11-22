@@ -16,6 +16,58 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Qualified namespace composition and execution lock promoted — 22 November 2026
+
+The complete source-owned namespace implementation and execution-lock foundation
+are promoted from exact producer `4a39059878dc556ff38a681be76d4f0bfa21a03b`.
+[Run 45002727473](https://github.com/werg/tracing-js-self/actions/runs/45002727473)
+passed **178 focused individual JUnit controls, 17 source/compiler controls,
+846 native controls, 40 namespace controls, 79 ordinary paired transport controls
+and one actual original-module artifact**, all zero skips. The final guarded
+artifact test also passed at exact `5503879/b6e0bf9` in
+[run 45003132223](https://github.com/werg/tracing-js-self/actions/runs/45003132223).
+Native main is now `124fbd0d493c29af6fb7cf7965d06744e4c7bad5`; this producer policy pins it.
+New exact-main-head checks remain separate from the qualified candidate evidence.
+
+[Full logs, raw prepared manifest/report, per-kind token-mask evidence and exact
+implementation file map](evidence/v8-namespace-composed4a390-2026-11-22/README.md)
+are permanently retained, alongside prior failed probes. The artifact is one
+source in a separate technical registry: 15 packed windows, seven namespace/cell
+target occurrences, 225 scored positions, **zero optimizer updates**. Production
+denominators remain original 665, interoperability 66, gallery 11 and support 64.
+The actual source authority derives from original modules, fresh independent ESM
+observation, exact event-group ownership and native state; neither a copied
+reference outcome nor a rehashed wrong export plan grants admission.
+
+The bounded explicit profile supports synchronous scalar live cells, namespace
+creation, keys, dynamic read and descriptors. Unsupported graphs retain their
+default refusal. See [profile and remaining scope](V8_MODULE_NAMESPACES.md).
+Public async module scheduling, cycles, arbitrary reflection/escape, persistent
+sessions, broader source populations and learned exposure remain open.
+
+The trusted-local Linux execution lock passed six actual cross-process controls
+and preserved all eight storage exports; its full evidence is retained in
+[evidence/v8-execution-lock325-2026-11-22](evidence/v8-execution-lock325-2026-11-22/README.md).
+It uses a stable inode and inherited open-file-description ownership; no TTL,
+PID liveness or unlink-based stealing. **It is not recovery authority by itself.**
+Original-driver ownership, outliving native-process lifetime and durable exact
+request/result/poststate reconciliation remain prerequisites. The isolated
+request-journal foundation passed 12 crash/contention/durability controls, while
+its combined inventory probe remains failed (51/52 plus formatting). A saved
+selection response cannot be reused when native restore intentionally abandons
+that uncommitted selection.
+
+The full `134a832/e9817ad` four-population campaign and main `e52855c` focused,
+installed and completed support/interoperability/gallery lanes are retained in
+[evidence/v8-main134-e528-2026-11-22](evidence/v8-main134-e528-2026-11-22/README.md).
+The e528 original-source lane was still running at this checkpoint. The separate
+full-target training pass and objective-bound inventory remain isolated until
+actual optimizer evidence proves their measured exposure.
+
+**0/17 complete acceptance packages are closed; both PRs remain drafts.**
+The dated sections below preserve historical states; this section supersedes
+their older namespace-isolated and already-completed campaign pending notes.
+
 ## Same-owner service terminal recovery promoted — 22 November 2026
 
 Exact candidate `5e8b987f13b43aff6b7084828646e2a3c258185b`, paired with native

@@ -1,0 +1,980 @@
+﻿2026-11-22T08:25:21.9822322Z Current runner version: '2.338.2'
+2026-11-22T08:25:21.9841587Z ##[group]Runner Image Provisioner
+2026-11-22T08:25:21.9842361Z Hosted Compute Agent
+2026-11-22T08:25:21.9842799Z Version: 20261111.635
+2026-11-22T08:25:21.9843264Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-22T08:25:21.9843828Z Build Date: 2026-11-11T01:49:01Z
+2026-11-22T08:25:21.9844333Z Worker ID: {2f7b68d2-3e2c-4718-8aaa-30c88a498f6f}
+2026-11-22T08:25:21.9844872Z Region: us-west-2
+2026-11-22T08:25:21.9845292Z Cloud: AWS
+2026-11-22T08:25:21.9845673Z ##[endgroup]
+2026-11-22T08:25:21.9846616Z ##[group]Operating System
+2026-11-22T08:25:21.9847058Z Ubuntu
+2026-11-22T08:25:21.9847428Z 24.04.5
+2026-11-22T08:25:21.9847820Z LTS
+2026-11-22T08:25:21.9848183Z ##[endgroup]
+2026-11-22T08:25:21.9848571Z ##[group]Runner Image
+2026-11-22T08:25:21.9849002Z Image: ubuntu-24.04
+2026-11-22T08:25:21.9849425Z Version: 20261116.133.1
+2026-11-22T08:25:21.9850699Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.133/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-22T08:25:21.9851965Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.133
+2026-11-22T08:25:21.9852758Z ##[endgroup]
+2026-11-22T08:25:21.9853613Z ##[group]GITHUB_TOKEN Permissions
+2026-11-22T08:25:21.9855284Z Contents: read
+2026-11-22T08:25:21.9855694Z Metadata: read
+2026-11-22T08:25:21.9856126Z ##[endgroup]
+2026-11-22T08:25:21.9857631Z Secret source: Actions
+2026-11-22T08:25:21.9858289Z Cache mode: write
+2026-11-22T08:25:21.9858894Z Prepare workflow directory
+2026-11-22T08:25:22.0225982Z Prepare all required actions
+2026-11-22T08:25:22.0263744Z Getting action download info
+2026-11-22T08:25:22.3767440Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-22T08:25:24.2062834Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-22T08:25:24.4162861Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-11-22T08:25:24.5860845Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-22T08:25:24.9567515Z Complete job name: paired-state
+2026-11-22T08:25:25.0130515Z ##[group]Run actions/checkout@v4
+2026-11-22T08:25:25.0131219Z with:
+2026-11-22T08:25:25.0131740Z   ref: 4a39059878dc556ff38a681be76d4f0bfa21a03b
+2026-11-22T08:25:25.0132093Z   path: tracing-js-self
+2026-11-22T08:25:25.0132413Z   persist-credentials: false
+2026-11-22T08:25:25.0132754Z   repository: werg/tracing-js-self
+2026-11-22T08:25:25.0134885Z   token: ***
+2026-11-22T08:25:25.0135175Z   ssh-strict: true
+2026-11-22T08:25:25.0135455Z   ssh-user: git
+2026-11-22T08:25:25.0135732Z   clean: true
+2026-11-22T08:25:25.0136053Z   sparse-checkout-cone-mode: true
+2026-11-22T08:25:25.0136347Z   fetch-depth: 1
+2026-11-22T08:25:25.0136677Z   fetch-tags: false
+2026-11-22T08:25:25.0136944Z   show-progress: true
+2026-11-22T08:25:25.0137219Z   lfs: false
+2026-11-22T08:25:25.0137466Z   submodules: false
+2026-11-22T08:25:25.0137753Z   set-safe-directory: true
+2026-11-22T08:25:25.0138095Z   allow-unsafe-pr-checkout: false
+2026-11-22T08:25:25.0138511Z env:
+2026-11-22T08:25:25.0138852Z   OMP_NUM_THREADS: 1
+2026-11-22T08:25:25.0139119Z   MKL_NUM_THREADS: 1
+2026-11-22T08:25:25.0139528Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:25:25.0140125Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:25:25.0140914Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T08:25:25.0141604Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T08:25:25.0142246Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:25:25.0142672Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:25:25.0142961Z ##[endgroup]
+2026-11-22T08:25:29.0243745Z Syncing repository: werg/tracing-js-self
+2026-11-22T08:25:29.0245005Z ##[group]Getting Git version info
+2026-11-22T08:25:29.0245513Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self'
+2026-11-22T08:25:29.0246105Z [command]/usr/bin/git version
+2026-11-22T08:25:29.3895750Z git version 2.56.1
+2026-11-22T08:25:29.3910553Z ##[endgroup]
+2026-11-22T08:25:29.3923197Z Temporarily overriding HOME='/home/runner/work/_temp/6ef70f11-7930-46a9-bf2f-596425309bcb' before making global git config changes
+2026-11-22T08:25:29.3924190Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T08:25:29.3928431Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:25:29.4301986Z ##[group]Initializing the repository
+2026-11-22T08:25:29.4305495Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:25:29.5240535Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T08:25:29.5241257Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T08:25:29.5241918Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T08:25:29.5242331Z hint: call:
+2026-11-22T08:25:29.5242570Z hint:
+2026-11-22T08:25:29.5242981Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T08:25:29.5243489Z hint:
+2026-11-22T08:25:29.5243815Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T08:25:29.5244250Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T08:25:29.5244580Z hint:
+2026-11-22T08:25:29.5244852Z hint: 	git branch -m <name>
+2026-11-22T08:25:29.5245143Z hint:
+2026-11-22T08:25:29.5245611Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T08:25:29.5247003Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/.git/
+2026-11-22T08:25:29.5256160Z [command]/usr/bin/git remote add origin https://github.com/werg/tracing-js-self
+2026-11-22T08:25:29.5302715Z ##[endgroup]
+2026-11-22T08:25:29.5303788Z ##[group]Disabling automatic garbage collection
+2026-11-22T08:25:29.5306034Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T08:25:29.5328662Z ##[endgroup]
+2026-11-22T08:25:29.5329368Z ##[group]Setting up auth
+2026-11-22T08:25:29.5334554Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:25:29.5361125Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:25:29.9034931Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:25:29.9060862Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:25:29.9209697Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:25:29.9233619Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:25:29.9382706Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T08:25:29.9409173Z ##[endgroup]
+2026-11-22T08:25:29.9409821Z ##[group]Fetching the repository
+2026-11-22T08:25:29.9421151Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 4a39059878dc556ff38a681be76d4f0bfa21a03b
+2026-11-22T08:25:58.3031321Z From https://github.com/werg/tracing-js-self
+2026-11-22T08:25:58.3031924Z  * branch            4a39059878dc556ff38a681be76d4f0bfa21a03b -> FETCH_HEAD
+2026-11-22T08:25:58.3040381Z ##[endgroup]
+2026-11-22T08:25:58.3041236Z ##[group]Determining the checkout info
+2026-11-22T08:25:58.3041735Z ##[endgroup]
+2026-11-22T08:25:58.3042035Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T08:25:58.3131819Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T08:25:58.3134776Z ##[group]Checking out the ref
+2026-11-22T08:25:58.3138958Z [command]/usr/bin/git checkout --progress --force 4a39059878dc556ff38a681be76d4f0bfa21a03b
+2026-11-22T08:25:59.3207108Z Updating files:  45% (1683/3702)
+2026-11-22T08:25:59.3289903Z Updating files:  46% (1703/3702)
+2026-11-22T08:25:59.3326757Z Updating files:  47% (1740/3702)
+2026-11-22T08:25:59.3570666Z Updating files:  48% (1777/3702)
+2026-11-22T08:25:59.3593202Z Updating files:  49% (1814/3702)
+2026-11-22T08:25:59.3604791Z Updating files:  50% (1851/3702)
+2026-11-22T08:25:59.3612752Z Updating files:  51% (1889/3702)
+2026-11-22T08:25:59.3634763Z Updating files:  52% (1926/3702)
+2026-11-22T08:25:59.3668420Z Updating files:  53% (1963/3702)
+2026-11-22T08:25:59.3698075Z Updating files:  54% (2000/3702)
+2026-11-22T08:25:59.3733829Z Updating files:  55% (2037/3702)
+2026-11-22T08:25:59.3785093Z Updating files:  56% (2074/3702)
+2026-11-22T08:25:59.3794164Z Updating files:  57% (2111/3702)
+2026-11-22T08:25:59.3803118Z Updating files:  58% (2148/3702)
+2026-11-22T08:25:59.3810057Z Updating files:  59% (2185/3702)
+2026-11-22T08:25:59.3826552Z Updating files:  60% (2222/3702)
+2026-11-22T08:25:59.3837222Z Updating files:  61% (2259/3702)
+2026-11-22T08:25:59.3844034Z Updating files:  62% (2296/3702)
+2026-11-22T08:25:59.3851709Z Updating files:  63% (2333/3702)
+2026-11-22T08:25:59.3863873Z Updating files:  64% (2370/3702)
+2026-11-22T08:25:59.3878139Z Updating files:  65% (2407/3702)
+2026-11-22T08:25:59.3891053Z Updating files:  66% (2444/3702)
+2026-11-22T08:25:59.3899649Z Updating files:  67% (2481/3702)
+2026-11-22T08:25:59.3917135Z Updating files:  68% (2518/3702)
+2026-11-22T08:25:59.3922390Z Updating files:  69% (2555/3702)
+2026-11-22T08:25:59.3954782Z Updating files:  70% (2592/3702)
+2026-11-22T08:25:59.3973874Z Updating files:  71% (2629/3702)
+2026-11-22T08:25:59.3984815Z Updating files:  72% (2666/3702)
+2026-11-22T08:25:59.3995341Z Updating files:  73% (2703/3702)
+2026-11-22T08:25:59.4008070Z Updating files:  74% (2740/3702)
+2026-11-22T08:25:59.4024802Z Updating files:  75% (2777/3702)
+2026-11-22T08:25:59.4042550Z Updating files:  76% (2814/3702)
+2026-11-22T08:25:59.4057620Z Updating files:  77% (2851/3702)
+2026-11-22T08:25:59.4088604Z Updating files:  78% (2888/3702)
+2026-11-22T08:25:59.4108110Z Updating files:  79% (2925/3702)
+2026-11-22T08:25:59.4131079Z Updating files:  80% (2962/3702)
+2026-11-22T08:25:59.4155211Z Updating files:  81% (2999/3702)
+2026-11-22T08:25:59.4168056Z Updating files:  82% (3036/3702)
+2026-11-22T08:25:59.4184641Z Updating files:  83% (3073/3702)
+2026-11-22T08:25:59.4197587Z Updating files:  84% (3110/3702)
+2026-11-22T08:25:59.4426865Z Updating files:  85% (3147/3702)
+2026-11-22T08:25:59.4437401Z Updating files:  86% (3184/3702)
+2026-11-22T08:25:59.4450347Z Updating files:  87% (3221/3702)
+2026-11-22T08:25:59.4464371Z Updating files:  88% (3258/3702)
+2026-11-22T08:25:59.4482865Z Updating files:  89% (3295/3702)
+2026-11-22T08:25:59.4500592Z Updating files:  90% (3332/3702)
+2026-11-22T08:25:59.4518481Z Updating files:  91% (3369/3702)
+2026-11-22T08:25:59.4534816Z Updating files:  92% (3406/3702)
+2026-11-22T08:25:59.4546006Z Updating files:  93% (3443/3702)
+2026-11-22T08:25:59.4559684Z Updating files:  94% (3480/3702)
+2026-11-22T08:25:59.4571708Z Updating files:  95% (3517/3702)
+2026-11-22T08:25:59.4588006Z Updating files:  96% (3554/3702)
+2026-11-22T08:25:59.4607396Z Updating files:  97% (3591/3702)
+2026-11-22T08:25:59.4633906Z Updating files:  98% (3628/3702)
+2026-11-22T08:25:59.4647002Z Updating files:  99% (3665/3702)
+2026-11-22T08:25:59.4647254Z Updating files: 100% (3702/3702)
+2026-11-22T08:25:59.4647508Z Updating files: 100% (3702/3702), done.
+2026-11-22T08:25:59.4691497Z Note: switching to '4a39059878dc556ff38a681be76d4f0bfa21a03b'.
+2026-11-22T08:25:59.4692009Z 
+2026-11-22T08:25:59.4692257Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T08:25:59.4692762Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T08:25:59.4693212Z state without impacting any branches by switching back to a branch.
+2026-11-22T08:25:59.4693456Z 
+2026-11-22T08:25:59.4693608Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T08:25:59.4694051Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T08:25:59.4694284Z 
+2026-11-22T08:25:59.4694439Z   git switch -c <new-branch-name>
+2026-11-22T08:25:59.4694600Z 
+2026-11-22T08:25:59.4694750Z Or undo this operation with:
+2026-11-22T08:25:59.4694889Z 
+2026-11-22T08:25:59.4695000Z   git switch -
+2026-11-22T08:25:59.4695160Z 
+2026-11-22T08:25:59.4695344Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T08:25:59.4695636Z 
+2026-11-22T08:25:59.4695875Z HEAD is now at 4a39059 test(v8): retain qualified execution lock and rerun complete namespace composition
+2026-11-22T08:25:59.4774179Z ##[endgroup]
+2026-11-22T08:25:59.4816085Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T08:25:59.4836005Z 4a39059878dc556ff38a681be76d4f0bfa21a03b
+2026-11-22T08:25:59.4848635Z ##[group]Removing auth
+2026-11-22T08:25:59.4848993Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:25:59.4870586Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:25:59.5027344Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:25:59.5048783Z http.https://github.com/.extraheader
+2026-11-22T08:25:59.5053986Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-22T08:25:59.5077362Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:25:59.5239263Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:25:59.5261552Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:25:59.5407008Z ##[endgroup]
+2026-11-22T08:25:59.5602392Z ##[group]Run actions/checkout@v4
+2026-11-22T08:25:59.5602640Z with:
+2026-11-22T08:25:59.5602888Z   repository: werg/megatoken
+2026-11-22T08:25:59.5603174Z   ref: 9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876
+2026-11-22T08:25:59.5603452Z   path: megatoken
+2026-11-22T08:25:59.5603690Z   persist-credentials: false
+2026-11-22T08:25:59.5605648Z   token: ***
+2026-11-22T08:25:59.5605898Z   ssh-strict: true
+2026-11-22T08:25:59.5606111Z   ssh-user: git
+2026-11-22T08:25:59.5606320Z   clean: true
+2026-11-22T08:25:59.5606571Z   sparse-checkout-cone-mode: true
+2026-11-22T08:25:59.5606826Z   fetch-depth: 1
+2026-11-22T08:25:59.5607305Z   fetch-tags: false
+2026-11-22T08:25:59.5607553Z   show-progress: true
+2026-11-22T08:25:59.5607770Z   lfs: false
+2026-11-22T08:25:59.5607981Z   submodules: false
+2026-11-22T08:25:59.5608208Z   set-safe-directory: true
+2026-11-22T08:25:59.5608510Z   allow-unsafe-pr-checkout: false
+2026-11-22T08:25:59.5608752Z env:
+2026-11-22T08:25:59.5608943Z   OMP_NUM_THREADS: 1
+2026-11-22T08:25:59.5609272Z   MKL_NUM_THREADS: 1
+2026-11-22T08:25:59.5609601Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:25:59.5610383Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:25:59.5610910Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T08:25:59.5612011Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T08:25:59.5612723Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:25:59.5613079Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:25:59.5613349Z ##[endgroup]
+2026-11-22T08:25:59.6263048Z Syncing repository: werg/megatoken
+2026-11-22T08:25:59.6274632Z ##[group]Getting Git version info
+2026-11-22T08:25:59.6275246Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self/megatoken'
+2026-11-22T08:25:59.6295630Z [command]/usr/bin/git version
+2026-11-22T08:25:59.6325563Z git version 2.56.1
+2026-11-22T08:25:59.6342368Z ##[endgroup]
+2026-11-22T08:25:59.6352921Z Temporarily overriding HOME='/home/runner/work/_temp/f7985e81-8f9f-461f-a75a-f830312f3c71' before making global git config changes
+2026-11-22T08:25:59.6353594Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T08:25:59.6357742Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:25:59.6383583Z ##[group]Initializing the repository
+2026-11-22T08:25:59.6386645Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:25:59.6410701Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T08:25:59.6411512Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T08:25:59.6412123Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T08:25:59.6412590Z hint: call:
+2026-11-22T08:25:59.6412860Z hint:
+2026-11-22T08:25:59.6413373Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T08:25:59.6413708Z hint:
+2026-11-22T08:25:59.6413996Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T08:25:59.6414441Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T08:25:59.6414821Z hint:
+2026-11-22T08:25:59.6415045Z hint: 	git branch -m <name>
+2026-11-22T08:25:59.6415259Z hint:
+2026-11-22T08:25:59.6415532Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T08:25:59.6416027Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/megatoken/.git/
+2026-11-22T08:25:59.6417712Z [command]/usr/bin/git remote add origin https://github.com/werg/megatoken
+2026-11-22T08:25:59.6443572Z ##[endgroup]
+2026-11-22T08:25:59.6444627Z ##[group]Disabling automatic garbage collection
+2026-11-22T08:25:59.6446078Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T08:25:59.6466495Z ##[endgroup]
+2026-11-22T08:25:59.6467154Z ##[group]Setting up auth
+2026-11-22T08:25:59.6471454Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:25:59.6493153Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:25:59.6646095Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:25:59.6674990Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:25:59.6834376Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:25:59.6856289Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:25:59.7010260Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T08:25:59.7035809Z ##[endgroup]
+2026-11-22T08:25:59.7036502Z ##[group]Fetching the repository
+2026-11-22T08:25:59.7042067Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876
+2026-11-22T08:26:02.1839504Z From https://github.com/werg/megatoken
+2026-11-22T08:26:02.1840553Z  * branch            9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876 -> FETCH_HEAD
+2026-11-22T08:26:02.1844654Z ##[endgroup]
+2026-11-22T08:26:02.1845153Z ##[group]Determining the checkout info
+2026-11-22T08:26:02.1845955Z ##[endgroup]
+2026-11-22T08:26:02.1851620Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T08:26:02.1884120Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T08:26:02.1907400Z ##[group]Checking out the ref
+2026-11-22T08:26:02.1910632Z [command]/usr/bin/git checkout --progress --force 9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876
+2026-11-22T08:26:02.3989344Z Note: switching to '9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876'.
+2026-11-22T08:26:02.3989765Z 
+2026-11-22T08:26:02.3990024Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T08:26:02.3990899Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T08:26:02.3991512Z state without impacting any branches by switching back to a branch.
+2026-11-22T08:26:02.3991819Z 
+2026-11-22T08:26:02.3992078Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T08:26:02.3992603Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T08:26:02.3992867Z 
+2026-11-22T08:26:02.3993011Z   git switch -c <new-branch-name>
+2026-11-22T08:26:02.3993218Z 
+2026-11-22T08:26:02.3993402Z Or undo this operation with:
+2026-11-22T08:26:02.3993627Z 
+2026-11-22T08:26:02.3993727Z   git switch -
+2026-11-22T08:26:02.3993879Z 
+2026-11-22T08:26:02.3994300Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T08:26:02.3994717Z 
+2026-11-22T08:26:02.3995232Z HEAD is now at 9a5b87f test(v8): commit canonical namespace evidence collector formatting
+2026-11-22T08:26:02.4009158Z ##[endgroup]
+2026-11-22T08:26:02.4043558Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T08:26:02.4063778Z 9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876
+2026-11-22T08:26:02.4070883Z ##[group]Removing auth
+2026-11-22T08:26:02.4073865Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:26:02.4097029Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:26:02.4255299Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:26:02.4272204Z http.https://github.com/.extraheader
+2026-11-22T08:26:02.4276966Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-22T08:26:02.4300426Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:26:02.4449483Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:26:02.4473352Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:26:02.4619249Z ##[endgroup]
+2026-11-22T08:26:02.4754642Z ##[group]Run actions/setup-node@v4
+2026-11-22T08:26:02.4754902Z with:
+2026-11-22T08:26:02.4755162Z   node-version-file: tracing-js-self/.nvmrc
+2026-11-22T08:26:02.4755440Z   always-auth: false
+2026-11-22T08:26:02.4755720Z   check-latest: false
+2026-11-22T08:26:02.4757762Z   token: ***
+2026-11-22T08:26:02.4757964Z env:
+2026-11-22T08:26:02.4758194Z   OMP_NUM_THREADS: 1
+2026-11-22T08:26:02.4758414Z   MKL_NUM_THREADS: 1
+2026-11-22T08:26:02.4758780Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:26:02.4759348Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:26:02.4759860Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T08:26:02.4760833Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T08:26:02.4761489Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:26:02.4761864Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:26:02.4762102Z ##[endgroup]
+2026-11-22T08:26:02.5790772Z Node version file is not JSON file
+2026-11-22T08:26:02.5792271Z Resolved tracing-js-self/.nvmrc as 24.22.3
+2026-11-22T08:26:02.6496022Z Found in cache @ /opt/hostedtoolcache/node/24.22.3/x64
+2026-11-22T08:26:02.6498227Z (node:2424) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T08:26:02.6499645Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T08:26:02.6500684Z ##[group]Environment details
+2026-11-22T08:26:05.2318205Z node: v24.22.3
+2026-11-22T08:26:05.2318611Z npm: 11.19.1
+2026-11-22T08:26:05.2319009Z yarn: 1.22.22
+2026-11-22T08:26:05.2319588Z ##[endgroup]
+2026-11-22T08:26:05.2432137Z ##[group]Run actions/setup-python@v5
+2026-11-22T08:26:05.2432419Z with:
+2026-11-22T08:26:05.2432662Z   python-version: 3.12.14
+2026-11-22T08:26:05.2432905Z   check-latest: false
+2026-11-22T08:26:05.2434771Z   token: ***
+2026-11-22T08:26:05.2435000Z   update-environment: true
+2026-11-22T08:26:05.2435249Z   allow-prereleases: false
+2026-11-22T08:26:05.2435508Z   freethreaded: false
+2026-11-22T08:26:05.2435723Z env:
+2026-11-22T08:26:05.2435945Z   OMP_NUM_THREADS: 1
+2026-11-22T08:26:05.2436295Z   MKL_NUM_THREADS: 1
+2026-11-22T08:26:05.2436644Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:26:05.2437294Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:26:05.2437914Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T08:26:05.2438698Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T08:26:05.2439303Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:26:05.2439691Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:26:05.2439927Z ##[endgroup]
+2026-11-22T08:26:05.3417851Z ##[group]Installed versions
+2026-11-22T08:26:05.3720951Z Version 3.12.14 was not found in the local cache
+2026-11-22T08:26:05.3913365Z (node:2455) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T08:26:05.3914078Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T08:26:06.1985638Z Version 3.12.14 is available for downloading
+2026-11-22T08:26:06.1986495Z Download from "https://github.com/actions/python-versions/releases/download/3.12.14-31661455385/python-3.12.14-linux-24.04-x64.tar.gz"
+2026-11-22T08:26:06.8422692Z Extract downloaded archive
+2026-11-22T08:26:06.8557708Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/04ef116b-4a40-4123-b4b0-f0a29b276925 -f /home/runner/work/_temp/170a5433-c869-4060-af51-b764cac6a695
+2026-11-22T08:26:08.5176365Z Execute installation script
+2026-11-22T08:26:08.5262514Z Check if Python hostedtoolcache folder exist...
+2026-11-22T08:26:08.5263121Z Create Python 3.12.14 folder
+2026-11-22T08:26:08.5270738Z Copy Python binaries to hostedtoolcache folder
+2026-11-22T08:26:08.7489927Z Create additional symlinks (Required for the UsePythonVersion Azure Pipelines task and the setup-python GitHub Action)
+2026-11-22T08:26:08.7516499Z Upgrading pip...
+2026-11-22T08:26:10.3902254Z Collecting pip
+2026-11-22T08:26:10.4310680Z Downloading pip-26.3-py3-none-any.whl.metadata (4.6 kB)
+2026-11-22T08:26:10.4419421Z Downloading pip-26.3-py3-none-any.whl (2.0 MB)
+2026-11-22T08:26:10.4882256Z ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 72.7 MB/s eta 0:00:00
+2026-11-22T08:26:10.4883084Z 
+2026-11-22T08:26:10.5451704Z Installing collected packages: pip
+2026-11-22T08:26:10.5452303Z Attempting uninstall: pip
+2026-11-22T08:26:10.5465190Z Found existing installation: pip 25.0.1
+2026-11-22T08:26:10.5642384Z Uninstalling pip-25.0.1:
+2026-11-22T08:26:10.5672856Z Successfully uninstalled pip-25.0.1
+2026-11-22T08:26:11.1922086Z Successfully installed pip-26.3
+2026-11-22T08:26:11.2443754Z Create complete file
+2026-11-22T08:26:11.2472568Z Successfully set up CPython (3.12.14)
+2026-11-22T08:26:11.2473262Z ##[endgroup]
+2026-11-22T08:26:11.2612867Z ##[group]Run npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+2026-11-22T08:26:11.2613494Z [36;1mnpm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund[0m
+2026-11-22T08:26:11.2614039Z [36;1mpython -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock[0m
+2026-11-22T08:26:11.2614551Z [36;1mpython -m pip install --no-deps --no-build-isolation -e ./megatoken[0m
+2026-11-22T08:26:11.2614973Z [36;1mpython -m pip install ruff[0m
+2026-11-22T08:26:11.5127916Z shell: /usr/bin/bash -e {0}
+2026-11-22T08:26:11.5128235Z env:
+2026-11-22T08:26:11.5128588Z   OMP_NUM_THREADS: 1
+2026-11-22T08:26:11.5128853Z   MKL_NUM_THREADS: 1
+2026-11-22T08:26:11.5129228Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:26:11.5129804Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:26:11.5130678Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T08:26:11.5131325Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T08:26:11.5131885Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:26:11.5132262Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:26:11.5132557Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:26:11.5133241Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:26:11.5133647Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:26:11.5134012Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:26:11.5134377Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:26:11.5134723Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:26:11.5135031Z ##[endgroup]
+2026-11-22T08:26:13.1842451Z 
+2026-11-22T08:26:13.1843390Z added 4 packages in 2s
+2026-11-22T08:26:14.0801355Z Looking in indexes: https://pypi.org/simple, https://download.pytorch.org/whl/cpu
+2026-11-22T08:26:14.4726853Z Collecting anyio==4.16.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 9))
+2026-11-22T08:26:14.5252464Z   Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+2026-11-22T08:26:14.8510921Z Collecting attrs==26.1.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 13))
+2026-11-22T08:26:14.8597154Z   Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-11-22T08:26:15.2257437Z Collecting certifi==2026.10.23 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 19))
+2026-11-22T08:26:15.2339894Z   Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+2026-11-22T08:26:15.7029348Z Collecting click==8.5.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 25))
+2026-11-22T08:26:15.7112374Z   Downloading click-8.5.1-py3-none-any.whl (126 kB)
+2026-11-22T08:26:16.0339314Z Collecting editables==0.6 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 29))
+2026-11-22T08:26:16.0418718Z   Downloading editables-0.6-py3-none-any.whl (5.4 kB)
+2026-11-22T08:26:16.2779929Z Collecting filelock==4.2.12 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 33))
+2026-11-22T08:26:16.2877393Z   Downloading filelock-4.2.12-py3-none-any.whl (222 kB)
+2026-11-22T08:26:16.4718536Z Collecting fsspec==2026.9.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 39))
+2026-11-22T08:26:16.4799258Z   Downloading fsspec-2026.9.0-py3-none-any.whl (221 kB)
+2026-11-22T08:26:16.9291518Z Collecting h11==0.16.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 45))
+2026-11-22T08:26:16.9376652Z   Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2026-11-22T08:26:17.2739838Z Collecting hatchling==1.33.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 49))
+2026-11-22T08:26:17.2859468Z   Downloading hatchling-1.33.0-py3-none-any.whl (78 kB)
+2026-11-22T08:26:17.7565787Z Collecting hf-xet==1.8.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 53))
+2026-11-22T08:26:17.7649224Z   Downloading hf_xet-1.8.0-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.3 MB)
+2026-11-22T08:26:18.0173231Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.3/4.3 MB 17.2 MB/s  0:00:00
+2026-11-22T08:26:18.2427505Z Collecting httpcore==1.0.9 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 72))
+2026-11-22T08:26:18.2510454Z   Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+2026-11-22T08:26:18.5212139Z Collecting httpx==0.28.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 76))
+2026-11-22T08:26:18.5298817Z   Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+2026-11-22T08:26:18.6429532Z Collecting huggingface-hub==1.33.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 80))
+2026-11-22T08:26:18.6512321Z   Downloading huggingface_hub-1.33.0-py3-none-any.whl (846 kB)
+2026-11-22T08:26:18.6695647Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 846.4/846.4 kB 42.3 MB/s  0:00:00
+2026-11-22T08:26:18.7015428Z Collecting idna==3.20 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 86))
+2026-11-22T08:26:18.7104077Z   Downloading idna-3.20-py3-none-any.whl (69 kB)
+2026-11-22T08:26:18.8165050Z Collecting iniconfig==2.3.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 92))
+2026-11-22T08:26:18.8244996Z   Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+2026-11-22T08:26:18.8479461Z Collecting jinja2==3.1.6 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 96))
+2026-11-22T08:26:18.8558423Z   Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-11-22T08:26:18.9652585Z Collecting jsonschema==4.26.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 100))
+2026-11-22T08:26:18.9748320Z   Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-11-22T08:26:19.0756969Z Collecting jsonschema-specifications==2025.9.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 104))
+2026-11-22T08:26:19.0842328Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-11-22T08:26:19.1849430Z Collecting markdown-it-py==4.0.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 108))
+2026-11-22T08:26:19.1930864Z   Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+2026-11-22T08:26:19.2499441Z Collecting markupsafe==3.0.4 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 112))
+2026-11-22T08:26:19.2580057Z   Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2026-11-22T08:26:19.3557394Z Collecting mdurl==0.1.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 265))
+2026-11-22T08:26:19.3643055Z   Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-11-22T08:26:19.3904999Z Collecting mpmath==1.3.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 269))
+2026-11-22T08:26:19.3991111Z   Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+2026-11-22T08:26:19.4105400Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 36.4 MB/s  0:00:00
+2026-11-22T08:26:19.4461210Z Collecting networkx==3.7 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 273))
+2026-11-22T08:26:19.4542841Z   Downloading networkx-3.7-py3-none-any.whl (2.1 MB)
+2026-11-22T08:26:19.4889245Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 60.8 MB/s  0:00:00
+2026-11-22T08:26:19.8147420Z Collecting numpy==2.5.5 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 277))
+2026-11-22T08:26:19.8235355Z   Downloading numpy-2.5.5-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (15.7 MB)
+2026-11-22T08:26:19.9725291Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.7/15.7 MB 106.2 MB/s  0:00:00
+2026-11-22T08:26:20.0135588Z Collecting packaging==26.3 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 345))
+2026-11-22T08:26:20.0215880Z   Downloading packaging-26.3-py3-none-any.whl (129 kB)
+2026-11-22T08:26:20.1283762Z Collecting pathspec==1.1.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 352))
+2026-11-22T08:26:20.1368993Z   Downloading pathspec-1.1.1-py3-none-any.whl (57 kB)
+2026-11-22T08:26:20.2425650Z Collecting pluggy==1.7.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 356))
+2026-11-22T08:26:20.2510375Z   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+2026-11-22T08:26:20.3540361Z Collecting pygments==2.21.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 362))
+2026-11-22T08:26:20.3622608Z   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-11-22T08:26:20.3703182Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 164.8 MB/s  0:00:00
+2026-11-22T08:26:20.4839624Z Collecting pytest==8.4.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 366))
+2026-11-22T08:26:20.4924222Z   Downloading pytest-8.4.2-py3-none-any.whl (365 kB)
+2026-11-22T08:26:20.6158749Z Collecting pyyaml==6.0.3 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 370))
+2026-11-22T08:26:20.6243140Z   Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+2026-11-22T08:26:20.6298389Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 134.3 MB/s  0:00:00
+2026-11-22T08:26:20.7376697Z Collecting referencing==0.37.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 447))
+2026-11-22T08:26:20.7456235Z   Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-11-22T08:26:20.9845008Z Collecting rpds-py==2026.9.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 453))
+2026-11-22T08:26:20.9932579Z   Downloading rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (371 kB)
+2026-11-22T08:26:21.1449199Z Collecting safetensors==0.8.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 585))
+2026-11-22T08:26:21.1532009Z   Downloading safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (516 kB)
+2026-11-22T08:26:21.1866991Z Collecting sympy==1.14.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 604))
+2026-11-22T08:26:21.1948715Z   Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+2026-11-22T08:26:21.2318065Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 171.4 MB/s  0:00:00
+2026-11-22T08:26:21.4366111Z Collecting tokenizers==0.23.3 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 608))
+2026-11-22T08:26:21.4453284Z   Downloading tokenizers-0.23.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.4 MB)
+2026-11-22T08:26:21.4656252Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 169.6 MB/s  0:00:00
+2026-11-22T08:26:21.5727091Z Collecting tomlkit==0.15.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 634))
+2026-11-22T08:26:21.5809249Z   Downloading tomlkit-0.15.2-py3-none-any.whl (52 kB)
+2026-11-22T08:26:21.6717547Z Collecting torch==2.10.0+cpu (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 638))
+2026-11-22T08:26:21.7457586Z   Downloading torch-2.10.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl (188.9 MB)
+2026-11-22T08:26:22.3598251Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 188.9/188.9 MB 317.0 MB/s  0:00:00
+2026-11-22T08:26:22.5585296Z Collecting tqdm==4.70.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 678))
+2026-11-22T08:26:22.5667490Z   Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+2026-11-22T08:26:22.6836105Z Collecting tree-sitter==0.25.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 682))
+2026-11-22T08:26:22.6918576Z   Downloading tree_sitter-0.25.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (635 kB)
+2026-11-22T08:26:22.6957565Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 635.4/635.4 kB 180.6 MB/s  0:00:00
+2026-11-22T08:26:22.8010053Z Collecting tree-sitter-c-sharp==0.23.5 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 722))
+2026-11-22T08:26:22.8091206Z   Downloading tree_sitter_c_sharp-0.23.5-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (358 kB)
+2026-11-22T08:26:23.0613128Z Collecting tree-sitter-embedded-template==0.25.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 735))
+2026-11-22T08:26:23.0698190Z   Downloading tree_sitter_embedded_template-0.25.0-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (18 kB)
+2026-11-22T08:26:23.1884257Z Collecting tree-sitter-language-pack==0.13.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 748))
+2026-11-22T08:26:23.1967336Z   Downloading tree_sitter_language_pack-0.13.0-cp310-abi3-manylinux2014_x86_64.whl (20.0 MB)
+2026-11-22T08:26:23.2739742Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20.0/20.0 MB 260.9 MB/s  0:00:00
+2026-11-22T08:26:23.5497879Z Collecting tree-sitter-yaml==0.7.2 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 756))
+2026-11-22T08:26:23.5579886Z   Downloading tree_sitter_yaml-0.7.2-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (91 kB)
+2026-11-22T08:26:23.6690107Z Collecting trove-classifiers==2026.9.21.13 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 769))
+2026-11-22T08:26:23.6774320Z   Downloading trove_classifiers-2026.9.21.13-py3-none-any.whl (14 kB)
+2026-11-22T08:26:23.7060465Z Collecting typing-extensions==4.16.0 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 773))
+2026-11-22T08:26:23.7140312Z   Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-11-22T08:26:23.8225346Z Collecting uniseg==0.10.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 781))
+2026-11-22T08:26:23.8309764Z   Downloading uniseg-0.10.1-py3-none-any.whl (8.2 MB)
+2026-11-22T08:26:23.8685961Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.2/8.2 MB 230.7 MB/s  0:00:00
+2026-11-22T08:26:23.9303179Z Collecting setuptools==84.2.1 (from -r tracing-js-self/tools/native-consumer/requirements.lock (line 787))
+2026-11-22T08:26:23.9384412Z   Downloading setuptools-84.2.1-py3-none-any.whl (876 kB)
+2026-11-22T08:26:23.9428185Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 876.3/876.3 kB 237.2 MB/s  0:00:00
+2026-11-22T08:26:24.1636599Z Installing collected packages: trove-classifiers, mpmath, uniseg, typing-extensions, tree-sitter-yaml, tree-sitter-embedded-template, tree-sitter-c-sharp, tree-sitter, tqdm, tomlkit, sympy, setuptools, safetensors, rpds-py, pyyaml, pygments, pluggy, pathspec, packaging, numpy, networkx, mdurl, markupsafe, iniconfig, idna, hf-xet, h11, fsspec, filelock, editables, click, certifi, attrs, tree-sitter-language-pack, referencing, pytest, markdown-it-py, jinja2, httpcore, hatchling, anyio, torch, jsonschema-specifications, httpx, jsonschema, huggingface-hub, tokenizers
+2026-11-22T08:26:40.6544937Z 
+2026-11-22T08:26:40.6575290Z Successfully installed anyio-4.16.0 attrs-26.1.0 certifi-2026.10.23 click-8.5.1 editables-0.6 filelock-4.2.12 fsspec-2026.9.0 h11-0.16.0 hatchling-1.33.0 hf-xet-1.8.0 httpcore-1.0.9 httpx-0.28.1 huggingface-hub-1.33.0 idna-3.20 iniconfig-2.3.1 jinja2-3.1.6 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 markdown-it-py-4.0.0 markupsafe-3.0.4 mdurl-0.1.2 mpmath-1.3.0 networkx-3.7 numpy-2.5.5 packaging-26.3 pathspec-1.1.1 pluggy-1.7.0 pygments-2.21.0 pytest-8.4.2 pyyaml-6.0.3 referencing-0.37.0 rpds-py-2026.9.1 safetensors-0.8.0 setuptools-84.2.1 sympy-1.14.0 tokenizers-0.23.3 tomlkit-0.15.2 torch-2.10.0+cpu tqdm-4.70.1 tree-sitter-0.25.2 tree-sitter-c-sharp-0.23.5 tree-sitter-embedded-template-0.25.0 tree-sitter-language-pack-0.13.0 tree-sitter-yaml-0.7.2 trove-classifiers-2026.9.21.13 typing-extensions-4.16.0 uniseg-0.10.1
+2026-11-22T08:26:41.5003108Z Obtaining file:///home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:26:41.5009767Z   Checking if build backend supports build_editable: started
+2026-11-22T08:26:41.5292117Z   Checking if build backend supports build_editable: finished with status 'done'
+2026-11-22T08:26:41.5298031Z   Preparing editable metadata (pyproject.toml): started
+2026-11-22T08:26:41.6487100Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+2026-11-22T08:26:41.6538543Z Building wheels for collected packages: megatoken
+2026-11-22T08:26:41.6544263Z   Building editable for megatoken (pyproject.toml): started
+2026-11-22T08:26:41.6811469Z   Building editable for megatoken (pyproject.toml): finished with status 'done'
+2026-11-22T08:26:41.6814726Z   Created wheel for megatoken: filename=megatoken-0.1.0-py3-none-any.whl size=8443 sha256=ea4c3ba695bb3188f69e88a67ae66f73f2f5b278ffad2b77e5ca6b99c9649272
+2026-11-22T08:26:41.6815601Z   Stored in directory: /tmp/pip-ephem-wheel-cache-0do9lvlj/wheels/0b/ed/7b/b8468944e64c9e6abb5bf5ba9ba8cb86d84dbb9c76e21fd64a
+2026-11-22T08:26:41.6836170Z Successfully built megatoken
+2026-11-22T08:26:41.6976803Z Installing collected packages: megatoken
+2026-11-22T08:26:41.8625046Z Successfully installed megatoken-0.1.0
+2026-11-22T08:26:42.9395229Z Collecting ruff
+2026-11-22T08:26:42.9948211Z   Downloading ruff-0.17.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (20 kB)
+2026-11-22T08:26:43.0113052Z Downloading ruff-0.17.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (10.6 MB)
+2026-11-22T08:26:43.0951241Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.6/10.6 MB 172.0 MB/s  0:00:00
+2026-11-22T08:26:43.1462854Z Installing collected packages: ruff
+2026-11-22T08:26:43.2591965Z Successfully installed ruff-0.17.6
+2026-11-22T08:26:43.3219357Z ##[group]Run python - <<'PY'
+2026-11-22T08:26:43.3219670Z [36;1mpython - <<'PY'[0m
+2026-11-22T08:26:43.3219919Z [36;1mimport hashlib, json, os, shutil[0m
+2026-11-22T08:26:43.3220451Z [36;1mfrom pathlib import Path[0m
+2026-11-22T08:26:43.3220737Z [36;1mfrom huggingface_hub import hf_hub_download[0m
+2026-11-22T08:26:43.3221169Z [36;1mfrom megatoken.generation.codec import LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256[0m
+2026-11-22T08:26:43.3221618Z [36;1mpath = Path(os.environ['MEGATOKEN_TOKENIZER_JSON'])[0m
+2026-11-22T08:26:43.3222075Z [36;1mshutil.copyfile(hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION), path)[0m
+2026-11-22T08:26:43.3222584Z [36;1mpolicy = json.loads(Path(os.environ['SEMANTIC_V8_NATIVE_POLICY']).read_text())[0m
+2026-11-22T08:26:43.3223154Z [36;1mdigest = hashlib.sha256(path.read_bytes()).hexdigest()[0m
+2026-11-22T08:26:43.3223555Z [36;1massert digest == LING_TOKENIZER_SHA256 == policy['tokenizerSha256'][0m
+2026-11-22T08:26:43.3223971Z [36;1mPY[0m
+2026-11-22T08:26:43.3251074Z shell: /usr/bin/bash -e {0}
+2026-11-22T08:26:43.3251340Z env:
+2026-11-22T08:26:43.3251613Z   OMP_NUM_THREADS: 1
+2026-11-22T08:26:43.3251858Z   MKL_NUM_THREADS: 1
+2026-11-22T08:26:43.3252203Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:26:43.3252724Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:26:43.3253249Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T08:26:43.3253857Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T08:26:43.3254434Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:26:43.3254789Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:26:43.3255078Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:26:43.3255452Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:26:43.3255826Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:26:43.3256198Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:26:43.3256531Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:26:43.3256860Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:26:43.3257150Z ##[endgroup]
+2026-11-22T08:26:43.7194688Z Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-11-22T08:26:44.4095587Z ##[group]Run set -o pipefail
+2026-11-22T08:26:44.4096056Z [36;1mset -o pipefail[0m
+2026-11-22T08:26:44.4096543Z [36;1mnpm run semantic:v8:contract 2>&1 | tee "$RUNNER_TEMP/namespace-contract.log"[0m
+2026-11-22T08:26:44.4097367Z [36;1mcmp contracts/semantic-execution-v8.json ../megatoken/src/megatoken/data/contracts/semantic-execution-v8.json[0m
+2026-11-22T08:26:44.4098042Z [36;1mpython - <<'PY'[0m
+2026-11-22T08:26:44.4098400Z [36;1mimport base64,gzip,json[0m
+2026-11-22T08:26:44.4098761Z [36;1mfrom pathlib import Path[0m
+2026-11-22T08:26:44.4099660Z [36;1massert Path('test/fixtures/semantic-regions-v8.json').read_bytes()==gzip.decompress(base64.b64decode(Path('../megatoken/tests/fixtures/semantic-regions-v8.json.gz.b64').read_text()))[0m
+2026-11-22T08:26:44.4101266Z [36;1massert json.loads(Path('contracts/semantic-native-policy-v8.json').read_text())['consumerRevision']=='9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876'[0m
+2026-11-22T08:26:44.4102041Z [36;1mPY[0m
+2026-11-22T08:26:44.4137586Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T08:26:44.4137913Z env:
+2026-11-22T08:26:44.4138163Z   OMP_NUM_THREADS: 1
+2026-11-22T08:26:44.4138395Z   MKL_NUM_THREADS: 1
+2026-11-22T08:26:44.4138737Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:26:44.4139306Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:26:44.4139823Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T08:26:44.4140590Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T08:26:44.4141171Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:26:44.4141525Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:26:44.4141833Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:26:44.4142188Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:26:44.4142561Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:26:44.4143034Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:26:44.4143373Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:26:44.4143739Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:26:44.4144068Z ##[endgroup]
+2026-11-22T08:26:44.4864056Z 
+2026-11-22T08:26:44.4864483Z > tracing-js-self@0.3.0 semantic:v8:contract
+2026-11-22T08:26:44.4865087Z > node tools/generate-semantic-region-contract.mjs --check
+2026-11-22T08:26:44.4865388Z 
+2026-11-22T08:27:17.2218776Z {"valid":true,"contractDigest":"0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47","interoperabilityDigest":"f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661","examples":[{"id":"ordered-map","compactRegions":1,"detailedRegions":1,"compactRecords":1,"detailedRecords":1,"compactBytes":365,"detailedBytes":48,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"shared-getter","compactRegions":2,"detailedRegions":3,"compactRecords":2,"detailedRecords":11,"compactBytes":234,"detailedBytes":908,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"causal-counter","compactRegions":1,"detailedRegions":2,"compactRecords":1,"detailedRecords":10,"compactBytes":100,"detailedBytes":1099,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"number-callback-cleanup","compactRegions":0,"detailedRegions":1,"compactRecords":0,"detailedRecords":15,"protocolRecords":11,"compactBytes":0,"detailedBytes":1955,"protocolBytes":1267,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"custom-iterator-close","compactRegions":2,"detailedRegions":2,"compactRecords":2,"detailedRecords":52,"protocolRecords":30,"compactBytes":197,"detailedBytes":6681,"protocolBytes":3900,"detailTokenShare":null,"tokenMeasurement":"untested"},{"id":"iterable-binding-close","compactRegions":2,"detailedRegions":2,"compactRecords":2,"detailedRecords":54,"protocolRecords":30,"compactBytes":197,"detailedBytes":6434,"protocolBytes":3900,"detailTokenShare":null,"tokenMeasurement":"untested"}],"protocolSources":["source-symbol-getter-arithmetic","typed-views-shared-backing","source-derived-private-arithmetic","builtin-iterator-mixed-arithmetic","source-promise-all-reaction-arithmetic","source-promise-join-rejection-finally","source-number-private-arithmetic","source-generator-cleanup-suspension","source-generator-delegated-cleanup","source-proxy-traps-arithmetic","source-base-initializer-throw","source-derived-initializer-throw","source-promise-executor-first-call","source-promise-executor-retained-resolution","source-promise-executor-abrupt","source-ordinary-constructor-prototype","source-enumeration-map-callback","generator-own-symbol-alias","source-logical-left-operands","source-for-in-own-keys"],"protocolHostSources":["join-host-join","join-retained-callback","callback-owned-join","callback-owned-join-awaited"],"mode":"checked"}
+2026-11-22T08:27:17.2893098Z ##[group]Run set -o pipefail
+2026-11-22T08:27:17.2893461Z [36;1mset -o pipefail[0m
+2026-11-22T08:27:17.2893731Z [36;1mpython - <<'PY'[0m
+2026-11-22T08:27:17.2893963Z [36;1mimport json,subprocess[0m
+2026-11-22T08:27:17.2894225Z [36;1mfrom pathlib import Path[0m
+2026-11-22T08:27:17.2894587Z [36;1mpath=Path('tests/integration/test_module_namespace_artifact_packing.py')[0m
+2026-11-22T08:27:17.2894978Z [36;1moriginal=path.read_text()[0m
+2026-11-22T08:27:17.2895517Z [36;1mformatted=subprocess.run(['python','-m','ruff','format','--stdin-filename',str(path),'-'],input=original,text=True,capture_output=True,check=True).stdout[0m
+2026-11-22T08:27:17.2896241Z [36;1mif formatted!=original:[0m
+2026-11-22T08:27:17.2896611Z [36;1m    print('FORMATTED_SOURCE_JSON '+json.dumps({'path':str(path),'content':formatted}))[0m
+2026-11-22T08:27:17.2896967Z [36;1mPY[0m
+2026-11-22T08:27:17.2897371Z [36;1mpython -m ruff check tests/integration/test_module_namespace_artifact_packing.py[0m
+2026-11-22T08:27:17.2897921Z [36;1mpython -m ruff format --check tests/integration/test_module_namespace_artifact_packing.py[0m
+2026-11-22T08:27:17.2898444Z [36;1mgit diff --exit-code --[0m
+2026-11-22T08:27:17.2898727Z [36;1mgit -C ../tracing-js-self diff --exit-code --[0m
+2026-11-22T08:27:17.2899500Z [36;1mpython -m pytest -q -s tests/integration/test_module_namespace_artifact_packing.py --basetemp="$RUNNER_TEMP/namespace-packing" --junitxml="$RUNNER_TEMP/namespace-artifact-packing.xml" 2>&1 | tee "$RUNNER_TEMP/namespace-artifact-packing.log"[0m
+2026-11-22T08:27:17.2900427Z [36;1mpython - <<'PY'[0m
+2026-11-22T08:27:17.2900690Z [36;1mimport os,xml.etree.ElementTree as ET[0m
+2026-11-22T08:27:17.2900994Z [36;1mfrom pathlib import Path[0m
+2026-11-22T08:27:17.2901459Z [36;1mcases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'namespace-artifact-packing.xml').getroot().iter('testcase'))[0m
+2026-11-22T08:27:17.2902064Z [36;1mif len(cases)!=1 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):[0m
+2026-11-22T08:27:17.2902636Z [36;1m    raise ValueError('The actual source/native/token/packing namespace control must run and pass')[0m
+2026-11-22T08:27:17.2903288Z [36;1mprint('One actual source-qualified namespace artifact passed independent native preparation and all six packed target kinds; zero optimizer updates')[0m
+2026-11-22T08:27:17.2903803Z [36;1mPY[0m
+2026-11-22T08:27:17.2931588Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T08:27:17.2931882Z env:
+2026-11-22T08:27:17.2932068Z   OMP_NUM_THREADS: 1
+2026-11-22T08:27:17.2932301Z   MKL_NUM_THREADS: 1
+2026-11-22T08:27:17.2932629Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:27:17.2933126Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:27:17.2933652Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T08:27:17.2934256Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T08:27:17.2934828Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:27:17.2935153Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:27:17.2935422Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:27:17.2935791Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:27:17.2936138Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:27:17.2936468Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:27:17.2936811Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:27:17.2937150Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:27:17.2937435Z ##[endgroup]
+2026-11-22T08:27:17.3582020Z All checks passed!
+2026-11-22T08:27:17.3779435Z 1 file already formatted
+2026-11-22T08:27:31.1450309Z NAMESPACE_ARTIFACT_PACK_EVIDENCE_JSON {"consumerRevision":"9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876","contextsDigest":"04c490cf6fb022ec04975eb94c02d87b67e2471fc349e19a141cb66716c7b449","datasetBinding":{"componentId":"semantic-region-component:b5e42193c92740c5f131070b2af834f9dfd8a307e25a3a42486602838bb5f10a","contextsDigest":"04c490cf6fb022ec04975eb94c02d87b67e2471fc349e19a141cb66716c7b449","coreDigest":null,"episodeDigest":"e9c88fd83a4b11cd266cc70441e691d4ba2d72ba9d6cfbb9d1fa04ae68104807","family":"namespace-public-pack-fixture","registryDigest":"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365","schema":"semantic-region-dataset-binding/1","sourceArtifactDigest":"86071d9e897f6d95551f00ac0860ce0875593e4bbf23e9b60e6248610022dbe0","sourceDigest":"ce3a12821794ba1fedf61aaf5dd182350ad49720a73e244778abddcb73d52c4e","sourceId":"namespace-public-pack-fixture-v1","split":"train","traceFormat":"semantic-trace/8"},"datasetBindingDigest":"935e8991ff7dc29ce72eb0ebd6a5c8351ddd17882d4cbdc6602cf2c407593f33","learnedSuccess":null,"nativeAdmission":{"admitted":true,"checks":{"contexts":"passed","continuation":"passed","masks":"passed","replay":"passed","sourceBinding":"passed","tokenizer":"passed"},"componentGate":"native-consumer-only","consumerRevision":"9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876","contextFormat":"semantic-context/8","contextsDigest":"04c490cf6fb022ec04975eb94c02d87b67e2471fc349e19a141cb66716c7b449","contractDigest":"0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47","counts":{"algorithmRecords":0,"contexts":42,"detailedRecords":10,"generatedRecords":42,"generatedTokens":1576,"observedTokens":113515,"protocolRecords":32,"records":44,"regionRecords":0},"datasetBindingDigest":"935e8991ff7dc29ce72eb0ebd6a5c8351ddd17882d4cbdc6602cf2c407593f33","fixtureDigest":"56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce","framing":{"eosTokenId":null,"kind":"native-physical-record-boundaries/1","physicalRecords":232,"terminalTokens":0},"interoperabilityDigest":"f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661","learningClaim":null,"nativeTrainingDigest":"5a7217d19b6e48c7f29c808dc262c4f94353c818c32c27b8e510afd64161180b","optimizerSteps":0,"protocolExtensions":["experimental-module-namespace-source/1"],"protocolProfile":"protocol-source-extensions/1","publicDigest":"e9c88fd83a4b11cd266cc70441e691d4ba2d72ba9d6cfbb9d1fa04ae68104807","representation":"mixed","schema":"semantic-native-admission/8","sourceArtifactDigest":"86071d9e897f6d95551f00ac0860ce0875593e4bbf23e9b60e6248610022dbe0","sourceProfile":"compositional-regions/1","sourceVerification":{"artifactSha256":"4057518d4876fa4aca1cb35b3ab368cb9511612e703c44ad9978434ddc6913a9","contextDigest":"04c490cf6fb022ec04975eb94c02d87b67e2471fc349e19a141cb66716c7b449","datasetBindingDigest":"935e8991ff7dc29ce72eb0ebd6a5c8351ddd17882d4cbdc6602cf2c407593f33","familyBindingValidated":true,"producerRevision":"4a39059878dc556ff38a681be76d4f0bfa21a03b","producerTreeClean":true,"projectionValidated":true,"publicDigest":"e9c88fd83a4b11cd266cc70441e691d4ba2d72ba9d6cfbb9d1fa04ae68104807","regionRecords":null,"registryDigest":"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365","replayValidated":true,"schema":"semantic-native-source-recheck/1","sourceArtifactDigest":"86071d9e897f6d95551f00ac0860ce0875593e4bbf23e9b60e6248610022dbe0","sourceValidated":true},"tokenizer":{"identity":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","sha256":"40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60","status":"passed"},"traceFormat":"semantic-trace/8"},"optimizerSteps":0,"packedTargetsByKind":{"cell.initialize":{"scoredPositions":66,"targetRecords":2,"tokenAndMaskDigest":"d87b5b19491ce278eb91af7064b2f0a6882b76a3e5e1a30af8d41753a25e96f5","tokenIds":66},"cell.write":{"scoredPositions":33,"targetRecords":1,"tokenAndMaskDigest":"77b47c27b37857243a16f27e8fc046c9e89ac06308d8a483752e4b2d3acedd41","tokenIds":33},"namespace.create":{"scoredPositions":20,"targetRecords":1,"tokenAndMaskDigest":"5947b69dc9e4d00c9facd6250cb1dce20cd94ce98b56f1db91bfd64765f95cb4","tokenIds":20},"namespace.descriptor":{"scoredPositions":51,"targetRecords":1,"tokenAndMaskDigest":"af31df2fae33390dea6815f7f73516d46582e426221cb431fc4ef10e5a70c3ee","tokenIds":51},"namespace.keys":{"scoredPositions":29,"targetRecords":1,"tokenAndMaskDigest":"865207ad390beef19bc3aa94db52f11374716d395c3c3cf20a936a26e25e5e54","tokenIds":29},"namespace.read":{"scoredPositions":26,"targetRecords":1,"tokenAndMaskDigest":"b6e4a6027e22d8d0a04d3cbec2e7bd6dfadbce6db703fdd57cacd468d2005f56","tokenIds":26}},"packedWindowCount":15,"preparedCodecFingerprint":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","preparedManifest":{"behavior_coverage":{"episodes":{"train|semantic_execution|semantic_code_invocation":1,"train|semantic_execution|semantic_v8":1},"original_families":{"train|semantic_execution|semantic_code_invocation":1,"train|semantic_execution|semantic_v8":1},"original_family_ids":{"train|semantic_execution|semantic_code_invocation":["semantic-region-component:b5e42193c92740c5f131070b2af834f9dfd8a307e25a3a42486602838bb5f10a"],"train|semantic_execution|semantic_v8":["semantic-region-component:b5e42193c92740c5f131070b2af834f9dfd8a307e25a3a42486602838bb5f10a"]},"version":2},"census":{"U":115091,"U_definition":"Raw-codec tokens in accepted deduplicated complete transcripts, including shared context.","accepted_episodes":1,"duplicates":0,"executed_transcript_U":0,"filtered_rows":0,"free_position_candidates":1576,"free_position_candidates_definition":"The static masked target inventory: positions that could carry loss.","incomplete_transcript_U":0,"independent_families":1,"parser_review_rows":0,"quarantined":0,"rejected_rows":0,"simulated_transcript_U":0,"strata":[{"U":115091,"eligible_assistant_tokens":1576,"episodes":1,"executed_observation_tokens":113515,"families":1,"free_position_candidates":1576,"source_id":"semantic-execution-v8","split":"train","stream":"semantic_execution","tool_observation_tokens":0}],"verified_success_U":0},"chunking":{"codec_fingerprint":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","config":{"chat_template":"auto","code_tree_scale":1.5,"hard_max_tokens":8192,"limits":{"isolate_native":true,"max_depth":12,"max_injections":2048,"max_nodes":100000,"max_parse_bytes":1048576,"max_parse_milliseconds":0,"max_regions":20000,"max_tree_depth":128,"worker_timeout_ms":5000},"max_bytes":16384,"parser_backend":"tree_sitter","planner_max_edges":64,"soft_max_tokens":768,"target_tokens":512,"tree_distance_budget":4.0,"tree_distance_weight":0.15,"use_icu":false,"version":"recursive-parser-v2"},"config_fingerprint":"02246d76b517454299c35a682576de35f2877e3a14ae011f28a465dda811e82e","fingerprint":"bc5e145e98467c541f480c10a93bb2c7be5ffe2d110cb5a17fba93a99e350e9a","parsers":{"chat":{"templates":{"chatml":{"aliases":["qwen"],"allow_named_tools":false,"body_newlines":0,"channel_markers":[],"ends":["3c7c696d5f656e647c3e"],"format_markers":[],"mode":"delimited","name":"chatml","prefixes":[],"separator":"0a","start":"3c7c696d5f73746172747c3e"},"deepseek":{"aliases":["deepseek-v3","deepseek-r1"],"allow_named_tools":false,"body_newlines":0,"channel_markers":[],"ends":["3cefbd9c656e64e296816f66e2968173656e74656e6365efbd9c3e"],"format_markers":[],"mode":"deepseek","name":"deepseek","prefixes":["3cefbd9c626567696ee296816f66e2968173656e74656e6365efbd9c3e"],"separator":"3cefbd9c417373697374616e74efbd9c3e","start":"3cefbd9c55736572efbd9c3e"},"gemma":{"aliases":["gemma2","gemma3"],"allow_named_tools":false,"body_newlines":0,"channel_markers":[],"ends":["3c656e645f6f665f7475726e3e"],"format_markers":[],"mode":"delimited","name":"gemma","prefixes":["3c626f733e"],"separator":"0a","start":"3c73746172745f6f665f7475726e3e"},"harmony":{"aliases":[],"allow_named_tools":true,"body_newlines":0,"channel_markers":["3c7c6368616e6e656c7c3e"],"ends":["3c7c656e647c3e","3c7c72657475726e7c3e","3c7c63616c6c7c3e"],"format_markers":["3c7c636f6e73747261696e7c3e"],"mode":"delimited","name":"harmony","prefixes":[],"separator":"3c7c6d6573736167657c3e","start":"3c7c73746172747c3e"},"harmony_legacy":{"aliases":[],"allow_named_tools":true,"body_newlines":0,"channel_markers":["3c7c6d6574615f7365707c3e"],"ends":["3c7c696d5f656e647c3e","3c7c66696d5f7375666669787c3e","3c7c676869737375657c3e"],"format_markers":["3c7c6d6574615f73746172747c3e"],"mode":"delimited","name":"harmony_legacy","prefixes":["3c7c656e646f66746578747c3e"],"separator":"3c7c696d5f7365707c3e","start":"3c7c696d5f73746172747c3e"},"inst":{"aliases":["llama2","llama-2","mistral"],"allow_named_tools":false,"body_newlines":0,"channel_markers":[],"ends":["3c2f733e"],"format_markers":[],"mode":"inst","name":"inst","prefixes":["3c733e"],"separator":"5b2f494e53545d","start":"5b494e53545d"},"llama3":{"aliases":["llama-3","llama3.1","llama3.2","llama3.3"],"allow_named_tools":true,"body_newlines":2,"channel_markers":[],"ends":["3c7c656f745f69647c3e","3c7c656f6d5f69647c3e","3c7c656e645f6f665f746578747c3e"],"format_markers":[],"mode":"delimited","name":"llama3","prefixes":["3c7c626567696e5f6f665f746578747c3e"],"separator":"3c7c656e645f6865616465725f69647c3e","start":"3c7c73746172745f6865616465725f69647c3e"},"phi3":{"aliases":["phi-3","phi4"],"allow_named_tools":false,"body_newlines":1,"channel_markers":[],"ends":["3c7c656e647c3e","3c7c656e646f66746578747c3e"],"format_markers":[],"mode":"delimited","name":"phi3","prefixes":[],"separator":"7c3e","start":"3c7c"}},"version":"chat-framing-v1"},"implementation":"bfd48445630387eb441499ae13aafc3315c12e75ffc4795cc6a88bd7c8f993d9","prose":{"icu":null,"rules":"unicode-prose-v1","unicode":"16.0.0","uniseg":"0.10.1"},"syntax":{"backend":"tree_sitter","grammar_dependencies":{"tree-sitter-c-sharp":"0.23.5","tree-sitter-embedded-template":"0.25.0","tree-sitter-yaml":"0.7.2"},"markdown_it_py":"4.0.0","network":"disabled","providers":[],"registry":"offline-grammar-registry-v1","tree_sitter":"0.25.2","tree_sitter_language_pack":"0.13.0"}}},"chunking_stats":{"boundaries":{"end":86,"word":146},"bytes":339613,"diagnostics":{"semantic_boundary_projected":54},"forced_splits":0,"histogram":{"0":0,"1024":7,"128":0,"192":0,"256":0,"32":16,"384":1,"512":2,"64":22,"768":180,"96":4,">1024":0},"histogram_kind":"disjoint buckets, inclusive upper bounds","languages":{"text":232},"max_positions":863,"mean_positions":496.0818965517241,"over_soft_max":7,"positions":115091,"records":232,"reference_tokens":115091,"unversioned_records":0},"codec_fingerprint":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","complete":true,"counts":{"*":1,"split:train":1,"split:train|stream:semantic_execution":1,"stream:semantic_execution":1},"dedup":{"anchor_count":8,"evaluation_after":null,"max_candidates":4096,"max_descendants_per_parent":20000,"min_near_words":40,"near_threshold":0.94,"shingle_words":5,"sketch_size":256,"split_seed":"semantic-region-family-components/1","train_fraction":0.98,"validation_fraction":0.01},"feature_counts":{},"feature_extractors":[],"fingerprint":"3a7b4850ecf92f8662302bf695c2e140a3f505817cd25f985839fc9ef7908e63","index":{"path":"index.sqlite","sha256":"cef8bf765e514d9b038035ad06725ba26a93201d9896816bf83f22411b1fbe60"},"parser_review":{},"pipeline_fingerprint":"aea52c5092539975ae7dec12452a6e05c23adaedeef255ae6c2503e6321336ed","schema_version":10,"scored_media_counts":{},"shards":[{"bytes":1734871,"episodes":1,"path":"episodes-000000.jsonl","sha256":"17bf0527f722fc0284eba7a1a35e667e51e9c03631ea3e8b756aedbc7f54f181"}],"sources":[{"consumerRevision":"9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876","contractDigest":"0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47","fixtureDigest":"56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce","learningClaim":null,"maxHistory":1024,"maxPositions":8192,"optimizerSteps":0,"producerRevision":"4a39059878dc556ff38a681be76d4f0bfa21a03b","registryDigest":"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365","representation":"mixed","schema":"semantic-preparation/8","tokenizerIdentity":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","tokenizerSha256":"40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"}],"structured_supply":{"counts":{"train|semantic_execution|episode_views":1,"train|semantic_execution|event_modality:text":232,"train|semantic_execution|group_clock:unknown":232,"train|semantic_execution|group_modalities:text":232,"train|semantic_execution|group_width:1":232,"train|semantic_execution|record_provenance:executed":190,"train|semantic_execution|record_provenance:teacher":42},"denominators":"group_* count committed groups; event_* and availability count events; record_* count physical records; language_pair and episode_views count episodes; original_families deduplicate each dimension","original_families":{"train|semantic_execution|episode_views":1,"train|semantic_execution|event_modality:text":1,"train|semantic_execution|group_clock:unknown":1,"train|semantic_execution|group_modalities:text":1,"train|semantic_execution|group_width:1":1,"train|semantic_execution|record_provenance:executed":1,"train|semantic_execution|record_provenance:teacher":1},"version":1}},"preparedManifestFingerprint":"3a7b4850ecf92f8662302bf695c2e140a3f505817cd25f985839fc9ef7908e63","preparedManifestRaw":"{\n  \"behavior_coverage\": {\n    \"episodes\": {\n      \"train|semantic_execution|semantic_code_invocation\": 1,\n      \"train|semantic_execution|semantic_v8\": 1\n    },\n    \"original_families\": {\n      \"train|semantic_execution|semantic_code_invocation\": 1,\n      \"train|semantic_execution|semantic_v8\": 1\n    },\n    \"original_family_ids\": {\n      \"train|semantic_execution|semantic_code_invocation\": [\n        \"semantic-region-component:b5e42193c92740c5f131070b2af834f9dfd8a307e25a3a42486602838bb5f10a\"\n      ],\n      \"train|semantic_execution|semantic_v8\": [\n        \"semantic-region-component:b5e42193c92740c5f131070b2af834f9dfd8a307e25a3a42486602838bb5f10a\"\n      ]\n    },\n    \"version\": 2\n  },\n  \"census\": {\n    \"U\": 115091,\n    \"U_definition\": \"Raw-codec tokens in accepted deduplicated complete transcripts, including shared context.\",\n    \"accepted_episodes\": 1,\n    \"duplicates\": 0,\n    \"executed_transcript_U\": 0,\n    \"filtered_rows\": 0,\n    \"free_position_candidates\": 1576,\n    \"free_position_candidates_definition\": \"The static masked target inventory: positions that could carry loss.\",\n    \"incomplete_transcript_U\": 0,\n    \"independent_families\": 1,\n    \"parser_review_rows\": 0,\n    \"quarantined\": 0,\n    \"rejected_rows\": 0,\n    \"simulated_transcript_U\": 0,\n    \"strata\": [\n      {\n        \"U\": 115091,\n        \"eligible_assistant_tokens\": 1576,\n        \"episodes\": 1,\n        \"executed_observation_tokens\": 113515,\n        \"families\": 1,\n        \"free_position_candidates\": 1576,\n        \"source_id\": \"semantic-execution-v8\",\n        \"split\": \"train\",\n        \"stream\": \"semantic_execution\",\n        \"tool_observation_tokens\": 0\n      }\n    ],\n    \"verified_success_U\": 0\n  },\n  \"chunking\": {\n    \"codec_fingerprint\": \"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2\",\n    \"config\": {\n      \"chat_template\": \"auto\",\n      \"code_tree_scale\": 1.5,\n      \"hard_max_tokens\": 8192,\n      \"limits\": {\n        \"isolate_native\": true,\n        \"max_depth\": 12,\n        \"max_injections\": 2048,\n        \"max_nodes\": 100000,\n        \"max_parse_bytes\": 1048576,\n        \"max_parse_milliseconds\": 0,\n        \"max_regions\": 20000,\n        \"max_tree_depth\": 128,\n        \"worker_timeout_ms\": 5000\n      },\n      \"max_bytes\": 16384,\n      \"parser_backend\": \"tree_sitter\",\n      \"planner_max_edges\": 64,\n      \"soft_max_tokens\": 768,\n      \"target_tokens\": 512,\n      \"tree_distance_budget\": 4.0,\n      \"tree_distance_weight\": 0.15,\n      \"use_icu\": false,\n      \"version\": \"recursive-parser-v2\"\n    },\n    \"config_fingerprint\": \"02246d76b517454299c35a682576de35f2877e3a14ae011f28a465dda811e82e\",\n    \"fingerprint\": \"bc5e145e98467c541f480c10a93bb2c7be5ffe2d110cb5a17fba93a99e350e9a\",\n    \"parsers\": {\n      \"chat\": {\n        \"templates\": {\n          \"chatml\": {\n            \"aliases\": [\n              \"qwen\"\n            ],\n            \"allow_named_tools\": false,\n            \"body_newlines\": 0,\n            \"channel_markers\": [],\n            \"ends\": [\n              \"3c7c696d5f656e647c3e\"\n            ],\n            \"format_markers\": [],\n            \"mode\": \"delimited\",\n            \"name\": \"chatml\",\n            \"prefixes\": [],\n            \"separator\": \"0a\",\n            \"start\": \"3c7c696d5f73746172747c3e\"\n          },\n          \"deepseek\": {\n            \"aliases\": [\n              \"deepseek-v3\",\n              \"deepseek-r1\"\n            ],\n            \"allow_named_tools\": false,\n            \"body_newlines\": 0,\n            \"channel_markers\": [],\n            \"ends\": [\n              \"3cefbd9c656e64e296816f66e2968173656e74656e6365efbd9c3e\"\n            ],\n            \"format_markers\": [],\n            \"mode\": \"deepseek\",\n            \"name\": \"deepseek\",\n            \"prefixes\": [\n              \"3cefbd9c626567696ee296816f66e2968173656e74656e6365efbd9c3e\"\n            ],\n            \"separator\": \"3cefbd9c417373697374616e74efbd9c3e\",\n            \"start\": \"3cefbd9c55736572efbd9c3e\"\n          },\n          \"gemma\": {\n            \"aliases\": [\n              \"gemma2\",\n              \"gemma3\"\n            ],\n            \"allow_named_tools\": false,\n            \"body_newlines\": 0,\n            \"channel_markers\": [],\n            \"ends\": [\n              \"3c656e645f6f665f7475726e3e\"\n            ],\n            \"format_markers\": [],\n            \"mode\": \"delimited\",\n            \"name\": \"gemma\",\n            \"prefixes\": [\n              \"3c626f733e\"\n            ],\n            \"separator\": \"0a\",\n            \"start\": \"3c73746172745f6f665f7475726e3e\"\n          },\n          \"harmony\": {\n            \"aliases\": [],\n            \"allow_named_tools\": true,\n            \"body_newlines\": 0,\n            \"channel_markers\": [\n              \"3c7c6368616e6e656c7c3e\"\n            ],\n            \"ends\": [\n              \"3c7c656e647c3e\",\n              \"3c7c72657475726e7c3e\",\n              \"3c7c63616c6c7c3e\"\n            ],\n            \"format_markers\": [\n              \"3c7c636f6e73747261696e7c3e\"\n            ],\n            \"mode\": \"delimited\",\n            \"name\": \"harmony\",\n            \"prefixes\": [],\n            \"separator\": \"3c7c6d6573736167657c3e\",\n            \"start\": \"3c7c73746172747c3e\"\n          },\n          \"harmony_legacy\": {\n            \"aliases\": [],\n            \"allow_named_tools\": true,\n            \"body_newlines\": 0,\n            \"channel_markers\": [\n              \"3c7c6d6574615f7365707c3e\"\n            ],\n            \"ends\": [\n              \"3c7c696d5f656e647c3e\",\n              \"3c7c66696d5f7375666669787c3e\",\n              \"3c7c676869737375657c3e\"\n            ],\n            \"format_markers\": [\n              \"3c7c6d6574615f73746172747c3e\"\n            ],\n            \"mode\": \"delimited\",\n            \"name\": \"harmony_legacy\",\n            \"prefixes\": [\n              \"3c7c656e646f66746578747c3e\"\n            ],\n            \"separator\": \"3c7c696d5f7365707c3e\",\n            \"start\": \"3c7c696d5f73746172747c3e\"\n          },\n          \"inst\": {\n            \"aliases\": [\n              \"llama2\",\n              \"llama-2\",\n              \"mistral\"\n            ],\n            \"allow_named_tools\": false,\n            \"body_newlines\": 0,\n            \"channel_markers\": [],\n            \"ends\": [\n              \"3c2f733e\"\n            ],\n            \"format_markers\": [],\n            \"mode\": \"inst\",\n            \"name\": \"inst\",\n            \"prefixes\": [\n              \"3c733e\"\n            ],\n            \"separator\": \"5b2f494e53545d\",\n            \"start\": \"5b494e53545d\"\n          },\n          \"llama3\": {\n            \"aliases\": [\n              \"llama-3\",\n              \"llama3.1\",\n              \"llama3.2\",\n              \"llama3.3\"\n            ],\n            \"allow_named_tools\": true,\n            \"body_newlines\": 2,\n            \"channel_markers\": [],\n            \"ends\": [\n              \"3c7c656f745f69647c3e\",\n              \"3c7c656f6d5f69647c3e\",\n              \"3c7c656e645f6f665f746578747c3e\"\n            ],\n            \"format_markers\": [],\n            \"mode\": \"delimited\",\n            \"name\": \"llama3\",\n            \"prefixes\": [\n              \"3c7c626567696e5f6f665f746578747c3e\"\n            ],\n            \"separator\": \"3c7c656e645f6865616465725f69647c3e\",\n            \"start\": \"3c7c73746172745f6865616465725f69647c3e\"\n          },\n          \"phi3\": {\n            \"aliases\": [\n              \"phi-3\",\n              \"phi4\"\n            ],\n            \"allow_named_tools\": false,\n            \"body_newlines\": 1,\n            \"channel_markers\": [],\n            \"ends\": [\n              \"3c7c656e647c3e\",\n              \"3c7c656e646f66746578747c3e\"\n            ],\n            \"format_markers\": [],\n            \"mode\": \"delimited\",\n            \"name\": \"phi3\",\n            \"prefixes\": [],\n            \"separator\": \"7c3e\",\n            \"start\": \"3c7c\"\n          }\n        },\n        \"version\": \"chat-framing-v1\"\n      },\n      \"implementation\": \"bfd48445630387eb441499ae13aafc3315c12e75ffc4795cc6a88bd7c8f993d9\",\n      \"prose\": {\n        \"icu\": null,\n        \"rules\": \"unicode-prose-v1\",\n        \"unicode\": \"16.0.0\",\n        \"uniseg\": \"0.10.1\"\n      },\n      \"syntax\": {\n        \"backend\": \"tree_sitter\",\n        \"grammar_dependencies\": {\n          \"tree-sitter-c-sharp\": \"0.23.5\",\n          \"tree-sitter-embedded-template\": \"0.25.0\",\n          \"tree-sitter-yaml\": \"0.7.2\"\n        },\n        \"markdown_it_py\": \"4.0.0\",\n        \"network\": \"disabled\",\n        \"providers\": [],\n        \"registry\": \"offline-grammar-registry-v1\",\n        \"tree_sitter\": \"0.25.2\",\n        \"tree_sitter_language_pack\": \"0.13.0\"\n      }\n    }\n  },\n  \"chunking_stats\": {\n    \"boundaries\": {\n      \"end\": 86,\n      \"word\": 146\n    },\n    \"bytes\": 339613,\n    \"diagnostics\": {\n      \"semantic_boundary_projected\": 54\n    },\n    \"forced_splits\": 0,\n    \"histogram\": {\n      \"0\": 0,\n      \"1024\": 7,\n      \"128\": 0,\n      \"192\": 0,\n      \"256\": 0,\n      \"32\": 16,\n      \"384\": 1,\n      \"512\": 2,\n      \"64\": 22,\n      \"768\": 180,\n      \"96\": 4,\n      \">1024\": 0\n    },\n    \"histogram_kind\": \"disjoint buckets, inclusive upper bounds\",\n    \"languages\": {\n      \"text\": 232\n    },\n    \"max_positions\": 863,\n    \"mean_positions\": 496.0818965517241,\n    \"over_soft_max\": 7,\n    \"positions\": 115091,\n    \"records\": 232,\n    \"reference_tokens\": 115091,\n    \"unversioned_records\": 0\n  },\n  \"codec_fingerprint\": \"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2\",\n  \"complete\": true,\n  \"counts\": {\n    \"*\": 1,\n    \"split:train\": 1,\n    \"split:train|stream:semantic_execution\": 1,\n    \"stream:semantic_execution\": 1\n  },\n  \"dedup\": {\n    \"anchor_count\": 8,\n    \"evaluation_after\": null,\n    \"max_candidates\": 4096,\n    \"max_descendants_per_parent\": 20000,\n    \"min_near_words\": 40,\n    \"near_threshold\": 0.94,\n    \"shingle_words\": 5,\n    \"sketch_size\": 256,\n    \"split_seed\": \"semantic-region-family-components/1\",\n    \"train_fraction\": 0.98,\n    \"validation_fraction\": 0.01\n  },\n  \"feature_counts\": {},\n  \"feature_extractors\": [],\n  \"fingerprint\": \"3a7b4850ecf92f8662302bf695c2e140a3f505817cd25f985839fc9ef7908e63\",\n  \"index\": {\n    \"path\": \"index.sqlite\",\n    \"sha256\": \"cef8bf765e514d9b038035ad06725ba26a93201d9896816bf83f22411b1fbe60\"\n  },\n  \"parser_review\": {},\n  \"pipeline_fingerprint\": \"aea52c5092539975ae7dec12452a6e05c23adaedeef255ae6c2503e6321336ed\",\n  \"schema_version\": 10,\n  \"scored_media_counts\": {},\n  \"shards\": [\n    {\n      \"bytes\": 1734871,\n      \"episodes\": 1,\n      \"path\": \"episodes-000000.jsonl\",\n      \"sha256\": \"17bf0527f722fc0284eba7a1a35e667e51e9c03631ea3e8b756aedbc7f54f181\"\n    }\n  ],\n  \"sources\": [\n    {\n      \"consumerRevision\": \"9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876\",\n      \"contractDigest\": \"0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47\",\n      \"fixtureDigest\": \"56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce\",\n      \"learningClaim\": null,\n      \"maxHistory\": 1024,\n      \"maxPositions\": 8192,\n      \"optimizerSteps\": 0,\n      \"producerRevision\": \"4a39059878dc556ff38a681be76d4f0bfa21a03b\",\n      \"registryDigest\": \"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365\",\n      \"representation\": \"mixed\",\n      \"schema\": \"semantic-preparation/8\",\n      \"tokenizerIdentity\": \"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2\",\n      \"tokenizerSha256\": \"40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60\"\n    }\n  ],\n  \"structured_supply\": {\n    \"counts\": {\n      \"train|semantic_execution|episode_views\": 1,\n      \"train|semantic_execution|event_modality:text\": 232,\n      \"train|semantic_execution|group_clock:unknown\": 232,\n      \"train|semantic_execution|group_modalities:text\": 232,\n      \"train|semantic_execution|group_width:1\": 232,\n      \"train|semantic_execution|record_provenance:executed\": 190,\n      \"train|semantic_execution|record_provenance:teacher\": 42\n    },\n    \"denominators\": \"group_* count committed groups; event_* and availability count events; record_* count physical records; language_pair and episode_views count episodes; original_families deduplicate each dimension\",\n    \"original_families\": {\n      \"train|semantic_execution|episode_views\": 1,\n      \"train|semantic_execution|event_modality:text\": 1,\n      \"train|semantic_execution|group_clock:unknown\": 1,\n      \"train|semantic_execution|group_modalities:text\": 1,\n      \"train|semantic_execution|group_width:1\": 1,\n      \"train|semantic_execution|record_provenance:executed\": 1,\n      \"train|semantic_execution|record_provenance:teacher\": 1\n    },\n    \"version\": 1\n  }\n}\n","preparedManifestSha256":"7b95b18db0323d9a22c2c1e0ef0a2afcccfe012e03fd6a468ed3b572ece0a37f","preparedSemanticV8Report":{"consumerRevision":"9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876","contractDigest":"0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47","counts":{"admitted":1,"attempted":1},"fixtureDigest":"56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce","learningClaim":null,"maxHistory":1024,"maxPositions":8192,"optimizerSteps":0,"producerRevision":"4a39059878dc556ff38a681be76d4f0bfa21a03b","refusals":[],"registryDigest":"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365","representation":"mixed","schema":"semantic-preparation/8","tokenizerIdentity":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","tokenizerSha256":"40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"},"preparedSemanticV8ReportRaw":"{\n  \"consumerRevision\": \"9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876\",\n  \"contractDigest\": \"0df031301d75122edad5f0efbbbe041ddbe90ebaac3cf2d6e6705540acd71a47\",\n  \"counts\": {\n    \"admitted\": 1,\n    \"attempted\": 1\n  },\n  \"fixtureDigest\": \"56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce\",\n  \"learningClaim\": null,\n  \"maxHistory\": 1024,\n  \"maxPositions\": 8192,\n  \"optimizerSteps\": 0,\n  \"producerRevision\": \"4a39059878dc556ff38a681be76d4f0bfa21a03b\",\n  \"refusals\": [],\n  \"registryDigest\": \"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365\",\n  \"representation\": \"mixed\",\n  \"schema\": \"semantic-preparation/8\",\n  \"tokenizerIdentity\": \"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2\",\n  \"tokenizerSha256\": \"40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60\"\n}\n","preparedSemanticV8ReportSha256":"b0c63aa70e461160c4e2c5db384281c6e52888b51dff7f2b082530e6e668a06c","producerRevision":"4a39059878dc556ff38a681be76d4f0bfa21a03b","publicDigest":"e9c88fd83a4b11cd266cc70441e691d4ba2d72ba9d6cfbb9d1fa04ae68104807","registryDigest":"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365","schema":"semantic-v8-namespace-artifact-pack-evidence/1","sourceAdmission":{"artifactSha256":"4057518d4876fa4aca1cb35b3ab368cb9511612e703c44ad9978434ddc6913a9","contextDigest":"04c490cf6fb022ec04975eb94c02d87b67e2471fc349e19a141cb66716c7b449","datasetBindingDigest":"935e8991ff7dc29ce72eb0ebd6a5c8351ddd17882d4cbdc6602cf2c407593f33","familyBindingValidated":true,"producerRevision":"4a39059878dc556ff38a681be76d4f0bfa21a03b","producerTreeClean":true,"projectionValidated":true,"publicDigest":"e9c88fd83a4b11cd266cc70441e691d4ba2d72ba9d6cfbb9d1fa04ae68104807","regionRecords":null,"registryDigest":"ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365","replayValidated":true,"schema":"semantic-native-source-recheck/1","sourceArtifactDigest":"86071d9e897f6d95551f00ac0860ce0875593e4bbf23e9b60e6248610022dbe0","sourceValidated":true},"sourceArtifactDigest":"86071d9e897f6d95551f00ac0860ce0875593e4bbf23e9b60e6248610022dbe0","sourceArtifactSha256":"4057518d4876fa4aca1cb35b3ab368cb9511612e703c44ad9978434ddc6913a9","sourceComponentId":"semantic-region-component:b5e42193c92740c5f131070b2af834f9dfd8a307e25a3a42486602838bb5f10a","sourceDigest":"ce3a12821794ba1fedf61aaf5dd182350ad49720a73e244778abddcb73d52c4e","sourceFamily":"namespace-public-pack-fixture","sourceId":"namespace-public-pack-fixture-v1","split":"train","tokenizerEvidence":{"identity":"7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2","schema":"semantic-tokenizer-admission/1","sha256":"40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60","status":"passed","verification":"pinned-tokenizer-bytes"}}
+2026-11-22T08:27:31.2794940Z .
+2026-11-22T08:27:31.2795693Z -- generated xml file: /home/runner/work/_temp/namespace-artifact-packing.xml --
+2026-11-22T08:27:31.2796767Z 1 passed in 11.89s
+2026-11-22T08:27:31.5098040Z One actual source-qualified namespace artifact passed independent native preparation and all six packed target kinds; zero optimizer updates
+2026-11-22T08:27:31.5155032Z ##[group]Run set -o pipefail
+2026-11-22T08:27:31.5155391Z [36;1mset -o pipefail[0m
+2026-11-22T08:27:31.5156301Z [36;1mpython -m ruff check src/megatoken/data/module_namespace_state_v8.py src/megatoken/data/module_namespace_machine_v8.py src/megatoken/data/protocol_v8.py src/megatoken/data/native_v8.py tests/test_module_namespace_state_v8.py tests/test_module_namespace_machine_v8.py[0m
+2026-11-22T08:27:31.5157684Z [36;1mpython -m ruff format --check src/megatoken/data/module_namespace_state_v8.py src/megatoken/data/module_namespace_machine_v8.py src/megatoken/data/protocol_v8.py src/megatoken/data/native_v8.py tests/test_module_namespace_state_v8.py tests/test_module_namespace_machine_v8.py[0m
+2026-11-22T08:27:31.5158499Z [36;1mgit diff --exit-code --[0m
+2026-11-22T08:27:31.5158835Z [36;1mgit -C ../tracing-js-self diff --exit-code --[0m
+2026-11-22T08:27:31.5159666Z [36;1mpython -m pytest -q tests/test_*v8*.py tests/test_algorithm_v7.py tests/test_protocol_properties.py tests/test_semantic_launch.py --junitxml="$RUNNER_TEMP/namespace-native.xml" 2>&1 | tee "$RUNNER_TEMP/namespace-native.log"[0m
+2026-11-22T08:27:31.5160543Z [36;1mpython - <<'PY'[0m
+2026-11-22T08:27:31.5160824Z [36;1mimport os,xml.etree.ElementTree as ET[0m
+2026-11-22T08:27:31.5161120Z [36;1mfrom pathlib import Path[0m
+2026-11-22T08:27:31.5161570Z [36;1mcases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'namespace-native.xml').getroot().iter('testcase'))[0m
+2026-11-22T08:27:31.5162172Z [36;1mif not cases or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):[0m
+2026-11-22T08:27:31.5162694Z [36;1m    raise ValueError('Every experimental native state control must run and pass')[0m
+2026-11-22T08:27:31.5163207Z [36;1mprint(f'{len(cases)} native protocol and namespace regression controls passed with zero skips')[0m
+2026-11-22T08:27:31.5163603Z [36;1mPY[0m
+2026-11-22T08:27:31.5191020Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T08:27:31.5191340Z env:
+2026-11-22T08:27:31.5191611Z   OMP_NUM_THREADS: 1
+2026-11-22T08:27:31.5191840Z   MKL_NUM_THREADS: 1
+2026-11-22T08:27:31.5192200Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:27:31.5192747Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:27:31.5193266Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T08:27:31.5194236Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T08:27:31.5194796Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:27:31.5195149Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:27:31.5195465Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:27:31.5195956Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:27:31.5196499Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:27:31.5196858Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:27:31.5197257Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:27:31.5197619Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:27:31.5197923Z ##[endgroup]
+2026-11-22T08:27:31.5486489Z All checks passed!
+2026-11-22T08:27:31.5744155Z 6 files already formatted
+2026-11-22T08:28:29.4981884Z ........................................................................ [  8%]
+2026-11-22T08:28:45.6636917Z ........................................................................ [ 17%]
+2026-11-22T08:28:45.9282852Z ........................................................................ [ 25%]
+2026-11-22T08:28:54.7459365Z ........................................................................ [ 34%]
+2026-11-22T08:29:11.2955679Z ........................................................................ [ 42%]
+2026-11-22T08:29:12.3658342Z ........................................................................ [ 51%]
+2026-11-22T08:32:40.6599198Z ........................................................................ [ 59%]
+2026-11-22T08:33:31.6698129Z ........................................................................ [ 68%]
+2026-11-22T08:35:32.2162286Z ........................................................................ [ 76%]
+2026-11-22T08:36:35.2202779Z ........................................................................ [ 85%]
+2026-11-22T08:40:26.1011187Z ........................................................................ [ 93%]
+2026-11-22T08:40:30.4079083Z ......................................................                   [100%]
+2026-11-22T08:40:30.4080021Z ------- generated xml file: /home/runner/work/_temp/namespace-native.xml -------
+2026-11-22T08:40:30.4080803Z 846 passed in 776.87s (0:12:56)
+2026-11-22T08:40:31.3769676Z 846 native protocol and namespace regression controls passed with zero skips
+2026-11-22T08:40:31.3970071Z ##[group]Run set -o pipefail
+2026-11-22T08:40:31.3970606Z [36;1mset -o pipefail[0m
+2026-11-22T08:40:31.3970890Z [36;1mnode --check src/semantic/module-namespace-state-v8.js[0m
+2026-11-22T08:40:31.3972609Z [36;1mnode --test --test-concurrency=1 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination="$RUNNER_TEMP/namespace-paired.xml" test/semantic-module-v8.test.js test/semantic-module-namespace-state-v8.test.js test/semantic-module-namespace-machine-v8.test.js test/semantic-module-namespace-source*.test.js test/semantic-native-module-namespace-state-v8.test.js 2>&1 | tee "$RUNNER_TEMP/namespace-paired.log"[0m
+2026-11-22T08:40:31.3974358Z [36;1mpython - <<'PY'[0m
+2026-11-22T08:40:31.3974597Z [36;1mimport os,xml.etree.ElementTree as ET[0m
+2026-11-22T08:40:31.3974937Z [36;1mfrom pathlib import Path[0m
+2026-11-22T08:40:31.3975430Z [36;1mcases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'namespace-paired.xml').getroot().iter('testcase'))[0m
+2026-11-22T08:40:31.3976105Z [36;1mif not cases or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):[0m
+2026-11-22T08:40:31.3976716Z [36;1m    raise ValueError('Every experimental namespace differential must run and pass')[0m
+2026-11-22T08:40:31.3977278Z [36;1mprint(f'{len(cases)} namespace differentials and refusal controls passed with zero skips')[0m
+2026-11-22T08:40:31.3977719Z [36;1mPY[0m
+2026-11-22T08:40:31.4010441Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T08:40:31.4010681Z env:
+2026-11-22T08:40:31.4010829Z   OMP_NUM_THREADS: 1
+2026-11-22T08:40:31.4010979Z   MKL_NUM_THREADS: 1
+2026-11-22T08:40:31.4011249Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:40:31.4011691Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:40:31.4012328Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T08:40:31.4012881Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T08:40:31.4013391Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:40:31.4013682Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:40:31.4013910Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:40:31.4014214Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:40:31.4014515Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:40:31.4014786Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:40:31.4015064Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:40:31.4015333Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:40:31.4015562Z ##[endgroup]
+2026-11-22T08:40:31.8192678Z ✔ registered namespace records use the actual shared live cells and heap allocations (28.130594ms)
+2026-11-22T08:40:31.8203418Z ✔ TDZ, const, wrong aliases, malformed results and duplicate identities fail atomically (13.402059ms)
+2026-11-22T08:40:31.8205998Z ✔ ordinary records cannot initialize or overwrite namespace cells and owner bindings (12.331425ms)
+2026-11-22T08:40:31.8207013Z ✔ namespace transitions cannot jump over an existing Number continuation (4.54308ms)
+2026-11-22T08:40:31.8207969Z ✔ ordinary objects cannot mutate namespaces and retained heap metadata remains exact (3.738304ms)
+2026-11-22T08:40:31.8209150Z ✔ public program binding and checkpoint replay retain the exact plan across unrelated publications (30.67673ms)
+2026-11-22T08:40:31.8210448Z ✔ ordinary closure entry cannot redirect a protected live cell through captures (5.712578ms)
+2026-11-22T08:40:32.9485590Z ✔ direct namespace evidence entry rechecks original modules, args, worker observations and public plan (825.572884ms)
+2026-11-22T08:40:33.2647204Z ✔ private namespace source owners map each initializer to one owned callsite (55.543803ms)
+2026-11-22T08:40:33.2661292Z ✔ private namespace owner derivation rejects source drift and duplicate sites (15.120254ms)
+2026-11-22T08:40:34.2945801Z ✔ module namespace opt-in source-projects dynamic reads, keys and live descriptors (745.506129ms)
+2026-11-22T08:40:34.2946732Z ✔ module namespace remains refused without explicit opt-in plan (2.927682ms)
+2026-11-22T08:40:34.5626535Z ✔ experimental source sites bind namespace getters to unique linker cells (19.845519ms)
+2026-11-22T08:40:34.5636591Z ✔ experimental source sites reject getter drift and unplanned namespace initializers (3.491075ms)
+2026-11-22T08:40:34.8407729Z ✔ experimental namespace sync wrapper is source-proved only for the no-job AST subset (29.685252ms)
+2026-11-22T08:40:34.8409529Z ✔ namespace no-job proof rejects parameter and local shadows of imported call targets (3.825441ms)
+2026-11-22T08:40:34.8414315Z ✔ namespace no-job proof rejects thenable result shapes even through descriptor values (3.699944ms)
+2026-11-22T08:40:34.8417370Z ✔ namespace no-job proof refuses async declarations even without a taken call (1.800875ms)
+2026-11-22T08:40:34.8418818Z ✔ the experimental no-job wrapper does not change ordinary evaluated-module scheduling (1.643029ms)
+2026-11-22T08:40:35.1427764Z ✔ public region program carries the immutable normalized experimental namespace plan (10.024113ms)
+2026-11-22T08:40:35.1434169Z ✔ experimental namespace plan is derived from canonical linker source records (15.186542ms)
+2026-11-22T08:40:35.1435041Z ✔ experimental namespace plan binds aliases to live canonical source cells (1.865073ms)
+2026-11-22T08:40:35.1435828Z ✔ experimental namespace reads enforce TDZ and malformed transitions are atomic (0.956088ms)
+2026-11-22T08:40:35.1436877Z ✔ experimental plan refuses numeric export names and changed source/link tables (1.173566ms)
+2026-11-22T08:40:35.1438051Z ✔ experimental cell records require unique linker-stable lowered names (0.198496ms)
+2026-11-22T08:40:35.1438729Z ✔ experimental lowered-name mapping must preserve local suffix and module identity (0.37628ms)
+2026-11-22T08:40:35.1439291Z ✔ experimental namespace records require a unique generated linker binding (0.152533ms)
+2026-11-22T08:40:36.9878546Z ✔ native ESM independently agrees with owned live cells, a synchronous cycle and acyclic top-level await (1543.558887ms)
+2026-11-22T08:40:38.0368617Z ✔ ordered exports preserve module-cell state and input/returned aliases in one episode (1045.84333ms)
+2026-11-22T08:40:39.1502330Z ✔ destructured live module cells pass original-source/public checks and fresh module rechecking (1058.103639ms)
+2026-11-22T08:40:40.1411233Z ✔ static namespace re-export reads keep live-cell public projection without admitting namespace escape (1048.476025ms)
+2026-11-22T08:40:40.3929646Z ✔ owned module declarations do not bypass public class and generator observation boundaries (229.146987ms)
+2026-11-22T08:40:41.3459188Z ✔ erased TypeScript and runtime-emitting enum declarations are separately source-qualified (976.937906ms)
+2026-11-22T08:40:46.4277163Z ✔ module proof tampering, exotic namespace receivers and asynchronous cycles cannot be relabeled as qualified (379.694091ms)
+2026-11-22T08:40:46.4278797Z ✔ parallel TLA links and runs in owned state while public/native module projection stays unqualified (4540.305276ms)
+2026-11-22T08:40:46.4279844Z ✔ module rechecking derives the scheduler refusal from source even when proof metadata lies (11.580082ms)
+2026-11-22T08:40:46.5564119Z ✔ owned namespace reflection matches native ESM while public projection stays refused (206.03077ms)
+2026-11-22T08:40:46.5967342Z ✔ owned and native ESM observe a namespace getter TDZ read during module initialization (117.385432ms)
+2026-11-22T08:40:47.3368541Z ✔ experimental JS and independent Python namespace cells agree through aliases, TDZ and atomic refusals (194.355285ms)
+2026-11-22T08:40:47.3381951Z ✔ actual JavaScript and Python public namespace records preserve the same shared state at every cut (265.089566ms)
+2026-11-22T08:40:47.3477752Z ℹ tests 40
+2026-11-22T08:40:47.3477970Z ℹ suites 0
+2026-11-22T08:40:47.3491413Z ℹ pass 40
+2026-11-22T08:40:47.3491733Z ℹ fail 0
+2026-11-22T08:40:47.3492001Z ℹ cancelled 0
+2026-11-22T08:40:47.3492254Z ℹ skipped 0
+2026-11-22T08:40:47.3492468Z ℹ todo 0
+2026-11-22T08:40:47.3492727Z ℹ duration_ms 15899.00345
+2026-11-22T08:40:47.3743817Z 40 namespace differentials and refusal controls passed with zero skips
+2026-11-22T08:40:47.3803614Z ##[group]Run node --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \
+2026-11-22T08:40:47.3804709Z [36;1mnode --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \[0m
+2026-11-22T08:40:47.3805681Z [36;1m  test/semantic-selected-orchestration-v8.test.js test/semantic-selected-orchestration-checkpoint-v8.test.js \[0m
+2026-11-22T08:40:47.3806420Z [36;1m  test/semantic-native-orchestration-recovery-v8.test.js \[0m
+2026-11-22T08:40:47.3806994Z [36;1m  test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js \[0m
+2026-11-22T08:40:47.3807681Z [36;1m  test/semantic-source-session-v8.test.js test/semantic-region-support-cohort.test.js \[0m
+2026-11-22T08:40:47.3808401Z [36;1m  test/semantic-qualification-population-v8.test.js test/qualify-support-lifecycle.test.js \[0m
+2026-11-22T08:40:47.3808957Z [36;1m  2>&1 | tee "$RUNNER_TEMP/semantic-v8-transport-tests.xml"[0m
+2026-11-22T08:40:47.3809227Z [36;1mpython - <<'PY'[0m
+2026-11-22T08:40:47.3809428Z [36;1mimport os, xml.etree.ElementTree as ET[0m
+2026-11-22T08:40:47.3809659Z [36;1mfrom pathlib import Path[0m
+2026-11-22T08:40:47.3810042Z [36;1mcases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-transport-tests.xml').getroot().iter('testcase'))[0m
+2026-11-22T08:40:47.3811043Z [36;1mif not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):[0m
+2026-11-22T08:40:47.3811584Z [36;1m    raise ValueError('Every paired V8 transport control, including the Python contract check, must run and pass')[0m
+2026-11-22T08:40:47.3812041Z [36;1mprint(f'{len(cases)} paired transport controls passed with zero skips')[0m
+2026-11-22T08:40:47.3812309Z [36;1mPY[0m
+2026-11-22T08:40:47.3838400Z shell: /usr/bin/bash -e {0}
+2026-11-22T08:40:47.3838594Z env:
+2026-11-22T08:40:47.3838742Z   OMP_NUM_THREADS: 1
+2026-11-22T08:40:47.3838917Z   MKL_NUM_THREADS: 1
+2026-11-22T08:40:47.3839206Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:40:47.3839662Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:40:47.3840264Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T08:40:47.3840828Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T08:40:47.3841329Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:40:47.3841612Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:40:47.3841835Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:40:47.3842146Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:40:47.3842532Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:40:47.3842861Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:40:47.3843139Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:40:47.3843420Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:40:47.3843656Z ##[endgroup]
+2026-11-22T08:40:47.4338535Z <?xml version="1.0" encoding="utf-8"?>
+2026-11-22T08:40:47.4341443Z <testsuites>
+2026-11-22T08:43:55.2703463Z 	<testcase name="test/qualify-support-lifecycle.test.js" time="0.211290" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/qualify-support-lifecycle.test.js"/>
+2026-11-22T08:43:55.2705053Z 	<testcase name="actual Python native automatic history refuses an unacknowledged coordinator selection" time="5.652062" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T08:43:55.2707005Z 	<testcase name="actual Python child execution remains fenced after its completion-cut acknowledgement is lost" time="16.730810" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T08:43:55.2708751Z 	<testcase name="actual Python V8 checkpoint bytes restore through the JS composite driver at mixed cuts" time="18.685487" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T08:43:55.2711078Z 	<testcase name="actual Python shared-runtime automatic history restores a child-complete sparse cut without redispatch" time="42.922951" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T08:43:55.2712966Z 	<testcase name="actual Python track_cancel reconciliation requires the acknowledged same-owner service intent" time="53.797305" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T08:43:55.2714331Z 	<testcase name="actual Python track_complete service intent reconciles without reopening active work" time="49.906683" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-recovery-v8.test.js"/>
+2026-11-22T08:43:55.2716148Z 	<testcase name="V8 coordinator JSONL fixture preserves child bindings, original bytes, typed commits and closed retry" time="0.222175" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:43:55.2717846Z 	<testcase name="ordinary V8 orchestration driver uses the native JSONL transport for model and child choices" time="0.188248" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:43:55.2719242Z 	<testcase name="cancellation discards a pending coordinator candidate and retains the exact receipt" time="0.078956" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:43:55.2720784Z 	<testcase name="noninteger or altered coordinator fragment provenance is refused" time="0.076062" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:43:55.2722082Z 	<testcase name="creation acknowledgement cannot substitute another declared child binding" time="0.087329" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:43:55.2723389Z 	<testcase name="Python and JavaScript V8 coordinator contexts and child bindings agree" time="0.292344" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:43:55.2724685Z 	<testcase name="transport refuses altered model/context/payload and forged lifecycle receipts" time="0.423480" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-orchestration-transport-v8.test.js"/>
+2026-11-22T08:43:55.2725975Z 	<testcase name="native v8 transport preserves fragmented original output and waits for semantic acknowledgement" time="0.095108" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2727258Z 	<testcase name="native v8 output cannot change checkpoint, causal boundary or original bytes" time="0.399504" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2728620Z 	<testcase name="native malformed semantic output retains original bytes and token evidence as failed cost" time="0.048053" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2730647Z 	<testcase name="native partial binary failures retain authenticated original tokens without inventing a record" time="0.047877" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2731947Z 	<testcase name="native v8 transport rejects current-context leakage, stale prefixes and changed commit bytes" time="0.049889" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2733239Z 	<testcase name="native v8 failed initialization cannot leave an earlier checkpoint active" time="0.045842" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2734564Z 	<testcase name="native ordinary training lineage is bound at initialization, selection and recovery" time="0.320510" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2735820Z 	<testcase name="native v8 malformed UTF-8 and deadlines terminate the transport" time="0.103396" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2737153Z 	<testcase name="native acknowledgement failure does not count an execution as accepted" time="0.060460" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2738528Z 	<testcase name="transport closure during an unreturned native commit preserves unknown acknowledgement through cancellation" time="0.061438" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2739956Z 	<testcase name="stale native candidates can be rejected without closing the session or losing their costs" time="0.070802" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2741414Z 	<testcase name="native completion and close acknowledgments bind the exact invocation and public history" time="0.398018" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2743054Z 	<testcase name="native close receipt preserves the consumer reason and rejects altered or extended fields" time="0.414764" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2745009Z 	<testcase name="native checkpoint transport retains attempts and restores with pending candidates excluded" time="0.075225" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2746779Z 	<testcase name="native restore transport rejects altered checkpoints and false recovery acknowledgements" time="0.273334" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-process-v8.test.js"/>
+2026-11-22T08:43:55.2748587Z 	<testcase name="v8 receipt validator requires exact contract, source, contexts, tokenizer and every native gate" time="0.207531" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-v8.test.js"/>
+2026-11-22T08:43:55.2750483Z 	<testcase name="production region admission reruns source checking and refuses missing or fabricated native evidence" time="1.282772" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-v8.test.js"/>
+2026-11-22T08:43:55.2751749Z 	<testcase name="orchestration admission requires one exact transcript across source and native receipts" time="0.455124" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-v8.test.js"/>
+2026-11-22T08:43:55.2752958Z 	<testcase name="direct host receipts bind exactly one verified source identity without a nested artifact" time="0.013963" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-native-v8.test.js"/>
+2026-11-22T08:43:55.2754161Z 	<testcase name="a complete source-qualified child outside the authored work budget is refused" time="5.708932" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T08:43:55.2755481Z 	<testcase name="source-qualified scalar child attaches the canonical ten-event four-target lifecycle without mutation" time="0.017663" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T08:43:55.2757027Z 	<testcase name="the transcript digest cannot bless missing, reordered, or rehashed altered teacher events" time="0.085457" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T08:43:55.2758404Z 	<testcase name="source, input, causal context, ownership, dependency and terminal bytes remain bound" time="0.076327" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T08:43:55.2759720Z 	<testcase name="attachment refuses controlled source origin and artifacts already bound or admitted" time="0.007187" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T08:43:55.2761259Z 	<testcase name="family-bound local diagnostic serialization keeps four flat lifecycle targets loss-masked and source-bound" time="0.403631" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-orchestration-training-v8.test.js"/>
+2026-11-22T08:43:55.2762665Z 	<testcase name="native qualification retains every frozen family input, script and module interaction" time="0.813608" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-qualification-population-v8.test.js"/>
+2026-11-22T08:43:55.2764012Z 	<testcase name="interoperability includes all source goldens and returns fresh mutable guest inputs" time="0.296309" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-qualification-population-v8.test.js"/>
+2026-11-22T08:43:55.2765351Z 	<testcase name="complete ordinary inventory preserves cyclic callback inputs through durable JSON" time="0.041473" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-qualification-population-v8.test.js"/>
+2026-11-22T08:43:55.2766739Z 	<testcase name="conversion qualification extends the original 47 unchanged and retains five explicit candidate refusals" time="0.083734" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-qualification-population-v8.test.js"/>
+2026-11-22T08:43:55.2768118Z 	<testcase name="fixed support cohort keeps all 16 templates and four declared variants before execution" time="0.115320" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+2026-11-22T08:43:55.2769520Z 	<testcase name="support registry rejects changed split, membership and source-derived core relations" time="0.109624" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+2026-11-22T08:43:55.2770898Z 	<testcase name="support-only mutable materialization round-trips all 64 authored fixtures" time="0.064130" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+2026-11-22T08:43:55.2772134Z 	<testcase name="generic generation encoding still refuses genuinely frozen guest values" time="0.000343" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-region-support-cohort.test.js"/>
+2026-11-22T08:43:55.2773419Z 	<testcase name="restores coordinator-ready after exact create and bootstrap receipts" time="0.421258" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2774708Z 	<testcase name="restores bootstrapped active children within the declared active bound" time="0.333585" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2775949Z 	<testcase name="restored host bridge keeps the caller live clock" time="0.245474" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2777273Z 	<testcase name="restores the exact acknowledged stale child rejection and retries its original selection" time="0.545028" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2778631Z 	<testcase name="restores join-before-run and executes only the acknowledged child" time="0.254917" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2779923Z 	<testcase name="restores the mixed child ledger after exact native child completion" time="0.452396" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2781352Z 	<testcase name="composite verifier rejects mixed-ledger, dependency, and unknown-ack mutations" time="0.693312" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2782695Z 	<testcase name="checkpoint is unavailable before a safe point" time="0.008601" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2783984Z 	<testcase name="two declared children restore from sparse acknowledged cuts without redispatch" time="3.036387" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2785360Z 	<testcase name="durable composite checkpoint requires an independent exact head acknowledgement and restores latest" time="2.443904" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2786699Z 	<testcase name="lost completed-disposition ACK leaves the last external head fenced" time="13.331822" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2788003Z 	<testcase name="unknown native close leaves a completed session fenced without a terminal disposition" time="7.232601" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2789389Z 	<testcase name="automatic composite history acknowledges the join safe point before child dispatch" time="16.626018" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2790877Z 	<testcase name="post-child persistence failure leaves a durable in-flight fence that refuses fresh replay" time="2.929299" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2792243Z 	<testcase name="automatic persistence refuses a journal readback that drops its pending fence" time="0.276444" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2793616Z 	<testcase name="requested child-ready pause stores a complete cut and arms its fence only on resumed dispatch" time="11.400009" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2795015Z 	<testcase name="cancellation during coordinator fence acknowledgement prevents a later selection" time="0.348081" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2796478Z 	<testcase name="requested orchestration safe point is snapshotted before native initialization awaits" time="0.065935" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2797837Z 	<testcase name="failed durable head acknowledgement leaves no reusable history receipt" time="0.198262" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+2026-11-22T08:43:55.2799162Z 	<testcase name="model-only coordinator runs only the exact joined, bootstrapped child before its next choice" time="0.087485" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T08:43:55.2800617Z 	<testcase name="failed original coordinator bytes and one normalized cancellation reason survive cleanup" time="0.011599" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T08:43:55.2801928Z 	<testcase name="a committed create remains counted as acknowledged when bootstrap later fails" time="0.011832" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T08:43:55.2803299Z 	<testcase name="orchestration exposes only safe composite checkpoints and requires explicit durable dependencies" time="0.007782" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-selected-orchestration-v8.test.js"/>
+2026-11-22T08:43:55.2804653Z 	<testcase name="source sessions retain both independently checked fresh roots and every original target byte" time="1.417964" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T08:43:55.2805952Z 	<testcase name="session source recheck independently reruns both components after a JSON round trip" time="1.026616" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T08:43:55.2807187Z 	<testcase name="source session remains one exact member of the registry frozen before collection" time="1.482453" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T08:43:55.2808497Z 	<testcase name="rehashing an altered original source cannot certify a source session" time="0.110911" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T08:43:55.2809726Z 	<testcase name="rehashed changes to the composition plan, public bytes and component authority refuse" time="2.376869" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T08:43:55.2811140Z 	<testcase name="colliding callback identities retain both source dispositions and refuse session composition" time="2.374831" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T08:43:55.2812446Z 	<testcase name="a failed declared source call stays in the denominator and prevents partial session export" time="0.721481" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T08:43:55.2813727Z 	<testcase name="the bounded session profile refuses changed sources and out-of-range root counts before collection" time="0.000504" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T08:43:55.2815032Z 	<testcase name="native session receipts must bind the complete source collection and exact native gates" time="4.307326" classname="test" file="/home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/test/semantic-source-session-v8.test.js"/>
+2026-11-22T08:43:55.2815793Z 	<!-- tests 79 -->
+2026-11-22T08:43:55.2815971Z 	<!-- suites 0 -->
+2026-11-22T08:43:55.2816134Z 	<!-- pass 79 -->
+2026-11-22T08:43:55.2816298Z 	<!-- fail 0 -->
+2026-11-22T08:43:55.2816467Z 	<!-- cancelled 0 -->
+2026-11-22T08:43:55.2816641Z 	<!-- skipped 0 -->
+2026-11-22T08:43:55.2816804Z 	<!-- todo 0 -->
+2026-11-22T08:43:55.2816995Z 	<!-- duration_ms 187854.570139 -->
+2026-11-22T08:43:55.2817195Z </testsuites>
+2026-11-22T08:43:55.2942047Z 79 paired transport controls passed with zero skips
+2026-11-22T08:43:55.3014592Z ##[group]Run actions/upload-artifact@v4
+2026-11-22T08:43:55.3014809Z with:
+2026-11-22T08:43:55.3014989Z   name: namespace-state-experiment
+2026-11-22T08:43:55.3015193Z   retention-days: 30
+2026-11-22T08:43:55.3015371Z   if-no-files-found: warn
+2026-11-22T08:43:55.3016586Z   path: /home/runner/work/_temp/semantic-v8-transport-tests.xml
+/home/runner/work/_temp/namespace-contract.log
+/home/runner/work/_temp/namespace-native.xml
+/home/runner/work/_temp/namespace-native.log
+/home/runner/work/_temp/namespace-paired.xml
+/home/runner/work/_temp/namespace-paired.log
+/home/runner/work/_temp/namespace-artifact-packing.xml
+/home/runner/work/_temp/namespace-artifact-packing.log
+/home/runner/work/_temp/namespace-packing/
+
+2026-11-22T08:43:55.3017828Z   compression-level: 6
+2026-11-22T08:43:55.3017995Z   overwrite: false
+2026-11-22T08:43:55.3018165Z   include-hidden-files: false
+2026-11-22T08:43:55.3018345Z env:
+2026-11-22T08:43:55.3018488Z   OMP_NUM_THREADS: 1
+2026-11-22T08:43:55.3018680Z   MKL_NUM_THREADS: 1
+2026-11-22T08:43:55.3018962Z   TRACING_JS_SELF_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:43:55.3019446Z   MEGATOKEN_NATIVE_SOURCE_PRODUCER: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:43:55.3019918Z   MEGATOKEN_TOKENIZER_JSON: /home/runner/work/tracing-js-self/tracing-js-self/tokenizer.json
+2026-11-22T08:43:55.3020719Z   SEMANTIC_V8_NATIVE_POLICY: /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self/contracts/semantic-native-policy-v8.json
+2026-11-22T08:43:55.3021242Z   MEGATOKEN_ROOT: /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:43:55.3021528Z   MEGATOKEN_PYTHON: python
+2026-11-22T08:43:55.3021751Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:43:55.3022057Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-11-22T08:43:55.3022368Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:43:55.3022655Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:43:55.3022985Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-11-22T08:43:55.3023266Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-11-22T08:43:55.3023517Z ##[endgroup]
+2026-11-22T08:43:55.4228105Z (node:7785) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T08:43:55.4228675Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T08:43:55.4317048Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-22T08:43:55.4319416Z The least common ancestor is /home/runner/work/_temp. This will be the root directory of the artifact
+2026-11-22T08:43:55.4319918Z With the provided path, there will be 22 files uploaded
+2026-11-22T08:43:55.4323993Z Artifact name is valid!
+2026-11-22T08:43:55.4324433Z Root directory input is valid!
+2026-11-22T08:43:57.1218501Z Beginning upload of artifact content to blob storage
+2026-11-22T08:43:57.2255251Z (node:7785) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-22T08:43:57.9556608Z Uploaded bytes 689051
+2026-11-22T08:43:58.0444536Z Finished uploading artifact content to blob storage!
+2026-11-22T08:43:58.0445159Z SHA256 digest of uploaded artifact zip is 08f805bbc1d84d6f09076a0565062acf3c51806bb38061e4243ae24b86c780ca
+2026-11-22T08:43:58.0446562Z Finalizing artifact upload
+2026-11-22T08:43:58.4332366Z Artifact namespace-state-experiment.zip successfully finalized. Artifact ID 14746644867
+2026-11-22T08:43:58.4333286Z Artifact namespace-state-experiment has been successfully uploaded! Final size is 689051 bytes. Artifact ID is 14746644867
+2026-11-22T08:43:58.4338532Z Artifact download URL: https://github.com/werg/tracing-js-self/actions/runs/45002727473/artifacts/14746644867
+2026-11-22T08:43:58.4485011Z Post job cleanup.
+2026-11-22T08:43:58.5399014Z (node:7797) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T08:43:58.5399745Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T08:43:58.5499896Z Post job cleanup.
+2026-11-22T08:43:58.6456176Z (node:7805) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T08:43:58.6456977Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T08:43:58.6567157Z Post job cleanup.
+2026-11-22T08:43:58.7273936Z [command]/usr/bin/git version
+2026-11-22T08:43:58.7304046Z git version 2.56.1
+2026-11-22T08:43:58.7335123Z Temporarily overriding HOME='/home/runner/work/_temp/6c8acd29-9e21-467c-a085-83377afdc742' before making global git config changes
+2026-11-22T08:43:58.7336215Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T08:43:58.7337288Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/megatoken
+2026-11-22T08:43:58.7391396Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:43:58.7553499Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:43:58.7557356Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:43:58.7581802Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:43:58.7742037Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:43:58.7765226Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:43:58.8037887Z Post job cleanup.
+2026-11-22T08:43:58.8685844Z [command]/usr/bin/git version
+2026-11-22T08:43:58.8716109Z git version 2.56.1
+2026-11-22T08:43:58.8740882Z Temporarily overriding HOME='/home/runner/work/_temp/ce9a18cb-80a1-49e4-b594-4d1b0d334723' before making global git config changes
+2026-11-22T08:43:58.8741906Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T08:43:58.8744042Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self/tracing-js-self
+2026-11-22T08:43:58.8773315Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:43:58.8796720Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:43:58.8973970Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:43:58.8992928Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:43:58.9152450Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:43:58.9175790Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:43:58.9463220Z Cleaning up orphan processes
+2026-11-22T08:43:58.9706983Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/setup-python@v5, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

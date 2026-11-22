@@ -41,6 +41,8 @@ jobs:
             test/semantic-service-coordinator-v8.test.js \
             test/semantic-service-fence-v8.test.js \
             test/semantic-module*.test.js \
+            test/module-region-reference-worker.test.js \
+            test/selected-orchestration-execution-lock.test.js \
             test/semantic-source-session-v8.test.js \
             test/semantic-region-support-cohort.test.js \
             test/qualify-support-lifecycle.test.js \

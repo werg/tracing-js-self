@@ -10,6 +10,7 @@ import {RegionExecutionHarness} from './region-harness.js';
 import {defineRegionProgram,evaluateLocalRegion,sharedRegionState,cloneRegionController,REGION_TRACE_VERSION} from './regions.js';
 import {assertProtocolDetailCompatible} from './protocol-state-v8.js';
 import {hashAlgorithmData} from './program.js';
+import {compareObservableGraphs} from './observables.js';
 import {validateV8NativePolicy,validateV8NativeReceipt} from './native-v8.js';
 
 export const PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA='semantic-protocol-source-evidence/1';
@@ -27,33 +28,92 @@ function inputFixture(fixture){
   const maxSteps=fixture.maxSteps??10000,maxGenerated=fixture.projectionOptions?.maxGenerated??16384,timeoutMs=fixture.timeoutMs??10000;
   if([maxSteps,maxGenerated,timeoutMs].some(value=>!Number.isSafeInteger(value)||value<1))fail('positive execution bounds required');
   if(fixture.randomSeed!=null||fixture.fixture?.calls?.length)fail('first protocol source profile has no random or external inputs');
+  const moduleNamespacePlan=fixture.projectionOptions?.moduleNamespacePlan;
+  if(moduleNamespacePlan){
+    const evidence=fixture.provenance?.moduleEvidence;
+    if(evidence?.schema!=='semantic-module-evidence/1'||evidence.profile!=='evaluated-module-regions/1'||
+      evidence.request?.experimentalNamespacePlan!==true||!evidence.request.modules||
+      evidence.metadata?.namespaceSourcePlan===undefined)
+      fail('experimental namespace plans require original module evidence');
+  }
   return {source:fixture.source,entry:fixture.entry,family:fixture.family,license,trustTier,
+    ...(moduleNamespacePlan?{moduleNamespacePlan:copy(moduleNamespacePlan)}:{}),
     ancestorIds:[...new Set([fixture.family,...(fixture.ancestorIds??fixture.ancestors??[])])],
     producerRevision:fixture.producerRevision??null,provenance:copy(fixture.provenance??{}),
     limits:{maxSteps,maxGenerated,timeoutMs},args:fixture.args??[]};
 }
 function executeOwned(input){
-  const runtime=createRuntime({maxSteps:input.limits.maxSteps}).startEntry({text:input.source,functionName:input.entry,args:input.args,allowAsync:true});
+  const runtime=createRuntime({maxSteps:input.limits.maxSteps}).startEntry({text:input.source,functionName:input.entry,args:input.args,allowAsync:true,
+    ...(input.moduleNamespacePlan?{moduleNamespaceIntrinsic:true}:{})});
   const progress=runtime.drive(),bundle=runtime.exportRun();
   if(progress.kind!=='terminated'&&!(progress.kind==='runtime.failure'&&runtime.state.control.a0.failure?.kind==='guest-abrupt'))
     fail('owned execution is not a completed source invocation');
   return bundle;
 }
+function originalModuleOutcomeAgrees(reference,outcome){
+  const left=reference?.outcome,right=outcome;
+  const anchors=graph=>graph.roots.slice(0,-1).filter(value=>value[0]==='ref').map(value=>value[1]);
+  return left?.kind===right?.kind&&compareObservableGraphs(left.graph,right.graph,
+    {leftInputIds:anchors(left.graph),rightInputIds:anchors(right.graph)}).equal;
+}
+function originalNamespaceRowsAgree(reference,claims){
+  const observations=reference?.namespaceObservations;
+  if(observations?.schema!=='semantic-module-namespace-observations/1'||!Array.isArray(observations.rows))
+    return false;
+  const records=claims.filter(row=>row.kind==='protocol'&&
+    (row.record?.kind?.startsWith('namespace.')||row.record?.kind?.startsWith('cell.'))).map(row=>row.record);
+  const fileById=new Map(),rows=[];
+  for(const record of records){
+    if(record.kind==='namespace.create'){
+      fileById.set(record.namespaceId,record.moduleFile);rows.push({kind:record.kind,moduleFile:record.moduleFile});continue;
+    }
+    if(record.kind==='cell.initialize'||record.kind==='cell.write'){
+      rows.push({kind:record.kind,cell:record.cell,loweredName:record.loweredName,value:record.value});continue;
+    }
+    const moduleFile=fileById.get(record.namespaceId);
+    if(!moduleFile)return false;
+    if(record.kind==='namespace.keys')rows.push({kind:record.kind,moduleFile,names:record.names});
+    else if(record.kind==='namespace.read')rows.push({kind:record.kind,moduleFile,
+      exportName:record.exportName,value:record.value});
+    else if(record.kind==='namespace.descriptor')rows.push({kind:record.kind,moduleFile,
+      exportName:record.exportName,value:record.value});
+    else return false;
+  }
+  return eq(rows,observations.rows);
+}
 async function buildSourceArtifact(input){
-  const archive=executeOwned(input),projection=compileProtocolSourceV8(archive,{maxGenerated:input.limits.maxGenerated});
+  const archive=executeOwned(input),projection=compileProtocolSourceV8(archive,{maxGenerated:input.limits.maxGenerated,
+    ...(input.moduleNamespacePlan?{moduleNamespacePlan:input.moduleNamespacePlan}:{})});
   if(!projection.claims.some(row=>row.kind==='protocol'&&
     (row.record.kind.startsWith('symbol.')||row.record.kind.startsWith('property.')))&&!projection.extensions?.length)
     fail('no declared source protocol boundary');
   const completionPolicy=projection.completionPolicy?{completionPolicy:projection.completionPolicy}:{},
     referenceInput={source:input.source,entry:input.entry,inputGraph:encodeNativeGraph(input.args),
-      ...(projection.completionPolicy==='await-returned-promise'?{awaitReturnedPromise:true}:{})},
-    reference=await auditProtocolSourceV8({bundle:archive,referenceInput,outcome:projection.outcome,timeoutMs:input.limits.timeoutMs});
+      ...(projection.completionPolicy==='await-returned-promise'?{awaitReturnedPromise:true}:{})};
+  let reference,referenceStatus='agreed',referenceBasis='generated-source-esm';
+  if(input.moduleNamespacePlan){
+    const moduleEvidence=input.provenance.moduleEvidence;
+    reference=moduleEvidence?.reference;
+    if(reference?.status!=='passed'||
+       reference.namespaceObservations?.schema!=='semantic-module-namespace-observations/1'||
+       !Array.isArray(reference.namespaceObservations.rows))
+      fail('original module ESM namespace observations are required');
+    if(!originalModuleOutcomeAgrees(reference,projection.outcome)||
+       !originalNamespaceRowsAgree(reference,projection.claims))
+      fail('fresh original ESM outcome or namespace observations differ from owned source projection');
+    reference=copy(reference);referenceStatus='agreed';referenceBasis='original-module-esm';
+  }else{
+    reference=await auditProtocolSourceV8({bundle:archive,referenceInput,outcome:projection.outcome,
+      timeoutMs:input.limits.timeoutMs});
+  }
   const publicData={schema:'semantic-protocol-source-target/1',sourceDigest:hashAlgorithmData(input.source),
     entry:input.entry,inputGraph:projection.inputGraph,...completionPolicy,claims:projection.claims.map(({kind,line})=>({kind,line}))};
-  return clean({public:publicData,sidecar:{schema:PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA,admission:'locally_verified',referenceStatus:'agreed',
+  return clean({public:publicData,sidecar:{schema:PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA,admission:'locally_verified',referenceStatus,
+    ...(referenceBasis==='original-module-esm'?{referenceBasis}:{}),
     profile:projection.sourceProfile,sourceFamily:input.family,sourceLineage:input.family,ancestorIds:input.ancestorIds,
     producerRevision:input.producerRevision,license:input.license,trustTier:input.trustTier,
     sourceProvenance:{family:input.family,sourceDigest:hashAlgorithmData(input.source),upstream:input.provenance},
+    ...(input.moduleNamespacePlan?{moduleNamespacePlan:copy(input.moduleNamespacePlan)}:{}),
     executionLimits:input.limits,referenceInput,reference,
     archive,archiveDigest:digest(archive),compiler:{schema:projection.schema,claims:projection.claims,
       ...(projection.extensions.length?{extensions:projection.extensions}:{})},
@@ -63,9 +123,14 @@ async function buildSourceArtifact(input){
 /** Rebuilds causal contexts and only replaces detail groups with equal state. */
 export function projectProtocolRegionWitness(sourceArtifact){
   const side=sourceArtifact?.sidecar;
-  if(side?.schema!==PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA||side.referenceStatus!=='agreed'||side.admission!=='locally_verified')
+  const expectedReferenceStatus='agreed';
+  if(side?.schema!==PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA||side.referenceStatus!==expectedReferenceStatus||
+     side.admission!=='locally_verified')
     fail('independently checked direct source evidence required');
-  const projection=compileProtocolSourceV8(side.archive,{maxGenerated:side.executionLimits.maxGenerated}),
+  if(side.moduleNamespacePlan&&side.referenceBasis!=='original-module-esm')
+    fail('namespace projection must identify the actual original-module ESM reference');
+  const projection=compileProtocolSourceV8(side.archive,{maxGenerated:side.executionLimits.maxGenerated,
+    ...(side.moduleNamespacePlan?{moduleNamespacePlan:side.moduleNamespacePlan}:{})}),
     harness=new RegionExecutionHarness({sessionId:'protocol-source',automaticDelivery:false,now:()=>-Infinity,maxGenerated:side.executionLimits.maxGenerated});
   if(!eq(projection.claims,side.compiler.claims)||!eq(projection.extensions,side.compiler.extensions??[])||
     !eq(projection.outcome,side.outcome)||
@@ -73,7 +138,8 @@ export function projectProtocolRegionWitness(sourceArtifact){
       inputGraph:projection.inputGraph,...(projection.completionPolicy?{completionPolicy:projection.completionPolicy}:{}),
       claims:projection.claims.map(({kind,line})=>({kind,line}))},sourceArtifact.public))
     fail('source target or projection certificate changed');
-  harness.publishProgram({programId:'program1',source:projection.source,entry:projection.entry,capabilities:[]});
+  harness.publishProgram({programId:'program1',source:projection.source,entry:projection.entry,capabilities:[],
+    ...(side.moduleNamespacePlan?{moduleNamespacePlan:side.moduleNamespacePlan}: {})});
   harness.admitInvocation({programId:'program1',invocationId:'invocation1',trackId:'worker1',realmId:'realm1',triggerId:'protocol-entry',
     inputGraph:projection.inputGraph,realmPolicy:'fresh',completionPolicy:projection.completionPolicy??'call-return'});
   const locations=defineRegionProgram({source:projection.source,entry:projection.entry}).provenance.locations,
@@ -81,7 +147,8 @@ export function projectProtocolRegionWitness(sourceArtifact){
   let compactRecords=0,detailedRecords=0,protocolRecords=0,compactBytes=0,detailedBytes=0,protocolBytes=0;
   for(let index=0;index<projection.claims.length;){
     const claim=projection.claims[index],point=claim.certificate.source,controller=harness.controller;
-    const candidates=claim.kind==='detail'&&point?locations.filter(location=>point.start>=location.start&&point.end<=location.end):[];
+    const candidates=!side.moduleNamespacePlan&&claim.kind==='detail'&&point?
+      locations.filter(location=>point.start>=location.start&&point.end<=location.end):[];
     let compact=false;
     for(const location of candidates){
       const region=harness.program('invocation1').regions.find(row=>row.id===location.id);
@@ -121,7 +188,8 @@ export function projectProtocolRegionWitness(sourceArtifact){
       (index===0||array[index-1].mode!=='generated'||array[index-1].kind==='region')).length,
     compactRecords,detailedRecords,protocolRecords,compactBytes,detailedBytes,protocolBytes,
     detailTokenShare:null,tokenMeasurement:'untested'};
-  return clean({public:publicData,contexts,sidecar:{schema:PROTOCOL_REGION_EVIDENCE_V8_SCHEMA,admission:'locally_verified',referenceStatus:'agreed',
+  return clean({public:publicData,contexts,sidecar:{schema:PROTOCOL_REGION_EVIDENCE_V8_SCHEMA,admission:'locally_verified',
+    referenceStatus:'agreed',
     representation:REGION_TRACE_VERSION,profile:'compositional-regions/1',protocolProfile:projection.sourceProfile,
     ...(projection.extensions.length?{protocolExtensions:projection.extensions}:{}),
     sourceFamily:side.sourceFamily,family:side.sourceFamily,sourceArtifact:copy(sourceArtifact),sourceArtifactDigest:digest(sourceArtifact),
@@ -133,7 +201,14 @@ export async function verifyProtocolRegionTrainingCase(fixture){
   const identity=Object.fromEntries(['id','family','source','entry','ancestorIds','ancestors'].filter(key=>Object.hasOwn(fixture??{},key)).map(key=>[key,copy(fixture[key])]));
   let phase='source';
   try{
-    const input=inputFixture(fixture);phase='owned-and-independent-source';const sourceArtifact=await buildSourceArtifact(input);
+    const input=inputFixture(fixture);
+    if(input.moduleNamespacePlan){
+      phase='original-module-namespace-recheck';
+      const {verifyModuleNamespaceInputEvidence}=await import('./module-v8.js');
+      await verifyModuleNamespaceInputEvidence({source:input.source,entry:input.entry,args:input.args,
+        moduleNamespacePlan:input.moduleNamespacePlan,provenance:input.provenance});
+    }
+    phase='owned-and-independent-source';const sourceArtifact=await buildSourceArtifact(input);
     phase='projection';const exported=projectProtocolRegionWitness(sourceArtifact);
     return {...identity,status:exported.sidecar.regionCoverage.compactRegions?'locally_verified':'detailed-fallback',
       representation:'mixed',profile:exported.sidecar.protocolProfile,exported,regionCoverage:exported.sidecar.regionCoverage};
@@ -144,15 +219,27 @@ export async function verifyProtocolRegionTrainingCase(fixture){
 
 export async function recheckProtocolRegionEvidence(exported,{nativeConsumer=null,nativePolicy=null,requireNative=false}={}){
   const side=exported?.sidecar,source=side?.sourceArtifact?.sidecar;
-  if(side?.schema!==PROTOCOL_REGION_EVIDENCE_V8_SCHEMA||side.representation!==REGION_TRACE_VERSION||side.referenceStatus!=='agreed'||
+  const expectedRegionReferenceStatus='agreed';
+  if(side?.schema!==PROTOCOL_REGION_EVIDENCE_V8_SCHEMA||side.representation!==REGION_TRACE_VERSION||
+    side.referenceStatus!==expectedRegionReferenceStatus||
     side.sourceArtifactDigest!==digest(side.sourceArtifact)||side.publicDigest!==digest(exported.public)||
     side.contextDigest!==digest(exported.contexts)||side.optimizerSteps!==0||side.learningClaim!==null||
     source?.schema!==PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA||source.archiveDigest!==digest(source.archive))
     fail('incompatible or altered direct source evidence');
   const args=decodeOwnedGraph(JSON.stringify(source.referenceInput.inputGraph)),input=inputFixture({
     ...source.referenceInput,args,family:source.sourceFamily,ancestorIds:source.ancestorIds,license:source.license,trustTier:source.trustTier,
-    producerRevision:source.producerRevision,provenance:source.sourceProvenance.upstream,maxSteps:source.executionLimits.maxSteps,
-    timeoutMs:source.executionLimits.timeoutMs,projectionOptions:{maxGenerated:source.executionLimits.maxGenerated}});
+    producerRevision:source.producerRevision,provenance:source.sourceProvenance.upstream,
+    ...(source.moduleNamespacePlan?{projectionOptions:{moduleNamespacePlan:source.moduleNamespacePlan}}:{}),
+    maxSteps:source.executionLimits.maxSteps,
+    timeoutMs:source.executionLimits.timeoutMs,
+    projectionOptions:{maxGenerated:source.executionLimits.maxGenerated,
+      ...(source.moduleNamespacePlan?{moduleNamespacePlan:source.moduleNamespacePlan}:{})}});
+  if(source.moduleNamespacePlan){
+    const {recheckModuleRegionEvidence}=await import('./module-v8.js');
+    const moduleCheck=await recheckModuleRegionEvidence(exported);
+    if(moduleCheck.status!=='passed'||!moduleCheck.applicable)
+      fail('experimental namespace source requires fresh original-module and ESM recheck');
+  }
   const fresh=await buildSourceArtifact(input);
   if(!eq(fresh,side.sourceArtifact))fail('source, owned archive or independent observations changed');
   const rebuilt=projectProtocolRegionWitness(fresh);

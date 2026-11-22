@@ -21,7 +21,15 @@ import {PROXY_PROFILE_V8,PROXY_RECORD_FIELDS,validateProxyRecordV8,applyProxyRec
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_RECORD_FIELDS,validatePromiseExecutorRecordV8,applyPromiseExecutorRecordV8,
   restorePromiseExecutorStateV8,assertPromiseExecutorNextV8,assertPromiseExecutorCallV8,
   allowsPromiseExecutorInternalSchedulerV8,allowsPromiseExecutorDetailedCallV8} from './protocol-promise-executor-v8.js';
+import {MODULE_NAMESPACE_PROFILE_V8,MODULE_NAMESPACE_RECORD_FIELDS,validateModuleNamespaceRecordV8,
+  applyModuleNamespaceRecordV8,restoreModuleNamespaceStateV8,assertModuleNamespaceNextV8,
+  assertModuleNamespaceTransitionV8} from './protocol-module-namespace-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
+  id:MODULE_NAMESPACE_PROFILE_V8,recordFields:MODULE_NAMESPACE_RECORD_FIELDS,
+  validateRecord:validateModuleNamespaceRecordV8,applyRecord:applyModuleNamespaceRecordV8,
+  hasRichState:node=>node.kind==='module-namespace',restoreState:restoreModuleNamespaceStateV8,
+  assertNext:assertModuleNamespaceNextV8,assertTransition:assertModuleNamespaceTransitionV8
+}),Object.freeze({
   id:MEMORY_PROFILE_V8,recordFields:MEMORY_RECORD_FIELDS,validateRecord:validateMemoryRecordV8,applyRecord:applyMemoryRecordV8,
   hasRichState:node=>isBinaryMemoryKind(node.kind),
   restoreState:(controller,_snapshot,api)=>restoreMemoryStateV8(controller,api)

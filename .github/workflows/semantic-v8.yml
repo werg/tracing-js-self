@@ -84,6 +84,22 @@ jobs:
         run: |
           npm run semantic:v8:contract --prefix tracing-js-self 2>&1 | tee "$RUNNER_TEMP/semantic-v8-contract.log"
           cmp tracing-js-self/contracts/semantic-execution-v8.json megatoken/src/megatoken/data/contracts/semantic-execution-v8.json
+      - name: Admit and pack the actual original-module namespace artifact
+        if: ${{ matrix.population == 'interoperability' }}
+        working-directory: megatoken
+        run: |
+          python -m pytest -q -s tests/integration/test_module_namespace_artifact_packing.py \
+            --basetemp="$RUNNER_TEMP/v8-namespace-artifact" \
+            --junitxml="$RUNNER_TEMP/semantic-v8-namespace-artifact.xml" \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-namespace-artifact.log"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-namespace-artifact.xml').getroot().iter('testcase'))
+          if len(cases) != 1 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('The actual namespace artifact must pass source/native/token/packing checks with zero skips')
+          print('One actual namespace artifact passed; six operation kinds packed; zero optimizer updates')
+          PY
       - name: Check independent v8 semantics and malformed boundaries
         working-directory: megatoken
         run: |
@@ -106,6 +122,7 @@ jobs:
           node --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \
             test/semantic-selected-orchestration-v8.test.js test/semantic-selected-orchestration-checkpoint-v8.test.js \
             test/semantic-native-orchestration-recovery-v8.test.js \
+            test/semantic-native-module-namespace-state-v8.test.js \
             test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js \
             test/semantic-source-session-v8.test.js test/semantic-region-support-cohort.test.js \
             test/semantic-qualification-population-v8.test.js test/qualify-support-lifecycle.test.js \
@@ -248,6 +265,9 @@ jobs:
             ${{ runner.temp }}/semantic-v8-tests.xml
             ${{ runner.temp }}/semantic-v8-tests.log
             ${{ runner.temp }}/semantic-v8-transport-tests.xml
+            ${{ runner.temp }}/semantic-v8-namespace-artifact.xml
+            ${{ runner.temp }}/semantic-v8-namespace-artifact.log
+            ${{ runner.temp }}/v8-namespace-artifact/
             ${{ runner.temp }}/semantic-v8-qualification.log
             ${{ runner.temp }}/semantic-v8-costs.log
             ${{ runner.temp }}/v8-admitted/

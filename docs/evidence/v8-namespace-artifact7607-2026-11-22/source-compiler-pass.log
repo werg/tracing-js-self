@@ -1,0 +1,257 @@
+﻿2026-11-22T08:09:12.3359483Z Current runner version: '2.338.2'
+2026-11-22T08:09:12.3376072Z ##[group]Runner Image Provisioner
+2026-11-22T08:09:12.3376759Z Hosted Compute Agent
+2026-11-22T08:09:12.3377174Z Version: 20261111.635
+2026-11-22T08:09:12.3377712Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-22T08:09:12.3378228Z Build Date: 2026-11-11T01:49:01Z
+2026-11-22T08:09:12.3378720Z Worker ID: {18464480-16de-42ec-8d1c-3a8ec30258ea}
+2026-11-22T08:09:12.3379245Z Region: us-west-2
+2026-11-22T08:09:12.3379635Z Cloud: AWS
+2026-11-22T08:09:12.3380008Z ##[endgroup]
+2026-11-22T08:09:12.3381018Z ##[group]Operating System
+2026-11-22T08:09:12.3381464Z Ubuntu
+2026-11-22T08:09:12.3381843Z 24.04.5
+2026-11-22T08:09:12.3382203Z LTS
+2026-11-22T08:09:12.3382583Z ##[endgroup]
+2026-11-22T08:09:12.3382976Z ##[group]Runner Image
+2026-11-22T08:09:12.3383404Z Image: ubuntu-24.04
+2026-11-22T08:09:12.3383813Z Version: 20261116.133.1
+2026-11-22T08:09:12.3384980Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.133/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-22T08:09:12.3386124Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.133
+2026-11-22T08:09:12.3386812Z ##[endgroup]
+2026-11-22T08:09:12.3387741Z ##[group]GITHUB_TOKEN Permissions
+2026-11-22T08:09:12.3389461Z Contents: read
+2026-11-22T08:09:12.3389887Z Metadata: read
+2026-11-22T08:09:12.3390286Z ##[endgroup]
+2026-11-22T08:09:12.3391743Z Secret source: Actions
+2026-11-22T08:09:12.3392421Z Cache mode: write
+2026-11-22T08:09:12.3392893Z Prepare workflow directory
+2026-11-22T08:09:12.3617692Z Prepare all required actions
+2026-11-22T08:09:12.3652888Z Getting action download info
+2026-11-22T08:09:12.7281725Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-22T08:09:13.9587066Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-22T08:09:14.2427936Z Complete job name: source-compiler
+2026-11-22T08:09:14.3142039Z ##[group]Run actions/checkout@v4
+2026-11-22T08:09:14.3143302Z with:
+2026-11-22T08:09:14.3144126Z   ref: 7607f9715d9f440a4696e19dad4c3fe2fa805146
+2026-11-22T08:09:14.3145470Z   persist-credentials: false
+2026-11-22T08:09:14.3146415Z   repository: werg/tracing-js-self
+2026-11-22T08:09:14.3153432Z   token: ***
+2026-11-22T08:09:14.3154187Z   ssh-strict: true
+2026-11-22T08:09:14.3155163Z   ssh-user: git
+2026-11-22T08:09:14.3155938Z   clean: true
+2026-11-22T08:09:14.3156724Z   sparse-checkout-cone-mode: true
+2026-11-22T08:09:14.3157676Z   fetch-depth: 1
+2026-11-22T08:09:14.3158423Z   fetch-tags: false
+2026-11-22T08:09:14.3159441Z   show-progress: true
+2026-11-22T08:09:14.3160238Z   lfs: false
+2026-11-22T08:09:14.3161021Z   submodules: false
+2026-11-22T08:09:14.3161825Z   set-safe-directory: true
+2026-11-22T08:09:14.3162722Z   allow-unsafe-pr-checkout: false
+2026-11-22T08:09:14.3163951Z ##[endgroup]
+2026-11-22T08:09:15.6698954Z Syncing repository: werg/tracing-js-self
+2026-11-22T08:09:15.6700421Z ##[group]Getting Git version info
+2026-11-22T08:09:15.6700858Z Working directory is '/home/runner/work/tracing-js-self/tracing-js-self'
+2026-11-22T08:09:15.6701460Z [command]/usr/bin/git version
+2026-11-22T08:09:15.8955904Z git version 2.56.1
+2026-11-22T08:09:15.8969293Z ##[endgroup]
+2026-11-22T08:09:15.8980544Z Temporarily overriding HOME='/home/runner/work/_temp/5ae43b70-69e7-4a83-b4b9-43f9ae990c4a' before making global git config changes
+2026-11-22T08:09:15.8981673Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T08:09:15.8984881Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-22T08:09:15.9346926Z Deleting the contents of '/home/runner/work/tracing-js-self/tracing-js-self'
+2026-11-22T08:09:15.9349169Z ##[group]Initializing the repository
+2026-11-22T08:09:15.9353025Z [command]/usr/bin/git init /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-22T08:09:16.0140290Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T08:09:16.0141207Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T08:09:16.0141696Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T08:09:16.0142125Z hint: call:
+2026-11-22T08:09:16.0142367Z hint:
+2026-11-22T08:09:16.0142703Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T08:09:16.0143083Z hint:
+2026-11-22T08:09:16.0143488Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T08:09:16.0144166Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T08:09:16.0144999Z hint:
+2026-11-22T08:09:16.0145362Z hint: 	git branch -m <name>
+2026-11-22T08:09:16.0145867Z hint:
+2026-11-22T08:09:16.0146372Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T08:09:16.0147221Z Initialized empty Git repository in /home/runner/work/tracing-js-self/tracing-js-self/.git/
+2026-11-22T08:09:16.0151912Z [command]/usr/bin/git remote add origin https://github.com/werg/tracing-js-self
+2026-11-22T08:09:16.0192925Z ##[endgroup]
+2026-11-22T08:09:16.0193599Z ##[group]Disabling automatic garbage collection
+2026-11-22T08:09:16.0195432Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T08:09:16.0217112Z ##[endgroup]
+2026-11-22T08:09:16.0217656Z ##[group]Setting up auth
+2026-11-22T08:09:16.0222114Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:09:16.0247256Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:09:16.3074764Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:09:16.3097366Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:09:16.3246210Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:09:16.3269302Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:09:16.3415948Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T08:09:16.3440847Z ##[endgroup]
+2026-11-22T08:09:16.3441379Z ##[group]Fetching the repository
+2026-11-22T08:09:16.3451099Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 7607f9715d9f440a4696e19dad4c3fe2fa805146
+2026-11-22T08:09:45.0986549Z From https://github.com/werg/tracing-js-self
+2026-11-22T08:09:45.0987099Z  * branch            7607f9715d9f440a4696e19dad4c3fe2fa805146 -> FETCH_HEAD
+2026-11-22T08:09:45.1014271Z ##[endgroup]
+2026-11-22T08:09:45.1015372Z ##[group]Determining the checkout info
+2026-11-22T08:09:45.1015869Z ##[endgroup]
+2026-11-22T08:09:45.1016265Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T08:09:45.1069682Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T08:09:45.1092519Z ##[group]Checking out the ref
+2026-11-22T08:09:45.1096707Z [command]/usr/bin/git checkout --progress --force 7607f9715d9f440a4696e19dad4c3fe2fa805146
+2026-11-22T08:09:46.1192721Z Updating files:  46% (1708/3643)
+2026-11-22T08:09:46.1404321Z Updating files:  47% (1713/3643)
+2026-11-22T08:09:46.1435295Z Updating files:  48% (1749/3643)
+2026-11-22T08:09:46.1450997Z Updating files:  49% (1786/3643)
+2026-11-22T08:09:46.1458786Z Updating files:  50% (1822/3643)
+2026-11-22T08:09:46.1480854Z Updating files:  51% (1858/3643)
+2026-11-22T08:09:46.1510724Z Updating files:  52% (1895/3643)
+2026-11-22T08:09:46.1528840Z Updating files:  53% (1931/3643)
+2026-11-22T08:09:46.1569874Z Updating files:  54% (1968/3643)
+2026-11-22T08:09:46.1620404Z Updating files:  55% (2004/3643)
+2026-11-22T08:09:46.1635727Z Updating files:  56% (2041/3643)
+2026-11-22T08:09:46.1647180Z Updating files:  57% (2077/3643)
+2026-11-22T08:09:46.1652150Z Updating files:  58% (2113/3643)
+2026-11-22T08:09:46.1660198Z Updating files:  59% (2150/3643)
+2026-11-22T08:09:46.1678205Z Updating files:  60% (2186/3643)
+2026-11-22T08:09:46.1685747Z Updating files:  61% (2223/3643)
+2026-11-22T08:09:46.1692197Z Updating files:  62% (2259/3643)
+2026-11-22T08:09:46.1698055Z Updating files:  63% (2296/3643)
+2026-11-22T08:09:46.1712039Z Updating files:  64% (2332/3643)
+2026-11-22T08:09:46.1725032Z Updating files:  65% (2368/3643)
+2026-11-22T08:09:46.1738885Z Updating files:  66% (2405/3643)
+2026-11-22T08:09:46.1748274Z Updating files:  67% (2441/3643)
+2026-11-22T08:09:46.1762387Z Updating files:  68% (2478/3643)
+2026-11-22T08:09:46.1773591Z Updating files:  69% (2514/3643)
+2026-11-22T08:09:46.1806566Z Updating files:  70% (2551/3643)
+2026-11-22T08:09:46.1817691Z Updating files:  71% (2587/3643)
+2026-11-22T08:09:46.1828348Z Updating files:  72% (2623/3643)
+2026-11-22T08:09:46.1837733Z Updating files:  73% (2660/3643)
+2026-11-22T08:09:46.1851617Z Updating files:  74% (2696/3643)
+2026-11-22T08:09:46.1868722Z Updating files:  75% (2733/3643)
+2026-11-22T08:09:46.1885837Z Updating files:  76% (2769/3643)
+2026-11-22T08:09:46.1908215Z Updating files:  77% (2806/3643)
+2026-11-22T08:09:46.1932169Z Updating files:  78% (2842/3643)
+2026-11-22T08:09:46.1952495Z Updating files:  79% (2878/3643)
+2026-11-22T08:09:46.1973742Z Updating files:  80% (2915/3643)
+2026-11-22T08:09:46.1995034Z Updating files:  81% (2951/3643)
+2026-11-22T08:09:46.2006418Z Updating files:  82% (2988/3643)
+2026-11-22T08:09:46.2021511Z Updating files:  83% (3024/3643)
+2026-11-22T08:09:46.2035912Z Updating files:  84% (3061/3643)
+2026-11-22T08:09:46.2245990Z Updating files:  85% (3097/3643)
+2026-11-22T08:09:46.2256670Z Updating files:  86% (3133/3643)
+2026-11-22T08:09:46.2268619Z Updating files:  87% (3170/3643)
+2026-11-22T08:09:46.2283964Z Updating files:  88% (3206/3643)
+2026-11-22T08:09:46.2301128Z Updating files:  89% (3243/3643)
+2026-11-22T08:09:46.2318830Z Updating files:  90% (3279/3643)
+2026-11-22T08:09:46.2335675Z Updating files:  91% (3316/3643)
+2026-11-22T08:09:46.2351065Z Updating files:  92% (3352/3643)
+2026-11-22T08:09:46.2361869Z Updating files:  93% (3388/3643)
+2026-11-22T08:09:46.2374903Z Updating files:  94% (3425/3643)
+2026-11-22T08:09:46.2387322Z Updating files:  95% (3461/3643)
+2026-11-22T08:09:46.2402540Z Updating files:  96% (3498/3643)
+2026-11-22T08:09:46.2424957Z Updating files:  97% (3534/3643)
+2026-11-22T08:09:46.2451440Z Updating files:  98% (3571/3643)
+2026-11-22T08:09:46.2462815Z Updating files:  99% (3607/3643)
+2026-11-22T08:09:46.2463332Z Updating files: 100% (3643/3643)
+2026-11-22T08:09:46.2463697Z Updating files: 100% (3643/3643), done.
+2026-11-22T08:09:46.2501560Z Note: switching to '7607f9715d9f440a4696e19dad4c3fe2fa805146'.
+2026-11-22T08:09:46.2501848Z 
+2026-11-22T08:09:46.2502025Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T08:09:46.2502463Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T08:09:46.2502895Z state without impacting any branches by switching back to a branch.
+2026-11-22T08:09:46.2503140Z 
+2026-11-22T08:09:46.2503321Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T08:09:46.2503708Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T08:09:46.2503946Z 
+2026-11-22T08:09:46.2504075Z   git switch -c <new-branch-name>
+2026-11-22T08:09:46.2504240Z 
+2026-11-22T08:09:46.2504337Z Or undo this operation with:
+2026-11-22T08:09:46.2504638Z 
+2026-11-22T08:09:46.2504737Z   git switch -
+2026-11-22T08:09:46.2504874Z 
+2026-11-22T08:09:46.2505040Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T08:09:46.2505312Z 
+2026-11-22T08:09:46.2576593Z HEAD is now at 7607f97 test(v8): run namespace artifact admission against clean formatted consumer
+2026-11-22T08:09:46.2577694Z ##[endgroup]
+2026-11-22T08:09:46.2613613Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T08:09:46.2632135Z 7607f9715d9f440a4696e19dad4c3fe2fa805146
+2026-11-22T08:09:46.2640164Z ##[group]Removing auth
+2026-11-22T08:09:46.2643267Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:09:46.2665607Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:09:46.2821964Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:09:46.2841584Z http.https://github.com/.extraheader
+2026-11-22T08:09:46.2846533Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-22T08:09:46.2868594Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:09:46.3013749Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:09:46.3033849Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:09:46.3178747Z ##[endgroup]
+2026-11-22T08:09:46.3371063Z ##[group]Run actions/setup-node@v4
+2026-11-22T08:09:46.3371330Z with:
+2026-11-22T08:09:46.3371549Z   node-version-file: .nvmrc
+2026-11-22T08:09:46.3371803Z   always-auth: false
+2026-11-22T08:09:46.3372034Z   check-latest: false
+2026-11-22T08:09:46.3374059Z   token: ***
+2026-11-22T08:09:46.3374284Z ##[endgroup]
+2026-11-22T08:09:46.4388360Z Node version file is not JSON file
+2026-11-22T08:09:46.4389955Z Resolved .nvmrc as 24.22.3
+2026-11-22T08:09:46.5365984Z Found in cache @ /opt/hostedtoolcache/node/24.22.3/x64
+2026-11-22T08:09:46.5372610Z (node:2315) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T08:09:46.5373613Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T08:09:46.5374896Z ##[group]Environment details
+2026-11-22T08:09:50.6545759Z node: v24.22.3
+2026-11-22T08:09:50.6546160Z npm: 11.19.1
+2026-11-22T08:09:50.6546400Z yarn: 1.22.22
+2026-11-22T08:09:50.6547080Z ##[endgroup]
+2026-11-22T08:09:50.6638698Z ##[group]Run npm ci --ignore-scripts --no-audit --no-fund
+2026-11-22T08:09:50.6639147Z [36;1mnpm ci --ignore-scripts --no-audit --no-fund[0m
+2026-11-22T08:09:50.7771765Z shell: /usr/bin/bash -e {0}
+2026-11-22T08:09:50.7772165Z ##[endgroup]
+2026-11-22T08:09:52.3254134Z 
+2026-11-22T08:09:52.3258585Z added 4 packages in 2s
+2026-11-22T08:09:52.3435756Z ##[group]Run node --test --test-reporter=spec test/semantic-module-namespace-compile-only-v8.test.js test/semantic-module-namespace-source-sync-gate-v8.test.js test/module-region-reference-worker.test.js test/semantic-module-namespace-source-projection-v8.test.js test/semantic-module-namespace-source-boundary-v8.test.js test/semantic-module-namespace-source-owners-v8.test.js
+2026-11-22T08:09:52.3437901Z [36;1mnode --test --test-reporter=spec test/semantic-module-namespace-compile-only-v8.test.js test/semantic-module-namespace-source-sync-gate-v8.test.js test/module-region-reference-worker.test.js test/semantic-module-namespace-source-projection-v8.test.js test/semantic-module-namespace-source-boundary-v8.test.js test/semantic-module-namespace-source-owners-v8.test.js[0m
+2026-11-22T08:09:52.3462247Z shell: /usr/bin/bash -e {0}
+2026-11-22T08:09:52.3462518Z ##[endgroup]
+2026-11-22T08:09:52.8617186Z ✔ original ESM namespace worker observes real link identity, cells, keys, reads and descriptors in order (69.543968ms)
+2026-11-22T08:09:52.8646489Z ✔ original ESM namespace worker refuses a planned alias mapped to another module object (62.424012ms)
+2026-11-22T08:09:52.8647956Z ✔ original ESM namespace worker refuses a reexport plan mapped to the wrong source cell (58.989053ms)
+2026-11-22T08:09:52.8649352Z ✔ original ESM namespace worker rejects source digest substitution (52.170754ms)
+2026-11-22T08:09:52.8650368Z ✔ original ESM namespace worker refuses namespace escapes and non-scalar cells (158.020184ms)
+2026-11-22T08:09:53.3390938Z ✔ namespace source compiler owns runtime namespace and live-cell effects before audit qualification (552.544745ms)
+2026-11-22T08:09:53.9114365Z ✔ direct namespace evidence entry rechecks original modules, args, worker observations and public plan (1137.134745ms)
+2026-11-22T08:09:53.9235576Z ✔ private namespace source owners map each initializer to one owned callsite (83.815959ms)
+2026-11-22T08:09:53.9236254Z ✔ private namespace owner derivation rejects source drift and duplicate sites (24.523681ms)
+2026-11-22T08:09:54.4747066Z ✔ module namespace opt-in source-projects dynamic reads, keys and live descriptors (760.083551ms)
+2026-11-22T08:09:54.4748180Z ✔ module namespace remains refused without explicit opt-in plan (2.79482ms)
+2026-11-22T08:09:54.4849447Z ✔ experimental namespace sync wrapper is source-proved only for the no-job AST subset (52.002332ms)
+2026-11-22T08:09:54.4850355Z ✔ namespace no-job proof rejects parameter and local shadows of imported call targets (7.589476ms)
+2026-11-22T08:09:54.4851353Z ✔ namespace no-job proof rejects thenable result shapes even through descriptor values (8.287529ms)
+2026-11-22T08:09:54.4852303Z ✔ namespace no-job proof refuses async declarations even without a taken call (2.832879ms)
+2026-11-22T08:09:54.4853190Z ✔ the experimental no-job wrapper does not change ordinary evaluated-module scheduling (10.017297ms)
+2026-11-22T08:09:54.4853869Z ℹ tests 16
+2026-11-22T08:09:54.4854168Z ℹ suites 0
+2026-11-22T08:09:54.4854757Z ℹ pass 16
+2026-11-22T08:09:54.4855078Z ℹ fail 0
+2026-11-22T08:09:54.4855406Z ℹ cancelled 0
+2026-11-22T08:09:54.4855732Z ℹ skipped 0
+2026-11-22T08:09:54.4856015Z ℹ todo 0
+2026-11-22T08:09:54.4856342Z ℹ duration_ms 2110.847871
+2026-11-22T08:09:54.4969405Z Post job cleanup.
+2026-11-22T08:09:54.5859450Z (node:2521) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T08:09:54.5860081Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T08:09:54.5988806Z Post job cleanup.
+2026-11-22T08:09:54.6638659Z [command]/usr/bin/git version
+2026-11-22T08:09:54.6665366Z git version 2.56.1
+2026-11-22T08:09:54.6689007Z Temporarily overriding HOME='/home/runner/work/_temp/e90a73e1-682e-4ed2-83e5-349cdf9d592f' before making global git config changes
+2026-11-22T08:09:54.6690333Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T08:09:54.6692273Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/tracing-js-self/tracing-js-self
+2026-11-22T08:09:54.6718064Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T08:09:54.6739871Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T08:09:54.6905015Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T08:09:54.6926400Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T08:09:54.7082781Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T08:09:54.7102792Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T08:09:54.7381489Z Cleaning up orphan processes
+2026-11-22T08:09:54.7651090Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

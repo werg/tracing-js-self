@@ -5,6 +5,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {encode} from '../values.js';
 import {evaluateWitnessExpression} from '../training/witness-check.js';
 import {hashAlgorithmData} from './program.js';
+import {verifyExperimentalModuleNamespacePlan} from './module-namespace-state-v8.js';
 import {assertAlgorithmFields,assertAlgorithmValue,stableAlgorithmJSON} from './ir.js';
 import {tryLowerJavaScriptV8} from './lower-v8.js';
 
@@ -94,8 +95,12 @@ function termLocals(term,result=new Set()){
 }
 
 /** Definitions depend only on source. Source spans are kept in private provenance. */
-export function defineRegionProgram({source,entry}={}){
+export function defineRegionProgram({source,entry,moduleNamespacePlan}={}){
   if(typeof source!=='string'||typeof entry!=='string')refuse('exact source and entry required');
+  if(moduleNamespacePlan!==undefined){
+    verifyExperimentalModuleNamespacePlan(moduleNamespacePlan);
+    if(moduleNamespacePlan.namespaces.length===0)refuse('module namespace source plan cannot be empty');
+  }
   const ast=parse(source,{ecmaVersion:2026,sourceType:'script'}),declared=[];
   if(ast.body[0]?.directive!=='use strict')refuse('explicit strict source required');
   walk(ast,node=>{if(functions.has(node.type)&&node.body.type==='BlockStatement')declared.push(node);});
@@ -153,12 +158,15 @@ export function defineRegionProgram({source,entry}={}){
   if(regions.length>REGION_LIMITS.regions)refuse('region count bound');
   const lowered=tryLowerJavaScriptV8({source,entry});
   const body={schema:REGION_PROGRAM_VERSION,traceFormat:REGION_TRACE_VERSION,profile:REGION_PROFILE,
-    source,entry,sourceDigest:hashAlgorithmData(source),regions,algorithm:lowered.status==='lowered'?lowered.core:null};
+    source,entry,sourceDigest:hashAlgorithmData(source),regions,algorithm:lowered.status==='lowered'?lowered.core:null,
+    ...(moduleNamespacePlan!==undefined?{moduleNamespacePlan:copy(moduleNamespacePlan)}:{})};
   return {program:freeze({...body,definitionDigest:hashAlgorithmData(body)}),
     provenance:{schema:'semantic-region-provenance/1',locations}};
 }
 export function validateRegionProgram(program){
-  assertAlgorithmFields(program,['schema','traceFormat','profile','source','entry','sourceDigest','regions','algorithm','definitionDigest'],'region program');
+  const fields=['schema','traceFormat','profile','source','entry','sourceDigest','regions','algorithm','definitionDigest'];
+  if(Object.hasOwn(program??{},'moduleNamespacePlan'))fields.push('moduleNamespacePlan');
+  assertAlgorithmFields(program,fields,'region program');
   const expected=defineRegionProgram(program).program;
   if(!isDeepStrictEqual(program,expected))throw new TypeError('Region source or immutable definition changed');
   return true;

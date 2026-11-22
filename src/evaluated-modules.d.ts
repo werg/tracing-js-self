@@ -32,6 +32,11 @@ export interface EvaluatedModulesMetadata {
    * with no host-supplied properties, matching the default Node
    * SourceTextModule import-meta hook used by the differential controls. */
   importMetaPolicy:'empty-null-prototype';
+  /** Opt-in experimental linker records; this metadata grants no public/native admission. */
+  namespaceSourcePlan?:{
+    cells:Array<{file:string;local:string;kind:'let'|'const'|'var'|'function'|'class';mutable:boolean}>;
+    namespaces:Array<{file:string;namespaceName:string;exports:Array<{name:string;file:string;local:string}>}>;
+  };
   /** Parallel TLA branches retain per-module environments and dependency
    * records. This strategy is owned-runtime evidence, not public qualification. */
   evaluationStrategy:'dependency-concatenation'|'async-dependency-scheduler';
@@ -69,7 +74,10 @@ export interface EvaluatedModulesMetadata {
     sourceMap:unknown;
   }>;
 }
-export function linkEvaluatedModules(options:EvaluatedModulesOptions):{
+export function linkEvaluatedModules(options:EvaluatedModulesOptions&{
+  /** Build bounded source-cell records for the unregistered namespace experiment. */
+  experimentalNamespacePlan?:boolean;
+}):{
   profile:'evaluated-module/1';
   source:string;
   entryFunction:string;

@@ -1,0 +1,291 @@
+{
+  "schema": "v8-namespace-composed-evidence/1",
+  "date": "2026-11-22",
+  "composed": {
+    "producerRevision": "4a39059878dc556ff38a681be76d4f0bfa21a03b",
+    "consumerRevision": "9a5b87f3959d7c1e034f7ccc75e0d7e11c06d876",
+    "run": "https://github.com/werg/tracing-js-self/actions/runs/45002727473",
+    "controls": {
+      "focusedIndividualJUnit": 178,
+      "sourceCompiler": 17,
+      "native": 846,
+      "namespace": 40,
+      "pairedTransport": 79,
+      "artifact": 1,
+      "skipped": 0
+    }
+  },
+  "portableArtifact": {
+    "producerRevision": "550387918313393b49017397d47bd66e9d4b5e82",
+    "consumerRevision": "b6e0bf97963a135a5cb9280555cc03c77eac7b37",
+    "run": "https://github.com/werg/tracing-js-self/actions/runs/45003132223",
+    "controls": {
+      "completeAssetArtifactPass": 1,
+      "completeAssetArtifactSkip": 0,
+      "absentAssetsExplicitSkip": 1,
+      "partialAssetsExpectedFailure": 1
+    },
+    "registryDigest": "ffc1a788eeef005a53487c916221f24d324ee924593c3168c55e3bb9c871f365",
+    "packedWindowCount": 15,
+    "packedTargetsByKind": {
+      "cell.initialize": {
+        "scoredPositions": 66,
+        "targetRecords": 2,
+        "tokenAndMaskDigest": "d87b5b19491ce278eb91af7064b2f0a6882b76a3e5e1a30af8d41753a25e96f5",
+        "tokenIds": 66
+      },
+      "cell.write": {
+        "scoredPositions": 33,
+        "targetRecords": 1,
+        "tokenAndMaskDigest": "77b47c27b37857243a16f27e8fc046c9e89ac06308d8a483752e4b2d3acedd41",
+        "tokenIds": 33
+      },
+      "namespace.create": {
+        "scoredPositions": 20,
+        "targetRecords": 1,
+        "tokenAndMaskDigest": "5947b69dc9e4d00c9facd6250cb1dce20cd94ce98b56f1db91bfd64765f95cb4",
+        "tokenIds": 20
+      },
+      "namespace.descriptor": {
+        "scoredPositions": 51,
+        "targetRecords": 1,
+        "tokenAndMaskDigest": "af31df2fae33390dea6815f7f73516d46582e426221cb431fc4ef10e5a70c3ee",
+        "tokenIds": 51
+      },
+      "namespace.keys": {
+        "scoredPositions": 29,
+        "targetRecords": 1,
+        "tokenAndMaskDigest": "865207ad390beef19bc3aa94db52f11374716d395c3c3cf20a936a26e25e5e54",
+        "tokenIds": 29
+      },
+      "namespace.read": {
+        "scoredPositions": 26,
+        "targetRecords": 1,
+        "tokenAndMaskDigest": "b6e4a6027e22d8d0a04d3cbec2e7bd6dfadbce6db703fdd57cacd468d2005f56",
+        "tokenIds": 26
+      }
+    },
+    "preparedManifestSha256": "ad634cd22d5bbef10bce816400093ecb19df951939b5d04af9fb0fd7b714224a",
+    "preparedSemanticV8ReportSha256": "c9986ea1b0e6139fd8ea10faa31fc17255a0241373ad3a5b8658db8e39066ea8"
+  },
+  "sourceFileMap": [
+    {
+      "path": "contracts/semantic-execution-v8.json",
+      "sha": "785f8364f96a42d19ea79921a5be30a1c8de5a9a"
+    },
+    {
+      "path": "src/evaluated-modules.d.ts",
+      "sha": "867d2cdcdcee45163edfdd9f490c34150700f31f"
+    },
+    {
+      "path": "src/evaluated-modules.js",
+      "sha": "79ea86059105ac5b289621608503a7479f23cebd"
+    },
+    {
+      "path": "src/semantic/compiler-v8.js",
+      "sha": "583d5b90bc4723ccc419c56cb80dbaa83654fa88"
+    },
+    {
+      "path": "src/semantic/module-namespace-source-owners-v8.js",
+      "sha": "8e1f1f68339e861a48e6af1300b580c28d30ed71"
+    },
+    {
+      "path": "src/semantic/module-namespace-source-sites-v8.js",
+      "sha": "d5b28f35d2a83e215825761dbcf154a655a001d4"
+    },
+    {
+      "path": "src/semantic/module-namespace-state-v8.js",
+      "sha": "bbc5b939ed8360d3c560ec50f3815f125114e577"
+    },
+    {
+      "path": "src/semantic/module-v8.js",
+      "sha": "4bff17fcfba36ca7a0b4ed6cfa31085483d8dbe2"
+    },
+    {
+      "path": "src/semantic/protocol-machine-extensions-v8.js",
+      "sha": "29c1d7a6cf40449cee83a273a6f70ab5df238697"
+    },
+    {
+      "path": "src/semantic/protocol-module-namespace-source-v8.js",
+      "sha": "3eb7375ac74db4161e3e99eca91fb48b4007ff70"
+    },
+    {
+      "path": "src/semantic/protocol-module-namespace-v8.js",
+      "sha": "ab24002fdf86a194100571b5accbccb3470120c3"
+    },
+    {
+      "path": "src/semantic/protocol-source-claims-v8.js",
+      "sha": "fd7230b4a0cf6d234724309efef93a39219c0bf0"
+    },
+    {
+      "path": "src/semantic/protocol-source-compiler-v8.js",
+      "sha": "7439eb56c947e67467cf9ebf9e211f340712a691"
+    },
+    {
+      "path": "src/semantic/protocol-source-v8.js",
+      "sha": "48d01540f1370b7f37d749a0921bac48d5c1084c"
+    },
+    {
+      "path": "src/semantic/protocol-state-v8.js",
+      "sha": "3284d717d1a2c4b82674b03c5716379686316e01"
+    },
+    {
+      "path": "src/semantic/region-harness.js",
+      "sha": "08c1524e1d7e76bea437babe11fcdd7cfa6ca74f"
+    },
+    {
+      "path": "src/semantic/regions.js",
+      "sha": "184c370c5401787606b547f1458374c075484d09"
+    },
+    {
+      "path": "src/semantic/source-projection.js",
+      "sha": "988ec403af8894ffd3de933ac4f70f31fa8518ce"
+    },
+    {
+      "path": "test/fixtures/semantic-module-namespace-v8.js",
+      "sha": "3aaca6a9d8af6dafdc1a1773f9caad6f8ed72a69"
+    },
+    {
+      "path": "test/fixtures/semantic-regions-v8.json",
+      "sha": "212ba35b120f1bfca742fe9967dcab2ef8d0626a"
+    },
+    {
+      "path": "test/module-region-reference-worker.test.js",
+      "sha": "726b411f4e32dc922d25ad51c082a90f1ef1c871"
+    },
+    {
+      "path": "test/semantic-module-namespace-compile-only-v8.test.js",
+      "sha": "c5df54112dfa50766a14c92d7a4949b15452fc27"
+    },
+    {
+      "path": "test/semantic-module-namespace-machine-v8.test.js",
+      "sha": "3de4f305685a13fa8eeb150ef0e88be973777e2b"
+    },
+    {
+      "path": "test/semantic-module-namespace-runtime-capture-v8.test.js",
+      "sha": "5f28cded1ef402b631c75ee863b66fc678c27bc0"
+    },
+    {
+      "path": "test/semantic-module-namespace-source-boundary-v8.test.js",
+      "sha": "478a0c07ff077f524fb73b338586ee324a2fdbfc"
+    },
+    {
+      "path": "test/semantic-module-namespace-source-owners-v8.test.js",
+      "sha": "809c9a9aa3c96358925eb2b42016c9998ae6d384"
+    },
+    {
+      "path": "test/semantic-module-namespace-source-projection-v8.test.js",
+      "sha": "7f62ede3f14a1d0b02911a2320da4721a52866db"
+    },
+    {
+      "path": "test/semantic-module-namespace-source-sites-v8.test.js",
+      "sha": "25acc7483a8c6e7a1d04b6b3d20884c52a9d5504"
+    },
+    {
+      "path": "test/semantic-module-namespace-source-sync-gate-v8.test.js",
+      "sha": "0543622bb8673a88fcac0850e727200602cdf8ec"
+    },
+    {
+      "path": "test/semantic-module-namespace-state-v8.test.js",
+      "sha": "173567d7300c02c7d7391da09d086eddb064fa72"
+    },
+    {
+      "path": "test/semantic-module-v8.test.js",
+      "sha": "e030be1159c6c1e409173905bf563e5244e423cd"
+    },
+    {
+      "path": "test/semantic-native-module-namespace-state-v8.test.js",
+      "sha": "ff5d60931dc73ca26164ad08f7045005cf260f84"
+    },
+    {
+      "path": "tools/emit-semantic-v8-namespace-artifact.mjs",
+      "sha": "56e355c357df33690eccdc53b65a5f9d83db800b"
+    },
+    {
+      "path": "tools/module-namespace-reference-observations.mjs",
+      "sha": "23b3d4d78d07ad4daa19cc89c80e61b25b8a3040"
+    },
+    {
+      "path": "tools/module-region-reference-worker.mjs",
+      "sha": "23191879c3ce22df65eb392c099a4bb852d24433"
+    }
+  ],
+  "nativeFileMap": [
+    {
+      "path": "src/megatoken/data/contracts/semantic-execution-v8.json",
+      "sha": "785f8364f96a42d19ea79921a5be30a1c8de5a9a"
+    },
+    {
+      "path": "src/megatoken/data/module_namespace_machine_v8.py",
+      "sha": "14cc14aa1e66634eeabe91b34e5cb45a1c2e8faa"
+    },
+    {
+      "path": "src/megatoken/data/module_namespace_state_v8.py",
+      "sha": "d880238da66b5413cae509bfd1601fe5c72ccda2"
+    },
+    {
+      "path": "src/megatoken/data/native_v8.py",
+      "sha": "66f76631f9065d40ab5752a5ca54e0e2c661fdf5"
+    },
+    {
+      "path": "src/megatoken/data/protocol_v8.py",
+      "sha": "d9e8d7bbd475df0806fe87849b95d07a944712e6"
+    },
+    {
+      "path": "tests/fixtures/semantic-regions-v8.json.gz.b64",
+      "sha": "2b5a53c5058f64f2c5dfc7cb5465a3e81479d564"
+    },
+    {
+      "path": "tests/integration/test_module_namespace_artifact_packing.py",
+      "sha": "d3af1e088680674aa311ab51b2a6f886fe03a303"
+    },
+    {
+      "path": "tests/test_module_namespace_machine_v8.py",
+      "sha": "201eb7b1483596092eeb88bd632ed2e656e07861"
+    },
+    {
+      "path": "tests/test_module_namespace_state_v8.py",
+      "sha": "3dd258d050d7c300fb81be8b9699339ce9b4f3dd"
+    }
+  ],
+  "executionLock": {
+    "producerRevision": "325145dc32b2515cf176d1dd6da6c47a85cb20e8",
+    "run": "https://github.com/werg/tracing-js-self/actions/runs/45002354342",
+    "actualCrossProcessControls": 6,
+    "skipped": 0,
+    "permissionToReplay": false
+  },
+  "productionDenominators": {
+    "original": 665,
+    "interoperability": 66,
+    "gallery": 11,
+    "support": 64
+  },
+  "optimizerUpdates": 0,
+  "learnedSuccess": null,
+  "limits": [
+    "Explicit synchronous scalar namespace profile only",
+    "Separate one-member technical registry; no production population expansion",
+    "Packed positive-loss target evidence is not optimizer exposure",
+    "Kernel lock foundation is not integrated recovery authority",
+    "Broader async modules, cycles, reflection, persistent sessions and learned quality remain open"
+  ],
+  "retainedLogBlobs": [
+    {
+      "path": "docs/evidence/v8-namespace-composed4a390-2026-11-22/paired-pass.log",
+      "sha": "923f6c489d91600bf3e9fe9a4a0a082b8c7c7899"
+    },
+    {
+      "path": "docs/evidence/v8-namespace-composed4a390-2026-11-22/source-pass.log",
+      "sha": "4a0a03961d8543324bd5681e9715c7696d5c0825"
+    },
+    {
+      "path": "docs/evidence/v8-namespace-composed4a390-2026-11-22/focused-pass.log",
+      "sha": "d7e9ea8ff62abd060af88a87b564e0215fc68350"
+    },
+    {
+      "path": "docs/evidence/v8-namespace-composed4a390-2026-11-22/artifact-portability-pass.log",
+      "sha": "38f967c6740428d50ff89c2d4c62b86311494bc4"
+    }
+  ]
+}

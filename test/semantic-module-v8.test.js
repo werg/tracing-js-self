@@ -1,11 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {MODULE_REGION_PROFILE,verifyRegionModuleTrainingCase,recheckModuleRegionEvidence} from '../src/semantic/module-v8.js';
+import {MODULE_REGION_PROFILE,verifyRegionModuleTrainingCase,recheckModuleRegionEvidence,independentModuleRegionReference} from '../src/semantic/module-v8.js';
 import {recheckRegionEvidence} from '../src/semantic/compiler-v8.js';
 import {LANGUAGE_EXPANSION_INTERACTIONS} from '../fixtures/language-expansion/benchmark.js';
 import {executeEvaluatedModules,linkEvaluatedModules} from '../src/evaluated-modules.js';
-import {encodeNativeGraph} from '../src/host/graph-codec.js';
+import {encodeNativeGraph,decodeOwnedGraph,GRAPH_CODEC} from '../src/host/graph-codec.js';
+import {compileBoundedTypeScript} from '../src/typescript.js';
 import {moduleQualificationFixtures} from '../fixtures/semantic-regions/qualification.js';
+
+async function nativeModuleOutcome(modules,entryModule,exportName,inputGraph){
+  const emitted=Object.fromEntries(Object.entries(modules).map(([file,source])=>
+    [file,compileBoundedTypeScript(source,{path:file}).javascript]));
+  return independentModuleRegionReference({modules:emitted,entryModule,exportName,calls:null,inputGraph});
+}
+function decodeReferenceOutcome(reference,rootIndex){
+  const graph={schema:GRAPH_CODEC,...reference.outcome.graph};
+  return decodeOwnedGraph(JSON.stringify(graph))[rootIndex];
+}
+
+
 
 const siblingSchedulerFixture={id:'parallel-tla-boundary',family:'parallel-tla-boundary',modules:{
   'state.js':'export let order="";export function add(value){order+=value;}',
@@ -184,4 +197,55 @@ test('module rechecking derives the scheduler refusal from source even when proo
       error.status==='projection_refused'&&error.phase==='module-projection'&&
       error.moduleLink==='passed'&&error.evaluationStrategy==='async-dependency-scheduler');
   }
+});
+
+test('owned namespace reflection matches native ESM while public projection stays refused',async()=>{
+  const modules={
+    'leaf.js':'export let value=2;export function update(next){value=next;}',
+    'main.js':`import * as ns from './leaf.js';import {update} from './leaf.js';
+      export function run(){
+        const keys=Object.keys(ns);
+        const descriptor=Object.getOwnPropertyDescriptor(ns,'value');
+        const before=descriptor.value;update(9);
+        const setResult=Reflect.set(ns,'value',10);
+        const defineResult=Reflect.defineProperty(ns,'value',{value:10});
+        const after=Object.getOwnPropertyDescriptor(ns,'value').value;
+        return {keys,hasValue:Object.hasOwn(ns,'value'),prototypeIsNull:Object.getPrototypeOf(ns)===null,
+          extensible:Object.isExtensible(ns),descriptor:{value:before,writable:descriptor.writable,
+            enumerable:descriptor.enumerable,configurable:descriptor.configurable},before,setResult,defineResult,after};
+      }`
+  };
+  const request={modules,entryModule:'main.js',exportName:'run'},linked=linkEvaluatedModules(request),
+    owned=await executeEvaluatedModules(request),native=await nativeModuleOutcome(
+      modules,'main.js','run',encodeNativeGraph([linked.entryInput]));
+  const expected={keys:['update','value'],hasValue:true,prototypeIsNull:true,extensible:false,
+    descriptor:{value:2,writable:true,enumerable:true,configurable:false},before:2,setResult:false,defineResult:false,after:9};
+  assert.equal(native.status,'passed',native.reason);
+  assert.deepEqual(owned.result,expected);
+  assert.deepEqual(decodeReferenceOutcome(native,1),owned.result);
+  const projection=await verifyRegionModuleTrainingCase({id:'namespace-observation-refusal',
+    family:'namespace-observation-refusal',...request,fixture:{calls:[]}});
+  assert.equal(projection.exported,undefined);
+  assert.equal(projection.status,'projection_refused');
+  assert.equal(projection.category,'unsupported.module-namespace-projection');
+});
+
+test('owned and native ESM observe a namespace getter TDZ read during module initialization',async()=>{
+  const modules={
+    'leaf.js':"import {probe} from './main.js';export const observed=(()=>{try{return probe();}catch(error){return {name:error.name,message:error.message};}})();export let value=2;",
+    'main.js':"import * as ns from './leaf.js';import {observed} from './leaf.js';export function probe(){return Object.getOwnPropertyDescriptor(ns,'value').value;}export function run(){return {before:observed,after:probe()};}"
+  };
+  const request={modules,entryModule:'main.js',exportName:'run'},linked=linkEvaluatedModules(request),
+    owned=await executeEvaluatedModules(request);
+  assert.equal(owned.result.before.name,'ReferenceError');
+  assert.equal(owned.result.after,2,'the same binding is readable after initialization');
+  const native=await nativeModuleOutcome(modules,'main.js','run',encodeNativeGraph([linked.entryInput]));
+  assert.equal(native.status,'passed',native.reason);
+  const reference=decodeReferenceOutcome(native,1);
+  assert.equal(reference.before.name,'ReferenceError');
+  assert.equal(reference.after,2);
+  // Error wording is implementation-defined; both reject the early read and
+  // successfully read that same binding after module initialization.
+  assert.deepEqual({before:reference.before.name,after:reference.after},
+    {before:owned.result.before.name,after:owned.result.after});
 });
