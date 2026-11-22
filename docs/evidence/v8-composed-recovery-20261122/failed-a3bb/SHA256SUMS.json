@@ -35,6 +35,11 @@
     "sha256": "3a113353ab3e62ef1ac4c537f06647aed75f68f916d5002c1f6b4d0990690d00"
   },
   {
+    "path": "local-structural-workspace-tmp.xml.gz",
+    "size": 70,
+    "sha256": "9ae052babf4357c1784e3e68d9b827da5657d87bf45d980f2c1abe0d34da888a"
+  },
+  {
     "path": "local-structural.xml.gz",
     "size": 6570,
     "sha256": "ce99dcd1bdd910f470eafabee3d4bb1f1595c5869880aed63a2c852bb5e001e0"
