@@ -1,0 +1,89 @@
+{
+  "controlledTraining": {
+    "boundaries": {
+      "sourceAdmission": "injected fixture receipt",
+      "sourcePopulation": "one controlled prepared fixture, not the 64-source support population",
+      "tokenizerAdmission": "injected byte-fallback fixture"
+    },
+    "file": "controlled-position-proof.json",
+    "firstPhaseOptimizerUpdates": 3,
+    "learnedSuccess": null,
+    "phaseTransitionOptimizerUpdates": 1,
+    "routerInternalPositionCoverage": "unmeasured",
+    "sha256": "eea3868179ed24732b765add2d16fc3e96509ad2963a80472311dc918a681ed5",
+    "sourceCommit": "cdd01ac0dcd65d92e948cec39f7b5c156800206e",
+    "totalOptimizerUpdatesExecuted": 4
+  },
+  "counts": {
+    "errors": 0,
+    "failures": 0,
+    "native": 271,
+    "producer": 366,
+    "skipped": 0,
+    "total": 637
+  },
+  "globalOptimizerUpdates": null,
+  "installedPythonModules": 267,
+  "installedSources": {
+    "additionalSourcePopulations": [
+      {
+        "contexts": 423,
+        "file": "promise-adoption-source-evidence.json",
+        "nativeCases": 15,
+        "restoreCuts": 65,
+        "sources": 15
+      },
+      {
+        "contexts": 96,
+        "file": "promise-mutation-profile-evidence.json",
+        "nativeCases": 5,
+        "restoreCuts": null,
+        "sources": 24
+      },
+      {
+        "contexts": 51,
+        "file": "promise-object-profile-evidence.json",
+        "nativeCases": 5,
+        "restoreCuts": null,
+        "sources": 22
+      },
+      {
+        "contexts": 78,
+        "file": "async-return-adoption-composition-evidence.json",
+        "nativeCases": 2,
+        "restoreCuts": 9,
+        "sources": 2
+      }
+    ],
+    "cases": 23,
+    "contexts": 849,
+    "sharedRealm": {
+      "contexts": 19,
+      "owners": 2
+    }
+  },
+  "learnedQualityClaim": null,
+  "moduleAdmission": false,
+  "originalArtifacts": 7,
+  "originalReportingCorrection": null,
+  "pair": {
+    "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "gateSpecSha256": "432fb031331297cf16e820b28a25d72c86a63567831bc18732099af04a1a33c4",
+    "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+    "native": {
+      "revision": "cdd01ac0dcd65d92e948cec39f7b5c156800206e",
+      "tree": "8698f34329ae2827aff090c05bdfdc2941974d10"
+    },
+    "policySha256": "b79963ff2ad6b0c3c34f36de623079bc350e020b56398a9b708df5e6278fb8fa",
+    "producer": {
+      "revision": "cc0d61e98dc6252749f4a2a4c8b669d79b0f7efa",
+      "tree": "c10c3dc89361c443583955fab0a8a37a22ac092a"
+    }
+  },
+  "requiredJobs": 7,
+  "runId": 45047889597,
+  "schema": "semantic-v8-original-hosted-artifact-audit/1",
+  "status": "test-evidence-verified",
+  "trainingAdmission": false
+}
