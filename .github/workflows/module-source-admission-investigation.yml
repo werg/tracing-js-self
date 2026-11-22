@@ -21,7 +21,7 @@ jobs:
     env:
       OMP_NUM_THREADS: '1'
       MKL_NUM_THREADS: '1'
-      TMPDIR: ${{ runner.temp }}
+      TMPDIR: ${{ github.workspace }}
       PYTHONPATH: ${{ github.workspace }}/megatoken/src
       TRACING_JS_SELF_ROOT: ${{ github.workspace }}/tracing-js-self
       MEGATOKEN_NATIVE_SOURCE_PRODUCER: ${{ github.workspace }}/tracing-js-self
