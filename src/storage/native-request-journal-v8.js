@@ -1,4 +1,4 @@
-// Producer-owned exact commit frames. This journal alone never authorizes a
+// Producer-owned exact commit and bootstrap frames. This journal alone never authorizes a
 // native retry or host replay; the native side must independently own its outcome.
 import {createHash,randomUUID} from 'node:crypto';
 import {constants} from 'node:fs';
@@ -17,7 +17,7 @@ const exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&
   Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
 const canonical=value=>Buffer.from(stableAlgorithmJSON(value),'utf8');
 
-export function decodeNativeV8CommitFrame(requestBase64){
+export function decodeNativeV8RequestFrame(requestBase64){
   if(typeof requestBase64!=='string'||!requestBase64.length)fail('exact base64 request bytes required');
   const bytes=Buffer.from(requestBase64,'base64');
   if(bytes.toString('base64')!==requestBase64)fail('noncanonical request base64');
@@ -25,10 +25,15 @@ export function decodeNativeV8CommitFrame(requestBase64){
   try{text=utf8.decode(bytes);request=JSON.parse(text);}catch{fail('request must be exact UTF-8 JSON');}
   if(!text.endsWith('\n')||text.slice(0,-1).includes('\n')||JSON.stringify(request)+'\n'!==text)
     fail('request must be one original JSONL frame without duplicate fields');
-  if(!['commit','commit-orchestration'].includes(request?.op)||!ID.test(request?.session??'')||
-      typeof request?.id!=='string'||!request.id||typeof request.record!=='string'||
+  if(!ID.test(request?.session??'')||typeof request?.id!=='string'||!request.id)
+    fail('exact request session and identifier required');
+  if(request.op==='bootstrap-orchestration-child'){
+    if(!exact(request,['op','session','track','childTrack','id'])||
+        !ID.test(request.track??'')||!ID.test(request.childTrack??'')||request.track===request.childTrack)
+      fail('only an exact reserved child bootstrap frame may be retained');
+  }else if(!['commit','commit-orchestration'].includes(request.op)||typeof request.record!=='string'||
       !request.selection||typeof request.selection.selectionId!=='string')
-    fail('only an exact semantic or orchestration commit frame may be retained');
+    fail('only an exact semantic, orchestration commit or child bootstrap frame may be retained');
   return {bytes,request};
 }
 
@@ -36,7 +41,8 @@ function validateIdentity(value,scope){
   if(!exact(value,['schema','session_id','stream_id','session_generation','ordinal','operation','model_identity'])||
       value.schema!=='semantic-native-request-identity/1'||!ID.test(value.session_id??'')||
       !ID.test(value.stream_id??'')||!positive(value.session_generation)||!positive(value.ordinal)||
-      !['commit','commit-orchestration'].includes(value.operation))fail('invalid exact request identity');
+      !['commit','commit-orchestration','bootstrap-orchestration-child'].includes(value.operation))
+    fail('invalid exact request identity');
   const model=value.model_identity;
   if(!exact(model,['checkpoint','tokenizer'])&&!exact(model,['checkpoint','tokenizer','training']))
     fail('model identity requires exact checkpoint, tokenizer and optional training hashes');
@@ -49,7 +55,7 @@ function validateIntent(record,scope){
   if(!exact(record,['schema','identity','requestBase64','checkpoint'])||
       record.schema!=='semantic-native-producer-request/8')fail('invalid intent fields');
   validateIdentity(record.identity,scope);
-  const {request}=decodeNativeV8CommitFrame(record.requestBase64),packet=record.checkpoint;
+  const {request}=decodeNativeV8RequestFrame(record.requestBase64),packet=record.checkpoint;
   if(request.session!==record.identity.session_id||request.op!==record.identity.operation)
     fail('request bytes differ from their immutable identity');
   const {digest,...body}=packet??{},native=packet?.native,{digest:nativeDigest,...nativeBody}=native??{};
@@ -62,6 +68,23 @@ function validateIntent(record,scope){
   const model=record.identity.model_identity,identity=packet.identity;
   if(identity.checkpointIdentity!==model.checkpoint||identity.tokenizerIdentity!==model.tokenizer||
       (identity.trainingIdentity??null)!==(model.training??null))fail('checkpoint changed request model identity');
+  if(request.op==='bootstrap-orchestration-child'){
+    const session=native.sessions?.[request.session],state=session?.orchestration,
+      child=state?.children?.find(row=>row.track===request.childTrack),last=packet.attempts.at(-1),
+      decision=state?.decisions?.at(-1),operation=state?.operations?.at(-1);
+    let action;try{action=JSON.parse(last?.record);}catch{fail('bootstrap requires an original create decision');}
+    if(!session||session.unacknowledgedSelection!==null||state.track!==request.track||!child||
+        child.completion!==null||state.operations.some(row=>row.kind==='bootstrap'&&row.track===request.childTrack)||
+        last?.family!=='orchestration'||last.status!=='accepted'||last.session!==request.session||
+        action?.name!=='track_create'||!isDeepStrictEqual(action.arguments?.execution,child.execution)||
+        last.commitReceipt?.committed!==true||last.commitReceipt.track?.address!==request.childTrack||
+        last.commitReceipt.track?.bootstrap_ready!==false||decision?.selectionId!==last.selection?.selectionId||
+        decision?.record!==last.record||!isDeepStrictEqual(decision.outcome,last.commitReceipt)||
+        operation?.kind!=='coordinator'||operation.attempt!==last.attempt||
+        Object.values(native.sessions).some(row=>row.unacknowledgedSelection!==null))
+      fail('bootstrap does not follow its exact acknowledged unbootstrapped reservation');
+    return record;
+  }
   const matching=packet.attempts.filter(item=>item.session===request.session&&
     item.selection?.selectionId===request.selection.selectionId);
   if(matching.length!==1||matching[0].status!=='acknowledging'||matching[0].record!==request.record||

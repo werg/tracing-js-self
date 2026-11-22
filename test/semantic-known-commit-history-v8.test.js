@@ -59,8 +59,10 @@ async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}
     const select=createNativeV8ProcessSelector({command:python,args,cwd:nativeRoot,env,timeoutMs:120000,
       maxMessageBytes:64*1024*1024,durableRequests:{journal:requests,executionLease}});
     let recoverCalls=0;
-    const recover=select.recoverCommit;
-    select.recoverCommit=(...args)=>{recoverCalls++;return recover(...args);};
+    for(const method of ['recoverCommit','recoverBootstrap']){
+      const recover=select[method];
+      select[method]=(...args)=>{recoverCalls++;return recover(...args);};
+    }
     return {select,lease:executionLease,log,recoverCalls:()=>recoverCalls};
   }
   const close=async value=>{
@@ -80,15 +82,17 @@ async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}
     driver.startAutomaticHistory({journal:history,acknowledge,executionClock:createSelectedOrchestrationExecutionClock()});
     result=await driver.run();
     assert.equal(result.status,'failed',JSON.stringify(result.failure));
-    assert.equal(result.coordinatorAttempts.at(-1)?.status,'acknowledgement-unknown',
+    assert.equal(result.coordinatorAttempts.at(-1)?.status,
+      action==='bootstrap-orchestration-child'?'committed':'acknowledgement-unknown',
       JSON.stringify({failure:result.failure,transport:first.select.status()}));
     receipt=first.select.durableRequestReceipt();assert(receipt);
   }finally{await close(first);}
   const entries=await history.readLatest(head),tail=entries.at(-1);
-  assert.equal(tail.pending.kind,'coordinator-selection');
+  assert.equal(tail.pending.kind,action==='bootstrap-orchestration-child'?'child-bootstrap':'coordinator-selection');
   assert(tail.pending.clockReceipt);assert.equal(tail.pending.requestBoundary.ordinal,receipt.ordinal);
   return {history,requests,initialPublic,policy,tail,receipt,acknowledge,close,replacement,
-    head:()=>copy(head),original:result,firstLog:first.log};
+    head:()=>copy(head),original:result,firstLog:first.log,
+    recoveryKind:action==='bootstrap-orchestration-child'?'bootstrapRecovery':'commitRecovery'};
 }
 const decoderLines=path=>readFileSync(path,'utf8').split('\n').filter(line=>line.startsWith('ORCH_DECODER '));
 function assertNoRecoveryOrDecoderWork(peer){
@@ -105,9 +109,10 @@ function assertNoRecoveryOrDecoderWork(peer){
 const options=(context,fresh,overrides={})=>({historyJournal:context.history,historyReceipt:context.head(),
   initialPublic:context.initialPublic,select:fresh.select,policy:context.policy,
   acknowledge:context.acknowledge,executionClock:createSelectedOrchestrationExecutionClock(),
-  commitRecovery:{receipt:copy(context.receipt)},...overrides});
+  [context.recoveryKind]:{receipt:copy(context.receipt)},...overrides});
 
-for(const action of ['track_join','track_progress'])test('actual lost '+action+' reply seals history before exact continuation',{skip},async t=>{
+for(const action of ['track_create','track_join','track_progress','bootstrap-orchestration-child'])
+test('actual lost '+action+' reply seals history before exact continuation',{skip},async t=>{
   const c=await setup(t,action);let fresh=await c.replacement();
   try{
     const before=copy(c.tail.checkpoint),priorHead=c.head();
@@ -147,8 +152,9 @@ for(const action of ['track_join','track_progress'])test('actual lost '+action+'
   }finally{await c.close(fresh);}
 });
 
-test('unknown native outcome cannot resolve the coordinator fence or authorize replay',{skip},async t=>{
-  const c=await setup(t,'track_join',{fault:'before-native-intent'}),fresh=await c.replacement(),head=c.head();
+for(const action of ['track_join','bootstrap-orchestration-child'])
+test('unknown native '+action+' outcome cannot resolve the history fence or authorize replay',{skip},async t=>{
+  const c=await setup(t,action,{fault:'before-native-intent'}),fresh=await c.replacement(),head=c.head();
   try{
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,options(c,fresh)),/never admitted/);
     assert.deepEqual(c.head(),head);assert.equal(readFileSync(fresh.log,'utf8'),'');
