@@ -11,15 +11,17 @@ function canonical(value){
  if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';
  return '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonical(value[key])).join(',')+'}';
 }
-function plan(modules,sourceDigestOverride){
+function plan(modules,sourceDigestOverride,exportCell='state.mjs#value'){
  const files=Object.keys(modules).sort();
  const body={schema:'semantic-module-namespace-plan/1',entryModule:'entry.mjs',
    modules:files.map(file=>({file,sourceDigest:file==='dep.mjs'&&sourceDigestOverride?
      sourceDigestOverride:hash(modules[file])})),
    cells:[{id:'state.mjs#value',file:'state.mjs',local:'value',kind:'let',mutable:true,
-     loweredName:'__traced_eval_m1_value'}],
+     loweredName:'__traced_eval_m1_value'},
+     ...(Object.hasOwn(modules,'other.mjs')?[{id:'other.mjs#value',file:'other.mjs',local:'value',
+       kind:'let',mutable:true,loweredName:'__traced_eval_m2_value'}]:[])],
    namespaces:[{file:'dep.mjs',namespaceName:'__traced_eval_namespace_0',
-     exports:[{name:'value',cell:'state.mjs#value'}]}]};
+     exports:[{name:'value',cell:exportCell}]}]};
  return {...body,digest:hash(body)};
 }
 function run(request){
@@ -59,6 +61,24 @@ test('original ESM namespace worker observes real link identity, cells, keys, re
     value:{value:['num',2],writable:true,enumerable:true,configurable:false}}
   ]
  });
+});
+
+test('original ESM namespace worker refuses a planned alias mapped to another module object',()=>{
+ const alteredModules={...modules,'entry.mjs':"import * as view from './state.mjs'; export function inspect(){return view.value;}"};
+ const result=run({...base,modules:alteredModules,
+  moduleNamespacePlan:plan(alteredModules)});
+ assert.equal(result.status,0,String(result.error??'')+'\\n'+result.stdout+'\\n'+result.stderr);
+ assert.equal(JSON.parse(result.stdout).status,'unsupported');
+ assert.match(JSON.parse(result.stdout).reason,/namespace import|namespace plan/i);
+});
+
+test('original ESM namespace worker refuses a reexport plan mapped to the wrong source cell',()=>{
+ const alteredModules={...modules,'other.mjs':'export let value=9;'};
+ const request={...base,modules:alteredModules,moduleNamespacePlan:plan(alteredModules,undefined,'other.mjs#value')};
+ const result=run(request);
+ assert.equal(result.status,0,String(result.error??'')+'\\n'+result.stdout+'\\n'+result.stderr);
+ assert.equal(JSON.parse(result.stdout).status,'unsupported');
+ assert.match(JSON.parse(result.stdout).reason,/reexport|source cell/i);
 });
 
 test('original ESM namespace worker rejects source digest substitution',()=>{

@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
-          ref: 449838503e19068bccf1ed461c1dac03c444d9fd
+          ref: bca3789058823b843467e6370eb4477e24d29f78
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -86,7 +86,7 @@ jobs:
           import base64,gzip,json
           from pathlib import Path
           assert Path('test/fixtures/semantic-regions-v8.json').read_bytes()==gzip.decompress(base64.b64decode(Path('../megatoken/tests/fixtures/semantic-regions-v8.json.gz.b64').read_text()))
-          assert json.loads(Path('contracts/semantic-native-policy-v8.json').read_text())['consumerRevision']=='449838503e19068bccf1ed461c1dac03c444d9fd'
+          assert json.loads(Path('contracts/semantic-native-policy-v8.json').read_text())['consumerRevision']=='bca3789058823b843467e6370eb4477e24d29f78'
           PY
       - name: Check native protocol and namespace regressions
         working-directory: megatoken
@@ -141,6 +141,33 @@ jobs:
               raise ValueError('Every paired V8 transport control, including the Python contract check, must run and pass')
           print(f'{len(cases)} paired transport controls passed with zero skips')
           PY
+      - name: Admit and pack the actual original-module namespace artifact
+        working-directory: megatoken
+        shell: bash
+        run: |
+          set -o pipefail
+          python - <<'PY'
+          import json,subprocess
+          from pathlib import Path
+          path=Path('tests/integration/test_module_namespace_artifact_packing.py')
+          original=path.read_text()
+          formatted=subprocess.run(['python','-m','ruff','format','--stdin-filename',str(path),'-'],input=original,text=True,capture_output=True,check=True).stdout
+          if formatted!=original:
+              print('FORMATTED_SOURCE_JSON '+json.dumps({'path':str(path),'content':formatted}))
+          PY
+          python -m ruff check tests/integration/test_module_namespace_artifact_packing.py
+          python -m ruff format --check tests/integration/test_module_namespace_artifact_packing.py
+          git diff --exit-code --
+          git -C ../tracing-js-self diff --exit-code --
+          python -m pytest -q tests/integration/test_module_namespace_artifact_packing.py --basetemp="$RUNNER_TEMP/namespace-packing" --junitxml="$RUNNER_TEMP/namespace-artifact-packing.xml" 2>&1 | tee "$RUNNER_TEMP/namespace-artifact-packing.log"
+          python - <<'PY'
+          import os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'namespace-artifact-packing.xml').getroot().iter('testcase'))
+          if len(cases)!=1 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('The actual source/native/token/packing namespace control must run and pass')
+          print('One actual source-qualified namespace artifact passed independent native preparation and all six packed target kinds; zero optimizer updates')
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -154,3 +181,6 @@ jobs:
             ${{ runner.temp }}/namespace-native.log
             ${{ runner.temp }}/namespace-paired.xml
             ${{ runner.temp }}/namespace-paired.log
+            ${{ runner.temp }}/namespace-artifact-packing.xml
+            ${{ runner.temp }}/namespace-artifact-packing.log
+            ${{ runner.temp }}/namespace-packing/

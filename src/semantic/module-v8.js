@@ -168,7 +168,9 @@ export async function verifyRegionModuleTrainingCase(fixture){
       ...(namespacePlan?{moduleNamespacePlan:namespacePlan}:{})},
     provenance:{...fixture.provenance,moduleEvidence}});
   if(!result.exported)return {...identity,...result,sourceProfile:MODULE_REGION_PROFILE,moduleReference:'passed'};
-  if(!outcomeAgreement(reference.outcome,result.exported.sidecar.sourceArtifact.sidecar.outcome))
+  const sourceSide=result.exported.sidecar.sourceArtifact.sidecar,
+    ownedOutcome=sourceSide.moduleNamespacePlan?sourceSide.outcome:sourceSide.reference?.outcome;
+  if(!outcomeAgreement(reference.outcome,ownedOutcome))
     return {...identity,status:'failed',phase:'module-correspondence',sourceProfile:MODULE_REGION_PROFILE,
       reason:'Native original module graph and owned linked JavaScript differ'};
   if(namespacePlan&&!namespaceObservationAgreement(reference,result.exported.sidecar.sourceArtifact,namespacePlan))
@@ -244,8 +246,9 @@ export async function recheckModuleRegionEvidence(artifact){
     !isDeepStrictEqual(prepared.referenceInput,evidence.referenceInput)||
     !isDeepStrictEqual(prepared.linked.metadata,evidence.metadata))fail('module graph, transformation, inputs or provenance changed');
   const reference=await independentModuleRegionReference(prepared.referenceInput);
+  const ownedOutcome=side.moduleNamespacePlan?side.outcome:side.reference?.outcome;
   if(reference.status!=='passed'||!isDeepStrictEqual(reference,evidence.reference)||
-    !outcomeAgreement(reference.outcome,side.outcome))fail('independent original-module outcome changed');
+    !outcomeAgreement(reference.outcome,ownedOutcome))fail('independent original-module outcome changed');
   if(expectedPlan&&!namespaceObservationAgreement(reference,sourceArtifact,expectedPlan))
     fail('fresh original ESM namespace observations differ from source-owned actions');
   return {status:'passed',applicable:true,graphDigest:evidence.graphDigest};

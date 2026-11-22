@@ -105,6 +105,84 @@ function validatePlan(plan,modules,entryModule){
   if(namespaces.size===0)fail('namespace plan has no linked namespace objects');
   return {files,cells,namespaces,exportsByFile};
 }
+
+function literalName(node){
+  if(node?.type==='Identifier')return node.name;
+  if(node?.type==='Literal'&&typeof node.value==='string')return node.value;
+  return null;
+}
+function verifyOriginalExportBindings(modules,plan,canonical){
+  const localByFile=new Map(),exportRefsByFile=new Map(),asts=new Map();
+  for(const file of canonical.files){
+    const ast=parse(modules[file],{ecmaVersion:2022,sourceType:'module',allowHashBang:true});
+    asts.set(file,ast);localByFile.set(file,new Map());exportRefsByFile.set(file,new Map());
+  }
+  const put=(map,key,value)=>{
+    if(typeof key!=='string'||!key)fail('original module has an ambiguous export binding');
+    if(map.has(key)){
+      const prior=map.get(key);
+      if(prior.cell&&value.cell&&prior.cell===value.cell)return;
+      fail('original module has an ambiguous export binding');
+    }
+    map.set(key,value);
+  };
+  for(const file of canonical.files){
+    const ast=asts.get(file),locals=localByFile.get(file),refs=exportRefsByFile.get(file);
+    for(const node of ast.body){
+      if(node.type==='VariableDeclaration'){
+        for(const declarator of node.declarations)if(declarator.id?.type==='Identifier')
+          put(locals,declarator.id.name,{cell:file+'#'+declarator.id.name});
+      }else if(node.type==='FunctionDeclaration'||node.type==='ClassDeclaration'){
+        if(node.id)put(locals,node.id.name,{cell:file+'#'+node.id.name});
+      }else if(node.type==='ImportDeclaration'){
+        const target=resolveModule(file,node.source.value,modules);
+        for(const specifier of node.specifiers)if(specifier.type==='ImportSpecifier')
+          put(locals,specifier.local.name,{target,name:literalName(specifier.imported)});
+      }
+      if(node.type==='ExportAllDeclaration')
+        fail('star exports are outside the independent namespace plan profile');
+      if(node.type!=='ExportNamedDeclaration')continue;
+      if(node.declaration){
+        const declaration=node.declaration;
+        if(declaration.type==='VariableDeclaration'){
+          for(const declarator of declaration.declarations)if(declarator.id?.type==='Identifier'){
+            const binding={cell:file+'#'+declarator.id.name};
+            put(locals,declarator.id.name,binding);put(refs,declarator.id.name,binding);
+          }
+        }else if((declaration.type==='FunctionDeclaration'||declaration.type==='ClassDeclaration')&&declaration.id){
+          const binding={cell:file+'#'+declaration.id.name};
+          put(locals,declaration.id.name,binding);put(refs,declaration.id.name,binding);
+        }
+      }
+      for(const specifier of node.specifiers??[]){
+        const name=literalName(specifier.exported),localName=literalName(specifier.local);
+        if(name===null||localName===null)fail('original export name is not a static string');
+        if(node.source){
+          put(refs,name,{target:resolveModule(file,node.source.value,modules),name:localName});
+        }else{
+          const local=locals.get(localName);
+          if(!local)fail('original local export binding is unavailable');
+          put(refs,name,local);
+        }
+      }
+    }
+  }
+  function resolve(file,name,trail=new Set()){
+    const key=file+'\\0'+name;
+    if(trail.has(key))fail('cyclic original namespace export binding is outside this profile');
+    const ref=exportRefsByFile.get(file)?.get(name);
+    if(!ref)fail('original namespace export is missing from source modules');
+    if(ref.cell)return ref.cell;
+    const next=new Set(trail);next.add(key);
+    return resolve(ref.target,ref.name,next);
+  }
+  for(const namespace of plan.namespaces){
+    const actual=exportRefsByFile.get(namespace.file),expected=new Map(namespace.exports.map(row=>[row.name,row.cell]));
+    if(!actual||actual.size!==expected.size)fail('original namespace export table differs from the plan');
+    for(const name of actual.keys())if(!expected.has(name)||resolve(namespace.file,name)!==expected.get(name))
+      fail('original namespace reexport does not resolve to its planned source cell');
+  }
+}
 function renderEdits(source,edits,start=0,end=source.length){
   const inside=edits.filter(edit=>edit.start>=start&&edit.end<=end);
   const top=inside.filter(edit=>!inside.some(other=>other!==edit&&other.start<=edit.start&&
@@ -140,7 +218,9 @@ export function prepareOriginalNamespaceModules({modules,entryModule,plan,observ
   if(!plain(modules)||!exact(plan,['schema','entryModule','modules','cells','namespaces','digest'])||
      typeof observerSpecifier!=='string'||!observerSpecifier||!NAME.test(observerLocal??''))
     fail('worker observation preparation inputs are malformed');
-  const canonical=validatePlan(plan,modules,entryModule),namespaceFiles=new Set(canonical.namespaces.keys());
+  const canonical=validatePlan(plan,modules,entryModule);
+  verifyOriginalExportBindings(modules,plan,canonical);
+  const namespaceFiles=new Set(canonical.namespaces.keys());
   const output=Object.create(null),namespaceImports=new Map();
   for(const file of canonical.files){
     const source=modules[file];
