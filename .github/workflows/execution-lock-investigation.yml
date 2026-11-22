@@ -1,0 +1,52 @@
+name: Selected orchestration kernel execution lock
+
+on:
+  push:
+    branches: [codex/v8-execution-lock-validation-20261122]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: selected-execution-lock-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  linux-process-controls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check actual kernel exclusion and descriptor lifetime
+        shell: bash
+        run: |
+          set -o pipefail
+          /usr/bin/flock --version
+          node --check src/storage/selected-orchestration-execution-lock.js
+          node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination="$RUNNER_TEMP/execution-lock.xml" test/selected-orchestration-execution-lock.test.js 2>&1 | tee "$RUNNER_TEMP/execution-lock.log"
+          python - <<'PY'
+          import os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'execution-lock.xml').getroot().iter('testcase'))
+          if len(cases)!=6 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('Every cross-process kernel lock control must execute and pass')
+          print(f'{len(cases)} cross-process kernel execution lock controls passed with zero skips')
+          PY
+      - name: Preserve the existing storage public entry
+        run: node --input-type=module -e "import('./src/storage/node.js').then(m=>{for(const name of ['DurableTraceStore','DurableRetainedModuleStore','DurableHostIngressStore','DurableSelectedHistoryJournal','DurableSelectedServiceJournal','DurableFencedSelectedServiceJournal','SelectedServiceAdmissionCoordinator','DurableSelectedOrchestrationExecutionLock'])if(typeof m[name]!=='function')throw new Error('Missing storage export '+name)})"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: selected-execution-lock-controls
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/execution-lock.xml
+            ${{ runner.temp }}/execution-lock.log
