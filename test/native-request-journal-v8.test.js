@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,rm,readFile,writeFile,symlink,mkdir,chmod} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {DurableNativeV8RequestJournal,decodeNativeV8CommitFrame} from '../src/storage/native-request-journal-v8.js';
+import {DurableNativeV8RequestJournal,decodeNativeV8RequestFrame} from '../src/storage/native-request-journal-v8.js';
 import {DurableSelectedOrchestrationExecutionLock,assertSelectedOrchestrationExecutionLease}
   from '../src/storage/selected-orchestration-execution-lock.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
@@ -94,8 +94,8 @@ test('commit bytes reject malformed UTF-8, multiple frames, duplicate fields and
   for(const bytes of [Buffer.from([255,10]),Buffer.from(raw+raw),Buffer.from(raw.trim()),
     Buffer.from(raw.replace('"op":"commit"','"op":"select"')),
     Buffer.from(raw.replace('"op":"commit"','"op":"commit","op":"commit"'))])
-    assert.throws(()=>decodeNativeV8CommitFrame(bytes.toString('base64')));
-  assert.throws(()=>decodeNativeV8CommitFrame(input.requestBase64+'\n'),/base64/);
+    assert.throws(()=>decodeNativeV8RequestFrame(bytes.toString('base64')));
+  assert.throws(()=>decodeNativeV8RequestFrame(input.requestBase64+'\n'),/base64/);
 });
 
 test('only a live original kernel lease can authorize a native transport',async t=>{

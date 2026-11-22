@@ -244,6 +244,27 @@ function validateCompositePending(pending,checkpoint){
         Number.isSafeInteger(boundary.sessionGeneration)&&boundary.sessionGeneration>0,
         'pending native request scope or ordinal is invalid');
     }
+  }else if(pending.kind==='child-bootstrap'){
+    const clockBound=Object.hasOwn(pending,'clockReceipt'),attempt=checkpoint.coordinatorAttempts.at(-1);
+    assertAlgorithmFields(pending,['schema','kind','session','checkpointDigest','attempt','track','childTrack','id',
+      ...(clockBound?['clockReceipt','requestBoundary']:[])],'composite bootstrap pending marker');
+    demand(checkpoint.continuation.phase==='bootstrap-ready'&&checkpoint.state.status==='active'&&
+      pending.attempt===checkpoint.coordinatorAttempts.length-1&&attempt?.action?.name==='track_create'&&
+      attempt.status==='committed'&&attempt.bootstrapReceipt===undefined&&
+      pending.track===checkpoint.state.track&&pending.childTrack===attempt.commitReceipt?.track?.address,
+      'child bootstrap fence differs from its exact acknowledged reservation');
+    if(clockBound){
+      validateSelectedOrchestrationClockReceipt(pending.clockReceipt,{timeoutMs:checkpoint.policy.timeoutMs});
+      demand(eq(pending.clockReceipt,checkpoint.continuation.clockReceipt),
+        'bootstrap fence changed the original execution clock');
+      const boundary=pending.requestBoundary,prior=checkpoint.native.attempts.at(-1)?.durableRequestReceipt;
+      assertAlgorithmFields(boundary,['schema','ordinal','sessionId','streamId','sessionGeneration'],
+        'bootstrap native request boundary');
+      demand(boundary.schema==='semantic-native-producer-request-boundary/8'&&prior&&
+        ['sessionId','streamId','sessionGeneration'].every(key=>boundary[key]===prior[key])&&
+        boundary.sessionId===checkpoint.session&&Number.isSafeInteger(boundary.ordinal)&&
+        boundary.ordinal===prior.ordinal+1,'bootstrap request must directly follow its durable create receipt');
+    }
   }else if(pending.kind==='child-dispatch'){
     assertAlgorithmFields(pending,['schema','kind','session','checkpointDigest','attempt',
       'invocationId','track','dependency','id'],'composite child pending marker');
@@ -270,6 +291,19 @@ function validatePendingResolution(pending,before,after){
     if(pending.clockReceipt)demand(eq(after.continuation.clockReceipt,pending.clockReceipt)&&
       after.continuation.elapsedMs>=pending.clockReceipt.consumedElapsedMs,
       'resolved coordinator cut changed its pending clock or refunded its execution budget');
+  }else if(pending.kind==='child-bootstrap'){
+    demand(before.continuation.phase==='bootstrap-ready'&&after.continuation.phase==='coordinator-ready'&&
+      after.state.status==='active'&&after.coordinatorAttempts.length===before.coordinatorAttempts.length&&
+      after.continuation.coordinatorSelections===before.continuation.coordinatorSelections&&
+      attempt?.action?.name==='track_create'&&attempt.bootstrapReceipt?.bootstrapped===true&&
+      attempt.bootstrapReceipt.track?.address===pending.childTrack&&
+      eq(after.bridge,before.bridge)&&eq(after.contexts,before.contexts)&&
+      eq(after.childAttempts,before.childAttempts)&&eq(after.childRejections,before.childRejections),
+      'bootstrap fence must resolve only its exact reserved child without selecting or dispatching work');
+    if(pending.clockReceipt)demand(eq(after.continuation.clockReceipt,pending.clockReceipt)&&
+      ['ordinal','sessionId','streamId','sessionGeneration'].every(key=>
+        attempt.bootstrapRequestReceipt?.[key]===pending.requestBoundary[key]),
+      'bootstrap resolution changed its retained clock or durable request boundary');
   }else{
     demand(before.continuation.phase==='child-ready'&&before.continuation.joinedAttempt===pending.attempt&&
       before.continuation.joinedDependency?.track===pending.track&&
@@ -577,7 +611,7 @@ function validateHistoryExtension(before,after,verifyComposite){
     for(let index=0;index<before.coordinatorAttempts.length;index++){
       const prior=before.coordinatorAttempts[index],next=after.coordinatorAttempts[index];
       const stripJoinCompletion=row=>Object.fromEntries(Object.entries(row)
-        .filter(([key])=>key!=='childCompletion'&&key!=='childOutcome'));
+        .filter(([key])=>!['childCompletion','childOutcome','bootstrapReceipt','bootstrapRequestReceipt'].includes(key)));
       demand(eq(stripJoinCompletion(prior),stripJoinCompletion(next)),
         'a recorded coordinator selection or receipt changed');
       if(prior.childCompletion!==undefined||prior.childOutcome!==undefined)
@@ -588,6 +622,16 @@ function validateHistoryExtension(before,after,verifyComposite){
           next.childCompletion?.schema==='semantic-child-completion/8'&&next.childOutcome&&
           typeof next.childOutcome==='object',
           'only an acknowledged join may acquire its exact child completion outcome');
+      if(prior.bootstrapReceipt!==undefined||prior.bootstrapRequestReceipt!==undefined)
+        demand(eq(prior.bootstrapReceipt,next.bootstrapReceipt)&&
+          eq(prior.bootstrapRequestReceipt,next.bootstrapRequestReceipt),
+          'acknowledged child bootstrap evidence changed');
+      else if(next.bootstrapReceipt!==undefined||next.bootstrapRequestReceipt!==undefined)
+        demand(prior.action?.name==='track_create'&&prior.status==='committed'&&
+          index===before.coordinatorAttempts.length-1&&before.continuation.phase==='bootstrap-ready'&&
+          next.bootstrapReceipt?.schema==='semantic-orchestration-bootstrap/8'&&next.bootstrapReceipt.bootstrapped===true&&
+          next.bootstrapReceipt.track?.address===prior.commitReceipt.track?.address,
+          'only the exact reserved child may acquire its completed bootstrap evidence');
     }
     prefix(before.childAttempts,after.childAttempts,'child selections');
     prefix(before.childRejections,after.childRejections,'child rejections');
@@ -601,6 +645,8 @@ function validateHistoryExtension(before,after,verifyComposite){
       after.continuation.elapsedMs>=before.continuation.elapsedMs&&
       (before.continuation.phase===after.continuation.phase||
         before.continuation.phase==='coordinator-ready'&&after.continuation.phase==='child-ready'||
+        before.continuation.phase==='coordinator-ready'&&after.continuation.phase==='bootstrap-ready'||
+        before.continuation.phase==='bootstrap-ready'&&after.continuation.phase==='coordinator-ready'||
         before.continuation.phase==='child-ready'&&after.continuation.phase==='coordinator-ready'),
       'composite retry budget, phase, selection count or elapsed deadline rolled back');
     if(before.continuation.clockReceipt){

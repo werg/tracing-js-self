@@ -243,6 +243,10 @@ try{
   const positions=measured.optimizerResumeExport?.optimizerPositionExposure;
   if(positions?.historyContinued!==true||positions.registryDigest!==prepared.registry.digest||
      positions.firstCheckpointCounts?.lastGlobalStep!==1||positions.resumedCounts?.lastGlobalStep!==2||
+     positions.firstCheckpointCounts?.routerInternalPositionAuditUpdates!==1||
+     positions.resumedCounts?.routerInternalPositionAuditUpdates!==2||
+     positions.firstCheckpointCounts?.routerInternalPositionAccounting!=='complete-per-update'||
+     positions.resumedCounts?.routerInternalPositionAccounting!=='complete-per-update'||
      positions.fullPopulationQualified!==false||positions.routerInternalPositionCoverage!=='unmeasured'||
      positions.learnedSuccess!==null)
     throw new Error('Ordinary lifecycle collector lost its bounded executed-position history or scope');

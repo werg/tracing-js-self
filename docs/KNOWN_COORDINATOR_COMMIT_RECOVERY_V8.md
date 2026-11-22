@@ -2,10 +2,12 @@
 
 This candidate connects the independently durable native commit primitive to the
 latest externally acknowledged composite application checkpoint. It supports
-`track_join` and `track_progress`: both can preserve the complete host bridge,
-child contexts, settled results and child-attempt ledger while accounting for
-exactly one original coordinator selection. Creation/bootstrap, terminal service
-close and unknown child or external effects retain their separate refusal paths.
+`track_create`, `track_join` and `track_progress`, accounting for exactly one
+original coordinator selection. A create restores a complete `bootstrap-ready`
+application cut: the reservation is acknowledged, but initialization has not
+been authorized by a known native outcome. The separate initialization request
+has its own journal ordinal and `bootstrapRecovery: {receipt}` option. Terminal
+close and unknown child or external effects retain separate boundaries.
 
 ## Capture the original authority before selection
 
@@ -52,6 +54,13 @@ const restored = await RegionSelectedOrchestrationDriver.restoreLatest(packet, {
 const result = await restored.run();
 ```
 
+For a lost child-initialization reply, supply `bootstrapRecovery: {receipt}`
+instead of `commitRecovery`. The complete pending history must name exactly the
+reserved child and the next request ordinal after its acknowledged create. A
+known initialization restores the coordinator-ready cut without another model
+selection or host dispatch. The create and initialization receipts cannot be
+substituted for each other. An unknown native initialization remains fenced.
+
 The latest complete history is verified before native reexecution. The native
 side must independently own the exact completed request and whole postcommit
 state; a producer-only intent or later native mutation refuses. The new host
@@ -70,6 +79,14 @@ accounting before adding the new recovery costs. Repeated recovery cannot refund
 earlier reexecution, erase consumed selections or reset elapsed time.
 
 ## Evidence and remaining boundaries
+
+The exact producer `86b1ecc` / native `8cdec19` hosted gate passed 72 leaf cases,
+zero failures/errors/skips, including create/startup and repeated process loss.
+[Complete retained proof](evidence/v8-bootstrap-hosted-86b1-2026-11-22/README.md)
+records the clean pair and actual clock authority. A further independent native
+journal check linking startup to the immediately preceding durable create,
+additional before-intent and startup-expiry controls, and terminal-close recovery
+are subsequent work; this frozen pass does not qualify those later changes.
 
 The reconstruction controls use a deterministic protocol peer and explicitly do
 not certify native reexecution. A separate mandatory paired gate uses the actual

@@ -5,7 +5,7 @@ import {TextDecoder,isDeepStrictEqual} from 'node:util';
 import {hashAlgorithmData} from './program.js';
 import {decodeCausalLmV8Target,validateRegionContext} from './causal-lm-v8.js';
 import {attachNativeV8OrchestrationTransport} from './native-orchestration-transport-v8.js';
-import {verifyNativeV8DurableCommit} from './native-durable-commit-v8.js';
+import {verifyNativeV8DurableCommit,verifyNativeV8DurableBootstrap} from './native-durable-commit-v8.js';
 import {assertDurableNativeV8RequestJournal} from '../storage/native-request-journal-v8.js';
 import {assertSelectedOrchestrationExecutionLease,claimSelectedOrchestrationExecutionLeaseForNative}
   from '../storage/selected-orchestration-execution-lock.js';
@@ -104,8 +104,10 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       if(durable)assertSelectedOrchestrationExecutionLease(durable.lease);
       if(durable&&captured.op==='initialize')demand((await durable.journal.list()).length===0,
         'existing durable requests require explicit commit recovery before initialization');
-      if(!durable||!['commit','commit-orchestration'].includes(captured.op))return await rawRequest(captured);
+      if(!durable||!['commit','commit-orchestration','bootstrap-orchestration-child'].includes(captured.op))
+        return await rawRequest(captured);
       const {journal,lease}=durable;
+      const bootstrap=captured.op==='bootstrap-orchestration-child';
       demand(identity!==null&&captured.session===journal.sessionId,'durable commit differs from execution scope');
       const checkpoint=transportPacket(await rawRequest({op:'checkpoint'}));
       const ordinal=nextOrdinal+1,requestIdentity={schema:'semantic-native-request-identity/1',
@@ -113,22 +115,25 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
         ordinal,operation:captured.op,model_identity:{checkpoint:identity.checkpointIdentity,
           tokenizer:identity.tokenizerIdentity,...(identity.trainingIdentity?{training:identity.trainingIdentity}:{})}};
       const requestBase64=Buffer.from(JSON.stringify({...captured,
-        id:'v8-commit-'+journal.sessionGeneration+'-'+ordinal})+'\n').toString('base64');
+        id:'v8-'+(bootstrap?'bootstrap':'commit')+'-'+journal.sessionGeneration+'-'+ordinal})+'\n').toString('base64');
       const intent={identity:requestIdentity,requestBase64,checkpoint};
       const receipt=await journal.append(intent);
       nextOrdinal=ordinal;lastDurableRequest=copy(receipt);
-      const evidence=attempts.find(row=>row.session===captured.session&&
-        row.selection?.selectionId===captured.selection.selectionId);
-      evidence.durableRequestReceipt=copy(receipt);
+      if(!bootstrap){
+        const evidence=attempts.find(row=>row.session===captured.session&&
+          row.selection?.selectionId===captured.selection.selectionId);
+        evidence.durableRequestReceipt=copy(receipt);
+      }
       assertSelectedOrchestrationExecutionLease(lease);
       const retained=await journal.read(receipt,{latest:true});
       try{
-        const result=await rawRequest({op:'durable-commit',identity:requestIdentity,requestBase64,
+        const result=await rawRequest({op:bootstrap?'durable-bootstrap':'durable-commit',identity:requestIdentity,requestBase64,
           preCheckpointDigest:checkpoint.native.digest});
-        return verifyNativeV8DurableCommit(result,retained).result;
+        return (bootstrap?verifyNativeV8DurableBootstrap:verifyNativeV8DurableCommit)(result,retained).result;
       }catch(error){
         // After dispatch, missing durability/poststate proof must fence every
         // later action even when the child returned an explicit error frame.
+        if(bootstrap)error.acknowledgementUnknown=true;
         stop(error);throw error;
       }
     }catch(error){
@@ -282,22 +287,29 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     demand(identity!==null,'model has not attested its checkpoint');
     return transportPacket(await request({op:'checkpoint'}));
   };
-  select.recoverCommit=async({receipt,accountingCheckpoint=null}={})=>{
+  const recoverOperation=async(bootstrap,{receipt,accountingCheckpoint=null}={})=>{
     demand(durable&&identity===null&&attempts.length===0&&sessions.size===0&&pending.size===0&&!requestBusy,
       'durable commit recovery requires a fresh guarded native transport');
     const captured=copy(receipt),retainedAccounting=copy(accountingCheckpoint);requestBusy=true;
     try{
       assertSelectedOrchestrationExecutionLease(durable.lease);
       const intent=await durable.journal.read(captured,{latest:true});
-      const value=await rawRequest({op:'recover-commit',identity:intent.identity,requestBase64:intent.requestBase64,
+      demand(bootstrap?intent.identity.operation==='bootstrap-orchestration-child':
+        ['commit','commit-orchestration'].includes(intent.identity.operation),
+        'retained request operation differs from the requested recovery');
+      const value=await rawRequest({op:bootstrap?'recover-bootstrap':'recover-commit',
+        identity:intent.identity,requestBase64:intent.requestBase64,
         preCheckpointDigest:intent.checkpoint.native.digest});
-      const verified=verifyNativeV8DurableCommit(value,intent,{recovered:true});
+      const verified=(bootstrap?verifyNativeV8DurableBootstrap:verifyNativeV8DurableCommit)(value,intent,{recovered:true});
       identity=copy(intent.checkpoint.identity);epoch++;
       orchestration.restore(verified.postCheckpoint);
-      const restored=copy(intent.checkpoint.attempts),target=restored.find(row=>row.session===verified.request.session&&
-        row.selection?.selectionId===verified.request.selection.selectionId);
-      target.status='accepted';target.failure=null;target.durableRequestReceipt=captured;
-      if(verified.request.op==='commit-orchestration')target.commitReceipt=copy(verified.result);
+      const restored=copy(intent.checkpoint.attempts);
+      if(!bootstrap){
+        const target=restored.find(row=>row.session===verified.request.session&&
+          row.selection?.selectionId===verified.request.selection.selectionId);
+        target.status='accepted';target.failure=null;target.durableRequestReceipt=captured;
+        if(verified.request.op==='commit-orchestration')target.commitReceipt=copy(verified.result);
+      }
       attempts.push(...restored);
       for(const session of Object.keys(verified.postCheckpoint.sessions))sessions.set(session,{pending:null,evidence:null});
       let costs=intent.checkpoint.runtimeMetrics;
@@ -318,11 +330,14 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       runtimeMetrics.rpcCalls+=costs.rpcCalls;runtimeMetrics.computeSeconds+=costs.computeSeconds;
       runtimeMetrics.peakMemoryBytes=Math.max(runtimeMetrics.peakMemoryBytes,costs.peakMemoryBytes);
       nextOrdinal=intent.identity.ordinal;lastDurableRequest=captured;
-      return {schema:'semantic-native-transport-commit-recovery/8',recovered:true,
+      return {schema:bootstrap?'semantic-native-transport-bootstrap-recovery/8':'semantic-native-transport-commit-recovery/8',
+        recovered:true,
         request:copy(verified.request),result:verified.result,receipt:captured,
         nativeCheckpointDigest:verified.postCheckpoint.digest,hostDispatches:0,hostRecoveryAuthorized:false};
     }catch(error){stop(error);throw error;}finally{requestBusy=false;}
   };
+  select.recoverCommit=input=>recoverOperation(false,input);
+  select.recoverBootstrap=input=>recoverOperation(true,input);
   select.restore=async({checkpoint}={})=>{
     demand(!durable,'guarded durable transports require explicit commit recovery');
     demand(identity===null&&attempts.length===0&&sessions.size===0&&pending.size===0&&!requestBusy,

@@ -41,9 +41,10 @@ async function inputs(t){
   const lock=new DurableSelectedOrchestrationExecutionLock({directory,sessionId,streamId,
     flockPath:process.env.TRACING_TEST_FLOCK??'/usr/bin/flock'});
   let count=0;
-  async function open(fault=null){
+  async function open(fault=null,action=null){
     const executionLease=await lock.acquire(),log=join(directory,'decoder-'+(++count)+'.log');
     const args=fault?[faultPeer,'--peer',peer,'--fault',fault]:[peer];
+    if(fault&&action)args.push('--fault-action',action);
     args.push('--decoder-log',log,'--request-journal-dir',journal.directory,'--execution-lock-fd','3',
       '--execution-lock-path',executionLease.lockPath,'--execution-session-id',sessionId,'--execution-stream-id',streamId,
       '--execution-session-generation',String(journal.sessionGeneration));
@@ -162,9 +163,61 @@ test('actual Python later child bootstrap fences recovery of the earlier native 
   }finally{await close(first);}
   const fresh=await replacement(context);
   try{
-    await assert.rejects(fresh.select.recoverCommit({receipt}),/supersed|later native/);
+    await assert.rejects(fresh.select.recoverCommit({receipt}),/supersed|later native|later request/);
     assert.equal(fresh.select.metrics().semanticallyAccepted,0);
-    assert.equal(readFileSync(fresh.log,'utf8'),'','stale poststate must refuse before decoder replay');
+    assert.equal(fresh.select.metrics().predictionAttempts,0);
+    assert.equal(fresh.select.metrics().runtime.rpcCalls,0);
+    // The stale producer receipt refuses before an RPC and may beat the peer's
+    // exclusive log creation. Absence is allowed only alongside zero work.
+    assert.equal(existsSync(fresh.log)?readFileSync(fresh.log,'utf8'):'','',
+      'stale poststate must refuse before decoder replay');
+  }finally{await close(fresh);}
+});
+
+for(const fault of [null,'after-native-outcome','alter-reply'])
+test('actual Python bootstrap has an independent durable outcome: '+String(fault),async t=>{
+  const context=await inputs(t);if(!context)return;
+  const first=await context.open(fault,'bootstrap-orchestration-child');let receipt,original,checkpoint;
+  try{
+    const request=await context.choose(first.select),committed=await first.select.commitOrchestration(request);
+    const bootstrap=()=>first.select.bootstrapOrchestrationChild({session:request.session,track:request.track,
+      childTrack:committed.track.address});
+    if(fault)await assert.rejects(bootstrap(),error=>{assert.equal(error.acknowledgementUnknown,true);return true;});
+    else{original=await bootstrap();checkpoint=await first.select.checkpoint();}
+    receipt=first.select.durableRequestReceipt();assert.equal(receipt.ordinal,2);
+    assert.equal(first.select.metrics().predictionAttempts,1);
+    assert.equal((await context.journal.inspect(2)).intent.identity.operation,'bootstrap-orchestration-child');
+  }finally{await close(first);}
+  const fresh=await replacement(context);
+  try{
+    const recovered=await fresh.select.recoverBootstrap({receipt});
+    assert.equal(recovered.result.bootstrapped,true);assert.equal(recovered.result.track.bootstrap_ready,true);
+    assert.equal(recovered.hostDispatches,0);assert.equal(recovered.hostRecoveryAuthorized,false);
+    const after=await fresh.select.checkpoint();
+    assert.equal(after.native.attempts.length,1);assert.equal(after.attempts.length,1);
+    assert.equal(after.native.sessions[recovered.request.session].orchestration.operations
+      .filter(row=>row.kind==='bootstrap').length,1);
+    if(original){assert.deepEqual(recovered.result,original);assert.deepEqual(after.native,checkpoint.native);}
+    assert.equal(fresh.select.metrics().predictionAttempts,1);
+    const emitted=path=>readFileSync(path,'utf8').split('\n').filter(line=>line.startsWith('ORCH_DECODER '));
+    assert.deepEqual(emitted(fresh.log),emitted(first.log));
+  }finally{await close(fresh);}
+});
+
+test('missing native bootstrap outcome never authorizes replay or retry',async t=>{
+  const context=await inputs(t);if(!context)return;
+  const first=await context.open('before-native-intent','bootstrap-orchestration-child');let receipt;
+  try{
+    const request=await context.choose(first.select),committed=await first.select.commitOrchestration(request);
+    await assert.rejects(first.select.bootstrapOrchestrationChild({session:request.session,track:request.track,
+      childTrack:committed.track.address}));
+    receipt=first.select.durableRequestReceipt();assert.equal(receipt.ordinal,2);
+  }finally{await close(first);}
+  const fresh=await replacement(context);
+  try{
+    await assert.rejects(fresh.select.recoverBootstrap({receipt}),/never admitted/);
+    assert.equal(fresh.select.metrics().predictionAttempts,0);
+    assert.equal(readFileSync(fresh.log,'utf8'),'');
   }finally{await close(fresh);}
 });
 

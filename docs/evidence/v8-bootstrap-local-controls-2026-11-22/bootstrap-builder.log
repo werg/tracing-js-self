@@ -1,0 +1,16 @@
+✔ known track_create reconstructs one exact cut with unchanged host work (565.585421ms)
+✔ known track_join reconstructs one exact cut with unchanged host work (529.636233ms)
+✔ known track_progress reconstructs one exact cut with unchanged host work (827.123479ms)
+✔ bootstrap reconstruction preserves every host and model attempt and supports repeated sealed recovery (732.911598ms)
+✔ bootstrap reconstruction refuses wrong children, extra selections, changed clocks and forged outcomes (189.366193ms)
+✔ known commit reconstruction refuses changed scope, owner, work, record, source or consumed budget (352.670594ms)
+✔ clock-bound history cannot drop its clock or extend its deadline by rehashing a later sample (184.523199ms)
+✔ first clock-bound coordinator fence rejects a later-issued replacement through full history validation (227.392718ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3921.976618

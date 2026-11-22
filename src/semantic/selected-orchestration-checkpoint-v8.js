@@ -291,8 +291,13 @@ function checkCoordinatorHistory(packet,nativeSession,all,session){
     bootstraps=operations.filter(row=>row?.kind==='bootstrap'),
     completions=operations.filter(row=>row?.kind==='completion');
   const bootstrapTracks=new Set(bootstraps.map(row=>row.track));
-  demand(bootstraps.length===creates.length&&bootstrapTracks.size===bootstraps.length&&
-    creates.every(row=>bootstrapTracks.has(row.commitReceipt.track?.address))&&
+  const pendingCreate=packet.continuation.phase==='bootstrap-ready'?packet.coordinatorAttempts.at(-1):null;
+  demand(pendingCreate===null||pendingCreate?.action.name==='track_create'&&
+    pendingCreate.bootstrapReceipt===undefined&&pendingCreate.bootstrapRequestReceipt===undefined,
+    'bootstrap continuation must retain exactly the latest unbootstrapped create');
+  demand(bootstraps.length===creates.length-(pendingCreate?1:0)&&bootstrapTracks.size===bootstraps.length&&
+    creates.every(row=>row===pendingCreate?!bootstrapTracks.has(row.commitReceipt.track?.address):
+      bootstrapTracks.has(row.commitReceipt.track?.address))&&
     bootstraps.every(row=>creates.some(create=>create.commitReceipt.track?.address===row.track)),
     'native bootstrap operation count or exact create-track coverage differs');
   for(const create of creates){
@@ -301,16 +306,17 @@ function checkCoordinatorHistory(packet,nativeSession,all,session){
       bootstrap=create.bootstrapReceipt,track=state.children.find(row=>row.track===dependency?.track);
     demand(dependency?.schema==='semantic-completion-dependency/4'&&dependency.track===receipt.track?.address&&
       dependency.invocation===receipt.track?.execution?.invocation_id&&child&&track===child&&
-      isDeepStrictEqual(receipt.track.execution,child.execution)&&bootstrap?.schema==='semantic-orchestration-bootstrap/8'&&
+      isDeepStrictEqual(receipt.track.execution,child.execution)&&
+      (create===pendingCreate||bootstrap?.schema==='semantic-orchestration-bootstrap/8'&&
       bootstrap.bootstrapped===true&&bootstrap.track?.address===child.track&&bootstrap.track.bootstrap_ready===true&&
-      isDeepStrictEqual(bootstrap.track.execution,child.execution),
+      isDeepStrictEqual(bootstrap.track.execution,child.execution)),
       'create, dependency or bootstrap receipt changed its exact declared root binding');
-    demand(bootstraps.some(row=>row.track===child.track),'native bootstrap operation has no exact create receipt');
     const createdAt=operations.findIndex(row=>row.kind==='coordinator'&&
       row.attempt===nativeIndex(create.selection.selectionId)),nextCoordinator=operations.findIndex((row,index)=>
       index>createdAt&&row.kind==='coordinator'),bootstrapAt=operations.findIndex((row,index)=>
       index>createdAt&&row.kind==='bootstrap'&&row.track===child.track);
-    demand(createdAt>=0&&bootstrapAt>createdAt&&(nextCoordinator<0||bootstrapAt<nextCoordinator),
+    demand(create===pendingCreate?createdAt===operations.length-1&&bootstrapAt<0&&nextCoordinator<0:
+      createdAt>=0&&bootstrapAt>createdAt&&(nextCoordinator<0||bootstrapAt<nextCoordinator),
       'create bootstrap was not acknowledged before the next coordinator choice');
   }
   demand(completions.length===state.children.filter(row=>row.completion!==null).length,
@@ -391,7 +397,7 @@ function checkContinuation(packet,nativeSession,allowTerminal=false,allowCancell
   const continuation=packet.continuation,state=packet.state,policy=packet.policy;
   demand(keys(continuation,['phase','coordinatorSelections','joinedAttempt','joinedDependency','elapsedMs',
       ...(Object.hasOwn(continuation??{},'clockReceipt')?['clockReceipt']:[])])&&
-    ['coordinator-ready','child-ready'].includes(continuation.phase)&&
+    ['coordinator-ready','bootstrap-ready','child-ready'].includes(continuation.phase)&&
     continuation.coordinatorSelections===packet.coordinatorAttempts.length&&
     continuation.coordinatorSelections<=policy.maxCoordinatorSelections&&
     Number.isFinite(continuation.elapsedMs)&&continuation.elapsedMs>=0&&
@@ -412,7 +418,9 @@ function checkContinuation(packet,nativeSession,allowTerminal=false,allowCancell
     isDeepStrictEqual(state.published,nativeSession.orchestration.published),
     'host continuation status differs from the retained native coordinator state');
   demand(Array.isArray(state.tracks),'native coordinator track table is missing');
-  const directTracks=state.tracks.filter(row=>row.parent===state.track),
+  const pendingCreate=continuation.phase==='bootstrap-ready'?packet.coordinatorAttempts.at(-1):null,
+    pendingTrack=pendingCreate?.commitReceipt?.track?.address,
+    directTracks=state.tracks.filter(row=>row.parent===state.track),
     activeChildren=directTracks.filter(row=>row.status==='active'),
     childTracks=new Map(directTracks.map(row=>[row.address,row])),
     coordinatorTrack=state.tracks.find(row=>row.address===state.track);
@@ -422,7 +430,10 @@ function checkContinuation(packet,nativeSession,allowTerminal=false,allowCancell
     childTracks.size===directTracks.length&&activeChildren.length<=policy.maxActive&&state.children.every(child=>{
     const track=child.track===null?null:childTracks.get(child.track);
     if(child.track===null)return child.completion===null&&!track;
-    if(!track||!isDeepStrictEqual(track.execution,child.execution)||track.bootstrap_ready!==true)return false;
+    if(!track||!isDeepStrictEqual(track.execution,child.execution)||
+      track.bootstrap_ready!==(track.address!==pendingTrack))return false;
+    if(track.address===pendingTrack)return child.completion===null&&
+      isDeepStrictEqual(track,pendingCreate.commitReceipt.track)&&track.status==='waiting';
     if(child.completion!==null)return track.status==='completed';
     if(allowCancelled)return track.status==='cancelled';
     return ['active','waiting'].includes(track.status);
@@ -432,7 +443,14 @@ function checkContinuation(packet,nativeSession,allowTerminal=false,allowCancell
     return child&&child.completion===null&&create?.bootstrapReceipt?.bootstrapped===true&&
       !packet.childAttempts.some(row=>row.invocationId===child.execution.invocation_id);
   }),'native active child tracks are not quiescent exact bootstrapped roots');
-  if(continuation.phase==='child-ready'){
+  if(continuation.phase==='bootstrap-ready'){
+    demand(continuation.joinedAttempt===null&&continuation.joinedDependency===null&&state.status==='active'&&
+      pendingCreate?.action.name==='track_create'&&pendingCreate.status==='committed'&&
+      pendingCreate.bootstrapReceipt===undefined&&pendingCreate.bootstrapRequestReceipt===undefined&&
+      directTracks.filter(row=>row.bootstrap_ready===false).length===1&&
+      childTracks.get(pendingTrack)?.bootstrap_ready===false,
+      'bootstrap continuation is not the exact reserved child before any startup or child dispatch');
+  }else if(continuation.phase==='child-ready'){
     const index=continuation.joinedAttempt,join=packet.coordinatorAttempts[index],dependency=continuation.joinedDependency;
     demand(Number.isSafeInteger(index)&&join?.action?.name==='track_join'&&join.childCompletion===undefined&&
       isDeepStrictEqual(join.action.arguments.completion_dependency,dependency)&&state.status==='waiting'&&

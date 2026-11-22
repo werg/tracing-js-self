@@ -15,16 +15,23 @@ function fixture(){
     sourceIds:['source'],sourceCount:1,logicalTargetCount:2,physicalTargetRecordCount:3,
     verifiedPhysicalTargets:3,unmeasuredPhysicalTargets:0,positiveWeightPositionCounts:counts,objective};
   const actual={...expected,digest:'c'.repeat(64),scoredOccurrences:3,
-    routerInternalPositionCoverage:'unmeasured',learnedSuccess:null};
+    routerInternalPositionCoverage:'unmeasured',learnedSuccess:null,
+    routerInternalPositionCounts:{p:4,adapter_c:2},routerInternalPositionCount:6,
+    routerInternalAssignmentCounts:{p:4,adapter_c:4},routerInternalAssignmentCount:8,
+    routerInternalPositionAuditUpdates:3,routerInternalPositionAccounting:'complete-per-update'};
   const comparison={exactOnePassPreparedTextPositions:true,positiveWeightPositionCountsMatch:true,
     independentPreparedPhysicalTargets:3,observedPhysicalTargets:3,missingPhysicalTargets:[],
     unexpectedPhysicalTargets:[],preparedOracleMismatches:[],independentOccurrenceMismatches:[],
     targetCensusWindowOrOccurrenceMismatches:[],targetCensusWithoutPositionReceipt:[],
-    unmeasuredPhysicalTargets:[],routerInternalPositionCoverage:'unmeasured',learnedSuccess:null};
-  const evidence={tokenOrMaskPositionCoverage:'complete-for-prepared-text',
+    unmeasuredPhysicalTargets:[],routerInternalPositionCoverage:'unmeasured',learnedSuccess:null,
+    routerInternalPositionCounts:actual.routerInternalPositionCounts,routerInternalPositionCount:6,
+    routerInternalAssignmentCounts:actual.routerInternalAssignmentCounts,routerInternalAssignmentCount:8,
+    routerInternalPositionAuditUpdates:3,routerInternalPositionAccounting:'complete-per-update'};
+  const evidence={globalStep:3,tokenOrMaskPositionCoverage:'complete-for-prepared-text',
     routerInternalPositionCoverage:'unmeasured',learnedSuccess:null,
     independentPreparedPositionInventory:expected,optimizerPositionSummary:actual,
-    positionComparison:comparison,optimizerPositionExposure:{digest:actual.digest,objective}};
+    positionComparison:comparison,optimizerPositionExposure:{digest:actual.digest,objective,
+      routerInternalPositionAuditUpdates:3}};
   return structuredClone({inventory,evidence});
 }
 
@@ -45,6 +52,9 @@ const mutations={
   'unsupported structured masks':e=>{e.optimizerPositionSummary.unmeasuredPhysicalTargets=1;},
   'logical/physical conflation':e=>{e.independentPreparedPositionInventory.physicalTargetRecordCount=2;},
   'hidden routing credit':e=>{e.routerInternalPositionCoverage='complete';},
+  'missing per-update router receipt':e=>{e.optimizerPositionSummary.routerInternalPositionAuditUpdates=2;},
+  'router assignment total mismatch':e=>{e.optimizerPositionSummary.routerInternalAssignmentCount=7;},
+  'router scope promotion':e=>{e.positionComparison.routerInternalPositionCoverage='complete';},
   'changed source membership':e=>{e.independentPreparedPositionInventory.sourceIds=['other'];},
   'changed objective':e=>{e.optimizerPositionExposure.objective={different:true};},
   'learned quality promotion':e=>{e.learnedSuccess=true;},
