@@ -42,7 +42,10 @@ function fixture(classifications={}){
   const snapshot={repository:'tc39/test262',revision:'1'.repeat(40),
     files:Object.fromEntries(Object.entries(sources).map(([path,source])=>[path,gitBlobSha(source)]))};
   const pinned=readPinnedEcma262Specification();
-  const profile={name:'edition-audit-test',edition:'ECMAScript 2026',specification:pinned.specification,
+  // The retained acquisition profile intentionally predates a specification
+  // binding; the review evidence pins it separately and the edition audit
+  // verifies it against the exact specification bytes.
+  const profile={name:'edition-audit-test',edition:'ECMAScript 2026',specification:null,
     parser:{name:'not-executed'},hostProfile:{name:'not-executed'},resourcePolicy:{maxSteps:1,maxSourceBytes:1024}};
   for(const [path,classification] of Object.entries(classifications)){
     if(classification.membership==='unclassified')continue;
@@ -79,6 +82,24 @@ test('all variants survive reference reconciliation without becoming edition or 
   assert.equal(report.features[0].variants,4);
   assert.deepEqual(report.claims,{editionMembershipCertified:false,applicabilityCertified:false,conformance:false});
   assert(report.summary.sectionsWithoutDirectTestReference>0);
+});
+
+test('edition audit validates the declared default harness closure for script tests',()=>{
+  const path='test/core-script.js',sources={
+    [path]:'/*---\nesid: sec-array.prototype.map\n---*/\nassert.sameValue(1, 1);\n',
+    'harness/assert.js':'function assert() {}\n','harness/sta.js':'function Test262Error() {}\n',
+  },snapshot={repository:'tc39/test262',revision:'2'.repeat(40),
+    files:Object.fromEntries(Object.entries(sources).map(([name,value])=>[name,gitBlobSha(value)]))},
+    pinned=readPinnedEcma262Specification(),profile={name:'script-audit-test',edition:'ECMAScript 2026',
+      specification:null,parser:{name:'not-executed'},hostProfile:{name:'not-executed'},
+      resourcePolicy:{maxSteps:1,maxSourceBytes:1024}},
+    catalog=buildTest262Catalog({snapshot,sources,profile}),
+    report=buildTest262EditionAudit({catalog,sources,specification:pinned.specification,bytes:pinned.bytes});
+  assert.deepEqual(report.rows.map(row=>row.classification.membership),['unclassified','unclassified']);
+  assert.deepEqual(catalog.variants[0].harness,[
+    {path:'harness/assert.js',sha256:createHash('sha256').update(sources['harness/assert.js']).digest('hex')},
+    {path:'harness/sta.js',sha256:createHash('sha256').update(sources['harness/sta.js']).digest('hex')},
+  ]);
 });
 
 test('edition and release classification denominators remain explicit by review scope',()=>{
@@ -125,6 +146,14 @@ test('membership review binds suite, source closure, profile and normative claus
   target.classification.evidence.sourceDigest='f'.repeat(64);
   const {digest,...body}=tampered;tampered.digest=conformanceDigest(body);
   assert.throws(()=>validateTest262Catalog(tampered),/test source digest/);
+  const wrongEdition=structuredClone(input.catalog),wrongEditionRow=wrongEdition.variants.find(row=>row.path==='test/core.js');
+  wrongEditionRow.classification.evidence.editionSpecification.sha256='f'.repeat(64);
+  wrongEditionRow.classification.evidence.normativeObligations[0].sha256='f'.repeat(64);
+  for(const row of wrongEdition.variants){const {id,...identity}=row;
+    row.id=conformanceDigest({suiteRevision:wrongEdition.suiteRevision,profile:wrongEdition.profile,...identity});}
+  const {digest:editionDigest,...editionBody}=wrongEdition;wrongEdition.digest=conformanceDigest(editionBody);
+  assert.equal(validateTest262Catalog(wrongEdition),true);
+  assert.throws(()=>buildTest262EditionAudit({...input,catalog:wrongEdition}),/different pinned edition specification/);
   const wrongProfile=structuredClone(input.catalog),variant=wrongProfile.variants.find(row=>row.path==='test/core.js');
   variant.classification.evidence.hostProfileDigest='f'.repeat(64);
   const {digest:oldDigest,...wrongBody}=wrongProfile;wrongProfile.digest=conformanceDigest(wrongBody);

@@ -61,14 +61,17 @@ the report.
 New non-`unclassified` catalog decisions use `test262-edition-membership-review/1`.
 The decision is file-level and binds the exact Test262 revision and test source
 digest, the catalog profile and host profile digests, and the retained annual
-edition URI and SHA-256. `sourceInputs` lists the exact test, included harness
-files, and module dependency closure used for the decision. `normativeObligations`
-lists one or more cited clause IDs together with the specification URI and
-digest and a basis (`edition`, `addition`, or `profile`). The edition audit
-checks every `edition` clause ID against the clause inventory extracted from
-the pinned HTML. Addition/profile citations remain explicit source references;
-they do not certify the external artifact unless that artifact is separately
-acquired and verified.
+edition URI and SHA-256. The retained historical acquisition profile has
+`specification: null`; the review stores the separate exact annual edition pin,
+and the edition audit checks it against the specification bytes it verifies.
+`sourceInputs` lists the exact test, included harness files, and module
+dependency closure used for the decision. `normativeObligations` lists one or
+more cited clause IDs together with the specification URI and digest and a
+basis (`edition`, `addition`, or `profile`). The edition audit checks every
+`edition` clause ID against the clause inventory extracted from the pinned
+HTML. Addition/profile citations remain explicit source references; they do
+not certify the external artifact unless that artifact is separately acquired
+and verified.
 
 `reviewer.kind` records who or what performed the review (`human`, `assistant`,
 or `tool-assisted`); `method` and `rationale` describe the actual work. The
@@ -81,9 +84,22 @@ the denominator; edition-membership, applicability, and conformance claims
 remain false.
 
 This schema makes declared decisions auditable and content-bound; it does not
-automatically adjudicate the 102,994 retained variants. No full pinned Test262
-source checkout was available during this increment, so no source-family pilot
-was classified. Synthetic tests exercise the evidence contract only and are
+automatically adjudicate the 102,994 retained variants. A one-file source pilot
+is recorded in
+[`multiplication-line-terminator-pilot.json`](../evidence/test262-edition-audit-d53ebc8-2026-11-22/multiplication-line-terminator-pilot.json).
+The exact test source and its default `assert.js` / `sta.js` harness closure
+were fetched from `tc39/test262` at the pinned revision and their Git blob IDs
+and SHA-256 digests match the retained full catalog. The reviewed test contains
+a numeric `MultiplicativeExpression` split across line terminators and an
+`assert.sameValue` check; it uses no feature tags, includes, dynamic code, or
+host APIs. The decision cites ECMA-262 17 clauses `sec-line-terminators`,
+`sec-multiplicative-operators`, and
+`sec-multiplicative-operators-runtime-semantics-evaluation`. Both generated
+strict and sloppy variants carry the same file-level decision. The pilot's
+release requirement remains false, and its audit claims for applicability and
+conformance remain false. It demonstrates one source-scope decision only; the
+retained full catalog is unchanged and still has all 102,994 variants
+unclassified. Synthetic tests exercise the evidence contract only and are
 explicitly not membership decisions.
 
 The audit also reconciles unique test source files separately from execution

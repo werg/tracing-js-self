@@ -61,6 +61,7 @@ export function buildTest262EditionAudit({catalog,sources,specification,bytes,py
   verifyEcma262SpecificationBytes(bytes,specification);
   const inventory=extractEcma262HtmlInventory(bytes,{python});
   const anchors=new Map(inventory.anchors.map(row=>[row.id,row]));
+  const catalogPaths=new Set(catalog.files.map(file=>file.path));
   const references=new Map(),routing=new Map(),fileIdentities=new Map();
   for(const file of catalog.files.filter(file=>file.kind==='test')){
     const value=sources?.[file.path],source=typeof value==='string'?Buffer.from(value):value;
@@ -83,7 +84,7 @@ export function buildTest262EditionAudit({catalog,sources,specification,bytes,py
     const {id,...identity}=variant,metadata=routing.get(variant.path);
     const expectedHarness=metadata&&!metadata.flags.includes('raw')?[...new Set(['assert.js','sta.js',
       ...(metadata.flags.includes('async')?['doneprintHandle.js']:[]),...metadata.includes])]
-      .map(name=>({path:'harness/'+name,sha256:snapshot.files['harness/'+name]?
+      .map(name=>({path:'harness/'+name,sha256:catalogPaths.has('harness/'+name)?
         sha(sources['harness/'+name]):null})):[];
     if(!references.has(variant.path)||variant.sourceDigest!==fileIdentities.get(variant.path)||
        id!==conformanceDigest({suiteRevision:catalog.suiteRevision,profile:catalog.profile,...identity})||
@@ -93,6 +94,9 @@ export function buildTest262EditionAudit({catalog,sources,specification,bytes,py
     if(!modes.has(variant.path))modes.set(variant.path,[]);
     modes.get(variant.path).push(variant.mode);
     const evidence=variant.classification.evidence;
+    if(evidence&&(evidence.editionSpecification.uri!==specification.uri||
+      evidence.editionSpecification.sha256!==specification.sha256))
+      throw new TypeError('Membership review names a different pinned edition specification: '+variant.path);
     for(const obligation of evidence?.normativeObligations??[]){
       if(obligation.basis==='edition'&&obligation.clauseIds.some(id=>!inventory.sections.some(section=>section.id===id)))
         throw new TypeError('Membership review cites a clause absent from the exact pinned edition: '+variant.path);

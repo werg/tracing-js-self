@@ -152,9 +152,9 @@ function validateMembershipClassification(classification,{suiteRevision,profile,
     evidence.suiteRevision!==suiteRevision?'suite revision':evidence.sourceDigest!==sourceDigest?'test source digest':
     evidence.profileDigest!==conformanceDigest(profile)?'profile digest':
     evidence.hostProfileDigest!==conformanceDigest(profile.hostProfile)?'host profile digest':
-    !profile.specification||!exactFields(evidence.editionSpecification,['uri','sha256'])?'edition specification fields':
-    evidence.editionSpecification?.uri!==profile.specification.uri||
-      evidence.editionSpecification?.sha256!==profile.specification.sha256?'edition specification identity':
+    !exactFields(evidence.editionSpecification,['uri','sha256'])||
+      typeof evidence.editionSpecification?.uri!=='string'||!evidence.editionSpecification.uri||
+      !hex64.test(evidence.editionSpecification.sha256??'')?'edition specification fields':
     !Array.isArray(evidence.sourceInputs)?'source input list':
     conformanceDigest(evidence.sourceInputs)!==conformanceDigest(sourceInputs)?'source input closure':
     evidence.sourceInputs.some(row=>!exactFields(row,['path','sha256','kind'])||
@@ -169,7 +169,8 @@ function validateMembershipClassification(classification,{suiteRevision,profile,
       !Array.isArray(obligation.clauseIds)||!obligation.clauseIds.length||
       obligation.clauseIds.some(id=>typeof id!=='string'||!id.trim()))
       throw new TypeError('Membership review must cite exact normative obligations');
-    const isEdition=obligation.uri===profile.specification.uri&&obligation.sha256===profile.specification.sha256;
+    const isEdition=obligation.uri===evidence.editionSpecification.uri&&
+      obligation.sha256===evidence.editionSpecification.sha256;
     if(obligation.basis==='edition'&&!isEdition||obligation.basis!=='edition'&&isEdition)
       throw new TypeError('Membership obligation basis differs from its pinned specification');
     if(isEdition)editionObligation=true;else externalObligation=true;
