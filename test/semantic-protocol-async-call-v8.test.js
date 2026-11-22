@@ -108,6 +108,43 @@ test('wrong targets, missing turns, FIFO bypasses and self-resolution refuse ato
     assert.deepEqual(sharedRegionState(harness.controller),subscribed);}
 });
 
+test('future settlement identities stay reserved across ordinary jobs and other async returns',()=>{
+  const {harness,detail,protocol}=fixture({settled:false});enqueue(protocol);
+  const queued=sharedRegionState(harness.controller);
+  assert.equal(harness.controller.jobs.get('j2').status,'reserved');
+  assert.throws(()=>detail('job',{action:'enqueue',job:'j2',owner:'invocation1'}),/duplicate job|async-scoped-call/);
+  assert.deepEqual(sharedRegionState(harness.controller),queued);
+  protocol({kind:'async.call',promise:'p3',child:'other-body',callee:['ref','helper'],receiver:['undefined'],arguments:[]});
+  protocol({kind:'async.complete',promise:'p3',invocation:'other-body',completion:{kind:'return',value:['ref','p2']}});
+  const second=sharedRegionState(harness.controller);
+  assert.throws(()=>protocol({kind:'async.resolve.enqueue',promise:'p3',invocation:'other-body',target:'p2',
+    job:'j3',settlementJob:'j2'}),/job identities must be fresh/);
+  assert.deepEqual(sharedRegionState(harness.controller),second);
+  protocol({kind:'async.resolve.enqueue',promise:'p3',invocation:'other-body',target:'p2',job:'j3',settlementJob:'j4'});
+  detail('await',{invocation:'invocation1',promise:'p1',continuation:'c1'});
+  const reservation=harness.controller.jobs.get('j2');
+  harness.controller.jobs.set('j2',{...reservation,reaction:'unrelated'});
+  const forged=sharedRegionState(harness.controller);
+  assert.throws(()=>subscribe(protocol),/queued async|assimilation|resolution/);
+  assert.deepEqual(sharedRegionState(harness.controller),forged);
+  assert.throws(()=>RegionExecutionHarness.restore(JSON.parse(JSON.stringify(harness.checkpoint()))),
+    /queued async assimilation|checkpoint differs/);
+  assert.deepEqual(sharedRegionState(harness.controller),forged);
+  harness.controller.jobs.set('j2',reservation);
+  subscribe(protocol);
+});
+
+test('throwing an owned Promise preserves it as the rejection reason at restored cuts',()=>{
+  const {harness,protocol}=fixture({complete:false});
+  protocol({kind:'async.complete',promise:'p1',invocation:'outer-body',
+    completion:{kind:'throw',value:['ref','p2']}});
+  assert.equal(harness.controller.heap.get('p1').state,'rejected');
+  assert.deepEqual(harness.controller.heap.get('p1').result,['ref','p2']);
+  assert.equal(harness.controller.heap.get('p1').asyncCall.resolution,null);
+  const restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(harness.checkpoint())));
+  assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(harness.controller));
+});
+
 test('every retained resolution cut restores its body, observer and job ownership',()=>{
   const {harness,detail,protocol}=fixture({settled:false}),cuts=[];
   const retain=()=>cuts.push({packet:harness.checkpoint(),state:sharedRegionState(harness.controller)});

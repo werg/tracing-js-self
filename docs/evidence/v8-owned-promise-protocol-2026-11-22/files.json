@@ -1,0 +1,22 @@
+[
+  {
+    "path": "README.md",
+    "bytes": 2413,
+    "sha256": "d64743ed4dad5b26497c41da3c3bacdd523afe6ab9e28cc29ace5507d5260b03"
+  },
+  {
+    "path": "native-9698bd61-direct-eleven.log",
+    "bytes": 99,
+    "sha256": "e8f01c9ea06de443c433d59484983036f62a38e00c91145186b7988e21335a39"
+  },
+  {
+    "path": "producer-3b5e36c9-direct-six.log",
+    "bytes": 721,
+    "sha256": "0b25f44b3dc72ffc56f6d1dc17e618518cfc4920d3e0a1a5825f669b5536edec"
+  },
+  {
+    "path": "summary.json",
+    "bytes": 1012,
+    "sha256": "ae0108805ff4b12c71521565cfbf31a35c4abf608dd0f2b9a889d74cc179a151"
+  }
+]

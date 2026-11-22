@@ -1,0 +1,33 @@
+{
+  "schema": "owned-promise-protocol-proof/1",
+  "producerExecutedLocal": "3b5e36c9f5f8e97d9e188635d1ddd98d65444601",
+  "nativeExecutedLocal": "9698bd6142f787b36814138c14707d189eba703e",
+  "nativePublishedSourceEquivalent": "138f8354b62cbc7747bea8d2e230ed1f341f640c",
+  "node": {
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 334.305804
+  },
+  "python": {
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 0.19
+  },
+  "scope": "direct JavaScript protocol and independent Python semantic-state controls, not original-source or learned-model qualification",
+  "runtime": {
+    "node": "v24.22.3",
+    "python": "3.12.14",
+    "pytest": "8.4.2"
+  },
+  "priorReportedOnly": {
+    "nodePassed": 4,
+    "pythonPassed": 10,
+    "rawRetained": false,
+    "reason": "initial local log paths were overwritten by the later focused run; no original raw or pre-fix red run is claimed"
+  },
+  "originalSourceQualified": false,
+  "learnedSuccess": null,
+  "promoted": false
+}

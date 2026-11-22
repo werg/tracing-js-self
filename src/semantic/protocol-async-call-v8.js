@@ -134,17 +134,23 @@ export function applyAsyncCallRecordV8(controller,record,api){
     controller.jobs.set(record.job,{status:'queued',owner:call.owner,promise:null,reaction:'async-resolution-enqueue',
       closure:null,rejectionClosure:null,target:record.promise,sequence:null,
       asyncResolution:{promise:record.promise,target:record.target,phase:'enqueue'}});
+    controller.jobs.set(record.settlementJob,{status:'reserved',owner:call.owner,promise:null,
+      reaction:'async-resolution-reserved',closure:null,rejectionClosure:null,target:record.promise,sequence:null,
+      asyncResolution:{promise:record.promise,target:record.target,phase:'reserved'}});
     controller.ready.push(record.job);controller.jobs.get(record.job).readySequence=++controller.scheduler.ready;
     return true;
   }
   if(record.kind==='async.resolve.subscribe'){
-    const resolution=call.resolution,job=controller.jobs.get(record.job),target=controller.heap.get(record.target);
+    const resolution=call.resolution,job=controller.jobs.get(record.job),reserved=controller.jobs.get(record.settlementJob),
+      target=controller.heap.get(record.target);
     api.require(call.phase==='completed'&&resolution?.schema===resolutionSchema&&resolution.phase==='queued'&&
       resolution.target===record.target&&resolution.assimilationJob===record.job&&
       resolution.settlementJob===record.settlementJob&&record.job!==record.settlementJob&&
       call.completion?.kind==='return'&&api.eq(call.completion.value,['ref',record.target])&&
       job?.owner===call.owner&&job.status==='queued'&&job.reaction==='async-resolution-enqueue'&&
       api.eq(job.asyncResolution,{promise:record.promise,target:record.target,phase:'enqueue'})&&
+      reserved?.owner===call.owner&&reserved.status==='reserved'&&reserved.reaction==='async-resolution-reserved'&&
+      api.eq(reserved.asyncResolution,{promise:record.promise,target:record.target,phase:'reserved'})&&
       controller.ready[0]===record.job&&!controller.stack.length&&!controller.activeJob&&
       target?.kind==='promise'&&target.external===null,
     'Promise-resolution subscription requires its exact FIFO enqueue job');
@@ -309,12 +315,15 @@ export function restoreAsyncCallStateV8(controller,api){
 
 function validateResolutionState(controller,identity,node,call,api){
   const completionValue=call.completion.value,
-    targetId=completionValue?.[0]==='ref'&&controller.heap.get(completionValue[1])?.kind==='promise'?
+    targetId=call.completion.kind==='return'&&completionValue?.[0]==='ref'&&
+      controller.heap.get(completionValue[1])?.kind==='promise'?
       completionValue[1]:null,resolution=call.resolution;
   if(targetId===null){
     api.require(resolution===null&&node.state===(call.completion.kind==='return'?'fulfilled':'rejected')&&
       api.eq(node.result,completionValue),'retained async completion differs from execution Promise');return;
   }
+  assertAlgorithmFields(resolution,['schema','target','assimilationJob','settlementJob','phase'],
+    'retained async Promise resolution');
   api.require(call.completion.kind==='return'&&resolution?.schema===resolutionSchema&&
     resolution.target===targetId&&targetId!==identity&&resolution.phase&&
     ['enqueue-pending','queued','subscribed','settled'].includes(resolution.phase)&&
@@ -332,7 +341,10 @@ function validateResolutionState(controller,identity,node,call,api){
   'retained async assimilation job differs');
   if(resolution.phase==='queued'){
     api.require(assimilation.status==='queued'&&controller.ready.includes(resolution.assimilationJob)&&
-      !controller.jobs.has(resolution.settlementJob)&&node.state==='pending'&&node.result===null,
+      controller.jobs.get(resolution.settlementJob)?.status==='reserved'&&
+      controller.jobs.get(resolution.settlementJob)?.reaction==='async-resolution-reserved'&&
+      !controller.ready.includes(resolution.settlementJob)&&
+      node.state==='pending'&&node.result===null,
     'queued async assimilation job or unresolved Promise differs');return;
   }
   api.require(assimilation.status==='completed'&&!controller.ready.includes(resolution.assimilationJob),
