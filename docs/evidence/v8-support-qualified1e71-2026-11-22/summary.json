@@ -1,0 +1,134 @@
+{
+  "schema": "v8-hosted-support-evidence/1",
+  "producerRevision": "1e71e5a9385de8f1425593787c3261c20c3a0160",
+  "consumerRevision": "b276dc3c14075206c1550cbaacb3f456712788b3",
+  "workflowRun": 44978118012,
+  "jobId": 137072926196,
+  "jobUrl": "https://github.com/werg/tracing-js-self/actions/runs/44978118012/job/137072926196",
+  "status": "passed",
+  "sourceCount": 64,
+  "nativeCount": 64,
+  "preparedCount": 64,
+  "frozenSplits": {
+    "train": 48,
+    "validation": 12,
+    "test": 4
+  },
+  "productionSupply": "passed",
+  "optimizerSteps": 0,
+  "fullLaunchQualified": false,
+  "learnedSuccess": null,
+  "reports": [
+    {
+      "output": "/home/runner/work/_temp/v8-admitted",
+      "producerRevision": "1e71e5a9385de8f1425593787c3261c20c3a0160",
+      "sourceQualified": 64,
+      "nativeAdmitted": 64,
+      "declared": 64
+    },
+    {
+      "output": "/home/runner/work/_temp/v8-costs",
+      "producerRevision": "1e71e5a9385de8f1425593787c3261c20c3a0160",
+      "summary": {
+        "declared": 64,
+        "sourceQualified": 64,
+        "sourceDispositions": {
+          "passed": 64
+        },
+        "compactEpisodes": 64,
+        "whollyDetailedEpisodes": 0,
+        "regionCoverage": {
+          "measuredEpisodes": 64,
+          "unmeasuredEpisodes": 0,
+          "compact": 80,
+          "detailed": 128,
+          "compactRecords": 80,
+          "detailedRecords": 784
+        },
+        "flat": {
+          "sourceQualified": 64,
+          "measured": 64,
+          "unmeasured": 0,
+          "dispositions": {
+            "passed": 64
+          },
+          "bytes": {
+            "generated": 115679,
+            "detailed": 87696,
+            "detailedShare": 0.7580978397116158,
+            "cumulativeContext": 4886668,
+            "peakContext": 9113
+          },
+          "tokenMeasurement": "passed",
+          "tokenMeasuredEpisodes": 64,
+          "tokens": {
+            "generated": 34865,
+            "detailed": 25444,
+            "detailedShare": 0.7297863186576796,
+            "terminal": 928,
+            "observedAndContext": 1683092,
+            "total": 1718885,
+            "peakContext": 3061
+          },
+          "scope": "Sums cover measured episodes only; source refusals and measurement limits remain in the declared denominator."
+        },
+        "nativePacking": {
+          "status": "measured",
+          "measuredEpisodes": 64,
+          "unmeasuredEpisodes": 0,
+          "generatedTokens": 34865,
+          "observedTokens": 1869474,
+          "terminalTokens": 0,
+          "physicalRecords": 4604,
+          "logicalRecords": 1456,
+          "scope": "Actual retained native training packing receipts. Physical records include inserted contexts and framing; these counts do not measure serving latency or model success."
+        },
+        "model": {
+          "status": "unmeasured",
+          "nextStep": null,
+          "completedExecution": null,
+          "latencyMs": null
+        },
+        "nativeServing": {
+          "status": "unmeasured",
+          "latencyMs": null,
+          "cacheSavings": null
+        },
+        "defaultPromotion": "not-qualified"
+      }
+    },
+    {
+      "manifestFingerprint": "b50e0263950194bb0ebfaddd5876ca9d45079f42627a10c18d2c323d34185f1d",
+      "report": {
+        "schema": "semantic-preparation/8",
+        "representation": "mixed",
+        "producerRevision": "1e71e5a9385de8f1425593787c3261c20c3a0160",
+        "consumerRevision": "b276dc3c14075206c1550cbaacb3f456712788b3",
+        "contractDigest": "75b4b47cccd0b137e00f477e45572d9d160acbb63f70af4f506e8003359e32cc",
+        "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+        "registryDigest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+        "maxPositions": 128,
+        "maxHistory": 128,
+        "optimizerSteps": 0,
+        "learningClaim": null,
+        "counts": {
+          "attempted": 64,
+          "admitted": 64,
+          "orchestrationRecords": 64
+        },
+        "refusals": []
+      }
+    },
+    {
+      "status": "passed",
+      "qualification": "ordinary-prepared-source-supply-only",
+      "registryDigest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+      "population": 64,
+      "fullLaunchQualified": false,
+      "optimizerSteps": 0,
+      "report": "/home/runner/work/_temp/semantic-v8-support-supply.json"
+    }
+  ]
+}

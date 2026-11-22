@@ -16,6 +16,30 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Complete source-qualified production support — verified 22 November 2026
+
+The hosted ordinary route now passes at exact producer `1e71e5a9385de8f1425593787c3261c20c3a0160`
+and consumer `b276dc3c14075206c1550cbaacb3f456712788b3`: **64/64 source checks,
+64/64 independent native admissions, 64/64 complete token/packing measurements,
+and 64/64 ordinary prepared sources**, followed by the unchanged eight production
+behavior requirements in both train and validation. This supersedes the pending
+supply status in the historical checkpoint below. The frozen 16 families and
+48/12/4 split, original665 and selected66 remain unchanged.
+
+Complete job logs and extracted report lines are retained in
+`docs/evidence/v8-support-qualified1e71-2026-11-22/`. The result is explicitly
+source supply only: **zero optimizer steps, full launch unqualified, learned
+success unmeasured**. Normal production launch/assets/recipe readiness, target
+exposure, distributed lineage and accepted/held-out execution remain open.
+
+Hardest-first active implementation now addresses automatic durable composite
+coordinator/child history and latest-cut recovery, explicit public/native
+namespace/live-cell ownership, and the remaining ordinary-launch boundary.
+Current sandbox disk exhaustion prevents local execution; hosted validation is
+required for new changes and will retain its exact committed revisions. No
+untested implementation is credited as complete. **0/17 full acceptance packages
+are closed.**
+
 ## Source-qualified repeated calls and full production support inventory — 22 November 2026
 
 Command-level follow-up found that recursively freezing the support inventory
