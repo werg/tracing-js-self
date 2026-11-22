@@ -27,7 +27,7 @@ jobs:
       MEGATOKEN_NATIVE_SOURCE_PRODUCER: ${{ github.workspace }}/tracing-js-self
       MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
       MEGATOKEN_PYTHON: python
-      MEGATOKEN_TOKENIZER_JSON: ${{ runner.temp }}/production-tokenizer.json
+      MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/production-tokenizer.json
     defaults:
       run:
         shell: bash
