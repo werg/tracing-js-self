@@ -1,0 +1,54 @@
+{
+  "schema": "semantic-v8-combined-controlled-position-correction/1",
+  "helperRevision": "46b2f8f88e9556fd6bf13d6ddee93817e7c83689",
+  "helperSha256": "7bb9c60da778d0081279d5a68764b0eb6ae3c43ac3c908d4d97423568e16fa43",
+  "nativeRevision": "a8cf158882913fcf920f71b4f1efa85270d13e41",
+  "nativeTree": "8698f34329ae2827aff090c05bdfdc2941974d10",
+  "publishedNativeSameTree": "cdd01ac0dcd65d92e948cec39f7b5c156800206e",
+  "oldRunPreservedSeparately": 45045811229,
+  "actualControlledTestCases": 1,
+  "testFailures": 0,
+  "testErrors": 0,
+  "testSkips": 0,
+  "validatorRefusals": 6,
+  "firstPhaseOptimizerUpdates": 3,
+  "phaseTransitionOptimizerUpdates": 1,
+  "totalControlledOptimizerUpdatesExecuted": 4,
+  "globalOptimizerUpdates": null,
+  "fullCombinedGateRerun": false,
+  "runtime": {
+    "python": "3.12.14",
+    "torch": "2.10.0+cpu",
+    "pytest": "8.4.2"
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 2864,
+      "sha256": "31ed636e06169e75a7ed59c5e57fd0d320f97421db3a472bcda9e270651d8eab"
+    },
+    {
+      "path": "control.log",
+      "bytes": 204,
+      "sha256": "0d2716830fd301e43dfcf94d0016f67e6cce5216d8819af2fe9f02b0fc97e1e3"
+    },
+    {
+      "path": "control.xml",
+      "bytes": 400,
+      "sha256": "d6899a63c7837ae437859498409be7b0c1864fc01cfb08c7d63d97352b9fd460"
+    },
+    {
+      "path": "helper-validation.json",
+      "bytes": 2026,
+      "sha256": "ec2a1e806a66828ea6d92093e217345b3d52645ddbc4107dde5cdd4e95b6f8b4"
+    },
+    {
+      "path": "original-position-proof.json.gz.b64",
+      "bytes": 32289,
+      "sha256": "f20bd069cb564cae1ddedbe6bee547abbd6031c8ca3c435f3ee4a26b4ff014c2",
+      "encoding": "gzip-base64",
+      "originalBytes": 420330,
+      "originalSha256": "e613a6a7300d26360db231ca2ada727911286ffe3b81605e542a6435d97ff580"
+    }
+  ]
+}
