@@ -1,0 +1,23 @@
+{
+  "ordinary-137278424576": {
+    "originalBytes": 426829,
+    "originalSha256": "834b3bc6fe7117d666e5b3ffbd19c28568732a0fbcb101494a2c39078e6f3af0",
+    "gzipBytes": 123120,
+    "gzipSha256": "0c15934ef69f476643aaec55552431aac6f679e7a56fb9ff47deddbb703def69",
+    "path": "/workspace/scratch/175924c3d3c2/worktrees/recovery-resume-audit/docs/evidence/v8-ordinary-matrix-86bff70c-20261122/ordinary-137278424576.log.gz"
+  },
+  "ordinary-137278424819": {
+    "originalBytes": 1133231,
+    "originalSha256": "1655c7c0e4864c9b1d3b39134f8bdca266713b007d639e71a4db5f3bd6751e3c",
+    "gzipBytes": 218193,
+    "gzipSha256": "53df58ee465756dc186dcbfbbc26e380c4c014cb9ccc571622bf223b8aeabd34",
+    "path": "/workspace/scratch/175924c3d3c2/worktrees/recovery-resume-audit/docs/evidence/v8-ordinary-matrix-86bff70c-20261122/ordinary-137278424819.log.gz"
+  },
+  "ordinary-137278424908": {
+    "originalBytes": 1266084,
+    "originalSha256": "02c59c1513dfdc9eefd76f0b0e59ca14deeed485249fd4b0b7853cafefc8ee48",
+    "gzipBytes": 233171,
+    "gzipSha256": "e6d86351a1264b80460a2cb211b8dc5a8d0f90f95e7cc6a4bc04dc3f30e7d25c",
+    "path": "/workspace/scratch/175924c3d3c2/worktrees/recovery-resume-audit/docs/evidence/v8-ordinary-matrix-86bff70c-20261122/ordinary-137278424908.log.gz"
+  }
+}

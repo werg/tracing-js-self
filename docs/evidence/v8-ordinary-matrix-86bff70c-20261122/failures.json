@@ -1,0 +1,49 @@
+{
+  "runId": 45045101499,
+  "sourceSha": "86bff70c3b333ac307922e440647ad6b17926677",
+  "nodeReportedPerJob": {
+    "tests": 3041,
+    "pass": 2948,
+    "fail": 9,
+    "skipped": 84,
+    "independentLeafCensus": false
+  },
+  "failures": [
+    {
+      "test": "installed inventory retains all 665 original and 66 selected inputs including five module graphs",
+      "location": "/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-installed-qualification-v8.test.js:15:1"
+    },
+    {
+      "test": "public worker source, callback and original module controls recheck and continue without a native receipt",
+      "location": "/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-installed-qualification-v8.test.js:49:1"
+    },
+    {
+      "test": "installed continuation accepts callback-owned joins with ordered handler-close receipts",
+      "location": "/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-installed-qualification-v8.test.js:61:1"
+    },
+    {
+      "test": "source Promise joins preserve current-event allocations, duplicate dependencies, settlement and cleanup",
+      "location": "/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-protocol-promise-join-source-v8.test.js:14:1"
+    },
+    {
+      "test": "Promise join projection routes through common admission and independently rechecks exact contexts",
+      "location": "/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-protocol-promise-join-source-v8.test.js:37:1"
+    },
+    {
+      "test": "interoperability includes all source goldens and returns fresh mutable guest inputs",
+      "location": "/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-qualification-population-v8.test.js:25:1"
+    },
+    {
+      "test": "complete ordinary inventory preserves cyclic callback inputs through durable JSON",
+      "location": "/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-qualification-population-v8.test.js:63:1"
+    },
+    {
+      "test": "conversion qualification extends the original 47 unchanged and retains five explicit candidate refusals",
+      "location": "/home/runner/work/tracing-js-self/tracing-js-self/test/semantic-qualification-population-v8.test.js:81:1"
+    },
+    {
+      "test": "forwarding queue tampering and unpaired V8 promotion are refused",
+      "location": "/home/runner/work/tracing-js-self/tracing-js-self/test/training-promise-job-projection.test.js:59:1"
+    }
+  ]
+}
