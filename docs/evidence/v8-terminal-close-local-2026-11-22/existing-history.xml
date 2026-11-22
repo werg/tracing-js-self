@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="restores coordinator-ready after exact create and bootstrap receipts" time="0.580399" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="restores bootstrapped active children within the declared active bound" time="0.354088" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="restored host bridge keeps the caller live clock" time="0.363786" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="restores the exact acknowledged stale child rejection and retries its original selection" time="0.489244" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="restores join-before-run and executes only the acknowledged child" time="0.310174" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="restores the mixed child ledger after exact native child completion" time="0.527715" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="composite verifier rejects mixed-ledger, dependency, and unknown-ack mutations" time="0.914020" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="checkpoint is unavailable before a safe point" time="0.006770" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="two declared children restore from sparse acknowledged cuts without redispatch" time="2.857062" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="rejects an older acknowledged composite head after a later durable pending marker" time="0.245988" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="durable composite checkpoint requires an independent exact head acknowledgement and restores latest" time="2.399064" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="lost completed-disposition ACK leaves the last external head fenced" time="16.781434" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="unknown native close leaves a completed session fenced without a terminal disposition" time="13.376907" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="automatic composite history acknowledges the join safe point before child dispatch" time="26.658756" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="post-child persistence failure leaves a durable in-flight fence that refuses fresh replay" time="5.706622" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="automatic persistence refuses a journal readback that drops its pending fence" time="0.393258" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="requested child-ready pause stores a complete cut and arms its fence only on resumed dispatch" time="19.884253" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="cancellation during coordinator fence acknowledgement prevents a later selection" time="0.456885" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="requested orchestration safe point is snapshotted before native initialization awaits" time="0.103030" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="failed durable head acknowledgement leaves no reusable history receipt" time="0.253004" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-checkpoint-v8.test.js"/>
+	<testcase name="model-only coordinator runs only the exact joined, bootstrapped child before its next choice" time="0.105545" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-v8.test.js"/>
+	<testcase name="failed original coordinator bytes and one normalized cancellation reason survive cleanup" time="0.015848" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-v8.test.js"/>
+	<testcase name="a committed create remains counted as acknowledged when bootstrap later fails" time="0.010253" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-v8.test.js"/>
+	<testcase name="orchestration exposes only safe composite checkpoints and requires explicit durable dependencies" time="0.006903" classname="test" file="/workspace/scratch/9faed68167fb/producer-terminal/test/semantic-selected-orchestration-v8.test.js"/>
+	<!-- tests 24 -->
+	<!-- suites 0 -->
+	<!-- pass 24 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 93581.827113 -->
+</testsuites>
