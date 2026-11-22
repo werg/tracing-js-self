@@ -73,6 +73,14 @@ HTML. Addition/profile citations remain explicit source references; they do
 not certify the external artifact unless that artifact is separately acquired
 and verified.
 
+A decision requires resolved routing metadata and a complete declared module
+dependency closure. Referenced `_FIXTURE` files are valid dependency inputs;
+the audit verifies their actual bytes along with the test and harness inputs.
+An unresolved closure remains `unclassified`, and rehashing its catalog cannot
+make it eligible for a decision. An `edition` decision cannot also list a
+required addition or external profile obligation; those obligations require
+separate extension/profile adjudication.
+
 `reviewer.kind` records who or what performed the review (`human`, `assistant`,
 or `tool-assisted`); `method` and `rationale` describe the actual work. The
 schema does not require a human reviewer. A feature tag, path, anchor, parser
@@ -86,7 +94,7 @@ remain false.
 This schema makes declared decisions auditable and content-bound; it does not
 automatically adjudicate the 102,994 retained variants. A one-file source pilot
 is recorded in
-[`multiplication-line-terminator-pilot.json`](../evidence/test262-edition-audit-d53ebc8-2026-11-22/multiplication-line-terminator-pilot.json).
+[`multiplication-line-terminator-pilot.json`](evidence/test262-edition-audit-d53ebc8-2026-11-22/multiplication-line-terminator-pilot.json).
 The exact test source and its default `assert.js` / `sta.js` harness closure
 were fetched from `tc39/test262` at the pinned revision and their Git blob IDs
 and SHA-256 digests match the retained full catalog. The reviewed test contains

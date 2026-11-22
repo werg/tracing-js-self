@@ -80,6 +80,7 @@ export function buildTest262EditionAudit({catalog,sources,specification,bytes,py
     fileIdentities.set(file.path,file.sha256);
   }
   const modes=new Map();
+  const reviewedInputs=new Set();
   for(const variant of catalog.variants){
     const {id,...identity}=variant,metadata=routing.get(variant.path);
     const expectedHarness=metadata&&!metadata.flags.includes('raw')?[...new Set(['assert.js','sta.js',
@@ -94,6 +95,13 @@ export function buildTest262EditionAudit({catalog,sources,specification,bytes,py
     if(!modes.has(variant.path))modes.set(variant.path,[]);
     modes.get(variant.path).push(variant.mode);
     const evidence=variant.classification.evidence;
+    for(const input of evidence?.sourceInputs??[]){
+      if(reviewedInputs.has(input.path))continue;
+      const value=sources?.[input.path],source=typeof value==='string'?Buffer.from(value):value;
+      if(!(source instanceof Uint8Array)||sha(source)!==input.sha256)
+        throw new TypeError('Membership audit requires the exact reviewed source input bytes: '+input.path);
+      reviewedInputs.add(input.path);
+    }
     if(evidence&&(evidence.editionSpecification.uri!==specification.uri||
       evidence.editionSpecification.sha256!==specification.sha256))
       throw new TypeError('Membership review names a different pinned edition specification: '+variant.path);

@@ -127,7 +127,8 @@ export function test262VariantModes(metadata){
     flags.includes('onlyStrict')?['strict']:flags.includes('noStrict')?['sloppy']:['sloppy','strict'];
 }
 
-function validateMembershipClassification(classification,{suiteRevision,profile,sourceInputs,path,sourceDigest}={}){
+function validateMembershipClassification(classification,{suiteRevision,profile,sourceInputs,sourceDigest,
+  metadataResolved=true,dependencies={status:'not_required',unresolved:[]}}={}){
   if(!classification||!membershipValues.has(classification.membership)||
     typeof classification.requiredForThisRelease!=='boolean'||
     classification.membership==='outside_profile'&&
@@ -141,6 +142,9 @@ function validateMembershipClassification(classification,{suiteRevision,profile,
     if(Object.hasOwn(classification,'evidence'))throw new TypeError('Unclassified Test262 membership cannot carry a decision');
     return true;
   }
+  if(!metadataResolved||!['complete','not_required'].includes(dependencies?.status)||
+    !Array.isArray(dependencies?.unresolved)||dependencies.unresolved.length)
+    throw new TypeError('Membership review requires resolved metadata and complete source dependency closure');
   const evidence=classification.evidence;
   const evidenceProblem=!exactFields(evidence,['schema','reviewer','method','rationale','suiteRevision','sourceDigest','profileDigest',
       'hostProfileDigest','editionSpecification','sourceInputs','normativeObligations'])?'evidence fields':
@@ -178,6 +182,8 @@ function validateMembershipClassification(classification,{suiteRevision,profile,
   if(classification.membership==='edition'&&!editionObligation||
     classification.membership==='extension'&&!externalObligation)
     throw new TypeError('Membership review lacks a normative obligation for its declared membership');
+  if(classification.membership==='edition'&&externalObligation)
+    throw new TypeError('Edition membership cannot require addition or external profile obligations');
   return true;
 }
 
@@ -245,19 +251,20 @@ export function buildTest262Catalog({snapshot,sources,profile,moduleDependencies
     for(const mode of modes){
       const harness=metadata&&!metadata.flags.includes('raw')?[...new Set(['assert.js','sta.js',
         ...(metadata.flags.includes('async')?['doneprintHandle.js']:[]),...metadata.includes])]:[];
-      const moduleFiles=mode==='module'?closure(file.path).files.filter(row=>row.path!==file.path):[],
+      const dependencies=mode==='module'?closure(file.path):{status:'not_required',unresolved:[],files:[]},
+        moduleFiles=dependencies.files.filter(row=>row.path!==file.path),
         sourceInputs=[{path:file.path,sha256:file.sha256,kind:'test'},
           ...harness.map(name=>({path:'harness/'+name,sha256:byPath.get('harness/'+name)?.sha256??null,kind:'harness'})),
           ...moduleFiles.map(row=>({path:row.path,sha256:row.sha256,kind:'module-dependency'}))]
           .sort((a,b)=>a.path.localeCompare(b.path)||a.kind.localeCompare(b.kind));
       const classification=classifications[file.path]??{membership:'unclassified',requiredForThisRelease:false};
       validateMembershipClassification(classification,{suiteRevision:snapshot.revision,profile:boundProfile,
-        sourceInputs,path:file.path,sourceDigest:file.sha256});
+        sourceInputs,sourceDigest:file.sha256,metadataResolved:metadata!==null&&metadataError===null,dependencies});
       const row={path:file.path,sourceDigest:file.sha256,gitBlobSha:file.gitBlobSha,mode,
         metadata,metadataError,classification:JSON.parse(canonical(classification)),
         expectedOutcome:metadata?.negative?{kind:'error',...metadata.negative}:{kind:'normal'},
         harness:harness.map(name=>({path:'harness/'+name,sha256:byPath.get('harness/'+name)?.sha256??null})),
-        dependencies:mode==='module'?closure(file.path):{status:'not_required',unresolved:[],files:[]},
+        dependencies,
         requiredHostCapabilities:metadata?[...(metadata.flags.includes('async')?['async-completion']:[]),
           ...(mode==='module'?['module-linker']:[]),
           ...(metadata.features.some(feature=>/^(?:Atomics|SharedArrayBuffer)/.test(feature))?['agent-cluster']:[])]:[]};
@@ -296,12 +303,14 @@ export function validateTest262Catalog(catalog){
         .map(file=>({path:file.path,sha256:file.sha256,kind:'module-dependency'}))]
       .sort((a,b)=>a.path.localeCompare(b.path)||a.kind.localeCompare(b.kind));
     validateMembershipClassification(row.classification,{suiteRevision:catalog.suiteRevision,profile:catalog.profile,
-      sourceInputs,path:row.path,sourceDigest:row.sourceDigest});
+      sourceInputs,sourceDigest:row.sourceDigest,metadataResolved:row.metadata!==null&&row.metadataError===null,
+      dependencies:row.dependencies});
     const sourceFile=files.get(row.path);
     if(!sourceFile||sourceFile.kind!=='test'||sourceFile.sha256!==row.sourceDigest||
       row.classification.membership!=='unclassified'&&row.classification.evidence.sourceInputs.some(input=>{
         const file=files.get(input.path);return !file||file.sha256!==input.sha256||
-          input.kind==='harness'&&file.kind!=='harness'||input.kind==='module-dependency'&&file.kind!=='test';
+          input.kind==='harness'&&file.kind!=='harness'||
+          input.kind==='module-dependency'&&!['test','fixture'].includes(file.kind);
       }))throw new TypeError('Membership review source bytes do not match the frozen catalog: '+row.path);
     if(classifications.has(row.path)&&conformanceDigest(classifications.get(row.path))!==
       conformanceDigest(row.classification))throw new TypeError('Test262 variants disagree on file membership review: '+row.path);

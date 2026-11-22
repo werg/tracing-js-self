@@ -185,3 +185,56 @@ test('changed original bytes and rehashed missing variants cannot manufacture a 
   const changed=Buffer.from(input.bytes);changed[0]^=1;
   assert.throws(()=>buildTest262EditionAudit({...input,bytes:changed}),/specification bytes differ/);
 });
+
+test('reviewed modules require every pinned fixture and a complete dependency closure',()=>{
+  const path='test/module-review.js',dependency='test/value_FIXTURE.js',
+    sources={
+      [path]:'/*---\nesid: sec-modules\nflags: [module]\n---*/\n'+
+        'import value from "./value_FIXTURE.js";\nassert.sameValue(value, 1);\n',
+      [dependency]:'export default 1;\n',
+      'harness/assert.js':'function assert() {}\n',
+      'harness/sta.js':'function Test262Error() {}\n',
+    },snapshot={repository:'tc39/test262',revision:'3'.repeat(40),
+      files:Object.fromEntries(Object.entries(sources).map(([name,source])=>[name,gitBlobSha(source)]))},
+    base=fixture(),profile=base.catalog.profile,
+    sourceInputs=Object.entries(sources).map(([name,source])=>({path:name,
+      sha256:createHash('sha256').update(source).digest('hex'),
+      kind:name===path?'test':name===dependency?'module-dependency':'harness'}))
+      .sort((a,b)=>a.path.localeCompare(b.path)),
+    classification={membership:'edition',requiredForThisRelease:false,evidence:{
+      schema:'test262-edition-membership-review/1',
+      reviewer:{kind:'assistant',identity:'synthetic module review control'},
+      method:'synthetic-fixture-only',rationale:'Tests byte and closure validation; no actual membership decision.',
+      suiteRevision:snapshot.revision,sourceDigest:sourceInputs.find(row=>row.path===path).sha256,
+      profileDigest:conformanceDigest(profile),hostProfileDigest:conformanceDigest(profile.hostProfile),
+      editionSpecification:{uri:base.specification.uri,sha256:base.specification.sha256},sourceInputs,
+      normativeObligations:[{basis:'edition',uri:base.specification.uri,sha256:base.specification.sha256,
+        clauseIds:['sec-modules']}],
+    }},input={snapshot,sources,profile,moduleDependencies:{[path]:[dependency],[dependency]:[]},
+      classifications:{[path]:classification}},catalog=buildTest262Catalog(input);
+  assert.equal(catalog.files.find(row=>row.path===dependency).kind,'fixture');
+  assert.equal(validateTest262Catalog(catalog),true);
+  const audit={catalog,sources,specification:base.specification,bytes:base.bytes};
+  assert.deepEqual(buildTest262EditionAudit(audit).summary.editionMembership,{edition:1});
+  assert.throws(()=>buildTest262EditionAudit({...audit,sources:{...sources,[dependency]:'export default 2;\n'}}),
+    /exact reviewed source input bytes/);
+  const unresolved={...input,moduleDependencies:{[path]:[dependency]}};
+  assert.throws(()=>buildTest262Catalog(unresolved),/complete source dependency closure/);
+  const unknown=buildTest262Catalog({...unresolved,classifications:{}});
+  assert.equal(unknown.variants[0].classification.membership,'unclassified');
+  assert.equal(unknown.variants[0].dependencies.status,'unresolved');
+  const rehashed=structuredClone(catalog);
+  rehashed.variants[0].dependencies.status='unresolved';
+  rehashed.variants[0].dependencies.unresolved=[dependency];
+  const {digest,...body}=rehashed;rehashed.digest=conformanceDigest(body);
+  assert.throws(()=>validateTest262Catalog(rehashed),/complete source dependency closure/);
+});
+
+test('an edition decision cannot simultaneously require an addition or external profile obligation',()=>{
+  const input=fixture({'test/core.js':{membership:'edition',requiredForThisRelease:false}}),
+    catalog=structuredClone(input.catalog);
+  catalog.variants[0].classification.evidence.normativeObligations.push({basis:'addition',
+    uri:'https://example.invalid/required-addition',sha256:'a'.repeat(64),clauseIds:['addition']});
+  const {digest,...body}=catalog;catalog.digest=conformanceDigest(body);
+  assert.throws(()=>validateTest262Catalog(catalog),/Edition membership cannot require addition/);
+});
