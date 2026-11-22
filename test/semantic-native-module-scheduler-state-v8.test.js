@@ -29,7 +29,7 @@ test('standalone source-derived scheduler state agrees with actual Python at eve
   const plan=buildModuleSchedulerPlanV8(metadata),initial=createModuleSchedulerStateV8(plan);
   const cuts=[];
   let state=initial;
-  const frame=file=>'frame:'+file,execution=file=>'execution:'+file,awaited=file=>'awaited:'+file;
+  const frame=file=>'frame:'+file,execution=file=>plan.modules.find(row=>row.file===file).hasTLA?'execution:'+file:null,awaited=file=>'awaited:'+file;
   const startAction=file=>({type:'module.start',file,frameId:frame(file),executionPromiseId:execution(file)});
   const startFacts=file=>({frames:{[frame(file)]:{id:frame(file),moduleFile:file,
     executionPromiseId:execution(file)}},promises:{[execution(file)]:{id:execution(file),status:'pending'}},jobs:{}});
@@ -47,9 +47,9 @@ test('standalone source-derived scheduler state agrees with actual Python at eve
   function settle(file,rejected=false){
     const promiseId=execution(file),jobId='settle:'+file,status=rejected?'rejected':'fulfilled';
     return [{type:rejected?'module.reject':'module.complete',file,frameId:frame(file),promiseId,jobId},
-      {promises:{[promiseId]:{id:promiseId,status,value:rejected?'failure':null}},
+      {frames:{[frame(file)]:{id:frame(file),moduleFile:file,executionPromiseId:promiseId,status:'completed',completion:{type:rejected?'throw':'return',value:rejected?'failure':null}}},promises:{[promiseId]:{id:promiseId,status,value:rejected?'failure':null}},
         jobs:{[jobId]:{id:jobId,promiseId,frameId:frame(file),moduleFile:file,status,
-          kind:rejected?'module-evaluation-failure':'module-execution-settle',
+          kind:promiseId===null?(rejected?'module-synchronous-failure':'module-synchronous-complete'):(rejected?'module-evaluation-failure':'module-execution-settle'),
           value:rejected?'failure':null}}}];
   }
   function awaitCut(file){
@@ -99,7 +99,7 @@ test('standalone source-derived scheduler state agrees with actual Python at eve
   const wrongReason=structuredClone(rightFacts);wrongReason.jobs[rightReject.jobId].value='different';
   cut('rejected reaction outcome must agree',rightReject,wrongReason,false);
   cut('right await rejects',rightReject,rightFacts);
-  cut('rejected await cannot fulfill module',...settle('right.js'),false);
+  cut('caught rejected await can fulfill from exact execution settlement',...settle('right.js'),true,state,false);
   cut('right execution rejects',...settle('right.js',true));
   const propagate={type:'module.propagateFailure',file:'main.js',dependencyFile:'right.js',
     promiseId:execution('right.js'),jobId:'settle:right.js'};

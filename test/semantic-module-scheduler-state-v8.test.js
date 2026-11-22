@@ -31,11 +31,11 @@ const fact=(frameId,moduleFile,promiseId,status='pending',extra={})=>({
 });
 const awaitFacts=(file,frameId,executionPromiseId,promiseId,status='pending',jobId=null)=>({frames:{[frameId]:{id:frameId,moduleFile:file,executionPromiseId,awaitedPromiseId:promiseId}},promises:{[promiseId]:{id:promiseId,status,...(status==='pending'?{}:{value:null})}},jobs:jobId?{[jobId]:{id:jobId,promiseId,frameId,status,kind:'promise-reaction',moduleFile:file,value:null}}:{}});
 function complete(plan,state,file,n) {
-  const frameId='frame-'+n, promiseId='exec-'+n, jobId='job-'+n;
+  const frameId='frame-'+n, promiseId=plan.modules.find(row=>row.file===file).hasTLA?'exec-'+n:null, jobId='job-'+n;
   const startFacts=fact(frameId,file,promiseId);
   state=applyModuleSchedulerActionV8(plan,state,{type:'module.start',file,frameId,executionPromiseId:promiseId},startFacts);
-  const facts={frames:startFacts.frames,promises:{[promiseId]:{id:promiseId,status:'fulfilled',value:null}},
-    jobs:{[jobId]:{id:jobId,promiseId,frameId,status:'fulfilled',kind:'module-execution-settle',moduleFile:file,value:null}}};
+  const facts={frames:{[frameId]:{...startFacts.frames[frameId],status:'completed',completion:{type:'return',value:null}}},promises:{[promiseId]:{id:promiseId,status:'fulfilled',value:null}},
+    jobs:{[jobId]:{id:jobId,promiseId,frameId,status:'fulfilled',kind:promiseId===null?'module-synchronous-complete':'module-execution-settle',moduleFile:file,value:null}}};
   return applyModuleSchedulerActionV8(plan,state,{type:'module.complete',file,frameId,promiseId,jobId},facts);
 }
 

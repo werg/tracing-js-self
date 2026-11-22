@@ -1,8 +1,8 @@
-name: Experimental source-derived module scheduler state
+name: Source-owned module scheduler lifecycle and native parity
 
 on:
   push:
-    branches: [codex/v8-module-scheduler-state-20261122]
+    branches: [codex/v8-module-scheduler-state-20261122, codex/v8-scheduler-source-ownership-20261122]
 
 permissions:
   contents: read
@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: werg/megatoken
-          ref: 263b7b9ec921fd43e3d97a8136dee1d1ab433b33
+          ref: 385b830b8744d39fa5847b58f82dd0eceb3656ee
           path: megatoken
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -93,6 +93,7 @@ jobs:
             test/evaluated-module-scheduler.test.js \
             test/semantic-module-scheduler-state-v8.test.js \
             test/semantic-native-module-scheduler-state-v8.test.js \
+            test/semantic-module-scheduler-source-v8.test.js \
             2>&1 | tee "$RUNNER_TEMP/module-scheduler-js.xml"
           python - <<'PY'
           import json, os, xml.etree.ElementTree as ET
@@ -104,8 +105,14 @@ jobs:
           evidence=json.loads((root/'module-scheduler-state-evidence.json').read_text())
           if evidence['publicAdmission'] is not False or evidence['acceptedCuts']<1 or evidence['refusedCuts']<1:
               raise ValueError('Standalone scheduler comparison must retain both accepted and refused cuts without claiming admission')
+          source=json.loads((root/'module-scheduler-source-evidence.json').read_text())
+          if source['sourceCases']!=6 or source['actualNativeCases']!=6 or source['ownedTransitions']<1:
+              raise ValueError('Every original source lifecycle must pass actual native transition replay')
+          if source['publicAdmission'] is not False or source['trainingAdmission'] is not False or source['optimizerUpdates']!=0:
+              raise ValueError('Source ownership alone cannot grant public/data admission or optimizer exposure')
           print(f'{len(cases)} original ESM and shared scheduler controls passed, zero skips')
           print('SCHEDULER_STATE_EVIDENCE_JSON '+json.dumps(evidence,separators=(',',':')))
+          print('SCHEDULER_SOURCE_EVIDENCE_JSON '+json.dumps(source,separators=(',',':')))
           PY
       - name: Verify both candidate checkouts remained exact
         if: ${{ !cancelled() }}

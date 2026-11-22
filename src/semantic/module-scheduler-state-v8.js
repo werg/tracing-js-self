@@ -1,4 +1,4 @@
-// Experimental async module DAG state model. Not wired to public admission.
+// Source-bound module DAG state. Public/data admission remains a separate gate.
 import {createHash} from 'node:crypto';
 
 const fail = (message) => { throw new TypeError('Module scheduler state: ' + message); };
@@ -103,7 +103,7 @@ function verifyState(plan, state) {
     const row = state.modules[module.file];
     if (!exact(row, ['status', 'pendingDependencies', 'startOrder', 'frameId',
       'executionPromiseId', 'awaited', 'completionJobId', 'failure', 'completedDependencies']) ||
-      !['waiting', 'running', 'suspended', 'fulfilled', 'rejected', 'failed-await'].includes(row.status) ||
+      !['waiting', 'running', 'suspended', 'fulfilled', 'rejected'].includes(row.status) ||
       !Array.isArray(row.completedDependencies) ||
       new Set(row.completedDependencies).size !== row.completedDependencies.length ||
       row.completedDependencies.some((file) => !module.dependencies.includes(file)) ||
@@ -112,11 +112,12 @@ function verifyState(plan, state) {
     const started = row.startOrder !== null;
     if (started) {
       if (!Number.isSafeInteger(row.startOrder) || row.startOrder < 0 ||
-          row.startOrder >= state.nextStartOrder || !id(row.frameId) || !id(row.executionPromiseId) ||
-          frames.has(row.frameId) || executions.has(row.executionPromiseId))
+          row.startOrder >= state.nextStartOrder || !id(row.frameId) ||
+          (module.hasTLA ? !id(row.executionPromiseId) : row.executionPromiseId !== null) ||
+          frames.has(row.frameId) || (row.executionPromiseId !== null && executions.has(row.executionPromiseId)))
         fail('module identity state');
       frames.add(row.frameId);
-      executions.add(row.executionPromiseId);
+      if (row.executionPromiseId !== null) executions.add(row.executionPromiseId);
       orders.push(row.startOrder);
     } else if (row.frameId !== null || row.executionPromiseId !== null) fail('unstarted identity');
     if (row.status === 'waiting' &&
@@ -129,11 +130,6 @@ function verifyState(plan, state) {
         (!started || row.pendingDependencies !== 0 || !exact(row.awaited, ['promiseId']) || !id(row.awaited.promiseId) ||
          row.completionJobId !== null || row.failure !== null))
       fail('suspended module state');
-    if (row.status === 'failed-await' &&
-        (!started || row.pendingDependencies !== 0 || row.awaited !== null || !exact(row.failure, ['moduleFile', 'promiseId', 'jobId']) ||
-         row.failure.moduleFile !== module.file || !id(row.failure.promiseId) || !id(row.failure.jobId) ||
-         row.completionJobId !== null))
-      fail('failed await state');
     if (row.status === 'fulfilled' &&
         (!started || row.pendingDependencies !== 0 || row.awaited !== null || !id(row.completionJobId) || row.failure !== null))
       fail('fulfilled module state');
@@ -141,7 +137,9 @@ function verifyState(plan, state) {
         (row.awaited !== null || (started && row.pendingDependencies !== 0) ||
          !exact(row.failure, ['moduleFile', 'promiseId', 'jobId']) ||
          !plan.modules.some((item) => item.file === row.failure.moduleFile) ||
-         !id(row.failure.promiseId) || !id(row.failure.jobId) || !id(row.completionJobId) ||
+         (plan.modules.find(item=>item.file===row.failure.moduleFile).hasTLA ?
+           !id(row.failure.promiseId) : row.failure.promiseId !== null) ||
+         !id(row.failure.jobId) || !id(row.completionJobId) ||
          row.completionJobId !== row.failure.jobId ||
          (started && row.failure.moduleFile !== module.file)))
       fail('rejected module state');
@@ -166,9 +164,10 @@ function verifyState(plan, state) {
   if (new Set(orders).size !== orders.length || orders.length !== state.nextStartOrder)
     fail('noncanonical start order');
 }
-function pendingPromise(facts, promiseId) {
+function existingPromise(facts, promiseId) {
   const promise = facts?.promises?.[promiseId];
-  if (!promise || promise.id !== promiseId || promise.status !== 'pending') fail('expected existing pending promise');
+  if (!promise || promise.id !== promiseId || !['pending','fulfilled','rejected'].includes(promise.status))
+    fail('expected existing await promise');
   return promise;
 }
 function settledJob(facts, action, expectedStatus) {
@@ -197,7 +196,8 @@ export function applyModuleSchedulerActionV8(plan, state, action, facts = {}) {
   if (!row || !source) fail('unknown module');
   if (action.type === 'module.start') {
     if (!exact(action, ['type', 'file', 'frameId', 'executionPromiseId']) ||
-        row.status !== 'waiting' || row.pendingDependencies !== 0 || !id(action.frameId) || !id(action.executionPromiseId))
+        row.status !== 'waiting' || row.pendingDependencies !== 0 || !id(action.frameId) ||
+        (source.hasTLA ? !id(action.executionPromiseId) : action.executionPromiseId !== null))
       fail('module start');
     const deps = source.dependencies.map((file) => next.modules[file]);
     if (deps.some((dep) => dep.status !== 'fulfilled')) fail('dependencies have not completed');
@@ -206,10 +206,10 @@ export function applyModuleSchedulerActionV8(plan, state, action, facts = {}) {
         facts.frames[action.frameId].executionPromiseId !== action.executionPromiseId)
       fail('module execution frame identity');
     if (Object.values(next.modules).some((item) => item.frameId === action.frameId ||
-        item.executionPromiseId === action.executionPromiseId)) fail('reused module execution identity');
-    if (!facts.promises?.[action.executionPromiseId] ||
+        (action.executionPromiseId !== null && item.executionPromiseId === action.executionPromiseId))) fail('reused module execution identity');
+    if (source.hasTLA && (!facts.promises?.[action.executionPromiseId] ||
         facts.promises[action.executionPromiseId].id !== action.executionPromiseId ||
-        facts.promises[action.executionPromiseId].status !== 'pending')
+        facts.promises[action.executionPromiseId].status !== 'pending'))
       fail('execution promise identity');
     row.status = 'running';
     row.frameId = action.frameId;
@@ -225,7 +225,7 @@ export function applyModuleSchedulerActionV8(plan, state, action, facts = {}) {
     if (!frame || frame.id !== action.frameId || frame.moduleFile !== action.file ||
         frame.executionPromiseId !== row.executionPromiseId ||
         frame.awaitedPromiseId !== action.promiseId) fail('module await frame identity');
-    pendingPromise(facts, action.promiseId);
+    existingPromise(facts, action.promiseId);
     row.awaited = {promiseId: action.promiseId};
     row.status = 'suspended';
   } else if (action.type === 'module.resume') {
@@ -239,28 +239,34 @@ export function applyModuleSchedulerActionV8(plan, state, action, facts = {}) {
     if (!frame || frame.id !== action.frameId || frame.moduleFile !== action.file ||
         frame.executionPromiseId !== row.executionPromiseId ||
         frame.awaitedPromiseId !== action.promiseId) fail('resume frame identity');
-    const {job} = settledJob(facts, action, promise.status);
-    if (promise.status === 'rejected') {
-      row.status = 'failed-await';
-      row.failure = {moduleFile: action.file, promiseId: promise.id, jobId: job.id};
-      row.awaited = null;
-      verifyState(plan, next);
-      return next;
-    }
+    settledJob(facts, action, promise.status);
+    // A rejected await resumes the body with a throw. Source catch/finally may
+    // handle it; only the independently settled execution proves module failure.
     row.awaited = null;
     row.status = 'running';
   } else if (action.type === 'module.complete' || action.type === 'module.reject') {
     const rejecting = action.type === 'module.reject';
     if (!exact(action, ['type', 'file', 'frameId', 'promiseId', 'jobId']) ||
-        !['running', 'suspended', 'failed-await'].includes(row.status) ||
+        !['running', 'suspended'].includes(row.status) ||
         row.frameId !== action.frameId || row.executionPromiseId !== action.promiseId ||
         !id(action.jobId)) fail('module settlement');
     const status = rejecting ? 'rejected' : 'fulfilled';
-    const {promise, job} = settledJob(facts, action, status);
-    const expectedKind = rejecting ? 'module-evaluation-failure' : 'module-execution-settle';
+    let promise,job;
+    if(source.hasTLA) ({promise,job}=settledJob(facts,action,status));
+    else {
+      job=facts.jobs?.[action.jobId];
+      const frame=facts.frames?.[action.frameId];
+      if(!job||job.id!==action.jobId||job.promiseId!==null||job.frameId!==action.frameId||
+         job.status!==status||!Object.hasOwn(job,'value')||!frame||frame.id!==action.frameId||
+         frame.moduleFile!==action.file||frame.executionPromiseId!==null||
+         frame.status!=='completed'||frame.completion?.type!==(rejecting?'throw':'return')||
+         canonical(frame.completion.value)!==canonical(job.value)) fail('synchronous completion authority');
+      promise={id:null};
+    }
+    const expectedKind = source.hasTLA ? (rejecting ? 'module-evaluation-failure' : 'module-execution-settle') :
+      (rejecting?'module-synchronous-failure':'module-synchronous-complete');
     if (job.kind !== expectedKind || job.moduleFile !== action.file) fail('module execution settlement authority');
     if (row.status === 'suspended') fail('cannot settle with an unresolved await');
-    if (row.status === 'failed-await' && !rejecting) fail('failed await cannot complete successfully');
     row.status = status;
     row.awaited = null;
     row.completionJobId = job.id;
@@ -274,19 +280,20 @@ export function applyModuleSchedulerActionV8(plan, state, action, facts = {}) {
         next.modules[action.dependencyFile]?.status !== 'rejected' ||
         next.modules[action.dependencyFile].failure?.promiseId !== action.promiseId ||
         next.modules[action.dependencyFile].failure?.jobId !== action.jobId ||
-        !id(action.promiseId) || !id(action.jobId)) fail('dependency failure propagation');
+        (action.promiseId!==null&&!id(action.promiseId)) || !id(action.jobId)) fail('dependency failure propagation');
     const promise = facts.promises?.[action.promiseId];
     const job = facts.jobs?.[action.jobId];
-    if (!promise || promise.id !== action.promiseId || promise.status !== 'rejected' ||
+    const asynchronous=plan.modules.find(item=>item.file===next.modules[action.dependencyFile].failure.moduleFile).hasTLA;
+    if (asynchronous&&(!promise || promise.id !== action.promiseId || promise.status !== 'rejected') ||
         !job || job.id !== action.jobId || job.promiseId !== action.promiseId ||
-        job.status !== 'rejected' || job.kind !== 'module-evaluation-failure' ||
+        job.status !== 'rejected' || job.kind !== (asynchronous?'module-evaluation-failure':'module-synchronous-failure') ||
         job.moduleFile !== next.modules[action.dependencyFile].failure.moduleFile ||
-        !Object.hasOwn(promise, 'value') || !Object.hasOwn(job, 'value') ||
-        canonical(promise.value) !== canonical(job.value))
+        !Object.hasOwn(job, 'value') || asynchronous&&(!Object.hasOwn(promise, 'value') ||
+        canonical(promise.value) !== canonical(job.value)))
       fail('dependency propagation job identity');
     row.status = 'rejected';
     row.failure = {moduleFile: next.modules[action.dependencyFile].failure.moduleFile,
-      promiseId: promise.id, jobId: job.id};
+      promiseId: action.promiseId, jobId: job.id};
     row.completionJobId = job.id;
     row.completedDependencies.push(action.dependencyFile);
     row.pendingDependencies -= 1;
