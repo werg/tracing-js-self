@@ -1,0 +1,88 @@
+name: Retain exact support optimizer target counts
+
+on:
+  push:
+    branches: [codex/v8-target-exposure-evidence-20261122]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  extract-recorded-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: '14742489071'
+          run-id: '44991189912'
+          repository: werg/tracing-js-self
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: retained-support
+      - name: Verify identities and print the actual checkpoint census
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+
+          root=Path('retained-support')
+          commands=list(root.rglob('command-report.json'))
+          matches=[]
+          for path in commands:
+              data=json.loads(path.read_text())
+              if data.get('populationCount')==64 and data.get('supportPopulation'):
+                  matches.append((path,data))
+          assert len(matches)==1, 'Expected one exact complete support command report'
+          command_path,command=matches[0]
+          assert command['producerRevision']=='3cf0e4732290ab07a6f0d1f897e8893df762cc92'
+          assert command['consumerRevision']=='e9817ad637f57ba82e370770420f6f3ef877c7b3'
+          assert command['status']=='passed' and command['optimizerUpdates']==2
+          assert command['learnedSuccess'] is None
+          summary_path=command_path.parent/'qualification'/'summary.json'
+          summary=json.loads(summary_path.read_text())
+          assert summary['consumerRevision']==command['consumerRevision']
+          assert summary['preparation']['producerRevision']==command['producerRevision']
+          assert summary['preparation']['consumerRevision']==command['consumerRevision']
+          assert summary['fullLaunchQualified'] is False and summary['learnedSuccess'] is None
+          target=summary['optimizerResumeExport']['optimizerTargetExposure']
+          assert target['registryDigest']==command['registryDigest']
+          assert target['historyContinued'] is True and target['allTargetsExposed'] is False
+          assert target['resumedCounts']['sourceCount']>0
+          assert target['resumedCounts']['logicalTargetCount']>0
+          assert target['resumedCounts']['physicalTargetRecordCount']>0
+          files=[command_path,summary_path]
+          supply=[]
+          for name in ('semantic-v8-support-supply.json','support-supply.json'):
+              for path in sorted(root.rglob(name)):
+                  assert path.stat().st_size<1048576, 'Unexpected supply report size'
+                  supply.append({'path':str(path.relative_to(root)),'report':json.loads(path.read_text())})
+                  files.append(path)
+          evidence={
+              'schema':'retained-v8-support-target-exposure-evidence/1',
+              'sourceRunId':44991189912,
+              'sourceArtifactId':14742489071,
+              'producerRevision':command['producerRevision'],
+              'consumerRevision':command['consumerRevision'],
+              'registryDigest':command['registryDigest'],
+              'declaredSources':64,
+              'optimizerUpdates':2,
+              'optimizerTargetExposure':target,
+              'productionBehaviorSupply':supply,
+              'reports':[{'path':str(path.relative_to(root)),'bytes':path.stat().st_size,
+                          'sha256':hashlib.sha256(path.read_bytes()).hexdigest()} for path in files],
+              'learnedSuccess':None,
+              'fullLaunchQualified':False,
+              'scope':'Extracted existing complete-run report bytes; no new training, source admission, or learned-quality claim.'
+          }
+          output=Path(os.environ['RUNNER_TEMP'])/'support-target-exposure-evidence.json'
+          output.write_text(json.dumps(evidence,indent=2,sort_keys=True)+'\n')
+          print('SUPPORT_TARGET_EXPOSURE_EVIDENCE_JSON '+json.dumps(evidence,separators=(',',':'),sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: retained-support-target-counts
+          retention-days: 30
+          if-no-files-found: error
+          path: ${{ runner.temp }}/support-target-exposure-evidence.json
