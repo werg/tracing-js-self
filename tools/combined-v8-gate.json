@@ -67,7 +67,8 @@
         "tests/test_semantic_close_recovery_v8.py": 9,
         "tests/test_semantic_request_journal_v8.py": 13,
         "tests/test_semantic_launch_v8.py": 16,
-        "tests/test_semantic_v8_position_receipts.py": 55
+        "tests/test_semantic_v8_position_receipts.py": 55,
+        "tests/test_semantic_model_v8.py": 17
       }
     },
     "transport": {
@@ -131,6 +132,7 @@
   },
   "expectationEvidence": {
     "recovery": "GitHub Actions45042073863 original downloaded JUnit per-file leaves",
-    "promise": "GitHub Actions45042386283 plus exact local original-source4 and public/native boundary20/10 groups, with twelve adjacent ordinary-contract leaves (join-source5, qualification-population4, training-projection3) added after six stale assertions reproduced on cc0d61e9 and all twelve passed on b79f7ae1. Required final185/106 is not qualified until this workflow succeeds."
+    "promise": "GitHub Actions45042386283 plus exact local original-source4 and public/native boundary20/10 groups, with twelve adjacent ordinary-contract leaves (join-source5, qualification-population4, training-projection3) added after six stale assertions reproduced on cc0d61e9 and all twelve passed on b79f7ae1. Required final185/106 is not qualified until this workflow succeeds.",
+    "modelSelectionEvidence": "Original rejected-fragment model bookkeeping correction: the entire test_semantic_model_v8.py file passed17 actual leaves on native6d5ea691 (published source9bbc5342), preserving14 prior cases and adding3 controls. The original green JUnit is retained in native proof5f9ddd14; subcases are not counted as extra leaves."
   }
 }
