@@ -1,0 +1,33 @@
+{
+  "schema": "bootstrap-ci-budget-evidence/1",
+  "run": 45032886414,
+  "job": 137240150945,
+  "conclusion": "cancelled",
+  "producer": "e5d53e47b39ccc1699db6da0c6f53bb703b3dce2",
+  "native": "56cce3b80423b0cb70c3a096d867561066e3a211",
+  "nativeCases": 151,
+  "nativeFailures": 0,
+  "nativeSkips": 0,
+  "nativeSeconds": 334.081,
+  "producerRequiredCases": 170,
+  "producerCompletedCases": null,
+  "producerUnfinishedCases": null,
+  "producerReportBytes": 52,
+  "producerReportStatus": "incomplete XML header only; buffered reporter did not publish case events",
+  "hostStepStarted": "2026-11-22T14:38:33.7924322Z",
+  "hostStepCancelled": "2026-11-22T15:06:52.5301245Z",
+  "jobWallTimeMinutes": 35,
+  "cancellationRequestedByAgent": false,
+  "zipSha256": "a55a5f35dbc344097afc07e524d5e3fd4dc9911855070b99ebc49538ed8295a8",
+  "rawLogSha256": "4c37d12e2e213620cc8294b377eb49aad2a0ec990659a4104445ac025b8d6d8a",
+  "workflowOnlySuccessor": "4371410e0026a5c70246b484f99b01da3994a6fb",
+  "successorProducerCheckout": "e5d53e47b39ccc1699db6da0c6f53bb703b3dce2",
+  "successorNativeCheckout": "56cce3b80423b0cb70c3a096d867561066e3a211",
+  "successorJobWallTimeMinutes": 60,
+  "semanticModelOrTestBoundsChanged": false,
+  "files": {
+    "45032886414.log.gz.b64": "d26e3034afd1bb0b6c41d13a5d4a136a1d7c4c847b182eed4f95f29c3f748eeb",
+    "host-bootstrap-history.xml": "3fff342c77a4f19d7eb929822375a104b884d4aaa02f66165b7133d15aefbcc5",
+    "native-bootstrap.xml": "344d535d05a6a43166737805ce4d74cb435c93c9d638b921d67d9bccc925a232"
+  }
+}
