@@ -18,6 +18,7 @@ import {createSourceClaimCoordinatorV8} from './source-claim-coordinator-v8.js';
 import {ORDINARY_PROTOCOL_SOURCE_V8,protocolSourceClaimsV8} from './protocol-source-claims-v8.js';
 import {encodeProtocolRecordV8,validateProtocolValueV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
 import {PROTOCOL_SOURCE_ADAPTERS_V8} from './protocol-source-extensions-v8.js';
+import {createExperimentalModuleNamespaceSourceAdapterV8} from './protocol-module-namespace-source-v8.js';
 import {createSharedProtocolSourceComponentsV8} from './protocol-source-bridge-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
 
@@ -84,15 +85,18 @@ function referencedNames(node){const names=new Set();
   }
   node.params?.forEach(bound);return names;
 }
-export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROTOCOL_SOURCE_ADAPTERS_V8}={}){
+export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROTOCOL_SOURCE_ADAPTERS_V8,
+  moduleNamespacePlan=null}={}){
   if(validateBundle(bundle).valid!==true||replayExact(bundle).valid!==true)refuse('invalid owned archive');
   const entry=bundle.entrySpec;if(entry?.kind!=='function')refuse('explicit function entry required');
   const source=bundle.sources.find(row=>row.sourceId===entry.sourceId)?.text;
   adapters=adapters.map(adapter=>typeof adapter==='function'?adapter({bundle,source}):adapter).filter(Boolean);
+  if(moduleNamespacePlan)adapters.push(createExperimentalModuleNamespaceSourceAdapterV8({source,moduleNamespacePlan,bundle}));
   if(adapters.some(adapter=>typeof adapter.id!=='string'||!adapter.id||adapter.id.length>128)||
     new Set(adapters.map(adapter=>adapter.id)).size!==adapters.length)refuse('distinct versioned extension identities required');
   adapters.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
   const components=adapters.filter(adapter=>adapter.sourceComponent).sort((a,b)=>a.id.localeCompare(b.id));
+  if(moduleNamespacePlan&&components.length)refuse('experimental module namespaces cannot yet compose with shared source components');
   if(components.length){
     const shared=createSharedProtocolSourceComponentsV8({source,bundle,adapters}),
       extensions=[...components.map(adapter=>adapter.sourceComponent),...shared].sort((a,b)=>a.id.localeCompare(b.id));
@@ -138,10 +142,11 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   const inputGraph={roots:copy(ownedInitial.roots),objects:ownedInitial.objects.map(node=>({id:node.id,kind:node.kind,
     ...(node.prototype===null?{prototype:null}:{}),properties:node.properties.map(({key,value})=>({key,value}))}))};
   const harness=new RegionExecutionHarness({sessionId:'protocol-source',automaticDelivery:false,now:()=>-Infinity,maxGenerated});
-  harness.publishProgram({programId:'program1',source,entry:entry.functionName,capabilities:[]});
+  harness.publishProgram({programId:'program1',source,entry:entry.functionName,capabilities:[],
+    ...(moduleNamespacePlan?{moduleNamespacePlan}: {})});
   harness.admitInvocation({programId:'program1',invocationId:'invocation1',trackId:'worker1',realmId:'realm1',
     triggerId:'protocol-entry',inputGraph,realmPolicy:'fresh',completionPolicy:'call-return'});
-  let controller=harness.controller,claims=[],state=copy(bundle.initialState),names=new Map(),used=new Set(),frames=new Map([[semantic.rootInvocation,'invocation1']]),
+  let controller=harness.controller,claims=[],consumedJournalEvents=[],state=copy(bundle.initialState),names=new Map(),used=new Set(),frames=new Map([[semantic.rootInvocation,'invocation1']]),
     pendingAccessors=new Map(),published=new Set(controller.heap.keys()),publishing=new Set(),extensionState=new Map();
   const functionCodes=new Map(),functionNodes=new Map();
   let cellCounter=0,frameCounter=0,accessorCounter=0;
@@ -158,14 +163,22 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     while(used.has(result))result=stem+'_'+(++cellCounter);used.add(result);names.set(key,result);
   }return names.get(key);};
   const codeFor=node=>functionCodes.get(node.codeId)??refuse('owned function has no exact source definition');
-  function emit(record,event=null,rule='owned-protocol-transition/1',{detail=false}={}){
+  function emit(record,event=null,rule='owned-protocol-transition/1',{detail=false,journalEvents=null}={}){
     if(claims.length>=maxGenerated)throw new RangeError('Protocol source record bound');
+    const selectedEvents=journalEvents??(event?[event.eventId]:[]),positions=selectedEvents.map(id=>consumedJournalEvents.indexOf(id));
+    if(selectedEvents.some(id=>typeof id!=='string')||new Set(selectedEvents).size!==selectedEvents.length||
+      positions.some(index=>index<0)||positions.some((index,offset)=>offset>0&&index<=positions[offset-1])||
+      (event&&selectedEvents.at(-1)!==event.eventId)||(!event&&selectedEvents.length))
+      refuse('source transition journal events must be an ordered unique subset of the consumed prefix ending at the current event');
     if(detail){assertProtocolDetailCompatible(controller,record);controller.commitRecord(record,{mode:'generated',track:'worker1'});
       if(controller.firstWitnessViolation)refuse('incorrect selected primitive claim');}
     else applyProtocolRecordV8(controller,record);
-    const source=event?bundle.sites.find(site=>site.siteId===event.siteId):null;
+    const source=event?bundle.sites.find(site=>site.siteId===event.siteId):null,
+      eventSites=selectedEvents.map(id=>{const observed=bundle.events.find(row=>row.eventId===id),site=observed&&bundle.sites.find(item=>item.siteId===observed.siteId);
+        return {eventId:id,site:site?{start:site.start,end:site.end}:null};});
     claims.push({kind:detail?'detail':'protocol',record:copy(record),line:detail?encodeDetailedRecord(record,{role:'generated'}):encodeProtocolRecordV8(record),
-      certificate:{rule,journalEvents:event?[event.eventId]:[],source:source?{start:source.start,end:source.end}:null}});
+      certificate:{rule,journalEvents:selectedEvents,source:source?{start:source.start,end:source.end}:null,
+        ...(selectedEvents.length>1?{sourceEvents:eventSites}:{})}});
   }
   function tag(value,event=null){if(!valueTag(value))refuse('value requires an explicit callable/protocol interface: '+JSON.stringify(value));
     if(value[0]==='ref'&&!published.has(value[1])){
@@ -416,6 +429,8 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   transaction(()=>{planEvent(null,null);for(const [name,binding]of Object.entries(state.envs[entryEnv]?.bindings??{}))
     if(binding.initialized)bind(cell(entryEnv,name),binding.token.value);});
   function projectEvent(event){
+    if(consumedJournalEvents.includes(event.eventId))refuse('duplicate source journal event');
+    consumedJournalEvents.push(event.eventId);
     const row=rows.get(event.eventId),heapChanges=event.stateChanges.filter(change=>change.table==='heap');
     planEvent(event,row);
     observe('beforeEvent',event,row);

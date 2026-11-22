@@ -27,7 +27,9 @@ function inputFixture(fixture){
   const maxSteps=fixture.maxSteps??10000,maxGenerated=fixture.projectionOptions?.maxGenerated??16384,timeoutMs=fixture.timeoutMs??10000;
   if([maxSteps,maxGenerated,timeoutMs].some(value=>!Number.isSafeInteger(value)||value<1))fail('positive execution bounds required');
   if(fixture.randomSeed!=null||fixture.fixture?.calls?.length)fail('first protocol source profile has no random or external inputs');
+  const moduleNamespacePlan=fixture.projectionOptions?.moduleNamespacePlan;
   return {source:fixture.source,entry:fixture.entry,family:fixture.family,license,trustTier,
+    ...(moduleNamespacePlan?{moduleNamespacePlan:copy(moduleNamespacePlan)}:{}),
     ancestorIds:[...new Set([fixture.family,...(fixture.ancestorIds??fixture.ancestors??[])])],
     producerRevision:fixture.producerRevision??null,provenance:copy(fixture.provenance??{}),
     limits:{maxSteps,maxGenerated,timeoutMs},args:fixture.args??[]};
@@ -40,7 +42,8 @@ function executeOwned(input){
   return bundle;
 }
 async function buildSourceArtifact(input){
-  const archive=executeOwned(input),projection=compileProtocolSourceV8(archive,{maxGenerated:input.limits.maxGenerated});
+  const archive=executeOwned(input),projection=compileProtocolSourceV8(archive,{maxGenerated:input.limits.maxGenerated,
+    ...(input.moduleNamespacePlan?{moduleNamespacePlan:input.moduleNamespacePlan}:{})});
   if(!projection.claims.some(row=>row.kind==='protocol'&&
     (row.record.kind.startsWith('symbol.')||row.record.kind.startsWith('property.')))&&!projection.extensions?.length)
     fail('no declared source protocol boundary');
@@ -54,6 +57,7 @@ async function buildSourceArtifact(input){
     profile:projection.sourceProfile,sourceFamily:input.family,sourceLineage:input.family,ancestorIds:input.ancestorIds,
     producerRevision:input.producerRevision,license:input.license,trustTier:input.trustTier,
     sourceProvenance:{family:input.family,sourceDigest:hashAlgorithmData(input.source),upstream:input.provenance},
+    ...(input.moduleNamespacePlan?{moduleNamespacePlan:copy(input.moduleNamespacePlan)}:{}),
     executionLimits:input.limits,referenceInput,reference,
     archive,archiveDigest:digest(archive),compiler:{schema:projection.schema,claims:projection.claims,
       ...(projection.extensions.length?{extensions:projection.extensions}:{})},
@@ -65,7 +69,8 @@ export function projectProtocolRegionWitness(sourceArtifact){
   const side=sourceArtifact?.sidecar;
   if(side?.schema!==PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA||side.referenceStatus!=='agreed'||side.admission!=='locally_verified')
     fail('independently checked direct source evidence required');
-  const projection=compileProtocolSourceV8(side.archive,{maxGenerated:side.executionLimits.maxGenerated}),
+  const projection=compileProtocolSourceV8(side.archive,{maxGenerated:side.executionLimits.maxGenerated,
+    ...(side.moduleNamespacePlan?{moduleNamespacePlan:side.moduleNamespacePlan}:{})}),
     harness=new RegionExecutionHarness({sessionId:'protocol-source',automaticDelivery:false,now:()=>-Infinity,maxGenerated:side.executionLimits.maxGenerated});
   if(!eq(projection.claims,side.compiler.claims)||!eq(projection.extensions,side.compiler.extensions??[])||
     !eq(projection.outcome,side.outcome)||
@@ -73,7 +78,8 @@ export function projectProtocolRegionWitness(sourceArtifact){
       inputGraph:projection.inputGraph,...(projection.completionPolicy?{completionPolicy:projection.completionPolicy}:{}),
       claims:projection.claims.map(({kind,line})=>({kind,line}))},sourceArtifact.public))
     fail('source target or projection certificate changed');
-  harness.publishProgram({programId:'program1',source:projection.source,entry:projection.entry,capabilities:[]});
+  harness.publishProgram({programId:'program1',source:projection.source,entry:projection.entry,capabilities:[],
+    ...(side.moduleNamespacePlan?{moduleNamespacePlan:side.moduleNamespacePlan}: {})});
   harness.admitInvocation({programId:'program1',invocationId:'invocation1',trackId:'worker1',realmId:'realm1',triggerId:'protocol-entry',
     inputGraph:projection.inputGraph,realmPolicy:'fresh',completionPolicy:projection.completionPolicy??'call-return'});
   const locations=defineRegionProgram({source:projection.source,entry:projection.entry}).provenance.locations,
@@ -81,7 +87,8 @@ export function projectProtocolRegionWitness(sourceArtifact){
   let compactRecords=0,detailedRecords=0,protocolRecords=0,compactBytes=0,detailedBytes=0,protocolBytes=0;
   for(let index=0;index<projection.claims.length;){
     const claim=projection.claims[index],point=claim.certificate.source,controller=harness.controller;
-    const candidates=claim.kind==='detail'&&point?locations.filter(location=>point.start>=location.start&&point.end<=location.end):[];
+    const candidates=!side.moduleNamespacePlan&&claim.kind==='detail'&&point?
+      locations.filter(location=>point.start>=location.start&&point.end<=location.end):[];
     let compact=false;
     for(const location of candidates){
       const region=harness.program('invocation1').regions.find(row=>row.id===location.id);
@@ -151,7 +158,9 @@ export async function recheckProtocolRegionEvidence(exported,{nativeConsumer=nul
     fail('incompatible or altered direct source evidence');
   const args=decodeOwnedGraph(JSON.stringify(source.referenceInput.inputGraph)),input=inputFixture({
     ...source.referenceInput,args,family:source.sourceFamily,ancestorIds:source.ancestorIds,license:source.license,trustTier:source.trustTier,
-    producerRevision:source.producerRevision,provenance:source.sourceProvenance.upstream,maxSteps:source.executionLimits.maxSteps,
+    producerRevision:source.producerRevision,provenance:source.sourceProvenance.upstream,
+    ...(source.moduleNamespacePlan?{projectionOptions:{moduleNamespacePlan:source.moduleNamespacePlan}}:{}),
+    maxSteps:source.executionLimits.maxSteps,
     timeoutMs:source.executionLimits.timeoutMs,projectionOptions:{maxGenerated:source.executionLimits.maxGenerated}});
   const fresh=await buildSourceArtifact(input);
   if(!eq(fresh,side.sourceArtifact))fail('source, owned archive or independent observations changed');

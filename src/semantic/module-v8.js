@@ -77,14 +77,16 @@ function outcomeAgreement(left,right){
   return left?.kind===right?.kind&&compareObservableGraphs(left.graph,right.graph,
     {leftInputIds:anchors(left.graph),rightInputIds:anchors(right.graph)}).equal;
 }
-function moduleProjectionRefusal(linked){
-  if(linked.metadata.requiresModuleNamespace===true)
+function moduleProjectionRefusal(linked,request={}){
+  if(linked.metadata.requiresModuleNamespace===true&&
+     !(request.experimentalNamespacePlan===true&&linked.metadata.namespaceSourcePlan&&
+       linked.metadata.evaluationStrategy==='dependency-concatenation'))
     return {status:'projection_refused',phase:'module-projection',
       category:'unsupported.module-namespace-projection',sourceProfile:MODULE_REGION_PROFILE,
       moduleLink:'passed',ownedRuntimeProfile:linked.profile,
       moduleNamespace:'owned-internal',moduleReference:'untested',
       publicProjection:'unqualified',nativeQualification:'unqualified',
-      reason:'Owned module namespace exotics have no qualified public/native heap projection'};
+      reason:'Owned module namespace exotics require the explicit experimental source/native plan gate'};
   if(linked.metadata.evaluationStrategy!=='async-dependency-scheduler')return null;
   // Owned generator/Promise execution is a distinct implementation milestone.
   // A generic generator projection cannot establish public/native module
@@ -104,7 +106,7 @@ export async function verifyRegionModuleTrainingCase(fixture){
   try{prepared=prepare(fixture);}catch(error){return {...identity,status:'unsupported',phase:'module-link',
     sourceProfile:MODULE_REGION_PROFILE,reason:error.message};}
   identity.modules=copy(prepared.request.modules);
-  const refused=moduleProjectionRefusal(prepared.linked);
+  const refused=moduleProjectionRefusal(prepared.linked,prepared.request);
   if(refused)return {...identity,...refused};
   const reference=await independentModuleRegionReference(prepared.referenceInput);
   if(reference.status!=='passed')return {...identity,status:reference.status,phase:'module-reference',
@@ -118,7 +120,7 @@ export async function verifyRegionModuleTrainingCase(fixture){
       ...(request.experimentalNamespacePlan?{experimentalNamespacePlan:true}:{})},graphDigest,
     generatedSourceDigest:hashAlgorithmData(linked.source),metadata:linked.metadata,referenceInput,reference,
     originalTypeScriptClaim:'provenance only; generated JavaScript semantics are checked',
-    adapterMeaning:'native ESM outcome compared with owned linked code; no native guest execution in the producer'};
+    adapterMeaning:'native ESM outcome compared with owned linked code; experimental namespace source records remain unadmitted until independent native replay'};
   const ancestorIds=[...new Set([...(fixture.ancestorIds??[]),'module-graph:'+graphDigest,
     ...Object.values(request.modules).map(source=>'module-source:'+hashAlgorithmData(source))])];
   const {moduleNamespacePlan:_untrustedNamespacePlan,...callerProjectionOptions}=fixture.projectionOptions??{};

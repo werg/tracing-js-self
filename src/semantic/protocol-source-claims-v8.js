@@ -116,7 +116,26 @@ const eventClaims={
   }
 };
 function standardEventClaims(view,input){return Object.entries(eventClaims).filter(([id,claim])=>enabled(view,id)&&claim(view,input)).map(([id])=>id);}
+const moduleNamespace='experimental-module-namespace-source/1';
+function experimentalModuleNamespaceEvent(view,{event,row}){
+  const own=state(view,moduleNamespace),names=new Set(own.cellNames??[]),writes=row?.writes??[];
+  if(event.operation==='call.enter'&&own.ownerSiteIds?.includes(event.siteId))return true;
+  if([...new Set((own.pendingCreates??[]).map(([,item])=>item))].some(item=>
+    item.invocationId===event.invocationId&&event.operation==='binding.initialize'&&
+    writes.some(write=>write.key===item.namespaceName)))return true;
+  if(['binding.initialize','binding.write','binding.update'].includes(event.operation)&&
+    writes.some(write=>write.kind==='cell'&&names.has(write.key)))return true;
+  if(event.operation==='call.enter'&&['Object.keys','Object.getOwnPropertyDescriptor'].includes(
+    builtin(callee(event.operands?.[0])))&&event.operands?.[1]?.[0]==='ref'&&
+    view.owned.heap?.[event.operands[1][1]]?.kind==='module-namespace')return true;
+  if((own.operations??[]).some(([,operation])=>operation.waitingFrameId===event.invocationId)&&
+    ['binding.read','call.return'].includes(event.operation))return true;
+  if(event.operation==='property.read'&&event.operands?.[0]?.[0]==='ref'&&
+    view.owned.heap?.[event.operands[0][1]]?.kind==='module-namespace')return true;
+  return false;
+}
 function ordinaryEvent(view,input){
+  if(enabled(view,moduleNamespace)&&experimentalModuleNamespaceEvent(view,input))return false;
   if(standardEventClaims(view,input).length)return false;
   const {event,row}=input;
   // An Array#map callback's completion belongs to the map adapter, which must
