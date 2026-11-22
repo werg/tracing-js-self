@@ -1,0 +1,145 @@
+{
+  "publishedSource": "c253a1e7770ee569d1b2022efadb471a1cc98da2",
+  "publishedProof": "200da926eef6c90670e5837797c1e72028912741",
+  "baseRevision": "38305a3c1dff10a860e11a102bd9c3b2909104ea",
+  "candidateRevision": "a8cf158882913fcf920f71b4f1efa85270d13e41",
+  "candidateTree": "8698f34329ae2827aff090c05bdfdc2941974d10",
+  "paths": [
+    {
+      "path": "docs/v8-release-verification.md",
+      "historicalParentBlob": "3753aaa0763fc741e4dd84482d314873455cac20",
+      "composedBaseBlob": "3753aaa0763fc741e4dd84482d314873455cac20",
+      "publishedChangeBlob": "89b020906e9cdc9cd7cb5bc645417c5b51453a5e",
+      "candidateBlob": "89b020906e9cdc9cd7cb5bc645417c5b51453a5e"
+    },
+    {
+      "path": "scripts/verify_semantic_v8_release.py",
+      "historicalParentBlob": "2bf5dcc34be5f3ab2bac6b93f5056e5f5d3e08de",
+      "composedBaseBlob": "2bf5dcc34be5f3ab2bac6b93f5056e5f5d3e08de",
+      "publishedChangeBlob": "622f6d0fa8a3b111cbf914d5e0c0279a66e578d0",
+      "candidateBlob": "622f6d0fa8a3b111cbf914d5e0c0279a66e578d0"
+    },
+    {
+      "path": "tests/test_semantic_v8_release_verifier.py",
+      "historicalParentBlob": "b96eaa9feebf67dcef9c8a239890a510bfe481d1",
+      "composedBaseBlob": "b96eaa9feebf67dcef9c8a239890a510bfe481d1",
+      "publishedChangeBlob": "ebd2a3ce3d5b3dba9c37b85ae913b97af80b1ead",
+      "candidateBlob": "ebd2a3ce3d5b3dba9c37b85ae913b97af80b1ead"
+    }
+  ],
+  "existingTests": [
+    {
+      "test": "test_release_descriptor_and_hidden_member_inventory",
+      "originalAssertionsRetained": 3,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 0
+    },
+    {
+      "test": "test_release_paths_refuse_escapes_and_aliases",
+      "originalAssertionsRetained": 0,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 1
+    },
+    {
+      "test": "test_release_symlinks_refused_in_role_tree_and_ancestors",
+      "originalAssertionsRetained": 0,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 3
+    },
+    {
+      "test": "test_release_descriptor_refuses_ambiguous_membership",
+      "originalAssertionsRetained": 0,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 1
+    },
+    {
+      "test": "test_release_recipe_refuses_unbound_assets_and_routes",
+      "originalAssertionsRetained": 0,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 1
+    },
+    {
+      "test": "test_release_recipe_preserves_physical_provenance_and_binds_only_declared_inputs",
+      "originalAssertionsRetained": 3,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 1
+    },
+    {
+      "test": "test_release_source_membership_rejects_two_cases_for_one_physical_source",
+      "originalAssertionsRetained": 0,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 1
+    },
+    {
+      "test": "test_release_strict_json_refuses_duplicate_keys_and_nonfinite_numbers",
+      "originalAssertionsRetained": 0,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 1
+    },
+    {
+      "test": "test_native_json_comparison_preserves_scalar_types",
+      "originalAssertionsRetained": 2,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 0
+    },
+    {
+      "test": "test_checkpoint_companion_metadata_is_strict_and_never_resolves_pointers",
+      "originalAssertionsRetained": 1,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 1
+    },
+    {
+      "test": "test_served_companion_json_refuses_duplicate_fields_before_loading",
+      "originalAssertionsRetained": 0,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 1
+    },
+    {
+      "test": "test_reprepared_semantics_compare_every_physical_field_and_index_scope",
+      "originalAssertionsRetained": 2,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 2
+    },
+    {
+      "test": "test_reprepare_uses_physical_prepared_order_without_rewriting_inputs",
+      "originalAssertionsRetained": 7,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 0
+    },
+    {
+      "test": "test_reprepare_refuses_membership_drift_before_starting_child",
+      "originalAssertionsRetained": 0,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 1
+    },
+    {
+      "test": "test_resealed_prepared_label_change_is_not_hidden_by_valid_file_hashes",
+      "originalAssertionsRetained": 0,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 1
+    },
+    {
+      "test": "test_actual_loaded_state_comparison_rejects_plausible_forgery",
+      "originalAssertionsRetained": 0,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 1
+    },
+    {
+      "test": "test_checkpoint_refusal_never_repairs_or_moves_input_files",
+      "originalAssertionsRetained": 1,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 1
+    },
+    {
+      "test": "test_real_controlled_checkpoint_export_and_resealed_weight_refusal",
+      "originalAssertionsRetained": 8,
+      "parameterDecoratorsUnchanged": true,
+      "originalRefusalAssertionsRetained": 5
+    }
+  ],
+  "addedTestFunctions": [
+    "test_release_case_label_can_differ_from_digest_suffixed_source_id",
+    "test_release_descriptor_requires_unique_explicit_source_ids",
+    "test_release_refuses_mislabeled_source_before_fresh_preparation"
+  ]
+}
