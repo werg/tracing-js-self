@@ -83,17 +83,22 @@
     "source-promise-adoption-executor": [
       12,
       1,
-      26
+      14
     ],
     "source-promise-adoption-async-return": [
       9,
       0,
-      21
+      12
     ],
     "source-promise-adoption-reaction-return": [
       9,
       0,
-      26
+      17
     ]
-  }
+  },
+  "expectedNewCountsOrder": [
+    "protocolRecords",
+    "regionRecords",
+    "semanticDetailedRecords"
+  ]
 }

@@ -11,11 +11,11 @@ All existing 20 source examples were independently regenerated and rechecked.
 Three new source examples exercise the new protocol within the same fixture
 bundle, taking that source interoperability list to **23**:
 
-| Example | Protocol records | Compact regions | Detailed records |
+| Example | Protocol records | Compact regions | Semantic detail records |
 | --- | ---: | ---: | ---: |
-| Executor resolves to an owned pending Promise, then ignores reject | 12 | 1 | 26 |
-| Scoped async function returns an owned Promise after suspension | 9 | 0 | 21 |
-| Reaction returns an owned Promise | 9 | 0 | 26 |
+| Executor resolves to an owned pending Promise, then ignores reject | 12 | 1 | 14 |
+| Scoped async function returns an owned Promise after suspension | 9 | 0 | 12 |
+| Reaction returns an owned Promise | 9 | 0 | 17 |
 
 The four mixed host/protocol examples and six region examples were also rebuilt
 and independently source-rechecked by the existing generators. The full
@@ -36,3 +36,7 @@ Native implementation/replay and the exact hosted paired gate are still pending
 for this increment. The production admission policy remains fail closed until
 the matching native source is published and pinned. The earlier initial bundle
 retains its original scope and its explicit unconfigured-native skip.
+
+The table counts generated public timeline kinds directly. The source projector's
+`detailedRecords` coverage aggregate also includes protocol records, so it must
+not be used as the independent native semantic-detail denominator.

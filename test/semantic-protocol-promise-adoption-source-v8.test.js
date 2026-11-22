@@ -18,6 +18,8 @@ const cases=[
   ['settled-executor','const p=new Promise(resolve=>resolve(Promise.resolve(5)));return await p;',['num',5]],
   ['pending-executor','let done;const a=new Promise(resolve=>{done=resolve;});const b=new Promise(resolve=>resolve(a));done(7);return await b;',['num',7]],
   ['source-fifo-microtask',fifo,['str','dqa']],
+  ['pending-forwarding-before-microtask-settlement',
+    fifo.replace('settle(7);queueMicrotask(()=>{order+="q";});','queueMicrotask(()=>{order+="q";settle(7);});'),['str','qda']],
   ['rejected-executor','const target=Promise.reject(7);const outer=new Promise(resolve=>resolve(target));return await outer.then(undefined,x=>x+1);',['num',8]],
   ['root-async-result','return new Promise(resolve=>resolve(3));',['num',3]],
   ['nested-async-result','async function f(){return Promise.resolve(9);}return await f();',['num',9]],
@@ -39,6 +41,21 @@ for(const [name,body,expected]of cases)test('independent original source and pub
   assert.deepEqual(replay.controller.completion.value,expected);
   assert.equal(result.exported.sidecar.sourceArtifact.sidecar.reference.status,'agreed');
   assert.equal((await recheckProtocolRegionEvidence(result.exported)).sourceValidated,true);
+  if(name==='pending-forwarding-before-microtask-settlement'){
+    const enter=result.exported.public.timeline.filter(row=>row.kind==='protocol')
+      .map(row=>decodeProtocolRecordV8(row.fields.line)).find(row=>row.kind==='promise.adopt.enter');
+    const contexts=result.exported.contexts,waiting=contexts.find(row=>new Map(row.state.jobs).get(enter.forwarding)?.status==='waiting');
+    assert(waiting,'the original target must still be pending when forwarding subscribes');
+    assert.equal(new Map(waiting.state.heap).get(enter.target).state,'pending');
+    const direct=waiting.state.jobs.find(([,job])=>job.promise===enter.target&&job.reaction==='then')?.[0],
+      adopter=waiting.state.jobs.find(([,job])=>job.promise===enter.promise&&job.reaction==='then')?.[0],
+      awaiting=waiting.state.continuations.find(([,continuation])=>continuation.promise===enter.promise)?.[0];
+    assert(direct&&adopter&&awaiting);
+    assert(contexts.some(({state})=>state.ready.includes(enter.forwarding)&&state.ready.includes(direct)&&
+      state.ready.indexOf(direct)<state.ready.indexOf(enter.forwarding)));
+    assert(contexts.some(({state})=>state.ready.includes(adopter)&&state.ready.includes(awaiting)&&
+      state.ready.indexOf(adopter)<state.ready.indexOf(awaiting)));
+  }
   artifacts.push({name,input,exported:result.exported,state:sharedRegionState(replay.controller)});
 });
 test('source ownership and identities are independent of registry order',()=>{

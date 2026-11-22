@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {writeFileSync} from 'node:fs';
+import {join,resolve} from 'node:path';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {encodeDetailedRecord} from '../src/semantic/detail-v8.js';
 import {encodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
@@ -14,8 +17,15 @@ const enter=(h)=>select(h,{kind:'promise.adopt.enter',promise:'p1',target:'p2',j
 const forward=(h,status='fulfilled',value=['num',8])=>select(h,{kind:'promise.adopt.forward',promise:'p1',target:'p2',job:'forward1',status,value});
 const finish=h=>select(h,{kind:'promise.executor.finish',promise:'p1',invocation:'guest1',completion:{kind:'return',value:['undefined']}});
 const rootReturn=h=>detail(h,'return',{invocation:'invocation1',value:['ref','p1']});
-function setup({settled=false}={}){
+function recordingHarness(record){
   const h=new RegionExecutionHarness({automaticDelivery:false});
+  if(record){h.selectedContexts=[];const original=h.select.bind(h);
+    h.select=(owner,line,options)=>{const context=h.modelContext(owner),result=original(owner,line,options);
+      h.selectedContexts.push(context);return result;};}
+  return h;
+}
+function setup({settled=false,record=false}={}){
+  const h=recordingHarness(record);
   h.publishProgram({programId:'program1',source:'"use strict";function run(){return 0;}function executor(resolve,reject){}',entry:'run',capabilities:[]});
   h.admitInvocation({programId:'program1',invocationId:'invocation1',trackId:'worker1',realmId:'realm1',triggerId:'adoption',
     inputGraph:{roots:[],objects:[]},realmPolicy:'fresh'});
@@ -37,6 +47,7 @@ test('settled target still requires the separate assimilation and forwarding FIF
   assert.equal(h.controller.heap.get('p1').state,'pending');
   refuses(h,{kind:'bind',name:'interleaved',value:['num',1]},/guard/);
   refuses(h,{kind:'promise.adopt.enqueue',promise:'p1',target:'p3',job:'wrong'},/guard/);
+  refuses(h,{kind:'promise.adopt.enqueue',promise:'p3',target:'p2',job:'wrong'},/guard/);
   enqueue(h);h=roundtrip(h);call(h,'reject',['num',91]);call(h,'resolve',['num',92]);finish(h);
   detail(h,'job',{action:'enqueue',job:'competitor',owner:'invocation1'});rootReturn(h);
   enter(h);h=roundtrip(h);assert.deepEqual(h.controller.ready,['competitor','forward1']);
@@ -136,7 +147,9 @@ test('malformed restored adoption state cannot substitute its cause, owner or fo
     c=>c.jobs.get('forward1').status='waiting',
     c=>c.ready.splice(0),
     c=>c.jobs.get('forward1').sequence=999999,
-    c=>c.jobs.get('adopt1').closure='o1'
+    c=>c.jobs.get('adopt1').closure='o1',
+    c=>c.jobs.get('adopt1').extra=null,
+    c=>c.jobs.get('forward1').extra=null
   ]){
     const c=Object.assign(Object.create(Object.getPrototypeOf(h.controller)),h.controller);
     for(const key of ['heap','protocol','jobs','ready','scheduler'])c[key]=structuredClone(c[key]);mutate(c);
@@ -144,10 +157,11 @@ test('malformed restored adoption state cannot substitute its cause, owner or fo
   }
 });
 test('typed adoption forwarding cannot overtake another invocation in the shared realm FIFO',()=>{
-  const h=setup({settled:true});call(h,'resolve',['ref','p2']);enqueue(h);finish(h);rootReturn(h);
+  const h=asyncSetup({record:true});enqueue(h);rootReturn(h);
   h.admitInvocation({programId:'program1',invocationId:'invocation2',trackId:'worker2',realmId:'realm1',triggerId:'other',
     inputGraph:{roots:[],objects:[]},realmPolicy:'retained'});
   const other=(kind,fields)=>h.select('invocation2',encodeDetailedRecord({kind,fields},{role:'generated'}));
+  h.select('invocation2',encodeProtocolRecordV8({kind:'bind',name:'secondOwner',value:['num',2]}));
   other('job',{action:'enqueue',job:'otherfirst',owner:'invocation2'});
   other('return',{invocation:'invocation2',value:['num',0]});enter(h);
   const before=[...h.invocations].map(([identity,row])=>[identity,sharedRegionState(row.controller)]);
@@ -155,14 +169,35 @@ test('typed adoption forwarding cannot overtake another invocation in the shared
   assert.deepEqual([...h.invocations].map(([identity,row])=>[identity,sharedRegionState(row.controller)]),before);
   other('job',{action:'dispatch',job:'otherfirst',owner:'invocation2'});
   other('job',{action:'complete',job:'otherfirst',owner:'invocation2'});forward(h);
+  detail(h,'end',{kind:'return'});other('end',{kind:'return'});
   const restored=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(h.checkpoint())));
   for(const [identity,row]of h.invocations)assert.deepEqual(sharedRegionState(restored.invocations.get(identity).controller),sharedRegionState(row.controller));
+  if(process.env.MEGATOKEN_ROOT){
+    const data={artifact:{public:h.exportEpisode(),contexts:h.selectedContexts},
+      states:[...h.invocations].map(([owner,row])=>[owner,sharedRegionState(row.controller)])};
+    if(process.env.RUNNER_TEMP)writeFileSync(join(process.env.RUNNER_TEMP,'promise-adoption-shared-realm-public.json'),JSON.stringify(data));
+    const root=resolve(process.env.MEGATOKEN_ROOT),script=`
+import json,sys
+from megatoken.data.native_v8 import validate_v8_artifact,_replay_shared_state
+data=json.load(sys.stdin)
+receipt=validate_v8_artifact(data['artifact'])
+assert all(receipt['checks'][key]=='passed' for key in ['replay','contexts','continuation'])
+for owner,expected in data['states']:
+    state=_replay_shared_state(data['artifact']['public']['timeline'],data['artifact']['contexts'],{},roundtrip=True,boundary_invocation=owner)['state']
+    assert state==expected,owner
+print(json.dumps({'owners':len(data['states']),'contexts':len(data['artifact']['contexts'])}))
+`;
+    const result=spawnSync(process.env.MEGATOKEN_PYTHON||'python',['-c',script],{cwd:root,
+      env:{...process.env,PYTHONPATH:join(root,'src')},encoding:'utf8',timeout:30000,maxBuffer:4*1024*1024,
+      input:JSON.stringify(data)});
+    assert.equal(result.status,0,result.stderr||String(result.error));assert.equal(JSON.parse(result.stdout).owners,2);
+  }
 });
 
 // These async cases retain the distinct ordering and restore assertions from
 // the earlier async-only proposal, using the shared Promise resolution records.
-function asyncSetup({settled=true,completed=true}={}){
-  const h=new RegionExecutionHarness({automaticDelivery:false});
+function asyncSetup({settled=true,completed=true,record=false}={}){
+  const h=recordingHarness(record);
   h.publishProgram({programId:'program1',source:'"use strict";async function helper(){return 1;}function run(){}',entry:'run',capabilities:[]});
   h.admitInvocation({programId:'program1',invocationId:'invocation1',trackId:'worker1',realmId:'realm1',triggerId:'async-adoption',
     inputGraph:{roots:[],objects:[]},realmPolicy:'fresh'});
