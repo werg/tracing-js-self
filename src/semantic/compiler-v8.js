@@ -186,7 +186,8 @@ export async function verifyRegionTrainingCase(fixture){
     return {...identity,status:count?'locally_verified':'detailed-fallback',representation:'mixed',profile:'compositional-regions/1',
       exported,detailed:source.exported,regionCoverage:exported.sidecar.regionCoverage};
   }catch(error){const refused={...identity,status:error instanceof RangeError?'resource_limited':'unsupported',
-    phase:'projection',sourceStatus:source.status,category:error.category??'unsupported.region-projection',reason:error.message};
+    phase:'projection',sourceStatus:source.status,category:error.category??'unsupported.region-projection',
+    reason:error.message+'\n'+String(error.stack??'')};
     return refused.status==='unsupported'?tryDirectProtocolSource(fixture,refused):refused;}
 }
 
