@@ -1,0 +1,1 @@
+05a1a7fc6b5c072324334f49696ffe4f122d2181ba4c211f6719c401ca365905  /workspace/scratch/9faed68167fb/async-return-native/src/megatoken/data/contracts/semantic-execution-v8.json

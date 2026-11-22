@@ -1,0 +1,3 @@
+bca84c17c9fa6a50a2d722605b160242c7ae00d6ae08f13573233d52e668c062  /workspace/scratch/9faed68167fb/async-return-producer/src/semantic/protocol-async-call-source-v8.js
+aba7c29b6a7425bed588364820c9caa711f90b1af82cdd9afd9065c2f54cbfb8  /workspace/scratch/9faed68167fb/async-return-producer/src/semantic/source-projection.js
+ab7455dd57afa2ae0d346d53e7910460a32a2cfcb71f5b284c068efa7b8dee74  /workspace/scratch/9faed68167fb/async-return-producer/test/semantic-async-call-source-v8.test.js
