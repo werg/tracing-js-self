@@ -2997,3 +2997,9 @@ required. No all-green final-head or release result is claimed.
   serialization/selection checks pass, including both previously failing real
   sources and forged-host/context refusals. The original 28/30 cost failure is
   preserved; the patch does not relabel it as a pass.
+
+## 22 November 2026 — composed release verification and exact recovery accounting
+
+The [release composition checkpoint](progress/V8_RELEASE_COMPOSITION_2026_11_22.md) records the published Promise104/144 hosted pass, qualified native398-case union (with original environmental failures retained), exact17-method direct archive controls, completed training ZIP custody and the still-running165/193 terminal recovery gate. It also records the outstanding original task-to-artifact binding review and the unlaunched64-source/two-update actual package/restore gate. All17 full acceptance packages remain open, both PRs remain drafts and V6 remains default.
+
+The full PR47 and PR38 narratives before composition are preserved under `docs/progress/PR47_NARRATIVE_2026_11_22_BEFORE_RELEASE_COMPOSITION.md` and `docs/progress/PR38_NARRATIVE_2026_11_22_BEFORE_RELEASE_COMPOSITION.md`. No historical result is relabeled as current-pair qualification. The interrupted314-step campaign and planned34-update continuation remain distinct from the completed348-step expanded campaign and its separate2-update serving bundle.
