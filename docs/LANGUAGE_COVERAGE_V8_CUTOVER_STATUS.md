@@ -16,6 +16,54 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Full support-corpus census measured — 22 November 2026
+
+Exact producer `3cf0e4732290ab07a6f0d1f897e8893df762cc92` / native
+`e9817ad637f57ba82e370770420f6f3ef877c7b3` passed the complete 64-source support
+route through source/native/token/packing/preparation, all eight source-supply
+requirements in both splits, and ordinary two-update training, fresh resume,
+export and real service restoration. [Run 44991189912 / support job137112388330](https://github.com/werg/tracing-js-self/actions/runs/44991189912/job/137112388330).
+All 75 paired JavaScript and 801 native controls passed, zero skips. Other
+superseded pending lanes are not credited as passes.
+
+The actual census advanced from 1 source / 2 logical targets / 2 physical records /
+2 occurrences to 1 source / 4 logical targets / 4 physical records / 4 occurrences.
+Only `se-support-inventory-shortfall-callbacks-recovery` was scored: 1 of the 48
+training sources. Cumulative positive-weight denominators were lexical125,
+reconstruction125, structure16, terminal8 and router_z4; these distinct loss
+normalizations must not be summed. The exact step-one digest is retained as the
+step-two parent. Complete behavior-target exposure remains unqualified.
+
+The serving sample `se-support-capped-budget-child-teacher` is canonically bound
+to training but differs from the scored source. Its trained weights preserve the
+exact next selection after restore, with zero host dispatches, and zero model
+selections acknowledged. No accepted-record recovery or learned-program result
+is claimed. Full launch, all-target exposure and learned success remain false,
+false and null respectively.
+
+[Full original reports, complete logs, exact source-supply counts and provenance](evidence/v8-support-census3cf-e981-2026-11-22/README.md)
+are now retained in git. An independent artifact-reading job verified exact
+revisions/registry/status before extracting them; no training was rerun for
+extraction. The ordinary command now retains and prints the complete census
+instead of hiding it only in the native subcommand report.
+
+New native general CI passed Python3.11 and3.12 at `e9817ad`: 3,730 passed,
+83 skipped,20 warnings each; Blackwell was skipped. The native paired66/11
+campaign against producer`c640f2b` passed47 JS/801 native controls per lane,
+all source/token/packing gates, and the66-source ordinary plus teacher lifecycle.
+Producer`8dad4e6` passed108 focused cases and installed665/66 source checks.
+The entire prior`10c3016/a886fb8` matrix also passed all four populations,
+including665 original sources. Each result retains its exact executable heads.
+
+Remaining training work: target-level behavior attribution and coverage, qualified
+production recipes and full launch assets, distributed optimizer failure recovery
+and checkpoint lineage, held-out model quality/cost, then operational cutover.
+The namespace state foundation is qualified only in isolation (31 Python and16
+JS/ESM/cross-language cases); owning source events/public/native integration are
+still under construction. Service-aware terminal intent and same-owner
+cancellation reconciliation are also isolated work. All17 broad packages remain
+open; these new results advance their evidence without shrinking their scope.
+
 ## Successful completed orchestration recovery — 22 November 2026
 
 The exact implementation tested at producer
