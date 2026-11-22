@@ -136,7 +136,7 @@ test('experimental cell records require unique linker-stable lowered names',()=>
   assert.throws(()=>buildExperimentalModuleNamespacePlan(fields),/cell record is malformed/);
   assert.throws(()=>buildExperimentalModuleNamespacePlan({...fields,cells:[
     {file:'cells.js',local:'value',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'},
-    {file:'cells.js',local:'other',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'}
+    {file:'cells.js',local:'value',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'}
   ]}),/duplicate canonical source cell or lowered binding/);
 });
 
