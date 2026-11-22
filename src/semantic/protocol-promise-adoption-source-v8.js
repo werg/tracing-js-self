@@ -3,6 +3,38 @@
 import {isDeepStrictEqual as eq} from 'node:util';
 import {PROMISE_ADOPTION_COMPONENT_V8 as id,sourcePromiseAdoptionEventV8,sourceHasSyntaxV8} from './source-projection-base-v8.js';
 
+// An unsupported intrinsic can leave a valid owned guest-throw event with no
+// operands. The validated CALL's before-stack still binds the actual callable
+// and evaluated arguments. Do not certify that implementation limit as a guest
+// TypeError: Promise own descriptors require a separate source profile. This
+// is independent of source spellings, computed keys and local shadowed names.
+export function assertPromiseSourceMutationProfileV8(bundle){
+  for(const event of bundle.events){
+    if(event.operation!=='call.enter')continue;
+    const frame=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId)?.before,
+      instruction=bundle.programs[frame?.codeId]?.instructions[frame?.pc];
+    if(instruction?.op!=='CALL')continue;
+    const count=typeof instruction.arg==='number'?instruction.arg:instruction.arg?.count;
+    if(!Number.isSafeInteger(count)||count<1||frame.stack.length<count+1)continue;
+    const inputs=frame.stack.slice(-count-1),raw=inputs[0]?.value,
+      callee=raw?.[0]==='method'?raw[1]:raw;
+    if(callee?.[0]!=='builtinfn'||callee[1]!=='Object.defineProperty')continue;
+    const args=[];
+    for(let index=0;index<count;index++){
+      const value=inputs[index+1]?.value;
+      if(instruction.arg?.spread?.includes(index)){
+        if(value?.[0]!=='spread'||!Array.isArray(value[1]))
+          throw new TypeError('Protocol source projection: invalid evaluated mutation arguments');
+        args.push(...value[1]);
+      }else args.push(value);
+    }
+    if(args[0]?.[0]==='promise'){
+      const error=new TypeError('Protocol source projection: Promise own-property mutation requires its declared source profile');
+      error.category='unsupported.promise-source-mutation';throw error;
+    }
+  }
+}
+
 function data(ctx){const result=ctx.componentState(id);
   if(!result)ctx.refuse('Promise adoption lacks its source component');return result;}
 function ownedPromise(ctx,event,identity){
