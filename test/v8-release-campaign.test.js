@@ -15,12 +15,13 @@ const CONTRACT='1'.repeat(64),FIXTURE='2'.repeat(64),INTEROP='3'.repeat(64);
 const read=path=>JSON.parse(readFileSync(path,'utf8'));
 const write=(path,value)=>writeFileSync(path,JSON.stringify(value,null,2)+'\n');
 
-function fixture(t,{overwriteHistory=false,admitUnselected=false,mismatchedNativeFile=false}={}){
+function fixture(t,{overwriteHistory=false,admitUnselected=false,mismatchedNativeFile=false,wrongTaskSource=false}={}){
   const parent=mkdtempSync(join(tmpdir(),'v8-release-campaign-'));
   t.after(()=>rmSync(parent,{recursive:true,force:true}));
   const directory=join(parent,'campaign'),ids=['accepted','refused','unselected'];
   const tasks=ids.map(id=>({kind:'source',traceVersion:8,producerRevision:REVISION,
-    fixture:{id,source:'function run(){return 1;}',entry:'run',argsGraph:{roots:[],objects:[]}}}));
+    fixture:{id,family:'controlled:'+id,source:'function run(){return 1;}',entry:'run',
+      argsGraph:{schema:'owned-graph/1',roots:[],objects:[]}}}));
   const inventory={schema:'semantic-v8-qualification-population/1',producerRevision:REVISION,
     population:'controlled-release-test',inputs:'all',declared:3,selectedCaseIds:ids.slice(0,2),tasks};
   const populationDigest=hashAlgorithmData(inventory),nativePolicy={schema:'semantic-native-policy/8',
@@ -40,7 +41,7 @@ function fixture(t,{overwriteHistory=false,admitUnselected=false,mismatchedNativ
   const rows=ids.map((id,index)=>{
     const admitted=index===0||index===2&&admitUnselected;
     const status=admitted?'admitted':index===1?'unsupported':'untested';
-    const row={id,status,source:admitted?'passed':status,native:admitted?'passed':'untested',
+    const row={id,family:tasks[index].fixture.family,status,source:admitted?'passed':status,native:admitted?'passed':'untested',
       durationMs:admitted?2:0,peakRssBytes:null};
     const names=[];
     if(admitted){
@@ -48,8 +49,15 @@ function fixture(t,{overwriteHistory=false,admitUnselected=false,mismatchedNativ
       row.nativeReceipt={schema:'controlled-fixture-only/1',id,kind:'native',qualifiedRealSource:false};
       for(const kind of ['source','admitted','native']){
         const name=id+'.'+kind+'.json';names.push(name);
-        save(name,{schema:'controlled-fixture-only/1',id,kind,qualifiedRealSource:false,
-          ...(kind==='native'&&mismatchedNativeFile?{changed:true}:{})});
+        save(name,kind==='native'?{schema:'controlled-fixture-only/1',id,kind,qualifiedRealSource:false,
+          ...(mismatchedNativeFile?{changed:true}:{})}:{
+          public:{schema:'semantic-execution/8'},qualifiedRealSource:false,
+          sidecar:{family:tasks[index].fixture.family,sourceFamily:tasks[index].fixture.family,
+            sourceArtifact:{sidecar:{schema:'semantic-supervision/8',producerRevision:REVISION,
+              sourceFamily:tasks[index].fixture.family,ancestorIds:[],taskId:id,
+              license:'repository-fixture',trustTier:'repository-fixture',
+              referenceInput:{source:wrongTaskSource&&id==='accepted'?'function run(){return 2;}':tasks[index].fixture.source,entry:'run',
+                inputGraph:tasks[index].fixture.argsGraph,fixture:{calls:[],settlementOrder:null},randomSeed:null}}}}});
       }
     }else{const name=id+'.result.json';names.push(name);save(name,{status});}
     progress.complete(id,tasks[index],row,names);return row;
@@ -153,6 +161,12 @@ test('V8 release snapshot binds native artifact bytes to the exact committed rec
   await assert.rejects(verifyV8ReleaseCampaign(directory),/native artifact differs from its committed result/);
 });
 
+test('V8 release snapshot refuses a coherently resealed journal returning another source for the original task',async t=>{
+  const {directory}=fixture(t,{wrongTaskSource:true}),before=readFileSync(join(directory,'progress/campaign.jsonl'));
+  await assert.rejects(verifyV8ReleaseCampaign(directory),/V8 release task binding: source, entry, argument graph/);
+  assert.deepEqual(readFileSync(join(directory,'progress/campaign.jsonl')),before);
+});
+
 test('uncommitted orphan files remain explicit auxiliary bytes and never gain admission',async t=>{
   const {directory}=fixture(t),name='orphan.admitted.json';
   write(join(directory,name),{status:'admitted',claimed:true});
@@ -178,14 +192,16 @@ test('V8 release snapshot refuses a symbolic-link ancestor of its root',async t=
 
 test('V8 release campaign verification runs with every semantic compiler and old release tool absent',async t=>{
   const {directory,parent}=fixture(t),isolated=join(parent,'isolated');
-  for(const file of ['tools/verify-v8-release-campaign.mjs','src/corpus/campaign-store.mjs']){
+  for(const file of ['tools/verify-v8-release-campaign.mjs','src/corpus/campaign-store.mjs',
+    'src/corpus/release-task-binding-v8.mjs','src/host/graph-codec.js','src/values.js',
+    'src/property-keys.js','src/training/data-graph-contract.js','src/host/proxy-check-node.js','package.json']){
     const target=join(isolated,file);mkdirSync(dirname(target),{recursive:true});copyFileSync(join(ROOT,file),target);
   }
   const stdout=execFileSync(process.execPath,[join(isolated,'tools/verify-v8-release-campaign.mjs'),directory],
     {cwd:isolated,encoding:'utf8',timeout:30000,maxBuffer:MAX_BUFFER});
   const result=JSON.parse(stdout);assert.equal(result.status,'verified');assert.equal(result.declared,3);
   assert.equal(result.nativeAdmitted,1);assert.equal(result.freshNativeAdmissions,0);
-  assert.deepEqual(readdirSync(join(isolated,'src')),['corpus']);
+  assert.equal(readdirSync(join(isolated,'src')).includes('semantic'),false);
 });
 
 const MAX_BUFFER=8*1024*1024;

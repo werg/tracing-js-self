@@ -21,6 +21,18 @@ source and native admission. Unselected cases, original failed attempts,
 refusals, content-addressed journal objects and auxiliary files remain retained;
 none can silently become an admitted source.
 
+Before fresh source replay, each source-qualified attempt is matched to its
+original encoded task. The comparison covers exact source and entry, canonical
+argument graph (including aliases and scalar types), host fixture and random
+seed, ordered session components, original module graph and calls, and the
+orchestration-teacher requirement. Registered support tasks must name their
+own frozen source member and complete split identity. A consistent journal
+and hashes are insufficient: swapping two individually valid source artifacts
+must refuse even when all journal and report hashes are resealed. Transformed
+`originalReferenceSource` tasks currently refuse until their distinct original
+source receives an explicit release binding; their transformed output alone
+cannot stand in for that source.
+
 The native verifier rejects unbound packs, donor imports, teacher features,
 text anchors, hindsight inputs, distributed or decoupled routes, stage/effort
 mixtures and archived stage history. Its first profile cannot infer those
@@ -178,7 +190,7 @@ external checksum to refuse before any restoration destination is created.
 
 The `Direct V8 source model package and restore` workflow freezes native
 `d4afac5bb7261aa7ef85c1d65d3ae6dcaf6caeef` and the triggering producer commit.
-It runs the 17 producer archive, 25 campaign history and 62 native verifier controls without skips,
+It runs the 17 producer archive, 59 task-binding/campaign-history and 62 native verifier controls without skips,
 then the full paired gate in the exact release runtime. Every subprocess streams
 progress and retains its original stdout/stderr. A complete tar archive retains
 hidden campaign locks, immutable history, original inputs, package, restoration

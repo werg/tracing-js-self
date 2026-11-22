@@ -52,6 +52,7 @@ IMPLEMENTATIONS = (
     "tools/package-semantic-release-v8.py", "tools/restore-semantic-release-v8.py",
     "tools/semantic_release_v8.py", "tools/release_archive.py",
     "tools/verify-v8-release-campaign.mjs", "src/corpus/campaign-store.mjs",
+    "src/corpus/release-task-binding-v8.mjs",
     "tools/native-consumer/check_environment_v8.py",
     "tools/native-consumer/requirements.lock", "profiles/release-environment-v8.lock.json",
     "npm-shrinkwrap.json",

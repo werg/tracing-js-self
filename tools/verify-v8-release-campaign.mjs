@@ -7,6 +7,7 @@ import {join,resolve,relative,dirname,posix} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {isDeepStrictEqual} from 'node:util';
 import {CampaignStore,sha256} from '../src/corpus/campaign-store.mjs';
+import {verifyV8TaskArtifactBinding} from '../src/corpus/release-task-binding-v8.mjs';
 
 const HASH=/^[a-f0-9]{64}$/,REVISION=/^[a-f0-9]{40}$/;
 const ID=/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,199}$/;
@@ -150,11 +151,14 @@ export async function verifyV8ReleaseCampaign(directory){
   for(const key of ['supportCohortDigest','registryDigest','sourceCounts'])
     require(isDeepStrictEqual(report[key],inventory[key]),'support population identity differs: '+key);
   require(reportArtifacts['population.json']===population.sha256,'population artifact bytes differ');
+  const registry=inventory.registryDigest===undefined?null:readJSON(root,'family-registry.json',MAX_OBJECT).value;
+  require(registry===null||globals.has('family-registry.json')&&registry.digest===inventory.registryDigest,
+    'original task family registry differs from the frozen population');
   const store=new CampaignStore(join(root,'progress'),authority,{readOnly:true,maxObjectBytes:MAX_OBJECT,recoverTornLog:false});
   try{
     require(store.identityDigest===report.progressDigest&&store.latest.size===ids.length,
       'report does not cover the complete committed journal');
-    const requiredArtifacts=new Map(),attempts=[],referencedObjects=new Set(),cases=[];
+    const requiredArtifacts=new Map(),attempts=[],referencedObjects=new Set(),cases=[],taskBindings=new Map();
     const retain=ref=>{
       if(!ref)return;
       inputPath(root,'progress/'+ref.path);referencedObjects.add('progress/'+ref.path);
@@ -180,6 +184,18 @@ export async function verifyV8ReleaseCampaign(directory){
         result.row.durationMs===entry.durationMs&&result.row.peakRssBytes===entry.peakRssBytes&&
         !entry.public&&!entry.private,'committed result or resource accounting changed');
       retainArtifacts(result.artifacts,entry.id);
+      if(result.row.source==='passed'){
+        const name=result.row.sourceArtifact;
+        require(name===entry.id+'.source.json'&&Object.hasOwn(result.artifacts,name),
+          'source-qualified attempt has no original source artifact');
+        // A hash-linked journal can consistently name the wrong safe artifact.
+        // Bind the encoded task's request before fresh source/native replay.
+        const binding=verifyV8TaskArtifactBinding(task,readJSON(root,name,MAX_OBJECT).value,{registry});
+        require(result.row.family===task.fixture.family,'reported family differs from original task');
+        if(registry!==null)require(result.row.sourceId===binding.membership.sourceId&&
+          result.row.split===binding.membership.split,'reported source membership differs from original task');
+        taskBindings.set(entry.entryDigest,binding);
+      }
       for(const ref of [entry.candidate,entry.result,...(task.inputs??[]).flatMap(input=>
         [input.source,input.input,input.fixture])])retain(ref);
       attempts.push({id:entry.id,status:entry.status,attempt:entry.attempt,entryDigest:entry.entryDigest,
@@ -207,6 +223,7 @@ export async function verifyV8ReleaseCampaign(directory){
         require(row.sourceArtifact===row.id+'.source.json'&&Object.hasOwn(result.artifacts,row.sourceArtifact),
           'source-qualified result has no bound original source artifact');
         item.sourceArtifact=row.sourceArtifact;
+        item.taskArtifactBinding=taskBindings.get(entry.entryDigest);
       }
       if(row.native==='passed'){
         require(!authority.prepareOnly&&isSelected&&row.source==='passed'&&row.status==='admitted'&&
@@ -248,6 +265,8 @@ export async function verifyV8ReleaseCampaign(directory){
       declared:ids.length,selectedCaseIds:selected,sourceQualified,nativeAdmitted,
       counts:counts(cases),attemptCounts:counts(attempts),cases,attempts,files,
       auxiliaryFiles:files.filter(row=>!authorityFiles.has(row.path)).map(row=>row.path),
+      taskArtifactBindings:{checkedAttempts:taskBindings.size,checkedCurrentSources:sourceQualified,
+        authority:'Original encoded task request and frozen family registry; checked before source/native replay'},
       limits:{metadataBytes:MAX_METADATA,objectBytes:MAX_OBJECT,fileBytes:MAX_FILE_BYTES,
         totalBytes:MAX_TOTAL_BYTES,files:MAX_FILES},
       optimizerUpdates:0,freshSourceReplays:0,freshNativeAdmissions:0,learnedSuccess:null,

@@ -142,6 +142,16 @@ def qualify(args):
             all(row["source"] == row["native"] == "passed" for row in rows) and
             {split: list(split_by_id.values()).count(split) for split in ("train", "validation", "test")}
             == {"train": 48, "validation": 12, "test": 4}, "Complete frozen 64-source admission did not pass")
+    task_binding = inputs / "task-binding-snapshot.json"
+    run("bind-original-64-source-tasks", ["node", producer / "tools/verify-v8-release-campaign.mjs",
+                                         qualification, "--output", task_binding])
+    binding_snapshot = read(task_binding)
+    require(binding_snapshot["status"] == "verified" and
+            binding_snapshot["taskArtifactBindings"]["checkedAttempts"] == 64 and
+            binding_snapshot["taskArtifactBindings"]["checkedCurrentSources"] == 64 and
+            all(row["taskArtifactBinding"]["membership"]["sourceId"] == row["id"]
+                for row in binding_snapshot["cases"]),
+            "Original task to artifact binding did not cover the complete frozen campaign")
     source_inventory = inputs / "source-ids.json"
     write(source_inventory, {"schema": "semantic-v8-source-population/1",
                              "registryDigest": registry["digest"], "sourceIds": ids})
@@ -217,6 +227,7 @@ def qualify(args):
               "ordinaryLifecycleOptimizerUpdates": 2, "packageOptimizerUpdates": 0,
               "restoreOptimizerUpdates": 0, "releaseDecoderForwardPasses": 0,
               "freshSourceNativePreparationAtPackageAndRestore": True,
+              "originalTaskArtifactBindingsVerified": True,
               "originalRuntimeAssetLocatorsAbsentAtRestore": True,
               "wrongExternalChecksumRefusedBeforeExtraction": True,
               "fullTargetCoverageQualified": False, "acceptedHistoryRecovery": "unmeasured",
