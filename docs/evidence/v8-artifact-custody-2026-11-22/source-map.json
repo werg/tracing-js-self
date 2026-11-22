@@ -1,0 +1,51 @@
+{
+  "baseCommit": "ade3618eac91723d433da9d64661dfbabe000cd9",
+  "baseTree": "806aa309bb5c54bc81f1a5e40c058b0a1ac21085",
+  "branch": "codex/v8-release-restoration-20261122",
+  "claims": {
+    "archiveExecuted": false,
+    "learnedSuccess": null,
+    "optimizerUpdates": 0,
+    "productionPromotion": false
+  },
+  "expandedArchive": {
+    "archiveBytes": 178270704,
+    "archiveSha256": "4e4d26f10173d85182af3d189ba0d69a6327c90cdaba7ebd2adc5abc8758087e",
+    "artifactId": "14758849422",
+    "runId": "45025994295",
+    "status": "already-retained in an unpublished draft release; no duplicate upload scheduled"
+  },
+  "files": [
+    {
+      "bytes": 3856,
+      "path": ".github/workflows/retain-v8-workflow-artifact.yml",
+      "sha256": "b7a69be669bdba207c93b92ef46611f3a0312ae04afe8884ab8a2de8e0e47fe1"
+    },
+    {
+      "bytes": 23435,
+      "path": "tools/retain-workflow-artifact.py",
+      "sha256": "3d14450be68d245c381857f3083ac871944d7fda85adab354839b07dc82ad122"
+    },
+    {
+      "bytes": 9660,
+      "path": "tests/test_retain_workflow_artifact.py",
+      "sha256": "2f652647c040558e5f13afd4eb914b2ef389d6e4951fffa309b2adb2f89cef31"
+    }
+  ],
+  "localVerification": {
+    "networkUpload": "not run locally",
+    "py_compile": "passed",
+    "pytest": "6 passed, zero skipped",
+    "ruff": "passed"
+  },
+  "primarySourceAttempt": {
+    "archiveBytes": 175381869,
+    "archiveSha256": "6dc909ecc1c1ed7401fa5ceb1cba7006c07641d530a1550f16a7870af3e483af",
+    "artifactId": "14759987389",
+    "attempt": "1",
+    "runId": "45023684906",
+    "sourceSha": "9cf091e6ccc5add960ef0897576d0c391b199a65"
+  },
+  "repository": "werg/tracing-js-self",
+  "schema": "v8-workflow-artifact-custody-source-map/1"
+}

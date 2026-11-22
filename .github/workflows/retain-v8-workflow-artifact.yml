@@ -1,0 +1,113 @@
+name: Preserve original V8 evidence archive
+
+on:
+  push:
+    branches:
+      - codex/v8-release-restoration-20261122
+    paths:
+      - .github/workflows/retain-v8-workflow-artifact.yml
+      - tools/retain-workflow-artifact.py
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Completed source workflow run ID
+        required: true
+        type: string
+      source_run_attempt:
+        description: Exact original workflow attempt number
+        required: true
+        default: '1'
+        type: string
+      artifact_id:
+        description: Exact original Actions artifact ID
+        required: true
+        type: string
+      source_sha:
+        description: Exact source run commit SHA
+        required: true
+        type: string
+      archive_sha256:
+        description: Independently retained SHA-256 of original downloaded ZIP bytes
+        required: true
+        type: string
+      archive_bytes:
+        description: Independently retained original ZIP byte count
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: v8-artifact-custody-${{ inputs.source_run_id || (github.event_name == 'push' && '45023684906') }}-${{ inputs.source_run_attempt || '1' }}
+  cancel-in-progress: false
+
+jobs:
+  preserve-original-archive:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - name: Verify and retain exact original bytes as a draft asset
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SOURCE_RUN_ATTEMPT: ${{ inputs.source_run_attempt || '1' }}
+          ARTIFACT_ID: ${{ inputs.artifact_id }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          ARCHIVE_SHA256: ${{ inputs.archive_sha256 }}
+          ARCHIVE_BYTES: ${{ inputs.archive_bytes }}
+        run: |
+          python tools/retain-workflow-artifact.py \
+            --run-id "$SOURCE_RUN_ID" \
+            --run-attempt "$SOURCE_RUN_ATTEMPT" \
+            --artifact-id "$ARTIFACT_ID" \
+            --source-sha "$SOURCE_SHA" \
+            --archive-sha256 "$ARCHIVE_SHA256" \
+            --archive-bytes "$ARCHIVE_BYTES" \
+            --out "$RUNNER_TEMP/v8-artifact-custody"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v8-artifact-custody-receipt
+          path: ${{ runner.temp }}/v8-artifact-custody/custody.json
+          retention-days: 90
+          if-no-files-found: warn
+
+  preserve-primary-partial-archive:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - name: Retain the exact failed primary run with its partial checkpoint
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python tools/retain-workflow-artifact.py \
+            --run-id '45023684906' \
+            --run-attempt '1' \
+            --artifact-id '14759987389' \
+            --source-sha '9cf091e6ccc5add960ef0897576d0c391b199a65' \
+            --archive-sha256 '6dc909ecc1c1ed7401fa5ceb1cba7006c07641d530a1550f16a7870af3e483af' \
+            --archive-bytes '175381869' \
+            --out "$RUNNER_TEMP/v8-primary-artifact-custody"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v8-primary-artifact-custody-receipt
+          path: ${{ runner.temp }}/v8-primary-artifact-custody/custody.json
+          retention-days: 90
+          if-no-files-found: warn
