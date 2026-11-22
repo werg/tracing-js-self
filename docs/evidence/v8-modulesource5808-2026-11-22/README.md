@@ -2,8 +2,8 @@
 
 [GitHub Actions run 45018445352](https://github.com/werg/tracing-js-self/actions/runs/45018445352),
 job `137195785507`, completed successfully against the exact published pair
-below. This is the first complete hosted original-source admission result. It
-covers one explicitly enabled module family in an isolated **validation**
+below. This is the first complete hosted original-source admission result for
+the opt-in scheduler profile. It covers one module family in an isolated **validation**
 registry. It changes no production population and runs no optimizer.
 
 | Component | Actual hosted revision | Complete tree |
