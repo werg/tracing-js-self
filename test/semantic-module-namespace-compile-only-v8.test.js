@@ -5,22 +5,17 @@ import {buildExperimentalModuleNamespacePlanFromLinker} from '../src/semantic/mo
 import {createRuntime} from '../src/runtime.js';
 import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
-
-const modules={
-  'main.js':"import * as view from './view.js';import {update} from './state.js';export function run(key){const before=view[key];const keys=Object.keys(view);update(9);const after=Object.getOwnPropertyDescriptor(view,'value').value;return {before,after,keys};}",
-  'state.js':"export let value=1;export const fixed=2;export function update(next){value=next;}",
-  'view.js':"export {value,fixed} from './state.js';"
-};
+import {namespaceModules as modules,namespaceEntry,namespaceExport,namespaceArgs,namespaceMaxGenerated} from './fixtures/semantic-module-namespace-v8.js';
 
 test('namespace source compiler owns runtime namespace and live-cell effects before audit qualification',()=>{
-  const linked=linkEvaluatedModules({modules,entryModule:'main.js',exportName:'run',args:['value'],
+  const linked=linkEvaluatedModules({modules,entryModule:namespaceEntry,exportName:namespaceExport,args:namespaceArgs,
     calls:null,experimentalNamespacePlan:true});
   const plan=buildExperimentalModuleNamespacePlanFromLinker(linked);
   const runtime=createRuntime({maxSteps:20000}).startEntry({text:linked.source,functionName:linked.entryFunction,
     args:[linked.entryInput],allowAsync:true,moduleNamespaceIntrinsic:true});
   const progress=runtime.drive();
   assert.equal(progress.kind,'terminated');
-  const projection=compileProtocolSourceV8(runtime.exportRun(),{maxGenerated:20000,moduleNamespacePlan:plan});
+  const projection=compileProtocolSourceV8(runtime.exportRun(),{maxGenerated:namespaceMaxGenerated,moduleNamespacePlan:plan});
   const records=projection.claims.filter(row=>row.kind==='protocol').map(row=>row.record);
   const kinds=new Set(records.map(row=>row.kind));
   for(const kind of ['namespace.create','namespace.keys','namespace.read','namespace.descriptor',

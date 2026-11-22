@@ -100,7 +100,7 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
     }
     return method==='Object.getOwnPropertyDescriptor'&&pending.key===event.operands?.[2]?.[1];
   }
-  function checkNamespaceNode(ctx,node){
+  function checkNamespaceNode(ctx,node,initialOwner=null){
     if(node.kind!=='module-namespace')return false;
     const names=moduleNamespacePlan.namespaces.filter(row=>
       eq(row.exports.map(item=>item.name),node.namespaceExportNames));
@@ -116,10 +116,25 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
        node.dataAttributes?.['\u0000symbol:well-known:toStringTag']?.enumerable!==false||
        node.dataAttributes?.['\u0000symbol:well-known:toStringTag']?.configurable!==false)
       return false;
+    const retainedOwner=ownedNamespace(ctx,node.id),
+      sourceOwner=initialOwner??(retainedOwner&&owners.find(row=>row.file===retainedOwner.file));
+    if(!sourceOwner||!owners.includes(sourceOwner)||
+       !eq(sourceOwner.exports.map(row=>row.name),node.namespaceExportNames))return false;
     for(const name of expected){
-      const descriptor=node.accessors[name];
+      const descriptor=node.accessors[name],sourceExport=sourceOwner.exports.find(item=>item.name===name);
       if(!descriptor||descriptor.enumerable!==true||descriptor.configurable!==false||
-         descriptor.get?.value?.[0]!=='ref'||!eq(descriptor.set?.value,['undefined']))return false;
+         descriptor.get?.value?.[0]!=='ref'||!eq(descriptor.set?.value,['undefined'])||!sourceExport)return false;
+      const getter=ctx.state.heap[descriptor.get.value[1]];
+      if(getter?.kind!=='function'||getter.codeId!==sourceExport.getterCodeId)return false;
+      let envId=getter.closureEnvId,found=false,visited=new Set();
+      while(typeof envId==='string'&&!visited.has(envId)){
+        visited.add(envId);
+        const env=ctx.state.envs[envId];
+        if(!env)break;
+        if(Object.hasOwn(env.bindings??{},sourceExport.loweredName)){found=true;break;}
+        envId=env.parent;
+      }
+      if(!found)return false;
     }
     return true;
   }
@@ -186,7 +201,7 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
     const owner=ownerBySite.get(event.siteId),id=namespaceIdFrom(event,row);
     if(!owner||!id)ctx.refuse('namespace allocation lacks its exact source callsite or identity');
     const allocation=event.stateChanges.find(change=>change.table==='heap'&&change.id===id&&change.before===null)?.after;
-    if(!allocation||!checkNamespaceNode(ctx,allocation)||
+    if(!allocation||!checkNamespaceNode(ctx,allocation,owner)||
        !eq(allocation.namespaceExportNames,owner.exports.map(item=>item.name)))
       ctx.refuse('namespace allocation differs from the exact generated initializer');
     checkRuntimeGetters(ctx,allocation,owner);

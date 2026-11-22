@@ -168,7 +168,7 @@ export async function verifyRegionModuleTrainingCase(fixture){
       ...(namespacePlan?{moduleNamespacePlan:namespacePlan}:{})},
     provenance:{...fixture.provenance,moduleEvidence}});
   if(!result.exported)return {...identity,...result,sourceProfile:MODULE_REGION_PROFILE,moduleReference:'passed'};
-  if(!outcomeAgreement(reference.outcome,result.exported.sidecar.sourceArtifact.sidecar.reference.outcome))
+  if(!outcomeAgreement(reference.outcome,result.exported.sidecar.sourceArtifact.sidecar.outcome))
     return {...identity,status:'failed',phase:'module-correspondence',sourceProfile:MODULE_REGION_PROFILE,
       reason:'Native original module graph and owned linked JavaScript differ'};
   if(namespacePlan&&!namespaceObservationAgreement(reference,result.exported.sidecar.sourceArtifact,namespacePlan))
@@ -180,6 +180,34 @@ export async function verifyRegionModuleTrainingCase(fixture){
 
 /** Re-run the native ESM reference and linker from source-bound private proof.
  * This is called by production v8 rechecking, never by the model serializer. */
+export async function verifyModuleNamespaceInputEvidence({source,entry,args,moduleNamespacePlan,provenance}={}){
+  const evidence=provenance?.moduleEvidence;
+  if(evidence?.schema!=='semantic-module-evidence/1'||evidence.profile!==MODULE_REGION_PROFILE||
+     evidence.request?.experimentalNamespacePlan!==true||!evidence.request.inputGraph)
+    fail('fresh original module evidence is required');
+  const {decodeOwnedGraph}=await import('../host/graph-codec.js');
+  const [input]=decodeOwnedGraph(JSON.stringify(evidence.request.inputGraph));
+  const request={...evidence.request,args:evidence.request.calls?[]:input.args,
+    calls:evidence.request.calls?.map((call,index)=>({...call,args:input.calls[index].args}))??null};
+  const prepared=prepare(request),expectedPlan=prepared.moduleNamespacePlan;
+  const refused=moduleProjectionRefusal(prepared.linked,prepared.request);
+  if(refused)fail(refused.reason);
+  if(!expectedPlan||!isDeepStrictEqual(moduleNamespacePlan,expectedPlan)||
+     !isDeepStrictEqual(encodeNativeGraph(args),encodeNativeGraph([prepared.linked.entryInput]))||
+     source!==prepared.linked.source||entry!==prepared.linked.entryFunction||
+     evidence.graphDigest!==hashAlgorithmData(prepared.request.modules)||
+     evidence.generatedSourceDigest!==hashAlgorithmData(prepared.linked.source)||
+     !isDeepStrictEqual(prepared.referenceInput,evidence.referenceInput)||
+     !isDeepStrictEqual(prepared.linked.metadata,evidence.metadata))
+    fail('namespace plan or generated source does not match a fresh original-module relink');
+  const reference=await independentModuleRegionReference(prepared.referenceInput);
+  if(reference.status!=='passed'||!isDeepStrictEqual(reference,evidence.reference)||
+     !reference.namespaceObservations||
+     reference.namespaceObservations.schema!=='semantic-module-namespace-observations/1')
+    fail('fresh original ESM namespace observations differ from supplied evidence');
+  return {status:'passed',graphDigest:evidence.graphDigest};
+}
+
 export async function recheckModuleRegionEvidence(artifact){
   // Protocol-region callers pass the outer evidence so its actually published
   // program plan is checked. Legacy module callers may still pass the direct
@@ -217,7 +245,7 @@ export async function recheckModuleRegionEvidence(artifact){
     !isDeepStrictEqual(prepared.linked.metadata,evidence.metadata))fail('module graph, transformation, inputs or provenance changed');
   const reference=await independentModuleRegionReference(prepared.referenceInput);
   if(reference.status!=='passed'||!isDeepStrictEqual(reference,evidence.reference)||
-    !outcomeAgreement(reference.outcome,side.reference.outcome))fail('independent original-module outcome changed');
+    !outcomeAgreement(reference.outcome,side.outcome))fail('independent original-module outcome changed');
   if(expectedPlan&&!namespaceObservationAgreement(reference,sourceArtifact,expectedPlan))
     fail('fresh original ESM namespace observations differ from source-owned actions');
   return {status:'passed',applicable:true,graphDigest:evidence.graphDigest};

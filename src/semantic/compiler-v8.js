@@ -163,6 +163,13 @@ async function tryDirectProtocolSource(fixture,prior){
   return {...prior,regionAttempts,protocolRefusal:projectionAttempt('direct-protocol-source/1',protocol)};
 }
 export async function verifyRegionTrainingCase(fixture){
+  // Namespace source authority is established by the explicit original-module
+  // gate. The generic teacher cannot execute the reserved generated intrinsic.
+  if(fixture?.projectionOptions?.moduleNamespacePlan){
+    const {verifyProtocolRegionTrainingCase}=await import('./protocol-source-v8.js');
+    return verifyProtocolRegionTrainingCase(fixture);
+  }
+
   if(Object.hasOwn(fixture??{},'sessionCases')){
     const {verifyRegionSourceSessionV8}=await import('./source-session-v8.js');
     return verifyRegionSourceSessionV8({...fixture,cases:fixture.sessionCases});

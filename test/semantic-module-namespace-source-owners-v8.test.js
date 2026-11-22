@@ -1,8 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {executeEvaluatedModulesSync,linkEvaluatedModules} from '../src/evaluated-modules.js';
+import {linkEvaluatedModules} from '../src/evaluated-modules.js';
+import {createRuntime} from '../src/runtime.js';
 import {buildExperimentalModuleNamespacePlanFromLinker} from '../src/semantic/module-namespace-state-v8.js';
 import {deriveExperimentalModuleNamespaceOwnersV8} from '../src/semantic/module-namespace-source-owners-v8.js';
+
+function executeLinked(linked){
+  const runtime=createRuntime({maxSteps:20000}).startEntry({
+    text:linked.source,functionName:linked.entryFunction,args:[linked.entryInput],
+    allowAsync:true,moduleNamespaceIntrinsic:true
+  });
+  assert.equal(runtime.drive().kind,'terminated');
+  return {bundle:runtime.exportRun()};
+}
 
 test('private namespace source owners map each initializer to one owned callsite',()=>{
   const modules={
@@ -12,7 +22,7 @@ test('private namespace source owners map each initializer to one owned callsite
   };
   const linked=linkEvaluatedModules({modules,entryModule:'main.js',exportName:'run',
     experimentalNamespacePlan:true});
-  const owned=executeEvaluatedModulesSync({modules,entryModule:'main.js',exportName:'run'});
+  const owned=executeLinked(linked);
   const plan=buildExperimentalModuleNamespacePlanFromLinker(linked);
   const owners=deriveExperimentalModuleNamespaceOwnersV8({
     source:linked.source,moduleNamespacePlan:plan,bundle:owned.bundle
@@ -35,7 +45,7 @@ test('private namespace owner derivation rejects source drift and duplicate site
   };
   const linked=linkEvaluatedModules({modules,entryModule:'main.js',exportName:'run',
     experimentalNamespacePlan:true});
-  const owned=executeEvaluatedModulesSync({modules,entryModule:'main.js',exportName:'run'});
+  const owned=executeLinked(linked);
   const plan=buildExperimentalModuleNamespacePlanFromLinker(linked);
   const owner=deriveExperimentalModuleNamespaceOwnersV8({source:linked.source,moduleNamespacePlan:plan,bundle:owned.bundle})[0];
   const duplicate=structuredClone(owned.bundle);

@@ -25,7 +25,7 @@ jobs:
           node-version-file: .nvmrc
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Check source projection before independent ESM qualification
-        run: node --test --test-reporter=spec test/semantic-module-namespace-compile-only-v8.test.js test/semantic-module-namespace-source-sync-gate-v8.test.js test/module-region-reference-worker.test.js
+        run: node --test --test-reporter=spec test/semantic-module-namespace-compile-only-v8.test.js test/semantic-module-namespace-source-sync-gate-v8.test.js test/module-region-reference-worker.test.js test/semantic-module-namespace-source-projection-v8.test.js test/semantic-module-namespace-source-boundary-v8.test.js test/semantic-module-namespace-source-owners-v8.test.js
   paired-state:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
