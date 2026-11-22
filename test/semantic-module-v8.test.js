@@ -17,7 +17,7 @@ const siblingSchedulerFixture={id:'parallel-tla-boundary',family:'parallel-tla-b
 test('native ESM independently agrees with owned live cells, a synchronous cycle and acyclic top-level await',async()=>{
   for(const fixture of LANGUAGE_EXPANSION_INTERACTIONS.filter(row=>row.modules)){
     const result=await verifyRegionModuleTrainingCase(fixture);
-    assert.ok(result.exported,[result.reason,result.failure?.original?.error?.stack].filter(Boolean).join('\n'));assert.equal(result.moduleCorrespondence,'passed');
+    assert.ok(result.exported,result.reason);assert.equal(result.moduleCorrespondence,'passed');
     assert.equal(result.exported.public.schema,'semantic-execution/8');
     assert.equal(result.exported.sidecar.sourceArtifact.sidecar.referenceStatus,'agreed');
     const check=await recheckRegionEvidence(result.exported);
@@ -59,16 +59,22 @@ test('source-owned namespace reflection observes sorted keys and live export cel
       'leaf.js':'export let value=2;export function update(next){value=next;}',
       'main.js':`import * as ns from './leaf.js';import {update} from './leaf.js';
         export function run(){
-          const keys=Reflect.ownKeys(ns);
+          const keys=Object.keys(ns);
           const descriptor=Object.getOwnPropertyDescriptor(ns,'value');
-          const before=ns.value;update(9);const after=ns.value;
+          const before=descriptor.value;update(9);
+          const setResult=Reflect.set(ns,'value',10);
+          const defineResult=Reflect.defineProperty(ns,'value',{value:10});
+          const after=Object.getOwnPropertyDescriptor(ns,'value').value;
           return {keys,hasValue:Object.hasOwn(ns,'value'),prototypeIsNull:Object.getPrototypeOf(ns)===null,
-            extensible:Object.isExtensible(ns),descriptor:{enumerable:descriptor.enumerable,
-              configurable:descriptor.configurable,getter:typeof descriptor.get==='function'},before,after};
+            extensible:Object.isExtensible(ns),descriptor:{value:before,writable:descriptor.writable,
+              enumerable:descriptor.enumerable,configurable:descriptor.configurable},before,setResult,defineResult,after};
         }`
     }};
-  const linked=linkEvaluatedModules({modules:fixture.modules,entryModule:'main.js',exportName:'run'});
+  const request={modules:fixture.modules,entryModule:'main.js',exportName:'run'},
+    linked=linkEvaluatedModules(request),owned=await executeEvaluatedModules(request);
   assert.equal(linked.metadata.requiresModuleNamespace,true);
+  assert.deepEqual(owned.result,{keys:['update','value'],hasValue:true,prototypeIsNull:true,extensible:false,
+    descriptor:{value:2,writable:true,enumerable:true,configurable:false},before:2,setResult:false,defineResult:false,after:9});
   const result=await verifyRegionModuleTrainingCase(fixture);
   assert.ok(result.exported,result.reason);
   assert.equal(result.moduleReference,'passed');
