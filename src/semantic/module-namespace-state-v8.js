@@ -7,6 +7,7 @@ import {hashAlgorithmData} from './program.js';
 
 const HASH=/^[a-f0-9]{64}$/;
 const LOWERED_LOCAL=/^__traced_eval_m([1-9][0-9]*)_([A-Za-z_$][A-Za-z0-9_$]*)$/;
+const NAMESPACE_LOCAL=/^__traced_eval_namespace_(0|[1-9][0-9]*)$/;
 const loweredIndex=value=>Number(LOWERED_LOCAL.exec(value)?.[1]);
 const copy=structuredClone;
 const own=Object.hasOwn;
@@ -67,7 +68,8 @@ export function buildExperimentalModuleNamespacePlan({modules,entryModule,namesp
   }
   const namespaceMap=new Map();
   for(const record of namespaces){
-    if(!exact(record,['file','exports'])||!canonicalPath(record.file)||!own(modules,record.file)||
+    if(!exact(record,['file','namespaceName','exports'])||!canonicalPath(record.file)||!own(modules,record.file)||
+       typeof record.namespaceName!=='string'||!NAMESPACE_LOCAL.test(record.namespaceName)||
        !Array.isArray(record.exports)||namespaceMap.has(record.file))
       fail('namespace link record is malformed or duplicated');
     let previous=null;
@@ -81,7 +83,7 @@ export function buildExperimentalModuleNamespacePlan({modules,entryModule,namesp
       previous=entry.name;
       return {name:entry.name,cell:id};
     });
-    namespaceMap.set(record.file,{file:record.file,exports});
+    namespaceMap.set(record.file,{file:record.file,namespaceName:record.namespaceName,exports});
   }
   const body={schema:'semantic-module-namespace-plan/1',entryModule,
     modules:files.map(file=>({file,sourceDigest:hashAlgorithmData(modules[file])})),
@@ -161,10 +163,13 @@ export function verifyExperimentalModuleNamespacePlan(plan){
   }
   prior=null;const namespaceFiles=new Set();
   for(const row of plan.namespaces){
-    if(!exact(row,['file','exports'])||!canonicalPath(row.file)||!files.has(row.file)||
+    if(!exact(row,['file','namespaceName','exports'])||!canonicalPath(row.file)||!files.has(row.file)||
+       typeof row.namespaceName!=='string'||!NAMESPACE_LOCAL.test(row.namespaceName)||
        namespaceFiles.has(row.file)||prior!==null&&prior>=row.file||!Array.isArray(row.exports))
       fail('namespace plan namespace table is malformed');
     prior=row.file;namespaceFiles.add(row.file);
+    if([...namespaceFiles].some(file=>file!==row.file&&plan.namespaces.find(item=>item.file===file)?.namespaceName===row.namespaceName))
+      fail('namespace source binding is duplicated');
     let previous=null;
     for(const entry of row.exports){
       if(!exact(entry,['name','cell'])||!name(entry.name)||!cells.has(entry.cell)||
@@ -193,7 +198,7 @@ function verifyState(plan,state){
   }
   const namespaceFiles=new Set();
   for(const [id,row] of Object.entries(state.namespaces)){
-    if(!/^obj[1-9][0-9]*$/.test(id)||!exact(row,['file','exports'])||
+    if(!/^o[1-9][0-9]*$/.test(id)||!exact(row,['file','exports'])||
        !isDeepStrictEqual(plan.namespaces.find(item=>item.file===row.file),row))
       fail('namespace identity state is malformed');
   }
@@ -218,7 +223,7 @@ export function applyExperimentalModuleNamespaceTransition(plan,state,transition
   };
   if(transition?.kind==='namespace.create'){
     if(!exact(transition,['kind','namespaceId','moduleFile'])||
-       typeof transition.namespaceId!=='string'||!/^obj[1-9][0-9]*$/.test(transition.namespaceId)||
+       typeof transition.namespaceId!=='string'||!/^o[1-9][0-9]*$/.test(transition.namespaceId)||
        own(next.namespaces,transition.namespaceId)||Object.values(next.namespaces).some(row=>row.file===transition.moduleFile))
       fail('namespace allocation identity is malformed or duplicated');
     const planned=plan.namespaces.find(row=>row.file===transition.moduleFile);

@@ -14,6 +14,7 @@ test('experimental namespace linker cells map to owned runtime allocation and bi
   const valueCell=plan.cells.find(cell=>cell.file==='cells.js'&&cell.local==='value');
   assert.deepEqual(valueCell,{file:'cells.js',local:'value',loweredName:'__traced_eval_m1_value',
     kind:'let',mutable:true});
+  assert.equal(plan.namespaces.find(row=>row.file==='cells.js').namespaceName,'__traced_eval_namespace_0');
   assert.deepEqual(plan.namespaces.find(row=>row.file==='cells.js').exports.map(row=>row.name),
     ['alias','fixed','update','value']);
   assert.equal(plan.namespaces.find(row=>row.file==='cells.js').exports.find(row=>row.name==='alias').file,

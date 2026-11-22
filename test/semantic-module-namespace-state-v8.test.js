@@ -18,7 +18,7 @@ const plan=()=>buildExperimentalModuleNamespacePlan({
     {file:'cells.js',local:'value',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'},
     {file:'cells.js',local:'fixed',kind:'const',mutable:false,loweredName:'__traced_eval_m1_fixed'}
   ],
-  namespaces:[{file:'cells.js',exports:[
+  namespaces:[{file:'cells.js',namespaceName:'__traced_eval_namespace_0',exports:[
     {name:'alias',file:'cells.js',local:'value'},
     {name:'fixed',file:'cells.js',local:'fixed'},
     {name:'value',file:'cells.js',local:'value'}
@@ -31,7 +31,7 @@ test('experimental namespace plan is derived from canonical linker source record
   const linked=linkEvaluatedModules({modules,entryModule:'main.js',exportName:'run',experimentalNamespacePlan:true});
   const source=buildExperimentalModuleNamespacePlanFromLinker(linked);
   assert.equal(source.schema,'semantic-module-namespace-plan/1');
-  assert.deepEqual(source.namespaces,[{file:'cells.js',exports:[
+  assert.deepEqual(source.namespaces,[{file:'cells.js',namespaceName:'__traced_eval_namespace_0',exports:[
     {name:'alias',cell:'cells.js#value'},
     {name:'fixed',cell:'cells.js#fixed'},
     {name:'value',cell:'cells.js#value'}
@@ -48,19 +48,19 @@ test('experimental namespace plan binds aliases to live canonical source cells',
     'cells.js#fixed':{initialized:true,value:['num',2]}
   });
   let transition=applyExperimentalModuleNamespaceTransition(source,state,{
-    kind:'namespace.create',namespaceId:'obj1',moduleFile:'cells.js'});
+    kind:'namespace.create',namespaceId:'o15',moduleFile:'cells.js'});
   let result=applyExperimentalModuleNamespaceTransition(source,transition.state,{
-    kind:'namespace.keys',namespaceId:'obj1',names:['alias','fixed','value']});
+    kind:'namespace.keys',namespaceId:'o15',names:['alias','fixed','value']});
   assert.deepEqual(result.result,['alias','fixed','value']);
   result=applyExperimentalModuleNamespaceTransition(source,result.state,{
-    kind:'namespace.read',namespaceId:'obj1',exportName:'alias',value:['num',1]});
+    kind:'namespace.read',namespaceId:'o15',exportName:'alias',value:['num',1]});
   transition=applyExperimentalModuleNamespaceTransition(source,result.state,{
     kind:'cell.write',cell:'cells.js#value',value:['num',9]});
   result=applyExperimentalModuleNamespaceTransition(source,transition.state,{
-    kind:'namespace.read',namespaceId:'obj1',exportName:'alias',value:['num',9]});
+    kind:'namespace.read',namespaceId:'o15',exportName:'alias',value:['num',9]});
   assert.deepEqual(result.result,['num',9]);
   result=applyExperimentalModuleNamespaceTransition(source,result.state,{
-    kind:'namespace.descriptor',namespaceId:'obj1',exportName:'value',
+    kind:'namespace.descriptor',namespaceId:'o15',exportName:'value',
     value:{value:['num',9],writable:true,enumerable:true,configurable:false}});
   assert.deepEqual(result.result,{value:['num',9],writable:true,enumerable:true,configurable:false});
 });
@@ -69,17 +69,17 @@ test('experimental namespace reads enforce TDZ and malformed transitions are ato
   const source=plan();
   const initial=createExperimentalModuleNamespaceState(source);
   const created=applyExperimentalModuleNamespaceTransition(source,initial,{
-    kind:'namespace.create',namespaceId:'obj1',moduleFile:'cells.js'}).state;
+    kind:'namespace.create',namespaceId:'o15',moduleFile:'cells.js'}).state;
   assert.throws(()=>applyExperimentalModuleNamespaceTransition(source,created,{
-    kind:'namespace.read',namespaceId:'obj1',exportName:'value',value:['num',1]}),/before its source binding is initialized/);
+    kind:'namespace.read',namespaceId:'o15',exportName:'value',value:['num',1]}),/before its source binding is initialized/);
   assert.throws(()=>applyExperimentalModuleNamespaceTransition(source,created,{
-    kind:'namespace.keys',namespaceId:'obj1',names:['value','fixed','alias']}),/own-key result differs/);
+    kind:'namespace.keys',namespaceId:'o15',names:['value','fixed','alias']}),/own-key result differs/);
   assert.deepEqual(created,applyExperimentalModuleNamespaceTransition(source,initial,{
-    kind:'namespace.create',namespaceId:'obj1',moduleFile:'cells.js'}).state);
+    kind:'namespace.create',namespaceId:'o15',moduleFile:'cells.js'}).state);
   assert.throws(()=>applyExperimentalModuleNamespaceTransition(source,created,{
     kind:'cell.write',cell:'cells.js#fixed',value:['num',3]}),/write is not allowed/);
   assert.throws(()=>applyExperimentalModuleNamespaceTransition(source,created,{
-    kind:'namespace.read',namespaceId:'obj1',exportName:'notExported',value:['num',0]}),/missing export/);
+    kind:'namespace.read',namespaceId:'o15',exportName:'notExported',value:['num',0]}),/missing export/);
 });
 
 test('experimental plan refuses numeric export names and changed source/link tables',()=>{
@@ -87,12 +87,12 @@ test('experimental plan refuses numeric export names and changed source/link tab
   assert.throws(()=>buildExperimentalModuleNamespacePlan({
     modules:{'main.js':'','cells.js':''},entryModule:'main.js',
     cells:[{file:'cells.js',local:'value',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'}],
-    namespaces:[{file:'cells.js',exports:[{name:'2',file:'cells.js',local:'value'}]}]
+    namespaces:[{file:'cells.js',namespaceName:'__traced_eval_namespace_0',exports:[{name:'2',file:'cells.js',local:'value'}]}]
   }),/malformed/);
   assert.throws(()=>buildExperimentalModuleNamespacePlan({
     modules,entryModule:'main.js',
     cells:[{file:'cells.js',local:'fixed',kind:'const',mutable:true,loweredName:'__traced_eval_m1_fixed'}],
-    namespaces:[{file:'cells.js',exports:[]}]
+    namespaces:[{file:'cells.js',namespaceName:'__traced_eval_namespace_0',exports:[]}]
   }),/malformed/);
   assert.throws(()=>createExperimentalModuleNamespaceState(plan(),{
     'cells.js#value':{initialized:true,value:['num','garbage']}
@@ -108,16 +108,16 @@ test('experimental plan refuses numeric export names and changed source/link tab
   assert.throws(()=>verifyExperimentalModuleNamespacePlan(changed),/integrity differs/);
   assert.throws(()=>applyExperimentalModuleNamespaceTransition(base,{
     schema:'semantic-module-namespace-state/1',planDigest:'0'.repeat(64),cells:{},namespaces:{}
-  },{kind:'namespace.create',namespaceId:'obj1',moduleFile:'cells.js'}),/not bound/);
+  },{kind:'namespace.create',namespaceId:'o15',moduleFile:'cells.js'}),/not bound/);
   const state=createExperimentalModuleNamespaceState(base);
   const forged=structuredClone(state);forged.cells['cells.js#value']={initialized:true,value:['num',77],version:-1};
   assert.throws(()=>applyExperimentalModuleNamespaceTransition(base,forged,{
-    kind:'namespace.create',namespaceId:'obj1',moduleFile:'cells.js'
+    kind:'namespace.create',namespaceId:'o15',moduleFile:'cells.js'
   }),/state is not bound|cell state is malformed/);
 });
 
 test('experimental cell records require unique linker-stable lowered names',()=>{
-  const fields={modules,entryModule:'main.js',namespaces:[{file:'cells.js',exports:[]}],
+  const fields={modules,entryModule:'main.js',namespaces:[{file:'cells.js',namespaceName:'__traced_eval_namespace_0',exports:[]}],
     cells:[{file:'cells.js',local:'value',kind:'let',mutable:true,loweredName:'value'}]};
   assert.throws(()=>buildExperimentalModuleNamespacePlan(fields),/cell record is malformed/);
   assert.throws(()=>buildExperimentalModuleNamespacePlan({...fields,cells:[
@@ -134,10 +134,18 @@ test('experimental lowered-name mapping must preserve local suffix and module id
   mixed.cells.find(row=>row.file==='cells.js'&&row.local==='fixed').loweredName='__traced_eval_m2_fixed';
   assert.throws(()=>verifyExperimentalModuleNamespacePlan(mixed),/module indices are inconsistent/);
   assert.throws(()=>buildExperimentalModuleNamespacePlan({
-    modules,entryModule:'main.js',namespaces:[{file:'cells.js',exports:[]}],
+    modules,entryModule:'main.js',namespaces:[{file:'cells.js',namespaceName:'__traced_eval_namespace_0',exports:[]}],
     cells:[
       {file:'cells.js',local:'value',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'},
       {file:'main.js',local:'entry',kind:'let',mutable:true,loweredName:'__traced_eval_m1_entry'}
     ]
   }),/module indices are inconsistent/);
+});
+
+test('experimental namespace records require a unique generated linker binding',()=>{
+  assert.throws(()=>buildExperimentalModuleNamespacePlan({
+    modules,entryModule:'main.js',cells:[
+      {file:'cells.js',local:'value',kind:'let',mutable:true,loweredName:'__traced_eval_m1_value'}
+    ],namespaces:[{file:'cells.js',namespaceName:'invalid',exports:[]}]
+  }),/namespace link record is malformed/);
 });

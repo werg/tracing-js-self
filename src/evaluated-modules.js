@@ -967,7 +967,8 @@ export function linkEvaluatedModules({modules,entryModule,exportName='default',
       file,local,loweredName:renamed.get(file).get(local),kind:symbol.kind,mutable:symbol.kind!=='const'
     }))),
     namespaces:[...namespaceTargets].sort((a,b)=>a<b?-1:a>b?1:0).map(file=>({
-      file,exports:[...exportedNames(file)].sort((a,b)=>a<b?-1:a>b?1:0).map(name=>{
+      file,namespaceName:'__traced_eval_namespace_'+indices.get(file),
+      exports:[...exportedNames(file)].sort((a,b)=>a<b?-1:a>b?1:0).map(name=>{
         if(/^(0|[1-9][0-9]*)$/.test(name)&&Number(name)<=0xfffffffe)
           reject('experimental namespace plans exclude integer-index export names until native ordering parity is verified');
         const binding=resolve(file,name);

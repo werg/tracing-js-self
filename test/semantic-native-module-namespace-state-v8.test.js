@@ -20,26 +20,26 @@ test('experimental JS and independent Python namespace cells agree through alias
     experimentalNamespacePlan:true});
   const plan=buildExperimentalModuleNamespacePlanFromLinker(linked);
   const steps=[
-    {kind:'namespace.create',namespaceId:'obj1',moduleFile:'cells.js'},
-    {kind:'namespace.read',namespaceId:'obj1',exportName:'value',value:['num',1]},
+    {kind:'namespace.create',namespaceId:'o15',moduleFile:'cells.js'},
+    {kind:'namespace.read',namespaceId:'o15',exportName:'value',value:['num',1]},
     {kind:'cell.initialize',cell:'cells.js#value',value:['num',1]},
     {kind:'cell.initialize',cell:'cells.js#fixed',value:['num',2]},
-    {kind:'namespace.keys',namespaceId:'obj1',names:['alias','fixed','value']},
-    {kind:'namespace.read',namespaceId:'obj1',exportName:'alias',value:['num',1]},
+    {kind:'namespace.keys',namespaceId:'o15',names:['alias','fixed','value']},
+    {kind:'namespace.read',namespaceId:'o15',exportName:'alias',value:['num',1]},
     {kind:'cell.write',cell:'cells.js#value',value:['num',9]},
-    {kind:'namespace.read',namespaceId:'obj1',exportName:'alias',value:['num',9]},
-    {kind:'namespace.descriptor',namespaceId:'obj1',exportName:'value',
+    {kind:'namespace.read',namespaceId:'o15',exportName:'alias',value:['num',9]},
+    {kind:'namespace.descriptor',namespaceId:'o15',exportName:'value',
       value:{value:['num',9],writable:true,enumerable:true,configurable:false}},
     {kind:'cell.write',cell:'cells.js#fixed',value:['num',3]},
-    {kind:'namespace.keys',namespaceId:'obj1',names:['value','alias','fixed']},
-    {kind:'namespace.create',namespaceId:'obj2',moduleFile:'cells.js'},
+    {kind:'namespace.keys',namespaceId:'o15',names:['value','alias','fixed']},
+    {kind:'namespace.create',namespaceId:'o16',moduleFile:'cells.js'},
     {kind:'cell.initialize',cell:'cells.js#value',value:['num',10]},
     {kind:'cell.write',cell:'cells.js#value',value:['bool','true']},
     {kind:'cell.write',cell:'cells.js#value',value:['ref','obj9']},
     {kind:'cell.write',cell:'cells.js#value',value:['num','NaN']},
-    {kind:'namespace.read',namespaceId:'obj1',exportName:'alias',value:['num','NaN']},
+    {kind:'namespace.read',namespaceId:'o15',exportName:'alias',value:['num','NaN']},
     {kind:'cell.write',cell:'cells.js#value',value:['bigint','123456789012345678901234567890']},
-    {kind:'namespace.read',namespaceId:'obj1',exportName:'value',value:['bigint','123456789012345678901234567890']}
+    {kind:'namespace.read',namespaceId:'o15',exportName:'value',value:['bigint','123456789012345678901234567890']}
   ];
   let state=createExperimentalModuleNamespaceState(plan);const outcomes=[];
   for(const step of steps){
