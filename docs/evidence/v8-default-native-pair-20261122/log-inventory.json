@@ -1,0 +1,41 @@
+[
+  {
+    "jobId": 137260371802,
+    "nodeLane": "test (24)",
+    "file": "node-24.job.log.gz",
+    "decodedLogBytes": 396006,
+    "decodedLogSha256": "f9b5de7f41583979b291b34175f708f40f3ae25a73a09488c31f76e46c67013f",
+    "compressedBytes": 115310,
+    "compressedSha256": "90b8c84cc22d36a381c031cc5177ef58a6ce14b798f1cd3b503e9c8b5a034c3b",
+    "reportedTests": 2813,
+    "reportedPasses": 2772,
+    "reportedFailures": 9,
+    "reportedSkips": 32
+  },
+  {
+    "jobId": 137260372070,
+    "nodeLane": "test (20)",
+    "file": "node-20.job.log.gz",
+    "decodedLogBytes": 1052878,
+    "decodedLogSha256": "868571a11e8860bfef0e343a1489fc9f6e686cdd15fb4e04705017d7aff4a7f8",
+    "compressedBytes": 203421,
+    "compressedSha256": "3d77bf9769bdb30104bfc49d70a04ad1069949a85668315e7ff217f8ec24b78e",
+    "reportedTests": 2813,
+    "reportedPasses": 2772,
+    "reportedFailures": 9,
+    "reportedSkips": 32
+  },
+  {
+    "jobId": 137260372187,
+    "nodeLane": "test (22)",
+    "file": "node-22.job.log.gz",
+    "decodedLogBytes": 1171871,
+    "decodedLogSha256": "28354c09309dfb7602827c6bfd17b3f33259144eaab2bc46500018c78b4046e7",
+    "compressedBytes": 215809,
+    "compressedSha256": "c7d97a8c857d8bc9860d6e498f23a08e01ea3cb1caf2f0f15b6aac31298ba4aa",
+    "reportedTests": 2813,
+    "reportedPasses": 2772,
+    "reportedFailures": 9,
+    "reportedSkips": 32
+  }
+]
