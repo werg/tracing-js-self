@@ -118,6 +118,7 @@ test('bootstrap reconstruction refuses changed causal authority, child, native w
     ['claimed host authority',x=>{x.recovery.hostRecoveryAuthorized=true;}],
     ['new model selection',x=>{x.native.attempts.push(copy(x.native.attempts.at(-1)));rehash(x.native);}],
     ['changed host public',x=>{x.state.publicDigest='f'.repeat(64);}],
+    ['forged returned execution binding',x=>{x.recovery.result.track.execution.invocation_id='another-invocation';}],
     ['changed other track',x=>{x.state.tracks.find(row=>row.parent===null).purpose='substituted coordinator purpose';}],
     ['refunded elapsed time',x=>{x.elapsedMs=x.checkpoint.continuation.elapsedMs-1;}],
     ['expired elapsed time',x=>{x.elapsedMs=x.policy.timeoutMs;}],
@@ -125,6 +126,10 @@ test('bootstrap reconstruction refuses changed causal authority, child, native w
     ['missing durable proof',x=>{delete x.native.attempts.at(-1).durableBootstrap;rehash(x.native);}],
     ['rehashed changed clock origin',x=>{
       x.pending.clockReceipt.issuedMonotonicNs='1000001000';rehash(x.pending.clockReceipt);
+      const {id,...body}=x.pending;x.pending.id=hashAlgorithmData(body);
+    }],
+    ['rehashed changed consumed clock budget',x=>{
+      x.pending.clockReceipt.consumedElapsedMs++;rehash(x.pending.clockReceipt);
       const {id,...body}=x.pending;x.pending.id=hashAlgorithmData(body);
     }],
     ...['sessionId','streamId','sessionGeneration'].map(key=>['rehashed substituted '+key+' boundary',x=>{

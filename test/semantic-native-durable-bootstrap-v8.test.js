@@ -100,6 +100,8 @@ test('actual native bootstrap preserves the accepted create and supports a secon
       assert.deepEqual(result.result,original);assert.deepEqual(result.createReceipt,createReceipt);
       const after=await fresh.select.checkpoint();
       assert.deepEqual(after.native,before.native);assert.deepEqual(after.attempts,before.attempts);
+      assert.equal(after.native.sessions[result.request.session].orchestration.operations
+        .filter(row=>row.kind==='bootstrap').length,1);
       assert(after.runtimeMetrics.rpcCalls>before.runtimeMetrics.rpcCalls);
       assert(after.runtimeMetrics.computeSeconds>=before.runtimeMetrics.computeSeconds);
       assert(after.runtimeMetrics.peakMemoryBytes>=before.runtimeMetrics.peakMemoryBytes);
@@ -117,7 +119,9 @@ for(const fault of ['after-native-outcome','alter-reply'])test('actual native bo
   const first=await context.open(fault);let receipt,request,createReceipt;
   try{
     request=await context.create(first.select);createReceipt=first.select.durableRequestReceipt();
-    await assert.rejects(first.select.bootstrapOrchestrationChild(request));
+    await assert.rejects(first.select.bootstrapOrchestrationChild(request),error=>{
+      assert.equal(error.acknowledgementUnknown,true);return true;
+    });
     assert.equal(first.select.status().closed,true);
     assert.equal(first.select.metrics().predictionAttempts,1);
     assert.equal(first.select.metrics().attempts[0].status,'accepted');

@@ -152,6 +152,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       }catch(error){
         // After dispatch, missing durability/poststate proof must fence every
         // later action even when the child returned an explicit error frame.
+        if(bootstrap)error.acknowledgementUnknown=true;
         stop(error);throw error;
       }
     }catch(error){

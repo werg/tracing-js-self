@@ -23,7 +23,8 @@ export declare class DurableNativeV8RequestJournal {
   readonly sessionGeneration: number;
   readonly maxBytes: number;
   readonly maxRequests: number;
-  append(input: {identity: unknown;requestBase64: string;checkpoint: unknown}): Promise<NativeV8RequestReceipt>;
+  append(input: {identity: unknown;requestBase64: string;checkpoint: unknown;
+    createReceipt?: NativeV8RequestReceipt}): Promise<NativeV8RequestReceipt>;
   read(receipt: NativeV8RequestReceipt, options?: {latest?: boolean}): Promise<any>;
   inspect(ordinal: number): Promise<{receipt: NativeV8RequestReceipt;intent: any}>;
   list(): Promise<Array<{ordinal: number}>>;
