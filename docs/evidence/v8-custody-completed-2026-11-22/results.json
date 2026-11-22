@@ -1,0 +1,103 @@
+[
+  {
+    "archiveExtracted": false,
+    "entries": [
+      {
+        "archive": {
+          "bytes": 16427247,
+          "name": "semantic-v8-run-45046754653-artifact-14763634179.zip",
+          "sha256": "2d575cbec0b543e329e68e9bb1289e3a7f33988866a145a9fb3c641a41ff91ad"
+        },
+        "completeJobLogs": [
+          {
+            "originalJob": {
+              "bytes": 111317,
+              "conclusion": "failure",
+              "id": 137282942375,
+              "name": "evaluate-original348",
+              "sha256": "a930ace1e75105681e80c970a8b9fab839f9b78e4fc038c44a9e6b6c02c045ee"
+            },
+            "retainedAsset": {
+              "bytes": 111317,
+              "id": 779841154,
+              "independentlyReread": true,
+              "name": "complete-job-137282942375.log",
+              "sha256": "a930ace1e75105681e80c970a8b9fab839f9b78e4fc038c44a9e6b6c02c045ee"
+            }
+          }
+        ],
+        "completeReceiptAsset": {
+          "bytes": 2929,
+          "id": 779841215,
+          "independentlyReread": true,
+          "name": "complete-custody-14763634179-4603e7a9f69220a4.json",
+          "sha256": "769ab3c554f3d93c52a916479da789da11097bf4c325f5485597cc5e2babd2e2"
+        },
+        "entryIdentity": "4603e7a9f69220a47c5d8526868efb509dd75e4059b2f219a95b3e3971f3f0db",
+        "label": "failed-original348-evaluation",
+        "release": {
+          "draft": true,
+          "id": 454615292,
+          "tag": "v8-evidence-run-45046754653-attempt-1",
+          "tagBinding": {
+            "status": "absent"
+          },
+          "url": "https://github.com/werg/tracing-js-self/releases/tag/untagged-25553ca7023911c473fe"
+        },
+        "sourceConclusion": "failure",
+        "status": "verified"
+      },
+      {
+        "archive": {
+          "bytes": 349428034,
+          "name": "semantic-v8-run-45044587251-artifact-14763982452.zip",
+          "sha256": "9ae36532437b62803b2190759c04b91f8c831c2716305bd788031bd067e7120f"
+        },
+        "completeJobLogs": [
+          {
+            "originalJob": {
+              "bytes": 413112,
+              "conclusion": "success",
+              "id": 137276290532,
+              "name": "direct-release",
+              "sha256": "faadeb7a306ae4f14b266f2c174449d12b65fa6e78e95d42056f7cf7081f0de5"
+            },
+            "retainedAsset": {
+              "bytes": 413112,
+              "id": 779842195,
+              "independentlyReread": true,
+              "name": "complete-job-137276290532.log",
+              "sha256": "faadeb7a306ae4f14b266f2c174449d12b65fa6e78e95d42056f7cf7081f0de5"
+            }
+          }
+        ],
+        "completeReceiptAsset": {
+          "bytes": 3006,
+          "id": 779842248,
+          "independentlyReread": true,
+          "name": "complete-custody-14763982452-cb3feff860c10e0a.json",
+          "sha256": "5e80078f98ba4750ec5b202036e97403c40cb62fea70cc0a945181a86a7d24c4"
+        },
+        "entryIdentity": "cb3feff860c10e0a6e755d450562252a8b7c026467efb7ab08969eafd0ca5def",
+        "label": "historical-task-binding-790",
+        "release": {
+          "draft": true,
+          "id": 454615411,
+          "tag": "v8-evidence-run-45044587251-attempt-1",
+          "tagBinding": {
+            "status": "absent"
+          },
+          "url": "https://github.com/werg/tracing-js-self/releases/tag/untagged-6cff4efc93b6bbdb0331"
+        },
+        "sourceConclusion": "success",
+        "status": "verified"
+      }
+    ],
+    "optimizerUpdates": 0,
+    "planSha256": "ed99c67108cbbd8d9ab17f5565ac2e475fe3c78cf996a7809e1d9965da695fc8",
+    "productionPromotion": false,
+    "schema": "v8-evidence-custody-plan-result/1",
+    "status": "verified",
+    "workflowRevision": "85773eca01c2a9c8cb0c9ce10a83d947f20f9cf2"
+  }
+]
