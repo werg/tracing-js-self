@@ -1,8 +1,8 @@
-name: Known native commit and complete host-history recovery
+name: Known native commit, child startup and complete host-history recovery
 
 on:
   push:
-    branches: [codex/v8-combined-recovery-ledger-20261122]
+    branches: [codex/v8-combined-recovery-ledger-20261122, codex/v8-bootstrap-recovery-20261122]
 
 permissions:
   contents: read
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: werg/megatoken
-          ref: 10d1f5fd611fbe4fbc3f19b6463f597d90946f7c
+          ref: 8cdec19dbac9af0ba7968ac3b1adb84e53ce0dbc
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -49,7 +49,7 @@ jobs:
           npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
           python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
           python -m pip install --no-deps --no-build-isolation -e ./megatoken
-          test "$(git -C megatoken rev-parse HEAD)" = 10d1f5fd611fbe4fbc3f19b6463f597d90946f7c
+          test "$(git -C megatoken rev-parse HEAD)" = 8cdec19dbac9af0ba7968ac3b1adb84e53ce0dbc
           cmp tracing-js-self/contracts/semantic-execution-v8.json megatoken/src/megatoken/data/contracts/semantic-execution-v8.json
       - name: Verify complete reconstruction, real native recovery and refusal boundaries
         working-directory: tracing-js-self
@@ -67,9 +67,9 @@ jobs:
           import os,xml.etree.ElementTree as ET
           from pathlib import Path
           cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'known-commit-history.xml').getroot().iter('testcase'))
-          if len(cases)!=62 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
-              raise ValueError('Every one of the 62 exact known-commit/clock/whole-history controls must run and pass')
-          print('62 known-commit, kernel-clock, native durability and complete-history controls passed; zero skips')
+          if len(cases)!=72 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('Every one of the 72 exact create/bootstrap/join/progress/clock/history controls must run and pass')
+          print('72 complete-history controls passed; zero skips; known create/bootstrap outcomes and repeated process loss included')
           PY
       - name: Preserve exact candidate checkouts
         if: ${{ !cancelled() }}
