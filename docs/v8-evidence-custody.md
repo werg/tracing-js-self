@@ -35,7 +35,7 @@ The `Preserve exact V8 archives and complete original job logs` workflow runs on
 on `codex/v8-release-evidence-custody-20261122`, with the checkout frozen to the
 triggering commit. It has read access to Actions and write access to repository
 draft assets. The same branch/repository restriction is enforced in the driver.
-It runs twelve local refusal/reuse controls before any network custody operation.
+It runs thirteen local refusal/reuse controls before any network custody operation.
 
 ```sh
 python tools/retain-v8-evidence-plan.py \
@@ -44,6 +44,8 @@ python tools/retain-v8-evidence-plan.py \
 ```
 
 Original logs are downloaded and checked before creating or changing a draft.
+They are checked against the same independent pins again immediately before
+upload, so a changed temporary log cannot be rebound as a new source identity.
 The existing retainer independently checks the original ZIP before creating a
 draft and reads the retained ZIP back afterward. The companion then checks that
 the draft remains unpublished and bound to the same source, uploads or reuses

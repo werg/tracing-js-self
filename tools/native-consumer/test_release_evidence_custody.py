@@ -190,6 +190,16 @@ class ReleaseEvidenceCustodyTests(unittest.TestCase):
                 driver.retain_entry(api, api.entry, self.root / "changed")
         self.assertEqual(api.uploads, uploaded)
 
+    def test_log_changed_after_original_download_cannot_be_rebound_as_new_authority(self):
+        api = FakeAPI()
+        def changed_local_log(entry, output):
+            (output.parent / "complete-job-33.log").write_bytes(b"x" * len(LOG))
+            return api.archive_receipt(entry, output)
+        with patch.object(driver, "retain_archive", side_effect=changed_local_log):
+            with self.assertRaisesRegex(ValueError, "independently pinned bytes"):
+                driver.retain_entry(api, api.entry, self.root / "changed-local")
+        self.assertEqual(api.uploads, [])
+
 
 if __name__ == "__main__":
     unittest.main()
