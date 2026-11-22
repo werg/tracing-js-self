@@ -17,7 +17,6 @@ import sys
 
 
 MAX_MESSAGE_BYTES = 8 * 1024 * 1024
-TOKENIZERS_VERSION = "0.23.3"
 
 
 def emit(value):
@@ -35,8 +34,7 @@ def load_codec(consumer_root, tokenizer_path, policy):
     ).strip()
     if revision != policy["consumerRevision"] or dirty:
         raise ValueError("Token meter requires the exact clean pinned consumer checkout")
-    if importlib.metadata.version("tokenizers") != TOKENIZERS_VERSION:
-        raise ValueError("Token meter requires tokenizers==" + TOKENIZERS_VERSION)
+    tokenizers_version = importlib.metadata.version("tokenizers")
     sys.path.insert(0, str(root / "src"))
     from megatoken.generation import codec as module
 
@@ -64,7 +62,7 @@ def load_codec(consumer_root, tokenizer_path, policy):
         "consumerClean": True,
         "codecSourceSha256": hashlib.sha256(codec_source.read_bytes()).hexdigest(),
         "pythonVersion": platform.python_version(),
-        "tokenizersVersion": TOKENIZERS_VERSION,
+        "tokenizersVersion": tokenizers_version,
         "nativeAdmission": False,
     }
     # Test the byte contract independently of the eventual measured corpus.

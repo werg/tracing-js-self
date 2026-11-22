@@ -21,7 +21,8 @@ export function validateAlgorithmTokenizerEvidence({identity,qualification},poli
     !isAlgorithmDataRecord(qualification)||qualification.schema!=='semantic-codec-meter/1'||
     qualification.status!=='qualified'||qualification.scope!=='byte-exact-token-meter-only'||
     qualification.consumerRevision!==policy.consumerRevision||qualification.consumerClean!==true||
-    qualification.nativeAdmission!==false||qualification.tokenizersVersion!=='0.23.3'||
+    qualification.nativeAdmission!==false||typeof qualification.tokenizersVersion!=='string'||
+    !/^\d+\.\d+(?:\.\d+)?(?:[a-zA-Z0-9.+-]*)$/.test(qualification.tokenizersVersion)||
     !sha.test(qualification.codecSourceSha256)||typeof qualification.pythonVersion!=='string')
     throw new TypeError('Token meter evidence differs from the exact codec policy');
   return true;

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validateV8NativePolicy,validateV8NativeReceipt,V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_INTEROPERABILITY_DIGEST,V8_NATIVE_CHECKS} from '../src/semantic/native-v8.js';
+import {loadV8NativePolicy,validateV8NativePolicy,validateV8NativeReceipt,V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_INTEROPERABILITY_DIGEST,V8_NATIVE_CHECKS} from '../src/semantic/native-v8.js';
 import {verifyRegionTrainingCase,recheckRegionEvidence,admitRegionEvidence} from '../src/semantic/compiler-v8.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 import {identityDigest} from '../src/semantic/source-identity.js';
@@ -51,6 +51,20 @@ test('v8 receipt validator requires exact contract, source, contexts, tokenizer 
   assert.throws(()=>validateV8NativeReceipt(artifact,legacy,policy),/receipt/);
   assert.throws(()=>validateV8NativeReceipt(artifact,{admitted:true},policy),/receipt/);
   assert.throws(()=>validateV8NativePolicy({...policy,contractDigest:'f'.repeat(64)}),/exact/);
+});
+
+test('the current native contract accepts observed revisions without freezing the development pair',()=>{
+  const current=loadV8NativePolicy();
+  assert.equal(Object.hasOwn(current,'consumerRevision'),false);
+  const {consumerRevision,...contract}=policy;
+  assert.equal(validateV8NativePolicy(contract),contract);
+  for(const revision of ['1'.repeat(40),'2'.repeat(40)]){
+    const receipt={...unitReceipt(),consumerRevision:revision};
+    assert.equal(validateV8NativeReceipt(artifact,receipt,contract),true);
+    assert.throws(()=>validateV8NativeReceipt(artifact,receipt,policy),/consumerRevision/);
+  }
+  assert.throws(()=>validateV8NativeReceipt(artifact,{...unitReceipt(),consumerRevision:null},contract),/consumerRevision/);
+  assert.throws(()=>validateV8NativePolicy({...contract,consumerRevision:null}),/observed consumer/);
 });
 
 test('production region admission reruns source checking and refuses missing or fabricated native evidence',async()=>{
