@@ -1,0 +1,32 @@
+name: Namespace observation investigation
+on:
+  push:
+    branches: [codex/v8-namespace-observation-probe-20261122]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Exercise source-owned namespace candidate and refusal controls
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test --test-concurrency=1 test/semantic-module-v8.test.js 2>&1 | tee "$RUNNER_TEMP/namespace-source-probe.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: namespace-source-probe
+          retention-days: 30
+          if-no-files-found: error
+          path: ${{ runner.temp }}/namespace-source-probe.log

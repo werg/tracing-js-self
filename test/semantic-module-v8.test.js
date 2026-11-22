@@ -53,6 +53,46 @@ test('destructured live module cells pass original-source/public checks and fres
   assert.equal(check.native.admitted,false,'independent consumer admission is a separate gate');
 });
 
+test('source-owned namespace reflection observes sorted keys and live export cells',async()=>{
+  const fixture={id:'module-namespace-live-cell-observation',family:'module-namespace-live-cell-observation',
+    entryModule:'main.js',exportName:'run',fixture:{calls:[]},modules:{
+      'leaf.js':'export let value=2;export function update(next){value=next;}',
+      'main.js':`import * as ns from './leaf.js';import {update} from './leaf.js';
+        export function run(){
+          const keys=Reflect.ownKeys(ns);
+          const descriptor=Object.getOwnPropertyDescriptor(ns,'value');
+          const before=ns.value;update(9);const after=ns.value;
+          return {keys,hasValue:Object.hasOwn(ns,'value'),prototypeIsNull:Object.getPrototypeOf(ns)===null,
+            extensible:Object.isExtensible(ns),descriptor:{enumerable:descriptor.enumerable,
+              configurable:descriptor.configurable,getter:typeof descriptor.get==='function'},before,after};
+        }`
+    }};
+  const linked=linkEvaluatedModules({modules:fixture.modules,entryModule:'main.js',exportName:'run'});
+  assert.equal(linked.metadata.requiresModuleNamespace,true);
+  const result=await verifyRegionModuleTrainingCase(fixture);
+  assert.ok(result.exported,result.reason);
+  assert.equal(result.moduleReference,'passed');
+  assert.equal(result.moduleCorrespondence,'passed');
+  const fresh=await recheckRegionEvidence(result.exported);
+  assert.equal(fresh.moduleReference.status,'passed');
+  const outcome=result.exported.sidecar.sourceArtifact.sidecar.reference.outcome;
+  assert.equal(outcome.kind,'return');
+  assert.deepEqual(outcome.graph.roots[0],['ref',outcome.graph.roots[0][1]]);
+});
+
+test('direct and nested namespace escapes remain outside public module result projection',async()=>{
+  for(const expression of ['ns','{nested:ns}']){
+    const result=await verifyRegionModuleTrainingCase({id:'namespace-escape-'+expression.length,
+      family:'namespace-escape',entryModule:'main.js',exportName:'run',fixture:{calls:[]},modules:{
+        'leaf.js':'export let value=2;',
+        'main.js':`import * as ns from './leaf.js';export function run(){return ${expression};}`
+      }});
+    assert.equal(result.exported,undefined);
+    assert.notEqual(result.status,'passed');
+    assert.equal(result.moduleReference,'passed');
+  }
+});
+
 test('static namespace re-export reads keep live-cell public projection without admitting namespace escape',async()=>{
   const fixture=moduleQualificationFixtures().find(row=>row.id==='module-namespace-shadow-live'),
     request={modules:fixture.modules,entryModule:fixture.moduleEntry,exportName:fixture.exportName,args:fixture.args},
@@ -85,10 +125,9 @@ test('static namespace re-export reads keep live-cell public projection without 
     escaped=linkEvaluatedModules(escape);
   assert.equal(escaped.metadata.requiresModuleNamespace,true);
   const refused=await verifyRegionModuleTrainingCase(escape);
-  assert.equal(refused.status,'projection_refused');
-  assert.equal(refused.phase,'module-projection');
-  assert.equal(refused.category,'unsupported.module-namespace-projection');
   assert.equal(refused.exported,undefined);
+  assert.notEqual(refused.status,'passed');
+  assert.equal(refused.moduleReference,'passed');
 });
 
 test('owned module declarations do not bypass public class and generator observation boundaries',async()=>{
@@ -131,11 +170,9 @@ test('module proof tampering, exotic namespace receivers and asynchronous cycles
   const namespace=await verifyRegionModuleTrainingCase({id:'namespace-receiver',family:'namespace-receiver',
     modules:{'a.js':'export function f(){return this;}',
       'b.js':'import * as ns from "./a.js";export function run(){return ns.f();}'},entryModule:'b.js'});
-  assert.equal(namespace.status,'projection_refused');
-  assert.equal(namespace.phase,'module-projection');
-  assert.equal(namespace.category,'unsupported.module-namespace-projection');
-  assert.equal(namespace.moduleNamespace,'owned-internal');
   assert.equal(namespace.exported,undefined);
+  assert.notEqual(namespace.status,'passed');
+  assert.equal(namespace.moduleReference,'passed');
   const cycle=await verifyRegionModuleTrainingCase({id:'async-cycle',family:'async-cycle',modules:{
     'a.js':'import {b} from "./b.js";export const a=await Promise.resolve(1);export function run(){return b;}',
     'b.js':'import {a} from "./a.js";export const b=2;'},entryModule:'a.js'});
