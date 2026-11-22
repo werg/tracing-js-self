@@ -1,0 +1,110 @@
+{
+  "schema": "bound-module-ledger-qualified-source-map/1",
+  "workflowRun": 45016987512,
+  "job": 137191304151,
+  "repositories": [
+    {
+      "repository": "werg/tracing-js-self",
+      "localBase": "cc030fa9851f10d702e952d181b3b68003c294eb",
+      "localSource": "79ec42a1ef7be0644a84953067d954453ec92c3b",
+      "publishedSource": "61c9cacfacad3d5e8fd7bab6c72c8e18b1a5a46b",
+      "tree": "7cd17267b3d44d9f51aa94d0d14dae13643a6e4c",
+      "files": [
+        {
+          "path": ".github/workflows/module-scheduler-state-investigation.yml",
+          "mode": "100644",
+          "blob": "2dc30584c3f8b8b728fc88ed6b50eb91e4fa83b7"
+        },
+        {
+          "path": "contracts/semantic-execution-v8.json",
+          "mode": "100644",
+          "blob": "c0b26ecd930ce33784e02bd2c769f52731e6cada"
+        },
+        {
+          "path": "src/semantic/contract-v8.js",
+          "mode": "100644",
+          "blob": "ac6a89653ef7308c77b0a70f19f5989816b75d23"
+        },
+        {
+          "path": "src/semantic/module-scheduler-plan-v8.js",
+          "mode": "100644",
+          "blob": "7415b76c7e2b818f08d7a51b4872fd69f779a309"
+        },
+        {
+          "path": "src/semantic/module-scheduler-state-v8.js",
+          "mode": "100644",
+          "blob": "766fa52b7aad6b1cba72f99c4074198b552911d7"
+        },
+        {
+          "path": "src/semantic/protocol-machine-extensions-v8.js",
+          "mode": "100644",
+          "blob": "ec5b38cfa17c46a894acf51955451d72144cba40"
+        },
+        {
+          "path": "src/semantic/protocol-module-scheduler-v8.js",
+          "mode": "100644",
+          "blob": "989dcf5b1aa470f6084ecafc54b9ad1467d49a7a"
+        },
+        {
+          "path": "src/semantic/region-harness.js",
+          "mode": "100644",
+          "blob": "ea6060dd2273845b114ba15166d8fac2df5a3ce3"
+        },
+        {
+          "path": "src/semantic/regions.js",
+          "mode": "100644",
+          "blob": "dd68d3d06f50bd9647dc4b5be90478d481402870"
+        },
+        {
+          "path": "test/fixtures/semantic-regions-v8.json",
+          "mode": "100644",
+          "blob": "01e889d4f5cfe0e9adb4a9131dac782dd5b4824c"
+        },
+        {
+          "path": "test/semantic-bound-module-scheduler-v8.test.js",
+          "mode": "100644",
+          "blob": "9fa0fa8acb647ebf39a5a40622b5deb307e944c4"
+        }
+      ]
+    },
+    {
+      "repository": "werg/megatoken",
+      "localBase": "b81eff9033709d79cb9d92d3789f03679718e543",
+      "localSource": "bebe2bbc250ea9d7bd722aa420ca1ea07ca59274",
+      "publishedSource": "4fd7b561774f4dcda7d08b985909cd08a882df71",
+      "tree": "8a74c801a6449027efc803c63855468cf789385f",
+      "files": [
+        {
+          "path": "src/megatoken/data/contracts/semantic-execution-v8.json",
+          "mode": "100644",
+          "blob": "c0b26ecd930ce33784e02bd2c769f52731e6cada"
+        },
+        {
+          "path": "src/megatoken/data/module_scheduler_machine_v8.py",
+          "mode": "100644",
+          "blob": "a1fbe772d1062a01d589e3573ae23046d87ac97c"
+        },
+        {
+          "path": "src/megatoken/data/native_v8.py",
+          "mode": "100644",
+          "blob": "ac8803e729a1e40b5b97b73b5f56a188b5bf1356"
+        },
+        {
+          "path": "src/megatoken/data/protocol_v8.py",
+          "mode": "100644",
+          "blob": "86e6c0abb02ea7699a1b63a214e53f83d00011ea"
+        },
+        {
+          "path": "tests/fixtures/semantic-regions-v8.json.gz.b64",
+          "mode": "100644",
+          "blob": "05b936f5b92b9c348bc4494441d91c15dde10b1e"
+        },
+        {
+          "path": "tests/test_module_scheduler_machine_v8.py",
+          "mode": "100644",
+          "blob": "a10e68d4d3123ebdb7611ffe3eb7627278ba8f27"
+        }
+      ]
+    }
+  ]
+}
