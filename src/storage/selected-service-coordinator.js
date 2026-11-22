@@ -27,6 +27,10 @@ export class SelectedServiceAdmissionCoordinator {
     Object.freeze(policy.serviceIds);Object.freeze(policy);
     Object.defineProperty(this,'policy',{value:policy,enumerable:true});
   }
+  ownerSnapshot(){
+    return copy({schema:'semantic-service-admission-owner-snapshot/8',policy:this.policy,
+      services:this.#members.map(member=>({serviceId:member.serviceId,owner:copy(member.owner)}))});
+  }
   async #verifyMember(member,row,reason){
     const state=await member.inspect();
     demand(eq(row.owner,member.owner)&&eq(state.owner?.receipt,row.owner)&&

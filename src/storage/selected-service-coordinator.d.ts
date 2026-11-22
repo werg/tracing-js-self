@@ -6,6 +6,13 @@ export interface SelectedServiceAdmissionPolicy {
   readonly sessionId: string;
   readonly serviceIds: readonly string[];
 }
+export interface SelectedServiceAdmissionOwnerSnapshot {
+  readonly schema: 'semantic-service-admission-owner-snapshot/8';
+  readonly policy: SelectedServiceAdmissionPolicy;
+  /** Immutable exact owner receipts configured for this supervisor. */
+  ownerSnapshot(): SelectedServiceAdmissionOwnerSnapshot;
+  readonly services: ReadonlyArray<{readonly serviceId: string; readonly owner: SelectedServiceFenceReceipt}>;
+}
 export interface SelectedServiceAdmissionFence {
   schema: 'semantic-service-admission-fence/8';
   sessionId: string;

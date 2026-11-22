@@ -38,6 +38,8 @@ jobs:
           node --test --test-concurrency=1 --test-reporter=junit \
             test/semantic-selected-orchestration*.test.js \
             test/semantic-selected-history*.test.js \
+            test/semantic-service-coordinator-v8.test.js \
+            test/semantic-service-fence-v8.test.js \
             test/semantic-module*.test.js \
             test/semantic-source-session-v8.test.js \
             test/semantic-region-support-cohort.test.js \

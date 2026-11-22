@@ -8,8 +8,16 @@ import {nativeV8OrchestrationContext} from './native-orchestration-transport-v8.
 import {verifySelectedOrchestrationCheckpoint} from './selected-orchestration-checkpoint-v8.js';
 import {hashAlgorithmData} from './program.js';
 import {validateSelectedHistoryReceipt,validateSelectedHistoryChain} from './selected-history-v8.js';
+import {validateServiceAdmissionOwnerSnapshot} from './service-admission-v8.js';
 
 const copy=structuredClone,HASH=/^[a-f0-9]{64}$/;
+function freezeTree(value){
+  if(value&&typeof value==='object'&&!Object.isFrozen(value)){
+    for(const child of Object.values(value))freezeTree(child);
+    Object.freeze(value);
+  }
+  return value;
+}
 const demand=(value,message)=>{if(!value)throw new TypeError('Selected orchestration v8: '+message);};
 const positive=(value,maximum)=>Number.isSafeInteger(value)&&value>0&&value<=maximum;
 const hex=value=>typeof value==='string'&&/^(?:[0-9a-f]{2})*$/.test(value);
@@ -107,8 +115,14 @@ export class RegionSelectedOrchestrationDriver {
   constructor({initialPublic,select,checkpointIdentity,tokenizerIdentity,trainingIdentity=null,seed=17,
       generationSettings,maxActive=1,childBudget=128,maxCoordinatorSelections=128,maxPredictions=4096,
       maxGenerated=16384,maxOutstanding=64,maxStaleRetries=8,timeoutMs=15000,
-      automaticDelivery=null,harness=null,harnessOptions={}}={}){
+      automaticDelivery=null,harness=null,harnessOptions={},serviceAdmissionCoordinator=null}={}){
     const ingress=validateIngress(initialPublic);
+    demand(serviceAdmissionCoordinator===null||typeof serviceAdmissionCoordinator.ownerSnapshot==='function'&&
+      typeof serviceAdmissionCoordinator.assertActive==='function'&&typeof serviceAdmissionCoordinator.terminate==='function'&&
+      typeof serviceAdmissionCoordinator.verify==='function',
+      'composite service fencing requires its independently owned admission coordinator');
+    const serviceAdmission=serviceAdmissionCoordinator===null?null:copy(serviceAdmissionCoordinator.ownerSnapshot());
+    if(serviceAdmission!==null)validateServiceAdmissionOwnerSnapshot(serviceAdmission,ingress.session);
     demand(typeof select==='function'&&typeof select.initialize==='function'&&
       typeof select.openOrchestration==='function'&&typeof select.statusOrchestration==='function'&&
       typeof select.selectOrchestration==='function'&&typeof select.commitOrchestration==='function'&&
@@ -135,12 +149,15 @@ export class RegionSelectedOrchestrationDriver {
     demand(automaticDelivery===null||automaticDelivery===bridge.inner.automaticDelivery,
       'host callback delivery differs from the frozen orchestration policy');
     Object.assign(this,{initialPublic:copy(initialPublic),session:ingress.session,invocations:ingress.invocations.map(row=>copy(row)),
-      select,bridge,checkpointIdentity,tokenizerIdentity,trainingIdentity,seed,
+      select,bridge,checkpointIdentity,tokenizerIdentity,trainingIdentity,seed,serviceAdmissionCoordinator,
       generationSettings:copy(generationSettings),maxActive,childBudget,maxCoordinatorSelections,maxPredictions,
-      maxGenerated,maxOutstanding,maxStaleRetries,timeoutMs,automaticDelivery:bridge.inner.automaticDelivery});
+      maxGenerated,maxOutstanding,maxStaleRetries,timeoutMs,automaticDelivery:bridge.inner.automaticDelivery,
+      ...(serviceAdmission===null?{}:{serviceAdmission:copy(serviceAdmission)})});
+    const retainedServiceAdmission=serviceAdmission===null?null:freezeTree(copy(serviceAdmission));
     this.policy=Object.freeze({checkpointIdentity,tokenizerIdentity,trainingIdentity,seed,
       generationSettings:copy(generationSettings),maxActive,childBudget,maxCoordinatorSelections,maxPredictions,
-      maxGenerated,maxOutstanding,maxStaleRetries,timeoutMs,automaticDelivery:bridge.inner.automaticDelivery});
+      maxGenerated,maxOutstanding,maxStaleRetries,timeoutMs,automaticDelivery:bridge.inner.automaticDelivery,
+      ...(retainedServiceAdmission===null?{}:{serviceAdmission:retainedServiceAdmission})});
     this.coordinatorAttempts=[];this.state=null;this.initialState=null;this.nativeIdentity=null;
     this.continuation={phase:'unopened',coordinatorSelections:0,joinedAttempt:null,joinedDependency:null,elapsedMs:0};
     this.createdDependencies=new Map();this.pausedCheckpoint=null;this.historyReceipt=null;this.automaticHistory=null;this.terminalDisposition=null;this.restored=false;this.running=false;this.used=false;
@@ -181,12 +198,22 @@ export class RegionSelectedOrchestrationDriver {
     this.automaticHistory={journal,acknowledge,previous:head,status:'ready',failure:null};
     return this;
   }
-  static async restore(packet,{initialPublic,select,policy,harnessOptions={},signal=null}={}){
+  static async restore(packet,{initialPublic,select,policy,harnessOptions={},signal=null,serviceAdmissionCoordinator=null}={}){
     packet=copy(packet);initialPublic=copy(initialPublic);policy=copy(policy);harnessOptions={...harnessOptions};
     demand(initialPublic&&typeof select==='function'&&typeof select.restore==='function'&&
       typeof select.checkpoint==='function'&&typeof select.status==='function',
       'external source cut and a fresh checkpoint-capable native selector are required');
-    verifySelectedOrchestrationCheckpoint(packet,policy,{initialPublic});
+    const expectedPolicy={...policy,...(Object.hasOwn(packet.policy??{},'serviceAdmission')?
+      {serviceAdmission:copy(packet.policy.serviceAdmission)}:{})};
+    verifySelectedOrchestrationCheckpoint(packet,expectedPolicy,{initialPublic});
+    if(packet.policy.serviceAdmission!=null){
+      demand(serviceAdmissionCoordinator&&
+        isDeepStrictEqual(copy(serviceAdmissionCoordinator.ownerSnapshot()),packet.policy.serviceAdmission),
+        'composite restoration requires the exact retained service owner snapshot');
+      demand(isDeepStrictEqual(await serviceAdmissionCoordinator.assertActive(),packet.policy.serviceAdmission.policy),
+        'composite restoration service owners changed or are terminal');
+    }else demand(serviceAdmissionCoordinator===null,
+      'unfenced composite checkpoint cannot acquire service admission authority on restore');
     demand(select.status().closed===false&&select.status().pending===0,
       'restore requires a fresh native process selector');
     const bridge=RegionExecutionHarness.restore(copy(packet.bridge),{...harnessOptions,
@@ -203,7 +230,7 @@ export class RegionSelectedOrchestrationDriver {
       const ingressHarness=RegionExecutionHarness.replay(copy(packet.initialPublic),{...harnessOptions,
         requireTerminal:false,automaticDelivery:policy.automaticDelivery});
       const driver=new RegionSelectedOrchestrationDriver({initialPublic:copy(packet.initialPublic),select,
-        ...policy,automaticDelivery:policy.automaticDelivery,harness:ingressHarness});
+        ...policy,serviceAdmissionCoordinator,automaticDelivery:policy.automaticDelivery,harness:ingressHarness});
       driver.bridge=bridge;
       driver.state=copy(state);driver.initialState=copy(packet.initialState);
       driver.nativeIdentity=copy(packet.native.identity);driver.continuation=copy(packet.continuation);
@@ -218,7 +245,8 @@ export class RegionSelectedOrchestrationDriver {
       return driver;
     }catch(error){select.close?.();throw error;}
   }
-  static async restoreLatest(packet,{historyJournal,historyReceipt,initialPublic,select,policy,harnessOptions={},signal=null}={}){
+  static async restoreLatest(packet,{historyJournal,historyReceipt,initialPublic,select,policy,harnessOptions={},signal=null,
+      serviceAdmissionCoordinator=null,acknowledge=null}={}){
     const checkAbort=()=>{if(signal?.aborted)throw signal.reason instanceof Error?
       signal.reason:new Error(String(signal.reason??'Selected orchestration v8 restore cancelled'));};
     checkAbort();
@@ -226,31 +254,113 @@ export class RegionSelectedOrchestrationDriver {
     policy=copy(policy);harnessOptions={...harnessOptions};
     demand(typeof historyJournal?.readAll==='function','independently retained composite history is required');
     validateSelectedHistoryReceipt(historyReceipt);
-    const entries=validateSelectedHistoryChain(copy(await historyJournal.readAll(copy(historyReceipt))),copy(historyReceipt));
+    const retainedEntries=copy(await historyJournal.readAll(copy(historyReceipt)));
+    checkAbort();
+    const entries=validateSelectedHistoryChain(retainedEntries,copy(historyReceipt));
     demand(entries.some(entry=>isDeepStrictEqual(entry.checkpoint,packet)),
       'supplied composite checkpoint is absent from the independently acknowledged history');
-    for(const entry of entries)verifySelectedOrchestrationCheckpoint(entry.checkpoint,policy,{initialPublic});
+    for(const entry of entries){
+      const expectedPolicy={...policy,...(Object.hasOwn(entry.checkpoint.policy,'serviceAdmission')?
+        {serviceAdmission:copy(entry.checkpoint.policy.serviceAdmission)}:{})};
+      demand(entries.every(row=>isDeepStrictEqual(row.checkpoint.policy.serviceAdmission,
+        entry.checkpoint.policy.serviceAdmission)),'service admission owner snapshot changed within composite history');
+      verifySelectedOrchestrationCheckpoint(entry.checkpoint,expectedPolicy,{initialPublic});
+    }
     const latestEntry=entries.at(-1);
     if(latestEntry.terminal?.schema==='semantic-selected-orchestration-terminal-event/8'){
-      const terminal=latestEntry.terminal,snapshot=terminal.snapshot;
+      let terminal=latestEntry.terminal,snapshot=terminal.snapshot,closedOnThisSelector=false;
+      if(terminal.phase==='requested'){
+        demand(typeof acknowledge==='function'&&serviceAdmissionCoordinator&&
+          isDeepStrictEqual(copy(serviceAdmissionCoordinator.ownerSnapshot()),terminal.ownerSnapshot),
+          'cancellation reconciliation requires the exact retained service owner snapshot and head acknowledger');
+        checkAbort();
+        const serviceFence=copy(await serviceAdmissionCoordinator.terminate({
+          sessionId:terminal.session,reason:terminal.reason}));
+        const verifiedFence=copy(await serviceAdmissionCoordinator.verify(copy(serviceFence)));
+        demand(isDeepStrictEqual(verifiedFence,serviceFence),'service terminal fence differs from independent journal reads');
+        checkAbort();
+        demand(typeof select==='function'&&typeof select.restore==='function'&&
+          typeof select.status==='function'&&select.status().closed===false&&select.status().pending===0,
+          'cancellation reconciliation requires a fresh native process selector');
+        const restored=copy(await select.restore({checkpoint:copy(snapshot.native)}));
+        checkAbort();
+        demand(restored?.schema==='semantic-model-restore/8'&&restored.restored===true&&
+          restored.restoredSessions===1&&restored.consumedAttempts===snapshot.native.native.attempts.length&&
+          restored.hostDispatches===0&&restored.equivalence==='verified-model-reexecution'&&
+          restored.transportCheckpointDigest===snapshot.native.digest,
+          'cancelled native snapshot did not reexecute without host dispatch');
+        const current=copy(await select.statusOrchestration({session:terminal.session,track:snapshot.state.track}));
+        checkAbort();
+        demand(isDeepStrictEqual(current,snapshot.state)&&current.status===snapshot.state.status&&
+          ['completed','cancelled'].includes(current.status)&&current.pendingSelection===null,
+          'restored orchestration state is not the exact committed cancellation intent');
+        const closeReceipt=copy(await select.cancel({session:terminal.session,reason:terminal.reason}));
+        demand(closeReceipt?.schema==='semantic-native-close/8'&&closeReceipt.closed===true&&
+          closeReceipt.session===terminal.session&&closeReceipt.reason===terminal.reason,
+          'native selector did not acknowledge the exact cancellation reason');
+        const closedNative=copy(await select.checkpoint());
+        const finalPhase=snapshot.state.status==='completed'?'completed':'cancelled';
+        const unsigned={schema:'semantic-selected-orchestration-terminal-event/8',
+          terminalId:terminal.terminalId,phase:finalPhase,session:terminal.session,
+          baseCheckpointDigest:terminal.baseCheckpointDigest,pendingId:terminal.pendingId,
+          snapshot:copy(terminal.snapshot),snapshotDigest:terminal.snapshotDigest,reason:terminal.reason,
+          ownerSnapshot:copy(terminal.ownerSnapshot),serviceAdmission:copy(serviceFence),
+          closeReceipt,closedNativeDigest:hashAlgorithmData(closedNative),closedNative},
+          finalTerminal={...unsigned,digest:hashAlgorithmData(unsigned)};
+        const previous=copy(historyReceipt),receipt=copy(await historyJournal.append(
+          copy(latestEntry.checkpoint),{previous:copy(previous),terminal:copy(finalTerminal)}));
+        validateSelectedHistoryReceipt(receipt);
+        const recorded=validateSelectedHistoryChain(copy(await historyJournal.readAll(copy(receipt))),copy(receipt)),
+          tail=recorded.at(-1);
+        demand(isDeepStrictEqual(tail?.terminal,finalTerminal)&&isDeepStrictEqual(tail?.checkpoint,latestEntry.checkpoint)&&
+          isDeepStrictEqual(tail?.previous,previous),
+          'reconciled cancellation history retained different terminal evidence');
+        const acknowledged=copy(await acknowledge({receipt:copy(receipt),previous:copy(previous)}));
+        validateSelectedHistoryReceipt(acknowledged);
+        demand(isDeepStrictEqual(acknowledged,receipt),'reconciled cancellation head acknowledgement differs');
+        terminal=finalTerminal;historyReceipt=receipt;snapshot=terminal.snapshot;closedOnThisSelector=true;
+      }
+      if(terminal.phase==='cancelled'){
+        demand(serviceAdmissionCoordinator&&
+          isDeepStrictEqual(copy(serviceAdmissionCoordinator.ownerSnapshot()),terminal.ownerSnapshot),
+          'cancelled disposition requires its exact retained service owners');
+        const verifiedFence=copy(await serviceAdmissionCoordinator.verify(copy(terminal.serviceAdmission)));
+        demand(isDeepStrictEqual(verifiedFence,terminal.serviceAdmission),
+          'cancelled disposition service fence differs from independent journal reads');
+        checkAbort();
+      }else if(terminal.phase==='completed'){
+        if(terminal.ownerSnapshot){
+          demand(serviceAdmissionCoordinator&&
+            isDeepStrictEqual(copy(serviceAdmissionCoordinator.ownerSnapshot()),terminal.ownerSnapshot),
+            'completed disposition service owners changed');
+          const verifiedFence=copy(await serviceAdmissionCoordinator.verify(copy(terminal.serviceAdmission)));
+          demand(isDeepStrictEqual(verifiedFence,terminal.serviceAdmission),
+            'completed disposition service fence differs from independent journal reads');
+          checkAbort();
+        }else demand(serviceAdmissionCoordinator===null,
+          'unfenced completed history cannot acquire service authority during recovery');
+      }
       checkAbort();
       demand(typeof select==='function'&&typeof select.restore==='function'&&
         typeof select.status==='function'&&select.status().closed===false&&select.status().pending===0,
         'terminal verification requires a fresh native process selector');
-      const closedRestore=copy(await select.restore({checkpoint:copy(terminal.closedNative)}));
-      checkAbort();
-      const {digest:closedTransportDigest,...closedTransportBody}=terminal.closedNative;
-      demand(closedRestore?.schema==='semantic-model-restore/8'&&closedRestore.restored===true&&
-        closedRestore.restoredSessions===0&&closedRestore.consumedAttempts===terminal.closedNative.native.attempts.length&&
-        closedRestore.hostDispatches===0&&closedRestore.equivalence==='verified-model-reexecution'&&
-        closedRestore.transportCheckpointDigest===closedTransportDigest&&
-        closedTransportDigest===hashAlgorithmData(closedTransportBody),
-        'native closed-session tombstone did not reexecute without restoring active sessions');
-      return {schema:'semantic-selected-orchestration-disposition/8',status:'completed',resumable:false,
-        session:terminal.session,terminalId:terminal.terminalId,historyReceipt:copy(historyReceipt),
-        snapshotDigest:terminal.snapshotDigest,closeReceipt:copy(terminal.closeReceipt),
-        initialPublic:copy(snapshot.initialPublic),public:copy(snapshot.bridge.public),
-        publicCompleted:true,completionReceipts:copy(snapshot.state.children.map(row=>row.completion)),
+      if(!closedOnThisSelector){
+        const closedRestore=copy(await select.restore({checkpoint:copy(terminal.closedNative)}));
+        checkAbort();
+        const {digest:closedTransportDigest,...closedTransportBody}=terminal.closedNative;
+        demand(closedRestore?.schema==='semantic-model-restore/8'&&closedRestore.restored===true&&
+          closedRestore.restoredSessions===0&&closedRestore.consumedAttempts===terminal.closedNative.native.attempts.length&&
+          closedRestore.hostDispatches===0&&closedRestore.equivalence==='verified-model-reexecution'&&
+          closedRestore.transportCheckpointDigest===closedTransportDigest&&
+          closedTransportDigest===hashAlgorithmData(closedTransportBody),
+          'native closed-session tombstone did not reexecute without restoring active sessions');
+      }
+      return {schema:'semantic-selected-orchestration-disposition/8',status:terminal.phase,
+        resumable:false,session:terminal.session,terminalId:terminal.terminalId,
+        historyReceipt:copy(historyReceipt),snapshotDigest:terminal.snapshotDigest,
+        closeReceipt:copy(terminal.closeReceipt),initialPublic:copy(snapshot.initialPublic),
+        public:copy(snapshot.bridge.public),publicCompleted:terminal.phase==='completed',
+        completionReceipts:copy(snapshot.state.children.map(row=>row.completion)),
         nativeIdentity:copy(snapshot.native.identity),sourceValidated:false,
         qualification:{modelMeasurement:'actual-model-selected',sourceCorrespondence:'not-checked-by-public-replay',
           defaultPromotion:false}};
@@ -258,12 +368,24 @@ export class RegionSelectedOrchestrationDriver {
     const latest=latestEntry.checkpoint;
     demand(!latestEntry.terminal,'terminal orchestration disposition cannot be restored as active work');
     demand(!latestEntry.pending,'latest composite history head has unresolved in-flight work and cannot be replayed');
-    const restored=await this.restore(latest,{initialPublic,select,policy,harnessOptions,signal});
+    if(latest.policy.serviceAdmission!=null){
+      demand(serviceAdmissionCoordinator&&
+        isDeepStrictEqual(copy(serviceAdmissionCoordinator.ownerSnapshot()),latest.policy.serviceAdmission),
+        'active composite recovery requires the exact retained service owner snapshot');
+      checkAbort();
+      demand(isDeepStrictEqual(await serviceAdmissionCoordinator.assertActive(),latest.policy.serviceAdmission.policy),
+        'active composite recovery service owners changed or are terminal');
+      checkAbort();
+    }else demand(serviceAdmissionCoordinator===null,
+      'unfenced composite history cannot acquire service admission authority during recovery');
+    const restored=await this.restore(latest,{initialPublic,select,policy,harnessOptions,signal,serviceAdmissionCoordinator});
     restored.historyReceipt=copy(historyReceipt);return restored;
   }
 
   async run({signal=null,stopAt=null}={}){
     demand(!this.running&&!this.used,'coordinator driver is one-shot and cannot be reopened');
+    demand(this.serviceAdmissionCoordinator===null||this.automaticHistory!==null,
+      'service-aware orchestration requires independently acknowledged durable history');
     demand(stopAt===null||stopAt&&typeof stopAt==='object'&&!Array.isArray(stopAt)&&
       Object.keys(stopAt).length===2&&['phase','coordinatorSelections'].every(key=>Object.hasOwn(stopAt,key))&&
       ['coordinator-ready','child-ready'].includes(stopAt.phase)&&
@@ -273,7 +395,8 @@ export class RegionSelectedOrchestrationDriver {
     this.running=true;this.used=true;
     const started=performance.now(),baseElapsed=this.continuation.elapsedMs,abort=new AbortController(),coordinatorAttempts=this.coordinatorAttempts;
     let nativeIdentity=null,initialState=null,state=null,failure=null,cleanupFailure=null,
-      closeReceipt=null,cancelReceipt=null,terminalReason=null,terminalCheckpoint=null,deadlineExceeded=false,opened=false,paused=false;
+      closeReceipt=null,cancelReceipt=null,terminalReason=null,terminalCheckpoint=null,cancellationIntent=null,
+      cancellationServiceAdmission=null,serviceTerminalVerified=false,deadlineExceeded=false,opened=false,paused=false;
     let timer=null;
     const onExternalAbort=()=>abort.abort(signal.reason??new Error('Selected orchestration v8 cancelled'));
     const checkAbort=()=>{if(abort.signal.aborted)throw abort.signal.reason instanceof Error?
@@ -316,12 +439,14 @@ export class RegionSelectedOrchestrationDriver {
       return {invocationId:child.execution.invocation_id,track:child.track,
         completion:copy(receipt),outcome:copy(completed)};
     };
-    const captureCheckpoint=async({allowTerminal=false}={})=>{
-      demand(allowTerminal?state?.status==='completed':
+    const captureCheckpoint=async({allowTerminal=false,allowCancelled=false}={})=>{
+      demand(allowTerminal?state?.status==='completed':allowCancelled?state?.status==='cancelled':
         (this.continuation.phase!=='unopened'&&state?.status==='active')||
         (this.continuation.phase==='child-ready'&&state?.status==='waiting'),
         'only an active safe coordinator, acknowledged waiting child or proved completion can be checkpointed');
       demand(this.#childDriver?.running.size===0,'a running child cannot be checkpointed');
+      if(allowCancelled)demand([...this.bridge.invocations.values()].every(row=>row.status==='completed'),
+        'cancelled terminal cut requires every host invocation to be already settled');
       const transportStatus=this.select.status?.();
       demand(transportStatus?.closed===false&&transportStatus.pending===0,
         'in-flight native acknowledgements cannot be checkpointed');
@@ -336,7 +461,7 @@ export class RegionSelectedOrchestrationDriver {
           childAttempts:copy(this.#childDriver.attempts),childRejections:copy(this.#childDriver.rejections),
           staleRetries:this.#childDriver.metrics().staleRetries,continuation:copy(this.continuation),native};
       const packet={...body,digest:hashAlgorithmData(body)};
-      verifySelectedOrchestrationCheckpoint(packet,this.policy,{initialPublic:this.initialPublic,allowTerminal});
+      verifySelectedOrchestrationCheckpoint(packet,this.policy,{initialPublic:this.initialPublic,allowTerminal,allowCancelled});
       return packet;
     };
     const pendingMarker=(checkpoint,kind,details)=>{
@@ -404,6 +529,74 @@ export class RegionSelectedOrchestrationDriver {
         this.terminalDisposition=copy(terminal);return copy(receipt);
       }catch(error){history.status='failed';history.failure=error;throw error;}
     };
+    const persistServiceTerminalIntent=async(snapshot,reason)=>{
+      const history=this.automaticHistory,ownerSnapshot=this.policy.serviceAdmission;
+      demand(history!==null&&history.status==='ready'&&ownerSnapshot!==null&&
+        this.serviceAdmissionCoordinator,'cancelled terminal intent requires acknowledged history and service owners');
+      history.status='saving';
+      try{
+        const previous=copy(history.previous);
+        validateSelectedHistoryReceipt(previous);
+        const entries=validateSelectedHistoryChain(copy(await history.journal.readAll(copy(previous))),copy(previous)),
+          tail=entries.at(-1),base=copy(tail?.checkpoint),pending=tail?.pending,saved=copy(snapshot);
+        demand(base&&pending?.kind==='coordinator-selection'&&pending.checkpointDigest===base.digest&&
+          pending.attempt===base.coordinatorAttempts.length,'cancelled terminal intent lacks its exact selection fence');
+        const snapshotDigest=hashAlgorithmData(saved),reasonCopy=String(reason),identity={schema:
+          'semantic-selected-orchestration-terminal-event/8',phase:'requested',session:this.session,
+          baseCheckpointDigest:base.digest,pendingId:pending.id,snapshotDigest,reason:reasonCopy,
+          ownerSnapshotDigest:hashAlgorithmData(ownerSnapshot)},terminalId=hashAlgorithmData(identity),
+          unsigned={...identity,terminalId,snapshot:saved,ownerSnapshot:copy(ownerSnapshot)},
+          terminal={...unsigned,digest:hashAlgorithmData(unsigned)};
+        const receipt=copy(await history.journal.append(base,{previous:copy(previous),terminal:copy(terminal)}));
+        validateSelectedHistoryReceipt(receipt);
+        const recorded=validateSelectedHistoryChain(copy(await history.journal.readAll(copy(receipt))),copy(receipt)),
+          latest=recorded.at(-1);
+        demand(isDeepStrictEqual(latest?.checkpoint,base)&&isDeepStrictEqual(latest?.previous,previous)&&
+          isDeepStrictEqual(latest?.terminal,terminal)&&!Object.hasOwn(latest??{},'pending'),
+          'cancellation intent journal retained a different base or owner binding');
+        const acknowledged=copy(await history.acknowledge({receipt:copy(receipt),previous:copy(previous)}));
+        validateSelectedHistoryReceipt(acknowledged);
+        demand(isDeepStrictEqual(acknowledged,receipt),'cancellation intent head acknowledgement differs');
+        history.previous=copy(receipt);history.status='ready';this.historyReceipt=copy(receipt);
+        return {base:copy(base),terminal:copy(terminal),receipt:copy(receipt)};
+      }catch(error){history.status='failed';history.failure=error;throw error;}
+    };
+    const persistServiceTerminalFinal=async(intent,phase,serviceAdmission,closeReceipt,closedNative)=>{
+      const history=this.automaticHistory;
+      demand(history!==null&&history.status==='ready'&&intent?.terminal?.phase==='requested',
+        'cancelled disposition requires an acknowledged terminal intent');
+      history.status='saving';
+      try{
+        const previous=copy(history.previous);
+        validateSelectedHistoryReceipt(previous);
+        const entries=validateSelectedHistoryChain(copy(await history.journal.readAll(copy(previous))),copy(previous)),
+          tail=entries.at(-1);
+        demand(tail?.terminal?.phase==='requested'&&tail.terminal.terminalId===intent.terminal.terminalId&&
+          isDeepStrictEqual(tail.terminal,intent.terminal),
+          'cancelled disposition differs from the independently acknowledged intent');
+        const unsigned={schema:'semantic-selected-orchestration-terminal-event/8',
+          terminalId:intent.terminal.terminalId,phase,session:intent.terminal.session,
+          baseCheckpointDigest:intent.terminal.baseCheckpointDigest,pendingId:intent.terminal.pendingId,
+          snapshot:intent.terminal.snapshot,snapshotDigest:intent.terminal.snapshotDigest,
+          reason:intent.terminal.reason,ownerSnapshot:copy(intent.terminal.ownerSnapshot),
+          serviceAdmission:copy(serviceAdmission),closeReceipt:copy(closeReceipt),
+          closedNativeDigest:hashAlgorithmData(closedNative),closedNative:copy(closedNative)},
+          terminal={...unsigned,digest:hashAlgorithmData(unsigned)};
+        const receipt=copy(await history.journal.append(copy(tail.checkpoint),{
+          previous:copy(previous),terminal:copy(terminal)}));
+        validateSelectedHistoryReceipt(receipt);
+        const recorded=validateSelectedHistoryChain(copy(await history.journal.readAll(copy(receipt))),copy(receipt)),
+          latest=recorded.at(-1);
+        demand(isDeepStrictEqual(latest?.checkpoint,tail.checkpoint)&&isDeepStrictEqual(latest?.previous,previous)&&
+          isDeepStrictEqual(latest?.terminal,terminal)&&!Object.hasOwn(latest??{},'pending'),
+          'cancelled disposition journal retained different terminal evidence');
+        const acknowledged=copy(await history.acknowledge({receipt:copy(receipt),previous:copy(previous)}));
+        validateSelectedHistoryReceipt(acknowledged);
+        demand(isDeepStrictEqual(acknowledged,receipt),'cancelled disposition head acknowledgement differs');
+        history.previous=copy(receipt);history.status='ready';this.historyReceipt=copy(receipt);
+        this.terminalDisposition=copy(terminal);return copy(receipt);
+      }catch(error){history.status='failed';history.failure=error;throw error;}
+    };
     const maybePause=async()=>{
       const requested=Boolean(stopAt&&stopAt.phase===this.continuation.phase&&
         stopAt.coordinatorSelections===this.continuation.coordinatorSelections);
@@ -432,6 +625,14 @@ export class RegionSelectedOrchestrationDriver {
         nativeIdentity=copy(this.nativeIdentity);initialState=copy(this.initialState);state=copy(this.state);opened=true;
         demand(nativeIdentity&&state&&this.#childDriver,'restored coordinator continuation is incomplete');
       }else{
+        if(this.serviceAdmissionCoordinator){
+          demand(isDeepStrictEqual(copy(this.serviceAdmissionCoordinator.ownerSnapshot()),this.policy.serviceAdmission),
+            'composite service owner snapshot changed before execution');
+          checkAbort();
+          demand(isDeepStrictEqual(await this.serviceAdmissionCoordinator.assertActive(),this.policy.serviceAdmission.policy),
+            'composite services are not active under the retained owner snapshot');
+          checkAbort();
+        }
         nativeIdentity=copy(await this.select.initialize({seed:this.seed,checkpointIdentity:this.checkpointIdentity,
           tokenizerIdentity:this.tokenizerIdentity,trainingIdentity:this.trainingIdentity}));
         demand(nativeIdentity?.schema==='semantic-inference-identity/8'&&
@@ -557,12 +758,37 @@ export class RegionSelectedOrchestrationDriver {
         terminalReason=state.status==='cancelled'?boundedCancellationReason(state.receipts.find(row=>
           row.schema==='semantic-orchestration-cancel/8')?.reason??'selected coordinator cancellation'):
           'Selected orchestration v8 completed';
-        if(state.status==='completed'&&this.automaticHistory!==null)
+        if(state.status==='completed'&&this.automaticHistory!==null){
           terminalCheckpoint=await captureCheckpoint({allowTerminal:true});
+          if(this.serviceAdmissionCoordinator){
+            cancellationIntent=await persistServiceTerminalIntent(terminalCheckpoint,terminalReason);
+            checkAbort();
+            cancellationServiceAdmission=copy(await this.serviceAdmissionCoordinator.terminate({
+              sessionId:this.session,reason:terminalReason}));
+            const verified=copy(await this.serviceAdmissionCoordinator.verify(copy(cancellationServiceAdmission)));
+            demand(isDeepStrictEqual(verified,cancellationServiceAdmission),
+              'service coordinator acknowledged a different completion fence');
+            serviceTerminalVerified=true;
+            checkAbort();
+          }
+        }
+        if(state.status==='cancelled'&&this.automaticHistory!==null&&this.serviceAdmissionCoordinator){
+          const cancelledSnapshot=await captureCheckpoint({allowCancelled:true});
+          cancellationIntent=await persistServiceTerminalIntent(cancelledSnapshot,terminalReason);
+          checkAbort();
+          cancellationServiceAdmission=copy(await this.serviceAdmissionCoordinator.terminate({
+            sessionId:this.session,reason:terminalReason}));
+          const verified=copy(await this.serviceAdmissionCoordinator.verify(copy(cancellationServiceAdmission)));
+          demand(isDeepStrictEqual(verified,cancellationServiceAdmission),
+            'service coordinator acknowledged a different cancellation fence');
+          serviceTerminalVerified=true;
+          checkAbort();
+        }
       }
     }catch(error){
       if(error?.selectedOrchestrationPause)paused=true;
-      else{failure=failureOf(error);terminalReason=boundedCancellationReason(error?.message??error);}
+      else{failure=failureOf(error);terminalReason=cancellationIntent?.terminal.reason??
+        boundedCancellationReason(error?.message??error);}
     }finally{
       if(timer!==null)clearTimeout(timer);
       signal?.removeEventListener('abort',onExternalAbort);
@@ -578,14 +804,24 @@ export class RegionSelectedOrchestrationDriver {
           reason:terminalReason}));state=cancelReceipt;}
         catch(error){cleanupFailure??=failureOf(error);}
       }
-      if(!paused&&nativeIdentity){
+      const preserveUnacknowledgedTerminalIntent=!paused&&
+        ['cancelled','completed'].includes(state?.status)&&this.automaticHistory!==null&&
+        this.serviceAdmissionCoordinator&&(cancellationIntent===null||!serviceTerminalVerified);
+      if(!paused&&nativeIdentity&&!preserveUnacknowledgedTerminalIntent){
         try{closeReceipt=copy(await this.select.cancel({session:this.session,
           reason:terminalReason??(state?.status==='completed'?'Selected orchestration v8 completed':'Selected orchestration v8 finished')}));}
         catch(error){cleanupFailure??=failureOf(error);}
       }
-      if(!paused&&failure===null&&terminalCheckpoint&&this.automaticHistory!==null&&closeReceipt){
+      if(!paused&&failure===null&&terminalCheckpoint&&this.automaticHistory!==null&&closeReceipt&&
+        cancellationIntent===null){
         try{const closedNative=copy(await this.select.checkpoint());
           await persistCompletedTerminal(terminalCheckpoint,closeReceipt,closedNative);}
+        catch(error){cleanupFailure??=failureOf(error);}
+      }
+      if(!paused&&failure===null&&cancellationIntent&&cancellationServiceAdmission&&closeReceipt){
+        try{const closedNative=copy(await this.select.checkpoint());
+          await persistServiceTerminalFinal(cancellationIntent,terminalCheckpoint?'completed':'cancelled',
+            cancellationServiceAdmission,closeReceipt,closedNative);}
         catch(error){cleanupFailure??=failureOf(error);}
       }
       if(cleanupFailure&&failure===null)failure=cleanupFailure;

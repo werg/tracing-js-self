@@ -16,7 +16,39 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
-## Latest paired campaign and isolated hard-boundary work — 22 November 2026
+## Same-owner service terminal recovery promoted — 22 November 2026
+
+Exact candidate `5e8b987f13b43aff6b7084828646e2a3c258185b`, paired with native
+`e9817ad637f57ba82e370770420f6f3ef877c7b3`, passed **141 focused individual
+JUnit cases and 79 actual Python/shared-runtime paired cases, zero skips**.
+The exact 15 qualified implementation/documentation blobs are now on this branch.
+[Complete success and prior failure logs, exact file map and scope](evidence/v8-service-terminal5e8-2026-11-22/README.md)
+are permanently retained. Main-head CI remains a separate pending observation.
+
+The driver independently acknowledges terminal intent before service fences or
+native close. Settled completion and cancellation bind the same exact service
+owners, terminal reason, selected record, host completion cut and native checkpoint.
+Requested-intent recovery restores one terminal session only to close it, with
+zero host dispatch and no new model selection. Final tombstone recovery restores
+zero active sessions. The actual Python test compares every original/recovered
+decoder fragment, including the final selected cancellation record.
+
+Active and terminal service listings independently validate each admitted action
+and outcome, recheck stable owner/head/action snapshots, and report missing outcomes
+as unknown. They do not grant retry, exclusive execution ownership or takeover.
+The last failed probes are retained: a correct tampered-chain refusal with an
+outdated error expectation, and an expected trace that omitted selected cancellation.
+Readback of a published fence after lost directory-sync ACK remains distinct from
+that missing original acknowledgement.
+
+**Still open:** unsettled child replay, unknown/failed outcomes, successor or
+distributed ownership, and learned-quality/production launch qualification.
+The namespace candidate remains isolated; original-ESM observation, source authority,
+whole-artifact native replay and packing must pass before namespace admission.
+**0/17 complete acceptance packages are closed; both main PRs remain drafts.**
+Historical sections below retain the pending status at their recorded checkpoints.
+
+## Previous paired campaign and isolated hard-boundary checkpoint — 22 November 2026
 
 The complete `8dad4e6/e9817ad` four-population campaign passed: 665 original,
 66 interoperability, 11 gallery and 64 support source/native/token/packing cases.

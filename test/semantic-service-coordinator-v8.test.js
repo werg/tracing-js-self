@@ -95,3 +95,21 @@ test('invalid coordinated policy is rejected before writing any service terminal
   await assert.rejects(coordinator.terminate({sessionId,reason:'😀'.repeat(1025)}),/bounded terminal reason/);
   for(const {journal}of services)assert.equal((await journal.inspect()).terminal,null);
 });
+
+test('owner snapshot is an immutable ordered binding for terminal reconciliation',async t=>{
+  const {directory,services,coordinator}=await fixture(t),snapshot=coordinator.ownerSnapshot();
+  assert.deepEqual(snapshot,{schema:'semantic-service-admission-owner-snapshot/8',
+    policy:coordinator.policy,services:services.map(({journal,owner})=>({serviceId:journal.serviceId,owner}))
+      .sort((left,right)=>left.serviceId<right.serviceId?-1:left.serviceId>right.serviceId?1:0)});
+  snapshot.services[0].owner.id='0'.repeat(64);
+  snapshot.services.reverse();
+  const retained=coordinator.ownerSnapshot();
+  assert.equal(retained.services.length,2);
+  assert.notEqual(retained.services[0].owner.id,'0'.repeat(64));
+  const reopened=new Coordinator({sessionId,services:services.map(({journal,owner})=>({owner,
+    journal:new Journal({directory,sessionId,serviceId:journal.serviceId})}))});
+  assert.deepEqual(reopened.ownerSnapshot(),retained);
+  await coordinator.terminate({sessionId,reason});
+  assert.deepEqual(await reopened.verify(await reopened.terminate({sessionId,reason})),
+    await reopened.terminate({sessionId,reason}));
+});
