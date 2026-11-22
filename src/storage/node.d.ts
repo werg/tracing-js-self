@@ -39,3 +39,6 @@ export type {SelectedServiceFenceReceipt,SelectedServiceFenceState,DurableFenced
   from './selected-service-fence-journal.js';
 export {SelectedServiceAdmissionCoordinator} from './selected-service-coordinator.js';
 export type {SelectedServiceAdmissionPolicy,SelectedServiceAdmissionFence} from './selected-service-coordinator.js';
+
+export {DurableSelectedOrchestrationExecutionLock} from './selected-orchestration-execution-lock.js';
+export type {SelectedOrchestrationExecutionLease} from './selected-orchestration-execution-lock.js';

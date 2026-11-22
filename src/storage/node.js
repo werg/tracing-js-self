@@ -192,3 +192,5 @@ export {DurableSelectedHistoryJournal} from './selected-history.js';
 export {DurableSelectedServiceJournal} from './selected-service-journal.js';
 export {DurableFencedSelectedServiceJournal} from './selected-service-fence-journal.js';
 export {SelectedServiceAdmissionCoordinator} from './selected-service-coordinator.js';
+
+export {DurableSelectedOrchestrationExecutionLock} from './selected-orchestration-execution-lock.js';
