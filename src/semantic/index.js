@@ -48,6 +48,7 @@ export {CAUSAL_LM_V8_BRIDGE_VERSION,validateRegionContext,decodeCausalLmV8Target
   commitCausalLmV8Selection,auditRegionServingCosts} from './causal-lm-v8.js';
 export {createNativeV8ProcessSelector,createNativeV8PythonSelector} from './native-process-v8.js';
 export {RegionSelectedModelDriver,runSelectedRegionExecution} from './selected-execution-v8.js';
+export {RegionSelectedOrchestrationDriver,runSelectedRegionOrchestrationV8} from './selected-orchestration-v8.js';
 export {prepareRegionExecutionCase,freezeRegionExecutionStudy,validateRegionExecutionStudy,
   scoreSelectedRegionExecution,runFrozenRegionExecutionStudy} from './execution-study-v8.js';
 export {V8_CONTRACT_DIGEST,V8_FIXTURE_DIGEST,V8_INTEROPERABILITY_DIGEST,V8_NATIVE_CHECKS,validateV8NativePolicy,

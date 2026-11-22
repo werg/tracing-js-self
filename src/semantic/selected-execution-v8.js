@@ -17,7 +17,7 @@ const copy=structuredClone,HASH=/^[a-f0-9]{64}$/;
 const demand=(value,message)=>{if(!value)throw new TypeError('Selected v8: '+message);};
 const positive=(value,maximum)=>Number.isSafeInteger(value)&&value>0&&value<=maximum;
 const isPayloadHex=value=>typeof value==='string'&&/^(?:[0-9a-f]{2})*$/.test(value);
-function boundedCancellationReason(value){
+export function boundedCancellationReason(value){
   const source=Buffer.from(String(value),'utf8').toString('utf8');let bytes=0;const parts=[];
   for(const point of source){const size=Buffer.byteLength(point,'utf8');if(bytes+size>4096)break;
     parts.push(point);bytes+=size;}

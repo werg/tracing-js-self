@@ -16,6 +16,31 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Ordinary model coordinator driver — 22 November 2026
+
+The public V8 entry now exposes `RegionSelectedOrchestrationDriver` and its
+one-shot runner. Original native coordinator selections are committed before
+host scheduling. Child execution follows the exact reservation, bootstrap and
+join receipts, and native completion must bind the exact child result and
+public/context cut before the next coordinator selection. One retained root or
+up to sixteen distinct fresh roots are supported. The ordinary semantic driver
+executes each child; no lifecycle teacher participates in serving.
+
+The process/transport/driver selection passes **26/26**, zero skips. It includes
+a subprocess JSONL integration, two-root scheduling, failed original-byte
+retention, Unicode cancellation, one-shot use and post-commit failure accounting.
+It supersedes the overlapping 21-control selection. Review caught native shape
+mismatches and corrected acknowledged-versus-rejected accounting after bootstrap
+failure. Full logs and limitations are retained under
+`docs/evidence/v8-orchestration-driver-2026-11-22/`; the usage and bounded contract
+are in `docs/NATIVE_V8_ORCHESTRATION_DRIVER.md`.
+
+**Still open:** a host/native composite checkpoint and independently retained
+mixed-attempt history, exact replay of coordinator and child state after a crash,
+source-bound lifecycle training and production census, learned whole-program
+success, and final-pair operational proof. Child-only checkpoint APIs explicitly
+refuse orchestration recovery. **0/17 complete packages are closed.**
+
 ## Complete original population and installed cache correction — 22 November 2026
 
 The preserved producer `25c8beb` run now passes **665/665** original source,

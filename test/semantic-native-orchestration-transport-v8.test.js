@@ -8,6 +8,7 @@ import {spawnSync} from 'node:child_process';
 import {delimiter,dirname,join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createNativeV8ProcessSelector} from '../src/semantic/native-process-v8.js';
+import {runSelectedRegionOrchestrationV8} from '../src/semantic/selected-orchestration-v8.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 import {nativeV8OrchestrationContext} from '../src/semantic/native-orchestration-transport-v8.js';
 
@@ -51,7 +52,7 @@ function expectedBinding(publicData,track,invocationId){
     completion_target:track};
 }
 
-function fakeServer({meridian='number',tamper=''}={}){
+function fakeServer({meridian='number',tamper='',childRecords=[]}={}){
   const selectionTamper={model:"selection.checkpointIdentity='f'.repeat(64);",
     context:"selection.contextDigest='f'.repeat(64);",payload:"selection.payloadHex='00';"}[tamper]??'';
   const creationTamper={owner:"outcome.track.parent='track:forged';",
@@ -60,10 +61,10 @@ function fakeServer({meridian='number',tamper=''}={}){
   return `import {createInterface} from 'node:readline';
     import {isDeepStrictEqual} from 'node:util';
     import {hashAlgorithmData} from ${JSON.stringify(programModule)};
-    const clone=structuredClone, identitySeed=${JSON.stringify(identity)};
+    const clone=structuredClone, identitySeed=${JSON.stringify(identity)}, childRecords=${JSON.stringify(childRecords)};
     const plan=['track_create','track_join','track_progress','track_complete'];
     const completion=${JSON.stringify(completion)};
-    let modelIdentity=null, orchestration=null, closedSessions={}, nativeAttempts=[], nextSelection=0;
+    let modelIdentity=null, orchestration=null, closedSessions={}, nativeAttempts=[], nextSelection=0, childPositions={};
     const pending=new Map(), receipts=[];
     function binding(publicData,track,invocationId){
       const program=publicData.timeline.find(row=>row.kind==='program');
@@ -94,7 +95,8 @@ function fakeServer({meridian='number',tamper=''}={}){
           completion:'Deliver its exact result',budget:64,capabilities:['text'],execution:clone(child.execution)}};
         case 'track_join':return {name:'track_join',arguments:{address:orchestration.track,
           completion_dependency:clone(orchestration.dependency)}};
-        case 'track_progress':return {name:'track_progress',arguments:{address:orchestration.track,progress:JSON.stringify(completion)}};
+        case 'track_progress':return {name:'track_progress',arguments:{address:orchestration.track,
+          progress:JSON.stringify(orchestration.childCompletion??completion)}};
         case 'track_complete':return {name:'track_complete',arguments:{address:orchestration.track}};
         default:throw new Error('fake action plan exhausted');
       }
@@ -109,15 +111,17 @@ function fakeServer({meridian='number',tamper=''}={}){
       item.execution.invocation_id===request.invocationId);
       if(!child?.track)throw new Error('completion has no declared child track');
       const receipt={schema:'semantic-child-completion/8',session:request.session,invocationId:request.invocationId,
-        track:child.track,completion:clone(completion),heap:[],publicDigest:hashAlgorithmData(request.public),
+        track:child.track,completion:clone(request.completion??completion),heap:[],publicDigest:hashAlgorithmData(request.public),
         contextsDigest:hashAlgorithmData(request.contexts)};
       ${completionTamper}
-      if(!child.completion){child.completion=clone(receipt);orchestration.child.status='completed';
+      if(!child.completion){child.completion=clone(receipt);orchestration.childCompletion=clone(receipt.completion);
+        orchestration.child.status='completed';
         orchestration.status='active';orchestration.publicDigest=hashAlgorithmData(request.public);
         const dependency=orchestration.dependency;
-        receipts.push({schema:'semantic-completion/4',dependency:clone(dependency),kind:completion.kind,
-          value:clone(completion.value),parent:orchestration.track,target:orchestration.track});}
-      else if(!isDeepStrictEqual(child.completion,receipt))throw new Error('changed completion retry');
+        receipts.push({schema:'semantic-completion/4',dependency:clone(dependency),kind:receipt.completion.kind,
+          value:clone(receipt.completion.value),parent:orchestration.track,target:orchestration.track});}
+      // The protocol peer returns its retained original receipt; the JavaScript
+      // transport, not this fixture, rejects an altered retry payload.
       return {schema:'semantic-native-completion/8',session:request.session,invocationId:request.invocationId,
         completed:true,sessionRetained:!Object.hasOwn(closedSessions,request.session),
         publicDigest:hashAlgorithmData(request.public),childCompletion:clone(child.completion)};
@@ -125,7 +129,7 @@ function fakeServer({meridian='number',tamper=''}={}){
     for await (const line of createInterface({input:process.stdin})){
       const request=JSON.parse(line);let result;
       if(request.op==='initialize'){
-        modelIdentity={schema:'semantic-inference-identity/8',adapter:'semantic-model-v8',seed:request.seed,
+        modelIdentity={schema:'semantic-inference-identity/8',adapter:'native-semantic-v8/1',seed:request.seed,
           checkpointIdentity:request.checkpointIdentity,tokenizerIdentity:request.tokenizerIdentity,
           trainingIdentity:request.trainingIdentity??null,nativeAdmissionClaim:false,generationSettings:{device:'test-runtime',
           maxTokens:512,maxFragments:64,effort:1}};result=clone(modelIdentity);
@@ -152,6 +156,30 @@ function fakeServer({meridian='number',tamper=''}={}){
         nativeAttempts.push({selectionId,session:request.session,status:'awaiting-commit',family:'orchestration'});
         pending.set(selectionId,{action,record,selection});orchestration.pendingSelection=selectionId;
         result={schema:'semantic-orchestration-output/8',record,selection};
+      }else if(request.op==='select'){
+        const invocationId=request.context.invocationId,index=childPositions[invocationId]??0,record=childRecords[index];
+        if(typeof record!=='string')throw new Error('child semantic fixture exhausted');
+        childPositions[invocationId]=index+1;
+        const bytes=Buffer.from(record,'utf8'),selectionId='v8:'+nextSelection++,track=
+          orchestration.children.find(item=>item.execution.invocation_id===invocationId)?.track;
+        const selection={selectionId,session:request.session,invocationId,
+          checkpointIdentity:modelIdentity.checkpointIdentity,tokenizerIdentity:modelIdentity.tokenizerIdentity,
+          trainingIdentity:modelIdentity.trainingIdentity,origin:'actual-model-selected',modelSelected:true,
+          prefixDigest:request.context.prefixDigest,contextDigest:hashAlgorithmData(request.context),
+          publicDigest:hashAlgorithmData(request.public),payloadHex:bytes.toString('hex'),fragments:[{
+            selectedEventId:'child:'+selectionId,meridian:9,modelTrack:track,payloadHex:bytes.toString('hex'),
+            tokenIds:[...bytes],emittedTokenIds:[...bytes],terminal:true}]};
+        nativeAttempts.push({selectionId,session:request.session,invocationId,status:'awaiting-commit'});
+        pending.set(selectionId,{semantic:true,record,selection});
+        result={schema:'semantic-model-output/8',record,selection};
+      }else if(request.op==='commit'){
+        const item=pending.get(request.selection?.selectionId);
+        if(!item?.semantic||item.record!==request.record||!isDeepStrictEqual(item.selection,request.selection))
+          throw new Error('changed original child selection');
+        pending.delete(request.selection.selectionId);
+        const attempt=nativeAttempts.find(row=>row.selectionId===request.selection.selectionId);attempt.status='committed';
+        result={schema:'semantic-native-commit/8',selectionId:request.selection.selectionId,committed:true,
+          publicDigest:hashAlgorithmData(request.public)};
       }else if(request.op==='commit-orchestration'){
         const old=orchestration.decisions.find(item=>item.selectionId===request.selection?.selectionId);
         if(old){if(old.record!==request.record||!isDeepStrictEqual(old.selection,request.selection))throw new Error('changed retry');result=clone(old.outcome);}
@@ -300,6 +328,25 @@ test('V8 coordinator JSONL fixture preserves child bindings, original bytes, typ
       const altered={...input,completion:{kind:'throw',value:['num',8]}};
       await assert.rejects(restored.complete(altered),/source cut, result, owner or closed-session authority/);
     }finally{restored.close();}
+  }finally{select.close();}
+});
+
+test('ordinary V8 orchestration driver uses the native JSONL transport for model and child choices',async()=>{
+  const publicData=ingress(),childRecords=artifact.public.timeline.filter(row=>row.mode==='generated')
+    .map(row=>row.fields.line),select=selector({childRecords});
+  try{
+    const result=await runSelectedRegionOrchestrationV8({initialPublic:publicData,select,...identity,
+      generationSettings:{device:'test-runtime',maxTokens:512,maxFragments:64,effort:1},maxActive:1});
+    assert.equal(result.status,'completed',JSON.stringify(result.failure));
+    assert.equal(result.finalState.status,'completed');assert.equal(result.publicCompleted,true);
+    assert.equal(result.coordinatorAttempts.length,4);assert.equal(result.childAttempts.length,childRecords.length);
+    assert.equal(result.completionReceipts.length,1);
+    const attempts=select.metrics().attempts,order=attempts.map(row=>row.family==='orchestration'?
+      JSON.parse(row.record).name:'child-selection');
+    assert.deepEqual(order,['track_create','track_join',...childRecords.map(()=> 'child-selection'),
+      'track_progress','track_complete']);
+    assert.equal(result.nativeMetrics.nativeAdmissionClaim,false);
+    assert.equal(result.nativeMetrics.sourceAdmissionClaim,false);
   }finally{select.close();}
 });
 
