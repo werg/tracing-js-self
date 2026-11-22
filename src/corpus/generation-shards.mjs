@@ -11,7 +11,7 @@ const safeId=value=>typeof value==='string'&&/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,239}$
 const sorted=rows=>[...rows].sort((a,b)=>a.id.localeCompare(b.id,'en'));
 const assignment=(taskDigest,count)=>Number(BigInt('0x'+taskDigest.slice(0,16))%BigInt(count));
 function candidateRows(tasks,registry){
-  ensure(Array.isArray(tasks)&&tasks.length>0&&tasks.length<=10000,'A bounded nonempty candidate inventory is required');
+  ensure(Array.isArray(tasks)&&tasks.length>0,'A nonempty candidate inventory is required');
   const ids=new Set(),sourceKeys=new Set(registry.sources.map(row=>row.family+'\0'+row.source));
   return sorted(tasks.map(task=>{
     ensure(['source','session'].includes(task?.kind)&&safeId(task.fixture?.id)&&!ids.has(task.fixture.id),
@@ -29,7 +29,7 @@ function candidateRows(tasks,registry){
 }
 
 export function buildGenerationShardPlan({tasks,registry,identity,shardCount=1}){
-  ensure(Number.isSafeInteger(shardCount)&&shardCount>=1&&shardCount<=64,'Shard count must be 1..64');
+  ensure(Number.isSafeInteger(shardCount)&&shardCount>=1,'Shard count must be a positive safe integer');
   registry=immutableSourceRegistry(registry);
   const registryDigest=canonicalHash(registry);
   ensure(identity?.schema==='semantic-generation-identity/1'&&/^[a-f0-9]{40}$/.test(identity.producerRevision??'')&&
@@ -74,9 +74,11 @@ export function generationShardReceipt(plan,index,store){
   ensure(store.identityDigest===identityHash(campaignIdentity(plan,index)),'Shard campaign identity differs from plan');
   const expected=plan.candidates.filter(row=>row.shard===index),expectedIds=new Set(expected.map(row=>row.id));
   ensure([...store.latest.keys()].every(id=>expectedIds.has(id)),'Shard contains an unplanned candidate');
-  const registry=immutableSourceRegistry(plan.registry),rows=[];
+  const registry=immutableSourceRegistry(plan.registry),rows=[],unrun=[];
   for(const candidate of expected){
-    const entry=store.latest.get(candidate.id);if(!entry)continue;
+    const entry=store.latest.get(candidate.id);
+    if(!entry){unrun.push({id:candidate.id,taskDigest:candidate.taskDigest,
+      componentId:candidate.componentId,split:candidate.split,status:'unrun'});continue;}
     const saved=store.readObject(entry.candidate),task=preparedTask(candidate,registry),encoded=encodeGenerationTask(task);
     ensure(saved.kind===task.kind&&saved.id===task.fixture.id&&saved.family===task.fixture.family&&
       identityHash(saved.fixture)===identityHash(encoded.fixture),'Stored candidate differs from frozen source/input/split');
@@ -91,7 +93,8 @@ export function generationShardReceipt(plan,index,store){
   const payload={schema:'semantic-generation-shard-receipt/1',planDigest:plan.digest,
     inventoryDigest:plan.inventoryDigest,registryDigest:plan.registryDigest,
     index,shardCount:plan.shardCount,expected:expected.length,
-    complete:rows.length===expected.length&&rows.every(row=>row.status!=='cancelled'),rows};
+    complete:rows.length===expected.length&&rows.every(row=>row.status!=='cancelled'),
+    attempted:rows.length,unrun,rows};
   return {...payload,digest:identityHash(payload)};
 }
 
@@ -101,16 +104,21 @@ export async function runGenerationShard({plan,index,directory,currentIdentity,
   verifyGenerationShardPlan(plan);checkIndex(plan,index);
   ensure(isDeepStrictEqual(currentIdentity,plan.identity),'Current producer/runtime identity differs from frozen shard plan');
   ensure(isDeepStrictEqual(bounds,plan.identity.bounds),'Worker resource bounds differ from frozen shard plan');
+  const maxCandidates=bounds.maxCandidates??Number.MAX_SAFE_INTEGER;
+  ensure(Number.isSafeInteger(maxCandidates)&&maxCandidates>=0,'Invalid per-invocation candidate budget');
   ensure(!plan.identity.nativePolicy||native,'Pinned native policy requires its actual consumer configuration');
   if(native)ensure(isDeepStrictEqual(native.policy,plan.identity.nativePolicy),'Native policy differs from shard plan');
   const store=new CampaignStore(directory,campaignIdentity(plan,index),{resume,maxObjectBytes:bounds.maxOutputBytes??268435456});
   const registry=immutableSourceRegistry(plan.registry);
   try{
+    let attempted=0;
     for(const row of plan.candidates.filter(row=>row.shard===index)){
       if(signal?.aborted)break;
       const task=preparedTask(row,registry),candidate=persistGenerationCandidate(store,task);
       let entry=store.cached(row.id,candidate,{retryFailures});
       if(!entry){
+        if(attempted>=maxCandidates)break;
+        attempted++;
         const run=await execute({...task,native,producerRevision:plan.identity.producerRevision},
           {...bounds,outputDirectory:join(directory,'.workers'),signal});
         entry=store.record(row.id,candidate,run.result,run);

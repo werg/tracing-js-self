@@ -28,11 +28,12 @@ const currentIdentity=plan=>generationIdentity(root,{producerRevision:execFileSy
 let result;
 if(operation==='plan'){
   const registry=read(need('--registry')),recipe=options.get('--recipe')??'engineering';
-  const limit=Number(options.get('--limit')??10000);
-  if(!Number.isSafeInteger(limit)||limit<1||limit>10000)throw Error('--limit must be 1..10000');
+  const limit=options.has('--limit')?Number(options.get('--limit')):null;
+  if(limit!==null&&(!Number.isSafeInteger(limit)||limit<1))throw Error('--limit must be a positive safe integer');
   const identity=generationIdentity(root,{producerRevision:execFileSync('git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),
-    recipe,bounds:{memoryMb:768,timeoutMs:120000,maxOutputBytes:268435456},registryDigest:canonicalHash(registry)});
-  result=buildGenerationShardPlan({tasks:trainingCandidateTasks(recipe,{root}).slice(0,limit),registry,identity,
+    recipe,bounds:{memoryMb:768,timeoutMs:120000,maxOutputBytes:268435456,
+      ...(limit===null?{}:{maxCandidates:limit})},registryDigest:canonicalHash(registry)});
+  result=buildGenerationShardPlan({tasks:trainingCandidateTasks(recipe,{root}),registry,identity,
     shardCount:Number(options.get('--shards')??1)});
 }else if(operation==='run'){
   const plan=read(need('--plan'));

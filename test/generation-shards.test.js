@@ -54,6 +54,8 @@ test('cancellation preserves the durable prefix and plain resume completes witho
   const first=await runGenerationShard({plan:frozen,index:0,directory,currentIdentity:identity,signal:abort.signal,
     onRecord:()=>abort.abort()});
   assert.equal(first.complete,false);assert.equal(first.rows.length,1);
+  assert.equal(first.attempted,1);assert.equal(first.unrun.length,3);
+  assert.deepEqual([...first.rows,...first.unrun].map(row=>row.id).sort(),tasks.map(task=>task.fixture.id).sort());
   const prefix=readFileSync(join(directory,'campaign.jsonl'),'utf8');
   assert.throws(()=>mergeGenerationShardReceipts(frozen,[first]),/incomplete/);
   const resumed=await runGenerationShard({plan:frozen,index:0,directory,currentIdentity:identity,resume:true});
@@ -62,4 +64,27 @@ test('cancellation preserves the durable prefix and plain resume completes witho
   assert(resumed.rows.every(row=>row.attempts.length===1));
   assert.deepEqual(readGenerationShardReceipt({plan:frozen,index:0,directory}),resumed);
   await assert.rejects(runGenerationShard({plan:frozen,index:0,directory,currentIdentity:{...identity,recipe:'changed'},resume:true}),/identity differs/);
+});
+
+test('per-run candidate budgets preserve the complete inventory and resume only unfinished work',async t=>{
+  const directory=temporary(t),limitedIdentity={...identity,bounds:{...identity.bounds,maxCandidates:1}};
+  const limitedPlan=buildGenerationShardPlan({tasks,registry,identity:limitedIdentity,shardCount:1});
+  let executions=0;
+  const execute=async()=>{executions++;return {result:{status:'unsupported',reason:'counted test execution'},durationMs:0,peakRssBytes:null};};
+  for(let run=0;run<tasks.length;run++){
+    const receipt=await runGenerationShard({plan:limitedPlan,index:0,directory,currentIdentity:limitedIdentity,
+      execute,resume:run>0});
+    assert.equal(receipt.attempted,run+1);assert.equal(receipt.unrun.length,tasks.length-run-1);
+    assert.equal(receipt.complete,run===tasks.length-1);
+    assert(receipt.rows.every(row=>row.attempts.length===1));
+    assert.deepEqual(receipt,readGenerationShardReceipt({plan:limitedPlan,index:0,directory}));
+  }
+  assert.equal(executions,tasks.length);
+});
+
+test('plans retain more than 10000 candidates and allow more than 64 shards',()=>{
+  const expanded=Array.from({length:10001},(_,i)=>({...tasks[0],fixture:{...tasks[0].fixture,id:'large-'+i}}));
+  const large=buildGenerationShardPlan({tasks:expanded,registry,identity,shardCount:65});
+  assert.equal(large.candidates.length,10001);assert.equal(large.shardCount,65);
+  assert.equal(new Set(large.candidates.map(row=>row.id)).size,10001);
 });
