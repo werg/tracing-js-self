@@ -205,7 +205,8 @@ def observed_case(report, study, case_id, identities):
     result = row.get("result")
     if result is None:
         return {"caseId": case_id, "seed": SEED, "status": row["status"], "actualModelMeasured": False,
-                "completedExecution": False, "sourceValidated": False, "failure": row.get("failure"), "costs": None}
+                "sourceScoringComplete": False, "completedExecution": False, "sourceValidated": False,
+                "failure": row.get("failure"), "costs": None}
     require(result["origin"] == "model" and result["seed"] == SEED and result["optimizerSteps"] == 0
             and result["generationSettings"] == SETTINGS and all(result[key] == value for key, value in identities.items()),
             "Rollout identity or actual-model origin differs")
@@ -225,9 +226,10 @@ def observed_case(report, study, case_id, identities):
                 and result["sourceEvidence"]["exactPublicProjection"] is True,
                 "First-record/public-only success cannot stand in for a source-certified full execution")
     return {"caseId": case_id, "seed": SEED, "status": row["status"], "actualModelMeasured": actual,
+            "sourceScoringComplete": result.get("sourceEvidence", {}).get("sourceValidated") is True,
             "sourceValidated": row["sourceValidated"] is True, "completedExecution": complete,
             "publicCompleted": result["publicCompleted"] is True, "sourceStatus": result["sourceStatus"],
-            "failure": result.get("failure"), "cleanupFailure": result.get("cleanupFailure"),
+            "failure": result.get("failure"), "privateScoringFailure": row.get("failure"), "cleanupFailure": result.get("cleanupFailure"),
             "costs": result["costs"], "nextStep": result.get("nextStep"),
             "nativeMetricsBefore": result.get("nativeMetricsBefore"), "nativeMetricsAfter": result.get("nativeMetricsAfter")}
 
@@ -351,6 +353,7 @@ def execute(args):
             successful = sum(row["completedExecution"] for row in rows)
             summaries[split] = {"declared": count, "reportsCollected": len(rows),
                 "actualModelMeasured": sum(row["actualModelMeasured"] for row in rows),
+                "sourceScoringComplete": sum(row["sourceScoringComplete"] for row in rows),
                 "completedExecution": successful, "completedExecutionRate": successful / count,
                 "rateDenominator": count, "unmeasuredOrUntested": count - sum(row["actualModelMeasured"] for row in rows)}
         return {"schema": "semantic-v8-original348-pure-evaluation/1", "status": status,
@@ -376,6 +379,7 @@ def execute(args):
             row = observed_case(measured, studies[split], case_id, identities)
         except Exception as error:
             row = {"caseId": case_id, "seed": SEED, "status": "unmeasured", "actualModelMeasured": False,
+                   "sourceScoringComplete": False,
                    "completedExecution": False, "sourceValidated": False, "auditFailure": str(error), "costs": None}
         row.update({"split": split, "family": item["family"], "processExitCode": receipt["exitCode"],
                     "processError": receipt["error"], "report": str((case_dir / "report.json").relative_to(output))})
@@ -385,7 +389,7 @@ def execute(args):
     require(bundle_hashes == {file.name: sha(file) for file in served.iterdir() if file.is_file()}, "Served weights changed during inference")
     require(sha(checkpoint / "state.pt") == STATE_SHA and sha(args.archive) == ARCHIVE_SHA, "Source checkpoint/archive changed")
     frozen_sources(producer, native)
-    measured_all = len(observations) == 16 and all(row["actualModelMeasured"] and row["processExitCode"] == 0
+    measured_all = len(observations) == 16 and all(row["actualModelMeasured"] and row["sourceScoringComplete"] and row["processExitCode"] == 0
                                                    and not row["processError"] for row in observations)
     result = report("measurement-complete" if measured_all else "measurement-incomplete")
     write(output / "report.json", result, replace=True)

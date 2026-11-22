@@ -128,6 +128,18 @@ class Original348EvaluationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "First-record/public-only"):
             evaluation.observed_case(report, study, "a", identity)
 
+    def test_private_oracle_failure_remains_distinct_from_model_quality_failure(self):
+        report, study, identity = self.observation()
+        row = report["rows"][0]
+        row.update(status="failed", completedExecution=False, sourceValidated=False,
+                   failure={"category": "source-check", "message": "private source oracle failed"})
+        row["result"].update(completedExecution=False, sourceValidated=False, sourceStatus="unmeasured")
+        row["result"].pop("sourceEvidence")
+        observed = evaluation.observed_case(report, study, "a", identity)
+        self.assertTrue(observed["actualModelMeasured"])
+        self.assertFalse(observed["sourceScoringComplete"])
+        self.assertEqual(observed["privateScoringFailure"], row["failure"])
+
     def test_synthetic_selection_cannot_supply_model_success(self):
         report, study, identity = self.observation()
         report["rows"][0]["result"]["attempts"][0]["provenanceValidated"] = False
