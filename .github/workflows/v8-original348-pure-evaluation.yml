@@ -1,0 +1,102 @@
+name: Actual original348 pure-program evaluation
+
+on:
+  push:
+    branches: [codex/v8-original348-pure-evaluation-20261122]
+    paths-ignore: ['docs/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: v8-original348-pure-evaluation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  evaluate-original348:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          path: evaluation-driver
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 9cf091e6ccc5add960ef0897576d0c391b199a65
+          path: tracing-js-self
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: werg/megatoken
+          ref: 1a69d9da3254b7568c831d12866a629c206cf4fe
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.22.3'
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.14'
+      - name: Install the original runtime and verify measurement refusals
+        run: |
+          test -L /proc/self/ns/time
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+          python -m unittest discover -s evaluation-driver/tools -p test_evaluate_v8_original348_pure.py -v \
+            2>&1 | tee "$RUNNER_TEMP/original348-evaluation-controls.log"
+      - name: Download the byte-original successful continuation evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/werg/tracing-js-self/actions/artifacts/14763057413/zip > "$RUNNER_TEMP/original348-continuation.zip"
+      - name: Export actual348 weights and measure every predeclared pure program
+        run: |
+          python evaluation-driver/tools/evaluate-v8-original348-pure.py \
+            --archive "$RUNNER_TEMP/original348-continuation.zip" \
+            --producer "$GITHUB_WORKSPACE/tracing-js-self" --native "$GITHUB_WORKSPACE/megatoken" \
+            --work "$RUNNER_TEMP/original348-evaluation-inputs" \
+            --out "$RUNNER_TEMP/original348-pure-evaluation" \
+            2>&1 | tee "$RUNNER_TEMP/original348-evaluation-live.log"
+      - name: Retain exact driver and frozen runtime identities
+        if: always()
+        run: |
+          python - <<'PY'
+          import importlib.metadata,json,os,platform,subprocess
+          from pathlib import Path
+          workspace=Path(os.environ['GITHUB_WORKSPACE'])
+          sources={name:subprocess.check_output(['git','-C',str(workspace/name),'rev-parse','HEAD'],text=True).strip()
+                   for name in ('evaluation-driver','tracing-js-self','megatoken')}
+          packages={}
+          for name in ('torch','numpy','safetensors','tokenizers'):
+              try: packages[name]=importlib.metadata.version(name)
+              except importlib.metadata.PackageNotFoundError: packages[name]=None
+          record={'sources':sources,'python':platform.python_version(),'platform':platform.platform(),
+                  'node':subprocess.check_output(['node','--version'],text=True).strip(),'packages':packages,
+                  'runId':int(os.environ['GITHUB_RUN_ID']),'runAttempt':int(os.environ['GITHUB_RUN_ATTEMPT'])}
+          (Path(os.environ['RUNNER_TEMP'])/'original348-evaluation-runtime.json').write_text(json.dumps(record,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v8-original348-pure-evaluation
+          if-no-files-found: error
+          retention-days: 90
+          include-hidden-files: true
+          path: |
+            ${{ runner.temp }}/original348-pure-evaluation/
+            ${{ runner.temp }}/original348-evaluation-controls.log
+            ${{ runner.temp }}/original348-evaluation-live.log
+            ${{ runner.temp }}/original348-evaluation-runtime.json
