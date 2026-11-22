@@ -100,6 +100,12 @@ reconstructed data semantics must match the bundled corpus. SQLite placement
 and incidental JSON formatting are not semantic equality; the bundled and
 regenerated corpora still each validate their own file seals.
 
+The descriptor names each original `*.source.json` input, whose complete bytes
+were bound into the preparation receipt. Its distinct admitted copy and native
+receipt remain archived and journal-verified. Fresh preparation preserves the
+bundled episode order after checking exact unique source membership; the
+qualification report's registration order need not be the training input order.
+
 The native report is written outside the immutable input root, then preserved
 as proof before the final archive inventory is sealed. Its original input
 inventory therefore does not include its own later report or the outer archive

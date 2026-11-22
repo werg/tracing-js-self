@@ -210,7 +210,9 @@ def descriptor_from_campaign(snapshot, producer, native):
                 for row in selected), "Every selected release source must be source-qualified and native-admitted")
     roles = {key: value for key, value in ROLES.items() if key != "prepared"}
     roles["prepared"] = [{"path": ROLES["prepared"], "sourceArtifacts": [
-        {"caseId": row["id"], "path": ROLES["qualification"] + "/" + row["admittedArtifact"]}
+        # Original preparation binds the complete source input bytes. The
+        # admitted copy remains retained evidence, not a substitute source.
+        {"caseId": row["id"], "path": ROLES["qualification"] + "/" + row["sourceArtifact"]}
         for row in selected
     ]}]
     return {"schema": "semantic-v8-release-inputs/1", "producerRevision": producer["revision"],

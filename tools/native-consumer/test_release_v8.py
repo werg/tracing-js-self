@@ -32,7 +32,7 @@ class DirectV8ReleaseTests(unittest.TestCase):
                 "contractDigest": "1" * 64, "fixtureDigest": "2" * 64, "interoperabilityDigest": "3" * 64,
                 "selectedCaseIds": ["selected"], "cases": [
                     {"id": "selected", "selected": True, "status": "admitted", "source": "passed", "native": "passed",
-                     "admittedArtifact": "selected.admitted.json"},
+                     "sourceArtifact": "selected.source.json", "admittedArtifact": "selected.admitted.json"},
                     {"id": "untested", "selected": False, "status": "untested", "source": "untested", "native": "untested"},
                 ]}
 
@@ -200,7 +200,7 @@ class DirectV8ReleaseTests(unittest.TestCase):
         snapshot = self.snapshot()
         descriptor = release.descriptor_from_campaign(snapshot, {"revision": "a" * 40}, {"revision": "b" * 40})
         self.assertEqual(descriptor["roles"]["prepared"][0]["sourceArtifacts"], [
-            {"caseId": "selected", "path": "source-qualification/selected.admitted.json"}])
+            {"caseId": "selected", "path": "source-qualification/selected.source.json"}])
         with self.assertRaisesRegex(ValueError, "another source pair"):
             release.descriptor_from_campaign(snapshot, {"revision": "c" * 40}, {"revision": "b" * 40})
 
