@@ -19,6 +19,11 @@ def main():
     fault_index = args.index("--fault")
     fault = args[fault_index + 1]
     del args[fault_index:fault_index + 2]
+    operation = "durable-commit"
+    if "--fault-operation" in args:
+        operation_index = args.index("--fault-operation")
+        operation = args[operation_index + 1]
+        del args[operation_index:operation_index + 2]
     action_name = None
     if "--fault-action" in args:
         action_index = args.index("--fault-action")
@@ -31,7 +36,7 @@ def main():
     original = peer.dispatch
 
     def dispatch(adapter, request, **kwargs):
-        target = request.get("op") == "durable-commit"
+        target = request.get("op") == operation
         if target and action_name is not None:
             original_request = json.loads(base64.b64decode(request["requestBase64"]))
             target = (original_request.get("op") == "commit-orchestration"

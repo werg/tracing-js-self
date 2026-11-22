@@ -162,9 +162,11 @@ test('actual Python later child bootstrap fences recovery of the earlier native 
   }finally{await close(first);}
   const fresh=await replacement(context);
   try{
-    await assert.rejects(fresh.select.recoverCommit({receipt}),/supersed|later native/);
+    await assert.rejects(fresh.select.recoverCommit({receipt}),/supersed|later native|later request/);
     assert.equal(fresh.select.metrics().semanticallyAccepted,0);
-    assert.equal(readFileSync(fresh.log,'utf8'),'','stale poststate must refuse before decoder replay');
+    assert.equal(fresh.select.metrics().runtime.rpcCalls,0,'producer latest-request fence refuses before native dispatch');
+    assert.equal(existsSync(fresh.log)?readFileSync(fresh.log,'utf8'):'','',
+      'stale poststate must refuse before decoder replay');
   }finally{await close(fresh);}
 });
 
