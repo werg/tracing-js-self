@@ -23,13 +23,16 @@ const faultPeer=join(root,'test/fixtures/semantic-v8-durable-commit-peer.py');
 const env={...process.env,PYTHONPATH:[join(nativeRoot,'src'),nativeRoot,process.env.PYTHONPATH].filter(Boolean).join(delimiter)};
 let namespaceAvailable=false,described;
 try{namespaceAvailable=/^time:\[[1-9][0-9]*\]$/.test(readlinkSync('/proc/self/ns/time'));}catch{}
-const skip=namespaceAvailable?false:'Linux time namespace identity is unavailable; hosted positive gate is mandatory';
+const paired=Object.hasOwn(process.env,'MEGATOKEN_ROOT')&&existsSync(peer);
+const skip=!paired?'An explicitly paired native runtime is required':
+  namespaceAvailable?false:'Linux time namespace identity is unavailable; hosted positive gate is mandatory';
 if(process.env.REQUIRE_KNOWN_COMMIT_RECOVERY==='1'){
+  assert(paired,'Mandatory recovery gate requires its explicitly paired native peer');
   assert(namespaceAvailable,'Mandatory recovery gate requires the actual Linux time namespace identity');
   assert(existsSync(peer),'Mandatory recovery gate requires its exact native peer');
 }
 
-async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}){
+async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000,beforeProducerIntent=false}={}){
   assert(existsSync(peer),'Actual paired native recovery fixture is required');
   described??=spawnSync(python,[peer,'--describe'],{cwd:nativeRoot,env,encoding:'utf8',timeout:120000});
   assert.equal(described.status,0,described.stderr);
@@ -78,6 +81,14 @@ async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}
   };
   const first=await open(action);let result,receipt;
   try{
+    if(beforeProducerIntent){
+      const append=requests.append.bind(requests);
+      requests.append=async intent=>{
+        if(intent.identity.operation==='bootstrap-orchestration-child')
+          throw new Error('producer bootstrap intent was not published');
+        return append(intent);
+      };
+    }
     const driver=new RegionSelectedOrchestrationDriver({initialPublic,select:first.select,...policy});
     driver.startAutomaticHistory({journal:history,acknowledge,executionClock:createSelectedOrchestrationExecutionClock()});
     result=await driver.run();
@@ -89,9 +100,12 @@ async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}
   }finally{await close(first);}
   const entries=await history.readLatest(head),tail=entries.at(-1);
   assert.equal(tail.pending.kind,action==='bootstrap-orchestration-child'?'child-bootstrap':'coordinator-selection');
-  assert(tail.pending.clockReceipt);assert.equal(tail.pending.requestBoundary.ordinal,receipt.ordinal);
+  assert(tail.pending.clockReceipt);
+  assert.equal(tail.pending.requestBoundary.ordinal,
+    receipt.ordinal+(beforeProducerIntent&&action==='bootstrap-orchestration-child'?1:0));
+  if(beforeProducerIntent)assert.equal((await requests.list()).length,1,'only the acknowledged create intent exists');
   return {history,requests,initialPublic,policy,tail,receipt,acknowledge,close,replacement,
-    head:()=>copy(head),original:result,firstLog:first.log,
+    head:()=>copy(head),original:result,firstLog:first.log,beforeProducerIntent,
     recoveryKind:action==='bootstrap-orchestration-child'?'bootstrapRecovery':'commitRecovery'};
 }
 const decoderLines=path=>readFileSync(path,'utf8').split('\n').filter(line=>line.startsWith('ORCH_DECODER '));
@@ -176,6 +190,26 @@ test('wrong request scope or absent live clock refuses before any native recover
   }finally{await c.close(fresh);}
 });
 
+test('a bootstrap history fence before producer intent cannot recover the prior create as bootstrap',{skip},async t=>{
+  const c=await setup(t,'bootstrap-orchestration-child',{beforeProducerIntent:true}),retainedHead=c.head(),
+    fresh=await c.replacement();
+  try{
+    assert.equal((await c.requests.list()).length,1);
+    assert.equal(c.receipt.ordinal,1,'the only retained producer intent is the acknowledged create');
+    assert.equal(c.tail.pending.requestBoundary.ordinal,2,'bootstrap fence reserves exactly the next request');
+    assert.equal(c.original.coordinatorAttempts.length,1);
+    assert.equal(c.original.childAttempts.length,0);
+    assert.equal(c.tail.checkpoint.native.attempts.length,1);
+    await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,options(c,fresh)),
+      /retained request scope/);
+    assert.deepEqual(c.head(),retainedHead,'a refused bootstrap recovery cannot advance the durable history head');
+    assert.equal((await c.requests.list()).length,1,'a refused recovery cannot publish a new request');
+    assert.equal(fresh.recoverCalls(),0);
+    assert.equal(fresh.select.metrics().predictionAttempts,0);
+    assert.deepEqual(decoderLines(fresh.log),[]);
+  }finally{await c.close(fresh);}
+});
+
 test('lost reconciled-head acknowledgement leaves the old receipt fenced without another host dispatch',{skip},async t=>{
   const c=await setup(t,'track_join'),fresh=await c.replacement(),head=c.head();
   try{
@@ -192,13 +226,21 @@ test('lost reconciled-head acknowledgement leaves the old receipt fenced without
   }finally{await c.close(third);}
 });
 
-test('a real expired pending clock cannot refund time on process replacement',{skip},async t=>{
-  const c=await setup(t,'track_join',{timeoutMs:30000}),clock=createSelectedOrchestrationExecutionClock();
+for(const action of ['track_join','bootstrap-orchestration-child'])
+test('a real expired pending '+action+' clock cannot refund time on process replacement',{skip},async t=>{
+  const c=await setup(t,action,{timeoutMs:30000}),clock=createSelectedOrchestrationExecutionClock();
+  const retainedRequests=await c.requests.list(),retainedHead=c.head(),retainedAttempts=copy(c.tail.checkpoint.native),
+    retainedCoordinator=copy(c.tail.checkpoint.coordinatorAttempts),retainedBridge=copy(c.tail.checkpoint.bridge);
   const used=await clock.elapsed(c.tail.pending.clockReceipt,{timeoutMs:c.policy.timeoutMs});
   await new Promise(resolve=>setTimeout(resolve,c.policy.timeoutMs-used+30));
   const fresh=await c.replacement();
   try{
     await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest(c.tail.checkpoint,options(c,fresh)),/deadline has expired/);
+    assert.deepEqual(c.head(),retainedHead,'expired recovery cannot alter the retained history head');
+    assert.deepEqual(await c.requests.list(),retainedRequests,'expired recovery cannot append or replace native intent');
+    assert.deepEqual(c.tail.checkpoint.native,retainedAttempts,'the sealed pre-recovery model cost record remains exact');
+    assert.deepEqual(c.tail.checkpoint.coordinatorAttempts,retainedCoordinator,'coordinator attempts remain exact');
+    assert.deepEqual(c.tail.checkpoint.bridge,retainedBridge,'expired recovery adds no host work');
     assertNoRecoveryOrDecoderWork(fresh);
   }finally{await c.close(fresh);}
 });

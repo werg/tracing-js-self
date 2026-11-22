@@ -10,7 +10,7 @@ import {dirname,join,resolve,delimiter} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {gunzipSync} from 'node:zlib';
 import {createNativeV8ProcessSelector} from '../src/semantic/native-process-v8.js';
-import {DurableNativeV8RequestJournal} from '../src/storage/native-request-journal-v8.js';
+import {DurableNativeV8RequestJournal,decodeNativeV8RequestFrame} from '../src/storage/native-request-journal-v8.js';
 import {DurableSelectedOrchestrationExecutionLock} from '../src/storage/selected-orchestration-execution-lock.js';
 
 const repository=dirname(dirname(fileURLToPath(import.meta.url)));
@@ -177,24 +177,54 @@ test('actual Python later child bootstrap fences recovery of the earlier native 
 for(const fault of [null,'after-native-outcome','alter-reply'])
 test('actual Python bootstrap has an independent durable outcome: '+String(fault),async t=>{
   const context=await inputs(t);if(!context)return;
-  const first=await context.open(fault,'bootstrap-orchestration-child');let receipt,original,checkpoint;
+  const first=await context.open(fault,'bootstrap-orchestration-child');let receipt,createReceipt,original,checkpoint,
+    bootstrapPreDigest;
   try{
     const request=await context.choose(first.select),committed=await first.select.commitOrchestration(request);
+    createReceipt=first.select.durableRequestReceipt();
+    const createIntent=await context.journal.read(createReceipt,{latest:true}),
+      createFrame=decodeNativeV8RequestFrame(createIntent.requestBase64);
+    assert.equal(createFrame.request.op,'commit-orchestration');
+    assert.equal(JSON.parse(createFrame.request.record).name,'track_create');
+    assert.equal(createFrame.request.track,request.track);
+    assert.equal(createFrame.request.selection.selectionId,request.selection.selectionId);
+    bootstrapPreDigest=(await first.select.checkpoint()).native.digest;
     const bootstrap=()=>first.select.bootstrapOrchestrationChild({session:request.session,track:request.track,
       childTrack:committed.track.address});
     if(fault)await assert.rejects(bootstrap(),error=>{assert.equal(error.acknowledgementUnknown,true);return true;});
     else{original=await bootstrap();checkpoint=await first.select.checkpoint();}
     receipt=first.select.durableRequestReceipt();assert.equal(receipt.ordinal,2);
     assert.equal(first.select.metrics().predictionAttempts,1);
-    assert.equal((await context.journal.inspect(2)).intent.identity.operation,'bootstrap-orchestration-child');
+    const bootstrapIntent=(await context.journal.inspect(2)).intent;
+    assert.equal(bootstrapIntent.identity.operation,'bootstrap-orchestration-child');
+    assert.deepEqual(bootstrapIntent.createReceipt,createReceipt,
+      'bootstrap intent must bind the exact previously acknowledged producer receipt');
+    assert.equal(bootstrapIntent.identity.ordinal,createIntent.identity.ordinal+1);
+    assert.equal(bootstrapIntent.identity.session_id,createIntent.identity.session_id);
+    assert.equal(bootstrapIntent.identity.stream_id,createIntent.identity.stream_id);
+    assert.equal(bootstrapIntent.identity.session_generation,createIntent.identity.session_generation);
+    assert.deepEqual(bootstrapIntent.identity.model_identity,createIntent.identity.model_identity);
+    assert.equal(bootstrapIntent.checkpoint.native.digest,bootstrapPreDigest,
+      'bootstrap precheckpoint must be the complete immediate state after the prior create');
+    assert.equal(decodeNativeV8RequestFrame(bootstrapIntent.requestBase64).request.childTrack,committed.track.address);
+    if(checkpoint){
+      const proof=checkpoint.attempts[0].durableBootstrap;
+      assert.deepEqual(proof.createReceipt,createReceipt);
+      assert.equal(proof.preCheckpointDigest,bootstrapPreDigest);
+      assert.deepEqual(proof.result,original);
+    }
   }finally{await close(first);}
   const fresh=await replacement(context);
   try{
     const recovered=await fresh.select.recoverBootstrap({receipt});
+    assert.deepEqual(recovered.createReceipt,createReceipt);
     assert.equal(recovered.result.bootstrapped,true);assert.equal(recovered.result.track.bootstrap_ready,true);
     assert.equal(recovered.hostDispatches,0);assert.equal(recovered.hostRecoveryAuthorized,false);
     const after=await fresh.select.checkpoint();
     assert.equal(after.native.attempts.length,1);assert.equal(after.attempts.length,1);
+    assert.deepEqual(after.attempts[0].durableBootstrap.createReceipt,createReceipt);
+    assert.equal(after.attempts[0].durableBootstrap.preCheckpointDigest,bootstrapPreDigest);
+    assert.deepEqual(after.attempts[0].durableBootstrap.result,recovered.result);
     assert.equal(after.native.sessions[recovered.request.session].orchestration.operations
       .filter(row=>row.kind==='bootstrap').length,1);
     if(original){assert.deepEqual(recovered.result,original);assert.deepEqual(after.native,checkpoint.native);}

@@ -28,8 +28,8 @@ def main():
     spec.loader.exec_module(peer)
     original = peer._fixture_records
 
-    def track_cancel_records():
-        records = list(original())
+    def track_cancel_records(final_action="track_complete"):
+        records = list(original("track_complete"))
         if not records:
             raise RuntimeError("paired recovery peer produced no terminal decision")
         terminal = json.loads(records[-1])

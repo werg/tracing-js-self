@@ -303,7 +303,8 @@ function checkCoordinatorHistory(packet,nativeSession,all,session){
   for(const create of creates){
     const receipt=create.commitReceipt,dependency=receipt.completion_dependency,
       child=state.children.find(row=>row.execution?.invocation_id===dependency?.invocation),
-      bootstrap=create.bootstrapReceipt,track=state.children.find(row=>row.track===dependency?.track);
+      bootstrap=create.bootstrapReceipt,track=state.children.find(row=>row.track===dependency?.track),
+      nativeAttempt=packet.native.attempts[nativeIndex(create.selection.selectionId)],proof=nativeAttempt?.durableBootstrap;
     demand(dependency?.schema==='semantic-completion-dependency/4'&&dependency.track===receipt.track?.address&&
       dependency.invocation===receipt.track?.execution?.invocation_id&&child&&track===child&&
       isDeepStrictEqual(receipt.track.execution,child.execution)&&
@@ -311,6 +312,14 @@ function checkCoordinatorHistory(packet,nativeSession,all,session){
       bootstrap.bootstrapped===true&&bootstrap.track?.address===child.track&&bootstrap.track.bootstrap_ready===true&&
       isDeepStrictEqual(bootstrap.track.execution,child.execution)),
       'create, dependency or bootstrap receipt changed its exact declared root binding');
+    if(create===pendingCreate)demand(proof===undefined,
+      'unbootstrapped create already contains a durable bootstrap proof');
+    else if(nativeAttempt.durableRequestReceipt!==undefined||proof!==undefined||
+        create.bootstrapRequestReceipt!==undefined)demand(proof?.schema==='semantic-native-durable-bootstrap-evidence/8'&&
+      isDeepStrictEqual(proof.createReceipt,nativeAttempt.durableRequestReceipt)&&
+      isDeepStrictEqual(proof.receipt,create.bootstrapRequestReceipt)&&
+      isDeepStrictEqual(proof.result,bootstrap),
+    'completed child bootstrap lost its exact producer intent proof');
     const createdAt=operations.findIndex(row=>row.kind==='coordinator'&&
       row.attempt===nativeIndex(create.selection.selectionId)),nextCoordinator=operations.findIndex((row,index)=>
       index>createdAt&&row.kind==='coordinator'),bootstrapAt=operations.findIndex((row,index)=>

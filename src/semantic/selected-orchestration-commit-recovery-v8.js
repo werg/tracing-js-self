@@ -123,14 +123,24 @@ export function buildRecoveredBootstrapCheckpointV8({checkpoint,pending,recovery
     known.nativeCheckpointDigest===transport?.native?.digest&&
     request?.op==='bootstrap-orchestration-child'&&request.session===base.session&&
     request.track===base.state.track&&request.childTrack===fence.childTrack&&
+    same(known.createReceipt,fence.createReceipt)&&
     known.result?.schema==='semantic-orchestration-bootstrap/8'&&known.result.bootstrapped===true&&
     known.result.track?.address===fence.childTrack&&
     ['ordinal','sessionId','streamId','sessionGeneration'].every(key=>
       known.receipt?.[key]===fence.requestBoundary?.[key]),
     'bootstrap recovery changed its exact operation, child, outcome or journal identity');
-  demand(same(transport.attempts,base.native.attempts)&&
-    same(transport.native.attempts,base.native.native.attempts),
-    'bootstrap recovery cannot consume or alter any model selection');
+  const recoveredRows=transport.attempts,baseRows=base.native.attempts;
+  demand(Array.isArray(recoveredRows)&&recoveredRows.length===baseRows.length&&
+    recoveredRows.slice(0,-1).every((row,index)=>same(row,baseRows[index]))&&
+    same(Object.fromEntries(Object.entries(recoveredRows.at(-1)??{}).filter(([key])=>key!=='durableBootstrap')),
+      baseRows.at(-1))&&same(transport.native.attempts,base.native.native.attempts),
+    'bootstrap recovery cannot consume a selection or alter other native evidence');
+  const proof=recoveredRows.at(-1)?.durableBootstrap;
+  demand(proof?.schema==='semantic-native-durable-bootstrap-evidence/8'&&
+    same(proof.createReceipt,fence.createReceipt)&&same(proof.receipt,known.receipt)&&
+    proof.preCheckpointDigest===base.native.native.digest&&
+    proof.postCheckpointDigest===transport.native.digest&&same(proof.result,known.result),
+    'bootstrap producer proof does not bind the exact pending create and native transition');
   demand(Number.isFinite(elapsedMs)&&elapsedMs>=base.continuation.elapsedMs&&elapsedMs<policy.timeoutMs,
     'bootstrap recovery elapsed budget is absent, refunded or expired');
   const {digest,...resultBody}=base;
@@ -157,7 +167,9 @@ export function refreshRecoveredBootstrapCheckpointV8({checkpoint,recovery,nativ
     last?.action?.name==='track_create'&&last.bootstrapReceipt?.bootstrapped===true&&
     known?.schema==='semantic-native-transport-bootstrap-recovery/8'&&known.recovered===true&&
     known.hostDispatches===0&&known.hostRecoveryAuthorized===false&&
-    same(known.receipt,last.bootstrapRequestReceipt)&&known.request?.op==='bootstrap-orchestration-child'&&
+    same(known.receipt,last.bootstrapRequestReceipt)&&
+    same(known.createReceipt,base.native.attempts.at(-1)?.durableBootstrap?.createReceipt)&&
+    known.request?.op==='bootstrap-orchestration-child'&&
     known.request.session===base.session&&known.request.track===base.state.track&&
     known.request.childTrack===last.commitReceipt.track.address&&same(known.result,last.bootstrapReceipt)&&
     known.nativeCheckpointDigest===base.native.native.digest&&same(transport.native,base.native.native)&&

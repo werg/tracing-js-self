@@ -108,14 +108,23 @@ async function bootstrapFixture(){
     const last=after.coordinatorAttempts.at(-1),receipt={...previous,ordinal:2,digest:'b'.repeat(64)},
       pendingBody={schema:'semantic-selected-orchestration-pending/8',kind:'child-bootstrap',session:base.session,
         checkpointDigest:base.digest,attempt:0,track:base.state.track,childTrack:last.commitReceipt.track.address,
+        createReceipt:copy(previous),
         clockReceipt:copy(base.continuation.clockReceipt),requestBoundary:{
           schema:'semantic-native-producer-request-boundary/8',ordinal:2,sessionId:base.session,
           streamId:'bootstrap-test',sessionGeneration:1}};
+    last.bootstrapRequestReceipt=copy(receipt);
+    after.native.attempts.at(-1).durableBootstrap={schema:'semantic-native-durable-bootstrap-evidence/8',
+      receipt:copy(receipt),createReceipt:copy(previous),preCheckpointDigest:base.native.native.digest,
+      postCheckpointDigest:after.native.native.digest,result:copy(last.bootstrapReceipt)};
+    const nativeTransportBody={...after.native};delete nativeTransportBody.digest;
+    after.native=seal(nativeTransportBody);
+    delete after.digest;after=seal(after);
     return {checkpoint:base,pending:{...pendingBody,id:hashAlgorithmData(pendingBody)},
       recovery:{schema:'semantic-native-transport-bootstrap-recovery/8',recovered:true,
         request:{id:'v8-bootstrap-1-2',op:'bootstrap-orchestration-child',session:base.session,
           track:base.state.track,childTrack:last.commitReceipt.track.address},
-        result:copy(last.bootstrapReceipt),receipt,nativeCheckpointDigest:after.native.native.digest,
+        result:copy(last.bootstrapReceipt),receipt,createReceipt:copy(previous),
+        nativeCheckpointDigest:after.native.native.digest,
         hostDispatches:0,hostRecoveryAuthorized:false},native:after.native,state:after.state,
       elapsedMs:after.continuation.elapsedMs+1,policy,initialPublic};
   })();return copy(await bootstrapCase);
@@ -124,7 +133,8 @@ async function bootstrapFixture(){
 test('bootstrap reconstruction preserves every host and model attempt and supports repeated sealed recovery',async()=>{
   const input=await bootstrapFixture(),before=copy(input),next=buildRecoveredBootstrapCheckpointV8(input);
   assert.deepEqual(input,before);assert.deepEqual(next.bridge,input.checkpoint.bridge);
-  assert.deepEqual(next.native.attempts,input.checkpoint.native.attempts);
+  assert.deepEqual(next.native.native.attempts,input.checkpoint.native.native.attempts);
+  assert.deepEqual(next.native.attempts.at(-1).durableBootstrap.createReceipt,input.pending.createReceipt);
   assert.equal(next.continuation.phase,'coordinator-ready');
   assert.deepEqual(next.coordinatorAttempts.at(-1).bootstrapRequestReceipt,input.recovery.receipt);
   const again=refreshRecoveredBootstrapCheckpointV8({...input,checkpoint:next,elapsedMs:input.elapsedMs+1});

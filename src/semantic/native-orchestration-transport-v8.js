@@ -188,6 +188,14 @@ export function attachNativeV8OrchestrationTransport(select,{request,identity,ep
     const captured=copy(input),expected=requireCoordinator(captured);
     const child=expected.children.find(child=>child.track===captured.childTrack);
     demand(child&&nonempty(captured.childTrack),'child bootstrap requires an acknowledged reservation');
+    if(captured.createReceipt!==undefined){
+      const prior=attempts.at(-1);
+      demand(prior?.family==='orchestration'&&prior.status==='accepted'&&
+        prior.commitReceipt?.track?.address===captured.childTrack&&
+        isDeepStrictEqual(prior.durableRequestReceipt,captured.createReceipt)&&
+        !prior.durableBootstrap,
+      'host bootstrap fence differs from its exact durable create receipt');
+    }
     const receipt=await request({op:'bootstrap-orchestration-child',session:captured.session,
       track:captured.track,childTrack:captured.childTrack});
     demand(receipt?.schema==='semantic-orchestration-bootstrap/8'&&receipt.bootstrapped===true&&

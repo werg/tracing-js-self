@@ -7,6 +7,9 @@ import {decodeNativeV8RequestFrame} from '../storage/native-request-journal-v8.j
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const demand=(value,message)=>{if(!value)throw new TypeError('Native v8 durable commit: '+message);};
 const same=isDeepStrictEqual,HASH=/^[a-f0-9]{64}$/;
+const nativeRequestId=identity=>hashAlgorithmData({schema:'semantic-native-request-slot/1',
+  scope:hashAlgorithmData({session_id:identity.session_id,stream_id:identity.stream_id,
+    session_generation:identity.session_generation}),ordinal:identity.ordinal});
 
 /** Verify the returned bytes against both the original producer request and the
  * complete before/after native state. Neither a digest nor a saved reply alone
@@ -15,11 +18,11 @@ export function verifyNativeV8DurableCommit(value,intent,{recovered=false}={}){
   return verifyDurableOperation(value,intent,{recovered,bootstrap:false});
 }
 
-export function verifyNativeV8DurableBootstrap(value,intent,{recovered=false}={}){
-  return verifyDurableOperation(value,intent,{recovered,bootstrap:true});
+export function verifyNativeV8DurableBootstrap(value,intent,{recovered=false,createIntent}={}){
+  return verifyDurableOperation(value,intent,{recovered,bootstrap:true,createIntent});
 }
 
-function verifyDurableOperation(value,intent,{recovered,bootstrap}){
+function verifyDurableOperation(value,intent,{recovered,bootstrap,createIntent}){
   const {identity,requestBase64,checkpoint}=intent,{bytes,request}=decodeNativeV8RequestFrame(requestBase64);
   demand(bootstrap?request.op==='bootstrap-orchestration-child':
     ['commit','commit-orchestration'].includes(request.op),'response operation differs from requested recovery');
@@ -27,7 +30,9 @@ function verifyDurableOperation(value,intent,{recovered,bootstrap}){
     session_generation:identity.session_generation});
   const requestId=hashAlgorithmData({schema:'semantic-native-request-slot/1',scope,ordinal:identity.ordinal});
   const keys=['schema','requestId','identity','requestSha256','preCheckpointDigest','postCheckpointDigest',
-    'responseBase64','responseSha256','postCheckpoint','recovered','restoreReceipt'];
+    'responseBase64','responseSha256','postCheckpoint',...(bootstrap?['createIdentity','createRequestId',
+      'createRequestSha256','createPreCheckpointDigest','createPostCheckpointDigest','createResponseSha256']:[]),
+    'recovered','restoreReceipt'];
   demand(value&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key))&&
     value.schema===(bootstrap?'semantic-native-durable-bootstrap/8':'semantic-native-durable-commit/8')&&
     value.requestId===requestId&&
@@ -106,6 +111,44 @@ function verifyDurableOperation(value,intent,{recovered,bootstrap}){
       expected.selectionId===request.selection.selectionId,'invalid orchestration acknowledgement');
   }
   demand(same(response.result,expected),'stored reply differs from independently committed native state');
+  if(bootstrap){
+    demand(createIntent?.schema==='semantic-native-producer-request/8'&&
+      same(intent.createReceipt,intent.checkpoint.attempts.at(-1)?.durableRequestReceipt),
+    'bootstrap producer intent lost the exact prior create receipt');
+    const {identity:createIdentity,requestBase64:createRequestBase64,checkpoint:createCheckpoint}=createIntent,
+      {bytes:createBytes,request:createRequest}=decodeNativeV8RequestFrame(createRequestBase64),
+      createPre=createCheckpoint.native,createPrior=intent.checkpoint.attempts.at(-1),
+      createState=pre.sessions?.[request.session]?.orchestration,
+      createDecision=createState?.decisions?.find(row=>row.selectionId===createRequest.selection?.selectionId),
+      createResult=createDecision?.outcome;
+    demand(createIdentity?.operation==='commit-orchestration'&&
+      createIdentity.ordinal+1===identity.ordinal&&
+      ['session_id','stream_id','session_generation'].every(key=>createIdentity[key]===identity[key])&&
+      same(createIdentity.model_identity,identity.model_identity)&&
+      value.createIdentity&&same(value.createIdentity,createIdentity)&&
+      value.createRequestId===nativeRequestId(createIdentity)&&
+      value.createRequestSha256===sha(createBytes)&&
+      value.createPreCheckpointDigest===createPre?.digest&&
+      value.createPostCheckpointDigest===pre.digest&&value.createResponseSha256&&
+      createRequest.op==='commit-orchestration'&&createRequest.session===request.session&&
+      createRequest.track===request.track&&createRequest.record===createPrior?.record&&
+      createRequest.selection?.selectionId===createPrior?.selection?.selectionId&&
+      createPrior?.family==='orchestration'&&createPrior.status==='accepted'&&
+      createPrior.commitReceipt?.track?.address===request.childTrack&&
+      JSON.parse(createRequest.record).name==='track_create'&&
+      createResult?.track?.address===request.childTrack&&createResult.track.bootstrap_ready===false,
+    'bootstrap changed the exact adjacent create identity, bytes, checkpoint or reserved child');
+    const createResponseBytes=Buffer.from(stableAlgorithmJSON({id:createRequest.id,ok:true,result:createResult})+'\n');
+    demand(value.createResponseSha256===sha(createResponseBytes),
+      'bootstrap predecessor response differs from its exact native create outcome');
+    // The bootstrap precheckpoint is independently rechecked as the entire
+    // poststate of the exact producer create intent, not only by matching a digest.
+    verifyNativeV8DurableCommit({schema:'semantic-native-durable-commit/8',
+      requestId:nativeRequestId(createIdentity),identity:createIdentity,requestSha256:sha(createBytes),
+      preCheckpointDigest:createPre.digest,postCheckpointDigest:pre.digest,
+      responseBase64:createResponseBytes.toString('base64'),responseSha256:sha(createResponseBytes),
+      postCheckpoint:pre,recovered:false,restoreReceipt:null},createIntent);
+  }
   if(recovered){
     const restored=value.restoreReceipt;
     demand(restored?.schema==='semantic-model-restore/8'&&restored.restored===true&&
