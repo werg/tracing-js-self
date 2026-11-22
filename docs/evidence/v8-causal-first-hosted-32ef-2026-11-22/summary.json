@@ -1,0 +1,56 @@
+{
+  "schema": "paired-hosted-recovery-evidence/1",
+  "runId": 45029326909,
+  "jobId": 137229192500,
+  "producerRevision": "32efcddadf1cb441dc32ceb8263f6c3d9049fff9",
+  "nativeRevision": "b504228288e2935c9e021da23896fc82babc6836",
+  "conclusion": "failure",
+  "promotionQualified": false,
+  "artifactId": 14757907063,
+  "artifactSha256": "9527296eeb5a0e5f79ee7d2d78eb7f65d57fe74966ecdf5fd1e5c6676c88b5c2",
+  "populations": {
+    "native": {
+      "total": 145,
+      "passed": 145,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failedNames": [],
+      "byFile": {
+        "not-recorded": 145
+      }
+    },
+    "producer": {
+      "total": 170,
+      "passed": 166,
+      "failed": 4,
+      "errors": 0,
+      "skipped": 0,
+      "failedNames": [
+        "actual two-child lexical fixture completes through the full native and host history without a clock claim",
+        "actual later sibling create recovery preserves completed child work across lost reply and repeat loss",
+        "actual later sibling bootstrap recovery preserves completed child work across lost reply and repeat loss",
+        "actual Python track_cancel reconciliation requires the acknowledged same-owner service intent"
+      ],
+      "byFile": {
+        "native-request-journal-v8.test.js": 8,
+        "selected-orchestration-clock.test.js": 5,
+        "semantic-known-bootstrap-builder-v8.test.js": 26,
+        "semantic-known-bootstrap-history-v8.test.js": 12,
+        "semantic-known-commit-builder-v8.test.js": 6,
+        "semantic-known-commit-history-v8.test.js": 9,
+        "semantic-native-durable-bootstrap-v8.test.js": 9,
+        "semantic-native-durable-commit-v8.test.js": 11,
+        "semantic-native-orchestration-recovery-v8.test.js": 6,
+        "semantic-selected-history-automatic-v8.test.js": 21,
+        "semantic-selected-history-tail-v8.test.js": 13,
+        "semantic-selected-history-v8.test.js": 20,
+        "semantic-selected-orchestration-checkpoint-v8.test.js": 20,
+        "semantic-selected-orchestration-v8.test.js": 4
+      }
+    }
+  },
+  "independentPromotionBlocker": "raw child-bootstrap mixed command spellings bypassed the durable guard; reproduced separately after this source froze",
+  "runtimeEvidence": "complete-job.log",
+  "learnedSuccess": null
+}
