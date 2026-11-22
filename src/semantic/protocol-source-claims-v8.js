@@ -29,7 +29,7 @@ const ordinaryOperations=new Set(['property.read','property.write','property.upd
 // These protocol families can participate in Promise source projection without
 // introducing an independent whole-episode teacher. Their events are still
 // claimed through the same prefix coordinator and retained-state transaction.
-export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy,iterator,map,generator]);
+export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy,iterator,map,generator,custom,completion]);
 const callee=value=>value?.[0]==='method'?value[1]:value;
 const builtin=value=>['intrinsic','builtinfn'].includes(value?.[0])?value[1]:null;
 const selected=value=>value?.[0]==='method'?value[1]:value;
@@ -73,11 +73,16 @@ const eventClaims={
   [custom](view,{event}){
     const inst=view.instruction,node=view.sourceNode,own=state(view,custom),point=node?.start+':'+node?.end;
     if(!inst)return false;
+    const base=heap(view,event.operands?.[0]),output=selected(event.result);
+    if(own.asyncLoop&&event.operands.length>=2&&['object','array','function'].includes(base?.kind)&&
+      (event.operation==='property.write'||event.operation==='property.read'&&
+        !['builtinfn','intrinsic'].includes(output?.[0])))return true;
     if(own.defaults?.includes(point)&&inst.op==='BINARY'||own.rests?.includes(point)&&inst.op==='APPEND_ARRAY')return true;
     const pattern=node?.type==='ArrayPattern'&&own.patterns?.includes(point);
-    if((node?.type!=='ForOfStatement'||node.await)&&!pattern)return false;
-    return ['REQUIRE_OBJECT','LOGICAL_JUMP','PENDING_THROW'].includes(inst.op)||
-      ['INIT','GET'].includes(inst.op)&&(/^\[\[iterator next [0-9]+\]\]$/.test(inst.arg)||pattern&&event.result?.[0]==='method');
+    if(node?.type!=='ForOfStatement'&&!pattern)return false;
+    return ['REQUIRE_OBJECT','LOGICAL_JUMP','PENDING_THROW'].includes(inst.op)||node.await&&inst.op==='UNARY'||
+      ['INIT','GET'].includes(inst.op)&&(/^\[\[(?:(?:async|sync) )?iterator next [0-9]+\]\]$/.test(inst.arg)&&event.result?.[0]==='method'||
+        pattern&&event.result?.[0]==='method');
   },
   [iterator](view,{event,row}){
     const inst=view.instruction;
@@ -155,7 +160,7 @@ function completionOwners(view,change){
   return [...(change.after?.generatorId||routedGenerator?.length===1?[generator]:[]),
     ...(enabled(view,moduleNamespace)&&(state(view,moduleNamespace).operations??[]).some(([,operation])=>
       operation.waitingFrameId===change.id)?[moduleNamespace]:[]),
-    ...[[construction,'roles'],[number,'callbacks'],[proxy,'callbacks'],[map,'callbacks']]
+    ...[[construction,'roles'],[number,'callbacks'],[proxy,'callbacks'],[map,'callbacks'],[custom,'accessors']]
       .filter(([id,key])=>has(state(view,id)[key],change.id)).map(([id])=>id)];
 }
 function allocationOwner(view,node){

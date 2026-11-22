@@ -1,5 +1,6 @@
 import {SEMANTIC_GALLERY_FIXTURES} from '../../src/training/semantic-trace-gallery.js';
 import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
 import {expansionCoveragePopulation} from '../../src/semantic/expansion-benchmark.js';
 import {HOST_PROTOCOL_FIXTURES_V8} from './host-protocol.js';
 import {RETURN_CALLBACK_FIXTURES} from './return-callbacks.js';
@@ -99,7 +100,8 @@ export function primitiveConversionQualificationFixtures(){
 // protocol golden, not just the original three shared-state examples.
 export function regionQualificationPopulation({population='interoperability',allInputs=true}={}){
   if(population!=='interoperability')return expansionCoveragePopulation({population,allInputs});
-  const declared=JSON.parse(readFileSync(new URL('../../test/fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
+  const declared=JSON.parse(gunzipSync(Buffer.from(readFileSync(
+    new URL('../../test/fixtures/semantic-protocol-region-v8.json.gz.b64',import.meta.url),'utf8'),'base64')).toString());
   if(declared.schema!=='semantic-protocol-region-fixtures/1'||!Array.isArray(declared.cases)||!declared.cases.length)
     throw new TypeError('Missing declared source-qualified protocol fixtures');
   return {scripts:[...regionQualificationFixtures(),...declared.cases.map(row=>{

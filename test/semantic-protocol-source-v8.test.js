@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {gunzipSync} from 'node:zlib';
 import {createRuntime} from '../src/runtime.js';
 import {encodeNativeGraph} from '../src/host/graph-codec.js';
 import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-v8.js';
@@ -153,7 +154,8 @@ test('source null-prototype reads and abrupt setters preserve protocol distincti
 test('committed source-region fixture rechecks its full public contexts and private source evidence',async()=>{
   const {readFileSync}=await import('node:fs');
   const {recheckProtocolRegionEvidence}=await import('../src/semantic/protocol-source-v8.js');
-  const fixtures=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
+  const fixtures=JSON.parse(gunzipSync(Buffer.from(readFileSync(
+    new URL('./fixtures/semantic-protocol-region-v8.json.gz.b64',import.meta.url),'utf8'),'base64')).toString());
   assert.equal(fixtures.schema,'semantic-protocol-region-fixtures/1');
   for(const row of fixtures.cases)assert.equal((await recheckProtocolRegionEvidence(row.artifact)).valid,true,row.id);
 });

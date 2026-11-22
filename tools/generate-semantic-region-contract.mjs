@@ -35,7 +35,8 @@ for(const fixture of fixtures){
 }
 const protocolFixtures=JSON.parse(await readFile(new URL('../test/fixtures/semantic-protocol-v8.json',import.meta.url),'utf8'));
 const iteratorFixtures=JSON.parse(await readFile(new URL('../test/fixtures/semantic-iterator-v8.json',import.meta.url),'utf8'));
-const protocolSources=JSON.parse(await readFile(new URL('../test/fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
+const protocolSources=JSON.parse(gunzipSync(Buffer.from(await readFile(
+  new URL('../test/fixtures/semantic-protocol-region-v8.json.gz.b64',import.meta.url),'utf8'),'base64')).toString());
 if(protocolSources.schema!=='semantic-protocol-region-fixtures/1'||!Array.isArray(protocolSources.cases)||!protocolSources.cases.length)
   throw new Error('Missing source-qualified protocol interoperability fixtures');
 // A manifest digest proves only that bytes were pinned. Before pinning those

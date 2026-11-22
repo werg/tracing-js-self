@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
 import {regionQualificationPopulation,regionQualificationFixtures,sharedProtocolQualificationFixtures,
   moduleQualificationFixtures} from '../fixtures/semantic-regions/qualification.js';
 import {expansionCoveragePopulation} from '../src/semantic/expansion-benchmark.js';
@@ -27,7 +28,8 @@ test('native qualification retains every declared family input, script and modul
 });
 
 test('interoperability includes all source goldens and returns fresh mutable guest inputs',()=>{
-  const declared=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
+  const declared=JSON.parse(gunzipSync(Buffer.from(readFileSync(
+    new URL('./fixtures/semantic-protocol-region-v8.json.gz.b64',import.meta.url),'utf8'),'base64')).toString());
   const selected=regionQualificationPopulation();
   const conversion=[...PRIMITIVE_CONVERSION_FIXTURES,...PRIMITIVE_CONVERSION_COMPOSITION_FIXTURES]
     .filter(fixture=>!fixture.boundary);

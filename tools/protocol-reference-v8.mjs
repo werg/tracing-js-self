@@ -46,6 +46,11 @@ try{
     try{context.__result=await context.__result;}
     catch(error){context.__kind='throw';context.__result=error;}
   }
+  // The owned scheduler runs the whole current microtask queue, including
+  // detached async work after a scalar root return. One host turn boundary
+  // drains that queue to quiescence; a fixed number of Promise awaits would
+  // truncate longer chains. The parent deadline still bounds infinite jobs.
+  if(input.awaitReturnedPromise)await new Promise(resolve=>setImmediate(resolve));
   if(failures.length)throw new TypeError(failures[0]);
   phase='observe';
   const outcome={kind:context.__kind,graph:describeCompletionGraph(args,context.__result,context.__kind)};

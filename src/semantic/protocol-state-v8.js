@@ -451,6 +451,8 @@ export function restoreProtocolStateV8(controller,snapshot){
       known(temporary,prototype);require(prototype[0]==='ref','prototype reference');heapNode(temporary,prototype[1]);}
   }
   const extensionIdentities=new Set([...controller.heap.keys(),...snapshot.symbols.map(row=>row.id)]);
+  for(const continuation of controller.continuations?.values()??[])
+    validateProtocolPendingScopeV8(temporary,continuation.pending,[continuation.invocation]);
   for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8){
     const additional=adapter.stateField===undefined?null:snapshot[adapter.stateField];
     if(adapter.stateField!==undefined&&additional===null){
@@ -517,6 +519,22 @@ export function allowsProtocolCompletionDetailV8(controller,record){
   return true;
 }
 
+// A suspended invocation owns only its own cleanup obligations. An idle
+// caller scope can also retain the root's completed outcome while async work
+// runs, so detaching that work must restore the whole prior pending state.
+export function validateProtocolPendingScopeV8(controller,pending,invocations=controller.stack){
+  if(pending===null)return true;
+  const hasHandler=Object.hasOwn(pending??{},'handler');
+  assertAlgorithmFields(pending,['kind','value',...(hasHandler?['handler']:[])],'retained pending scope');
+  require(['return','throw','cleanup'].includes(pending.kind),'retained pending kind');known(controller,pending.value);
+  if(pending.handler?.schema==='semantic-handler-scopes/1'){
+    require(allowsProtocolCompletionDetailV8({...controller,stack:invocations},{kind:'transfer',fields:pending}),
+      'retained handler scope');
+  }else if(hasHandler)require(pending.handler===null||typeof pending.handler==='string','retained pending handler');
+  else require(pending.kind!=='cleanup','cleanup requires its retained handler scope');
+  return true;
+}
+
 export function assertProtocolDetailCompatible(controller,record){
   allowsProtocolCompletionDetailV8(controller,record);
   for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.assertNext)
@@ -576,4 +594,5 @@ export function describeProtocolObjectV8(controller,id){
 
 /** Trusted component interface. Public records never carry options or adapters. */
 export const PROTOCOL_MACHINE_API_V8=Object.freeze({require,fail,copy,eq,state,known,knownKey,heapNode,
-  ownDescriptor,installDescriptor,resolveProperty,directSet,order,fresh,call,complete,allocate,setLocal,truthy});
+  ownDescriptor,installDescriptor,resolveProperty,directSet,order,fresh,call,complete,allocate,setLocal,truthy,
+  validatePendingScope:validateProtocolPendingScopeV8});

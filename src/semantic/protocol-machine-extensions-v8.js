@@ -32,6 +32,7 @@ import {MODULE_SCHEDULER_PROFILE_V8,MODULE_SCHEDULER_RECORD_FIELDS,validateModul
 import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_RECORD_FIELDS,validatePromiseAdoptionRecordV8,applyPromiseAdoptionRecordV8,
   restorePromiseAdoptionStateV8,assertPromiseAdoptionNextV8,allowsPromiseAdoptionInternalSchedulerV8,
   allowsPromiseAdoptionWithoutStackV8} from './protocol-promise-adoption-v8.js';
+import {hasAsyncIterationSourceCallableV8} from './async-iteration-source-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:MODULE_SCHEDULER_PROFILE_V8,recordFields:MODULE_SCHEDULER_RECORD_FIELDS,
   validateRecord:validateModuleSchedulerRecordV8,applyRecord:applyModuleSchedulerRecordV8,
@@ -42,6 +43,7 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:ASYNC_CALL_PROFILE_V8,recordFields:ASYNC_CALL_RECORD_FIELDS,validateRecord:validateAsyncCallRecordV8,
   applyRecord:applyAsyncCallRecordV8,restoreState:(controller,_snapshot,api)=>restoreAsyncCallStateV8(controller,api),
   assertNext:assertAsyncCallNextV8,assertCall:assertAsyncCallV8,
+  hasSourceCallable:hasAsyncIterationSourceCallableV8,
   hasRichState:node=>node.asyncFunction!==undefined||node.asyncCall!==undefined,
   allowsInternalScheduler:allowsAsyncCallInternalSchedulerV8,allowsWithoutStack:allowsAsyncCallWithoutStackV8
 }),Object.freeze({

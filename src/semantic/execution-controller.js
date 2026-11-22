@@ -461,7 +461,9 @@ export class SemanticExecutionController {
         this.continuations.set(f.continuation,{state:'waiting',promise:f.promise,
           invocation:this.stack.pop(),sequence:++this.scheduler.registration,
           activeJob:this.activeJob,captureAliases:[...this.captureAliases],
+          pending:structuredClone(this.pending??null),
           ...(this.protocol?{receiver:structuredClone(this.receiver)}:{})});
+        this.pending=null;
         if(this.activeJob){
           const job=this.jobs.get(this.activeJob);
           this.captureAliases=new Map(job.priorAliases);
@@ -481,6 +483,7 @@ export class SemanticExecutionController {
         this.stack.push(continuation.invocation);
         this.activeJob=continuation.activeJob;
         this.captureAliases=new Map(continuation.captureAliases);
+        this.pending=structuredClone(continuation.pending);
         if(Object.hasOwn(continuation,'receiver'))this.receiver=structuredClone(continuation.receiver);
       }else if(kind==='job'){
         if(f.action==='enqueue'){
