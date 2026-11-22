@@ -1,0 +1,346 @@
+{
+  "schema": "semantic-v8-retained-hosted-qualification/1",
+  "runId": 45045811229,
+  "producerRevision": "7c20124f3d89dfe1a8d5e892238e7b7f92589720",
+  "nativeRevision": "ddda9a7339297e6074765a001743e2bb569e0eb9",
+  "requiresControlledPositionProof": false,
+  "requiredGroups": {
+    "recovery": {
+      "native": 165,
+      "producer": 193
+    },
+    "promise": {
+      "native": 106,
+      "producer": 173
+    }
+  },
+  "files": [
+    {
+      "path": "originals/archives/combined-v8-bootstrap-history.zip.gz.b64",
+      "originalPath": "archives/combined-v8-bootstrap-history.zip",
+      "bytes": 1844025,
+      "sha256": "230d5fab3ad5f905d3ca29add740c6dad72a59f9f141e66479ee5ee94ffdc2fb",
+      "encoding": "gzip-base64",
+      "originalBytes": 1382900,
+      "originalSha256": "91c269c27e6e87896679d3f76c1b73fa108539a94439a405c9b92d6f0807be02"
+    },
+    {
+      "path": "originals/archives/combined-v8-commit-history.zip.gz.b64",
+      "originalPath": "archives/combined-v8-commit-history.zip",
+      "bytes": 1843433,
+      "sha256": "454e5a19b62a53c377de9c3da7909d30abe7db5b24dcca1c75dcf6e8ff59bda3",
+      "encoding": "gzip-base64",
+      "originalBytes": 1382459,
+      "originalSha256": "9adf078d7deb8effc314b976f1ce91dfae91bb2b455dc3c664a846bf6b8707bb"
+    },
+    {
+      "path": "originals/archives/combined-v8-promise.zip.gz.b64",
+      "originalPath": "archives/combined-v8-promise.zip",
+      "bytes": 2645493,
+      "sha256": "97c07b8c6fe881f15a85610da10f447295653c2923a977aff28353121ea03f6c",
+      "encoding": "gzip-base64",
+      "originalBytes": 2000939,
+      "originalSha256": "cd1ed1a1fb9188a697ab4d9e68a9acfcb7fccb89b6a6ccdc056f7be93dcc3d50"
+    },
+    {
+      "path": "originals/archives/combined-v8-qualification.zip.gz.b64",
+      "originalPath": "archives/combined-v8-qualification.zip",
+      "bytes": 2381,
+      "sha256": "8b620f3e379bc741276aecbc71b0c8b4c8f35d2a8c7d11b0659a4f296b927df2",
+      "encoding": "gzip-base64",
+      "originalBytes": 1770,
+      "originalSha256": "f349ac2771ad34fef459f043755409460cc85e4cb3f805267e9e4fbef13c4ffb"
+    },
+    {
+      "path": "originals/archives/combined-v8-structural.zip.gz.b64",
+      "originalPath": "archives/combined-v8-structural.zip",
+      "bytes": 1859261,
+      "sha256": "6b8a3249ce2567c607e6d70735f304cc9084acb1ec26d2a49e93aa7a9165544f",
+      "encoding": "gzip-base64",
+      "originalBytes": 1394458,
+      "originalSha256": "5ace3972626c4e2fc604a45d26a019bee33c3bf5344e8a76f95b216d36d2d0ea"
+    },
+    {
+      "path": "originals/archives/combined-v8-terminal-history.zip.gz.b64",
+      "originalPath": "archives/combined-v8-terminal-history.zip",
+      "bytes": 1844325,
+      "sha256": "b3e52b0872d0eaf611db735dffa39016f1f32e3132efd1fbdd95b83ebd838b99",
+      "encoding": "gzip-base64",
+      "originalBytes": 1383158,
+      "originalSha256": "4bf5636b387d31f825b31af949618b0b68d2d5bfed9ffd64cb7068df1d6847f0"
+    },
+    {
+      "path": "originals/archives/combined-v8-transport.zip.gz.b64",
+      "originalPath": "archives/combined-v8-transport.zip",
+      "bytes": 1845737,
+      "sha256": "46aa9049c677c792db7579f33a1d316b1bcf99395b5eead4a15bb6c626246b12",
+      "encoding": "gzip-base64",
+      "originalBytes": 1384185,
+      "originalSha256": "0522444a44efb6cea7368a7287dc70f0daa96f379b71d23bca43c9da1c0ef414"
+    },
+    {
+      "path": "originals/jobs/137280048414.log.gz.b64",
+      "originalPath": "jobs/137280048414.log",
+      "bytes": 25593,
+      "sha256": "52ff09d3f0db662ad8bff1a131913a0c98df25f3ef90a1f9249342c2b2df607c",
+      "encoding": "gzip-base64",
+      "originalBytes": 87327,
+      "originalSha256": "6757b845ee90cbef618fac021856f6224c210e5502c6bf33b89fe3578234aa92"
+    },
+    {
+      "path": "originals/jobs/137280048592.log.gz.b64",
+      "originalPath": "jobs/137280048592.log",
+      "bytes": 20281,
+      "sha256": "f06c7af7df3a45a2bb11a06355e05ead2bb60df4d52304adb0a4de7a368eeb9c",
+      "encoding": "gzip-base64",
+      "originalBytes": 73890,
+      "originalSha256": "92c3f3b147bd09c3710d6ddec06dd0c746dd514929d375ee203b95dfc05d80fc"
+    },
+    {
+      "path": "originals/jobs/137280048623.log.gz.b64",
+      "originalPath": "jobs/137280048623.log",
+      "bytes": 20033,
+      "sha256": "88e5707653859447c87dd283cd6d62298a7df46db8ed0dcf442ca85fe567f0c9",
+      "encoding": "gzip-base64",
+      "originalBytes": 73029,
+      "originalSha256": "6fb35e2d341aa96f4ef355153c1bea7f6415e3a751a0b6b3cb9ce226bf55f660"
+    },
+    {
+      "path": "originals/jobs/137280048625.log.gz.b64",
+      "originalPath": "jobs/137280048625.log",
+      "bytes": 19857,
+      "sha256": "476e602c2d63d5a930cc77d76a590f1c72627f15f25888d5c18f6b103a6dad2e",
+      "encoding": "gzip-base64",
+      "originalBytes": 72860,
+      "originalSha256": "74ec0a3046a0f218a4a4b1984edc4e2b1aa824e6f6c80f8da6f7b75fcc39a468"
+    },
+    {
+      "path": "originals/jobs/137280048660.log.gz.b64",
+      "originalPath": "jobs/137280048660.log",
+      "bytes": 29145,
+      "sha256": "345e9ab74ef7d3bc7ea9333b0eebfc799acf50a1a5ff2e3abf7f52e5dee4dadc",
+      "encoding": "gzip-base64",
+      "originalBytes": 99129,
+      "originalSha256": "cc59fcbf9422ba6f660dec1f5670420c64a49d465115472f7ffc38ed277045a3"
+    },
+    {
+      "path": "originals/jobs/137280048689.log.gz.b64",
+      "originalPath": "jobs/137280048689.log",
+      "bytes": 21081,
+      "sha256": "59caa8aede6ec995fbf499f113b17cb6e6b0217bd08aeebdebdb6ac6e120a0c9",
+      "encoding": "gzip-base64",
+      "originalBytes": 76123,
+      "originalSha256": "9826997b55cced20145bc13b16556f0d24472ebdf088efdf8a78c0b92b42ceea"
+    },
+    {
+      "path": "originals/jobs/137287248116.log.gz.b64",
+      "originalPath": "jobs/137287248116.log",
+      "bytes": 11713,
+      "sha256": "20ef2be6875b2c2a33d1eb841e3ee73f3dcf7990cc315b979ac05ecabbf78f6b",
+      "encoding": "gzip-base64",
+      "originalBytes": 35074,
+      "originalSha256": "fc976b3dbd4eb6731c1e9723324eeca2acc26888ec2f8191860b82a8cdee50c3"
+    },
+    {
+      "path": "originals/original-artifacts.json",
+      "originalPath": "original-artifacts.json",
+      "bytes": 5861,
+      "sha256": "e42438600a8acfceffc090604a7675a3e5b1dc6961b95e908170585fc5ffa00f"
+    },
+    {
+      "path": "originals/original-gate-helper.py",
+      "originalPath": "original-gate-helper.py",
+      "bytes": 18598,
+      "sha256": "a01a55746d2b424818c0559b95ff784639bb41937b28fdc9be3f815d19d8b977"
+    },
+    {
+      "path": "originals/original-gate-spec.json",
+      "originalPath": "original-gate-spec.json",
+      "bytes": 5606,
+      "sha256": "432fb031331297cf16e820b28a25d72c86a63567831bc18732099af04a1a33c4"
+    },
+    {
+      "path": "originals/original-jobs.json",
+      "originalPath": "original-jobs.json",
+      "bytes": 27727,
+      "sha256": "e259c855a56dc71b73181f7e3b1c042ef6c6d740a7131562d28a6dd3f394e730"
+    },
+    {
+      "path": "originals/original-native-module-manifest.json",
+      "originalPath": "original-native-module-manifest.json",
+      "bytes": 33880,
+      "sha256": "deca1f832ca479db705f4a9c28bba635b8f91526045c09a8f1a81bfc5491c074"
+    },
+    {
+      "path": "originals/original-native-policy.json",
+      "originalPath": "original-native-policy.json",
+      "bytes": 602,
+      "sha256": "60a39ba57f5169fd116e1379858c0352424f9f3ec134db157d3ab17f482baa3a"
+    },
+    {
+      "path": "originals/original-protocol-fixture.json.gz.b64",
+      "originalPath": "original-protocol-fixture.json",
+      "bytes": 695341,
+      "sha256": "f6f5e37868bc0350d6901a7a8df0140d7f7ad6b4c5608675cdec1eaed8838b04",
+      "encoding": "gzip-base64",
+      "originalBytes": 9187898,
+      "originalSha256": "6afc19c9a25d27be91849b330a4d300bcc7a3d0160c4414bf4c40c7811871a98"
+    },
+    {
+      "path": "originals/original-release-environment.json",
+      "originalPath": "original-release-environment.json",
+      "bytes": 926,
+      "sha256": "838acc918a36459b3fa304234acf32ede143a592dd39ed3896c84acfc28175a6"
+    },
+    {
+      "path": "originals/original-requirements.lock",
+      "originalPath": "original-requirements.lock",
+      "bytes": 58598,
+      "sha256": "233ce2065a5eebb85472eb2bdab714bedc26aa74536c6c0df73ea0081f204135"
+    },
+    {
+      "path": "originals/original-run.json",
+      "originalPath": "original-run.json",
+      "bytes": 12589,
+      "sha256": "ef85642da58dc64d7f5b6ce43a7dbc77951e51c487d41d6bb81690a52c1e8cf0"
+    },
+    {
+      "path": "originals/payloads/native/src/megatoken/data/contracts/semantic-execution-v8.json.gz.b64",
+      "originalPath": "payloads/native/src/megatoken/data/contracts/semantic-execution-v8.json",
+      "bytes": 20545,
+      "sha256": "449b5cbd12127ecae6f67569c678fd279352db7a3d2e533b10242e0e496c4786",
+      "encoding": "gzip-base64",
+      "originalBytes": 82585,
+      "originalSha256": "ad09b9ad4f777165c00763b42519c152de7c0f5b02964a19821d3b22667ef58b"
+    },
+    {
+      "path": "originals/payloads/native/tests/fixtures/semantic-host-protocol-v8.json.gz.b64.gz.b64",
+      "originalPath": "payloads/native/tests/fixtures/semantic-host-protocol-v8.json.gz.b64",
+      "bytes": 54505,
+      "sha256": "20f1e6e53914b03d354ee8f7138a8a5283fb8248214a26dde8670a1f7bd2335a",
+      "encoding": "gzip-base64",
+      "originalBytes": 60565,
+      "originalSha256": "d55fb40d10b582e861b2099e03c10a95e04213a09fca404e2367ee1489a0f5ab"
+    },
+    {
+      "path": "originals/payloads/native/tests/fixtures/semantic-iterator-v8.json.gz.b64",
+      "originalPath": "payloads/native/tests/fixtures/semantic-iterator-v8.json",
+      "bytes": 2453,
+      "sha256": "9ce7e43361ce77478a04622a398ed2f43361cec1f38577f6d18db087888cce94",
+      "encoding": "gzip-base64",
+      "originalBytes": 32084,
+      "originalSha256": "f124dba091c3fa36463fd0c6b79b98e5566c14cc0807938b25954d68f8d1db69"
+    },
+    {
+      "path": "originals/payloads/native/tests/fixtures/semantic-protocol-region-v8.json.gz.b64.gz.b64",
+      "originalPath": "payloads/native/tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
+      "bytes": 685365,
+      "sha256": "845ae6f9567f4301f980b0206123c4d5b8d9d5e8ca8a26ce85f9dc33ca38c076",
+      "encoding": "gzip-base64",
+      "originalBytes": 695341,
+      "originalSha256": "f6f5e37868bc0350d6901a7a8df0140d7f7ad6b4c5608675cdec1eaed8838b04"
+    },
+    {
+      "path": "originals/payloads/native/tests/fixtures/semantic-protocol-source-v8.json.gz.b64",
+      "originalPath": "payloads/native/tests/fixtures/semantic-protocol-source-v8.json",
+      "bytes": 16773,
+      "sha256": "3af776642988bee92dd85591b11d50a0b80f7acb3720956604db5969e3258d30",
+      "encoding": "gzip-base64",
+      "originalBytes": 171870,
+      "originalSha256": "8d4943e57e4033a1a4dfc3649d53ae9e1b8d42039375c618b35a6664c040f382"
+    },
+    {
+      "path": "originals/payloads/native/tests/fixtures/semantic-protocol-v8.json.gz.b64",
+      "originalPath": "payloads/native/tests/fixtures/semantic-protocol-v8.json",
+      "bytes": 3061,
+      "sha256": "c7cbc63c626698058fa9c8e275e1744c11253805cd852fee19a7f0eaff18cf37",
+      "encoding": "gzip-base64",
+      "originalBytes": 29227,
+      "originalSha256": "704dcb2f7a34d7bd2089391020b1686a0e9ef118def323ed1db99227e05e5d58"
+    },
+    {
+      "path": "originals/payloads/native/tests/fixtures/semantic-regions-v8.json.gz.b64.gz.b64",
+      "originalPath": "payloads/native/tests/fixtures/semantic-regions-v8.json.gz.b64",
+      "bytes": 63229,
+      "sha256": "f74528316f9d2c97aebc921a70983ad55fe531a69b18c60014a2fe9d88528891",
+      "encoding": "gzip-base64",
+      "originalBytes": 66329,
+      "originalSha256": "f3e5225516e4db740665e746226c76be65dff4fcb73d0aae545e0d4f215393ca"
+    },
+    {
+      "path": "originals/payloads/producer/contracts/semantic-execution-v8.json.gz.b64",
+      "originalPath": "payloads/producer/contracts/semantic-execution-v8.json",
+      "bytes": 20545,
+      "sha256": "449b5cbd12127ecae6f67569c678fd279352db7a3d2e533b10242e0e496c4786",
+      "encoding": "gzip-base64",
+      "originalBytes": 82585,
+      "originalSha256": "ad09b9ad4f777165c00763b42519c152de7c0f5b02964a19821d3b22667ef58b"
+    },
+    {
+      "path": "originals/payloads/producer/test/fixtures/semantic-host-protocol-v8.json.gz.b64.gz.b64",
+      "originalPath": "payloads/producer/test/fixtures/semantic-host-protocol-v8.json.gz.b64",
+      "bytes": 54505,
+      "sha256": "20f1e6e53914b03d354ee8f7138a8a5283fb8248214a26dde8670a1f7bd2335a",
+      "encoding": "gzip-base64",
+      "originalBytes": 60565,
+      "originalSha256": "d55fb40d10b582e861b2099e03c10a95e04213a09fca404e2367ee1489a0f5ab"
+    },
+    {
+      "path": "originals/payloads/producer/test/fixtures/semantic-iterator-v8.json.gz.b64",
+      "originalPath": "payloads/producer/test/fixtures/semantic-iterator-v8.json",
+      "bytes": 2453,
+      "sha256": "9ce7e43361ce77478a04622a398ed2f43361cec1f38577f6d18db087888cce94",
+      "encoding": "gzip-base64",
+      "originalBytes": 32084,
+      "originalSha256": "f124dba091c3fa36463fd0c6b79b98e5566c14cc0807938b25954d68f8d1db69"
+    },
+    {
+      "path": "originals/payloads/producer/test/fixtures/semantic-protocol-region-v8.json.gz.b64",
+      "originalPath": "payloads/producer/test/fixtures/semantic-protocol-region-v8.json",
+      "bytes": 695341,
+      "sha256": "f6f5e37868bc0350d6901a7a8df0140d7f7ad6b4c5608675cdec1eaed8838b04",
+      "encoding": "gzip-base64",
+      "originalBytes": 9187898,
+      "originalSha256": "6afc19c9a25d27be91849b330a4d300bcc7a3d0160c4414bf4c40c7811871a98"
+    },
+    {
+      "path": "originals/payloads/producer/test/fixtures/semantic-protocol-source-v8.json.gz.b64",
+      "originalPath": "payloads/producer/test/fixtures/semantic-protocol-source-v8.json",
+      "bytes": 16773,
+      "sha256": "3af776642988bee92dd85591b11d50a0b80f7acb3720956604db5969e3258d30",
+      "encoding": "gzip-base64",
+      "originalBytes": 171870,
+      "originalSha256": "8d4943e57e4033a1a4dfc3649d53ae9e1b8d42039375c618b35a6664c040f382"
+    },
+    {
+      "path": "originals/payloads/producer/test/fixtures/semantic-protocol-v8.json.gz.b64",
+      "originalPath": "payloads/producer/test/fixtures/semantic-protocol-v8.json",
+      "bytes": 3061,
+      "sha256": "c7cbc63c626698058fa9c8e275e1744c11253805cd852fee19a7f0eaff18cf37",
+      "encoding": "gzip-base64",
+      "originalBytes": 29227,
+      "originalSha256": "704dcb2f7a34d7bd2089391020b1686a0e9ef118def323ed1db99227e05e5d58"
+    },
+    {
+      "path": "originals/payloads/producer/test/fixtures/semantic-regions-v8.json.gz.b64",
+      "originalPath": "payloads/producer/test/fixtures/semantic-regions-v8.json",
+      "bytes": 66329,
+      "sha256": "f3e5225516e4db740665e746226c76be65dff4fcb73d0aae545e0d4f215393ca",
+      "encoding": "gzip-base64",
+      "originalBytes": 2045603,
+      "originalSha256": "eae00662b5d38381facbf31543f01756308e2cb12afad44088ad5ae02cced89c"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4157,
+      "sha256": "2e5cb29a86ae4bcbc02a3acba0352b1c126393f24c7ce7a865c6514b3dbbf049"
+    },
+    {
+      "path": "audit.py",
+      "bytes": 17088,
+      "sha256": "fc7204d08b9b2e6d5e583ea66fa16c4e0c065536bfe5097833dea42713e22581"
+    }
+  ],
+  "producerTree": "13a2497fdd19ca5de94c86ba24a54f04251e808f",
+  "nativeTree": "a0cdb4d771bc1b904c1ac7a49a94bf5e3f560bdc"
+}

@@ -1,0 +1,80 @@
+{
+  "controlledTraining": null,
+  "counts": {
+    "errors": 0,
+    "failures": 0,
+    "native": 271,
+    "producer": 366,
+    "skipped": 0,
+    "total": 637
+  },
+  "globalOptimizerUpdates": null,
+  "installedPythonModules": 267,
+  "installedSources": {
+    "additionalSourcePopulations": [
+      {
+        "contexts": 423,
+        "file": "promise-adoption-source-evidence.json",
+        "nativeCases": 15,
+        "restoreCuts": 65,
+        "sources": 15
+      },
+      {
+        "contexts": 96,
+        "file": "promise-mutation-profile-evidence.json",
+        "nativeCases": 5,
+        "restoreCuts": null,
+        "sources": 24
+      },
+      {
+        "contexts": 51,
+        "file": "promise-object-profile-evidence.json",
+        "nativeCases": 5,
+        "restoreCuts": null,
+        "sources": 22
+      },
+      {
+        "contexts": 78,
+        "file": "async-return-adoption-composition-evidence.json",
+        "nativeCases": 2,
+        "restoreCuts": 9,
+        "sources": 2
+      }
+    ],
+    "cases": 23,
+    "contexts": 849,
+    "sharedRealm": {
+      "contexts": 19,
+      "owners": 2
+    }
+  },
+  "learnedQualityClaim": null,
+  "moduleAdmission": false,
+  "originalArtifacts": 7,
+  "originalReportingCorrection": {
+    "actualGlobalOptimizerUpdates": null,
+    "claimSupported": false,
+    "originalAggregateOptimizerUpdates": 0,
+    "reason": "The structural group executes controlled fixture optimization; this old gate did not retain its emitted position-proof.json. The original artifact is preserved, and the reporting correction is separate."
+  },
+  "pair": {
+    "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "gateSpecSha256": "432fb031331297cf16e820b28a25d72c86a63567831bc18732099af04a1a33c4",
+    "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+    "native": {
+      "revision": "ddda9a7339297e6074765a001743e2bb569e0eb9",
+      "tree": "a0cdb4d771bc1b904c1ac7a49a94bf5e3f560bdc"
+    },
+    "policySha256": "60a39ba57f5169fd116e1379858c0352424f9f3ec134db157d3ab17f482baa3a",
+    "producer": {
+      "revision": "7c20124f3d89dfe1a8d5e892238e7b7f92589720",
+      "tree": "13a2497fdd19ca5de94c86ba24a54f04251e808f"
+    }
+  },
+  "requiredJobs": 7,
+  "runId": 45045811229,
+  "schema": "semantic-v8-original-hosted-artifact-audit/1",
+  "status": "test-evidence-verified-with-reporting-correction",
+  "trainingAdmission": false
+}

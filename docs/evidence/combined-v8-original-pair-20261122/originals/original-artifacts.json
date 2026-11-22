@@ -1,0 +1,137 @@
+{
+  "artifacts": [
+    {
+      "id": 14764816684,
+      "name": "combined-v8-qualification",
+      "size_in_bytes": 1770,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14764816684",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14764816684/zip",
+      "expired": false,
+      "created_at": "2026-11-22T17:20:01Z",
+      "expires_at": "2027-02-20T16:47:46Z",
+      "updated_at": "2026-11-22T17:20:01Z",
+      "digest": "sha256:f349ac2771ad34fef459f043755409460cc85e4cb3f805267e9e4fbef13c4ffb",
+      "workflow_run": {
+        "id": 45045811229,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/language-coverage-v8-cutover",
+        "head_sha": "7c20124f3d89dfe1a8d5e892238e7b7f92589720"
+      }
+    },
+    {
+      "id": 14764026682,
+      "name": "combined-v8-commit-history",
+      "size_in_bytes": 1382459,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14764026682",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14764026682/zip",
+      "expired": false,
+      "created_at": "2026-11-22T17:04:08Z",
+      "expires_at": "2027-02-20T16:47:46Z",
+      "updated_at": "2026-11-22T17:04:08Z",
+      "digest": "sha256:9adf078d7deb8effc314b976f1ce91dfae91bb2b455dc3c664a846bf6b8707bb",
+      "workflow_run": {
+        "id": 45045811229,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/language-coverage-v8-cutover",
+        "head_sha": "7c20124f3d89dfe1a8d5e892238e7b7f92589720"
+      }
+    },
+    {
+      "id": 14763958240,
+      "name": "combined-v8-transport",
+      "size_in_bytes": 1384185,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14763958240",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14763958240/zip",
+      "expired": false,
+      "created_at": "2026-11-22T17:05:30Z",
+      "expires_at": "2027-02-20T16:47:46Z",
+      "updated_at": "2026-11-22T17:05:30Z",
+      "digest": "sha256:0522444a44efb6cea7368a7287dc70f0daa96f379b71d23bca43c9da1c0ef414",
+      "workflow_run": {
+        "id": 45045811229,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/language-coverage-v8-cutover",
+        "head_sha": "7c20124f3d89dfe1a8d5e892238e7b7f92589720"
+      }
+    },
+    {
+      "id": 14763874937,
+      "name": "combined-v8-bootstrap-history",
+      "size_in_bytes": 1382900,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14763874937",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14763874937/zip",
+      "expired": false,
+      "created_at": "2026-11-22T17:12:54Z",
+      "expires_at": "2027-02-20T16:47:46Z",
+      "updated_at": "2026-11-22T17:12:54Z",
+      "digest": "sha256:91c269c27e6e87896679d3f76c1b73fa108539a94439a405c9b92d6f0807be02",
+      "workflow_run": {
+        "id": 45045811229,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/language-coverage-v8-cutover",
+        "head_sha": "7c20124f3d89dfe1a8d5e892238e7b7f92589720"
+      }
+    },
+    {
+      "id": 14763701348,
+      "name": "combined-v8-structural",
+      "size_in_bytes": 1394458,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14763701348",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14763701348/zip",
+      "expired": false,
+      "created_at": "2026-11-22T16:54:58Z",
+      "expires_at": "2027-02-20T16:47:46Z",
+      "updated_at": "2026-11-22T16:54:58Z",
+      "digest": "sha256:5ace3972626c4e2fc604a45d26a019bee33c3bf5344e8a76f95b216d36d2d0ea",
+      "workflow_run": {
+        "id": 45045811229,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/language-coverage-v8-cutover",
+        "head_sha": "7c20124f3d89dfe1a8d5e892238e7b7f92589720"
+      }
+    },
+    {
+      "id": 14763617984,
+      "name": "combined-v8-promise",
+      "size_in_bytes": 2000939,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14763617984",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14763617984/zip",
+      "expired": false,
+      "created_at": "2026-11-22T16:57:38Z",
+      "expires_at": "2027-02-20T16:47:46Z",
+      "updated_at": "2026-11-22T16:57:38Z",
+      "digest": "sha256:cd1ed1a1fb9188a697ab4d9e68a9acfcb7fccb89b6a6ccdc056f7be93dcc3d50",
+      "workflow_run": {
+        "id": 45045811229,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/language-coverage-v8-cutover",
+        "head_sha": "7c20124f3d89dfe1a8d5e892238e7b7f92589720"
+      }
+    },
+    {
+      "id": 14763582315,
+      "name": "combined-v8-terminal-history",
+      "size_in_bytes": 1383158,
+      "url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14763582315",
+      "archive_download_url": "https://api.github.com/repos/werg/tracing-js-self/actions/artifacts/14763582315/zip",
+      "expired": false,
+      "created_at": "2026-11-22T17:01:42Z",
+      "expires_at": "2027-02-20T16:47:46Z",
+      "updated_at": "2026-11-22T17:01:42Z",
+      "digest": "sha256:4bf5636b387d31f825b31af949618b0b68d2d5bfed9ffd64cb7068df1d6847f0",
+      "workflow_run": {
+        "id": 45045811229,
+        "repository_id": 1429775465,
+        "head_repository_id": 1429775465,
+        "head_branch": "codex/language-coverage-v8-cutover",
+        "head_sha": "7c20124f3d89dfe1a8d5e892238e7b7f92589720"
+      }
+    }
+  ]
+}
