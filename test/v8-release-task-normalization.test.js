@@ -57,6 +57,8 @@ for(const [name,fields] of [
   ['omitted source defaults',{}],
   ['explicit null guest RNG',{randomSeed:null}],
   ['inherited guest RNG',{seeds:{guestRng:7}}],
+  ['false seed metadata',{seeds:false}],
+  ['zero seed metadata',{seeds:0}],
   ['false empty fixture',{fixture:false}],
   ['zero empty fixture',{fixture:0}],
   ['empty-string fixture',{fixture:''}],
@@ -65,6 +67,10 @@ for(const [name,fields] of [
 
 test('task normalization preserves the direct protocol ancestry alias',()=>accepts('protocol ancestry alias',{
   ...plain,ancestors:['protocol-ancestor'],
+  source:'"use strict";function run(x){const key=Symbol("key");const o={};o[key]=x;return o[key];}',
+},'source','semantic-protocol-source-evidence/1'));
+test('task normalization preserves the direct protocol null ancestry default',()=>accepts('protocol null ancestry',{
+  ...plain,ancestorIds:null,
   source:'"use strict";function run(x){const key=Symbol("key");const o={};o[key]=x;return o[key];}',
 },'source','semantic-protocol-source-evidence/1'));
 
@@ -82,6 +88,13 @@ for(const field of ['seed','sessionId'])
     refusesChangedTask('session null '+field,session,fixture=>{fixture[field]=null;}));
 test('task normalization preserves explicit ordered-session seed and identity',()=>
   accepts('session explicit plan',{...session,seed:0,sessionId:'explicit-source-session'}));
+test('task normalization takes session source and entry from its ordered components',()=>
+  accepts('session component source',{id:session.id,family:session.family,sessionCases:session.sessionCases}));
+test('task normalization ignores session outer source metadata not passed to components',()=>
+  accepts('session ignored outer metadata',{...session,source:null,entry:null,
+    fixture:null,license:null,trustTier:null,ancestorIds:null,seeds:null,randomSeed:'unused'}));
+test('task normalization applies the session seed before component defaults',()=>
+  accepts('session overridden component seed',{...session,sessionCases:session.sessionCases.map(item=>({...item,seed:null}))}));
 test('task normalization derives session ancestry from its actual ordered components',()=>
   accepts('session component ancestry',{...session,sessionCases:[
     {...plain,args:[2],ancestorIds:['first-origin']},
@@ -93,13 +106,23 @@ for(const field of ['experimentalNamespacePlan','experimentalSchedulerPlan'])
     accepts('module null '+field,{...moduleFixture,[field]:null},'module'));
 test('task normalization preserves module null host-fixture default',()=>
   accepts('module null fixture',{...moduleFixture,fixture:null},'module'));
-test('task normalization preserves explicit namespace-profile nullable custody defaults',()=>
-  accepts('namespace nullable custody',{
+const namespaceFixture={
     id:'normalization-namespace',family:'normalization-namespace',
-    modules:{'main.js':'import * as view from "./value.js";export function run(){return view.value;}',
+    modules:{'main.js':'import * as view from "./value.js";export function run(){return Object.keys(view);}',
       'value.js':'export const value=4;'},moduleEntry:'main.js',args:[],
-    experimentalNamespacePlan:true,license:null,trustTier:null,
-  },'module','semantic-protocol-source-evidence/1'));
+    experimentalNamespacePlan:true,
+};
+test('task normalization preserves actual namespace-profile nullable custody defaults',()=>
+  accepts('namespace nullable custody',{...namespaceFixture,license:null,trustTier:null},
+    'module','semantic-protocol-source-evidence/1'));
+test('task normalization preserves actual namespace-profile unused seed metadata',()=>
+  accepts('namespace unused seeds',{...namespaceFixture,seed:null,seeds:{guestRng:7}},
+    'module','semantic-protocol-source-evidence/1'));
+test('task normalization refuses null custody for a statically lowered namespace import',()=>
+  refusesChangedTask('static namespace null license',{
+    ...namespaceFixture,modules:{...namespaceFixture.modules,
+      'main.js':'import * as view from "./value.js";export function run(){return view.value;}'},
+  },fixture=>{fixture.license=null;},'module'));
 
 test('task normalization refuses null custody rejected by mixed host-protocol generation',async()=>{
   const fixture=clone(HOST_PROTOCOL_FIXTURES_V8[0]);

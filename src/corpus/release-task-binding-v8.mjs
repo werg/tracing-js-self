@@ -23,6 +23,42 @@ const emptyFixture=()=>({calls:[],settlementOrder:null});
 const sourceSide=artifact=>artifact?.sidecar?.schema==='semantic-protocol-host-region-evidence/1'?
   artifact.sidecar:artifact?.sidecar?.sourceArtifact?.sidecar;
 const seed=fixture=>Object.hasOwn(fixture,'randomSeed')?fixture.randomSeed:fixture.seeds?.guestRng??null;
+const defaulted=(value,fallback)=>value===undefined?fallback:value;
+
+function sourceDefaults(fixture,{directModule=false}={}){
+  // Source admission uses destructuring defaults (undefined only). Explicit
+  // module plans enter the protocol source profile directly, whose nullable
+  // custody defaults and ignored split-seed metadata are deliberately distinct.
+  const license=directModule?fixture.license??'repository-fixture':defaulted(fixture.license,'repository-fixture'),
+    trustTier=directModule?fixture.trustTier??'repository-fixture':defaulted(fixture.trustTier,'repository-fixture'),
+    randomSeed=directModule?fixture.randomSeed??null:seed(fixture);
+  demand(text(license)&&['repository-fixture','trusted-owned-source'].includes(trustTier),
+    'invalid original source custody');
+  if(!directModule){
+    const seeds=defaulted(fixture.seeds,{}),split=defaulted(fixture.seed,17);
+    demand(seeds!==null&&Number.isSafeInteger(split)&&
+      (seeds.guestRng===undefined||seeds.guestRng===randomSeed)&&
+      Object.values({generation:null,input:null,schedule:null,optimizer:null,...seeds,guestRng:randomSeed,split})
+        .every(value=>value===null||Number.isSafeInteger(value)),
+    'invalid original source seed declarations');
+    demand(randomSeed===null||Number.isInteger(randomSeed)&&randomSeed>=0&&randomSeed<=0xffffffff,
+      'invalid original guest RNG seed');
+  }
+  // encodeGenerationTask already canonicalizes every truthy host fixture.
+  // The producer also boxes these falsy primitives to an empty fixture; null
+  // throws in ordinary source admission and is defaulted by the module caller.
+  const value=fixture.fixture,host=value===undefined||value===false||value===0||value===''?emptyFixture():value;
+  demand(record(host)&&Array.isArray(host.calls),'invalid original host fixture');
+  return {license,trustTier,randomSeed,host};
+}
+
+function sourceAncestors(fixture,protocol){
+  const value=protocol?fixture.ancestorIds??fixture.ancestors??[]:defaulted(fixture.ancestorIds,[]);
+  // Both source implementations spread the declared ancestry. JSON strings are
+  // iterable too; validate the resulting IDs instead of changing that contract.
+  demand(Array.isArray(value)||typeof value==='string','invalid original source ancestry');
+  return [...value];
+}
 
 function graph(value){
   demand(record(value)&&value.schema==='owned-graph/1','original task has no encoded argument graph');
@@ -32,16 +68,18 @@ function graph(value){
   return value;
 }
 
-function sourceRequest(fixture){
+function sourceRequest(fixture,defaults){
   demand(text(fixture.source)&&text(fixture.entry),'original source or entry is missing');
   return {source:fixture.source,entry:fixture.entry,inputGraph:graph(fixture.argsGraph),
-    fixture:fixture.fixture??emptyFixture(),randomSeed:seed(fixture)};
+    fixture:defaults.host,randomSeed:defaults.randomSeed};
 }
 
-function checkSource(fixture,artifact,revision,{taskId,ancestry=fixture.ancestorIds??fixture.ancestors??[]}={}){
+function checkSource(fixture,artifact,revision,{taskId,ancestry,directModule=false}={}){
   const side=sourceSide(artifact),reference=side?.referenceInput;
   demand(record(side)&&record(reference)&&side.producerRevision===revision,
     'artifact has no original source at the frozen producer revision');
+  const defaults=sourceDefaults(fixture,{directModule});
+  ancestry??=sourceAncestors(fixture,side.schema==='semantic-protocol-source-evidence/1');
   demand(side.sourceFamily===fixture.family&&artifact.sidecar.sourceFamily===fixture.family&&
     artifact.sidecar.family===fixture.family&&
     equal(ancestors(side.ancestorIds??[],fixture.family),ancestors(ancestry,fixture.family)),
@@ -50,10 +88,9 @@ function checkSource(fixture,artifact,revision,{taskId,ancestry=fixture.ancestor
     'artifact source lineage differs from the original task');
   if(side.taskId!==undefined)demand(side.taskId===(taskId??fixture.taskId??fixture.family),
     'artifact task ID differs from the original task');
-  demand(side.license===(fixture.license??'repository-fixture')&&
-    side.trustTier===(fixture.trustTier??'repository-fixture'),
+  demand(side.license===defaults.license&&side.trustTier===defaults.trustTier,
   'artifact source custody differs from the original task');
-  const request=sourceRequest(fixture);
+  const request=sourceRequest(fixture,defaults);
   if(side.schema==='semantic-protocol-source-evidence/1'){
     demand(equal(request.fixture,emptyFixture())&&request.randomSeed===null,
       'protocol source artifact omitted original external inputs or random seed');
@@ -87,7 +124,7 @@ function moduleRequest(fixture){
     record(call)&&equal(Object.keys(call).sort(),['args','exportName'])&&text(call.exportName)&&Array.isArray(call.args)),
   'invalid original module call sequence');
   for(const key of ['experimentalNamespacePlan','experimentalSchedulerPlan'])
-    demand(fixture[key]===undefined||typeof fixture[key]==='boolean','module plan switch must be boolean');
+    demand(fixture[key]==null||typeof fixture[key]==='boolean','module plan switch must be boolean');
   const input=calls===null?{args}:{calls:calls.map(call=>({args:call.args}))};
   return {modules,entryModule,exportName:fixture.exportName??'run',
     inputGraph:encodeNativeGraph([input],{maxBytes:1048576}),
@@ -151,21 +188,30 @@ export function verifyV8TaskArtifactBinding(task,artifact,{registry=null}={}){
       evidence.graphDigest===digest(request.modules),'original module graph, entry, export or argument/call graph differs');
     const ancestry=[...(fixture.ancestorIds??[]),'module-graph:'+digest(request.modules),
       ...Object.values(request.modules).map(source=>'module-source:'+digest(source))];
+    const directModule=side?.schema==='semantic-protocol-source-evidence/1'&&
+      (request.experimentalNamespacePlan===true&&record(side.moduleNamespacePlan)||
+        request.experimentalSchedulerPlan===true&&record(side.moduleSchedulerPlan));
     checkSource({...fixture,source:side.referenceInput?.source,entry:side.referenceInput?.entry,
-      argsGraph:request.inputGraph},artifact,task.producerRevision,{taskId:fixture.id,ancestry});
+      fixture:fixture.fixture??emptyFixture(),argsGraph:request.inputGraph},artifact,task.producerRevision,
+    {taskId:fixture.id,ancestry,directModule});
   }else if(Object.hasOwn(fixture,'sessionCases')){
-    const cases=fixture.sessionCases,collection=side?.collection,reference=side?.referenceInput;
-    demand(Array.isArray(cases)&&cases.length>=2&&side?.schema==='semantic-session-source-evidence/1'&&
+    const cases=fixture.sessionCases,collection=side?.collection,reference=side?.referenceInput,
+      seed=defaulted(fixture.seed,17),sessionId=defaulted(fixture.sessionId,'source-session-v8');
+    demand(Array.isArray(cases)&&cases.length>=2&&cases.length<=16&&
+      cases.every(item=>item?.source===cases[0].source&&item?.entry===cases[0].entry)&&
+      Number.isSafeInteger(seed)&&seed>=0&&text(sessionId)&&side?.schema==='semantic-session-source-evidence/1'&&
       collection?.schema==='semantic-source-session-collection/1'&&
       Array.isArray(collection.components)&&collection.components.length===cases.length&&
-      reference?.source===fixture.source&&reference.entry===fixture.entry&&
+      reference?.source===cases[0].source&&reference.entry===cases[0].entry&&
       side.producerRevision===task.producerRevision&&side.sourceFamily===fixture.family&&
-      equal(ancestors(side.ancestorIds??[],fixture.family),ancestors(fixture.ancestorIds??[],fixture.family))&&
-      collection.plan?.seed===(fixture.seed??17)&&collection.plan.sessionId===(fixture.sessionId??'source-session-v8'),
+      collection.plan?.seed===seed&&collection.plan.sessionId===sessionId,
     'original ordered source-session plan differs');
-    const invocations=cases.map((item,index)=>checkSource({...item,family:fixture.family},
+    const invocations=cases.map((item,index)=>checkSource({...item,family:fixture.family,seed},
       collection.components[index],task.producerRevision));
-    request={source:fixture.source,entry:fixture.entry,invocations};
+    const ancestry=collection.components.flatMap(component=>sourceSide(component).ancestorIds??[]);
+    demand(equal(ancestors(side.ancestorIds??[],fixture.family),ancestors(ancestry,fixture.family)),
+      'source-session ancestry differs from its original ordered components');
+    request={source:cases[0].source,entry:cases[0].entry,invocations};
     demand(equal(reference,request),'source-session component count, order or inputs differ from the original task');
   }else request=checkSource(fixture,artifact,task.producerRevision,{taskId:fixture.id});
   const membership=registry===null?null:checkRegistry(task,artifact,registry);
