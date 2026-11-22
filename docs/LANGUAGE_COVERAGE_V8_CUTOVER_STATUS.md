@@ -16,6 +16,50 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Native orchestration training and complete installed proof — 22 November 2026
+
+Native `21572be70f7884397e513fd65099fda240526971` is published and is now the
+producer policy pin. It independently validates the source-qualified teacher,
+materializes four lifecycle targets on a coordinator track and original child
+targets on their own track, binds exact physical/control/action evidence, and
+rebuilds it during ordinary admission. The production behavior census requires
+the real lifecycle records and exact order; a detached parent edge does not
+count. The integrated local selection passes **44 tests**, with six existing
+live-source checks explicitly deselected while the source checkout was under
+active edit. Both Ruff gates pass across 588 files. All live-source checks and
+the new actual shared-runtime parity test remain mandatory in hosted paired CI.
+
+Review removed a future-history leak from initial coordinator inputs, added
+exact child bootstrap observations, shared neutral teacher/native acknowledgement
+inputs, preserved delivery-before-completion order, and made coverage reject
+reordered or interleaved physical parts. The larger predeclared ordinary source
+has 56 child targets plus four lifecycle targets; independent byte-fallback
+replay/framing measures 3,177 physical / 130 logical records. This is structural
+evidence, not production-tokenizer admission, optimizer exposure or learned
+success. [Native contract and full evidence](https://github.com/werg/megatoken/blob/21572be70f7884397e513fd65099fda240526971/docs/V8_ORCHESTRATION_TRAINING.md).
+
+Both paired workflows now require a separate ordinary orchestration preparation,
+two-update train/resume, export and actual service restore command. Fresh
+results for the new pair are pending. Composite coordinator/child recovery,
+real production-stage source supply and learned-quality studies remain active.
+
+The independent installed run at exact producer `073870f` **passes every case
+in both unchanged populations: 665/665 original and 66/66 selected, zero
+unqualified or untested**. It exercises the installed public V8 entry, JSON
+checkpoint restoration and ordinary live continuation. Its native/model fields
+remain explicitly untested. The complete successful job log and exact hashes
+are permanently retained under `docs/evidence/v8-installed-complete-073-2026-11-22/`.
+The original failed 347 run and callback repairs remain retained separately.
+
+All Node 20/22/24 general lanes pass at producer `58e10e5`. Historical native
+`b865b5f` has successful general Python 3.11/3.12 lanes, each 3,673 passed with
+83 declared skips and 20 warnings, plus paired 744/744 zero-skip controls,
+selected66 admission and the ordinary semantic two-update lifecycle against
+producer `14e3c07`. That producer also passes 744/744 controls and all665
+source/native/token/packing before the old offline-cache failure. Complete logs
+are retained in the paired repositories; none is reused as proof of the new
+teacher or recovery code. **0/17 complete acceptance packages are closed.**
+
 ## Installed callback continuation correction — 22 November 2026
 
 The independent installed gate at producer `347c0ec` now completes the full
@@ -31,8 +75,8 @@ receipt synchronously. The restored continuation check now compares every row
 in that complete batch against the exact saved suffix and advances only after
 all match. It still uses ordinary live public APIs, without private replay
 flags. The focused tooling suite passes **9/9**, zero skips, including both
-original failed cases. A fresh full installed665/66 run is required before the
-complete gate is credited. No source population was removed or narrowed.
+original failed cases. The later exact `073870f` full installed run passes
+665/665 and 66/66 as recorded above. No source population was removed or narrowed.
 
 Both general native CPU lanes at exact `b865b5f` have now passed: Python 3.11 and
 Python 3.12 each report **3,673 passed, 83 declared skips, 20 warnings**. The paired
@@ -68,13 +112,12 @@ prepare/train/resume/export/service-restore route with real pinned assets.
 Documentation and full local logs are in `docs/V8_ORCHESTRATION_TRAINING.md` and
 `docs/evidence/v8-orchestration-training-2026-11-22/`.
 
-**Still open:** paired native physical materialization, exact coordinator/child
-track ownership and serving-control parity, persisted ordinary-policy rebuild,
-production census, and fresh exact-pair tokenizer/command/optimizer proof. The
-current producer policy remains on its prior native executable until that
-consumer increment is published and verified. Old consumers cannot satisfy the
-new transcript admission checks. Learned orchestration and complete production
-SE coverage are unmeasured. **0/17 complete packages are closed.**
+Native physical materialization, distinct coordinator/child ownership, shared
+serving controls, persisted policy rebuild and the strict behavior census are
+now delivered at `21572be`, with the local limits recorded above. **Still open:**
+fresh exact-pair tokenizer/command/optimizer proof, actual runtime parity,
+complete production-stage source supply and learned orchestration. Old consumers
+cannot satisfy the transcript admission checks. **0/17 complete packages are closed.**
 
 ## Ordinary model coordinator driver — 22 November 2026
 
@@ -97,8 +140,8 @@ are in `docs/NATIVE_V8_ORCHESTRATION_DRIVER.md`.
 
 **Still open:** a host/native composite checkpoint and independently retained
 mixed-attempt history, exact replay of coordinator and child state after a crash,
-source-bound lifecycle training and production census, learned whole-program
-success, and final-pair operational proof. Child-only checkpoint APIs explicitly
+production source supply, learned whole-program success, and final-pair
+operational proof. Child-only checkpoint APIs explicitly
 refuse orchestration recovery. **0/17 complete packages are closed.**
 
 ## Complete original population and installed cache correction — 22 November 2026
@@ -1552,11 +1595,11 @@ serving, and measured learned success.
 | 1 | Frozen scope, denominator, parity inventory | In progress | Annual HTML and full Test262 catalog are pinned; a source-reference audit preserves every variant and maps exact anchors/feature tags for review. Edition membership/applicability still require explicit decisions. Reconcile real-source inventories and runtime identities; preserve unselected rows; map every production V6 route to a replacement test. |
 | 2 | Qualified Test262 runner | In progress | Original scripts, isolated native references and a bounded original-module owned-lowering path now retain pinned harness/dependency bytes and negative/async/TLA controls. Remaining: complete module semantics and source correspondence, fresh realms/agents, separate early-error qualification and complete upstream applicability/failure reconciliation. |
 | 3 | Neutral JS execution state | Internal implementation delivered; acceptance pending | Neutral typed values/controller/lifecycle and V8-only public entry are implemented. Original665 fixtures are preserved exactly. Remaining: fresh complete population and lifecycle behavior, installed absence, and all production-route parity; client equivalence alone is insufficient. |
-| 4 | Direct V8 detail and source certification | Internal implementation delivered; acceptance pending | Direct detail/context/checkpoint schemas and source compilation are implemented without legacy episode replay. Remaining: full665 original-source/native qualification, complete installed package with exact dependency evidence, and remaining source-family ownership. |
+| 4 | Direct V8 detail and source certification | Internal implementation delivered; acceptance pending | Direct detail/context/checkpoint schemas and source compilation are implemented without legacy episode replay. Complete original665 source/native/token/packing and installed665/66 gates pass at their recorded revisions. Remaining: fresh current-pair proof and remaining source-family ownership. |
 | 5 | Independent native V8 semantics | In progress | Direct detail, observation, effect and primitive paths plus installed import controls are delivered. Remaining: complete contract ownership and paired language-family semantics, broader malformed-state controls, final current-pair absence/replay proof. |
 | 6 | Composable source projections | In progress | Unique event ownership and atomic private/public rollback are implemented for current adapters; map callbacks now compose finally/throw and generator creation/yield. Remaining: general IteratorClose/abrupt cleanup, cross-family ownership and exact source/native qualification of the expanded population. |
 | 7 | Protocol/effect/lifecycle composition | In progress | Protocol → effect → callback → protocol, reentrancy, guest errors, cancellation and restore with independent source/native checks. Coordinated driver/model/host recovery now preserves acknowledged history and budgets. |
-| 8 | Ordinary V8 training admission | In progress | Strict preparation, ordinary readiness, recipe/loader/config/stage/resume gates are implemented. Remaining: fresh command-level qualification of the expanded source population and production recipes with the exact final assets; source eligibility remains distinct from learned outcomes. |
+| 8 | Ordinary V8 training admission | In progress | Strict preparation, ordinary readiness, recipe/loader/config/stage/resume gates and source-bound two-track coordinator materialization are implemented. Remaining: fresh ordinary orchestration command proof, expanded production source supply and recipes with exact final assets; source eligibility remains distinct from learned outcomes. |
 | 9 | Canonical selected serving and live restore | In progress | Acknowledged state, random/budget state, registered private snapshots, durable intake and explicit later-history cuts are implemented. Actual fitted weights recover one acknowledged record from an older saved packet and reproduce the same refused next output. Remaining: general accepted-record/complete-program recovery, automatic transition durability, return-value callbacks, child/reentrant work, cancellation after the trusted head, bounded rotation/distributed ownership and final source/native/no-redispatch operational proof. |
 | 10 | References, coercion and abrupt operations | In progress | General references, property keys, guest error objects, partial effects, nested binding and cleanup; source/public/native/restore cases. |
 | 11 | Promises, async and scheduler | In progress | Adoption order, repeated thenables, getter/throw/first-call/finally behavior; public/native transitions; combinators, async functions/generators and module interactions. |
@@ -1564,7 +1607,7 @@ serving, and measured learned success.
 | 13 | Modules, persistent sessions, TS and host graphs | In progress | Per-module evaluation and sibling TLA scheduling, cycles/live bindings/namespaces/imports, persistent restore, emitted-JS provenance and host graph/lifecycle parity. |
 | 14 | Binary memory, RegExp and remaining intrinsics | In progress (bounded families) | Resizing/detachment/transfer/species/coercion, complete selected text/numeric families and iterator helpers, declared resource boundaries. |
 | 15 | Edition long tail and separate profiles | Not started | Dynamic eval and realms, applicable Annex B/Intl, weak references/finalization, shared agents and memory constraints; separately pinned later additions. |
-| 16 | Data, ordinary model lifecycle and studies | In progress | All 47 recurring sources are independently readmitted on exact measured pairs; an ordinary two-update lifecycle and separate one-record fitted diagnostic have complete retained assets. Remaining: expanded production corpus and recipes, final-pair optimizer/resume/export/reload, frozen held-out and comprehension studies, and honest learned-quality/cost gates. |
+| 16 | Data, ordinary model lifecycle and studies | In progress | All 66 recurring and 665 original sources are independently readmitted on recorded exact pairs; an ordinary semantic two-update lifecycle and separate one-record fitted diagnostic have retained assets. The new coordinator teacher still requires its own ordinary lifecycle result. Remaining: expanded production corpus and recipes, final-pair optimizer/resume/export/reload, frozen held-out and comprehension studies, and honest learned-quality/cost gates. |
 | 17 | Coordinated default cutover and operational proof | Not started | Complete parity first; change defaults/remove legacy; freeze final pair; actual-head CI, installed absence tests, release restore, effect-safe rollback/deployment qualification. |
 
 ## Initial regression targets

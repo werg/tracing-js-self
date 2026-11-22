@@ -152,6 +152,15 @@ jobs:
             --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \
             --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \
             2>&1 | tee "$RUNNER_TEMP/semantic-v8-ordinary-lifecycle.log"
+      - name: Qualify source-qualified orchestration through ordinary training and serving
+        if: ${{ matrix.population == 'interoperability' }}
+        working-directory: tracing-js-self
+        run: |
+          node tools/qualify-ordinary-v8-lifecycle.mjs --orchestration-teacher \
+            --out "$RUNNER_TEMP/v8-ordinary-orchestration" \
+            --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \
+            --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-ordinary-orchestration.log"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -169,3 +178,5 @@ jobs:
             ${{ runner.temp }}/v8-costs/
             ${{ runner.temp }}/semantic-v8-ordinary-lifecycle.log
             ${{ runner.temp }}/v8-ordinary-lifecycle/
+            ${{ runner.temp }}/semantic-v8-ordinary-orchestration.log
+            ${{ runner.temp }}/v8-ordinary-orchestration/

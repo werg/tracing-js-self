@@ -109,6 +109,15 @@ or null transcripts and detached orchestration claims are refused. These
 requirements supplement the existing exact source, contexts, tokenizer,
 physical-mask and native-training checks.
 
+The policy now pins consumer
+`21572be70f7884397e513fd65099fda240526971`, which materializes coordinator and
+child records on distinct native tracks, shares exact initial/continuation
+controls with serving, and rebuilds persisted physical supervision during
+ordinary policy validation. Its behavior census requires the four actual
+actions and exact causal record order. The initial coordinator wrapper includes
+only the source/input prefix; child bootstrap and completion observations
+follow the serving order. [Native implementation and evidence](https://github.com/werg/megatoken/blob/21572be70f7884397e513fd65099fda240526971/docs/V8_ORCHESTRATION_TRAINING.md).
+
 ## Ordinary command qualification
 
 `tools/qualify-ordinary-v8-lifecycle.mjs --orchestration-teacher` uses the same
@@ -122,6 +131,9 @@ real pinned tokenizer. Two optimizer updates test the ordinary command path;
 they do not establish exposure to every lifecycle target, learned orchestration
 success, held-out quality or production readiness. Full production behavior
 coverage and whole-program serving/recovery remain separate acceptance gates.
+Both paired workflows now require this orchestration command separately from
+the existing semantic-only lifecycle and retain both complete output sets.
+Fresh hosted results for this pair remain pending.
 
 ## Retained controls
 
