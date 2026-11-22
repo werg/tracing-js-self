@@ -13,12 +13,18 @@ import {mapQualificationCases} from '../src/corpus/qualification-progress.mjs';
 import {prepareInstalledV8Package,restoreInstalledV8Package,runInstalledV8Worker,runInstalledCommand,
   installedSha256,installedFileHash} from '../src/corpus/installed-v8-qualification.mjs';
 
+// The original 665-case population is unchanged. The selected population adds
+// three source-owned Promise-adoption cases to its original 66 inputs.
+export const INSTALLED_V8_POPULATION_COUNTS=Object.freeze({all:665,interoperability:69});
+
 export function installedQualificationInventory({producerRevision,population='both',requested=null}={}){
   if(!['all','interoperability','both'].includes(population))throw new TypeError('Unknown installed population');
   const names=population==='both'?['all','interoperability']:[population],rows=[];
   for(const name of names){
     const selected=regionQualificationPopulation({population:name,allInputs:true}),fixtures=[...selected.scripts,...selected.modules];
-    if(fixtures.length!==(name==='all'?665:66))throw new Error('Declared installed population changed: '+name);
+    if(fixtures.length!==INSTALLED_V8_POPULATION_COUNTS[name])
+      throw new Error('Declared installed population changed: '+name+'; expected '+
+        INSTALLED_V8_POPULATION_COUNTS[name]+', received '+fixtures.length);
     if(new Set(fixtures.map(fixture=>fixture.id)).size!==fixtures.length)throw new Error('Duplicate installed population input');
     for(const [index,fixture]of fixtures.entries()){
       const task=encodeGenerationTask({kind:fixture.modules?'module':'source',traceVersion:8,fixture,producerRevision});
