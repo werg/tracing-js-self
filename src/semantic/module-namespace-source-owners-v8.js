@@ -34,10 +34,17 @@ export function deriveExperimentalModuleNamespaceOwnersV8({source,moduleNamespac
       if(!getter||getter.async||getter.params.length||getter.body?.type!=='Identifier')
         fail('namespace getter is not the exact synchronous identifier closure');
       const getterSites=bundle.sites.filter(candidate=>candidate.start===getter.body.start&&
-        candidate.end===getter.body.end);
-      if(getterSites.length>1)fail('getter body source range maps ambiguously');
+        candidate.end===getter.body.end&&candidate.op==='GET');
+      if(getterSites.length!==1)fail('getter body must map to one exact GET source site');
+      const code=bundle.programs[getterSites[0].codeId],instructions=code?.instructions;
+      if(!Array.isArray(instructions))fail('getter GET code is not present in the owned program');
+      const matching=instructions.filter(instruction=>instruction.siteId===getterSites[0].siteId&&
+        instruction.op==='GET');
+      if(matching.length!==1)fail('getter source site does not map to one owned GET instruction');
+      const operand=matching[0].arg?.name??matching[0].arg??matching[0].name;
+      if(operand!==row.loweredName)fail('getter GET instruction does not name its planned live cell');
       return {...row,getterBodyStart:getter.body.start,getterBodyEnd:getter.body.end,
-        getterSiteId:getterSites[0]?.siteId??null};
+        getterSiteId:getterSites[0].siteId,getterCodeId:getterSites[0].codeId};
     });
     owners.push({file:site.file,namespaceName:site.namespaceName,
       declarationStart:site.start,declarationEnd:site.end,

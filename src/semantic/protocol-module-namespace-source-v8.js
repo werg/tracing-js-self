@@ -18,6 +18,12 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
   verifyExperimentalModuleNamespacePlan(moduleNamespacePlan);
   const owners=deriveExperimentalModuleNamespaceOwnersV8({source,moduleNamespacePlan,bundle});
   const ownerBySite=new Map(owners.map(row=>[row.siteId,row]));
+  const getterBySite=new Map();
+  for(const owner of owners)for(const item of owner.exports){
+    if(!item.getterSiteId)fail('namespace getter body must have one source-owned read site');
+    if(getterBySite.has(item.getterSiteId))fail('namespace getter source site is ambiguous');
+    getterBySite.set(item.getterSiteId,{file:owner.file,name:item.name,cell:item.cell});
+  }
   const namespaceCellIds=new Set(moduleNamespacePlan.namespaces.flatMap(row=>row.exports.map(item=>item.cell)));
   const cells=new Map(moduleNamespacePlan.cells.filter(row=>namespaceCellIds.has(row.id)).map(row=>[row.loweredName,row]));
   const namespaces=new Map(moduleNamespacePlan.namespaces.map(row=>[row.namespaceName,row]));
@@ -48,6 +54,51 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
   function ownedNamespace(ctx,id){
     const file=namespaceFiles.get(id)??[...pendingCreates.values()].find(row=>row.namespaceId===id)?.file;
     return file?moduleNamespacePlan.namespaces.find(row=>row.file===file):null;
+  }
+  function checkContinuationFrame(ctx,frame,event,frameId){
+    if(!Object.hasOwn(frame,'pendingModuleNamespace'))return true;
+    const pending=frame.pendingModuleNamespace;
+    if(pending===null)return true;
+    if(!pending||typeof pending!=='object'||Array.isArray(pending))return false;
+    const ns=ownedNamespace(ctx,pending.namespaceId);
+    if(!ns||typeof pending.waitingFrameId!=='string'||pending.waitingFrameId===frameId)return false;
+    if(pending.kind==='descriptor'){
+      if(!exactKeys(pending,['kind','namespaceId','key','waitingFrameId'])||
+         typeof pending.key!=='string'||!ns.exports.some(item=>item.name===pending.key))return false;
+    }else if(pending.kind==='namespace-inspection'){
+      const expected=ns.exports.map(item=>item.name);
+      if(!exactKeys(pending,['kind','namespaceId','key','waitingFrameId','operation','keys','index','phase','operationEventId'])||
+         pending.operation!=='Object.keys'||pending.phase!=='read-export'||
+         !eq(pending.keys,expected)||!Number.isSafeInteger(pending.index)||
+         pending.index<0||pending.index>=expected.length||pending.key!==expected[pending.index]||
+         typeof pending.operationEventId!=='string')return false;
+    }else return false;
+    const operation=operations.get(frameId);
+    if(operation){
+      if(operation.namespaceId!==pending.namespaceId||
+         (operation.kind==='descriptor'&&pending.kind!=='descriptor')||
+         (operation.kind==='keys'&&pending.kind!=='namespace-inspection'))return false;
+      if(operation.kind==='descriptor'&&operation.keys[0]!==pending.key)return false;
+      if(operation.kind==='keys'){
+        const next=operation.index+
+          (event?.operation==='call.return'&&event.invocationId===operation.waitingFrameId?1:0);
+        if(pending.index!==next||pending.key!==operation.keys[next]||
+           pending.operationEventId!==operation.operationEventId)return false;
+      }
+      if(event?.operation!=='call.return'||event.invocationId!==operation.waitingFrameId){
+        if(operation.waitingFrameId!==pending.waitingFrameId)return false;
+      }
+      return true;
+    }
+    if(event?.operation!=='call.enter'||event.invocationId!==frameId||
+       event.operands?.[1]?.[0]!=='ref'||event.operands[1][1]!==pending.namespaceId)return false;
+    const method=methodName(event.operands[0]);
+    if(pending.kind==='namespace-inspection'){
+      return method==='Object.keys'&&pending.operation==='Object.keys'&&
+        pending.phase==='read-export'&&pending.operationEventId===event.eventId&&
+        pending.index===0&&pending.key===pending.keys[0];
+    }
+    return method==='Object.getOwnPropertyDescriptor'&&pending.key===event.operands?.[2]?.[1];
   }
   function checkNamespaceNode(ctx,node){
     if(node.kind!=='module-namespace')return false;
@@ -183,9 +234,11 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
     const key=operation.keys[operation.index],cell=exportCell(operation.file,key);
     if(!cell)ctx.refuse('namespace getter has no source-owned export cell');
     if(event.operation==='binding.read'){
-      const read=event.readObservations?.find(item=>item.kind==='binding'&&item.name===cell.loweredName);
-      if(!read||!eq(read.value,event.result)||!valueTag(read.value))
-        ctx.refuse('generated namespace getter did not read its planned live cell');
+      const getter=getterBySite.get(event.siteId),
+        read=event.readObservations?.find(item=>item.kind==='binding'&&item.name===cell.loweredName);
+      if(!getter||getter.file!==operation.file||getter.name!==key||getter.cell!==cell.id||
+         !read||!eq(read.value,event.result)||!valueTag(read.value))
+        ctx.refuse('generated namespace getter did not read its exact source-owned live cell');
       operation.value=copy(read.value);operations.set(parent,operation);return true;
     }
     if(event.operation!=='call.return'||!operation.value||!eq(operation.value,event.result))
@@ -199,7 +252,14 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
       operation.waitingFrameId=next.waitingFrameId;operation.value=null;operations.set(parent,operation);
       return true;
     }
-    if(operation.kind==='keys'){
+    if(operation.kind==='read'){
+      const pending=parentFrame?.pendingProperty,returned=parentFrame?.stack?.at(-1)?.value;
+      if(pending!==null&&pending!==undefined||!eq(returned,operation.value))
+        ctx.refuse('dynamic namespace read did not clear its exact property continuation');
+      ctx.emit({kind:'namespace.read',namespaceId:operation.namespaceId,
+        exportName:operation.keys[0],value:copy(operation.value)},event,
+        'source-module-namespace-read/1',{journalEvents:operation.journalEvents});
+    }else if(operation.kind==='keys'){
       const allocation=event.stateChanges.find(change=>change.table==='heap'&&change.before===null&&
         change.after?.kind==='array'&&change.id===parentFrame?.stack?.at(-1)?.value?.[1]);
       const expected=operation.keys.map((name,index)=>[String(index),['str',name]]);
@@ -260,6 +320,12 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
         ctx.refuse('namespace getter completion lacks its consumed exact source read');
       syntheticFrames.delete(change.id);return true;
     },
+    frameFields(frame){
+      return Object.hasOwn(frame,'pendingModuleNamespace')?['pendingModuleNamespace']:null;
+    },
+    checkFrame(ctx,frame,event,frameId){
+      return checkContinuationFrame(ctx,frame,event,frameId);
+    },
     event(ctx,event,row){
       if(event.operation==='call.enter'&&event.operands?.[0]?.[0]==='builtinfn'&&
          event.operands[0][1]==='__traced_eval_create_module_namespace')return beginCreate(ctx,event,row);
@@ -275,14 +341,16 @@ export function createExperimentalModuleNamespaceSourceAdapterV8({source,moduleN
         return startInspection(ctx,event,row);
       if(operationForChild(event.invocationId))return consumeGetter(ctx,event,row);
       if(event.operation==='property.read'&&event.operands?.[0]?.[0]==='ref'){
-        const file=namespaceFiles.get(event.operands[0][1]);
+        const namespaceId=event.operands[0][1],file=namespaceFiles.get(namespaceId);
         if(file){
           const name=event.operands[1]?.[0]==='str'?event.operands[1][1]:null,cell=name&&exportCell(file,name),
-            read=cell&&event.readObservations?.find(item=>item.kind==='binding'&&item.name===cell.loweredName);
-          if(!cell||!read||!valueTag(event.result)||!eq(read.value,event.result))
-            ctx.refuse('dynamic namespace read lacks its source-owned cell observation');
-          ctx.emit({kind:'namespace.read',namespaceId:event.operands[0][1],exportName:name,
-            value:copy(event.result)},event,'source-module-namespace-read/1');return true;
+            parent=event.invocationId,pending=frameAfter(ctx,event,parent)?.pendingProperty;
+          if(!cell||!pending||pending.kind!=='get'||pending.method!==false||
+             !eq(pending.receiver,['ref',namespaceId])||typeof pending.waitingFrameId!=='string')
+            ctx.refuse('dynamic namespace read lacks its exact getter continuation');
+          operations.set(parent,{kind:'read',parent,namespaceId,file,operationEventId:event.eventId,
+            journalEvents:[event.eventId],keys:[name],index:0,waitingFrameId:pending.waitingFrameId,value:null});
+          return true;
         }
       }
       return false;

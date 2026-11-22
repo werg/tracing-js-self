@@ -51,8 +51,11 @@ function prepare(fixture){
   const emitted=Object.fromEntries(Object.entries(request.modules).map(([id,source])=>[id,
     compileBoundedTypeScript(source,{path:id}).javascript]));
   const graph=encodeNativeGraph([linked.entryInput],{maxBytes:1048576});
-  return {request,linked,referenceInput:{modules:emitted,entryModule:request.entryModule,
-    exportName:request.exportName,calls:request.calls?.map(({exportName})=>({exportName}))??null,inputGraph:graph}};
+  const moduleNamespacePlan=request.experimentalNamespacePlan&&linked.metadata.namespaceSourcePlan?
+    buildExperimentalModuleNamespacePlanFromLinker(linked):undefined;
+  return {request,linked,moduleNamespacePlan,referenceInput:{modules:emitted,entryModule:request.entryModule,
+    exportName:request.exportName,calls:request.calls?.map(({exportName})=>({exportName}))??null,inputGraph:graph,
+    ...(moduleNamespacePlan?{moduleNamespacePlan}:{})}};
 }
 
 export async function independentModuleRegionReference(referenceInput,{timeoutMs=1000,processTimeoutMs=10000}={}){

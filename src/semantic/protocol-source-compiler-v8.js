@@ -590,7 +590,7 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     observe('afterEvent',event,row);
     for(const change of heapChanges)if(published.has(change.id))checkNode(change.after);
     for(const change of event.stateChanges.filter(change=>change.table==='frames'&&change.after))
-      for(const adapter of frameOwners.get(change.id)??[])if(adapter.checkFrame(context,change.after,event)!==true)refuse('extension failed its complete frame comparison: '+adapter.id);
+      for(const adapter of frameOwners.get(change.id)??[])if(adapter.checkFrame(context,change.after,event,change.id,row)!==true)refuse('extension failed its complete frame comparison: '+adapter.id);
     for(const change of event.stateChanges)if(state[change.table]){
       if(change.after===null)delete state[change.table][change.id];else if(change.after!==undefined)state[change.table][change.id]=copy(change.after);
     }
