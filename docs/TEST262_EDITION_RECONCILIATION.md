@@ -47,6 +47,24 @@ Intl tests are labeled for a separate ECMA-402 pin, Annex B paths for explicit
 applicability review, and other paths for core-or-extension review. These labels
 organize the work; they do not exclude tests or establish edition membership.
 
+The summary also tallies each row's existing `classification.membership`
+(`edition`, `extension`, `outside_profile`, or `unclassified`) and its explicit
+`requiredForThisRelease` boolean. A scope-review-by-membership cross-tab makes
+unresolved counts directly visible for the full denominator. An absent
+classification still means `unclassified`; it is never inferred from paths,
+feature tags, or reference outcomes. These counts report declared decisions,
+not independently certified applicability, and all catalog variants remain in
+the report.
+
+The audit also reconciles unique test source files separately from execution
+variants, counts execution modes, and counts ordinary versus negative expected
+outcomes by phase. The source denominator uses one classification per path;
+variants retain their distinct strict, sloppy, raw and module identities. The
+catalog refuses duplicate variant IDs (`validateTest262Catalog`), and this audit
+requires every source's declared mode set to be present, so dropping or
+duplicating a variant cannot reduce the audited denominator. Every test file is
+read and SHA-256 checked against the catalog before it is included.
+
 Implementation source hashes, exact producer revision, tracked and untracked
 dirty status, Node version and Python version accompany the complete report.
 The complete wrapper is hashed, and the deterministic reconciliation content

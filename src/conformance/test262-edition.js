@@ -95,14 +95,32 @@ export function buildTest262EditionAudit({catalog,sources,specification,bytes,py
   }
   const rows=catalog.variants.map(variant=>({id:variant.id,path:variant.path,mode:variant.mode,
     sourceDigest:variant.sourceDigest,features:variant.metadata?.features??[],
+    expectedOutcome:variant.expectedOutcome,
     reference:references.get(variant.path),
     scopeReview:variant.path.startsWith('test/intl402/')?'separate-ecma402-pin-required':
       variant.path.startsWith('test/annexB/')?'annex-b-applicability-review':'core-or-extension-review',
     classification:variant.classification}));
   const statuses={},profiles={},features=new Map(),referencedSections=new Set();
+  const membership={},releaseRequirement={required:0,notRequired:0},scopeByMembership={};
+  const variantModes={},expectedOutcomes={normal:0,negativePhases:{}},fileMembership={};
   for(const row of rows){
     statuses[row.reference.status]=(statuses[row.reference.status]??0)+1;
     profiles[row.scopeReview]=(profiles[row.scopeReview]??0)+1;
+    const classification=row.classification;
+    membership[classification.membership]=(membership[classification.membership]??0)+1;
+    releaseRequirement[classification.requiredForThisRelease?'required':'notRequired']++;
+    if(!scopeByMembership[row.scopeReview])scopeByMembership[row.scopeReview]={};
+    scopeByMembership[row.scopeReview][classification.membership]=
+      (scopeByMembership[row.scopeReview][classification.membership]??0)+1;
+    variantModes[row.mode]=(variantModes[row.mode]??0)+1;
+    const expected=row.expectedOutcome;
+    if(expected?.kind==='error')
+      expectedOutcomes.negativePhases[expected.phase]=(expectedOutcomes.negativePhases[expected.phase]??0)+1;
+    else expectedOutcomes.normal++;
+    if(Object.hasOwn(fileMembership,row.path)&&
+      conformanceDigest(fileMembership[row.path])!==conformanceDigest(classification))
+      throw new TypeError('Edition audit variants disagree on source-file classification: '+row.path);
+    fileMembership[row.path]=classification;
     row.reference.sections.forEach(section=>referencedSections.add(section));
     for(const name of row.features){
       if(!features.has(name))features.set(name,{feature:name,variants:0,referenceDispositions:{},targets:new Set(),sections:new Set()});
@@ -112,10 +130,17 @@ export function buildTest262EditionAudit({catalog,sources,specification,bytes,py
       row.reference.sections.forEach(section=>feature.sections.add(section));
     }
   }
+  const testFilesByMembership={};
+  for(const classification of Object.values(fileMembership))
+    testFilesByMembership[classification.membership]=(testFilesByMembership[classification.membership]??0)+1;
   const body={schema:'test262-edition-reference-audit/1',catalogDigest:catalog.digest,
     suiteRevision:catalog.suiteRevision,specification,inventory,
     summary:{catalogVariants:catalog.variants.length,auditedVariants:rows.length,testFiles:references.size,
       referenceDispositions:statuses,scopeReview:profiles,featureTags:features.size,
+      editionMembership:membership,releaseRequirement,
+      scopeReviewByEditionMembership:scopeByMembership,
+      unresolvedEditionMembership:membership.unclassified??0,
+      sourceFilesByEditionMembership:testFilesByMembership,variantModes,expectedOutcomes,
       sections:inventory.sections.length,sectionsReferenced:referencedSections.size,
       sectionsWithoutDirectTestReference:inventory.sections.filter(section=>!referencedSections.has(section.id)).length},
     features:[...features.values()].sort((a,b)=>a.feature.localeCompare(b.feature)).map(feature=>({...feature,
