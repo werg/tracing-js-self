@@ -56,8 +56,11 @@ The previous detailed PR narrative is preserved in
   and changed native state without child-bootstrap intent. Candidate producer
   `32efcdda` and
   [run 45029326909](https://github.com/werg/tracing-js-self/actions/runs/45029326909)
-  are therefore explicitly superseded for promotion, irrespective of that
-  run's eventual outcome. A corrected native tree is being composed from
+  are therefore explicitly superseded for promotion. That run completed with
+  **145 native passes and 166 of 170 producer leaf passes**, four fixture
+  argument-mismatch failures and zero skips. Both affected fixture replacements
+  are corrected in the current combined candidate; the failed source remains
+  unqualified. [Complete original logs, ZIP and per-file population](evidence/v8-causal-first-hosted-32ef-2026-11-22/README.md). A corrected native tree is being composed from
   current main, preserving router evidence and all current terminal-close
   controls. Its measured native population and a new exact paired hosted gate
   are mandatory; the producer gate requires 170 individual leaf cases with no
@@ -79,8 +82,12 @@ The previous detailed PR narrative is preserved in
   Completion, cancellation, lost/altered replies, repeated loss, unknown outcome,
   history acknowledgement races and unresolved intents retain distinct controls.
   [Local observations, corrections and limits](evidence/v8-terminal-close-local-2026-11-22/README.md).
-  Its history integration with causal child bootstrap and service-backed
-  same-owner recovery remain subsequent work.
+  The combined candidate [26676d44](https://github.com/werg/tracing-js-self/commit/26676d44e4b5b397f04596f2d5d8539ee446c55e)
+  now includes causal bootstrap, terminal close and same-owner service fencing.
+  Its **82 structural/builder/history cases passed with zero failures/errors/skips**.
+  Review also reproduced and fixed a stale unowned-only builder guard, with five
+  focused builder controls. The final 193-leaf producer gate and reconciled
+  native source are pending; this remains an isolated candidate, not promotion.
 
 Local native checks use Python 3.12.14, Torch 2.14.1+cpu and pytest 9.2.0; pytest
 9.2 is outside the repository's declared `>=8.3,<9` range. The local container

@@ -11,8 +11,8 @@
   },
   {
     "path": "complete-job.log",
-    "bytes": 101394,
-    "sha256": "d045aecaf5cee3d16c58979e0678204c3a21ca744ba0b5dbce4833f8ab601068"
+    "bytes": 101393,
+    "sha256": "9b71e31eb4916c4318869d0b9f8c5bedec1fc8e86d2affedf11ad2aaf8d8ab8c"
   },
   {
     "path": "native-recovery.log",

@@ -1,8 +1,8 @@
 [
   {
     "path": "README.md",
-    "bytes": 3478,
-    "sha256": "d1d7473d7b92fd130fc91fcbf5b8cb9fc135e99d51d5fc39d37d20e0806e2591"
+    "bytes": 4311,
+    "sha256": "7620fc11090ac2118821877485ccb98a4cb0ca6997191d2d08e42c559d2287bb"
   },
   {
     "path": "command.txt",
@@ -18,6 +18,11 @@
     "path": "composed-native-transport.xml",
     "bytes": 4678,
     "sha256": "47cdb749c3cbbf1133c974c955e109e777aaf9a4bd26db6962cbaef404e5958c"
+  },
+  {
+    "path": "native-smoke-command.txt",
+    "bytes": 673,
+    "sha256": "8bbcbc257b167f2476cd815558d35f60d38ec93105b64116f17cc187bae64f34"
   },
   {
     "path": "service/legacy-track-cancel-initial-peer-crash.log",
@@ -76,13 +81,23 @@
   },
   {
     "path": "summary.json",
-    "bytes": 1874,
-    "sha256": "87724162f03f6b931012009ea81153cf11ecf2bfebc5b97e27a890003906c9d8"
+    "bytes": 2652,
+    "sha256": "a855517f40f33f1a28d7163e0754dc2beaea43db0652346d165335635662715f"
   },
   {
     "path": "unified-journal-diagnostic.log",
     "bytes": 893,
     "sha256": "11181603b0e8d7fd8897e2995951e5d7d7ad9b2f08e4b9c22249aee47148c79f"
+  },
+  {
+    "path": "unified-native-smoke.log",
+    "bytes": 334,
+    "sha256": "7c2fa89afb304d10e0aa3550a1aca35e90de398c58232ee4e25468c3701fbaef"
+  },
+  {
+    "path": "unified-native-smoke.xml",
+    "bytes": 741,
+    "sha256": "5ac7323df280b17e180320b8314fa94db6e4b766305b728d7ef244e8f56d5b7f"
   },
   {
     "path": "unified-pure-corrected.log",

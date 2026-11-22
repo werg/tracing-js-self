@@ -54,5 +54,21 @@
     "liveServiceCasesLocallySkipped": 2,
     "externalEffectsExecuted": 0
   },
-  "learnedSuccess": null
+  "learnedSuccess": null,
+  "currentActualNativeFocusedControls": {
+    "producerExecutedLocal": "0e00918f638b3a63af5b44b2cf8cc6adcddf2f9a",
+    "producerPublishedExecutableEquivalent": "26676d44e4b5b397f04596f2d5d8539ee446c55e",
+    "nativeExecutedLocal": "4b0dbdd11e5d8741c3594b5fb8bda988b04a0fac",
+    "nativePublishedExactTreeEquivalent": "a07f74287a7ff9a13b5a52d113d07883961b7f9c",
+    "nativeTree": "62cf0a170a0241283a3b860fe927b557414192e3",
+    "selectedCases": 2,
+    "passed": 2,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "durationMs": 47103.019605,
+    "selection": "actual native bootstrap preserves|actual Python terminal close restores a closed outcome: null",
+    "unselectedCases": "not executed; excluded by explicit name filter",
+    "liveClockAuthorityClaim": false
+  }
 }

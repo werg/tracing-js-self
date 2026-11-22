@@ -51,3 +51,16 @@ clock authority, accepts unknown outcomes, or demonstrates learned quality.
 immutable hashes for every retained evidence file. The complete original failed
 terminal hosted gate is retained separately in
 [the original 55-native/95-producer report](../v8-terminal-hosted-5fc8-2026-11-22/README.md).
+
+## First actual native check of the unified interface
+
+Two explicitly selected controls passed in **47.103 seconds**, zero failures,
+errors or skips, using the current producer executable files and unified native
+`a07f7428` (identical whole tree to executed local `4b0dbdd1`). They exercise
+actual bootstrap with preserved create evidence and a second process loss, and
+terminal close with exact closed-state restoration. The original Node/Python
+processes and locked local runtime execute; controlled final output bytes remain
+a fixture, not learned quality. Other cases in these files were excluded by the
+explicit name filter, not run or credited. Genuine-clock complete-history
+qualification remains pending. `summary.json` retains the executed producer
+revision and confirms executable-file equality with published `26676d44`.
