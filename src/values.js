@@ -14,7 +14,7 @@ export function encode(value) {
     return ['num', value];
   }
   const error=new TypeError('Only primitive values may be encoded without a guest identity');
-  console.error('[namespace-debug] scalar encode rejected a non-primitive value\\n'+error.stack);
+  error.message+='\n[namespace-debug] '+error.stack;
   throw error;
 }
 export function decode(value) {
