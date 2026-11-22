@@ -122,7 +122,10 @@ const run=(stage,command,args,{timeoutMs=600000}={})=>{
   finally{closeSync(fd);}
   report.stages.push({stage,command:[command,...args],log,exitCode:result.status,
     signal:result.signal,error:result.error?.message??null,durationMs:Date.now()-started});record();
-  if(result.error||result.status!==0)throw new Error('Ordinary lifecycle '+stage+' failed; see '+join(out,log));
+  if(result.error||result.status!==0){
+    process.stderr.write(readFileSync(join(out,log),'utf8').slice(-12000));
+    throw new Error('Ordinary lifecycle '+stage+' failed; see '+join(out,log));
+  }
   assertRoots();
 };
 try{
@@ -235,7 +238,8 @@ try{
       sourceIds:targetInventory.sourceIds,available:targetInventory.available,
       positiveWeight:targetInventory.positiveWeight};
     const coverageConfig={...configuration,output:join(out,'fit-coverage'),
-      max_steps:targetInventory.optimizerWindowCount};
+      max_steps:targetInventory.optimizerWindowCount,
+      checkpoint_every:targetInventory.optimizerWindowCount,keep_checkpoints:1};
     const coverageConfigPath=join(out,'coverage-training-config.json');
     writeFileSync(coverageConfigPath,JSON.stringify(coverageConfig,null,2)+'\n',{flag:'wx'});
     report.coverageBudget={kind:'one-train-window-pass',windowCount:targetInventory.windowCount,

@@ -26,3 +26,25 @@ route, and a separate complete ordinary window pass whose checkpoint matches eve
 positive-weight logical/physical target, scored occurrence, window set and per-loss
 denominator. Merely having every source in prepared input does not satisfy that gate.
 Token/mask-position coverage and learned quality are independently unmeasured.
+
+
+The next direct prepared-data probe caught an observation-only native step with
+records and no loss plans. Native `9c68b14f5bc3e2329f0d3f21515fd3d7daa5ecc1`
+skips those unscored steps while retaining exact pairing for every actual plan.
+Its 21 inventory controls include the complete 64-source traversal with controlled
+source/planner boundaries and actual census extraction.
+
+Native `a1d7f83dc46e4829ca4226e4040519cd5835f365` additionally bounds reuse of
+complete immutable source admission to eight entries per model. The full episode,
+codec instance/fingerprint, policy/registry bytes, geometry and split are all part
+of that identity. Window/model/loss state is rebuilt each time. Fifty-three local
+controls passed with the actual pinned tokenizer and zero skips, including changed
+source proof, physical bytes, policy, registry, geometry, split and codec instances.
+The 48-source training split has 348 windows, and repeating identical complete
+admission cost about 2.5 seconds per adjacent window in a direct measurement.
+
+The separate coverage fit now writes its checkpoint at the final bounded step,
+instead of serializing the entire model after every window. Its objective and every
+optimizer update remain unchanged; the original two-step resume test still writes
+both required checkpoints. Failed subprocess stages now include their bounded log
+tail in the job output while preserving the complete stage log in the artifact.
