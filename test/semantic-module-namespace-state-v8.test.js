@@ -2,11 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 import {
-  buildExperimentalModuleNamespacePlan,\n  buildExperimentalModuleNamespacePlanFromLinker,
+  buildExperimentalModuleNamespacePlan,
+  buildExperimentalModuleNamespacePlanFromLinker,
   createExperimentalModuleNamespaceState,
   applyExperimentalModuleNamespaceTransition,
   verifyExperimentalModuleNamespacePlan
-} from '../src/semantic/module-namespace-state-v8.js';\nimport {linkEvaluatedModules} from '../src/evaluated-modules.js';
+} from '../src/semantic/module-namespace-state-v8.js';
+import {linkEvaluatedModules} from '../src/evaluated-modules.js';
 
 const modules={'main.js':'import * as ns from "./cells.js"; export function run(){ return Object.keys(ns); }',
   'cells.js':'export let value=1; export {value as alias}; export const fixed=2;'};
@@ -24,7 +26,9 @@ const plan=()=>buildExperimentalModuleNamespacePlan({
 });
 
 test('experimental namespace plan is derived from canonical linker source records',()=>{
-  const ordinary=linkEvaluatedModules({modules,entryModule:'main.js',exportName:'run'});\n  assert.equal(Object.hasOwn(ordinary.metadata,'namespaceSourcePlan'),false);\n  const linked=linkEvaluatedModules({modules,entryModule:'main.js',exportName:'run',experimentalNamespacePlan:true});
+  const ordinary=linkEvaluatedModules({modules,entryModule:'main.js',exportName:'run'});
+  assert.equal(Object.hasOwn(ordinary.metadata,'namespaceSourcePlan'),false);
+  const linked=linkEvaluatedModules({modules,entryModule:'main.js',exportName:'run',experimentalNamespacePlan:true});
   const source=buildExperimentalModuleNamespacePlanFromLinker(linked);
   assert.equal(source.schema,'semantic-module-namespace-plan/1');
   assert.deepEqual(source.namespaces,[{file:'cells.js',exports:[

@@ -45,7 +45,7 @@ test('experimental JS and independent Python namespace cells agree through alias
   for(const step of steps){
     const before=plain(state);
     try{const result=applyExperimentalModuleNamespaceTransition(plan,state,step);
-      state=result.state;outcomes.push({status:'accepted',state:plain(state),result:plain(result.result)});
+      state=result.state;outcomes.push({status:'accepted',state:plain(state),result:result.result===undefined?null:plain(result.result)});
     }catch(error){assert.match(error.message,/Experimental module namespace/);
       assert.deepEqual(plain(state),before);outcomes.push({status:'refused',state:plain(state)});
     }

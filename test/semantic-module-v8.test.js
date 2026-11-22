@@ -230,14 +230,19 @@ test('owned namespace reflection matches native ESM while public projection stay
   assert.equal(projection.category,'unsupported.module-namespace-projection');
 });
 
-test('owned and native ESM both reject a namespace getter read in TDZ',async()=>{
+test('owned and native ESM observe a namespace getter TDZ read during module initialization',async()=>{
   const modules={
-    'leaf.js':"import {probe} from './main.js';export const observed=probe();export let value=2;",
-    'main.js':"import * as ns from './leaf.js';export function probe(){return Object.getOwnPropertyDescriptor(ns,'value').value;}export function run(){return 0;}"
+    'leaf.js':"import {probe} from './main.js';export const observed=(()=>{try{return probe();}catch(error){return {name:error.name,message:error.message};}})();export let value=2;",
+    'main.js':"import * as ns from './leaf.js';import {observed} from './leaf.js';export function probe(){return Object.getOwnPropertyDescriptor(ns,'value').value;}export function run(){return observed;}"
   };
-  const request={modules,entryModule:'main.js',exportName:'run'},linked=linkEvaluatedModules(request);
-  await assert.rejects(()=>executeEvaluatedModules(request),/before initialization|uninitialized/i);
+  const request={modules,entryModule:'main.js',exportName:'run'},linked=linkEvaluatedModules(request),
+    owned=await executeEvaluatedModules(request);
+  assert.equal(owned.result.name,'ReferenceError');
+  assert.match(owned.result.message,/initialization|initialized/i);
   const native=await nativeModuleOutcome(modules,'main.js','run',encodeNativeGraph([linked.entryInput]));
   assert.equal(native.status,'passed',native.reason);
-  assert.equal(native.outcome.kind,'throw');
+  const reference=decodeReferenceOutcome(native,1);
+  assert.equal(reference.name,'ReferenceError');
+  // Error wording is implementation-defined; both must fail on the TDZ read.
+  assert.match(reference.message,/initialization|initialized/i);
 });
