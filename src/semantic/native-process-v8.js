@@ -100,7 +100,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   };
   const request=async body=>{
     if(requestBusy)throw new Error('Native v8 model already has an outstanding request');
-    const captured=copy(body);requestBusy=true;
+    const captured=copy(body);let publicationAttempted=false;requestBusy=true;
     try{
       if(durable)assertSelectedOrchestrationExecutionLease(durable.lease);
       if(durable&&captured.op==='initialize')demand((await durable.journal.list()).length===0,
@@ -126,6 +126,10 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
         id:(bootstrap?'v8-bootstrap-':'v8-commit-')+journal.sessionGeneration+'-'+ordinal})+'\n').toString('base64');
       const intent={identity:requestIdentity,requestBase64,checkpoint,
         ...(bootstrap?{createReceipt:copy(createAttempt.durableRequestReceipt)}:{})};
+      // Publication can succeed before a storage acknowledgement is lost.
+      // From this point, any error leaves durable request authority uncertain;
+      // close even when no receipt was returned or native dispatch has begun.
+      publicationAttempted=true;
       const receipt=await journal.append(intent);
       nextOrdinal=ordinal;lastDurableRequest=copy(receipt);
       const evidence=bootstrap?createAttempt:attempts.find(row=>row.session===captured.session&&
@@ -151,7 +155,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
         stop(error);throw error;
       }
     }catch(error){
-      if(durable&&(error.durabilityFenced||/^NativeRequest/.test(error.category??'')))stop(error);
+      if(durable&&(publicationAttempted||error.durabilityFenced||/^NativeRequest/.test(error.category??'')))stop(error);
       throw error;
     }finally{requestBusy=false;}
   };

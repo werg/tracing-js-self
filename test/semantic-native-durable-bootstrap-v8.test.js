@@ -42,14 +42,14 @@ async function inputs(t){
   t.after(()=>rm(directory,{recursive:true,force:true}));
   let count=0;
   async function open(fault=null){
-    const lease=await lock.acquire(),log=join(directory,'decoder-'+(++count)+'.log'),
-      args=fault?[faultPeer,'--peer',peer,'--fault',fault,'--fault-operation','durable-bootstrap-child']:[peer];
+    const lease=await lock.acquire(),log=join(directory,'decoder-'+(++count)+'.log'),wireLog=join(directory,'wire-'+count+'.jsonl'),
+      args=fault?[faultPeer,'--peer',peer,'--fault',fault,'--fault-operation','durable-bootstrap-child','--rpc-log',wireLog]:[peer];
     args.push('--decoder-log',log,'--request-journal-dir',journal.directory,'--execution-lock-fd','3',
       '--execution-lock-path',lease.lockPath,'--execution-session-id',sessionId,'--execution-stream-id',streamId,
       '--execution-session-generation',String(journal.sessionGeneration));
     const select=createNativeV8ProcessSelector({command:python,args,cwd:nativeRoot,env,timeoutMs:120000,
       maxMessageBytes:64*1024*1024,durableRequests:{journal,executionLease:lease}});
-    return {select,lease,log};
+    return {select,lease,log,wireLog};
   }
   async function create(select){
     await select.initialize(identity);
@@ -176,3 +176,44 @@ test('durable bootstrap intent is immutable while publication serializes all nat
     assert.equal(first.select.metrics().predictionAttempts,1);
   }finally{release?.();await close(first);}
 });
+
+for(const operation of ['commit','bootstrap'])for(const failure of ['publication-acknowledgement','independent-readback'])
+  test('actual '+operation+' producer intent '+failure+' ambiguity fences every later native action',async t=>{
+    const context=await inputs(t);if(!context)return;
+    const first=await context.open('none'),ordinal=operation==='bootstrap'?2:1;
+    try{
+      let request;
+      if(operation==='bootstrap')request=await context.create(first.select);
+      const append=context.journal.append.bind(context.journal),read=context.journal.read.bind(context.journal);
+      if(failure==='publication-acknowledgement')context.journal.append=async input=>{
+        await append(input);throw new Error('ambiguous producer publication acknowledgement');
+      };
+      else context.journal.read=async(receipt,options)=>{
+        const retained=await read(receipt,options);
+        if(receipt.ordinal===ordinal&&options?.latest)throw new Error('ambiguous producer independent readback');
+        return retained;
+      };
+      await assert.rejects(operation==='bootstrap'?first.select.bootstrapOrchestrationChild(request):
+        context.create(first.select),/ambiguous producer/);
+      context.journal.read=read;
+      const retained=await context.journal.inspect(ordinal),attempt=first.select.metrics().attempts.at(-1),
+        closedAfterFailure=first.select.status().closed,cost=first.select.metrics().runtime.rpcCalls,
+        forbidden=operation==='bootstrap'?'durable-bootstrap-child':'durable-commit';
+      assert.equal(retained.intent.identity.ordinal,ordinal);
+      assert.equal(retained.intent.identity.operation,operation==='bootstrap'?'bootstrap-orchestration-child':'commit-orchestration');
+      const wireBefore=readFileSync(first.wireLog,'utf8').trim().split('\n').map(line=>JSON.parse(line));
+      assert.equal(wireBefore.filter(row=>row.op===forbidden).length,0,
+        'producer publication/readback must finish before the durable native operation is dispatched');
+      let laterMutationSucceeded=false;
+      try{
+        const result=await first.select.cancelOrchestration({session:attempt.session,track:attempt.track,
+          reason:'probe after ambiguous producer storage'});
+        laterMutationSucceeded=result.status==='cancelled';
+      }catch(error){assert.match(error.message,/closed|attested|fenced|unknown/);}
+      assert.equal(closedAfterFailure,true,JSON.stringify({closedAfterFailure,laterMutationSucceeded,
+        retainedOrdinal:retained.receipt.ordinal,observedBeforeFailure:wireBefore.map(row=>row.op)}));
+      assert.equal(laterMutationSucceeded,false);
+      assert.equal(first.select.metrics().runtime.rpcCalls,cost);
+      assert.deepEqual(readFileSync(first.wireLog,'utf8').trim().split('\n').map(line=>JSON.parse(line)),wireBefore);
+    }finally{await close(first);}
+  });
