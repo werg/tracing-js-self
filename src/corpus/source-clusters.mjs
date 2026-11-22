@@ -4,6 +4,26 @@ import {tokenizer} from 'acorn';
 import {createHash} from 'node:crypto';
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
 const digest=/^[0-9a-f]{64}$/;
+export const DEFAULT_SOURCE_CLONE_BUDGET=Object.freeze({
+ maxComparisons:1000000,maxCandidateVisits:10000000,maxIndexEntries:2000000
+});
+export function sourceCloneBudget(value={}){
+ if(!value||typeof value!=='object'||Array.isArray(value)||
+   Object.keys(value).some(key=>!Object.hasOwn(DEFAULT_SOURCE_CLONE_BUDGET,key)))
+  throw new TypeError('Invalid source-clone resource budget');
+ const budget={...DEFAULT_SOURCE_CLONE_BUDGET,...value};
+ if(Object.values(budget).some(limit=>!Number.isSafeInteger(limit)||limit<0))
+  throw new TypeError('Source-clone resource budgets must be nonnegative safe integers');
+ return budget;
+}
+export class SourceCloneResourceError extends Error{
+ constructor(resource,budget,costs){
+  super('Source-clone '+resource+' resource budget exhausted');
+  this.name='SourceCloneResourceError';this.code='SOURCE_CLONE_RESOURCE_EXHAUSTED';
+  this.status='resource_exhausted';this.resource=resource;
+  this.budget={...budget};this.costs={...costs};this.complete=false;
+ }
+}
 export function fingerprintOwnedSource(source){
  if(typeof source!=='string'||!source||source.length>2000000)
   throw new TypeError('Invalid or oversized owned source');
@@ -33,7 +53,8 @@ const valid=x=>x?.schema==='owned-source-fingerprint/1'&&
  Number.isSafeInteger(x.tokenCount)&&x.tokenCount>0&&x.tokenCount<=50000&&
  digest.test(x.exactHash??'')&&digest.test(x.alphaHash??'')&&
  Array.isArray(x.shingles)&&x.shingles.length<=50000&&
- x.shingles.every(s=>typeof s==='string'&&/^[a-f0-9]{24}$/.test(s));
+ x.shingles.every((s,i)=>typeof s==='string'&&/^[a-f0-9]{24}$/.test(s)&&
+  (i===0||x.shingles[i-1]<s));
 function similarity(a,b){
  const x=a.shingles,y=b.shingles;
  let i=0,j=0,n=0;
@@ -43,10 +64,15 @@ function similarity(a,b){
  }
  return n/(x.length+y.length-n||1);
 }
-export function clusterOwnedSources(profiles,{nearThreshold=0.92}={}){
- if(!Array.isArray(profiles)||profiles.length>10000||
+export function clusterOwnedSources(profiles,{nearThreshold=0.92,cloneBudget={}}={}){
+ if(!Array.isArray(profiles)||
    !Number.isFinite(nearThreshold)||nearThreshold<0.8||nearThreshold>1)
   throw new TypeError('Invalid source cluster inventory');
+ const budget=sourceCloneBudget(cloneBudget),costs={comparisons:0,candidateVisits:0,indexEntries:0};
+ const spend=(resource,limit)=>{
+  if(costs[resource]>=budget[limit])throw new SourceCloneResourceError(resource,budget,costs);
+  costs[resource]++;
+ };
  const families=new Map();
  for(const row of profiles){
   if(typeof row?.family!=='string'||!row.family||
@@ -73,30 +99,36 @@ export function clusterOwnedSources(profiles,{nearThreshold=0.92}={}){
    if(index.has(key))union(i,index.get(key));else index.set(key,i);
   }
  }
+ // A pair with Jaccard similarity >= t shares an element in both prefixes
+ // of length |S| - ceil(t * |S|) + 1 under one total token order. Index those
+ // prefixes, rare tokens first. Unlike dropping popular postings, this is a
+ // complete filter. Keep candidates only for the current row (linear space),
+ // and fail closed when a caller's explicit work or memory budget is spent.
+ const frequencies=new Map();
+ for(const row of rows)for(const shingle of row.fp.shingles)
+  frequencies.set(shingle,(frequencies.get(shingle)??0)+1);
+ const order=(a,b)=>frequencies.get(a)-frequencies.get(b)||(a<b?-1:a>b?1:0);
  const postings=new Map();
- for(let i=0;i<rows.length;i++)if(rows[i].fp.tokenCount>=60){
-  for(const shingle of rows[i].fp.shingles){
-   const ids=postings.get(shingle)??[];
-   if(ids.length<=128)ids.push(i);
-   postings.set(shingle,ids);
-  }
- }
- const candidates=new Map();
- for(const ids of postings.values()){
-  if(ids.length>128)continue;
-  for(let a=0;a<ids.length;a++)for(let b=a+1;b<ids.length;b++){
-   const key=ids[a]+':'+ids[b];
-   candidates.set(key,(candidates.get(key)??0)+1);
-   if(candidates.size>100000)throw new Error('Source-clone comparison budget exceeded');
-  }
- }
  let nearPairs=0;
- for(const [key,shared] of candidates){
-  if(shared<10)continue;
-  const [i,j]=key.split(':').map(Number),a=rows[i].fp,b=rows[j].fp;
-  if(Math.min(a.tokenCount,b.tokenCount)/Math.max(a.tokenCount,b.tokenCount)<0.85)
-   continue;
-  if(similarity(a,b)>=nearThreshold){nearPairs++;union(i,j);}
+ for(let i=0;i<rows.length;i++){
+  const fp=rows[i].fp,size=fp.shingles.length;
+  if(!size)continue;
+  const prefix=[...fp.shingles].sort(order).slice(0,size-Math.ceil(nearThreshold*size)+1);
+  const candidates=new Set();
+  for(const shingle of prefix)for(const j of postings.get(shingle)??[]){
+   spend('candidateVisits','maxCandidateVisits');
+   const otherSize=rows[j].fp.shingles.length;
+   // The smaller/larger set-size ratio is an upper bound on Jaccard.
+   if(Math.min(size,otherSize)/Math.max(size,otherSize)>=nearThreshold)candidates.add(j);
+  }
+  for(const j of candidates){
+   spend('comparisons','maxComparisons');
+   if(similarity(fp,rows[j].fp)>=nearThreshold){nearPairs++;union(i,j);}
+  }
+  for(const shingle of prefix){
+   spend('indexEntries','maxIndexEntries');
+   const ids=postings.get(shingle)??[];ids.push(i);postings.set(shingle,ids);
+  }
  }
  const groups=new Map(),keyByFamily={};
  for(let i=0;i<rows.length;i++){
@@ -115,6 +147,7 @@ export function clusterOwnedSources(profiles,{nearThreshold=0.92}={}){
  return {schema:'owned-source-clusters/1',distinctFamilies:rows.length,
   distinctSourceClusters:clusters.length,nearPairs,
   clusters:clusters.filter(x=>x.members.length>1),keyByFamily,
+  audit:{algorithm:'complete-jaccard-prefix',complete:true,nearThreshold,budget,costs},
   warnings:['Source-token similarity is a lexical heuristic, not a proof of semantic equivalence.',
    'Heuristic near-duplicate detection can miss altered or short program clones.']};
 }
