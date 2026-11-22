@@ -26,11 +26,21 @@ export function deriveModuleSchedulerSourceSitesV8({source,moduleSchedulerPlan,b
     fail('generated source and source-derived scheduler plan are required');
   verifyModuleSchedulerPlanV8(moduleSchedulerPlan);
   const ast=parse(source,{ecmaVersion:'latest',sourceType:'script'});
-  const functions=new Map(),calls=[],records=[],awaitSites=[],completionAwaitSites=[];
+  const functions=new Map(),calls=[],records=[],awaitSites=[],completionAwaitSites=[],moduleFunctions=[];
   function walk(node,owner=null){
     if(!node)return;
     const name=node.type==='FunctionDeclaration'?helperName(node.id):null;
+    const moduleFunction=node.type==='FunctionDeclaration'&&
+      /^__traced_eval_module_(0|[1-9][0-9]*)$/.test(node.id?.name??'');
     const current=name??owner;
+    if(moduleFunction){
+      const match=/^__traced_eval_module_(0|[1-9][0-9]*)$/.exec(node.id.name);
+      const index=Number(match[1]),module=moduleSchedulerPlan.modules[index];
+      if(!module||!node.generator||node.async||node.params.length!==0)
+        fail('generated module body differs from its source plan');
+      moduleFunctions.push({index,file:module.file,name:node.id.name,
+        start:node.start,end:node.end,bodyStart:node.body.start,bodyEnd:node.body.end});
+    }
     if(name){
       if(functions.has(name))fail('generated scheduler helper is duplicated: '+name);
       if(node.params.length!==functionArities.get(name)||
@@ -91,6 +101,9 @@ export function deriveModuleSchedulerSourceSitesV8({source,moduleSchedulerPlan,b
   if(records.length!==moduleSchedulerPlan.modules.length||
      new Set(records.map(row=>row.index)).size!==records.length)
     fail('generated module record table does not match the source plan');
+  if(moduleFunctions.length!==moduleSchedulerPlan.modules.length||
+     new Set(moduleFunctions.map(row=>row.index)).size!==moduleFunctions.length)
+    fail('generated module body table does not match the source plan');
   if(awaitSites.length!==1||completionAwaitSites.length!==1)
     fail('scheduler requires its unique module-driver and entry-completion await sites');
   if(bundle){
@@ -118,6 +131,7 @@ export function deriveModuleSchedulerSourceSitesV8({source,moduleSchedulerPlan,b
     functions:[...functions.values()].sort((a,b)=>a.start-b.start),
     calls:calls.sort((a,b)=>a.start-b.start),
     records:records.sort((a,b)=>a.index-b.index),
+    moduleFunctions:moduleFunctions.sort((a,b)=>a.index-b.index),
     awaitSites:awaitSites.sort((a,b)=>a.start-b.start),
     completionAwaitSites:completionAwaitSites.sort((a,b)=>a.start-b.start)};
   return {...planBody,schema:'semantic-module-scheduler-source-sites/1',

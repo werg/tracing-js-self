@@ -1,0 +1,50 @@
+name: Experimental actual module scheduler owner capture
+
+on:
+  push:
+    branches: [codex/v8-module-scheduler-owner-capture-20261122]
+
+permissions:
+  contents: read
+
+jobs:
+  actual-owner-capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install exact producer dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Capture real scheduler identity events and replay the exact owned run
+        run: |
+          node --test --test-reporter=junit test/module-scheduler-runtime-owner-capture-v8.test.js 2>&1 | tee "$RUNNER_TEMP/module-scheduler-owner-capture.xml"
+          python - <<'PY'
+          import json, os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          cases=list(ET.parse(root/'module-scheduler-owner-capture.xml').getroot().iter('testcase'))
+          if len(cases)!=1 or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('The actual owned-runtime capture must pass without skips')
+          evidence=json.loads((root/'module-scheduler-owner-capture.json').read_text())
+          if evidence.get('publicAdmission') is not False or not evidence.get('events'):
+              raise ValueError('Experimental capture must retain actual events without claiming admission')
+          print('MODULE_SCHEDULER_OWNER_CAPTURE_JSON '+json.dumps(evidence,separators=(',',':')))
+          PY
+          test -z "$(git status --porcelain --untracked-files=all)"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: actual-module-scheduler-owner-capture
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/module-scheduler-owner-capture*
