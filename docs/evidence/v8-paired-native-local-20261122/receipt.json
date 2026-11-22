@@ -1,0 +1,57 @@
+{
+  "schema": "paired-native-local-regression/1",
+  "status": "passed",
+  "nativeExecutableRevision": "eb758da9f1f6e6cca90ba7f4a3c9d4e70753bb0c",
+  "nativeExecutableTree": "85245d6cc3c95fb9d339c53bb54e4b66872bd8da",
+  "nativeFinalRevision": "ddda9a7339297e6074765a001743e2bb569e0eb9",
+  "nativeFinalTree": "a0cdb4d771bc1b904c1ac7a49a94bf5e3f560bdc",
+  "producerSourceFixtureRevision": "e58a0e3eca94aaf96df1aebfc487d83f40109fb9",
+  "tests": 347,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "seconds": 484.37,
+  "countsByFile": {
+    "test_promise_executor_v8": 11,
+    "test_async_call_v8": 10,
+    "test_promise_scheduler_v8": 10,
+    "test_promise_executor_boundaries_v8": 13,
+    "test_promise_join_v8": 12,
+    "test_protocol_v8": 22,
+    "test_protocol_host_v8": 13,
+    "test_protocol_host_composition_v8": 15,
+    "test_semantic_commit_recovery_v8": 42,
+    "test_semantic_bootstrap_recovery_v8": 30,
+    "test_semantic_close_recovery_v8": 9,
+    "test_semantic_request_journal_v8": 13,
+    "test_semantic_launch_v8": 16,
+    "test_semantic_v8_position_receipts": 55,
+    "test_semantic_v8_input_relocation": 14,
+    "test_semantic_v8_release_verifier": 62
+  },
+  "groups": {
+    "recovery": 165,
+    "promise": 106,
+    "releaseVerifier": 62,
+    "inputRelocation": 14
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "torch": "2.10.0+cpu",
+    "pytest": "8.4.2",
+    "node": "24.22.3",
+    "dependencyLock": "tools/native-consumer/requirements.lock"
+  },
+  "sourceScopeNote": "During this local run only native evidence and CI pairing metadata changed; all src/scripts/tests and runtime manifest bytes stayed identical. Producer recovery/Promise source and fixtures stayed identical while unrelated release tooling was integrated. This is not a claim of an unchanged full checkout tree during the local run; the final hosted gate independently attests exact clean checkouts.",
+  "optimizerScope": "Controlled input-relocation tests include fixture optimizer updates; no production fit or learned-quality acceptance is inferred.",
+  "files": {
+    "paired-native-local.log": {
+      "bytes": 520,
+      "sha256": "237e8cd5c162276b6c315285dab8feece54dc7aa3747aa51408045c16e230053"
+    },
+    "paired-native-local.xml": {
+      "bytes": 55431,
+      "sha256": "565ad1f8f3dbce05114423e4191d13e61d732e2aa8417c3109bbcde41ffb3831"
+    }
+  }
+}

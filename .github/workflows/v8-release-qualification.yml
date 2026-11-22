@@ -1,0 +1,160 @@
+name: Direct V8 source model package and restore
+
+on:
+  push:
+    branches: [codex/v8-release-restoration-qualification-20261122, codex/v8-release-task-binding-qualification-20261122, codex/language-coverage-v8-cutover]
+    paths-ignore: ['docs/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v8-release-qualification-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  direct-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      TZ: UTC
+      LC_ALL: C.UTF-8
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      TRACING_JS_SELF_ROOT: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_NATIVE_SOURCE_PRODUCER: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+      MEGATOKEN_PYTHON: python
+      MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/production-tokenizer.json
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - name: Freeze native revision from this exact producer policy
+        id: pair
+        working-directory: tracing-js-self
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          from pathlib import Path
+          producer = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert producer == os.environ['GITHUB_SHA'], (producer, os.environ['GITHUB_SHA'])
+          policy = json.loads(Path('contracts/semantic-native-policy-v8.json').read_text())
+          consumer = policy['consumerRevision']
+          assert policy['consumerRepository'] == 'werg/megatoken'
+          assert isinstance(consumer, str) and re.fullmatch(r'[a-f0-9]{40}', consumer), consumer
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('consumer_revision=' + consumer + '\n')
+          print(json.dumps({'producer': producer, 'consumer': consumer}))
+          PY
+      - uses: actions/checkout@v4
+        with:
+          repository: werg/megatoken
+          ref: ${{ steps.pair.outputs.consumer_revision }}
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.3'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - name: Install exact release dependencies
+        run: |
+          npm install --global npm@11.9.0 --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+          mkdir -p "$RUNNER_TEMP/release-controls"
+      - name: Verify frozen pair and production tokenizer
+        env:
+          FROZEN_CONSUMER_REVISION: ${{ steps.pair.outputs.consumer_revision }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, shutil, subprocess
+          from pathlib import Path
+          from huggingface_hub import hf_hub_download
+          from megatoken.generation.codec import ByteCodec, LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256
+          producer = Path(os.environ['TRACING_JS_SELF_ROOT'])
+          native = Path(os.environ['MEGATOKEN_ROOT'])
+          policy = json.loads((producer / 'contracts/semantic-native-policy-v8.json').read_text())
+          assert policy['consumerRevision'] == os.environ['FROZEN_CONSUMER_REVISION']
+          assert subprocess.check_output(['git', '-C', str(native), 'rev-parse', 'HEAD'], text=True).strip() == policy['consumerRevision']
+          tokenizer = Path(os.environ['MEGATOKEN_TOKENIZER_JSON'])
+          shutil.copyfile(hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION), tokenizer)
+          digest = hashlib.sha256(tokenizer.read_bytes()).hexdigest()
+          codec = ByteCodec.from_tokenizer_json(tokenizer, expected_sha256=LING_TOKENIZER_SHA256)
+          assert digest == LING_TOKENIZER_SHA256 == policy['tokenizerSha256']
+          assert codec.fingerprint == policy['tokenizerIdentity']
+          print(json.dumps({'producer': os.environ['GITHUB_SHA'], 'consumer': policy['consumerRevision'], 'tokenizerSha256': digest}))
+          PY
+          cmp tracing-js-self/contracts/semantic-execution-v8.json megatoken/src/megatoken/data/contracts/semantic-execution-v8.json
+      - name: Run archive and exact native verifier refusal controls
+        working-directory: megatoken
+        run: |
+          python -m pytest -q ../tracing-js-self/tools/native-consumer/test_release_v8.py tests/test_semantic_v8_release_verifier.py \
+            --junitxml="$RUNNER_TEMP/release-controls/python.xml" 2>&1 | tee "$RUNNER_TEMP/release-controls/python.log"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'release-controls/python.xml').getroot().iter('testcase'))
+          assert len(cases) == 79, len(cases)
+          assert all(case.find(kind) is None for case in cases for kind in ('failure', 'error', 'skipped'))
+          print('17 producer archive and 62 native verifier cases passed with zero skips')
+          PY
+      - name: Require original task binding and complete campaign history controls
+        working-directory: tracing-js-self
+        run: |
+          node --test --test-concurrency=1 --test-reporter=spec --test-reporter=junit \
+            --test-reporter-destination=stdout --test-reporter-destination="$RUNNER_TEMP/release-controls/campaign.xml" \
+            test/v8-release-campaign.test.js test/qualification-progress.test.js test/v8-release-task-binding.test.js \
+            2>&1 | tee "$RUNNER_TEMP/release-controls/campaign.log"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'release-controls/campaign.xml').getroot().iter('testcase'))
+          assert len(cases) == 69, len(cases)
+          assert all(case.find(kind) is None for case in cases for kind in ('failure', 'error', 'skipped'))
+          print('69 executable task binding and campaign history cases passed; parent containers are excluded')
+          PY
+      - name: Qualify original sources and actual package restoration
+        working-directory: tracing-js-self
+        run: |
+          python tools/qualify-v8-release.py --megatoken "$MEGATOKEN_ROOT" --python python \
+            --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --out "$RUNNER_TEMP/v8-release-qualification" \
+            2>&1 | tee "$RUNNER_TEMP/release-controls/qualification.log"
+      - name: Seal complete original evidence including hidden operational files
+        if: always()
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, tarfile
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          archive = root / 'v8-release-qualification-original.tar.gz'
+          with tarfile.open(archive, 'w:gz') as handle:
+              for name in ('release-controls', 'v8-release-qualification'):
+                  source = root / name
+                  if source.exists():
+                      handle.add(source, arcname=name, recursive=True)
+          digest = hashlib.file_digest(archive.open('rb'), 'sha256').hexdigest()
+          (root / 'v8-release-qualification-original.sha256').write_text(digest + '  ' + archive.name + '\n')
+          print(json.dumps({'archive': archive.name, 'bytes': archive.stat().st_size, 'sha256': digest}))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v8-direct-release-original-evidence
+          if-no-files-found: error
+          retention-days: 30
+          include-hidden-files: true
+          path: |
+            ${{ runner.temp }}/v8-release-qualification-original.tar.gz
+            ${{ runner.temp }}/v8-release-qualification-original.sha256
+            ${{ runner.temp }}/release-controls/
