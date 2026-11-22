@@ -142,6 +142,9 @@ export function assertPromiseJoinNextV8(controller,record){
   // The callback's return empties its JS stack before the existing scheduler
   // commits its result Promise. Completing that turn precedes the next job.
   if(record.kind==='job'&&fields.action==='complete'&&selected?.status==='running'&&selected.reaction!=='join')return true;
+  if(record.kind==='promise.reaction.complete'&&selected?.status==='running'&&selected.reaction!=='join')return true;
+  if(['promise.adopt.enqueue','promise.adopt.self'].includes(record.kind)&&
+    controller.heap.get(fields.promise)?.adoption?.phase==='intent')return true;
   const head=controller.ready?.[0],job=head&&controller.jobs?.get(head);
   if(controller.stack?.length===0&&job?.reaction==='join')
     return record.kind==='promise.join.step'&&record.job===head;

@@ -20,6 +20,7 @@ import {GENERATOR_PROFILE_V8,GENERATOR_HEAP_FIELDS,GENERATOR_INTRINSICS_V8} from
 import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIELDS} from './protocol-proxy-v8.js';
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8} from './protocol-promise-executor-v8.js';
+import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_STATE_V8} from './protocol-promise-adoption-v8.js';
 import {ASYNC_CALL_PROFILE_V8,ASYNC_CALL_STATE_V8,ASYNC_CALL_FIELDS_V8} from './protocol-async-call-v8.js';
 import {BOUND_MODULE_SCHEDULER_PLAN_V8} from './module-scheduler-plan-v8.js';
 import {MODULE_SCHEDULER_PROFILE_V8,MODULE_SCHEDULER_LEDGER_FIELDS_V8} from './protocol-module-scheduler-v8.js';
@@ -62,8 +63,8 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
     heap:'Existing heap nodes with property, descriptor and private-element Maps serialized as entry arrays; Symbol keys remain tagged pairs.',
     asyncCalls:{profile:ASYNC_CALL_PROFILE_V8,schema:ASYNC_CALL_STATE_V8,fields:ASYNC_CALL_FIELDS_V8,
       storage:'Retained asyncCall metadata belongs to its internal execution Promise; asyncFunction marks its callable closure.',
-      capabilities:'First await detaches the child and restores its caller scope. Later continuations resume in the realm FIFO with the same receiver, live capture cells, and execution Promise. Child completion settles that Promise without completing its parent invocation.',
-      boundaries:'Async Promise callbacks, Promise adoption, thenable assimilation and implicit scheduler completion require separate profiles.'},
+      capabilities:'First await detaches the child and restores its caller scope. Later continuations resume in the realm FIFO with the same receiver, live capture cells, and execution Promise. Child completion settles that Promise or stages its exact owned-Promise adoption intent without completing its parent invocation.',
+      boundaries:'Async Promise callbacks, callable thenables and implicit scheduler completion require separate profiles.'},
     moduleScheduler:{profile:MODULE_SCHEDULER_PROFILE_V8,planSchema:BOUND_MODULE_SCHEDULER_PLAN_V8,heapFields:MODULE_SCHEDULER_LEDGER_FIELDS_V8,
       storage:'One logical module-scheduler heap node bound to the active observed program source, entry, acyclic module plan, exact driver functions and completion reaction source offsets.',
       initialization:'The first generated record initializes the fresh entry ledger using its exact active plan digest. The logical ledger cannot escape into guest values.',
@@ -112,7 +113,14 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       fields:['schema','capabilities','executors'],capabilityFields:['promise','resolve','reject','called','resolution'],
       executorFields:['promise','parent','child','phase','completion'],
       resolverFields:['promise','mode'],
-      capabilities:'Synchronous source executor calls, stable resolving function identities, a shared first-call cell, retained resolvers, primitive or owned Promise resolution, and executor throw rejection. Thenables, self resolution and async executor bodies require separate profiles.'},
+      capabilities:'Synchronous source executor calls, stable resolving function identities, a shared first-call cell, retained resolvers, primitive settlement or an exact owned-Promise adoption intent, and executor throw rejection. The first resolve consumes authority before either adoption job. Callable thenables and async executor bodies require separate profiles.'},
+    promiseAdoption:{profile:PROMISE_ADOPTION_PROFILE_V8,schema:PROMISE_ADOPTION_STATE_V8,
+      fields:['schema','owner','target','phase','cause','job','forwarding','error'],
+      phases:['intent','queued','observing','completed','self'],causes:['resolver','async','reaction','source'],
+      assimilationJobFields:['status','owner','closure','reaction','adoptionPromise','adoptionTarget','readySequence'],
+      forwardingJobFields:['status','owner','promise','reaction','closure','rejectionClosure','target','sequence','adoptionPromise','adoptionTarget','readySequence'],
+      capabilities:'Owned internal Promises with unchanged intrinsic then lookup use one existing realm FIFO. The original resolver or completed async/reaction frame binds an immediate resolution intent. Enqueue consumes that intent before any further record. The first job registers a forwarding dependency in registration order; a separate FIFO job forwards the settled target. First-call authority remains consumed throughout. Distinct mutual adoption cycles remain pending. Direct self resolution allocates a fresh declared TypeError identity at the self step, without either job. Source admission independently rebuilds each identity and source event.',
+      boundaries:'Callable thenables, then getters, proxies, changed Promise properties/prototypes, async reaction activation and general Error reflection are outside this slice. A declared self error has ordinary name/message data properties; native Error descriptors, stack and prototype are not claimed equivalent. Original-source checks refuse any observable mismatch.'},
     binaryMemory:{profile:MEMORY_PROFILE_V8,heapFields:MEMORY_HEAP_FIELDS_V8,maxBufferBytes:1024,
       typedArrayByteOrder:'little-endian',dataViewByteOrder:'explicit per operation',
       capabilities:'Fixed ordinary buffers and fixed/growable shared buffers; scalar conversions; shared view identities; bounded single-agent atomic operations. No detach, transfer, host buffers or cross-agent scheduling.'},

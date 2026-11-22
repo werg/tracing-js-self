@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="independent original source and public adoption: settled-executor" time="1.027071" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: pending-executor" time="1.089278" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: source-fifo-microtask" time="2.774661" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: rejected-executor" time="1.172199" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: root-async-result" time="0.567540" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: nested-async-result" time="0.575918" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: reaction-result" time="0.857678" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: reaction-fifo-chain" time="2.642538" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: late-resolver-and-throw" time="1.255488" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: executor-self-ignored-error" time="0.843816" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: reaction-self-ignored-error" time="0.765442" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: reaction-join-result" time="1.145940" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: nested-async-receiver" time="1.059306" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: rejected-async-result" time="0.930597" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="source ownership and identities are independent of registry order" time="0.819236" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="every source adoption, original completion and first-call cut restores exact public continuation" time="1.554530" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="source recheck refuses changed adoption targets, original source and an invented current-event certificate" time="0.028535" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent native queueMicrotask order changes with actual source scheduling and retains its process deadline" time="1.204215" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="unqualified then lookup, async callback activation, reflected self Error and pending cycles remain source refusals" time="0.782348" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="actual native adoption consumer independently replays every source context and restored cut" time="12.934404" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js" failure="Traceback (most recent call last):&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/native_v8.py&quot;, line 1379, in _replay_shared_state&#10;    state = apply_protocol_to_shared_state(&#10;            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/protocol_v8.py&quot;, line 1783, in apply_protocol_to_shared_state&#10;    apply_protocol_record(machine, record)&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/protocol_v8.py&quot;, line 1398, in apply_protocol_record&#10;    _apply(staged, record)&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/protocol_v8.py&quot;, line 986, in _apply&#10;    if not apply_promise_adoption_record(machine, record):&#10;           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/promise_adoption_v8.py&quot;, line 240, in apply_record&#10;    _fail(&quot;adoption owner changed before enqueue&quot;)&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/promise_adoption_v8.py&quot;, line 22, in _fail&#10;    raise ProtocolV8Error(&quot;Invalid owned Promise adoption: &quot; + message)&#10;megatoken.data.protocol_v8.ProtocolV8Error: Invalid owned Promise adoption: adoption owner changed before enqueue&#10;&#10;The above exception was the direct cause of the following exception:&#10;&#10;Traceback (most recent call last):&#10;  File &quot;&lt;string>&quot;, line 7, in &lt;module>&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/native_v8.py&quot;, line 354, in validate_v8_artifact&#10;    final_restored = _replay_shared_state(timeline, contexts, programs, roundtrip=True)&#10;                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/native_v8.py&quot;, line 1388, in _replay_shared_state&#10;    raise NativeV8Error(&#10;megatoken.data.native_v8.NativeV8Error: Invalid independently replayed protocol transition: Invalid owned Promise adoption: adoption owner changed before enqueue&#10;&#10;&#10;1 !== 0&#10;">
+		<failure type="testCodeFailure" message="Traceback (most recent call last):&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/native_v8.py&quot;, line 1379, in _replay_shared_state&#10;    state = apply_protocol_to_shared_state(&#10;            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/protocol_v8.py&quot;, line 1783, in apply_protocol_to_shared_state&#10;    apply_protocol_record(machine, record)&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/protocol_v8.py&quot;, line 1398, in apply_protocol_record&#10;    _apply(staged, record)&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/protocol_v8.py&quot;, line 986, in _apply&#10;    if not apply_promise_adoption_record(machine, record):&#10;           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/promise_adoption_v8.py&quot;, line 240, in apply_record&#10;    _fail(&quot;adoption owner changed before enqueue&quot;)&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/promise_adoption_v8.py&quot;, line 22, in _fail&#10;    raise ProtocolV8Error(&quot;Invalid owned Promise adoption: &quot; + message)&#10;megatoken.data.protocol_v8.ProtocolV8Error: Invalid owned Promise adoption: adoption owner changed before enqueue&#10;&#10;The above exception was the direct cause of the following exception:&#10;&#10;Traceback (most recent call last):&#10;  File &quot;&lt;string>&quot;, line 7, in &lt;module>&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/native_v8.py&quot;, line 354, in validate_v8_artifact&#10;    final_restored = _replay_shared_state(timeline, contexts, programs, roundtrip=True)&#10;                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&#10;  File &quot;/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/native_v8.py&quot;, line 1388, in _replay_shared_state&#10;    raise NativeV8Error(&#10;megatoken.data.native_v8.NativeV8Error: Invalid independently replayed protocol transition: Invalid owned Promise adoption: adoption owner changed before enqueue&#10;&#10;&#10;1 !== 0">
+[Error [ERR_TEST_FAILURE]: Traceback (most recent call last):
+  File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/native_v8.py", line 1379, in _replay_shared_state
+    state = apply_protocol_to_shared_state(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/protocol_v8.py", line 1783, in apply_protocol_to_shared_state
+    apply_protocol_record(machine, record)
+  File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/protocol_v8.py", line 1398, in apply_protocol_record
+    _apply(staged, record)
+  File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/protocol_v8.py", line 986, in _apply
+    if not apply_promise_adoption_record(machine, record):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/promise_adoption_v8.py", line 240, in apply_record
+    _fail("adoption owner changed before enqueue")
+  File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/promise_adoption_v8.py", line 22, in _fail
+    raise ProtocolV8Error("Invalid owned Promise adoption: " + message)
+megatoken.data.protocol_v8.ProtocolV8Error: Invalid owned Promise adoption: adoption owner changed before enqueue
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "&lt;string>", line 7, in &lt;module>
+  File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/native_v8.py", line 354, in validate_v8_artifact
+    final_restored = _replay_shared_state(timeline, contexts, programs, roundtrip=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/native_v8.py", line 1388, in _replay_shared_state
+    raise NativeV8Error(
+megatoken.data.native_v8.NativeV8Error: Invalid independently replayed protocol transition: Invalid owned Promise adoption: adoption owner changed before enqueue
+
+
+1 !== 0
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: Traceback (most recent call last):
+    File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/native_v8.py", line 1379, in _replay_shared_state
+      state = apply_protocol_to_shared_state(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/protocol_v8.py", line 1783, in apply_protocol_to_shared_state
+      apply_protocol_record(machine, record)
+    File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/protocol_v8.py", line 1398, in apply_protocol_record
+      _apply(staged, record)
+    File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/protocol_v8.py", line 986, in _apply
+      if not apply_promise_adoption_record(machine, record):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/promise_adoption_v8.py", line 240, in apply_record
+      _fail("adoption owner changed before enqueue")
+    File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/promise_adoption_v8.py", line 22, in _fail
+      raise ProtocolV8Error("Invalid owned Promise adoption: " + message)
+  megatoken.data.protocol_v8.ProtocolV8Error: Invalid owned Promise adoption: adoption owner changed before enqueue
+  
+  The above exception was the direct cause of the following exception:
+  
+  Traceback (most recent call last):
+    File "&lt;string>", line 7, in &lt;module>
+    File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/native_v8.py", line 354, in validate_v8_artifact
+      final_restored = _replay_shared_state(timeline, contexts, programs, roundtrip=True)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/workspace/scratch/05d92519587f/native-promise-adoption/src/megatoken/data/native_v8.py", line 1388, in _replay_shared_state
+      raise NativeV8Error(
+  megatoken.data.native_v8.NativeV8Error: Invalid independently replayed protocol transition: Invalid owned Promise adoption: adoption owner changed before enqueue
+  
+  
+  1 !== 0
+  
+      at TestContext.&lt;anonymous> (file:///workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js:124:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+		</failure>
+	</testcase>
+	<!-- tests 20 -->
+	<!-- suites 0 -->
+	<!-- pass 19 -->
+	<!-- fail 1 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 34678.325448 -->
+</testsuites>

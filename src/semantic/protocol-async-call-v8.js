@@ -2,6 +2,7 @@
 // Its first await returns to the caller; later resumptions own separate turns.
 import {assertAlgorithmFields,assertAlgorithmDataArray} from './ir.js';
 import {assertPlainPromiseResolutionWithApiV8} from './promise-resolution-shape-v8.js';
+import {stagePromiseAdoptionV8,hasPromiseAdoptionResolutionV8} from './protocol-promise-adoption-v8.js';
 
 export const ASYNC_CALL_PROFILE_V8='async-scoped-call/1';
 export const ASYNC_CALL_STATE_V8='semantic-async-call-state/1';
@@ -113,10 +114,13 @@ export function applyAsyncCallRecordV8(controller,record,api){
   }
   api.require(call.phase==='running'&&node.state==='pending'&&controller.stack.at(-1)===call.invocation,
     'completion requires the running unsettled async invocation');
-  if(record.completion.kind==='return')assertPlainPromiseResolutionWithApiV8(controller,record.completion.value,api);
+  const value=record.completion.value,adopting=record.completion.kind==='return'&&value[0]==='ref'&&
+    controller.heap.get(value[1])?.kind==='promise';
+  if(adopting)stagePromiseAdoptionV8(controller,record.promise,value[1],{kind:'async',invocation:record.invocation},api);
+  else if(record.completion.kind==='return')assertPlainPromiseResolutionWithApiV8(controller,value,api);
   const attached=call.attached;detach(controller,call,api);
   call.phase='completed';call.completion=copy(record.completion);
-  controller.settlePromise(record.promise,record.completion.kind==='return'?'fulfilled':'rejected',record.completion.value);
+  if(!adopting)controller.settlePromise(record.promise,record.completion.kind==='return'?'fulfilled':'rejected',value);
   if(attached)controller.lastReturn={kind:'return',value:['ref',record.promise]};
   return true;
 }
@@ -166,9 +170,11 @@ export function restoreAsyncCallStateV8(controller,api){
     call.continuations.forEach(id);
     if(call.phase==='completed'){
       completion(call.completion,value=>api.known(controller,value));
-      api.require(node.state===(call.completion.kind==='return'?'fulfilled':'rejected')&&api.eq(node.result,call.completion.value),
+      api.require(call.completion.kind==='return'&&call.completion.value[0]==='ref'&&
+        hasPromiseAdoptionResolutionV8(controller,identity,call.completion.value[1],{kind:'async',invocation:call.invocation},call.owner)||
+        node.state===(call.completion.kind==='return'?'fulfilled':'rejected')&&api.eq(node.result,call.completion.value)&&!node.adoption,
         'retained async completion differs from execution Promise');
-    }else api.require(node.state==='pending'&&call.completion===null,'unfinished async execution Promise is settled');
+    }else api.require(node.state==='pending'&&call.completion===null&&!node.adoption,'unfinished async execution Promise is settled');
     if(call.owner!==controller.rootInvocation)continue; // Shared realm heap; only this controller owns its frames/jobs.
     api.require(controller.frameFunctions.get(call.invocation)===fn.code&&controller.frameFunctions.has(call.parent),
       'retained async source frame identity');
@@ -198,7 +204,9 @@ export function restoreAsyncCallStateV8(controller,api){
         'retained suspended async body');
       else{
         completion(call.completion,value=>api.known(controller,value));
-        api.require(node.state===(call.completion.kind==='return'?'fulfilled':'rejected')&&api.eq(node.result,call.completion.value),
+        api.require(call.completion.kind==='return'&&call.completion.value[0]==='ref'&&
+          hasPromiseAdoptionResolutionV8(controller,identity,call.completion.value[1],{kind:'async',invocation:call.invocation},call.owner)||
+          node.state===(call.completion.kind==='return'?'fulfilled':'rejected')&&api.eq(node.result,call.completion.value)&&!node.adoption,
           'retained async completion differs from execution Promise');
       }
     }

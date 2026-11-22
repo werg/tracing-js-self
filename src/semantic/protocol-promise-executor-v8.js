@@ -2,6 +2,7 @@
 // existing public invocation stack; settlement uses its existing Promise jobs.
 import {assertAlgorithmFields,assertAlgorithmDataArray} from './ir.js';
 import {allowsPromiseJoinDetailedCallV8} from './protocol-promise-join-v8.js';
+import {stagePromiseAdoptionV8,hasPromiseAdoptionResolutionV8} from './protocol-promise-adoption-v8.js';
 
 export const PROMISE_EXECUTOR_PROFILE_V8='promise-executor/1';
 export const PROMISE_EXECUTOR_STATE_V8='semantic-promise-executor-state/1';
@@ -64,14 +65,12 @@ export function applyPromiseExecutorRecordV8(controller,record,api){
       mode=row.resolve===record.resolver[1]?'resolve':'reject';
     if(row.called)return true;
     if(target.state==='pending'&&mode==='resolve'&&record.value[0]==='ref'){
-      // Native resolving functions enqueue assimilation even for an owned
-      // Promise. Direct controller adoption omits those observable FIFO jobs.
-      api.require(false,controller.heap.get(record.value[1])?.kind==='promise'?
-        'Promise adoption requires its resolving-function job protocol':
+      api.require(controller.heap.get(record.value[1])?.kind==='promise',
         'thenable/object resolution requires its separate protocol');
+      stagePromiseAdoptionV8(controller,row.promise,record.value[1],{kind:'resolver',resolver:row.resolve},api);
     }
     row.called=true;row.resolution={mode,value:copy(record.value)};
-    if(target.state==='pending')controller.settlePromise(row.promise,mode==='resolve'?'fulfilled':'rejected',record.value);
+    if(target.state==='pending'&&!target.adoption)controller.settlePromise(row.promise,mode==='resolve'?'fulfilled':'rejected',record.value);
   }else{
     const data=state(controller,api),entry=data.executors.find(row=>row.promise===record.promise),
       cap=data.capabilities.find(row=>row.promise===record.promise),target=promise(controller,record.promise,api);
@@ -142,8 +141,10 @@ export function restorePromiseExecutorStateV8(controller,data,api){
     if(row.resolution){const {mode,value}=row.resolution;
       resolved=(mode==='reject'||value[0]!=='ref')&&target.adopted===null&&
         target.state===(mode==='resolve'?'fulfilled':'rejected')&&api.eq(target.result,value);
+      if(mode==='resolve'&&value[0]==='ref')resolved=hasPromiseAdoptionResolutionV8(controller,row.promise,value[1],
+        {kind:'resolver',resolver:row.resolve});
     }
-    api.require(row.called?resolved:target.state==='pending'&&target.adopted===null,
+    api.require(row.called?resolved:target.state==='pending'&&target.adopted===null&&!target.adoption,
       'capability first-call state contradicts Promise settlement');
   }
   const children=new Set(),executed=new Set();

@@ -22,6 +22,7 @@ import {PROTOCOL_SOURCE_ADAPTERS_V8} from './protocol-source-extensions-v8.js';
 import {createExperimentalModuleNamespaceSourceAdapterV8} from './protocol-module-namespace-source-v8.js';
 import {createSharedProtocolSourceComponentsV8} from './protocol-source-bridge-v8.js';
 import {createPromiseExecutorTeacherV8} from './protocol-promise-executor-source-v8.js';
+import {assertPromiseSourceMutationProfileV8} from './protocol-promise-adoption-source-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
 import {bindModuleSchedulerSourceProjectionV8} from './module-scheduler-source-bridge-v8.js';
 
@@ -58,6 +59,7 @@ function referencedNames(node){const names=new Set();
 export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROTOCOL_SOURCE_ADAPTERS_V8,
   moduleNamespacePlan=null,moduleSchedulerPlan=null,moduleSchedulerRequest=null}={}){
   if(validateBundle(bundle).valid!==true||replayExact(bundle).valid!==true)refuse('invalid owned archive');
+  assertPromiseSourceMutationProfileV8(bundle);
   const entry=bundle.entrySpec;if(entry?.kind!=='function')refuse('explicit function entry required');
   const source=bundle.sources.find(row=>row.sourceId===entry.sourceId)?.text;
   if(moduleSchedulerPlan){
@@ -81,7 +83,8 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       extensions=[...components.map(adapter=>adapter.sourceComponent),...shared].sort((a,b)=>a.id.localeCompare(b.id));
     return compilePromiseSourceProjectionV8(bundle,{maxGenerated,extensions,extensionIds:extensions.map(component=>component.id),
       sourceProfile:shared.length?'composed-protocol-source/1':components.some(adapter=>adapter.id==='promise-executor/1')?
-        'promise-executors-source/1':'promise-joins-source/1'});
+        'promise-executors-source/1':components.some(adapter=>adapter.id==='promise-adoption/1')?
+        'promise-adoption-source/1':'promise-joins-source/1'});
   }
   for(const adapter of adapters){
     const stateful=typeof adapter.captureState==='function'&&typeof adapter.restoreState==='function';
