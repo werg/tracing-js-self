@@ -1,0 +1,446 @@
+✖ diagnostic selections retain the full population and bind resume to canonical selected IDs (1.882149ms)
+✖ resume preserves refusals and completed evidence while leaving incomplete cases untested (0.195548ms)
+✖ resume rejects stale revisions, changed policies or bounds, and corrupted completed bytes (0.163351ms)
+✔ bounded independent jobs preserve declared result order and wait for active jobs on failure (52.808128ms)
+✖ V8 release snapshot retains complete population, selection, failures and every committed attempt (1.83554ms)
+▶ V8 release snapshot refuses changed, omitted and forged report authority
+  ✖ row (0.365359ms)
+  ✖ count (0.223881ms)
+  ✖ omitted (0.205513ms)
+  ✖ revision (0.212834ms)
+  ✖ selected (1.257096ms)
+  ✖ contract (0.259122ms)
+  ✖ candidate (0.242698ms)
+✖ V8 release snapshot refuses changed, omitted and forged report authority (4.188514ms)
+▶ V8 release snapshot refuses changed completed bytes and missing original failures
+  ✖ changed (0.411487ms)
+  ✖ missing (0.182099ms)
+✖ V8 release snapshot refuses changed completed bytes and missing original failures (1.150489ms)
+▶ V8 release snapshot refuses torn and reordered logs without repairing their bytes
+  ✖ torn (0.260515ms)
+  ✖ reordered (0.150872ms)
+✖ V8 release snapshot refuses torn and reordered logs without repairing their bytes (0.858999ms)
+▶ V8 release snapshot verifies journal CAS bytes and refuses an active writer
+  ✖ cas (0.271631ms)
+  ✖ writer (0.179335ms)
+✖ V8 release snapshot verifies journal CAS bytes and refuses an active writer (0.883935ms)
+✖ V8 release snapshot refuses a coherent journal that qualifies an unselected source (0.21674ms)
+✖ V8 release snapshot cannot hide overwritten historical artifact bytes (0.219534ms)
+✖ uncommitted orphan files remain explicit auxiliary bytes and never gain admission (0.218362ms)
+✖ V8 release snapshot refuses symbolic-link input before reading campaign objects (0.246203ms)
+✖ V8 release campaign verification runs with every semantic compiler and old release tool absent (0.218132ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 1
+ℹ fail 26
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 153.698697
+
+✖ failing tests:
+
+test at test/qualification-progress.test.js:15:1
+✖ diagnostic selections retain the full population and bind resume to canonical selected IDs (1.882149ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at directory (file:///workspace/scratch/05d92519587f/producer-v8-release/test/qualification-progress.test.js:12:36)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/qualification-progress.test.js:22:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/qualification-progress-XXXXXX'
+  }
+
+test at test/qualification-progress.test.js:27:1
+✖ resume preserves refusals and completed evidence while leaving incomplete cases untested (0.195548ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at directory (file:///workspace/scratch/05d92519587f/producer-v8-release/test/qualification-progress.test.js:12:36)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/qualification-progress.test.js:28:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/qualification-progress-XXXXXX'
+  }
+
+test at test/qualification-progress.test.js:48:1
+✖ resume rejects stale revisions, changed policies or bounds, and corrupted completed bytes (0.163351ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/qualification-progress-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at directory (file:///workspace/scratch/05d92519587f/producer-v8-release/test/qualification-progress.test.js:12:36)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/qualification-progress.test.js:49:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/qualification-progress-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:64:1
+✖ V8 release snapshot retains complete population, selection, failures and every committed attempt (1.83554ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:65:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:83:104
+✖ row (0.365359ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:84:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:83:104)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:83:104
+✖ count (0.223881ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:84:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:83:104)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:83:104
+✖ omitted (0.205513ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:84:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:83:104)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:83:104
+✖ revision (0.212834ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:84:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:83:104)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:83:104
+✖ selected (1.257096ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:84:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:83:104)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:83:104
+✖ contract (0.259122ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:84:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:83:104)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:83:104
+✖ candidate (0.242698ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:84:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:83:104)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:101:55
+✖ changed (0.411487ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:102:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:101:55)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:101:55
+✖ missing (0.182099ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:102:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:101:55)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:110:54
+✖ torn (0.260515ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:111:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:110:54)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:110:54
+✖ reordered (0.150872ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:111:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:110:54)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:123:50
+✖ cas (0.271631ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:124:33)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:123:50)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:123:50
+✖ writer (0.179335ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:124:33)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:123:50)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:137:1
+✖ V8 release snapshot refuses a coherent journal that qualifies an unselected source (0.21674ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:138:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:142:1
+✖ V8 release snapshot cannot hide overwritten historical artifact bytes (0.219534ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:143:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:147:1
+✖ uncommitted orphan files remain explicit auxiliary bytes and never gain admission (0.218362ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:148:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:158:1
+✖ V8 release snapshot refuses symbolic-link input before reading campaign objects (0.246203ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:159:28)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }
+
+test at test/v8-release-campaign.test.js:164:1
+✖ V8 release campaign verification runs with every semantic compiler and old release tool absent (0.218132ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/tmp/v8-release-campaign-XXXXXX'
+      at mkdtempSync (node:fs:3144:18)
+      at fixture (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:19:16)
+      at TestContext.<anonymous> (file:///workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js:165:28)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/tmp/v8-release-campaign-XXXXXX'
+  }

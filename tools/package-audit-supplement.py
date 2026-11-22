@@ -65,6 +65,11 @@ def main():
 
     require(file_sha256(args.packager) == selection["packagerSha256"],
             "Pinned archive implementation changed")
+    # Current wrappers pin their extracted archive dependency before executing
+    # its bytes. Historical standalone packagers remain identified by their own
+    # source pin; the neutral helper can also be selected directly.
+    implementation = (helpers.archive_implementation_receipts()
+                      if hasattr(helpers, "archive_implementation_receipts") else {})
     expected, groups, roots = {}, {}, {}
     for row in selection["files"]:
         name = row["path"]
@@ -82,7 +87,15 @@ def main():
         "audit/selection.json": args.selection.resolve(),
         "audit/README.md": args.notes.resolve(),
         "audit/package-audit-supplement.py": Path(__file__).resolve(),
+        **{"audit/archive-implementation/" + name: args.packager.resolve().with_name(name)
+           for name in implementation},
     })
+    for row in extras:
+        prefix = "audit/archive-implementation/"
+        if row["path"].startswith(prefix):
+            expected_implementation = implementation[row["path"][len(prefix):]]
+            require({key: row[key] for key in ("bytes", "sha256")} == expected_implementation,
+                    "Pinned archive dependency changed before packaging")
     require(not (set(sources) & set(extra_sources)), "Audit metadata path collision")
     sources.update(extra_sources)
     files = sorted(actual + extras, key=lambda row: row["path"])
@@ -97,6 +110,7 @@ def main():
         "isPreparedTrainingDataset": False,
         "selectionSha256": file_sha256(args.selection),
         "packagerSha256": selection["packagerSha256"],
+        "packagerImplementationFiles": implementation,
         "qualifications": qualifications,
         "currentQualification": selection["currentQualification"],
         "groups": dict(sorted(summary.items())),
@@ -115,6 +129,7 @@ def main():
         "isPreparedTrainingDataset": False, "archiveBytes": archive.stat().st_size,
         "includedSourceFiles": len(actual), "includedSourceBytes": payload["includedSourceBytes"],
         "selectionSha256": payload["selectionSha256"], "groups": payload["groups"],
+        "packagerImplementationFiles": implementation,
         "qualifications": qualifications, "currentQualification": selection["currentQualification"]}
     (output / "audit-receipt.json").write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
     print(json.dumps(receipt, sort_keys=True))
