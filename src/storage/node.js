@@ -195,3 +195,6 @@ export {SelectedServiceAdmissionCoordinator} from './selected-service-coordinato
 
 export {DurableSelectedOrchestrationExecutionLock} from './selected-orchestration-execution-lock.js';
 export {DurableNativeV8RequestJournal} from './native-request-journal-v8.js';
+export {createSelectedOrchestrationExecutionClock,assertSelectedOrchestrationExecutionClock,
+  validateSelectedOrchestrationClockReceipt}
+  from './selected-orchestration-clock.js';
