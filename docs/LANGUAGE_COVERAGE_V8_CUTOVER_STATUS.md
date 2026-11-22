@@ -68,12 +68,16 @@ The previous detailed PR narrative is preserved in
   be terminal, no selection may remain pending anywhere in the adapter, and
   sibling/archived state, attempts, settings and RNG must match exactly. A
   recovered closed result is nonresumable and authorizes no host dispatch.
-  Producer `5fc8e9e6` / native `1507ac24` is separately testing actual close
-  history and transport in
-  [run 45028606167](https://github.com/werg/tracing-js-self/actions/runs/45028606167),
-  with required populations of 55 native and 95 producer leaves. Completion,
-  cancellation, lost/altered replies, repeated loss, unknown outcome, history
-  acknowledgement races and unresolved intents retain distinct controls.
+  Producer `5fc8e9e6` / native `1507ac24` completed its original
+  [run 45028606167](https://github.com/werg/tracing-js-self/actions/runs/45028606167):
+  **55 native cases passed; 95 producer leaves ran, with 94 passes and one
+  failure**, zero errors/skips. The existing same-owner cancellation fixture
+  crashed because its replacement function did not accept the native fixture's
+  new argument. The correction is implemented; the failed gate does not count
+  as qualification of that fix or later composition.
+  [Complete original failure and exact runtime evidence](evidence/v8-terminal-hosted-5fc8-2026-11-22/README.md).
+  Completion, cancellation, lost/altered replies, repeated loss, unknown outcome,
+  history acknowledgement races and unresolved intents retain distinct controls.
   [Local observations, corrections and limits](evidence/v8-terminal-close-local-2026-11-22/README.md).
   Its history integration with causal child bootstrap and service-backed
   same-owner recovery remain subsequent work.

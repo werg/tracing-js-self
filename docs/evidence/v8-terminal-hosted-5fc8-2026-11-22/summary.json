@@ -1,0 +1,32 @@
+{
+  "schema": "paired-hosted-recovery-evidence/1",
+  "runId": 45028606167,
+  "jobId": 137227001073,
+  "conclusion": "failure",
+  "producerRevision": "5fc8e9e690806d8fe2e6b2da9f0d820056ee7d55",
+  "nativeRevision": "1507ac24653158c68c91b314aefe83046f81ba31",
+  "artifactId": 14757571941,
+  "artifactSha256": "c2852d32a23b4f2c7fa56073dc3c93e4c1fe83de7c7e18e6082de6f09cec81b6",
+  "populations": {
+    "native": {
+      "total": 55,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 55,
+      "failedNames": []
+    },
+    "producer": {
+      "total": 95,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 94,
+      "failedNames": [
+        "actual Python track_cancel reconciliation requires the acknowledged same-owner service intent"
+      ]
+    }
+  },
+  "authorizesPromotion": false,
+  "learnedSuccess": null
+}
