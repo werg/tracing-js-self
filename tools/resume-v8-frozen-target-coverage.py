@@ -221,19 +221,26 @@ def execute(args, plan):
     def run(name, command, timeout):
         start = time.monotonic()
         print(json.dumps({"stage": name, "command": command}), flush=True)
+        failure = None
+        stream_errors = []
         with (output / (name + ".log")).open("xb") as log:
             process = subprocess.Popen(command, cwd=native, env=env, stdout=subprocess.PIPE,
                                        stderr=subprocess.STDOUT)
             def forward():
-                while block := process.stdout.read1(65536):
-                    log.write(block)
-                    log.flush()
-                    sys.stdout.buffer.write(block)
-                    sys.stdout.buffer.flush()
+                try:
+                    while block := process.stdout.read1(65536):
+                        log.write(block)
+                        log.flush()
+                        sys.stdout.buffer.write(block)
+                        sys.stdout.buffer.flush()
+                except Exception as error:
+                    stream_errors.append(str(error))
             reader = threading.Thread(target=forward)
             reader.start()
             try:
                 process.wait(timeout=timeout)
+            except subprocess.TimeoutExpired as error:
+                failure = str(error)
             finally:
                 if process.poll() is None:
                     process.terminate()
@@ -244,10 +251,12 @@ def execute(args, plan):
                         process.wait()
                 reader.join()
         stages.append({"stage": name, "command": command, "exitCode": process.returncode,
-                       "seconds": time.monotonic() - start})
+                       "seconds": time.monotonic() - start, "timedOut": failure is not None,
+                       "error": failure, "streamErrors": stream_errors})
         write(output / (name + ".receipt.json"), stages[-1])
         print(json.dumps(stages[-1]), flush=True)
-        require(process.returncode == 0, "Frozen continuation stage failed: " + name)
+        require(failure is None and not stream_errors and process.returncode == 0,
+                "Frozen continuation stage failed: " + name)
 
     run("resume-34-updates", [sys.executable, "-m", "megatoken", "train", "--config", str(config_path),
                             "--resume", str(checkpoint)], 3600)
