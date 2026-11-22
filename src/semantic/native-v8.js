@@ -35,7 +35,7 @@ export function validateV8NativeReceipt(exported,receipt,policy){
   const direct=exported?.sidecar?.schema==='semantic-protocol-host-region-evidence/1';
   if(exported?.public?.schema!=='semantic-execution/8'||exported.public.traceFormat!=='semantic-trace/8'||
     !Array.isArray(exported.contexts)||!['semantic-region-evidence/1','semantic-protocol-region-evidence/1',
-      'semantic-protocol-host-region-evidence/1'].includes(exported.sidecar?.schema))
+      'semantic-protocol-host-region-evidence/1','semantic-session-region-evidence/1'].includes(exported.sidecar?.schema))
     fail('exact v8 source-bound artifact required');
   const side=exported.sidecar,identity=side.identity;
   let sourceArtifactDigest;
@@ -54,6 +54,10 @@ export function validateV8NativeReceipt(exported,receipt,policy){
   }else{
     if(!side.sourceArtifact||typeof side.sourceArtifact!=='object'||Array.isArray(side.sourceArtifact)||
       side.sourceArtifactDigest!==hashAlgorithmData(side.sourceArtifact))fail('source artifact digest is missing or altered');
+    if(side.schema==='semantic-session-region-evidence/1'&&
+      (side.sourceArtifact.public?.schema!=='semantic-session-source-target/1'||
+       side.sourceArtifact.sidecar?.schema!=='semantic-session-source-evidence/1'))
+      fail('source session evidence has an incompatible original collection');
     sourceArtifactDigest=side.sourceArtifactDigest;
   }
   const generated=exported.public.timeline.filter(row=>row.mode==='generated').length;

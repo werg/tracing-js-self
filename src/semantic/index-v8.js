@@ -18,6 +18,8 @@ export {REGION_PROGRAM_VERSION,REGION_EXECUTION_VERSION,REGION_TRACE_VERSION,REG
 export {RegionExecutionHarness} from './region-harness.js';
 export {encodePureRegionRecord,decodePureRegionRecord} from './pure-region-v8.js';
 export {verifyRegionTrainingCase,projectRegionWitness,recheckRegionEvidence,admitRegionEvidence,checkRegionCounterfactualPrefixes} from './compiler-v8.js';
+export {SOURCE_SESSION_EVIDENCE_V8,SOURCE_SESSION_ARTIFACT_V8,
+  verifyRegionSourceSessionV8,recheckRegionSourceSessionV8} from './source-session-v8.js';
 export {CAUSAL_LM_V8_BRIDGE_VERSION,validateRegionContext,decodeCausalLmV8Target,causalLmV8Prompt,
   encodeCausalLmV8Example,validateRegionTrainingContexts,buildCausalLmV8Examples,createCausalLmV8Selector,
   commitCausalLmV8Selection,auditRegionServingCosts} from './causal-lm-v8.js';

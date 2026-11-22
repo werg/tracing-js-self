@@ -16,6 +16,49 @@ must name executable evidence; historical receipts retain their original pins.
 - The producer PR is the main progress report. Paired changes are published in
   small increments. Repository commits and this ledger support session recovery.
 
+## Source-qualified repeated calls and full production support inventory — 22 November 2026
+
+The direct public V8 source verifier can now compose 2–16 independently checked
+fresh root invocations of one immutable program. Original selected bytes and
+source-certified identities are retained; causal contexts, complete observation
+batches and JSON restoration are independently rebuilt. Controlled origins,
+rehashing changed source/plans, incomplete component collections and malformed
+worker session wrappers refuse. Cross-component callback ID collisions remain
+an explicit bounded refusal. Source-only checking never promotes a native claim.
+
+A separate supporting cohort freezes all **64 members from 16 authored source
+families** before execution: pure, callback/recovery, two repeated calls and a
+source-qualified child teacher. Seed 17 gives **48 train / 12 validation / 4 test**
+source members, with every family and its variants held together. The ordinary
+qualification CLI preserves all source IDs and failure dispositions, binds only
+the predeclared registry and retains failed binding evidence. The unchanged
+original665/selected66 populations are still independently required.
+
+The complete producer integration selection passes **37/37**, zero skips. The
+first attempt used nonexistent `/tmp` and is retained as a setup failure; the
+corrected run uses the workspace temporary directory. Native `b276dc3` adds
+strict session admission and an actual prepared-corpus SE supply qualifier;
+**23/23** local controls and both Ruff gates over **592 files** pass. Both sets
+are engineering checks, not current full production supply results. The producer
+policy pins exact `b276dc3c14075206c1550cbaacb3f456712788b3` and its paired workflow
+now requires all64 source/native/token/packing checks, ordinary preparation of
+every source and unchanged production behavior requirements in both train and
+validation. Full new-cohort execution remains pending at this checkpoint.
+
+The exact hosted native215/producer073 pair now passes **757 native controls and
+36 producer transport/teacher controls with zero skips** in each gallery and
+interoperability lane, all11/all66 admission and costs, and both ordinary semantic
+and coordinator-training two-update/resume/export/service-restore commands.
+Both ordinary runs acknowledge zero generated actions and keep learnedSuccess
+null. Complete logs and archive limits are retained in native
+`docs/evidence/v8-paired215-producer073-2026-11-22/`. General CPU215 was cancelled
+by its former concurrency setting; the new workflow preserves active CPU runs.
+
+See `docs/V8_SOURCE_SESSIONS_AND_SUPPORT_COHORT.md` for authority, collection and
+remaining gates. Durable composite history, actual source-supply execution,
+accepted-program and held-out learning, broader edition/language work and final
+default/operational acceptance remain open. **0/17 full packages are closed.**
+
 ## Composite recovery and stricter behavior evidence — 22 November 2026
 
 The ordinary coordinator/child driver now supports verified quiescent composite
@@ -1626,7 +1669,7 @@ serving, and measured learned success.
 | 5 | Independent native V8 semantics | In progress | Direct detail, observation, effect and primitive paths plus installed import controls are delivered. Remaining: complete contract ownership and paired language-family semantics, broader malformed-state controls, final current-pair absence/replay proof. |
 | 6 | Composable source projections | In progress | Unique event ownership and atomic private/public rollback are implemented for current adapters; map callbacks now compose finally/throw and generator creation/yield. Remaining: general IteratorClose/abrupt cleanup, cross-family ownership and exact source/native qualification of the expanded population. |
 | 7 | Protocol/effect/lifecycle composition | In progress | Protocol → effect → callback → protocol, reentrancy, guest errors, cancellation and restore with independent source/native checks. Coordinated driver/model/host recovery now preserves acknowledged history and budgets. |
-| 8 | Ordinary V8 training admission | In progress | Strict preparation, ordinary readiness, recipe/loader/config/stage/resume gates and source-bound two-track coordinator materialization are implemented. Remaining: fresh ordinary orchestration command proof, expanded production source supply and recipes with exact final assets; source eligibility remains distinct from learned outcomes. |
+| 8 | Ordinary V8 training admission | In progress | Strict preparation, ordinary readiness, recipe/loader/config/stage/resume gates and source-bound two-track coordinator materialization are implemented. Ordinary orchestration command proof passes at215/073. Remaining: complete source-supply qualification and recipes with exact final assets; source eligibility remains distinct from learned outcomes. |
 | 9 | Canonical selected serving and live restore | In progress | Acknowledged state, random/budget state, registered private snapshots, durable intake and explicit later-history cuts are implemented. Actual fitted weights recover one acknowledged record from an older saved packet and reproduce the same refused next output. Remaining: general accepted-record/complete-program recovery, automatic transition durability, return-value callbacks, child/reentrant work, cancellation after the trusted head, bounded rotation/distributed ownership and final source/native/no-redispatch operational proof. |
 | 10 | References, coercion and abrupt operations | In progress | General references, property keys, guest error objects, partial effects, nested binding and cleanup; source/public/native/restore cases. |
 | 11 | Promises, async and scheduler | In progress | Adoption order, repeated thenables, getter/throw/first-call/finally behavior; public/native transitions; combinators, async functions/generators and module interactions. |
@@ -1634,7 +1677,7 @@ serving, and measured learned success.
 | 13 | Modules, persistent sessions, TS and host graphs | In progress | Per-module evaluation and sibling TLA scheduling, cycles/live bindings/namespaces/imports, persistent restore, emitted-JS provenance and host graph/lifecycle parity. |
 | 14 | Binary memory, RegExp and remaining intrinsics | In progress (bounded families) | Resizing/detachment/transfer/species/coercion, complete selected text/numeric families and iterator helpers, declared resource boundaries. |
 | 15 | Edition long tail and separate profiles | Not started | Dynamic eval and realms, applicable Annex B/Intl, weak references/finalization, shared agents and memory constraints; separately pinned later additions. |
-| 16 | Data, ordinary model lifecycle and studies | In progress | All 66 recurring and 665 original sources are independently readmitted on recorded exact pairs; an ordinary semantic two-update lifecycle and separate one-record fitted diagnostic have retained assets. The new coordinator teacher still requires its own ordinary lifecycle result. Remaining: expanded production corpus and recipes, final-pair optimizer/resume/export/reload, frozen held-out and comprehension studies, and honest learned-quality/cost gates. |
+| 16 | Data, ordinary model lifecycle and studies | In progress | All 66 recurring and 665 original sources are independently readmitted on recorded exact pairs; an ordinary semantic two-update lifecycle and separate one-record fitted diagnostic have retained assets. The coordinator teacher has its own passing ordinary two-update lifecycle result at215/073, with zero acknowledged model actions. Remaining: expanded production corpus and recipes, final-pair optimizer/resume/export/reload, frozen held-out and comprehension studies, and honest learned-quality/cost gates. |
 | 17 | Coordinated default cutover and operational proof | Not started | Complete parity first; change defaults/remove legacy; freeze final pair; actual-head CI, installed absence tests, release restore, effect-safe rollback/deployment qualification. |
 
 ## Initial regression targets

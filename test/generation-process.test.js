@@ -13,6 +13,11 @@ import {CampaignStore,identityHash} from '../src/corpus/campaign-store.mjs';
 import {trainingCandidateTasks,candidateSourceInventory,SOURCE_RECIPES} from '../src/corpus/training-candidates.mjs';
 import {buildSourceRegistry,immutableSourceRegistry,frozenSplitIdentity,verifyFrozenSplitIdentity}
   from '../src/corpus/source-registry.mjs';
+import {semanticRecipeFamilies} from '../src/training/recipe-fixtures.js';
+import {validateOrchestrationTranscriptV8} from '../src/semantic/orchestration-training-v8.js';
+import {buildSemanticRegionSupportCohortV8} from '../fixtures/semantic-regions/support-cohort.js';
+import {bindRegionFamilySplit} from '../src/semantic/dataset-v8.js';
+import {verifyRegionDatasetBinding} from '../src/semantic/family-registry-v8.js';
 
 const task={kind:'source',producerRevision:'a'.repeat(40),fixture:{id:'one',
   source:'"use strict";function run(x){return x+1;}',entry:'run',args:[1],fixture:{calls:[]},family:'increment'}};
@@ -62,6 +67,75 @@ test('worker transport preserves null prototypes and shared input identities',as
   // graph, rather than silently certifying a plain object with another meaning.
   assert.equal(run.result.status,direct.status,run.result.reason);
   assert.equal(run.result.reason,direct.reason);
+});
+test('V8 source-session wrappers recursively preserve graph arguments and canonical host fixtures',()=>{
+  const shared=Object.create(null);shared.self=shared;shared.value=3n;
+  const sparse=[undefined,,NaN,-0,Infinity],family=semanticRecipeFamilies()[0],
+    sessionCases=family.repeated.cases.map((item,index)=>({...item,
+      args:[shared,shared,sparse],fixture:{calls:[{operation:'demo.effect',
+        arguments:[shared,shared],result:sparse}]},id:'support-session-call-'+index})),
+    fixture={...sessionCases[0],id:'support-session-wrapper',sessionCases},
+    request={kind:'source',traceVersion:8,producerRevision:'a'.repeat(40),fixture},
+    encoded=JSON.parse(JSON.stringify(encodeGenerationTask(request))),
+    restored=decodeGenerationTask(encoded).fixture;
+  assert.deepEqual(restored.sessionCases.map(item=>item.id),['support-session-call-0','support-session-call-1']);
+  for(const item of restored.sessionCases){
+    assert.equal(item.args[0],item.args[1]);assert.equal(Object.getPrototypeOf(item.args[0]),null);
+    assert.equal(item.args[0].self,item.args[0]);assert.equal(item.args[0].value,3n);
+    assert.equal(item.args[2][0],undefined);assert.ok(Object.hasOwn(item.args[2],0));
+    assert.ok(!Object.hasOwn(item.args[2],1));assert.ok(Number.isNaN(item.args[2][2]));
+    assert.ok(Object.is(item.args[2][3],-0));assert.equal(item.args[2][4],Infinity);
+    const call=item.fixture.calls[0],args=decodeOwnedGraph(JSON.stringify(call.argumentGraph)),
+      [result]=decodeOwnedGraph(JSON.stringify(call.resultGraph));
+    assert.equal(args[0],args[1]);assert.equal(args[0].self,args[0]);assert.equal(args[0].value,3n);
+    assert.equal(result[0],undefined);assert.ok(Object.hasOwn(result,0));assert.ok(!Object.hasOwn(result,1));
+    assert.ok(Number.isNaN(result[2]));assert.ok(Object.is(result[3],-0));assert.equal(result[4],Infinity);
+  }
+  assert.deepEqual(restored.ancestorIds,['source-template:'+family.template]);
+  assert.equal(encodeGenerationTask({...request,fixture:restored}).fixture.sessionCases.length,2);
+  for(const invalid of [null,false,0]){
+    assert.throws(()=>encodeGenerationTask({...request,fixture:{...fixture,sessionCases:invalid}}),/sessionCases/);
+    const malformed=encodeGenerationTask({...request,fixture:{...fixture,sessionCases:[]}});
+    malformed.fixture.sessionCases=invalid;
+    assert.throws(()=>decodeGenerationTask(malformed),/sessionCases/);
+  }
+});
+test('V8 source worker attaches only the authored orchestration teacher and rejects incompatible flags',async t=>{
+  const cohort=buildSemanticRegionSupportCohortV8(),family=semanticRecipeFamilies()[0],fixture=cohort.fixtures.find(row=>
+    row.supportCohort.variant==='child-teacher'),
+    run=await runGenerationProcess({kind:'source',traceVersion:8,fixture},
+      {outputDirectory:directory(t),timeoutMs:30000});
+  assert.equal(run.result.status,'locally_verified',run.result.reason);
+  assert.equal(validateOrchestrationTranscriptV8(run.result.exported).valid,true);
+  const member=cohort.registry.sources.find(source=>source.id===fixture.id),
+    bound=bindRegionFamilySplit(run.result.exported,member,cohort.registry);
+  assert.equal(bound.sidecar.splitIdentity.sourceId,fixture.id);
+  assert.equal(bound.sidecar.splitIdentity.registryDigest,cohort.registry.digest);
+  assert.equal(verifyRegionDatasetBinding(bound).valid,true);
+  const badType=await runGenerationProcess({kind:'source',traceVersion:8,
+    fixture:{...family.pure,id:'se-support-bad-flag',orchestrationTeacher:'yes'}},
+    {outputDirectory:directory(t),timeoutMs:30000});
+  assert.equal(badType.result.status,'collection_failed');
+  assert.match(badType.result.reason,/must be a boolean/);
+  const badTrace=await runGenerationProcess({kind:'source',traceVersion:7,
+    fixture:{...family.pure,id:'se-support-bad-trace',orchestrationTeacher:true}},
+    {outputDirectory:directory(t),timeoutMs:30000});
+  assert.equal(badTrace.result.status,'collection_failed');
+  assert.match(badTrace.result.reason,/requires a V8 source task/);
+});
+test('V8 generation worker processes data-only sessionCases through ordinary source verification',async t=>{
+  const cohort=buildSemanticRegionSupportCohortV8(),fixture=cohort.fixtures.find(row=>
+    row.supportCohort.variant==='repeated-2calls'),
+    run=await runGenerationProcess({kind:'source',traceVersion:8,fixture},
+      {outputDirectory:directory(t),timeoutMs:30000});
+  assert.equal(run.result.status,'locally_verified',run.result.reason);
+  assert.equal(run.result.exported.sidecar.schema,'semantic-session-region-evidence/1');
+  assert.equal(run.result.exported.sidecar.sourceArtifact.sidecar.collection.components.length,2);
+  const member=cohort.registry.sources.find(source=>source.id===fixture.id),
+    bound=bindRegionFamilySplit(run.result.exported,member,cohort.registry);
+  assert.equal(bound.sidecar.splitIdentity.sourceId,fixture.id);
+  assert.equal(bound.sidecar.splitIdentity.registryDigest,cohort.registry.digest);
+  assert.equal(verifyRegionDatasetBinding(bound).valid,true);
 });
 test('encoded fixtures separate structural metadata aliases from exact guest graphs',()=>{
   const value=Object.create(null);value.self=value;

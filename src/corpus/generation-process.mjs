@@ -54,10 +54,16 @@ function fixtureJsonTree(value,ancestors=new Set(),registryOccurrences=new Map()
 // prototypes. Use the canonical graph boundary for every semantic value.
 export function encodeGenerationTask(task,{jsonStorage=true}={}){
   const encodeFixture=fixture=>{
-    const {args,cases,...data}=fixture;
+    const {args,cases,sessionCases,...data}=fixture;
+    let encodedSessionCases={};
+    if(Object.hasOwn(fixture,'sessionCases')){
+      if(!Array.isArray(sessionCases))throw new TypeError('Generation sessionCases must be an array');
+      encodedSessionCases={sessionCases:sessionCases.map(encodeFixture)};
+    }
     return {...data,argsGraph:encodeNativeGraph(args??[]),
       ...(data.fixture?{fixture:canonicalFixturePlan(data.fixture)}:{}),
-      ...(cases?{cases:cases.map(encodeFixture)}:{})};
+      ...(cases?{cases:cases.map(encodeFixture)}:{}),
+      ...encodedSessionCases};
   };
   const fixture=encodeFixture(task.fixture);
   return {...task,fixture:jsonStorage?fixtureJsonTree(fixture):fixture};
@@ -73,9 +79,15 @@ export function persistGenerationCandidate(campaign,task){
 }
 export function decodeGenerationTask(task){
   const decodeFixture=fixture=>{
-    const {argsGraph,cases,...data}=fixture;
+    const {argsGraph,cases,sessionCases,...data}=fixture;
+    let decodedSessionCases={};
+    if(Object.hasOwn(fixture,'sessionCases')){
+      if(!Array.isArray(sessionCases))throw new TypeError('Encoded generation sessionCases must be an array');
+      decodedSessionCases={sessionCases:sessionCases.map(decodeFixture)};
+    }
     return {...data,args:decodeOwnedGraph(JSON.stringify(argsGraph)),
-      ...(cases?{cases:cases.map(decodeFixture)}:{})};
+      ...(cases?{cases:cases.map(decodeFixture)}:{}),
+      ...decodedSessionCases};
   };
   return {...task,fixture:decodeFixture(task.fixture)};
 }

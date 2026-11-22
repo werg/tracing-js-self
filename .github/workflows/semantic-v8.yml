@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        population: [interoperability, gallery, all]
+        population: [interoperability, gallery, all, se-support]
     defaults:
       run:
         shell: bash
@@ -108,6 +108,8 @@ jobs:
             test/semantic-selected-orchestration-v8.test.js test/semantic-selected-orchestration-checkpoint-v8.test.js \
             test/semantic-native-orchestration-recovery-v8.test.js \
             test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js \
+            test/semantic-source-session-v8.test.js test/semantic-region-support-cohort.test.js \
+            test/semantic-qualification-population-v8.test.js \
             2>&1 | tee "$RUNNER_TEMP/semantic-v8-transport-tests.xml"
           python - <<'PY'
           import os, xml.etree.ElementTree as ET
@@ -162,6 +164,45 @@ jobs:
             --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \
             --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \
             2>&1 | tee "$RUNNER_TEMP/semantic-v8-ordinary-orchestration.log"
+      - name: Prepare all frozen support sources and require production SE behavior in both splits
+        if: ${{ matrix.population == 'se-support' }}
+        working-directory: tracing-js-self
+        run: |
+          python - <<'PY' 2>&1 | tee "$RUNNER_TEMP/semantic-v8-support-supply.log"
+          import json, os, subprocess
+          from pathlib import Path
+          temporary = Path(os.environ['RUNNER_TEMP'])
+          qualification = temporary / 'v8-admitted'
+          report = json.loads((qualification / 'report.json').read_text())
+          registry = json.loads((qualification / 'family-registry.json').read_text())
+          rows = report['rows']
+          source_ids = [source['id'] for source in registry['sources']]
+          if (report['population'] != 'se-support' or report['declared'] != 64 or
+              report['preparationOnly'] or report['sourceQualified'] != 64 or report['nativeAdmitted'] != 64 or
+              report['registryDigest'] != registry['digest'] or len(rows) != 64 or
+              len(set(source_ids)) != 64 or {row['sourceId'] for row in rows} != set(source_ids) or
+              any(row['source'] != 'passed' or row['native'] != 'passed' for row in rows)):
+              raise ValueError('Every frozen support source requires its original source and independent native admission')
+          inventory = temporary / 'v8-support-source-ids.json'
+          inventory.write_text(json.dumps({'schema': 'semantic-v8-source-population/1',
+              'registryDigest': registry['digest'], 'sourceIds': source_ids}, indent=2) + '\n')
+          prepared = temporary / 'v8-support-prepared'
+          consumer = Path(os.environ['MEGATOKEN_ROOT'])
+          policy = json.loads(Path(os.environ['SEMANTIC_V8_NATIVE_POLICY']).read_text())
+          command = [os.environ['MEGATOKEN_PYTHON'], str(consumer / 'scripts/prepare_semantic_v8.py')]
+          for row in rows:
+              command.extend(['--input', str(qualification / row['sourceArtifact'])])
+          command.extend(['--output', str(prepared), '--producer-root', os.environ['TRACING_JS_SELF_ROOT'],
+              '--producer-revision', report['producerRevision'], '--consumer-revision', policy['consumerRevision'],
+              '--tokenizer-json', os.environ['MEGATOKEN_TOKENIZER_JSON'], '--max-positions', '128', '--max-history', '128'])
+          subprocess.run(command, check=True)
+          subprocess.run([os.environ['MEGATOKEN_PYTHON'], str(consumer / 'scripts/qualify_semantic_v8_supply.py'),
+              '--prepared-root', str(prepared), '--expected-source-ids', str(inventory),
+              '--producer-revision', report['producerRevision'], '--consumer-revision', policy['consumerRevision'],
+              '--registry-digest', registry['digest'], '--tokenizer-json', os.environ['MEGATOKEN_TOKENIZER_JSON'],
+              '--max-positions', '128', '--max-history', '128',
+              '--output', str(temporary / 'semantic-v8-support-supply.json')], check=True)
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -181,3 +222,7 @@ jobs:
             ${{ runner.temp }}/v8-ordinary-lifecycle/
             ${{ runner.temp }}/semantic-v8-ordinary-orchestration.log
             ${{ runner.temp }}/v8-ordinary-orchestration/
+            ${{ runner.temp }}/semantic-v8-support-supply.log
+            ${{ runner.temp }}/semantic-v8-support-supply.json
+            ${{ runner.temp }}/v8-support-source-ids.json
+            ${{ runner.temp }}/v8-support-prepared/

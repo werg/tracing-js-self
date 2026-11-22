@@ -1,0 +1,38 @@
+{
+  "schema": "v8-local-engineering-evidence/1",
+  "producerBase": "3dca770952b1902f4681cd7cc0500a94b555a9ef",
+  "nativePin": "b276dc3c14075206c1550cbaacb3f456712788b3",
+  "logs": [
+    {
+      "kind": "setup-failure-missing-default-tmp",
+      "archive": "v8-source-support-integrated-tests.log.gz.b64",
+      "decodedBytes": 13258,
+      "decodedSha256": "2ce0219a0238fb47b61d6c05bfa22ba064b777fc2377bdfe52aa9950ee44e489",
+      "archiveSha256": "c0c4194589b7641e7943fc3a1b511b6753717c9772faf67be36a18fefe2ab7b2"
+    },
+    {
+      "kind": "complete-37-test-integration",
+      "archive": "v8-source-support-integrated-corrected.log.gz.b64",
+      "decodedBytes": 4180,
+      "decodedSha256": "6f0d3123e915e8ecfbebe6bc2be63598bd9a1573cc565611eafbb732625e6e4d",
+      "archiveSha256": "fa7d8c84bca2992e0b0517a68c2d4985c3510b21934850e127faae11a243e2f4"
+    }
+  ],
+  "tests": {
+    "passed": 37,
+    "failed": 0,
+    "skipped": 0
+  },
+  "cohort": {
+    "declared": 64,
+    "families": 16,
+    "seed": 17,
+    "sourceCounts": {
+      "train": 48,
+      "validation": 12,
+      "test": 4
+    },
+    "digest": "13d83029df2237294608be8a127a1d8556fef24a9076d52b0f36741da5f74a15"
+  },
+  "fullNewCohortSourceNativeQualification": "pending"
+}

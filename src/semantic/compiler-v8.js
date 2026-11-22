@@ -163,6 +163,10 @@ async function tryDirectProtocolSource(fixture,prior){
   return {...prior,regionAttempts,protocolRefusal:projectionAttempt('direct-protocol-source/1',protocol)};
 }
 export async function verifyRegionTrainingCase(fixture){
+  if(Object.hasOwn(fixture??{},'sessionCases')){
+    const {verifyRegionSourceSessionV8}=await import('./source-session-v8.js');
+    return verifyRegionSourceSessionV8({...fixture,cases:fixture.sessionCases});
+  }
   const identity=Object.fromEntries(['id','family','source','entry','ancestorIds','ancestors']
     .filter(key=>Object.hasOwn(fixture,key)).map(key=>[key,copy(fixture[key])]));
   const source=await verifySourceTrainingCaseV8({...fixture,nativeConsumer:null,nativePolicy:null,
@@ -189,6 +193,10 @@ export async function verifyRegionTrainingCase(fixture){
 export async function recheckRegionEvidence(exported,{nativeConsumer=null,nativePolicy=null,requireNative=false}={}){
   const side=exported?.sidecar,orchestration=side&&Object.hasOwn(side,'orchestrationTranscript')?
     validateOrchestrationTranscriptV8(exported):{};
+  if(side?.schema==='semantic-session-region-evidence/1'){
+    const {recheckRegionSourceSessionV8}=await import('./source-session-v8.js');
+    return {...await recheckRegionSourceSessionV8(exported,{nativeConsumer,nativePolicy,requireNative}),...orchestration};
+  }
   if(side?.schema==='semantic-protocol-host-region-evidence/1'){
     const {recheckProtocolHostEvidenceV8}=await import('./protocol-host-source-v8.js');
     return {...await recheckProtocolHostEvidenceV8(exported,{nativeConsumer,nativePolicy,requireNative}),...orchestration};

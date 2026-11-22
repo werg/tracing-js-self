@@ -21,6 +21,12 @@ try{
   const nativeConsumer=createNativeConsumer(task.native),options={...task.fixture,
     producerRevision:task.producerRevision,nativeConsumer,nativePolicy:task.native?.policy??null,
     taskId:task.fixture.id};
+  if(Object.hasOwn(options,'orchestrationTeacher')){
+    if(typeof options.orchestrationTeacher!=='boolean')
+      throw new TypeError('orchestrationTeacher must be a boolean');
+    if(options.orchestrationTeacher&&(task.kind!=='source'||task.traceVersion!==8))
+      throw new TypeError('orchestrationTeacher requires a V8 source task');
+  }
   if(options.preflightFailure)result={...options.preflightFailure,
     failure:{source:options.source,originalSource:options.originalReferenceSource,
       inputGraph:encodeNativeGraph(options.args??[]),provenance:options.provenance}};
@@ -87,6 +93,22 @@ try{
         const {verifyEffectfulTrainingCase}=await import('../src/training/effectful-admit.js');
         result=await verifyEffectfulTrainingCase(options);}
       else throw new Error('Unknown generation trace version');
+    }
+    if(options.orchestrationTeacher===true&&result.exported){
+      phase='orchestration-teacher';
+      const sourceArtifact=result.exported;
+      try{
+        const {attachSourceQualifiedOrchestrationV8}=await import('../src/semantic/orchestration-training-v8.js');
+        result={...result,exported:await attachSourceQualifiedOrchestrationV8(sourceArtifact)};
+      }catch(error){
+        // Preserve the independently qualified source as failure evidence, but
+        // never let a failed authored teacher attach look source-qualified.
+        result={id:options.id,family:options.family,status:'orchestration_teacher_failed',phase,
+          reason:String(error.message??error),sourceArtifact,
+          failure:{source:options.source,originalSource:options.originalReferenceSource,
+            inputGraph:encodeNativeGraph(options.args??[]),provenance:options.provenance,
+            sourceEvidenceDigest:identityHash(sourceArtifact)}};
+      }
     }
   }
   else if(task.kind==='module'&&task.traceVersion===8){
