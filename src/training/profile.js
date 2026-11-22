@@ -1,14 +1,14 @@
 // Versioned, fail-closed Acorn -> owned bytecode frontend for training-js/1.
 // Parsing is not execution: the compiler/runtime own semantics.
-import {parse as acornParse} from 'acorn';
+import {parse as acornParse,version as acornVersion} from 'acorn';
 import {encode} from '../values.js';
 import {collectVarBindings} from '../frontend.js';
 import {supportsPinnedRegExp} from '../owned-pinned-regexp.js';
 
 export const TRAINING_PROFILE='training-js/1';
-export const TRAINING_PARSER='acorn/8.15.0:training-js/1';
+export const TRAINING_PARSER='acorn/'+acornVersion+':training-js/1';
 export const OWNED_SCRIPT_PROFILE='owned-script/1';
-export const OWNED_SCRIPT_PARSER='acorn/8.15.0:owned-script/1';
+export const OWNED_SCRIPT_PARSER='acorn/'+acornVersion+':owned-script/1';
 const binaries=new Set(['+','-','*','/','%','**','<','<=','>','>=','===','!==','==','!=',
   '&','|','^','<<','>>','>>>','instanceof','in']);
 const logical=new Set(['&&','||','??']);
@@ -38,7 +38,7 @@ function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){
   const reject=(node,why)=>{throw new SyntaxError('Unsupported '+profile+' '+why+' at '+
     (node.start??'?')+':'+(node.end??'?'));};
   if(typeof source!=='string')throw new TypeError('Training source must be text');
-  const parsed=acornParse(source,{ecmaVersion:training?2022:2026,sourceType:'script',locations:true,
+  const parsed=acornParse(source,{ecmaVersion:'latest',sourceType:'script',locations:true,
     allowAwaitOutsideFunction:false,allowReturnOutsideFunction:false});
   if(training&&(parsed.body[0]?.type!=='ExpressionStatement' ||
      parsed.body[0].directive!=='use strict'))
@@ -338,14 +338,14 @@ function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){
       case 'WhileStatement':return {...loc,type:'While',test:expr(n.test),body:stmt(n.body)};
       case 'DoWhileStatement':return {...loc,type:'DoWhile',test:expr(n.test),body:stmt(n.body)};
       case 'ForInStatement':case 'ForOfStatement':{
-        if(n.await || n.left?.type!=='VariableDeclaration' ||
+        if(n.left?.type!=='VariableDeclaration' ||
            !['const','let','var'].includes(n.left.kind) ||
            n.left.declarations.length!==1 ||n.left.declarations[0].init)
           reject(n,'for-in/of requires one declared binding');
         const target=n.left.declarations[0].id;
         if(!['Identifier','ArrayPattern','ObjectPattern'].includes(target.type))reject(target,'for-of binding form');
         const parsedPattern=target.type==='Identifier'?null:patternTree(target);
-        return {...loc,type:n.type==='ForInStatement'?'ForIn':'ForOf',kind:n.left.kind,id:parsedPattern?null:target.name,
+        return {...loc,type:n.type==='ForInStatement'?'ForIn':'ForOf',...(n.await?{await:true}:{}),kind:n.left.kind,id:parsedPattern?null:target.name,
           ...(parsedPattern??{bindings:null}),iterable:expr(n.right),body:stmt(n.body)};
       }
       case 'ForStatement':{
@@ -486,6 +486,7 @@ function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){
         case 'While':case 'DoWhile':
           value(n.test,e);statement(n.body,e);break;
         case 'ForIn':case 'ForOf':{
+          if(n.await&&!asyncFunction)reject(n,'for-await outside async function');
           const loopEnv=n.kind==='var'?e:{
             names:new Set(n.bindings?n.bindings.map(x=>x.name):[n.id]),parent:e
           };

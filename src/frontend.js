@@ -591,13 +591,15 @@ export function compile(ast) {
       }
       emit('GET',klass,n);emit('CLASS_FINISH',{name:n.name},n);emit('LEAVE_SCOPE',null,n);
     }
-    function iteratorClose(iterator,node){
+    function iteratorClose(iterator,node,{awaitResult=false,method=null}={}){
       const performClose=()=>{
-        emit('GET',iterator,node);emit('CONST',{value:['str','return']},node);emit('GET_METHOD',null,node);
+        if(method)emit('GET',method,node);
+        else {emit('GET',iterator,node);emit('CONST',{value:['str','return']},node);emit('GET_METHOD',null,node);}
         const present=emit('LOGICAL_JUMP',{operator:'??',to:null},node);
         emit('POP',null,node);const absent=emit('JUMP',null,node);
         instructions[present].arg.to=instructions.length;
-        emit('CALL',0,node);emit('REQUIRE_OBJECT',null,node);emit('POP',null,node);
+        emit('CALL',0,node);if(awaitResult)emit('AWAIT',null,node);
+        emit('REQUIRE_OBJECT',null,node);emit('POP',null,node);
         instructions[absent].arg=instructions.length;
       };
       emit('PENDING_THROW',null,node);const normal=emit('JUMP_IF_FALSE',null,node);
@@ -757,6 +759,50 @@ export function compile(ast) {
     }
     function stmt(n){
       switch(n.type){
+        case 'AsyncFromSyncMethod':{
+          // This internal async function is compiled from the original loop,
+          // never parsed from new host text. Its retained frame represents the
+          // AsyncFromSyncIteratorContinuation Promise reaction and gives the
+          // outer await its separate job, including synchronous failures.
+          const result='[[async-from-sync result]]',done='[[async-from-sync done]]',
+            value='[[async-from-sync value]]';
+          for(const name of [result,done,value])emit('DECLARE',{name,kind:'let'},n);
+          const returnResult=(empty=false)=>{
+            emit('NEW_OBJECT',null,n);
+            for(const [key,name]of [['value',value],['done',done]]){
+              emit('DUP',null,n);emit('CONST',{value:['str',key]},n);
+              if(empty)emit('CONST',{value:key==='value'?['undefined']:['bool',true]},n);
+              else emit('GET',name,n);
+              emit('DEFINE_LITERAL_PROP',{kind:'init'},n);emit('POP',null,n);
+            }
+            emit('RETURN',null,n);
+          };
+          if(n.method==='return'){
+            emit('GET',n.iterator,n);emit('CONST',{value:['str','return']},n);emit('GET_METHOD',null,n);
+            const present=emit('LOGICAL_JUMP',{operator:'??',to:null},n);
+            emit('POP',null,n);returnResult(true);
+            instructions[present].arg.to=instructions.length;
+          }else emit('GET',n.next,n);
+          emit('CALL',0,n);emit('REQUIRE_OBJECT',null,n);emit('INIT',result,n);
+          emit('GET',result,n);emit('CONST',{value:['str','done']},n);emit('GET_PROP',null,n);
+          emit('UNARY','!',n);emit('UNARY','!',n);emit('INIT',done,n);
+          // A sync result's value is read and awaited even when done is true.
+          emit('GET',result,n);emit('CONST',{value:['str','value']},n);emit('GET_PROP',null,n);emit('INIT',value,n);
+          const handler=n.method==='next'?emit('TRY_ENTER',null,n):null;
+          emit('GET',value,n);emit('AWAIT',null,n);emit('SET',value,n);emit('POP',null,n);
+          if(handler!==null){
+            emit('TRY_NORMAL',null,n);const finallyPc=instructions.length;
+            emit('PENDING_THROW',null,n);const normal=emit('JUMP_IF_FALSE',null,n);
+            emit('GET',done,n);emit('UNARY','!',n);const complete=emit('JUMP_IF_FALSE',null,n);
+            // Current AsyncFromSyncIterator next closes on a rejected value.
+            // The original rejection outranks a throwing return getter/call.
+            iteratorClose(n.iterator,n);
+            instructions[normal].arg=instructions[complete].arg=instructions.length;
+            emit('END_FINALLY',null,n);
+            instructions[handler].arg={catchPc:null,finallyPc,afterPc:instructions.length};
+          }
+          returnResult();break;
+        }
         case 'Variable':{
           if(n.kind==='var'){
             if(n.init){expr(n.init,n.id);emit('SET',n.id,n);emit('POP',null,n);}
@@ -890,6 +936,56 @@ export function compile(ast) {
             loopDepth++;stmt(n.body);loopDepth--;
             emit('LEAVE_SCOPE',null,n);
           };
+          if(n.await){
+            const iterator='[[async iterator '+salt+']]',next='[[async iterator next '+salt+']]',
+              step='[[async iterator step '+salt+']]',close='[[async iterator close '+salt+']]',
+              syncNext='[[sync iterator next '+salt+']]',syncReturn='[[sync iterator return '+salt+']]',
+              sync='[[async iterator sync '+salt+']]';
+            for(const name of [iterator,next,step,close,syncNext,syncReturn,sync])emit('DECLARE',{name,kind:'let'},n);
+            emit('GET',iterable,n);emit('CONST',{value:['symbol','well-known:asyncIterator']},n);emit('GET_METHOD',null,n);
+            const asynchronous=emit('LOGICAL_JUMP',{operator:'??',to:null},n);
+            emit('POP',null,n);
+            emit('GET',iterable,n);emit('CONST',{value:['symbol','well-known:iterator']},n);emit('GET_METHOD',null,n);
+            emit('CALL',0,n);emit('REQUIRE_OBJECT',null,n);emit('INIT',iterator,n);
+            emit('GET',iterator,n);emit('CONST',{value:['str','next']},n);emit('GET_METHOD',null,n);emit('INIT',syncNext,n);
+            for(const method of ['next','return']){
+              const codeId=bodyProgram([{type:'AsyncFromSyncMethod',start:n.start,end:n.end,method,iterator,next:syncNext}],[],true,[],-1,true);
+              emit('MAKE_FUNCTION',{codeId,arrow:false,async:true,nonConstructible:true},n);
+              emit('INIT',method==='next'?next:syncReturn,n);
+            }
+            emit('CONST',{value:['bool',true]},n);emit('INIT',sync,n);
+            const acquired=emit('JUMP',null,n);
+            instructions[asynchronous].arg.to=instructions.length;
+            emit('CALL',0,n);emit('REQUIRE_OBJECT',null,n);emit('INIT',iterator,n);
+            emit('GET',iterator,n);emit('CONST',{value:['str','next']},n);emit('GET_METHOD',null,n);emit('INIT',next,n);
+            emit('CONST',{value:['bool',false]},n);emit('INIT',sync,n);
+            instructions[acquired].arg=instructions.length;
+            emit('CONST',{value:['undefined']},n);emit('INIT',step,n);
+            emit('CONST',{value:['bool',false]},n);emit('INIT',close,n);
+            const handler=emit('TRY_ENTER',null,n),loop=emit('LOOP_ENTER',null,n),begin=instructions.length;
+            emit('CONST',{value:['bool',false]},n);emit('SET',close,n);emit('POP',null,n);
+            emit('GET',next,n);emit('CALL',0,n);emit('AWAIT',null,n);emit('REQUIRE_OBJECT',null,n);
+            emit('SET',step,n);emit('POP',null,n);
+            emit('GET',step,n);emit('CONST',{value:['str','done']},n);emit('GET_PROP',null,n);
+            const body=emit('JUMP_IF_FALSE',null,n),finish=emit('JUMP',null,n);
+            instructions[body].arg=instructions.length;
+            bind(()=>{
+              emit('GET',step,n);emit('CONST',{value:['str','value']},n);emit('GET_PROP',null,n);
+              emit('CONST',{value:['bool',true]},n);emit('SET',close,n);emit('POP',null,n);
+            });
+            emit('JUMP',begin,n);
+            const exit=instructions.length;emit('LOOP_EXIT',null,n);emit('TRY_NORMAL',null,n);
+            instructions[loop].arg={breakPc:exit,continuePc:begin,labels:n.labels??[]};instructions[finish].arg=exit;
+            const finallyPc=instructions.length;
+            emit('GET',close,n);const skipClose=emit('JUMP_IF_FALSE',null,n);
+            emit('GET',sync,n);const asyncClose=emit('JUMP_IF_FALSE',null,n);
+            iteratorClose(iterator,n,{awaitResult:true,method:syncReturn});
+            const closed=emit('JUMP',null,n);instructions[asyncClose].arg=instructions.length;
+            iteratorClose(iterator,n,{awaitResult:true});
+            instructions[skipClose].arg=instructions[closed].arg=instructions.length;
+            emit('END_FINALLY',null,n);instructions[handler].arg={catchPc:null,finallyPc,afterPc:instructions.length};
+            emit('LEAVE_SCOPE',null,n);break;
+          }
           // Preserve the existing detailed array path only when the standard
           // iterator is actually selected. Custom/inherited hooks take the
           // owned protocol path below, with a cached next method and cleanup.
@@ -1034,6 +1130,7 @@ export function compile(ast) {
     emit('CONST',{value:['undefined']},ast);emit('RETURN',null,ast);
     const firstDefault=defaults.findIndex(Boolean),functionLength=Math.min(params.length,restIndex<0?Infinity:restIndex,firstDefault<0?Infinity:firstDefault);
     programs[id]={id,params,restIndex,async,generator:generator===true,strict,parameterExpressions,functionLength,
+      ...(body[0]?.type==='AsyncFromSyncMethod'?{sourceRole:'async-from-sync-'+body[0].method}:{}),
       patternNames:parameterPatterns.flatMap(p=>(p?.bindings??[]).map(b=>b.name)),varNames:collectVarBindings(body),instructions};return id;
   }
   const entry=bodyProgram(ast.body);
