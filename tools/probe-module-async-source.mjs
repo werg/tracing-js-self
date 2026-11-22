@@ -82,10 +82,12 @@ for cut in cuts:
     assert selected==cut['before']
     selected=apply_module_scheduler_action_v8(data['plan'],selected,cut['action'],cut['facts'])
     assert selected==cut['after']
-    rows=artifact['public']['timeline'][:cut['publicSequence']]
-    contexts=[context for context in artifact['contexts'] if context['visibleThrough']<cut['publicSequence']]
-    observed=_replay_shared_state(rows,contexts,{},roundtrip=True,boundary_invocation='invocation1')['state']
-    assert observed==cut['publicState']
+    # validate_v8_artifact independently replayed and checked every supplied
+    # causal context above. The next context is the complete native-checked
+    # state after this cut; repeating all earlier checkpoints for every cut
+    # would multiply the same quadratic prefix work without adding authority.
+    observed=next(context for context in artifact['contexts'] if context['visibleThrough']==cut['publicSequence'])
+    assert observed['state']==cut['publicState']
 assert selected==data['moduleState']
 observed=_replay_shared_state(artifact['public']['timeline'],artifact['contexts'],{},roundtrip=True,boundary_invocation='invocation1')['state']
 assert observed==data['state']
