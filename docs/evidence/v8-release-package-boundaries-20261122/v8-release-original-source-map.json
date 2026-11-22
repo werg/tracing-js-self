@@ -1,0 +1,45 @@
+{
+  "repository": "werg/tracing-js-self",
+  "branch": "codex/v8-release-restoration-20261122",
+  "parent": "b4ee5e8645606f91002d10e4953618365fe7746c",
+  "baseTree": "cf44943f50acb47df97eaa7cad247224ce4c8aaa",
+  "localCommit": "c7512693c2016250977de92d537e8694d6d888c1",
+  "tree": "e56cc4ba037b10bebdd36abe137e3b424c9a1c33",
+  "entries": [
+    {
+      "path": "docs/direct-v8-release.md",
+      "mode": "100644",
+      "sha": "5bdc659142fa0ff41c815832c689d657303d9583",
+      "bytes": 9535,
+      "sha256": "5ac9a8062eafd6b48722bd585364370862692febfcd3a35723130101705da8af"
+    },
+    {
+      "path": "tools/native-consumer/test_release_v8.py",
+      "mode": "100644",
+      "sha": "f584bf50d0e3ba7cdf6c8e467b468c83da9556d2",
+      "bytes": 14360,
+      "sha256": "10b7f68fa2a984f2e2decf0ba88c5f9a7f3e5d38f37b427b691498733b8d53ff"
+    },
+    {
+      "path": "tools/package-semantic-release-v8.py",
+      "mode": "100755",
+      "sha": "cc01362dd2df0888bdc25bbf557ddf0585a6ea91",
+      "bytes": 966,
+      "sha256": "a3ad0624d23e50b0dbb30151d912931dd855a9f5c3beb43056e1a4b8d3400dcb"
+    },
+    {
+      "path": "tools/restore-semantic-release-v8.py",
+      "mode": "100755",
+      "sha": "e33f5d75f0934a03d7b20e41b2ccdc66c02d762f",
+      "bytes": 966,
+      "sha256": "6b080c9ff2be9541c0be485eceadcc2bfde36efc93933becdb1050e451139bd2"
+    },
+    {
+      "path": "tools/semantic_release_v8.py",
+      "mode": "100644",
+      "sha": "f8893408dea4470bdfa176d3cc78737d8d8b68ce",
+      "bytes": 29064,
+      "sha256": "47a47aa8045fcebf7564dfe932a4d02cf906bcdcd565cfd2a7e5ce7fd6fb1fd8"
+    }
+  ]
+}

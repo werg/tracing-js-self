@@ -1,0 +1,59 @@
+{
+  "repository": "werg/tracing-js-self",
+  "branch": "codex/v8-release-restoration-20261122",
+  "parent": "2bd8f6795c21f74b0e713df68bdebaa1b0d8f39a",
+  "baseTree": "3f505e9a648e6a678b9d97d6040e2976f4c8355f",
+  "localCommit": "ed6b873bfaa5c6db7ac15a21e78b58a7e21dbed2",
+  "tree": "cf44943f50acb47df97eaa7cad247224ce4c8aaa",
+  "entries": [
+    {
+      "path": "docs/direct-v8-release.md",
+      "mode": "100644",
+      "sha": "6e0f4130d86ce27ed9c61c08263f727cc9306518",
+      "bytes": 9145,
+      "sha256": "bbfc0f6578e7866122b5eeb71ee88a8c952f6251b4dae8429b65e7472de38308"
+    },
+    {
+      "path": "profiles/release-environment-v8.lock.json",
+      "mode": "100644",
+      "sha": "1326d80b5e29d3ac589c9212647d790896e2b6a6",
+      "bytes": 596,
+      "sha256": "f633fbfa3c8612f5b680ae37b5aac751a71ccdcb0a6a01571091aed6a56492b3"
+    },
+    {
+      "path": "tools/native-consumer/check_environment_v8.py",
+      "mode": "100755",
+      "sha": "4ac7c69b5543f431fadb9c02fb6c817a70ee2d85",
+      "bytes": 5792,
+      "sha256": "2f0c629777cbf4b4a4c0527126393cca8dd8d1e28ee53fd6f07291431422f565"
+    },
+    {
+      "path": "tools/native-consumer/test_release_v8.py",
+      "mode": "100644",
+      "sha": "9da4a98d97575de4b84fed53e693489d5b5049a0",
+      "bytes": 14320,
+      "sha256": "00bbd66354df7c1cffd45037cf02691e575f750706b135638c716765c7ec4e71"
+    },
+    {
+      "path": "tools/package-semantic-release-v8.py",
+      "mode": "100755",
+      "sha": "5efb1f5a4e778f7428a0180cb251e01a5af4029e",
+      "bytes": 966,
+      "sha256": "ea009bb34b5ce29437fa6b84910b60fcb5d1d667cc36f529b8f74c12a667f421"
+    },
+    {
+      "path": "tools/restore-semantic-release-v8.py",
+      "mode": "100755",
+      "sha": "130f7b2af41fb730b86d1a386dddce6825717545",
+      "bytes": 966,
+      "sha256": "35bbe31ebd3691acb1c543d334960c61a1f1037be8431704f9e71cf9ebf0f865"
+    },
+    {
+      "path": "tools/semantic_release_v8.py",
+      "mode": "100644",
+      "sha": "73bdbafcd9c1525a815319590497ef94d11a7540",
+      "bytes": 28916,
+      "sha256": "fe571363f55b2be739c61c939e45263e0b876ca346d0c7e06ad325a47dedf20c"
+    }
+  ]
+}
