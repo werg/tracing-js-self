@@ -9,7 +9,8 @@ permissions:
 
 concurrency:
   group: installed-v8-${{ github.ref }}
-  cancel-in-progress: false
+  # Manual evidence runs finish; new PR revisions supersede obsolete checks.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   installed-v8:

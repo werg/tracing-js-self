@@ -1,8 +1,8 @@
 name: Prototype tests and deterministic replay
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # Incremental publication must not discard an already running complete suite.
-  cancel-in-progress: false
+  # New PR revisions supersede obsolete checks.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 on:
   push:
     branches: [main]

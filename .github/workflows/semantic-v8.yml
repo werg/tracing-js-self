@@ -9,11 +9,11 @@ permissions:
 
 jobs:
   paired-v8:
-    # Preserve each active population's complete evidence independently. A long
-    # all-source run must not hold newer support/interop evidence behind it.
+    # Populations run independently; new PR revisions supersede obsolete checks.
+    # Manually launched evidence runs retain their complete results.
     concurrency:
       group: semantic-v8-${{ github.ref }}-${{ matrix.population }}
-      cancel-in-progress: false
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
