@@ -101,6 +101,19 @@ jobs:
           if counts['tests'] == 0 or any(counts[key] for key in ('failures', 'errors', 'skipped')):
               raise ValueError(f'Native v8 tests, including live source checks, must all run and pass: {counts}')
           PY
+      - name: Check the paired ordinary coordinator transport
+        working-directory: tracing-js-self
+        run: |
+          node --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-transport-tests.xml"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-transport-tests.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('Every paired V8 transport control, including the Python contract check, must run and pass')
+          print(f'{len(cases)} paired transport controls passed with zero skips')
+          PY
       - id: qualification
         name: Recollect exact source and native admission receipts
         working-directory: tracing-js-self
@@ -167,6 +180,7 @@ jobs:
             ${{ runner.temp }}/semantic-v8-contract.log
             ${{ runner.temp }}/semantic-v8-tests.xml
             ${{ runner.temp }}/semantic-v8-tests.log
+            ${{ runner.temp }}/semantic-v8-transport-tests.xml
             ${{ runner.temp }}/semantic-v8-qualification.log
             ${{ runner.temp }}/semantic-v8-costs.log
             ${{ runner.temp }}/v8-admitted/

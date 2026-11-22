@@ -4,6 +4,7 @@ import {spawn} from 'node:child_process';
 import {TextDecoder} from 'node:util';
 import {hashAlgorithmData} from './program.js';
 import {decodeCausalLmV8Target,validateRegionContext} from './causal-lm-v8.js';
+import {attachNativeV8OrchestrationTransport} from './native-orchestration-transport-v8.js';
 
 const HASH=/^[a-f0-9]{64}$/;
 const copy=structuredClone;
@@ -156,7 +157,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     finally{evidence.elapsedMs=performance.now()-started;}
   };
   select.initialize=async input=>{
-    const capturedEpoch=++epoch;identity=null;sessions.clear();
+    const capturedEpoch=++epoch;identity=null;sessions.clear();orchestration.reset();
     demand(input&&HASH.test(input.checkpointIdentity??'')&&HASH.test(input.tokenizerIdentity??'')&&
       (input.trainingIdentity==null||HASH.test(input.trainingIdentity))&&
       Number.isSafeInteger(input.seed)&&input.seed>=0,'frozen checkpoint, tokenizer, training lineage and seed required');
@@ -171,7 +172,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
   };
   select.commit=async input=>{
     const session=sessions.get(input?.session),selected=session?.pending;
-    demand(selected&&input.record===selected.record&&
+    demand(selected&&selected.family!=='orchestration'&&input.record===selected.record&&
       hashAlgorithmData(input.selection)===hashAlgorithmData(selected.selection),'commit changed original model selection');
     session.evidence.status='acknowledging';
     try{
@@ -190,10 +191,13 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     }
   };
   select.complete=async input=>{
+    input=copy(input);
     const result=await request({op:'complete',session:input.session,public:input.public,
-      contexts:input.contexts,invocationId:input.invocationId});
+      contexts:input.contexts,invocationId:input.invocationId,
+      ...(input.completion!==undefined?{completion:input.completion}:{})});
+    const child=orchestration.verifyCompletion(input,result);
     demand(result?.schema==='semantic-native-completion/8'&&result.completed===true&&
-      result.session===input.session&&result.invocationId===input.invocationId&&result.sessionRetained===true&&
+      result.session===input.session&&result.invocationId===input.invocationId&&(result.sessionRetained===true||child)&&
       result.publicDigest===hashAlgorithmData(input.public),'native model did not acknowledge this completed invocation');
     return result;
   };
@@ -246,6 +250,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
         result.consumedAttempts===native.attempts.length&&result.hostDispatches===0,
         'native model did not attest exact checkpoint restoration');
       identity=copy(checkpoint.identity);epoch++;
+      orchestration.restore(native);
       attempts.push(...copy(checkpoint.attempts).map(row=>['submitted','decoded'].includes(row.status)?
         {...row,status:'abandoned-on-restore',failure:'Unacknowledged candidate excluded from restored history'}:row));
       for(const session of Object.keys(native.sessions))sessions.set(session,{pending:null,evidence:null});
@@ -269,6 +274,7 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
         result.schema==='semantic-native-close/8'&&result.closed===true&&
         result.session===input.session&&result.reason===input.reason,
         'native model did not acknowledge closing this session with the exact close receipt');
+      orchestration.closed(input.session);
       return result;
     }
     finally{sessions.delete(input?.session);}
@@ -297,6 +303,8 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
     });
     return shutdownPromise;
   };
+  const orchestration=attachNativeV8OrchestrationTransport(select,
+    {request,identity:()=>identity,epoch:()=>epoch,sessions,attempts,stop});
   return select;
 }
 

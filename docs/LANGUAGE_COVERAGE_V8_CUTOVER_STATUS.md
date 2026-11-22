@@ -18,6 +18,20 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Production worker isolation and parallel native integration — 22 November 2026
 
+The ordinary native V8 process transport now exposes acknowledged coordinator
+selection, commit, child bootstrap, status and cancellation. It binds exact
+observed child sources/inputs and original model fragment bytes/tokens to the
+native coordinator context, checks typed completion receipts, and restores
+coordinator bindings from the native replay-verified checkpoint. Historical child
+completion receipts remain readable after session closure without redelivery.
+The paired transport selection passes **21/21**, zero skips. A direct Python/JS
+contract check caught numeric native meridian identity; a two-child negative
+control closes a swapped-receipt acceptance gap. These are protocol controls,
+not learned execution. The policy now pins native executable `10847cb`; the paired
+workflow requires the transport checks and complete native controls at that pin.
+See `docs/NATIVE_V8_ORCHESTRATION_TRANSPORT.md` and the complete retained JUnit
+evidence in `docs/evidence/v8-orchestration-transport-2026-11-22/`.
+
 The ordinary generation worker now loads the V6 effect verifier and session
 collector only when that route is selected. Both ordinary V8 collection and the
 original-versus-transformed-source check run with those two legacy clients
