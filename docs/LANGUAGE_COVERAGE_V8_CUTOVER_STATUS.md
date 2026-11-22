@@ -41,6 +41,17 @@ count the production `semantic_child` behavior. No acceptance package is closed.
 
 ## Coordinated terminal service/history authority — 22 November 2026
 
+Follow-up review reproduced a UTF-8 boundary defect: the selected driver capped
+cancellation reasons at 4,096 JavaScript code units, while durable service
+fences cap encoded bytes. A long emoji-containing reason could therefore make
+both cancellation and its exact retry fail permanently. The driver now
+normalizes valid UTF-8 and truncates only at whole code-point boundaries. That
+one normalized reason is retained through partial fencing, retry, terminal
+history, and the native close receipt. The updated integrated selection passes
+**116/116**, zero skips, including exact 4,096-byte emoji and crossing-boundary
+controls plus retry after an actual service synchronization failure. The new
+complete log and hashes are retained alongside the earlier 115-check evidence.
+
 The coordinator published at `d1e3045` now participates in the selected-driver
 cancellation and recovery path. The exact declared service set is retained in
 checkpoint policy. All service sessions must durably acknowledge and independently

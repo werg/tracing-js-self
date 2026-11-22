@@ -43,7 +43,8 @@ async function fixture(t,Second=Journal,{acknowledge=null}={}){
   return {directory,services,coordinator,policy,history,select,driver,first,restore,
     head:()=>copy(head),nativeCloses:()=>nativeCloses};
 }
-const cancel=f=>f.driver.select.cancel({...f.driver.prefix('call'),reason});
+const cancelFor=(f,why)=>f.driver.select.cancel({...f.driver.prefix('call'),reason:why});
+const cancel=f=>cancelFor(f,reason);
 
 test('driver waits for every service fence before terminal history and native close',async t=>{
   const reached=deferred(),resume=deferred();
@@ -86,6 +87,46 @@ test('partial fence failure cannot publish terminal history or reopen native sta
   assert.equal(result.phase,'closed');assert.equal(result.reason,reason);assert.equal(f.nativeCloses(),1);
   assert.deepEqual(result.serviceAdmission.services.map(row=>row.terminal.position),[2,2]);
   assert.throws(()=>f.driver.retryServiceAdmissionCancellation(),/only an unacknowledged service fence/);
+});
+
+test('terminal cancellation bounds UTF-8 reason bytes and carries the normalized reason through retry',async t=>{
+  class Broken extends Journal{
+    unavailable=false;
+    async _synchronize(){if(this.unavailable)throw Error('service sync unavailable');return super._synchronize();}
+  }
+  const f=await fixture(t,Broken),second=f.services[1].journal,emojiReason='😀'.repeat(1025),
+    normalizedEmojiReason='😀'.repeat(1024);
+  second.unavailable=true;
+  await assert.rejects(cancelFor(f,emojiReason),/service sync unavailable/);
+  assert.equal((await f.services[0].journal.inspect()).terminal.reason,normalizedEmojiReason);
+  await assert.rejects(f.driver.retryServiceAdmissionCancellation(),/service sync unavailable/);
+  second.unavailable=false;
+  const result=await f.driver.retryServiceAdmissionCancellation();
+  assert.equal(result.phase,'closed');assert.equal(result.reason,normalizedEmojiReason);
+  assert.equal(Buffer.byteLength(result.reason),4096);
+  assert.equal(result.closeReceipt.reason,normalizedEmojiReason);
+  assert.equal(result.serviceAdmission.reason,normalizedEmojiReason);
+  const rows=await f.history.readAll(f.head());
+  for(const row of rows.slice(1)){
+    assert.equal(row.terminal.reason,normalizedEmojiReason);
+    assert.equal(row.terminal.serviceAdmission.reason,normalizedEmojiReason);
+  }
+  for(const {journal}of f.services)
+    assert.equal((await journal.inspect()).terminal.reason,normalizedEmojiReason);
+
+  // 4095 ASCII bytes leave one byte in the limit; the four-byte code point
+  // must be omitted whole instead of being split at that final byte.
+  const boundary=await fixture(t),crossingReason='x'.repeat(4095)+'😀',
+    normalizedBoundary='x'.repeat(4095),boundaryResult=await cancelFor(boundary,crossingReason);
+  assert.equal(boundaryResult.phase,'closed');assert.equal(boundaryResult.reason,normalizedBoundary);
+  assert.equal(Buffer.byteLength(boundaryResult.reason),4095);
+  assert.equal(boundaryResult.closeReceipt.reason,normalizedBoundary);
+  assert.equal(boundaryResult.serviceAdmission.reason,normalizedBoundary);
+  const boundaryRows=await boundary.history.readAll(boundary.head());
+  for(const row of boundaryRows.slice(1)){
+    assert.equal(row.terminal.reason,normalizedBoundary);
+    assert.equal(row.terminal.serviceAdmission.reason,normalizedBoundary);
+  }
 });
 
 test('lost terminal-head acknowledgement retains service fences and cannot use the service-failure retry',async t=>{

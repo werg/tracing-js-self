@@ -17,6 +17,12 @@ const copy=structuredClone,HASH=/^[a-f0-9]{64}$/;
 const demand=(value,message)=>{if(!value)throw new TypeError('Selected v8: '+message);};
 const positive=(value,maximum)=>Number.isSafeInteger(value)&&value>0&&value<=maximum;
 const isPayloadHex=value=>typeof value==='string'&&/^(?:[0-9a-f]{2})*$/.test(value);
+function boundedCancellationReason(value){
+  const source=Buffer.from(String(value),'utf8').toString('utf8');let bytes=0;const parts=[];
+  for(const point of source){const size=Buffer.byteLength(point,'utf8');if(bytes+size>4096)break;
+    parts.push(point);bytes+=size;}
+  return parts.join('')||'selected execution cancelled';
+}
 const originalFragments=(payloadHex,selection)=>isPayloadHex(payloadHex)&&Array.isArray(selection?.fragments)&&
   selection.fragments.length>0&&selection.fragments.every(fragment=>Array.isArray(fragment?.tokenIds)&&fragment.tokenIds.length>0&&
     fragment.tokenIds.every(id=>Number.isSafeInteger(id)&&id>=0)&&isPayloadHex(fragment.payloadHex))&&
@@ -370,7 +376,7 @@ export class RegionSelectedModelDriver extends SelectedExecutionDriver {
         invocationId=previous.context.invocationId,
         suppliedReason=previous.reason??hostCancellation?.fields?.reason??hostCancellation?.reason??
           driver.rejections.at(-1)?.error??'selected execution cancelled',
-        reason=String(suppliedReason?.message??suppliedReason).slice(0,4096)||'selected execution cancelled',
+        reason=boundedCancellationReason(suppliedReason?.message??suppliedReason),
         settlement=activeAcknowledgement??activeSelection;
       fatal??=suppliedReason instanceof Error?suppliedReason:new Error(reason);
       terminalCancellationRequest={context:{invocationId},reason};
