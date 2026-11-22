@@ -1,7 +1,8 @@
 name: Prototype tests and deterministic replay
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Incremental publication must not discard an already running complete suite.
+  cancel-in-progress: false
 on:
   push:
     branches: [main]

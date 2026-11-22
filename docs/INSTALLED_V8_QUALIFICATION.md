@@ -68,6 +68,13 @@ implementation after legacy removal. Checkout receipts are never substituted.
 
 ## Running and inspecting
 
+The `Complete installed V8 source and recovery qualification` workflow runs
+this complete gate independently of the native training/tokenizer workflow.
+Both pin the actual published producer head. Separating these independent
+jobs lets package failures surface while native qualification continues; it
+does not replace either gate or narrow the 665/66 installed populations.
+Running full installed and general regression jobs survive incremental pushes.
+
 The output directory must be outside the repository. Complete extraction and
 installation need enough disk for the full repository and package; changing
 `--cases` bounds execution work, not package contents.

@@ -39,6 +39,13 @@ archive has a separate 30-day retention; it is not represented as permanently
 archived locally. Fresh installed665/66 proof remains active.
 **0/17 complete acceptance packages are closed.**
 
+Installed source/public/recovery qualification now runs as its own exact-head
+workflow, in parallel with independent native admission/token/packing work. The
+unchanged complete 665/66 assertions remain mandatory. This removes the long
+native gate from the critical path for discovering package-only failures; both
+workflows still must pass. Complete general regression jobs also survive
+incremental pushes instead of losing already-running evidence.
+
 ## Production worker isolation and parallel native integration — 22 November 2026
 
 The ordinary native V8 process transport now exposes acknowledged coordinator
