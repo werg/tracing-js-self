@@ -1,0 +1,1 @@
+{"baseline":9,"result":"refused","name":"TypeError","message":"Protocol source projection: first protocol source profile requires strict synchronous functions with simple parameters","category":"unsupported.protocol-source"}

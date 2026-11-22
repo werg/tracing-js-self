@@ -1,0 +1,6 @@
+The producer source snapshot was captured before executing the Proxy then-trap reproduction.
+Worktree: /workspace/scratch/9faed68167fb/async-return-producer
+HEAD and dirty status: native-script.txt
+Full working diff: producer-full-working-diff.patch
+Relevant source copies: promise-resolution-shape-v8.js, protocol-async-call-v8.js, protocol-state-v8.js, source-projection.js
+The reproduction was not executed before this source snapshot.

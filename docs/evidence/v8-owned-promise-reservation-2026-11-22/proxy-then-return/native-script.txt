@@ -1,0 +1,17 @@
+ M contracts/semantic-execution-v8.json
+ M src/semantic/contract-v8.js
+ M src/semantic/protocol-async-call-source-v8.js
+ M src/semantic/protocol-async-call-v8.js
+ M src/semantic/protocol-promise-executor-source-v8.js
+ M src/semantic/source-projection-base-v8.js
+ M src/semantic/source-projection.js
+ M test/fixtures/semantic-regions-v8.json
+ M test/semantic-async-call-source-v8.test.js
+ M test/semantic-protocol-async-call-v8.test.js
+?? node_modules
+3b5e36c9f5f8e97d9e188635d1ddd98d65444601
+329831d15b5db16eec9b0243291c21cbb4228aa14a56b550ff8902ef1d5ac8e0  src/semantic/promise-resolution-shape-v8.js
+a8451f737a5bb8c41ef4e1e3a39451fb0bd867b537d0fafead00f84dae3814b2  src/semantic/protocol-async-call-v8.js
+0f22391fc1974f7c5c0e80310eac83367675687b6f6b923cb89c8223148b37e2  src/semantic/protocol-state-v8.js
+e35f4c9d24f2520b841b7380012c6466544e74f361379c33b46c4fe2613466ed  src/semantic/source-projection.js
+

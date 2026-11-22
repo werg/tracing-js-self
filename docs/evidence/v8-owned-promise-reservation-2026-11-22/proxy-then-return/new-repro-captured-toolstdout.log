@@ -1,0 +1,1 @@
+{"baseline":9,"result":"refused","name":"TypeError","message":"Protocol v8: ordinary object or owned closure required","category":"unsupported.protocol-v8"}

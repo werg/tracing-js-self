@@ -1,0 +1,14 @@
+✔ owned async Promise return uses separate FIFO enqueue, subscription, and settlement turns (57.741164ms)
+✔ pending target subscribes first and schedules settlement with competing Promise jobs (7.908167ms)
+✔ wrong targets, missing turns, FIFO bypasses and self-resolution refuse atomically (18.981855ms)
+✔ future settlement identities stay reserved across ordinary jobs and other async returns (29.783596ms)
+✔ throwing an owned Promise preserves it as the rejection reason at restored cuts (21.649534ms)
+✔ every retained resolution cut restores its body, observer and job ownership (38.853656ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 355.717739

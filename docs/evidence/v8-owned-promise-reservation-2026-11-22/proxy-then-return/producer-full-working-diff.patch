@@ -1,0 +1,502 @@
+diff --git a/contracts/semantic-execution-v8.json b/contracts/semantic-execution-v8.json
+index c0b26ecd..76af2242 100644
+--- a/contracts/semantic-execution-v8.json
++++ b/contracts/semantic-execution-v8.json
+@@ -425,6 +425,31 @@
+             "invocation",
+             "completion"
+           ],
++          "async.resolve.enqueue": [
++            "kind",
++            "promise",
++            "invocation",
++            "target",
++            "job",
++            "settlementJob"
++          ],
++          "async.resolve.subscribe": [
++            "kind",
++            "promise",
++            "invocation",
++            "target",
++            "job",
++            "settlementJob"
++          ],
++          "async.resolve.settle": [
++            "kind",
++            "promise",
++            "invocation",
++            "target",
++            "job",
++            "status",
++            "value"
++          ],
+           "cell.initialize": [
+             "kind",
+             "cell",
+@@ -2030,11 +2055,12 @@
+           "attached",
+           "continuations",
+           "resumeScope",
+-          "completion"
++          "completion",
++          "resolution"
+         ],
+         "storage": "Retained asyncCall metadata belongs to its internal execution Promise; asyncFunction marks its callable closure.",
+-        "capabilities": "First await detaches the child and restores its caller scope. Later continuations resume in the realm FIFO with the same receiver, live capture cells, and execution Promise. Child completion settles that Promise without completing its parent invocation.",
+-        "boundaries": "Async Promise callbacks, Promise adoption, thenable assimilation and implicit scheduler completion require separate profiles."
++        "capabilities": "First await detaches the child and restores its caller scope. Later continuations resume in the realm FIFO with the same receiver, live capture cells, and execution Promise. Child completion settles that Promise without completing its parent invocation. Returning an exact owned internal Promise with source-proven ordinary, unmodified then lookup uses separate FIFO enqueue, subscription and settlement turns.",
++        "boundaries": "Arbitrary thenables, own or inherited then overrides/accessors, Promise.resolve shadowing, Proxy assimilation, external Promises, async Promise callbacks and implicit scheduler completion require separate profiles."
+       },
+       "moduleScheduler": {
+         "profile": "bound-module-scheduler/1",
+@@ -2578,7 +2604,7 @@
+       "default": "not promoted by engineering receipts alone"
+     }
+   },
+-  "digest": "a952385535b9b5e19d737206286f6f26c149f7301c51b4b106fe3b1cae5ab55a",
++  "digest": "f8546a803d7b6e1faa696e92d6e4df3e48de34d40475dce7c166a1587a9eb472",
+   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+   "fixtures": [
+     {
+diff --git a/src/semantic/contract-v8.js b/src/semantic/contract-v8.js
+index ac6a8965..8ae53d6e 100644
+--- a/src/semantic/contract-v8.js
++++ b/src/semantic/contract-v8.js
+@@ -62,8 +62,8 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
+     heap:'Existing heap nodes with property, descriptor and private-element Maps serialized as entry arrays; Symbol keys remain tagged pairs.',
+     asyncCalls:{profile:ASYNC_CALL_PROFILE_V8,schema:ASYNC_CALL_STATE_V8,fields:ASYNC_CALL_FIELDS_V8,
+       storage:'Retained asyncCall metadata belongs to its internal execution Promise; asyncFunction marks its callable closure.',
+-      capabilities:'First await detaches the child and restores its caller scope. Later continuations resume in the realm FIFO with the same receiver, live capture cells, and execution Promise. Child completion settles that Promise without completing its parent invocation.',
+-      boundaries:'Async Promise callbacks, Promise adoption, thenable assimilation and implicit scheduler completion require separate profiles.'},
++      capabilities:'First await detaches the child and restores its caller scope. Later continuations resume in the realm FIFO with the same receiver, live capture cells, and execution Promise. Child completion settles that Promise without completing its parent invocation. Returning an exact owned internal Promise with source-proven ordinary, unmodified then lookup uses separate FIFO enqueue, subscription and settlement turns.',
++      boundaries:'Arbitrary thenables, own or inherited then overrides/accessors, Promise.resolve shadowing, Proxy assimilation, external Promises, async Promise callbacks and implicit scheduler completion require separate profiles.'},
+     moduleScheduler:{profile:MODULE_SCHEDULER_PROFILE_V8,planSchema:BOUND_MODULE_SCHEDULER_PLAN_V8,heapFields:MODULE_SCHEDULER_LEDGER_FIELDS_V8,
+       storage:'One logical module-scheduler heap node bound to the active observed program source, entry, acyclic module plan, exact driver functions and completion reaction source offsets.',
+       initialization:'The first generated record initializes the fresh entry ledger using its exact active plan digest. The logical ledger cannot escape into guest values.',
+diff --git a/src/semantic/protocol-async-call-source-v8.js b/src/semantic/protocol-async-call-source-v8.js
+index c577cfc4..fa6aa5f6 100644
+--- a/src/semantic/protocol-async-call-source-v8.js
++++ b/src/semantic/protocol-async-call-source-v8.js
+@@ -6,7 +6,7 @@ import {ASYNC_CALL_COMPONENT_V8 as id,sourceAsyncCallEventV8,sourceAsyncCallAllo
+ const copy=structuredClone;
+ 
+ export function createAsyncCallTeacherV8(){return {id,
+-  initialize:()=>({calls:[],continuation:0}),
++  initialize:()=>({calls:[],continuation:0,resolution:0}),
+   claims:{event:sourceAsyncCallEventV8,allocation:sourceAsyncCallAllocationV8,completion:sourceAsyncCallCompletionV8},
+   prepare:{event:(_view,{event})=>({kind:'async-source-event',event:event.eventId}),
+     allocation:(_view,input)=>({kind:'async-source-closure',identity:input.identity}),
+@@ -39,7 +39,7 @@ export function createAsyncCallTeacherV8(){return {id,
+       if(!env||env.parent!==fn.closureEnvId)ctx.refuse('async source parameter environment differs');
+       for(const [name,binding]of Object.entries(env.bindings))if(binding.initialized)
+         ctx.emit(owner,'bind',{name:ctx.cell(env.id,name),value:ctx.tag(binding.token.value)},event,'source-async-parameter/1');
+-      data.calls.push([child.id,{promise,owner,callee:copy(callee),continuation:null}]);return true;
++      data.calls.push([child.id,{promise,owner,callee:copy(callee),invocation,continuation:null,resolution:null}]);return true;
+     }
+     if(event.operation==='async.await'){
+       const call=data.calls.find(([frame])=>frame===event.invocationId)?.[1],
+@@ -51,7 +51,32 @@ export function createAsyncCallTeacherV8(){return {id,
+         awaited:row.promise,continuation},event,'source-async-await/1');call.continuation=continuation;return true;
+     }
+     if(event.operation==='job.enter'){
+-      const queued=ctx.state.control.a0.queue?.[0],call=data.calls.find(([frame])=>frame===queued?.frameId)?.[1],
++      const queued=ctx.state.control.a0.queue?.[0];
++      if(queued?.kind==='promise-adopt'){
++        const call=data.calls.find(([,entry])=>entry.promise===queued.promiseId)?.[1],
++          state=call?.resolution,controller=call&&ctx.controller(call.owner),
++          enter=event.stateChanges.find(change=>change.table==='control')?.before?.queue?.[0];
++        if(!call||state?.target!==queued.targetId||state.phase!=='queued'||enter?.kind!=='promise-adopt'||
++          enter.promiseId!==call.promise||enter.targetId!==state.target)
++          ctx.refuse('async Promise adoption lacks its exact queued source return');
++        ctx.emitProtocol(call.owner,{kind:'async.resolve.subscribe',promise:call.promise,
++          invocation:call.invocation,target:state.target,job:state.job,
++          settlementJob:state.settlementJob},event,'source-async-resolution-subscribe/1');
++        state.phase='subscribed';return true;
++      }
++      if(queued?.kind==='adoption'){
++        const call=data.calls.find(([,entry])=>entry.promise===queued.resultId)?.[1],
++          state=call?.resolution,target=state&&ctx.state.promises[state.target];
++        if(!call||state?.phase!=='subscribed'||state.target!==queued.promiseId||
++          !target||!['fulfilled','rejected'].includes(target.status)||
++          queued.resultId!==call.promise)
++          ctx.refuse('async Promise settlement lacks its exact target observer');
++        ctx.emitProtocol(call.owner,{kind:'async.resolve.settle',promise:call.promise,
++          invocation:call.invocation,target:state.target,job:state.settlementJob,
++          status:target.status,value:ctx.tag(target.value.value)},event,'source-async-resolution-settle/1');
++        state.phase='settled';return true;
++      }
++      const call=data.calls.find(([frame])=>frame===queued?.frameId)?.[1],
+         frame=call&&ctx.state.frames[queued.frameId],awaited=call&&ctx.state.promises[queued.promiseId];
+       if(queued?.kind!=='await'||!call||frame.awaiting!==queued.promiseId||frame.asyncPromiseId!==call.promise||
+         !['fulfilled','rejected'].includes(awaited?.status)||!call.continuation)
+@@ -62,12 +87,31 @@ export function createAsyncCallTeacherV8(){return {id,
+     return false;
+   },
+   completion(ctx,event,_row,exit){
+-    const call=ctx.componentState(id).calls.find(([frame])=>frame===exit.invocation)?.[1],
++    const data=ctx.componentState(id),call=data.calls.find(([frame])=>frame===exit.invocation)?.[1],
+       frame=event.stateChanges.find(change=>change.table==='frames'&&change.id===exit.invocation)?.after;
+     if(!call||!['completed','thrown'].includes(frame?.status)||frame.asyncPromiseId!==call.promise||
+       !['return','throw'].includes(frame.completion?.type))ctx.refuse('async source completion lacks its exact retained body outcome');
+     ctx.emitProtocol(call.owner,{kind:'async.complete',promise:call.promise,invocation:ctx.frameId(frame.id),
+-      completion:{kind:frame.completion.type,value:ctx.tag(frame.completion.value.value)}},event,'source-async-complete/1');return true;
++      completion:{kind:frame.completion.type,value:ctx.tag(frame.completion.value.value)}},event,'source-async-complete/1');
++    const returned=frame.completion.value.value;
++    if(frame.completion.type==='return'&&returned?.[0]==='promise'){
++      if(ctx.componentState(id).unsafePromiseResolutionLookup)
++        ctx.refuse('async Promise return cannot prove its then lookup and resolver are unmodified');
++      const target=returned[1],queued=event.stateChanges.find(change=>change.table==='control')?.after?.queue??[],
++        adopted=queued.find(job=>job.kind==='promise-adopt'&&job.promiseId===call.promise&&job.targetId===target),
++        targetState=ctx.state.promises[target],publicTarget=ctx.controller(call.owner).heap.get(target);
++      if(!adopted||!targetState||!publicTarget||publicTarget.kind!=='promise'||publicTarget.external!==null)
++        ctx.refuse('async returned Promise lacks its exact owned assimilation queue entry');
++      const controller=ctx.controller(call.owner),fresh=()=>{
++        let job;
++        do{job='asyncresolve'+(++data.resolution);}while(controller.jobs.has(job)||controller.continuations.has(job));
++        return job;
++      },job=fresh(),settlementJob=fresh();
++      ctx.emitProtocol(call.owner,{kind:'async.resolve.enqueue',promise:call.promise,
++        invocation:ctx.frameId(frame.id),target,job,settlementJob},event,'source-async-resolution-enqueue/1');
++      call.resolution={target,job,settlementJob,phase:'queued'};
++    }
++    return true;
+   },
+   checkEvent(ctx){
+     for(const [identity,entry]of ctx.componentState(id).calls){
+@@ -86,6 +130,33 @@ export function createAsyncCallTeacherV8(){return {id,
+       }
+       if(phase==='completed'&&!eq(call.completion,{kind:frame.completion.type,value:ctx.tag(frame.completion.value.value)}))
+         ctx.refuse('async retained source completion differs');
++      if(entry.resolution){
++        const resolution=call.resolution,target=controller.heap.get(entry.resolution.target),
++          assimilation=controller.jobs.get(entry.resolution.job),settlement=controller.jobs.get(entry.resolution.settlementJob);
++        if(phase!=='completed'||frame.completion.type!=='return'||
++          !eq(call.completion?.value,['ref',entry.resolution.target])||
++          resolution?.target!==entry.resolution.target||resolution.assimilationJob!==entry.resolution.job||
++          resolution.settlementJob!==entry.resolution.settlementJob||resolution.phase!==entry.resolution.phase||
++          target?.kind!=='promise'||target.external!==null)
++          ctx.refuse('async Promise resolution differs from its exact source return');
++        if(entry.resolution.phase==='queued'&&
++          (assimilation?.reaction!=='async-resolution-enqueue'||assimilation.status!=='queued'||
++            !controller.ready.includes(entry.resolution.job)||settlement?.owner!==entry.owner||
++            settlement.status!=='reserved'||settlement.promise!==null||
++            settlement.reaction!=='async-resolution-reserved'||settlement.closure!==null||
++            settlement.rejectionClosure!==null||settlement.target!==entry.promise||settlement.sequence!==null||
++            !eq(settlement.asyncResolution,{promise:entry.promise,target:entry.resolution.target,phase:'reserved'})))
++          ctx.refuse('async Promise enqueue checkpoint lost its assimilation job');
++        if(entry.resolution.phase==='subscribed'&&
++          (assimilation?.status!=='completed'||settlement?.reaction!=='async-resolution-settle'||
++            settlement.promise!==entry.resolution.target||settlement.target!==entry.promise||
++            target.state==='pending'&&settlement.status!=='waiting'||
++            target.state!=='pending'&&settlement.status!=='queued'))
++          ctx.refuse('async Promise subscription checkpoint lost its target observer');
++        if(entry.resolution.phase==='settled'&&
++          (settlement?.status!=='completed'||promise.state!==target.state||!eq(promise.result,target.result)))
++          ctx.refuse('async Promise settlement checkpoint differs from its target');
++      }else if(call.resolution!==null)ctx.refuse('async source Promise resolution has no runtime return');
+     }
+     return true;
+   }
+@@ -94,5 +165,28 @@ export function createAsyncCallTeacherV8(){return {id,
+ export function createAsyncCallSourceAdapterV8(input={}){
+   if(!sourceHasSyntaxV8(input,node=>/Function/.test(node.type)&&node.async===true&&
+     (node.type!=='FunctionDeclaration'||node.id?.name!==input.bundle?.entrySpec?.functionName)))return null;
+-  return {id,sourceComponent:createAsyncCallTeacherV8(),sourceProfile:'async-scoped-call-source/1'};
++  const unsafePromiseResolutionLookup=sourceHasSyntaxV8(input,node=>{
++    const hasBinding=(pattern,name)=>!pattern?false:pattern.type==='Identifier'?pattern.name===name:
++      pattern.type==='RestElement'?hasBinding(pattern.argument,name):
++      pattern.type==='AssignmentPattern'?hasBinding(pattern.left,name):
++      pattern.type==='ArrayPattern'?pattern.elements.some(item=>hasBinding(item,name)):
++      pattern.type==='ObjectPattern'?pattern.properties.some(item=>hasBinding(item.value??item.argument,name)):false;
++    if(node.type==='VariableDeclarator'&&hasBinding(node.id,'Promise'))return true;
++    if(['FunctionDeclaration','FunctionExpression','ArrowFunctionExpression'].includes(node.type)&&
++      (node.id?.name==='Promise'||node.params?.some(param=>hasBinding(param,'Promise'))))return true;
++    if(node.type==='ClassDeclaration'&&node.id?.name==='Promise')return true;
++    if(node.type==='AssignmentExpression'&&node.left?.type==='MemberExpression'||
++      node.type==='UpdateExpression'&&node.argument?.type==='MemberExpression'||
++      node.type==='UnaryExpression'&&node.operator==='delete'&&node.argument?.type==='MemberExpression')return true;
++    if(node.type==='CallExpression'&&node.callee?.type==='MemberExpression'){
++      const method=node.callee.computed?node.callee.property?.value:node.callee.property?.name,
++        object=node.callee.object?.name;
++      if((object==='Object'&&['assign','defineProperty','defineProperties','setPrototypeOf'].includes(method))||
++        (object==='Reflect'&&['set','defineProperty','setPrototypeOf'].includes(method)))return true;
++    }
++    return false;
++  });
++  const sourceComponent=createAsyncCallTeacherV8();
++  sourceComponent.initialize=()=>({calls:[],continuation:0,resolution:0,unsafePromiseResolutionLookup});
++  return {id,sourceComponent,sourceProfile:'async-scoped-call-source/1'};
+ }
+diff --git a/src/semantic/protocol-async-call-v8.js b/src/semantic/protocol-async-call-v8.js
+index e812cbdd..e64e1e7b 100644
+--- a/src/semantic/protocol-async-call-v8.js
++++ b/src/semantic/protocol-async-call-v8.js
+@@ -143,13 +143,17 @@ export function applyAsyncCallRecordV8(controller,record,api){
+   if(record.kind==='async.resolve.subscribe'){
+     const resolution=call.resolution,job=controller.jobs.get(record.job),reserved=controller.jobs.get(record.settlementJob),
+       target=controller.heap.get(record.target);
++    assertAlgorithmFields(reserved,['status','owner','promise','reaction','closure','rejectionClosure','target','sequence',
++      'asyncResolution'],'reserved async settlement job');
+     api.require(call.phase==='completed'&&resolution?.schema===resolutionSchema&&resolution.phase==='queued'&&
+       resolution.target===record.target&&resolution.assimilationJob===record.job&&
+       resolution.settlementJob===record.settlementJob&&record.job!==record.settlementJob&&
+       call.completion?.kind==='return'&&api.eq(call.completion.value,['ref',record.target])&&
+       job?.owner===call.owner&&job.status==='queued'&&job.reaction==='async-resolution-enqueue'&&
+       api.eq(job.asyncResolution,{promise:record.promise,target:record.target,phase:'enqueue'})&&
+-      reserved?.owner===call.owner&&reserved.status==='reserved'&&reserved.reaction==='async-resolution-reserved'&&
++      reserved?.owner===call.owner&&reserved.status==='reserved'&&reserved.promise===null&&
++      reserved.reaction==='async-resolution-reserved'&&reserved.closure===null&&reserved.rejectionClosure===null&&
++      reserved.target===record.promise&&reserved.sequence===null&&
+       api.eq(reserved.asyncResolution,{promise:record.promise,target:record.target,phase:'reserved'})&&
+       controller.ready[0]===record.job&&!controller.stack.length&&!controller.activeJob&&
+       target?.kind==='promise'&&target.external===null,
+@@ -340,9 +344,14 @@ function validateResolutionState(controller,identity,node,call,api){
+     api.eq(assimilation.asyncResolution,{promise:identity,target:targetId,phase:'enqueue'}),
+   'retained async assimilation job differs');
+   if(resolution.phase==='queued'){
++    const reserved=controller.jobs.get(resolution.settlementJob);
++    assertAlgorithmFields(reserved,['status','owner','promise','reaction','closure','rejectionClosure','target','sequence',
++      'asyncResolution'],'reserved async settlement job');
+     api.require(assimilation.status==='queued'&&controller.ready.includes(resolution.assimilationJob)&&
+-      controller.jobs.get(resolution.settlementJob)?.status==='reserved'&&
+-      controller.jobs.get(resolution.settlementJob)?.reaction==='async-resolution-reserved'&&
++      reserved?.owner===call.owner&&reserved.status==='reserved'&&reserved.promise===null&&
++      reserved.reaction==='async-resolution-reserved'&&reserved.closure===null&&reserved.rejectionClosure===null&&
++      reserved.target===identity&&reserved.sequence===null&&
++      api.eq(reserved.asyncResolution,{promise:identity,target:targetId,phase:'reserved'})&&
+       !controller.ready.includes(resolution.settlementJob)&&
+       node.state==='pending'&&node.result===null,
+     'queued async assimilation job or unresolved Promise differs');return;
+diff --git a/src/semantic/protocol-promise-executor-source-v8.js b/src/semantic/protocol-promise-executor-source-v8.js
+index 2cd62364..acd32666 100644
+--- a/src/semantic/protocol-promise-executor-source-v8.js
++++ b/src/semantic/protocol-promise-executor-source-v8.js
+@@ -104,8 +104,13 @@ export function createPromiseExecutorTeacherV8(){
+     for(const change of event.stateChanges){
+       const completed=change.after;
+       if(change.table==='frames'&&completed?.status==='completed'&&completed.completion?.type==='return'&&
+-        completed.completion.value?.value?.[0]==='promise'&&(completed.asyncPromiseId||completed.reactionPromiseId))
+-        ctx.refuse('Promise return adoption requires its resolving-function job protocol');
++        completed.completion.value?.value?.[0]==='promise'&&(completed.asyncPromiseId||completed.reactionPromiseId)){
++        const call=completed.asyncPromiseId&&controller.heap.get(completed.asyncPromiseId)?.asyncCall,
++          ownedAsyncReturn=call?.invocation===ctx.frameId(change.id)&&call.phase==='completed'&&
++            call.completion?.kind==='return'&&call.completion.value?.[0]==='ref'&&
++            call.resolution?.target===call.completion.value[1];
++        if(!ownedAsyncReturn)ctx.refuse('Promise return adoption requires its resolving-function job protocol');
++      }
+       if(change.table==='frames'&&change.after?.status==='running'&&
+         ctx.frameId(change.id)===controller.stack.at(-1)&&
+         !eq(controller.receiver??['undefined'],ctx.tag(change.after.thisValue)))
+diff --git a/src/semantic/source-projection-base-v8.js b/src/semantic/source-projection-base-v8.js
+index 8f6422e9..7573f569 100644
+--- a/src/semantic/source-projection-base-v8.js
++++ b/src/semantic/source-projection-base-v8.js
+@@ -11,10 +11,16 @@ export const PROMISE_JOIN_COMPONENT_V8='promise-join/1';
+ export const ASYNC_CALL_COMPONENT_V8='async-scoped-call-source/1';
+ export function sourceAsyncCallEventV8(view,{event,row}){
+   const data=view.components[ASYNC_CALL_COMPONENT_V8];if(!data)return false;
+-  const owns=frame=>data.calls.some(([id])=>id===frame),raw=event.operands?.[0],callee=raw?.[0]==='method'?raw[1]:raw;
++  const owns=frame=>data.calls.some(([id])=>id===frame),queue=view.owned.control.a0.queue?.[0],
++    asyncResolution=queue?.kind==='promise-adopt'?
++      data.calls.some(([,call])=>call.promise===queue.promiseId&&call.resolution?.phase==='queued'&&
++        call.resolution.target===queue.targetId):queue?.kind==='adoption'?
++        data.calls.some(([,call])=>call.promise===queue.resultId&&call.resolution?.phase==='subscribed'&&
++          call.resolution.target===queue.promiseId):false,
++    raw=event.operands?.[0],callee=raw?.[0]==='method'?raw[1]:raw;
+   return event.operation==='call.enter'&&row?.child&&callee?.[0]==='ref'&&view.owned.heap[callee[1]]?.async===true||
+     event.operation==='async.await'&&owns(event.invocationId)||
+-    event.operation==='job.enter'&&view.owned.control.a0.queue?.[0]?.kind==='await'&&owns(view.owned.control.a0.queue[0].frameId);
++    event.operation==='job.enter'&&(queue?.kind==='await'&&owns(queue.frameId)||asyncResolution);
+ }
+ export function sourceAsyncCallAllocationV8(view,input){
+   return Object.hasOwn(view.components,ASYNC_CALL_COMPONENT_V8)&&input.kind==='closure'&&input.node?.async===true;
+diff --git a/src/semantic/source-projection.js b/src/semantic/source-projection.js
+index 5aae634f..3cc29b32 100644
+--- a/src/semantic/source-projection.js
++++ b/src/semantic/source-projection.js
+@@ -272,6 +272,10 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
+     }))});
+   };
+   const controller=owner=>harness.invocations.get(owner).controller;
++  const isOwnedAsyncResolution=(promiseId,targetId)=>regionAdapter&&[...harness.invocations.values()].some(({controller})=>{
++    const call=controller.heap.get(promiseId)?.asyncCall;
++    return call?.resolution?.target===targetId&&call.resolution.phase!=='enqueue-pending';
++  });
+   function publicScope(frame,owner){
+     const selected=controller(owner),locals=selected.visibleLocals();
+     return {
+@@ -826,6 +830,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
+       if(!['adoption','finally-pass'].includes(observer.kind))return;
+       const key=observer.kind+':'+observer.resultId;
+       if(forwardingJobs.has(key))return;
++      if(regionAdapter&&observer.kind==='adoption'&&isOwnedAsyncResolution(observer.resultId,promiseId))return;
+       if(regionAdapter)refuse(observer.kind==='adoption'?
+         'Promise adoption requires explicit assimilation jobs':'Normal Promise finally completion requires explicit cleanup jobs');
+       const job='forward'+(++jobOrdinal);
+@@ -981,7 +986,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
+         emit(owner,'job',{action:'complete',job:registration.job,owner},event,'promise-adoption-complete');
+       }else if(!changed&&['adoption','finally-pass'].includes(queue?.kind)){
+         const registration=forwardingJobs.get(queue.kind+':'+queue.resultId);
+-        if(!registration||registration.promise!==queue.promiseId)refuse('forwarding job lacks its source dependency');
++        if(!registration||registration.promise!==queue.promiseId)refuse('forwarding job lacks its source dependency '+JSON.stringify({queue,forwarding:[...forwardingJobs],calls:[...harness.invocations.values()].flatMap(({controller})=>[...controller.heap].filter(([,node])=>node.asyncCall).map(([id,node])=>({id,resolution:node.asyncCall.resolution})))}));
+         owner=registration.owner;
+         emit(owner,'job',{action:'dispatch',job:registration.job,owner},event,'promise-forwarding-dispatch');
+         if(queue.kind==='adoption'){
+@@ -1105,6 +1110,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
+       if(['fulfilled','rejected'].includes(change.after?.status)&&publicPromise?.state===change.after.status&&
+         isDeepStrictEqual(publicPromise.result,tag(change.after.value.value))){settledPromises.add(change.id);continue;}
+       if(change.after?.adopting&&change.before?.adopting!==change.after.adopting&&publicPromise?.adopted!==change.after.adopting){
++        if(isOwnedAsyncResolution(change.id,change.after.adopting))continue;
+         if(regionAdapter)refuse('Promise adoption requires explicit assimilation jobs');
+         // The operation queues an adoption job; it does not yet observe or
+         // settle its target. Publish that job after any same-event settlements
+@@ -1119,6 +1125,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
+     const previousQueue=event.stateChanges.find(change=>change.table==='control')?.before?.queue??[],
+       currentQueue=event.stateChanges.find(change=>change.table==='control')?.after?.queue??[];
+     for(const job of currentQueue)if(job.kind==='promise-adopt'&&!adoptionJobs.has(job.promiseId)){
++      if(isOwnedAsyncResolution(job.promiseId,job.targetId))continue;
+       if(previousQueue.some(prior=>prior.kind==='promise-adopt'&&prior.promiseId===job.promiseId))
+         refuse('adoption job appeared without its source enqueue event');
+       if(regionAdapter)refuse('Promise adoption requires explicit assimilation jobs');
+diff --git a/test/fixtures/semantic-regions-v8.json b/test/fixtures/semantic-regions-v8.json
+index 01e889d4..5c876349 100644
+--- a/test/fixtures/semantic-regions-v8.json
++++ b/test/fixtures/semantic-regions-v8.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "semantic-v8-interoperability/1",
+-  "contractDigest": "a952385535b9b5e19d737206286f6f26c149f7301c51b4b106fe3b1cae5ab55a",
++  "contractDigest": "f8546a803d7b6e1faa696e92d6e4df3e48de34d40475dce7c166a1587a9eb472",
+   "interoperabilityDigest": "f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661",
+   "examples": [
+     {
+diff --git a/test/semantic-async-call-source-v8.test.js b/test/semantic-async-call-source-v8.test.js
+index 53e05416..6395009d 100644
+--- a/test/semantic-async-call-source-v8.test.js
++++ b/test/semantic-async-call-source-v8.test.js
+@@ -28,6 +28,8 @@ const cases=[
+   ['receiver and live capture cells','async function run(){let n=1;const obj={n:3,h:async function(x){await 0;return this.n+x+n;}};const p=obj.h(2);n=9;return await p;}',14],
+   ['nested detached children','async function child(){await 0;return 2;}async function parent(){const p=child();await 0;return (await p)+1;}async function run(){return await parent();}',3],
+   ['ordinary reference completion','async function h(){await 0;return {x:2};}async function run(){const r=await h();return r.x;}',2],
++  ['owned Promise.resolve return adoption','async function h(){return Promise.resolve(1);}async function run(){let order="";const adopted=h();adopted.then(()=>{order+="a";});Promise.resolve().then(()=>{order+="q";});await adopted;return order;}','qa'],
++  ['owned Promise return adoption FIFO','async function target(){return 1;}async function run(){let order="";const targetPromise=target();async function outer(){return targetPromise;}const adopted=outer();adopted.then(()=>{order+="a";});targetPromise.then(()=>{order+="d";});targetPromise.then(()=>{order+="q";});await adopted;return order;}','dqa'],
+   ['generator yields a child execution Promise','async function leaf(n){await 0;return n+1;}async function run(){function* g(){yield leaf(2);return 4;}const it=g();const first=await it.next().value;return first+it.next().value;}',7]
+ ].map(([name,body,expected])=>({name,source:'"use strict";'+body,expected}));
+ const artifacts=[];
+@@ -60,10 +62,11 @@ for(const scenario of cases)test('nested async source: '+scenario.name,async()=>
+   const checked=await recheckProtocolRegionEvidence(verified.exported);
+   assert(checked.sourceValidated&&checked.projectionValidated&&checked.replayValidated);
+   const controller=RegionExecutionHarness.replay(verified.exported).controller;
+-  assert.deepEqual(controller.completion,{kind:'return',value:['num',scenario.expected]});
++  assert.deepEqual(controller.completion,{kind:'return',value:[typeof scenario.expected==='string'?'str':'num',scenario.expected]});
+   const example={name:scenario.name,exported:verified.exported,state:sharedRegionState(controller)};
+   artifacts.push(example);
+-  for(const [index,row]of example.exported.public.timeline.entries())if(['async.await','async.resume','async.complete'].includes(protocol(row)?.kind)){
++  for(const [index,row]of example.exported.public.timeline.entries())if(['async.await','async.resume','async.complete',
++    'async.resolve.enqueue','async.resolve.subscribe','async.resolve.settle'].includes(protocol(row)?.kind)){
+     const before=prefix(example,index+1),resumed=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(before.checkpoint())));
+     assert.deepEqual(resumed.modelContext('invocation1'),before.modelContext('invocation1'));
+     for(const later of example.exported.public.timeline.slice(index+1))
+@@ -72,6 +75,23 @@ for(const scenario of cases)test('nested async source: '+scenario.name,async()=>
+   }
+ });
+ 
++test('owned async Promise return projects exact source-bound enqueue, subscription and settlement jobs',()=>{
++  const example=artifacts.find(row=>row.name==='owned Promise return adoption FIFO'),records=example.exported.public.timeline
++      .map(protocol).filter(Boolean),resolution=records.filter(row=>row.kind.startsWith('async.resolve.')),
++    completion=records.find(row=>row.kind==='async.complete'&&row.completion.value[0]==='ref');
++  assert(completion);assert.deepEqual(resolution.map(row=>row.kind),[
++    'async.resolve.enqueue','async.resolve.subscribe','async.resolve.settle']);
++  assert(resolution.every(row=>row.promise===completion.promise&&row.invocation===completion.invocation&&
++    row.target===completion.completion.value[1]));
++  assert.equal(resolution[0].job,resolution[1].job);assert.equal(resolution[0].settlementJob,resolution[1].settlementJob);
++  assert.equal(resolution[2].job,resolution[0].settlementJob);
++  const controller=RegionExecutionHarness.replay(example.exported).controller,
++    returned=controller.heap.get(completion.promise),call=returned.asyncCall;
++  assert.equal(call.phase,'completed');assert.equal(call.resolution.phase,'settled');
++  assert.equal(returned.state,'fulfilled');assert.deepEqual(returned.result,['num',1]);
++  assert.deepEqual(controller.completion,{kind:'return',value:['str','dqa']});
++});
++
+ test('async resume verifies active-turn ownership, settled input and sibling FIFO atomically',()=>{
+   const example=artifacts.find(row=>row.name==='sibling FIFO and repeated awaits'),timeline=example.exported.public.timeline,
+     awaits=timeline.map((row,index)=>({record:protocol(row),index})).filter(row=>row.record?.kind==='async.await'),
+@@ -141,9 +161,34 @@ test('an async observer failure rolls back detachment, caller scope and continua
+   for(const {id}of extensions)assert.deepEqual(adapter.componentState(id),states[id],id);
+ });
+ 
+-test('async Promise callbacks and assimilation remain explicit refusals',()=>{
++test('owned async Promise returns are explicit while callbacks and thenables stay refused',()=>{
++  const supported='"use strict";async function h(){return Promise.resolve(1);}async function run(){let order="";const adopted=h();adopted.then(()=>{order+="a";});Promise.resolve().then(()=>{order+="q";});await adopted;return order;}',
++    runtime=createRuntime().startEntry({text:supported,functionName:'run',args:[],allowAsync:true});
++  runtime.drive();
++  const projection=compileProtocolSourceV8(runtime.exportRun()),records=projection.claims
++    .filter(row=>row.kind==='protocol').map(row=>row.record);
++  assert.deepEqual(projection.outcome.graph.roots,[['str','qa']]);
++  assert.deepEqual(records.filter(row=>row.kind==='async.resolve.enqueue').map(row=>row.kind),['async.resolve.enqueue']);
++  assert.deepEqual(records.filter(row=>row.kind==='async.resolve.subscribe').map(row=>row.kind),['async.resolve.subscribe']);
++  assert.deepEqual(records.filter(row=>row.kind==='async.resolve.settle').map(row=>row.kind),['async.resolve.settle']);
++  const lookupMutations=[
++    ['own Promise then override','async function target(){return 1;}async function run(){let order="";const p=target();p.then=function(resolve){order+="t";resolve(2);};async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}','t2'],
++    ['Promise prototype then override','async function h(){return Promise.resolve(1);}async function run(){let order="";const original=Promise.prototype.then;Promise.prototype.then=function(resolve,reject){order+="t";return original.call(this,resolve,reject);};const adopted=h();await adopted;return order;}','t'],
++    ['Promise.resolve override','async function h(){return Promise.resolve(1);}async function run(){Promise.resolve=function(value){return {then:function(resolve){resolve(value+1);}};};return await h();}',2],
++    ['Promise.resolve shadow','async function h(Promise){return Promise.resolve(1);}async function run(){const nativeResolve=Promise.resolve;return await h({resolve:function(value){return nativeResolve(value+1);}});}',2]
++  ];
++  for(const [name,source,expected]of lookupMutations){
++    const original=spawnSync(process.execPath,['-e','const unmodifiedThen=Promise.prototype.then;'+source+
++      ';unmodifiedThen.call(run(),value=>process.stdout.write(JSON.stringify(value)))'],
++      {encoding:'utf8',timeout:10000});
++    assert.equal(original.status,0,name+': '+original.stderr);assert.deepEqual(JSON.parse(original.stdout),expected,name);
++    const candidate=createRuntime().startEntry({text:'"use strict";'+source,functionName:'run',args:[],allowAsync:true});
++    let refused=null;
++    try{candidate.drive();compileProtocolSourceV8(candidate.exportRun());}catch(error){refused=error;}
++    assert(refused,name+' was accepted without ordinary then lookup');
++    if(name==='Promise.resolve shadow')assert.match(refused.message,/then lookup and resolver are unmodified/);
++  }
+   for(const source of [
+-    'async function h(){return Promise.resolve(1);}async function run(){return await h();}',
+     'function run(){return Promise.resolve(1).then(async function(x){await 0;return x;});}',
+     'async function h(){return {then:function(resolve){resolve(1);}};}async function run(){return await h();}'
+   ]){
+diff --git a/test/semantic-protocol-async-call-v8.test.js b/test/semantic-protocol-async-call-v8.test.js
+index 42f0b739..992550c9 100644
+--- a/test/semantic-protocol-async-call-v8.test.js
++++ b/test/semantic-protocol-async-call-v8.test.js
+@@ -4,6 +4,7 @@ import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
+ import {encodeDetailedRecord} from '../src/semantic/detailed-v7.js';
+ import {encodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
+ import {sharedRegionState} from '../src/semantic/regions.js';
++import {restoreProtocolStateV8} from '../src/semantic/protocol-state-v8.js';
+ 
+ const source='"use strict";async function helper(){return 1;}function run(){}';
+ function fixture({settled=true,complete=true}={}){
+@@ -123,13 +124,21 @@ test('future settlement identities stay reserved across ordinary jobs and other
+   protocol({kind:'async.resolve.enqueue',promise:'p3',invocation:'other-body',target:'p2',job:'j3',settlementJob:'j4'});
+   detail('await',{invocation:'invocation1',promise:'p1',continuation:'c1'});
+   const reservation=harness.controller.jobs.get('j2');
+-  harness.controller.jobs.set('j2',{...reservation,reaction:'unrelated'});
+-  const forged=sharedRegionState(harness.controller);
+-  assert.throws(()=>subscribe(protocol),/queued async|assimilation|resolution/);
+-  assert.deepEqual(sharedRegionState(harness.controller),forged);
+-  assert.throws(()=>RegionExecutionHarness.restore(JSON.parse(JSON.stringify(harness.checkpoint()))),
+-    /queued async assimilation|checkpoint differs/);
+-  assert.deepEqual(sharedRegionState(harness.controller),forged);
++  for(const altered of [
++    {...reservation,owner:'other'},
++    {...reservation,target:'p3'},
++    {...reservation,asyncResolution:{...reservation.asyncResolution,phase:'wrong'}},
++    {...reservation,readySequence:1},
++    {...reservation,foreignMetadata:true}
++  ]){
++    harness.controller.jobs.set('j2',altered);
++    const forged=sharedRegionState(harness.controller),cloned=Object.assign(
++      Object.create(Object.getPrototypeOf(harness.controller)),structuredClone(harness.controller));
++    assert.throws(()=>subscribe(protocol),/queued async|assimilation|resolution|reserved async settlement/);
++    assert.deepEqual(sharedRegionState(harness.controller),forged);
++    assert.throws(()=>restoreProtocolStateV8(cloned,cloned.protocol),
++      /queued async assimilation|reserved async settlement job fields/);
++  }
+   harness.controller.jobs.set('j2',reservation);
+   subscribe(protocol);
+ });

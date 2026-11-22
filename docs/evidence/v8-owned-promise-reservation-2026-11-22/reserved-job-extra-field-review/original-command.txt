@@ -1,0 +1,19 @@
+Executed from `/workspace/scratch/9faed68167fb/async-return-native`:
+
+```sh
+PYTHONPATH=src:. /workspace/scratch/9faed68167fb/.venv/bin/python - <<'PY'
+import copy,json
+from tests.test_async_call_v8 import promise_return_fixture,enqueue_resolution,_external_machine
+from megatoken.data.protocol_v8 import validate_protocol_state
+machine=promise_return_fixture(settled=False);enqueue_resolution(machine)
+jobs=dict(machine['jobs']);jobs['j2']['readySequence']=1;machine['jobs']=[[key,row] for key,row in jobs.items()]
+external=_external_machine(machine)
+try:
+ validate_protocol_state(external['protocol'],external['heap'],external)
+ print(json.dumps({'result':'accepted-extra-reserved-job-readiness','reserved':dict(machine['jobs'])['j2']}))
+except Exception as error:
+ print(json.dumps({'result':'refused','type':type(error).__name__,'message':str(error)}))
+PY
+```
+
+The exact stdout is in `captured-toolstdout.log`. No rerun was performed.

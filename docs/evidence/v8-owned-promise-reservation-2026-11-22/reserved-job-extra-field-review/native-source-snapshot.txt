@@ -1,0 +1,19 @@
+Review finding: native restoration validation accepted a reserved future settlement job with an extra `readySequence` field. The reproduction stdout is copied from the original tool return; no timestamp was added.
+
+The run used `tests.test_async_call_v8.promise_return_fixture(settled=False)`, admitted `async.resolve.enqueue`, added `readySequence: 1` to the reserved job `j2`, and passed the external checkpoint through `validate_protocol_state`.
+
+The following revision/hash/status/diff were captured after the tool-returned reproduction. No source hash was recorded before the original call, so this is not an exact pre-run source mapping.
+
+Native worktree HEAD: 9698bd6142f787b36814138c14707d189eba703e
+Native file: `src/megatoken/data/async_call_v8.py`
+Native file SHA-256 at capture: 0c656bda8f12ce652253bbd98dee884a7c8449fbb621438b905a40593d92ee56
+Native tracked dirty diff: `native-async-call-dirty.diff`
+Native working tree status at capture:
+```
+## work/owned-promise-return
+ M src/megatoken/data/async_call_v8.py
+ M tests/test_async_call_v8.py
+```
+
+Producer worktree HEAD at capture: 3b5e36c9f5f8e97d9e188635d1ddd98d65444601
+The reproduction calls only the native Python validator; no producer code is used by that script.

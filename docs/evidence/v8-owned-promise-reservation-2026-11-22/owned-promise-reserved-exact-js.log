@@ -1,0 +1,47 @@
+✔ owned async Promise return uses separate FIFO enqueue, subscription, and settlement turns (49.765865ms)
+✔ pending target subscribes first and schedules settlement with competing Promise jobs (8.219636ms)
+✔ wrong targets, missing turns, FIFO bypasses and self-resolution refuse atomically (16.535373ms)
+✖ future settlement identities stay reserved across ordinary jobs and other async returns (20.645492ms)
+✔ throwing an owned Promise preserves it as the rejection reason at restored cuts (21.561404ms)
+✔ every retained resolution cut restores its body, observer and job ownership (44.725405ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 310.18047
+
+✖ failing tests:
+
+test at test/semantic-protocol-async-call-v8.test.js:112:1
+✖ future settlement identities stay reserved across ordinary jobs and other async returns (20.645492ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /queued async|assimilation|resolution/. Input:
+  
+  'TypeError: Invalid semantic-algorithm/1: reserved async settlement job fields'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/9faed68167fb/async-return-producer/test/semantic-protocol-async-call-v8.test.js:137:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: TypeError: Invalid semantic-algorithm/1: reserved async settlement job fields
+        at algorithmError (file:///workspace/scratch/9faed68167fb/async-return-producer/src/semantic/ir.js:24:47)
+        at assertAlgorithmFields (file:///workspace/scratch/9faed68167fb/async-return-producer/src/semantic/ir.js:27:5)
+        at Object.applyAsyncCallRecordV8 [as applyRecord] (file:///workspace/scratch/9faed68167fb/async-return-producer/src/semantic/protocol-async-call-v8.js:146:5)
+        at apply (file:///workspace/scratch/9faed68167fb/async-return-producer/src/semantic/protocol-state-v8.js:268:31)
+        at applyProtocolRecordV8 (file:///workspace/scratch/9faed68167fb/async-return-producer/src/semantic/protocol-state-v8.js:371:3)
+        at RegionExecutionHarness.selectProtocol (file:///workspace/scratch/9faed68167fb/async-return-producer/src/semantic/region-harness.js:238:59)
+        at RegionExecutionHarness.select (file:///workspace/scratch/9faed68167fb/async-return-producer/src/semantic/region-harness.js:173:49)
+        at protocol (file:///workspace/scratch/9faed68167fb/async-return-producer/test/semantic-protocol-async-call-v8.test.js:16:30)
+        at subscribe (file:///workspace/scratch/9faed68167fb/async-return-producer/test/semantic-protocol-async-call-v8.test.js:29:57)
+        at file:///workspace/scratch/9faed68167fb/async-return-producer/test/semantic-protocol-async-call-v8.test.js:137:23,
+    expected: /queued async|assimilation|resolution/,
+    operator: 'throws',
+    diff: 'simple'
+  }

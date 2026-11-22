@@ -1,0 +1,30 @@
+diff --git a/src/megatoken/data/async_call_v8.py b/src/megatoken/data/async_call_v8.py
+index 2cd63c4..ee87dbb 100644
+--- a/src/megatoken/data/async_call_v8.py
++++ b/src/megatoken/data/async_call_v8.py
+@@ -406,7 +406,12 @@ def apply_record(machine, record):
+             and reserved is not None
+             and reserved.get("owner") == call["owner"]
+             and reserved.get("status") == "reserved"
++            and reserved.get("promise") is None
+             and reserved.get("reaction") == "async-resolution-reserved"
++            and reserved.get("closure") is None
++            and reserved.get("rejectionClosure") is None
++            and reserved.get("target") == record["promise"]
++            and reserved.get("sequence") is None
+             and reserved.get("asyncResolution")
+             == {"promise": record["promise"], "target": record["target"], "phase": "reserved"}
+             and machine["ready"][:1] == [record["job"]]
+@@ -872,8 +877,12 @@ def _validate_resolution_state(machine, identity, node, call):
+             and settlement is not None
+             and settlement.get("owner") == call["owner"]
+             and settlement.get("status") == "reserved"
++            and settlement.get("promise") is None
+             and settlement.get("reaction") == "async-resolution-reserved"
++            and settlement.get("closure") is None
++            and settlement.get("rejectionClosure") is None
+             and settlement.get("target") == identity
++            and settlement.get("sequence") is None
+             and settlement.get("asyncResolution")
+             == {"promise": identity, "target": target_id, "phase": "reserved"}
+             and settlement_id not in ready

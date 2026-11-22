@@ -1,0 +1,37 @@
+{
+  "files": [
+    {
+      "repository": "producer",
+      "localImplementationCommit": "7cdecaaa7e925b723cffb2fccb295a38059e43eb",
+      "publishedCommit": "f9d3363a24b3e3bee7f7be2f8db1d12acb0672d5",
+      "path": "src/semantic/protocol-async-call-v8.js",
+      "bytes": 27195,
+      "sha256": "a8451f737a5bb8c41ef4e1e3a39451fb0bd867b537d0fafead00f84dae3814b2"
+    },
+    {
+      "repository": "producer",
+      "localImplementationCommit": "7cdecaaa7e925b723cffb2fccb295a38059e43eb",
+      "publishedCommit": "f9d3363a24b3e3bee7f7be2f8db1d12acb0672d5",
+      "path": "test/semantic-protocol-async-call-v8.test.js",
+      "bytes": 10773,
+      "sha256": "6dcc32243dc33c8ea318245792c6205a29643dc8ae24e6552230f0472508709c"
+    },
+    {
+      "repository": "native",
+      "localImplementationCommit": "da817b269500d56da9983f22f58ddf1dbb48fc19",
+      "publishedCommit": "a8b2a78350ecc6971fa1b3f2397aeaf8266ff8bd",
+      "path": "src/megatoken/data/async_call_v8.py",
+      "bytes": 37779,
+      "sha256": "3a90a5d54f35db40da685983325fe890fbc344feec8197be896684bbfdbd2ef2"
+    },
+    {
+      "repository": "native",
+      "localImplementationCommit": "da817b269500d56da9983f22f58ddf1dbb48fc19",
+      "publishedCommit": "a8b2a78350ecc6971fa1b3f2397aeaf8266ff8bd",
+      "path": "tests/test_async_call_v8.py",
+      "bytes": 17923,
+      "sha256": "566fe61f1fa26b59f921fb57ad22ec458fa1bc22b006d8048a77420896b15984"
+    }
+  ],
+  "preRunWholeWorktreeSnapshotAvailable": false
+}

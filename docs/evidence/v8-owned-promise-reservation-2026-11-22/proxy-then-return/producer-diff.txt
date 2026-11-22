@@ -1,0 +1,177 @@
+diff --git a/src/semantic/protocol-async-call-v8.js b/src/semantic/protocol-async-call-v8.js
+index e812cbdd..e64e1e7b 100644
+--- a/src/semantic/protocol-async-call-v8.js
++++ b/src/semantic/protocol-async-call-v8.js
+@@ -143,13 +143,17 @@ export function applyAsyncCallRecordV8(controller,record,api){
+   if(record.kind==='async.resolve.subscribe'){
+     const resolution=call.resolution,job=controller.jobs.get(record.job),reserved=controller.jobs.get(record.settlementJob),
+       target=controller.heap.get(record.target);
++    assertAlgorithmFields(reserved,['status','owner','promise','reaction','closure','rejectionClosure','target','sequence',
++      'asyncResolution'],'reserved async settlement job');
+     api.require(call.phase==='completed'&&resolution?.schema===resolutionSchema&&resolution.phase==='queued'&&
+       resolution.target===record.target&&resolution.assimilationJob===record.job&&
+       resolution.settlementJob===record.settlementJob&&record.job!==record.settlementJob&&
+       call.completion?.kind==='return'&&api.eq(call.completion.value,['ref',record.target])&&
+       job?.owner===call.owner&&job.status==='queued'&&job.reaction==='async-resolution-enqueue'&&
+       api.eq(job.asyncResolution,{promise:record.promise,target:record.target,phase:'enqueue'})&&
+-      reserved?.owner===call.owner&&reserved.status==='reserved'&&reserved.reaction==='async-resolution-reserved'&&
++      reserved?.owner===call.owner&&reserved.status==='reserved'&&reserved.promise===null&&
++      reserved.reaction==='async-resolution-reserved'&&reserved.closure===null&&reserved.rejectionClosure===null&&
++      reserved.target===record.promise&&reserved.sequence===null&&
+       api.eq(reserved.asyncResolution,{promise:record.promise,target:record.target,phase:'reserved'})&&
+       controller.ready[0]===record.job&&!controller.stack.length&&!controller.activeJob&&
+       target?.kind==='promise'&&target.external===null,
+@@ -340,9 +344,14 @@ function validateResolutionState(controller,identity,node,call,api){
+     api.eq(assimilation.asyncResolution,{promise:identity,target:targetId,phase:'enqueue'}),
+   'retained async assimilation job differs');
+   if(resolution.phase==='queued'){
++    const reserved=controller.jobs.get(resolution.settlementJob);
++    assertAlgorithmFields(reserved,['status','owner','promise','reaction','closure','rejectionClosure','target','sequence',
++      'asyncResolution'],'reserved async settlement job');
+     api.require(assimilation.status==='queued'&&controller.ready.includes(resolution.assimilationJob)&&
+-      controller.jobs.get(resolution.settlementJob)?.status==='reserved'&&
+-      controller.jobs.get(resolution.settlementJob)?.reaction==='async-resolution-reserved'&&
++      reserved?.owner===call.owner&&reserved.status==='reserved'&&reserved.promise===null&&
++      reserved.reaction==='async-resolution-reserved'&&reserved.closure===null&&reserved.rejectionClosure===null&&
++      reserved.target===identity&&reserved.sequence===null&&
++      api.eq(reserved.asyncResolution,{promise:identity,target:targetId,phase:'reserved'})&&
+       !controller.ready.includes(resolution.settlementJob)&&
+       node.state==='pending'&&node.result===null,
+     'queued async assimilation job or unresolved Promise differs');return;
+diff --git a/src/semantic/source-projection.js b/src/semantic/source-projection.js
+index 5aae634f..3cc29b32 100644
+--- a/src/semantic/source-projection.js
++++ b/src/semantic/source-projection.js
+@@ -272,6 +272,10 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
+     }))});
+   };
+   const controller=owner=>harness.invocations.get(owner).controller;
++  const isOwnedAsyncResolution=(promiseId,targetId)=>regionAdapter&&[...harness.invocations.values()].some(({controller})=>{
++    const call=controller.heap.get(promiseId)?.asyncCall;
++    return call?.resolution?.target===targetId&&call.resolution.phase!=='enqueue-pending';
++  });
+   function publicScope(frame,owner){
+     const selected=controller(owner),locals=selected.visibleLocals();
+     return {
+@@ -826,6 +830,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
+       if(!['adoption','finally-pass'].includes(observer.kind))return;
+       const key=observer.kind+':'+observer.resultId;
+       if(forwardingJobs.has(key))return;
++      if(regionAdapter&&observer.kind==='adoption'&&isOwnedAsyncResolution(observer.resultId,promiseId))return;
+       if(regionAdapter)refuse(observer.kind==='adoption'?
+         'Promise adoption requires explicit assimilation jobs':'Normal Promise finally completion requires explicit cleanup jobs');
+       const job='forward'+(++jobOrdinal);
+@@ -981,7 +986,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
+         emit(owner,'job',{action:'complete',job:registration.job,owner},event,'promise-adoption-complete');
+       }else if(!changed&&['adoption','finally-pass'].includes(queue?.kind)){
+         const registration=forwardingJobs.get(queue.kind+':'+queue.resultId);
+-        if(!registration||registration.promise!==queue.promiseId)refuse('forwarding job lacks its source dependency');
++        if(!registration||registration.promise!==queue.promiseId)refuse('forwarding job lacks its source dependency '+JSON.stringify({queue,forwarding:[...forwardingJobs],calls:[...harness.invocations.values()].flatMap(({controller})=>[...controller.heap].filter(([,node])=>node.asyncCall).map(([id,node])=>({id,resolution:node.asyncCall.resolution})))}));
+         owner=registration.owner;
+         emit(owner,'job',{action:'dispatch',job:registration.job,owner},event,'promise-forwarding-dispatch');
+         if(queue.kind==='adoption'){
+@@ -1105,6 +1110,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
+       if(['fulfilled','rejected'].includes(change.after?.status)&&publicPromise?.state===change.after.status&&
+         isDeepStrictEqual(publicPromise.result,tag(change.after.value.value))){settledPromises.add(change.id);continue;}
+       if(change.after?.adopting&&change.before?.adopting!==change.after.adopting&&publicPromise?.adopted!==change.after.adopting){
++        if(isOwnedAsyncResolution(change.id,change.after.adopting))continue;
+         if(regionAdapter)refuse('Promise adoption requires explicit assimilation jobs');
+         // The operation queues an adoption job; it does not yet observe or
+         // settle its target. Publish that job after any same-event settlements
+@@ -1119,6 +1125,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
+     const previousQueue=event.stateChanges.find(change=>change.table==='control')?.before?.queue??[],
+       currentQueue=event.stateChanges.find(change=>change.table==='control')?.after?.queue??[];
+     for(const job of currentQueue)if(job.kind==='promise-adopt'&&!adoptionJobs.has(job.promiseId)){
++      if(isOwnedAsyncResolution(job.promiseId,job.targetId))continue;
+       if(previousQueue.some(prior=>prior.kind==='promise-adopt'&&prior.promiseId===job.promiseId))
+         refuse('adoption job appeared without its source enqueue event');
+       if(regionAdapter)refuse('Promise adoption requires explicit assimilation jobs');
+diff --git a/test/semantic-async-call-source-v8.test.js b/test/semantic-async-call-source-v8.test.js
+index 53e05416..6395009d 100644
+--- a/test/semantic-async-call-source-v8.test.js
++++ b/test/semantic-async-call-source-v8.test.js
+@@ -28,6 +28,8 @@ const cases=[
+   ['receiver and live capture cells','async function run(){let n=1;const obj={n:3,h:async function(x){await 0;return this.n+x+n;}};const p=obj.h(2);n=9;return await p;}',14],
+   ['nested detached children','async function child(){await 0;return 2;}async function parent(){const p=child();await 0;return (await p)+1;}async function run(){return await parent();}',3],
+   ['ordinary reference completion','async function h(){await 0;return {x:2};}async function run(){const r=await h();return r.x;}',2],
++  ['owned Promise.resolve return adoption','async function h(){return Promise.resolve(1);}async function run(){let order="";const adopted=h();adopted.then(()=>{order+="a";});Promise.resolve().then(()=>{order+="q";});await adopted;return order;}','qa'],
++  ['owned Promise return adoption FIFO','async function target(){return 1;}async function run(){let order="";const targetPromise=target();async function outer(){return targetPromise;}const adopted=outer();adopted.then(()=>{order+="a";});targetPromise.then(()=>{order+="d";});targetPromise.then(()=>{order+="q";});await adopted;return order;}','dqa'],
+   ['generator yields a child execution Promise','async function leaf(n){await 0;return n+1;}async function run(){function* g(){yield leaf(2);return 4;}const it=g();const first=await it.next().value;return first+it.next().value;}',7]
+ ].map(([name,body,expected])=>({name,source:'"use strict";'+body,expected}));
+ const artifacts=[];
+@@ -60,10 +62,11 @@ for(const scenario of cases)test('nested async source: '+scenario.name,async()=>
+   const checked=await recheckProtocolRegionEvidence(verified.exported);
+   assert(checked.sourceValidated&&checked.projectionValidated&&checked.replayValidated);
+   const controller=RegionExecutionHarness.replay(verified.exported).controller;
+-  assert.deepEqual(controller.completion,{kind:'return',value:['num',scenario.expected]});
++  assert.deepEqual(controller.completion,{kind:'return',value:[typeof scenario.expected==='string'?'str':'num',scenario.expected]});
+   const example={name:scenario.name,exported:verified.exported,state:sharedRegionState(controller)};
+   artifacts.push(example);
+-  for(const [index,row]of example.exported.public.timeline.entries())if(['async.await','async.resume','async.complete'].includes(protocol(row)?.kind)){
++  for(const [index,row]of example.exported.public.timeline.entries())if(['async.await','async.resume','async.complete',
++    'async.resolve.enqueue','async.resolve.subscribe','async.resolve.settle'].includes(protocol(row)?.kind)){
+     const before=prefix(example,index+1),resumed=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(before.checkpoint())));
+     assert.deepEqual(resumed.modelContext('invocation1'),before.modelContext('invocation1'));
+     for(const later of example.exported.public.timeline.slice(index+1))
+@@ -72,6 +75,23 @@ for(const scenario of cases)test('nested async source: '+scenario.name,async()=>
+   }
+ });
+ 
++test('owned async Promise return projects exact source-bound enqueue, subscription and settlement jobs',()=>{
++  const example=artifacts.find(row=>row.name==='owned Promise return adoption FIFO'),records=example.exported.public.timeline
++      .map(protocol).filter(Boolean),resolution=records.filter(row=>row.kind.startsWith('async.resolve.')),
++    completion=records.find(row=>row.kind==='async.complete'&&row.completion.value[0]==='ref');
++  assert(completion);assert.deepEqual(resolution.map(row=>row.kind),[
++    'async.resolve.enqueue','async.resolve.subscribe','async.resolve.settle']);
++  assert(resolution.every(row=>row.promise===completion.promise&&row.invocation===completion.invocation&&
++    row.target===completion.completion.value[1]));
++  assert.equal(resolution[0].job,resolution[1].job);assert.equal(resolution[0].settlementJob,resolution[1].settlementJob);
++  assert.equal(resolution[2].job,resolution[0].settlementJob);
++  const controller=RegionExecutionHarness.replay(example.exported).controller,
++    returned=controller.heap.get(completion.promise),call=returned.asyncCall;
++  assert.equal(call.phase,'completed');assert.equal(call.resolution.phase,'settled');
++  assert.equal(returned.state,'fulfilled');assert.deepEqual(returned.result,['num',1]);
++  assert.deepEqual(controller.completion,{kind:'return',value:['str','dqa']});
++});
++
+ test('async resume verifies active-turn ownership, settled input and sibling FIFO atomically',()=>{
+   const example=artifacts.find(row=>row.name==='sibling FIFO and repeated awaits'),timeline=example.exported.public.timeline,
+     awaits=timeline.map((row,index)=>({record:protocol(row),index})).filter(row=>row.record?.kind==='async.await'),
+@@ -141,9 +161,34 @@ test('an async observer failure rolls back detachment, caller scope and continua
+   for(const {id}of extensions)assert.deepEqual(adapter.componentState(id),states[id],id);
+ });
+ 
+-test('async Promise callbacks and assimilation remain explicit refusals',()=>{
++test('owned async Promise returns are explicit while callbacks and thenables stay refused',()=>{
++  const supported='"use strict";async function h(){return Promise.resolve(1);}async function run(){let order="";const adopted=h();adopted.then(()=>{order+="a";});Promise.resolve().then(()=>{order+="q";});await adopted;return order;}',
++    runtime=createRuntime().startEntry({text:supported,functionName:'run',args:[],allowAsync:true});
++  runtime.drive();
++  const projection=compileProtocolSourceV8(runtime.exportRun()),records=projection.claims
++    .filter(row=>row.kind==='protocol').map(row=>row.record);
++  assert.deepEqual(projection.outcome.graph.roots,[['str','qa']]);
++  assert.deepEqual(records.filter(row=>row.kind==='async.resolve.enqueue').map(row=>row.kind),['async.resolve.enqueue']);
++  assert.deepEqual(records.filter(row=>row.kind==='async.resolve.subscribe').map(row=>row.kind),['async.resolve.subscribe']);
++  assert.deepEqual(records.filter(row=>row.kind==='async.resolve.settle').map(row=>row.kind),['async.resolve.settle']);
++  const lookupMutations=[
++    ['own Promise then override','async function target(){return 1;}async function run(){let order="";const p=target();p.then=function(resolve){order+="t";resolve(2);};async function outer(){return p;}const adopted=outer();adopted.then(value=>{order+=value;});await adopted;return order;}','t2'],
++    ['Promise prototype then override','async function h(){return Promise.resolve(1);}async function run(){let order="";const original=Promise.prototype.then;Promise.prototype.then=function(resolve,reject){order+="t";return original.call(this,resolve,reject);};const adopted=h();await adopted;return order;}','t'],
++    ['Promise.resolve override','async function h(){return Promise.resolve(1);}async function run(){Promise.resolve=function(value){return {then:function(resolve){resolve(value+1);}};};return await h();}',2],
++    ['Promise.resolve shadow','async function h(Promise){return Promise.resolve(1);}async function run(){const nativeResolve=Promise.resolve;return await h({resolve:function(value){return nativeResolve(value+1);}});}',2]
++  ];
++  for(const [name,source,expected]of lookupMutations){
++    const original=spawnSync(process.execPath,['-e','const unmodifiedThen=Promise.prototype.then;'+source+
++      ';unmodifiedThen.call(run(),value=>process.stdout.write(JSON.stringify(value)))'],
++      {encoding:'utf8',timeout:10000});
++    assert.equal(original.status,0,name+': '+original.stderr);assert.deepEqual(JSON.parse(original.stdout),expected,name);
++    const candidate=createRuntime().startEntry({text:'"use strict";'+source,functionName:'run',args:[],allowAsync:true});
++    let refused=null;
++    try{candidate.drive();compileProtocolSourceV8(candidate.exportRun());}catch(error){refused=error;}
++    assert(refused,name+' was accepted without ordinary then lookup');
++    if(name==='Promise.resolve shadow')assert.match(refused.message,/then lookup and resolver are unmodified/);
++  }
+   for(const source of [
+-    'async function h(){return Promise.resolve(1);}async function run(){return await h();}',
+     'function run(){return Promise.resolve(1).then(async function(x){await 0;return x;});}',
+     'async function h(){return {then:function(resolve){resolve(1);}};}async function run(){return await h();}'
+   ]){
+
