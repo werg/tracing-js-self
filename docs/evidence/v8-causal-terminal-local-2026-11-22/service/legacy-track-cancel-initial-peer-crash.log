@@ -1,0 +1,42 @@
+✖ actual Python track_cancel reconciliation requires the acknowledged same-owner service intent (4210.361869ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4465.764166
+
+✖ failing tests:
+
+test at test/semantic-native-orchestration-recovery-v8.test.js:371:1
+✖ actual Python track_cancel reconciliation requires the acknowledged same-owner service intent (4210.361869ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /simulated interruption after acknowledged intent/i. Input:
+  
+  'Native v8 model exited 1 (stderr: space/scratch/9faed68167fb/producer-service-close/test/fixtures/semantic-v8-track-cancel-recovery-peer.py", line 48, in <module>\n' +
+    '    raise SystemExit(main())\n' +
+    '                     ^^^^^^\n' +
+    '  File "/workspace/scratch/9faed68167fb/producer-service-close/test/fixtures/semantic-v8-track-cancel-recovery-peer.py", line 44, in main\n' +
+    '    return peer.main()\n' +
+    '           ^^^^^^^^^^^\n' +
+    '  File "/workspace/scratch/9faed68167fb/native-close-recovery/tests/fixtures/serve_semantic_v8_recovery_fixture.py", line 297, in main\n' +
+    '    _serve(arguments.decoder_log, arguments if arguments.request_journal_dir is not None else None,\n' +
+    '  File "/workspace/scratch/9faed68167fb/native-close-recovery/tests/fixtures/serve_semantic_v8_recovery_fixture.py", line 210, in _serve\n' +
+    '    decoder = _FragmentingFixtureDecoder(_fixture_records(final_action), codec, decoder_log)\n' +
+    '                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+    'TypeError: main.<locals>.track_cancel_records() takes 0 positional arguments but 1 was given\n' +
+    ')'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/9faed68167fb/producer-service-close/test/semantic-native-orchestration-recovery-v8.test.js:408:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'Native v8 model exited 1 (stderr: space/scratch/9faed68167fb/producer-service-close/test/fixtures/semantic-v8-track-cancel-recovery-peer.py", line 48, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File "/workspace/scratch/9faed68167fb/producer-service-close/test/fixtures/semantic-v8-track-cancel-recovery-peer.py", line 44, in main\n    return peer.main()\n           ^^^^^^^^^^^\n  File "/workspace/scratch/9faed68167fb/native-close-recovery/tests/fixtures/serve_semantic_v8_recovery_fixture.py", line 297, in main\n    _serve(arguments.decoder_log, arguments if arguments.request_journal_dir is not None else None,\n  File "/workspace/scratch/9faed68167fb/native-close-recovery/tests/fixtures/serve_semantic_v8_recovery_fixture.py", line 210, in _serve\n    decoder = _FragmentingFixtureDecoder(_fixture_records(final_action), codec, decoder_log)\n                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: main.<locals>.track_cancel_records() takes 0 positional arguments but 1 was given\n)',
+    expected: /simulated interruption after acknowledged intent/i,
+    operator: 'match',
+    diff: 'simple'
+  }
+exit_code=1

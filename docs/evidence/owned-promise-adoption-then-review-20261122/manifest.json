@@ -1,0 +1,82 @@
+{
+  "schema": "promise-then-lookup-review-evidence/1",
+  "frozenSource": {
+    "producer": {
+      "localRevision": "a9a2df84d81da5106a4c39258f46324e1c2b04e9",
+      "tree": "1652a93ff2e99d02a962d95f0c856317c02bb2fe",
+      "status": "",
+      "publishedRevision": "90756c533ee04afc2a41d8890d979e94456f9243"
+    },
+    "native": {
+      "revision": "03a9e33866207b5b0c4105297c6050dacadcf85f",
+      "tree": "0531e702beb88c5421907d6c41d078169ccd00b5",
+      "status": ""
+    }
+  },
+  "correctedProbeCounts": {
+    "cases": 19,
+    "negativeCases": 16,
+    "negativeSourceRefusals": 16,
+    "negativeDirectProjectionAccepted": 4,
+    "positiveNativePassed": 3
+  },
+  "initialProbe": {
+    "exitCode": 1,
+    "cause": "Probe incorrectly expected the legitimate shadowed ordinary-object resolve parameter to refuse. It matched original Node and actual native replay; this was a probe expectation defect."
+  },
+  "correctedProbe": {
+    "exitCode": 0,
+    "sourceChanges": 0,
+    "nativeChanges": 0
+  },
+  "fullAdmissionBypassDemonstrated": false,
+  "directCompilerMisprojectionDemonstrated": true,
+  "externalRegression": "Literal accessor follows7fe published test; computed and alias variants are derived, not claimed to be the unavailable external regression source.",
+  "files": [
+    {
+      "name": "promise-then-lookup-initial-shadow-expectation.mjs",
+      "bytes": 8838,
+      "sha256": "4bca6fb12266e2e7cb4b1a190bf289259f2e4f6709ffcc58d1b04fa0d2677725"
+    },
+    {
+      "name": "promise-then-lookup-initial-shadow-expectation.json",
+      "bytes": 30312,
+      "sha256": "dc1dc10c28d85845424b706728aae74540188a522631f6735611c4bffaf1779d"
+    },
+    {
+      "name": "promise-then-lookup-initial-shadow-expectation.log",
+      "bytes": 8288,
+      "sha256": "48ebf29a4ff2e0d80921827aabf2911a2006bb20bc45bf02317f19976657f98b"
+    },
+    {
+      "name": "promise-then-lookup-frozen-probe.mjs",
+      "bytes": 8839,
+      "sha256": "e8ff194874771933beff930cedc704143bf8a88bab4ac67a53e3ddff36af6d54"
+    },
+    {
+      "name": "promise-then-lookup-frozen-probe.json",
+      "bytes": 30313,
+      "sha256": "ceee9d37b4545b2b13ba6fb2b906b107f9aca4cb581db26fd449fb8d14d6b30c"
+    },
+    {
+      "name": "promise-then-lookup-frozen-probe.log",
+      "bytes": 8288,
+      "sha256": "45cf53aa77b00b9e1591e965c158cfaed3f427a263b8cda6c3c2e5914f9cf80f"
+    },
+    {
+      "name": "promise-producer-composition-readonly.json",
+      "bytes": 54410,
+      "sha256": "fc9fa6efa59dd0bd82fe91c45ce4de0bf4ec44227b2271e573854f3ff7de0b62"
+    },
+    {
+      "name": "promise-native-composition-readonly.json",
+      "bytes": 14156,
+      "sha256": "ddb63aff07dea301fa6295fd6ad011024281f755fca769bca7d6ee1e56f14dc4"
+    },
+    {
+      "name": "bootstrap-e5-to-a3-composition-readonly.json",
+      "bytes": 5454,
+      "sha256": "cd432c0bb900054feb00c9b487a5bfa6f107c85aa00d95fb240fce01572f2589"
+    }
+  ]
+}

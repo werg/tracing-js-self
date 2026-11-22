@@ -1,0 +1,24 @@
+usage: restore-semantic-release-v8.py [-h] --producer-root PRODUCER_ROOT
+                                      --megatoken MEGATOKEN [--python PYTHON]
+                                      [--source-recheck-timeout-seconds SOURCE_RECHECK_TIMEOUT_SECONDS]
+                                      --out OUT --archive ARCHIVE
+                                      --expected-archive-sha256
+                                      EXPECTED_ARCHIVE_SHA256 --evidence-out
+                                      EVIDENCE_OUT
+
+Direct V8 text release custody, fresh qualification and bounded restoration.
+This driver never imports a V6/V7 compiler, packager or restorer. Archived
+code is never used as verification authority. Both commands require exact
+clean external producer and native checkouts, and fresh source/native
+preparation.
+
+options:
+  -h, --help            show this help message and exit
+  --producer-root PRODUCER_ROOT
+  --megatoken MEGATOKEN
+  --python PYTHON
+  --source-recheck-timeout-seconds SOURCE_RECHECK_TIMEOUT_SECONDS
+  --out OUT
+  --archive ARCHIVE
+  --expected-archive-sha256 EXPECTED_ARCHIVE_SHA256
+  --evidence-out EVIDENCE_OUT

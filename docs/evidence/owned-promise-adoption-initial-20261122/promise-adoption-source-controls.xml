@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="independent original source and public adoption: settled-executor" time="1.228741" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: pending-executor" time="1.181725" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: source-fifo-microtask" time="2.671462" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: rejected-executor" time="1.168465" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: root-async-result" time="0.753662" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: nested-async-result" time="0.662907" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: reaction-result" time="0.874500" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: reaction-fifo-chain" time="2.866732" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: late-resolver-and-throw" time="1.113792" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: executor-self-ignored-error" time="0.814390" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: reaction-self-ignored-error" time="0.771661" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: reaction-join-result" time="1.315001" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: nested-async-receiver" time="0.970509" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent original source and public adoption: rejected-async-result" time="1.039436" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="source ownership and identities are independent of registry order" time="0.789842" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="every source adoption, original completion and first-call cut restores exact public continuation" time="1.526688" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="source recheck refuses changed adoption targets, original source and an invented current-event certificate" time="0.028186" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="independent native queueMicrotask order changes with actual source scheduling and retains its process deadline" time="1.185879" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="unqualified then lookup, async callback activation, reflected self Error and pending cycles remain source refusals" time="0.812961" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js"/>
+	<testcase name="actual native adoption consumer independently replays every source context and restored cut" time="0.000199" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-adoption/test/semantic-protocol-promise-adoption-source-v8.test.js">
+		<skipped type="skipped" message="true"/>
+	</testcase>
+	<!-- tests 20 -->
+	<!-- suites 0 -->
+	<!-- pass 19 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 1 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 22304.944144 -->
+</testsuites>

@@ -1,0 +1,1011 @@
+{
+  "schema": "semantic-v8-release-original-inputs-observation/1",
+  "verifierRevision": "729a05507f20242514c81f2e8f7979c2ccaac1f5",
+  "originalProducerRevision": "b4157952ed0fc28c5ae1eb8893cd9035ce25bbdb",
+  "originalConsumerRevision": "2f3e6cf04aad60473e8ecc67e846e81e5b9dec83",
+  "status": "matched",
+  "sources": 64,
+  "filesRead": 67,
+  "filesBefore": [
+    {
+      "path": "population.json",
+      "bytes": 242296,
+      "sha256": "4dd1dfcc4e52f886127c3e732a87ad2b010fa7d8c05316d196563d36cdaed6f4"
+    },
+    {
+      "path": "report.json",
+      "bytes": 284542,
+      "sha256": "51b95312eb7a6ff2dfd2465035de13766fe0291c45ac6d9c2ce46f5c98041617"
+    },
+    {
+      "path": "family-registry.json",
+      "bytes": 42407,
+      "sha256": "d809b231d3eafb2e67f6dad1ca539c315b5e346a4a5a3ce036b054dedd65c58e"
+    },
+    {
+      "path": "se-support-rectangle-perimeter-pure.source.json",
+      "bytes": 278773,
+      "sha256": "f658687f7f92c1c4fb40bbac96d98cddd98c8dd0a9fead47d8e7f01e1570db5f"
+    },
+    {
+      "path": "se-support-rectangle-perimeter-callbacks-recovery.source.json",
+      "bytes": 1288295,
+      "sha256": "59ca75b6032f1cfe0cc5894e95089f3e2741b76023d927def3262ef833b26f0c"
+    },
+    {
+      "path": "se-support-rectangle-perimeter-repeated-2calls.source.json",
+      "bytes": 1821963,
+      "sha256": "371ebb08936e1ac798d2dc51a378bb269da6eab85abb454bec969a02433dbd79"
+    },
+    {
+      "path": "se-support-rectangle-perimeter-child-teacher.source.json",
+      "bytes": 347538,
+      "sha256": "39d8cbc8f98d27a7196da2f5276ea06227e8e5c071ca446786a4d7109e9996cf"
+    },
+    {
+      "path": "se-support-rectangular-capacity-pure.source.json",
+      "bytes": 228187,
+      "sha256": "d57eb81316013ce0e81d072d83a2b8caa74bb660297cb29e03685a3c1e6ff2ee"
+    },
+    {
+      "path": "se-support-rectangular-capacity-callbacks-recovery.source.json",
+      "bytes": 1215881,
+      "sha256": "7bcac8b37e88e26421d62ddf040b04228054c39e1e872faea98550256a447544"
+    },
+    {
+      "path": "se-support-rectangular-capacity-repeated-2calls.source.json",
+      "bytes": 1658479,
+      "sha256": "71008fbbbae802c072a8672b2ef424973cae163d41d39cfc8597f6232895926a"
+    },
+    {
+      "path": "se-support-rectangular-capacity-child-teacher.source.json",
+      "bytes": 291312,
+      "sha256": "522866bb90425896b3e7e8268100102f0b2ecca6dad94aa3eaa9df1f092f2124"
+    },
+    {
+      "path": "se-support-squared-distance-pure.source.json",
+      "bytes": 321928,
+      "sha256": "9d54b1a7a1b006afdec5c7b64bb313f292fa3bf71cdbf6bc6cbb60a593064c36"
+    },
+    {
+      "path": "se-support-squared-distance-callbacks-recovery.source.json",
+      "bytes": 1346288,
+      "sha256": "95702341dd1b10cd0376695550ec808759b8904c652b435e2b7dd1d8643e0a0e"
+    },
+    {
+      "path": "se-support-squared-distance-repeated-2calls.source.json",
+      "bytes": 1954700,
+      "sha256": "726a868326e05e8e86d3b33e853f18edddbc6e9094cbf0564e574575c4ca862f"
+    },
+    {
+      "path": "se-support-squared-distance-child-teacher.source.json",
+      "bytes": 394449,
+      "sha256": "6214f5cb676f35d38862c5d47bd520381c542fa5e956ae51bb8a9ef82b8569c8"
+    },
+    {
+      "path": "se-support-absolute-distance-pure.source.json",
+      "bytes": 256687,
+      "sha256": "632718698ff81e08398c3ff600933b807ac5a74aa746c3b26c4d06a250f311a8"
+    },
+    {
+      "path": "se-support-absolute-distance-callbacks-recovery.source.json",
+      "bytes": 1262797,
+      "sha256": "69bef89e4b1bdf1bffe2b7b55f2953f12c5a9382cf87503a8ca59feddfb4d545"
+    },
+    {
+      "path": "se-support-absolute-distance-repeated-2calls.source.json",
+      "bytes": 1777072,
+      "sha256": "7feb0761513aba934fd92fe0ff1630323d8717ffb7dee5dfc29fbe97981b6cd1"
+    },
+    {
+      "path": "se-support-absolute-distance-child-teacher.source.json",
+      "bytes": 337816,
+      "sha256": "c251e8b5a86e607ebf0990e48806638b536d50546b89a96b7dcf0de566561bb7"
+    },
+    {
+      "path": "se-support-weighted-average-pure.source.json",
+      "bytes": 366440,
+      "sha256": "ac649b75c114c4dcdef392bef702d307a3be70225c65433541245924f60133ca"
+    },
+    {
+      "path": "se-support-weighted-average-callbacks-recovery.source.json",
+      "bytes": 1415315,
+      "sha256": "9cdfdc6e811aa75ece24d7f85dffbb633893afb5f3208b4b74f91b951c9e7655"
+    },
+    {
+      "path": "se-support-weighted-average-repeated-2calls.source.json",
+      "bytes": 2110024,
+      "sha256": "9acb162be92d33a07e398de506c2ba4cea5bc2120468a09f571b43df4cce856d"
+    },
+    {
+      "path": "se-support-weighted-average-child-teacher.source.json",
+      "bytes": 447177,
+      "sha256": "1d3df167544f756d019aae59dd257b8cc7ae9b1e2d6de14ff7c64aafbface2a9"
+    },
+    {
+      "path": "se-support-unit-conversion-pure.source.json",
+      "bytes": 271750,
+      "sha256": "7adeb04bb0f91141181c0ac059bb107b2cedd029a28855a713358c477c815b38"
+    },
+    {
+      "path": "se-support-unit-conversion-callbacks-recovery.source.json",
+      "bytes": 1282670,
+      "sha256": "411e14bf59d48663af170c110392a011609f978ddcafc56529b80566df39c1fc"
+    },
+    {
+      "path": "se-support-unit-conversion-repeated-2calls.source.json",
+      "bytes": 1800809,
+      "sha256": "1d66367a01029b2a971b89a8d7d035ebf24ad075faf8bcc249723692683b9c90"
+    },
+    {
+      "path": "se-support-unit-conversion-child-teacher.source.json",
+      "bytes": 340823,
+      "sha256": "f4046480e1a8437754f216128f4179ef1a591432b6eb9c011e5ee77d7fc003a7"
+    },
+    {
+      "path": "se-support-triangular-series-pure.source.json",
+      "bytes": 373688,
+      "sha256": "69f933cbd0df3429c08a8607f303d257a4291c86e64b0c653a4e42a2ab9ec839"
+    },
+    {
+      "path": "se-support-triangular-series-callbacks-recovery.source.json",
+      "bytes": 1423926,
+      "sha256": "2cfd438967919732d3b424bc1e8a098b8cff45c0713612183c135d9540377966"
+    },
+    {
+      "path": "se-support-triangular-series-repeated-2calls.source.json",
+      "bytes": 2128362,
+      "sha256": "ddde723ceb70fa11fe5ee68a139a9ea67843e2d01562d1322a6959e73cd91d81"
+    },
+    {
+      "path": "se-support-triangular-series-child-teacher.source.json",
+      "bytes": 453689,
+      "sha256": "3d0ac96162e69c113473b51a5dcc335180c764a88577193fb207a27df98d2cae"
+    },
+    {
+      "path": "se-support-modular-clock-pure.source.json",
+      "bytes": 321980,
+      "sha256": "16e6dc5656672730431f3ac3a84786767442dedf723b883e0bd54780eb0a1e90"
+    },
+    {
+      "path": "se-support-modular-clock-callbacks-recovery.source.json",
+      "bytes": 1349162,
+      "sha256": "df4a44984534591410f8e1229885970e93bd12720e5b9760c4301660ae9c1ec3"
+    },
+    {
+      "path": "se-support-modular-clock-repeated-2calls.source.json",
+      "bytes": 1961675,
+      "sha256": "d185f3c0cb9af749a222726bbee7866c8637f8f0de7ee482979dc81814ed27c1"
+    },
+    {
+      "path": "se-support-modular-clock-child-teacher.source.json",
+      "bytes": 396765,
+      "sha256": "3baa62414b4c9dace26272877b0ad945e1957e3be73a73265b1e3d1a468b2bc7"
+    },
+    {
+      "path": "se-support-flag-intersection-pure.source.json",
+      "bytes": 194942,
+      "sha256": "dcf1c679e6eda9443bf035b4fd7b9701a750930b8acf62e719600befd875d875"
+    },
+    {
+      "path": "se-support-flag-intersection-callbacks-recovery.source.json",
+      "bytes": 1169607,
+      "sha256": "35be3b558b9f844f420a77a6c5cb681da653b8813d24686e27097d9ba5c261c3"
+    },
+    {
+      "path": "se-support-flag-intersection-repeated-2calls.source.json",
+      "bytes": 1560167,
+      "sha256": "12a39cc669066e3031cbecd40109db155eae5140d8f88d8f3fa40c98aa0c55bf"
+    },
+    {
+      "path": "se-support-flag-intersection-child-teacher.source.json",
+      "bytes": 258051,
+      "sha256": "7a47d3c2f65eb37b0eb3343768798894e154db5ca97d321b1cc60d4ab00d308b"
+    },
+    {
+      "path": "se-support-flag-union-pure.source.json",
+      "bytes": 194771,
+      "sha256": "b53af3d644c99dfe62f00ab44f22447a1b6f081db71a45f409d8c891f76906ef"
+    },
+    {
+      "path": "se-support-flag-union-callbacks-recovery.source.json",
+      "bytes": 1166614,
+      "sha256": "1e581d8fb0d04ecbb240c62051b807419aa70cfba1c0ae1337b2458d9b1057ba"
+    },
+    {
+      "path": "se-support-flag-union-repeated-2calls.source.json",
+      "bytes": 1555786,
+      "sha256": "45a33e1f91642c09a6b1d6b5de0158e45d5c2a539168d28c52e40516ae6f7097"
+    },
+    {
+      "path": "se-support-flag-union-child-teacher.source.json",
+      "bytes": 257888,
+      "sha256": "05ccaaaf5d7d2c49a68f5dc55542b929960f8e645d3ebdc0f05ea4b1d01ccd4d"
+    },
+    {
+      "path": "se-support-inventory-shortfall-pure.source.json",
+      "bytes": 254151,
+      "sha256": "e37fb5281602d0afdde2b9900c874973fccefe5180badee404b42491173ed523"
+    },
+    {
+      "path": "se-support-inventory-shortfall-callbacks-recovery.source.json",
+      "bytes": 1257028,
+      "sha256": "f977743f1f62f65a6eb15096ead8b3dccf46d42d49ec8b8268361d60a7bfd026"
+    },
+    {
+      "path": "se-support-inventory-shortfall-repeated-2calls.source.json",
+      "bytes": 1762560,
+      "sha256": "7ad2e4e6798743a35ce4beccd54cb7ac15c2b4945c573e78473c2966ac69e2fd"
+    },
+    {
+      "path": "se-support-inventory-shortfall-child-teacher.source.json",
+      "bytes": 331460,
+      "sha256": "9386a334ea9dbaa9d505719418cb29f29cdd5a9322ff43350c8a9aaa7c322e64"
+    },
+    {
+      "path": "se-support-capped-budget-pure.source.json",
+      "bytes": 264415,
+      "sha256": "82bac29e0aeceacad40466be7624b4bb603374bb7968109cda4a0a52aea7408c"
+    },
+    {
+      "path": "se-support-capped-budget-callbacks-recovery.source.json",
+      "bytes": 1276469,
+      "sha256": "b85a092f3d00e5dee2d2226f4006df2b604b1a3c38bcf727c1fa7f512b7de3f0"
+    },
+    {
+      "path": "se-support-capped-budget-repeated-2calls.source.json",
+      "bytes": 1873519,
+      "sha256": "96f9aada410a2fc8d539dd9d127f91b3519f192ada113f6fc4946506ee47ffd2"
+    },
+    {
+      "path": "se-support-capped-budget-child-teacher.source.json",
+      "bytes": 345828,
+      "sha256": "42d429b391f79c6397ba1d7ef4c879300f403fb296c47118fefd5fd3df3cc290"
+    },
+    {
+      "path": "se-support-overtime-rate-pure.source.json",
+      "bytes": 442019,
+      "sha256": "95628c9878cbec6b9bdadef1969d63b08d4890478a245074d96bf3b9cbc20652"
+    },
+    {
+      "path": "se-support-overtime-rate-callbacks-recovery.source.json",
+      "bytes": 1531251,
+      "sha256": "a8813b81f74cf2a4fcd7a3de0f576f2c014427e29f7fb7e3dea0981593b2347b"
+    },
+    {
+      "path": "se-support-overtime-rate-repeated-2calls.source.json",
+      "bytes": 2133703,
+      "sha256": "1693f2181a70775eae1586d66d3de35ba9e14b8df759ffce9efb89725651d2c7"
+    },
+    {
+      "path": "se-support-overtime-rate-child-teacher.source.json",
+      "bytes": 548196,
+      "sha256": "5819f7b6b056a6c68a0201feb211ea35e63364ca6c582f0ceba498e5ccacba31"
+    },
+    {
+      "path": "se-support-midpoint-pure.source.json",
+      "bytes": 278472,
+      "sha256": "46fb9955c9930bd0e6daaaca87114cf9d6f6359512d3217ba47adc4a462e4377"
+    },
+    {
+      "path": "se-support-midpoint-callbacks-recovery.source.json",
+      "bytes": 1283504,
+      "sha256": "b8195d40fa2cabc3e6824524de3ebbc2ae0ccfe7e9a39fa1af9afdf1e5229c67"
+    },
+    {
+      "path": "se-support-midpoint-repeated-2calls.source.json",
+      "bytes": 1815068,
+      "sha256": "b85534ac8043971724131933412798a695fc5125c633a39bfa30631da3c82925"
+    },
+    {
+      "path": "se-support-midpoint-child-teacher.source.json",
+      "bytes": 347241,
+      "sha256": "c82240727b4218cc4f468c55a8fa31330487eeeb5d7816c52809233ce4127c8d"
+    },
+    {
+      "path": "se-support-relative-growth-pure.source.json",
+      "bytes": 270966,
+      "sha256": "7abfc6f656d99fa3f6373ce4749c28d544a3e6b4475f8c580283de42fe2cf070"
+    },
+    {
+      "path": "se-support-relative-growth-callbacks-recovery.source.json",
+      "bytes": 1279452,
+      "sha256": "78aa762c35a5eec9b1e4713ab16430a7c7dfa407465f55ae8f2147799711b659"
+    },
+    {
+      "path": "se-support-relative-growth-repeated-2calls.source.json",
+      "bytes": 1794427,
+      "sha256": "f2a352948b6027d3c154d5bfc4db474ad0f3f401947ed777526fa160e6966db5"
+    },
+    {
+      "path": "se-support-relative-growth-child-teacher.source.json",
+      "bytes": 338999,
+      "sha256": "b12c6283fcd0ba3ac2cdaf1224f58f1f4e24994a6ab8f0281b2022282cc5487b"
+    },
+    {
+      "path": "se-support-parity-adjustment-pure.source.json",
+      "bytes": 307565,
+      "sha256": "38fadf464a429102881c97a587032f76989c00f978ba1b618a9fe771208e0430"
+    },
+    {
+      "path": "se-support-parity-adjustment-callbacks-recovery.source.json",
+      "bytes": 1339717,
+      "sha256": "4494f232d64bbc5e11d1abef8f9bbfbe3676c0db34783c8029731de83b82f9c3"
+    },
+    {
+      "path": "se-support-parity-adjustment-repeated-2calls.source.json",
+      "bytes": 1934008,
+      "sha256": "8454df2f86dfa70af6a9a94a5ac3bafe1106166bc417137e273e51baefad0d7b"
+    },
+    {
+      "path": "se-support-parity-adjustment-child-teacher.source.json",
+      "bytes": 393838,
+      "sha256": "c9b07df33ea96fa0b3e6685c3cbde522d867d5c3eb44fd598e3bf6c4911ab0ff"
+    }
+  ],
+  "filesAfter": [
+    {
+      "path": "population.json",
+      "bytes": 242296,
+      "sha256": "4dd1dfcc4e52f886127c3e732a87ad2b010fa7d8c05316d196563d36cdaed6f4"
+    },
+    {
+      "path": "report.json",
+      "bytes": 284542,
+      "sha256": "51b95312eb7a6ff2dfd2465035de13766fe0291c45ac6d9c2ce46f5c98041617"
+    },
+    {
+      "path": "family-registry.json",
+      "bytes": 42407,
+      "sha256": "d809b231d3eafb2e67f6dad1ca539c315b5e346a4a5a3ce036b054dedd65c58e"
+    },
+    {
+      "path": "se-support-rectangle-perimeter-pure.source.json",
+      "bytes": 278773,
+      "sha256": "f658687f7f92c1c4fb40bbac96d98cddd98c8dd0a9fead47d8e7f01e1570db5f"
+    },
+    {
+      "path": "se-support-rectangle-perimeter-callbacks-recovery.source.json",
+      "bytes": 1288295,
+      "sha256": "59ca75b6032f1cfe0cc5894e95089f3e2741b76023d927def3262ef833b26f0c"
+    },
+    {
+      "path": "se-support-rectangle-perimeter-repeated-2calls.source.json",
+      "bytes": 1821963,
+      "sha256": "371ebb08936e1ac798d2dc51a378bb269da6eab85abb454bec969a02433dbd79"
+    },
+    {
+      "path": "se-support-rectangle-perimeter-child-teacher.source.json",
+      "bytes": 347538,
+      "sha256": "39d8cbc8f98d27a7196da2f5276ea06227e8e5c071ca446786a4d7109e9996cf"
+    },
+    {
+      "path": "se-support-rectangular-capacity-pure.source.json",
+      "bytes": 228187,
+      "sha256": "d57eb81316013ce0e81d072d83a2b8caa74bb660297cb29e03685a3c1e6ff2ee"
+    },
+    {
+      "path": "se-support-rectangular-capacity-callbacks-recovery.source.json",
+      "bytes": 1215881,
+      "sha256": "7bcac8b37e88e26421d62ddf040b04228054c39e1e872faea98550256a447544"
+    },
+    {
+      "path": "se-support-rectangular-capacity-repeated-2calls.source.json",
+      "bytes": 1658479,
+      "sha256": "71008fbbbae802c072a8672b2ef424973cae163d41d39cfc8597f6232895926a"
+    },
+    {
+      "path": "se-support-rectangular-capacity-child-teacher.source.json",
+      "bytes": 291312,
+      "sha256": "522866bb90425896b3e7e8268100102f0b2ecca6dad94aa3eaa9df1f092f2124"
+    },
+    {
+      "path": "se-support-squared-distance-pure.source.json",
+      "bytes": 321928,
+      "sha256": "9d54b1a7a1b006afdec5c7b64bb313f292fa3bf71cdbf6bc6cbb60a593064c36"
+    },
+    {
+      "path": "se-support-squared-distance-callbacks-recovery.source.json",
+      "bytes": 1346288,
+      "sha256": "95702341dd1b10cd0376695550ec808759b8904c652b435e2b7dd1d8643e0a0e"
+    },
+    {
+      "path": "se-support-squared-distance-repeated-2calls.source.json",
+      "bytes": 1954700,
+      "sha256": "726a868326e05e8e86d3b33e853f18edddbc6e9094cbf0564e574575c4ca862f"
+    },
+    {
+      "path": "se-support-squared-distance-child-teacher.source.json",
+      "bytes": 394449,
+      "sha256": "6214f5cb676f35d38862c5d47bd520381c542fa5e956ae51bb8a9ef82b8569c8"
+    },
+    {
+      "path": "se-support-absolute-distance-pure.source.json",
+      "bytes": 256687,
+      "sha256": "632718698ff81e08398c3ff600933b807ac5a74aa746c3b26c4d06a250f311a8"
+    },
+    {
+      "path": "se-support-absolute-distance-callbacks-recovery.source.json",
+      "bytes": 1262797,
+      "sha256": "69bef89e4b1bdf1bffe2b7b55f2953f12c5a9382cf87503a8ca59feddfb4d545"
+    },
+    {
+      "path": "se-support-absolute-distance-repeated-2calls.source.json",
+      "bytes": 1777072,
+      "sha256": "7feb0761513aba934fd92fe0ff1630323d8717ffb7dee5dfc29fbe97981b6cd1"
+    },
+    {
+      "path": "se-support-absolute-distance-child-teacher.source.json",
+      "bytes": 337816,
+      "sha256": "c251e8b5a86e607ebf0990e48806638b536d50546b89a96b7dcf0de566561bb7"
+    },
+    {
+      "path": "se-support-weighted-average-pure.source.json",
+      "bytes": 366440,
+      "sha256": "ac649b75c114c4dcdef392bef702d307a3be70225c65433541245924f60133ca"
+    },
+    {
+      "path": "se-support-weighted-average-callbacks-recovery.source.json",
+      "bytes": 1415315,
+      "sha256": "9cdfdc6e811aa75ece24d7f85dffbb633893afb5f3208b4b74f91b951c9e7655"
+    },
+    {
+      "path": "se-support-weighted-average-repeated-2calls.source.json",
+      "bytes": 2110024,
+      "sha256": "9acb162be92d33a07e398de506c2ba4cea5bc2120468a09f571b43df4cce856d"
+    },
+    {
+      "path": "se-support-weighted-average-child-teacher.source.json",
+      "bytes": 447177,
+      "sha256": "1d3df167544f756d019aae59dd257b8cc7ae9b1e2d6de14ff7c64aafbface2a9"
+    },
+    {
+      "path": "se-support-unit-conversion-pure.source.json",
+      "bytes": 271750,
+      "sha256": "7adeb04bb0f91141181c0ac059bb107b2cedd029a28855a713358c477c815b38"
+    },
+    {
+      "path": "se-support-unit-conversion-callbacks-recovery.source.json",
+      "bytes": 1282670,
+      "sha256": "411e14bf59d48663af170c110392a011609f978ddcafc56529b80566df39c1fc"
+    },
+    {
+      "path": "se-support-unit-conversion-repeated-2calls.source.json",
+      "bytes": 1800809,
+      "sha256": "1d66367a01029b2a971b89a8d7d035ebf24ad075faf8bcc249723692683b9c90"
+    },
+    {
+      "path": "se-support-unit-conversion-child-teacher.source.json",
+      "bytes": 340823,
+      "sha256": "f4046480e1a8437754f216128f4179ef1a591432b6eb9c011e5ee77d7fc003a7"
+    },
+    {
+      "path": "se-support-triangular-series-pure.source.json",
+      "bytes": 373688,
+      "sha256": "69f933cbd0df3429c08a8607f303d257a4291c86e64b0c653a4e42a2ab9ec839"
+    },
+    {
+      "path": "se-support-triangular-series-callbacks-recovery.source.json",
+      "bytes": 1423926,
+      "sha256": "2cfd438967919732d3b424bc1e8a098b8cff45c0713612183c135d9540377966"
+    },
+    {
+      "path": "se-support-triangular-series-repeated-2calls.source.json",
+      "bytes": 2128362,
+      "sha256": "ddde723ceb70fa11fe5ee68a139a9ea67843e2d01562d1322a6959e73cd91d81"
+    },
+    {
+      "path": "se-support-triangular-series-child-teacher.source.json",
+      "bytes": 453689,
+      "sha256": "3d0ac96162e69c113473b51a5dcc335180c764a88577193fb207a27df98d2cae"
+    },
+    {
+      "path": "se-support-modular-clock-pure.source.json",
+      "bytes": 321980,
+      "sha256": "16e6dc5656672730431f3ac3a84786767442dedf723b883e0bd54780eb0a1e90"
+    },
+    {
+      "path": "se-support-modular-clock-callbacks-recovery.source.json",
+      "bytes": 1349162,
+      "sha256": "df4a44984534591410f8e1229885970e93bd12720e5b9760c4301660ae9c1ec3"
+    },
+    {
+      "path": "se-support-modular-clock-repeated-2calls.source.json",
+      "bytes": 1961675,
+      "sha256": "d185f3c0cb9af749a222726bbee7866c8637f8f0de7ee482979dc81814ed27c1"
+    },
+    {
+      "path": "se-support-modular-clock-child-teacher.source.json",
+      "bytes": 396765,
+      "sha256": "3baa62414b4c9dace26272877b0ad945e1957e3be73a73265b1e3d1a468b2bc7"
+    },
+    {
+      "path": "se-support-flag-intersection-pure.source.json",
+      "bytes": 194942,
+      "sha256": "dcf1c679e6eda9443bf035b4fd7b9701a750930b8acf62e719600befd875d875"
+    },
+    {
+      "path": "se-support-flag-intersection-callbacks-recovery.source.json",
+      "bytes": 1169607,
+      "sha256": "35be3b558b9f844f420a77a6c5cb681da653b8813d24686e27097d9ba5c261c3"
+    },
+    {
+      "path": "se-support-flag-intersection-repeated-2calls.source.json",
+      "bytes": 1560167,
+      "sha256": "12a39cc669066e3031cbecd40109db155eae5140d8f88d8f3fa40c98aa0c55bf"
+    },
+    {
+      "path": "se-support-flag-intersection-child-teacher.source.json",
+      "bytes": 258051,
+      "sha256": "7a47d3c2f65eb37b0eb3343768798894e154db5ca97d321b1cc60d4ab00d308b"
+    },
+    {
+      "path": "se-support-flag-union-pure.source.json",
+      "bytes": 194771,
+      "sha256": "b53af3d644c99dfe62f00ab44f22447a1b6f081db71a45f409d8c891f76906ef"
+    },
+    {
+      "path": "se-support-flag-union-callbacks-recovery.source.json",
+      "bytes": 1166614,
+      "sha256": "1e581d8fb0d04ecbb240c62051b807419aa70cfba1c0ae1337b2458d9b1057ba"
+    },
+    {
+      "path": "se-support-flag-union-repeated-2calls.source.json",
+      "bytes": 1555786,
+      "sha256": "45a33e1f91642c09a6b1d6b5de0158e45d5c2a539168d28c52e40516ae6f7097"
+    },
+    {
+      "path": "se-support-flag-union-child-teacher.source.json",
+      "bytes": 257888,
+      "sha256": "05ccaaaf5d7d2c49a68f5dc55542b929960f8e645d3ebdc0f05ea4b1d01ccd4d"
+    },
+    {
+      "path": "se-support-inventory-shortfall-pure.source.json",
+      "bytes": 254151,
+      "sha256": "e37fb5281602d0afdde2b9900c874973fccefe5180badee404b42491173ed523"
+    },
+    {
+      "path": "se-support-inventory-shortfall-callbacks-recovery.source.json",
+      "bytes": 1257028,
+      "sha256": "f977743f1f62f65a6eb15096ead8b3dccf46d42d49ec8b8268361d60a7bfd026"
+    },
+    {
+      "path": "se-support-inventory-shortfall-repeated-2calls.source.json",
+      "bytes": 1762560,
+      "sha256": "7ad2e4e6798743a35ce4beccd54cb7ac15c2b4945c573e78473c2966ac69e2fd"
+    },
+    {
+      "path": "se-support-inventory-shortfall-child-teacher.source.json",
+      "bytes": 331460,
+      "sha256": "9386a334ea9dbaa9d505719418cb29f29cdd5a9322ff43350c8a9aaa7c322e64"
+    },
+    {
+      "path": "se-support-capped-budget-pure.source.json",
+      "bytes": 264415,
+      "sha256": "82bac29e0aeceacad40466be7624b4bb603374bb7968109cda4a0a52aea7408c"
+    },
+    {
+      "path": "se-support-capped-budget-callbacks-recovery.source.json",
+      "bytes": 1276469,
+      "sha256": "b85a092f3d00e5dee2d2226f4006df2b604b1a3c38bcf727c1fa7f512b7de3f0"
+    },
+    {
+      "path": "se-support-capped-budget-repeated-2calls.source.json",
+      "bytes": 1873519,
+      "sha256": "96f9aada410a2fc8d539dd9d127f91b3519f192ada113f6fc4946506ee47ffd2"
+    },
+    {
+      "path": "se-support-capped-budget-child-teacher.source.json",
+      "bytes": 345828,
+      "sha256": "42d429b391f79c6397ba1d7ef4c879300f403fb296c47118fefd5fd3df3cc290"
+    },
+    {
+      "path": "se-support-overtime-rate-pure.source.json",
+      "bytes": 442019,
+      "sha256": "95628c9878cbec6b9bdadef1969d63b08d4890478a245074d96bf3b9cbc20652"
+    },
+    {
+      "path": "se-support-overtime-rate-callbacks-recovery.source.json",
+      "bytes": 1531251,
+      "sha256": "a8813b81f74cf2a4fcd7a3de0f576f2c014427e29f7fb7e3dea0981593b2347b"
+    },
+    {
+      "path": "se-support-overtime-rate-repeated-2calls.source.json",
+      "bytes": 2133703,
+      "sha256": "1693f2181a70775eae1586d66d3de35ba9e14b8df759ffce9efb89725651d2c7"
+    },
+    {
+      "path": "se-support-overtime-rate-child-teacher.source.json",
+      "bytes": 548196,
+      "sha256": "5819f7b6b056a6c68a0201feb211ea35e63364ca6c582f0ceba498e5ccacba31"
+    },
+    {
+      "path": "se-support-midpoint-pure.source.json",
+      "bytes": 278472,
+      "sha256": "46fb9955c9930bd0e6daaaca87114cf9d6f6359512d3217ba47adc4a462e4377"
+    },
+    {
+      "path": "se-support-midpoint-callbacks-recovery.source.json",
+      "bytes": 1283504,
+      "sha256": "b8195d40fa2cabc3e6824524de3ebbc2ae0ccfe7e9a39fa1af9afdf1e5229c67"
+    },
+    {
+      "path": "se-support-midpoint-repeated-2calls.source.json",
+      "bytes": 1815068,
+      "sha256": "b85534ac8043971724131933412798a695fc5125c633a39bfa30631da3c82925"
+    },
+    {
+      "path": "se-support-midpoint-child-teacher.source.json",
+      "bytes": 347241,
+      "sha256": "c82240727b4218cc4f468c55a8fa31330487eeeb5d7816c52809233ce4127c8d"
+    },
+    {
+      "path": "se-support-relative-growth-pure.source.json",
+      "bytes": 270966,
+      "sha256": "7abfc6f656d99fa3f6373ce4749c28d544a3e6b4475f8c580283de42fe2cf070"
+    },
+    {
+      "path": "se-support-relative-growth-callbacks-recovery.source.json",
+      "bytes": 1279452,
+      "sha256": "78aa762c35a5eec9b1e4713ab16430a7c7dfa407465f55ae8f2147799711b659"
+    },
+    {
+      "path": "se-support-relative-growth-repeated-2calls.source.json",
+      "bytes": 1794427,
+      "sha256": "f2a352948b6027d3c154d5bfc4db474ad0f3f401947ed777526fa160e6966db5"
+    },
+    {
+      "path": "se-support-relative-growth-child-teacher.source.json",
+      "bytes": 338999,
+      "sha256": "b12c6283fcd0ba3ac2cdaf1224f58f1f4e24994a6ab8f0281b2022282cc5487b"
+    },
+    {
+      "path": "se-support-parity-adjustment-pure.source.json",
+      "bytes": 307565,
+      "sha256": "38fadf464a429102881c97a587032f76989c00f978ba1b618a9fe771208e0430"
+    },
+    {
+      "path": "se-support-parity-adjustment-callbacks-recovery.source.json",
+      "bytes": 1339717,
+      "sha256": "4494f232d64bbc5e11d1abef8f9bbfbe3676c0db34783c8029731de83b82f9c3"
+    },
+    {
+      "path": "se-support-parity-adjustment-repeated-2calls.source.json",
+      "bytes": 1934008,
+      "sha256": "8454df2f86dfa70af6a9a94a5ac3bafe1106166bc417137e273e51baefad0d7b"
+    },
+    {
+      "path": "se-support-parity-adjustment-child-teacher.source.json",
+      "bytes": 393838,
+      "sha256": "c9b07df33ea96fa0b3e6685c3cbde522d867d5c3eb44fd598e3bf6c4911ab0ff"
+    }
+  ],
+  "members": [
+    {
+      "caseId": "se-support-rectangle-perimeter-pure",
+      "sourceId": "se-support-rectangle-perimeter-pure",
+      "path": "source-qualification/se-support-rectangle-perimeter-pure.source.json"
+    },
+    {
+      "caseId": "se-support-rectangle-perimeter-callbacks-recovery",
+      "sourceId": "se-support-rectangle-perimeter-callbacks-recovery",
+      "path": "source-qualification/se-support-rectangle-perimeter-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-rectangle-perimeter-repeated-2calls",
+      "sourceId": "se-support-rectangle-perimeter-repeated-2calls",
+      "path": "source-qualification/se-support-rectangle-perimeter-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-rectangle-perimeter-child-teacher",
+      "sourceId": "se-support-rectangle-perimeter-child-teacher",
+      "path": "source-qualification/se-support-rectangle-perimeter-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-rectangular-capacity-pure",
+      "sourceId": "se-support-rectangular-capacity-pure",
+      "path": "source-qualification/se-support-rectangular-capacity-pure.source.json"
+    },
+    {
+      "caseId": "se-support-rectangular-capacity-callbacks-recovery",
+      "sourceId": "se-support-rectangular-capacity-callbacks-recovery",
+      "path": "source-qualification/se-support-rectangular-capacity-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-rectangular-capacity-repeated-2calls",
+      "sourceId": "se-support-rectangular-capacity-repeated-2calls",
+      "path": "source-qualification/se-support-rectangular-capacity-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-rectangular-capacity-child-teacher",
+      "sourceId": "se-support-rectangular-capacity-child-teacher",
+      "path": "source-qualification/se-support-rectangular-capacity-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-squared-distance-pure",
+      "sourceId": "se-support-squared-distance-pure",
+      "path": "source-qualification/se-support-squared-distance-pure.source.json"
+    },
+    {
+      "caseId": "se-support-squared-distance-callbacks-recovery",
+      "sourceId": "se-support-squared-distance-callbacks-recovery",
+      "path": "source-qualification/se-support-squared-distance-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-squared-distance-repeated-2calls",
+      "sourceId": "se-support-squared-distance-repeated-2calls",
+      "path": "source-qualification/se-support-squared-distance-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-squared-distance-child-teacher",
+      "sourceId": "se-support-squared-distance-child-teacher",
+      "path": "source-qualification/se-support-squared-distance-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-absolute-distance-pure",
+      "sourceId": "se-support-absolute-distance-pure",
+      "path": "source-qualification/se-support-absolute-distance-pure.source.json"
+    },
+    {
+      "caseId": "se-support-absolute-distance-callbacks-recovery",
+      "sourceId": "se-support-absolute-distance-callbacks-recovery",
+      "path": "source-qualification/se-support-absolute-distance-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-absolute-distance-repeated-2calls",
+      "sourceId": "se-support-absolute-distance-repeated-2calls",
+      "path": "source-qualification/se-support-absolute-distance-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-absolute-distance-child-teacher",
+      "sourceId": "se-support-absolute-distance-child-teacher",
+      "path": "source-qualification/se-support-absolute-distance-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-weighted-average-pure",
+      "sourceId": "se-support-weighted-average-pure",
+      "path": "source-qualification/se-support-weighted-average-pure.source.json"
+    },
+    {
+      "caseId": "se-support-weighted-average-callbacks-recovery",
+      "sourceId": "se-support-weighted-average-callbacks-recovery",
+      "path": "source-qualification/se-support-weighted-average-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-weighted-average-repeated-2calls",
+      "sourceId": "se-support-weighted-average-repeated-2calls",
+      "path": "source-qualification/se-support-weighted-average-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-weighted-average-child-teacher",
+      "sourceId": "se-support-weighted-average-child-teacher",
+      "path": "source-qualification/se-support-weighted-average-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-unit-conversion-pure",
+      "sourceId": "se-support-unit-conversion-pure",
+      "path": "source-qualification/se-support-unit-conversion-pure.source.json"
+    },
+    {
+      "caseId": "se-support-unit-conversion-callbacks-recovery",
+      "sourceId": "se-support-unit-conversion-callbacks-recovery",
+      "path": "source-qualification/se-support-unit-conversion-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-unit-conversion-repeated-2calls",
+      "sourceId": "se-support-unit-conversion-repeated-2calls",
+      "path": "source-qualification/se-support-unit-conversion-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-unit-conversion-child-teacher",
+      "sourceId": "se-support-unit-conversion-child-teacher",
+      "path": "source-qualification/se-support-unit-conversion-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-triangular-series-pure",
+      "sourceId": "se-support-triangular-series-pure",
+      "path": "source-qualification/se-support-triangular-series-pure.source.json"
+    },
+    {
+      "caseId": "se-support-triangular-series-callbacks-recovery",
+      "sourceId": "se-support-triangular-series-callbacks-recovery",
+      "path": "source-qualification/se-support-triangular-series-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-triangular-series-repeated-2calls",
+      "sourceId": "se-support-triangular-series-repeated-2calls",
+      "path": "source-qualification/se-support-triangular-series-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-triangular-series-child-teacher",
+      "sourceId": "se-support-triangular-series-child-teacher",
+      "path": "source-qualification/se-support-triangular-series-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-modular-clock-pure",
+      "sourceId": "se-support-modular-clock-pure",
+      "path": "source-qualification/se-support-modular-clock-pure.source.json"
+    },
+    {
+      "caseId": "se-support-modular-clock-callbacks-recovery",
+      "sourceId": "se-support-modular-clock-callbacks-recovery",
+      "path": "source-qualification/se-support-modular-clock-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-modular-clock-repeated-2calls",
+      "sourceId": "se-support-modular-clock-repeated-2calls",
+      "path": "source-qualification/se-support-modular-clock-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-modular-clock-child-teacher",
+      "sourceId": "se-support-modular-clock-child-teacher",
+      "path": "source-qualification/se-support-modular-clock-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-flag-intersection-pure",
+      "sourceId": "se-support-flag-intersection-pure",
+      "path": "source-qualification/se-support-flag-intersection-pure.source.json"
+    },
+    {
+      "caseId": "se-support-flag-intersection-callbacks-recovery",
+      "sourceId": "se-support-flag-intersection-callbacks-recovery",
+      "path": "source-qualification/se-support-flag-intersection-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-flag-intersection-repeated-2calls",
+      "sourceId": "se-support-flag-intersection-repeated-2calls",
+      "path": "source-qualification/se-support-flag-intersection-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-flag-intersection-child-teacher",
+      "sourceId": "se-support-flag-intersection-child-teacher",
+      "path": "source-qualification/se-support-flag-intersection-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-flag-union-pure",
+      "sourceId": "se-support-flag-union-pure",
+      "path": "source-qualification/se-support-flag-union-pure.source.json"
+    },
+    {
+      "caseId": "se-support-flag-union-callbacks-recovery",
+      "sourceId": "se-support-flag-union-callbacks-recovery",
+      "path": "source-qualification/se-support-flag-union-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-flag-union-repeated-2calls",
+      "sourceId": "se-support-flag-union-repeated-2calls",
+      "path": "source-qualification/se-support-flag-union-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-flag-union-child-teacher",
+      "sourceId": "se-support-flag-union-child-teacher",
+      "path": "source-qualification/se-support-flag-union-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-inventory-shortfall-pure",
+      "sourceId": "se-support-inventory-shortfall-pure",
+      "path": "source-qualification/se-support-inventory-shortfall-pure.source.json"
+    },
+    {
+      "caseId": "se-support-inventory-shortfall-callbacks-recovery",
+      "sourceId": "se-support-inventory-shortfall-callbacks-recovery",
+      "path": "source-qualification/se-support-inventory-shortfall-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-inventory-shortfall-repeated-2calls",
+      "sourceId": "se-support-inventory-shortfall-repeated-2calls",
+      "path": "source-qualification/se-support-inventory-shortfall-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-inventory-shortfall-child-teacher",
+      "sourceId": "se-support-inventory-shortfall-child-teacher",
+      "path": "source-qualification/se-support-inventory-shortfall-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-capped-budget-pure",
+      "sourceId": "se-support-capped-budget-pure",
+      "path": "source-qualification/se-support-capped-budget-pure.source.json"
+    },
+    {
+      "caseId": "se-support-capped-budget-callbacks-recovery",
+      "sourceId": "se-support-capped-budget-callbacks-recovery",
+      "path": "source-qualification/se-support-capped-budget-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-capped-budget-repeated-2calls",
+      "sourceId": "se-support-capped-budget-repeated-2calls",
+      "path": "source-qualification/se-support-capped-budget-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-capped-budget-child-teacher",
+      "sourceId": "se-support-capped-budget-child-teacher",
+      "path": "source-qualification/se-support-capped-budget-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-overtime-rate-pure",
+      "sourceId": "se-support-overtime-rate-pure",
+      "path": "source-qualification/se-support-overtime-rate-pure.source.json"
+    },
+    {
+      "caseId": "se-support-overtime-rate-callbacks-recovery",
+      "sourceId": "se-support-overtime-rate-callbacks-recovery",
+      "path": "source-qualification/se-support-overtime-rate-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-overtime-rate-repeated-2calls",
+      "sourceId": "se-support-overtime-rate-repeated-2calls",
+      "path": "source-qualification/se-support-overtime-rate-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-overtime-rate-child-teacher",
+      "sourceId": "se-support-overtime-rate-child-teacher",
+      "path": "source-qualification/se-support-overtime-rate-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-midpoint-pure",
+      "sourceId": "se-support-midpoint-pure",
+      "path": "source-qualification/se-support-midpoint-pure.source.json"
+    },
+    {
+      "caseId": "se-support-midpoint-callbacks-recovery",
+      "sourceId": "se-support-midpoint-callbacks-recovery",
+      "path": "source-qualification/se-support-midpoint-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-midpoint-repeated-2calls",
+      "sourceId": "se-support-midpoint-repeated-2calls",
+      "path": "source-qualification/se-support-midpoint-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-midpoint-child-teacher",
+      "sourceId": "se-support-midpoint-child-teacher",
+      "path": "source-qualification/se-support-midpoint-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-relative-growth-pure",
+      "sourceId": "se-support-relative-growth-pure",
+      "path": "source-qualification/se-support-relative-growth-pure.source.json"
+    },
+    {
+      "caseId": "se-support-relative-growth-callbacks-recovery",
+      "sourceId": "se-support-relative-growth-callbacks-recovery",
+      "path": "source-qualification/se-support-relative-growth-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-relative-growth-repeated-2calls",
+      "sourceId": "se-support-relative-growth-repeated-2calls",
+      "path": "source-qualification/se-support-relative-growth-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-relative-growth-child-teacher",
+      "sourceId": "se-support-relative-growth-child-teacher",
+      "path": "source-qualification/se-support-relative-growth-child-teacher.source.json"
+    },
+    {
+      "caseId": "se-support-parity-adjustment-pure",
+      "sourceId": "se-support-parity-adjustment-pure",
+      "path": "source-qualification/se-support-parity-adjustment-pure.source.json"
+    },
+    {
+      "caseId": "se-support-parity-adjustment-callbacks-recovery",
+      "sourceId": "se-support-parity-adjustment-callbacks-recovery",
+      "path": "source-qualification/se-support-parity-adjustment-callbacks-recovery.source.json"
+    },
+    {
+      "caseId": "se-support-parity-adjustment-repeated-2calls",
+      "sourceId": "se-support-parity-adjustment-repeated-2calls",
+      "path": "source-qualification/se-support-parity-adjustment-repeated-2calls.source.json"
+    },
+    {
+      "caseId": "se-support-parity-adjustment-child-teacher",
+      "sourceId": "se-support-parity-adjustment-child-teacher",
+      "path": "source-qualification/se-support-parity-adjustment-child-teacher.source.json"
+    }
+  ],
+  "originalFilesUnchanged": true,
+  "sourceReplays": 0,
+  "nativeAdmissions": 0,
+  "optimizerUpdates": 0,
+  "fullPackageRestoreQualified": false,
+  "scope": "Read-only original-task correspondence on original retained source files; no campaign lock recreated and no whole journal or current-pair source qualification claimed"
+}

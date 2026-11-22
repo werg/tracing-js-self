@@ -1,0 +1,125 @@
+{
+  "schema": "durable-bootstrap-hosted-evidence/1",
+  "run": 45036948244,
+  "job": 137252701839,
+  "conclusion": "success",
+  "startedAt": "2026-11-22T15:11:47Z",
+  "completedAt": "2026-11-22T15:39:25Z",
+  "workflowRevision": "4371410e0026a5c70246b484f99b01da3994a6fb",
+  "exactSource": {
+    "workflowRevision": "4371410e0026a5c70246b484f99b01da3994a6fb",
+    "requiredNativeCases": 151,
+    "requiredProducerCases": 170,
+    "tracing-js-self": {
+      "revision": "e5d53e47b39ccc1699db6da0c6f53bb703b3dce2",
+      "tree": "4e1f048e718daa1a7ff7617202de2eb086090153"
+    },
+    "megatoken": {
+      "revision": "56cce3b80423b0cb70c3a096d867561066e3a211",
+      "tree": "96ac16250743ac46d3f4b97d231bfcea8cc2a223"
+    }
+  },
+  "junit": {
+    "native-bootstrap.xml": {
+      "leafCases": 151,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "sumLeafSeconds": 191.02700000000002,
+      "classes": {
+        "tests.test_semantic_commit_recovery_v8": 42,
+        "tests.test_semantic_request_journal_v8": 12,
+        "tests.test_semantic_bootstrap_recovery_v8": 17,
+        "tests.test_semantic_close_recovery_v8": 9,
+        "tests.test_semantic_launch_v8": 16,
+        "tests.test_semantic_v8_position_receipts": 55
+      }
+    },
+    "host-bootstrap-history.xml": {
+      "leafCases": 170,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "sumLeafSeconds": 1361.789967,
+      "classes": {
+        "test": 118,
+        "bootstrap reconstruction refuses changed causal authority, child, native work and execution budget": 23,
+        "automatic history stops on append, independent-read or head-acknowledgement failure before external work": 4,
+        "terminal recovery retains anchored native costs and original attempt bytes even under a rehashed head": 3,
+        "even a single authenticated cut rejects malformed native costs before opening model state": 8,
+        "every recorded cut and all three consumed-attempt prefixes validate before native restore": 14
+      }
+    }
+  },
+  "nodeReporterAggregate": 175,
+  "nodeParentContainers": 5,
+  "artifact": {
+    "id": 14760813655,
+    "bytes": 15916,
+    "sha256": "6e54d520f3a76095f1382e65560b91b5a9791a219a1a9736965837624a77dfc8"
+  },
+  "ciBudgetMinutes": 60,
+  "sourceOrSemanticBoundsChanged": false,
+  "previousCancelledRun": {
+    "run": 45032886414,
+    "nativePassed": 151,
+    "producerCompletedPopulation": null,
+    "producerPopulationStatus": "unknown; incomplete52-byte JUnit and no individual streamed events"
+  },
+  "files": [
+    {
+      "originalName": "bootstrap-source-identities.json",
+      "storedPath": "bootstrap-source-identities.json",
+      "encoding": "identity",
+      "originalBytes": 411,
+      "sha256": "052da36ff4efa9ef435d2ee628174615be3bdb623496d1c58f53a6c057900df6",
+      "storedBytes": 411,
+      "storedSha256": "052da36ff4efa9ef435d2ee628174615be3bdb623496d1c58f53a6c057900df6"
+    },
+    {
+      "originalName": "host-bootstrap-history.log",
+      "storedPath": "host-bootstrap-history.log",
+      "encoding": "identity",
+      "originalBytes": 16089,
+      "sha256": "e600e248a421a49fd77964da4e83cdd5bfaf42b0025630377f359f07a8a956d7",
+      "storedBytes": 16089,
+      "storedSha256": "e600e248a421a49fd77964da4e83cdd5bfaf42b0025630377f359f07a8a956d7"
+    },
+    {
+      "originalName": "host-bootstrap-history.xml",
+      "storedPath": "host-bootstrap-history.xml",
+      "encoding": "identity",
+      "originalBytes": 47680,
+      "sha256": "41771853bd2dcc77fa6e97f8f0de2698b997eeab7777e230a997a20fb914b15b",
+      "storedBytes": 47680,
+      "storedSha256": "41771853bd2dcc77fa6e97f8f0de2698b997eeab7777e230a997a20fb914b15b"
+    },
+    {
+      "originalName": "native-bootstrap.xml",
+      "storedPath": "native-bootstrap.xml",
+      "encoding": "identity",
+      "originalBytes": 23934,
+      "sha256": "438141910b91efa03a53d45e2c5f206e25eada6100263cd8c3551727b9dda55d",
+      "storedBytes": 23934,
+      "storedSha256": "438141910b91efa03a53d45e2c5f206e25eada6100263cd8c3551727b9dda55d"
+    },
+    {
+      "originalName": "bootstrap-e5-56-45036948244.log",
+      "storedPath": "bootstrap-e5-56-45036948244.log.gz.b64",
+      "encoding": "gzip-base64",
+      "originalBytes": 95330,
+      "sha256": "928d15ef53959675b24b672e1d1b58392e09f7a3ca3088fc90ed1c4975256b92",
+      "storedBytes": 28393,
+      "storedSha256": "d79cb2d496d0548db9ecc17beba14e977df19fe16c8870b08d5f2ae5e0f587e3"
+    },
+    {
+      "originalName": "bootstrap-e5-56-45036948244.zip",
+      "storedPath": "bootstrap-e5-56-45036948244.zip.gz.b64",
+      "encoding": "gzip-base64",
+      "originalBytes": 15916,
+      "sha256": "6e54d520f3a76095f1382e65560b91b5a9791a219a1a9736965837624a77dfc8",
+      "storedBytes": 20881,
+      "storedSha256": "933e58374c1992d0131d840aed42160003c2ac3eafa25119cbb8f93c0909c88a"
+    }
+  ]
+}

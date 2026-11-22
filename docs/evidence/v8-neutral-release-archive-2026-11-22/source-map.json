@@ -1,0 +1,31 @@
+{
+  "schema": "scoped-source-promotion-map/1",
+  "repository": "werg/tracing-js-self",
+  "base": "28dcdbaba8c59ececba4c62de98baeb6cce551b3",
+  "remoteHead": "99472fc4461fa0d37cea75fc62b40ae593b788a6",
+  "localHead": "56841b15dc8440dc015495d8e681c851774696c3",
+  "tree": "1de8415391f6a5a904cce52f0f5bbd9d5f663fb6",
+  "scope": "Neutral stdlib archive extraction, preserved V6 wrappers, transitive audit pin, five new direct tests. No semantic V8 packager or frozen campaign change.",
+  "files": [
+    {
+      "path": "tools/native-consumer/test_release_archive.py",
+      "afterBlob": "e3be0142cf008d76b2b3ce87ab5e67a19d117d72"
+    },
+    {
+      "path": "tools/package-audit-supplement.py",
+      "afterBlob": "3b0dd86b73fdfef6817f140d23a4e3ffab8c744b"
+    },
+    {
+      "path": "tools/package-semantic-release.py",
+      "afterBlob": "c79927f37b57733ce80be2d495d4dadd4a9224e8"
+    },
+    {
+      "path": "tools/release_archive.py",
+      "afterBlob": "5ebd1baad362f60e978438d967512937d87eae45"
+    },
+    {
+      "path": "tools/restore-semantic-release.py",
+      "afterBlob": "e9b6dadecd5ee763057da6dfb7c74b97e5a17046"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="diagnostic selections retain the full population and bind resume to canonical selected IDs" time="0.016249" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-release/test/qualification-progress.test.js"/>
+	<testcase name="resume preserves refusals and completed evidence while leaving incomplete cases untested" time="0.024663" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-release/test/qualification-progress.test.js"/>
+	<testcase name="resume rejects stale revisions, changed policies or bounds, and corrupted completed bytes" time="0.022029" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-release/test/qualification-progress.test.js"/>
+	<testcase name="bounded independent jobs preserve declared result order and wait for active jobs on failure" time="0.052496" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-release/test/qualification-progress.test.js"/>
+	<testcase name="V8 release snapshot retains complete population, selection, failures and every committed attempt" time="0.069182" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+	<testsuite name="V8 release snapshot refuses changed, omitted and forged report authority" time="0.196397" disabled="0" errors="0" tests="7" failures="0" skipped="0" timestamp="2026-11-22T14:55:52.580Z" hostname="07bf85b14210">
+		<testcase name="row" time="0.034777" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+		<testcase name="count" time="0.036152" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+		<testcase name="omitted" time="0.024861" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+		<testcase name="revision" time="0.023013" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+		<testcase name="selected" time="0.022753" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+		<testcase name="contract" time="0.023273" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+		<testcase name="candidate" time="0.029726" classname="V8 release snapshot refuses changed, omitted and forged report authority" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+	</testsuite>
+	<testsuite name="V8 release snapshot refuses changed completed bytes and missing original failures" time="0.073092" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-22T14:55:52.769Z" hostname="07bf85b14210">
+		<testcase name="changed" time="0.046100" classname="V8 release snapshot refuses changed completed bytes and missing original failures" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+		<testcase name="missing" time="0.026411" classname="V8 release snapshot refuses changed completed bytes and missing original failures" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+	</testsuite>
+	<testsuite name="V8 release snapshot refuses torn and reordered logs without repairing their bytes" time="0.051008" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-22T14:55:52.840Z" hostname="07bf85b14210">
+		<testcase name="torn" time="0.026318" classname="V8 release snapshot refuses torn and reordered logs without repairing their bytes" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+		<testcase name="reordered" time="0.024179" classname="V8 release snapshot refuses torn and reordered logs without repairing their bytes" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+	</testsuite>
+	<testsuite name="V8 release snapshot verifies journal CAS bytes and refuses an active writer" time="0.051248" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-22T14:55:52.889Z" hostname="07bf85b14210">
+		<testcase name="cas" time="0.023766" classname="V8 release snapshot verifies journal CAS bytes and refuses an active writer" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+		<testcase name="writer" time="0.026953" classname="V8 release snapshot verifies journal CAS bytes and refuses an active writer" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+	</testsuite>
+	<testcase name="V8 release snapshot refuses a coherent journal that qualifies an unselected source" time="0.026007" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+	<testcase name="V8 release snapshot cannot hide overwritten historical artifact bytes" time="0.024851" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+	<testcase name="V8 release snapshot binds native artifact bytes to the exact committed receipt" time="0.025616" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+	<testcase name="uncommitted orphan files remain explicit auxiliary bytes and never gain admission" time="0.042354" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+	<testcase name="V8 release snapshot refuses symbolic-link input before reading campaign objects" time="0.022379" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+	<testcase name="V8 release snapshot refuses a symbolic-link ancestor of its root" time="0.020407" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+	<testcase name="V8 release campaign verification runs with every semantic compiler and old release tool absent" time="0.136616" classname="test" file="/workspace/scratch/05d92519587f/producer-v8-release/test/v8-release-campaign.test.js"/>
+	<!-- tests 29 -->
+	<!-- suites 0 -->
+	<!-- pass 29 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 857.680169 -->
+</testsuites>

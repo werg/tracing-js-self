@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="task normalization preserves omitted source defaults" time="0.612231" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves explicit null guest RNG" time="0.504222" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves inherited guest RNG" time="0.399413" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves false seed metadata" time="0.376348" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves zero seed metadata" time="0.327555" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves false empty fixture" time="0.358851" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves zero empty fixture" time="0.418182" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves empty-string fixture" time="0.339110" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves ordinary source ignores the protocol-only ancestry alias" time="0.367410" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves the direct protocol ancestry alias" time="0.327895" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves the direct protocol null ancestry default" time="0.301893" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null fixture rejected by ordinary source generation" time="0.001163" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null license rejected by ordinary source generation" time="0.000228" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null trustTier rejected by ordinary source generation" time="0.000176" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null ancestorIds rejected by ordinary source generation" time="0.318389" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null seeds rejected by ordinary source generation" time="0.000570" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null seed rejected by ordinary source generation" time="0.000238" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses conflicting explicit-null and inherited guest RNG declarations" time="0.000324" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves omitted ordered-session defaults" time="0.898708" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null session seed" time="0.000667" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses explicit null session sessionId" time="0.095853" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves explicit ordered-session seed and identity" time="0.763098" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization takes session source and entry from its ordered components" time="0.855544" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization ignores session outer source metadata not passed to components" time="0.733528" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization applies the session seed before component defaults" time="0.708760" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization derives session ancestry from its actual ordered components" time="0.724148" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves the module null default for experimentalNamespacePlan" time="0.507763" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves the module null default for experimentalSchedulerPlan" time="0.464966" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves module null host-fixture default" time="0.549949" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves actual namespace-profile nullable custody defaults" time="0.416136" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization preserves actual namespace-profile unused seed metadata" time="0.409090" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses null custody for a statically lowered namespace import" time="0.505508" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<testcase name="task normalization refuses null custody rejected by mixed host-protocol generation" time="1.434190" classname="test" file="/workspace/scratch/05d92519587f/producer-promise-then-profile/test/v8-release-task-normalization.test.js"/>
+	<!-- tests 33 -->
+	<!-- suites 0 -->
+	<!-- pass 33 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 14479.557363 -->
+</testsuites>

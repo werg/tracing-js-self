@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="7" skipped="0" tests="65" time="1.623" timestamp="2026-11-22T15:39:15.357589+01:00" hostname="07bf85b14210"><testcase classname="tools.native-consumer.test_release_bundle.ReleaseArchiveTests" name="test_archive_rejects_uninventoried_duplicate_and_link_members" time="0.009" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseArchiveTests" name="test_deterministic_complete_archive_and_checksum_verification" time="0.005" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseArchiveTests" name="test_duplicate_inventory_cannot_hide_a_candidate" time="0.000" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseArchiveTests" name="test_large_members_are_hashed_archived_and_verified_without_whole_file_reads" time="0.203" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseArchiveTests" name="test_manifest_metadata_is_bounded_on_write_and_verify" time="0.002" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseArchiveTests" name="test_mutated_input_does_not_leave_a_release" time="0.001" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseArchiveTests" name="test_path_escape_is_rejected" time="0.001" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseArchiveTests" name="test_symbolic_link_inputs_are_rejected" time="0.001" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseQualificationTests" name="test_actual_public_digest_is_checked_independently_of_sidecar_identity" time="0.001" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseQualificationTests" name="test_compact_documents_are_read_from_checksummed_bounded_objects" time="0.001" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseQualificationTests" name="test_environment_gate_executes_the_exact_producer_checker_and_retains_actual_receipt" time="0.002" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseQualificationTests" name="test_fresh_checker_failure_cannot_be_bypassed_by_a_previous_verified_receipt" time="0.001" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseQualificationTests" name="test_package_lock_excludes_resumed_generation_until_the_bundle_is_complete" time="0.001" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseQualificationTests" name="test_stale_dependency_receipt_is_rejected_even_when_policy_pins_match" time="0.001" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseTrainingSelectionTests" name="test_impossible_training_caps_keep_an_explicit_selection_receipt_and_fail" time="0.118"><failure message="AssertionError: &quot;excluded every training candidate&quot; does not match &quot;Training selection failed: node:internal/modules/package_json_reader:331&#10;  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);&#10;        ^&#10;&#10;Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs&#10;    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)&#10;[+14 more lines; full report in element text]">ValueError: Training selection failed: node:internal/modules/package_json_reader:331
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)
+    at packageResolve (node:internal/modules/esm/resolve:784:25)
+    at moduleResolve (node:internal/modules/esm/resolve:873:18)
+    at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.22.3
+
+
+During handling of the above exception, another exception occurred:
+
+self = &lt;test_release_bundle.ReleaseTrainingSelectionTests testMethod=test_impossible_training_caps_keep_an_explicit_selection_receipt_and_fail&gt;
+
+    def test_impossible_training_caps_keep_an_explicit_selection_receipt_and_fail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rows = [self.candidate(), self.candidate("held", 10000, "test")]
+&gt;           with self.assertRaisesRegex(ValueError, "excluded every training candidate"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: "excluded every training candidate" does not match "Training selection failed: node:internal/modules/package_json_reader:331
+E             throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+E                   ^
+E           
+E           Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs
+E               at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)
+E               at packageResolve (node:internal/modules/esm/resolve:784:25)
+E               at moduleResolve (node:internal/modules/esm/resolve:873:18)
+E               at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+E               at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+E               at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+E               at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+E               at #resolve (node:internal/modules/esm/loader:687:17)
+E               at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+E               at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+E             code: 'ERR_MODULE_NOT_FOUND'
+E           }
+E           
+E           Node.js v24.22.3
+E           "
+
+tools/native-consumer/test_release_bundle.py:272: AssertionError</failure></testcase><testcase classname="tools.native-consumer.test_release_bundle.ReleaseTrainingSelectionTests" name="test_native_qualification_measures_tokens_and_binds_cached_source_receipts_to_full_evidence" time="0.002" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseTrainingSelectionTests" name="test_new_native_ancestry_joins_require_a_rebuilt_global_registry_before_a_capped_release" time="0.077"><failure message="ValueError: Training selection failed: node:internal/modules/package_json_reader:331&#10;  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);&#10;        ^&#10;&#10;Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs&#10;    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)&#10;    at packageResolve (node:internal/modules/esm/resolve:784:25)&#10;[+12 more lines; full report in element text]">self = &lt;test_release_bundle.ReleaseTrainingSelectionTests testMethod=test_new_native_ancestry_joins_require_a_rebuilt_global_registry_before_a_capped_release&gt;
+
+    def test_new_native_ancestry_joins_require_a_rebuilt_global_registry_before_a_capped_release(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rows = [self.candidate("a"), self.candidate("b")]
+&gt;           selection = release.select_training(rows, root, max_family_share=.5)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tools/native-consumer/test_release_bundle.py:317: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+qualified = [{'id': 'a', 'status': 'admitted', 'family': 'a', 'sourceCluster': 'a', ...}, {'id': 'b', 'status': 'admitted', 'family': 'b', 'sourceCluster': 'b', ...}]
+output = PosixPath('/workspace/scratch/05d92519587f/producer-neutral-release-archive/tmp1l0sd62o')
+max_family_tokens = None, max_family_share = 0.5
+
+    def select_training(qualified: list[dict], output: Path, *, max_family_tokens=None, max_family_share=None) -&gt; dict:
+        request = output / "training-selection-input.json"
+        destination = output / "training-selection.json"
+        write_json(request, {"rows": qualified, "maxFamilyTokens": max_family_tokens, "maxFamilyShare": max_family_share})
+        selector = Path(__file__).with_name("select-release-training.mjs")
+        result = subprocess.run(["node", str(selector), str(request), str(destination)],
+                                capture_output=True, text=True, timeout=600, check=False)
+        if result.returncode:
+&gt;           raise ValueError("Training selection failed: " + result.stderr[-4000:])
+E           ValueError: Training selection failed: node:internal/modules/package_json_reader:331
+E             throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+E                   ^
+E           
+E           Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs
+E               at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)
+E               at packageResolve (node:internal/modules/esm/resolve:784:25)
+E               at moduleResolve (node:internal/modules/esm/resolve:873:18)
+E               at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+E               at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+E               at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+E               at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+E               at #resolve (node:internal/modules/esm/loader:687:17)
+E               at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+E               at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+E             code: 'ERR_MODULE_NOT_FOUND'
+E           }
+E           
+E           Node.js v24.22.3
+
+tools/package-semantic-release.py:389: ValueError</failure></testcase><testcase classname="tools.native-consumer.test_release_bundle.ReleaseTrainingSelectionTests" name="test_prepared_data_cannot_add_candidates_move_splits_or_change_measured_tokens" time="0.267"><failure message="ValueError: Training selection failed: node:internal/modules/package_json_reader:331&#10;  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);&#10;        ^&#10;&#10;Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs&#10;    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)&#10;    at packageResolve (node:internal/modules/esm/resolve:784:25)&#10;[+12 more lines; full report in element text]">self = &lt;test_release_bundle.ReleaseTrainingSelectionTests testMethod=test_prepared_data_cannot_add_candidates_move_splits_or_change_measured_tokens&gt;
+
+    def test_prepared_data_cannot_add_candidates_move_splits_or_change_measured_tokens(self):
+        changes = [
+            ("UPDATE episodes SET assistant_tokens=51", "token count"),
+            ("UPDATE episodes SET split='test'", "frozen split"),
+            ("UPDATE episodes SET episode_id='unexpected'", "unselected episode"),
+        ]
+        for query, error in changes:
+            with self.subTest(query=query), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                rows = [self.candidate()]
+&gt;               selection = release.select_training(rows, root)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tools/native-consumer/test_release_bundle.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+qualified = [{'id': 'one', 'status': 'admitted', 'family': 'one', 'sourceCluster': 'one', ...}]
+output = PosixPath('/workspace/scratch/05d92519587f/producer-neutral-release-archive/tmp_5hf3n00')
+max_family_tokens = None, max_family_share = None
+
+    def select_training(qualified: list[dict], output: Path, *, max_family_tokens=None, max_family_share=None) -&gt; dict:
+        request = output / "training-selection-input.json"
+        destination = output / "training-selection.json"
+        write_json(request, {"rows": qualified, "maxFamilyTokens": max_family_tokens, "maxFamilyShare": max_family_share})
+        selector = Path(__file__).with_name("select-release-training.mjs")
+        result = subprocess.run(["node", str(selector), str(request), str(destination)],
+                                capture_output=True, text=True, timeout=600, check=False)
+        if result.returncode:
+&gt;           raise ValueError("Training selection failed: " + result.stderr[-4000:])
+E           ValueError: Training selection failed: node:internal/modules/package_json_reader:331
+E             throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+E                   ^
+E           
+E           Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs
+E               at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)
+E               at packageResolve (node:internal/modules/esm/resolve:784:25)
+E               at moduleResolve (node:internal/modules/esm/resolve:873:18)
+E               at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+E               at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+E               at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+E               at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+E               at #resolve (node:internal/modules/esm/loader:687:17)
+E               at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+E               at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+E             code: 'ERR_MODULE_NOT_FOUND'
+E           }
+E           
+E           Node.js v24.22.3
+
+tools/package-semantic-release.py:389: ValueError</failure><failure message="ValueError: Training selection failed: node:internal/modules/package_json_reader:331&#10;  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);&#10;        ^&#10;&#10;Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs&#10;    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)&#10;    at packageResolve (node:internal/modules/esm/resolve:784:25)&#10;[+12 more lines; full report in element text]">self = &lt;test_release_bundle.ReleaseTrainingSelectionTests testMethod=test_prepared_data_cannot_add_candidates_move_splits_or_change_measured_tokens&gt;
+
+    def test_prepared_data_cannot_add_candidates_move_splits_or_change_measured_tokens(self):
+        changes = [
+            ("UPDATE episodes SET assistant_tokens=51", "token count"),
+            ("UPDATE episodes SET split='test'", "frozen split"),
+            ("UPDATE episodes SET episode_id='unexpected'", "unselected episode"),
+        ]
+        for query, error in changes:
+            with self.subTest(query=query), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                rows = [self.candidate()]
+&gt;               selection = release.select_training(rows, root)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tools/native-consumer/test_release_bundle.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+qualified = [{'id': 'one', 'status': 'admitted', 'family': 'one', 'sourceCluster': 'one', ...}]
+output = PosixPath('/workspace/scratch/05d92519587f/producer-neutral-release-archive/tmpu8r7v0gl')
+max_family_tokens = None, max_family_share = None
+
+    def select_training(qualified: list[dict], output: Path, *, max_family_tokens=None, max_family_share=None) -&gt; dict:
+        request = output / "training-selection-input.json"
+        destination = output / "training-selection.json"
+        write_json(request, {"rows": qualified, "maxFamilyTokens": max_family_tokens, "maxFamilyShare": max_family_share})
+        selector = Path(__file__).with_name("select-release-training.mjs")
+        result = subprocess.run(["node", str(selector), str(request), str(destination)],
+                                capture_output=True, text=True, timeout=600, check=False)
+        if result.returncode:
+&gt;           raise ValueError("Training selection failed: " + result.stderr[-4000:])
+E           ValueError: Training selection failed: node:internal/modules/package_json_reader:331
+E             throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+E                   ^
+E           
+E           Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs
+E               at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)
+E               at packageResolve (node:internal/modules/esm/resolve:784:25)
+E               at moduleResolve (node:internal/modules/esm/resolve:873:18)
+E               at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+E               at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+E               at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+E               at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+E               at #resolve (node:internal/modules/esm/loader:687:17)
+E               at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+E               at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+E             code: 'ERR_MODULE_NOT_FOUND'
+E           }
+E           
+E           Node.js v24.22.3
+
+tools/package-semantic-release.py:389: ValueError</failure><failure message="ValueError: Training selection failed: node:internal/modules/package_json_reader:331&#10;  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);&#10;        ^&#10;&#10;Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs&#10;    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)&#10;    at packageResolve (node:internal/modules/esm/resolve:784:25)&#10;[+12 more lines; full report in element text]">self = &lt;test_release_bundle.ReleaseTrainingSelectionTests testMethod=test_prepared_data_cannot_add_candidates_move_splits_or_change_measured_tokens&gt;
+
+    def test_prepared_data_cannot_add_candidates_move_splits_or_change_measured_tokens(self):
+        changes = [
+            ("UPDATE episodes SET assistant_tokens=51", "token count"),
+            ("UPDATE episodes SET split='test'", "frozen split"),
+            ("UPDATE episodes SET episode_id='unexpected'", "unselected episode"),
+        ]
+        for query, error in changes:
+            with self.subTest(query=query), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                rows = [self.candidate()]
+&gt;               selection = release.select_training(rows, root)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tools/native-consumer/test_release_bundle.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+qualified = [{'id': 'one', 'status': 'admitted', 'family': 'one', 'sourceCluster': 'one', ...}]
+output = PosixPath('/workspace/scratch/05d92519587f/producer-neutral-release-archive/tmphv15hti0')
+max_family_tokens = None, max_family_share = None
+
+    def select_training(qualified: list[dict], output: Path, *, max_family_tokens=None, max_family_share=None) -&gt; dict:
+        request = output / "training-selection-input.json"
+        destination = output / "training-selection.json"
+        write_json(request, {"rows": qualified, "maxFamilyTokens": max_family_tokens, "maxFamilyShare": max_family_share})
+        selector = Path(__file__).with_name("select-release-training.mjs")
+        result = subprocess.run(["node", str(selector), str(request), str(destination)],
+                                capture_output=True, text=True, timeout=600, check=False)
+        if result.returncode:
+&gt;           raise ValueError("Training selection failed: " + result.stderr[-4000:])
+E           ValueError: Training selection failed: node:internal/modules/package_json_reader:331
+E             throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+E                   ^
+E           
+E           Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs
+E               at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)
+E               at packageResolve (node:internal/modules/esm/resolve:784:25)
+E               at moduleResolve (node:internal/modules/esm/resolve:873:18)
+E               at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+E               at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+E               at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+E               at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+E               at #resolve (node:internal/modules/esm/loader:687:17)
+E               at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+E               at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+E             code: 'ERR_MODULE_NOT_FOUND'
+E           }
+E           
+E           Node.js v24.22.3
+
+tools/package-semantic-release.py:389: ValueError</failure></testcase><testcase classname="tools.native-consumer.test_release_bundle.ReleaseTrainingSelectionTests" name="test_prepared_shares_use_the_final_native_denominator_and_never_include_held_out_tokens" time="0.168"><failure message="ValueError: Training selection failed: node:internal/modules/package_json_reader:331&#10;  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);&#10;        ^&#10;&#10;Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs&#10;    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)&#10;    at packageResolve (node:internal/modules/esm/resolve:784:25)&#10;[+12 more lines; full report in element text]">self = &lt;test_release_bundle.ReleaseTrainingSelectionTests testMethod=test_prepared_shares_use_the_final_native_denominator_and_never_include_held_out_tokens&gt;
+
+    def test_prepared_shares_use_the_final_native_denominator_and_never_include_held_out_tokens(self):
+        rows = [self.candidate("a"), self.candidate("b"), self.candidate("held", 10000, "validation")]
+        for excluded in ([], ["b"]):
+            with self.subTest(excluded=excluded), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+&gt;               selection = release.select_training(rows, root, max_family_tokens=100, max_family_share=.5)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tools/native-consumer/test_release_bundle.py:284: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+qualified = [{'id': 'a', 'status': 'admitted', 'family': 'a', 'sourceCluster': 'a', ...}, {'id': 'b', 'status': 'admitted', 'family': 'b', 'sourceCluster': 'b', ...}, {'id': 'held', 'status': 'admitted', 'family': 'held', 'sourceCluster': 'held', ...}]
+output = PosixPath('/workspace/scratch/05d92519587f/producer-neutral-release-archive/tmpeq1id69v')
+max_family_tokens = 100, max_family_share = 0.5
+
+    def select_training(qualified: list[dict], output: Path, *, max_family_tokens=None, max_family_share=None) -&gt; dict:
+        request = output / "training-selection-input.json"
+        destination = output / "training-selection.json"
+        write_json(request, {"rows": qualified, "maxFamilyTokens": max_family_tokens, "maxFamilyShare": max_family_share})
+        selector = Path(__file__).with_name("select-release-training.mjs")
+        result = subprocess.run(["node", str(selector), str(request), str(destination)],
+                                capture_output=True, text=True, timeout=600, check=False)
+        if result.returncode:
+&gt;           raise ValueError("Training selection failed: " + result.stderr[-4000:])
+E           ValueError: Training selection failed: node:internal/modules/package_json_reader:331
+E             throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+E                   ^
+E           
+E           Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs
+E               at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)
+E               at packageResolve (node:internal/modules/esm/resolve:784:25)
+E               at moduleResolve (node:internal/modules/esm/resolve:873:18)
+E               at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+E               at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+E               at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+E               at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+E               at #resolve (node:internal/modules/esm/loader:687:17)
+E               at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+E               at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+E             code: 'ERR_MODULE_NOT_FOUND'
+E           }
+E           
+E           Node.js v24.22.3
+
+tools/package-semantic-release.py:389: ValueError</failure><failure message="ValueError: Training selection failed: node:internal/modules/package_json_reader:331&#10;  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);&#10;        ^&#10;&#10;Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs&#10;    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)&#10;    at packageResolve (node:internal/modules/esm/resolve:784:25)&#10;[+12 more lines; full report in element text]">self = &lt;test_release_bundle.ReleaseTrainingSelectionTests testMethod=test_prepared_shares_use_the_final_native_denominator_and_never_include_held_out_tokens&gt;
+
+    def test_prepared_shares_use_the_final_native_denominator_and_never_include_held_out_tokens(self):
+        rows = [self.candidate("a"), self.candidate("b"), self.candidate("held", 10000, "validation")]
+        for excluded in ([], ["b"]):
+            with self.subTest(excluded=excluded), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+&gt;               selection = release.select_training(rows, root, max_family_tokens=100, max_family_share=.5)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tools/native-consumer/test_release_bundle.py:284: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+qualified = [{'id': 'a', 'status': 'admitted', 'family': 'a', 'sourceCluster': 'a', ...}, {'id': 'b', 'status': 'admitted', 'family': 'b', 'sourceCluster': 'b', ...}, {'id': 'held', 'status': 'admitted', 'family': 'held', 'sourceCluster': 'held', ...}]
+output = PosixPath('/workspace/scratch/05d92519587f/producer-neutral-release-archive/tmpuz3r6xp0')
+max_family_tokens = 100, max_family_share = 0.5
+
+    def select_training(qualified: list[dict], output: Path, *, max_family_tokens=None, max_family_share=None) -&gt; dict:
+        request = output / "training-selection-input.json"
+        destination = output / "training-selection.json"
+        write_json(request, {"rows": qualified, "maxFamilyTokens": max_family_tokens, "maxFamilyShare": max_family_share})
+        selector = Path(__file__).with_name("select-release-training.mjs")
+        result = subprocess.run(["node", str(selector), str(request), str(destination)],
+                                capture_output=True, text=True, timeout=600, check=False)
+        if result.returncode:
+&gt;           raise ValueError("Training selection failed: " + result.stderr[-4000:])
+E           ValueError: Training selection failed: node:internal/modules/package_json_reader:331
+E             throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+E                   ^
+E           
+E           Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'acorn' imported from /workspace/scratch/05d92519587f/producer-neutral-release-archive/src/corpus/source-registry.mjs
+E               at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)
+E               at packageResolve (node:internal/modules/esm/resolve:784:25)
+E               at moduleResolve (node:internal/modules/esm/resolve:873:18)
+E               at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+E               at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+E               at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+E               at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+E               at #resolve (node:internal/modules/esm/loader:687:17)
+E               at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+E               at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+E             code: 'ERR_MODULE_NOT_FOUND'
+E           }
+E           
+E           Node.js v24.22.3
+
+tools/package-semantic-release.py:389: ValueError</failure></testcase><testcase classname="tools.native-consumer.test_release_bundle.ReleaseCompactCampaignTests" name="test_admitted_document_loading_is_lazy_and_keeps_only_release_metadata" time="0.001" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseCompactCampaignTests" name="test_archive_streams_large_members_and_checksums_without_read_bytes" time="0.107" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseCompactCampaignTests" name="test_compact_cas_staging_keeps_original_bytes_and_archive_audit" time="0.448" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseCompactCampaignTests" name="test_selected_release_preserves_all_heldout_ids_and_candidate_identity" time="0.001" /><testcase classname="tools.native-consumer.test_release_bundle.ReleaseCompactCampaignTests" name="test_selection_needs_exact_original_campaign_for_audit" time="0.001" /><testcase classname="tools.native-consumer.test_release_restore.ReleaseRestoreTests" name="test_compressed_extension_metadata_is_bounded_before_tar_parsing" time="0.001" /><testcase classname="tools.native-consumer.test_release_restore.ReleaseRestoreTests" name="test_corrupted_inventory_fails_before_any_original_producer_execution" time="0.003" /><testcase classname="tools.native-consumer.test_release_restore.ReleaseRestoreTests" name="test_each_expansion_limit_is_enforced" time="0.005" /><testcase classname="tools.native-consumer.test_release_restore.ReleaseRestoreTests" name="test_exact_clean_original_producer_and_locked_bytes_are_required" time="0.030" /><testcase classname="tools.native-consumer.test_release_restore.ReleaseRestoreTests" name="test_roundtrip_preserves_all_bytes_and_rejects_reuse" time="0.005" /><testcase classname="tools.native-consumer.test_release_restore.ReleaseRestoreTests" name="test_runtime_mismatch_retains_exact_expected_and_actual_before_replay" time="0.021" /><testcase classname="tools.native-consumer.test_release_restore.ReleaseRestoreTests" name="test_symlink_destination_or_parent_cannot_redirect_extraction" time="0.003" /><testcase classname="tools.native-consumer.test_release_restore.ReleaseRestoreTests" name="test_traversal_links_duplicates_and_special_members_are_rejected" time="0.006" /><testcase classname="tools.native-consumer.test_release_restore.ReleaseRestoreTests" name="test_wrong_archive_pin_and_change_after_verification_are_rejected" time="0.004" /></testsuite></testsuites>

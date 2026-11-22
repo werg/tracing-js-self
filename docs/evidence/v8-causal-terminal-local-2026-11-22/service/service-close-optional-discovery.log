@@ -1,0 +1,11 @@
+﹣ service-owned known close recovers only after exact same-owner authority and preserves it across process loss (0.715196ms) # MEGATOKEN_ROOT is unset; optional paired native service-close test skipped
+﹣ service-owned settled cancellation preserves its exact owner and terminal fence (0.101791ms) # MEGATOKEN_ROOT is unset; optional paired native service-close test skipped
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 261.735695
+exit_code=0
