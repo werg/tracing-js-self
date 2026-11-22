@@ -1,0 +1,99 @@
+{
+  "schema": "semantic-v8-composed-module-evidence-retention/1",
+  "runId": 45023157562,
+  "jobId": 137210278184,
+  "fullArtifact": {
+    "artifactId": 14755122783,
+    "bytes": 74793410,
+    "sha256": "3a919bb9f23ebdaf5ed2637f21952536d6608f60a33cf39584275419135b0754",
+    "memberCount": 21,
+    "originalBytes": 715803098,
+    "expiresAt": "2026-12-22T12:54:57Z"
+  },
+  "rawJobLog": {
+    "retainedAs": "job-137210278184.log.gz",
+    "uncompressedBytes": 123263,
+    "uncompressedSha256": "1f58eb7f1aa88a935fe925b2b660098e61eb586a8f1c4274101065608667216b",
+    "transferVerifiedAgainstConnectorString": true
+  },
+  "reportArchive": {
+    "path": "retained-reports-and-source.tar.gz",
+    "memberCount": 12,
+    "members": [
+      "module-artifact-admission-controls.log",
+      "module-artifact-admission-controls.xml",
+      "module-artifact-packed-data/test_original_module_scheduler0/module-scheduler-source-artifact.json",
+      "module-artifact-packed-data/test_original_module_scheduler0/prepared-module-scheduler/index.sqlite",
+      "module-artifact-packed-data/test_original_module_scheduler0/prepared-module-scheduler/manifest.json",
+      "module-artifact-packed-data/test_original_module_scheduler0/prepared-module-scheduler/semantic-v8-families.json",
+      "module-artifact-packed-data/test_original_module_scheduler0/prepared-module-scheduler/semantic-v8-report.json",
+      "module-artifact-packing-evidence.json",
+      "module-artifact-packing.log",
+      "module-artifact-source-controls.json",
+      "module-artifact-packing.xml",
+      "module-artifact-source-controls.xml"
+    ]
+  },
+  "excludedFromReportArchive": [
+    {
+      "path": "module-artifact-packed-data/test_original_module_scheduler0/prepared-module-scheduler/episodes-000000.jsonl",
+      "bytes": 104295939,
+      "sha256": "12304fabe7a491e9c4f1524c4745e2722efa0d71f6f38a5df2e3e1a99d927987",
+      "reason": "prepared data or dedup database; complete unchanged bytes remain in original GitHub artifact ZIP"
+    },
+    {
+      "path": "module-artifact-packed-data/test_original_module_scheduler0/prepared-module-scheduler/semantic-v8-dedup.sqlite",
+      "bytes": 209182720,
+      "sha256": "b9b4726f614574f997f9ea084cf3a085a4f6d79d79ae89f5ea813e3be0ec8f38",
+      "reason": "prepared data or dedup database; complete unchanged bytes remain in original GitHub artifact ZIP"
+    },
+    {
+      "path": "module-artifact-packed-data/test_original_module_schedulercurrent/module-scheduler-source-artifact.json",
+      "bytes": 29521433,
+      "sha256": "b206c883e8f665af5ff1e959b035f4f009a22aad5dabc2cf6be4cffae13e5615",
+      "reason": "byte-identical pytest current alias"
+    },
+    {
+      "path": "module-artifact-packed-data/test_original_module_schedulercurrent/prepared-module-scheduler/episodes-000000.jsonl",
+      "bytes": 104295939,
+      "sha256": "12304fabe7a491e9c4f1524c4745e2722efa0d71f6f38a5df2e3e1a99d927987",
+      "reason": "byte-identical pytest current alias"
+    },
+    {
+      "path": "module-artifact-packed-data/test_original_module_schedulercurrent/prepared-module-scheduler/index.sqlite",
+      "bytes": 53248,
+      "sha256": "8ace7c5182d15e4a8719b283f5151f1b1ca1e9f52ce28b4fd823c88ebbaef358",
+      "reason": "byte-identical pytest current alias"
+    },
+    {
+      "path": "module-artifact-packed-data/test_original_module_schedulercurrent/prepared-module-scheduler/manifest.json",
+      "bytes": 12797,
+      "sha256": "919a014a1ff4a64e0edda9f17ec03cc79a8a808a20c60e92886970f4700f1bda",
+      "reason": "byte-identical pytest current alias"
+    },
+    {
+      "path": "module-artifact-packed-data/test_original_module_schedulercurrent/prepared-module-scheduler/semantic-v8-dedup.sqlite",
+      "bytes": 209182720,
+      "sha256": "b9b4726f614574f997f9ea084cf3a085a4f6d79d79ae89f5ea813e3be0ec8f38",
+      "reason": "byte-identical pytest current alias"
+    },
+    {
+      "path": "module-artifact-packed-data/test_original_module_schedulercurrent/prepared-module-scheduler/semantic-v8-report.json",
+      "bytes": 814,
+      "sha256": "aaaf44e346ca3a5a4eb1aa21ca07b8b4259f97a1060606ec42aeb38a1e30ae2c",
+      "reason": "byte-identical pytest current alias"
+    },
+    {
+      "path": "module-artifact-packed-data/test_original_module_schedulercurrent/prepared-module-scheduler/semantic-v8-families.json",
+      "bytes": 8943,
+      "sha256": "6b2359c65880a965f2249df88cc8289aa810f02e88602a0e2ea106169ea47e2a",
+      "reason": "byte-identical pytest current alias"
+    }
+  ],
+  "selectedMasks": {
+    "retainedAs": "selected-token-and-mask-receipt.json.gz",
+    "uncompressedBytes": 307644,
+    "uncompressedSha256": "057829c2c1e4870deec4647f16c42281aa9aab40c8aedc2312a96e05d5bdee73",
+    "scope": "All 708 actual prepared/packed target selections, independently checked against physical byte spans; no optimizer or decoder execution credit."
+  }
+}
