@@ -5,6 +5,7 @@ import {TextDecoder} from 'node:util';
 import {hashAlgorithmData} from './program.js';
 import {decodeCausalLmV8Target,validateRegionContext} from './causal-lm-v8.js';
 import {attachNativeV8OrchestrationTransport} from './native-orchestration-transport-v8.js';
+import {assertDurableSelectedOrchestrationExecutionLease} from '../storage/selected-orchestration-execution-lock.js';
 
 const HASH=/^[a-f0-9]{64}$/;
 const copy=structuredClone;
@@ -12,11 +13,28 @@ const demand=(condition,message)=>{if(!condition)throw new TypeError('Native v8:
 const bounded=(value,minimum,maximum)=>Number.isSafeInteger(value)&&value>=minimum&&value<=maximum;
 
 export function createNativeV8ProcessSelector({command,args=[],cwd,env,
-    timeoutMs=30000,maxMessageBytes=16*1024*1024}={}){
+    timeoutMs=30000,maxMessageBytes=16*1024*1024,executionLease}={}){
   demand(typeof command==='string'&&command.length>0,'model executable required');
   demand(Array.isArray(args)&&args.every(value=>typeof value==='string'),'invalid executable arguments');
+  demand(!args.some(value=>['--request-journal','--execution-lock-fd','--execution-lock-session',
+    '--execution-lock-stream','--execution-lock-path'].some(flag=>value===flag||value.startsWith(flag+'='))),
+    'execution lease arguments are managed by this transport; request journaling needs durable frame retention');
   demand(bounded(timeoutMs,1,300000)&&bounded(maxMessageBytes,1024,64*1024*1024),'invalid transport bounds');
-  const child=spawn(command,args,{cwd,env,stdio:['pipe','pipe','pipe'],shell:false,windowsHide:true});
+  if(executionLease!==undefined){
+    demand(typeof executionLease?.assertHeld==='function'&&
+      Number.isSafeInteger(executionLease.fileDescriptor)&&executionLease.fileDescriptor>=3&&
+      typeof executionLease.sessionId==='string'&&typeof executionLease.streamId==='string'&&
+      typeof executionLease.lockPath==='string','a held execution lock lease is required');
+    assertDurableSelectedOrchestrationExecutionLease(executionLease);
+    executionLease.assertHeld();
+  }
+  const childArgs=executionLease===undefined?args:[
+    ...args,'--execution-lock-fd','4','--execution-lock-session',executionLease.sessionId,
+    '--execution-lock-stream',executionLease.streamId,'--execution-lock-path',executionLease.lockPath
+  ];
+  const childStdio=executionLease===undefined?['pipe','pipe','pipe']:
+    ['pipe','pipe','pipe','ignore',executionLease.fileDescriptor];
+  const child=spawn(command,childArgs,{cwd,env,stdio:childStdio,shell:false,windowsHide:true});
   const utf8=new TextDecoder('utf-8',{fatal:true}),pending=new Map(),sessions=new Map(),attempts=[];
   const runtimeMetrics={rpcCalls:0,computeSeconds:0,peakMemoryBytes:0};
   let nextId=0,buffer=Buffer.alloc(0),stderr='',closed=false,identity=null,epoch=0,shutdownPromise=null;
@@ -59,7 +77,10 @@ export function createNativeV8ProcessSelector({command,args=[],cwd,env,
       if(response.ok===false){
         const error=new Error('Native v8 inference refused: '+String(response.error?.message??'unknown failure'));
         error.category=response.error?.category??'native-inference';
-        error.evidence=copy(response.error?.evidence??null);item.reject(error);
+        error.evidence=copy(response.error?.evidence??null);
+        if(['NativeRequestOutcomeUnknown','NativePoststateMismatch','NativeRequestJournalError',
+          'NativeRequestConflict','NativeRequestBusy'].includes(error.category))stop(error);
+        item.reject(error);
       }else if(response.ok!==true)item.reject(new Error('Native v8 response lacks success authority'));
       else item.resolve(response.result);
     }

@@ -1,17 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,fstatSync} from 'node:fs';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {createNativeV8ProcessSelector} from '../src/semantic/native-process-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {commitCausalLmV8Selection} from '../src/semantic/causal-lm-v8.js';
+import {DurableSelectedOrchestrationExecutionLock} from '../src/storage/selected-orchestration-execution-lock.js';
 
 const artifact=JSON.parse(readFileSync(new URL('./fixtures/semantic-regions-v8.json',import.meta.url))).examples
   .find(row=>row.id==='ordered-map');
 const row=artifact.public.timeline.find(row=>row.mode==='generated');
 const identity={checkpointIdentity:'c'.repeat(64),tokenizerIdentity:'e'.repeat(64),seed:17};
 const programModule=new URL('../src/semantic/program.js',import.meta.url).href;
-function fakeServer({alter='',initializeAlter='',commitAlter='',completeAlter='',cancelAlter='',restoreAlter='',raw=false,hang=false}={}){
+function fakeServer({alter='',initializeAlter='',commitAlter='',commitCheck='',completeAlter='',cancelAlter='',restoreAlter='',raw=false,hang=false}={}){
   return `import {createInterface} from 'node:readline';
+    import {fstatSync} from 'node:fs';
     import {hashAlgorithmData} from ${JSON.stringify(programModule)};
     const record=${JSON.stringify(row.fields.line)};
     let modelIdentity=null,nativeAttempts=[],nativeSessions={};
@@ -34,7 +39,7 @@ function fakeServer({alter='',initializeAlter='',commitAlter='',completeAlter=''
         nativeAttempts.push({...result.selection,status:'awaiting-commit'});
         nativeSessions[request.session]={replay:[]};
       }else if(request.op==='commit'){result={schema:'semantic-native-commit/8',committed:true,
-        selectionId:request.selection.selectionId,publicDigest:hashAlgorithmData(request.public)};${commitAlter}
+        selectionId:request.selection.selectionId,publicDigest:hashAlgorithmData(request.public)};${commitCheck}${commitAlter}
         if(result.committed)nativeAttempts.at(-1).status='committed';}
       else if(request.op==='reject')result={schema:'semantic-native-rejection/8',rejected:true,selectionId:request.selectionId};
       else if(request.op==='complete'){result={schema:'semantic-native-completion/8',completed:true,
@@ -65,8 +70,11 @@ function boundary(){
   return {harness,input:{session:harness.inner.sessionId,public:harness.exportEpisode(),contexts:[],
     context:harness.modelContext(row.fields.invocationId)}};
 }
-function selector(options={}){return createNativeV8ProcessSelector({command:process.execPath,
-  args:['--input-type=module','-e',fakeServer(options)],timeoutMs:options.timeoutMs??5000});}
+function selector(options={}){
+  const {selectorOptions={},...serverOptions}=options;
+  return createNativeV8ProcessSelector({...selectorOptions,command:process.execPath,
+    args:['--input-type=module','-e',fakeServer(serverOptions)],timeoutMs:options.timeoutMs??5000});
+}
 
 test('native v8 transport preserves fragmented original output and waits for semantic acknowledgement',async()=>{
   const select=selector(),{harness,input}=boundary();
@@ -326,6 +334,42 @@ test('native checkpoint transport retains attempts and restores with pending can
   }finally{original.close();restored.close();}
 });
 
+test('native process rejects a caller-shaped lock object without a real acquired lease',()=>{
+  assert.throws(()=>createNativeV8ProcessSelector({
+    command:process.execPath,
+    executionLease:{fileDescriptor:4,sessionId:'lock-session',streamId:'lock-stream',
+      lockPath:'/tmp/fake.lock',assertHeld:()=>true,release:async()=>{}}
+  }),/not acquired by this lock implementation/);
+});
+
+test('acquired execution lease is inherited on fd4 without enabling request replay',async()=>{
+  const directory=await mkdtemp(join(tmpdir(),'native-v8-request-'));
+  const lock=new DurableSelectedOrchestrationExecutionLock({
+    directory,sessionId:'lock-session',streamId:'lock-stream'
+  });
+  const lease=await lock.acquire();
+  const {harness,input}=boundary();
+  const select=selector({
+    commitCheck:`if(request.id!=='v8-3'||!fstatSync(4).isFile()||
+      request.nativeRequest!==undefined)
+      throw new Error('inherited lock descriptor or non-recovery request mode differs');`,
+    selectorOptions:{executionLease:lease}
+  });
+  try{
+    await select.initialize(identity);
+    const output=await select(input);
+    commitCausalLmV8Selection(harness,row.fields.invocationId,output.record,{context:input.context});
+    const response=await select.commit({session:input.session,public:harness.exportEpisode(),
+      contexts:[input.context],invocationId:row.fields.invocationId,...output});
+    assert.equal(response.committed,true);
+  }finally{
+    await select.shutdown().catch(()=>{});
+    select.close();
+    await lease.release();
+    await rm(directory,{recursive:true,force:true});
+  }
+});
+
 test('native restore transport rejects altered checkpoints and false recovery acknowledgements',async()=>{
   const original=selector();let packet;
   try{await original.initialize(identity);packet=await original.checkpoint();}
@@ -343,5 +387,37 @@ test('native restore transport rejects altered checkpoints and false recovery ac
       await assert.rejects(restored.restore({checkpoint:packet}),/exact checkpoint restoration/);
       assert.equal(restored.status().closed,true);
     }finally{restored.close();}
+  }
+});
+
+test('native transport refuses both explicit and equals-form managed recovery arguments',()=>{
+  for(const flag of ['--request-journal','--execution-lock-fd','--execution-lock-session',
+    '--execution-lock-stream','--execution-lock-path']){
+    for(const args of [[flag,'value'],[flag+'=value']]){
+      assert.throws(()=>createNativeV8ProcessSelector({command:process.execPath,args}),
+        /arguments are managed by this transport/);
+    }
+  }
+});
+
+test('native transport stops and retains unknown acknowledgement on durable commit refusal',async()=>{
+  for(const category of ['NativeRequestOutcomeUnknown','NativePoststateMismatch',
+    'NativeRequestJournalError','NativeRequestConflict','NativeRequestBusy']){
+    const {harness,input}=boundary();
+    const select=selector({commitCheck:
+      "process.stdout.write(JSON.stringify({id:request.id,ok:false,error:{category:"+
+      JSON.stringify(category)+",message:'durable commit cannot be acknowledged'}})+'\\n');continue;"
+    });
+    try{
+      await select.initialize(identity);
+      const output=await select(input);
+      commitCausalLmV8Selection(harness,row.fields.invocationId,output.record,{context:input.context});
+      await assert.rejects(select.commit({session:input.session,public:harness.exportEpisode(),
+        contexts:[input.context],invocationId:row.fields.invocationId,...output}),
+        error=>error.category===category);
+      assert.equal(select.status().closed,true);
+      assert.equal(select.metrics().attempts.at(-1).status,'acknowledgement-unknown');
+      assert.equal(select.metrics().semanticallyAccepted,0);
+    }finally{select.close();}
   }
 });

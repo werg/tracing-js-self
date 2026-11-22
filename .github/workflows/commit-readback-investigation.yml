@@ -1,0 +1,153 @@
+name: Checkpoint-bound native commit readback and transport controls
+
+on:
+  push:
+    branches: [codex/v8-commit-readback-validation-20261122]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commit-readback-${{ github.ref }}-${{ github.sha }}
+  # Preserve the running full-population evidence during incremental delivery.
+  cancel-in-progress: false
+
+jobs:
+  commit-readback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      PYTHONPATH: ${{ github.workspace }}/megatoken/src
+      TRACING_JS_SELF_ROOT: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_NATIVE_SOURCE_PRODUCER: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/semantic-v8-tokenizer.json
+      MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+      MEGATOKEN_PYTHON: python
+      SEMANTIC_V8_NATIVE_POLICY: ${{ github.workspace }}/semantic-v8-policy.json
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: werg/megatoken
+          ref: 70eef100ee08915e4be85e1cdbf095660dfafead
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: werg/tracing-js-self
+          ref: ${{ github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: tracing-js-self/.nvmrc
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12.14'
+      - name: Install locked dependencies and the checked consumer
+        run: |
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+      - name: Bind the production tokenizer and exact consumer under test
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, re, shutil, subprocess
+          from pathlib import Path
+          from huggingface_hub import hf_hub_download
+          from megatoken.generation.codec import ByteCodec, LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256
+          producer = Path(os.environ['TRACING_JS_SELF_ROOT'])
+          consumer = Path(os.environ['MEGATOKEN_ROOT'])
+          def snapshot(root):
+              revision = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
+              changes = subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain', '--untracked-files=all'], text=True).strip()
+              if not re.fullmatch('[0-9a-f]{40}', revision) or changes:
+                  raise ValueError('Paired admission requires exact clean checkouts')
+              return {'revision': revision, 'tree': subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD:'], text=True).strip()}
+          identity = {'producer': snapshot(producer), 'consumer': snapshot(consumer)}
+          tokenizer = Path(os.environ['MEGATOKEN_TOKENIZER_JSON'])
+          shutil.copyfile(hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION), tokenizer)
+          policy = json.loads((producer / 'contracts/semantic-native-policy-v8.json').read_text())
+          digest = hashlib.sha256(tokenizer.read_bytes()).hexdigest()
+          codec = ByteCodec.from_tokenizer_json(tokenizer, expected_sha256=LING_TOKENIZER_SHA256)
+          if policy['consumerRepository'] != 'werg/megatoken' or policy['tokenizerSha256'] != digest or digest != LING_TOKENIZER_SHA256 or policy['tokenizerIdentity'] != codec.fingerprint:
+              raise ValueError('Pinned tokenizer or consumer repository differs')
+          # Test this exact consumer without altering the clean producer or its
+          # contract, fixture, interoperability, and tokenizer requirements.
+          policy['consumerRevision'] = identity['consumer']['revision']
+          Path(os.environ['SEMANTIC_V8_NATIVE_POLICY']).write_text(json.dumps(policy, indent=2) + '\n')
+          identity['policy'] = policy
+          (Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-identities.json').write_text(json.dumps(identity, indent=2) + '\n')
+          print(json.dumps(identity))
+          PY
+      - name: Emit canonical formatting without changing the checkout
+        working-directory: megatoken
+        shell: bash
+        run: |
+          python -m pip install ruff
+          python - <<'PY'
+          import json,subprocess,sys
+          from pathlib import Path
+          paths=["src/megatoken/semantic_request_bridge_v8.py","scripts/serve_semantic_v8.py","tests/test_semantic_request_bridge_v8.py","tests/test_semantic_model_v8.py","tests/test_serve_semantic_v8.py","tests/fixtures/serve_semantic_v8_bridge_fixture.py"]
+          for name in paths:
+              path=Path(name)
+              original=path.read_text()
+              fixed=subprocess.run([sys.executable,'-m','ruff','check','--fix-only','--stdin-filename',name,'-'],input=original,text=True,capture_output=True,check=False)
+              candidate=fixed.stdout if fixed.stdout else original
+              formatted=subprocess.run([sys.executable,'-m','ruff','format','--stdin-filename',name,'-'],input=candidate,text=True,capture_output=True,check=True).stdout
+              if formatted!=original:
+                  print('FORMATTED_SOURCE_JSON '+json.dumps({'path':name,'content':formatted}))
+          PY
+          python -m ruff check src/megatoken/semantic_request_bridge_v8.py scripts/serve_semantic_v8.py tests/test_semantic_request_bridge_v8.py tests/test_semantic_model_v8.py tests/test_serve_semantic_v8.py tests/fixtures/serve_semantic_v8_bridge_fixture.py
+          python -m ruff format --check src/megatoken/semantic_request_bridge_v8.py scripts/serve_semantic_v8.py tests/test_semantic_request_bridge_v8.py tests/test_semantic_model_v8.py tests/test_serve_semantic_v8.py tests/fixtures/serve_semantic_v8_bridge_fixture.py
+          git diff --exit-code --
+      - name: Exercise actual adapter poststate, JSONL restarts and immutable native requests
+        if: ${{ !cancelled() }}
+        working-directory: megatoken
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m pytest -q tests/test_semantic_request_journal_v8.py tests/test_semantic_request_bridge_v8.py tests/test_semantic_model_v8.py tests/test_serve_semantic_v8.py --junitxml="$RUNNER_TEMP/native-commit-readback.xml" 2>&1 | tee "$RUNNER_TEMP/native-commit-readback.log"
+          python - <<'PY'
+          import os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'native-commit-readback.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('Every native commit readback and durable-request control must execute and pass')
+          print(f'{len(cases)} native commit readback and durable-request controls passed with zero skips')
+          PY
+      - name: Exercise branded lock inheritance and unchanged ordinary paired transport
+        if: ${{ !cancelled() }}
+        working-directory: tracing-js-self
+        run: |
+          node --test --test-concurrency=1 --test-reporter=junit test/selected-orchestration-execution-lock.test.js test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js test/semantic-selected-orchestration-v8.test.js test/semantic-selected-orchestration-checkpoint-v8.test.js test/semantic-native-orchestration-recovery-v8.test.js test/semantic-native-module-namespace-state-v8.test.js test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js test/semantic-source-session-v8.test.js test/semantic-region-support-cohort.test.js test/semantic-qualification-population-v8.test.js test/qualify-support-lifecycle.test.js 2>&1 | tee "$RUNNER_TEMP/commit-readback-transport.xml"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'commit-readback-transport.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure','error','skipped')):
+              raise ValueError('All paired lock and transport controls must run and pass')
+          print(f'{len(cases)} paired execution-lock and transport controls passed with zero skips')
+          PY
+      - name: Verify both candidate checkouts remained exact
+        if: ${{ !cancelled() }}
+        run: |
+          test -z "$(git -C megatoken status --porcelain --untracked-files=all)"
+          test -z "$(git -C tracing-js-self status --porcelain --untracked-files=all)"
+          git -C megatoken rev-parse HEAD
+          git -C tracing-js-self rev-parse HEAD
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: native-commit-readback-controls
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/native-commit-readback.xml
+            ${{ runner.temp }}/native-commit-readback.log
+            ${{ runner.temp }}/semantic-v8-identities.json
+            ${{ runner.temp }}/commit-readback-transport.xml

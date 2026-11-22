@@ -12,6 +12,13 @@ const ID=/^[a-z][a-z0-9:_-]{0,255}$/;
 const fail=message=>{throw new TypeError('Selected orchestration execution lock: '+message);};
 const digest=value=>createHash('sha256').update(stableAlgorithmJSON(value),'utf8').digest('hex');
 const ownUid=()=>typeof process.getuid==='function'?process.getuid():null;
+const liveExecutionLeases=new WeakSet();
+
+export function assertDurableSelectedOrchestrationExecutionLease(lease){
+  if(!liveExecutionLeases.has(lease))fail('execution lease was not acquired by this lock implementation');
+  lease.assertHeld();
+  return lease;
+}
 
 async function requirePrivateDirectory(path){
   let info;
@@ -109,8 +116,9 @@ export class DurableSelectedOrchestrationExecutionLock {
       sessionId:this.#sessionId,streamId:this.#streamId,lockPath:this.#lockPath,
       get fileDescriptor(){if(released||handle.fd<0)fail('execution lock lease is released');return handle.fd;},
       assertHeld(){if(released||handle.fd<0)fail('execution lock lease is released');return true;},
-      async release(){if(released)return;released=true;await handle.close();}
+      async release(){if(released)return;released=true;liveExecutionLeases.delete(lease);await handle.close();}
     });
+    liveExecutionLeases.add(lease);
     return lease;
   }
 }

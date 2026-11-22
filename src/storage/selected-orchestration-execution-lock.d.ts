@@ -29,3 +29,8 @@ export declare class DurableSelectedOrchestrationExecutionLock {
   readonly lockPath: string;
   acquire(): Promise<SelectedOrchestrationExecutionLease>;
 }
+
+/** Accept only a live lease issued by DurableSelectedOrchestrationExecutionLock. */
+export declare function assertDurableSelectedOrchestrationExecutionLease(
+  lease: SelectedOrchestrationExecutionLease
+): SelectedOrchestrationExecutionLease;
