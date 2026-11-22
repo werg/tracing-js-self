@@ -18,6 +18,23 @@ must name executable evidence; historical receipts retain their original pins.
 
 ## Source-qualified repeated calls and full production support inventory — 22 November 2026
 
+Command-level follow-up found that recursively freezing the support inventory
+also froze callback fixture values before graph encoding. The support-only
+worker boundary now materializes the authored values; generic nonextensible
+guest-value refusal is unchanged. A full64 value/encode/JSON/decode control
+preserves every recipe, the cohort digest and48/12/4 split. Full actual collection
+and production-supply evidence remain separate and pending at this correction.
+
+New complete hosted evidence is retained in
+`docs/evidence/v8-hosted-recovery3d-source073-2026-11-22/`. Exact producer3d/native9a
+passes759 native controls and45 producer controls, with zero skips, including
+the actual Python shared-runtime composite recovery across fresh processes.
+Its gallery11/11 and installed665/665 plus66/66 gates pass. The independent
+original665 source/native/token/packing job also passes at exact073/native108.
+These pins do not qualify newer support or durable-history work. Native9a's
+general Python3.11/3.12 jobs each pass3,688 tests with83 declared skips and20
+warnings; complete logs are retained separately in the native repository.
+
 The direct public V8 source verifier can now compose 2–16 independently checked
 fresh root invocations of one immutable program. Original selected bytes and
 source-certified identities are retained; causal contexts, complete observation

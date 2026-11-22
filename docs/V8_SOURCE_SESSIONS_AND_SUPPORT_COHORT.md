@@ -87,6 +87,14 @@ exact predeclared source ID. `--cases` can select a bounded run while retaining
 all other declared rows as untested. `--inputs first` is refused because the
 repeated cases are part of the fixed declaration.
 
+The inventory is immutable metadata. At the support-only worker boundary, the
+command materializes fresh copies of the authored fixture values before graph
+encoding. This preserves the original mutable recipe semantics while leaving
+the frozen cohort and registry digests unchanged. Generic generation inputs
+still reject genuinely nonextensible guest objects. The first command probe at
+producer856 exposed this distinction before any source case executed; its
+failure is retained rather than counted as source qualification.
+
 ```sh
 node tools/qualify-semantic-v8.mjs \
   --population se-support --inputs all --workers 2 \

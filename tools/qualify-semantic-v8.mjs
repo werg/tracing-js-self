@@ -54,7 +54,11 @@ const settings=prepareOnly?null:loadNativeV8Settings({megatoken:flags.get('--meg
   python:flags.get('--python')??'python3',policyFile:flags.get('--native-policy')??join(root,'contracts/semantic-native-policy-v8.json'),
   timeoutMs:nativeTimeoutMs,temporaryDirectory:join(output,'native')});
 const nativeConsumer=settings?createNativeV8Consumer(settings):null;
-const taskFor=fixture=>({kind:fixture.modules?'module':'source',traceVersion:8,fixture,producerRevision});
+// The fixed support cohort freezes its complete pre-execution inventory.
+// Materialize only those fixture values for the graph boundary; generic
+// generation tasks retain the strict frozen/accessor refusal behavior.
+const taskFor=fixture=>({kind:fixture.modules?'module':'source',traceVersion:8,
+  fixture:supportCohort?structuredClone(fixture):fixture,producerRevision});
 const inventory={schema:'semantic-v8-qualification-population/1',producerRevision,population,inputs,
   declared:fixtures.length,selectedCaseIds,
   ...(supportCohort?{supportCohortDigest:supportCohort.digest,

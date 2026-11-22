@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {semanticRecipeFamilies,SEMANTIC_TASK_TEMPLATES} from '../src/training/recipe-fixtures.js';
 import {buildRegionFamilyRegistry,verifyRegionFamilyRegistry,REGION_DATASET_SPLITS} from '../src/semantic/family-registry-v8.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
+import {canonicalFixturePlan} from '../src/training/fixture-broker.js';
+import {decodeOwnedGraph,encodeNativeGraph} from '../src/host/graph-codec.js';
+import {decodeGenerationTask,encodeGenerationTask} from '../src/corpus/generation-process.mjs';
 import {buildSemanticRegionSupportCohortV8,SEMANTIC_REGION_SUPPORT_COHORT_SEED,
   SEMANTIC_REGION_SUPPORT_VARIANTS} from '../fixtures/semantic-regions/support-cohort.js';
 
@@ -103,4 +106,56 @@ test('support registry rejects changed split, membership and source-derived core
     ancestors:fixture.ancestorIds,source:fixture.source,entry:fixture.entry}));
   assert.deepEqual(buildRegionFamilyRegistry(duplicatedInput,{seed:17}),cohort.registry,
     'the complete fixed inventory deterministically reconstructs the frozen registry');
+});
+
+test('support-only mutable materialization round-trips all 64 authored fixtures',()=>{
+  const cohort=buildSemanticRegionSupportCohortV8(),recipes=semanticRecipeFamilies(),
+    recipeByTemplate=new Map(recipes.map(family=>[family.template,family]));
+  const authoredFixture=fixture=>{
+    const family=recipeByTemplate.get(fixture.supportCohort.template);
+    switch(fixture.supportCohort.variant){
+      case 'pure':return structuredClone(family.pure);
+      case 'callbacks-recovery':return structuredClone(family.callbacks);
+      case 'repeated-2calls':{
+        const first=family.repeated.cases[0];
+        return {...structuredClone(first),source:first.source,entry:first.entry,
+          ancestorIds:structuredClone(first.ancestorIds),sessionCases:structuredClone(family.repeated.cases)};
+      }
+      case 'child-teacher':return {...structuredClone(family.pure),orchestrationTeacher:true};
+      default:assert.fail('unknown support variant');
+    }
+  };
+  const expectedDecoded=fixture=>{
+    const {args,cases,sessionCases,...data}=fixture;
+    return {...data,args:decodeOwnedGraph(JSON.stringify(encodeNativeGraph(args??[]))),
+      ...(data.fixture?{fixture:canonicalFixturePlan(data.fixture)}:{}),
+      ...(cases?{cases:cases.map(expectedDecoded)}:{}),
+      ...(sessionCases?{sessionCases:sessionCases.map(expectedDecoded)}:{})};
+  };
+
+  for(const original of cohort.fixtures){
+    const expected=authoredFixture(original),actual=structuredClone(original);
+    delete expected.id;
+    delete actual.id;
+    delete actual.supportCohort;
+    assert.deepEqual(actual,expected,`${original.id}: cohort inventory retains the original recipe values`);
+
+    const task={kind:'source',traceVersion:8,producerRevision:'fixture-test',fixture:structuredClone(original)};
+    const decoded=decodeGenerationTask(JSON.parse(JSON.stringify(encodeGenerationTask(task))));
+    assert.deepEqual(decoded.fixture,expectedDecoded(structuredClone(original)),
+      `${original.id}: mutable support-boundary materialization survives canonical task encoding`);
+  }
+  assert.equal(cohort.fixtures.length,64);
+  assert.equal(cohort.registry.sources.length,64);
+  assert.deepEqual(cohort.sourceCounts,{train:48,validation:12,test:4});
+  assert.equal(cohort.digest,buildSemanticRegionSupportCohortV8().digest,
+    'encoding operates on worker copies and leaves the frozen inventory identity unchanged');
+});
+
+test('generic generation encoding still refuses genuinely frozen guest values',()=>{
+  const frozenArgs=Object.freeze([Object.freeze({input:1})]);
+  const fixture=Object.freeze({id:'frozen-guest',source:'function run(x){return x;}',args:frozenArgs,
+    fixture:Object.freeze({calls:Object.freeze([])})});
+  assert.throws(()=>encodeGenerationTask({kind:'source',traceVersion:8,fixture}),
+    /nonextensible object/);
 });
