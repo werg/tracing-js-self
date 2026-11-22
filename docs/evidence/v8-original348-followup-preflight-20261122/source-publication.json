@@ -1,0 +1,14 @@
+{
+  "nativeTrees": {
+    "edce470bcc69df742464cc86d7cd1d8695204e9a": "eb0d09931c2c944bf24850408afa862665540846",
+    "99f018e045e760d802ff65f69bac1435985068aa": "eb0d09931c2c944bf24850408afa862665540846"
+  },
+  "trainingNative": "1a69d9da3254b7568c831d12866a629c206cf4fe",
+  "inferenceNative": "99f018e045e760d802ff65f69bac1435985068aa",
+  "driverCommit": "8f288007",
+  "driverControlCases": 26,
+  "driverControlFailures": 0,
+  "driverControlSkips": 0,
+  "actualModelCallsPerformed": 0,
+  "optimizerUpdatesPerformed": 0
+}

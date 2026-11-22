@@ -1,0 +1,16 @@
+{
+  "runtimeCandidate": "edce470bcc69df742464cc86d7cd1d8695204e9a",
+  "runtimeParent": "1a69d9da3254b7568c831d12866a629c206cf4fe",
+  "status": "loaded",
+  "modelSha256": "88c4b86fdfcdc0032a3813b59317fdc0a240dbf434b06e63362b495fccf3940e",
+  "originalTrainingPolicy": {
+    "consumerRevision": "1a69d9da3254b7568c831d12866a629c206cf4fe",
+    "producerRevision": "9cf091e6ccc5add960ef0897576d0c391b199a65",
+    "registryDigest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+    "schema": "semantic-training-policy/8"
+  },
+  "modelVersion": 348,
+  "oldTrainingLineageModified": false,
+  "modelCallsPerformed": 0,
+  "optimizerUpdatesPerformed": 0
+}

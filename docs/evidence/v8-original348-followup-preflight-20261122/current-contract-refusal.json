@@ -1,0 +1,14 @@
+{
+  "runtimeCandidate": "cdd01ac0-plus-6d5ea691",
+  "status": "refused",
+  "message": "V8 training lineage identities or integrity differ",
+  "currentContractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+  "originalTrainingContractDigest": "a952385535b9b5e19d737206286f6f26c149f7301c51b4b106fe3b1cae5ab55a",
+  "currentFixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+  "originalTrainingFixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+  "currentInteropDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+  "originalTrainingInteropDigest": "f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661",
+  "oldTrainingLineageModified": false,
+  "modelCallsPerformed": 0,
+  "optimizerUpdatesPerformed": 0
+}
