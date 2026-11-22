@@ -409,3 +409,54 @@ test('an outcome published during recovery inspection remains unknown in that re
   assert.deepEqual(next.actions[0].outcome.record,outcome(selected,23));
   assert(claim);
 });
+
+
+test('active service recovery listing is read-only, owner-bound and leaves missing outcomes unknown',async t=>{
+  const path=await directory(t),journal=new Journal(options(path)),
+    staleOwner=await journal.advanceOwner({ownerId:'old'}),
+    owner=await journal.advanceOwner({previous:staleOwner,ownerId:'current'}),
+    selected=action(context('active-unknown',29));
+  await journal.claim(selected,{owner});
+  await assert.rejects(journal.inspectActiveRecovery({owner:staleOwner}),
+    /exact current owner and no terminal fence/);
+  const listing=await journal.inspectActiveRecovery({owner});
+  assert.equal(listing.schema,'semantic-service-active-recovery-listing/8');
+  assert.deepEqual(listing.owner.receipt,owner);
+  assert.equal(listing.terminal,null);
+  assert.equal(listing.allOutcomesKnown,false);
+  assert.deepEqual(listing.actions[0].action,selected);
+  assert.deepEqual(listing.actions[0].outcome,{schema:'semantic-service-outcome-readback/8',status:'unknown'});
+});
+
+test('active recovery listing refuses admission, owner or terminal changes during outcome reads',async t=>{
+  class RacedJournal extends Journal{
+    syncs=0;race=null;
+    async _synchronize(){
+      await super._synchronize();
+      if(this.race&&++this.syncs===2){
+        const mutate=this.race;this.race=null;await mutate();
+      }
+    }
+  }
+  for(const mutation of ['admission','owner','terminal']){
+    const path=await directory(t),journal=new RacedJournal(options(path)),
+      owner=await journal.advanceOwner({ownerId:'owner'});
+    if(mutation==='admission')await journal.claim(action(context('before-race',31)),{owner});
+    const reason='active listing race';
+    let terminal=null;
+    journal.syncs=0;
+    journal.race=async()=>{
+      if(mutation==='admission')await journal.claim(action(context('during-race',37)),{owner});
+      if(mutation==='owner')await journal.advanceOwner({previous:owner,ownerId:'successor'});
+      if(mutation==='terminal')terminal=await journal.terminate({owner,reason});
+    };
+    await assert.rejects(journal.inspectActiveRecovery({owner}),
+      /admission head, owner or action set changed during active recovery inspection/,
+      mutation+' must be detected before a snapshot can be returned');
+    if(mutation==='terminal'){
+      assert(terminal,'the pre-read active owner had no terminal receipt');
+      assert.equal((await journal.inspect()).terminal.reason,reason,
+        'the race created an independently retained terminal fence');
+    }
+  }
+});

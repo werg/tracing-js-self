@@ -337,3 +337,10 @@ and no running or unsettled host work. Failed host actions, cancellation of an
 unsettled child, unknown acknowledgements, dynamic descendants, successor-owner
 handoff, takeover and distributed ownership remain separate acceptance work. A
 two-process deterministic test is not a learned-program result.
+
+
+The fault-injection gate distinguishes retained bytes from a returned fence acknowledgement.
+A directory synchronization failure can occur after the terminal transition file is visible.
+The driver still refuses every native restore until the full service-fence set is independently
+verified. A fresh journal reader synchronizes and validates those exact bytes; this establishes
+current durable readback, without inventing an acknowledgement from the failed writer.

@@ -228,6 +228,14 @@ the admission chain before returning and refuses if its head, owner, terminal
 fence, or action set changed during inspection. A caller must refuse reconciliation
 while any action remains unknown.
 
+`inspectActiveRecovery({owner})` provides the same action/outcome readback while
+the exact owner is still current and no terminal fence exists. It rereads the
+head, owner, terminal state and full action set after outcome reads and refuses if
+any changed. This is a read-only snapshot; it does not reserve the owner, fence
+concurrent workers, authorize a child replay, or make an unknown outcome retryable.
+The embedding must retain sole-owner sequencing around any action it takes after
+reading the snapshot.
+
 ### Required supervisor and selected-history ordering
 
 The service admission log and `DurableSelectedHistoryJournal` are separate

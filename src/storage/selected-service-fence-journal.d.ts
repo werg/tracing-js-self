@@ -42,6 +42,17 @@ export interface SelectedServiceRecoveryListing {
   allOutcomesKnown: boolean;
   digest: string;
 }
+export interface SelectedServiceActiveRecoveryListing {
+  schema: 'semantic-service-active-recovery-listing/8';
+  serviceId: string;
+  sessionId: string;
+  head: SelectedServiceFenceReceipt;
+  owner: {generation: number; ownerId: string; receipt: SelectedServiceFenceReceipt};
+  terminal: null;
+  actions: SelectedServiceRecoveryAdmission[];
+  allOutcomesKnown: boolean;
+  digest: string;
+}
 export interface DurableFencedSelectedServiceJournalOptions {
   /** One trusted service-owned POSIX namespace shared by all workers. */
   directory: string;
@@ -73,7 +84,10 @@ export declare class DurableFencedSelectedServiceJournal {
     receipt: SelectedServiceJournalReceipt): Promise<SelectedServiceJournalReceipt>;
   /** Replays every slot and synchronizes the directory before returning retained authority. */
   inspect(): Promise<SelectedServiceFenceState>;
-  /** Reads each admitted action's immutable outcome; missing outcomes remain unknown. */
+  /** Reads terminal admissions and immutable outcomes; missing outcomes remain unknown. */
   inspectRecovery(options: {owner: SelectedServiceFenceReceipt; terminal: SelectedServiceFenceReceipt;
     reason: string}): Promise<SelectedServiceRecoveryListing>;
+  /** Reads active admissions and outcomes without authorizing child resumption. */
+  inspectActiveRecovery(options: {owner: SelectedServiceFenceReceipt}):
+    Promise<SelectedServiceActiveRecoveryListing>;
 }

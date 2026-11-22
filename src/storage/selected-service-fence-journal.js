@@ -284,16 +284,60 @@ export class DurableFencedSelectedServiceJournal {
       }
       actions.push({...row,actionDigest:selectedServiceActionDigest(row.action),outcome:readback});
     }
+    if(source.head)await this._synchronize();
     const after=await this.#load();
     if(after.head)await this._synchronize();
+    const stable=await this.#load();
+    const actionRows=state=>[...state.actions].map(([key,row])=>({key,action:row.action,
+      owner:row.owner,fenceClaimReceipt:row.receipt})).sort((left,right)=>
+      left.key<right.key?-1:left.key>right.key?1:0);
     const stableAuthority=after.head&&eq(after.head,source.head)&&eq(after.owner,source.owner)&&
-      eq(after.terminal,source.terminal)&&eq([...after.actions].map(([key,row])=>({key,action:row.action,
-        owner:row.owner,fenceClaimReceipt:row.receipt})).sort((left,right)=>
-        left.key<right.key?-1:left.key>right.key?1:0),source.actions);
+      eq(after.terminal,source.terminal)&&eq(actionRows(after),source.actions)&&
+      eq(stable.head,source.head)&&eq(stable.owner,source.owner)&&eq(stable.terminal,source.terminal)&&
+      eq(actionRows(stable),source.actions);
     demand(stableAuthority,'service admission head or action set changed during recovery inspection');
     const unsigned={schema:'semantic-service-recovery-listing/8',serviceId:this.serviceId,
       sessionId:this.sessionId,head:source.head,owner:source.owner,terminal:source.terminal,
       actions,allOutcomesKnown:actions.every(row=>row.outcome.status==='observed')};
+    return {...unsigned,digest:digest(Buffer.from(stableAlgorithmJSON(unsigned)))};
+  }
+  async inspectActiveRecovery({owner}={}){
+    validateReceipt(owner,this);
+    await this.#prepare();
+    const before=await this.#load();
+    if(before.head)await this._synchronize();
+    demand(before.owner&&eq(before.owner.receipt,owner)&&before.terminal===null,
+      'active recovery listing requires the exact current owner and no terminal fence');
+    const actionRows=state=>[...state.actions].map(([key,row])=>({key,action:copy(row.action),
+      owner:copy(row.owner),fenceClaimReceipt:copy(row.receipt)})).sort((left,right)=>
+      left.key<right.key?-1:left.key>right.key?1:0);
+    const source={head:copy(before.head),owner:copy(before.owner),terminal:before.terminal,
+      actions:actionRows(before)},actions=[];
+    for(const row of source.actions){
+      let readback;
+      try{
+        const {bytes,record}=await this.#outcomes.readBytes(row.key,'outcome');
+        validateSelectedServiceOutcome(record,row.action);
+        await syncDirectory(this.#outcomes.directory);
+        readback={schema:'semantic-service-outcome-readback/8',status:'observed',
+          digest:digest(bytes),bytes:bytes.length,record:copy(record)};
+      }catch(error){
+        if(error.code!=='ENOENT')throw error;
+        readback={schema:'semantic-service-outcome-readback/8',status:'unknown'};
+      }
+      actions.push({...row,actionDigest:selectedServiceActionDigest(row.action),outcome:readback});
+    }
+    if(source.head)await this._synchronize();
+    const after=await this.#load();
+    if(after.head)await this._synchronize();
+    const stable=await this.#load();
+    const same=state=>eq(state.head,source.head)&&eq(state.owner,source.owner)&&
+      state.terminal===null&&eq(actionRows(state),source.actions);
+    demand(same(after)&&same(stable),
+      'service admission head, owner or action set changed during active recovery inspection');
+    const unsigned={schema:'semantic-service-active-recovery-listing/8',serviceId:this.serviceId,
+      sessionId:this.sessionId,head:source.head,owner:source.owner,terminal:null,actions,
+      allOutcomesKnown:actions.every(row=>row.outcome.status==='observed')};
     return {...unsigned,digest:digest(Buffer.from(stableAlgorithmJSON(unsigned)))};
   }
   async inspect(){
