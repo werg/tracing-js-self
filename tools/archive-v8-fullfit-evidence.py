@@ -22,6 +22,7 @@ from pathlib import Path, PurePosixPath
 REPOSITORY = "werg/tracing-js-self"
 RUN_ID = 45025994295
 ARTIFACT_ID = 14758849422
+JOB_ID = 137219026731
 PRODUCER = "b4157952ed0fc28c5ae1eb8893cd9035ce25bbdb"
 NATIVE = "2f3e6cf04aad60473e8ecc67e846e81e5b9dec83"
 READER = "622c37c23f93c4cc58ff226eb4805c766fee3166"
@@ -37,7 +38,8 @@ TITLE = "Diagnostic V8 training evidence — run 45025994295 (unpublished)"
 NOTES = f"""Evidence archive for the completed controlled CPU training run {RUN_ID}.
 
 This draft preserves the exact original GitHub Actions ZIP and its independently
-verified inventory, source map and read-only audit. It is unpublished and is not
+verified inventory, source map, read-only audit and original complete job log.
+It is unpublished and is not
 a production model release or learned-quality qualification.
 
 Original producer: {PRODUCER}
@@ -161,10 +163,18 @@ def gh_json(endpoint: str, *, data: dict | None = None, pages: bool = False):
     return json.loads(result.stdout)
 
 
-def download(endpoint: str, path: Path) -> None:
+def download(endpoint: str, path: Path, *, release_asset: bool = False) -> None:
     with path.open("xb") as output:
         subprocess.run(
-            ["gh", "api", endpoint, "-H", "Accept: application/octet-stream"],
+            [
+                "gh",
+                "api",
+                endpoint,
+                "-H",
+                "Accept: application/octet-stream"
+                if release_asset
+                else "Accept: application/json",
+            ],
             check=True,
             stdout=output,
         )
@@ -229,11 +239,19 @@ def preserve_draft(root: Path, work: Path) -> dict:
     receipt = verify_archive(original, inventory)
     audit = work / "fullfit-45025994295-independent-audit.tar.gz"
     make_audit_archive(root, audit)
+    job = gh_json(f"{base}/actions/jobs/{JOB_ID}")
+    require(
+        job["run_id"] == RUN_ID and job["conclusion"] == "success",
+        "Original job identity differs",
+    )
+    job_log = work / f"complete-job-{JOB_ID}.txt"
+    download(f"{base}/actions/jobs/{JOB_ID}/logs", job_log)
+    require(job_log.stat().st_size > 0, "Original job log is empty")
     sums = work / "SHA256SUMS"
     sums.write_text(
-        "".join(f"{sha256(path)}  {path.name}\n" for path in (original, audit))
+        "".join(f"{sha256(path)}  {path.name}\n" for path in (original, audit, job_log))
     )
-    assets = (original, audit, sums)
+    assets = (original, audit, job_log, sums)
     releases = [
         release
         for page in gh_json(base + "/releases?per_page=100", pages=True)
@@ -291,7 +309,7 @@ def preserve_draft(root: Path, work: Path) -> dict:
             asset["digest"] == "sha256:" + sha256(path), "Uploaded asset digest differs"
         )
         readback = work / (path.name + ".readback")
-        download(f"{base}/releases/assets/{asset['id']}", readback)
+        download(f"{base}/releases/assets/{asset['id']}", readback, release_asset=True)
         require(
             sha256(readback) == sha256(path)
             and readback.stat().st_size == path.stat().st_size,
