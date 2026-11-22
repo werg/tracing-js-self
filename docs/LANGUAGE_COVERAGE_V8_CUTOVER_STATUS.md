@@ -5,15 +5,19 @@ This is the durable work ledger for the two design plans supplied on 20 November
 coverage, and qualified learned execution. None is complete yet. Checked items
 must name executable evidence; historical receipts retain their original pins.
 
-## Current checkpoint: composed source admission, recovery and training audit
+## Current checkpoint: production routes, causal recovery and training evidence
 
 Updated 22 November 2026. **0/17 complete acceptance packages are closed.** Both
 PRs remain drafts and the V6 production default is unchanged. The current public
 contract is `a952385535b9b5e19d737206286f6f26c149f7301c51b4b106fe3b1cae5ab55a`;
-the six existing interoperability payloads remain unchanged. This section
+the six interoperability example payloads remain unchanged. This section
 supersedes pending/isolation statements in the historical checkpoints below.
+The previous detailed PR narrative is preserved in
+[the pre-unification snapshot](progress/PR47_NARRATIVE_2026_11_22_BEFORE_CAUSAL_BOOTSTRAP.md).
 
-- **Known join/progress recovery is integrated.** The exact original pair
+### Recovery: qualified predecessors, corrected composition still pending
+
+- **Known join/progress recovery is integrated.** The original pair
   `170baa28/0066888` passed 62 individual hosted controls with no skips. The
   expanded module-contract composition `2896ccac/10d1f5f` independently passed
   the same 62-case gate in
@@ -24,71 +28,153 @@ supersedes pending/isolation statements in the historical checkpoints below.
   independent acknowledgement. Actual lost replies and repeated process loss
   are covered; unknown outcomes do not authorize retry.
   [Exact composed evidence](evidence/v8-known-commit-composition-2026-11-22/README.md).
-- **Creation/bootstrap recovery remains isolated and incomplete.** Reserving a
-  child and initializing it are separate native mutations. Native source
-  `97cfd78c` has 54 exact-tree local journal/recovery controls with zero skips;
-  producer transport `a415e188` has five new actual-process controls plus the
-  earlier overlapping cohorts. The complete application history between these
-  mutations and its hosted crash-window qualification are still in progress.
-  Neither native completion nor a transport receipt alone grants runnable
-  application recovery. Later mutations must match the exact continuation;
-  raw initialization cannot bypass the durable path when recovery is enabled.
+- **Both historical child-bootstrap paths completed their frozen hosted gates.**
+  `95bcaf60/97cfd78c` passed **54 native and 146 producer leaf cases**, zero
+  failures/errors/skips, in
+  [run 45025181568](https://github.com/werg/tracing-js-self/actions/runs/45025181568).
+  The separately developed `86b1ecc6/8cdec19d` path passed **72 producer leaf
+  cases**, zero failures/errors/skips, in
+  [run 45025448089](https://github.com/werg/tracing-js-self/actions/runs/45025448089);
+  its source and evidence are integrated. These populations overlap and are
+  not additive. Their successful historical gates do not qualify subsequent
+  corrections or the unified protocol.
+- **Causal unification is not promoted.** Reserving a child and initializing it
+  are separate native mutations. The unified candidate requires the exact
+  durable create predecessor, complete immutable bootstrap request/reply and
+  current native state before a recovered application history can run. The
+  earlier native implementation also needed full result/RNG binding and a
+  direct fenced-duplicate check. Producer storage controls establish that once
+  durable-intent publication is attempted, a lost append acknowledgement or
+  failed independent readback fences that process; later cancellation must not
+  overtake an unresolved request. Actual two-child continuation, later child
+  loss and repeated loss extend the history population. Those proofs retain
+  their exact source pins and narrower runtime claims.
+- **A real raw-bootstrap spelling bypass blocks the first unified candidate.**
+  The service normalizes hyphens to underscores, but the durability guard
+  checked only two of the four accepted child-bootstrap spellings. On frozen
+  `b5042282`, both mixed spellings dispatched raw bootstrap after durable create
+  and changed native state without child-bootstrap intent. Candidate producer
+  `32efcdda` and
+  [run 45029326909](https://github.com/werg/tracing-js-self/actions/runs/45029326909)
+  are therefore explicitly superseded for promotion, irrespective of that
+  run's eventual outcome. A corrected native tree is being composed from
+  current main, preserving router evidence and all current terminal-close
+  controls. Its measured native population and a new exact paired hosted gate
+  are mandatory; the producer gate requires 170 individual leaf cases with no
+  skips. Local focused refusal of all four spellings is not the final gate.
+- **Terminal close has a separate native foundation and pending history gate.**
+  Native main includes terminal-only durable close/recovery and nine native
+  close controls. A completed/cancelled coordinator and every owned track must
+  be terminal, no selection may remain pending anywhere in the adapter, and
+  sibling/archived state, attempts, settings and RNG must match exactly. A
+  recovered closed result is nonresumable and authorizes no host dispatch.
+  Producer `5fc8e9e6` / native `1507ac24` is separately testing actual close
+  history and transport in
+  [run 45028606167](https://github.com/werg/tracing-js-self/actions/runs/45028606167),
+  with required populations of 55 native and 95 producer leaves. Completion,
+  cancellation, lost/altered replies, repeated loss, unknown outcome, history
+  acknowledgement races and unresolved intents retain distinct controls.
+  [Local observations, corrections and limits](evidence/v8-terminal-close-local-2026-11-22/README.md).
+  Its history integration with causal child bootstrap and service-backed
+  same-owner recovery remain subsequent work.
+
+Local native checks use Python 3.12.14, Torch 2.14.1+cpu and pytest 9.2.0; pytest
+9.2 is outside the repository's declared `>=8.3,<9` range. The local container
+cannot supply the genuine boot/time-namespace authority required by complete
+history recovery. Hosted gates must exercise those controls with zero skips;
+no mocked clock or previous passing run supplies that authority.
+
+### Source admission and measured training work
+
 - **The source-owned module ledger and opt-in source/data bridge are integrated.**
   The complete ledger composition passed 225 native cases plus 119 pytest
-  subtests and, separately, 208 producer leaf cases, all with zero skips. The
-  16 affected module/training controls also passed after import cleanup; these
-  are overlapping checks, not additional state cuts. The neutral-contract source/data pair
-  `7663c11/3fa9272` separately passed 45 native controls, nine source controls
-  and one actual original-module packing test with zero skips in
-  [run 45020274216](https://github.com/werg/tracing-js-self/actions/runs/45020274216).
-  Its single validation family has 708 selected targets, 898 windows, 22,974
-  scored positions and 7,074,274 unscored observation tokens. This is not a
-  production cost qualification; the roughly 308:1 observation/scored ratio
-  and near-cap artifact remain material limits. Admission requires explicit
-  experimental opt-in. Other source-only graphs and metadata-limit refusals
-  keep their narrower claims.
-  [Full source/data evidence](evidence/v8-modulesource7663-2026-11-22/README.md).
-- **Actual training positions are now audited.** The frozen composition
-  `9cf091e6/1a69d9d` checks the decoder's actual labels, gathered rows and masks
-  against an independent reconstruction of immutable prepared data. A complete
-  controlled fit and a separate fresh-process resume pass; stage transitions
-  archive prior exposure without crediting it to a new objective. Local
-  integration resolves 192 distinct native cases and 31 required subtests across
-  two retained runs, plus 31 producer leaf cases with zero skips. The first
-  native run's three missing-environment skips are retained and explicitly
-  resolved by the 45-case live-admission rerun.
-  [Exact composition and runtime limits](evidence/v8-training-source-composition-2026-11-22/README.md).
-- **The fresh full support campaign is running.**
+  subtests and, separately, 208 producer leaf cases, all with zero skips. These
+  populations are distinct from source/packing checks. The final composed pair
+  `9cf091e6/1a69d9d` passed 45 native controls, nine source controls and one actual
+  original-module packing test with zero skips in
+  [run 45023157562](https://github.com/werg/tracing-js-self/actions/runs/45023157562).
+  One validation family contains 708 selected targets, 898 windows, 22,974
+  scored positions and 7,074,274 unscored observation tokens. All 11,730
+  observation records have zero scored positions. An independent retained
+  reconstruction checks the original token masks, target ownership and window
+  dependencies without another optimizer update. The roughly 308:1
+  observation/scored ratio remains a cost limit; admission is experimental
+  opt-in and does not establish learned success.
+  [Exact composed evidence and retained source receipts](evidence/v8-composed-module-packing-2026-11-22/README.md).
+- **Actual training positions are audited.** The frozen composition
+  `9cf091e6/1a69d9d` compares actual decoder labels, gathered rows and masks with
+  an independent reconstruction of immutable prepared data. A controlled fit
+  and a separate fresh-process resume pass; stage transitions archive prior
+  exposure without crediting it to a new objective. Local integration resolves
+  192 distinct native cases and 31 required subtests across two retained runs,
+  plus 31 producer leaf cases with zero unresolved skips. This is a resolved
+  union, not one 192-case run and not the sum of overlapping reruns.
+  [Composition, exact denominators and runtime limits](evidence/v8-training-source-composition-2026-11-22/README.md).
+- **Two frozen full-support campaigns remain in progress.**
   [Run 45023684906](https://github.com/werg/tracing-js-self/actions/runs/45023684906)
-  freezes producer `9cf091e6` and native `1a69d9d`, requalifies all 64 original
-  sources and the 48/12/4 split, and requires a new 348-update fit to match both
-  the target inventory and independently reconstructed scored positions. Its
-  separate two-update lifecycle fit is not part of the 348-update trajectory.
-  Actual full-campaign optimizer/position totals remain unclaimed until the
-  final checkpoint comparisons succeed. Older completed local and hosted
-  348-update fits measured 48 sources, 696 logical targets and 720 physical
-  records; exact positions and masks were unmeasured in those old fits.
-- **Edition membership has a source-bound review path and a real pilot.** The
-  complete frozen catalog still contains 53,616 source files and 102,994
-  execution variants, all unclassified in the original full report. A separately
-  reviewed original multiplication test supplies two strict/sloppy edition
-  variants, with exact harness dependencies and the annual specification bound
-  into the review. Required-for-release remains independent and false. This is
-  a two-variant pilot, not full catalog classification or conformance.
-  [Pilot and 22 controls](evidence/test262-membership-review-2026-11-22/README.md).
-- **The ordinary supported-Node matrix completed.** Node 20, 22 and 24 each
-  ran 2,742 tests: 2,715 passed, 27 recorded skips and no failures. These are
-  three runtime observations of one population, not 8,145 distinct passing
-  tests. [Complete logs and scope](evidence/v8-default-test-entry-2026-11-22/completed-matrix).
+  freezes `9cf091e6/1a69d9d` for exact target and scored-position coverage.
+  [Run 45025994295](https://github.com/werg/tracing-js-self/actions/runs/45025994295)
+  freezes `b4157952/2f3e6cf0` and additionally captures actual router-recorder
+  rows and assignments. Both requalify all 64 original sources and the 48/12/4
+  split before a separate two-update lifecycle fit and a fresh 348-update fit.
+  Final optimizer, position and checkpoint totals remain unclaimed until the
+  final comparisons and retained artifacts succeed. The two fits are not one
+  350-update trajectory. The router-enabled campaign does not independently
+  measure every internal router position.
+- **Router receipt validation is corrected on native main.** Source `19d01124`
+  and retained evidence `c489ff8e` refuse nonempty maps with zero audited
+  updates, assignments below rows, backwards counts, dropped selectors and
+  invalid resume deltas. Twelve original red failures plus six passing controls
+  become 18 passing controls; the broader focused population passes 54 cases
+  without skips (one actual-fit case deliberately deselected there). Read-only
+  audits of four unchanged `2f3e6cf0` checkpoints, two prepared inventories and
+  six update deltas validate existing evidence without new optimization.
+  Reported rows/assignments are scoped to the existing balance recorder;
+  suppressed reconstruction, no-grad paths and later auxiliary work are
+  excluded. Neither this stricter audit nor a checkpoint metadata receipt
+  qualifies the still-running full campaigns.
 
-Hardest remaining priorities are complete creation/bootstrap history recovery,
-the fresh full position-qualified fit, broader async/Promise/module ownership
-and source populations, and the full edition/applicability and production-route
-inventories. General realms/agents, dynamic descendants, unknown remote effects,
-remaining language families, production assets/recipes, held-out learned
-execution, default cutover and rollback gates remain open. Passing a bounded
-fixture, admitting a source, packing a target and actually optimizing its exact
-positions are separate claims; learned success requires further evidence.
+### Production routes and language population
+
+- **The production entry-point inventory is reviewed and integrated.** Frozen
+  producer `2cb668c2` / native `6ef47940` yield **205 canonical registrations**,
+  assigned exactly once to **23 review groups**, with **eight additional
+  accepted V8 wire spellings** attached to their canonical operations. The
+  snapshot records 191 producer and 155 native catalog files, nine producer
+  and two native supplemental inputs, ten raw training stages and shared
+  training defaults. Independently constructing the native CLI confirms all
+  46 command paths and handlers without dispatching any command. Final local
+  controls pass seven pytest cases and 22 unittest subtests, zero skips;
+  earlier red probes and previous populations remain retained. All semantic
+  parity and default-cutover flags are false.
+  [Reviewed route matrix](V6_TO_V8_PRODUCTION_ROUTE_MATRIX.md) and
+  [frozen inventory, dispositions and independent corrections](evidence/v8-production-routes-2026-11-22/README.md).
+  This enumerates registered entry points and retained source/catalog inputs;
+  it does not prove every symbol behind each entry, arbitrary embedding,
+  external deployment configuration or behavior combination. Real remaining
+  migrations include selected natural-language routes, default semantic data,
+  general exported APIs, release packaging, production assets and rollback.
+- **Edition membership has a source-bound pilot.** The complete frozen catalog
+  contains 53,616 source files and 102,994 execution variants, all unclassified
+  in its original full report. A separately reviewed original multiplication
+  test supplies two strict/sloppy edition variants with exact harness and
+  annual-specification evidence. Required-for-release remains independent and
+  false. This is a two-variant pilot, not full classification or conformance.
+  [Pilot and 22 controls](evidence/test262-membership-review-2026-11-22/README.md).
+- **The ordinary supported-Node matrix completed.** Node 20, 22 and 24 each ran
+  2,742 tests: 2,715 passed, 27 recorded skips and no failures. These are three
+  runtime observations of one population, not 8,145 distinct passing tests.
+  [Complete logs and scope](evidence/v8-default-test-entry-2026-11-22/completed-matrix).
+
+Hardest remaining priorities are corrected causal child/history qualification,
+terminal close composition, genuine Promise/thenable resolution jobs and
+broader async/module ownership, completion and independent audit of both full
+training campaigns, and actual production-route migration. General realms and
+agents, dynamic descendants, unknown remote effects, remaining language
+families, full edition/applicability review, production assets/recipes,
+held-out learned execution, default cutover and rollback remain open. A bounded
+fixture, an admitted source, a packed target, actual optimization of its exact
+positions and learned success are separate claims.
 
 ## Branches and baseline
 
