@@ -1,0 +1,23 @@
+{
+  "auditDevelopmentOnly": true,
+  "originalEvidenceChanged": false,
+  "modelCallsPerformed": 0,
+  "optimizerUpdatesPerformed": 0,
+  "corrections": [
+    {
+      "attempt": 1,
+      "issue": "False provenance may be absent on an attempt; aggregate failure envelope retains explicit false. Auditor now treats absent as unvalidated."
+    },
+    {
+      "attempt": 2,
+      "issue": "Ambient container timezone Europe/Berlin differs from original UTC source-admission environment; original source verifier correctly refused replay. Audit now explicitly configures UTC, preserving all identity checks."
+    },
+    {
+      "attempt": 3,
+      "issue": "Auditor initially assumed only initial public rows remained. Original driver legitimately appends an observed cancellation after a validated malformed selection; auditor permits that exact cancellation but no generated record or other host event."
+    }
+  ],
+  "successfulAttempt": 4,
+  "originalRunConclusion": "failure",
+  "originalMeasurementStatus": "measurement-incomplete"
+}

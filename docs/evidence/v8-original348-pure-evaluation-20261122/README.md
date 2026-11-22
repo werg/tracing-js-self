@@ -66,16 +66,60 @@ outstanding operations, zero stale retries, and a 300,000 ms execution bound.
 The three studies were frozen before the first model call. These measurements
 belong only to the original source pair above, not to later PR candidate code.
 
+## Independent audit completed
+
+`audit.py` and `audit-source.mjs` independently verified the complete original
+archive, original 64-case source population and selected 16-case split, all
+freeze receipts, the actual checkpoint/export relationship, all original model
+fragments, and all source scores. `independent-audit.json`, `fragment-audit.json`
+and `source-audit.json.gz` retain the results. The audit passed; the evaluated
+workflow and its quality result remain failed/incomplete.
+
+- All **407 served tensors, containing 4,039,640 elements**, matched the original
+  checkpoint exactly, including dtype and every value. The served transducer
+  snapshot also matched the real checkpoint. The original loader validated
+  checkpoint, tokenizer, architecture, and training lineage.
+- All **29 fragments, containing 1,957 original token IDs and 12,475 raw bytes**,
+  reproduced exactly with the original tokenizer. This is an offline identity
+  check of retained evidence, not new inference or retroactive acceptance.
+- Exactly **eight final fragments** contain invalid UTF-8. In each corresponding
+  native failure packet, the fragment list retains the rejected final bytes but
+  the aggregate payload contains only earlier fragments, or is null on the first
+  fragment. The producer correctly refuses that incomplete aggregate binding.
+- All **16 private source artifacts** were independently re-executed and scored
+  again by the original source verifier. The resulting scored records and their
+  digests matched the original reports exactly. All 16 private source oracles
+  are valid; all 16 selected executions still fail to complete. The eight
+  provenance-validated outputs are not canonical V8 records.
+- The eight validated malformed outputs retain an observed cancellation event.
+  This cleanup is not a generated model record or source-program completion.
+
+The audit used the original Node 24.22.3, Python 3.12.14 and locked Python package
+versions, with the source verifier's original UTC setting. It performed **zero
+model calls and zero optimizer updates**, and verified that no original archive,
+checkpoint, study, report, source case or served bundle bytes changed. Its local
+platform is recorded separately from the original hosted runtime. The retained
+audit-development notes include the initial strict environment refusal and
+corrections to the auditor's assumptions; those were not model reruns.
+
+The measurement now separates two concrete problems. The model fails to emit
+the required record grammar even for the eight outputs whose original selection
+provenance is valid. Separately, the native exception path loses aggregate byte
+coverage when rejecting invalid text. Correcting that exception evidence cannot
+establish learned execution success or change this original run's provenance
+flags. A later serving implementation requires its own exact source identity
+and full fixed-population evaluation.
+
 ## Retained failures and remaining work
 
-- Independently recheck all 16 private source projections and unchanged result
-  digests, verify the exported tensors against the original checkpoint, and
-  audit complete fragment/token identity and cost accounting.
-- Distinguish the model's failure to emit canonical records from the incomplete
+- [x] Independently recheck all 16 private source projections and unchanged result
+  digests, verify every exported tensor and transducer state against the original
+  checkpoint, and audit complete fragment/token identity and original cost flags.
+- [x] Distinguish the model's failure to emit canonical records from the incomplete
   rejected-fragment envelope. Preserve the eight unvalidated selections even
   if a later implementation corrects rejection evidence.
-- Use the measured failure to choose the next bounded training or inference
+- [ ] Use the measured failure to choose the next bounded training or inference
   investigation. This run establishes no learned full-program success.
-- Preserve the complete ZIP beyond Actions retention using the existing
+- [ ] Preserve the complete ZIP beyond Actions retention using the existing
   unpublished-release custody helper. Custody is evidence storage, not a
   quality gate, release, or publication approval.
