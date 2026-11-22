@@ -6,6 +6,7 @@ import {spawnSync} from 'node:child_process';
 import {join,resolve} from 'node:path';
 import {writeFileSync} from 'node:fs';
 import {createRuntime} from '../src/runtime.js';
+import {verifyRegionModuleTrainingCase} from '../src/semantic/module-v8.js';
 import {realizeGraph} from '../src/training/graph.js';
 import {linkEvaluatedModules} from '../src/evaluated-modules.js';
 import {deriveModuleSchedulerSourceCutsV8} from '../src/semantic/module-scheduler-source-v8.js';
@@ -79,6 +80,96 @@ print(json.dumps({'cuts':len(result),'state':state}))
     cwd:root,env:{...process.env,PYTHONPATH:join(root,'src')},input:JSON.stringify(projection),encoding:'utf8',timeout:30000});
   assert.equal(result.status,0,result.stderr||String(result.error));return JSON.parse(result.stdout);
 }
+function assertRuntimeOwners(projection,bundle){
+  const modules=new Map(projection.plan.modules.map(row=>[row.file,row]));
+  const linked=new Map(),events=new Map(bundle.events.map(event=>[event.eventId,event]));
+  for(const cut of projection.cuts){
+    const action=cut.action,owner=cut.runtimeOwner;
+    assert(owner,'every scheduler cut has a source-derived runtime owner');
+    assert.equal(owner.file,action.file);
+    assert.match(owner.recordId,/^o\d+$/);
+    assert.match(owner.generatorId,/^o\d+$/);
+    assert.match(owner.generatorFrameId,/^f\d+$/);
+    assert.match(owner.bodyCodeId,/^src\d+:code\d+$/);
+    assert.match(owner.recordAssignmentEventId,/^a0:e\d+$/);
+    assert.match(owner.generatorAllocationEventId,/^a0:e\d+$/);
+    assert.match(owner.iteratorBindingEventId,/^a0:e\d+$/);
+    assert.match(owner.definitionSiteId,/^src\d+:s\d+$/);
+    assert(Number(owner.generatorAllocationSequence)<Number(owner.recordAssignmentSequence));
+    assert(Number(owner.iteratorBindingSequence)<Number(owner.recordAssignmentSequence));
+    const stable=Object.fromEntries(['file','recordId','generatorId','generatorFrameId',
+      'bodyCodeId','recordAssignmentEventId','recordAssignmentSequence',
+      'generatorAllocationEventId','generatorAllocationSequence',
+      'iteratorBindingEventId','iteratorBindingSequence','definitionSiteId']
+      .map(key=>[key,owner[key]]));
+    const prior=linked.get(action.file);
+    if(prior)assert.deepEqual(stable,prior,'module identity remains stable across lifecycle cuts');
+    else linked.set(action.file,stable);
+    const assignment=events.get(owner.recordAssignmentEventId),
+      allocation=events.get(owner.generatorAllocationEventId),
+      iterator=events.get(owner.iteratorBindingEventId);
+    assert.equal(assignment.operands[2][0],'ref');
+    assert.equal(assignment.operands[2][1],owner.recordId);
+    assert.equal(allocation.sequence,owner.generatorAllocationSequence);
+    assert.equal(iterator.sequence,owner.iteratorBindingSequence);
+    const generatorChange=allocation.stateChanges.find(change=>change.table==='heap'&&
+      change.id===owner.generatorId&&change.before===null&&change.after?.kind==='generator');
+    const frameChange=allocation.stateChanges.find(change=>change.table==='frames'&&
+      change.before===null&&change.after?.id===owner.generatorFrameId);
+    assert(generatorChange);assert(frameChange);
+    assert.equal(generatorChange.after.frameId,owner.generatorFrameId);
+    assert.equal(frameChange.after.generatorId,owner.generatorId);
+    assert.equal(frameChange.after.codeId,owner.bodyCodeId);
+    assert.equal(iterator.operands[0][1],owner.recordId);
+    assert.deepEqual(iterator.operands[1],['str','iterator']);
+    assert.deepEqual(iterator.operands[2],['ref',owner.generatorId]);
+    const definition=Object.values(bundle.programs).flatMap(program=>program.instructions)
+      .find(instruction=>instruction.siteId===owner.definitionSiteId&&instruction.op==='DEF_FN');
+    assert(definition);
+    assert.equal(definition.arg.codeId,owner.bodyCodeId);
+    assert.equal(bundle.programs[owner.bodyCodeId].generator,true);
+    assert(owner.generatorAllocationSequence<owner.iteratorBindingSequence);
+    assert(owner.iteratorBindingSequence<owner.recordAssignmentSequence);
+    if(action.type==='module.start'){
+      assert.equal(owner.driverFrameId,action.frameId);
+      assert.equal(owner.executionPromiseId,action.executionPromiseId);
+      assert.notEqual(owner.driverFrameId,owner.generatorFrameId,
+        'scheduler driver and module generator body are separate frames');
+      const startEvent=events.get(cut.certificate.eventId);
+      const driver=startEvent.stateChanges.find(change=>change.table==='frames'&&
+        change.before===null&&change.after?.id===owner.driverFrameId);
+      assert(driver);
+      assert.equal(driver.after.asyncPromiseId,action.executionPromiseId);
+      if(modules.get(action.file).hasTLA){
+        assert(owner.executionPromiseId);
+        assert.equal(owner.executionPromiseId.startsWith('p'),true);
+      }else assert.equal(owner.executionPromiseId,null);
+    }else if(action.type==='module.await'||action.type==='module.resume'){
+      assert.equal(owner.driverFrameId,action.frameId);
+      assert(owner.executionPromiseId);
+    }else if(action.type==='module.complete'||action.type==='module.reject'){
+      if(action.promiseId!==null){
+        assert.equal(owner.driverFrameId,action.frameId);
+        assert.equal(owner.executionPromiseId,action.promiseId);
+        assert(owner.callbackFrameId);
+        assert.notEqual(owner.callbackFrameId,owner.driverFrameId);
+        assert.equal(owner.completionJobEventId,action.jobId);
+        const job=events.get(owner.completionJobEventId);
+        const callback=job.stateChanges.find(change=>change.table==='frames'&&
+          change.before===null&&change.after?.id===owner.callbackFrameId);
+        assert(callback);
+        assert.equal(callback.after.reactionJob,true);
+      }else{
+        assert.equal(owner.driverFrameId,action.frameId);
+        assert.equal(owner.executionPromiseId,null);
+        assert.equal(owner.synchronousCompletionEventId,action.jobId);
+      }
+    }
+  }
+  assert.equal(linked.size,projection.plan.modules.length);
+  return linked;
+}
+
 const cases=[
   ['already-settled rejection is caught, a sibling finishes, and the synchronous parent has no execution Promise',{
     'left.js':'export let x=0;try {await Promise.reject(7);} catch(e){x=e;}',
@@ -127,6 +218,7 @@ for(const [name,modules]of cases)test(name,async()=>{
   for(const module of projection.plan.modules.filter(row=>!row.hasTLA))
     assert.equal(projection.state.modules[module.file].executionPromiseId,null);
   assert.equal(projection.publicAdmission,false);assert.equal(projection.trainingAdmission,false);
+  assertRuntimeOwners(projection,run.bundle);
   const native=nativeCuts(projection);if(native)assert.deepEqual(native.state,projection.state);
   evidence.push({name,request:run.request,outcome:baseline.outcome,originalObservations:observed.observations,projection,native});
 });
@@ -155,4 +247,16 @@ after(()=>{
       sourceCases:evidence.length,actualNativeCases:evidence.filter(row=>row.native!==null).length,
       ownedTransitions:evidence.reduce((n,row)=>n+row.projection.cuts.length,0),
       publicAdmission:false,trainingAdmission:false,optimizerUpdates:0})+'\n');
+});
+
+test('source ownership certificates alone do not enable public or native module admission',async()=>{
+  const result=await verifyRegionModuleTrainingCase({
+    id:'module-scheduler-owner-boundary',family:'evaluated-modules',modules:cases[0][1],
+    entryModule:'main.js',exportName:'run'
+  });
+  assert.equal(result.status,'projection_refused');
+  assert.equal(result.category,'unsupported.module-scheduler-projection');
+  assert.equal(result.publicProjection,'unqualified');
+  assert.equal(result.nativeQualification,'unqualified');
+  assert.equal(result.exported,undefined);
 });

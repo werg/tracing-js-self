@@ -7,6 +7,7 @@ import {validateBundle} from '../validation.js';
 import {replayExact} from '../replay.js';
 import {buildModuleSchedulerPlanV8,createModuleSchedulerStateV8,
   applyModuleSchedulerActionV8} from './module-scheduler-state-v8.js';
+import {deriveModuleSchedulerSourceSitesV8} from './module-scheduler-source-sites-v8.js';
 
 const copy=structuredClone;
 const fail=message=>{throw new TypeError('Module scheduler source: '+message);};
@@ -51,10 +52,25 @@ export function deriveModuleSchedulerSourceCutsV8({request,bundle}={}){
       callbacks.set(status,instruction.arg.codeId);
   }
   need(callbacks.size===2,'exact module completion callbacks are absent');
+  const sourceSites=deriveModuleSchedulerSourceSitesV8({
+    source:linked.source,moduleSchedulerPlan:plan,bundle
+  });
+  const instructions=Object.values(bundle.programs).flatMap(program=>program.instructions);
+  const moduleFunctionByFile=new Map();
+  const moduleBodyCodeIds=new Map(sourceSites.moduleFunctions.map(module=>{
+    const defs=instructions.filter(instruction=>instruction.op==='DEF_FN'&&
+      instruction.arg?.name===module.name&&instruction.start===module.start&&
+      instruction.end===module.end);
+    need(defs.length===1,'module generator definition is ambiguous');
+    const codeId=defs[0].arg.codeId;
+    need(bundle.programs[codeId]?.generator===true,'module body is not the proved generator');
+    moduleFunctionByFile.set(module.file,{...module,codeId,definitionSiteId:defs[0].siteId});
+    return [module.file,codeId];
+  }));
   const sites=new Map(bundle.sites.map(row=>[row.siteId,row])),records=new Map(),drivers=new Map(),
     executions=new Map(),settlements=new Map(),claimed=new Set(),cuts=[],observations=[];
   let state=copy(bundle.initialState),selected=createModuleSchedulerStateV8(plan);
-  function emit(event,action,facts){
+  function emit(event,action,facts,ownerProof=null){
     need(!claimed.has(event.eventId),'runtime event already has a module lifecycle owner');
     const before=copy(selected),after=applyModuleSchedulerActionV8(plan,before,action,facts);
     const frame=state.frames[event.invocationId],instruction=frame&&bundle.programs[frame.codeId]?.instructions[frame.pc];
@@ -62,6 +78,7 @@ export function deriveModuleSchedulerSourceCutsV8({request,bundle}={}){
       'event does not own its exact current instruction');
     const site=sites.get(event.siteId);
     cuts.push({action:copy(action),facts:copy(facts),before,after:copy(after),
+      ...(ownerProof?{runtimeOwner:copy(ownerProof)}:{}),
       certificate:{eventId:event.eventId,sequence:event.sequence,operation:event.operation,
         codeId:event.codeId,pc:frame?.pc??null,site:site?{start:site.start,end:site.end}:null}});
     claimed.add(event.eventId);selected=after;
@@ -95,24 +112,67 @@ export function deriveModuleSchedulerSourceCutsV8({request,bundle}={}){
           actual=Array.from({length:value(dependencies,'length')?.[1]??-1},(_,i)=>value(dependencies,String(i))?.[1]);
         need(eq(actual,module.dependencies.map(file=>plan.modules.find(row=>row.file===file).index)),
           'module dependency identities differ from source');
-        const iterator=next.heap[value(node,'iterator')?.[1]];
-        need(iterator?.kind==='generator','module has no owned generator environment');
-        records.set(recordId,module.file);
+        const generatorId=value(node,'iterator')?.[1],iterator=next.heap[generatorId],
+          generatorFrameId=iterator?.frameId,generatorFrame=generatorFrameId&&next.frames[generatorFrameId],
+          bodyCodeId=moduleBodyCodeIds.get(module.file);
+        need(iterator?.kind==='generator'&&generatorFrame&&
+          generatorFrame.generatorId===generatorId&&generatorFrame.codeId===bodyCodeId&&
+          bundle.programs[bodyCodeId]?.generator===true,
+          'module generator lacks its source-bound body frame');
+        const initializerGeneratorEvents=bundle.events.filter(candidate=>{
+          const candidateSite=sites.get(candidate.siteId);
+          return linked.metadata.instantiationAndEvaluation.some(candidateSpan=>
+            candidateSpan.kind==='module-record'&&candidateSpan.file===module.file&&
+            candidateSite&&candidateSite.start>=candidateSpan.start&&candidateSite.end<=candidateSpan.end)&&
+            candidate.stateChanges.some(change=>change.table==='heap'&&change.id===generatorId&&
+              change.before===null&&change.after?.kind==='generator');
+        });
+        need(initializerGeneratorEvents.length===1&&
+          initializerGeneratorEvents[0].stateChanges.some(change=>change.table==='frames'&&
+            change.before===null&&change.after?.id===generatorFrameId&&
+            change.after.generatorId===generatorId&&change.after.codeId===bodyCodeId),
+          'module generator creation lacks its exact initializer owner');
+        const iteratorWrites=bundle.events.filter(candidate=>
+          candidate.operation==='property.write'&&candidate.operands?.[0]?.[0]==='ref'&&
+          candidate.operands?.[0]?.[1]===recordId&&
+          candidate.operands?.[1]?.[0]==='str'&&candidate.operands[1][1]==='iterator'&&
+          candidate.operands?.[2]?.[0]==='ref'&&candidate.operands[2][1]===generatorId);
+        const iteratorSite=sites.get(iteratorWrites[0]?.siteId);
+        need(iteratorWrites.length===1&&iteratorSite&&
+          linked.metadata.instantiationAndEvaluation.some(candidateSpan=>
+            candidateSpan.kind==='module-record'&&candidateSpan.file===module.file&&
+            iteratorSite.start>=candidateSpan.start&&iteratorSite.end<=candidateSpan.end)&&
+          initializerGeneratorEvents[0].sequence<iteratorWrites[0].sequence&&
+          iteratorWrites[0].sequence<event.sequence,
+          'module generator allocation or iterator binding is after record publication');
+        const moduleFunction=moduleFunctionByFile.get(module.file);
+        need(moduleFunction,'module generator definition mapping is absent');
+        records.set(recordId,{file:module.file,recordId,generatorId,
+          generatorFrameId,bodyCodeId,recordAssignmentEventId:event.eventId,
+          recordAssignmentSequence:event.sequence,
+          generatorAllocationEventId:initializerGeneratorEvents[0].eventId,
+          generatorAllocationSequence:initializerGeneratorEvents[0].sequence,
+          iteratorBindingEventId:iteratorWrites[0].eventId,
+          iteratorBindingSequence:iteratorWrites[0].sequence,
+          definitionSiteId:moduleFunction.definitionSiteId});
       }
     }
     const child=event.operation==='call.enter'&&event.stateChanges.find(change=>change.table==='frames'&&change.before===null)?.after;
     if(child&&[asynchronous,synchronous].includes(child.codeId)){
-      const record=binding(next,child.envId,'record'),file=record?.[0]==='ref'&&records.get(record[1]),
-        module=plan.modules.find(row=>row.file===file);
+      const record=binding(next,child.envId,'record'),recordOwner=record?.[0]==='ref'&&records.get(record[1]),
+        file=recordOwner?.file,module=plan.modules.find(row=>row.file===file);
       need(module&&module.hasTLA===(child.codeId===asynchronous),'driver lacks its original module record');
       need(!drivers.has(child.id),'duplicate driver identity');
       const facts={frames:{[child.id]:frameFact(child,file)},promises:{},jobs:{}};
       if(child.asyncPromiseId!==null){
         facts.promises[child.asyncPromiseId]=promiseFact(next.promises[child.asyncPromiseId]);
-        executions.set(child.asyncPromiseId,{file,frameId:child.id,recordId:record[1]});
+        executions.set(child.asyncPromiseId,{...recordOwner,file,frameId:child.id,
+          driverFrameId:child.id,executionPromiseId:child.asyncPromiseId});
       }
-      emit(event,{type:'module.start',file,frameId:child.id,executionPromiseId:child.asyncPromiseId},facts);
-      drivers.set(child.id,{file,recordId:record[1]});observations.push({file,type:'start'});
+      emit(event,{type:'module.start',file,frameId:child.id,executionPromiseId:child.asyncPromiseId},facts,
+        {...recordOwner,driverFrameId:child.id,executionPromiseId:child.asyncPromiseId});
+      drivers.set(child.id,{...recordOwner,driverFrameId:child.id,
+        executionPromiseId:child.asyncPromiseId});observations.push({file,type:'start'});
     }
     const owner=drivers.get(event.invocationId);
     if(owner&&event.operation==='async.await'){
@@ -120,7 +180,8 @@ export function deriveModuleSchedulerSourceCutsV8({request,bundle}={}){
       need(frame.codeId===asynchronous&&frame.status==='suspended'&&next.promises[promiseId],
         'await lacks the actual driver continuation');
       emit(event,{type:'module.await',file:owner.file,frameId:frame.id,promiseId},
-        {frames:{[frame.id]:frameFact(frame,owner.file,promiseId)},promises:{[promiseId]:promiseFact(next.promises[promiseId])},jobs:{}});
+        {frames:{[frame.id]:frameFact(frame,owner.file,promiseId)},promises:{[promiseId]:promiseFact(next.promises[promiseId])},jobs:{}},
+        owner);
       observations.push({file:owner.file,type:'await'});
     }
     if(event.operation==='job.enter'){
@@ -132,19 +193,30 @@ export function deriveModuleSchedulerSourceCutsV8({request,bundle}={}){
         emit(event,{type:'module.resume',file:owner.file,frameId:frame.id,promiseId:promise.id,jobId:event.eventId},
           {frames:{[frame.id]:frameFact(frame,owner.file,promise.id)},promises:{[promise.id]:promiseFact(promise)},
             jobs:{[event.eventId]:{id:event.eventId,promiseId:promise.id,frameId:frame.id,status:promise.status,
-              moduleFile:owner.file,kind:'promise-reaction',value:copy(promise.value.value)}}});
+              moduleFile:owner.file,kind:'promise-reaction',value:copy(promise.value.value)}}},owner);
       }else if(queued?.kind==='reaction'&&executions.has(queued.promiseId)){
         const owner=executions.get(queued.promiseId),promise=state.promises[queued.promiseId],
           callback=queued.reaction[promise.status==='fulfilled'?'onFulfilled':'onRejected'],
           fn=callback?.[0]==='ref'&&state.heap[callback[1]],
           closureRecord=fn&&binding(state,fn.closureEnvId,'record');
+        const callbackFrameId=event.causes?.find(cause=>cause.kind==='invocation')?.frameId,
+          callbackFrame=callbackFrameId&&next.frames[callbackFrameId];
         need(fn?.codeId===callbacks.get(promise.status==='fulfilled'?'fulfilled':'failed')&&
-          eq(closureRecord,['ref',owner.recordId]),'completion reaction lacks its original module closure');
+          eq(closureRecord,['ref',owner.recordId])&&callbackFrame?.codeId===fn.codeId&&
+          callbackFrame.reactionJob===true&&
+          callbackFrame.reactionPromiseId===queued.reaction.resultId&&
+          eq(binding(next,callbackFrame.envId,'record'),['ref',owner.recordId]),
+          'completion reaction lacks its original callback frame and module closure');
+        const callbackFrameChange=event.stateChanges.find(change=>change.table==='frames'&&
+          change.before===null&&change.after?.id===callbackFrameId);
+        need(callbackFrameChange?.after?.codeId===fn.codeId,
+          'completion job did not allocate its exact callback function frame');
         const facts={frames:{},promises:{[promise.id]:promiseFact(promise)},jobs:{[event.eventId]:{
-          id:event.eventId,promiseId:promise.id,frameId:owner.frameId,status:promise.status,moduleFile:owner.file,
+          id:event.eventId,promiseId:promise.id,frameId:owner.driverFrameId,status:promise.status,moduleFile:owner.file,
           kind:promise.status==='fulfilled'?'module-execution-settle':'module-evaluation-failure',value:copy(promise.value.value)}}};
         emit(event,{type:promise.status==='fulfilled'?'module.complete':'module.reject',file:owner.file,
-          frameId:owner.frameId,promiseId:promise.id,jobId:event.eventId},facts);
+          frameId:owner.driverFrameId,promiseId:promise.id,jobId:event.eventId},facts,
+          {...owner,callbackFrameId,completionJobEventId:event.eventId});
         settlements.set(event.eventId,facts);
       }
     }
@@ -158,14 +230,19 @@ export function deriveModuleSchedulerSourceCutsV8({request,bundle}={}){
               id:event.eventId,promiseId:null,frameId:frame.id,status,moduleFile:owner.file,
               kind:status==='fulfilled'?'module-synchronous-complete':'module-synchronous-failure',
               value:copy(frame.completion.value.value)}}};
+          need(owner.generatorFrameId&&state.frames[owner.generatorFrameId]?.status==='completed'&&
+            state.frames[owner.generatorFrameId]?.generatorId===owner.generatorId,
+            'synchronous helper completed without its module generator body');
           emit(event,{type:status==='fulfilled'?'module.complete':'module.reject',file:owner.file,
-            frameId:frame.id,promiseId:null,jobId:event.eventId},facts);
+            frameId:frame.id,promiseId:null,jobId:event.eventId},facts,
+            {...owner,driverFrameId:frame.id,synchronousCompletionEventId:event.eventId});
           settlements.set(event.eventId,facts);
         }
       }
     }
     if(child?.codeId===failed){
-      const record=binding(next,child.envId,'record'),file=record?.[0]==='ref'&&records.get(record[1]);
+      const record=binding(next,child.envId,'record'),recordOwner=record?.[0]==='ref'&&records.get(record[1]),
+        file=recordOwner?.file;
       if(file&&selected.modules[file].status==='waiting'){
         const module=plan.modules.find(row=>row.file===file),dependencyFile=module.dependencies.find(dependency=>
           selected.modules[dependency].status==='rejected');
@@ -173,7 +250,8 @@ export function deriveModuleSchedulerSourceCutsV8({request,bundle}={}){
         const failure=selected.modules[dependencyFile].failure,facts=settlements.get(failure.jobId);
         need(facts&&eq(binding(next,child.envId,'error'),facts.jobs[failure.jobId].value),
           'propagated error differs from the dependency outcome');
-        emit(event,{type:'module.propagateFailure',file,dependencyFile,promiseId:failure.promiseId,jobId:failure.jobId},facts);
+        emit(event,{type:'module.propagateFailure',file,dependencyFile,promiseId:failure.promiseId,jobId:failure.jobId},facts,
+          recordOwner);
       }
     }
     state=next;
