@@ -27,11 +27,10 @@ export function buildModuleSchedulerPlanV8(metadata) {
         typeof row.hasTLA !== 'boolean' || !Array.isArray(row.dependencies)) fail('dependency row');
     const source = moduleByFile.get(row.file).source;
     if (typeof source !== 'string') fail('missing original source');
-    const dependencies = row.dependencies.map((dependencyIndex) => {
-      if (!Number.isSafeInteger(dependencyIndex) || dependencyIndex < 0 ||
-          dependencyIndex >= metadata.asyncDependencies.length || dependencyIndex === index)
-        fail('dependency index');
-      return metadata.asyncDependencies[dependencyIndex].file;
+    const dependencies = row.dependencies.map((dependencyFile) => {
+      if (typeof dependencyFile !== 'string' || !moduleByFile.has(dependencyFile) ||
+          dependencyFile === row.file) fail('dependency file');
+      return dependencyFile;
     });
     if (new Set(dependencies).size !== dependencies.length) fail('duplicate dependency');
     return {file: row.file, index, sourceDigest: createHash('sha256').update(source).digest('hex'),
