@@ -1,0 +1,155 @@
+{
+  "schema": "v8-original-hosted-release-proof/1",
+  "runId": 45045811024,
+  "runAttempt": 1,
+  "jobId": 137280047239,
+  "conclusion": "success",
+  "producerRevision": "7c20124f3d89dfe1a8d5e892238e7b7f92589720",
+  "consumerRevision": "ddda9a7339297e6074765a001743e2bb569e0eb9",
+  "scope": "Historical original task/native-record binding before explicit physical sourceId correction; package mechanics and ordinary two-update lifecycle only. No learned-quality or checkpoint348 serving claim.",
+  "jobLog": {
+    "path": "original-job.log",
+    "bytes": 416679,
+    "sha256": "0e54edce93c39c7ab32fa53204a61e726638bb69e6171f7e80173128b95adb09"
+  },
+  "results": [
+    {
+      "name": "qualify-64",
+      "status": "running"
+    },
+    {
+      "name": "qualify-64",
+      "status": "passed",
+      "exitCode": 0,
+      "seconds": 249.87278168199998
+    },
+    {
+      "name": "bind-original-64-source-tasks",
+      "status": "running"
+    },
+    {
+      "name": "bind-original-64-source-tasks",
+      "status": "passed",
+      "exitCode": 0,
+      "seconds": 2.27041759399998
+    },
+    {
+      "name": "prepare-64",
+      "status": "running"
+    },
+    {
+      "name": "prepare-64",
+      "status": "passed",
+      "exitCode": 0,
+      "seconds": 205.06042282100003
+    },
+    {
+      "archive": {
+        "bytes": 70598096,
+        "path": "semantic-v8-release.tar.gz",
+        "sha256": "f0dbd19dc7906e7573e6da8a61d83b7863afccd5d915b36448e41f6c4ba6046c"
+      },
+      "decoderForwardPassesPerformed": 0,
+      "defaultPromotion": false,
+      "learnedSuccess": null,
+      "manifestIdentity": "4f58a7d07a57f6c016096ebf1480b2405dd4e7c6681a2b199f81aa65f7641fbb",
+      "memberVerification": {
+        "archiveSha256": "f0dbd19dc7906e7573e6da8a61d83b7863afccd5d915b36448e41f6c4ba6046c",
+        "files": 351,
+        "identityDigest": "4f58a7d07a57f6c016096ebf1480b2405dd4e7c6681a2b199f81aa65f7641fbb",
+        "schema": "semantic-release-verification/1",
+        "status": "verified"
+      },
+      "optimizerUpdatesPerformed": 0,
+      "schema": "semantic-v8-release-package-result/1",
+      "sourcePair": {
+        "consumer": {
+          "clean": true,
+          "revision": "ddda9a7339297e6074765a001743e2bb569e0eb9",
+          "tree": "a0cdb4d771bc1b904c1ac7a49a94bf5e3f560bdc"
+        },
+        "producer": {
+          "clean": true,
+          "revision": "7c20124f3d89dfe1a8d5e892238e7b7f92589720",
+          "tree": "13a2497fdd19ca5de94c86ba24a54f04251e808f"
+        }
+      },
+      "status": "verified"
+    },
+    {
+      "name": "restore-with-original-locators-absent",
+      "status": "running"
+    },
+    {
+      "acceptedHistoryRecovery": "unmeasured",
+      "actualCheckpointAndServedStateCompared": true,
+      "archiveSha256": "f0dbd19dc7906e7573e6da8a61d83b7863afccd5d915b36448e41f6c4ba6046c",
+      "decoderForwardPassesPerformed": 0,
+      "defaultPromotion": false,
+      "freshSourceNativePreparation": true,
+      "learnedSuccess": null,
+      "manifestIdentity": "4f58a7d07a57f6c016096ebf1480b2405dd4e7c6681a2b199f81aa65f7641fbb",
+      "optimizerUpdatesPerformed": 0,
+      "restoredFiles": {
+        "bytes": 303223395,
+        "files": 351,
+        "status": "verified"
+      },
+      "schema": "semantic-v8-release-restore-result/1",
+      "sourcePair": {
+        "consumer": {
+          "clean": true,
+          "revision": "ddda9a7339297e6074765a001743e2bb569e0eb9",
+          "tree": "a0cdb4d771bc1b904c1ac7a49a94bf5e3f560bdc"
+        },
+        "producer": {
+          "clean": true,
+          "revision": "7c20124f3d89dfe1a8d5e892238e7b7f92589720",
+          "tree": "13a2497fdd19ca5de94c86ba24a54f04251e808f"
+        }
+      },
+      "status": "verified"
+    },
+    {
+      "name": "restore-with-original-locators-absent",
+      "status": "passed",
+      "exitCode": 0,
+      "seconds": 335.2451929839999
+    },
+    {
+      "acceptedHistoryRecovery": "unmeasured",
+      "archiveBytes": 70598096,
+      "archiveSha256": "f0dbd19dc7906e7573e6da8a61d83b7863afccd5d915b36448e41f6c4ba6046c",
+      "consumerRevision": "ddda9a7339297e6074765a001743e2bb569e0eb9",
+      "declaredSources": 64,
+      "defaultPromotion": false,
+      "freshSourceNativePreparationAtPackageAndRestore": true,
+      "fullTargetCoverageQualified": false,
+      "learnedSuccess": null,
+      "manifestIdentity": "4f58a7d07a57f6c016096ebf1480b2405dd4e7c6681a2b199f81aa65f7641fbb",
+      "nativeAdmitted": 64,
+      "ordinaryLifecycleOptimizerUpdates": 2,
+      "originalRuntimeAssetLocatorsAbsentAtRestore": true,
+      "originalTaskArtifactBindingsVerified": true,
+      "packageOptimizerUpdates": 0,
+      "producerRevision": "7c20124f3d89dfe1a8d5e892238e7b7f92589720",
+      "registryDigest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+      "releaseDecoderForwardPasses": 0,
+      "restoreOptimizerUpdates": 0,
+      "schema": "semantic-v8-release-qualification/1",
+      "sourceQualified": 64,
+      "splitCounts": {
+        "test": 4,
+        "train": 48,
+        "validation": 12
+      },
+      "status": "passed",
+      "wrongExternalChecksumRefusedBeforeExtraction": true
+    },
+    {
+      "archive": "v8-release-qualification-original.tar.gz",
+      "bytes": 350205905,
+      "sha256": "3ac27c6e32302ed650f3351227f0f44c75fca8c1612d73ac54698390363371d0"
+    }
+  ]
+}

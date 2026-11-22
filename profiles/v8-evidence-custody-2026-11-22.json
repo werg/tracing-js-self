@@ -67,6 +67,28 @@
           "sha256": "3b7bfd06824cb5c9c962db5fc3f9f40b49c10ed719ef7da6d755a4bbf90b4e7a"
         }
       ]
+    },
+    {
+      "label": "historical-native-record-binding-7c",
+      "scope": "Historical7c20124f/ddda9a73 full64 source/native, original task and historical native-record correspondence, two-update lifecycle, package and relocated restoration. Predates explicit physical sourceId descriptor correction and later invalid-fragment refusal; not final composed-pair acceptance, learned-quality or checkpoint348 serving evidence.",
+      "runId": 45045811024,
+      "runAttempt": 1,
+      "sourceRevision": "7c20124f3d89dfe1a8d5e892238e7b7f92589720",
+      "conclusion": "success",
+      "workflowPath": ".github/workflows/v8-release-qualification.yml",
+      "artifactId": 14764328184,
+      "artifactName": "v8-direct-release-original-evidence",
+      "archiveBytes": 349499070,
+      "archiveSha256": "206268ae9fe75808a0fdadafefbdb395caebb1607db0faa258548551d0c61ae4",
+      "jobs": [
+        {
+          "id": 137280047239,
+          "name": "direct-release",
+          "conclusion": "success",
+          "bytes": 416679,
+          "sha256": "0e54edce93c39c7ab32fa53204a61e726638bb69e6171f7e80173128b95adb09"
+        }
+      ]
     }
   ]
 }
