@@ -1,0 +1,29 @@
+{
+  "acceptedHistoryRecovery": "unmeasured",
+  "archiveBytes": 70579166,
+  "archiveSha256": "b6b1c8abbf280b01e4b86a60cfb3e4a654f7cdfe898103fb8399fca74739eb6c",
+  "consumerRevision": "d4afac5bb7261aa7ef85c1d65d3ae6dcaf6caeef",
+  "declaredSources": 64,
+  "defaultPromotion": false,
+  "freshSourceNativePreparationAtPackageAndRestore": true,
+  "fullTargetCoverageQualified": false,
+  "learnedSuccess": null,
+  "manifestIdentity": "b03c5f345669db72eadfb5f332e6b4a863df64ae5e82ebd863b6034ea9365a78",
+  "nativeAdmitted": 64,
+  "ordinaryLifecycleOptimizerUpdates": 2,
+  "originalRuntimeAssetLocatorsAbsentAtRestore": true,
+  "packageOptimizerUpdates": 0,
+  "producerRevision": "596a3b8e61011dcfd38fcf28ff5bef4cb6242975",
+  "registryDigest": "306a20791e1a76fa53872f6b1b856bba66f1308c1428a3a745171d28322b3e6c",
+  "releaseDecoderForwardPasses": 0,
+  "restoreOptimizerUpdates": 0,
+  "schema": "semantic-v8-release-qualification/1",
+  "sourceQualified": 64,
+  "splitCounts": {
+    "test": 4,
+    "train": 48,
+    "validation": 12
+  },
+  "status": "passed",
+  "wrongExternalChecksumRefusedBeforeExtraction": true
+}

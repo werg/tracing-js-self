@@ -1,0 +1,24 @@
+{
+  "allOtherFieldsUnchanged": true,
+  "changes": {
+    "codec": {
+      "bundled": "tokenizer/tokenizer.json",
+      "original": "/home/runner/work/_temp/v8-release-qualification/original-inputs/tokenizer.json"
+    },
+    "datasets": {
+      "bundled": [
+        "prepared/000"
+      ],
+      "original": [
+        "/home/runner/work/_temp/v8-release-qualification/original-inputs/prepared"
+      ]
+    },
+    "output": {
+      "bundled": "training/resume-output",
+      "original": "/home/runner/work/_temp/v8-release-qualification/original-inputs/lifecycle/fit"
+    }
+  },
+  "originalRecipe": "training/original-recipe.json",
+  "portableRecipe": "training/recipe.json",
+  "schema": "semantic-v8-release-locators/1"
+}
