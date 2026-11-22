@@ -56,6 +56,36 @@ feature tags, or reference outcomes. These counts report declared decisions,
 not independently certified applicability, and all catalog variants remain in
 the report.
 
+## Evidence required for a membership decision
+
+New non-`unclassified` catalog decisions use `test262-edition-membership-review/1`.
+The decision is file-level and binds the exact Test262 revision and test source
+digest, the catalog profile and host profile digests, and the retained annual
+edition URI and SHA-256. `sourceInputs` lists the exact test, included harness
+files, and module dependency closure used for the decision. `normativeObligations`
+lists one or more cited clause IDs together with the specification URI and
+digest and a basis (`edition`, `addition`, or `profile`). The edition audit
+checks every `edition` clause ID against the clause inventory extracted from
+the pinned HTML. Addition/profile citations remain explicit source references;
+they do not certify the external artifact unless that artifact is separately
+acquired and verified.
+
+`reviewer.kind` records who or what performed the review (`human`, `assistant`,
+or `tool-assisted`); `method` and `rationale` describe the actual work. The
+schema does not require a human reviewer. A feature tag, path, anchor, parser
+result, or execution result alone is never enough to create a decision. All
+variants of one source file must carry identical classification and review
+evidence. `requiredForThisRelease` remains independent of edition membership.
+A missing or invalid decision leaves the original row `unclassified` and in
+the denominator; edition-membership, applicability, and conformance claims
+remain false.
+
+This schema makes declared decisions auditable and content-bound; it does not
+automatically adjudicate the 102,994 retained variants. No full pinned Test262
+source checkout was available during this increment, so no source-family pilot
+was classified. Synthetic tests exercise the evidence contract only and are
+explicitly not membership decisions.
+
 The audit also reconciles unique test source files separately from execution
 variants, counts execution modes, and counts ordinary versus negative expected
 outcomes by phase. The source denominator uses one classification per path;

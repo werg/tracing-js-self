@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildTest262Catalog,conformanceDigest} from '../src/conformance/test262-catalog.js';
+import {createHash} from 'node:crypto';
+import {buildTest262Catalog,conformanceDigest,validateTest262Catalog} from '../src/conformance/test262-catalog.js';
 import {gitBlobSha} from '../src/test262-baseline.js';
 import {readPinnedEcma262Specification} from '../src/conformance/test262-specification.js';
 import {extractEcma262HtmlInventory,test262SpecificationReference,buildTest262EditionAudit}
@@ -40,9 +41,26 @@ function fixture(classifications={}){
     'test/intl402/linked.js':make('esid: sec-array.prototype.map')};
   const snapshot={repository:'tc39/test262',revision:'1'.repeat(40),
     files:Object.fromEntries(Object.entries(sources).map(([path,source])=>[path,gitBlobSha(source)]))};
-  const profile={name:'edition-audit-test',edition:'ECMAScript 2026',specification:null,
+  const pinned=readPinnedEcma262Specification();
+  const profile={name:'edition-audit-test',edition:'ECMAScript 2026',specification:pinned.specification,
     parser:{name:'not-executed'},hostProfile:{name:'not-executed'},resourcePolicy:{maxSteps:1,maxSourceBytes:1024}};
-  return {sources,catalog:buildTest262Catalog({snapshot,sources,profile,classifications}),...readPinnedEcma262Specification()};
+  for(const [path,classification] of Object.entries(classifications)){
+    if(classification.membership==='unclassified')continue;
+    const source=Buffer.from(sources[path]),membership=classification.membership;
+    const normativeObligations=[{basis:'edition',uri:pinned.specification.uri,sha256:pinned.specification.sha256,
+      clauseIds:['sec-array.prototype.map']}];
+    if(membership==='extension')normativeObligations.push({basis:'addition',uri:'https://example.invalid/addition.html',
+      sha256:'a'.repeat(64),clauseIds:['feature-example']});
+    classification.evidence={schema:'test262-edition-membership-review/1',
+      reviewer:{kind:'assistant',identity:'synthetic schema fixture'},method:'synthetic-fixture-only',
+      rationale:'Synthetic validation fixture; not a real Test262 membership adjudication.',
+      suiteRevision:snapshot.revision,sourceDigest:createHash('sha256').update(source).digest('hex'),
+      profileDigest:conformanceDigest(profile),hostProfileDigest:conformanceDigest(profile.hostProfile),
+      editionSpecification:{uri:pinned.specification.uri,sha256:pinned.specification.sha256},
+      sourceInputs:[{path,sha256:createHash('sha256').update(source).digest('hex'),kind:'test'}],
+      normativeObligations};
+  }
+  return {sources,catalog:buildTest262Catalog({snapshot,sources,profile,classifications}),...pinned};
 }
 
 test('all variants survive reference reconciliation without becoming edition or execution passes',()=>{
@@ -80,6 +98,51 @@ test('edition and release classification denominators remain explicit by review 
   });
   assert.equal(report.rows.length,input.catalog.variants.length);
   assert.deepEqual(report.claims,{editionMembershipCertified:false,applicabilityCertified:false,conformance:false});
+});
+
+test('resolved anchors, tags and review paths cannot classify without source-bound normative evidence',()=>{
+  const base=fixture(),rows=base.catalog.variants;
+  assert(rows.every(row=>row.classification.membership==='unclassified'));
+  for(const path of ['test/core.js','test/intl402/linked.js']){
+    const source=base.sources[path],classification={membership:path.includes('intl402')?'outside_profile':'edition',
+      requiredForThisRelease:false,...(path.includes('intl402')?{reason:'Separate standard/profile requires review.'}:{})};
+    assert.throws(()=>buildTest262Catalog({snapshot:{repository:'tc39/test262',revision:'1'.repeat(40),
+      files:Object.fromEntries(Object.entries(base.sources).map(([name,value])=>[name,gitBlobSha(value)]))},
+      sources:base.sources,profile:base.catalog.profile,classifications:{[path]:classification}}),/review evidence|classification fields/);
+    assert(source.includes('features: [generators]'));
+  }
+});
+
+test('membership review binds suite, source closure, profile and normative clauses across every variant',()=>{
+  const input=fixture({'test/core.js':{membership:'edition',requiredForThisRelease:true},
+    'test/missing.js':{membership:'extension',requiredForThisRelease:false},
+    'test/legacy.js':{membership:'outside_profile',requiredForThisRelease:false,reason:'Separate profile.'}});
+  assert.equal(input.catalog.variants.length,4);
+  assert(input.catalog.variants.filter(row=>row.classification.membership!=='unclassified')
+    .every(row=>row.classification.evidence.sourceDigest===row.sourceDigest));
+  assert.equal(validateTest262Catalog(input.catalog),true);
+  const tampered=structuredClone(input.catalog),target=tampered.variants.find(row=>row.path==='test/core.js');
+  target.classification.evidence.sourceDigest='f'.repeat(64);
+  const {digest,...body}=tampered;tampered.digest=conformanceDigest(body);
+  assert.throws(()=>validateTest262Catalog(tampered),/test source digest/);
+  const wrongProfile=structuredClone(input.catalog),variant=wrongProfile.variants.find(row=>row.path==='test/core.js');
+  variant.classification.evidence.hostProfileDigest='f'.repeat(64);
+  const {digest:oldDigest,...wrongBody}=wrongProfile;wrongProfile.digest=conformanceDigest(wrongBody);
+  assert.throws(()=>validateTest262Catalog(wrongProfile),/host profile digest/);
+  const wrongClosure=structuredClone(input.catalog),closureRow=wrongClosure.variants.find(row=>row.path==='test/core.js');
+  closureRow.classification.evidence.sourceInputs.push({path:'test/omitted-helper.js',sha256:'b'.repeat(64),kind:'test'});
+  const {digest:closureDigest,...closureBody}=wrongClosure;wrongClosure.digest=conformanceDigest(closureBody);
+  assert.throws(()=>validateTest262Catalog(wrongClosure),/source input closure/);
+  const missingClause=fixture({'test/core.js':{membership:'edition',requiredForThisRelease:false}});
+  const invalid=structuredClone(missingClause.catalog),evidence=invalid.variants[0].classification.evidence;
+  evidence.normativeObligations[0].clauseIds=['not-a-clause'];
+  for(const row of invalid.variants){const {id,...identity}=row;
+    row.id=conformanceDigest({suiteRevision:invalid.suiteRevision,profile:invalid.profile,...identity});}
+  const {digest:old,...invalidBody}=invalid;invalid.digest=conformanceDigest(invalidBody);
+  assert.throws(()=>buildTest262EditionAudit({...missingClause,catalog:invalid}),/clause absent/);
+  assert.equal(input.catalog.variants.find(row=>row.path==='test/core.js').classification.requiredForThisRelease,true);
+  assert.deepEqual(buildTest262EditionAudit(input).claims,
+    {editionMembershipCertified:false,applicabilityCertified:false,conformance:false});
 });
 
 test('changed original bytes and rehashed missing variants cannot manufacture a smaller denominator',()=>{

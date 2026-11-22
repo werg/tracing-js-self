@@ -81,12 +81,22 @@ export function buildTest262EditionAudit({catalog,sources,specification,bytes,py
   const modes=new Map();
   for(const variant of catalog.variants){
     const {id,...identity}=variant,metadata=routing.get(variant.path);
+    const expectedHarness=metadata&&!metadata.flags.includes('raw')?[...new Set(['assert.js','sta.js',
+      ...(metadata.flags.includes('async')?['doneprintHandle.js']:[]),...metadata.includes])]
+      .map(name=>({path:'harness/'+name,sha256:snapshot.files['harness/'+name]?
+        sha(sources['harness/'+name]):null})):[];
     if(!references.has(variant.path)||variant.sourceDigest!==fileIdentities.get(variant.path)||
        id!==conformanceDigest({suiteRevision:catalog.suiteRevision,profile:catalog.profile,...identity})||
-       (metadata?conformanceDigest(metadata)!==conformanceDigest(variant.metadata):variant.metadata!==null))
+       (metadata?conformanceDigest(metadata)!==conformanceDigest(variant.metadata):variant.metadata!==null)||
+       conformanceDigest(variant.harness)!==conformanceDigest(expectedHarness))
       throw new TypeError('Edition audit variant contradicts its pinned source or profile: '+variant.path);
     if(!modes.has(variant.path))modes.set(variant.path,[]);
     modes.get(variant.path).push(variant.mode);
+    const evidence=variant.classification.evidence;
+    for(const obligation of evidence?.normativeObligations??[]){
+      if(obligation.basis==='edition'&&obligation.clauseIds.some(id=>!inventory.sections.some(section=>section.id===id)))
+        throw new TypeError('Membership review cites a clause absent from the exact pinned edition: '+variant.path);
+    }
   }
   for(const path of references.keys()){
     const expected=routing.has(path)?test262VariantModes(routing.get(path)):['unclassified'];
