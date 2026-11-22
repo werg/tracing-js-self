@@ -328,6 +328,7 @@ export class RegionSelectedOrchestrationDriver {
       demand(ownerSnapshot===null?serviceAdmissionCoordinator===null:Boolean(serviceAdmissionCoordinator)&&
         isDeepStrictEqual(copy(serviceAdmissionCoordinator.ownerSnapshot()),ownerSnapshot),
         'known terminal close requires the exact retained service owner snapshot');
+      const closePolicy={...policy,...(ownerSnapshot===null?{}:{serviceAdmission:copy(ownerSnapshot)})};
       assertSelectedOrchestrationExecutionClock(executionClock);
       const beforeElapsed=await executionClock.elapsed(snapshot.continuation.clockReceipt,{timeoutMs:policy.timeoutMs});
       demand(beforeElapsed>=Math.max(snapshot.continuation.elapsedMs,terminal.closeElapsedMs??0),
@@ -374,7 +375,7 @@ export class RegionSelectedOrchestrationDriver {
         const native=copy(await select.checkpoint()),elapsedMs=await executionClock.elapsed(
           snapshot.continuation.clockReceipt,{timeoutMs:policy.timeoutMs});
         const finalTerminal=buildRecoveredTerminalCloseV8({checkpoint:latestEntry.checkpoint,terminal,recovery:recovered,
-          native,elapsedMs,policy,initialPublic,serviceAdmission});
+          native,elapsedMs,policy:closePolicy,initialPublic,serviceAdmission});
         const stillLatest=validateSelectedHistoryChain(copy(await historyJournal.readLatest(copy(historyReceipt))),historyReceipt);
         demand(isDeepStrictEqual(stillLatest,entries),'acknowledged terminal history changed during native recovery');
         checkAbort();

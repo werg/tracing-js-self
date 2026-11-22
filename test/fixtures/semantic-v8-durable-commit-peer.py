@@ -50,7 +50,7 @@ def main():
         action_index = args.index("--fault-action")
         action_name = args[action_index + 1]
         del args[action_index:action_index + 2]
-    if fault not in {None, "before-native-intent", "after-native-outcome", "alter-reply"}:
+    if fault not in {None, "none", "before-native-intent", "after-native-outcome", "alter-reply"}:
         raise ValueError("Unknown controlled process-loss boundary")
     if request_ordinal is not None and request_ordinal < 1:
         raise ValueError("Fault request ordinal must be positive")

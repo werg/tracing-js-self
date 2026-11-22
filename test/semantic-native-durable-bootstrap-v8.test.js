@@ -151,7 +151,7 @@ test('unknown bootstrap refuses replay, stale create recovery and a bootstrap re
   for(const [operation,chosen,pattern,dispatches]of [
     ['recoverBootstrapChild',receipt,/never admitted|unknown/,1],
     ['recoverCommit',createReceipt,/later request/,0],
-    ['recoverCommit',receipt,/selected-commit producer request/,0]
+    ['recoverCommit',receipt,/retained request operation differs from the requested recovery/,0]
   ]){
     const fresh=await replacement(context);
     try{
