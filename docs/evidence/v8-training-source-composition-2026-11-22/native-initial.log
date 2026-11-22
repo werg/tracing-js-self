@@ -1,0 +1,8 @@
+........................................................................ [ 37%]
+........................................................................ [ 75%]
+.......................sss...................... [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_admit_semantic_v8.py:320: set the live producer and pinned tokenizer to check full CLI admission
+SKIPPED [1] tests/test_admit_semantic_v8.py:468: set MEGATOKEN_NATIVE_SOURCE_PRODUCER to run the live V8 authority test
+SKIPPED [1] tests/test_admit_semantic_v8.py:500: set MEGATOKEN_NATIVE_SOURCE_PRODUCER to run the live V8 authority test
+189 passed, 3 skipped, 24 subtests passed in 116.20s (0:01:56)

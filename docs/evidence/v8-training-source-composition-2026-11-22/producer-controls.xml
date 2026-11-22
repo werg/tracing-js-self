@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="test/qualify-support-lifecycle.test.js" time="0.696069" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/qualify-support-lifecycle.test.js"/>
+	<testcase name="explicit original module source evidence survives fresh source, projection and replay checks" time="214.136456" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-module-scheduler-admission-v8.test.js"/>
+	<testcase name="default module admission retains its existing refusal" time="0.010042" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-module-scheduler-admission-v8.test.js"/>
+	<testcase name="a raw scheduler plan cannot replace original module source evidence" time="0.001261" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-module-scheduler-admission-v8.test.js"/>
+	<testcase name="rehashing a changed dependency/TLA plan cannot acquire source authority" time="0.009041" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-module-scheduler-admission-v8.test.js"/>
+	<testcase name="changed original source cannot reuse a previously linked program" time="0.007686" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-module-scheduler-admission-v8.test.js"/>
+	<testcase name="a forged original ESM outcome is independently rerun" time="0.106976" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-module-scheduler-admission-v8.test.js"/>
+	<testcase name="published module plans cannot be removed or switched independently of private source proof" time="2.139024" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-module-scheduler-admission-v8.test.js"/>
+	<testcase name="logical initialization still requires its freshly rebuilt source certificate" time="47.530064" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-module-scheduler-admission-v8.test.js"/>
+	<testcase name="experimental source entry remains a bounded scalar single-call profile" time="0.000473" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-module-scheduler-admission-v8.test.js"/>
+	<testcase name="a module observer cap preserves the failed worker diagnostic without admitting its source" time="0.366369" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-protocol-reference-failure-v8.test.js"/>
+	<testcase name="a returned Promise that leaves the worker unsettled reports its process exit" time="0.500338" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-protocol-reference-failure-v8.test.js"/>
+	<testcase name="fixed support cohort keeps all 16 templates and four declared variants before execution" time="0.133118" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-region-support-cohort.test.js"/>
+	<testcase name="support registry rejects changed split, membership and source-derived core relations" time="0.114700" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-region-support-cohort.test.js"/>
+	<testcase name="support-only mutable materialization round-trips all 64 authored fixtures" time="0.083471" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-region-support-cohort.test.js"/>
+	<testcase name="generic generation encoding still refuses genuinely frozen guest values" time="0.000347" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-region-support-cohort.test.js"/>
+	<testcase name="full gate requires explicit independent positions and preserves logical/physical counts" time="0.001886" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects historical unmeasured report" time="0.000480" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects missing position inventory" time="0.000175" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects same-count shifted mask" time="0.000166" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects duplicated occurrence" time="0.000205" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects omitted target" time="0.000240" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects invented target" time="0.000203" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects missing decoder count" time="0.000191" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects boolean count" time="0.000354" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects unsupported structured masks" time="0.000329" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects logical/physical conflation" time="0.000217" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects hidden routing credit" time="0.000984" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects changed source membership" time="0.000211" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects changed objective" time="0.000173" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<testcase name="full gate rejects learned quality promotion" time="0.000120" classname="test" file="/workspace/scratch/05d92519587f/producer-training-composition/test/semantic-v8-position-coverage.test.js"/>
+	<!-- tests 31 -->
+	<!-- suites 0 -->
+	<!-- pass 31 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 267412.25101 -->
+</testsuites>

@@ -1,0 +1,182 @@
+name: Original module source admission and native packing
+
+on:
+  pull_request:
+    paths:
+      - 'contracts/semantic-native-policy-v8.json'
+      - 'contracts/semantic-execution-v8.json'
+      - 'src/semantic/module*.js'
+      - 'src/semantic/protocol*.js'
+      - 'src/semantic/compiler-v8.js'
+      - 'src/semantic/region-harness.js'
+      - 'src/semantic/regions.js'
+      - 'test/semantic-module-scheduler-admission-v8.test.js'
+      - 'test/fixtures/semantic-module-scheduler-source-v8.js'
+      - 'tools/emit-semantic-v8-module-scheduler-artifact.mjs'
+      - '.github/workflows/module-source-admission-investigation.yml'
+  push:
+    branches: [codex/v8-training-position-composition-20261122]
+    paths-ignore: ['docs/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: module-source-admission-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  original-module-artifact:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      TMPDIR: ${{ github.workspace }}
+      PYTHONPATH: ${{ github.workspace }}/megatoken/src
+      TRACING_JS_SELF_ROOT: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_NATIVE_SOURCE_PRODUCER: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+      MEGATOKEN_PYTHON: python
+      MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/semantic-v8-tokenizer.json
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - id: native-pin
+        name: Read the exact paired consumer from policy
+        working-directory: tracing-js-self
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,appendFileSync} from 'node:fs';
+          const policy=JSON.parse(readFileSync('contracts/semantic-native-policy-v8.json'));
+          if(policy.consumerRepository!=='werg/megatoken'||!/^[0-9a-f]{40}$/.test(policy.consumerRevision))
+            throw new Error('Module admission requires an exact native consumer');
+          appendFileSync(process.env.GITHUB_OUTPUT,'revision='+policy.consumerRevision+'\n');
+          JS
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: werg/megatoken
+          ref: ${{ steps.native-pin.outputs.revision }}
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: tracing-js-self/.nvmrc
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12.14'
+      - name: Install locked dependencies and the exact consumer
+        run: |
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+      - name: Bind the production tokenizer bytes
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,shutil
+          from pathlib import Path
+          from huggingface_hub import hf_hub_download
+          from megatoken.generation.codec import ByteCodec,LING_REPOSITORY,LING_REVISION,LING_TOKENIZER_SHA256
+          path=Path(os.environ['MEGATOKEN_TOKENIZER_JSON'])
+          shutil.copyfile(hf_hub_download(LING_REPOSITORY,'tokenizer.json',revision=LING_REVISION),path)
+          assert hashlib.sha256(path.read_bytes()).hexdigest()==LING_TOKENIZER_SHA256
+          codec=ByteCodec.from_tokenizer_json(path,expected_sha256=LING_TOKENIZER_SHA256)
+          print(json.dumps({'tokenizerIdentity':codec.fingerprint,'tokenizerSha256':LING_TOKENIZER_SHA256}))
+          PY
+      - name: Check paired canonical contract and unchanged six interoperability cases
+        working-directory: tracing-js-self
+        run: |
+          node tools/generate-semantic-region-contract.mjs --check
+          cmp contracts/semantic-execution-v8.json ../megatoken/src/megatoken/data/contracts/semantic-execution-v8.json
+          python - <<'PY'
+          import base64,gzip,json
+          from pathlib import Path
+          producer=json.loads(Path('test/fixtures/semantic-regions-v8.json').read_text())
+          native=json.loads(gzip.decompress(base64.b64decode(Path('../megatoken/tests/fixtures/semantic-regions-v8.json.gz.b64').read_bytes())))
+          assert producer==native and len(producer['examples'])==6
+          assert producer['interoperabilityDigest']=='f5c2d5fd15ad3b84e9b17de771d2f72a58f3c7dee4969ded8a7eb9c3c449f661'
+          print('Existing public contract and six interoperability payloads are unchanged')
+          PY
+      - name: Check admission guards, live source authority and bounded recheck deadlines
+        working-directory: megatoken
+        run: |
+          python -m pytest -q tests/test_source_recheck_deadline_v8.py tests/test_orchestration_admit_v8.py \
+            tests/test_admit_semantic_v8.py tests/test_admit_semantic_v8_session.py \
+            --junitxml="$RUNNER_TEMP/module-artifact-admission-controls.xml" \
+            2>&1 | tee "$RUNNER_TEMP/module-artifact-admission-controls.log"
+          python - <<'PY'
+          import os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases=list(ET.parse(Path(os.environ['RUNNER_TEMP'])/'module-artifact-admission-controls.xml').getroot().iter('testcase'))
+          assert len(cases)==45 and not any(case.find(k) is not None for case in cases for k in ('failure','error','skipped'))
+          print('All 45 admission and deadline controls passed with zero skips')
+          PY
+      - name: Check fresh original ESM, unique ownership and source tamper refusals
+        working-directory: tracing-js-self
+        env:
+          BOUND_MODULE_ADMISSION_EVIDENCE: ${{ runner.temp }}/module-artifact-source-controls.json
+        run: |
+          node --test --test-concurrency=1 --test-reporter=junit test/semantic-module-scheduler-admission-v8.test.js \
+            2>&1 | tee "$RUNNER_TEMP/module-artifact-source-controls.xml"
+          python - <<'PY'
+          import json,os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          cases=list(ET.parse(root/'module-artifact-source-controls.xml').getroot().iter('testcase'))
+          assert len(cases)==9 and not any(case.find(k) is not None for case in cases for k in ('failure','error','skipped'))
+          summary=json.loads((root/'module-artifact-source-controls.json').read_text())['summary']
+          assert summary=={'schema':'bound-module-source-admission-controls/1','sourceCases':1,'contexts':708,
+            'sourceValidated':True,'projectionValidated':True,'replayValidated':True,'nativeAdmission':False,
+            'productionPopulationChanged':False,'optimizerUpdates':0}
+          print('BOUND_MODULE_ADMISSION_CONTROLS_JSON '+json.dumps(summary,separators=(',',':')))
+          PY
+      - name: Admit and pack the actual original module artifact at existing window bounds
+        working-directory: megatoken
+        run: |
+          python -m pytest -q -s tests/integration/test_module_scheduler_artifact_packing.py \
+            --basetemp="$RUNNER_TEMP/module-artifact-packed-data" \
+            --junitxml="$RUNNER_TEMP/module-artifact-packing.xml" \
+            2>&1 | tee "$RUNNER_TEMP/module-artifact-packing.log"
+          python - <<'PY'
+          import json,os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          cases=list(ET.parse(root/'module-artifact-packing.xml').getroot().iter('testcase'))
+          assert len(cases)==1 and not any(case.find(k) is not None for case in cases for k in ('failure','error','skipped'))
+          prefix='MODULE_SCHEDULER_ARTIFACT_PACK_EVIDENCE_JSON '
+          lines=[line[len(prefix):] for line in (root/'module-artifact-packing.log').read_text().splitlines() if line.startswith(prefix)]
+          assert len(lines)==1
+          evidence=json.loads(lines[0])
+          assert evidence['logicalGeneratedTargets']==evidence['logicalContexts']==708
+          assert evidence['physicalSelectedTargets']>=708 and evidence['physicalContextParts']>=708
+          assert evidence['totalScoredPositions']>0 and evidence['packedWindows']>0
+          assert 0<evidence['maxPackedWindowTokens']<=8192
+          assert all(evidence[key] is True for key in ('allContextBytesReassembled','allTargetBytesReassembled',
+            'allContextDependenciesPreserved','allPhysicalRecordsWithin8192Tokens'))
+          assert evidence['nativeAdmission']['admitted'] is True
+          assert all(evidence['nativeAdmission']['checks'][key]=='passed' for key in ('replay','contexts','continuation','masks','sourceBinding','tokenizer'))
+          assert evidence['productionPopulationChanged'] is False and evidence['optimizerUpdates']==0 and evidence['learnedSuccess'] is None
+          (root/'module-artifact-packing-evidence.json').write_text(json.dumps(evidence,indent=2)+'\n')
+          print('One isolated original-source artifact passed all source/native checks and exact physical packing; no optimizer ran')
+          PY
+      - name: Verify exact paired checkouts at completion
+        if: ${{ !cancelled() }}
+        run: |
+          test -z "$(git -C megatoken status --porcelain --untracked-files=all)"
+          test -z "$(git -C tracing-js-self status --porcelain --untracked-files=all)"
+          git -C megatoken rev-parse HEAD
+          git -C tracing-js-self rev-parse HEAD
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.0
+        if: ${{ !cancelled() }}
+        with:
+          name: original-module-source-admission-and-packing
+          if-no-files-found: error
+          retention-days: 30
+          path: ${{ runner.temp }}/module-artifact-*

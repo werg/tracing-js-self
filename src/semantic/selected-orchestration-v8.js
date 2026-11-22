@@ -807,15 +807,23 @@ export class RegionSelectedOrchestrationDriver {
               attempt:attempt.attempt,track:state.track,childTrack,...clockFields}));
             checkAbort();
           }
-          const bootstrap=await this.select.bootstrapOrchestrationChild({session:this.session,
-            track:state.track,childTrack});
-          attempt.bootstrapReceipt=copy(bootstrap);
-          const requestReceipt=this.select.durableRequestReceipt?.();
-          if(requestReceipt)attempt.bootstrapRequestReceipt=copy(requestReceipt);
-          state=await readState();
-          const bound=state.tracks.find(row=>row.address===childTrack);
-          demand(bound?.bootstrap_ready===true&&isDeepStrictEqual(bound.execution,child.execution),
-            'native child is not ready under the exact bootstrapped execution binding');
+          try{
+            const bootstrap=await this.select.bootstrapOrchestrationChild({session:this.session,
+              track:state.track,childTrack});
+            attempt.bootstrapReceipt=copy(bootstrap);
+            const requestReceipt=this.select.durableRequestReceipt?.();
+            if(requestReceipt)attempt.bootstrapRequestReceipt=copy(requestReceipt);
+            state=await readState();
+            const bound=state.tracks.find(row=>row.address===childTrack);
+            demand(bound?.bootstrap_ready===true&&isDeepStrictEqual(bound.execution,child.execution),
+              'native child is not ready under the exact bootstrapped execution binding');
+          }catch(error){
+            // The reservation was acknowledged even when its separate startup
+            // outcome is unknown. Keep its exact receipt and accepted count.
+            attempt.status='post-commit-failed';attempt.failure=String(error?.message??error);
+            if(error?.evidence!==undefined)attempt.failureEvidence=copy(error.evidence);
+            throw error;
+          }
           this.continuation={...this.continuation,phase:'coordinator-ready'};
           if(await maybePause())throw Object.assign(new Error('orchestration paused at requested checkpoint boundary'),
             {selectedOrchestrationPause:true});

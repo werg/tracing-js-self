@@ -1,0 +1,12 @@
+✔ independent Promise observations preserve identity, calls, cleanup order and returned settlement (549.027267ms)
+✔ independent Promise metadata refuses modified prototypes or own state (93.908221ms)
+✔ a module observer cap preserves the failed worker diagnostic without admitting its source (378.331369ms)
+✔ a returned Promise that leaves the worker unsettled reports its process exit (87.012271ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1066.022847

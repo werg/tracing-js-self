@@ -83,7 +83,7 @@ async function setup(t,action,{fault='after-native-outcome',timeoutMs=120000}={}
     result=await driver.run();
     assert.equal(result.status,'failed',JSON.stringify(result.failure));
     assert.equal(result.coordinatorAttempts.at(-1)?.status,
-      action==='bootstrap-orchestration-child'?'committed':'acknowledgement-unknown',
+      action==='bootstrap-orchestration-child'?'post-commit-failed':'acknowledgement-unknown',
       JSON.stringify({failure:result.failure,transport:first.select.status()}));
     receipt=first.select.durableRequestReceipt();assert(receipt);
   }finally{await close(first);}

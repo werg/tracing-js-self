@@ -165,7 +165,12 @@ test('actual Python later child bootstrap fences recovery of the earlier native 
   try{
     await assert.rejects(fresh.select.recoverCommit({receipt}),/supersed|later native|later request/);
     assert.equal(fresh.select.metrics().semanticallyAccepted,0);
-    assert.equal(readFileSync(fresh.log,'utf8'),'','stale poststate must refuse before decoder replay');
+    assert.equal(fresh.select.metrics().predictionAttempts,0);
+    assert.equal(fresh.select.metrics().runtime.rpcCalls,0);
+    // The stale producer receipt refuses before an RPC and may beat the peer's
+    // exclusive log creation. Absence is allowed only alongside zero work.
+    assert.equal(existsSync(fresh.log)?readFileSync(fresh.log,'utf8'):'','',
+      'stale poststate must refuse before decoder replay');
   }finally{await close(fresh);}
 });
 
