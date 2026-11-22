@@ -34,8 +34,10 @@ supersedes pending/isolation statements in the historical checkpoints below.
   application recovery. Later mutations must match the exact continuation;
   raw initialization cannot bypass the durable path when recovery is enabled.
 - **The source-owned module ledger and opt-in source/data bridge are integrated.**
-  The complete ledger composition passed 225 native and 119 producer controls
-  with zero skips and 16,208 state cuts. The neutral-contract source/data pair
+  The complete ledger composition passed 225 native cases plus 119 pytest
+  subtests and, separately, 208 producer leaf cases, all with zero skips. The
+  16 affected module/training controls also passed after import cleanup; these
+  are overlapping checks, not additional state cuts. The neutral-contract source/data pair
   `7663c11/3fa9272` separately passed 45 native controls, nine source controls
   and one actual original-module packing test with zero skips in
   [run 45020274216](https://github.com/werg/tracing-js-self/actions/runs/45020274216).
