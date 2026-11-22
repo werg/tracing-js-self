@@ -73,7 +73,7 @@ function boundary(){
 function selector(options={}){
   const {selectorOptions={},...serverOptions}=options;
   return createNativeV8ProcessSelector({...selectorOptions,command:process.execPath,
-    args:['--input-type=module','-e',fakeServer(serverOptions)],timeoutMs:options.timeoutMs??5000});
+    args:['--input-type=module','-e',fakeServer(serverOptions),'--'],timeoutMs:options.timeoutMs??5000});
 }
 
 test('native v8 transport preserves fragmented original output and waits for semantic acknowledgement',async()=>{

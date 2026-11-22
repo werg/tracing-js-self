@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: werg/megatoken
-          ref: 70eef100ee08915e4be85e1cdbf095660dfafead
+          ref: 613822cd58830b4a3ed40e1765150dc6780fa7b4
           path: megatoken
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
