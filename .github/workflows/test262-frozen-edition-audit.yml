@@ -51,8 +51,15 @@ jobs:
           node tools/catalog-test262.mjs \
             --suite-root ../test262 \
             --revision d53ebc8b1931d9f1541e43d59650776e4b766248 \
-            --out ../audit-evidence/test262-catalog.json 2>&1 | tee ../audit-evidence/catalog.log
-          xz -6 ../audit-evidence/test262-catalog.json
+            --out ../audit-evidence/test262-catalog-run.json 2>&1 | tee ../audit-evidence/catalog.log
+          node --input-type=module -e '
+            import {readFileSync,writeFileSync} from "node:fs";
+            const report=JSON.parse(readFileSync("../audit-evidence/test262-catalog-run.json","utf8"));
+            if(!report.catalog||report.catalog.suiteRevision!=="d53ebc8b1931d9f1541e43d59650776e4b766248")
+              throw Error("Catalog runner output is missing the exact frozen catalog");
+            writeFileSync("../audit-evidence/test262-catalog.json",JSON.stringify(report.catalog)+"\n");
+          '
+          xz -6 ../audit-evidence/test262-catalog-run.json ../audit-evidence/test262-catalog.json
       - name: Reconcile all original source files and execution variants
         working-directory: producer
         shell: bash
@@ -93,11 +100,12 @@ jobs:
           ' | tee ../audit-evidence/denominator-check.log
       - name: Hash retained audit evidence
         working-directory: producer
-        run: cd ../audit-evidence && sha256sum test262-catalog.json.xz test262-edition-audit.json.xz catalog.log audit.log denominator-check.log toolchain.log npm-ci.log > SHA256SUMS
+        run: cd ../audit-evidence && sha256sum test262-catalog-run.json.xz test262-catalog.json.xz test262-edition-audit.json.xz catalog.log audit.log denominator-check.log toolchain.log npm-ci.log > SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
           name: test262-edition-audit-d53ebc8-${{ github.sha }}
           path: |
+            audit-evidence/test262-catalog-run.json.xz
             audit-evidence/test262-catalog.json.xz
             audit-evidence/test262-edition-audit.json.xz
             audit-evidence/catalog.log
