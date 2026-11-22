@@ -1,0 +1,53 @@
+{
+  "schema": "semantic-v8-hosted-position-coverage-launch/1",
+  "status": "queued",
+  "run": {
+    "id": 45023684906,
+    "attempt": 1,
+    "event": "push",
+    "url": "https://github.com/werg/tracing-js-self/actions/runs/45023684906",
+    "createdAt": "2026-11-22T12:42:37Z",
+    "jobId": 137211919487
+  },
+  "branch": {
+    "name": "codex/v8-target-coverage-position-qualification-20261122",
+    "createdAtBase": "451bf2b0e68cb415472e29382a4bb9407c5bd678",
+    "advancedWithExpectedBase": true,
+    "force": false
+  },
+  "source": {
+    "producerRepository": "werg/tracing-js-self",
+    "producerRevision": "9cf091e6ccc5add960ef0897576d0c391b199a65",
+    "producerTree": "96917ba346a7650f602f41d4d159671a0db8cf2f",
+    "nativeRepository": "werg/megatoken",
+    "nativeRevision": "1a69d9da3254b7568c831d12866a629c206cf4fe",
+    "nativeTree": "c6dcecf3cf47a589d940c883d6c176fed54003ab",
+    "contractDigest": "a952385535b9b5e19d737206286f6f26c149f7301c51b4b106fe3b1cae5ab55a"
+  },
+  "requiredGates": [
+    "64 fresh source and native admission receipts",
+    "production tokenizer byte identity and exact physical packing",
+    "64-source support preparation with 48 train / 12 validation / 4 challenge ownership",
+    "separate ordinary two-update fresh-process resume, export and service lifecycle",
+    "fresh complete one-pass optimizer target census",
+    "independent prepared-text decoder position and loss-mask comparison against actual checkpoint receipts"
+  ],
+  "configuredBounds": {
+    "hostedJobMinutes": 180,
+    "freshCoverageTrainingMilliseconds": 7200000,
+    "expectedLifecycleUpdates": 2,
+    "expectedCoverageUpdates": 348,
+    "expectedCombinedUpdates": 350,
+    "sourceCount": 48,
+    "logicalPolicyTargets": 696,
+    "physicalPolicyTargets": 720
+  },
+  "results": {
+    "actualOptimizerUpdates": null,
+    "exactOnePassTargetCensus": null,
+    "independentPreparedTextPositionComparison": null,
+    "learnedSuccess": null
+  },
+  "scope": "Launch record only. Configured counts are requirements, not observed optimizer exposure. The two lifecycle updates and separate fresh coverage fit must be reported independently. Hidden routing positions, media/action-field position masks and learned quality remain outside this prepared plain-text position claim.",
+  "predecessorProof": "Historical run 45009024141 and its branch remain untouched; it used the older contract/pair and measured target presence but not decoder positions."
+}
