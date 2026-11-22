@@ -20,6 +20,7 @@ import {GENERATOR_PROFILE_V8,GENERATOR_HEAP_FIELDS,GENERATOR_INTRINSICS_V8} from
 import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIELDS} from './protocol-proxy-v8.js';
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8} from './protocol-promise-executor-v8.js';
+import {ASYNC_CALL_PROFILE_V8,ASYNC_CALL_STATE_V8,ASYNC_CALL_FIELDS_V8} from './protocol-async-call-v8.js';
 
 export const SEMANTIC_V8_DEFINITION=Object.freeze({
   execution:REGION_EXECUTION_VERSION,trace:REGION_TRACE_VERSION,context:REGION_CONTEXT_VERSION,
@@ -56,6 +57,10 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
     'receiver','captureAliases','continuations','reactionSequence','blockedSync','callReturn','activeJob','scheduler','frameFunctions','jobErrors','protocol'],
   protocolState:{schema:PROTOCOL_STATE_V8_SCHEMA,fields:PROTOCOL_STATE_V8_FIELDS,initial:null,
     heap:'Existing heap nodes with property, descriptor and private-element Maps serialized as entry arrays; Symbol keys remain tagged pairs.',
+    asyncCalls:{profile:ASYNC_CALL_PROFILE_V8,schema:ASYNC_CALL_STATE_V8,fields:ASYNC_CALL_FIELDS_V8,
+      storage:'Retained asyncCall metadata belongs to its internal execution Promise; asyncFunction marks its callable closure.',
+      capabilities:'First await detaches the child and restores its caller scope. Later continuations resume in the realm FIFO with the same receiver, live capture cells, and execution Promise. Child completion settles that Promise without completing its parent invocation.',
+      boundaries:'Async Promise callbacks, Promise adoption, thenable assimilation and implicit scheduler completion require separate profiles.'},
     construction:{schema:CONSTRUCTION_STATE_V8_SCHEMA,fields:CONSTRUCTION_STATE_V8_FIELDS,initial:null,
       callableFields:CALLABLE_STATE_V8_FIELDS,frameFields:CONSTRUCTION_FRAME_V8_FIELDS,
       privateElementFields:['kind','value','version'],

@@ -47,6 +47,36 @@ and duplicated descriptors for one process lock do not create independent
 owners. These distinctions now have explicit checks rather than inferred
 success claims.
 
+The later known-history correction is published at producer `656661f`: an older
+acknowledged prefix now refuses recovery if any later durable position exists,
+including an unacknowledged pending-action record. The local complete recovery
+run passed 96 cases with zero failures/errors/skips against native `abf4dc6`.
+[Exact evidence and limits](evidence/v8-current-history-2026-11-22/README.md).
+
+Further independently qualified source increments are now being composed:
+shared generators with Promise execution (`36f9dd7/385b830`) and nested async
+calls (`fa8eeee2/fe563c1`). The latter hosted gate passed 95 native and 107 Node
+controls with zero skips: six generator sources/189 native contexts, ten async
+sources/231 native contexts, and the earlier six module lifecycle sources/64
+cuts. These are distinct technical populations; evaluated-module and training
+admission remain false, with zero optimizer updates. The existing six
+interoperability example payloads are unchanged. The paired public contract
+digest is `f92c2b99bcd373eadaadf2fa425af6b866c4312a18c6ff62b74743c40ab19f3c`.
+[Frozen nested-call evidence](evidence/v8-nestedasyncfa8e-2026-11-22/README.md).
+
+The complete frozen edition audit also ran successfully at exact producer
+`d1b35fa`: 53,616 source files and 102,994 execution variants, with every source
+and mode preserved. All 102,994 variants remain explicitly unclassified and
+none is marked required-for-release. The 94,235 normal expectations and 8,759
+negative expectations reconcile to the full variant denominator. Reference
+anchors are review evidence, not edition/applicability/conformance decisions.
+The complete compressed inputs/reports, successful and failed logs and
+checksums are retained in
+[the full edition audit](evidence/test262-edition-audit-d53ebc8-2026-11-22/README.md).
+The [production route matrix](V6_TO_V8_PRODUCTION_ROUTE_MATRIX.md) supersedes
+outdated route-absence claims for four inspected categories; it remains a
+partial inventory, with complete production mapping still open.
+
 - Producer: `werg/tracing-js-self`, `codex/language-coverage-v8-cutover`, based on
   `f32c6fcf4e11ef2c18592a04d9ff108ad74913dc` (merged producer PR 46).
 - Consumer: `werg/megatoken`, `codex/language-coverage-v8-cutover`, based on

@@ -16,48 +16,17 @@ import {RegionExecutionHarness} from './region-harness.js';
 import {cloneRegionController} from './regions.js';
 import {createSourceClaimCoordinatorV8} from './source-claim-coordinator-v8.js';
 import {ORDINARY_PROTOCOL_SOURCE_V8,protocolSourceClaimsV8} from './protocol-source-claims-v8.js';
-import {encodeProtocolRecordV8,validateProtocolValueV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
+import {encodeProtocolRecordV8,validateProtocolValueV8} from './protocol-codec-v8.js';
+import {guardHeap,prototype,descriptor,orderedKeys,frameFields} from './protocol-source-shapes-v8.js';
 import {PROTOCOL_SOURCE_ADAPTERS_V8} from './protocol-source-extensions-v8.js';
 import {createExperimentalModuleNamespaceSourceAdapterV8} from './protocol-module-namespace-source-v8.js';
 import {createSharedProtocolSourceComponentsV8} from './protocol-source-bridge-v8.js';
+import {createPromiseExecutorTeacherV8} from './protocol-promise-executor-source-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual,lit=value=>({op:'literal',value:copy(value)});
 function refuse(message){const error=new TypeError('Protocol source projection: '+message);error.category='unsupported.protocol-source';throw error;}
 const valueTag=value=>Array.isArray(value)&&['undefined','null','bool','str','num','bigint','ref','symbol'].includes(value[0]);
-const ordinaryFields=new Set(['id','kind','properties','propertyVersions','shapeVersion','version','propertyOrder','prototype','accessors','dataAttributes','extensible']);
-const functionFields=new Set([...ordinaryFields,'codeId','closureEnvId','async','arrow','lexicalThis','nonConstructible']);
-const symbolFields=new Set(['id','kind','description','registeredKey','properties','propertyVersions','shapeVersion','version']);
-const frameFields=new Set(['id','codeId','pc','stack','envId','callerFrameId','asyncPromiseId','status','blockedOn','awaiting','operationId','pendingCoercionThrow','handlers','loops','thisValue','version','pendingProperty','completion']);
-function guardHeap(node,{extraFields=[],allowUnknown=false,allowFunctionMetadata=false}={}){
-  const fields=node.kind==='symbol'?symbolFields:node.kind==='function'?functionFields:
-    ['object','array'].includes(node.kind)?ordinaryFields:null;
-  const allowed=fields?new Set([...fields,...extraFields]):allowUnknown?new Set(['id','kind','version',...extraFields]):null;
-  if(!allowed||Object.keys(node).some(key=>!allowed.has(key)))refuse('heap kind or metadata needs a declared protocol: '+node.kind);
-  if(node.nonConstructible===true&&!node.arrow&&!allowFunctionMetadata)refuse('method construction capability requires explicit function metadata');
-  if(node.kind==='function'&&node.async)refuse('async function state needs the scheduler protocol');
-}
-function prototype(node){const p=node.prototype;
-  if(p===undefined||['Object.prototype','Array.prototype','Function.prototype'].includes(p))return 'ordinary';
-  if(PROTOCOL_INTRINSIC_PROTOTYPES_V8.includes(p))return p;
-  if(p===null)return null;if(typeof p==='string')return ['ref',p];
-  refuse('unrecognized owned prototype representation');
-}
-function descriptor(node,key){
-  const accessor=Object.hasOwn(node.accessors??{},key)?node.accessors[key]:null;
-  if(accessor)return {kind:'accessor',get:copy(accessor.get?.value??['undefined']),set:copy(accessor.set?.value??['undefined']),
-    enumerable:accessor.enumerable,configurable:accessor.configurable};
-  const value=node.properties?.[key]?.value;if(!value)return null;
-  return {kind:'data',value:copy(value),...(node.kind==='array'&&key==='length'?
-    {writable:true,enumerable:false,configurable:false}:{writable:true,enumerable:true,configurable:true}),...copy(node.dataAttributes?.[key]??{})};
-}
-function orderedKeys(node){
-  const keys=[...new Set([...(node.propertyOrder??[]),...Object.keys(node.properties??{}),...Object.keys(node.accessors??{})])]
-    .filter(key=>descriptor(node,key)!==null);
-  const integer=key=>/^(0|[1-9][0-9]*)$/.test(key)&&Number(key)<4294967295;
-  return [...keys.filter(integer).sort((a,b)=>Number(a)-Number(b)),
-    ...keys.filter(key=>!integer(key)&&propertyKeyValue(key)[0]==='str'),...keys.filter(key=>propertyKeyValue(key)[0]==='symbol')];
-}
 function sourceInventory(source,admitSyntax=()=>false){const functions=new Map(),nodes=new Map();
   function visit(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(visit);return;}
     if(typeof node.type==='string')nodes.set(node.start+':'+node.end,node);
@@ -91,6 +60,10 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   const entry=bundle.entrySpec;if(entry?.kind!=='function')refuse('explicit function entry required');
   const source=bundle.sources.find(row=>row.sourceId===entry.sourceId)?.text;
   adapters=adapters.map(adapter=>typeof adapter==='function'?adapter({bundle,source}):adapter).filter(Boolean);
+  // Nested async bodies still call ordinary source helpers. The existing
+  // synchronous callable peer retains those scopes even without new Promise.
+  if(adapters.some(adapter=>adapter.id==='async-scoped-call-source/1')&&!adapters.some(adapter=>adapter.id==='promise-executor/1'))
+    adapters.push({id:'promise-executor/1',sourceComponent:createPromiseExecutorTeacherV8()});
   if(moduleNamespacePlan)adapters.push(createExperimentalModuleNamespaceSourceAdapterV8({source,moduleNamespacePlan,bundle}));
   if(adapters.some(adapter=>typeof adapter.id!=='string'||!adapter.id||adapter.id.length>128)||
     new Set(adapters.map(adapter=>adapter.id)).size!==adapters.length)refuse('distinct versioned extension identities required');

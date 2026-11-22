@@ -6,6 +6,9 @@ import {isDeepStrictEqual as eq} from 'node:util';
 import {decode} from '../values.js';
 import {protocolSourceClaimsV8,SHARED_PROTOCOL_SOURCE_IDS_V8} from './protocol-source-claims-v8.js';
 import {sourceHasSyntaxV8} from './source-projection-base-v8.js';
+import {propertyKeyValue} from '../property-keys.js';
+import {describeProtocolObjectV8} from './protocol-state-v8.js';
+import {guardHeap,prototype,orderedKeys,frameFields} from './protocol-source-shapes-v8.js';
 
 const copy=structuredClone;
 function memberName(node){
@@ -16,6 +19,7 @@ function memberName(node){
 }
 function sharedSyntax(adapter,node){
   const name=memberName(node);
+  if(adapter.id==='synchronous-generator-source/1')return node.generator===true&&!node.async;
   if(adapter.id==='ordinary-array-map-source/1')return node.type==='MemberExpression'&&name==='map';
   if(adapter.id==='builtin-iterator/1')return node.type==='ForOfStatement'&&!node.await||
     node.type==='MemberExpression'&&(['values','keys','entries','next'].includes(name)||
@@ -50,6 +54,9 @@ function selected(adapter,input){
 export function createSharedProtocolSourceComponentsV8({source,bundle,adapters}){
   const chosen=adapters.filter(adapter=>selected(adapter,{source,bundle}));
   if(!chosen.length)return [];
+  if(chosen.some(adapter=>adapter.id==='synchronous-generator-source/1')&&
+    sourceHasSyntaxV8({source,bundle},node=>node.type==='YieldExpression'&&node.delegate))
+    throw new TypeError('Shared generator source: yield delegation requires its explicit composition profile');
   const syntax=inventory(source,bundle);
   return chosen.map(adapter=>{
     const id=adapter.id,claims=adapter.claims??protocolSourceClaimsV8(id),
@@ -58,7 +65,7 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
       throw new TypeError('Shared protocol source state requires both capture and restore: '+id);
     if(!stateful&&adapter.stateless!==true)
       throw new TypeError('Shared protocol source adapter must declare retained state: '+id);
-    function invoke(ctx,event,operation){
+    function invoke(ctx,event,operation,{allocationFields=null}={}){
       const owner=event?ctx.rootFor(event.invocationId):ctx.rootInvocation,
         prior=stateful?adapter.captureState():null,component=ctx.componentState(id);
       const controller=()=>ctx.controller(owner);
@@ -115,11 +122,29 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
         }
         return ctx.tag(value);
       };
+      const baseCheckHeap=node=>{
+        const expected={kind:node.kind==='function'?'closure':node.kind,prototype:prototype(node),extensible:node.extensible!==false,
+          properties:orderedKeys(node).map(key=>({key:propertyKeyValue(key),descriptor:descriptor(node,key)})),
+          ...(node.kind==='function'?{code:syntax.codes.get(node.codeId),functionKind:node.arrow?'arrow':'ordinary',
+            lexicalReceiver:node.arrow?node.lexicalThis:null}:{})};
+        if(!eq(expected,describeProtocolObjectV8(controller(),ctx.identity(node.id))))
+          ctx.refuse('shared protocol descriptor/heap state differs: '+id+'/'+node.id);
+      };
       const context={bundle:ctx.bundle,source:ctx.source,inventory:syntax,
         get state(){return ctx.state;},get beforeState(){return ctx.state;},
         get controller(){return controller();},
         get publicInvocation(){return controller().stack.at(-1);},
-        tag,cell:ctx.cell,frame:frame=>ctx.registerFrame(frame,owner),descriptor,publish,
+        tag,cell:ctx.cell,frame:frame=>ctx.registerFrame(frame,owner),descriptor,publish,orderedKeys,
+        functionCodes:syntax.codes,baseCheckHeap,
+        baseAllocate(node,at=event){
+          if(!allocationFields||node.kind!=='function'||node.id!==allocationFields.name||
+            Object.keys(node.properties??{}).length||node.generatorFunction||node.nonConstructible||
+            node.prototype!==undefined||Object.keys(node.dataAttributes??{}).length)
+            ctx.refuse('shared generator allocation requires its bare reserved source closure');
+          ctx.emitProtocol(owner,{kind:'allocate',name:allocationFields.name,objectKind:'closure',length:null,properties:[],
+            code:allocationFields.code,captures:copy(allocationFields.captures),functionKind:'ordinary',lexicalReceiver:null},
+            at,'owned-source-generator-closure/1');
+        },
         codeFor:node=>syntax.codes.get(node?.codeId)??ctx.refuse('shared source function has no exact definition'),
         bind:(name,value,at=event)=>ctx.emit(owner,'bind',{name,value:tag(value)},at,'shared-protocol-cell'),
         bindDerived:(name,value,at=event)=>{
@@ -165,7 +190,23 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
       prepare:{event:(_view,{event})=>({kind:'shared-protocol-event',event:event.eventId}),
         allocation:(_view,input)=>({kind:'shared-protocol-allocation',identity:input.identity}),
         completion:(_view,exit)=>({kind:'shared-protocol-completion',invocation:exit.invocation})},
-      allocation(ctx){ctx.refuse('protocol allocation must be performed by its reserved source event: '+id);},
+      allocation(ctx,event,fields){
+        const node=event?.stateChanges.find(change=>change.table==='heap'&&ctx.identity(change.id)===fields.name)?.after??
+          ctx.state.heap[fields.name];
+        if(id!=='synchronous-generator-source/1'||node?.generatorFunction!==true||fields.kind!=='closure')
+          ctx.refuse('protocol allocation must be performed by its reserved source event: '+id);
+        return invoke(ctx,event,context=>{
+          guardHeap(node,{extraFields:adapter.heapFields(node),allowUnknown:true,allowFunctionMetadata:true});
+          if(adapter.allocate(context,node,event)!==true||adapter.checkHeap(context,node)!==true)
+            ctx.refuse('shared generator definition allocation failed');
+          context.baseCheckHeap(node);
+          const prototypeId=node.properties.prototype.value[1],prototypeNode=event?.stateChanges.find(change=>
+            change.table==='heap'&&change.id===prototypeId)?.after??ctx.state.heap[prototypeId];
+          if(!prototypeNode)ctx.refuse('shared generator definition lacks its owned prototype');
+          guardHeap(prototypeNode);context.baseCheckHeap(prototypeNode);
+          return true;
+        },{allocationFields:fields});
+      },
       event:(ctx,event,row)=>invoke(ctx,event,context=>adapter.event(context,event,row)),
       completion(ctx,event,_row,exit){
         const change=event.stateChanges.find(change=>change.table==='frames'&&change.id===exit.invocation);
@@ -177,12 +218,22 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
           if(change.table==='heap'){
             const fields=adapter.heapFields?.(change.after);
             if(fields){
-              const allowed=new Set(['id','kind','version',...fields]);
-              if(Object.keys(change.after).some(key=>!allowed.has(key))||adapter.checkHeap?.(context,change.after)!==true)
+              const generator=id==='synchronous-generator-source/1',allowed=new Set(['id','kind','version',...fields]);
+              if(generator)guardHeap(change.after,{extraFields:fields,allowUnknown:true,allowFunctionMetadata:true});
+              if(!generator&&Object.keys(change.after).some(key=>!allowed.has(key))||adapter.checkHeap?.(context,change.after)!==true)
                 ctx.refuse('shared protocol heap comparison failed: '+id);
+              if(generator&&['object','array','function'].includes(change.after.kind))
+                context.baseCheckHeap(change.after);
             }
-          }else if(change.table==='frames'&&typeof adapter.checkFrame==='function'&&adapter.checkFrame(context,change.after)!==true)
-            ctx.refuse('shared protocol frame comparison failed: '+id);
+          }else if(change.table==='frames'){
+            const fields=adapter.frameFields?.(change.after);
+            if(id==='synchronous-generator-source/1'&&fields){
+              if(Object.keys(change.after).some(key=>!frameFields.has(key)&&!fields.includes(key))||
+                typeof adapter.checkFrame!=='function'||adapter.checkFrame(context,change.after,event)!==true)
+                ctx.refuse('shared protocol frame comparison failed: '+id);
+            }else if(id!=='synchronous-generator-source/1'&&typeof adapter.checkFrame==='function'&&adapter.checkFrame(context,change.after,event)!==true)
+              ctx.refuse('shared protocol frame comparison failed: '+id);
+          }
         }
         if(adapter.afterEvent?.(context,event,row)===false)ctx.refuse('shared protocol observer rejected: '+id);
         return true;

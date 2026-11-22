@@ -21,7 +21,7 @@ for(let i=2;i<process.argv.length;i++){
 for(const key of ['--catalog','--suite-root','--out'])if(!options.has(key))throw new TypeError('Required '+key);
 const root=fileURLToPath(new URL('..',import.meta.url)),catalogPath=resolve(options.get('--catalog'));
 const catalogBytes=catalogPath.endsWith('.xz')?execFileSync('xz',['--decompress','--stdout','--',catalogPath],
-  {maxBuffer:256*1024*1024}):readFileSync(catalogPath);
+  {maxBuffer:1024*1024*1024}):readFileSync(catalogPath);
 const catalog=JSON.parse(catalogBytes);
 const {snapshot,sources}=acquireTest262GitSnapshot({suiteRoot:options.get('--suite-root'),revision:catalog.suiteRevision});
 if(catalog.acquisition.fullUpstreamTree!==snapshot.acquisition.fullUpstreamTree||

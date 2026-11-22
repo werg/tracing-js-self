@@ -12,4 +12,5 @@ import {createGeneratorSourceAdapterV8} from './protocol-generator-source-v8.js'
 import {createPromiseExecutorSourceAdapterV8} from './protocol-promise-executor-source-v8.js';
 import {createArrayMapSourceAdapterV8} from './protocol-array-map-source-v8.js';
 import {createEnumerationSourceAdapterV8} from './protocol-enumeration-source-v8.js';
-export const PROTOCOL_SOURCE_ADAPTERS_V8=Object.freeze([memorySourceAdapterV8,createGeneratorSourceAdapterV8,createConstructionSourceAdapterV8,createIteratorSourceAdapterV8,createCustomIteratorSourceAdapterV8,createPromiseJoinSourceAdapterV8,createPromiseExecutorSourceAdapterV8,createPrimitiveConversionSourceAdapterV8,createProxySourceAdapterV8,createArrayMapSourceAdapterV8,createEnumerationSourceAdapterV8,createCompletionSourceAdapterV8]);
+import {createAsyncCallSourceAdapterV8} from './protocol-async-call-source-v8.js';
+export const PROTOCOL_SOURCE_ADAPTERS_V8=Object.freeze([memorySourceAdapterV8,createGeneratorSourceAdapterV8,createConstructionSourceAdapterV8,createIteratorSourceAdapterV8,createCustomIteratorSourceAdapterV8,createPromiseJoinSourceAdapterV8,createPromiseExecutorSourceAdapterV8,createAsyncCallSourceAdapterV8,createPrimitiveConversionSourceAdapterV8,createProxySourceAdapterV8,createArrayMapSourceAdapterV8,createEnumerationSourceAdapterV8,createCompletionSourceAdapterV8]);

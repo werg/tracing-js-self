@@ -112,6 +112,14 @@ Use **ECMAScript 2026, ECMA-262 17th edition**, as the initial normative languag
 
 The repository already pins a Test262 acquisition at `d53ebc8b1931d9f1541e43d59650776e4b766248`. Preserve it for historical reproduction, then choose and record the suite revision for each new campaign. A newer suite may contain features outside the frozen edition. [Snapshot lock][r-test262-lock]
 
+Keep edition membership and release requirements as explicit per-row fields.
+The current reference audit reports exact counts for `edition`, `extension`,
+`outside_profile`, and `unclassified` memberships, plus the release-required
+boolean and a scope-by-membership cross-tab. Those counts expose unresolved
+denominators; they do not certify applicability or remove rows. Missing
+classifications remain `unclassified` until reviewed against the retained
+specification and the declared language/host profile.
+
 Proposed manifest fields:
 
 ```json

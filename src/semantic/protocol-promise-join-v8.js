@@ -166,7 +166,7 @@ export function allowsPromiseJoinDetailedCallV8(controller,record){
   if(typeof identity!=='string'||!identity||identity.length>256)return false;
   const callee=controller.heap?.get(identity);
   if(callee)return callee.kind==='closure'&&(callee.functionKind===undefined||callee.functionKind==='ordinary')&&
-    callee.callable==null&&callee.constructorKind==null&&!callee.generatorFunction&&!callee.promiseResolver;
+    callee.callable==null&&callee.constructorKind==null&&!callee.generatorFunction&&!callee.promiseResolver&&!callee.asyncFunction;
   // Detailed-source lifecycle carries immutable source callable names. Match
   // them against this invocation's analyzed source rather than accepting
   // arbitrary names or any class constructor.

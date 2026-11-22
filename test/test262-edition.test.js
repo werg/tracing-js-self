@@ -32,7 +32,7 @@ test('descriptive references do not change routing identities or infer legacy an
   assert.throws(()=>test262SpecificationReference('/*---\nesid: one\nesid: two\nflags: [raw]\n---*/'),/Duplicate/);
 });
 
-function fixture(){
+function fixture(classifications={}){
   const make=reference=>'/*---\n'+reference+'\nflags: [raw]\nfeatures: [generators]\n---*/\n';
   const sources={'test/core.js':make('esid: sec-array.prototype.map'),
     'test/missing.js':make('esid: sec-a-deliberately-absent-feature'),
@@ -42,13 +42,19 @@ function fixture(){
     files:Object.fromEntries(Object.entries(sources).map(([path,source])=>[path,gitBlobSha(source)]))};
   const profile={name:'edition-audit-test',edition:'ECMAScript 2026',specification:null,
     parser:{name:'not-executed'},hostProfile:{name:'not-executed'},resourcePolicy:{maxSteps:1,maxSourceBytes:1024}};
-  return {sources,catalog:buildTest262Catalog({snapshot,sources,profile}),...readPinnedEcma262Specification()};
+  return {sources,catalog:buildTest262Catalog({snapshot,sources,profile,classifications}),...readPinnedEcma262Specification()};
 }
 
 test('all variants survive reference reconciliation without becoming edition or execution passes',()=>{
   const input=fixture(),report=buildTest262EditionAudit(input);
   assert.equal(report.summary.auditedVariants,4);
   assert.deepEqual(report.summary.referenceDispositions,{resolved_anchor:2,missing_metadata:1,anchor_absent:1});
+  assert.deepEqual(report.summary.editionMembership,{unclassified:4});
+  assert.deepEqual(report.summary.releaseRequirement,{required:0,notRequired:4});
+  assert.equal(report.summary.unresolvedEditionMembership,4);
+  assert.deepEqual(report.summary.sourceFilesByEditionMembership,{unclassified:4});
+  assert.deepEqual(report.summary.variantModes,{raw:4});
+  assert.deepEqual(report.summary.expectedOutcomes,{normal:4,negativePhases:{}});
   assert.deepEqual(report.rows.map(row=>row.id),input.catalog.variants.map(row=>row.id));
   assert(report.rows.every(row=>row.classification.membership==='unclassified'));
   assert.equal(report.rows.find(row=>row.path.startsWith('test/intl402')).scopeReview,'separate-ecma402-pin-required');
@@ -57,11 +63,33 @@ test('all variants survive reference reconciliation without becoming edition or 
   assert(report.summary.sectionsWithoutDirectTestReference>0);
 });
 
+test('edition and release classification denominators remain explicit by review scope',()=>{
+  const input=fixture({
+    'test/core.js':{membership:'edition',requiredForThisRelease:true},
+    'test/missing.js':{membership:'extension',requiredForThisRelease:false},
+    'test/legacy.js':{membership:'outside_profile',requiredForThisRelease:false,reason:'ECMA-402 profile'},
+    'test/intl402/linked.js':{membership:'unclassified',requiredForThisRelease:true},
+  });
+  const report=buildTest262EditionAudit(input);
+  assert.deepEqual(report.summary.editionMembership,{edition:1,extension:1,outside_profile:1,unclassified:1});
+  assert.deepEqual(report.summary.releaseRequirement,{required:2,notRequired:2});
+  assert.equal(report.summary.unresolvedEditionMembership,1);
+  assert.deepEqual(report.summary.scopeReviewByEditionMembership,{
+    'core-or-extension-review':{edition:1,extension:1,outside_profile:1},
+    'separate-ecma402-pin-required':{unclassified:1},
+  });
+  assert.equal(report.rows.length,input.catalog.variants.length);
+  assert.deepEqual(report.claims,{editionMembershipCertified:false,applicabilityCertified:false,conformance:false});
+});
+
 test('changed original bytes and rehashed missing variants cannot manufacture a smaller denominator',()=>{
   const input=fixture();
   assert.throws(()=>buildTest262EditionAudit({...input,sources:{...input.sources,'test/core.js':input.sources['test/core.js']+' '}}),/exact catalog test bytes/);
   const {digest,...body}=structuredClone(input.catalog);body.variants=body.variants.slice(1);
   assert.throws(()=>buildTest262EditionAudit({...input,catalog:{...body,digest:conformanceDigest(body)}}),/every declared variant mode/);
+  const duplicate=structuredClone(input.catalog);duplicate.variants.push(structuredClone(duplicate.variants[0]));
+  const {digest:ignored,...duplicateBody}=duplicate;
+  assert.throws(()=>buildTest262EditionAudit({...input,catalog:{...duplicateBody,digest:conformanceDigest(duplicateBody)}}),/Duplicate or missing Test262 variants/);
   const changed=Buffer.from(input.bytes);changed[0]^=1;
   assert.throws(()=>buildTest262EditionAudit({...input,bytes:changed}),/specification bytes differ/);
 });

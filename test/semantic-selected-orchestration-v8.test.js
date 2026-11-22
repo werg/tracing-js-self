@@ -232,5 +232,8 @@ test('orchestration exposes only safe composite checkpoints and requires explici
   assert.throws(()=>driver.checkpoint(),/requested quiescent safe-point pause/);
   await assert.rejects(driver.checkpointDurableHistory(),/verified quiescent composite checkpoint/);
   await assert.rejects(RegionSelectedOrchestrationDriver.restore({}),/external source cut/);
-  await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest({}),/independently retained composite history/);
+  await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest({}),/independently verified latest composite history/);
+  await assert.rejects(RegionSelectedOrchestrationDriver.restoreLatest({},
+    {historyJournal:{readAll:async()=>{throw Error('historical reader must not authorize recovery');}}}),
+  /independently verified latest composite history/);
 });

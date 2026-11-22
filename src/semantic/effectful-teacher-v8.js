@@ -142,7 +142,10 @@ export function createEffectfulRegionAdapterV8({extensions=[],allowHost=false}={
     componentState(id){if(!Object.hasOwn(states,id))fail('unknown component state');return states[id];},
     beginEvent(event,row,fact){
       if(current)fail('nested source event transaction');
-      eventView={event:event??null,row:row??null,fact:fact??null};
+      const frame=event&&context.state.frames[event.invocationId],
+        instruction=frame&&context.bundle.programs[frame.codeId]?.instructions[frame.pc];
+      eventView={event:event??null,row:row??null,fact:fact??null,
+        instruction:instruction&&event&&instruction.siteId===event.siteId&&frame.codeId===event.codeId?instruction:null};
       const priorStates=states,claimView=immutableSourceDataV8(view());
       states=copy(states);current={priorStates,view:claimView};
       const exits=fact?[fact,...(fact.unwound??[])]:[],allocations=new Map();

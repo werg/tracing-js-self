@@ -163,6 +163,32 @@ jobs:
               raise ValueError('Source ownership alone cannot grant artifact admission or optimizer exposure')
           print('40 module scheduler controls passed, zero skips; 6 original sources and 64 native lifecycle transitions')
           PY
+      - name: Qualify shared generators and nested async scopes against actual native replay
+        if: ${{ matrix.population == 'interoperability' }}
+        working-directory: tracing-js-self
+        run: |
+          node --test --test-concurrency=1 --test-reporter=junit \
+            test/semantic-protocol-generator-source-v8.test.js \
+            test/semantic-protocol-promise-executor-source-v8.test.js \
+            test/semantic-shared-protocol-source-v8.test.js \
+            test/semantic-shared-generator-source-v8.test.js \
+            test/semantic-async-call-source-v8.test.js \
+            2>&1 | tee "$RUNNER_TEMP/shared-async-source-tests.xml"
+          python - <<'PY'
+          import json, os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          cases = list(ET.parse(root / 'shared-async-source-tests.xml').getroot().iter('testcase'))
+          if len(cases) != 67 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('Every shared generator/Promise and nested async control must run and pass')
+          for name, sources, contexts in [('shared-generator-source-evidence.json', 6, 189), ('nested-async-source-evidence.json', 10, 231)]:
+              evidence = json.loads((root / name).read_text())
+              if evidence['sourceCases'] != sources or evidence['actualNativeCases'] != sources or evidence['generatedContexts'] != contexts:
+                  raise ValueError('Every original source and generated context requires independent native replay: ' + name)
+              if evidence['moduleAdmission'] is not False or evidence['trainingAdmission'] is not False or evidence['optimizerUpdates'] != 0:
+                  raise ValueError('Source composition cannot itself grant evaluated-module/data admission or optimizer exposure')
+          print('67 source composition controls passed, zero skips; 6 generator/189 context and 10 async/231 context cases')
+          PY
       - id: qualification
         name: Recollect exact source and native admission receipts
         working-directory: tracing-js-self
@@ -294,6 +320,9 @@ jobs:
             ${{ runner.temp }}/semantic-v8-tests.log
             ${{ runner.temp }}/semantic-v8-transport-tests.xml
             ${{ runner.temp }}/module-scheduler-*
+            ${{ runner.temp }}/shared-async-source-tests.xml
+            ${{ runner.temp }}/shared-generator-source-evidence.json
+            ${{ runner.temp }}/nested-async-source-evidence.json
             ${{ runner.temp }}/semantic-v8-namespace-artifact.xml
             ${{ runner.temp }}/semantic-v8-namespace-artifact.log
             ${{ runner.temp }}/v8-namespace-artifact/

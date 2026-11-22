@@ -232,7 +232,8 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     return {exported,semantic,certificates,outcome:expected};
   }
   let certificates=[],elided=[],checkpoints=[];
-  const rows=new Map(semantic.events.map(row=>[row.journalEvent,row])),facts=normalizeCompletionFacts(bundle);
+  const rows=new Map(semantic.events.map(row=>[row.journalEvent,row])),facts=normalizeCompletionFacts(bundle,
+    {generators:regionAdapter?.projectionStateProfiles.includes('synchronous-generator-source/1')===true});
   let state=copy(bundle.initialState);
   let roots=new Map([[semantic.rootInvocation,invocationId]]),frames=new Map([[semantic.rootInvocation,invocationId]]);
   const functionNames=new Map();
@@ -397,6 +398,11 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     };publish(fields);
     if(kind==='allocate'){
       const record=regionAdapter?.allocation?.(extensionContext,event,fields);
+      // A shared component can publish several inseparable allocation records
+      // inside this event's detached transaction (for example, a generator's
+      // closure and its prototype capability). Its explicit true return means
+      // that every record has already passed the public controller.
+      if(record===true)return null;
       if(record)return emitProtocol(owner,record,event,'source-owned-closure/1');
     }
     // Canonical production reduction over an already committed local cell.
@@ -503,8 +509,10 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
   function publishInitialClosure(id,owner,event){
     const initial=bundle.initialState.heap[id],current=state.heap[id];
     if(!initial)return; // The ordinary selected identity check remains final.
+    const generator=initial.generatorFunction===true&&
+      regionAdapter?.projectionStateProfiles.includes('synchronous-generator-source/1');
     if(initial.kind!=='function'||!isDeepStrictEqual(initial,current)||
-      Object.keys(initial.properties??{}).length||initial.prototypeInitialized||initial.classConstructor||
+      (!generator&&(Object.keys(initial.properties??{}).length||initial.prototypeInitialized))||initial.classConstructor||
       initial.privateSlots||initial.instanceInitializer||initial.staticInitializer)
       refuse('unpublished initial identity requires an explicit behavioral-state profile');
     if(publishingInitialClosures.has(id))refuse('cyclic initial closure capture requires explicit cells');
@@ -661,6 +669,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       const emitDeferred=(kind,fields)=>{
         flushComputations();
         const record=kind==='allocate'?regionAdapter?.allocation?.(extensionContext,pending.event,fields):null;
+        if(record===true)refuse('multi-record protocol allocation cannot defer its source event');
         return commitEmission(pending.owner,record?'protocol':kind,record??fields,{
           rule:pending.patternProof?'owned-deferred-parameter-initialization/1':'owned-deferred-parameter-closure/4',journalEvents:[...pending.events],
           allocationEvent:pending.event.eventId,initializationBoundary:event.eventId,
