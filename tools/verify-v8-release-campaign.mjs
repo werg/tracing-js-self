@@ -151,7 +151,19 @@ export async function verifyV8ReleaseCampaign(directory){
   for(const key of ['supportCohortDigest','registryDigest','sourceCounts'])
     require(isDeepStrictEqual(report[key],inventory[key]),'support population identity differs: '+key);
   require(reportArtifacts['population.json']===population.sha256,'population artifact bytes differ');
-  const registry=inventory.registryDigest===undefined?null:readJSON(root,'family-registry.json',MAX_OBJECT).value;
+  const interpretedArtifacts=new Map();
+  const readArtifact=(name,expected)=>{
+    const input=readJSON(root,name,MAX_OBJECT);
+    // Bind semantic comparisons to these exact read bytes, then recheck them
+    // during the final inventory. A shared journal lock is not byte authority.
+    require(HASH.test(expected)&&input.sha256===expected,
+      'completed artifact bytes changed before interpretation: '+name);
+    require(!interpretedArtifacts.has(name)||interpretedArtifacts.get(name)===input.sha256,
+      'completed artifact changed between interpretations: '+name);
+    interpretedArtifacts.set(name,input.sha256);return input.value;
+  };
+  const registry=inventory.registryDigest===undefined?null:
+    readArtifact('family-registry.json',reportArtifacts['family-registry.json']);
   require(registry===null||globals.has('family-registry.json')&&registry.digest===inventory.registryDigest,
     'original task family registry differs from the frozen population');
   const store=new CampaignStore(join(root,'progress'),authority,{readOnly:true,maxObjectBytes:MAX_OBJECT,recoverTornLog:false});
@@ -191,7 +203,7 @@ export async function verifyV8ReleaseCampaign(directory){
           'source-qualified attempt has no original source artifact');
         // A hash-linked journal can consistently name the wrong safe artifact.
         // Bind the encoded task's request before fresh source/native replay.
-        const sourceArtifact=readJSON(root,name,MAX_OBJECT).value,
+        const sourceArtifact=readArtifact(name,result.artifacts[name]),
           binding=verifyV8TaskArtifactBinding(task,sourceArtifact,{registry});
         require(result.row.family===task.fixture.family,'reported family differs from original task');
         if(registry!==null)require(result.row.sourceId===binding.membership.sourceId&&
@@ -201,10 +213,10 @@ export async function verifyV8ReleaseCampaign(directory){
           const admitted=entry.id+'.admitted.json',native=entry.id+'.native.json';
           require(Object.hasOwn(result.artifacts,admitted)&&Object.hasOwn(result.artifacts,native),
             'native-qualified attempt has no original admitted copy or native receipt');
-          const receipt=readJSON(root,native,MAX_OBJECT).value;
+          const receipt=readArtifact(native,result.artifacts[native]);
           require(isDeepStrictEqual(receipt,result.row.nativeReceipt),'recorded native receipt differs from its journal');
           nativeBindings.set(entry.entryDigest,verifyV8RecordedAdmissionBinding(sourceArtifact,
-            readJSON(root,admitted,MAX_OBJECT).value,receipt,authority.nativePolicy,authority.producerRevision));
+            readArtifact(admitted,result.artifacts[admitted]),receipt,authority.nativePolicy,authority.producerRevision));
         }
       }
       for(const ref of [entry.candidate,entry.result,...(task.inputs??[]).flatMap(input=>
@@ -240,7 +252,7 @@ export async function verifyV8ReleaseCampaign(directory){
         require(!authority.prepareOnly&&isSelected&&row.source==='passed'&&row.status==='admitted'&&
           Object.hasOwn(result.artifacts,row.id+'.admitted.json')&&
           Object.hasOwn(result.artifacts,row.id+'.native.json'),'admitted result has no exact native artifacts');
-        require(isDeepStrictEqual(readJSON(root,row.id+'.native.json').value,row.nativeReceipt),
+        require(isDeepStrictEqual(readArtifact(row.id+'.native.json',result.artifacts[row.id+'.native.json']),row.nativeReceipt),
           'native artifact differs from its committed result: '+row.id);
         item.admittedArtifact=row.id+'.admitted.json';item.nativeArtifact=row.id+'.native.json';
         item.nativeRecordBinding=nativeBindings.get(entry.entryDigest);
@@ -258,6 +270,8 @@ export async function verifyV8ReleaseCampaign(directory){
     const byPath=new Map(files.map(row=>[row.path,row]));
     for(const [name,digest] of requiredArtifacts)
       require(byPath.get(name)?.sha256===digest,'completed artifact bytes changed: '+name);
+    for(const [name,digest] of interpretedArtifacts)
+      require(byPath.get(name)?.sha256===digest,'interpreted artifact changed while checking: '+name);
     for(const [name,initial] of [['population.json',population],['report.json',reportInput],
       ['progress/campaign.json',header],['progress/campaign.jsonl',initialLog]])
       require(byPath.get(name)?.sha256===initial.sha256,'authority changed while checking: '+name);
