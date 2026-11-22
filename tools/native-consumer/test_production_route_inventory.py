@@ -54,9 +54,33 @@ def parser():
 '''
         for body in ("item = commands.add_parser(runtime_name)",
                      "item = commands.add_parser('train', aliases=['fit'])",
-                     "register_more(commands)"):
+                     "register_more(commands)",
+                     "if enabled:\n        register_more(commands)",
+                     "for name in ('extra',):\n        register_more(commands)",
+                     "try:\n        item = commands.add_parser('extra')\n    except Exception:\n        pass",
+                     "getattr(commands, 'add_parser')('extra')",
+                     "plugin.register_more(commands)",
+                     "commands.register_plugin()",
+                     "alias = commands\n    register_more(alias)"):
             with self.subTest(body=body), self.assertRaises(ValueError):
                 audit.cli_registrations({"src/megatoken/cli.py": template.replace("BODY", body)})
+
+    def test_rpc_normalization_retains_all_wire_spellings_without_inventing_durable_alias(self):
+        source = '''
+def dispatch(operation, adapter):
+    if operation in {'durable-close'}:
+        return close()
+    methods = {name: getattr(adapter, name) for name in ('open_orchestration', 'bootstrap_orchestration_child')}
+    operation = operation.replace('-', '_')
+    return methods[operation]()
+'''
+        rows = {row['operation']: row for row in audit.rpc_registrations(source, 'fixture.py')}
+        self.assertEqual(rows['durable-close']['acceptedSpellings'], ['durable-close'])
+        self.assertEqual(rows['open_orchestration']['acceptedSpellings'],
+                         ['open-orchestration', 'open_orchestration'])
+        self.assertEqual(rows['bootstrap_orchestration_child']['acceptedSpellings'], [
+            'bootstrap-orchestration-child', 'bootstrap-orchestration_child',
+            'bootstrap_orchestration-child', 'bootstrap_orchestration_child'])
 
     def test_new_removed_changed_and_relabelled_registration_fail_verification(self):
         original = {"schema": audit.SCHEMA, "sources": {}, "fileCatalogs": {},

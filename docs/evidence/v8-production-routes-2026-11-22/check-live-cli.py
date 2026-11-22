@@ -11,7 +11,7 @@ options = argparse.ArgumentParser(description=__doc__)
 options.add_argument("--native", type=Path, required=True)
 args = options.parse_args()
 root = args.native.resolve()
-inventory = json.loads(Path(__file__).with_name("registered-surfaces.json").read_text())
+inventory = json.loads(Path(__file__).with_name("registered-surfaces-corrected.json").read_text())
 revision = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
 if revision != inventory["sources"]["native"]["revision"]:
     raise ValueError("Live parser must use the exact retained native revision")

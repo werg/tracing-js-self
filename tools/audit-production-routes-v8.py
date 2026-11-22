@@ -10,6 +10,7 @@ import argparse
 import ast
 import hashlib
 import json
+import itertools
 import re
 import subprocess
 import tomllib
@@ -109,12 +110,33 @@ def cli_registrations(sources):
         except (ValueError, TypeError) as error:
             raise ValueError("Unmodeled dynamic argparse registration") from error
 
+    def registration_sensitive(statement, scopes):
+        for node in ast.walk(statement):
+            if isinstance(node, ast.Assign) and isinstance(node.value, ast.Name) \
+                    and node.value.id in scopes:
+                return True
+            if not isinstance(node, ast.Call):
+                continue
+            if isinstance(node.func, ast.Attribute) and node.func.attr in {
+                "add_parser", "add_subparsers", "set_defaults"
+            }:
+                return True
+            if isinstance(node.func, ast.Attribute) and node.func.attr in {
+                "add_argument", "add_mutually_exclusive_group", "add_argument_group"
+            }:
+                continue
+            if any(isinstance(child, ast.Name) and child.id in scopes
+                   for argument in [*node.args, *(item.value for item in node.keywords)]
+                   for child in ast.walk(argument)):
+                return True
+            if isinstance(node.func, ast.Name) and node.func.id in helpers:
+                return True
+        return False
+
     def walk(statements, path, scopes, constants):
         for statement in statements:
             if isinstance(statement, ast.For):
-                if not any(isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute)
-                           and child.func.attr in {"add_parser", "add_subparsers", "set_defaults"}
-                           for child in ast.walk(statement)):
+                if not registration_sensitive(statement, scopes):
                     continue
                 if not isinstance(statement.target, ast.Name):
                     raise ValueError("Unmodeled argparse loop binding")
@@ -124,6 +146,9 @@ def cli_registrations(sources):
                     raise ValueError("Unmodeled argparse loop else")
                 continue
             call = statement.value if isinstance(statement, (ast.Assign, ast.Expr)) else None
+            if isinstance(statement, ast.Assign) and isinstance(statement.value, ast.Name) \
+                    and statement.value.id in scopes:
+                raise ValueError("Parser aliases require explicit inventory support")
             if isinstance(call, ast.Call) and isinstance(call.func, ast.Name):
                 name = call.func.id
                 if name in helpers:
@@ -144,12 +169,12 @@ def cli_registrations(sources):
                     ):
                         raise ValueError("Unreviewed parser helper: " + name)
             if not (isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute)):
-                # Argument-only conditional branches do not register commands.
-                if isinstance(statement, ast.If):
-                    if any(isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute)
-                           and child.func.attr in {"add_parser", "add_subparsers", "set_defaults"}
-                           for child in ast.walk(statement)):
-                        raise ValueError("Conditional command registration needs explicit review")
+                if not isinstance(statement, (ast.Assign, ast.Expr)) \
+                        and registration_sensitive(statement, scopes):
+                    raise ValueError("Nested command registration needs explicit review")
+                if isinstance(call, ast.Call) and not isinstance(call.func, ast.Name) \
+                        and registration_sensitive(statement, scopes):
+                    raise ValueError("Dynamic parser call needs explicit review")
                 continue
             action = call.func.attr
             receiver = call.func.value
@@ -181,6 +206,9 @@ def cli_registrations(sources):
                             raise ValueError("Unmodeled CLI handler")
                         identity = "native:cli:" + " ".join(scopes[receiver.id])
                         rows[identity]["handler"] = keyword.value.id
+            elif action not in {"add_argument", "add_mutually_exclusive_group", "add_argument_group"} \
+                    and (receiver.id in scopes or registration_sensitive(statement, scopes)):
+                raise ValueError("Unreviewed parser method or helper: " + action)
             if result is not None:
                 if not isinstance(statement, ast.Assign) or len(statement.targets) != 1 \
                         or not isinstance(statement.targets[0], ast.Name):
@@ -193,8 +221,14 @@ def cli_registrations(sources):
 
 
 def rpc_registrations(source, path):
-    operations = set()
-    for node in ast.walk(ast.parse(source, filename=path)):
+    operations, methods = set(), set()
+    tree = ast.parse(source, filename=path)
+    normalized = any(isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                     and isinstance(node.func.value, ast.Name) and node.func.value.id == "operation"
+                     and node.func.attr == "replace" and len(node.args) == 2
+                     and all(isinstance(arg, ast.Constant) for arg in node.args)
+                     and [arg.value for arg in node.args] == ["-", "_"] for node in ast.walk(tree))
+    for node in ast.walk(tree):
         if isinstance(node, ast.Compare) and isinstance(node.left, ast.Name) \
                 and node.left.id in {"op", "operation"}:
             for comparator in node.comparators:
@@ -209,11 +243,21 @@ def rpc_registrations(source, path):
             for generator in node.generators:
                 if isinstance(generator.target, ast.Name) and generator.target.id == "name" \
                         and isinstance(generator.iter, (ast.Tuple, ast.List)):
-                    operations.update(ast.literal_eval(generator.iter))
+                    registered = ast.literal_eval(generator.iter)
+                    operations.update(registered)
+                    methods.update(registered)
     if not operations or any(not isinstance(name, str) for name in operations):
         raise ValueError("No exact static RPC operations found")
-    return [{"id": "native:rpc:" + path + ":" + name, "kind": "native-jsonl-operation",
-             "registration": path, "operation": name} for name in sorted(operations)]
+    rows = []
+    for name in sorted(operations):
+        spellings = {name}
+        if normalized and name in methods:
+            parts = name.split("_")
+            for separators in itertools.product(("-", "_"), repeat=len(parts) - 1):
+                spellings.add(parts[0] + "".join(separator + part for separator, part in zip(separators, parts[1:])))
+        rows.append({"id": "native:rpc:" + path + ":" + name, "kind": "native-jsonl-operation",
+                     "registration": path, "operation": name, "acceptedSpellings": sorted(spellings)})
+    return rows
 
 
 def collect(producer, native):
@@ -295,7 +339,17 @@ def collect(producer, native):
                       "excluded": ["individual public symbols behind a package entry", "arbitrary embedding callers",
                                    "external deployment configuration", "vendor spec-oracle tree"],
                       "semanticParityQualified": False, "defaultCutoverQualified": False},
-            "registrations": sorted(rows, key=lambda row: row["id"]), "fileCatalogs": catalogs}
+            "registrations": sorted(rows, key=lambda row: row["id"]), "fileCatalogs": catalogs,
+            "sharedTrainingDefaults": stages["training_defaults"],
+            "supplementalInputs": {
+                "producer": [producer.bind(path) for path in (
+                    "npm-shrinkwrap.json", "profiles/release-environment.lock.json",
+                    "profiles/targets.lock.json", "tools/native-consumer/requirements.lock",
+                    "tools/native-consumer/requirements.in", "contracts/semantic-integration-lock.json",
+                    "contracts/native-admission-policy-v6.json", "contracts/semantic-native-policy-v7.json",
+                    "contracts/semantic-native-policy-v8.json")],
+                "native": [native.bind("Dockerfile"), native.bind("pyproject.toml")],
+            }}
     data["digest"] = hashlib.sha256(canonical(data)).hexdigest()
     return data
 
@@ -307,11 +361,16 @@ def verify(expected, actual):
         detail = {"added": sorted(new.keys() - old.keys()), "removed": sorted(old.keys() - new.keys()),
                   "changed": sorted(key for key in old.keys() & new.keys() if old[key] != new[key]),
                   "sourceOrCatalogChanged": expected.get("sources") != actual.get("sources")
-                     or expected.get("fileCatalogs") != actual.get("fileCatalogs")}
+                     or expected.get("fileCatalogs") != actual.get("fileCatalogs")
+                     or expected.get("supplementalInputs") != actual.get("supplementalInputs")
+                     or expected.get("sharedTrainingDefaults") != actual.get("sharedTrainingDefaults")}
         raise ValueError("Source-bound route inventory differs: " + json.dumps(detail, sort_keys=True))
     return {"schema": "semantic-production-route-audit/1", "inventoryDigest": actual["digest"],
             "registrations": len(actual["registrations"]),
             "catalogFiles": {key: len(value) for key, value in actual["fileCatalogs"].items()},
+            "additionalRpcSpellings": sum(len(row.get("acceptedSpellings", [])) - 1
+                 for row in actual["registrations"] if row["kind"] == "native-jsonl-operation"),
+            "supplementalInputs": {key: len(value) for key, value in actual.get("supplementalInputs", {}).items()},
             "missingOrUnexpectedRegistrations": 0, "semanticParityQualified": False,
             "defaultCutoverQualified": False}
 

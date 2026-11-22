@@ -14,16 +14,17 @@ installed legacy absence and release restoration remain separate gates.
 ## What is now enumerated
 
 The [complete retained inventory](evidence/v8-production-routes-2026-11-22/README.md)
-contains **205 registrations**, assigned once each to **23 reviewed groups**:
+contains **205 canonical registrations**, assigned once each to **23 reviewed groups**:
 36 package targets and conditions, 52 npm commands, five general CLI commands,
 one Python console entry, 46 native command/group registrations, nine Python
-module launchers, 34 semantic JSONL operation names, 12 stream registrations
-and ten complete stage definitions. The two semantic servers account for
-12 legacy and 22 V8 operation names in this snapshot. The independently
+module launchers, 34 canonical semantic JSONL operation names, 12 stream registrations
+and ten raw stage definitions plus shared training defaults. The two semantic servers account for
+12 legacy and 22 canonical V8 operations; eight additional accepted V8 separator
+spellings are explicitly mapped to their canonical names. The independently
 constructed real native parser agrees on every command and handler.
 
 It also binds **191 producer and 155 native** candidate source/configuration/
-workflow files. These are file catalogs, not additional behavior or conformance
+workflow files, plus eleven explicit release/dependency/policy/container input receipts. These are file catalogs, not additional behavior or conformance
 populations. The audit rejects added, removed or changed registrations and
 source bytes, incomplete/duplicate review ownership and qualification claims.
 It cannot prove every symbol behind an entry, every embedding caller, every
@@ -50,7 +51,7 @@ claim that they all passed at these new heads.
 ## Data, training, model bundles and serving
 
 Native paths are relative to the [recorded consumer source](https://github.com/werg/megatoken/tree/6ef4794048a4d2ab0e732ccfd61c5cc3e7c3c822).
-All ten canonical stages and their complete definitions are retained; model
+All ten canonical raw stage definitions and shared training defaults are retained; model
 architecture version labels and unrelated data streams are outside semantic
 V6/V7 retirement.
 
