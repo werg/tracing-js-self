@@ -29,6 +29,16 @@ function inputFixture(fixture){
   if([maxSteps,maxGenerated,timeoutMs].some(value=>!Number.isSafeInteger(value)||value<1))fail('positive execution bounds required');
   if(fixture.randomSeed!=null||fixture.fixture?.calls?.length)fail('first protocol source profile has no random or external inputs');
   const moduleNamespacePlan=fixture.projectionOptions?.moduleNamespacePlan;
+  const moduleSchedulerPlan=fixture.projectionOptions?.moduleSchedulerPlan;
+  if(moduleSchedulerPlan){
+    const evidence=fixture.provenance?.moduleEvidence;
+    if(moduleNamespacePlan||evidence?.schema!=='semantic-module-evidence/1'||evidence.profile!=='evaluated-module-regions/1'||
+      evidence.request?.experimentalSchedulerPlan!==true||!evidence.request.modules||
+      evidence.metadata?.evaluationStrategy!=='async-dependency-scheduler')
+      fail('experimental scheduler plans require original module evidence');
+  }
+  if(fixture.provenance?.moduleEvidence?.request?.experimentalSchedulerPlan&&!moduleSchedulerPlan)
+    fail('original scheduler evidence requires its bound source plan');
   if(moduleNamespacePlan){
     const evidence=fixture.provenance?.moduleEvidence;
     if(evidence?.schema!=='semantic-module-evidence/1'||evidence.profile!=='evaluated-module-regions/1'||
@@ -38,9 +48,17 @@ function inputFixture(fixture){
   }
   return {source:fixture.source,entry:fixture.entry,family:fixture.family,license,trustTier,
     ...(moduleNamespacePlan?{moduleNamespacePlan:copy(moduleNamespacePlan)}:{}),
+    ...(moduleSchedulerPlan?{moduleSchedulerPlan:copy(moduleSchedulerPlan)}:{}),
     ancestorIds:[...new Set([fixture.family,...(fixture.ancestorIds??fixture.ancestors??[])])],
     producerRevision:fixture.producerRevision??null,provenance:copy(fixture.provenance??{}),
     limits:{maxSteps,maxGenerated,timeoutMs},args:fixture.args??[]};
+}
+function schedulerProjectionOptions(source){
+  if(!source.moduleSchedulerPlan)return {};
+  const evidence=(source.provenance??source.sourceProvenance?.upstream)?.moduleEvidence;
+  const [input]=decodeOwnedGraph(JSON.stringify(evidence.request.inputGraph));
+  return {moduleSchedulerPlan:source.moduleSchedulerPlan,moduleSchedulerRequest:{modules:copy(evidence.request.modules),
+    entryModule:evidence.request.entryModule,exportName:evidence.request.exportName,args:input.args,calls:null}};
 }
 function executeOwned(input){
   const runtime=createRuntime({maxSteps:input.limits.maxSteps}).startEntry({text:input.source,functionName:input.entry,args:input.args,allowAsync:true,
@@ -83,7 +101,9 @@ function originalNamespaceRowsAgree(reference,claims){
 }
 async function buildSourceArtifact(input){
   const archive=executeOwned(input),projection=compileProtocolSourceV8(archive,{maxGenerated:input.limits.maxGenerated,
-    ...(input.moduleNamespacePlan?{moduleNamespacePlan:input.moduleNamespacePlan}:{})});
+    ...(input.moduleNamespacePlan?{moduleNamespacePlan:input.moduleNamespacePlan}:{}),...schedulerProjectionOptions(input)});
+  if(input.moduleSchedulerPlan&&!originalModuleOutcomeAgrees(input.provenance.moduleEvidence.reference,projection.outcome))
+    fail('fresh original ESM outcome differs from the bound scheduler projection');
   if(!projection.claims.some(row=>row.kind==='protocol'&&
     (row.record.kind.startsWith('symbol.')||row.record.kind.startsWith('property.')))&&!projection.extensions?.length)
     fail('no declared source protocol boundary');
@@ -114,9 +134,11 @@ async function buildSourceArtifact(input){
     producerRevision:input.producerRevision,license:input.license,trustTier:input.trustTier,
     sourceProvenance:{family:input.family,sourceDigest:hashAlgorithmData(input.source),upstream:input.provenance},
     ...(input.moduleNamespacePlan?{moduleNamespacePlan:copy(input.moduleNamespacePlan)}:{}),
+    ...(input.moduleSchedulerPlan?{moduleSchedulerPlan:copy(input.moduleSchedulerPlan)}:{}),
     executionLimits:input.limits,referenceInput,reference,
     archive,archiveDigest:digest(archive),compiler:{schema:projection.schema,claims:projection.claims,
-      ...(projection.extensions.length?{extensions:projection.extensions}:{})},
+      ...(projection.extensions.length?{extensions:projection.extensions}:{}),
+      ...(projection.moduleSchedulerOwnership?{moduleSchedulerOwnership:projection.moduleSchedulerOwnership}:{})},
     outcome:projection.outcome,optimizerSteps:0,learningClaim:null}});
 }
 
@@ -130,16 +152,18 @@ export function projectProtocolRegionWitness(sourceArtifact){
   if(side.moduleNamespacePlan&&side.referenceBasis!=='original-module-esm')
     fail('namespace projection must identify the actual original-module ESM reference');
   const projection=compileProtocolSourceV8(side.archive,{maxGenerated:side.executionLimits.maxGenerated,
-    ...(side.moduleNamespacePlan?{moduleNamespacePlan:side.moduleNamespacePlan}:{})}),
+    ...(side.moduleNamespacePlan?{moduleNamespacePlan:side.moduleNamespacePlan}:{}),...schedulerProjectionOptions(side)}),
     harness=new RegionExecutionHarness({sessionId:'protocol-source',automaticDelivery:false,now:()=>-Infinity,maxGenerated:side.executionLimits.maxGenerated});
   if(!eq(projection.claims,side.compiler.claims)||!eq(projection.extensions,side.compiler.extensions??[])||
+    !eq(projection.moduleSchedulerOwnership,side.compiler.moduleSchedulerOwnership)||
     !eq(projection.outcome,side.outcome)||
     !eq({schema:'semantic-protocol-source-target/1',sourceDigest:hashAlgorithmData(projection.source),entry:projection.entry,
       inputGraph:projection.inputGraph,...(projection.completionPolicy?{completionPolicy:projection.completionPolicy}:{}),
       claims:projection.claims.map(({kind,line})=>({kind,line}))},sourceArtifact.public))
     fail('source target or projection certificate changed');
   harness.publishProgram({programId:'program1',source:projection.source,entry:projection.entry,capabilities:[],
-    ...(side.moduleNamespacePlan?{moduleNamespacePlan:side.moduleNamespacePlan}: {})});
+    ...(side.moduleNamespacePlan?{moduleNamespacePlan:side.moduleNamespacePlan}: {}),
+    ...(side.moduleSchedulerPlan?{moduleSchedulerPlan:side.moduleSchedulerPlan}:{})});
   harness.admitInvocation({programId:'program1',invocationId:'invocation1',trackId:'worker1',realmId:'realm1',triggerId:'protocol-entry',
     inputGraph:projection.inputGraph,realmPolicy:'fresh',completionPolicy:projection.completionPolicy??'call-return'});
   const locations=defineRegionProgram({source:projection.source,entry:projection.entry}).provenance.locations,
@@ -147,7 +171,7 @@ export function projectProtocolRegionWitness(sourceArtifact){
   let compactRecords=0,detailedRecords=0,protocolRecords=0,compactBytes=0,detailedBytes=0,protocolBytes=0;
   for(let index=0;index<projection.claims.length;){
     const claim=projection.claims[index],point=claim.certificate.source,controller=harness.controller;
-    const candidates=!side.moduleNamespacePlan&&claim.kind==='detail'&&point?
+    const candidates=!side.moduleNamespacePlan&&!side.moduleSchedulerPlan&&claim.kind==='detail'&&point?
       locations.filter(location=>point.start>=location.start&&point.end<=location.end):[];
     let compact=false;
     for(const location of candidates){
@@ -208,6 +232,12 @@ export async function verifyProtocolRegionTrainingCase(fixture){
       await verifyModuleNamespaceInputEvidence({source:input.source,entry:input.entry,args:input.args,
         moduleNamespacePlan:input.moduleNamespacePlan,provenance:input.provenance});
     }
+    if(input.moduleSchedulerPlan){
+      phase='original-module-scheduler-recheck';
+      const {verifyModuleSchedulerInputEvidence}=await import('./module-v8.js');
+      await verifyModuleSchedulerInputEvidence({source:input.source,entry:input.entry,args:input.args,
+        moduleSchedulerPlan:input.moduleSchedulerPlan,provenance:input.provenance});
+    }
     phase='owned-and-independent-source';const sourceArtifact=await buildSourceArtifact(input);
     phase='projection';const exported=projectProtocolRegionWitness(sourceArtifact);
     return {...identity,status:exported.sidecar.regionCoverage.compactRegions?'locally_verified':'detailed-fallback',
@@ -233,12 +263,13 @@ export async function recheckProtocolRegionEvidence(exported,{nativeConsumer=nul
     maxSteps:source.executionLimits.maxSteps,
     timeoutMs:source.executionLimits.timeoutMs,
     projectionOptions:{maxGenerated:source.executionLimits.maxGenerated,
-      ...(source.moduleNamespacePlan?{moduleNamespacePlan:source.moduleNamespacePlan}:{})}});
-  if(source.moduleNamespacePlan){
+      ...(source.moduleNamespacePlan?{moduleNamespacePlan:source.moduleNamespacePlan}:{}),
+      ...(source.moduleSchedulerPlan?{moduleSchedulerPlan:source.moduleSchedulerPlan}:{})}});
+  if(source.moduleNamespacePlan||source.moduleSchedulerPlan){
     const {recheckModuleRegionEvidence}=await import('./module-v8.js');
     const moduleCheck=await recheckModuleRegionEvidence(exported);
     if(moduleCheck.status!=='passed'||!moduleCheck.applicable)
-      fail('experimental namespace source requires fresh original-module and ESM recheck');
+      fail('experimental module source requires fresh original-module and ESM recheck');
   }
   const fresh=await buildSourceArtifact(input);
   if(!eq(fresh,side.sourceArtifact))fail('source, owned archive or independent observations changed');

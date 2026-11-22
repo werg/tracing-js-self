@@ -2,7 +2,7 @@ name: Exact64 V8 support target inventory and ordinary coverage
 
 on:
   push:
-    branches: [codex/v8-target-coverage-final-qualification-20261122]
+    branches: [codex/v8-target-coverage-position-qualification-20261122]
     paths-ignore: ['docs/**']
   workflow_dispatch:
 
@@ -88,7 +88,9 @@ jobs:
       - name: Run support-cohort ownership controls with zero skips
         working-directory: tracing-js-self
         run: |
-          node --test --test-reporter=junit test/semantic-region-support-cohort.test.js             test/qualify-support-lifecycle.test.js             2>&1 | tee "$RUNNER_TEMP/semantic-v8-support-controls.xml"
+          node --test --test-reporter=junit test/semantic-region-support-cohort.test.js \
+            test/qualify-support-lifecycle.test.js test/semantic-v8-position-coverage.test.js \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-support-controls.xml"
           python - <<'PY'
           import os, xml.etree.ElementTree as ET
           from pathlib import Path
@@ -259,7 +261,12 @@ jobs:
               or coverage.get('globalStep')!=expected_coverage_steps
               or coverage.get('comparison',{}).get('allPositiveWeightTargetsExposed') is not True
               or coverage.get('comparison',{}).get('exactOnePassCensus') is not True
-              or coverage.get('tokenOrMaskPositionCoverage')!='unmeasured'
+              or coverage.get('tokenOrMaskPositionCoverage')!='complete-for-prepared-text'
+              or coverage.get('routerInternalPositionCoverage')!='unmeasured'
+              or coverage.get('positionComparison',{}).get('exactOnePassPreparedTextPositions') is not True
+              or coverage.get('positionComparison',{}).get('positiveWeightPositionCountsMatch') is not True
+              or coverage.get('independentPreparedPositionInventory',{}).get('physicalTargetRecordCount')!=inventory.get('positiveWeight',{}).get('physicalTargetRecordCount')
+              or coverage.get('optimizerPositionSummary',{}).get('unmeasuredPhysicalTargets')!=0
               or coverage.get('learnedSuccess') is not None
               or command.get('learnedSuccess') is not None
               or command.get('supportPopulation',{}).get('fullLaunchQualified') is not False):
@@ -268,7 +275,8 @@ jobs:
               'positiveWeightSources':len(scored_source_ids),'targetInventoryDigest':inventory['digest'],
               'windowCount':inventory['windowCount'],'optimizerWindowCount':expected_coverage_steps,
               'optimizerUpdateCounts':update_counts,'exactOnePassCensus':True,
-              'tokenOrMaskPositionCoverage':'unmeasured','learnedSuccess':None}))
+              'tokenOrMaskPositionCoverage':'complete-for-prepared-text',
+              'routerInternalPositionCoverage':'unmeasured','learnedSuccess':None}))
           PY
       - uses: actions/upload-artifact@v4
         if: always()

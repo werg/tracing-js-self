@@ -6,6 +6,7 @@ import {posix} from 'node:path';
 import {types,isDeepStrictEqual} from 'node:util';
 import {linkEvaluatedModules} from '../evaluated-modules.js';
 import {buildExperimentalModuleNamespacePlanFromLinker} from './module-namespace-state-v8.js';
+import {buildBoundModuleSchedulerPlanFromLinkerV8} from './module-scheduler-plan-v8.js';
 import {compileBoundedTypeScript} from '../typescript.js';
 import {encodeNativeGraph} from '../host/graph-codec.js';
 import {generationEnvironment} from '../corpus/generation-process.mjs';
@@ -36,13 +37,19 @@ function normalizedRequest(fixture){
   const originalEntry=fixture.moduleEntry??fixture.entryModule;
   if(typeof originalEntry!=='string')fail('module entry required');
   const entryModule=originalEntry.startsWith('/')?originalEntry.slice(1):originalEntry;
-  const experimentalNamespacePlan=fixture.experimentalNamespacePlan??false,args=fixture.args??[],
+  const experimentalNamespacePlan=fixture.experimentalNamespacePlan??false,
+    experimentalSchedulerPlan=fixture.experimentalSchedulerPlan??false,args=fixture.args??[],
     calls=fixture.calls??null;
   if(typeof experimentalNamespacePlan!=='boolean')fail('experimentalNamespacePlan must be boolean');
+  if(typeof experimentalSchedulerPlan!=='boolean')fail('experimentalSchedulerPlan must be boolean');
+  if(experimentalNamespacePlan&&experimentalSchedulerPlan)fail('scheduler/namespace composition requires its own profile');
+  if(experimentalSchedulerPlan&&(!Array.isArray(args)||args.some(value=>!namespaceHostScalar(value))||calls!==null))
+    fail('experimental scheduler source profile requires scalar entry args and a single call');
   if(experimentalNamespacePlan&&(!Array.isArray(args)||args.some(value=>!namespaceHostScalar(value))||calls!==null))
     fail('experimental namespace source profile requires scalar entry args and a single call');
   return {modules,entryModule,exportName:fixture.exportName??'run',args,calls,
-    ...(experimentalNamespacePlan?{experimentalNamespacePlan:true}:{})};
+    ...(experimentalNamespacePlan?{experimentalNamespacePlan:true}:{}),
+    ...(experimentalSchedulerPlan?{experimentalSchedulerPlan:true}:{})};
 }
 function prepare(fixture){
   const request=normalizedRequest(fixture),linked=linkEvaluatedModules(request);
@@ -53,7 +60,8 @@ function prepare(fixture){
   const graph=encodeNativeGraph([linked.entryInput],{maxBytes:1048576});
   const moduleNamespacePlan=request.experimentalNamespacePlan&&linked.metadata.namespaceSourcePlan?
     buildExperimentalModuleNamespacePlanFromLinker(linked):undefined;
-  return {request,linked,moduleNamespacePlan,referenceInput:{modules:emitted,entryModule:request.entryModule,
+  const moduleSchedulerPlan=request.experimentalSchedulerPlan?buildBoundModuleSchedulerPlanFromLinkerV8(linked):undefined;
+  return {request,linked,moduleNamespacePlan,moduleSchedulerPlan,referenceInput:{modules:emitted,entryModule:request.entryModule,
     exportName:request.exportName,calls:request.calls?.map(({exportName})=>({exportName}))??null,inputGraph:graph,
     ...(moduleNamespacePlan?{moduleNamespacePlan}:{})}};
 }
@@ -126,6 +134,7 @@ function moduleProjectionRefusal(linked,request={}){
       publicProjection:'unqualified',nativeQualification:'unqualified',
       reason:'Owned module namespace exotics require the explicit experimental source/native plan gate'};
   if(linked.metadata.evaluationStrategy!=='async-dependency-scheduler')return null;
+  if(request.experimentalSchedulerPlan){buildBoundModuleSchedulerPlanFromLinkerV8(linked);return null;}
   // Owned generator/Promise execution is a distinct implementation milestone.
   // A generic generator projection cannot establish public/native module
   // dependency counts, retained cells, completion jobs, or failure propagation.
@@ -149,27 +158,29 @@ export async function verifyRegionModuleTrainingCase(fixture){
   const reference=await independentModuleRegionReference(prepared.referenceInput);
   if(reference.status!=='passed')return {...identity,status:reference.status,phase:'module-reference',
     sourceProfile:MODULE_REGION_PROFILE,reason:reference.reason};
-  const {request,linked,referenceInput}=prepared,graphDigest=hashAlgorithmData(request.modules);
+  const {request,linked,referenceInput,moduleSchedulerPlan}=prepared,graphDigest=hashAlgorithmData(request.modules);
   const namespacePlan=linked.metadata.namespaceSourcePlan?
     buildExperimentalModuleNamespacePlanFromLinker(linked):undefined;
   const moduleEvidence={schema:'semantic-module-evidence/1',profile:MODULE_REGION_PROFILE,
     request:{modules:request.modules,entryModule:request.entryModule,exportName:request.exportName,
       inputGraph:referenceInput.inputGraph,calls:referenceInput.calls,
-      ...(request.experimentalNamespacePlan?{experimentalNamespacePlan:true}:{})},graphDigest,
+      ...(request.experimentalNamespacePlan?{experimentalNamespacePlan:true}:{}),
+      ...(request.experimentalSchedulerPlan?{experimentalSchedulerPlan:true}:{})},graphDigest,
     generatedSourceDigest:hashAlgorithmData(linked.source),metadata:linked.metadata,referenceInput,reference,
     originalTypeScriptClaim:'provenance only; generated JavaScript semantics are checked',
     adapterMeaning:'native ESM outcome compared with owned linked code; experimental namespace source records remain unadmitted until independent native replay'};
   const ancestorIds=[...new Set([...(fixture.ancestorIds??[]),'module-graph:'+graphDigest,
     ...Object.values(request.modules).map(source=>'module-source:'+hashAlgorithmData(source))])];
-  const {moduleNamespacePlan:_untrustedNamespacePlan,...callerProjectionOptions}=fixture.projectionOptions??{};
+  const {moduleNamespacePlan:_untrustedNamespacePlan,moduleSchedulerPlan:_untrustedSchedulerPlan,...callerProjectionOptions}=fixture.projectionOptions??{};
   const result=await verifyRegionTrainingCase({...fixture,source:linked.source,entry:linked.entryFunction,
     args:[linked.entryInput],fixture:fixture.fixture??{calls:[]},ancestorIds,
     projectionOptions:{...callerProjectionOptions,
-      ...(namespacePlan?{moduleNamespacePlan:namespacePlan}:{})},
+      ...(namespacePlan?{moduleNamespacePlan:namespacePlan}:{}),
+      ...(moduleSchedulerPlan?{moduleSchedulerPlan}:{})},
     provenance:{...fixture.provenance,moduleEvidence}});
   if(!result.exported)return {...identity,...result,sourceProfile:MODULE_REGION_PROFILE,moduleReference:'passed'};
   const sourceSide=result.exported.sidecar.sourceArtifact.sidecar,
-    ownedOutcome=sourceSide.moduleNamespacePlan?sourceSide.outcome:sourceSide.reference?.outcome;
+    ownedOutcome=sourceSide.moduleNamespacePlan||sourceSide.moduleSchedulerPlan?sourceSide.outcome:sourceSide.reference?.outcome;
   if(!outcomeAgreement(reference.outcome,ownedOutcome))
     return {...identity,status:'failed',phase:'module-correspondence',sourceProfile:MODULE_REGION_PROFILE,
       reason:'Native original module graph and owned linked JavaScript differ'};
@@ -210,6 +221,28 @@ export async function verifyModuleNamespaceInputEvidence({source,entry,args,modu
   return {status:'passed',graphDigest:evidence.graphDigest};
 }
 
+export async function verifyModuleSchedulerInputEvidence({source,entry,args,moduleSchedulerPlan,provenance}={}){
+  const evidence=provenance?.moduleEvidence;
+  if(evidence?.schema!=='semantic-module-evidence/1'||evidence.profile!==MODULE_REGION_PROFILE||
+     evidence.request?.experimentalSchedulerPlan!==true||!evidence.request.inputGraph)
+    fail('fresh original module scheduler evidence is required');
+  const {decodeOwnedGraph}=await import('../host/graph-codec.js');
+  const [input]=decodeOwnedGraph(JSON.stringify(evidence.request.inputGraph));
+  const prepared=prepare({...evidence.request,args:input.args,calls:null}),expectedPlan=prepared.moduleSchedulerPlan;
+  if(!expectedPlan||!isDeepStrictEqual(moduleSchedulerPlan,expectedPlan)||
+     !isDeepStrictEqual(encodeNativeGraph(args),encodeNativeGraph([prepared.linked.entryInput]))||
+     source!==prepared.linked.source||entry!==prepared.linked.entryFunction||
+     evidence.graphDigest!==hashAlgorithmData(prepared.request.modules)||
+     evidence.generatedSourceDigest!==hashAlgorithmData(prepared.linked.source)||
+     !isDeepStrictEqual(prepared.referenceInput,evidence.referenceInput)||
+     !isDeepStrictEqual(prepared.linked.metadata,evidence.metadata))
+    fail('scheduler plan or generated source does not match a fresh original-module relink');
+  const reference=await independentModuleRegionReference(prepared.referenceInput);
+  if(reference.status!=='passed'||!isDeepStrictEqual(reference,evidence.reference))
+    fail('fresh original ESM scheduler outcome differs from supplied evidence');
+  return {status:'passed',graphDigest:evidence.graphDigest};
+}
+
 export async function recheckModuleRegionEvidence(artifact){
   // Protocol-region callers pass the outer evidence so its actually published
   // program plan is checked. Legacy module callers may still pass the direct
@@ -230,6 +263,7 @@ export async function recheckModuleRegionEvidence(artifact){
   const publicArtifact=artifact?.public?.timeline?artifact:sourceArtifact;
   const publicProgram=publicArtifact?.public?.timeline?.find(row=>row.kind==='program');
   const publicPlan=publicProgram?.fields?.regionProgram?.moduleNamespacePlan;
+  const publicSchedulerPlan=publicProgram?.fields?.regionProgram?.moduleSchedulerPlan;
   const expectedPlan=prepared.request.experimentalNamespacePlan&&prepared.linked.metadata.namespaceSourcePlan?
     buildExperimentalModuleNamespacePlanFromLinker(prepared.linked):undefined;
   if(expectedPlan!==undefined&&!publicProgram)
@@ -238,6 +272,11 @@ export async function recheckModuleRegionEvidence(artifact){
     fail('public module namespace plan differs from freshly relinked source');
   if(expectedPlan===undefined&&publicPlan!==undefined)
     fail('public module namespace plan has no explicit source request');
+  const expectedSchedulerPlan=prepared.moduleSchedulerPlan;
+  if(expectedSchedulerPlan!==undefined&&(!publicProgram||!isDeepStrictEqual(publicSchedulerPlan,expectedSchedulerPlan)))
+    fail('public module scheduler plan differs from freshly relinked source');
+  if(expectedSchedulerPlan===undefined&&publicSchedulerPlan!==undefined)
+    fail('public module scheduler plan has no explicit source request');
   const refused=moduleProjectionRefusal(prepared.linked,prepared.request);
   if(refused)throw Object.assign(new TypeError('Module regions: '+refused.reason),refused);
   if(evidence.graphDigest!==hashAlgorithmData(prepared.request.modules)||
@@ -246,7 +285,7 @@ export async function recheckModuleRegionEvidence(artifact){
     !isDeepStrictEqual(prepared.referenceInput,evidence.referenceInput)||
     !isDeepStrictEqual(prepared.linked.metadata,evidence.metadata))fail('module graph, transformation, inputs or provenance changed');
   const reference=await independentModuleRegionReference(prepared.referenceInput);
-  const ownedOutcome=side.moduleNamespacePlan?side.outcome:side.reference?.outcome;
+  const ownedOutcome=side.moduleNamespacePlan||side.moduleSchedulerPlan?side.outcome:side.reference?.outcome;
   if(reference.status!=='passed'||!isDeepStrictEqual(reference,evidence.reference)||
     !outcomeAgreement(reference.outcome,ownedOutcome))fail('independent original-module outcome changed');
   if(expectedPlan&&!namespaceObservationAgreement(reference,sourceArtifact,expectedPlan))
