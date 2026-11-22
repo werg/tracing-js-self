@@ -1,7 +1,7 @@
 // Static capability accounting only. No source transformation or guest
 // evaluation: lexical bindings prevent a local `Map` from becoming a false
 // requirement for an unimplemented global Map intrinsic.
-const missingGlobals=new Set(['eval','Function','Date','RegExp','Map','WeakMap','WeakSet','JSON','Intl','globalThis',
+const missingGlobals=new Set(['eval','Function','Boolean','Date','RegExp','Map','WeakMap','WeakSet','JSON','Intl','globalThis',
   'isFinite','parseFloat','decodeURI','decodeURIComponent','encodeURI','encodeURIComponent','escape','unescape',
   'AggregateError','WeakRef','FinalizationRegistry','Uint8ClampedArray','Float16Array','Iterator','AsyncIterator',
   'ShadowRealm']);

@@ -6,6 +6,11 @@ import {freeTest262Identifiers,requiresScriptGlobalThis,test262HostCapabilities,
 
 const ast=source=>parse(source,{ecmaVersion:2026,sourceType:'script'});
 
+test('the unimplemented Boolean global stays distinct from ordinary shadowed bindings',()=>{
+  assert.deepEqual(unsupportedOwnedGlobals(ast('Boolean(true);')),['Boolean']);
+  assert.deepEqual(unsupportedOwnedGlobals(ast('function Boolean(value){return !!value;}Boolean(true);')),[]);
+});
+
 test('parameter initializers retain outer globals despite body variable declarations',()=>{
   for(const source of [
     'function f(value=Map){var Map;return value;}',

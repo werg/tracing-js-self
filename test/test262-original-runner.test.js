@@ -659,6 +659,20 @@ test('known absent global intrinsics and the global receiver cannot create false
   assert.deepEqual(globals,['Date','missing']);
 });
 
+test('missing Boolean support cannot pass a later expected ReferenceError or hide guest-error details',()=>{
+  for(const {owned,reference} of both('Boolean(true);throw new ReferenceError("later");',{
+    metadata:'negative:\n  phase: runtime\n  type: ReferenceError\n'
+  })){
+    assert.equal(owned.status,'unsupported');assert.match(owned.reason,/Boolean/);
+    assert.equal(reference.status,'passed');
+  }
+  for(const {owned} of both('throw new TypeError("visible failure");')){
+    assert.equal(owned.status,'failed');assert.equal(owned.errorType,'TypeError');
+    assert.equal(owned.completion.type,'throw');
+    assert.deepEqual(owned.completion,owned.stages.ownedExecution.completion);
+  }
+});
+
 test('resource bounds and corrupt trace validation never satisfy a runtime-negative test',t=>{
   const [limited]=fixture('while(true){}',{profile:ownedTest262Profile({maxSteps:10})});
   assert.equal(executeOfficialTest262Variant(limited).status,'resource_limited');

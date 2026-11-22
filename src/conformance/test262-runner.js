@@ -490,6 +490,7 @@ export function executeOfficialTest262Variant(options={}){
     observed=outcome('environment_unavailable','Original script is waiting for unavailable external progress');
   else observed=outcome('passed','Original script and original assertions completed without an uncaught error',{phase:'runtime'});
   result.stages.ownedExecution={...observed,trace};
-  return finish(observed.status,observed.reason,{phase:observed.phase??'runtime',trace,
-    ...(includeBundle?{bundle}:{}),...(observed.completionCalls!==undefined?{completionCalls:observed.completionCalls}:{})});
+  const {status,reason,...details}=observed;
+  return finish(status,reason,{...details,phase:observed.phase??'runtime',trace,
+    ...(includeBundle?{bundle}:{})});
 }
