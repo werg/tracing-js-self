@@ -122,9 +122,10 @@ test('V8 release snapshot refuses changed, omitted and forged report authority',
 });
 
 test('V8 release snapshot refuses changed completed bytes and missing original failures',async t=>{
-  for(const mutation of ['changed','missing'])await t.test(mutation,async t=>{
+  for(const mutation of ['changed','changed-source','missing'])await t.test(mutation,async t=>{
     const {directory}=fixture(t);
     if(mutation==='changed')appendFileSync(join(directory,'accepted.admitted.json'),' ');
+    else if(mutation==='changed-source')appendFileSync(join(directory,'accepted.source.json'),' ');
     else rmSync(join(directory,'accepted.first-failure.json'));
     await assert.rejects(verifyV8ReleaseCampaign(directory),/artifact bytes changed|ENOENT/);
   });

@@ -22,7 +22,15 @@ const ancestors=(values,family)=>{
 const emptyFixture=()=>({calls:[],settlementOrder:null});
 const sourceSide=artifact=>artifact?.sidecar?.schema==='semantic-protocol-host-region-evidence/1'?
   artifact.sidecar:artifact?.sidecar?.sourceArtifact?.sidecar;
-const seed=fixture=>Object.hasOwn(fixture,'randomSeed')?fixture.randomSeed:fixture.seeds?.guestRng??null;
+function seed(fixture){
+  demand(fixture.seeds===undefined||record(fixture.seeds),'original RNG settings are not a seed record');
+  const seeds=fixture.seeds??{},value=Object.hasOwn(fixture,'randomSeed')?fixture.randomSeed:seeds.guestRng??null;
+  demand(value===null||Number.isInteger(value)&&value>=0&&value<=0xffffffff,
+    'original guest RNG seed is not a uint32 or null');
+  demand(seeds.guestRng===undefined||seeds.guestRng===value,
+    'original declared guest RNG seed differs from its executed fixture');
+  return value;
+}
 
 function graph(value){
   demand(record(value)&&value.schema==='owned-graph/1','original task has no encoded argument graph');
@@ -96,14 +104,18 @@ function moduleRequest(fixture){
     ...(fixture.experimentalSchedulerPlan===true?{experimentalSchedulerPlan:true}:{})};
 }
 
-function checkRegistry(task,artifact,registry){
+function checkRegistry(task,artifact,registry,expectedSourceId){
   const side=artifact.sidecar,binding=side.datasetBinding,identity=side.splitIdentity,fixture=task.fixture;
   demand(record(registry)&&registry.schema==='semantic-region-family-registry/1'&&
     Array.isArray(registry.sources)&&Array.isArray(registry.components),'original family registry is missing');
   const {digest:registryDigest,...body}=registry;
   demand(digest(body)===registryDigest,'original family registry digest differs');
-  const members=registry.sources.filter(row=>row.id===fixture.id),
-    components=registry.components.filter(row=>row.sourceIds.includes(fixture.id));
+  demand(text(expectedSourceId),'original task has no explicit physical source identity');
+  // The committed case label can differ from regionFamilyMembership's physical
+  // source ID. Select the independently recorded identity, then compare all of
+  // its frozen original-source and split fields; never infer it from a filename.
+  const members=registry.sources.filter(row=>row.id===expectedSourceId),
+    components=registry.components.filter(row=>row.sourceIds.includes(expectedSourceId));
   demand(members.length===1&&components.length===1,'original task has no unique frozen registry membership');
   const member=members[0],component=components[0],source=sourceSide(artifact);
   demand(member.family===fixture.family&&member.source===source.referenceInput.source&&
@@ -111,7 +123,7 @@ function checkRegistry(task,artifact,registry){
     equal(member.ancestors,ancestors(source.ancestorIds??[],fixture.family)),
   'artifact source is not the original task registry member');
   const expected={schema:'semantic-region-split-identity/1',policy:'semantic-region-family-components/1',
-    traceFormat:'semantic-trace/8',registryDigest,seed:registry.seed,sourceId:fixture.id,
+    traceFormat:'semantic-trace/8',registryDigest,seed:registry.seed,sourceId:expectedSourceId,
     family:member.family,ancestors:member.ancestors,entry:member.entry,sourceDigest:member.sourceDigest,
     coreDigest:member.coreDigest,coreStatus:member.coreStatus,componentId:component.id,
     members:component.members,split:component.split,holdout:component.holdout,registry};
@@ -122,15 +134,15 @@ function checkRegistry(task,artifact,registry){
     sourceArtifactDigest:direct?null:digest(side.sourceArtifact),
     ...(direct?{sourceIdentityDigest:side.identityDigest}:{}),
     ...(Object.hasOwn(side,'orchestrationTranscript')?{orchestrationTranscriptDigest:digest(side.orchestrationTranscript)}:{}),
-    registryDigest,componentId:component.id,split:component.split,sourceId:fixture.id,family:member.family,
+    registryDigest,componentId:component.id,split:component.split,sourceId:expectedSourceId,family:member.family,
     sourceDigest:member.sourceDigest,coreDigest:member.coreDigest};
   demand(equal(binding,expectedBinding)&&side.split===component.split&&
     side.sourceComponent===component.id&&side.familyRegistryDigest===registryDigest,
   'artifact dataset binding differs from the original task registry membership');
-  return {sourceId:fixture.id,split:component.split,registryDigest};
+  return {sourceId:expectedSourceId,split:component.split,registryDigest};
 }
 
-export function verifyV8TaskArtifactBinding(task,artifact,{registry=null}={}){
+export function verifyV8TaskArtifactBinding(task,artifact,{registry=null,expectedSourceId=null}={}){
   demand(record(task)&&task.traceVersion===8&&['source','module'].includes(task.kind)&&
     record(task.fixture)&&text(task.fixture.id)&&text(task.fixture.family),
   'invalid original encoded task');
@@ -168,7 +180,7 @@ export function verifyV8TaskArtifactBinding(task,artifact,{registry=null}={}){
     request={source:fixture.source,entry:fixture.entry,invocations};
     demand(equal(reference,request),'source-session component count, order or inputs differ from the original task');
   }else request=checkSource(fixture,artifact,task.producerRevision,{taskId:fixture.id});
-  const membership=registry===null?null:checkRegistry(task,artifact,registry);
+  const membership=registry===null?null:checkRegistry(task,artifact,registry,expectedSourceId);
   return {schema:'semantic-v8-release-task-artifact-binding/1',caseId:fixture.id,kind:task.kind,
     taskDigest:digest(clean(task)),requestDigest:digest(request),
     sourceEvidenceDigest:digest(side),membership,orchestrationTeacher:fixture.orchestrationTeacher===true};

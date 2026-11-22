@@ -192,7 +192,7 @@ export async function verifyV8ReleaseCampaign(directory){
         // A hash-linked journal can consistently name the wrong safe artifact.
         // Bind the encoded task's request before fresh source/native replay.
         const sourceArtifact=readJSON(root,name,MAX_OBJECT).value,
-          binding=verifyV8TaskArtifactBinding(task,sourceArtifact,{registry});
+          binding=verifyV8TaskArtifactBinding(task,sourceArtifact,{registry,expectedSourceId:result.row.sourceId});
         require(result.row.family===task.fixture.family,'reported family differs from original task');
         if(registry!==null)require(result.row.sourceId===binding.membership.sourceId&&
           result.row.split===binding.membership.split,'reported source membership differs from original task');

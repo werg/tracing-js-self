@@ -6,7 +6,7 @@ import hashlib
 import importlib.util
 from pathlib import Path
 
-IMPLEMENTATION_SHA256 = "4e309d261d4dabc4e1231c681b7fcc239825e838a25236785f0f98af396e123e"
+IMPLEMENTATION_SHA256 = "71d3b4b900736bacfd8718e7c9aefb851db50fb43c24e433e7d64ae433cebaca"
 _path = Path(__file__).with_name("semantic_release_v8.py")
 with _path.open("rb") as _stream:
     _source = _stream.read(1024 * 1024 + 1)

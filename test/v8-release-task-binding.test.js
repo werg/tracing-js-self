@@ -5,7 +5,7 @@ import {encodeNativeGraph} from '../src/host/graph-codec.js';
 import {verifyV8TaskArtifactBinding} from '../src/corpus/release-task-binding-v8.mjs';
 import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
 import {verifyRegionModuleTrainingCase} from '../src/semantic/module-v8.js';
-import {bindRegionFamilySplit} from '../src/semantic/dataset-v8.js';
+import {bindRegionFamilySplit,regionFamilyMembership,prepareRegionFamilyRegistry} from '../src/semantic/dataset-v8.js';
 import {attachSourceQualifiedOrchestrationV8} from '../src/semantic/orchestration-training-v8.js';
 import {buildSemanticRegionSupportCohortV8} from '../fixtures/semantic-regions/support-cohort.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
@@ -25,7 +25,8 @@ async function source(index){
   artifact=bindRegionFamilySplit(artifact,membership,cohort.registry);
   const value={task,artifact:JSON.parse(JSON.stringify(artifact))};cache.set(index,value);return value;
 }
-const bind=(task,artifact)=>verifyV8TaskArtifactBinding(task,artifact,{registry:cohort.registry});
+const bind=(task,artifact)=>verifyV8TaskArtifactBinding(task,artifact,
+  {registry:cohort.registry,expectedSourceId:task.fixture.id});
 
 test('original source, callback fixture, ordered session and teacher requests bind actual source artifacts',async t=>{
   for(const [index,name] of ['pure','callbacks-recovery','repeated-two-calls','child-teacher'].entries())
@@ -88,7 +89,73 @@ test('relabeling a valid artifact and resealing its dataset hashes cannot replac
   assert.throws(()=>bind(first.task,changed),/split identity differs/);
   const registry=clone(cohort.registry);registry.sources.find(row=>row.id===first.task.fixture.id).source='function run(){return 0;}';
   const {digest,...body}=registry;registry.digest=hashAlgorithmData(body);
-  assert.throws(()=>verifyV8TaskArtifactBinding(first.task,first.artifact,{registry}),/original task registry member/);
+  assert.throws(()=>verifyV8TaskArtifactBinding(first.task,first.artifact,
+    {registry,expectedSourceId:first.task.fixture.id}),/original task registry member/);
+});
+
+test('actual source membership keeps the case label separate from its digest-suffixed physical identity',async t=>{
+  const fixture={id:'release-source-label',family:'release-source-family',ancestorIds:['original-template'],
+    source:'"use strict";function run(value){return (value+2)*3;}',entry:'run',args:[4],fixture:{calls:[]}},
+    task=encodeGenerationTask({kind:'source',traceVersion:8,producerRevision:REVISION,fixture}),
+    result=await verifyRegionTrainingCase({...fixture,taskId:fixture.id,producerRevision:REVISION});
+  assert.ok(result.exported,result.reason);
+  const candidate={id:fixture.id,exported:result.exported},member=regionFamilyMembership(candidate),
+    {registry}=prepareRegionFamilyRegistry([candidate],{seed:17}),
+    artifact=JSON.parse(JSON.stringify(bindRegionFamilySplit(result.exported,member,registry))),
+    options={registry,expectedSourceId:member.id},binding=verifyV8TaskArtifactBinding(task,artifact,options);
+  assert.match(member.id,new RegExp('^'+fixture.id+':[a-f0-9]{40}$'));
+  assert.equal(binding.caseId,fixture.id);assert.equal(binding.membership.sourceId,member.id);
+  assert.notEqual(binding.caseId,binding.membership.sourceId);
+  for(const [name,changed] of [['absent',null],['case-label',fixture.id],['another-physical-source',member.id+'0']])
+    await t.test(name,()=>assert.throws(()=>verifyV8TaskArtifactBinding(task,artifact,
+      {registry,expectedSourceId:changed}),/physical source identity|unique frozen registry membership/));
+  await t.test('changed-split',()=>{
+    const changed=clone(artifact);changed.sidecar.datasetBinding.split=
+      binding.membership.split==='train'?'test':'train';
+    assert.throws(()=>verifyV8TaskArtifactBinding(task,changed,options),/dataset binding differs/);
+  });
+});
+
+test('original ancestry uses the existing normalized set identity without weakening different-ancestor refusal',async()=>{
+  const {task,artifact}=await source(0),equivalent=clone(task);
+  equivalent.fixture.ancestorIds.push(task.fixture.family,...task.fixture.ancestorIds);
+  assert.doesNotThrow(()=>bind(equivalent,artifact));
+  equivalent.fixture.ancestorIds.push('another-original-template');
+  assert.throws(()=>bind(equivalent,artifact),/family or ancestry differs/);
+});
+
+test('the original host settlement schedule remains part of the request',async()=>{
+  const {task,artifact}=await source(1),changed=clone(task);
+  changed.fixture.fixture.settlementOrder=[0];
+  assert.throws(()=>bind(changed,artifact),/host fixture or RNG seed differs/);
+});
+
+test('actual source RNG settings distinguish zero, omission, explicit null and conflicting guest declarations',async t=>{
+  const fixture={id:'release-rng-request',family:'release-rng-request',
+    source:'"use strict";function run(value){return value+1;}',entry:'run',args:[4],fixture:{calls:[]}};
+  let nullArtifact;
+  for(const [name,settings,expected] of [
+    ['explicit-zero',{randomSeed:0},0],['guest-zero',{seeds:{guestRng:0}},0],
+    ['omitted-random-with-guest-seed',{seeds:{guestRng:19}},19],
+    ['explicit-null',{randomSeed:null},null],['matching-null',{randomSeed:null,seeds:{guestRng:null}},null],
+  ])await t.test(name,async()=>{
+    const input={...fixture,...settings},task=encodeGenerationTask({kind:'source',traceVersion:8,
+      producerRevision:REVISION,fixture:input}),
+      result=await verifyRegionTrainingCase({...input,taskId:fixture.id,producerRevision:REVISION});
+    assert.ok(result.exported,result.reason);
+    const artifact=JSON.parse(JSON.stringify(result.exported)),reference=artifact.sidecar.sourceArtifact.sidecar.referenceInput;
+    assert.equal(reference.randomSeed,expected);assert.doesNotThrow(()=>verifyV8TaskArtifactBinding(task,artifact));
+    const changed=clone(task);changed.fixture.randomSeed=expected===null?0:null;
+    assert.throws(()=>verifyV8TaskArtifactBinding(changed,artifact),/RNG seed/);
+    if(name==='explicit-null')nullArtifact=artifact;
+  });
+  for(const randomSeed of [null,0])await t.test('conflicting-guest-seed-with-'+String(randomSeed),async()=>{
+    const input={...fixture,randomSeed,seeds:{guestRng:19}};
+    await assert.rejects(verifyRegionTrainingCase({...input,taskId:fixture.id,producerRevision:REVISION}),
+      /declared guest RNG seed must match/);
+    const task=encodeGenerationTask({kind:'source',traceVersion:8,producerRevision:REVISION,fixture:input});
+    assert.throws(()=>verifyV8TaskArtifactBinding(task,nullArtifact),/declared guest RNG seed differs/);
+  });
 });
 
 test('original module graph, entry, export, aliases and ordered calls bind actual module evidence',async t=>{
@@ -130,5 +197,9 @@ test('direct protocol and mixed host protocol requests bind their actual source 
     assert.ok(result.exported,result.reason);
     const artifact=JSON.parse(JSON.stringify(result.exported));
     assert.equal(verifyV8TaskArtifactBinding(task,artifact).caseId,fixture.id);
+    if(fixture.id==='release-protocol-source'){
+      const changed=clone(task);changed.fixture.fixture={calls:[{operation:'demo.readAsync',arguments:['required']}],settlementOrder:null};
+      assert.throws(()=>verifyV8TaskArtifactBinding(changed,artifact),/omitted original external inputs/);
+    }
   });
 });

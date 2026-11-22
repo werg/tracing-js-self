@@ -209,13 +209,27 @@ def descriptor_from_campaign(snapshot, producer, native):
     require([row["id"] for row in selected] == snapshot["selectedCaseIds"] and selected and
             all(row["status"] == "admitted" and row["source"] == row["native"] == "passed"
                 for row in selected), "Every selected release source must be source-qualified and native-admitted")
+    sources, source_ids = [], set()
+    for row in selected:
+        binding = row.get("taskArtifactBinding")
+        membership = binding.get("membership") if isinstance(binding, dict) else None
+        require(isinstance(binding, dict) and binding.get("schema") == "semantic-v8-release-task-artifact-binding/1" and
+                binding.get("caseId") == row["id"] and isinstance(membership, dict),
+                "Release source has no independently checked original task and physical membership")
+        source_id = membership.get("sourceId")
+        registry_digest = membership.get("registryDigest")
+        require(isinstance(source_id, str) and bool(source_id) and source_id not in source_ids and
+                membership.get("split") in ("train", "validation", "test") and
+                isinstance(registry_digest, str) and re.fullmatch(r"[a-f0-9]{64}", registry_digest),
+                "Release source has invalid or duplicate independently checked physical membership")
+        source_ids.add(source_id)
+        # The snapshot has compared this explicit journal identity with the
+        # original encoded task and frozen registry. Case labels and artifact
+        # basenames are not physical source identities.
+        sources.append({"caseId": row["id"], "sourceId": source_id,
+                        "path": ROLES["qualification"] + "/" + row["sourceArtifact"]})
     roles = {key: value for key, value in ROLES.items() if key != "prepared"}
-    roles["prepared"] = [{"path": ROLES["prepared"], "sourceArtifacts": [
-        # Original preparation binds the complete source input bytes. The
-        # admitted copy remains retained evidence, not a substitute source.
-        {"caseId": row["id"], "path": ROLES["qualification"] + "/" + row["sourceArtifact"]}
-        for row in selected
-    ]}]
+    roles["prepared"] = [{"path": ROLES["prepared"], "sourceArtifacts": sources}]
     return {"schema": "semantic-v8-release-inputs/1", "producerRevision": producer["revision"],
             "consumerRevision": native["revision"], "roles": roles,
             **{name: snapshot[name] for name in ("contractDigest", "fixtureDigest", "interoperabilityDigest")}}

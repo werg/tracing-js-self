@@ -34,6 +34,12 @@ source receives an explicit release binding; their transformed output alone
 cannot stand in for that source.
 
 Task binding does not execute or validate the artifact's claimed semantics.
+The descriptor preserves the case label, explicit physical source ID and
+artifact path separately. Physical identity comes from the verified task and
+frozen registry membership, including digest-suffixed source IDs; it is never
+inferred from a filename. See [original-input authority](direct-v8-release-original-inputs.md)
+for the actual RNG null/zero rules and the reconciliation of all eighteen
+independent original-input controls.
 For modules it first compares the original module graph and normalized input
 request. The separate fresh module source check then relinks that exact request
 and verifies generated source, metadata and the independently observed original
@@ -207,7 +213,7 @@ The `Direct V8 source model package and restore` workflow freezes the triggering
 producer commit and reads its exact 40-character native consumer revision from
 the committed policy before checking out that native source. It verifies that
 the resulting source pair still matches the frozen policy before qualification.
-It runs the 17 producer archive, 69 task-binding/campaign-history and 62 native verifier controls without skips,
+It runs the 19 producer archive, 83 task-binding/campaign-history and 69 native verifier controls without skips,
 then the full paired gate in the exact release runtime. Every subprocess streams
 progress and retains its original stdout/stderr. A complete tar archive retains
 hidden campaign locks, immutable history, original inputs, package, restoration
