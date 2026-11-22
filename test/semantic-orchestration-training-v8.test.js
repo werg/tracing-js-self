@@ -31,6 +31,15 @@ function event(candidate,kind,ordinal){
     (ordinal===undefined||row.ordinal===ordinal));
 }
 
+test('a complete source-qualified child outside the authored work budget is refused',async()=>{
+  const source=await verifyRegionTrainingCase({id:'orchestration-work-overflow',family:'orchestration-work-overflow',
+    source:'"use strict";async function run(){let total=0;for(let i=0;i<20;i++){total+=await Promise.resolve(i);}return total;}',
+    entry:'run',args:[],fixture:{calls:[]}});
+  assert(source.exported,source.reason);
+  assert(source.exported.contexts.length>64,'the qualified source must exceed the declared logical budget');
+  await assert.rejects(attachSourceQualifiedOrchestrationV8(source.exported),/logical teacher work budget/);
+});
+
 test('source-qualified scalar child attaches the canonical ten-event four-target lifecycle without mutation',()=>{
   assert.deepEqual(sourceArtifact,sourceBefore,'attaching lifecycle targets must not mutate source evidence');
   assert.equal(transcript.schema,'semantic-orchestration-transcript/1');
@@ -47,6 +56,12 @@ test('source-qualified scalar child attaches the canonical ten-event four-target
   assert.deepEqual(decisions.map(row=>JSON.parse(row.record).name),[
     'track_create','track_join','track_progress','track_complete'
   ]);
+  assert.equal(transcript.policy.workAccounting,'one-per-complete-teacher-target/1');
+  assert.deepEqual(decisions.map(row=>row.context.tracks.find(track=>track.address==='track:0').budget),
+    [100000,99999,99998,99997]);
+  assert.equal(decisions[2].context.tracks.find(track=>track.address==='track:1').budget,
+    64-artifact.contexts.length);
+  assert.equal(transcript.events.at(-1).receipt.track.budget,99996);
   for(const row of decisions){
     const record=JSON.parse(row.record);
     assert.equal(row.record,stableAlgorithmJSON(record),'teacher target bytes must be canonical');
@@ -85,6 +100,12 @@ test('source-qualified scalar child attaches the canonical ten-event four-target
 });
 
 test('the transcript digest cannot bless missing, reordered, or rehashed altered teacher events',()=>{
+  rejectedTranscript('unspent coordinator work',candidate=>{
+    candidate.events[3].context.tracks.find(track=>track.address==='track:0').budget=100000;
+  });
+  rejectedTranscript('unspent child work',candidate=>{
+    candidate.events[6].context.tracks.find(track=>track.address==='track:1').budget=64;
+  });
   rejectedTranscript('missing event',candidate=>candidate.events.splice(1,1));
   rejectedTranscript('reordered events',candidate=>{
     [candidate.events[0],candidate.events[1]]=[candidate.events[1],candidate.events[0]];

@@ -15,6 +15,7 @@ const freeze=value=>{if(value&&typeof value==='object'){
 
 export const V8_ORCHESTRATION_TRAINING_POLICY=freeze({
   schema:'semantic-orchestration-policy/1',name:'create-join-publish-complete',maxActive:1,maxWaiting:17,
+  workAccounting:'one-per-complete-teacher-target/1',
   coordinator:{track:'track:0',purpose:'Execute the declared V8 child tasks and publish their exact results',
     completion:'All declared children completed and their exact results were published',budget:100000},
   child:{track:'track:1',purpose:'Run the exact declared V8 source',completion:'Deliver its exact result',budget:64}
@@ -74,13 +75,20 @@ export function buildOrchestrationTranscriptV8(document){
       track:childTrack,completion:copy(terminal.completion),heap:copy(terminal.heap),publicDigest,contextsDigest},
     delivered={schema:'semantic-completion/4',dependency:copy(dependency),kind:terminal.completion.kind,
       value:copy(terminal.completion.value),parent:coordinatorTrack,target:coordinatorTrack};
+  const childWork=rows.filter(row=>row.mode==='generated').length;
+  demand(childWork>0&&childWork<=policy.child.budget,
+    'the complete child exceeds the declared logical teacher work budget');
   const state={session:source.session,track:coordinatorTrack,
     children:[{program:copy(program),invocation:copy(invocation),execution:copy(execution),track:null,completion:null}],
     tracks:[coordinator],receipts:[],published:[],publicDigest:initialDigest},events=[];
   const event=(afterPublicSequence,kind,extra)=>events.push({ordinal:events.length+1,afterPublicSequence,kind,...copy(extra)});
   const decision=(afterPublicSequence,name,args)=>{
     event(afterPublicSequence,'decision',{context:nativeV8OrchestrationContext(state),
-      record:stableAlgorithmJSON({name,arguments:args})});return events.length;};
+      record:stableAlgorithmJSON({name,arguments:args})});
+    // An authored complete target is one teacher work event. Actual native
+    // model fragments retain their own independently measured work cost.
+    demand(coordinator.budget>0,'the coordinator exhausted its logical teacher work budget');
+    coordinator.budget--;return events.length;};
   const ack=(afterPublicSequence,ordinal,track,extra={})=>event(afterPublicSequence,'ack',{for:ordinal,
     receipt:{schema:'semantic-orchestration-teacher-commit/1',committed:true,track:copy(track),...copy(extra)}});
 
@@ -94,7 +102,7 @@ export function buildOrchestrationTranscriptV8(document){
   coordinator.status='waiting';coordinator.prerequisites=[dependency.id];child.status='active';
   ack(2,join,coordinator);
 
-  child.status='completed';coordinator.status='active';state.children[0].completion=copy(completion);
+  child.budget-=childWork;child.status='completed';coordinator.status='active';state.children[0].completion=copy(completion);
   state.receipts.push(copy(delivered));state.publicDigest=publicDigest;
   event(rows.length,'completion',{receipt:completion,delivered});
   const progress=stableAlgorithmJSON(terminal.completion),publish=decision(rows.length,'track_progress',

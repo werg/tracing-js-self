@@ -14,7 +14,8 @@ call, one source definition, and a complete return or throw. The root may have a
 fresh realm or be the first invocation in a retained realm. Reused retained
 roots, multiple declared roots, dynamically created child invocations and a
 public cut with observations after the child's generated terminal record are
-outside this teacher profile. Refusals remain explicit.
+outside this teacher profile. The complete child must also fit the declared
+64-target logical work budget. Refusals remain explicit.
 
 The attaching API reruns original-source correspondence, source projection and
 public replay before authoring any targets. It only accepts qualified teacher
@@ -78,6 +79,16 @@ They carry no fabricated model selection IDs, token IDs, checkpoint identities
 or inference provenance. The native consumer independently replays the actual
 track registry rather than trusting these acknowledgements as authority.
 
+The policy explicitly binds `one-per-complete-teacher-target/1` work accounting.
+Each authored lifecycle target charges one coordinator work unit before its
+acknowledgement; every complete generated child target charges one child unit
+before completion. Causal contexts retain the reduced budgets. The coordinator
+starts with 100,000 units and the child with 64; neither keeps an unspent budget
+after work. An actual model spends native work units per emitted fragment, so
+its remaining budget and total work cost require separate measurement. Physical
+training fragments do not retrospectively turn a teacher transcript into actual
+model-execution evidence.
+
 ## Ordinary serialization and admission
 
 The flat causal serializer interleaves four additional loss-bearing targets at
@@ -115,7 +126,7 @@ coverage and whole-program serving/recovery remain separate acceptance gates.
 ## Retained controls
 
 The producer teacher/native-receipt/causal-serializer/dataset selection passes
-20 tests with zero failures or skips. Controls include exact source rechecking,
+21 tests with zero failures or skips. Controls include exact source rechecking,
 the complete ordered lifecycle, terminal heap/result binding, causal anchors,
 rehashed provenance/dependency/context/source mutations, conditional native
 receipts, duplicate identity and target-only masks. Complete local logs are in

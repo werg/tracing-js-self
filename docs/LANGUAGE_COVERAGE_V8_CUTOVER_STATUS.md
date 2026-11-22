@@ -42,6 +42,16 @@ teacher/materializer or composite recovery work. **0/17 packages are closed.**
 
 ## Source-qualified orchestration teacher — 22 November 2026
 
+Follow-up native review corrected the authored teacher's work accounting. Its
+policy now charges one unit per complete lifecycle target and per complete child
+target; causal contexts retain the reduced budgets. A complete source-qualified
+188-target async case is refused by the explicit 64-target child profile. The
+updated producer selection passes **21/21**, zero skips, superseding 20 overlapping
+controls. Actual model fragments have separately measured work cost; neither
+logical teacher accounting nor physical training framing proves learned serving.
+Fresh paired fixtures retain their new exact policy/transcript digests, and old
+source evidence whose verifier environment changed is regenerated from source.
+
 A separate source-bound transcript now authors four lifecycle targets without
 altering the child public timeline or fabricating model-selection evidence. The
 attaching API reruns original-source, projection and replay qualification before
