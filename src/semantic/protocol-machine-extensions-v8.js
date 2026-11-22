@@ -29,6 +29,9 @@ import {ASYNC_CALL_PROFILE_V8,ASYNC_CALL_RECORD_FIELDS,validateAsyncCallRecordV8
   allowsAsyncCallInternalSchedulerV8,allowsAsyncCallWithoutStackV8} from './protocol-async-call-v8.js';
 import {MODULE_SCHEDULER_PROFILE_V8,MODULE_SCHEDULER_RECORD_FIELDS,validateModuleSchedulerRecordV8,applyModuleSchedulerRecordV8,
   validateBoundModuleSchedulerStateV8,assertBoundModuleSchedulerNextV8} from './protocol-module-scheduler-v8.js';
+import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_RECORD_FIELDS,validatePromiseAdoptionRecordV8,applyPromiseAdoptionRecordV8,
+  restorePromiseAdoptionStateV8,assertPromiseAdoptionNextV8,allowsPromiseAdoptionInternalSchedulerV8,
+  allowsPromiseAdoptionWithoutStackV8} from './protocol-promise-adoption-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:MODULE_SCHEDULER_PROFILE_V8,recordFields:MODULE_SCHEDULER_RECORD_FIELDS,
   validateRecord:validateModuleSchedulerRecordV8,applyRecord:applyModuleSchedulerRecordV8,
@@ -92,4 +95,9 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   assertNext:assertPromiseExecutorNextV8,assertCall:assertPromiseExecutorCallV8,
   hasRichState:node=>node.promiseResolver!==undefined,
   allowsInternalScheduler:allowsPromiseExecutorInternalSchedulerV8,allowsDetailedCall:allowsPromiseExecutorDetailedCallV8
+}),Object.freeze({
+  id:PROMISE_ADOPTION_PROFILE_V8,recordFields:PROMISE_ADOPTION_RECORD_FIELDS,validateRecord:validatePromiseAdoptionRecordV8,
+  applyRecord:applyPromiseAdoptionRecordV8,restoreState:(controller,_snapshot,api)=>restorePromiseAdoptionStateV8(controller,api),
+  assertNext:assertPromiseAdoptionNextV8,hasRichState:node=>node.adoption!==undefined,
+  allowsInternalScheduler:allowsPromiseAdoptionInternalSchedulerV8,allowsWithoutStack:allowsPromiseAdoptionWithoutStackV8
 })]);

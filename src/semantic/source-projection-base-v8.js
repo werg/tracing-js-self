@@ -9,6 +9,10 @@ export const BASE_SOURCE_COMPONENT_V8='ordinary-source/1';
 export const PROMISE_EXECUTOR_COMPONENT_V8='promise-executor/1';
 export const PROMISE_JOIN_COMPONENT_V8='promise-join/1';
 export const ASYNC_CALL_COMPONENT_V8='async-scoped-call-source/1';
+export const PROMISE_ADOPTION_COMPONENT_V8='promise-adoption/1';
+export function sourcePromiseAdoptionEventV8(view,{event}){
+  return event.operation==='job.enter'&&['promise-adopt','adoption'].includes(view.owned.control.a0.queue?.[0]?.kind);
+}
 export function sourceAsyncCallEventV8(view,{event,row}){
   const data=view.components[ASYNC_CALL_COMPONENT_V8];if(!data)return false;
   const owns=frame=>data.calls.some(([id])=>id===frame),raw=event.operands?.[0],callee=raw?.[0]==='method'?raw[1]:raw;
@@ -62,6 +66,7 @@ export function createBaseSourceComponentV8(){return {id:BASE_SOURCE_COMPONENT_V
     event(view,input){
       if(sharedProtocolSourceEventV8(view,input))return false;
       if(sourceAsyncCallEventV8(view,input))return false;
+      if(sourcePromiseAdoptionEventV8(view,input))return false;
       if(sourcePromiseConstructorV8(input.event)||sourcePromiseJoinEventV8(view,input))return false;
       const callee=input.row?.operands?.[0],method=callee?.[0]==='method'?callee[1]:callee;
       if(input.event.operation==='call.enter'&&sourcePromiseResolverV8(method))return false;

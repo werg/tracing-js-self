@@ -23,7 +23,7 @@ try{
   const extensions=prepareProtocolObservationExtensionsV8({source:input.source,mode,side:'native',initialValues:args});
   const completion=createProtocolCompletionCapture({initialValues:args,adapters:extensions.metadataAdapters});
   function bounded(list,row){if(list.length>=32768)throw new RangeError('Independent protocol observation cap');list.push(row);}
-  const context=vm.createContext({...extensions.globals,__args:args,__result:undefined,__kind:'return',
+  const context=vm.createContext({...extensions.globals,queueMicrotask,__args:args,__result:undefined,__kind:'return',
     __tracingCapture:(site,value)=>{try{bounded(operations,{site,value:encode(value)});}catch(error){failures.push(error.message);throw error;}return value;},
     __tracingBranch:(site,value)=>{bounded(decisions,{site,decision:['bool',!Boolean(value)]});return value;},
     __tracingLogical:(site,operator,value)=>{bounded(decisions,{site,decision:['bool',

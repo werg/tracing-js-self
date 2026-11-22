@@ -141,9 +141,8 @@ test('an async observer failure rolls back detachment, caller scope and continua
   for(const {id}of extensions)assert.deepEqual(adapter.componentState(id),states[id],id);
 });
 
-test('async Promise callbacks and assimilation remain explicit refusals',()=>{
+test('async Promise callbacks and callable thenables remain explicit refusals',()=>{
   for(const source of [
-    'async function h(){return Promise.resolve(1);}async function run(){return await h();}',
     'function run(){return Promise.resolve(1).then(async function(x){await 0;return x;});}',
     'async function h(){return {then:function(resolve){resolve(1);}};}async function run(){return await h();}'
   ]){

@@ -67,7 +67,11 @@ export function createPromiseExecutorTeacherV8(){
     const callee=row?.operands?.[0],method=callee?.[0]==='method'?callee[1]:callee,match=resolver(method);
     if(event.operation==='call.enter'&&match){
       if(row?.child||row.result?.[0]!=='undefined')ctx.refuse('resolver call has an unexpected guest invocation or result');
+      const raw=row.operands[1]??['undefined'],target=match[1]==='resolve'&&raw[0]==='promise'&&
+        !ctx.controller(owner).protocol.promiseExecutors.capabilities.find(cap=>cap.promise===match[2])?.called?raw[1]:null;
+      if(target!==null)ctx.preparePromiseAdoption(event,owner,match[2],target);
       ctx.emitProtocol(owner,{kind:'promise.resolver.call',resolver:ctx.tag(method),value:ctx.tag(row.operands[1]??['undefined'])},event,'source-promise-resolver-call/1');
+      if(target!==null)ctx.publishPromiseAdoption(event,owner,match[2],target);
       ctx.writes(row,owner,event);return true;
     }
     if(row?.op==='call'&&event.operation!=='job.enter'){
@@ -103,9 +107,6 @@ export function createPromiseExecutorTeacherV8(){
     const controller=ctx.controller(ctx.rootInvocation),data=controller.protocol?.promiseExecutors;
     for(const change of event.stateChanges){
       const completed=change.after;
-      if(change.table==='frames'&&completed?.status==='completed'&&completed.completion?.type==='return'&&
-        completed.completion.value?.value?.[0]==='promise'&&(completed.asyncPromiseId||completed.reactionPromiseId))
-        ctx.refuse('Promise return adoption requires its resolving-function job protocol');
       if(change.table==='frames'&&change.after?.status==='running'&&
         ctx.frameId(change.id)===controller.stack.at(-1)&&
         !eq(controller.receiver??['undefined'],ctx.tag(change.after.thisValue)))
@@ -115,7 +116,8 @@ export function createPromiseExecutorTeacherV8(){
         const cap=data.capabilities.find(row=>row.promise===change.id);if(!cap)continue;
         const selected=controller.heap.get(change.id),owned=change.after;
         if(cap.called!==owned.resolverCalled||selected.state!==owned.status||
-          !eq(selected.result,owned.value===null?null:ctx.tag(owned.value.value))||owned.status==='pending'&&selected.adopted!==(owned.adopting??null))
+          !eq(selected.result,owned.value===null?null:ctx.tag(owned.value.value))||owned.status==='pending'&&
+          (selected.adoption?.target??selected.adopted)!==(owned.adopting??null))
           ctx.refuse('executor first-call cell, adoption or settlement differs from current owned state');
         if(owned.thenableLocked||owned.thenableSerial||owned.thenableSeen?.length)
           ctx.refuse('thenable resolving state requires its separate protocol');

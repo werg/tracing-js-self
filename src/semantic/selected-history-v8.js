@@ -245,25 +245,30 @@ function validateCompositePending(pending,checkpoint){
         'pending native request scope or ordinal is invalid');
     }
   }else if(pending.kind==='child-bootstrap'){
-    const clockBound=Object.hasOwn(pending,'clockReceipt'),attempt=checkpoint.coordinatorAttempts.at(-1);
+    const clockBound=Object.hasOwn(pending,'clockReceipt');
     assertAlgorithmFields(pending,['schema','kind','session','checkpointDigest','attempt','track','childTrack','id',
-      ...(clockBound?['clockReceipt','requestBoundary']:[])],'composite bootstrap pending marker');
+      ...(clockBound?['clockReceipt','requestBoundary','createReceipt']:[])],'composite bootstrap pending marker');
+    const create=checkpoint.coordinatorAttempts.at(-1),original=checkpoint.native.attempts.at(-1);
     demand(checkpoint.continuation.phase==='bootstrap-ready'&&checkpoint.state.status==='active'&&
-      pending.attempt===checkpoint.coordinatorAttempts.length-1&&attempt?.action?.name==='track_create'&&
-      attempt.status==='committed'&&attempt.bootstrapReceipt===undefined&&
-      pending.track===checkpoint.state.track&&pending.childTrack===attempt.commitReceipt?.track?.address,
-      'child bootstrap fence differs from its exact acknowledged reservation');
+      create?.action?.name==='track_create'&&create.status==='committed'&&
+      pending.attempt===create.attempt&&pending.track===checkpoint.state.track&&
+      pending.childTrack===create.commitReceipt?.track?.address&&!Object.hasOwn(create,'bootstrapReceipt'),
+      'bootstrap fence differs from the exact acknowledged reserved child');
     if(clockBound){
       validateSelectedOrchestrationClockReceipt(pending.clockReceipt,{timeoutMs:checkpoint.policy.timeoutMs});
-      demand(eq(pending.clockReceipt,checkpoint.continuation.clockReceipt),
+      demand(eq(pending.clockReceipt,checkpoint.continuation.clockReceipt)&&
+        checkpoint.continuation.elapsedMs>=pending.clockReceipt.consumedElapsedMs,
         'bootstrap fence changed the original execution clock');
-      const boundary=pending.requestBoundary,prior=checkpoint.native.attempts.at(-1)?.durableRequestReceipt;
+      const boundary=pending.requestBoundary,receipt=pending.createReceipt;
       assertAlgorithmFields(boundary,['schema','ordinal','sessionId','streamId','sessionGeneration'],
         'bootstrap native request boundary');
-      demand(boundary.schema==='semantic-native-producer-request-boundary/8'&&prior&&
-        ['sessionId','streamId','sessionGeneration'].every(key=>boundary[key]===prior[key])&&
-        boundary.sessionId===checkpoint.session&&Number.isSafeInteger(boundary.ordinal)&&
-        boundary.ordinal===prior.ordinal+1,'bootstrap request must directly follow its durable create receipt');
+      demand(original?.family==='orchestration'&&original.status==='accepted'&&
+        original.selection.selectionId===create.selection.selectionId&&eq(receipt,original.durableRequestReceipt)&&
+        receipt?.schema==='semantic-native-producer-request-receipt/8'&&
+        boundary.schema==='semantic-native-producer-request-boundary/8'&&
+        boundary.ordinal===receipt.ordinal+1&&boundary.sessionId===checkpoint.session&&
+        ['sessionId','streamId','sessionGeneration'].every(key=>boundary[key]===receipt[key]),
+        'bootstrap fence changed the causal create, owner, generation or adjacent request ordinal');
     }
   }else if(pending.kind==='child-dispatch'){
     assertAlgorithmFields(pending,['schema','kind','session','checkpointDigest','attempt',
@@ -291,19 +296,29 @@ function validatePendingResolution(pending,before,after){
     if(pending.clockReceipt)demand(eq(after.continuation.clockReceipt,pending.clockReceipt)&&
       after.continuation.elapsedMs>=pending.clockReceipt.consumedElapsedMs,
       'resolved coordinator cut changed its pending clock or refunded its execution budget');
+    if(pending.clockReceipt&&attempt.action.name==='track_create')
+      demand(after.continuation.phase==='bootstrap-ready'&&!Object.hasOwn(attempt,'bootstrapReceipt'),
+        'clock-bound create must be sealed before any child bootstrap');
   }else if(pending.kind==='child-bootstrap'){
     demand(before.continuation.phase==='bootstrap-ready'&&after.continuation.phase==='coordinator-ready'&&
-      after.state.status==='active'&&after.coordinatorAttempts.length===before.coordinatorAttempts.length&&
-      after.continuation.coordinatorSelections===before.continuation.coordinatorSelections&&
       attempt?.action?.name==='track_create'&&attempt.bootstrapReceipt?.bootstrapped===true&&
       attempt.bootstrapReceipt.track?.address===pending.childTrack&&
+      after.coordinatorAttempts.length===before.coordinatorAttempts.length&&
+      after.continuation.coordinatorSelections===before.continuation.coordinatorSelections&&
       eq(after.bridge,before.bridge)&&eq(after.contexts,before.contexts)&&
-      eq(after.childAttempts,before.childAttempts)&&eq(after.childRejections,before.childRejections),
-      'bootstrap fence must resolve only its exact reserved child without selecting or dispatching work');
-    if(pending.clockReceipt)demand(eq(after.continuation.clockReceipt,pending.clockReceipt)&&
-      ['ordinal','sessionId','streamId','sessionGeneration'].every(key=>
-        attempt.bootstrapRequestReceipt?.[key]===pending.requestBoundary[key]),
-      'bootstrap resolution changed its retained clock or durable request boundary');
+      eq(after.childAttempts,before.childAttempts)&&eq(after.childRejections,before.childRejections)&&
+      after.staleRetries===before.staleRetries,
+      'bootstrap fence must settle only its exact create without a new selection or host dispatch');
+    if(pending.clockReceipt){
+      const proof=after.native.attempts.at(-1)?.durableBootstrap;
+      demand(eq(after.continuation.clockReceipt,pending.clockReceipt)&&
+        eq(proof?.createReceipt,pending.createReceipt)&&
+        ['sessionId','streamId','sessionGeneration','ordinal'].every(key=>
+          proof?.receipt?.[key]===pending.requestBoundary[key])&&
+        proof?.preCheckpointDigest===before.native.native.digest&&
+        proof?.postCheckpointDigest===after.native.native.digest,
+        'resolved bootstrap changed its clock, causal create, request boundary or exact native transition');
+    }
   }else{
     demand(before.continuation.phase==='child-ready'&&before.continuation.joinedAttempt===pending.attempt&&
       before.continuation.joinedDependency?.track===pending.track&&
@@ -328,8 +343,9 @@ function validatePendingResolution(pending,before,after){
 
 const compositeTerminalSchema='semantic-selected-orchestration-terminal-event/8';
 function validateCompositeCancellationIntent(event,checkpoint,pending=null){
+  const durableClose=Object.hasOwn(event??{},'closeBoundary');
   const fields=['schema','terminalId','phase','session','baseCheckpointDigest','pendingId','snapshot',
-    'snapshotDigest','reason','ownerSnapshotDigest','ownerSnapshot','digest'];
+    'snapshotDigest','reason','ownerSnapshotDigest','ownerSnapshot',...(durableClose?['closeBoundary']:[]),'digest'];
   assertAlgorithmFields(event,fields,'composite cancellation intent');
   const {digest,...body}=event,snapshot=event.snapshot;
   demand(event.schema===compositeTerminalSchema&&event.phase==='requested'&&
@@ -340,11 +356,17 @@ function validateCompositeCancellationIntent(event,checkpoint,pending=null){
     HASH.test(digest??'')&&digest===hashAlgorithmData(body),
     'composite cancellation intent identity or digest differs');
   demand(snapshot?.schema==='semantic-selected-orchestration-checkpoint/8'&&
-    snapshot.policy.serviceAdmission!==null&&
+    (durableClose||snapshot.policy.serviceAdmission!=null)&&
     event.ownerSnapshotDigest===hashAlgorithmData(event.ownerSnapshot)&&
-    eq(event.ownerSnapshot,snapshot.policy.serviceAdmission),
+    eq(event.ownerSnapshot,snapshot.policy.serviceAdmission??null),
     'cancellation intent does not bind the configured service owner snapshot');
-  validateServiceAdmissionOwnerSnapshot(event.ownerSnapshot,checkpoint.session);
+  if(durableClose){
+    demand(['completed','cancelled'].includes(snapshot.state.status),
+      'durable close requires a settled terminal coordinator');
+    if(event.ownerSnapshot!==null)
+      validateServiceAdmissionOwnerSnapshot(event.ownerSnapshot,checkpoint.session);
+    validateCompositeCloseBoundary(event,snapshot);
+  }else validateServiceAdmissionOwnerSnapshot(event.ownerSnapshot,checkpoint.session);
   const bridge=verifySelectedOrchestrationCheckpoint(snapshot,snapshot.policy,
     {initialPublic:checkpoint.initialPublic,allowCancelled:snapshot.state?.status==='cancelled',
       allowTerminal:snapshot.state?.status==='completed',returnBridge:true});
@@ -374,9 +396,71 @@ function validateCompositeCancellationIntent(event,checkpoint,pending=null){
     'cancellation intent does not resolve the exact pending coordinator selection');
   const identity={schema:compositeTerminalSchema,phase:'requested',session:event.session,
     baseCheckpointDigest:event.baseCheckpointDigest,pendingId:event.pendingId,snapshotDigest:event.snapshotDigest,
-    reason:event.reason,ownerSnapshotDigest:hashAlgorithmData(event.ownerSnapshot)};
+    reason:event.reason,ownerSnapshotDigest:hashAlgorithmData(event.ownerSnapshot),
+    ...(durableClose?{closeBoundary:event.closeBoundary}:{})};
   demand(event.terminalId===hashAlgorithmData(identity),'cancellation intent terminal id differs');
   return true;
+}
+function validateCompositeCloseBoundary(event,snapshot){
+  const boundary=event.closeBoundary,clock=snapshot.continuation.clockReceipt,
+    prior=snapshot.native.attempts.at(-1)?.durableRequestReceipt;
+  assertAlgorithmFields(boundary,['schema','ordinal','sessionId','streamId','sessionGeneration'],
+    'terminal close request boundary');
+  demand(boundary.schema==='semantic-native-producer-request-boundary/8'&&
+    boundary.sessionId===snapshot.session&&Number.isSafeInteger(boundary.ordinal)&&boundary.ordinal>1&&
+    /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(boundary.streamId??'')&&
+    Number.isSafeInteger(boundary.sessionGeneration)&&boundary.sessionGeneration>0&&
+    prior?.schema==='semantic-native-producer-request-receipt/8'&&prior.ordinal+1===boundary.ordinal&&
+    ['sessionId','streamId','sessionGeneration'].every(key=>prior[key]===boundary[key]),
+    'terminal close does not immediately follow its exact durable completion');
+  validateSelectedOrchestrationClockReceipt(clock,{timeoutMs:snapshot.policy.timeoutMs});
+  demand(snapshot.continuation.elapsedMs>=clock.consumedElapsedMs,
+    'terminal close snapshot refunded its original clock');
+}
+function validateCompositeCloseReceipt(event,snapshot){
+  validateCompositeCloseBoundary(event,snapshot);
+  const receipt=event.closeRequestReceipt,boundary=event.closeBoundary;
+  assertAlgorithmFields(receipt,['schema','ordinal','digest','bytes','sessionId','streamId','sessionGeneration'],
+    'terminal close durable request receipt');
+  demand(receipt.schema==='semantic-native-producer-request-receipt/8'&&
+    ['ordinal','sessionId','streamId','sessionGeneration'].every(key=>receipt[key]===boundary[key])&&
+    HASH.test(receipt.digest??'')&&Number.isSafeInteger(receipt.bytes)&&receipt.bytes>0&&
+    Number.isFinite(event.closeElapsedMs)&&event.closeElapsedMs>=snapshot.continuation.elapsedMs&&
+    event.closeElapsedMs<snapshot.policy.timeoutMs,
+    'terminal close receipt or consumed clock differs from its acknowledged boundary');
+  validateCompositeCloseAuthority(event,snapshot);
+  const identity={schema:compositeTerminalSchema,phase:'requested',session:event.session,
+    baseCheckpointDigest:event.baseCheckpointDigest,pendingId:event.pendingId,snapshotDigest:event.snapshotDigest,
+    reason:event.reason,ownerSnapshotDigest:hashAlgorithmData(event.ownerSnapshot),closeBoundary:event.closeBoundary};
+  demand(event.terminalId===hashAlgorithmData(identity),'terminal close identity changed after acknowledgement');
+}
+function validateCompositeCloseAuthority(event,snapshot){
+  const owner=event.ownerSnapshot??null,admission=event.serviceAdmission??null,
+    retainedOwner=snapshot.policy.serviceAdmission??null;
+  demand(eq(owner,retainedOwner),'terminal close owner snapshot differs from its terminal checkpoint');
+  if(owner===null){
+    demand(admission===null,'unowned terminal close cannot acquire a service fence');
+    return true;
+  }
+  validateServiceAdmissionOwnerSnapshot(owner,event.session);
+  validateServiceAdmissionFence(admission,owner.policy,event.reason);
+  demand(admission.services.length===owner.services.length&&admission.services.every((row,index)=>
+    row.serviceId===owner.services[index].serviceId&&eq(row.owner,owner.services[index].owner)),
+    'terminal close service fence differs from its exact owner receipts');
+  return true;
+}
+function validateCompositeCloseExtension(previous,event){
+  const mutable=new Set(['digest','closedNativeDigest','closedNative','closeElapsedMs']);
+  demand(['completed','cancelled'].includes(previous.phase)&&event.phase===previous.phase&&
+    previous.closeBoundary&&event.closeBoundary&&
+    eq(Object.fromEntries(Object.entries(previous).filter(([key])=>!mutable.has(key))),
+      Object.fromEntries(Object.entries(event).filter(([key])=>!mutable.has(key))))&&
+    eq(previous.closedNative.native,event.closedNative.native)&&
+    eq(previous.closedNative.attempts,event.closedNative.attempts)&&
+    event.closeElapsedMs>=previous.closeElapsedMs&&
+    ['rpcCalls','computeSeconds','peakMemoryBytes'].every(key=>
+      event.closedNative.runtimeMetrics[key]>=previous.closedNative.runtimeMetrics[key]),
+    'repeated terminal reconstruction changed its outcome or refunded earlier recovery costs');
 }
 function validateCompositeClosedNative(closed,snapshot,session){
   const {digest:closedDigest,...closedBody}=closed??{},closedModel=closed?.native,
@@ -385,23 +469,27 @@ function validateCompositeClosedNative(closed,snapshot,session){
       !['digest','sessions','closedSessions'].includes(key))),
     closedImmutable=Object.fromEntries(Object.entries(closedModel??{}).filter(([key])=>
       !['digest','sessions','closedSessions'].includes(key)));
+  const expectedSessions=structuredClone(oldModel.sessions),expectedClosedSessions=structuredClone(oldModel.closedSessions);
+  delete expectedSessions[session];expectedClosedSessions[session]=oldModel.sessions[session];
   demand(closed?.schema===snapshot.native.schema&&HASH.test(closedDigest??'')&&
     closedDigest===hashAlgorithmData(closedBody)&&eq(closed.identity,snapshot.native.identity)&&
     eq(closed.attempts,snapshot.native.attempts)&&
     closedModel?.schema==='semantic-model-checkpoint/8'&&HASH.test(closedModelDigest??'')&&
     closedModelDigest===hashAlgorithmData(closedModelBody)&&eq(closedImmutable,oldImmutable)&&
     eq(closedModel.initialization,oldModel.initialization)&&eq(closedModel.attempts,oldModel.attempts)&&
-    closedModel.sessions&&Object.keys(closedModel.sessions).length===0&&
-    closedModel.closedSessions&&Object.keys(closedModel.closedSessions).length===1&&
-    eq(closedModel.closedSessions[session],oldModel.sessions[session])&&eq(closedModel.openings,oldModel.openings)&&
+    eq(closedModel.sessions,expectedSessions)&&eq(closedModel.closedSessions,expectedClosedSessions)&&
+    eq(closedModel.openings,oldModel.openings)&&
     closed.runtimeMetrics&&['rpcCalls','computeSeconds','peakMemoryBytes'].every(key=>
       Number.isFinite(closed.runtimeMetrics[key])&&closed.runtimeMetrics[key]>=snapshot.native.runtimeMetrics[key]),
     'closed-native checkpoint does not independently prove the exact terminal session tombstone');
   return true;
 }
 function validateCompositeCancelledEvent(event,checkpoint,previous=null){
+  const durableClose=Object.hasOwn(event??{},'closeBoundary');
   const fields=['schema','terminalId','phase','session','baseCheckpointDigest','pendingId','snapshot',
-    'snapshotDigest','reason','ownerSnapshot','serviceAdmission','closeReceipt','closedNativeDigest','closedNative','digest'];
+    'snapshotDigest','reason','ownerSnapshot','serviceAdmission',
+    ...(durableClose?['closeBoundary','closeRequestReceipt','closeElapsedMs']:[]),
+    'closeReceipt','closedNativeDigest','closedNative','digest'];
   assertAlgorithmFields(event,fields,'composite cancelled disposition');
   const {digest,...body}=event,snapshot=event.snapshot;
   demand(event.schema===compositeTerminalSchema&&event.phase==='cancelled'&&
@@ -409,15 +497,20 @@ function validateCompositeCancelledEvent(event,checkpoint,previous=null){
     event.session===checkpoint.session&&HASH.test(event.pendingId??'')&&
     HASH.test(event.snapshotDigest??'')&&event.snapshotDigest===hashAlgorithmData(snapshot)&&
     typeof event.reason==='string'&&event.reason.length>0&&Buffer.byteLength(event.reason)<=4096&&
-    eq(event.ownerSnapshot,snapshot?.policy?.serviceAdmission)&&
+    eq(event.ownerSnapshot,snapshot?.policy?.serviceAdmission??null)&&
     HASH.test(event.closedNativeDigest??'')&&event.closedNativeDigest===hashAlgorithmData(event.closedNative)&&
     HASH.test(digest??'')&&digest===hashAlgorithmData(body),
     'composite cancelled disposition identity or digest differs');
-  validateServiceAdmissionOwnerSnapshot(event.ownerSnapshot,checkpoint.session);
-  validateServiceAdmissionFence(event.serviceAdmission,event.ownerSnapshot.policy,event.reason);
-  demand(event.serviceAdmission.services.every((row,index)=>row.serviceId===event.ownerSnapshot.services[index].serviceId&&
-    eq(row.owner,event.ownerSnapshot.services[index].owner)),
-    'service terminal fence differs from the intent owner snapshot');
+  if(durableClose){
+    validateCompositeCloseAuthority(event,snapshot);
+    validateCompositeCloseReceipt(event,snapshot);
+  }else{
+    validateServiceAdmissionOwnerSnapshot(event.ownerSnapshot,checkpoint.session);
+    validateServiceAdmissionFence(event.serviceAdmission,event.ownerSnapshot.policy,event.reason);
+    demand(event.serviceAdmission.services.every((row,index)=>row.serviceId===event.ownerSnapshot.services[index].serviceId&&
+      eq(row.owner,event.ownerSnapshot.services[index].owner)),
+      'service terminal fence differs from the intent owner snapshot');
+  }
   const bridge=verifySelectedOrchestrationCheckpoint(snapshot,snapshot.policy,
     {initialPublic:checkpoint.initialPublic,allowCancelled:true,returnBridge:true});
   demand(bridge.invocations.size===snapshot.state.children.length&&snapshot.state.children.every(child=>{
@@ -434,21 +527,27 @@ function validateCompositeCancelledEvent(event,checkpoint,previous=null){
     event.closeReceipt.session===checkpoint.session&&event.closeReceipt.reason===event.reason,
     'cancelled disposition lacks exact native close acknowledgement');
   validateCompositeClosedNative(event.closedNative,snapshot,checkpoint.session);
-  if(previous!==null)demand(previous.phase==='requested'&&previous.terminalId===event.terminalId&&
-    previous.pendingId===event.pendingId&&previous.baseCheckpointDigest===event.baseCheckpointDigest&&
-    previous.snapshotDigest===event.snapshotDigest&&previous.reason===event.reason&&
-    eq(previous.ownerSnapshot,event.ownerSnapshot),
-    'cancelled disposition differs from its acknowledged terminal intent');
+  if(previous!==null){
+    if(durableClose&&previous.phase==='cancelled')validateCompositeCloseExtension(previous,event);
+    else demand(previous.phase==='requested'&&previous.terminalId===event.terminalId&&
+      previous.pendingId===event.pendingId&&previous.baseCheckpointDigest===event.baseCheckpointDigest&&
+      previous.snapshotDigest===event.snapshotDigest&&previous.reason===event.reason&&
+      eq(previous.ownerSnapshot,event.ownerSnapshot)&&
+      (!durableClose||eq(previous.closeBoundary,event.closeBoundary)),
+      'cancelled disposition differs from its acknowledged terminal intent');
+  }
   return true;
 }
 function validateCompositeTerminalEvent(event,checkpoint,pending=null,previous=null){
   if(event?.phase==='requested')return validateCompositeCancellationIntent(event,checkpoint,pending);
   if(event?.phase==='cancelled')return validateCompositeCancelledEvent(event,checkpoint,previous);
 
+  const durableClose=Object.hasOwn(event??{},'closeBoundary');
   const serviceBound=Object.hasOwn(event??{},'ownerSnapshot')||Object.hasOwn(event??{},'serviceAdmission')||
     Object.hasOwn(event??{},'reason');
   const fields=['schema','terminalId','phase','session','baseCheckpointDigest','pendingId',
     'snapshot','snapshotDigest',...(serviceBound?['reason','ownerSnapshot','serviceAdmission']:[]),
+    ...(durableClose?['closeBoundary','closeRequestReceipt','closeElapsedMs']:[]),
     'closeReceipt','closedNativeDigest','closedNative','digest'];
   assertAlgorithmFields(event,fields,'composite terminal event');
   const {digest,...body}=event,snapshot=event.snapshot;
@@ -488,7 +587,11 @@ function validateCompositeTerminalEvent(event,checkpoint,pending=null,previous=n
     close.session===checkpoint.session&&close.reason==='Selected orchestration v8 completed'&&
     (!serviceBound||event.reason===close.reason),
     'completed terminal event lacks the exact positive native close receipt');
-  if(serviceBound){
+  if(durableClose){
+    demand(serviceBound,'durable close must retain its exact terminal close owner authority');
+    validateCompositeCloseAuthority(event,snapshot);
+    validateCompositeCloseReceipt(event,snapshot);
+  }else if(serviceBound){
     validateServiceAdmissionOwnerSnapshot(event.ownerSnapshot,checkpoint.session);
     validateServiceAdmissionFence(event.serviceAdmission,event.ownerSnapshot.policy,event.reason);
     demand(eq(event.ownerSnapshot,snapshot.policy.serviceAdmission)&&
@@ -526,7 +629,16 @@ function validateCompositeTerminalEvent(event,checkpoint,pending=null,previous=n
       event.pendingId===pending.id,
       'completed terminal event does not resolve the exact pending completion selection');
   }
-  if(serviceBound){
+  if(durableClose){
+    if(previous!==null){
+      if(previous.phase==='completed')validateCompositeCloseExtension(previous,event);
+      else demand(previous.phase==='requested'&&previous.terminalId===event.terminalId&&
+        previous.pendingId===event.pendingId&&previous.baseCheckpointDigest===event.baseCheckpointDigest&&
+        previous.snapshotDigest===event.snapshotDigest&&previous.reason===event.reason&&
+        eq(previous.closeBoundary,event.closeBoundary)&&eq(previous.ownerSnapshot,event.ownerSnapshot),
+        'terminal close differs from its acknowledged complete application intent');
+    }
+  }else if(serviceBound){
     if(previous!==null)demand(previous?.phase==='requested'&&previous.terminalId===event.terminalId&&
       previous.pendingId===event.pendingId&&previous.baseCheckpointDigest===event.baseCheckpointDigest&&
       previous.snapshotDigest===event.snapshotDigest&&previous.reason===event.reason&&
@@ -542,6 +654,8 @@ function validateCompositeTerminalEvent(event,checkpoint,pending=null,previous=n
   }
   return true;
 }
+
+export {validateCompositeTerminalEvent as validateSelectedOrchestrationTerminalEvent};
 
 export function validateSelectedHistoryEntry(entry){
   stableAlgorithmJSON(entry);
@@ -611,7 +725,7 @@ function validateHistoryExtension(before,after,verifyComposite){
     for(let index=0;index<before.coordinatorAttempts.length;index++){
       const prior=before.coordinatorAttempts[index],next=after.coordinatorAttempts[index];
       const stripJoinCompletion=row=>Object.fromEntries(Object.entries(row)
-        .filter(([key])=>!['childCompletion','childOutcome','bootstrapReceipt','bootstrapRequestReceipt'].includes(key)));
+        .filter(([key])=>!['childCompletion','childOutcome','bootstrapReceipt'].includes(key)));
       demand(eq(stripJoinCompletion(prior),stripJoinCompletion(next)),
         'a recorded coordinator selection or receipt changed');
       if(prior.childCompletion!==undefined||prior.childOutcome!==undefined)
@@ -622,16 +736,13 @@ function validateHistoryExtension(before,after,verifyComposite){
           next.childCompletion?.schema==='semantic-child-completion/8'&&next.childOutcome&&
           typeof next.childOutcome==='object',
           'only an acknowledged join may acquire its exact child completion outcome');
-      if(prior.bootstrapReceipt!==undefined||prior.bootstrapRequestReceipt!==undefined)
-        demand(eq(prior.bootstrapReceipt,next.bootstrapReceipt)&&
-          eq(prior.bootstrapRequestReceipt,next.bootstrapRequestReceipt),
-          'acknowledged child bootstrap evidence changed');
-      else if(next.bootstrapReceipt!==undefined||next.bootstrapRequestReceipt!==undefined)
-        demand(prior.action?.name==='track_create'&&prior.status==='committed'&&
-          index===before.coordinatorAttempts.length-1&&before.continuation.phase==='bootstrap-ready'&&
-          next.bootstrapReceipt?.schema==='semantic-orchestration-bootstrap/8'&&next.bootstrapReceipt.bootstrapped===true&&
-          next.bootstrapReceipt.track?.address===prior.commitReceipt.track?.address,
-          'only the exact reserved child may acquire its completed bootstrap evidence');
+      if(Object.hasOwn(prior,'bootstrapReceipt'))
+        demand(eq(prior.bootstrapReceipt,next.bootstrapReceipt),'acknowledged child bootstrap evidence changed');
+      else if(Object.hasOwn(next,'bootstrapReceipt'))
+        demand(before.continuation.phase==='bootstrap-ready'&&after.continuation.phase==='coordinator-ready'&&
+          index===before.coordinatorAttempts.length-1&&prior.action?.name==='track_create'&&prior.status==='committed'&&
+          next.bootstrapReceipt?.schema==='semantic-orchestration-bootstrap/8'&&next.bootstrapReceipt.bootstrapped===true,
+          'only the exact bootstrap-ready create may acquire its child bootstrap receipt');
     }
     prefix(before.childAttempts,after.childAttempts,'child selections');
     prefix(before.childRejections,after.childRejections,'child rejections');
@@ -645,9 +756,9 @@ function validateHistoryExtension(before,after,verifyComposite){
       after.continuation.elapsedMs>=before.continuation.elapsedMs&&
       (before.continuation.phase===after.continuation.phase||
         before.continuation.phase==='coordinator-ready'&&after.continuation.phase==='child-ready'||
+        before.continuation.phase==='child-ready'&&after.continuation.phase==='coordinator-ready'||
         before.continuation.phase==='coordinator-ready'&&after.continuation.phase==='bootstrap-ready'||
-        before.continuation.phase==='bootstrap-ready'&&after.continuation.phase==='coordinator-ready'||
-        before.continuation.phase==='child-ready'&&after.continuation.phase==='coordinator-ready'),
+        before.continuation.phase==='bootstrap-ready'&&after.continuation.phase==='coordinator-ready'),
       'composite retry budget, phase, selection count or elapsed deadline rolled back');
     if(before.continuation.clockReceipt){
       const prior=before.continuation.clockReceipt,next=after.continuation.clockReceipt;
@@ -672,13 +783,61 @@ function validateHistoryExtension(before,after,verifyComposite){
     for(const [key,value] of Object.entries(oldTransport?.runtimeMetrics??{}))
       demand(Number.isFinite(value)&&value>=0&&Number.isFinite(newTransport?.runtimeMetrics?.[key])&&
         newTransport.runtimeMetrics[key]>=value,'composite native runtime accounting rolled back');
-    prefix(oldTransport?.attempts,newTransport?.attempts,'composite transport attempts');
+    demand(Array.isArray(oldTransport?.attempts)&&Array.isArray(newTransport?.attempts)&&
+      newTransport.attempts.length>=oldTransport.attempts.length,'composite transport attempts were removed');
+    for(const [index,prior]of oldTransport.attempts.entries()){
+      const next=newTransport.attempts[index],strip=row=>Object.fromEntries(Object.entries(row)
+        .filter(([key])=>key!=='durableBootstrap'));
+      demand(eq(strip(prior),strip(next)),'a recorded composite transport attempt changed');
+      if(Object.hasOwn(prior,'durableBootstrap'))
+        demand(eq(prior.durableBootstrap,next.durableBootstrap),'a recorded durable bootstrap changed');
+      else if(Object.hasOwn(next,'durableBootstrap'))
+        demand(before.continuation.phase==='bootstrap-ready'&&after.continuation.phase==='coordinator-ready'&&
+          index===oldTransport.attempts.length-1&&prior.family==='orchestration'&&prior.status==='accepted'&&
+          prior.selection.selectionId===before.coordinatorAttempts.at(-1)?.selection?.selectionId&&
+          eq(next.durableBootstrap.createReceipt,prior.durableRequestReceipt)&&
+          next.durableBootstrap.preCheckpointDigest===oldNative.digest&&
+          next.durableBootstrap.postCheckpointDigest===newNative.digest,
+          'durable bootstrap cannot enrich another create or change its exact native cut');
+    }
     prefix(oldNative?.attempts,newNative?.attempts,'composite native attempts');
     prefix(oldSession.orchestration?.operations,newSession.orchestration?.operations,
       'composite acknowledged operation history');
     prefix(oldSession.orchestration?.decisions,newSession.orchestration?.decisions,
       'composite coordinator decisions');
     prefix(oldSession.contexts,newSession.contexts,'composite native contexts');
+    if(before.continuation.phase==='bootstrap-ready'){
+      demand(after.coordinatorAttempts.length===before.coordinatorAttempts.length&&
+        after.continuation.coordinatorSelections===before.continuation.coordinatorSelections&&
+        eq(after.continuation.clockReceipt,before.continuation.clockReceipt)&&
+        eq(after.bridge,before.bridge)&&eq(after.contexts,before.contexts)&&
+        eq(after.childAttempts,before.childAttempts)&&eq(after.childRejections,before.childRejections)&&
+        after.staleRetries===before.staleRetries&&eq(oldNative.attempts,newNative.attempts)&&
+        oldTransport.attempts.length===newTransport.attempts.length,
+        'bootstrap continuation introduced another model selection, host dispatch or clock origin');
+      if(after.continuation.phase==='bootstrap-ready')
+        demand(eq(before.state,after.state)&&eq(oldNative,newNative)&&
+          eq(before.coordinatorAttempts,after.coordinatorAttempts)&&eq(oldTransport.attempts,newTransport.attempts),
+          'sealed create recovery changed its exact reserved native or host state');
+      else{
+        const immutable=node=>Object.fromEntries(Object.entries(node).filter(([key])=>!['digest','sessions'].includes(key))),
+          stableSession=node=>Object.fromEntries(Object.entries(node).filter(([key])=>!['continuationDigest','orchestration'].includes(key))),
+          operations=newSession.orchestration.operations,operation=operations.at(-1),
+          childTrack=before.coordinatorAttempts.at(-1).commitReceipt.track.address,
+          bootstrap=after.coordinatorAttempts.at(-1).bootstrapReceipt;
+        demand(eq(immutable(oldNative),immutable(newNative))&&
+          eq(Object.keys(oldNative.sessions).sort(),Object.keys(newNative.sessions).sort())&&
+          Object.entries(oldNative.sessions).every(([session,value])=>session===before.session||eq(value,newNative.sessions[session]))&&
+          eq(stableSession(oldSession),stableSession(newSession))&&
+          operations.length===oldSession.orchestration.operations.length+1&&
+          eq({...newSession.orchestration,operations:operations.slice(0,-1)},oldSession.orchestration)&&
+          operation?.kind==='bootstrap'&&operation.track===childTrack&&
+          eq(operation.randomBefore,oldNative.randomState)&&
+          eq(after.state,{...before.state,tracks:before.state.tracks.map(track=>
+            track.address===childTrack?bootstrap.track:track)}),
+          'bootstrap transition changed sibling work or more than its exact native initialization');
+      }
+    }
     demand(after.native.native.attempts.length>=before.native.native.attempts.length,
       'composite acknowledged work rolled back');
     return true;
@@ -742,7 +901,8 @@ export function validateSelectedHistoryChain(entries,receipt){
       ['completed','cancelled'].includes(entry.terminal.phase)&&
       (Object.hasOwn(entry.terminal,'ownerSnapshot')||Object.hasOwn(entry.terminal,'serviceAdmission')||
         Object.hasOwn(entry.terminal,'reason')))
-      demand(terminal?.phase==='requested',
+      demand(terminal?.phase==='requested'||entry.terminal.closeBoundary&&terminal?.closeBoundary&&
+        ['completed','cancelled'].includes(terminal.phase)&&entry.terminal.phase===terminal.phase,
         'service-bound terminal disposition must follow its exact acknowledged terminal intent');
     if(pending){
       if(entry.terminal?.schema===compositeTerminalSchema){
@@ -763,6 +923,13 @@ export function validateSelectedHistoryChain(entries,receipt){
       demand(Object.hasOwn(entry,'terminal')&&['closed','unknown'].includes(entry.terminal.phase)&&
         eq(entry.checkpoint,checkpoint),'terminal request must be followed only by its final disposition');
       validateTerminalEvent(entry.terminal,entry.checkpoint,terminal);
+      terminal=entry.terminal;
+    }else if(terminal?.schema===compositeTerminalSchema&&
+        ['completed','cancelled'].includes(terminal.phase)&&terminal.closeBoundary){
+      demand(entry.terminal?.schema===compositeTerminalSchema&&entry.terminal.phase===terminal.phase&&
+        entry.terminal.closeBoundary&&eq(entry.checkpoint,checkpoint),
+        'a closed session permits only exact repeated terminal reconstruction');
+      validateCompositeTerminalEvent(entry.terminal,entry.checkpoint,null,terminal);
       terminal=entry.terminal;
     }else if(terminal){
       fail('history continues after terminal disposition');

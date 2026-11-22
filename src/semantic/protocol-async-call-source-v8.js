@@ -66,8 +66,12 @@ export function createAsyncCallTeacherV8(){return {id,
       frame=event.stateChanges.find(change=>change.table==='frames'&&change.id===exit.invocation)?.after;
     if(!call||!['completed','thrown'].includes(frame?.status)||frame.asyncPromiseId!==call.promise||
       !['return','throw'].includes(frame.completion?.type))ctx.refuse('async source completion lacks its exact retained body outcome');
+    const target=frame.completion.type==='return'&&frame.completion.value.value[0]==='promise'?frame.completion.value.value[1]:null;
+    if(target!==null)ctx.preparePromiseAdoption(event,call.owner,call.promise,target);
     ctx.emitProtocol(call.owner,{kind:'async.complete',promise:call.promise,invocation:ctx.frameId(frame.id),
-      completion:{kind:frame.completion.type,value:ctx.tag(frame.completion.value.value)}},event,'source-async-complete/1');return true;
+      completion:{kind:frame.completion.type,value:ctx.tag(frame.completion.value.value)}},event,'source-async-complete/1');
+    if(target!==null)ctx.publishPromiseAdoption(event,call.owner,call.promise,target);
+    return true;
   },
   checkEvent(ctx){
     for(const [identity,entry]of ctx.componentState(id).calls){

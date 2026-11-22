@@ -31,7 +31,7 @@ test('source executors independently qualify first resolution, throws, captures,
     if(body===first){assert.equal(replay.controller.completion.value[1],13);assert(result.regionCoverage.compactRegions>=2);}
   }
 });
-test('executor Promise adoption is refused before an incorrect FIFO schedule can qualify',async()=>{
+test('executor, async and reaction Promise adoption qualify their explicit FIFO jobs',async()=>{
   for(const body of [
     'const p=new Promise(resolve=>resolve(Promise.resolve(5)));return await p;',
     'let done;const a=new Promise(resolve=>{done=resolve;});const b=new Promise(resolve=>resolve(a));done(7);return await b;',
@@ -40,7 +40,11 @@ test('executor Promise adoption is refused before an incorrect FIFO schedule can
     'let order="";const p=Promise.resolve(1).then(x=>new Promise(resolve=>resolve(x)));p.then(()=>{order+="p";});Promise.resolve().then(()=>{order+="a";}).then(()=>{order+="b";}).then(()=>{order+="c";});await p;return order;'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));
-    assert.equal(result.exported,undefined);assert.match(result.reason,/adoption.*(?:job protocol|assimilation jobs)/);
+    assert(result.exported,result.reason);
+    const kinds=result.exported.public.timeline.filter(row=>row.kind==='protocol')
+      .map(row=>decodeProtocolRecordV8(row.fields.line).kind);
+    for(const kind of ['promise.adopt.enqueue','promise.adopt.enter','promise.adopt.forward'])assert(kinds.includes(kind));
+    assert.equal(result.exported.sidecar.sourceArtifact.sidecar.reference.extensionAudit.status,'agreed');
   }
 });
 test('executor helpers retain receiver and captures across synchronous returns, throws and reaction jobs',async()=>{
@@ -118,7 +122,7 @@ test('common v8 admission routes executors and rechecks each source/context auth
   // Computed array access selects the conversion-capable source composition,
   // while its scalar index needs no guest conversion continuation.
   assert.equal(result.profile,'composed-protocol-source/1');
-  assert.deepEqual(result.exported.sidecar.protocolExtensions,['primitive-conversion-source/1','promise-executor/1']);
+  assert.deepEqual(result.exported.sidecar.protocolExtensions,['primitive-conversion-source/1','promise-adoption/1','promise-executor/1']);
   assert(!result.exported.public.timeline.filter(row=>row.kind==='protocol')
     .map(row=>decodeProtocolRecordV8(row.fields.line)).some(record=>record.kind.startsWith('conversion.')));
   assert.equal((await recheckProtocolRegionEvidence(result.exported)).sourceValidated,true);
