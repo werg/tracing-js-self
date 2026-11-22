@@ -1,0 +1,25 @@
+{
+  "schema": "semantic-v8-release-original-task-binding-control/1",
+  "sourceRevision": "17b49c2951b78584d726ced6922519d9fec16424",
+  "positive": {
+    "status": "verified",
+    "declared": 64,
+    "sourceQualified": 64,
+    "nativeAdmitted": 64,
+    "taskArtifactBindings": {
+      "checkedAttempts": 64,
+      "checkedCurrentSources": 64,
+      "authority": "Original encoded task request and frozen family registry; checked before source/native replay"
+    },
+    "identityDigest": "11306c8c0a62c3c60a36ef407830dff660a885550712ce8b6041c4421abdf220"
+  },
+  "negative": {
+    "status": "refused",
+    "reason": "V8 release task binding: artifact family or ancestry differs from the original task",
+    "journalBytesUnchanged": true,
+    "journalSha256": "f8679714601c323daa4dd3a3a6727bb8bb8e52b8600e392104fcd6a537472430"
+  },
+  "optimizerUpdatesPerformed": 0,
+  "freshSourceReplays": 0,
+  "freshNativeAdmissions": 0
+}
