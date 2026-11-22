@@ -1,0 +1,28 @@
+{
+  "schema": "v8-custody-plan-preflight/1",
+  "sourceRevision": "fa778f890db03795c9aa0b74f2d2f83df899daec",
+  "pinnedArchiveRetainerSha256": "3d14450be68d245c381857f3083ac871944d7fda85adab354839b07dc82ad122",
+  "controls": {
+    "tests": 12,
+    "failures": 0,
+    "skips": 0
+  },
+  "observedRuns": [
+    45046754653,
+    45044587251
+  ],
+  "originalZipDownloadsPerformed": 0,
+  "draftMutationsPerformed": 0,
+  "actualCustodyStatus": "pending hosted workflow",
+  "scope": "Bounded refusal/reuse controls and live read-only metadata verification. This is not a retained archive or learned-quality qualification.",
+  "files": {
+    "tests.log": {
+      "bytes": 2543,
+      "sha256": "189b542f7c9d214789eb85bf478a171224bf554aa022c5e59f1fdb7debf55e55"
+    },
+    "observed-metadata.json": {
+      "bytes": 46223,
+      "sha256": "c865b4b7ea02a4ea306e66d19012dedac2dee5208e2005707273d9824a5f23cf"
+    }
+  }
+}
