@@ -233,16 +233,19 @@ test('owned namespace reflection matches native ESM while public projection stay
 test('owned and native ESM observe a namespace getter TDZ read during module initialization',async()=>{
   const modules={
     'leaf.js':"import {probe} from './main.js';export const observed=(()=>{try{return probe();}catch(error){return {name:error.name,message:error.message};}})();export let value=2;",
-    'main.js':"import * as ns from './leaf.js';import {observed} from './leaf.js';export function probe(){return Object.getOwnPropertyDescriptor(ns,'value').value;}export function run(){return observed;}"
+    'main.js':"import * as ns from './leaf.js';import {observed} from './leaf.js';export function probe(){return Object.getOwnPropertyDescriptor(ns,'value').value;}export function run(){return {before:observed,after:probe()};}"
   };
   const request={modules,entryModule:'main.js',exportName:'run'},linked=linkEvaluatedModules(request),
     owned=await executeEvaluatedModules(request);
-  assert.equal(owned.result.name,'ReferenceError');
-  assert.match(owned.result.message,/initialization|initialized/i);
+  assert.equal(owned.result.before.name,'ReferenceError');
+  assert.equal(owned.result.after,2,'the same binding is readable after initialization');
   const native=await nativeModuleOutcome(modules,'main.js','run',encodeNativeGraph([linked.entryInput]));
   assert.equal(native.status,'passed',native.reason);
   const reference=decodeReferenceOutcome(native,1);
-  assert.equal(reference.name,'ReferenceError');
-  // Error wording is implementation-defined; both must fail on the TDZ read.
-  assert.match(reference.message,/initialization|initialized/i);
+  assert.equal(reference.before.name,'ReferenceError');
+  assert.equal(reference.after,2);
+  // Error wording is implementation-defined; both reject the early read and
+  // successfully read that same binding after module initialization.
+  assert.deepEqual({before:reference.before.name,after:reference.after},
+    {before:owned.result.before.name,after:owned.result.after});
 });

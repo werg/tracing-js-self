@@ -76,7 +76,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          node --test --test-concurrency=1 --test-reporter=junit test/semantic-module-v8.test.js test/semantic-module-namespace-state-v8.test.js test/semantic-native-module-namespace-state-v8.test.js 2>&1 | tee "$RUNNER_TEMP/namespace-paired.xml"
+          node --check src/semantic/module-namespace-state-v8.js
+          node --test --test-concurrency=1 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination="$RUNNER_TEMP/namespace-paired.xml" test/semantic-module-v8.test.js test/semantic-module-namespace-state-v8.test.js test/semantic-native-module-namespace-state-v8.test.js 2>&1 | tee "$RUNNER_TEMP/namespace-paired.log"
           python - <<'PY'
           import os,xml.etree.ElementTree as ET
           from pathlib import Path
@@ -95,3 +96,4 @@ jobs:
             ${{ runner.temp }}/namespace-native.xml
             ${{ runner.temp }}/namespace-native.log
             ${{ runner.temp }}/namespace-paired.xml
+            ${{ runner.temp }}/namespace-paired.log

@@ -173,7 +173,8 @@ function verifyState(plan,state){
        value.initialized&&!canonicalValue(value.value)||!value.initialized&&value.value!==null)
       fail('source cell state is malformed');
   }
-  const namespaceFiles=new Set();\n  for(const [id,row] of Object.entries(state.namespaces)){
+  const namespaceFiles=new Set();
+  for(const [id,row] of Object.entries(state.namespaces)){
     if(!/^obj[1-9][0-9]*$/.test(id)||!exact(row,['file','exports'])||
        !isDeepStrictEqual(plan.namespaces.find(item=>item.file===row.file),row))
       fail('namespace identity state is malformed');
