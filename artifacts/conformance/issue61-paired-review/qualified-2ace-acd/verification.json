@@ -1,0 +1,89 @@
+{
+  "schema": "issue61-paired-component-verification/1",
+  "valid": true,
+  "manifestSha256": "dcdc253d3bba1eae00d925048fe4d9455db5ad6548de89a4b08f2639e46d66d6",
+  "pair": {
+    "contractDigest": "38a5d7b90ad1da9cf3b56f29c4e730ac5bcec54427e2fe86e6a6afec3335f862",
+    "declaredPolicySha256": "a0b8edd8f049237cb11988da70e2ba48a2b9dafc926bdacd353e2d1bed2af97c",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "gateSpecSha256": "c780d97470bf31e8e8e470c51d97786f8d23e9b73784f56c6c97d172f7ba8621",
+    "interoperabilityDigest": "84fe03aa5857dadf23a6025fe5de84758f9567d41920a703fe32110ec13816b3",
+    "native": {
+      "revision": "acd86c6513ec7af8b50365517f4bff9b7e2aad5a",
+      "tree": "537e8368d3faf8eb707702597bbe9f321673cea5"
+    },
+    "policySha256": "2f4a264478cf0c53a203cbb679d01c54e0483e79283943616be9f491bdf7f224",
+    "producer": {
+      "revision": "2ace1440ebeac3b2ffac5a0061684bfcdfac1370",
+      "tree": "aace0ccafa089bd519721508c0e8a73ddd0bf2da"
+    },
+    "resolutionSha256": "74467df3e5538052c6aece8d9c45c43bfbac5012f97fefc05d0de521fbaa2408"
+  },
+  "verifiedFiles": 27,
+  "originalFilesCompared": 27,
+  "installedSources": 51,
+  "installedPythonFiles": 269,
+  "sharedPayloads": 7,
+  "sharedDecodedBytes": 34899975,
+  "actualTests": {
+    "native": {
+      "cases": 191,
+      "files": {
+        "tests/test_async_call_v8.py": 18,
+        "tests/test_native_detail_regressions_v8.py": 11,
+        "tests/test_number_v8.py": 15,
+        "tests/test_primitive_conversion_v8.py": 19,
+        "tests/test_promise_executor_boundaries_v8.py": 13,
+        "tests/test_promise_executor_v8.py": 12,
+        "tests/test_promise_join_v8.py": 12,
+        "tests/test_promise_scheduler_v8.py": 10,
+        "tests/test_protocol_host_composition_v8.py": 15,
+        "tests/test_protocol_host_v8.py": 13,
+        "tests/test_protocol_properties.py": 31,
+        "tests/test_protocol_v8.py": 22
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xmlSha256": "73e363e260a012942897fdba049c15662aca6afba3af2c275f2ce035e39ccf79"
+    },
+    "producer": {
+      "cases": 304,
+      "files": {
+        "test/owned-promise-object-state.test.js": 17,
+        "test/owned-promise-reflection-review.test.js": 7,
+        "test/owned-promise-review-boundaries.test.js": 8,
+        "test/semantic-async-call-source-v8.test.js": 18,
+        "test/semantic-async-return-adoption-composition-source-v8.test.js": 4,
+        "test/semantic-native-promise-slots-v8.test.js": 8,
+        "test/semantic-promise-adoption-getter-source-v8.test.js": 7,
+        "test/semantic-promise-mutation-profile-source-v8.test.js": 25,
+        "test/semantic-promise-object-observations-v8.test.js": 17,
+        "test/semantic-promise-object-profile-source-v8.test.js": 23,
+        "test/semantic-promise-object-review-source-v8.test.js": 11,
+        "test/semantic-promise-object-review-v8.test.js": 4,
+        "test/semantic-promise-object-source-v8.test.js": 17,
+        "test/semantic-promise-object-v8.test.js": 7,
+        "test/semantic-protocol-iterator-v8.test.js": 9,
+        "test/semantic-protocol-promise-adoption-getter-v8.test.js": 5,
+        "test/semantic-protocol-promise-adoption-source-v8.test.js": 21,
+        "test/semantic-protocol-promise-adoption-v8.test.js": 20,
+        "test/semantic-protocol-promise-executor-source-v8.test.js": 10,
+        "test/semantic-protocol-promise-executor-v8.test.js": 11,
+        "test/semantic-protocol-promise-join-source-v8.test.js": 5,
+        "test/semantic-protocol-promise-join-v8.test.js": 10,
+        "test/semantic-protocol-v8.test.js": 14,
+        "test/semantic-qualification-population-v8.test.js": 4,
+        "test/semantic-shared-intrinsic-boundaries-v8.test.js": 11,
+        "test/semantic-shared-protocol-source-v8.test.js": 8,
+        "test/training-promise-job-projection.test.js": 3
+      },
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xmlSha256": "7dcbda753f814798d72faac2c51d1fba89682c49f0c666bbcffe67deb3e2a6c6"
+    }
+  },
+  "completeCombinedGate": "not-qualified",
+  "fullGateBoundary": "blocked: /proc/self/ns/time is not exposed in this workspace"
+}
