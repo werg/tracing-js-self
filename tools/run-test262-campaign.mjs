@@ -4,7 +4,7 @@ import {resolve} from 'node:path';
 import {setImmediate as yieldToEvents} from 'node:timers/promises';
 import {createTest262Campaign,buildTest262Catalog,bindTest262CatalogProfile,recordTest262Stages,
   validateTest262Campaign,conformanceDigest,selectTest262Shard} from '../src/conformance/test262-catalog.js';
-import {acquireTest262GitSnapshot,discoverTest262ModuleDependencies} from '../src/conformance/test262-acquisition.js';
+import {acquireTest262GitSnapshot,discoverTest262ModuleDependencies,verifyTest262AcquiredCatalog} from '../src/conformance/test262-acquisition.js';
 import {ownedTest262Profile,prepareOfficialTest262Variant,checkOfficialTest262Syntax,
   test262VariantSource} from '../src/conformance/test262-runner.js';
 import {fingerprintTest262Implementation,verifyTest262ImplementationFiles,readTest262Json,writeTest262Json,
@@ -57,8 +57,7 @@ if(flags.has('--check')){
   baseCatalog??=buildTest262Catalog({snapshot,sources,profile,
     moduleDependencies:discoverTest262ModuleDependencies(sources)});
   const catalog=bindTest262CatalogProfile(baseCatalog,profile);
-  if(Object.keys(snapshot.files).length!==catalog.files.length||catalog.files.some(file=>snapshot.files[file.path]!==file.gitBlobSha))
-    throw new TypeError('Acquired exact Git tree differs from the retained catalog population');
+  verifyTest262AcquiredCatalog({catalog,snapshot,sources});
   let selected=catalog.variants;
   if(flags.has('--paths')){
     const paths=flags.get('--paths').split(',');

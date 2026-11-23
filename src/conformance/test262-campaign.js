@@ -9,7 +9,7 @@ import {verifyDeclaredEcma262Specification} from './test262-specification.js';
 import {bindTest262CatalogProfile,conformanceDigest,validateTest262Catalog,validateTest262Campaign,
   summarizeTest262Campaign} from './test262-catalog.js';
 
-const root=fileURLToPath(new URL('../..',import.meta.url));
+const root=resolve(fileURLToPath(new URL('../..',import.meta.url)));
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const workerEnvironment=()=>Object.fromEntries(['PATH','LANG','LC_ALL','TZ']
   .filter(key=>process.env[key]!==undefined).map(key=>[key,process.env[key]]));
@@ -24,14 +24,22 @@ export function fingerprintTest262Implementation(){
   while(pending.length){
     const path=pending.pop();if(paths.has(path))continue;
     paths.add(path);
-    if(!/\.m?js$/.test(path))continue;
+    // Installed entrypoints are authenticated byte-for-byte below; parsing the
+    // multi-megabyte TypeScript compiler as application source is unnecessary.
+    if(!/\.m?js$/.test(path)||path.startsWith('node_modules/'))continue;
     const url=new URL(path,'file://'+root+'/'),source=readFileSync(url,'utf8');
     const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
     function add(specifier){
-      if(typeof specifier!=='string'||!specifier.startsWith('.'))return;
-      const dependency=fileURLToPath(new URL(specifier,url));
+      if(typeof specifier!=='string'||specifier.startsWith('node:'))return;
+      const dependency=fileURLToPath(specifier.startsWith('.')?new URL(specifier,url):import.meta.resolve(specifier));
       if(!dependency.startsWith(root+'/')||!existsSync(dependency))throw new TypeError('Missing local runner dependency: '+specifier);
       pending.push(relative(root,dependency));
+      if(!specifier.startsWith('.')&&!specifier.startsWith('#')){
+        let directory=dirname(dependency);
+        while(directory.startsWith(root+'/')&&!existsSync(resolve(directory,'package.json')))directory=dirname(directory);
+        if(!directory.startsWith(root+'/'))throw new TypeError('Missing installed runner package metadata: '+specifier);
+        pending.push(relative(root,resolve(directory,'package.json')));
+      }
     }
     function walk(node){
       if(!node||typeof node!=='object')return;
@@ -47,7 +55,6 @@ export function fingerprintTest262Implementation(){
     walk(ast);
   }
   const files=[...paths].sort().map(path=>({path,sha256:sha(readFileSync(resolve(root,path)))}));
-  files.push({path:'node_modules/acorn/dist/acorn.mjs',sha256:sha(readFileSync(new URL(import.meta.resolve('acorn'))))});
   return {producerRevision:execFileSync('git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),
     codeDigest:conformanceDigest(files),runnerDigest:conformanceDigest(files.filter(file=>
       file.path.startsWith('src/conformance/')||file.path.startsWith('tools/'))),

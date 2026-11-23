@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,readFileSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
-import {dirname,join} from 'node:path';
+import {dirname,join,relative} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
 import {execFileSync,spawn} from 'node:child_process';
 import {acquireTest262GitSnapshot,discoverTest262ModuleDependencies} from '../src/conformance/test262-acquisition.js';
 import {buildTest262Catalog,bindTest262CatalogProfile,createTest262Campaign,recordTest262Stages} from '../src/conformance/test262-catalog.js';
@@ -94,6 +96,20 @@ test('disposable worker deadlines and source drift stay failures in their own au
     const drift=await runOriginalTest262Worker({authority:'reference',options,implementation:stale});
     assert.equal(drift.status,'infrastructure_error');assert.match(drift.reason,/implementation file identity/);
   }finally{rmSync(suite.directory,{recursive:true,force:true});}
+});
+
+test('campaign identity includes resolved package imports and installed compiler code',()=>{
+  const implementation=fingerprintTest262Implementation();
+  const root=fileURLToPath(new URL('..',import.meta.url));
+  for(const specifier of ['acorn','typescript','#owned-proxy-check']){
+    const entry=fileURLToPath(import.meta.resolve(specifier)),path=relative(root,entry);
+    assert.deepEqual(implementation.files.find(file=>file.path===path),{
+      path,sha256:createHash('sha256').update(readFileSync(entry)).digest('hex')
+    },'missing executable dependency '+specifier);
+  }
+  for(const path of ['node_modules/acorn/package.json','node_modules/typescript/package.json'])
+    assert(implementation.files.some(file=>file.path===path),'missing resolver metadata '+path);
+  assert.equal(new Set(implementation.files.map(file=>file.path)).size,implementation.files.length);
 });
 
 test('resuming a completed campaign preserves all original successes and failures without rerunning',()=>{

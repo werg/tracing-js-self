@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,mkdirSync,writeFileSync,rmSync,symlinkSync,unlinkSync} from 'node:fs';
 import {join,dirname} from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {acquireTest262GitSnapshot,discoverTest262ModuleDependencies} from '../src/conformance/test262-acquisition.js';
-import {buildTest262Catalog} from '../src/conformance/test262-catalog.js';
+import {acquireTest262GitSnapshot,discoverTest262ModuleDependencies,verifyTest262AcquiredCatalog} from '../src/conformance/test262-acquisition.js';
+import {buildTest262Catalog,conformanceDigest,validateTest262Catalog} from '../src/conformance/test262-catalog.js';
+import {gitBlobSha} from '../src/test262-baseline.js';
 
 const fixture=(body='',metadata='')=>`/*---\ndescription: synthetic acquisition control\n${metadata}---*/\n${body}`;
 
@@ -67,4 +68,23 @@ test('module discovery preserves cycles, missing imports and computed requests e
   assert.match(dependencies['test/b_FIXTURE.js'].unresolved[0],/Missing module request/);
   assert.match(dependencies['test/invalid.js'].unresolved[0],/Module parser/);
   assert(!Object.hasOwn(dependencies,'test/script.js'));
+});
+
+test('retained catalog metadata is reconciled against every original source before selecting work',()=>{
+  const sources={'test/control.js':fixture('var value=1;')};
+  const snapshot={repository:'tc39/test262',revision:'a'.repeat(40),
+    files:Object.fromEntries(Object.entries(sources).map(([path,source])=>[path,gitBlobSha(source)]))};
+  const profile={name:'control',edition:'ECMAScript (living)',specification:null,parser:{name:'acorn'},
+    hostProfile:{name:'synthetic'},resourcePolicy:{maxSteps:10,maxSourceBytes:1024}};
+  const catalog=buildTest262Catalog({snapshot,sources,profile});
+  assert.equal(verifyTest262AcquiredCatalog({catalog,snapshot,sources}),true);
+  const relabeled=structuredClone(catalog);
+  relabeled.variants.pop();relabeled.summary.knownVariants--;
+  relabeled.variants[0].metadata.flags=['noStrict'];
+  const {id,...row}=relabeled.variants[0];
+  relabeled.variants[0].id=conformanceDigest({suiteRevision:snapshot.revision,profile,...row});
+  const {digest,...identity}=relabeled;relabeled.digest=conformanceDigest(identity);
+  assert.equal(validateTest262Catalog(relabeled),true,'the forged inventory is internally consistent');
+  assert.throws(()=>verifyTest262AcquiredCatalog({catalog:relabeled,snapshot,sources}),/original source metadata/);
+  assert.throws(()=>verifyTest262AcquiredCatalog({catalog,snapshot,sources:{'test/control.js':fixture('var value=2;')}}),/source bytes differ/);
 });

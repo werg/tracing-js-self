@@ -294,9 +294,23 @@ export function validateTest262Catalog(catalog){
   if(conformanceDigest(identity)!==digest)throw new TypeError('Test262 catalog digest mismatch');
   if(!Array.isArray(catalog.variants)||new Set(catalog.variants.map(row=>row.id)).size!==catalog.variants.length)
     throw new TypeError('Duplicate or missing Test262 variants');
+  if(!Array.isArray(catalog.files)||new Set(catalog.files.map(file=>file.path)).size!==catalog.files.length||
+    catalog.files.some(file=>!safeTest262Path(file.path)||!hex40.test(file.gitBlobSha??'')||
+      !hex64.test(file.sha256??'')||!Number.isSafeInteger(file.bytes)||file.bytes<0||
+      file.kind!==(!file.path.endsWith('.js')?'resource':file.path.startsWith('harness/')?'harness':
+        file.path.split('/').at(-1).includes('_FIXTURE')?'fixture':'test')))
+    throw new TypeError('Invalid or duplicate Test262 source files');
   const files=new Map((catalog.files??[]).map(file=>[file.path,file]));
-  const classifications=new Map();
+  const classifications=new Map(),populations=new Map();
   for(const row of catalog.variants){
+    const {id,...variant}=row;
+    if(conformanceDigest({suiteRevision:catalog.suiteRevision,profile:catalog.profile,...variant})!==id)
+      throw new TypeError('Test262 variant identity differs from its original inputs');
+    const siblings=populations.get(row.path)??[];
+    if(siblings.some(other=>other.mode===row.mode||
+      conformanceDigest(other.metadata)!==conformanceDigest(row.metadata)||other.metadataError!==row.metadataError))
+      throw new TypeError('Test262 variants duplicate or disagree on original metadata: '+row.path);
+    siblings.push(row);populations.set(row.path,siblings);
     const sourceInputs=[{path:row.path,sha256:row.sourceDigest,kind:'test'},
       ...(row.harness??[]).map(file=>({path:file.path,sha256:file.sha256,kind:'harness'})),
       ...(row.dependencies?.files??[]).filter(file=>file.path!==row.path)
@@ -306,7 +320,7 @@ export function validateTest262Catalog(catalog){
       sourceInputs,sourceDigest:row.sourceDigest,metadataResolved:row.metadata!==null&&row.metadataError===null,
       dependencies:row.dependencies});
     const sourceFile=files.get(row.path);
-    if(!sourceFile||sourceFile.kind!=='test'||sourceFile.sha256!==row.sourceDigest||
+    if(!sourceFile||sourceFile.kind!=='test'||sourceFile.sha256!==row.sourceDigest||sourceFile.gitBlobSha!==row.gitBlobSha||
       row.classification.membership!=='unclassified'&&row.classification.evidence.sourceInputs.some(input=>{
         const file=files.get(input.path);return !file||file.sha256!==input.sha256||
           input.kind==='harness'&&file.kind!=='harness'||
@@ -316,6 +330,22 @@ export function validateTest262Catalog(catalog){
       conformanceDigest(row.classification))throw new TypeError('Test262 variants disagree on file membership review: '+row.path);
     classifications.set(row.path,row.classification);
   }
+  for(const file of catalog.files.filter(file=>file.kind==='test')){
+    const variants=populations.get(file.path),metadata=variants?.[0].metadata;
+    const expectedModes=metadata?test262VariantModes(metadata):['unclassified'];
+    if(!variants||conformanceDigest(variants.map(row=>row.mode))!==conformanceDigest(expectedModes))
+      throw new TypeError('Test262 catalog omits or changes required source variants: '+file.path);
+  }
+  const summary={discoveredFiles:catalog.files.length,testFiles:catalog.files.filter(file=>file.kind==='test').length,
+    fixtureFiles:catalog.files.filter(file=>file.kind==='fixture').length,harnessFiles:catalog.files.filter(file=>file.kind==='harness').length,
+    resourceFiles:catalog.files.filter(file=>file.kind==='resource').length,
+    knownVariants:catalog.variants.filter(row=>row.mode!=='unclassified').length,
+    unresolvedMetadataFiles:catalog.variants.filter(row=>row.mode==='unclassified').length,
+    variantPopulationComplete:catalog.variants.every(row=>row.mode!=='unclassified'),
+    missingHarnessFiles:[...new Set(catalog.variants.flatMap(row=>row.harness.filter(file=>file.sha256===null).map(file=>file.path)))].sort(),
+    specificationPinned:catalog.profile.specification!==null};
+  if(conformanceDigest(summary)!==conformanceDigest(catalog.summary))
+    throw new TypeError('Test262 catalog summary differs from its complete source population');
   return true;
 }
 

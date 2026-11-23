@@ -122,6 +122,22 @@ test('selection retains all catalog rows and cannot inherit passed later stages'
   assert.throws(()=>createTest262Campaign({catalog,implementation,selectedIds:['unknown']}),/catalog IDs/);
 });
 
+test('self-rehashed retained catalogs cannot shrink or relabel the acquired variant population',()=>{
+  const catalog=make({'test/a.js':fixture(),'test/b.js':fixture('','flags: [raw]\n')});
+  const rehash=changed=>{const {digest,...value}=changed;changed.digest=conformanceDigest(value);return changed;};
+  for(const mutate of [
+    changed=>{changed.variants.splice(1,1);changed.summary.knownVariants--;},
+    changed=>{changed.variants.pop();changed.summary.knownVariants--;},
+    changed=>{changed.files.push(structuredClone(changed.files[0]));},
+    changed=>{changed.variants[0].mode='raw';},
+    changed=>{changed.summary.knownVariants++;}
+  ]){
+    const changed=structuredClone(catalog);mutate(changed);rehash(changed);
+    assert.throws(()=>validateTest262Catalog(changed),/variant|source files|summary/);
+    assert.throws(()=>createTest262Campaign({catalog:changed,implementation}),TypeError);
+  }
+});
+
 test('source-family shards partition all variants and remain stable as the inventory grows',()=>{
   const catalog=make(Object.fromEntries(Array.from({length:30},(_,i)=>['test/source-'+i+'.js',fixture()])));
   const shards=Array.from({length:4},(_,index)=>selectTest262Shard(catalog.variants,{index,count:4}));

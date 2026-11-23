@@ -25,6 +25,9 @@ Each file is checked against the acquired Git blob before execution. Tests keep
 their original text and declared strict, sloppy, raw or module mode. Strict
 source adaptation preserves hashbang placement. Original harness files load in
 metadata order, and static module dependencies retain their content identities.
+Retained catalogs are reconciled against every acquired source before selecting
+a shard. Their metadata, required modes, unique file population and summary must
+agree; recomputing a catalog digest cannot authorize dropping a strict variant.
 
 Reports embed the acquired catalog, exact source and harness Git/SHA-256
 identities, profile, implementation revision and file hashes, resource policy,
@@ -92,6 +95,9 @@ implementation or input update; the earlier report remains an observation of its
 recorded run. Explicit `--retry failed,resource_limited` can repeat those outcomes
 within the same observation, retaining every earlier attempt and invalidating
 any dependent stages. Interrupted attempts are retried automatically.
+Implementation identity includes resolved package-import aliases and the actual
+installed Acorn and TypeScript entrypoints and package metadata, so a dependency
+file edit cannot hide behind an unchanged dependency-lock version.
 
 ```sh
 node tools/run-test262-campaign.mjs --check corpus/out/test262/part-0.json.gz
