@@ -201,8 +201,11 @@ archive controls do not execute source admission or optimization.
 ## Fresh paired package and restore gate
 
 `tools/qualify-v8-release.py` creates a new complete qualification of all 64
-frozen support sources (48 training, 12 validation and four test), prepares
-their original source documents and runs the ordinary two-update resume/export
+frozen support sources. It independently rebuilds the current authored cohort,
+exact tasks and family registry, then verifies complete admission and derives
+the training, validation and test counts from that authenticated registry.
+A past split distribution is not the population authority. It prepares
+the original source documents and runs the ordinary two-update resume/export
 lifecycle. It packages that two-update checkpoint with its matching served
 weights, moves the original runtime asset paths and temporary package payload
 out of the way, then restores using only the archive, its separately retained

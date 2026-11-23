@@ -237,11 +237,24 @@ def qualify(args):
                        "--inputs", "all", "--workers", "2", "--out", qualification,
                        "--megatoken", native, "--python", args.python, "--tokenizer", local_tokenizer,
                        "--native-policy", policy_path])
+    population_path = inputs / "support-population.json"
+    run("verify-current-support-population", ["node", producer / "tools/verify-v8-release-population.mjs",
+                                             qualification, "--output", population_path])
+    population = read(population_path)
+    population_sha256 = hashlib.sha256(population_path.read_bytes()).hexdigest()
     report = read(qualification / "report.json")
     registry = read(qualification / "family-registry.json")
     rows, ids = report["rows"], [row["id"] for row in registry["sources"]]
     split_by_id = {source: component["split"] for component in registry["components"]
                    for source in component["sourceIds"]}
+    split_counts = population["splitCounts"]
+    require(population["schema"] == "semantic-v8-release-population/1" and
+            population["status"] == "verified" and population["producerRevision"] == producer_revision and
+            population["populationCount"] == 64 and population["registryDigest"] == registry["digest"] and
+            len(population["sourceIds"]) == 64 and set(population["sourceIds"]) == set(ids) and
+            set(split_counts) == {"train", "validation", "test"} and
+            all(type(count) is int and count > 0 for count in split_counts.values()),
+            "Release population differs from the complete current support cohort")
     require(report["population"] == "se-support" and report["declared"] == 64 and
             report["sourceQualified"] == report["nativeAdmitted"] == 64 and not report["preparationOnly"] and
             len(rows) == len(set(ids)) == len(ids) == len(split_by_id) == 64 and
@@ -249,7 +262,7 @@ def qualify(args):
             {row["sourceId"] for row in rows} == set(ids) == set(split_by_id) and
             all(row["source"] == row["native"] == "passed" for row in rows) and
             {split: list(split_by_id.values()).count(split) for split in ("train", "validation", "test")}
-            == {"train": 48, "validation": 12, "test": 4}, "Complete frozen 64-source admission did not pass")
+            == split_counts, "Complete frozen 64-source admission did not pass")
     task_binding = inputs / "task-binding-snapshot.json"
     run("bind-original-64-source-tasks", ["node", producer / "tools/verify-v8-release-campaign.mjs",
                                          qualification, "--output", task_binding])
@@ -326,13 +339,17 @@ def qualify(args):
             restored_result["learnedSuccess"] is None and restored_result["defaultPromotion"] is False,
             "Restoration did not prove the exact bounded release claims")
     verify_policy_evidence()
+    require(hashlib.sha256((retained / population_path.name).read_bytes()).hexdigest() == population_sha256,
+            "Retained support population evidence changed during qualification")
     result = {"schema": "semantic-v8-release-qualification/1", "status": "passed",
               "producerRevision": producer_revision, "consumerRevision": native_revision,
               "nativePolicySha256": policy_evidence[policy_path.name],
               "nativePolicyEvidenceSha256": policy_evidence,
               "nativePolicyResolution": resolution,
               "declaredSources": 64, "sourceQualified": 64, "nativeAdmitted": 64,
-              "splitCounts": {"train": 48, "validation": 12, "test": 4},
+              "splitCounts": split_counts,
+              "supportCohortDigest": population["cohortDigest"],
+              "supportPopulationSha256": population_sha256,
               "registryDigest": registry["digest"], "archiveSha256": checksum,
               "archiveBytes": package_result["archive"]["bytes"],
               "manifestIdentity": package_result["manifestIdentity"],
