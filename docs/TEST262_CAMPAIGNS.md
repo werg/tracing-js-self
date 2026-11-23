@@ -150,6 +150,9 @@ Async success requires exactly one call to the original `doneprintHandle.js`
 forging it, or hiding duplicate calls cannot produce a pass. Retained aliases of
 the original function work. The reference monitor delegates to the original
 function; the owned monitor uses recorded frame ancestry at the print event.
+Both monitors also retain truthy error arguments and abrupt exits from the
+original call. A replaced print handle cannot turn `$DONE(error)` into success,
+and catching a getter or printer exception cannot erase a failed completion.
 Raw plus async remains an explicit unresolved metadata combination because raw
 forbids harness evaluation while async requires the original completion harness.
 

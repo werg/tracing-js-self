@@ -150,6 +150,27 @@ test('module reference async completion requires the original harness call and i
   }
 });
 
+test('async error arguments and caught completion exceptions cannot be rewritten into success',()=>{
+  const controls=[
+    '__consolePrintHandle__=function(){print("Test262:AsyncTestComplete");};$DONE(new Error("bad"));',
+    '__consolePrintHandle__=function(){print("Test262:AsyncTestComplete");};new $DONE("bad");',
+    '__consolePrintHandle__=function(){print("Test262:AsyncTestComplete");throw new Error("print failed");};try{$DONE();}catch(error){}',
+    'try{$DONE({get name(){print("Test262:AsyncTestComplete");throw new Error("getter failed");}});}catch(error){}'
+  ];
+  for(const body of controls){
+    const options=[...fixture(body,{metadata:'flags: [async]\n'}),...moduleFixture(body,{flags:'module, async'})];
+    for(const option of options)for(const execute of [executeOfficialTest262Variant,executeOfficialTest262Reference]){
+      const result=execute(option);
+      assert.equal(result.status,'failed',option.variant.mode+': '+body+': '+result.reason);
+      assert.equal(result.completionCalls,1);
+      assert.equal(result.completionPrints,1);
+      assert(result.completionErrorCalls>0||result.completionAbruptCalls>0);
+    }
+  }
+  for(const argument of ['undefined','null','false','0','-0','NaN','""','0n'])
+    statuses(both('$DONE('+argument+');',{metadata:'flags: [async]\n'}),'passed');
+});
+
 test('raw async metadata has no declared completion facility and cannot yield successful evidence',()=>{
   // The current routing contract rejects raw+async: raw does not install the
   // original doneprintHandle harness. Keep that gap visible before execution.
@@ -203,7 +224,7 @@ test('missing original includes, changed bytes, hosts and modules keep distinct 
 
 test('owned and native module runners bind the complete pinned fixture graph',()=>{
   const runnerProfile=ownedTest262Profile();
-  assert.equal(runnerProfile.hostProfile.moduleResolver,'frozen-static-relative-graph/1');
+  assert.equal(runnerProfile.hostProfile.moduleResolver,'content-bound-static-relative-graph/1');
   assert.equal(runnerProfile.hostProfile.moduleExecution.profile,'evaluated-module/1');
   assert.equal(runnerProfile.hostProfile.moduleExecution.sourceCorrespondence,false);
   assert.equal(runnerProfile.hostProfile.moduleExecution.dynamicImport,'unsupported');

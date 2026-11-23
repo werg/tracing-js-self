@@ -1,8 +1,17 @@
 // Observe the original harness function without replacing its implementation.
 // Guest print tokens alone are not evidence that the Test262 $DONE protocol ran.
 export function createTest262ReferenceCompletion(){
-  let calls=0,depth=0,bound=false;
+  let calls=0,errorCalls=0,abruptCalls=0,depth=0,bound=false;
   const output=[];
+  const observe=(args,invoke)=>{
+    calls++;depth++;
+    // doneprintHandle.js treats a truthy argument as failure. Record that
+    // boundary before guest-controlled getters or print handles can conceal it.
+    if(args[0])errorCalls++;
+    try{return invoke();}
+    catch(error){abruptCalls++;throw error;}
+    finally{depth--;}
+  };
   return {
     output,
     get calls(){return calls;},
@@ -13,14 +22,10 @@ export function createTest262ReferenceCompletion(){
         throw new TypeError('Original doneprintHandle.js did not define $DONE');
       const observed=new Proxy(descriptor.value,{
         apply(target,receiver,args){
-          calls++;depth++;
-          try{return Reflect.apply(target,receiver,args);}
-          finally{depth--;}
+          return observe(args,()=>Reflect.apply(target,receiver,args));
         },
         construct(target,args,newTarget){
-          calls++;depth++;
-          try{return Reflect.construct(target,args,newTarget);}
-          finally{depth--;}
+          return observe(args,()=>Reflect.construct(target,args,newTarget));
         }
       });
       Object.defineProperty(context,'$DONE',{...descriptor,value:observed});
@@ -31,7 +36,10 @@ export function createTest262ReferenceCompletion(){
       const completions=output.filter(item=>item.text==='Test262:AsyncTestComplete');
       const failures=output.filter(item=>item.text.startsWith('Test262:AsyncTestFailure:'));
       const details={completionCalls:calls,completionPrints:completions.length,
-        originalCompletionPrints:completions.filter(item=>item.originalDone).length};
+        originalCompletionPrints:completions.filter(item=>item.originalDone).length,
+        completionErrorCalls:errorCalls,completionAbruptCalls:abruptCalls};
+      if(errorCalls||abruptCalls)return {status:'failed',
+        reason:'Original reference $DONE received an error or exited abruptly',...details};
       if(failures.length)return {status:'failed',reason:'Original reference async harness reported failure',
         ...details,failurePrints:failures.length};
       if(calls>1||completions.length>1)return {status:'failed',

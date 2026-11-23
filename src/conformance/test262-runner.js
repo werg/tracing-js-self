@@ -9,6 +9,7 @@ import {linkEvaluatedModules} from '../evaluated-modules.js';
 import {unresolvedOriginalModuleBindings} from './test262-module-resolution.js';
 import {validateBundle,TraceValidationError} from '../validation.js';
 import {replayExact,TraceReplayError} from '../replay.js';
+import {truthy} from '../values.js';
 import {conformanceDigest,parseTest262Header,test262VariantModes} from './test262-catalog.js';
 import {test262HostCapabilities,unsupportedOwnedGlobals,
   unavailableOwnedStandardGlobal,requiresScriptGlobalThis} from './test262-capabilities.js';
@@ -255,12 +256,15 @@ function asyncCompletion(bundle,variant){
   const failures=output.filter(item=>item.value?.[0]==='str'&&item.value[1].startsWith('Test262:AsyncTestFailure:'));
   const doneSource=bundle.sources.find(source=>source.url==='harness/doneprintHandle.js');
   const definition=doneSource&&bundle.programs[doneSource.entry].instructions.find(inst=>inst.op==='DEF_FN'&&inst.arg.name==='$DONE');
-  const calls=definition?Object.values(bundle.finalState.frames).filter(frame=>frame.codeId===definition.arg.codeId).length:null;
+  const doneFrames=definition?Object.values(bundle.finalState.frames).filter(frame=>frame.codeId===definition.arg.codeId):[];
+  const calls=definition?doneFrames.length:null;
+  let completionErrorCalls=0;
+  const completionAbruptCalls=doneFrames.filter(frame=>frame.completion?.type==='throw').length;
   // Completed frames have cleared caller links. Inspect their retained state
   // at each print event, not the final heap, to establish original call ownership.
   const frames=new Map(Object.entries(bundle.initialState.frames));
   const wanted=new Set(completions.map(item=>item.origin));let originalCompletionPrints=0;
-  if(definition&&wanted.size)for(const event of bundle.events){
+  if(definition)for(const event of bundle.events){
     if(wanted.has(event.eventId)){
       let frame=frames.get(event.invocationId);const seen=new Set();
       while(frame&&!seen.has(frame.id)){
@@ -269,9 +273,19 @@ function asyncCompletion(bundle,variant){
       }
     }
     for(const patch of event.stateChanges??[])if(patch.table==='frames'){
+      if(!patch.before&&patch.after?.codeId===definition.arg.codeId){
+        const environment=event.stateChanges.find(change=>change.table==='envs'&&change.id===patch.after.envId)?.after;
+        const argument=environment?.bindings[bundle.programs[definition.arg.codeId].params[0]]?.token?.value;
+        if(!argument)throw new TypeError('Original async completion lost its invocation argument');
+        if(truthy(argument))completionErrorCalls++;
+      }
       if(patch.after)frames.set(patch.id,patch.after);else frames.delete(patch.id);
     }
   }
+  if(completionErrorCalls||completionAbruptCalls)return outcome('failed',
+    'Original $DONE received an error or exited abruptly',
+    {completionCalls:calls,completionPrints:completions.length,originalCompletionPrints,
+      completionErrorCalls,completionAbruptCalls});
   if(failures.length)return outcome('failed','Original async harness reported failure',
     {completionCalls:calls,completionPrints:completions.length,failurePrints:failures.length});
   if(completions.length>1||calls!==null&&calls>1)return outcome('failed','Async completion occurred more than once',
