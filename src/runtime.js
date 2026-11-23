@@ -1323,7 +1323,11 @@ export class Runtime {
     if(!selected)throw new TypeError('Promise constructor lookup requires owned ordinary storage');
     const getter=selected.accessor?.get.value??U;
     if(getter[0]==='undefined'){
-      this.continuePromiseConstructor(draft,selected.method?.value??U,continuation,origin);
+      try{this.continuePromiseConstructor(draft,selected.method?.value??U,continuation,origin);}
+      catch(error){
+        if(!(error instanceof GuestFault)||!['finally','adopt'].includes(continuation.kind))throw error;
+        this.rejectPromiseConstructor(draft,continuation,{type:'throw',errorType:error.name,message:error.message},origin);
+      }
       return {read:selected.observation};
     }
     if(!this.callableGuest(draft,getter))throw new TypeError('Promise constructor lookup requires an owned getter');
@@ -1350,12 +1354,24 @@ export class Runtime {
       const promise=draft.promises[continuation.promiseId];promise.adopting=null;
       const reason=this.caughtError(draft,completion,origin);this.rejectPromise(draft,promise.id,reason.value,reason.origin);
       draft.control.a0.activeFrameId=null;
+    }else if(continuation.kind==='finally'){
+      const reason=this.caughtError(draft,completion,origin);
+      this.rejectPromise(draft,continuation.reaction.resultId,reason.value,reason.origin);
+      this.resumePromiseResolution(draft,continuation.after);
     }else{
       const frame=draft.frames[continuation.frameId];draft.control.a0.activeFrameId=frame.id;
       this.routeCompletion(draft,frame,completion,origin);
     }
   }
   continuePromiseConstructor(draft,constructor,continuation,origin){
+    if(continuation.kind==='finally'&&continuation.stage==='resolve'){
+      const value=continuation.value,same=value[0]==='promise'&&ownedSameValue(constructor,['intrinsic','Promise']),
+        cleanupId=same?value[1]:this.newPromise(draft),
+        next={...continuation,stage:'then',cleanupId,phase:'constructor'},
+        waiting=same?null:this.resolvePromise(draft,cleanupId,value,origin);
+      if(waiting){draft.frames[waiting].promiseThenLookup.resume={kind:'finally-cleanup',continuation:next,origin};return;}
+      this.startFinallyCleanupThen(draft,next,origin);return;
+    }
     if(['resolve','await'].includes(continuation.kind)){
       const frame=draft.frames[continuation.frameId],value=continuation.value,
         same=value[0]==='promise'&&ownedSameValue(constructor,['intrinsic','Promise']),
@@ -1386,6 +1402,15 @@ export class Runtime {
       this.observePromise(draft,continuation.targetId,{kind:'adoption',resultId:continuation.promiseId});
       draft.control.a0.activeFrameId=null;return;
     }
+    if(continuation.kind==='finally'){
+      const reaction=continuation.reaction,passed=this.newPromise(draft);
+      this.observePromise(draft,continuation.cleanupId,{kind:'finally-pass',resultId:passed,
+        originalStatus:reaction.originalStatus,original:reaction.original});
+      const waiting=this.resolvePromise(draft,reaction.resultId,['promise',passed],origin);
+      if(waiting)draft.frames[waiting].promiseThenLookup.resume=continuation.after;
+      else this.resumePromiseResolution(draft,continuation.after);
+      return;
+    }
     if(continuation.kind!=='reaction')throw new Error('Unknown Promise constructor continuation');
     if(continuation.method==='finally'&&!continuation.finallySpecies){
       this.lookupPromiseConstructor(draft,continuation.receiver,{...continuation,phase:'constructor',finallySpecies:true},origin);return;
@@ -1398,6 +1423,12 @@ export class Runtime {
     this.observePromise(draft,continuation.receiver[1],{kind:'reaction',reaction});
     const frame=draft.frames[continuation.frameId];this.stackPush(frame,['promise',promiseId],origin);
     draft.control.a0.activeFrameId=frame.id;
+  }
+  startFinallyCleanupThen(draft,continuation,origin){
+    const value=['promise',continuation.cleanupId],then=ordinaryGet(ownedObjectHeap(draft),value,'then');
+    if(!then||!ownedSameValue(then.method.value,['builtinfn','Promise.prototype.then']))
+      throw new TypeError('Promise finally cleanup then override requires an owned call continuation');
+    this.lookupPromiseConstructor(draft,value,continuation,origin);
   }
   resolvePromise(draft,id,value,origin) {
     const p=draft.promises[id];if(!p||p.status!=='pending'||p.adopting)
@@ -1483,6 +1514,7 @@ export class Runtime {
       this.resolvePromise(draft,resume.resultId,['promise',resume.passed],resume.origin);
       this.resumePromiseResolution(draft,resume.after);
     }else if(resume.kind==='await')this.awaitPromise(draft,draft.frames[resume.frameId],resume.promiseId);
+    else if(resume.kind==='finally-cleanup')this.startFinallyCleanupThen(draft,resume.continuation,resume.origin);
     else if(resume.kind==='combinator'){
       draft.control.a0.activeFrameId=resume.frameId;
       this.advancePromiseCombinator(draft,draft.frames[resume.frameId],resume.origin);
@@ -1495,17 +1527,11 @@ export class Runtime {
       // The outer reaction then adopts that distinct promise. All three
       // scheduling boundaries remain visible even for a primitive callback
       // result, and an existing Promise is used directly by PromiseResolve.
-      const cleanup=value[0]==='promise'?value[1]:this.newPromise(draft);
-      const waiting=value[0]!=='promise'?this.resolvePromise(draft,cleanup,value,origin):null;
-      const passed=this.newPromise(draft);
-      this.observePromise(draft,cleanup,{kind:'finally-pass',resultId:passed,
-        originalStatus:reaction.originalStatus,original:reaction.original});
-      if(waiting){
-        draft.frames[waiting].promiseThenLookup.resume={kind:'finally-adopt',resultId:reaction.resultId,passed,origin,
-          after:after??{kind:'active',frameId:null}};
-        return true;
-      }
-      this.resolvePromise(draft,reaction.resultId,['promise',passed],origin);
+      const continuation={kind:'finally',stage:'resolve',frameId:frame.id,value:copy(value),reaction:copy(reaction),
+        after:after??{kind:'active',frameId:null}};
+      if(value[0]==='promise')this.lookupPromiseConstructor(draft,value,continuation,origin);
+      else this.continuePromiseConstructor(draft,U,continuation,origin);
+      return true;
     }else if(frame.reactionPromiseId){
       const waiting=this.resolvePromise(draft,frame.reactionPromiseId,value,origin);
       // An async callback publishes its returned promise at its first await
@@ -1523,6 +1549,16 @@ export class Runtime {
     const pending=frame.pendingPromiseCombinator;
     if(!pending)throw new Error('Missing Promise combinator continuation');
     const array=draft.heap[pending.arrayId],result=draft.promises[pending.resultId];
+    const requireIntrinsic=value=>{
+      const heap=ownedObjectHeap(draft),constructor=ordinaryGet(heap,value,'constructor'),then=ordinaryGet(heap,value,'then');
+      if(!constructor||!ownedSameValue(constructor.method.value,['intrinsic','Promise'])||
+         !then||!ownedSameValue(then.method.value,['builtinfn','Promise.prototype.then']))
+        throw new TypeError('Promise combinator constructor or then lookup requires an owned continuation');
+    };
+    // Combinator-specific PromiseResolve/Invoke continuations remain bounded.
+    // Refuse observable constructor/then mutations instead of skipping their
+    // getters or pretending a private observation was an ordinary then call.
+    if(pending.index||decode(array.properties.length.value))requireIntrinsic(['promise',pending.resultId]);
     for(;;){
       const length=decode(array.properties.length.value);
       if(!Number.isInteger(length)||length<0||length>64)
@@ -1531,6 +1567,7 @@ export class Runtime {
       const index=pending.index++,found=ordinaryGet(draft.heap,['ref',array.id],String(index));
       if(!found)throw new TypeError('Promise combinator element requires its own getter continuation');
       const v=found.method,inputId=v.value[0]==='promise'?v.value[1]:this.newPromise(draft);
+      if(v.value[0]==='promise')requireIntrinsic(v.value);
       if(result.combinator){result.combinator.values.push(null);result.combinator.remaining++;}
       const waiting=v.value[0]!=='promise'?this.resolvePromise(draft,inputId,v.value,v.origin):null;
       this.observePromise(draft,inputId,{kind:'combinator',resultId:pending.resultId,index,mode:pending.kind});

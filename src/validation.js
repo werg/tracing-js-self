@@ -308,8 +308,10 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
             state.promises[f.promiseThenLookup.promiseId]?.status==='rejected');
           const constructorRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
             f.promiseConstructorLookup?.delivered&&eq(f.completion,c)&&
-            f.promiseConstructorLookup.continuation.kind==='adopt'&&
-            state.promises[f.promiseConstructorLookup.continuation.promiseId]?.status==='rejected');
+            (f.promiseConstructorLookup.continuation.kind==='adopt'&&
+             state.promises[f.promiseConstructorLookup.continuation.promiseId]?.status==='rejected'||
+             f.promiseConstructorLookup.continuation.kind==='finally'&&
+             state.promises[f.promiseConstructorLookup.continuation.reaction?.resultId]?.status==='rejected'));
           const pendingCoercion=Object.values(state.frames).some(f=>{
             const pending=f.pendingCoercionThrow, operation=state.operations[f.operationId];
             const methodId=operation?.coercion?.waitingFrameId;

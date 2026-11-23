@@ -80,6 +80,19 @@ test('throwing constructor getters during assimilation reject only their adoptin
   }
 });
 
+test('finally cleanup PromiseResolve and SpeciesConstructor preserve getter and competing-job order',async()=>{
+  for(const getter of ["order+='c';return Promise;","order+='c';return undefined;","order+='c';throw reason;"]){
+    await differential(`let order='';const reason={tag:7},cleanup=Promise.resolve(9);
+      Object.defineProperty(cleanup,'constructor',{get(){${getter}}});
+      Promise.resolve(2).finally(()=>{order+='f';return cleanup;})
+        .then(value=>{order+='v'+value;},error=>{order+=error===reason?'e':'bad';});
+      Promise.resolve().then(()=>{order+='a';}).then(()=>{order+='b';}).then(()=>{order+='d';});order+='s';`);
+  }
+  await differential(`let order='';const cleanup=Promise.resolve(9),constructor={get [Symbol.species](){order+='s';return Promise;}};
+    Object.defineProperty(cleanup,'constructor',{get(){order+='c';return constructor;}});
+    Promise.reject(2).finally(()=>cleanup).catch(value=>{order+='e'+value;});queueMicrotask(()=>{order+='q';});`);
+});
+
 test('then and finally perform ordered constructor/species lookups and reject invalid descriptors',async()=>{
   await differential(`let order='';const p=Promise.resolve(2),constructor={get [Symbol.species](){order+='s';return Promise;}};
     Object.defineProperty(p,'constructor',{get(){order+='c';return constructor;}});
@@ -112,6 +125,8 @@ test('unsupported Promise species allocation cannot become a caught-error succes
     [Symbol.species]:function(executor){return new Promise(executor);}}});
     try{p.then(()=>{});}catch(error){return 7;}`;
   assert.throws(()=>start(body).drive(),/Custom Promise species construction is outside the owned profile/);
+  assert.throws(()=>start(`const p=Promise.resolve(1);Object.defineProperty(p,'constructor',{get(){return Promise;}});
+    try{Promise.all([p]);}catch(error){return 7;}`).drive(),/Promise combinator constructor or then lookup requires an owned continuation/);
 });
 
 test('Promise static and prototype methods reject altered receivers before their callbacks run',async()=>{

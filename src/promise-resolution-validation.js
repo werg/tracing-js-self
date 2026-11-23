@@ -52,6 +52,12 @@ function validateResume(state,resume,fail,depth=0){
     if(!state.frames[resume.frameId].asyncPromiseId||!state.promises[resume.promiseId])fail('Invalid Promise await continuation');
   }else if(resume.kind==='combinator'){
     exact(['kind','frameId','origin']);frame();
+  }else if(resume.kind==='finally-cleanup'){
+    exact(['kind','continuation','origin']);
+    const continuation=resume.continuation;
+    if(continuation?.kind!=='finally'||continuation.stage!=='then'||!state.promises[continuation.cleanupId]||
+       !state.promises[continuation.reaction?.resultId]||!state.frames[continuation.frameId])fail('Invalid finally cleanup continuation');
+    validateResume(state,continuation.after,fail,depth+1);
   }else fail('Unknown Promise lookup resume kind');
 }
 export function validatePromiseResolutionState(state,fail){
@@ -65,9 +71,10 @@ export function validatePromiseResolutionState(state,fail){
          frame.callerFrameId!==null||!frame.reactionJob)
         fail('Malformed Promise constructor lookup state');
       const c=constructor.continuation;
-      if(!c||!['resolve','await','reaction','adopt'].includes(c.kind))fail('Unknown Promise constructor continuation');
+      if(!c||!['resolve','await','reaction','adopt','finally'].includes(c.kind))fail('Unknown Promise constructor continuation');
       const expected=c.kind==='resolve'||c.kind==='await'?['kind','frameId','value']:
-        c.kind==='reaction'?['kind','frameId','receiver','method','args']:['kind','promiseId','targetId'];
+        c.kind==='reaction'?['kind','frameId','receiver','method','args']:
+          c.kind==='finally'?['kind','stage','frameId','value','reaction','after',...(c.cleanupId!==undefined?['cleanupId']:[])]:['kind','promiseId','targetId'];
       if(c.phase!==undefined)expected.push('phase');if(c.finallySpecies!==undefined)expected.push('finallySpecies');
       if(!equal(Object.keys(c).sort(),expected.sort())||c.phase!==undefined&&!['constructor','species'].includes(c.phase)||
          c.finallySpecies!==undefined&&(c.kind!=='reaction'||c.method!=='finally'||c.finallySpecies!==true))
@@ -80,6 +87,11 @@ export function validatePromiseResolutionState(state,fail){
         fail('Unknown PromiseResolve constructor receiver');
       if(c.kind==='reaction'&&(c.receiver?.[0]!=='promise'||!state.promises[c.receiver[1]]||
          !['then','catch','finally'].includes(c.method)||!Array.isArray(c.args)))fail('Invalid Promise reaction constructor');
+      if(c.kind==='finally'){
+        if(!['resolve','then'].includes(c.stage)||!state.promises[c.reaction?.resultId]||
+           c.stage==='then'&&!state.promises[c.cleanupId]||!Array.isArray(c.value))fail('Invalid finally constructor continuation');
+        validateResume(state,c.after,fail);
+      }
     }
     const lookup=frame.promiseThenLookup;if(!lookup)continue;
     const fields=Object.keys(lookup).sort(),expected=['promiseId','resolution','origin','resume','delivered',
@@ -119,8 +131,22 @@ export function validatePromiseResolutionEvent(before,event,fail){
       if(prior&&!prior.delivered&&event.operation!=='call.enter'&&event.operation!=='async.await'){
         const previous=prior.continuation,{phase:ignoredPhase,finallySpecies:ignoredFinally,...base}=c,
           {phase:previousPhase,finallySpecies:previousFinally,...oldBase}=previous;
-        if(!equal(base,oldBase)||!(c.phase==='species'||c.kind==='reaction'&&c.method==='finally'&&c.finallySpecies))
+        const finallyNext=c.kind==='finally'&&previous.kind==='finally'&&previous.stage==='resolve'&&c.stage==='then'&&
+          equal({...base,stage:'resolve',cleanupId:undefined},{...oldBase,cleanupId:undefined});
+        if(!finallyNext&&(!equal(base,oldBase)||!(c.phase==='species'||c.kind==='reaction'&&c.method==='finally'&&c.finallySpecies)))
           fail('Promise constructor continuation lost its parent lookup');
+      }else if(c.kind==='finally'){
+        const owner=before.frames[c.frameId],thenLookup=before.frames[event.invocationId]?.promiseThenLookup;
+        if(owner?.finallyReaction){
+          if(!equal(owner.finallyReaction,c.reaction)||c.frameId!==event.invocationId)
+            fail('Finally constructor lookup changed its reaction owner');
+          const input=owner.asyncPromiseId?['promise',owner.asyncPromiseId]:event.operands.at(-1);
+          if(!equal(c.value,input)||!equal(receiver,c.stage==='resolve'?c.value:['promise',c.cleanupId]))
+            fail('Finally constructor lookup changed its cleanup result');
+        }else if(thenLookup?.resume?.kind==='finally-cleanup'){
+          if(!equal(thenLookup.resume.continuation,c)||!equal(receiver,['promise',c.cleanupId]))
+            fail('Finally constructor lookup changed its pending cleanup');
+        }else fail('Finally constructor lookup lacks its callback boundary');
       }else if(c.kind==='adopt'){
         const job=before.control.a0.queue[0];
         if(event.operation!=='job.enter'||job?.kind!=='promise-adopt'||job.promiseId!==c.promiseId||job.targetId!==c.targetId||
