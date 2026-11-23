@@ -1,4 +1,4 @@
-// Stable ordinary for-in cursors on the authoritative shared heap. Key lists
+// Ordinary for-in cursors on the authoritative shared heap. Candidate lists
 // are derived here, never supplied by a teacher or a native enumeration call.
 import {assertAlgorithmFields,assertAlgorithmDataArray,isAlgorithmDataRecord} from './ir.js';
 
@@ -47,6 +47,17 @@ function snapshot(controller,source,api){
   }
   return {chain,keys:selectedKeys(chain,api)};
 }
+function liveCandidates(controller,cursor,api){
+  const current=snapshot(controller,cursor.source,api);
+  api.require(current.chain.length===cursor.chain.length,'enumeration prototype changed');
+  for(const [index,captured]of cursor.chain.entries()){
+    const live=current.chain[index];
+    api.require(live.id===captured.id&&api.eq(live.prototype,captured.prototype),'enumeration prototype changed');
+    const descriptors=new Map(live.keys);
+    for(const [key,enumerable]of captured.keys)
+      api.require(!descriptors.has(key)||descriptors.get(key)===enumerable,'enumeration key descriptor changed');
+  }
+}
 export function applyEnumerationRecordV8(controller,record,api){
   if(!Object.hasOwn(ENUMERATION_RECORD_FIELDS,record.kind))return false;
   if(record.kind==='enumeration.create'){
@@ -54,8 +65,14 @@ export function applyEnumerationRecordV8(controller,record,api){
     controller.heap.set(record.name,{kind:'enumerator',source:api.copy(record.source),...selected,nextIndex:0,done:false,properties:new Map()});
   }else{
     const node=controller.heap.get(record.object);api.require(node?.kind==='enumerator','enumeration cursor identity required');
-    const selected=snapshot(controller,node.source,api);
-    api.require(api.eq(selected.chain,node.chain)&&api.eq(selected.keys,node.keys),'enumeration key descriptor or prototype changed');
+    // Once exhausted, later mutations cannot revive a cursor. Before that,
+    // keep captured order, ignore additions and skip names no longer present
+    // anywhere on the same live chain, without ever reading a property value.
+    if(!node.done){
+      liveCandidates(controller,node,api);
+      if(node.source[0]==='ref')while(node.nextIndex<node.keys.length&&
+        !api.resolveProperty(controller,node.source[1],['str',node.keys[node.nextIndex]],{forHas:true}).descriptor)node.nextIndex++;
+    }
     const done=node.nextIndex>=node.keys.length,result=done?['undefined']:['str',node.keys[node.nextIndex]];
     api.require(record.done===done&&api.eq(record.result,result),'false enumeration next result');
     api.allocate(controller,{name:record.name,objectKind:'object',length:null,code:null,captures:[],functionKind:null,lexicalReceiver:null,
@@ -95,7 +112,8 @@ export function restoreEnumerationStateV8(controller,api){
     }
     api.require(api.eq(node.keys,selectedKeys(node.chain,api)),'enumeration snapshot key order or shadowing');
     // A checkpoint may follow a source write before the next step (or a break).
-    // Preserve that exact prefix; next checks its live key/prototype structure.
+    // Preserve that exact prefix; next checks compatible live descriptors and
+    // skips removed candidates. It never reconstructs a cursor from new keys.
   }
   return {valid:true,enumerators:count};
 }

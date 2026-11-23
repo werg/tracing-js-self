@@ -56,3 +56,32 @@ npm run contracts:check
 
 All results below must be attributed to their actual code and inputs. Starting
 point observations above are not verification of later changes.
+
+## Checkpoint 1 — shared existence and live enumeration
+
+Producer PR: <https://github.com/werg/tracing-js-self/pull/64>.
+Consumer PR: <https://github.com/werg/megatoken/pull/46>.
+
+The public machine now derives `property.has` from the same descriptor/prototype
+lookup used by ordinary access, without invoking a getter. Known intrinsic
+existence does not need a fabricated callable value. Unknown symbols, receiver
+identities, false outcomes and uninitialized Promise prototype claims refuse.
+Enumeration reuses that operation while retaining its original candidate order.
+This matters when deleting an own `toString`: the inherited Object.prototype
+property still keeps that captured name present, even though it is not enumerable.
+
+The direct public-machine test file `test/semantic-protocol-enumeration-v8.test.js`
+passes 9 tests, covering order/shadowing, existence, mutation, sticky exhaustion,
+restoration and malformed state. Native PR #46 has separately executed 66 focused
+tests; these counts describe separate checks and must not be summed as unique
+language coverage.
+
+Work still in progress at this checkpoint:
+
+- Owned delete syntax, `Reflect.has`, and `Reflect.deleteProperty`, including
+  configurable descriptors, property-key conversion and validation.
+- Original-source cases and their exact native observation audits.
+- Complete fixture/interoperability regeneration. The contract definition has
+  been bootstrapped for the new record; this intermediate definition alone is
+  not a passing `contracts:check` or native admission receipt.
+- Actual-tokenizer ordinary preparation on clean paired revisions.

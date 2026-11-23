@@ -134,13 +134,15 @@ function unmodeledPrototypeMember(node,key){
     node.kind==='closure'&&['constructor','toString','call','apply','bind','length','name','prototype','arguments','caller'].includes(key[1]);
 }
 function missingIntrinsic(node,key){return key[0]==='str'&&objectIntrinsicNames.includes(key[1])||unmodeledPrototypeMember(node,key);}
-function resolveProperty(controller,object,key,{forSet=false}={}){
+function resolveProperty(controller,object,key,{forSet=false,forHas=false}={}){
   const visited=new Set();let current=object;
   for(;;){
     require(!visited.has(current),'cyclic prototype chain');visited.add(current);
     const node=heapNode(controller,current),descriptor=ownDescriptor(node,key);
     if(descriptor)return {owner:current,node,descriptor};
     const prototype=node.prototype===undefined?'ordinary':node.prototype;
+    if(forHas&&node.kind==='promise'&&prototype==='ordinary')
+      require(false,'Promise property existence requires initialized intrinsic state');
     if(prototype===null)return {owner:null,node:null,descriptor:null};
     if(prototype==='ordinary'){
       // Array.prototype and Function.prototype override some Object members.
@@ -156,6 +158,11 @@ function resolveProperty(controller,object,key,{forSet=false}={}){
       if(forSet&&(key[0]==='str'&&key[1]!=='__proto__'&&objectIntrinsicNames.includes(key[1])||
         node.kind==='array'&&key[0]==='symbol'&&key[1]==='well-known:iterator'))
         return {owner:null,node:null,descriptor:{kind:'data',writable:true}};
+      // Existence does not read an intrinsic value or invoke its getter. A
+      // closure's own prototype depends on its construction capability and
+      // cannot be inferred from a generic callable record.
+      if(forHas&&missingIntrinsic(node,key)&&!(node.kind==='closure'&&key[0]==='str'&&key[1]==='prototype'))
+        return {owner:null,node:null,descriptor:{kind:'data'}};
       require(!missingIntrinsic(node,key),'inherited intrinsic property requires its callable protocol');
       return {owner:null,node:null,descriptor:null};
     }
@@ -357,6 +364,9 @@ function apply(controller,record){
       const expected=descriptor?.kind==='data'?descriptor.value:['undefined'];require(eq(expected,record.result),'false property read');known(controller,record.result);
     }else if(record.kind==='property.hasOwn'){
       require(eq(record.result,['bool',ownDescriptor(node,record.key)!==null]),'false own-property result');
+    }else if(record.kind==='property.has'){
+      const {descriptor}=resolveProperty(controller,record.object,record.key,{forHas:true});
+      require(eq(record.result,['bool',descriptor!==null]),'false inherited-property result');
     }else if(record.kind==='property.set'){
       const success=directSet(controller,record);require(record.success===success,'false property write result');
     }else if(record.kind==='property.delete'){

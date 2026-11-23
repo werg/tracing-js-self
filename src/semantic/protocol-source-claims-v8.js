@@ -12,7 +12,7 @@ const constructors=new Set(['ArrayBuffer','SharedArrayBuffer','DataView',...Obje
 const iteratorNames=new Set(['Array.prototype.values','Array.prototype.keys','Array.prototype.entries',
   'String.prototype.iterator','Iterator.next','Iterator.identity']);
 const baseBuiltins=new Set(['Array.prototype.push','Array.prototype.pop','Symbol','Symbol.for','Symbol.keyFor',
-  'Symbol.prototype.toString','Symbol.prototype.valueOf','Object.hasOwn','Reflect.ownKeys','Object.keys',
+  'Symbol.prototype.toString','Symbol.prototype.valueOf','Object.hasOwn','Reflect.has','Reflect.deleteProperty','Reflect.ownKeys','Object.keys',
   'Object.getOwnPropertyNames','Object.getOwnPropertySymbols','Object.entries','Object.values','Object.defineProperty',
   'Object.setPrototypeOf','Object.create']);
 const constructionOps=new Set(['CLASS_CREATE','SET_HOME_OBJECT','CLASS_INITIALIZER','CLASS_FINISH','CLASS_CONSTRUCTOR_GUARD',
@@ -20,7 +20,7 @@ const constructionOps=new Set(['CLASS_CREATE','SET_HOME_OBJECT','CLASS_INITIALIZ
   'PRIVATE_DEFINE','PRIVATE_GET','PRIVATE_GET_METHOD','PRIVATE_SET','PRIVATE_HAS','PRIVATE_UPDATE','DEFINE_LITERAL_PROP']);
 const delegateOps=new Set(['LOGICAL_JUMP','REQUIRE_OBJECT','BINARY','DELEGATE_RESUME_KIND','DELEGATE_RESUME_VALUE',
   'DELEGATE_YIELD','LEAVE_SCOPE','RETURN','ITERATOR_THROW_MISSING']);
-const ordinaryOperations=new Set(['property.read','property.write','property.update','primitive.binary','primitive.unary',
+const ordinaryOperations=new Set(['property.read','property.write','property.update','property.delete','primitive.binary','primitive.unary',
   'binding.update','binding.read','binding.initialize','binding.write','call.return','completion.throw','control.jump',
   'environment.iteration','binding.default.guard']);
 // The same declarative domains are available to the shared effectful source

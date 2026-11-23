@@ -284,6 +284,15 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       if(args[0]?.[0]!=='ref'||changes.length)refuse('own-property check requires ordinary storage without heap effects');
       emit({kind:'property.hasOwn',object:tag(args[0],event)[1],key:key(args[1]??['undefined']),result:tag(row.result,event)},event,'owned-source-own-property/1');return;
     }
+    if(name==='Reflect.has'){
+      if(args[0]?.[0]!=='ref'||changes.length)refuse('property existence requires ordinary storage without heap effects');
+      emit({kind:'property.has',object:tag(args[0],event)[1],key:key(args[1]??['undefined']),result:tag(row.result,event)},event,'owned-source-property-existence/1');return;
+    }
+    if(name==='Reflect.deleteProperty'){
+      if(args[0]?.[0]!=='ref'||row.result?.[0]!=='bool'||changes.some(change=>change.id!==args[0][1]))
+        refuse('property deletion requires an ordinary receiver and exact boolean result');
+      emit({kind:'property.delete',object:tag(args[0],event)[1],key:key(args[1]??['undefined']),success:row.result[1]},event,'owned-source-property-deletion/1');return;
+    }
     if(['Reflect.ownKeys','Object.keys','Object.getOwnPropertyNames','Object.getOwnPropertySymbols'].includes(name)){
       if(args[0]?.[0]!=='ref'||row.result?.[0]!=='ref')refuse('key enumeration requires an ordinary object');
       const allocation=changes.find(change=>change.before===null&&change.id===row.result[1]);if(!allocation)refuse('key list allocation missing');
@@ -478,6 +487,11 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
             emit({kind:'property.define',object,key:property,descriptor:descriptor(node,storage),success:true},event,'owned-source-literal-definition/1');
           }
         }else emit({kind:'property.set',object:row.operands[0][1],key:key(row.operands[1]),receiver:tag(row.operands[0],event),value:tag(row.operands[2],event),success:true},event,'owned-source-property-write/1');
+      }else if(event.operation==='property.delete'){
+        const [base,property]=row.operands;
+        if(base?.[0]!=='ref'||row.result?.[0]!=='bool'||heapChanges.some(change=>change.id!==base[1]))
+          refuse('property deletion requires an ordinary receiver and exact boolean result');
+        emit({kind:'property.delete',object:tag(base,event)[1],key:key(property),success:row.result[1]},event,'owned-source-property-deletion/1');
       }else if(event.operation==='property.update'){
         const [base,property,old]=row.operands,encoded=key(property);
         if(base?.[0]!=='ref'||!['undefined','null','bool','str','num','bigint'].includes(old?.[0]))
@@ -498,7 +512,10 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
         compute({op:'binary',operator:row.arithmetic.operator,left:operand(row.operands[0],node?.left,event),right:operand(row.operands[1],node?.right,event)},row.result,event);
       }else if(event.operation==='primitive.binary'){
         const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);if(!node?.operator)refuse('binary source operator missing');
-        compute({op:'binary',operator:node.operator,left:operand(row.operands[0],node.left,event),right:operand(row.operands[1],node.right,event)},row.result,event);
+        if(node.operator==='in'){
+          if(row.operands[1]?.[0]!=='ref'||heapChanges.length)refuse('in requires an ordinary object and separately checked key conversion');
+          emit({kind:'property.has',object:tag(row.operands[1],event)[1],key:key(row.operands[0]),result:tag(row.result,event)},event,'owned-source-property-existence/1');
+        }else compute({op:'binary',operator:node.operator,left:operand(row.operands[0],node.left,event),right:operand(row.operands[1],node.right,event)},row.result,event);
       }else if(event.operation==='primitive.unary'){
         const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);if(!node?.operator)refuse('unary source operator missing');
         compute({op:'unary',operator:node.operator,arg:operand(row.operands[0],node.argument,event)},row.result,event);

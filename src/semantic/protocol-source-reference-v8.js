@@ -79,7 +79,7 @@ export async function auditProtocolSourceV8({bundle,referenceInput,outcome,timeo
     if(sites.logicalAssignments.has(site)){
       if(event.operation==='control.branch'&&row.path==='use-left')expectedOperations.push({site,value:row.test});
       else if(['binding.write','property.write'].includes(event.operation))expectedOperations.push({site,value:row.result});
-    }else if(['primitive.binary','primitive.unary','binding.update','property.update','spec.operation.complete','template.substitute'].includes(event.operation)&&sites.operations.has(site))
+    }else if(['primitive.binary','primitive.unary','binding.update','property.update','property.delete','spec.operation.complete','template.substitute'].includes(event.operation)&&sites.operations.has(site))
       expectedOperations.push({site,value:row.result});
     if(event.operation==='control.branch'&&sites.branches.has(site))expectedBranches.push({site,decision:row.result});
   }

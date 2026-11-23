@@ -8,7 +8,7 @@ import {normalizeJournal} from '../semantic/normalize.js';
 import {referenceOutcome} from './reference.js';
 
 const observedOperations=new Set([
-  'primitive.binary','primitive.unary','template.substitute','spec.operation.complete','binding.update','property.update'
+  'primitive.binary','primitive.unary','template.substitute','spec.operation.complete','binding.update','property.update','property.delete'
 ]);
 
 function sourceOperationNodes(source) {
