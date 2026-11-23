@@ -30,7 +30,9 @@ export function ownedObjectHeap(state){
   // exposed to a property/prototype operation. Its fixed identity is the same
   // before and after materialization; an ordinary Promise allocation does not
   // allocate an unrelated guest object or consume an object counter.
-  return Object.assign(Object.create(null),{'Promise.prototype':promisePrototypeRecord()},state.heap,state.promises);
+  const view=Object.assign(Object.create(state.heap),state.promises);
+  if(!state.heap['Promise.prototype'])view['Promise.prototype']=promisePrototypeRecord();
+  return view;
 }
 
 export function ownedObjectValue(state,id){

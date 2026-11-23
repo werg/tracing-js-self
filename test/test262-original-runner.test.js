@@ -79,17 +79,25 @@ test('runtime negatives require actual owned error identity and cannot use names
 test('unsupported Object.defineProperty object storage cannot satisfy runtime-negative TypeError',()=>{
   const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
   for(const body of [
-    'Object.defineProperty(Promise.resolve(0),"constructor",{value:Promise});',
-    'var define=Object.defineProperty;define(Promise.resolve(0),"x",{value:1});',
     'Object.defineProperty(function(){},"x",{value:1});',
     'Object.defineProperty(Object.is,"x",{value:1});',
-    'Object.defineProperty({},"x",Promise.resolve(0));',
     'Object.defineProperty({},"x",function(){});'
   ])for(const {owned,reference} of both(body,{metadata})){
     assert.equal(owned.status,'unsupported',owned.reason);
     assert.match(owned.reason,/Object.defineProperty (?:descriptor )?requires owned ordinary storage/);
     assert.equal(reference.status,'failed',reference.reason);
   }
+});
+
+test('implemented Promise descriptors preserve the original false-negative counterexamples as genuine completions',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'Object.defineProperty(Promise.resolve(0),"constructor",{value:Promise});',
+    'var define=Object.defineProperty;define(Promise.resolve(0),"x",{value:1});',
+    'Object.defineProperty({},"x",Promise.resolve(0));'
+  ])statuses(both(body,{metadata}),'failed');
+  statuses(both('var p=Promise.resolve(0),caught=false;try{Object.defineProperty(p,"x",{value:1});}catch(error){caught=true;}'+
+    'assert.sameValue(caught,false);assert.sameValue(p.x,1);'),'passed');
 });
 
 test('Object.defineProperty primitive targets and descriptors retain genuine guest TypeErrors',()=>{
@@ -101,7 +109,8 @@ test('Object.defineProperty primitive targets and descriptors retain genuine gue
 });
 
 test('catching unsupported Object.defineProperty storage cannot manufacture a passing original script',()=>{
-  for(const {owned,reference} of both('try{Object.defineProperty(Promise.resolve(0),"x",{value:1});}catch(error){}')){
+  statuses(both('try{Object.defineProperty(Promise.resolve(0),"x",{value:1});}catch(error){}'),'passed');
+  for(const {owned,reference} of both('try{Object.defineProperty(function(){},"x",{value:1});}catch(error){}')){
     assert.equal(owned.status,'unsupported',owned.reason);
     assert.equal(reference.status,'passed',reference.reason);
   }
@@ -110,20 +119,30 @@ test('catching unsupported Object.defineProperty storage cannot manufacture a pa
 test('unsupported prototype and extensibility storage cannot manufacture runtime-negative TypeErrors',()=>{
   const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
   for(const body of [
-    'Object.getPrototypeOf(Promise.resolve(0));',
     'Object.getPrototypeOf(0);',
     'Object.getPrototypeOf(Object);',
-    'Object.setPrototypeOf(Promise.resolve(0),null);',
-    'Object.create(Promise.resolve(0));',
     'Object.create(Object);',
-    'Object.setPrototypeOf({},Promise.resolve(0));',
-    'if(!Object.isExtensible(Promise.resolve(0)))throw new TypeError();',
     'var object={};Object.preventExtensions(object);'+
       'if(!Object.isFrozen(new Proxy(object,{})))throw new TypeError();'
   ])for(const {owned,reference} of both(body,{metadata})){
     assert.equal(owned.status,'unsupported',owned.reason);
     assert.match(owned.reason,/requires owned ordinary storage/);
     assert.equal(reference.status,'failed',reference.reason);
+  }
+});
+
+test('implemented Promise prototype and extensibility operations cannot satisfy a negative TypeError',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'Object.getPrototypeOf(Promise.resolve(0));',
+    'Object.setPrototypeOf(Promise.resolve(0),null);',
+    'Object.create(Promise.resolve(0));',
+    'Object.setPrototypeOf({},Promise.resolve(0));',
+    'Object.preventExtensions(Promise.resolve(0));',
+    'if(!Object.isExtensible(Promise.resolve(0)))throw new TypeError();'
+  ]){
+    statuses(both(body,{metadata}),'failed');
+    statuses(both('var caught=false;try{'+body+'}catch(error){caught=true;}assert.sameValue(caught,false);'),'passed');
   }
 });
 
@@ -147,12 +166,8 @@ test('prototype primitive errors, invalid prototypes and ordinary invariants rem
 
 test('prototype and extensibility implementation refusals cannot be caught by original source',()=>{
   for(const body of [
-    'Object.getPrototypeOf(Promise.resolve(0));',
-    'Object.setPrototypeOf(Promise.resolve(0),null);',
-    'Object.create(Promise.resolve(0));',
-    'Object.setPrototypeOf({},Promise.resolve(0));',
-    'Object.preventExtensions(Promise.resolve(0));',
-    'Object.isExtensible(Promise.resolve(0));',
+    'Object.getPrototypeOf(Object);',
+    'Object.create(Object);',
     'Object.isFrozen(new Proxy({},{}));'
   ])for(const {owned,reference} of both('try{'+body+'}catch(error){}')){
     assert.equal(owned.status,'unsupported',owned.reason);
@@ -858,6 +873,22 @@ test('known absent global intrinsics and the global receiver cannot create false
   const globals=freeTest262Identifiers(parse('let Map=1;function f(JSON){return JSON.x+missing;}if(1){let Date=2;}Date;',
     {ecmaVersion:2026}));
   assert.deepEqual(globals,['Date','missing']);
+});
+
+test('global own reflection reads live var/function bindings while lexical declarations remain separate',()=>{
+  statuses(both('var exposed=1;function action(){}let hidden=2;const alsoHidden=3;'+
+    'var has=Object.prototype.hasOwnProperty;'+
+    'assert.sameValue(has.call(globalThis,"exposed"),true);'+
+    'assert.sameValue(has.call(globalThis,"action"),true);'+
+    'assert.sameValue(has.call(globalThis,"hidden"),false);'+
+    'assert.sameValue(has.call(globalThis,"alsoHidden"),false);'+
+    'assert.sameValue(globalThis.exposed,1);exposed=7;assert.sameValue(globalThis.exposed,7);'+
+    'assert.sameValue(globalThis.action,action);assert.sameValue(globalThis.globalThis,globalThis);'),'passed');
+  for(const body of [
+    'try{globalThis.created=7;}catch(error){}',
+    'try{Object.hasOwn(globalThis,"Map");}catch(error){}',
+    'assert.sameValue(typeof globalThis.Map,"undefined");'
+  ])for(const {owned} of both(body))assert.equal(owned.status,'unsupported',owned.reason);
 });
 
 test('missing Boolean support cannot pass a later expected ReferenceError or hide guest-error details',()=>{

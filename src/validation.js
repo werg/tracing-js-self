@@ -172,6 +172,12 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
             e.causes.filter(c=>c.kind==='promise'&&c.promiseId===p.id).length!==1||
             e.causes.filter(c=>c.kind==='invocation').length!==1)
            fail('Queued thenable is not backed by an owned function and promise',e.eventId);
+         const fn=state.heap[job.thenId],child=e.stateChanges.find(patch=>patch.table==='frames'&&patch.before===null&&patch.after?.thenableJob),
+           receiver=fn.arrow?fn.lexicalThisFrameId?state.frames[fn.lexicalThisFrameId]?.thisValue:fn.lexicalThis:
+             job.receiver??['ref',job.thenableId];
+         if(!child||child.after.codeId!==fn.codeId||!eq(child.after.thisValue,receiver)||
+            !eq(child.after.thenableJob,{promiseId:p.id,serial:job.serial}))
+           fail('Queued thenable changed its selected function, receiver or resolving pair',e.eventId);
        }else if(!job || !state.promises[job.promiseId] ||
          state.promises[job.promiseId].status==='pending' ||
          e.causes.filter(c=>c.kind==='promise').length!==1 ||
@@ -300,6 +306,10 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
           const resolutionRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
             f.promiseThenLookup?.delivered&&eq(f.completion,c)&&
             state.promises[f.promiseThenLookup.promiseId]?.status==='rejected');
+          const constructorRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
+            f.promiseConstructorLookup?.delivered&&eq(f.completion,c)&&
+            f.promiseConstructorLookup.continuation.kind==='adopt'&&
+            state.promises[f.promiseConstructorLookup.continuation.promiseId]?.status==='rejected');
           const pendingCoercion=Object.values(state.frames).some(f=>{
             const pending=f.pendingCoercionThrow, operation=state.operations[f.operationId];
             const methodId=operation?.coercion?.waitingFrameId;
@@ -322,7 +332,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
            // A thenable that calls resolve() and then throws ignores the throw.
            // It remains an executed guest abrupt completion, not a second
            // promise rejection, and is validated against the locked capability.
-           if(!rejection&&!reactionRejection&&!resolutionRejection&&!pendingCoercion&&!executorCompletion&&!thenableRejection&&!callbackRejection&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
+           if(!rejection&&!reactionRejection&&!resolutionRejection&&!constructorRejection&&!pendingCoercion&&!executorCompletion&&!thenableRejection&&!callbackRejection&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
              !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally')))
             fail('Guest throw was not routed to a handler or async rejection',e.eventId);
         }

@@ -70,6 +70,16 @@ test('nondefault constructor and live then getter retain PromiseResolve adoption
     Promise.resolve(p).then(value=>{order+=value;});order+='s';queueMicrotask(()=>{order+='q';});`);
 });
 
+test('throwing constructor getters during assimilation reject only their adopting promise',async()=>{
+  for(const expression of ['new Promise(resolve=>resolve(p))','work()']){
+    await differential(`let order='';const reason={tag:7},p=Promise.resolve(1);
+      Object.defineProperty(p,'constructor',{get(){order+='g';throw reason;}});
+      async function work(){return p;}
+      ${expression}.catch(error=>{order+=error===reason?'c':'bad';});
+      order+='s';queueMicrotask(()=>{order+='q';});`);
+  }
+});
+
 test('then and finally perform ordered constructor/species lookups and reject invalid descriptors',async()=>{
   await differential(`let order='';const p=Promise.resolve(2),constructor={get [Symbol.species](){order+='s';return Promise;}};
     Object.defineProperty(p,'constructor',{get(){order+='c';return constructor;}});
@@ -102,6 +112,13 @@ test('unsupported Promise species allocation cannot become a caught-error succes
     [Symbol.species]:function(executor){return new Promise(executor);}}});
     try{p.then(()=>{});}catch(error){return 7;}`;
   assert.throws(()=>start(body).drive(),/Custom Promise species construction is outside the owned profile/);
+});
+
+test('Promise static and prototype methods reject altered receivers before their callbacks run',async()=>{
+  await differential(`let order='';const resolve=Promise.resolve,then=Promise.resolve(1).then;
+    try{resolve(1);}catch(error){order+=error.name;}
+    const holder={resolve};try{holder.resolve(1);}catch(error){order+=':'+error.name;}
+    try{then(()=>{order+='bad';});}catch(error){order+=':'+error.name;}`);
 });
 
 test('constructor getter checkpoints restore without repeating effects and reject altered receivers and source inputs',async()=>{

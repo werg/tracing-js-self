@@ -17,6 +17,7 @@ import {createPrimitiveConversion,advancePrimitiveConversion} from './owned-prim
 import {ownedHasProperty} from './owned-has-property.js';
 import {ensurePromisePrototype,ownedObjectStorage,ownedObjectHeap,ownedObjectValue} from './owned-object-storage.js';
 import {validateExternalCallbackJob} from './external-callback-validation.js';
+import {unavailableOwnedStandardGlobal} from './conformance/test262-capabilities.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
@@ -101,7 +102,10 @@ function globalProperty(state,key){
   const control=state.control.a0,script=state.envs[control.scriptSequence?.environmentId],
     binding=script?.bindings[key];
   if(binding&&['var','function'].includes(binding.kind))return binding.token;
-  return state.envs[control.globalEnvId]?.bindings[key]?.token??null;
+  const global=state.envs[control.globalEnvId]?.bindings[key]?.token;
+  if(global)return global;
+  if(unavailableOwnedStandardGlobal(key))throw new TypeError('Global object property requires owned intrinsic storage: '+key);
+  return null;
 }
 function propertyKeySlot(frame,instruction){
   const op=instruction.op;
@@ -2310,7 +2314,13 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             return {...operands(base,key),completion};
           }
           if(base.value[0]==='host')v=['hostfn',base.value[1]==='demo'?(HOST_METHODS[property]??`demo.${property}`):`${base.value[1]}.${property}`];
-          else if(base.value[0]==='intrinsic'&&base.value[1]==='globalThis')v=globalProperty(s,property)?.value??U;
+          else if(base.value[0]==='intrinsic'&&base.value[1]==='globalThis'){
+            const own=globalProperty(s,property);
+            if(own)v=own.value;
+            else if(property==='hasOwnProperty')v=['builtinfn','Object.prototype.hasOwnProperty'];
+            else if(property in Object.prototype)throw new TypeError('Global inherited property requires owned ordinary storage');
+            else v=U;
+          }
           else if(base.value[0]==='intrinsic'&&GENERATOR_INTRINSIC_PROTOTYPES.includes(base.value[1]))
             v=generatorIntrinsicProperty(base.value[1],property).value;
           else if(['intrinsic','builtinfn','hostfn'].includes(base.value[0])&&property===symbolPropertyKey('well-known:hasInstance'))
@@ -2819,6 +2829,8 @@ if(obj.kind==='set'){
           if(['null','undefined'].includes(base.value[0]))
              guestFault('TypeError',`Cannot set properties of ${base.value[0]}`);
           const property=valueKey(key.value);
+          if(base.value[0]==='intrinsic'&&base.value[1]==='globalThis')
+            throw new TypeError('Global object mutation requires owned global property storage');
           const object=ownedObjectStorage(s,base.value);
           if(!object)throw new TypeError('Not a writable guest object');
           if(object.kind==='iterator'&&property===symbolPropertyKey('well-known:toStringTag')&&
@@ -2966,6 +2978,12 @@ if(object.kind==='regexp'){
             else if(isPrimitiveValue(base))present=false;
             else{
               const object=ownedObjectStorage(s,base);
+              if(object?.kind==='module-namespace'){
+                if(sourceCallArgs!==args)throw new TypeError('Module namespace reflection through a call adapter requires its own continuation');
+                const outcome=this.startModuleNamespaceInspection(s,f,object,'Object.hasOwn',key,eventId);
+                if(outcome.child)return {...operands(fn,...sourceCallArgs),causes:[{kind:'invocation',frameId:outcome.child}]};
+                return {...operands(fn,...sourceCallArgs),...result(outcome.value)};
+              }
               if(!object||!['object','array','function','generator','promise'].includes(object.kind))
                 throw new TypeError('Own property reflection requires owned ordinary storage');
               if(object.kind==='function')this.functionProperties(s,object,eventId,{prototype:key==='prototype'});
@@ -3184,6 +3202,12 @@ if(object.kind==='regexp'){
             throw new TypeError('Object descriptor and prototype operations on declared errors are outside the bounded error profile');
           if(callable[0]==='intrinsic'&&callable[1]==='Promise')
              guestFault('TypeError','Promise must be constructed with new');
+          if(callable[0]==='builtinfn'&&/^Promise[.](resolve|reject|all|race|allSettled|any|withResolvers)$/.test(callable[1])&&
+             !ownedSameValue(receiver,['intrinsic','Promise'])){
+            if(primitiveUnary('typeof',receiver,s.heap)[1]!=='function')
+              guestFault('TypeError','Promise static method requires a constructor receiver');
+            throw new TypeError('Custom Promise constructor receiver requires its owned capability construction');
+          }
            if(callable[0]==='builtinfn' &&
               /^Promise[.]executor[.](resolve|reject):p[0-9]+$/.test(callable[1])){
              const [,mode,pid]=callable[1].match(/^Promise[.]executor[.](resolve|reject):(p[0-9]+)$/);
@@ -4049,7 +4073,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 d[field]=selected.method;
               }
               if(obj.kind==='module-namespace'){
-                const outcome=this.moduleNamespaceDefine(s,f,obj,name,descriptor,false,eventId);
+                const outcome=this.moduleNamespaceDefine(s,f,obj,name,{...descriptor,properties:d},false,eventId);
                 if(outcome.child)
                   return {...operands(fn,...args),causes:[{kind:'invocation',frameId:outcome.child}]};
                 return {...operands(fn,...args),...result(outcome.value)};
@@ -4163,7 +4187,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             while(current!==null && !['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(current)){
               if(visited.has(current))guestFault('TypeError','Cyclic prototype value');
               visited.add(current);
-              const next=s.heap[current]??s.promises[current];
+              const next=ownedObjectHeap(s)[current];
               if(!next||!['object','array','function','generator','promise','module-namespace'].includes(next.kind))
                 throw new TypeError('Broken prototype identity');
               current=objectPrototype(next);
