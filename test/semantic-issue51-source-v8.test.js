@@ -58,8 +58,12 @@ test('primitive in operator projects inherited property existence from original 
     propertyClaim=sourceArtifact.sidecar.compiler.claims.find(row=>row.record.kind==='property.has'),
     alternate=sourceArtifact.sidecar.compiler.claims.find(row=>row.record.kind==='property.define')?.record.object;
   assert(propertyClaim&&alternate&&alternate!==propertyClaim.record.object);
+  const plausible=RegionExecutionHarness.replay(prefix,{requireTerminal:false});
+  assert.doesNotThrow(()=>plausible.select(timeline[at].fields.invocationId,
+    encodeProtocolRecordV8({...selected,object:alternate}),{entry:timeline[at].fields.entry??null}));
   propertyClaim.record.object=alternate;
-  propertyClaim.line='protocol '+encodeProtocolRecordV8(propertyClaim.record);
+  propertyClaim.line=encodeProtocolRecordV8(propertyClaim.record);
+  assert.deepEqual(decodeProtocolRecordV8(propertyClaim.line),propertyClaim.record);
   forged.sidecar.sourceArtifactDigest=hashAlgorithmData(sourceArtifact);
   await assert.rejects(()=>recheckProtocolRegionEvidence(forged),/source|projection|claim|target|ownership/i);
 });

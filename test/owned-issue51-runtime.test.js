@@ -92,12 +92,14 @@ test('Reflect.deleteProperty rejects primitive targets as catchable TypeErrors',
   assert.deepEqual(value(runtime,'error'),['str','TypeError']);
 });
 
-test('Reflect deletion validates its target before an object key and authenticates the error identity',()=>{
-  const source=`let calls=0;function keyText(){calls=calls+1;return 'x';}let key={toString:keyText};let error='';let missing='';
+test('Reflect operations validate targets before an object key and deletion authenticates error identity',()=>{
+  const source=`let calls=0;function keyText(){calls=calls+1;return 'x';}let key={toString:keyText};key[Symbol.toPrimitive]=keyText;
+    let error='';let missing='';let hasError='';
     try{Reflect.deleteProperty(1,key);}catch(e){error=e.name;}
     try{Reflect.deleteProperty();}catch(e){missing=e.name;}
-    [error,missing,calls].join(',');`;
-  assert.equal(vm.runInNewContext(source),'TypeError,TypeError,0');
+    try{Reflect.has(1,key);}catch(e){hasError=e.name;}
+    [error,missing,hasError,calls].join(',');`;
+  assert.equal(vm.runInNewContext(source),'TypeError,TypeError,TypeError,0');
   const runtime=execute(source);
   assert.deepEqual(value(runtime,'calls'),['num',0]);
   for(const mutate of [

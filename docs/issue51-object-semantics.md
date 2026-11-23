@@ -143,3 +143,35 @@ The immediate direct runtime/public selection passes 22 tests. Full canonical
 source regeneration, a final affected regression run, contract checks and clean
 paired native preparation are the remaining gates at this checkpoint. Host
 interoperability regeneration passed all 4 examples without byte changes.
+
+## Remaining operations and combinations
+
+- `in` and computed deletion use the retained ordinary object-key conversion.
+  The new Reflect paths accept primitive property keys. A valid Reflect target
+  with an object-valued key still needs a retained builtin key-conversion path.
+  Invalid Reflect targets are genuine owned TypeErrors before key hooks run.
+- Owned TypeError outcomes and their identities are checked, but the invalid
+  `in`-RHS source control still refuses the intrinsic error-object projection.
+  That refusal is retained in the source population; it is not an admitted
+  public guest-exception example.
+- Proxy `has` and `deleteProperty` traps/invariants, Proxy enumeration, and
+  ordinary enumeration after captured prototype replacement or a surviving
+  descriptor's enumerability change remain explicit boundaries. An implicit
+  intrinsic prototype with enumerable keys must be represented explicitly at
+  enumeration creation.
+- Deleting lazy function name/length/prototype metadata requires represented
+  owned storage. This increment does not establish complete construction,
+  private-brand, builtin/exotic-inheritance, Map/Set, nested destructuring or
+  abrupt iterable-cleanup coverage. Existing affected behaviors are regression
+  checked; broader work remains under the issue #51 umbrella and its linked
+  iteration/source-runner work.
+
+The final affected regression selection passed **127 tests with zero failures
+or skips**. After review, the forged allocated-receiver test was tightened: its
+canonical line is decoded successfully, the alternate receiver is proven to
+accept the same true result in the public machine, and fresh original-source
+rechecking still rejects the changed claim. Its earlier version also had a
+duplicated protocol prefix, so that earlier negative test did not isolate source
+correspondence. The corrected targeted test passes. A separate 11-test owned
+run includes both Reflect target checks with a `Symbol.toPrimitive` hook and
+confirms that the hook never runs for a primitive target.
