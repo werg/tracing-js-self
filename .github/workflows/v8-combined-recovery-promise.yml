@@ -27,6 +27,7 @@ on:
       - 'test/semantic-async-call-source-v8.test.js'
       - 'test/semantic-async-return-adoption-composition-source-v8.test.js'
       - 'test/semantic-shared-protocol-source-v8.test.js'
+      - 'test/semantic-shared-intrinsic-boundaries-v8.test.js'
       - 'test/semantic-qualification-population-v8.test.js'
       - 'test/training-promise-job-projection.test.js'
       - 'tools/native-consumer/requirements.lock'

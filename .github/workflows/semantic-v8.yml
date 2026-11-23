@@ -198,13 +198,14 @@ jobs:
             test/semantic-promise-object-source-v8.test.js \
             test/semantic-protocol-promise-adoption-getter-v8.test.js \
             test/semantic-promise-adoption-getter-source-v8.test.js \
+            test/semantic-shared-intrinsic-boundaries-v8.test.js \
             2>&1 | tee "$RUNNER_TEMP/promise-object-tests.xml"
           python - <<'PY'
           import json, os, xml.etree.ElementTree as ET
           from pathlib import Path
           root = Path(os.environ['RUNNER_TEMP'])
           cases = list(ET.parse(root / 'promise-object-tests.xml').getroot().iter('testcase'))
-          if len(cases) != 66 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+          if len(cases) != 81 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
               raise ValueError('Every Promise object and constructor job control must pass with actual native replay')
           for name, sources, contexts in [('promise-object-source-evidence.json', 15, 320), ('promise-adoption-getter-source-evidence.json', 5, 213)]:
               evidence = json.loads((root / name).read_text())

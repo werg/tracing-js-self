@@ -103,10 +103,12 @@
     },
     "promise": {
       "producer": {
+        "test/owned-promise-object-state.test.js": 17,
         "test/semantic-async-call-source-v8.test.js": 18,
         "test/semantic-async-return-adoption-composition-source-v8.test.js": 4,
         "test/semantic-promise-adoption-getter-source-v8.test.js": 7,
         "test/semantic-promise-mutation-profile-source-v8.test.js": 25,
+        "test/semantic-promise-object-observations-v8.test.js": 17,
         "test/semantic-promise-object-profile-source-v8.test.js": 23,
         "test/semantic-promise-object-source-v8.test.js": 17,
         "test/semantic-promise-object-v8.test.js": 7,
@@ -120,18 +122,21 @@
         "test/semantic-protocol-promise-join-v8.test.js": 10,
         "test/semantic-protocol-v8.test.js": 14,
         "test/semantic-qualification-population-v8.test.js": 4,
+        "test/semantic-shared-intrinsic-boundaries-v8.test.js": 11,
         "test/semantic-shared-protocol-source-v8.test.js": 8,
         "test/training-promise-job-projection.test.js": 3
       },
       "native": {
         "tests/test_async_call_v8.py": 18,
+        "tests/test_number_v8.py": 15,
+        "tests/test_primitive_conversion_v8.py": 19,
         "tests/test_promise_executor_boundaries_v8.py": 13,
         "tests/test_promise_executor_v8.py": 11,
         "tests/test_promise_join_v8.py": 12,
         "tests/test_promise_scheduler_v8.py": 10,
         "tests/test_protocol_host_composition_v8.py": 15,
         "tests/test_protocol_host_v8.py": 13,
-        "tests/test_protocol_properties.py": 28,
+        "tests/test_protocol_properties.py": 31,
         "tests/test_protocol_v8.py": 22
       }
     }
@@ -144,7 +149,9 @@
     "priorProducerLeafAudit": "The selected producer files are unchanged from e21651f7d246d9bf30e575e61e3a056987fae6fe. A working-tree audit emitted 25 mutation, 23 object-profile and 4 qualification-population JUnit leaves: 50 passed, two optional native controls skipped, zero failures. Leaf expectations remain unchanged; this is not a clean-pair gate pass, and the required combined gate still rejects any skipped leaf.",
     "priorNativeCollection": "Pytest 8.4.2 collected all 296 selected native leaves from clean consumer 21b7c80718244073dbf13263771da533d4ecbc25 in the exact hash-locked Python 3.12.14 environment: 182 structural and 114 Promise. Only tests/test_async_call_v8.py changed, from 10 to 18 leaves. Collection is not execution; no lane pass is inferred.",
     "currentPayloads": "Producer d4b049c6392b7eb5a04465ddac36f1377138c73c and consumer 375063e4aa802f309eda611db289260d60507e4a contain the regenerated shared contract and fixture payloads. The source protocol population preserves all 31 original examples and adds 15 Promise object and 5 adoption getter examples, for 51. Contract regeneration and contracts:check passed; this does not itself qualify an installed native wheel or combined lane.",
-    "currentProducerLeaves": "The six new/related Promise object, adoption, observation and owned-runtime files passed 66 actual leaves with zero failures or skips in the paired working trees using Python 3.12.14 and the hash-locked native environment. Combined-lane per-file counts remain mandatory, and no broader gate pass is inferred from this focused run.",
-    "currentNativeLeaves": "The ordinary property suite collected 28 actual pytest leaves on consumer 375063e4aa802f309eda611db289260d60507e4a in the locked environment. It is now mandatory in the Promise lane, which requires 142 native leaves across nine files. Collection is not execution and does not qualify a lane."
+    "priorObjectControlRun": "The six new/related Promise object, adoption, observation and owned-runtime files passed 66 actual leaves with zero failures or skips in the paired working trees using Python 3.12.14 and the hash-locked native environment. Combined-lane per-file counts remain mandatory, and no broader gate pass is inferred from this focused run.",
+    "priorObjectNativeCollection": "The ordinary property suite collected 28 actual pytest leaves on consumer 375063e4aa802f309eda611db289260d60507e4a in the locked environment. It is now mandatory in the Promise lane, which requires 142 native leaves across nine files. Collection is not execution and does not qualify a lane.",
+    "currentProducerLeaves": "Producer review controls passed 17 owned-runtime leaves and 51 existing runtime leaves; retained public review executions passed 90 of 91 leaves with one optional-native skip, including all 11 shared-intrinsic boundary leaves. These working-tree receipts are retained separately at artifacts/conformance/issue61-review-controls. The expanded Promise lane requires 266 actual producer leaves across 22 files, including owned-runtime 17, observation 17 and shared-intrinsic 11. A final clean-pair execution remains required; counts are never inferred from collection or earlier receipts.",
+    "currentNativeLeaves": "Native review corrections passed 78 actual leaves across four files: 31 properties, 19 primitive conversion, 15 Number and 13 host protocol. Restoration controls reject unsupported intrinsic/Proxy methods in derived faults and retained complete/abrupt Number continuations. The Promise lane now requires all 179 leaves across 11 files to execute with zero skips on the exact frozen native revision. Earlier 142-leaf execution at fb82 retained 136 passes and 6 host protocol failures; that failure is not relabeled as a passing lane."
   }
 }
