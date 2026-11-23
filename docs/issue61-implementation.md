@@ -54,15 +54,24 @@ getter effects, reentry, abrupt completion, and FIFO job behavior.
 - [x] Record the baseline and first-runtime executed revisions, input hashes,
   budgets and commands.
 - [x] Rerun and retain all 40 variants at clean producer `7336d7ba`, including
-  the completed runtime constructor/species/finally changes. Verify that all
-  74 recorded implementation-file hashes still match integrated producer
-  `d4b049c6392b7eb5a04465ddac36f1377138c73c`.
-- [x] Run the final focused controls: 66 passed, with no skips. Retain source
+  the initial runtime constructor/species/finally changes. Its 74 recorded
+  implementation-file hashes match integrated producer `d4b049c6`; this
+  historical fingerprint does not include the later runtime review fixes.
+- [x] Run the initial integrated focused controls: 66 passed, with no skips. Retain source
   and native results separately from the original-script campaign.
-- [ ] Finish the broad producer and consumer regression runs. The producer
-  semantic regression run covers all 156 semantic test files and is in progress.
+- [x] Complete the original 437-file producer regression population and retain
+  original failures alongside complete corrective file runs. The reconciled
+  population is 3,279 actual leaves: 3,181 passes and 98 optional-native skips.
+  This is an accounting of separate runs, not one all-green invocation.
+- [x] Repair the five semantic review findings across the runtime and both
+  protocol implementations, including unsupported callable restoration.
+- [x] Rerun the original 40 variants at clean producer `783cf78f` after the
+  finally/species review corrections: parse, owned and reference each pass 40/40.
+- [ ] Finish native regression qualification, including the three stale
+  retained-fixture assertions exposed by the broader hosted run.
 - [ ] Finish the installed combined gate, retaining its exact installed pair
-  and final result. This gate is in progress.
+  and final result. Local full attestation is blocked by the unavailable kernel
+  time namespace; separate components and hosted CI remain explicitly distinct.
 - [ ] Complete the explicitly bounded source-profile follow-ups below; these
   are not inferred from the passing original-script or focused-control results.
 
@@ -78,6 +87,7 @@ Node/V8-reference attempts. All use the exact full-catalog digest
 | `3d72b27cf626b87d78eb0b883f54ea9e9c5380e8` | 40 passed | 30 passed, 10 unsupported | 40 passed | `artifacts/conformance/issue61-baseline/` |
 | `47cd67bc48921b55135f5cde02c49b06e2ab4bd8` | 40 passed | 40 passed | 40 passed | `artifacts/conformance/issue61-runtime/` |
 | `7336d7bacdb7e53025cd8e66ed0d844b19c6ab19` | 40 passed | 40 passed | 40 passed | `artifacts/conformance/issue61-current/` |
+| `783cf78fb039d1ca97261fc41b086096e343f06b` | 40 passed | 40 passed | 40 passed | `artifacts/conformance/issue61-review-final/` |
 
 The baseline diagnoses identify unsupported Promise own-property storage,
 `Object.prototype.hasOwnProperty` in the original async harness, and access to
@@ -85,9 +95,11 @@ The baseline diagnoses identify unsupported Promise own-property storage,
 implementation refusal as success. The first runtime rerun exposed no further
 barrier within these 40 variants. Its result applies to that runtime checkpoint,
 before the later source, observer and native integration changes. The clean
-`7336d7ba` campaign includes the subsequent runtime fixes and again exposes no
-new barrier. Its 74-file implementation fingerprint matches the integrated
-producer payload, while the report continues to name the revision it executed.
+`7336d7ba` campaign includes the subsequent initial runtime fixes and again
+exposes no new barrier. Its 74-file implementation fingerprint matched the
+integrated producer payload through `65ce0796`. The review fixes change that
+fingerprint, so the separate clean `783cf78f` campaign executes all 40 variants
+again and passes all three stages. Neither report is relabeled as a later run.
 
 The retained projections were checked against every original file and harness
 hash at the pinned Test262 revision. All selected IDs and variant identities are
@@ -112,7 +124,7 @@ campaign above. All seven required shared payload comparisons pass, decoding
 34,899,975 bytes; this checks the paired artifacts and does not replace their
 execution evidence.
 
-The final focused run passed all 66 controls with no skips. Its new source
+The initial integrated focused run passed all 66 controls with no skips. Its new source
 population contains 20 distinct programs and 533 generated contexts:
 
 | Source population | Source cases | Actual native cases | Generated contexts |
@@ -145,9 +157,10 @@ The focused tests retain these receipt files through `RUNNER_TEMP`:
 - `promise-adoption-getter-source-evidence.json`
 
 The original-script campaign's exact worker commands, resource budgets,
-implementation fingerprint and source/harness hashes remain in
-`artifacts/conformance/issue61-current/`. Broad regression and installed-gate
-results are still pending and must be added to the main PR tally when finished.
+implementation fingerprint and source/harness hashes remain in each campaign
+directory. Broad producer receipts are retained in
+`artifacts/conformance/issue61-controls/`; review corrections and exact-pair
+qualification have separate receipts below.
 
 ## Adoption getter scope and restoration
 
@@ -168,6 +181,60 @@ checks the original selected callable and scope, while respecting that another
 invocation sharing the heap has its own frame table. Uninitialized captures,
 wrong job/child identities and bypasses through generic return or atomic
 adoption remain rejected.
+
+## Review corrections and retained regression evidence
+
+The five semantic review findings are corrected in producer `d25c2734` and
+`783cf78f`, with independent native counterparts in `085655fc`:
+
+1. `finally` selects its `then` method after the first constructor/species
+   lookup. An intrinsic `then` then performs its own constructor lookup. A
+   mutation during that second lookup cannot change the already selected
+   method. A first getter that installs an unsupported custom method refuses
+   after the getter's effects, before a second lookup or cleanup callback.
+2. A species getter reached through a data-valued constructor must authenticate
+   that original constructor value. A different object with the same accessor
+   function and captures cannot be substituted as the species receiver.
+3. Intrinsic callable references used as an ordinary object's `then` cannot
+   silently fulfill the destination Promise. Unsupported assimilation requires
+   an explicit implementation refusal, as it does for an ordinary closure.
+4. An unmodeled Array or Function prototype member cannot fall through to the
+   similarly named Object member. Explicit custom prototype chains remain
+   valid; shared Object members still use their current descriptors.
+5. General primitive conversion and the retained Number component consult
+   mutable shared Object prototype state. Live selection, derived faults and
+   restored complete/abrupt continuations reject unsupported intrinsic and
+   Proxy callable methods instead of treating them as noncallable guest errors.
+
+`artifacts/conformance/issue61-review-controls/` retains four actual producer
+executions: runtime focus 17/17, existing runtime regressions 51/51, public
+boundaries 83 passes plus one optional-native skip, and Number source controls
+7/7. The 11 new shared-intrinsic controls are a subset of the 84-leaf public
+run. No standalone log is invented for an earlier unretained execution.
+These are working-tree receipts before their checkpoint commits, with the
+concurrent-edit limitation of the public run recorded explicitly. Native
+review controls separately pass 78/78: properties 31, primitive conversion 19,
+Number 15 and host protocol 13.
+
+The expanded required Promise gate selects 266 producer leaves across 22 files
+and 179 native leaves across 11 files. Its per-file JUnit counts, missing-test
+checks and zero-skip requirement remain strict. The dedicated interoperability
+workflow also requires the full 81-leaf object/adoption/runtime/review group.
+These expectations do not count as an executed gate result.
+
+The earlier clean pair `65ce0796` / `fb82c671` independently replayed all 51
+source fixtures through a noneditable installed native wheel, with all seven
+shared payloads byte-identical. The subsequent native group passed 136 of 142
+tests; six host controls exposed the same nullable protocol-state bug. The
+producer group did not run after that command failed. The original installed
+receipt, failures, policy, commands and build logs are retained separately in
+`artifacts/conformance/issue61-paired-review/prior-65ce-fb82/`. The native bug
+and the missing source-extension inventory are corrected in `085655fc`.
+
+Full local combined attestation stops because this workspace does not expose
+`/proc/self/ns/time`. The actual namespace check has not been weakened or
+replaced. Separate installed replay and Promise test components do not qualify
+the six-lane recovery/Promise gate; hosted CI must produce that complete result.
 
 ## Explicit remaining profile boundaries
 
@@ -201,11 +268,12 @@ guest exceptions or successful negative tests:
   [#50](https://github.com/werg/tracing-js-self/issues/50) and shared object
   operations in [#51](https://github.com/werg/tracing-js-self/issues/51).
 
-A producer-only final audit found no new unsound admission in the reviewed
-slice. An additional shared `Promise.prototype.constructor` getter combined
-with async-return adoption source-qualified successfully. The audit also
-confirmed the `globalThis` source-profile refusal above; it is an evidence
-boundary, not a claim that the unchanged original harness fails owned execution.
+An additional shared `Promise.prototype.constructor` getter combined with
+async-return adoption source-qualified successfully. The producer audit also
+confirmed the `globalThis` source-profile refusal above. Later semantic review
+exposed the five counterexamples recorded in the preceding section; their
+passing regression controls, rather than the earlier audit, establish the
+current supported boundaries.
 
 ## Evidence boundaries
 

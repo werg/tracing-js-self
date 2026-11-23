@@ -1,0 +1,9 @@
+{
+  "schema": "semantic-native-resolution/1",
+  "repository": "werg/megatoken",
+  "requestedBranch": null,
+  "ref": "fb82c671276a1b68404ad14b8fcafc3b390b4c69",
+  "revision": "fb82c671276a1b68404ad14b8fcafc3b390b4c69",
+  "kind": "explicit-ref",
+  "declaredPolicySha256": "a0b8edd8f049237cb11988da70e2ba48a2b9dafc926bdacd353e2d1bed2af97c"
+}

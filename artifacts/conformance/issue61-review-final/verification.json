@@ -1,0 +1,202 @@
+{
+  "schema": "test262-campaign-retention-verification/1",
+  "verifiedAt": "2026-11-23T17:12:51.482110+00:00",
+  "provenance": {
+    "producer": {
+      "revision": "783cf78fb039d1ca97261fc41b086096e343f06b",
+      "clean": true
+    },
+    "test262": {
+      "revision": "2a1ade303f72d3de80565c921d685222405c32ce",
+      "clean": true
+    }
+  },
+  "fullReportCheck": {
+    "valid": true,
+    "catalogDigest": "67799da9e7d4dd08333fe38a75b7d738d9fd14ffc40a2e17d4d00254781a47de",
+    "summary": {
+      "catalogVariants": 103360,
+      "selected": 40,
+      "attempts": 120,
+      "stages": {
+        "parseStatic": {
+          "passed": 40,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 0,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "ownedExecution": {
+          "passed": 40,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 0,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "independentReference": {
+          "passed": 40,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 0,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "sourceCorrespondence": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 40,
+          "blocked_by_prior_stage": 0,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "publicReplay": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "nativeReplay": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "checkpointRestore": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "datasetExport": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "ordinaryTraining": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "serving": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "learnedUsefulness": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        }
+      }
+    }
+  },
+  "completedResume": {
+    "byteIdentical": true,
+    "sha256Before": "078f7aa34cb4ab78beb61d41b699403a5e4e44778db250d7b0f48dd69879a78a",
+    "sha256After": "078f7aa34cb4ab78beb61d41b699403a5e4e44778db250d7b0f48dd69879a78a",
+    "attemptsBefore": 120,
+    "attemptsAfter": 120
+  },
+  "compactReconstruction": {
+    "valid": true,
+    "reconstructed": true,
+    "guestExecutions": 0,
+    "sourceRevision": "2a1ade303f72d3de80565c921d685222405c32ce",
+    "producerRevision": "783cf78fb039d1ca97261fc41b086096e343f06b",
+    "catalogVariants": 103360,
+    "selected": 40,
+    "attempts": 120,
+    "jsonSha256": "b000365fce81147cc50e58ab14de60c48172ed75b3d95478347767d2e7b4f27b",
+    "archiveSha256": "078f7aa34cb4ab78beb61d41b699403a5e4e44778db250d7b0f48dd69879a78a",
+    "archiveByteIdentical": true
+  },
+  "originalSelectionUnchanged": true,
+  "originalInputIntegrity": {
+    "valid": true,
+    "exactOriginalFiles": 25,
+    "testPaths": 20,
+    "strictSloppyVariants": 40,
+    "retainedAttempts": 120,
+    "sourceAndHarnessMatchPinnedGitBytes": true,
+    "selectedVariantAndFileIdentitiesEqualBaseline": true,
+    "ownedPreparedSourceDigestsVerified": 40,
+    "strictModePreparation": "The original runner adds only its declared strict variant preparation.",
+    "retainedEvidenceAndArtifactIdentitiesValid": true,
+    "producerClean": true,
+    "test262Clean": true,
+    "guestExecutions": 0,
+    "nativeReplayExecuted": false
+  },
+  "newFirstBarriers": 0,
+  "sourceCorrespondenceExecuted": false,
+  "nativeTraceReplayExecuted": false,
+  "nativeConsumerContext": {
+    "revision": "fb82c671276a1b68404ad14b8fcafc3b390b4c69",
+    "executedInThisCampaign": false,
+    "purpose": "Recorded consumer HEAD context only; this campaign did not execute or certify the consumer checkout. Final source/native receipts identify their own exact revisions."
+  }
+}

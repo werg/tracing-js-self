@@ -1,0 +1,337 @@
+{
+  "schema": "issue61-review-retention-manifest/1",
+  "purpose": "Retain four actual producer review-control runs with honest working-tree provenance, without changing the earlier issue61-controls packet or claiming a full gate.",
+  "files": [
+    {
+      "path": "runtime-focused-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-controls.log",
+      "sourceBytes": 1999,
+      "sourceSha256": "20a32b727eae77ab26914850162a44273f1d8c83c70b2bd4b4f66490fd344247",
+      "retainedBytes": 926,
+      "retainedSha256": "b70aad6b112e7790648b07a45364dcfa79efaf804424adac3dd1fdd72d442eb1"
+    },
+    {
+      "path": "runtime-focused-junit.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-controls.xml",
+      "sourceBytes": 4306,
+      "sourceSha256": "d5717fbaaf1330fb1977cf8e699111edc44cf68bbeca9fef064d662e229102ca",
+      "retainedBytes": 1045,
+      "retainedSha256": "ba1dc4f1144e245e2a448ddb6ac3a904344ea41011f0ad7a830bd7f74ed080f5"
+    },
+    {
+      "path": "runtime-regressions-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-regressions.log",
+      "sourceBytes": 4738,
+      "sourceSha256": "38095af6b4a73c45caccf2fed94e5077a4e6e487521cc6beefa37bb6e17d71f6",
+      "retainedBytes": 1978,
+      "retainedSha256": "34bb4377f3940734896c5318c696f3f13bcaeb825e7c52ed035f7b9be5b607ae"
+    },
+    {
+      "path": "runtime-regressions-junit.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-regressions.xml",
+      "sourceBytes": 11484,
+      "sourceSha256": "cd9519a029fa970334dc8c82ac54f1181767ac8f9426a285ab819fb97a069239",
+      "retainedBytes": 2179,
+      "retainedSha256": "87efc26dd01390dcc9349a2a30cceb3e8cd8700d959fbc20e8d0f457439a79ce"
+    },
+    {
+      "path": "public-boundaries-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/shared-intrinsic-boundaries.log",
+      "sourceBytes": 8387,
+      "sourceSha256": "c98e21e4b830f55b7c447fbc12eb5a980334ee3f99b32a0be409a40cf45cf59f",
+      "retainedBytes": 3189,
+      "retainedSha256": "e50451fc0960e58914c8e7c7f56dbef33c38170182965d81e71a1c84c6a1f84c"
+    },
+    {
+      "path": "public-boundaries-junit.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/shared-intrinsic-boundaries.xml",
+      "sourceBytes": 20493,
+      "sourceSha256": "bd7835251f411da001b18930979232ebf885dc988c245e85271aae16502270b5",
+      "retainedBytes": 3451,
+      "retainedSha256": "cdbbb1211979cae06f64d58f5e51b61a52c23d394651f51dd2e9e2b41a2da111"
+    },
+    {
+      "path": "public-number-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/shared-intrinsic-number.log",
+      "sourceBytes": 934,
+      "sourceSha256": "9fad4a3560b1d308e12be129a22f7aefe97c73783d1aad6b18a74d866387c5e6",
+      "retainedBytes": 532,
+      "retainedSha256": "9ed6d99ab0cb25ebd4376d4b43c0912f53feb589f67c9da4f16e6b3f954005d2"
+    },
+    {
+      "path": "public-number-junit.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/shared-intrinsic-number.xml",
+      "sourceBytes": 2007,
+      "sourceSha256": "6b1d0a4637e6139716c69299e00f7f58f3efd4f91bccc928e74f835fca34965e",
+      "retainedBytes": 655,
+      "retainedSha256": "adfa1d26c61c175fc5494f092af998d2b78335826b2a6c8b7acafcddb1eac041"
+    },
+    {
+      "path": "README.md",
+      "encoding": "identity",
+      "derivation": "Retention documentation and self-contained standard-library verifier; not a historical execution report.",
+      "retainedBytes": 4474,
+      "retainedSha256": "180573d48fb666f00833998d603fa90dee1c664595bd61b4112dbf5bd4569568"
+    },
+    {
+      "path": "verify.py",
+      "encoding": "identity",
+      "derivation": "Retention documentation and self-contained standard-library verifier; not a historical execution report.",
+      "retainedBytes": 5272,
+      "retainedSha256": "acf171a842083ab4f43aa4037c92843b6e0a113df060e9180bee2b70d5e5c513"
+    }
+  ],
+  "runs": [
+    {
+      "id": "runtime-focused",
+      "spec": "runtime-focused-spec.log.gz",
+      "junit": "runtime-focused-junit.xml.gz",
+      "provenance": {
+        "kind": "working-tree/log-only",
+        "executionRevision": null,
+        "cleanCheckoutResult": false,
+        "startInputFingerprintCaptured": false,
+        "completeEnvironmentManifestCaptured": false,
+        "subsequentFixCommit": "783cf78fb039d1ca97261fc41b086096e343f06b",
+        "relationToCommit": "Executed before this checkpoint with the runtime review fixes uncommitted. The checkpoint is not an execution revision.",
+        "sourceOfProvenance": "Executing runtime agent and root checkpoint record."
+      },
+      "junitSummary": {
+        "counts": {
+          "total": 17,
+          "passed": 17,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/owned-promise-object-state.test.js": {
+            "total": 17,
+            "passed": 17,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "skippedLeaves": [],
+        "parentTestSuites": 0
+      }
+    },
+    {
+      "id": "runtime-regressions",
+      "spec": "runtime-regressions-spec.log.gz",
+      "junit": "runtime-regressions-junit.xml.gz",
+      "provenance": {
+        "kind": "working-tree/log-only",
+        "executionRevision": null,
+        "cleanCheckoutResult": false,
+        "startInputFingerprintCaptured": false,
+        "completeEnvironmentManifestCaptured": false,
+        "subsequentFixCommit": "783cf78fb039d1ca97261fc41b086096e343f06b",
+        "relationToCommit": "Executed before this checkpoint with the runtime review fixes uncommitted. The checkpoint is not an execution revision.",
+        "sourceOfProvenance": "Executing runtime agent and root checkpoint record."
+      },
+      "junitSummary": {
+        "counts": {
+          "total": 51,
+          "passed": 51,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/owned-async-promise-executors.test.js": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-executors.test.js": {
+            "total": 5,
+            "passed": 5,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-resolution-jobs.test.js": {
+            "total": 11,
+            "passed": 11,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-then-getters.test.js": {
+            "total": 13,
+            "passed": 13,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-thenables-combinators.test.js": {
+            "total": 7,
+            "passed": 7,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-with-resolvers.test.js": {
+            "total": 4,
+            "passed": 4,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/promise-reactions.test.js": {
+            "total": 8,
+            "passed": 8,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "skippedLeaves": [],
+        "parentTestSuites": 0
+      }
+    },
+    {
+      "id": "public-boundaries",
+      "spec": "public-boundaries-spec.log.gz",
+      "junit": "public-boundaries-junit.xml.gz",
+      "provenance": {
+        "kind": "working-tree/log-only",
+        "executionRevision": null,
+        "cleanCheckoutResult": false,
+        "startInputFingerprintCaptured": false,
+        "completeEnvironmentManifestCaptured": false,
+        "subsequentFixCommit": "d25c2734da6136b1cda204bfe4d4ea2b2bf7f117",
+        "relationToCommit": "Executed before this checkpoint with the public fixes uncommitted. The checkpoint is not an execution revision.",
+        "concurrentEdits": "Runtime review edits appeared during the public run; no complete starting input fingerprint was captured.",
+        "sourceOfProvenance": "Executing campaign agent and root checkpoint record."
+      },
+      "junitSummary": {
+        "counts": {
+          "total": 84,
+          "passed": 83,
+          "failed": 0,
+          "skipped": 1
+        },
+        "byTestFile": {
+          "test/semantic-primitive-conversion-machine-v8.test.js": {
+            "total": 10,
+            "passed": 10,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-primitive-conversion-observations-v8.test.js": {
+            "total": 21,
+            "passed": 21,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-primitive-conversion-source-v8.test.js": {
+            "total": 24,
+            "passed": 24,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-promise-object-v8.test.js": {
+            "total": 7,
+            "passed": 6,
+            "failed": 0,
+            "skipped": 1
+          },
+          "test/semantic-scheduler-resolution-v8.test.js": {
+            "total": 11,
+            "passed": 11,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-shared-intrinsic-boundaries-v8.test.js": {
+            "total": 11,
+            "passed": 11,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "skippedLeaves": [
+          {
+            "file": "test/semantic-promise-object-v8.test.js",
+            "name": "independent native transitions reproduce all Promise object cases and reject altered records"
+          }
+        ],
+        "parentTestSuites": 0
+      }
+    },
+    {
+      "id": "public-number",
+      "spec": "public-number-spec.log.gz",
+      "junit": "public-number-junit.xml.gz",
+      "provenance": {
+        "kind": "working-tree/log-only",
+        "executionRevision": null,
+        "cleanCheckoutResult": false,
+        "startInputFingerprintCaptured": false,
+        "completeEnvironmentManifestCaptured": false,
+        "subsequentFixCommit": "d25c2734da6136b1cda204bfe4d4ea2b2bf7f117",
+        "relationToCommit": "Executed before this checkpoint with the public fixes uncommitted. The checkpoint is not an execution revision.",
+        "concurrentEdits": "Runtime review edits appeared during the public run; no complete starting input fingerprint was captured.",
+        "sourceOfProvenance": "Executing campaign agent and root checkpoint record."
+      },
+      "junitSummary": {
+        "counts": {
+          "total": 7,
+          "passed": 7,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/semantic-protocol-number-source-v8.test.js": {
+            "total": 7,
+            "passed": 7,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "skippedLeaves": [],
+        "parentTestSuites": 0
+      }
+    }
+  ],
+  "sharedIntrinsicSubset": {
+    "run": "public-boundaries",
+    "testFile": "test/semantic-shared-intrinsic-boundaries-v8.test.js",
+    "counts": {
+      "total": 11,
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0
+    },
+    "standaloneReceiptRetained": false,
+    "accounting": "Already included in public-boundaries and the public 91-leaf total. Earlier standalone tool output had no retained spec or JUnit; no synthetic run is created."
+  },
+  "publicRunIds": [
+    "public-boundaries",
+    "public-number"
+  ],
+  "publicLeafExecutions": {
+    "total": 91,
+    "passed": 90,
+    "failed": 0,
+    "skipped": 1
+  },
+  "aggregateLeafExecutions": {
+    "total": 159,
+    "passed": 158,
+    "failed": 0,
+    "skipped": 1
+  },
+  "admissionClaims": {
+    "singleAllGreenBroadRun": false,
+    "fullCombinedGate": false,
+    "fullNativeAdmission": false,
+    "freshOriginal40Campaign": false,
+    "trainingAdmission": false
+  },
+  "historicalPacket": "../issue61-controls",
+  "historicalPacketModified": false,
+  "verification": "retention-verification.json"
+}
