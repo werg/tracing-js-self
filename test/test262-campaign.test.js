@@ -6,12 +6,12 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {execFileSync,spawn} from 'node:child_process';
 import {acquireTest262GitSnapshot,discoverTest262ModuleDependencies} from '../src/conformance/test262-acquisition.js';
-import {buildTest262Catalog,bindTest262CatalogProfile,createTest262Campaign,recordTest262Stages} from '../src/conformance/test262-catalog.js';
-import {ownedTest262Profile} from '../src/conformance/test262-runner.js';
+import {buildTest262Catalog,bindTest262CatalogProfile,createTest262Campaign,recordTest262Stages,conformanceDigest} from '../src/conformance/test262-catalog.js';
+import {ownedTest262Profile,executeOfficialTest262Variant} from '../src/conformance/test262-runner.js';
 import {readTest262Json,writeTest262Json,createTest262CampaignReport,validateOriginalTest262Report,fingerprintTest262Implementation,
   runOriginalTest262Worker} from '../src/conformance/test262-campaign.js';
 
-function syntheticSuite(){
+function syntheticSuite(overrides={}){
   const directory=mkdtempSync(join(process.cwd(),'test262-campaign-'));
   const suiteRoot=join(directory,'suite');mkdirSync(suiteRoot);
   const git=args=>execFileSync('git',['-C',suiteRoot,...args],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
@@ -26,7 +26,8 @@ function syntheticSuite(){
     'test/raw.js':fixture('var raw=1;','flags: [raw]\n'),
     'test/module.js':fixture('import {value} from "./value_FIXTURE.js";assert.sameValue(value,42);','flags: [module]\n'),
     'test/value_FIXTURE.js':'export const value=42;',
-    'test/negative.js':fixture('let = ;','flags: [noStrict]\nnegative:\n  phase: parse\n  type: SyntaxError\n')
+    'test/negative.js':fixture('let = ;','flags: [noStrict]\nnegative:\n  phase: parse\n  type: SyntaxError\n'),
+    ...overrides
   };
   for(const [path,bytes] of Object.entries(files)){
     mkdirSync(dirname(join(suiteRoot,path)),{recursive:true});writeFileSync(join(suiteRoot,path),bytes);
@@ -176,6 +177,32 @@ test('partial selection typos and incompatible retries fail before overwriting r
     assert.throws(()=>execFileSync(process.execPath,[...args,'--paths','test/good.js','--retry','failed'],
       {stdio:'pipe',timeout:30000}),/requires --resume/);
     assert.equal(readFileSync(out,'utf8'),'retained');
+  }finally{rmSync(suite.directory,{recursive:true,force:true});}
+});
+
+test('a rehashed omitted module edge cannot manufacture a passing resolution negative',()=>{
+  const suite=syntheticSuite({'test/module.js':
+    '/*---\ndescription: acquired dependency integrity control\nflags: [raw, module]\nnegative:\n  phase: resolution\n  type: SyntaxError\n---*/\nimport {value} from "./value_FIXTURE.js";'});
+  try{
+    const original=suite.catalog.variants.find(row=>row.path==='test/module.js');
+    const result=executeOfficialTest262Variant({variant:original,profile:suite.catalog.profile,
+      suiteRevision:suite.catalog.suiteRevision,sources:suite.sources});
+    assert.equal(result.status,'failed');
+    assert.match(result.reason,/pinned graph linked/);
+    const changed=structuredClone(suite.catalog),row=changed.variants.find(row=>row.path===original.path);
+    row.dependencies.files=row.dependencies.files.filter(file=>file.path===row.path);
+    const {id,...variant}=row;row.id=conformanceDigest({suiteRevision:changed.suiteRevision,profile:changed.profile,...variant});
+    const {digest,...identity}=changed;changed.digest=conformanceDigest(identity);
+    writeFileSync(suite.catalogPath,JSON.stringify(changed));
+    const out=join(suite.directory,'result.json');writeFileSync(out,'retained');
+    // Reconcile even unselected modules; selecting an unrelated script cannot
+    // make a manipulated catalog a valid full-population observation.
+    for(const path of ['test/module.js','test/good.js']){
+      assert.throws(()=>execFileSync(process.execPath,['tools/run-test262-campaign.mjs',
+        '--catalog',suite.catalogPath,'--suite-root',suite.suiteRoot,'--paths',path,'--out',out],
+      {stdio:'pipe',timeout:30000}),/module dependency closure differs/);
+      assert.equal(readFileSync(out,'utf8'),'retained');
+    }
   }finally{rmSync(suite.directory,{recursive:true,force:true});}
 });
 

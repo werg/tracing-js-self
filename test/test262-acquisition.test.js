@@ -88,3 +88,42 @@ test('retained catalog metadata is reconciled against every original source befo
   assert.throws(()=>verifyTest262AcquiredCatalog({catalog:relabeled,snapshot,sources}),/original source metadata/);
   assert.throws(()=>verifyTest262AcquiredCatalog({catalog,snapshot,sources:{'test/control.js':fixture('var value=2;')}}),/source bytes differ/);
 });
+
+test('retained module closures cannot omit, add or relabel acquired dependency evidence',()=>{
+  const sources={
+    'test/main.js':fixture('import {value} from "./dep_FIXTURE.js";import("./later_FIXTURE.js");','flags: [raw, module]\n'),
+    'test/dep_FIXTURE.js':'export {value} from "./leaf_FIXTURE.js";',
+    'test/leaf_FIXTURE.js':'export const value=1;',
+    'test/later_FIXTURE.js':'export * from "./main.js";',
+    'test/unused_FIXTURE.js':'export const other=2;',
+    'test/unresolved.js':fixture('import "./missing.js";import(choice);','flags: [raw, module]\n'),
+    'test/script.js':fixture('var value=1;','flags: [raw]\n')
+  };
+  const snapshot={repository:'tc39/test262',revision:'a'.repeat(40),
+    files:Object.fromEntries(Object.entries(sources).map(([path,source])=>[path,gitBlobSha(source)]))};
+  const profile={name:'control',edition:'ECMAScript (living)',specification:null,parser:{name:'acorn'},
+    hostProfile:{name:'synthetic'},resourcePolicy:{maxSteps:10,maxSourceBytes:1024}};
+  const catalog=buildTest262Catalog({snapshot,sources,profile,
+    moduleDependencies:discoverTest262ModuleDependencies(sources)});
+  assert.equal(verifyTest262AcquiredCatalog({catalog,snapshot,sources}),true);
+  const mutations=[
+    ['test/main.js',row=>{row.dependencies.files=row.dependencies.files.filter(file=>file.path!=='test/dep_FIXTURE.js');}],
+    ['test/main.js',row=>{row.dependencies.files=row.dependencies.files.filter(file=>file.path!=='test/leaf_FIXTURE.js');}],
+    ['test/main.js',row=>{const file=catalog.files.find(file=>file.path==='test/unused_FIXTURE.js');
+      row.dependencies.files.push({path:file.path,sha256:file.sha256});}],
+    ['test/main.js',row=>{row.dependencies.files[0].sha256='0'.repeat(64);}],
+    ['test/main.js',row=>{row.dependencies.status='unresolved';row.dependencies.unresolved=['test/dep_FIXTURE.js'];}],
+    ['test/main.js',row=>{row.dependencies.unresolved=['fabricated missing dependency'];}],
+    ['test/unresolved.js',row=>{row.dependencies.status='complete';row.dependencies.unresolved=[];}],
+    ['test/unresolved.js',row=>{row.dependencies.unresolved.pop();}],
+    ['test/script.js',row=>{row.dependencies=structuredClone(catalog.variants.find(row=>row.path==='test/main.js').dependencies);}]
+  ];
+  for(const [path,mutate] of mutations){
+    const changed=structuredClone(catalog),row=changed.variants.find(row=>row.path===path);
+    mutate(row);
+    const {id,...variant}=row;row.id=conformanceDigest({suiteRevision:snapshot.revision,profile,...variant});
+    const {digest,...identity}=changed;changed.digest=conformanceDigest(identity);
+    assert.equal(validateTest262Catalog(changed),true,'changed closure is internally consistent');
+    assert.throws(()=>verifyTest262AcquiredCatalog({catalog:changed,snapshot,sources}),/module dependency closure differs/);
+  }
+});

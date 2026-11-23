@@ -6,7 +6,8 @@ import {readFileSync,lstatSync} from 'node:fs';
 import {join,resolve,posix} from 'node:path';
 import {parse} from 'acorn';
 import {gitBlobSha} from '../test262-baseline.js';
-import {safeTest262Path,parseTest262Header,test262VariantModes,validateTest262Catalog,conformanceDigest} from './test262-catalog.js';
+import {safeTest262Path,parseTest262Header,test262VariantModes,test262ModuleDependencyClosure,
+  validateTest262Catalog,conformanceDigest} from './test262-catalog.js';
 
 export function acquireTest262GitSnapshot({suiteRoot,revision}={}){
   if(typeof suiteRoot!=='string'||revision!==undefined&&!/^[a-f0-9]{40}$/.test(revision))
@@ -64,6 +65,17 @@ export function verifyTest262AcquiredCatalog({catalog,snapshot,sources}={}){
     if(conformanceDigest(rows.map(row=>row.mode))!==conformanceDigest(modes)||
       rows.some(row=>conformanceDigest(row.metadata)!==conformanceDigest(metadata)))
       throw new TypeError('Retained Test262 variants differ from original source metadata: '+file.path);
+  }
+  // A self-consistent retained closure can still omit an acquired dependency.
+  // Missing edges could manufacture the expected error in a resolution-negative
+  // test, so rediscover the complete graph before selecting any campaign work.
+  const moduleDependencies=discoverTest262ModuleDependencies(sources),
+    files=new Map(catalog.files.map(file=>[file.path,file]));
+  for(const row of catalog.variants){
+    const expected=row.mode==='module'?test262ModuleDependencyClosure({path:row.path,files,moduleDependencies}):
+      {status:'not_required',unresolved:[],files:[]};
+    if(conformanceDigest(row.dependencies)!==conformanceDigest(expected))
+      throw new TypeError('Retained Test262 module dependency closure differs from acquired sources: '+row.path);
   }
   return true;
 }

@@ -127,6 +127,29 @@ export function test262VariantModes(metadata){
     flags.includes('onlyStrict')?['strict']:flags.includes('noStrict')?['sloppy']:['sloppy','strict'];
 }
 
+/** Traverse one discovered source graph identically during catalog construction
+ * and acquisition reconciliation. Retained closure declarations are not input. */
+export function test262ModuleDependencyClosure({path,files,moduleDependencies}){
+  const seen=new Set(),missing=new Set(),pending=[path];
+  while(pending.length){
+    const current=pending.pop();if(seen.has(current))continue;seen.add(current);
+    if(!own(moduleDependencies,current)){missing.add(current);continue;}
+    const declared=moduleDependencies[current],paths=Array.isArray(declared)?declared:declared.paths;
+    const unresolved=Array.isArray(declared)?[]:declared.unresolved;
+    if(!Array.isArray(paths)||new Set(paths).size!==paths.length||!Array.isArray(unresolved)||
+      unresolved.some(item=>typeof item!=='string'))
+      throw new TypeError('Module dependency list must be unique');
+    for(const reason of unresolved)missing.add(current+': '+reason);
+    for(const dependency of paths){
+      if(!safeTest262Path(dependency)||!dependency.startsWith('test/')||!files.has(dependency))
+        throw new TypeError('Unpinned module dependency: '+dependency);
+      pending.push(dependency);
+    }
+  }
+  return {status:missing.size?'unresolved':'complete',unresolved:[...missing].sort(),
+    files:[...seen].sort().map(name=>({path:name,sha256:files.get(name).sha256}))};
+}
+
 function validateMembershipClassification(classification,{suiteRevision,profile,sourceInputs,sourceDigest,
   metadataResolved=true,dependencies={status:'not_required',unresolved:[]}}={}){
   if(!classification||!membershipValues.has(classification.membership)||
@@ -220,26 +243,6 @@ export function buildTest262Catalog({snapshot,sources,profile,moduleDependencies
   for(const map of [moduleDependencies,classifications])
     if(Object.keys(map).some(path=>!texts.has(path)))throw new TypeError('Catalog annotation names an unpinned file');
   const byPath=new Map(files.map(file=>[file.path,file]));
-  const closure=path=>{
-    const seen=new Set(),missing=new Set(),pending=[path];
-    while(pending.length){
-      const current=pending.pop();if(seen.has(current))continue;seen.add(current);
-      if(!own(moduleDependencies,current)){missing.add(current);continue;}
-      const declared=moduleDependencies[current],paths=Array.isArray(declared)?declared:declared.paths;
-      const unresolved=Array.isArray(declared)?[]:declared.unresolved;
-      if(!Array.isArray(paths)||new Set(paths).size!==paths.length||!Array.isArray(unresolved)||
-        unresolved.some(item=>typeof item!=='string'))
-        throw new TypeError('Module dependency list must be unique');
-      for(const reason of unresolved)missing.add(current+': '+reason);
-      for(const dependency of paths){
-        if(!safeTest262Path(dependency)||!dependency.startsWith('test/')||!byPath.has(dependency))
-          throw new TypeError('Unpinned module dependency: '+dependency);
-        pending.push(dependency);
-      }
-    }
-    return {status:missing.size?'unresolved':'complete',unresolved:[...missing].sort(),
-      files:[...seen].sort().map(name=>({path:name,sha256:byPath.get(name).sha256}))};
-  };
   const variants=[];
   for(const file of files.filter(file=>file.kind==='test')){
     let metadata=null,metadataError=null;
@@ -251,7 +254,8 @@ export function buildTest262Catalog({snapshot,sources,profile,moduleDependencies
     for(const mode of modes){
       const harness=metadata&&!metadata.flags.includes('raw')?[...new Set(['assert.js','sta.js',
         ...(metadata.flags.includes('async')?['doneprintHandle.js']:[]),...metadata.includes])]:[];
-      const dependencies=mode==='module'?closure(file.path):{status:'not_required',unresolved:[],files:[]},
+      const dependencies=mode==='module'?test262ModuleDependencyClosure({path:file.path,files:byPath,moduleDependencies}):
+          {status:'not_required',unresolved:[],files:[]},
         moduleFiles=dependencies.files.filter(row=>row.path!==file.path),
         sourceInputs=[{path:file.path,sha256:file.sha256,kind:'test'},
           ...harness.map(name=>({path:'harness/'+name,sha256:byPath.get('harness/'+name)?.sha256??null,kind:'harness'})),
