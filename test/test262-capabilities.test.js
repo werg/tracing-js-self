@@ -6,6 +6,10 @@ import {freeTest262Identifiers,requiresScriptGlobalThis,test262HostCapabilities,
 
 const ast=source=>parse(source,{ecmaVersion:2026,sourceType:'script'});
 
+test('globalThis is an available read and reflection identity',()=>{
+  assert.deepEqual(unsupportedOwnedGlobals(ast('Object.hasOwn(globalThis,"Promise");')),[]);
+});
+
 test('the unimplemented Boolean global stays distinct from ordinary shadowed bindings',()=>{
   assert.deepEqual(unsupportedOwnedGlobals(ast('Boolean(true);')),['Boolean']);
   assert.deepEqual(unsupportedOwnedGlobals(ast('function Boolean(value){return !!value;}Boolean(true);')),[]);

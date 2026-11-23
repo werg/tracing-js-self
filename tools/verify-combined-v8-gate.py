@@ -236,12 +236,79 @@ def command(argv, cwd, log, env):
     require(code == 0, "Required command exited " + str(code) + ": " + str(log))
 
 
+def verify_review_promise_packets(root):
+    result = []
+    for name, total, contexts, population, artifact_key in (
+        ("promise-object-review-source-evidence.json", 8, 196, "sourceCases", "exported"),
+        ("promise-object-review-protocol-evidence.json", 2, 30, "publicCases", "artifact"),
+    ):
+        packet = read(root / name)
+        checkpoint_summary = None
+        require(packet[population] == packet["actualNativeCases"] == total,
+                "Review source/native population changed: " + name)
+        cases, receipts = packet["cases"], packet["nativeReceipts"]
+        names = {case["name"] for case in cases}
+        require(len(cases) == len(receipts) == len(names) == total and
+                names == {receipt["name"] for receipt in receipts},
+                "Review source/native identity differs: " + name)
+        by_name = {case["name"]: len(case[artifact_key]["contexts"]) for case in cases}
+        require(sum(by_name.values()) == contexts and all(
+            receipt["counts"]["contexts"] == by_name[receipt["name"]] for receipt in receipts),
+            "Review native context population differs: " + name)
+        require(all(receipt["admitted"] is False and all(receipt["checks"][key] == "passed"
+                    for key in ("replay", "contexts", "continuation")) for receipt in receipts),
+                "Review native replay, contexts or continuation did not pass: " + name)
+        require(packet["trainingAdmission"] is False and packet["optimizerUpdates"] == 0,
+                "Review controls cannot infer training admission: " + name)
+        if population == "sourceCases":
+            require(packet["moduleAdmission"] is False and packet["generatedContexts"] == contexts,
+                    "Review source context or admission boundary differs: " + name)
+            expected_checkpoints = {"promise-review-checkpoint-ordinary": 9,
+                                    "promise-review-checkpoint-constructor-getter": 28}
+            checkpoint_cases, checkpoint_receipts = packet["checkpointCases"], packet["checkpointNativeReceipts"]
+            require(len(checkpoint_cases) == len(checkpoint_receipts) == 2 and
+                    {case["name"] for case in checkpoint_cases} == set(expected_checkpoints) and
+                    {receipt["name"] for receipt in checkpoint_receipts} == set(expected_checkpoints),
+                    "Review checkpoint source/native identity differs: " + name)
+            require(all(len(case["exported"]["contexts"]) == expected_checkpoints[case["name"]] and
+                        sum(event["mode"] == "generated" for event in case["exported"]["public"]["timeline"]) ==
+                        expected_checkpoints[case["name"]] for case in checkpoint_cases) and
+                    all(receipt["counts"]["contexts"] == expected_checkpoints[receipt["name"]]
+                        for receipt in checkpoint_receipts),
+                    "Review checkpoint native context population differs: " + name)
+            require(all(receipt["admitted"] is False and all(receipt["checks"][key] == "passed"
+                        for key in ("replay", "contexts", "continuation")) for receipt in checkpoint_receipts),
+                    "Review checkpoint native replay, contexts or continuation did not pass: " + name)
+            for case in checkpoint_cases:
+                checkpoints = case["exported"]["sidecar"]["compiler"]["checkpoints"]
+                require(len(checkpoints) == 1 and checkpoints[0]["publicReplayValidated"] is True and
+                        checkpoints[0]["nativeRedispatches"] == 0,
+                        "Review first-await checkpoint boundary differs: " + case["name"])
+            checkpoint_summary = {"cases": 2, "actualNativeCases": 2, "contexts": 37}
+        else:
+            receipts_by_name = {receipt["name"]: receipt for receipt in receipts}
+            for case in cases:
+                owners = [owner for owner, _state in case["states"]]
+                invocations = {event["fields"]["invocationId"] for event in case[artifact_key]["public"]["timeline"]
+                               if event["kind"] == "invocation"}
+                checked = receipts_by_name[case["name"]]["checkedOwners"]
+                require(len(owners) == len(checked) == len(invocations) == 2 and
+                        set(owners) == set(checked) == invocations,
+                        "Review native retained invocation identity differs: " + case["name"])
+        result.append({"file": name, population: total, "actualNativeCases": total, "contexts": contexts,
+                       "sha256": sha(root / name),
+                       **({"checkpoints": checkpoint_summary} if checkpoint_summary is not None else {})})
+    return result
+
+
 def verify_promise_packets(root):
     populations = [
-        ("promise-adoption-source-evidence.json", 15, 15, 423, 65, None),
-        ("promise-mutation-profile-evidence.json", 24, 5, 96, None, 19),
-        ("promise-object-profile-evidence.json", 22, 5, 51, None, 17),
-        ("async-return-adoption-composition-evidence.json", 2, 2, 78, 9, None),
+        ("promise-adoption-source-evidence.json", 15, 15, 458, 65, None),
+        ("promise-mutation-profile-evidence.json", 24, 7, 125, None, 17),
+        ("promise-object-profile-evidence.json", 22, 22, 230, None, 0),
+        ("async-return-adoption-composition-evidence.json", 2, 2, 86, 9, None),
+        ("promise-object-source-evidence.json", 15, 15, 320, None, None),
+        ("promise-adoption-getter-source-evidence.json", 5, 5, 213, None, None),
     ]
     result = []
     for name, total, eligible, contexts, cuts, refused in populations:
@@ -273,10 +340,14 @@ def verify_promise_packets(root):
         result.append({"file": name, "sourceCases": total, "actualNativeCases": eligible, "contexts": contexts,
                        "restoreCuts": cuts, "refusedSources": refused, "sha256": sha(root / name)})
     mutation = read(root / "promise-mutation-profile-evidence.json")
-    require(mutation["sourceAdmissionWasAlreadyRefusing"] is True and mutation["directCompilerProfileRefusalAdded"] is True,
-            "Earlier descriptor defect classification changed")
+    require([mutation[key] for key in ("ownedExecutionCases", "ownedRefusals", "sourceProjectionRefusals")] == [19, 5, 12],
+            "Owned execution and source projection refusal populations differ")
+    require(sum(row.get("refusalPhase") == "owned-execution" for row in mutation["observations"]) == 5 and
+            sum(row.get("refusalPhase") == "source-projection" for row in mutation["observations"]) == 12,
+            "A projection refusal cannot be relabeled as an owned execution refusal")
     shared = read(root / "promise-adoption-shared-realm-public.json")
     require(len(shared["states"]) == 2 and len(shared["artifact"]["contexts"]) == 19, "Shared realm FIFO proof changed")
+    result.extend(verify_review_promise_packets(root))
     return result
 
 

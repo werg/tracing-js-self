@@ -1,0 +1,111 @@
+{
+  "schema": "issue61-final-control-execution-inputs/1",
+  "moduleDeclarations": {
+    "file": "test/semantic-module-v8.test.js",
+    "arguments": [
+      "node",
+      "--test",
+      "--test-reporter=spec",
+      "--test-reporter-destination=/workspace/scratch/65ba865519f3/issue61-evidence/module-regression-final.log",
+      "--test-reporter=junit",
+      "--test-reporter-destination=/workspace/scratch/65ba865519f3/issue61-evidence/module-regression-final.xml",
+      "test/semantic-module-v8.test.js"
+    ],
+    "producerRoot": "/workspace/scratch/65ba865519f3/tracing-js-self",
+    "cleanRevisionClaim": false,
+    "producerRevision": null,
+    "inputFingerprintCaptured": false,
+    "environment": "Inherited environment; no execution-time environment snapshot was captured.",
+    "receipts": [
+      "semantic-module-spec.log.gz",
+      "semantic-module-junit.xml.gz"
+    ]
+  },
+  "moduleAdmission": {
+    "file": "test/semantic-module-scheduler-admission-v8.test.js",
+    "arguments": [
+      "node",
+      "--test",
+      "--test-concurrency=1",
+      "--test-reporter=spec",
+      "--test-reporter-destination=/workspace/scratch/65ba865519f3/issue61-evidence/module-admission-controls-final.log",
+      "--test-reporter=junit",
+      "--test-reporter-destination=/workspace/scratch/65ba865519f3/issue61-evidence/module-admission-controls-final.xml",
+      "test/semantic-module-scheduler-admission-v8.test.js"
+    ],
+    "producerRoot": "/workspace/scratch/65ba865519f3/tracing-js-self",
+    "cleanRevisionClaim": false,
+    "producerRevision": null,
+    "inputFingerprintCaptured": false,
+    "explicitEnvironment": {
+      "BOUND_MODULE_ADMISSION_EVIDENCE": "/workspace/scratch/65ba865519f3/issue61-evidence/module-admission-controls-final.json"
+    },
+    "otherEnvironment": "Inherited; no execution-time environment snapshot was captured.",
+    "receipts": [
+      "semantic-module-admission-spec.log.gz",
+      "semantic-module-admission-junit.xml.gz",
+      "module-admission-summary.json"
+    ],
+    "newContexts": [
+      {
+        "claimIndex": 3,
+        "operation": "promise.intrinsics"
+      },
+      {
+        "claimIndex": 4,
+        "operation": "bind",
+        "name": "Promise",
+        "value": [
+          "ref",
+          "intrinsicpromise"
+        ]
+      },
+      {
+        "claimIndex": 237,
+        "operation": "property.get",
+        "object": "p3",
+        "key": [
+          "str",
+          "then"
+        ]
+      },
+      {
+        "claimIndex": 335,
+        "operation": "property.get",
+        "object": "p6",
+        "key": [
+          "str",
+          "then"
+        ]
+      }
+    ],
+    "previousExpectedContexts": 708,
+    "actualContexts": 712,
+    "schedulerOwnedEventCount": 10
+  },
+  "cleanHost": {
+    "file": "test/semantic-protocol-host-v8.test.js",
+    "producerRoot": "/workspace/scratch/65ba865519f3/tracing-js-self-issue61-qualified",
+    "producerRevision": "65ce0796569bb6ecf71441dc78f7ce491a322898",
+    "cleanCheckout": true,
+    "contextAuthority": "Execution revision and clean checkout supplied by the executing task owner; the retained clean-producer source-recheck control passed.",
+    "exactCommandCapturedInTheseReceipts": false,
+    "receipts": [
+      "semantic-clean-host-spec.log.gz",
+      "semantic-clean-host-junit.xml.gz"
+    ],
+    "expectedNegativeDiagnostics": "The two immutable-payload-digest error stacks in the spec log are intentional missing/altered-identity rejection controls; all seven JUnit leaves pass."
+  },
+  "nativeGenerator": {
+    "sourceArtifact": "module-generator-source-artifact.json.gz",
+    "receipt": "module-generator-native-receipt.json",
+    "rawOutput": "module-generator-native-replay.log.gz",
+    "fullNativeAdmissionClaim": false
+  },
+  "combinedAttestation": {
+    "localStatus": "blocked",
+    "reason": "The local environment lacks the required kernel time namespace.",
+    "authority": "Executing task owner report; the separate attestation receipt and hosted CI gate are tracked outside this regression packet.",
+    "passingCombinedGateClaim": false
+  }
+}

@@ -1,5 +1,8 @@
 // Read-only source linkage for call/apply. The public call still enters the
 // original closure; adapter arguments are not the closure's argument list.
+import {symbolPropertyKey,stringPropertyKey} from './property-keys.js';
+import {ownedGlobalProperty} from './owned-global-object.js';
+import {ownedHasOwnProperty} from './owned-has-property.js';
 const names=new Set(['Function.prototype.call','Function.prototype.apply','Reflect.apply']);
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),undefinedValue=['undefined'];
 export function callAdapterInvocation(event){
@@ -40,13 +43,16 @@ function scalarLength(value,fail){
   if(!Number.isSafeInteger(length)||length>10000)fail('Apply argument length exceeds the owned bound');
   return length;
 }
-export function validateCallAdapterEvent(state,event,programs,fail){
+export function validateCallAdapterEvent(state,event,programs,fail,sources=[]){
   const adapter=callAdapterInvocation(event);if(!adapter)return;
   const child=event.causes?.find(cause=>cause.kind==='invocation');
+  const ownBuiltin=adapter.callee?.[0]==='builtinfn'&&
+    ['Object.prototype.hasOwnProperty','Object.hasOwn'].includes(adapter.callee[1]);
   // Unsupported/guest-abrupt calls create no successful invocation to project.
-  if(!child){if(!event.completion)fail('Call adapter lacks a completion or invocation');return;}
+  if(!child&&!ownBuiltin){if(!event.completion)fail('Call adapter lacks a completion or invocation');return;}
+  if(event.completion&&!child)return;
   const frame=state.frames[event.invocationId],instruction=programs[frame?.codeId]?.instructions[frame?.pc];
-  if(instruction?.op!=='CALL'||event.causes.length!==1||event.completion)
+  if(instruction?.op!=='CALL'||event.causes.length!==(ownBuiltin?0:1)||event.completion)
     fail('Call adapter invocation has no source CALL');
   const count=typeof instruction.arg==='number'?instruction.arg:instruction.arg.count,
     inputs=frame.stack.slice(-count-1),expanded=[inputs[0]?.value];
@@ -59,7 +65,7 @@ export function validateCallAdapterEvent(state,event,programs,fail){
   }
   if(!same(expanded,event.operands))fail('Call adapter operands differ from the evaluated source stack');
   const target=adapter.callee[0]==='ref'?state.heap[adapter.callee[1]]:null;
-  if(target?.kind!=='function'||!same(event.result,adapter.callee))fail('Call adapter lost its owned function identity');
+  if(!ownBuiltin&&(target?.kind!=='function'||!same(event.result,adapter.callee)))fail('Call adapter lost its owned function identity');
   const reads=[];
   if(adapter.name!=='Function.prototype.call'){
     const list=event.operands[adapter.name==='Reflect.apply'?3:2]??undefinedValue,
@@ -71,6 +77,30 @@ export function validateCallAdapterEvent(state,event,programs,fail){
     }
   }
   if(!same(reads,event.readObservations))fail('Apply argument reads differ from the owned array-like values');
+  if(ownBuiltin){
+    const method=adapter.callee[1],base=method==='Object.hasOwn'?adapter.arguments[0]??undefinedValue:adapter.receiver,
+      tagged=adapter.arguments[method==='Object.hasOwn'?1:0]??undefinedValue;
+    if(!['undefined','null','bool','str','num','bigint','symbol'].includes(tagged[0]))
+      fail('Own property key requires its source coercion');
+    const key=tagged[0]==='symbol'?symbolPropertyKey(tagged[1]):stringPropertyKey(tagged[0]==='undefined'?'undefined':tagged[0]==='null'?'null':
+      tagged[0]==='num'&&tagged[1]==='-0'?'0':tagged[0]==='num'&&tagged[1]==='+Infinity'?'Infinity':String(tagged[1]));
+    let present;
+    if(base[0]==='intrinsic'&&base[1]==='globalThis'){
+      present=ownedGlobalProperty(state,key,sources)!==null;
+    }else if(base[0]==='str')present=key==='length'||/^(0|[1-9]\d*)$/.test(key)&&Number(key)<base[1].length;
+    else if(['bool','num','bigint','symbol'].includes(base[0]))present=false;
+    else{
+      const object=base[0]==='promise'?state.promises[base[1]]:base[0]==='ref'||base[0]==='intrinsic'?state.heap[base[1]]:null;
+      if(!object||!['object','array','function','generator','promise'].includes(object.kind))fail('Own property adapter lost receiver storage');
+      present=ownedHasOwnProperty(object,key);
+    }
+    if(!same(event.result,['bool',!!present]))fail('Own property adapter result differs from its actual receiver');
+    const changed=event.stateChanges.find(patch=>patch.table==='frames'&&patch.id===frame.id)?.after;
+    if(!changed||changed.pc!==frame.pc+1||!same(changed.stack,
+      [...frame.stack.slice(0,-count-1),{value:event.result,origin:event.eventId}]))
+      fail('Own property adapter changed its source continuation');
+    return;
+  }
   const created=event.stateChanges.find(patch=>patch.table==='frames'&&patch.id===child.frameId),
     activation=created?.after,environment=event.stateChanges.find(patch=>patch.table==='envs'&&patch.id===activation?.envId),
     receiver=target.arrow?(target.lexicalThisFrameId?state.frames[target.lexicalThisFrameId]?.thisValue:target.lexicalThis):adapter.receiver;

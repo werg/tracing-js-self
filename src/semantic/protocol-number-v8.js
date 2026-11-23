@@ -2,6 +2,7 @@
 // methods are entered by records; only scalar Number conversion is a host leaf.
 import {encode,decode} from '../values.js';
 import {assertAlgorithmFields,assertAlgorithmDataArray} from './ir.js';
+import {lookupConversionPropertyV8,assertSupportedConversionMethodV8} from './protocol-conversion-lookup-v8.js';
 
 export const NUMBER_STATE_V8_SCHEMA='semantic-number-conversion-state/1';
 export const NUMBER_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.entries({
@@ -24,26 +25,10 @@ function scalarBound(value,api){
 }
 const keyFor=index=>index===-1?['symbol','well-known:toPrimitive']:['str',index===0?'valueOf':'toString'];
 function lookup(controller,input,key,api){
-  let current=input[1];const seen=new Set();
-  for(;;){
-    api.require(!seen.has(current),'cyclic Number conversion prototype');seen.add(current);
-    const node=api.heapNode(controller,current);api.require(['object','array','closure'].includes(node.kind),'ordinary Number conversion prototype');
-    const descriptor=api.ownDescriptor(node,key);
-    if(descriptor){api.require(descriptor.kind==='data','conversion method accessor needs its getter continuation');return {method:descriptor.value,builtin:null};}
-    const prototype=node.prototype??'ordinary';
-    if(node.prototype===null)return {method:['undefined'],builtin:null};
-    if(prototype==='ordinary'){
-      api.require(node.kind!=='closure'||!(key[0]==='str'&&key[1]==='toString'||
-        key[0]==='symbol'&&key[1]==='well-known:toStringTag'),
-        'function intrinsic prototype requires its own conversion profile');
-      if(key[0]==='str'&&key[1]==='valueOf')return {method:['undefined'],builtin:'Object.valueOf'};
-      if(key[0]==='str'&&key[1]==='toString'){
-        api.require(node.kind!=='array','array stringification needs its array protocol');return {method:['undefined'],builtin:'Object.toString'};
-      }
-      return {method:['undefined'],builtin:null};
-    }
-    api.known(controller,prototype);api.require(prototype[0]==='ref','conversion prototype identity');current=prototype[1];
-  }
+  const found=lookupConversionPropertyV8(controller,input,key,api);
+  api.require(found.descriptor!=='accessor','conversion method accessor needs its getter continuation');
+  api.require(found.builtin!=='Array.toString','array stringification needs its array protocol');
+  return {method:found.value,builtin:found.builtin};
 }
 function acceptPrimitive(row,value,api){
   if(primitive(value)){scalarBound(value,api);row.primitive=api.copy(value);row.phase='convert';return;}
@@ -93,6 +78,7 @@ export function applyNumberRecordV8(controller,record,api){
     require(row.phase==='select'&&eq(record.key,keyFor(row.index)),'Number conversion method order');
     api.knownKey(controller,record.key);known(controller,record.method);
     const found=lookup(controller,row.input,record.key,api);
+    assertSupportedConversionMethodV8(controller,found.method,api);
     require(eq(found,{method:record.method,builtin:record.builtin}),'false Number conversion method selection');
     let index=row.index,method=copy(record.method),phase;
     if(record.builtin!==null)phase='builtin';
@@ -149,6 +135,7 @@ export function restoreNumberStateV8(controller,snapshot,api){
     if(!['complete','abrupt'].includes(row.phase))api.require(controller.stack.includes(row.parent),'unfinished Number conversion requires a live parent');
     api.known(controller,row.input);
     for(const value of [row.method,row.primitive,row.result])if(value!==null)api.known(controller,value);
+    assertSupportedConversionMethodV8(controller,row.method,api);
     if(['str','bigint'].includes(row.primitive?.[0]))api.require(row.primitive[1].length<=10000,'Number retained scalar bound');
     api.require([null,'Object.valueOf','Object.toString'].includes(row.builtin),'Number continuation builtin');
     if(row.child!==null){id(row.child);api.require(controller.frameFunctions.has(row.child),'Number callback identity');}

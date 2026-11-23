@@ -1,7 +1,7 @@
 {
   "schema": "semantic-v8-interoperability/1",
-  "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
-  "interoperabilityDigest": "64f230e7b05dc6b33b3d0df359898e27158cb67a386c9cdeb63fd64b4729df2d",
+  "contractDigest": "38a5d7b90ad1da9cf3b56f29c4e730ac5bcec54427e2fe86e6a6afec3335f862",
+  "interoperabilityDigest": "84fe03aa5857dadf23a6025fe5de84758f9567d41920a703fe32110ec13816b3",
   "examples": [
     {
       "id": "ordered-map",
@@ -9961,6 +9961,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 1,
+              "promiseObjects": null,
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
@@ -10136,6 +10137,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 2,
+              "promiseObjects": null,
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
@@ -10318,6 +10320,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 3,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -10528,6 +10531,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 4,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -10746,6 +10750,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 4,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -10987,6 +10992,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 4,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -11228,6 +11234,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 5,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -11491,6 +11498,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 6,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -11754,6 +11762,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 7,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -12043,6 +12052,7 @@
                 }
               ],
               "sequence": 8,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -12326,6 +12336,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 9,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -12609,6 +12620,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 10,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -12901,6 +12913,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 10,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -13168,6 +13181,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 10,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -14205,7 +14219,7 @@
                 "region": "r1",
                 "regionDigest": "8d791fead76f581795a4dddaac5813a2b12b365a01ba3c2dc7b71ed2127d6537",
                 "visibleThrough": 54,
-                "stateDigest": "0f74a3886c182cba6efd9166d42eb52e7d830fd60852c2d2db05d6569e9dde84"
+                "stateDigest": "7f75ced5977b92445864c448139fd61bbd460c11719ecfe5c48815b267b99529"
               },
               "line": "region {\"bindings\":[],\"completion\":{\"kind\":\"return\",\"value\":[\"num\",1]},\"decisions\":[],\"region\":\"r1\"}"
             }
@@ -14764,6 +14778,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 1,
+              "promiseObjects": null,
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
@@ -15016,6 +15031,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 2,
+              "promiseObjects": null,
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
@@ -15280,6 +15296,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 3,
+              "promiseObjects": null,
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
@@ -15551,6 +15568,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 4,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -15859,6 +15877,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 5,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -16179,6 +16198,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 6,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -16506,6 +16526,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 7,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -16850,6 +16871,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 8,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -17211,6 +17233,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 9,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -17579,6 +17602,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 10,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -17964,6 +17988,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 11,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -18356,6 +18381,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 11,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -18755,6 +18781,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 11,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -19154,6 +19181,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 12,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -19553,6 +19581,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 12,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -19952,6 +19981,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 13,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -20374,6 +20404,7 @@
                 }
               ],
               "sequence": 14,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -20796,6 +20827,7 @@
                 }
               ],
               "sequence": 15,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -21212,6 +21244,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 16,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -21635,6 +21668,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 16,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -22058,6 +22092,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -22488,6 +22523,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -22925,6 +22961,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -23368,6 +23405,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -23818,6 +23856,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -24291,6 +24330,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -24770,6 +24810,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -25249,6 +25290,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -25751,6 +25793,7 @@
                 }
               ],
               "sequence": 18,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -26263,6 +26306,7 @@
                 }
               ],
               "sequence": 19,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -26798,6 +26842,7 @@
                 }
               ],
               "sequence": 20,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -27350,6 +27395,7 @@
                 }
               ],
               "sequence": 21,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -27890,6 +27936,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 22,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -28431,6 +28478,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 22,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -28972,6 +29020,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 23,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -29513,6 +29562,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 23,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -30054,6 +30104,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -30595,6 +30646,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -31143,6 +31195,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -31685,6 +31738,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -32232,6 +32286,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -32779,6 +32834,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -33326,6 +33382,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -33873,6 +33930,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 25,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -34420,6 +34478,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 26,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -34995,6 +35054,7 @@
                 }
               ],
               "sequence": 27,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -35570,6 +35630,7 @@
                 }
               ],
               "sequence": 27,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -36145,6 +36206,7 @@
                 }
               ],
               "sequence": 27,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -36730,6 +36792,7 @@
                 }
               ],
               "sequence": 28,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -37298,6 +37361,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 29,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -37847,6 +37911,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 29,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -38391,6 +38456,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 29,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -38425,7 +38491,7 @@
             "closureQueue": []
           },
           "visibleThrough": 55,
-          "prefixDigest": "eacbc2dc013aee38b0b8582289ff53597b7883c6c24d3f9cf1aaf4862367339e"
+          "prefixDigest": "9d220dcff8eda4d57bdc908986d0af4370c2c03416a6d5d1470445632ae38ff4"
         }
       ],
       "sourceCheck": "agreed",
@@ -39449,7 +39515,7 @@
                 "region": "r1",
                 "regionDigest": "5d032d93ec0e28bbddc69bd2cf7ac70401a46ea478ccf335086fab0f18c3caef",
                 "visibleThrough": 56,
-                "stateDigest": "b2427d6dd7f0f89970cc07efd4c0db217a59a1b23ecf6519fb72ea8e46f59454"
+                "stateDigest": "7ad0a4cedb34671cc24ce87b6486261d95ffc9c0b8d87ce323abe5650e3496a6"
               },
               "line": "region {\"bindings\":[],\"completion\":{\"kind\":\"return\",\"value\":[\"num\",2]},\"decisions\":[],\"region\":\"r1\"}"
             }
@@ -40038,6 +40104,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 1,
+              "promiseObjects": null,
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
@@ -40300,6 +40367,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 2,
+              "promiseObjects": null,
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
@@ -40574,6 +40642,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 3,
+              "promiseObjects": null,
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
@@ -40855,6 +40924,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 4,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -41173,6 +41243,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 5,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -41503,6 +41574,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 6,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -41840,6 +41912,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 7,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -42194,6 +42267,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 8,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -42565,6 +42639,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 9,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -42943,6 +43018,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 10,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -43338,6 +43414,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 11,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -43740,6 +43817,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 11,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -44149,6 +44227,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 11,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -44558,6 +44637,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 12,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -44967,6 +45047,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 12,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -45383,6 +45464,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 12,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -45799,6 +45881,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 13,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -46238,6 +46321,7 @@
                 }
               ],
               "sequence": 14,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -46677,6 +46761,7 @@
                 }
               ],
               "sequence": 15,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -47110,6 +47195,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 16,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -47550,6 +47636,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 16,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -47990,6 +48077,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -48437,6 +48525,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -48891,6 +48980,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -49351,6 +49441,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -49818,6 +49909,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -50308,6 +50400,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -50804,6 +50897,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -51300,6 +51394,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -51796,6 +51891,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 17,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -52315,6 +52411,7 @@
                 }
               ],
               "sequence": 18,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -52844,6 +52941,7 @@
                 }
               ],
               "sequence": 19,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -53396,6 +53494,7 @@
                 }
               ],
               "sequence": 20,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -53965,6 +54064,7 @@
                 }
               ],
               "sequence": 21,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -54522,6 +54622,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 22,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -55080,6 +55181,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 22,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -55638,6 +55740,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 23,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -56196,6 +56299,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 23,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -56754,6 +56858,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -57313,6 +57418,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -57872,6 +57978,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -58438,6 +58545,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -59009,6 +59117,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -59580,6 +59689,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -60151,6 +60261,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 24,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -60722,6 +60833,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 25,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -61293,6 +61405,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 26,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -61892,6 +62005,7 @@
                 }
               ],
               "sequence": 27,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -62491,6 +62605,7 @@
                 }
               ],
               "sequence": 27,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -63090,6 +63205,7 @@
                 }
               ],
               "sequence": 27,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -63699,6 +63815,7 @@
                 }
               ],
               "sequence": 28,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -64291,6 +64408,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 29,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -64864,6 +64982,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 29,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -65432,6 +65551,7 @@
               "pendingCalls": [],
               "callFrames": [],
               "sequence": 29,
+              "promiseObjects": null,
               "construction": {
                 "schema": "semantic-construction-state/1",
                 "privateNames": [],
@@ -65466,7 +65586,7 @@
             "closureQueue": []
           },
           "visibleThrough": 57,
-          "prefixDigest": "3e664a1fd46bb03249f24eec3897457b5aa835f257b305bfe3fc7da2e5df9e29"
+          "prefixDigest": "30df8dc64056f482c77508d550abb6d7610f952a8401979caef9625b10048935"
         }
       ],
       "sourceCheck": "agreed",

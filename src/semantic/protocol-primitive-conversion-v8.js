@@ -3,6 +3,7 @@
 // call records; scalar leaves never invoke guest code in the host.
 import {encode,decode} from '../values.js';
 import {assertAlgorithmFields,assertAlgorithmDataArray} from './ir.js';
+import {lookupConversionPropertyV8 as lookup,assertSupportedConversionMethodV8} from './protocol-conversion-lookup-v8.js';
 
 export const PRIMITIVE_CONVERSION_PROFILE_V8='primitive-conversion/1';
 export const PRIMITIVE_CONVERSION_STATE_V8_SCHEMA='semantic-primitive-conversion-state/1';
@@ -44,33 +45,6 @@ function state(controller,api){return api.state(controller).primitiveConversions
 function operation(controller,id,api){const row=controller.protocol?.primitiveConversions?.operations.find(row=>row.id===id);
   api.require(row,'unknown primitive conversion');return row;}
 
-// This walk is independent of the owned runtime's ordinaryGet implementation.
-// A builtin is an explicit leaf identity, never an invented callable value.
-function lookup(controller,input,key,api){
-  let current=input[1];const seen=new Set();
-  for(;;){
-    api.require(!seen.has(current),'cyclic primitive conversion prototype');seen.add(current);
-    const node=api.heapNode(controller,current);
-    api.require(['object','array','closure'].includes(node.kind),'ordinary primitive conversion prototype');
-    const descriptor=api.ownDescriptor(node,key);
-    if(descriptor)return {descriptor:descriptor.kind,value:descriptor.kind==='accessor'?descriptor.get:descriptor.value,builtin:null};
-    const prototype=node.prototype??'ordinary';
-    if(node.prototype===null)return {descriptor:'missing',value:['undefined'],builtin:null};
-    if(prototype==='ordinary'){
-      // Function.prototype.toString is not Object.prototype.toString. Function
-      // kinds also have distinct intrinsic @@toStringTag values. Preserve
-      // own hooks above, but never invent either inherited function intrinsic.
-      api.require(node.kind!=='closure'||!(key[0]==='str'&&key[1]==='toString'||
-        key[0]==='symbol'&&key[1]==='well-known:toStringTag'),
-        'function intrinsic prototype requires its own conversion profile');
-      const builtin=key[0]!=='str'?null:key[1]==='valueOf'?'Object.valueOf':
-        key[1]==='toString'?(node.kind==='array'?'Array.toString':'Object.toString'):
-          key[1]==='join'&&node.kind==='array'?'Array.prototype.join':null;
-      return {descriptor:builtin?'builtin':'missing',value:['undefined'],builtin};
-    }
-    api.known(controller,prototype);api.require(prototype[0]==='ref','conversion prototype identity');current=prototype[1];
-  }
-}
 function scalarResult(row,api){
   api.require(primitive(row.candidate),'conversion scalar candidate');scalarBound(row.candidate,api);
   if(row.goal==='PropertyKey')return row.candidate[0]==='symbol'?api.copy(row.candidate):['str',String(decode(row.candidate))];
@@ -90,6 +64,7 @@ function acceptCandidate(row,value,api){
   else fault(row,'ordinary-exhausted',value,api);
 }
 function selectMethod(controller,row,value,api){
+  assertSupportedConversionMethodV8(controller,value,api);
   row.method=api.copy(value);row.builtin=null;row.child=null;
   if(row.index===-1&&['undefined','null'].includes(value[0]))nextLookup(row,0);
   else if(callable(controller,value))row.phase='call';
@@ -121,6 +96,7 @@ function builtinResult(controller,row,api){
 }
 function assertDerivedFault(controller,row,api){
   const {require,eq}=api;
+  assertSupportedConversionMethodV8(controller,row.method,api);
   require(Object.hasOwn(PRIMITIVE_CONVERSION_FAULTS_V8,row.fault),'unknown primitive conversion fault');
   if(row.fault==='symbol-to-number')require(row.goal==='Number'&&row.candidate?.[0]==='symbol'&&
     (primitive(row.input)||callable(controller,row.method)),'false Symbol Number fault');

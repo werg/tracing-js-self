@@ -47,7 +47,8 @@ test('Promise, Number, Proxy and binary events share deterministic source owners
     reverse=compileProtocolSourceV8(bundle,{adapters:[...PROTOCOL_SOURCE_ADAPTERS_V8].reverse()});
   assert.deepEqual(reverse,forward);
   assert.equal(forward.sourceProfile,'composed-protocol-source/1');
-  assert.deepEqual(forward.extensions,[number,proxy,memory,'promise-adoption/1','promise-executor/1','promise-join/1'].sort());
+  assert.deepEqual(forward.extensions,[number,proxy,memory,'promise-adoption/1','promise-executor/1','promise-join/1',
+    'promise-object-source/1'].sort());
   const kinds=new Set(forward.claims.filter(row=>row.kind==='protocol').map(row=>row.record.kind));
   for(const kind of ['promise.executor.enter','conversion.begin','conversion.call','proxy.get.call',
     'memory.construct','memory.set','memory.get','proxy.finish','conversion.return','promise.resolver.call','promise.join.step'])

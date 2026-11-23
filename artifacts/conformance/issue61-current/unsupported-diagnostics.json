@@ -1,0 +1,11 @@
+{
+  "schema": "test262-owned-unsupported-location/1",
+  "purpose": "Locate the first refused operation in unchanged original source or harness execution",
+  "sourceRevision": "2a1ade303f72d3de80565c921d685222405c32ce",
+  "producerRevision": "7336d7bacdb7e53025cd8e66ed0d844b19c6ab19",
+  "implementationDigest": "1e3c3c9372cf6a2d9b1806a57f305cfedeaae731f75d8ec606b6aa1bfc57dd78",
+  "inputReportSha256": "4591e6911eb03a4d3052fdd7993adeb7d2c305f7e877ef8d1a1b9a959c44617b",
+  "maxSteps": 20000,
+  "independentAdmission": false,
+  "diagnostics": []
+}

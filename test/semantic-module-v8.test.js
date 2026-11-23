@@ -7,6 +7,7 @@ import {executeEvaluatedModules,linkEvaluatedModules} from '../src/evaluated-mod
 import {encodeNativeGraph,decodeOwnedGraph,GRAPH_CODEC} from '../src/host/graph-codec.js';
 import {compileBoundedTypeScript} from '../src/typescript.js';
 import {moduleQualificationFixtures} from '../fixtures/semantic-regions/qualification.js';
+import {hashAlgorithmData} from '../src/semantic/program.js';
 
 async function nativeModuleOutcome(modules,entryModule,exportName,inputGraph){
   const emitted=Object.fromEntries(Object.entries(modules).map(([file,source])=>
@@ -104,18 +105,46 @@ test('static namespace re-export reads keep live-cell public projection without 
   assert.equal(refused.exported,undefined);
 });
 
-test('owned module declarations do not bypass public class and generator observation boundaries',async()=>{
-  for(const [source,reason] of [
-    ['export class C{static observed=this.name;}export function run(){return C.observed;}',/class\/private state/],
-    ['export function* values(){yield 7;}export function run(){return values.name;}',/constructor\/prototype descriptors/]
-  ]){
-    const result=await verifyRegionModuleTrainingCase({id:'declaration-boundary',family:'declaration-boundary',
-      modules:{'main.js':source},entryModule:'main.js',exportName:'run',fixture:{calls:[]}});
-    assert.equal(result.moduleReference,'passed');
-    assert.equal(result.status,'projection_refused');
-    assert.equal(result.phase,'projection');
-    assert.equal(result.exported,undefined);
-    assert.match(result.reason,reason);
+test('owned module declarations retain class refusal and independently prove generator descriptor observations',async()=>{
+  const input={id:'declaration-boundary',family:'declaration-boundary',entryModule:'main.js',exportName:'run',fixture:{calls:[]}},
+    refused=await verifyRegionModuleTrainingCase({...input,modules:{
+      'main.js':'export class C{static observed=this.name;}export function run(){return C.observed;}'}});
+  assert.equal(refused.moduleReference,'passed');
+  assert.equal(refused.status,'projection_refused');
+  assert.equal(refused.phase,'projection');
+  assert.equal(refused.exported,undefined);
+  assert.match(refused.reason,/class\/private state/);
+
+  const source='export function* values(){yield 7;}export function run(){return values.name;}',
+    result=await verifyRegionModuleTrainingCase({...input,modules:{'main.js':source}});
+  assert.ok(result.exported,result.reason);
+  assert.equal(result.moduleReference,'passed');
+  assert.equal(result.moduleCorrespondence,'passed');
+  const side=result.exported.sidecar.sourceArtifact.sidecar;
+  assert.equal(side.schema,'semantic-protocol-source-evidence/1');
+  assert.deepEqual(side.outcome.graph.roots.at(-1),['str','values']);
+  assert.equal(side.reference.metadataAudit.status,'agreed');
+  assert(side.reference.metadataAudit.checked>0);
+  assert.equal(side.sourceProvenance.upstream.moduleEvidence.request.modules['main.js'],source);
+  const fresh=await recheckRegionEvidence(result.exported);
+  assert(fresh.sourceValidated&&fresh.projectionValidated&&fresh.replayValidated);
+  assert.equal(fresh.moduleReference.status,'passed');
+  assert.equal(fresh.native.admitted,false,'native admission remains a separate gate');
+
+  const altered=structuredClone(result.exported);
+  altered.sidecar.sourceArtifact.sidecar.outcome.graph.roots[1]=['str','forged'];
+  await assert.rejects(recheckModuleRegionEvidence(altered),/independent original-module outcome changed/);
+  const changedSource=structuredClone(result.exported);
+  changedSource.sidecar.sourceArtifact.sidecar.sourceProvenance.upstream.moduleEvidence.request.modules['main.js']=
+    source.replace('return values.name','return "forged"');
+  changedSource.sidecar.sourceArtifactDigest=hashAlgorithmData(changedSource.sidecar.sourceArtifact);
+  await assert.rejects(recheckModuleRegionEvidence(changedSource),/module graph, transformation, inputs or provenance changed/);
+  await assert.rejects(recheckRegionEvidence(changedSource),/module graph, transformation, inputs or provenance changed/);
+  for(const evidence of [null,false]){
+    const malformed=structuredClone(result.exported);
+    malformed.sidecar.sourceArtifact.sidecar.sourceProvenance.upstream.moduleEvidence=evidence;
+    malformed.sidecar.sourceArtifactDigest=hashAlgorithmData(malformed.sidecar.sourceArtifact);
+    await assert.rejects(recheckRegionEvidence(malformed),/module evidence version/);
   }
 });
 

@@ -1,51 +1,18 @@
 // Source-only job identities are declared at the event that actually queues or
 // subscribes them. No future settlement chooses a present registration.
 import {isDeepStrictEqual as eq} from 'node:util';
+import {ordinaryGet} from '../spec-operations.js';
+import {ownedObjectHeap} from '../owned-object-storage.js';
 import {PROMISE_ADOPTION_COMPONENT_V8 as id,sourcePromiseAdoptionEventV8,sourceHasSyntaxV8} from './source-projection-base-v8.js';
 
-// An unsupported intrinsic can leave a valid owned guest-throw event with no
-// operands. The validated CALL's before-stack still binds the actual callable
-// and evaluated arguments. Do not certify that implementation limit as a guest
-// TypeError or primitive result: Promise object storage requires a separate
-// source profile. These positions cover the intrinsics that currently complete
-// without modeling that storage. Other object reflection/mutation intrinsics
-// already refuse during execution. Object.is is identity-only, and isFrozen is
-// correct for an intact, extensible Promise; neither needs object storage here.
-// Argument positions matter: a Promise can be the new prototype or descriptor
-// of an ordinary object, not just the operation's first operand.
-const promiseObjectArguments=new Map([
-  ['Object.defineProperty',[0,2]],['Object.create',[0,1]],
-  ['Object.setPrototypeOf',[0,1]],['Object.getPrototypeOf',[0]],
-  ['Object.preventExtensions',[0]],['Object.isExtensible',[0]]
-]);
+// Promise own properties are now shared ordinary state. Validate that the
+// archive actually contains that state; later source transitions check every
+// descriptor and the resolved intrinsic then instead of assuming a pristine
+// object from its Promise brand alone.
 export function assertPromiseSourceObjectProfileV8(bundle){
-  for(const event of bundle.events){
-    if(event.operation!=='call.enter')continue;
-    const frame=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId)?.before,
-      instruction=bundle.programs[frame?.codeId]?.instructions[frame?.pc];
-    if(instruction?.op!=='CALL')continue;
-    const count=typeof instruction.arg==='number'?instruction.arg:instruction.arg?.count;
-    if(!Number.isSafeInteger(count)||count<1||frame.stack.length<count+1)continue;
-    const inputs=frame.stack.slice(-count-1),raw=inputs[0]?.value,
-      callee=raw?.[0]==='method'?raw[1]:raw;
-    if(callee?.[0]!=='builtinfn'||!promiseObjectArguments.has(callee[1]))continue;
-    const args=[];
-    for(let index=0;index<count;index++){
-      const value=inputs[index+1]?.value;
-      if(instruction.arg?.spread?.includes(index)){
-        if(value?.[0]!=='spread'||!Array.isArray(value[1]))
-          throw new TypeError('Protocol source projection: invalid evaluated mutation arguments');
-        args.push(...value[1]);
-      }else args.push(value);
-    }
-    if(callee[1]==='Object.defineProperty'&&args[0]?.[0]==='promise'){
-      const error=new TypeError('Protocol source projection: Promise own-property mutation requires its declared source profile');
-      error.category='unsupported.promise-source-mutation';throw error;
-    }
-    if(promiseObjectArguments.get(callee[1]).some(index=>args[index]?.[0]==='promise')){
-      const error=new TypeError('Protocol source projection: Promise object operation '+callee[1]+' requires its declared source profile');
-      error.category='unsupported.promise-source-object-operation';throw error;
-    }
+  for(const state of [bundle.initialState,bundle.finalState])for(const node of Object.values(state.promises??{})){
+    if(node.kind!=='promise'||!node.properties||!node.propertyVersions||typeof node.extensible!=='boolean'||
+      node.proxy!==undefined)throw new TypeError('Protocol source projection: Promise object storage is not declared');
   }
 }
 
@@ -53,11 +20,46 @@ function data(ctx){const result=ctx.componentState(id);
   if(!result)ctx.refuse('Promise adoption lacks its source component');return result;}
 function ownedPromise(ctx,event,identity){
   const node=event.stateChanges.find(change=>change.table==='promises'&&change.id===identity)?.after??ctx.state.promises[identity];
-  if(!node||['properties','prototype','descriptors','accessors','proxy'].some(key=>Object.hasOwn(node,key)))
-    ctx.refuse('owned Promise adoption requires unchanged intrinsic then lookup');
+  if(!node||node.kind!=='promise'||!node.properties||node.proxy!==undefined)
+    ctx.refuse('owned Promise adoption requires shared ordinary object storage');
+  const state={...ctx.state,promises:{...ctx.state.promises,[identity]:node}},
+    selected=ordinaryGet(ownedObjectHeap(state),['promise',identity],'then',{accessors:true});
+  if(selected?.accessor||!eq(selected?.method?.value,['builtinfn','Promise.prototype.then']))
+    ctx.refuse('owned Promise adoption requires its resolved intrinsic then lookup');
   if(node.thenableLocked||node.thenableSerial||node.thenableSeen?.length)
     ctx.refuse('thenable resolving state requires its separate protocol');
   return node;
+}
+function forwardingSubscription(ctx,event,registration){
+  const {promise,target}=registration,old=ctx.state.promises[target],
+    changed=event.stateChanges.find(change=>change.table==='promises'&&change.id===target),
+    control=event.stateChanges.find(change=>change.table==='control'),matches=job=>job.kind==='adoption'&&job.resultId===promise,
+    ready=(control?.after?.queue??[]).filter(job=>job.promiseId===target&&matches(job)),
+    waiting=(changed?.after?.observers??old.observers).filter(matches);
+  if((old.observers??[]).some(matches)||(control?.before?.queue??[]).some(job=>job.promiseId===target&&matches(job))||
+    ready.length+waiting.length!==1||old.status==='pending'&&waiting.length!==1||old.status!=='pending'&&ready.length!==1)
+    ctx.refuse('intrinsic then step lacks its current forwarding subscription');
+  return 'forward'+(++data(ctx).next);
+}
+export function finishSourcePromiseAdoptionGetterV8(ctx,event,frame){
+  const registration=data(ctx).adoptions.find(row=>row.lookup?.frame===frame),
+    changed=event.stateChanges.find(change=>change.table==='frames'&&change.id===frame)?.after,
+    completion=changed?.completion,lookup=changed?.promiseConstructorLookup;
+  if(!registration||registration.lookup.finished||!['return','throw'].includes(completion?.type)||
+    lookup?.delivered!==true||lookup.continuation.kind!=='adopt'||
+    lookup.continuation.promiseId!==registration.promise||lookup.continuation.targetId!==registration.target)
+    ctx.refuse('adoption getter completion lacks its exact source continuation');
+  let forwarding=null;
+  if(completion.type==='return')forwarding=forwardingSubscription(ctx,event,registration);
+  else{
+    const result=event.stateChanges.find(change=>change.table==='promises'&&change.id===registration.promise)?.after;
+    if(result?.status!=='rejected'||result.adopting!==null||!eq(result.value?.value,completion.value.value))
+      ctx.refuse('adoption getter throw lacks its exact rejected adopter');
+  }
+  ctx.emitProtocol(registration.owner,{kind:'promise.adopt.finish',promise:registration.promise,target:registration.target,
+    job:registration.job,child:registration.lookup.child,completion:{kind:completion.type,value:ctx.tag(completion.value.value)},forwarding},
+    event,'source-promise-adopt-getter-finish/1');
+  registration.forwarding=forwarding;registration.lookup.finished=true;
 }
 export function prepareSourcePromiseAdoptionV8(ctx,event,owner,promise,target){
   if(target===null||target===undefined)return;
@@ -121,14 +123,29 @@ export function createPromiseAdoptionTeacherV8(){return {id,
     const {owner}=registration;
     if(queued.kind==='promise-adopt'){
       if(registration.forwarding!==null)ctx.refuse('duplicate forwarding registration');
-      const old=ctx.state.promises[target],changed=event.stateChanges.find(change=>change.table==='promises'&&change.id===target),
-        control=event.stateChanges.find(change=>change.table==='control'),matches=job=>job.kind==='adoption'&&job.resultId===promise,
-        ready=(control?.after?.queue??[]).filter(job=>job.promiseId===target&&matches(job)),
-        waiting=(changed?.after?.observers??old.observers).filter(matches);
-      if((old.observers??[]).some(matches)||(control?.before?.queue??[]).some(job=>job.promiseId===target&&matches(job))||
-        ready.length+waiting.length!==1||old.status==='pending'&&waiting.length!==1||old.status!=='pending'&&ready.length!==1)
-        ctx.refuse('intrinsic then step lacks its current forwarding subscription');
-      const forwarding='forward'+(++state.next);
+      const child=event.stateChanges.find(change=>change.table==='frames'&&change.before===null&&
+        change.after?.promiseConstructorLookup?.continuation.kind==='adopt')?.after;
+      if(child){
+        const lookup=child.promiseConstructorLookup,continuation=lookup.continuation,
+          selected=ordinaryGet(ownedObjectHeap(ctx.state),['promise',target],'constructor',{accessors:true}),
+          getter=selected?.accessor?.get.value,fn=getter?.[0]==='ref'?ctx.state.heap[getter[1]]:null,
+          environment=event.stateChanges.find(change=>change.table==='envs'&&change.id===child.envId)?.after,
+          receiver=fn?.arrow?(fn.lexicalThisFrameId?ctx.state.frames[fn.lexicalThisFrameId]?.thisValue:fn.lexicalThis):['promise',target];
+        if(continuation.promiseId!==promise||continuation.targetId!==target||continuation.phase!==undefined||
+          lookup.property!=='constructor'||lookup.delivered||!eq(lookup.receiver,['promise',target])||
+          !fn||fn.async||fn.generatorFunction||child.codeId!==fn.codeId||environment?.parent!==fn.closureEnvId||
+          !eq(child.thisValue,receiver))
+          ctx.refuse('adoption constructor getter differs from its selected source identity and receiver');
+        const invocation=ctx.registerFrame(child.id,owner);
+        ctx.emitProtocol(owner,{kind:'promise.adopt.get',promise,target,job:registration.job,child:invocation},
+          event,'source-promise-adopt-getter/1');
+        registration.lookup={frame:child.id,child:invocation,finished:false};
+        const objects=ctx.componentState('promise-object-source/1');
+        if(!objects)ctx.refuse('adoption getter requires its ordinary Promise object completion owner');
+        objects.accessors.push([child.id,{id:null,operation:'get',value:null,owner,finished:false,lookup:structuredClone(lookup)}]);
+        return true;
+      }
+      const forwarding=forwardingSubscription(ctx,event,registration);
       ctx.emitProtocol(owner,{kind:'promise.adopt.enter',promise,target,job:registration.job,forwarding},event,'source-promise-adopt-enter/1');
       registration.forwarding=forwarding;return true;
     }
@@ -149,6 +166,12 @@ export function createPromiseAdoptionTeacherV8(){return {id,
         !eq(selected.result,owned.value===null?null:ctx.tag(owned.value.value))||
         owned.status==='pending'&&owned.adopting!==row.target)
         ctx.refuse('public adoption differs from its current owned Promise state');
+      if(row.lookup){
+        const frame=ctx.state.frames[row.lookup.frame];
+        if(adoption.lookup?.child!==row.lookup.child||!frame?.promiseConstructorLookup||
+          row.lookup.finished!==frame.promiseConstructorLookup.delivered||
+          !row.lookup.finished&&adoption.phase!=='reading')ctx.refuse('public adoption getter scope differs from its source continuation');
+      }
     }
     if(event.stateChanges.some(change=>change.table==='control')){
       const actual=[...ctx.harness.invocations.values()].flatMap(({controller})=>controller.ready

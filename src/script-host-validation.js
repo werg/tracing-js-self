@@ -13,7 +13,8 @@ const prototypeKeys={
     'reduceRight','toReversed','toSorted','toSpliced','with',symbolPropertyKey('well-known:iterator'),
     symbolPropertyKey('well-known:unscopables')]),
   'Function.prototype':new Set([...objectKeys,'length','name','arguments','caller','constructor','apply','bind','call',
-    symbolPropertyKey('well-known:hasInstance')])
+    symbolPropertyKey('well-known:hasInstance')]),
+  'Promise.prototype':new Set([...objectKeys,'then','catch','finally',symbolPropertyKey('well-known:toStringTag')])
 };
 function keyOf(value,fail){
   if(value?.[0]==='str'||value?.[0]==='bigint')return value[1];
@@ -24,19 +25,22 @@ function keyOf(value,fail){
   fail('Unmodeled key coercion in ordinary in-operator receipt');
 }
 function hasProperty(state,receiver,key,fail){
-  let object=receiver?.[0]==='ref'?state.heap[receiver[1]]:null,seen=new Set();
+  let object=receiver?.[0]==='promise'?state.promises[receiver[1]]:
+    ['ref','intrinsic'].includes(receiver?.[0])?state.heap[receiver[1]]:null,seen=new Set();
   if(!object)fail('Ordinary in-operator has no owned receiver');
   for(;;){
-    if(seen.has(object.id)||!['object','array','function'].includes(object.kind))fail('Unmodeled in-operator prototype');
+    if(seen.has(object.id)||!['object','array','function','promise'].includes(object.kind))fail('Unmodeled in-operator prototype');
     seen.add(object.id);
     if(Object.hasOwn(object.properties??{},key)||Object.hasOwn(object.accessors??{},key))return true;
     if(object.kind==='function'&&(['name','length'].includes(key)||key==='prototype'&&!object.arrow&&!object.async&&!object.nonConstructible))return true;
     if(object.declaredError&&key==='constructor')return true;
     const parent=Object.hasOwn(object,'prototype')?object.prototype:
-      object.kind==='array'?'Array.prototype':object.kind==='function'?'Function.prototype':'Object.prototype';
+      object.kind==='array'?'Array.prototype':object.kind==='function'?'Function.prototype':
+        object.kind==='promise'?'Promise.prototype':'Object.prototype';
     if(parent===null)return false;
+    if(parent==='Promise.prototype'&&state.heap[parent]){object=state.heap[parent];continue;}
     if(Object.hasOwn(prototypeKeys,parent))return prototypeKeys[parent].has(key);
-    object=state.heap[parent];if(!object)fail('Unknown in-operator prototype');
+    object=state.heap[parent]??state.promises[parent];if(!object)fail('Unknown in-operator prototype');
   }
 }
 function expectStackResult(event,frame,result,fail){

@@ -7,8 +7,10 @@ import {regionQualificationFixtures} from '../fixtures/semantic-regions/qualific
 import {HOST_PROTOCOL_FIXTURES_V8} from '../fixtures/semantic-regions/host-protocol.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 
-const args=process.argv.slice(2);if(args.some(arg=>arg!=='--check'))throw new Error('Usage: node tools/generate-semantic-region-contract.mjs [--check]');
-const check=args.includes('--check');
+const args=process.argv.slice(2);
+if(args.length>1||args.some(arg=>!['--check','--definition-only'].includes(arg)))
+  throw new Error('Usage: node tools/generate-semantic-region-contract.mjs [--check | --definition-only]');
+const check=args.includes('--check'),definitionOnly=args.includes('--definition-only');
 const records=[
   {valid:false,line:'region {"future":1}',reason:'unknown fields'},
   {valid:false,line:'algorithm {"claims":[],"allocations":[],"completion":{"kind":"suspend"}}',reason:'missing or invalid completion'},
@@ -20,6 +22,13 @@ const records=[
 // the complete interoperability manifest is written after every example passes.
 if(!check)await writeFile(new URL('../contracts/semantic-execution-v8.json',import.meta.url),
   JSON.stringify(semanticV8Contract(records),null,2)+'\n');
+// Component/source fixtures must be rebuilt against the new definition before
+// their digests can be pinned. This explicit bootstrap does not publish an
+// interoperability manifest or policy and cannot satisfy the --check gate.
+if(definitionOnly){
+  process.stdout.write(JSON.stringify({valid:true,mode:'definition-only',interoperabilityChecked:false})+'\n');
+  process.exit(0);
+}
 const {verifyRegionTrainingCase,recheckRegionEvidence}=await import('../src/semantic/compiler-v8.js');
 const fixtures=regionQualificationFixtures();
 const examples=[];

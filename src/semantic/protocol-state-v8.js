@@ -9,6 +9,7 @@ import {assertAlgorithmFields,assertAlgorithmDataArray,isAlgorithmDataRecord} fr
 import {validateProtocolRecordV8,validateProtocolValueV8,validateProtocolKeyV8,
   validateProtocolDescriptorV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
+import {promiseIntrinsicIdV8,PROMISE_OBJECT_STATE_V8,restorePromiseObjectStateV8} from './protocol-promise-object-v8.js';
 
 export const PROTOCOL_STATE_V8_SCHEMA='semantic-protocol-state/1';
 const baseStateFields=['schema','symbols','pendingCalls','callFrames','sequence'];
@@ -31,6 +32,20 @@ const scalarDescription=row=>row.kind==='well-known'?['str','Symbol.'+row.name]:
 export function createProtocolStateV8(){return {schema:PROTOCOL_STATE_V8_SCHEMA,
   symbols:WELL_KNOWN_SYMBOLS.map(name=>({id:'well-known:'+name,kind:'well-known',name})),pendingCalls:[],callFrames:[],sequence:0,
   ...Object.fromEntries(extensionStateFields.map(field=>[field,null]))};}
+// The lifecycle shares a checked realm heap, not invocation-local call frames
+// or extension continuations. Materialized intrinsic identities survive that
+// boundary. A new V8 controller derives just their initialization marker after
+// validating the complete canonical group; ordinary restoration never repairs
+// a missing marker in a supplied state packet.
+export function initializeRetainedProtocolStateV8(controller){
+  if(![...controller.heap.values()].some(node=>node.kind==='intrinsic'))return;
+  const protocol=createProtocolStateV8();
+  protocol.promiseObjects={schema:PROMISE_OBJECT_STATE_V8,initialized:true};
+  restorePromiseObjectStateV8(controller,protocol.promiseObjects,PROTOCOL_MACHINE_API_V8);
+  PROTOCOL_MACHINE_API_V8.require(controller.heap.get(promiseIntrinsicIdV8('Object.prototype'))?.prototype===null,
+    'Object.prototype has an immutable null prototype');
+  controller.protocol=protocol;
+}
 function state(controller){return controller.protocol??=createProtocolStateV8();}
 export function protocolReservedIdentitiesV8(controller){
   return new Set([...controller.heap.keys(),...state(controller).symbols.map(row=>row.id),
@@ -102,15 +117,23 @@ function compatibleDefinition(node,key,descriptor){
 }
 const objectIntrinsicNames=['constructor','__proto__','toString','toLocaleString','valueOf','hasOwnProperty','isPrototypeOf','propertyIsEnumerable',
   '__defineGetter__','__defineSetter__','__lookupGetter__','__lookupSetter__'];
-function missingIntrinsic(node,key){
+function effectivePrototype(controller,id,node=heapNode(controller,id)){
+  const prototype=node.prototype===undefined?'ordinary':node.prototype;
+  if(prototype==='ordinary'&&node.kind==='object'&&controller.protocol?.promiseObjects?.initialized&&
+     id!==promiseIntrinsicIdV8('Object.prototype'))return ['ref',promiseIntrinsicIdV8('Object.prototype')];
+  return prototype;
+}
+function unmodeledPrototypeMember(node,key){
   if(key[0]==='symbol')return ['well-known:iterator','well-known:unscopables'].includes(key[1])&&node.kind==='array'||
     key[1]==='well-known:hasInstance'&&node.kind==='closure';
   const arrayNames=['at','concat','copyWithin','entries','every','fill','filter','find','findIndex','findLast','findLastIndex',
     'flat','flatMap','forEach','includes','indexOf','join','keys','lastIndexOf','map','pop','push','reduce','reduceRight',
-    'reverse','shift','slice','some','sort','splice','toReversed','toSorted','toSpliced','unshift','values','with'];
-  return objectIntrinsicNames.includes(key[1])||node.kind==='array'&&arrayNames.includes(key[1])||
-    node.kind==='closure'&&['call','apply','bind','length','name','prototype','arguments','caller'].includes(key[1]);
+    'reverse','shift','slice','some','sort','splice','toReversed','toSorted','toSpliced','unshift','values','with',
+    'constructor','toString','toLocaleString'];
+  return node.kind==='array'&&arrayNames.includes(key[1])||
+    node.kind==='closure'&&['constructor','toString','call','apply','bind','length','name','prototype','arguments','caller'].includes(key[1]);
 }
+function missingIntrinsic(node,key){return key[0]==='str'&&objectIntrinsicNames.includes(key[1])||unmodeledPrototypeMember(node,key);}
 function resolveProperty(controller,object,key,{forSet=false}={}){
   const visited=new Set();let current=object;
   for(;;){
@@ -120,6 +143,13 @@ function resolveProperty(controller,object,key,{forSet=false}={}){
     const prototype=node.prototype===undefined?'ordinary':node.prototype;
     if(prototype===null)return {owner:null,node:null,descriptor:null};
     if(prototype==='ordinary'){
+      // Array.prototype and Function.prototype override some Object members.
+      // Follow shared Object state only after excluding those unmodeled slots;
+      // an explicitly stored prototype above always selects its actual chain.
+      if(['object','array','closure'].includes(node.kind)&&!unmodeledPrototypeMember(node,key)&&
+        controller.protocol?.promiseObjects?.initialized&&current!==promiseIntrinsicIdV8('Object.prototype')){
+        current=promiseIntrinsicIdV8('Object.prototype');continue;
+      }
       // OrdinarySet needs only writability here. Do not invent the inherited
       // function's value or expose it through Get. __proto__ remains an
       // accessor requiring its separately modeled invocation.
@@ -154,7 +184,11 @@ function evaluate(controller,expr){
   const left=evaluate(controller,expr.op==='unary'?expr.arg:expr.left),right=expr.op==='binary'?evaluate(controller,expr.right):null;
   if(expr.op==='unary'&&['symbol','ref'].includes(left[0])){
     if(expr.operator==='!')return ['bool',false];if(expr.operator==='void')return ['undefined'];
-    if(expr.operator==='typeof')return ['str',left[0]==='symbol'?'symbol':controller.heap.get(left[1])?.kind==='closure'?'function':'object'];
+    if(expr.operator==='typeof'){
+      const node=left[0]==='ref'?controller.heap.get(left[1]):null;
+      return ['str',left[0]==='symbol'?'symbol':node?.kind==='closure'||
+        node?.kind==='intrinsic'&&['function','constructor'].includes(node.callableKind)?'function':'object'];
+    }
     fail('numeric conversion of a behavioral value requires an abrupt/coercion boundary');
   }
   if(expr.op==='binary'&&(left[0]==='symbol'||right[0]==='symbol')){
@@ -337,12 +371,16 @@ function apply(controller,record){
       allocate(controller,{name:record.name,objectKind:'array',length:keys.length,code:null,captures:[],
         properties:keys.map((value,index)=>({key:['str',String(index)],value}))});
     }else if(record.kind==='property.prototype'){
-      let success=true;const before=node.prototype===undefined?'ordinary':node.prototype;
-      if(!eq(before,record.prototype)&&node.extensible===false)success=false;
-      if(Array.isArray(record.prototype)){
-        known(controller,record.prototype);let id=record.prototype[1],visited=new Set();
+      const initialized=controller.protocol?.promiseObjects?.initialized,
+        immutable=initialized&&record.object===promiseIntrinsicIdV8('Object.prototype'),
+        before=effectivePrototype(controller,record.object,node),
+        prototype=record.prototype==='ordinary'&&node.kind==='object'&&initialized?
+          ['ref',promiseIntrinsicIdV8('Object.prototype')]:record.prototype;
+      let success=eq(before,prototype)||!immutable&&node.extensible!==false;
+      if(Array.isArray(prototype)){
+        known(controller,prototype);let id=prototype[1],visited=new Set();
         for(;;){if(id===record.object){success=false;break;}require(!visited.has(id),'existing prototype cycle');visited.add(id);
-          const next=heapNode(controller,id).prototype;if(!Array.isArray(next))break;id=next[1];}
+          const next=effectivePrototype(controller,id);if(!Array.isArray(next))break;id=next[1];}
       }
       require(record.success===success,'false prototype transition result');if(success)node.prototype=copy(record.prototype);
     }else if(record.kind==='property.preventExtensions')node.extensible=false;
@@ -406,6 +444,14 @@ export function restoreProtocolStateV8(controller,snapshot){
     heapNode(temporary,pending.object);knownKey(temporary,pending.key);known(temporary,pending.receiver);callable(temporary,pending.callee);
     require(controller.frameFunctions.has(pending.child)&&controller.frameFunctions.has(pending.parent),'pending call frames');
     if(pending.operation==='get')require(pending.value===null,'getter has no assignment operand');else known(temporary,pending.value);
+    const callee=heapNode(temporary,pending.callee[1]),receiver=callee.functionKind==='arrow'?callee.lexicalReceiver:pending.receiver,
+      active=snapshot.callFrames.find(frame=>frame.child===pending.child);
+    require(controller.frameFunctions.get(pending.child)===callee.code&&
+      eq(controller.locals.get(pending.child+':this'),receiver),'pending accessor receiver or callable differs from its activation');
+    if(active)require(active.parent===pending.parent&&eq(active.arguments,pending.operation==='get'?[]:[pending.value]),
+      'pending accessor arguments or parent differ from its activation');
+    if(controller.stack.at(-1)===pending.child)require(eq(controller.receiver,receiver),
+      'active accessor receiver differs from its retained call');
   }
   assertAlgorithmDataArray(snapshot.callFrames,'protocol call frames');
   require(snapshot.callFrames.length<=PROTOCOL_V8_LIMITS.calls,'call frame bound');
@@ -438,7 +484,13 @@ export function restoreProtocolStateV8(controller,snapshot){
         validateProtocolDescriptorV8(descriptor);
         if(metadata.kind==='accessor'){
           require(mapKey(node.properties,key)===undefined,'accessor also stores a data value');
-          for(const value of [descriptor.get,descriptor.set])if(value[0]!=='undefined')callable(temporary,value);
+          for(const value of [descriptor.get,descriptor.set])if(value[0]!=='undefined'){
+            const intrinsic=value[0]==='ref'&&temporary.heap.get(value[1]);
+            if(intrinsic?.kind==='intrinsic')require(snapshot.promiseObjects?.initialized===true&&
+              ['Object.prototype.__proto__.get','Object.prototype.__proto__.set'].includes(intrinsic.intrinsicName)&&
+              promiseIntrinsicIdV8(intrinsic.intrinsicName)===value[1],'undeclared intrinsic accessor');
+            else callable(temporary,value);
+          }
         }
       }
     }
@@ -447,8 +499,15 @@ export function restoreProtocolStateV8(controller,snapshot){
         require(!ordered.some(other=>keyEqual(other,key))&&ownDescriptor(node,publicKey(key)),'invalid or duplicate property order');ordered.push(key);}
       require([...keys,...described].every(key=>ordered.some(other=>keyEqual(other,key))),'property creation order is incomplete');}
     if(node.extensible!==undefined)require(typeof node.extensible==='boolean','extensible flag');
+    if(snapshot.promiseObjects?.initialized&&id===promiseIntrinsicIdV8('Object.prototype'))
+      require(node.prototype===null,'Object.prototype has an immutable null prototype');
     const prototype=node.prototype===undefined?'ordinary':node.prototype;if(prototype!==null&&prototype!=='ordinary'&&!PROTOCOL_INTRINSIC_PROTOTYPES_V8.includes(prototype)){
       known(temporary,prototype);require(prototype[0]==='ref','prototype reference');heapNode(temporary,prototype[1]);}
+  }
+  for(const [id,node]of controller.heap)if(ordinaryHeapKinds.has(node.kind)){
+    const visited=new Set();let current=id;
+    for(;;){require(!visited.has(current),'restored cyclic prototype chain');visited.add(current);
+      const prototype=effectivePrototype(temporary,current);if(!Array.isArray(prototype))break;current=prototype[1];}
   }
   const extensionIdentities=new Set([...controller.heap.keys(),...snapshot.symbols.map(row=>row.id)]);
   for(const continuation of controller.continuations?.values()??[])

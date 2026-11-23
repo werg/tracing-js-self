@@ -11,6 +11,7 @@ import {compileBoundedTypeScript} from '../typescript.js';
 import {encodeNativeGraph} from '../host/graph-codec.js';
 import {generationEnvironment} from '../corpus/generation-process.mjs';
 import {verifyRegionTrainingCase} from './compiler-v8.js';
+import {PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA} from './protocol-source-v8.js';
 import {hashAlgorithmData} from './program.js';
 import {compareObservableGraphs} from './observables.js';
 
@@ -92,6 +93,13 @@ function outcomeAgreement(left,right){
   const anchors=graph=>graph.roots.slice(0,-1).filter(value=>value[0]==='ref').map(value=>value[1]);
   return left?.kind===right?.kind&&compareObservableGraphs(left.graph,right.graph,
     {leftInputIds:anchors(left.graph),rightInputIds:anchors(right.graph)}).equal;
+}
+function sourceOutcome(side){
+  // A direct protocol source artifact records its checked owned outcome
+  // separately from the original/reference operation and metadata audits.
+  // That representation is independent of whether a module scheduler or
+  // namespace plan was needed for this particular graph.
+  return side.schema===PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA?side.outcome:side.reference?.outcome;
 }
 function namespaceObservationAgreement(reference,sourceArtifact,moduleNamespacePlan){
   if(!moduleNamespacePlan)return true;
@@ -180,7 +188,7 @@ export async function verifyRegionModuleTrainingCase(fixture){
     provenance:{...fixture.provenance,moduleEvidence}});
   if(!result.exported)return {...identity,...result,sourceProfile:MODULE_REGION_PROFILE,moduleReference:'passed'};
   const sourceSide=result.exported.sidecar.sourceArtifact.sidecar,
-    ownedOutcome=sourceSide.moduleNamespacePlan||sourceSide.moduleSchedulerPlan?sourceSide.outcome:sourceSide.reference?.outcome;
+    ownedOutcome=sourceOutcome(sourceSide);
   if(!outcomeAgreement(reference.outcome,ownedOutcome))
     return {...identity,status:'failed',phase:'module-correspondence',sourceProfile:MODULE_REGION_PROFILE,
       reason:'Native original module graph and owned linked JavaScript differ'};
@@ -253,7 +261,7 @@ export async function recheckModuleRegionEvidence(artifact){
   const side=sourceArtifact?.sidecar;
   const evidence=side?.sourceProvenance?.upstream?.moduleEvidence;
   if(evidence===undefined)return {status:'untested',applicable:false};
-  if(evidence.schema!=='semantic-module-evidence/1'||evidence.profile!==MODULE_REGION_PROFILE)
+  if(evidence?.schema!=='semantic-module-evidence/1'||evidence.profile!==MODULE_REGION_PROFILE)
     fail('module evidence version');
   const {decodeOwnedGraph}=await import('../host/graph-codec.js');
   const [input]=decodeOwnedGraph(JSON.stringify(evidence.request.inputGraph));
@@ -285,7 +293,7 @@ export async function recheckModuleRegionEvidence(artifact){
     !isDeepStrictEqual(prepared.referenceInput,evidence.referenceInput)||
     !isDeepStrictEqual(prepared.linked.metadata,evidence.metadata))fail('module graph, transformation, inputs or provenance changed');
   const reference=await independentModuleRegionReference(prepared.referenceInput);
-  const ownedOutcome=side.moduleNamespacePlan||side.moduleSchedulerPlan?side.outcome:side.reference?.outcome;
+  const ownedOutcome=sourceOutcome(side);
   if(reference.status!=='passed'||!isDeepStrictEqual(reference,evidence.reference)||
     !outcomeAgreement(reference.outcome,ownedOutcome))fail('independent original-module outcome changed');
   if(expectedPlan&&!namespaceObservationAgreement(reference,sourceArtifact,expectedPlan))

@@ -5,6 +5,8 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {verifyProtocolRegionTrainingCase,recheckProtocolRegionEvidence} from '../src/semantic/protocol-source-v8.js';
 import {ASYNC_ITERATION_FIXTURES_V8} from '../fixtures/semantic-regions/async-iteration.js';
+import {PROMISE_OBJECT_FIXTURES_V8} from '../fixtures/semantic-regions/promise-objects.js';
+import {PROMISE_ADOPTION_GETTER_FIXTURES_V8} from '../fixtures/semantic-regions/promise-adoption-getters.js';
 const args=process.argv.slice(2),check=args.includes('--check');
 if(args.some(arg=>arg!=='--check'))throw new Error('Usage: node tools/generate-protocol-source-fixtures.mjs [--check]');
 const outerPath=new URL('../test/fixtures/semantic-protocol-region-v8.json.gz.b64',import.meta.url);
@@ -14,9 +16,10 @@ if(input.schema!=='semantic-protocol-region-fixtures/1'||!Array.isArray(input.ca
   throw new Error('Missing declared protocol source fixtures');
 const outer={schema:input.schema,cases:[]},inner={schema:'semantic-protocol-source-fixtures/1',profile:'protocol-source-extensions/1',cases:[]};
 const ids=new Set();
-const authored=new Map(ASYNC_ITERATION_FIXTURES_V8.map(fixture=>[fixture.id,fixture])),
+const authoredFixtures=[...ASYNC_ITERATION_FIXTURES_V8,...PROMISE_OBJECT_FIXTURES_V8,...PROMISE_ADOPTION_GETTER_FIXTURES_V8],
+  authored=new Map(authoredFixtures.map(fixture=>[fixture.id,fixture])),
   cases=input.cases.map(row=>authored.has(row.id)?{id:row.id,fixture:authored.get(row.id)}:row);
-for(const fixture of ASYNC_ITERATION_FIXTURES_V8)if(!cases.some(row=>row.id===fixture.id))cases.push({id:fixture.id,fixture});
+for(const fixture of authoredFixtures)if(!cases.some(row=>row.id===fixture.id))cases.push({id:fixture.id,fixture});
 for(const row of cases){
   if(typeof row.id!=='string'||!row.id||ids.has(row.id)||row.id!==row.fixture?.id)throw new Error('Invalid fixture identity');
   ids.add(row.id);

@@ -1,0 +1,1446 @@
+{
+  "schema": "issue61-second-review-retention/1",
+  "runAuthority": "working-tree-executions-not-clean-pair-attestations",
+  "authorityNote": "These contemporaneous receipts preceded their checkpoint commits and may include other already-frozen working-tree corrections. Later clean-pair runs provide exact revision authority. No revision is retroactively assigned to these executions.",
+  "subsequentCodeCheckpoints": {
+    "producerReflection": "8bf97b7369d04df876da1a1712183c1724d0d304",
+    "producerRuntime": "310ee639a21cf12c01d7ac7aeb34cfea94935ad7",
+    "producerSourceObserver": "f3f245798b3ac5de615c7aaf2cc2c472ea3d7abc",
+    "producerGate": "2ace1440ebeac3b2ffac5a0061684bfcdfac1370",
+    "nativeFixtures": "91f2896d3b6a37108571fd2328e36b22b3c051c2",
+    "nativeAdoption": "913afe46d44f3e76e71203861d48e81a1070bb86",
+    "nativeRetained": "acd86c6513ec7af8b50365517f4bff9b7e2aad5a"
+  },
+  "runs": [
+    {
+      "id": "runtime-initial",
+      "kind": "producer",
+      "note": "Initial control includes one out-of-profile unbound-identifier probe; the genuine semantic regressions are preserved separately.",
+      "log": "runtime-review-second__focused.log.gz",
+      "junit": "runtime-review-second__focused.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 7,
+          "passed": 6,
+          "failed": 1,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/owned-promise-review-boundaries.test.js": {
+            "total": 7,
+            "passed": 6,
+            "failed": 1,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [
+          {
+            "file": "test/owned-promise-review-boundaries.test.js",
+            "name": "an async finally cleanup getter throw rejects the matching result while the callback resumes",
+            "message": "Unsupported training-js/1 unbound identifier missingConstructorBinding at 136:161"
+          }
+        ],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "runtime-first-correction",
+      "kind": "producer",
+      "note": "75 passing leaves before the additional nested-helper/reentrant unwind control.",
+      "log": "runtime-review-second__focused-corrected.log.gz",
+      "junit": "runtime-review-second__focused-corrected.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 75,
+          "passed": 75,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/owned-async-promise-executors.test.js": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-executors.test.js": {
+            "total": 5,
+            "passed": 5,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-object-state.test.js": {
+            "total": 17,
+            "passed": 17,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-resolution-jobs.test.js": {
+            "total": 11,
+            "passed": 11,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-review-boundaries.test.js": {
+            "total": 7,
+            "passed": 7,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-then-getters.test.js": {
+            "total": 13,
+            "passed": 13,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-thenables-combinators.test.js": {
+            "total": 7,
+            "passed": 7,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-with-resolvers.test.js": {
+            "total": 4,
+            "passed": 4,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/promise-reactions.test.js": {
+            "total": 8,
+            "passed": 8,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "runtime-final",
+      "kind": "producer",
+      "note": "Final 76 leaves include eight new review leaves and the nested-helper/reentrant unwind correction.",
+      "log": "runtime-review-second__focused-final.log.gz",
+      "junit": "runtime-review-second__focused-final.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 76,
+          "passed": 76,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/owned-async-promise-executors.test.js": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-executors.test.js": {
+            "total": 5,
+            "passed": 5,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-object-state.test.js": {
+            "total": 17,
+            "passed": 17,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-resolution-jobs.test.js": {
+            "total": 11,
+            "passed": 11,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-review-boundaries.test.js": {
+            "total": 8,
+            "passed": 8,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-then-getters.test.js": {
+            "total": 13,
+            "passed": 13,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-thenables-combinators.test.js": {
+            "total": 7,
+            "passed": 7,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-with-resolvers.test.js": {
+            "total": 4,
+            "passed": 4,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/promise-reactions.test.js": {
+            "total": 8,
+            "passed": 8,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "reflection-initial",
+      "kind": "producer",
+      "note": "Five passes and one probe requiring unsupported defineProperty on function storage.",
+      "log": "second-review__reflection.log.gz",
+      "junit": "second-review__reflection.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 6,
+          "passed": 5,
+          "failed": 1,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/owned-promise-reflection-review.test.js": {
+            "total": 6,
+            "passed": 5,
+            "failed": 1,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [
+          {
+            "file": "test/owned-promise-reflection-review.test.js",
+            "name": "Promise prototype lookup follows owned function data and accessor slots with the Promise receiver",
+            "message": "Object.defineProperty requires owned ordinary storage"
+          }
+        ],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "reflection-unwind",
+      "kind": "producer",
+      "note": "18 passes and one real in-operator validator regression; the subsequent complete corrective run is retained.",
+      "log": "second-review__reflection-final.log.gz",
+      "junit": "second-review__reflection-final.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 19,
+          "passed": 18,
+          "failed": 1,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/owned-call-adapters.test.js": {
+            "total": 6,
+            "passed": 6,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-reflection-review.test.js": {
+            "total": 6,
+            "passed": 5,
+            "failed": 1,
+            "skipped": 0
+          },
+          "test/owned-script-profile.test.js": {
+            "total": 7,
+            "passed": 7,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [
+          {
+            "file": "test/owned-promise-reflection-review.test.js",
+            "name": "Promise prototype lookup follows owned function data and inherited accessors with the Promise receiver",
+            "message": "Ordinary in-operator has no owned receiver at a0:e133"
+          }
+        ],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "reflection-final",
+      "kind": "producer",
+      "note": "24 passes: seven new reflection controls plus 17 existing controls.",
+      "log": "second-review__reflection-corrected.log.gz",
+      "junit": "second-review__reflection-corrected.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 24,
+          "passed": 24,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/owned-call-adapters.test.js": {
+            "total": 6,
+            "passed": 6,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-promise-reflection-review.test.js": {
+            "total": 7,
+            "passed": 7,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/owned-script-profile.test.js": {
+            "total": 7,
+            "passed": 7,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/training-class-function-metadata.test.js": {
+            "total": 4,
+            "passed": 4,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "observer-initial",
+      "kind": "producer",
+      "note": "24 passes and one incorrectly specified graph expectation; the native observer side effect was independently reproduced.",
+      "log": "review-observer-slots.log.gz",
+      "junit": "review-observer-slots.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 25,
+          "passed": 24,
+          "failed": 1,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/reference-isolation.test.js": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-native-promise-slots-v8.test.js": {
+            "total": 5,
+            "passed": 4,
+            "failed": 1,
+            "skipped": 0
+          },
+          "test/semantic-promise-object-observations-v8.test.js": {
+            "total": 17,
+            "passed": 17,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [
+          {
+            "file": "test/semantic-native-promise-slots-v8.test.js",
+            "name": "independent original completion ignores unrelated Error stack hooks on returned Promises",
+            "message": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    graph: {\n      objects: [\n        {\n+         id: 'o0',\n-         id: 'o1',\n          kind: 'array',\n          properties: [\n            [\n              'length',\n              [\n...\n          ],\n-         prototype: 'ordinary'\n        }\n      ],\n      roots: [\n        [\n          'ref',\n+         'o0'\n-         'o1'\n        ]\n      ]\n    },\n    kind: 'return'\n  }"
+          }
+        ],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "observer-core-final",
+      "kind": "producer",
+      "note": "32 passes: seven earlier observer controls plus existing observations, isolation and core execution.",
+      "log": "review-observer-slots-final.log.gz",
+      "junit": "review-observer-slots-final.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 32,
+          "passed": 32,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/reference-isolation.test.js": {
+            "total": 3,
+            "passed": 3,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-execution-core.test.js": {
+            "total": 5,
+            "passed": 5,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-native-promise-slots-v8.test.js": {
+            "total": 7,
+            "passed": 7,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-promise-object-observations-v8.test.js": {
+            "total": 17,
+            "passed": 17,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "observer-namespace-final",
+      "kind": "producer",
+      "note": "Eight observer controls, including actual Linux namespace worker execution.",
+      "log": "review-observer-slots-namespace.log.gz",
+      "junit": "review-observer-slots-namespace.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 8,
+          "passed": 8,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/semantic-native-promise-slots-v8.test.js": {
+            "total": 8,
+            "passed": 8,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "source-initial",
+      "kind": "producer",
+      "note": "Nine passes and one optional-native skip before native-enabled execution and the additional bounded-update refusal control.",
+      "log": "review-source-public.log.gz",
+      "junit": "review-source-public.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 10,
+          "passed": 9,
+          "failed": 0,
+          "skipped": 1
+        },
+        "byTestFile": {
+          "test/semantic-promise-object-review-source-v8.test.js": {
+            "total": 10,
+            "passed": 9,
+            "failed": 0,
+            "skipped": 1
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": [
+          {
+            "file": "test/semantic-promise-object-review-source-v8.test.js",
+            "name": "native independently checks every Promise review source and retained continuation"
+          }
+        ]
+      }
+    },
+    {
+      "id": "public-initial",
+      "kind": "producer",
+      "note": "28 passes and one optional-native skip before native-enabled execution.",
+      "log": "review-protocol-public.log.gz",
+      "junit": "review-protocol-public.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 29,
+          "passed": 28,
+          "failed": 0,
+          "skipped": 1
+        },
+        "byTestFile": {
+          "test/semantic-promise-object-review-v8.test.js": {
+            "total": 4,
+            "passed": 3,
+            "failed": 0,
+            "skipped": 1
+          },
+          "test/semantic-protocol-promise-adoption-getter-v8.test.js": {
+            "total": 5,
+            "passed": 5,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-protocol-promise-adoption-v8.test.js": {
+            "total": 20,
+            "passed": 20,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": [
+          {
+            "file": "test/semantic-promise-object-review-v8.test.js",
+            "name": "native independently replays retained invocations and captured adoption selection"
+          }
+        ]
+      }
+    },
+    {
+      "id": "source-public-native-final",
+      "kind": "producer",
+      "note": "15 passes with real native execution: source file11 and direct public file4.",
+      "log": "review-source-protocol-native.log.gz",
+      "junit": "review-source-protocol-native.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 15,
+          "passed": 15,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/semantic-promise-object-review-source-v8.test.js": {
+            "total": 11,
+            "passed": 11,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-promise-object-review-v8.test.js": {
+            "total": 4,
+            "passed": 4,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "existing-source-initial",
+      "kind": "producer",
+      "note": "23 passes, two optional-native skips and one real nested-helper throw validation regression.",
+      "log": "review-existing-source.log.gz",
+      "junit": "review-existing-source.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 26,
+          "passed": 23,
+          "failed": 1,
+          "skipped": 2
+        },
+        "byTestFile": {
+          "test/semantic-promise-adoption-getter-source-v8.test.js": {
+            "total": 7,
+            "passed": 5,
+            "failed": 1,
+            "skipped": 1
+          },
+          "test/semantic-promise-object-source-v8.test.js": {
+            "total": 17,
+            "passed": 16,
+            "failed": 0,
+            "skipped": 1
+          },
+          "test/semantic-protocol-reference-failure-v8.test.js": {
+            "total": 2,
+            "passed": 2,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [
+          {
+            "file": "test/semantic-promise-adoption-getter-source-v8.test.js",
+            "name": "source/reference adoption constructor: promise-adoption-getter-throw-identity-and-cleanup",
+            "message": "unsupported.protocol-source: Promise constructor throw did not reject its current destination with the exact reason at a0:e75"
+          }
+        ],
+        "skippedLeaves": [
+          {
+            "file": "test/semantic-promise-adoption-getter-source-v8.test.js",
+            "name": "native independently checks adoption constructor jobs, retained scopes and selected completions"
+          },
+          {
+            "file": "test/semantic-promise-object-source-v8.test.js",
+            "name": "independent native checker replays every new source and retained shared state"
+          }
+        ]
+      }
+    },
+    {
+      "id": "existing-source-native-final",
+      "kind": "producer",
+      "note": "26 passes with real native execution after current active unwind-chain authority was corrected.",
+      "log": "review-existing-source-native-final.log.gz",
+      "junit": "review-existing-source-native-final.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 26,
+          "passed": 26,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/semantic-promise-adoption-getter-source-v8.test.js": {
+            "total": 7,
+            "passed": 7,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-promise-object-source-v8.test.js": {
+            "total": 17,
+            "passed": 17,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-protocol-reference-failure-v8.test.js": {
+            "total": 2,
+            "passed": 2,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "native-fixture-reproductions",
+      "kind": "native",
+      "note": "Three reproduced stale-fixture failures; no passing result inferred from these diagnostics.",
+      "log": "native-fixture-diagnostics__current.log.gz",
+      "junit": "native-fixture-diagnostics__current.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 3,
+          "passed": 0,
+          "failed": 3,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "tests/test_enumeration_v8.py": {
+            "total": 1,
+            "passed": 0,
+            "failed": 1,
+            "skipped": 0
+          },
+          "tests/test_lifecycle_recovery_v8.py": {
+            "total": 1,
+            "passed": 0,
+            "failed": 1,
+            "skipped": 0
+          },
+          "tests/test_native_generator_close_v8.py": {
+            "total": 1,
+            "passed": 0,
+            "failed": 1,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [
+          {
+            "file": "tests/test_enumeration_v8.py",
+            "name": "test_source_golden_replays_every_context_and_matches_the_contract",
+            "message": "AssertionError: '92eb19f1ac38a3253d4b626cb2c33207e4cc3228053830785a7c957ce6267c84' != '32505c0d131925a8681055a0863dd8df5e2258b4c043a059c005507353931554'\n- 92eb19f1ac38a3253d4b626cb2c33207e4cc3228053830785a7c957ce6267c84\n+ 32505c0d131925a8681055a0863dd8df5e2258b4c043a059c005507353931554"
+          },
+          {
+            "file": "tests/test_lifecycle_recovery_v8.py",
+            "name": "test_actual_native_callback_recovery_fixture_matches_independent_public_replay",
+            "message": "megatoken.data.native_v8.NativeV8Error: Malformed shared protocol state: Invalid semantic-protocol-record/1: shared protocol state fields"
+          },
+          {
+            "file": "tests/test_native_generator_close_v8.py",
+            "name": "test_source_qualified_generator_close_replays_every_checkpoint",
+            "message": "megatoken.data.native_v8.NativeV8Error: Malformed shared protocol state: Invalid semantic-protocol-record/1: shared protocol state fields"
+          }
+        ],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "native-fixture-corrective",
+      "kind": "native",
+      "note": "20 passes across the three affected complete files after canonical unchanged-source regeneration.",
+      "log": "native-fixture-diagnostics__affected.log.gz",
+      "junit": "native-fixture-diagnostics__affected.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 20,
+          "passed": 20,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "tests/test_enumeration_v8.py": {
+            "total": 9,
+            "passed": 9,
+            "failed": 0,
+            "skipped": 0
+          },
+          "tests/test_lifecycle_recovery_v8.py": {
+            "total": 10,
+            "passed": 10,
+            "failed": 0,
+            "skipped": 0
+          },
+          "tests/test_native_generator_close_v8.py": {
+            "total": 1,
+            "passed": 1,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "native-adoption-final",
+      "kind": "native",
+      "note": "40 passes across executor, async and scheduler files.",
+      "log": "native-adoption-review__adoption.log.gz",
+      "junit": "native-adoption-review__adoption.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 40,
+          "passed": 40,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "tests/test_promise_executor_v8.py": {
+            "total": 12,
+            "passed": 12,
+            "failed": 0,
+            "skipped": 0
+          },
+          "tests/test_async_call_v8.py": {
+            "total": 18,
+            "passed": 18,
+            "failed": 0,
+            "skipped": 0
+          },
+          "tests/test_promise_scheduler_v8.py": {
+            "total": 10,
+            "passed": 10,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "native-retained-detail-final",
+      "kind": "native",
+      "note": "11 passes including three new retained-invocation intrinsic authority controls.",
+      "log": "native-retained-boundary__detail.log.gz",
+      "junit": "native-retained-boundary__detail.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 11,
+          "passed": 11,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "tests/test_native_detail_regressions_v8.py": {
+            "total": 11,
+            "passed": 11,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "gate-policy-final",
+      "kind": "policy",
+      "note": "24 passes: 13 combined-gate controls and 11 release-driver controls.",
+      "log": "review-gate-policy.log.gz",
+      "junit": "review-gate-policy.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 24,
+          "passed": 24,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "tools/native-consumer/test_combined_v8_gate.py": {
+            "total": 13,
+            "passed": 13,
+            "failed": 0,
+            "skipped": 0
+          },
+          "tools/native-consumer/test_release_policy_driver.py": {
+            "total": 11,
+            "passed": 11,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": []
+      }
+    },
+    {
+      "id": "gate-native-receipts-final",
+      "kind": "producer",
+      "note": "15 passes with actual native replay and the additional retained receipt fields required by the final gate.",
+      "log": "review-gate-integration__controls.log.gz",
+      "junit": "review-gate-integration__controls.xml.gz",
+      "junitSummary": {
+        "counts": {
+          "total": 15,
+          "passed": 15,
+          "failed": 0,
+          "skipped": 0
+        },
+        "byTestFile": {
+          "test/semantic-promise-object-review-source-v8.test.js": {
+            "total": 11,
+            "passed": 11,
+            "failed": 0,
+            "skipped": 0
+          },
+          "test/semantic-promise-object-review-v8.test.js": {
+            "total": 4,
+            "passed": 4,
+            "failed": 0,
+            "skipped": 0
+          }
+        },
+        "failedLeaves": [],
+        "skippedLeaves": []
+      }
+    }
+  ],
+  "finalReviewFiles": [
+    {
+      "run": "runtime-final",
+      "testFile": "test/owned-promise-review-boundaries.test.js",
+      "counts": {
+        "total": 8,
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "run": "reflection-final",
+      "testFile": "test/owned-promise-reflection-review.test.js",
+      "counts": {
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "run": "observer-namespace-final",
+      "testFile": "test/semantic-native-promise-slots-v8.test.js",
+      "counts": {
+        "total": 8,
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "run": "source-public-native-final",
+      "testFile": "test/semantic-promise-object-review-source-v8.test.js",
+      "counts": {
+        "total": 11,
+        "passed": 11,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "run": "source-public-native-final",
+      "testFile": "test/semantic-promise-object-review-v8.test.js",
+      "counts": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "run": "native-adoption-final",
+      "testFile": "tests/test_promise_executor_v8.py",
+      "counts": {
+        "total": 12,
+        "passed": 12,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "run": "native-retained-detail-final",
+      "testFile": "tests/test_native_detail_regressions_v8.py",
+      "counts": {
+        "total": 11,
+        "passed": 11,
+        "failed": 0,
+        "skipped": 0
+      }
+    }
+  ],
+  "sourceArtifacts": {
+    "file": "review-source-cases-final.json.gz",
+    "cases": 8,
+    "contexts": 196
+  },
+  "directArtifacts": {
+    "file": "review-protocol-cases-final.json.gz",
+    "cases": 2,
+    "contexts": 30
+  },
+  "partialRuns": [
+    {
+      "file": "native-fixture-diagnostics__fixture-consumers.log.gz",
+      "status": "stopped-after-29-progress-dots-no-complete-result",
+      "claim": "No complete-file pass is inferred."
+    }
+  ],
+  "admissionClaims": {
+    "fullCombinedGate": false,
+    "moduleAdmission": false,
+    "trainingAdmission": false,
+    "learnedQuality": false
+  },
+  "files": [
+    {
+      "path": "runtime-review-second__focused.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/focused.log",
+      "sourceBytes": 2090,
+      "sourceSha256": "6cbaa86bdcfaecc64bdb580e345f8c3f57d83befb2ffbd65c36869ca3d052655",
+      "retainedBytes": 784,
+      "retainedSha256": "9527cf9bce2e71cd8554cf4ad319378a763e1475d70710eb8a4efb02aa5d6e44"
+    },
+    {
+      "path": "runtime-review-second__focused.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/focused.xml",
+      "sourceBytes": 3383,
+      "sourceSha256": "e13373608a73f18a7ad25fb04768c0e53b777916f6f3ae9f9efbc33e42418476",
+      "retainedBytes": 957,
+      "retainedSha256": "3098148a4114050e49d6fbabdf5899bcc6810151cf9eb2b8dac61191dcad378f"
+    },
+    {
+      "path": "runtime-review-second__focused-corrected.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/focused-corrected.log",
+      "sourceBytes": 7411,
+      "sourceSha256": "565773dd8690826f7478f8801b258c703d9afd5f942d174af8b18ed65dea68c2",
+      "retainedBytes": 2901,
+      "retainedSha256": "c86740f84ffa18a20178a218c45ef08e51a49cd8de818b47a6d61afbb683b2ad"
+    },
+    {
+      "path": "runtime-review-second__focused-corrected.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/focused-corrected.xml",
+      "sourceBytes": 17287,
+      "sourceSha256": "04a8913881cbb169ae9f291abdadcd7caced5517223a36fa9e49b94f7cb83904",
+      "retainedBytes": 3136,
+      "retainedSha256": "433a1bc77f8d0b28f93400abbf293172a00fea19b75d660ff16d8ab1d4beda59"
+    },
+    {
+      "path": "runtime-review-second__focused-final.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/focused-final.log",
+      "sourceBytes": 7526,
+      "sourceSha256": "54547da9e7bb152f51bf560d18c137081422501f66e04cd7dac57fd3904f825a",
+      "retainedBytes": 2939,
+      "retainedSha256": "7dcf64f0be2bb3606328e78f3b2798ef7e2294154bf4a3f68aad9f5288c5f9d8"
+    },
+    {
+      "path": "runtime-review-second__focused-final.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/focused-final.xml",
+      "sourceBytes": 17536,
+      "sourceSha256": "fead04346dcb444f0f6a62f4dd6728ed17ea7e82d60f8669c58eaa1fda002aa1",
+      "retainedBytes": 3181,
+      "retainedSha256": "9e10593b7eba9f3bfe278de248bd6f8dc8d5efb5a71f9d0646f6d8497c68d532"
+    },
+    {
+      "path": "second-review__reflection.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/second-review/reflection.log",
+      "sourceBytes": 2042,
+      "sourceSha256": "25b0eaae2b03805a74e6b9884327ade888e67a8dec59e817c111fac09cfc5c6b",
+      "retainedBytes": 799,
+      "retainedSha256": "ca167ebc4039c52c525ac899ee01bc4bc8a7573c186102e3b9238a19a12f5097"
+    },
+    {
+      "path": "second-review__reflection.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/second-review/reflection.xml",
+      "sourceBytes": 3117,
+      "sourceSha256": "05d98e2837b9eadcaa5995cbcbcee903484c63ed20110786f9d491930f996ee2",
+      "retainedBytes": 958,
+      "retainedSha256": "1ec55c3b62b31e98a1ec3981036022f889baae619ee07eb47a69064edbf127ec"
+    },
+    {
+      "path": "second-review__reflection-final.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/second-review/reflection-final.log",
+      "sourceBytes": 3510,
+      "sourceSha256": "cad1d2dbe2cd6a1a8e17d911149c0a79546fa639e38970b12c12acc26bb006f5",
+      "retainedBytes": 1386,
+      "retainedSha256": "dd7b1568b2c1008905783e3f07436dadad2f2f3a58c4e77270e74bdf0e5e53fc"
+    },
+    {
+      "path": "second-review__reflection-final.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/second-review/reflection-final.xml",
+      "sourceBytes": 6183,
+      "sourceSha256": "9c1721b29910f28f44680ddc3464e3bb994f9cb834d72d2c31093b150ed40588",
+      "retainedBytes": 1582,
+      "retainedSha256": "377ee846bbf42fbc05cdc0047331721283b8732c049891fde6cbf6d7a510a0fc"
+    },
+    {
+      "path": "second-review__reflection-corrected.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/second-review/reflection-corrected.log",
+      "sourceBytes": 2642,
+      "sourceSha256": "42c57a8fe9c4c8da2d974c8bba5d22fb8bcf0891cb331d74ee935cc7e7c894c3",
+      "retainedBytes": 1265,
+      "retainedSha256": "d657f5e7fcc53b72d653cdf40ee62a1359546173d8e50f81dbabfff4cb13ee28"
+    },
+    {
+      "path": "second-review__reflection-corrected.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/second-review/reflection-corrected.xml",
+      "sourceBytes": 5838,
+      "sourceSha256": "99ce62f990f0d65ffa18b7bf1c8a5a4fba6bbae774525dd71ad22bf0ac37579c",
+      "retainedBytes": 1439,
+      "retainedSha256": "11c80a9804856a4fc41cf4cba5f128f6e04ffee9c6ce894923b2e6da9977b273"
+    },
+    {
+      "path": "review-observer-slots.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-observer-slots.log",
+      "sourceBytes": 4153,
+      "sourceSha256": "9bd3bd7d6a43dc093d3c1cdbb3bfb8e64ab219aa96c0e358c16b0465a5b9b633",
+      "retainedBytes": 1636,
+      "retainedSha256": "76b194ec1aca4cdea82c0655f79a8a135754b5f196820925ad5cff882de40034"
+    },
+    {
+      "path": "review-observer-slots.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-observer-slots.xml",
+      "sourceBytes": 9286,
+      "sourceSha256": "1f573a4bc93d4afed7f35e2fee228290a62dccd60a9261105808400d6871da9d",
+      "retainedBytes": 1969,
+      "retainedSha256": "cfedde669c6176f143cace8795eaa82678d21ad3461c74d5dd9b2ca6e3c36434"
+    },
+    {
+      "path": "review-observer-slots-final.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-observer-slots-final.log",
+      "sourceBytes": 3474,
+      "sourceSha256": "c22332bcf4b529d86d1bc124d8d9fb21d9c80a9e7ff5510275643eaa834ffa99",
+      "retainedBytes": 1407,
+      "retainedSha256": "1e6a587e4008e5505d51306b5bdb82329118319baabaef694640277779ffe59d"
+    },
+    {
+      "path": "review-observer-slots-final.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-observer-slots-final.xml",
+      "sourceBytes": 7963,
+      "sourceSha256": "8af6c5a4bc04e155cc0df1860c80784860bd773545ee8678b9ff7ea826626abc",
+      "retainedBytes": 1568,
+      "retainedSha256": "ef22d2b0d2725dcb6404c447b05d56f2c2cf186642bcb7728501b03ecfdbd7c2"
+    },
+    {
+      "path": "review-observer-slots-namespace.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-observer-slots-namespace.log",
+      "sourceBytes": 947,
+      "sourceSha256": "bd2eada08947c0cf95d52f600d5c6814d35a737303928d223ab474bc2735e908",
+      "retainedBytes": 528,
+      "retainedSha256": "02d3473bb72c42289bcae5d6bb4d81bf7876c384d6434abbcdf27cdad0a029e5"
+    },
+    {
+      "path": "review-observer-slots-namespace.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-observer-slots-namespace.xml",
+      "sourceBytes": 2143,
+      "sourceSha256": "aefbc6adaa7b4b553839dea5a3fd1ff1834aa1d5e67710e123f1aea5ca05ec3a",
+      "retainedBytes": 650,
+      "retainedSha256": "5757399f7ab24842358b814a94b2e33a6f27169e60abef140c2dd83ab711934b"
+    },
+    {
+      "path": "review-source-public.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-source-public.log",
+      "sourceBytes": 1178,
+      "sourceSha256": "58e98a4b7160e615fee738443b8a48940f8d38a5e416f35bce560f2ec43fc72e",
+      "retainedBytes": 486,
+      "retainedSha256": "eb414976a0ff3e8a832f5b29277a77bc5395c0306363eef1141be40cf5aab551"
+    },
+    {
+      "path": "review-source-public.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-source-public.xml",
+      "sourceBytes": 2765,
+      "sourceSha256": "6fa323e705878d7fadd6d191d3c7c7be4112a014d107af6830aeef8f17ce1219",
+      "retainedBytes": 605,
+      "retainedSha256": "ef050f4cc442421319b22e158ae26389e0d2997801944ffd72838a0da28d11a0"
+    },
+    {
+      "path": "review-protocol-public.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-protocol-public.log",
+      "sourceBytes": 3202,
+      "sourceSha256": "008b644f839816d5d516ab5ebad31512fb1d5a24762b42fc2729f83640d0e44d",
+      "retainedBytes": 1339,
+      "retainedSha256": "9bfe947c6259cc3ebf3c7ba50bd2f2e2f5531af846b0607f6e8a361cca7a00c1"
+    },
+    {
+      "path": "review-protocol-public.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-protocol-public.xml",
+      "sourceBytes": 7475,
+      "sourceSha256": "eef0868191653c8b9329f5150e7353e96a66476507d2323574e4bedf04af4ca0",
+      "retainedBytes": 1504,
+      "retainedSha256": "5b720cf8153debedc0f8279e3d4418ab1bce615e239c6fe9c5800c5aca9c1e73"
+    },
+    {
+      "path": "review-source-protocol-native.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-source-protocol-native.log",
+      "sourceBytes": 1709,
+      "sourceSha256": "25a0168e9f9eaba3155160abef067e2f52c9e7f84fe4975ba469084583a95901",
+      "retainedBytes": 704,
+      "retainedSha256": "a33a88787eee7478f6ef4565f5118a9100d3a259c9149c9e5f64ed9191c90c91"
+    },
+    {
+      "path": "review-source-protocol-native.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-source-protocol-native.xml",
+      "sourceBytes": 3933,
+      "sourceSha256": "ecfd9773101b8da247ca11c4de8c9a7e4594b7ec73e15dfc1c3d9500863b57ca",
+      "retainedBytes": 831,
+      "retainedSha256": "bd255f8927020de6ab504b9146ca45128f2459b385703fe6f19131b80456396f"
+    },
+    {
+      "path": "review-existing-source.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-existing-source.log",
+      "sourceBytes": 3847,
+      "sourceSha256": "45eaadc0ed5aad2c244ef8e5f5a3ffa5c5b40c67619c447087b4f5dba5023c3d",
+      "retainedBytes": 1308,
+      "retainedSha256": "09e991d184a2de1b5d238eb2cb9275ddbaaa5045f162c3aaf1effb623c938427"
+    },
+    {
+      "path": "review-existing-source.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-existing-source.xml",
+      "sourceBytes": 8020,
+      "sourceSha256": "90e6baff0e98b9aca62b66b43bbc7aafc27654c2a379c29f2d7e73f1c94da710",
+      "retainedBytes": 1449,
+      "retainedSha256": "ad753e8248194e73618d3516252d9ac5d5bc98d704094e0b1b5f2754559b687d"
+    },
+    {
+      "path": "review-existing-source-native-final.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-existing-source-native-final.log",
+      "sourceBytes": 2958,
+      "sourceSha256": "357e184731abefd82be1653257ca5dda1cb847a2b9cae6d5c1cdd6caeedfeed1",
+      "retainedBytes": 877,
+      "retainedSha256": "b4accff8579f1ff407f00beb36e6bbfbcecbbe19fe0b166fec3fe3458f40b902"
+    },
+    {
+      "path": "review-existing-source-native-final.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-existing-source-native-final.xml",
+      "sourceBytes": 6664,
+      "sourceSha256": "245c5a42e0ba425fa1ec79c233c4861455d802379715db4e4dc00d1112ae2498",
+      "retainedBytes": 1002,
+      "retainedSha256": "bbc0378a5baf60151191bf2de1a513d0af12971a9250237d458576e3b1edf814"
+    },
+    {
+      "path": "native-fixture-diagnostics__current.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/native-fixture-diagnostics/current.log",
+      "sourceBytes": 24160,
+      "sourceSha256": "841f759958e6fe57ffd60d5d68b79d1381eef7dd0986f83fab6be9079bf86d2f",
+      "retainedBytes": 2988,
+      "retainedSha256": "8b6d6ecc53ab3b72475c7542cb3e8c5df5fa59aa969ccdda9ca792349a530991"
+    },
+    {
+      "path": "native-fixture-diagnostics__current.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/native-fixture-diagnostics/current.xml",
+      "sourceBytes": 24610,
+      "sourceSha256": "297186f5d01dbb56248ca557eb90fd6b612666145817e99248518d43a055fb13",
+      "retainedBytes": 3042,
+      "retainedSha256": "f6b0fee77c6da6518aea5529a6a4859b6c0f9a6c02a8fc3b28fe2fcd9f69f4b1"
+    },
+    {
+      "path": "native-fixture-diagnostics__affected.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/native-fixture-diagnostics/affected.log",
+      "sourceBytes": 212,
+      "sourceSha256": "424978ddd9b53c0e533e245991da9c3f5e01c9414ba746d06b3fb271cbb4d570",
+      "retainedBytes": 147,
+      "retainedSha256": "5e5d9d6eb47531e87f3155bdf09043ffd9cf91ce8ced1a5c09be8a6f41b6076f"
+    },
+    {
+      "path": "native-fixture-diagnostics__affected.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/native-fixture-diagnostics/affected.xml",
+      "sourceBytes": 3333,
+      "sourceSha256": "4affe0b84980e08520ad0d02e8a20ad3adf2cdbcb0ac08e795bca7b5df44fc68",
+      "retainedBytes": 906,
+      "retainedSha256": "8a31956684323f86eca1136be47212560ba787a93275e7ff9f629095854ba4bb"
+    },
+    {
+      "path": "native-adoption-review__adoption.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/native-adoption-review/adoption.log",
+      "sourceBytes": 208,
+      "sourceSha256": "44239eec8f1d4620374968cf6d4e44dcb730055bda50473bac4ee04e2c8d7867",
+      "retainedBytes": 142,
+      "retainedSha256": "a75149591c6c0385f0d003a018a53adc3b49917813ae4c734ae380cf70f76a9a"
+    },
+    {
+      "path": "native-adoption-review__adoption.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/native-adoption-review/adoption.xml",
+      "sourceBytes": 6376,
+      "sourceSha256": "93d915356b49e403dc5b7bbe2a73a424cd70322ad2196ebd89461b833dbb8789",
+      "retainedBytes": 1364,
+      "retainedSha256": "9a3d6c15efca3b7caf9d2faee4b81a56fc0ef5eee135e1fc57f1fae3822d2b82"
+    },
+    {
+      "path": "native-retained-boundary__detail.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/native-retained-boundary/detail.log",
+      "sourceBytes": 209,
+      "sourceSha256": "d26688b6b13eba4dbaacfa86e81287fae180b03e6d913276988438bfd0ebd045",
+      "retainedBytes": 145,
+      "retainedSha256": "b3db89300c2503c19d4c8fed43f7ea3ef63102e19fe5629ffddf1207b6b917a6"
+    },
+    {
+      "path": "native-retained-boundary__detail.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/native-retained-boundary/detail.xml",
+      "sourceBytes": 2270,
+      "sourceSha256": "1a35fbe1214ee4b2f8d1b054f304b800d9e86381234a4a240973fc4c89c8514e",
+      "retainedBytes": 633,
+      "retainedSha256": "07ee87a8ad4558756e895c567084f9265fcd47a92c4b960dc96f750e5117bf31"
+    },
+    {
+      "path": "review-gate-policy.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-gate-policy.log",
+      "sourceBytes": 195,
+      "sourceSha256": "10bf6123576e8d12326e64d52d536406c5d64d7383340c2d7ce240bb6c453646",
+      "retainedBytes": 137,
+      "retainedSha256": "a14988705b592516a9915570e2e04ad37a363c46aa3aad7f9b144eee854e911d"
+    },
+    {
+      "path": "review-gate-policy.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-gate-policy.xml",
+      "sourceBytes": 4426,
+      "sourceSha256": "472ac86bf9ae416729c621a901685eb30d779243ffc8c564b3d3619768e7be91",
+      "retainedBytes": 1004,
+      "retainedSha256": "8527f670c6263913ddd6f2d6db1c8d255a5c1c90929493c097b9e969db9e7d41"
+    },
+    {
+      "path": "review-gate-integration__controls.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-gate-integration/controls.log",
+      "sourceBytes": 1708,
+      "sourceSha256": "2921c79df756ac946c5e7c9f29bf7c764d261f4ad68c13f5c226445e01638325",
+      "retainedBytes": 705,
+      "retainedSha256": "a364c552b0e0c14996f81699ee061b401d7c8c9705703ba349f32153e5bf0b20"
+    },
+    {
+      "path": "review-gate-integration__controls.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-gate-integration/controls.xml",
+      "sourceBytes": 3933,
+      "sourceSha256": "3481481471dd0719a15fca476f3a4055cdc71983215e3414cedc23046f66f6ef",
+      "retainedBytes": 828,
+      "retainedSha256": "41f1a0f2a0a9b4b146c5ad6a73db711429dc1a4716c76b3cb65763310bd79379"
+    },
+    {
+      "path": "runtime-review-second__adversarial-summary.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/adversarial-summary.json",
+      "sourceBytes": 506,
+      "sourceSha256": "02598ca50bc7e9c4446d00857fff399bb082944d86af23cf905eea3e549078b2",
+      "retainedBytes": 239,
+      "retainedSha256": "98854764c1a06f5046df04f8da938501243572553aa349f64f29a477aa0daccc"
+    },
+    {
+      "path": "runtime-review-second__arrow.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/arrow.json",
+      "sourceBytes": 100850,
+      "sourceSha256": "6c93a4ec26e6ef21f5a9ce0c50d8e80e95f29b354b38f4a1049e217c1284687e",
+      "retainedBytes": 8379,
+      "retainedSha256": "2d3f5f1e412d94c5a03f4b9475447a1f26930f5482591ce3d84f070b54f85f3f"
+    },
+    {
+      "path": "runtime-review-second__await_wrapper.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/await_wrapper.json",
+      "sourceBytes": 276481,
+      "sourceSha256": "863a595487d8f0c6b658d52c12af7e417dd5701c14454f3e4fd6a2f683c44ebf",
+      "retainedBytes": 18902,
+      "retainedSha256": "278b3be3ee651720ec00a7447241b2fb6c064df020dd73c27827612bf266656e"
+    },
+    {
+      "path": "runtime-review-second__constructor_throw.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/constructor_throw.json",
+      "sourceBytes": 159597,
+      "sourceSha256": "af00919ae9878ef85585356b1fc4c75f5ab99af15c35801b8e3bbdb79e2274aa",
+      "retainedBytes": 11286,
+      "retainedSha256": "2ab7b73c907a9256a76f5f254ed50904d55af6974a216e7d531cfdc26669b8fa"
+    },
+    {
+      "path": "runtime-review-second__finally_await.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/finally_await.json",
+      "sourceBytes": 192984,
+      "sourceSha256": "79b4b8dd4e355819d42a03e09f26d01e16103a7d00a7731454bcd8c85ca77d23",
+      "retainedBytes": 14884,
+      "retainedSha256": "1e984d49b8861685c98a7592a15776b53e990e87f8122ec4f135a29f345ec5fe"
+    },
+    {
+      "path": "runtime-review-second__finally_throw.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/finally_throw.json",
+      "sourceBytes": 170535,
+      "sourceSha256": "7c7035ee7ceb485cdb64d6485ab634aeb01f836059723f65759b0ff7d1d99f94",
+      "retainedBytes": 13757,
+      "retainedSha256": "b1f0ead796ed50c82e6f7ecda20a318adee77e4396634510fba4c8e8bacb7e6f"
+    },
+    {
+      "path": "runtime-review-second__generator.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/generator.json",
+      "sourceBytes": 111563,
+      "sourceSha256": "dd62a13c38d57afa89e17d1200c3112a02052fdbe9c9f77938977bf70604a9a1",
+      "retainedBytes": 9375,
+      "retainedSha256": "3b84bd6fe0e8e8aa557048be31acf31b8e80b2791c9bf13a0290e00f3289f330"
+    },
+    {
+      "path": "runtime-review-second__historical-rejection-forgery.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/historical-rejection-forgery.json",
+      "sourceBytes": 158800,
+      "sourceSha256": "e09b88df92ff261d94373711c53a314d952ae4168a4cef584ef118d97722fa81",
+      "retainedBytes": 11350,
+      "retainedSha256": "06034778fd7f3cce96004819d332f3f13174ac1a68415feef7d544345ed3e871"
+    },
+    {
+      "path": "runtime-review-second__reproduction-summary.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/reproduction-summary.json",
+      "sourceBytes": 3042,
+      "sourceSha256": "f1f6c0644cc00daf2ef83edc5724781207f426a869a88d8ab63be97217b5e279",
+      "retainedBytes": 594,
+      "retainedSha256": "799ef4f6fb83b6763dc13384638e355bce05543503e6aaa204cb91d43e101f94"
+    },
+    {
+      "path": "runtime-review-second__thenable.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/runtime-review-second/thenable.json",
+      "sourceBytes": 124522,
+      "sourceSha256": "82880688255231aed923e55fc3d76ad11273c79567bae47b7f1bb8a204bfcad8",
+      "retainedBytes": 9650,
+      "retainedSha256": "5c3d9c1bf6e6a257bee7ea220eb02ffedafabe2289c7818ba2b78d1855e1f8a5"
+    },
+    {
+      "path": "review-source-cases-final.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-source-cases-final.json",
+      "sourceBytes": 2919810,
+      "sourceSha256": "6978c387524aeb9cde9ec55c8f6dd1015fc96416079a58649d63b429a3429781",
+      "retainedBytes": 158281,
+      "retainedSha256": "076a53cf3e11c1747067c858be9c6023d6c20a3edb1f2930aa143c64cc6de82a"
+    },
+    {
+      "path": "review-protocol-cases-final.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-protocol-cases-final.json",
+      "sourceBytes": 300004,
+      "sourceSha256": "ee900389fa821cf8354ca62340279a2c69d84989598468b51a35f64ba9a988b8",
+      "retainedBytes": 9030,
+      "retainedSha256": "8b8f27ee27b2039654cee4903d59b681a790f5f046a856ae0f4bd6fcb7950d83"
+    },
+    {
+      "path": "native-fixture-diagnostics__regenerate.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/native-fixture-diagnostics/regenerate.log",
+      "sourceBytes": 284,
+      "sourceSha256": "fb3f45e07e788866de742a0af98e2d0f3bb2eda3ea2267217d2ae5dedb3e0079",
+      "retainedBytes": 212,
+      "retainedSha256": "6f60f8b128bcd9f5aab29bacca6e0372c5b76b3fc1430128dd4a1bf2eacf7a4c"
+    },
+    {
+      "path": "native-fixture-diagnostics__fixture-consumers.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/native-fixture-diagnostics/fixture-consumers.log",
+      "sourceBytes": 40,
+      "sourceSha256": "eec2e7703b7ff3ca60b810115a76a777a4e532d537fc0f6aa3aa29c7be9a06d8",
+      "retainedBytes": 24,
+      "retainedSha256": "bdb212cdf66120ff69b8d759567cdf75215712e0e903729d624686133094beed"
+    },
+    {
+      "path": "review-gate-inventory.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-gate-inventory.json",
+      "sourceBytes": 3203,
+      "sourceSha256": "ab704459e860265b6aca327cf506da510c3d61f0eae7fbffd9b873ebdb3fb24f",
+      "retainedBytes": 1073,
+      "retainedSha256": "12c81b330927371750c1f925b82154e909b50cf4f50c3af9617a053297550efc"
+    },
+    {
+      "path": "review-gate-integration__packet-verification.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-gate-integration/packet-verification.json",
+      "sourceBytes": 442,
+      "sourceSha256": "2df12d90d73ebafced8fe694b068231ae037902a440166f6b7b2ed3fad2382ec",
+      "retainedBytes": 254,
+      "retainedSha256": "43a4d4a59fb941f0b34f0f45572ffefd83ce2580ce4a9f3353abca06aa2d85ad"
+    },
+    {
+      "path": "review-gate-integration__promise-object-review-source-evidence.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-gate-integration/promise-object-review-source-evidence.json",
+      "sourceBytes": 2922765,
+      "sourceSha256": "ca6fa512f1f2fb199c0dfcf04b8b7f7d39a008b6f9961a8f8d269ffa8b0e96dd",
+      "retainedBytes": 158723,
+      "retainedSha256": "b4ddd1b2cf49a8836e1dc92b94a2d93b4a38ade2ca026b318eebd7090a29737a"
+    },
+    {
+      "path": "review-gate-integration__promise-object-review-protocol-evidence.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/review-gate-integration/promise-object-review-protocol-evidence.json",
+      "sourceBytes": 300914,
+      "sourceSha256": "0fcb2f7251d2b817f8c2fd44956243976a4762dca755edb73bc44faf97413929",
+      "retainedBytes": 9282,
+      "retainedSha256": "6734158891ca1330360acb469c1369f34f5d1663c6a0cae8c547499b25bc96c7"
+    }
+  ]
+}

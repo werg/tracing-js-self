@@ -33,7 +33,14 @@ import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_RECORD_FIELDS,validatePromi
   restorePromiseAdoptionStateV8,assertPromiseAdoptionNextV8,allowsPromiseAdoptionInternalSchedulerV8,
   allowsPromiseAdoptionWithoutStackV8} from './protocol-promise-adoption-v8.js';
 import {hasAsyncIterationSourceCallableV8} from './async-iteration-source-v8.js';
+import {PROMISE_OBJECT_PROFILE_V8,PROMISE_OBJECT_RECORD_FIELDS,validatePromiseObjectRecordV8,
+  applyPromiseObjectRecordV8,restorePromiseObjectStateV8} from './protocol-promise-object-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
+  id:PROMISE_OBJECT_PROFILE_V8,recordFields:PROMISE_OBJECT_RECORD_FIELDS,
+  validateRecord:validatePromiseObjectRecordV8,applyRecord:applyPromiseObjectRecordV8,
+  stateField:'promiseObjects',ordinaryHeapKinds:['promise'],
+  hasRichState:node=>node.kind==='intrinsic',restoreState:restorePromiseObjectStateV8
+}),Object.freeze({
   id:MODULE_SCHEDULER_PROFILE_V8,recordFields:MODULE_SCHEDULER_RECORD_FIELDS,
   validateRecord:validateModuleSchedulerRecordV8,applyRecord:applyModuleSchedulerRecordV8,
   restoreState:controller=>validateBoundModuleSchedulerStateV8(controller),

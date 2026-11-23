@@ -25,15 +25,20 @@ export function referenceEnvironment(){
   return Object.fromEntries(['PATH','TMPDIR','TEMP','TMP','LANG','LC_ALL','TZ'].filter(key=>process.env[key]!=null)
     .map(key=>[key,process.env[key]]));
 }
-export function referenceCommand(worker,{timeoutMs,isolation=referenceIsolationMode()}={}){
+export function referenceCommand(worker,{timeoutMs,isolation=referenceIsolationMode(),nativePromiseSlots=false}={}){
+  if(typeof nativePromiseSlots!=='boolean'||nativePromiseSlots&&
+    realpathSync(worker)!==realpathSync(new URL('../../tools/protocol-reference-v8.mjs',import.meta.url)))
+    throw new Error('Native Promise slots are restricted to the trusted protocol reference worker');
   const env=referenceEnvironment();
-  if(isolation==='trusted-process')return {command:process.execPath,args:[worker],env,cleanup(){}};
+  if(isolation==='trusted-process')return {command:process.execPath,
+    args:[...(nativePromiseSlots?['--expose-internals']:[]),worker],env,cleanup(){}};
   if(isolation!=='linux-namespace'||process.platform!=='linux')throw new Error('Linux namespace reference isolation is unavailable');
   const directory=process.env.TMPDIR??tmpdir();mkdirSync(directory,{recursive:true});
   const sandbox=mkdtempSync(join(directory,'semantic-reference-'));
   return {command:'/usr/bin/unshare',args:['--user','--map-root-user','--mount','--net','--ipc','--uts','--pid',
     '--fork','--kill-child=KILL','python3','-I','-S',launcher,'--root',sandbox,'--repo',root,
     '--node',realpathSync(process.execPath),'--worker',realpathSync(worker),
+    ...(nativePromiseSlots?['--native-promise-slots']:[]),
     '--cpu-seconds',String(Math.max(1,Math.ceil(timeoutMs/1000))),
     '--timezone',process.env.TZ??Intl.DateTimeFormat().resolvedOptions().timeZone,
     '--lang',process.env.LANG??'C.UTF-8','--locale',process.env.LC_ALL??process.env.LANG??'C.UTF-8'],env,

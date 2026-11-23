@@ -9,7 +9,7 @@ import {validateSuperEvent} from './super-validation.js';
 import {isBinaryMemoryKind,validateBinaryMemoryState,validateBinaryMemoryEvent} from './binary-memory-validation.js';
 import {validateNumberConversionState,validateNumberConversionEvent} from './number-conversion-validation.js';
 import {validatePropertyKeyConversionState,validatePropertyKeyConversionEvent} from './property-key-conversion-validation.js';
-import {validatePromiseResolutionState,validatePromiseResolutionEvent} from './promise-resolution-validation.js';
+import {validatePromiseResolutionState,validatePromiseResolutionEvent,isPromiseConstructorRejection} from './promise-resolution-validation.js';
 import {validateScriptSequenceState,validateScriptSequenceEvent} from './script-validation.js';
 import {validateScriptHostEvent} from './script-host-validation.js';
 import {validateExternalCallbackJob,validateExternalCallbackEntry} from './external-callback-validation.js';
@@ -167,10 +167,22 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       }else if(job?.kind==='thenable'){
          const p=state.promises[job.promiseId];
          if(!p||p.status!=='pending'||p.thenableSerial!==job.serial||
-            state.heap[job.thenId]?.kind!=='function'||!state.heap[job.thenableId]||
+            state.heap[job.thenId]?.kind!=='function'||!(state.heap[job.thenableId]??state.promises[job.thenableId])||
+            job.receiver!==undefined&&!eq(job.receiver,['promise',job.thenableId])||
             e.causes.filter(c=>c.kind==='promise'&&c.promiseId===p.id).length!==1||
             e.causes.filter(c=>c.kind==='invocation').length!==1)
            fail('Queued thenable is not backed by an owned function and promise',e.eventId);
+         const fn=state.heap[job.thenId],invocation=e.causes.find(c=>c.kind==='invocation').frameId,
+           child=e.stateChanges.find(patch=>patch.table==='frames'&&patch.id===invocation&&patch.before===null),
+           control=e.stateChanges.find(patch=>patch.table==='control'&&patch.id==='a0')?.after,
+           environment=e.stateChanges.find(patch=>patch.table==='envs'&&patch.id===child?.after?.envId&&patch.before===null)?.after,
+           receiver=fn.arrow?fn.lexicalThisFrameId?state.frames[fn.lexicalThisFrameId]?.thisValue:fn.lexicalThis:
+             job.receiver??['ref',job.thenableId];
+         if(!child||e.causes.length!==2||control?.activeFrameId!==invocation||
+            environment?.parent!==fn.closureEnvId||child.after.status!=='running'||child.after.callerFrameId!==null||
+            child.after.codeId!==fn.codeId||!eq(child.after.thisValue,receiver)||
+            !eq(child.after.thenableJob,{promiseId:p.id,serial:job.serial}))
+           fail('Queued thenable changed its invocation, capture, selected function, receiver or resolving pair',e.eventId);
        }else if(!job || !state.promises[job.promiseId] ||
          state.promises[job.promiseId].status==='pending' ||
          e.causes.filter(c=>c.kind==='promise').length!==1 ||
@@ -211,13 +223,14 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     validateTemplateEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateEnumerationEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateReceiverEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
-    validateCallAdapterEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateCallAdapterEvent(state,e,bundle.programs,message=>fail(message,e.eventId),bundle.sources);
     validateConstructionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateSuperEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateBinaryMemoryEvent(e,message=>fail(message,e.eventId));
     validateNumberConversionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validatePropertyKeyConversionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validatePromiseResolutionEvent(state,e,message=>fail(message,e.eventId));
+    const constructorRejection=isPromiseConstructorRejection(state,e);
     validateScriptSequenceEvent(state,e,bundle,message=>fail(message,e.eventId));
     validateScriptHostEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     if(e.operation==='execution.unsupported'||e.completion?.type==='unsupported'&&
@@ -321,7 +334,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
            // A thenable that calls resolve() and then throws ignores the throw.
            // It remains an executed guest abrupt completion, not a second
            // promise rejection, and is validated against the locked capability.
-           if(!rejection&&!reactionRejection&&!resolutionRejection&&!pendingCoercion&&!executorCompletion&&!thenableRejection&&!callbackRejection&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
+           if(!rejection&&!reactionRejection&&!resolutionRejection&&!constructorRejection&&!pendingCoercion&&!executorCompletion&&!thenableRejection&&!callbackRejection&&(['failed','unsupported'].includes(state.control.a0.status)||active?.status!=='running'||
              !active.handlers?.some(h=>h.phase==='catch'||h.phase==='finally')))
             fail('Guest throw was not routed to a handler or async rejection',e.eventId);
         }

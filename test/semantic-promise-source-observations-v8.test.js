@@ -18,8 +18,10 @@ test('independent Promise observations preserve identity, calls, cleanup order a
     assert(audit.observations.metadata.some(row=>row.objects.some(node=>node.kind==='promise')));
   }
 });
-test('independent Promise metadata refuses modified prototypes or own state',async()=>{
+test('independent Promise metadata retains modified own state',async()=>{
   const input={source:'"use strict";function run(){const p=Promise.resolve(1);p.extra=2;return p;}',
     entry:'run',inputGraph:encodeNativeGraph([]),mode:'completions',awaitReturnedPromise:true};
-  await assert.rejects(independentProtocolSourceReference(input),/Promise subclass or modified own state/);
+  const reference=await independentProtocolSourceReference(input);
+  assert(reference.metadata.some(row=>row.objects.some(node=>node.kind==='promise'&&node.properties.some(property=>
+    property.key[0]==='str'&&property.key[1]==='extra'&&property.descriptor.value?.[1]===2))));
 });

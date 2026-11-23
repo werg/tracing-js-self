@@ -1,0 +1,265 @@
+{
+  "schema": "issue61-regression-retention-manifest/1",
+  "purpose": "Preserve original failed broad runs and separately executed corrective evidence without inventing a single all-green run.",
+  "files": [
+    {
+      "path": "semantic-selected-files.txt",
+      "encoding": "identity",
+      "sourcePath": "issue61-evidence/semantic-suite/files.txt",
+      "sourceBytes": 7214,
+      "sourceSha256": "1d3b69acddb1578a9b2953a7273579bf2f94a3b451b14fc1733d976c5a0f6b28",
+      "retainedBytes": 7214,
+      "retainedSha256": "1d3b69acddb1578a9b2953a7273579bf2f94a3b451b14fc1733d976c5a0f6b28"
+    },
+    {
+      "path": "semantic-start.json",
+      "encoding": "identity",
+      "sourcePath": "issue61-evidence/semantic-suite/start.json",
+      "sourceBytes": 159514,
+      "sourceSha256": "c627ea0e435424c66c8cf9cbada6650d5e1ddba388b79d6e5b76405b003d5189",
+      "retainedBytes": 159514,
+      "retainedSha256": "c627ea0e435424c66c8cf9cbada6650d5e1ddba388b79d6e5b76405b003d5189"
+    },
+    {
+      "path": "semantic-summary.json",
+      "encoding": "identity",
+      "sourcePath": "issue61-evidence/semantic-suite/summary.json",
+      "sourceBytes": 279604,
+      "sourceSha256": "6de814da724c1ab56492101bc8226c1d1e31fbbc5568fdda733603356c3cc3ef",
+      "retainedBytes": 279604,
+      "retainedSha256": "6de814da724c1ab56492101bc8226c1d1e31fbbc5568fdda733603356c3cc3ef"
+    },
+    {
+      "path": "semantic-original-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/semantic-suite/spec.log",
+      "sourceBytes": 156852,
+      "sourceSha256": "5e67145a2e8e6a3fbcdbbcdec3c1d234ec8303ce7f3b576827497d0f6964692a",
+      "retainedBytes": 46427,
+      "retainedSha256": "b5c4a51d829e6d84a877e65837d9143dcbf590edf2fe6ab39d4c585e9ec95d95"
+    },
+    {
+      "path": "semantic-original-junit.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/semantic-suite/junit.xml",
+      "sourceBytes": 367464,
+      "sourceSha256": "0aa3319b4561b04dd43cb2ca3243d7299bf80a20a33ccdbb89b480e456dfdd74",
+      "retainedBytes": 52014,
+      "retainedSha256": "831555bd3aecc9a367d4cdff41c52cbe567f37ee8e4b8b8648e79ea83bd5c255"
+    },
+    {
+      "path": "semantic-focused-original-failures-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/semantic-suite/targeted-initial-failures.log",
+      "sourceBytes": 5067,
+      "sourceSha256": "c183996b7009d55ed84d5dc53133fd320c4a71b07e404afdd8d2dcb822ce1a32",
+      "retainedBytes": 1067,
+      "retainedSha256": "13696f5a87c2f98662f96dfc07b389b62b93a975bcfd56a09c0fa09488e70024"
+    },
+    {
+      "path": "semantic-corrected-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/semantic-suite/regressions-spec.log",
+      "sourceBytes": 1842,
+      "sourceSha256": "f4628ddf139985a8b396d1da3576a2b98c5e1bd32e558434b304309aaaa549e5",
+      "retainedBytes": 961,
+      "retainedSha256": "d1ff1ce02fb0bb9db0011bd36c5808161a3e9dca960c5e111d24f94308916a34"
+    },
+    {
+      "path": "semantic-corrected-junit.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/semantic-suite/regressions-junit.xml",
+      "sourceBytes": 4041,
+      "sourceSha256": "cf58fdff72506151cc6f1711a7431695163cb2daadf5f6cf58d4e8cdca138dd1",
+      "retainedBytes": 1126,
+      "retainedSha256": "92be3c2f91ffa5a01b936030e76a46ef0ca338c59e709a65a4158001a464a508"
+    },
+    {
+      "path": "semantic-observer-19-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/semantic-suite/reference-observer-rerun.log",
+      "sourceBytes": 2138,
+      "sourceSha256": "495ca214305db0170c9b28c27356101585d94cd73bde4f7a8d4067f280e692ae",
+      "retainedBytes": 806,
+      "retainedSha256": "6bcf0db87fa837cc54c2a95c92200b988cb96f9af7866fe70cb1e7794fa06eb6"
+    },
+    {
+      "path": "semantic-native-source-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/semantic-suite/native-source-spec.log",
+      "sourceBytes": 2001,
+      "sourceSha256": "1f4807828b9a83990515015d93017944744c340e95ae8bf91318188c989e0a97",
+      "retainedBytes": 570,
+      "retainedSha256": "e6f1de6ecef1231c7298fd16cac57f74b653220f0ca62b92ad968b8a712d04f5"
+    },
+    {
+      "path": "semantic-native-source-junit.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/semantic-suite/native-source-junit.xml",
+      "sourceBytes": 4414,
+      "sourceSha256": "5e20b22b1a21caeecf7d9fb4093319f4e145aeef8a35ac3534dbef47e271ba49",
+      "retainedBytes": 665,
+      "retainedSha256": "7acee6c7cea428f5a2aa5a61b31b03a8640cf04166779f573531fc0803a43b23"
+    },
+    {
+      "path": "nonsemantic-original-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-runtime-suite.log",
+      "sourceBytes": 187533,
+      "sourceSha256": "94be0ce1f1ffa4893c1cc8c29ed94524a1320b8d6fdeb92b9499f52eac96b111",
+      "retainedBytes": 61033,
+      "retainedSha256": "c491a820f7cf119ca6f9f1708341dbfd8664ed470c889c684688afb6f9ff2c5e"
+    },
+    {
+      "path": "nonsemantic-intermediate-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-runtime-rerun.log",
+      "sourceBytes": 4962,
+      "sourceSha256": "8a584902f9a411ac75c724f08608ec8243fdef676515be172ed4417da43c300b",
+      "retainedBytes": 2242,
+      "retainedSha256": "64aed3cd2ff724e720acd4d51a17c57d9f08e4fed818f99ec8e034d8b587d6fb"
+    },
+    {
+      "path": "nonsemantic-corrected-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-runtime-final-rerun.log",
+      "sourceBytes": 4273,
+      "sourceSha256": "95e52fe33f201f0d3c130b326d8d9e3c78309be42ff513d7147a53062671ba37",
+      "retainedBytes": 1967,
+      "retainedSha256": "84b29d59e6817efb7ec34e16ca0c70c30a3bc7461b3f565e17b43668125b9e61"
+    },
+    {
+      "path": "nonsemantic-corrected-junit.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-runtime-final-rerun.xml",
+      "sourceBytes": 10047,
+      "sourceSha256": "a83646424d53a4cc17f47c156b1cf69753bf4cfc1e9b7ae244a7a75ee54de7b0",
+      "retainedBytes": 2135,
+      "retainedSha256": "195efa7c8098cc281353816c3959955e9cc821c708d06ea2eca1bf6881681834"
+    },
+    {
+      "path": "nonsemantic-summary.json",
+      "encoding": "identity",
+      "derivation": "Node spec summary and exact test-name/file replacement against the retained 43-leaf JUnit; parent tests identified from original spec hierarchy.",
+      "retainedBytes": 13385,
+      "retainedSha256": "2e7131c2db2cc588caeb9bb5ed7aad457835ac53ff508d0171967b51d5d73409"
+    },
+    {
+      "path": "execution-inputs.json",
+      "encoding": "identity",
+      "derivation": "Commands/environment from the actual semantic orchestration calls; nonsemantic omissions remain explicit.",
+      "retainedBytes": 3002,
+      "retainedSha256": "e77ff33a9c342431a9318bacffcc1dad07ebd99918d797747387e19a428edfa0"
+    },
+    {
+      "path": "semantic-module-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/module-regression-final.log",
+      "sourceBytes": 1379,
+      "sourceSha256": "ad2076e3b24e84cda89aeae7ddb7ee1060e9ccc8837d54f7a8e760473193e744",
+      "retainedBytes": 719,
+      "retainedSha256": "4b707aa2dad81a62403d8747dc609210225fde2c5f453dff296f076bf2415f5e"
+    },
+    {
+      "path": "semantic-module-junit.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/module-regression-final.xml",
+      "sourceBytes": 2818,
+      "sourceSha256": "1ed402726584a8d100918eebdbf5b66d5d02120bd57310d4dd3dd710c5841d7c",
+      "retainedBytes": 831,
+      "retainedSha256": "da289869ae034d18e00c8c8323efa01a43a24f4fd0eb8c2a487fd5e469e35cf4"
+    },
+    {
+      "path": "semantic-module-admission-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/module-admission-controls-final.log",
+      "sourceBytes": 1205,
+      "sourceSha256": "e5cc832cee38595d98ac2f2e9ebb7917e2920895ae2dd837b26af57143bcc000",
+      "retainedBytes": 690,
+      "retainedSha256": "6ddf52933b798e15371cc57dcc0b47c67255474df1dde4a2f49e4baa757a6517"
+    },
+    {
+      "path": "semantic-module-admission-junit.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/module-admission-controls-final.xml",
+      "sourceBytes": 2319,
+      "sourceSha256": "357518fc60472c6a14588099d2b26cc90518bb55f3301ead07d1e6433df11cc9",
+      "retainedBytes": 653,
+      "retainedSha256": "a9c289d57db8970952579559916fe85292687e3980db6ca7c6b92d2488c8e10a"
+    },
+    {
+      "path": "semantic-clean-host-spec.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/clean-host-final.log",
+      "sourceBytes": 3524,
+      "sourceSha256": "04a8abb9d2e19298c01dd4e961395aaf0edf740d478b40346fd72ba052e04a36",
+      "retainedBytes": 900,
+      "retainedSha256": "018c6c3a61cb402919b5ab55d8262af49b42ac47d181cb9364387dd8bb0ab269"
+    },
+    {
+      "path": "semantic-clean-host-junit.xml.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/clean-host-final.xml",
+      "sourceBytes": 2046,
+      "sourceSha256": "cfd912a106cd485d621ac9cadb1e710d470277b172db5f36298ecdc1dad686a2",
+      "retainedBytes": 662,
+      "retainedSha256": "6a16066a7b695da99175823324f73e2d4cda1cb41e181d0da4be6875aee3d1e9"
+    },
+    {
+      "path": "module-generator-native-replay.log.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-tmp/native-generator-replay.txt",
+      "sourceBytes": 296,
+      "sourceSha256": "296858a3d4028a178ae2f55501cc612e5d01b76905c6cea384434466aad79004",
+      "retainedBytes": 171,
+      "retainedSha256": "3346cd70bf3dd2113ec1c47100a09b0d5367235faf5cd8622cce2abd053ce4d6"
+    },
+    {
+      "path": "module-generator-source-artifact.json.gz",
+      "encoding": "gzip",
+      "sourcePath": "issue61-evidence/module-generator-protocol-artifact.json",
+      "sourceBytes": 253634,
+      "sourceSha256": "df068fe1e3b79bb13b07f08cdeb481ee69a1845542662c586903af6fa4712277",
+      "retainedBytes": 15615,
+      "retainedSha256": "2adf4c556a9f526bbf30ae7e3f82417273449fdaf1affe92e0b59456199adb0f"
+    },
+    {
+      "path": "module-generator-native-receipt.json",
+      "encoding": "identity",
+      "derivation": "Parsed the retained original native helper dictionary without changing any checks or counts; hashed and retained its owner-identified input packet.",
+      "retainedBytes": 1107,
+      "retainedSha256": "fa51f1717ff95c687e945b3147bffebdd006f6d8b09ac177f529c0330c1750e3"
+    },
+    {
+      "path": "module-admission-summary.json",
+      "encoding": "identity",
+      "derivation": "Exact summary object extracted from the original 34 MB source-control receipt; the large source packet is represented by its original byte identity, not regenerated.",
+      "derivedFrom": {
+        "sourcePath": "issue61-evidence/module-admission-controls-final.json",
+        "sourceBytes": 34231535,
+        "sourceSha256": "368ef7216e2e17af9463e15a1cc97a61cbdc09aefd6fea57ca326356155564bb",
+        "jsonPath": "summary",
+        "wholeSourcePacketRetained": false
+      },
+      "retainedBytes": 276,
+      "retainedSha256": "dfaa92c764f91cd1685f96b82bb5789b426fd97ae3f353ef1b2ac07f2589fdd8"
+    },
+    {
+      "path": "final-execution-inputs.json",
+      "encoding": "identity",
+      "derivation": "Actual module execution tool arguments, retained source summaries, and task-owner clean-host/native execution records. Missing historical fingerprints and native revisions remain explicit.",
+      "retainedBytes": 4078,
+      "retainedSha256": "d86319fab50edbf778a6be605bf92a06d8e005e35c17f8cd895cc15a53bdf07d"
+    },
+    {
+      "path": "final-replacement-summary.json",
+      "encoding": "identity",
+      "derivation": "Parsed the retained original and corrective JUnit leaves, normalized checkout prefixes, replaced complete named files, checked every original failed control against its passing replacement, and combined with the retained nonsemantic accounting.",
+      "retainedBytes": 8767,
+      "retainedSha256": "bd66f46430721114dc921da6114c7aba65a88bee95763b6245325931df006e00"
+    }
+  ],
+  "accounting": "final-replacement-summary.json",
+  "finalExecutionInputs": "final-execution-inputs.json",
+  "allGreenBroadRunClaim": false
+}

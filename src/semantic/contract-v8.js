@@ -21,6 +21,7 @@ import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIEL
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8} from './protocol-promise-executor-v8.js';
 import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_STATE_V8} from './protocol-promise-adoption-v8.js';
+import {PROMISE_OBJECT_PROFILE_V8,PROMISE_OBJECT_STATE_V8,PROMISE_OBJECT_INTRINSICS_V8} from './protocol-promise-object-v8.js';
 import {ASYNC_CALL_PROFILE_V8,ASYNC_CALL_STATE_V8,ASYNC_CALL_FIELDS_V8} from './protocol-async-call-v8.js';
 import {BOUND_MODULE_SCHEDULER_PLAN_V8} from './module-scheduler-plan-v8.js';
 import {MODULE_SCHEDULER_PROFILE_V8,MODULE_SCHEDULER_LEDGER_FIELDS_V8} from './protocol-module-scheduler-v8.js';
@@ -61,6 +62,13 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
     'receiver','captureAliases','continuations','reactionSequence','blockedSync','callReturn','activeJob','scheduler','frameFunctions','jobErrors','protocol'],
   protocolState:{schema:PROTOCOL_STATE_V8_SCHEMA,fields:PROTOCOL_STATE_V8_FIELDS,initial:null,
     heap:'Existing heap nodes with property, descriptor and private-element Maps serialized as entry arrays; Symbol keys remain tagged pairs.',
+    promiseObjects:{profile:PROMISE_OBJECT_PROFILE_V8,schema:PROMISE_OBJECT_STATE_V8,fields:['schema','initialized'],
+      intrinsicNames:PROMISE_OBJECT_INTRINSICS_V8,
+      intrinsicIdentity:'intrinsic followed by the lowercase intrinsic name with all non-ASCII-alphanumeric characters removed; names are a fixed unique set, never selected aliases.',
+      storage:'Promise properties, descriptors, prototype links and extensibility occupy the same shared heap node as settlement and reactions. Intrinsic prototype objects are mutable; intrinsic callable identity markers are opaque and immutable.',
+      initialization:'One deterministic intrinsic-group transition materializes all identities and upgrades implicit Promise prototype links without consuming ordinary object identities. Duplicate or partial initialization is rejected.',
+      reflection:'Ordinary descriptor, hasOwn, key, get, set, delete, prototype and extensibility operations use the shared object machine. Accessors retain the original receiver, child call and exact normal or abrupt completion.',
+      boundaries:'Opaque intrinsic callable own-state reflection, custom Promise species construction and modified then-call protocols require their separately declared operations. Unsupported behavior remains outside guest exceptions.'},
     asyncCalls:{profile:ASYNC_CALL_PROFILE_V8,schema:ASYNC_CALL_STATE_V8,fields:ASYNC_CALL_FIELDS_V8,
       storage:'Retained asyncCall metadata belongs to its internal execution Promise; asyncFunction marks its callable closure.',
       resumeScopeFields:['receiver','aliases','pending'],continuationScopeFields:['receiver','captureAliases','pending'],
@@ -118,11 +126,13 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       capabilities:'Synchronous source executor calls, stable resolving function identities, a shared first-call cell, retained resolvers, primitive settlement or an exact owned-Promise adoption intent, and executor throw rejection. The first resolve consumes authority before either adoption job. Callable thenables and async executor bodies require separate profiles.'},
     promiseAdoption:{profile:PROMISE_ADOPTION_PROFILE_V8,schema:PROMISE_ADOPTION_STATE_V8,
       fields:['schema','owner','target','phase','cause','job','forwarding','error'],
-      phases:['intent','queued','observing','completed','self'],causes:['resolver','async','reaction','source'],
+      optionalFields:['lookup'],lookupFields:['child','callee'],
+      phases:['intent','queued','reading','observing','completed','rejected','self'],causes:['resolver','async','reaction','source'],
       assimilationJobFields:['status','owner','closure','reaction','adoptionPromise','adoptionTarget','readySequence'],
+      getterJobFields:['priorAliases','priorReceiver'],completedGetterJobFields:['returned'],
       forwardingJobFields:['status','owner','promise','reaction','closure','rejectionClosure','target','sequence','adoptionPromise','adoptionTarget','readySequence'],
-      capabilities:'Owned internal Promises with unchanged intrinsic then lookup use one existing realm FIFO. The original resolver or completed async/reaction frame binds an immediate resolution intent. Enqueue consumes that intent before any further record. The first job registers a forwarding dependency in registration order; a separate FIFO job forwards the settled target. First-call authority remains consumed throughout. Distinct mutual adoption cycles remain pending. Direct self resolution allocates a fresh declared TypeError identity at the self step, without either job. Source admission independently rebuilds each identity and source event.',
-      boundaries:'Callable thenables, then getters, proxies, changed Promise properties/prototypes, async reaction activation and general Error reflection are outside this slice. A declared self error has ordinary name/message data properties; native Error descriptors, stack and prototype are not claimed equivalent. Original-source checks refuse any observable mismatch.'},
+      capabilities:'Owned internal Promises with a resolved intrinsic then use one existing realm FIFO and shared ordinary descriptors/prototypes. The original resolver or completed async/reaction frame binds an immediate resolution intent. Enqueue consumes that intent before any further record. The first job checks the actual constructor. A synchronous owned constructor getter runs in that exact job with its original receiver, captures and nested calls; its explicit completion restores prior state and either rejects with the opaque thrown value or registers a forwarding dependency. A separate FIFO job forwards the settled target. First-call authority remains consumed throughout. Distinct mutual adoption cycles remain pending. Direct self resolution allocates a fresh declared TypeError identity at the self step, without either job. Source admission independently rebuilds each identity and source event.',
+      boundaries:'Callable thenables, then getters, proxies, custom adoption constructors/species and general Promise.finally cleanup continuations require separate profiles. Unrelated Promise properties and valid prototype chains remain ordinary shared state. A declared self error has ordinary name/message data properties; native Error descriptors, stack and prototype are not claimed equivalent. Original-source checks refuse any observable mismatch.'},
     binaryMemory:{profile:MEMORY_PROFILE_V8,heapFields:MEMORY_HEAP_FIELDS_V8,maxBufferBytes:1024,
       typedArrayByteOrder:'little-endian',dataViewByteOrder:'explicit per operation',
       capabilities:'Fixed ordinary buffers and fixed/growable shared buffers; scalar conversions; shared view identities; bounded single-agent atomic operations. No detach, transfer, host buffers or cross-agent scheduling.'},

@@ -101,7 +101,8 @@ export class SemanticExecutionController {
   createPromise(identity,{external=null}={}){
     if(this.heap.has(identity))fail('identity','Duplicate Promise identity');
     this.heap.set(identity,{kind:'promise',properties:new Map(),state:'pending',
-      result:null,adopted:null,external,reactions:[]});
+      result:null,adopted:null,external,reactions:[],
+      ...(this.protocol?.promiseObjects?.initialized?{prototype:['ref','intrinsicpromiseprototype']}: {})});
   }
   settlePromise(identity,status,value,{external=false}={}){
     const promise=this.promise(identity);
