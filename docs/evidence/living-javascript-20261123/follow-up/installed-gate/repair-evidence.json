@@ -1,0 +1,57 @@
+{
+  "schema": "installed-v8-ci-repair/1",
+  "baseProducerRevision": "a6e9c6ccf6f2b8b3d7bd7d75d0b5550d9c41fd2b",
+  "repairCommit": "7b826b2f41790ec086cbe7015bac464b42e54b3d",
+  "hostedFailure": {
+    "runId": 45132316511,
+    "jobId": 137550648216,
+    "url": "https://github.com/werg/tracing-js-self/actions/runs/45132316511/job/137550648216",
+    "cause": "Workflow retained interoperability=69 while the current installed inventory contained 77 fully source-qualified cases.",
+    "sourceResults": {
+      "all": {
+        "declared": 665,
+        "attempted": 665,
+        "sourceQualified": 665,
+        "sourceUnqualified": 0,
+        "untested": 0
+      },
+      "interoperability": {
+        "declared": 77,
+        "attempted": 77,
+        "sourceQualified": 77,
+        "sourceUnqualified": 0,
+        "untested": 0
+      }
+    },
+    "coverageComplete": true,
+    "native": "untested",
+    "model": "untested"
+  },
+  "verification": {
+    "command": "TMPDIR=/workspace/scratch/0952c3151b8f/tmp node --test --test-concurrency=2 test/semantic-installed-qualification-v8.test.js test/semantic-qualification-population-v8.test.js",
+    "workingDirectory": "/workspace/scratch/0952c3151b8f/producer-installed-ci",
+    "executionHeadBeforeCommit": "a6e9c6ccf6f2b8b3d7bd7d75d0b5550d9c41fd2b",
+    "candidateFilesCommittedUnchanged": true,
+    "passed": 14,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 77757.505712,
+    "scope": "Actual workflow gate with current emitted inventory plus revision/hash/rehashed-omission/count refusal controls; existing installed worker/package and qualification population controls. No complete installed source sweep was rerun locally.",
+    "beforeFix": "The new gate control reproduced the hosted interoperability-count failure."
+  },
+  "artifacts": {
+    "job-137550648216.log": {
+      "bytes": 131399,
+      "sha256": "bddcfc01485f26ecb55559c12ba41c286969c49d89a021fc4213f34c19e6a405"
+    },
+    "gate-before.log": {
+      "bytes": 1612,
+      "sha256": "5e1786014daf1036f43ffa2eb4c5d0d964f4fe4a07f1db6a7c3e212403c988a3"
+    },
+    "focused-tests.log": {
+      "bytes": 1736,
+      "sha256": "ec96ca0d52a243017024c47e4a36529458d8234334afa6d5145fdf2343f08220"
+    }
+  },
+  "worktreeStatusAfterCommit": ""
+}

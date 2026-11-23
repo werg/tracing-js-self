@@ -29,8 +29,10 @@ language, corpus, and training work remains explicit below.
 | Current continuation fixtures | Callback, source-session, and recovery controls were regenerated and rechecked from their original source or explicit controlled inputs, including the retained pending-completion scope. Shared producer/consumer callback fixtures have identical bytes. | [Producer callback evidence](https://github.com/werg/tracing-js-self/commit/9a17eb451f5d8ca66b6f2b9075a3b39d3ef18fdb), [consumer continuation controls](https://github.com/werg/megatoken/commit/86e70e72a74fd8eb9a099c18355096086ad5ebb9) |
 | Bounded lifecycle population | A single-source preparation is checked against its full frozen registry and exact source/public/context bytes. Independent optimizer-position checks use the authenticated prepared training source IDs. Full support-population checks still require every declared member and split. | [Consumer prepared-population audit](https://github.com/werg/megatoken/commit/aab637f002323a7820759763652df7a5ad50fe04) |
 | Current paired CI | Each run resolves the matching development branch, or the current default when the matching branch is absent, to an exact commit. Network/lookup failures do not silently select another revision. The resulting policy is retained separately from the clean checkout. | [Producer per-run policies](https://github.com/werg/tracing-js-self/commit/41553d8296abacb5c852e9734fd4c336b2f652d8), [consumer producer resolution](https://github.com/werg/megatoken/commit/6006b6cadad7a44e5c2e382ac937057a607e64f0) |
+| Reference runtime and source refusal | Supported Node versions retain their unit/typed-contract tests. Source-contract generation and canonical reasoning use the current runtime declared in `.nvmrc`; demo/replay return to the matrix version. A genuine older-engine disagreement remains a fresh admission refusal, while authenticated historical replay is labeled separately. | [Reference-aware controls](https://github.com/werg/tracing-js-self/commit/764665dc5d4ad18645580603252f63052445d0b8), [workflow runtime phases](https://github.com/werg/tracing-js-self/commit/bdbe40726c6dc6cb8646a2e299b955dd1f7425fb) |
+| Current qualification inventories | The installed workflow authenticates emitted population identities instead of expecting an obsolete case count. Specialized Promise admission accepts the producer's current declared inventories while retaining sorted/unique/known-extension checks and fresh source verification. | [Installed population assertions](https://github.com/werg/tracing-js-self/commit/938b80430f0b2acd272039536cd233042c73909f), [consumer Promise admission](https://github.com/werg/megatoken/commit/b3a6e25417db57a2968b2839dccdbccb54e4abe4) |
 | Installed dependency evidence | `npm ci` uses `package-lock.json`; packed execution retains the same bytes as `contracts/npm-lock.json`. Divergence or missing evidence fails verification. Offline package qualification checks archive integrity, installed dependency trees, and package contents under current npm behavior. Direct release wrappers authenticate the updated drivers. | [npm installation and packing](https://github.com/werg/tracing-js-self/commit/c71c5425e8ca84b9e62942990aefadea1a9b7163), [release driver authentication](https://github.com/werg/tracing-js-self/commit/45a1806d99550b9bbc9cdc1e86d4ca41833ae24e) |
-| Reproducible regression controls | Edition mutations rehash variant identities before checking semantics. Native replay cases have separate fixed deadlines, and live tests read tracked fixture paths from clean producer checkouts. | [Edition controls](https://github.com/werg/tracing-js-self/commit/d4ceb0744a15b37908c99337a2a320e7185b5b8a), [native replay isolation](https://github.com/werg/megatoken/commit/5a97318ecc77998fb2fc87a3500771b705793ab7), [tracked fixture paths](https://github.com/werg/megatoken/commit/65ebbf6a8eaafe707277eae0d8606b84c9db3ab3), [per-fixture async native deadlines](https://github.com/werg/tracing-js-self/commit/a44621ceb9bcb25b1348b349b70056cdef902d65) |
+| Reproducible regression controls | Edition mutations rehash variant identities before checking semantics. Native replay cases have separate fixed deadlines, and live tests read tracked fixture paths from clean producer checkouts. The full consumer CPU job budget is 60 minutes, with individual test/child bounds retained. | [Edition controls](https://github.com/werg/tracing-js-self/commit/d4ceb0744a15b37908c99337a2a320e7185b5b8a), [native replay isolation](https://github.com/werg/megatoken/commit/5a97318ecc77998fb2fc87a3500771b705793ab7), [tracked fixture paths](https://github.com/werg/megatoken/commit/65ebbf6a8eaafe707277eae0d8606b84c9db3ab3), [per-fixture async native deadlines](https://github.com/werg/tracing-js-self/commit/a44621ceb9bcb25b1348b349b70056cdef902d65), [CPU job budget](https://github.com/werg/megatoken/commit/2a35902ac93f4bf27adbfe255900091a90942aa4) |
 
 ### Observed verification
 
@@ -102,6 +104,69 @@ lock specifies **2.10.0+cpu**; local results must retain that difference. The
 production tokenizer bytes matched SHA-256
 `40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60`.
 
+#### Hosted outcomes and the reference-engine boundary
+
+The [later retained observations](evidence/living-javascript-20261123/README.md#follow-up-checks-and-hosted-outcomes)
+separate full unit-suite results, whole-job conclusions, and focused repairs:
+
+| Executed checkout or candidate | Result and scope |
+| --- | --- |
+| PR merge `849a81cf`, with head `a6e9c6cc` | Node 24.22.3: **3,224 total, 3,129 passed, 0 failed, 95 skipped**, and the whole job passed. Node 22.23.5: **3,126 passed, 3 failed, 95 skipped** from the same total. Node 20.20.2 was superseded before completion; its partial log is not a suite result. |
+| Async reference test repair, published as `764665dc` | **52/52 passed with zero skips on each of Node 20.20.2, 22.23.5, and 24.22.3**, including all eight native replay cases. Node 20 used clean local candidate `d382d935`; Node 22/24 used base `a6e9c6cc` with unchanged candidate-file hashes. These runs retain their original before/after metadata and are not attributed to the later published commit. |
+| PR merge `d0df0d6c`, with head `764665dc` | **Each of Node 20/22/24 completed 3,226 unit tests: 3,131 passed, 0 failed, 95 skipped.** Typed contracts passed on all three. Node 20/22 whole jobs subsequently failed fresh source-contract agreement; Node 24 passed all subsequent phases. |
+| Installed qualification at direct head `764665dc` | **665/665** all-population and **77/77** interoperability sources qualified; authenticated population assertions passed. Native/model qualification remained `untested`. This is a separate success after the older `a6e9c6cc` job completed both populations but failed its stale expectation of 69 cases. The earlier gate repair's **14/14** local controls remain a focused observation. |
+| Native admission workflow for head `764665dc` | All five population jobs and the separate restore job succeeded. The restore directly checked out `764665dc` and verified the original archive inventory and positive source replay; **`freshMachineQualification: false`** and **native requalification `untested`** remain explicit. Population-specific skipped steps are retained. |
+| Source-reference workflow repair, published as `bdbe4072` | Clean local candidate `38cc672d` on Node 24.22.3 passed the unchanged-command/runtime-phase check, **6 region + 31 protocol + 4 host** source-contract checks, and **8** canonical reasoning fixtures. This local result does not certify a hosted run of the published commit. |
+
+Both matrix merge checkouts target `fc372fac62480310c6539f0669bd5106ef7cfce2`.
+Their full execution revisions are
+`849a81cfd05a3635a2e4088f6aa434bfceda6567` and
+`d0df0d6cbb858bc0be1a75dd917f769c73b0a637`; the corresponding PR heads are
+`a6e9c6ccf6f2b8b3d7bd7d75d0b5550d9c41fd2b` and
+`764665dc5d4ad18645580603252f63052445d0b8`. Direct installed/restore checkouts and
+PR merge checkouts are separate identities. The [completed head-764 record](evidence/living-javascript-20261123/README.md#completed-producer-checks-after-the-test-repair)
+has 10 successful workflows and one failed workflow, with 23 successful jobs and
+two failed jobs. Those status totals do not create a single combined test result.
+
+The three earlier Node 22 test failures reflected genuine engine disagreement:
+current owned execution closes a rejected synchronous-iterator value once, while
+Node 20/22 omit that close. The repaired controls retain **seven fresh source
+agreements and one explicit refusal** on those older engines, plus all eight
+native replay controls. The refused case uses authenticated committed evidence
+solely for explicitly historical replay. Their 31-case committed source rechecks
+retain 30 validations and one refusal; Node 24 retains all eight fresh agreements
+and all 31 validations. A passing refusal test never creates fresh source
+admission. The [workflow phase repair](evidence/living-javascript-20261123/README.md#source-reference-runtime-phase-repair)
+uses `.nvmrc` for current-source agreement while retaining the supported host
+matrix for unit tests, typed contracts, demo, and replay.
+
+#### Consumer admission and CPU job follow-ups
+
+The [completed consumer records](evidence/living-javascript-20261123/README.md#completed-interoperability-retry-and-promise-admission-repair)
+retain the successful gallery at producer `0b9ca73` / consumer `65ebbf6`:
+**1,282 Python tests passed**, and all **11** gallery sources were source-qualified
+and native-admitted. Model usefulness and native serving latency were unmeasured.
+Both earlier CPU matrix jobs exhausted their 45-minute job budget on actual PR
+merge `8986bb82818b78fdbf45dd5b7afdd1ad60f22c18`, merging consumer `65ebbf6` into
+`dd80bb0c4ec0f6b7d6a14f87bd9f0ba806882c56`. Neither supplied a completed full-suite
+result. The later **60-minute job budget** is published at `2a35902a`; individual
+test and subprocess bounds remain unchanged.
+
+The completed interoperability retry used exact clean producer `a6e9c6cc` and
+consumer `65ebbf6a`. Its **85 transport controls**, **1,282 native replay tests**,
+and **77/77 source qualifications** passed, but **seven Promise sources failed
+native admission**, leaving **70/77 admitted and packed**. Both lifecycle steps
+were skipped after that failure. The repair published at `b3a6e254` aligns the
+specialized Promise profile inventories without bypassing source verification.
+The exact seven formerly refused artifacts passed admission and packing on clean
+local candidate consumer `0028cce9c23ca33563a74c06e9a5bb4a033dc27e` paired with
+producer `a6e9c6cc`; its before/after metadata and seven receipts are retained.
+The candidate used local Torch 2.14.1+cpu, distinct from the hosted dependency
+lock. Separate focused admission runs passed 9 and 2 selected controls. These
+observations do not combine the historical 70 passes and candidate seven passes
+into a fresh 77-case qualification. Subsequent hosted outcomes remain in the live
+PR tally until their completed proof is retained separately.
+
 ### Current original-source Test262 observation
 
 The [retained Test262 record](../artifacts/conformance/test262-current-pr60/README.md)
@@ -145,7 +210,9 @@ the earlier exhausted attempt was not overwritten.
 - **Current hosted CI is recorded in the [live PR tally](https://github.com/werg/tracing-js-self/pull/60).**
   The completed local observations and targeted repairs above do not assign
   earlier results to a later branch head. The retained packet separately records
-  the hosted aggregate timeout, its local repair, and the rerun pending at publication.
+  historical timeouts and failures, their focused repairs, and later completed
+  hosted observations. A successful unit suite does not relabel a later failed
+  workflow phase, and passing restore does not imply native requalification.
 - **Continuing implementation and qualification** remain under the issues below:
   missing Promise/harness reflection, broader language and host behavior, safe
   corpus append and preparation across growing populations, full training and
@@ -154,8 +221,11 @@ the earlier exhausted attempt was not overwritten.
 
 ## Reproduction commands
 
-Run from the producer checkout unless stated otherwise. Install the locked
-dependencies, provide a writable temporary directory, and use modest test
+Run from the producer checkout unless stated otherwise. Use the Node version
+declared in `.nvmrc` for generated source/reference contracts and canonical
+reasoning. Supported older Node versions still run their unit and typed-contract
+checks; genuine source-reference disagreement must remain visible. Install the
+locked dependencies, provide a writable temporary directory, and use modest test
 concurrency when the native checks share a machine:
 
 ```sh
@@ -325,6 +395,19 @@ them.
 - Async iteration must retain the iterator and its methods across awaits and
   preserve pending-completion precedence during cleanup; parser acceptance alone
   would not establish support.
+- An older reference engine can disagree with current language semantics. Keep
+  every fresh source attempt and its refusal, and label authenticated historical
+  replay separately. Test runtime compatibility on each supported engine; use
+  the declared current reference runtime for current-source contract generation.
+- Source qualification, native replay, and native admission are separate checks.
+  A stale specialized Promise inventory can reject a source after replay succeeds.
+  Repair the inventory while retaining known/unique/sorted extension checks and
+  fresh source verification; do not add separate historical pass counts into a
+  new full-population result.
+- Execution budgets apply at different levels. Per-case child limits bound an
+  individual replay; the complete CPU job needs enough time for the accumulated
+  suite. Increasing the job budget from 45 to 60 minutes preserves its original
+  timeout history and does not weaken individual test or child deadlines.
 - Shared source adapters need the same static declarations as direct adapters.
   Allocation can publish mutually referring identities in one event; projection
   may inspect that event's authenticated new nodes without reading future state.

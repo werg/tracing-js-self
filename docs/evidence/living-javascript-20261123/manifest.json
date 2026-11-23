@@ -279,7 +279,12 @@
       },
       "jobUrl": "https://github.com/werg/megatoken/actions/runs/45128882436/job/137539514197",
       "log": "historical/hosted-interop-aggregate-timeout.log.gz",
-      "failure": "One Python child attempted all eight async source artifacts under a single 120000 ms deadline and timed out; all original source cases passed before that replay aggregate."
+      "failure": "One Python child attempted all eight async source artifacts under a single 120000 ms deadline and timed out; all original source cases passed before that replay aggregate.",
+      "followUpObservations": [
+        "asyncSourcePerCase",
+        "asyncBindingPerCase",
+        "hostedConsumerInteropAttempt2"
+      ]
     },
     "asyncSourcePerCase": {
       "status": "passed",
@@ -337,11 +342,790 @@
         "MKL_NUM_THREADS": "1"
       }
     },
-    "finalDocumentationReview": {
+    "asyncReferenceNode20": {
+      "status": "passed",
+      "counts": {
+        "tests": 52,
+        "pass": 52,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "node": "20.20.2",
+      "v8": "11.3.244.8-node.38",
+      "before": "follow-up/node-reference/node20-before.json",
+      "after": "follow-up/node-reference/node20-after.json",
+      "log": "follow-up/node-reference/node20.log.gz",
+      "publishedRepairRevision": "764665dc5d4ad18645580603252f63052445d0b8",
+      "executionIdentityBasis": "Exact clean local commit before/after",
+      "freshSource": {
+        "declared": 8,
+        "verified": 7,
+        "referenceRefused": 1
+      },
+      "committedSourceRecheck": {
+        "declared": 31,
+        "validated": 30,
+        "referenceRefused": 1
+      },
+      "nativeReplay": {
+        "declared": 8,
+        "passed": 8,
+        "historicalArtifacts": 1
+      },
+      "scope": "Focused overlapping tests; no full-suite result and no fresh admission for the refused original"
+    },
+    "asyncReferenceNode22": {
+      "status": "passed",
+      "counts": {
+        "tests": 52,
+        "pass": 52,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "node": "22.23.5",
+      "v8": "12.4.254.21-node.57",
+      "before": "follow-up/node-reference/node22-before.json",
+      "after": "follow-up/node-reference/node22-after.json",
+      "log": "follow-up/node-reference/node22.log.gz",
+      "publishedRepairRevision": "764665dc5d4ad18645580603252f63052445d0b8",
+      "executionIdentityBasis": "Original base revision plus unchanged candidate file hashes; published repair revision is code attribution only",
+      "freshSource": {
+        "declared": 8,
+        "verified": 7,
+        "referenceRefused": 1
+      },
+      "committedSourceRecheck": {
+        "declared": 31,
+        "validated": 30,
+        "referenceRefused": 1
+      },
+      "nativeReplay": {
+        "declared": 8,
+        "passed": 8,
+        "historicalArtifacts": 1
+      },
+      "scope": "Focused overlapping tests; no full-suite result and no fresh admission for the refused original"
+    },
+    "asyncReferenceNode24": {
+      "status": "passed",
+      "counts": {
+        "tests": 52,
+        "pass": 52,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "node": "24.22.3",
+      "v8": "13.6.233.17-node.63",
+      "before": "follow-up/node-reference/node24-before.json",
+      "after": "follow-up/node-reference/node24-after.json",
+      "log": "follow-up/node-reference/node24.log.gz",
+      "publishedRepairRevision": "764665dc5d4ad18645580603252f63052445d0b8",
+      "executionIdentityBasis": "Original base revision plus unchanged candidate file hashes; published repair revision is code attribution only",
+      "freshSource": {
+        "declared": 8,
+        "verified": 8,
+        "referenceRefused": 0
+      },
+      "committedSourceRecheck": {
+        "declared": 31,
+        "validated": 31,
+        "referenceRefused": 0
+      },
+      "nativeReplay": {
+        "declared": 8,
+        "passed": 8,
+        "historicalArtifacts": 0
+      },
+      "scope": "Focused overlapping tests; no full-suite result and no fresh admission for the refused original"
+    },
+    "asyncReferenceNode22Baseline": {
+      "status": "completed_with_failures",
+      "counts": {
+        "tests": 3,
+        "pass": 0,
+        "fail": 3,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "producerBaseRevision": "a6e9c6ccf6f2b8b3d7bd7d75d0b5550d9c41fd2b",
+      "scope": "Three affected controls before repair, not a full suite",
+      "log": "follow-up/node-reference/node22-before-repair.log.gz"
+    },
+    "hostedProducerNode24": {
+      "status": "passed_with_skips",
+      "counts": {
+        "tests": 3224,
+        "pass": 3129,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 95,
+        "todo": 0
+      },
+      "url": "https://github.com/werg/tracing-js-self/actions/runs/45132316588/job/137550495934",
+      "log": "follow-up/hosted-producer/job-137550495934-node24.log.gz",
+      "scope": "Historical complete hosted run on the recorded PR merge checkout; PR head and later repair commits are separate identities",
+      "pullRequestHeadRevision": "a6e9c6ccf6f2b8b3d7bd7d75d0b5550d9c41fd2b",
+      "executionCheckoutKind": "pull-request-merge",
+      "executionCheckoutRevision": "849a81cfd05a3635a2e4088f6aa434bfceda6567",
+      "executionRef": "refs/remotes/pull/60/merge",
+      "mergeTargetRevision": "fc372fac62480310c6539f0669bd5106ef7cfce2"
+    },
+    "hostedProducerNode22": {
+      "status": "completed_with_failures",
+      "counts": {
+        "tests": 3224,
+        "pass": 3126,
+        "fail": 3,
+        "cancelled": 0,
+        "skipped": 95,
+        "todo": 0
+      },
+      "url": "https://github.com/werg/tracing-js-self/actions/runs/45132316588/job/137550496393",
+      "log": "follow-up/hosted-producer/job-137550496393-node22.log.gz",
+      "scope": "Historical complete hosted run on the recorded PR merge checkout; PR head and later repair commits are separate identities",
+      "pullRequestHeadRevision": "a6e9c6ccf6f2b8b3d7bd7d75d0b5550d9c41fd2b",
+      "executionCheckoutKind": "pull-request-merge",
+      "executionCheckoutRevision": "849a81cfd05a3635a2e4088f6aa434bfceda6567",
+      "executionRef": "refs/remotes/pull/60/merge",
+      "mergeTargetRevision": "fc372fac62480310c6539f0669bd5106ef7cfce2"
+    },
+    "hostedProducerNode20Superseded": {
+      "status": "superseded_incomplete",
+      "node": "20.20.2",
+      "v8": "11.3.244.8-node.38",
+      "url": "https://github.com/werg/tracing-js-self/actions/runs/45132316588/job/137550496269",
+      "reportedTopLevelTestsBeforeCancellation": 2220,
+      "completedSuiteCounts": null,
+      "log": "follow-up/hosted-producer/job-137550496269-node20-cancelled.log.gz",
+      "scope": "Original superseded incomplete run on the recorded PR merge checkout; later focused52 does not replace it",
+      "pullRequestHeadRevision": "a6e9c6ccf6f2b8b3d7bd7d75d0b5550d9c41fd2b",
+      "executionCheckoutKind": "pull-request-merge",
+      "executionCheckoutRevision": "849a81cfd05a3635a2e4088f6aa434bfceda6567",
+      "executionRef": "refs/remotes/pull/60/merge",
+      "mergeTargetRevision": "fc372fac62480310c6539f0669bd5106ef7cfce2"
+    },
+    "installedGateHostedFailure": {
+      "status": "completed_with_failure",
+      "producerRevision": "a6e9c6ccf6f2b8b3d7bd7d75d0b5550d9c41fd2b",
+      "runId": 45132316511,
+      "jobId": 137550648216,
+      "url": "https://github.com/werg/tracing-js-self/actions/runs/45132316511/job/137550648216",
+      "cause": "Workflow retained interoperability=69 while the current installed inventory contained 77 fully source-qualified cases.",
+      "sourceResults": {
+        "all": {
+          "declared": 665,
+          "attempted": 665,
+          "sourceQualified": 665,
+          "sourceUnqualified": 0,
+          "untested": 0
+        },
+        "interoperability": {
+          "declared": 77,
+          "attempted": 77,
+          "sourceQualified": 77,
+          "sourceUnqualified": 0,
+          "untested": 0
+        }
+      },
+      "coverageComplete": true,
+      "native": "untested",
+      "model": "untested",
+      "log": "follow-up/installed-gate/job-137550648216.log.gz",
+      "scope": "Both source populations completed; subsequent stale fixed-count workflow assertion failed. No native/model claim."
+    },
+    "installedGateFocusedRepair": {
+      "status": "passed",
+      "counts": {
+        "tests": 14,
+        "pass": 14,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "testedLocalCommit": "7b826b2f41790ec086cbe7015bac464b42e54b3d",
+      "executionHeadBeforeCommit": "a6e9c6ccf6f2b8b3d7bd7d75d0b5550d9c41fd2b",
+      "candidateFilesCommittedUnchanged": true,
+      "publishedRepairRevision": "938b80430f0b2acd272039536cd233042c73909f",
+      "publishedRevisionWasExecutionIdentity": false,
+      "log": "follow-up/installed-gate/focused-tests.log.gz",
+      "originalRepairRecord": "follow-up/installed-gate/repair-evidence.json",
+      "scope": "Actual workflow gate with current emitted inventory plus revision/hash/rehashed-omission/count refusal controls; existing installed worker/package and qualification population controls. No complete installed source sweep was rerun locally."
+    },
+    "hostedConsumerCpu311": {
+      "status": "job_timeout_incomplete",
+      "reportedJobBudgetMinutes": 45,
+      "budgetAttribution": "Coordinator reports45-minute job budget; original logs show cancellation near that elapsed time",
+      "pythonMatrix": "3.11",
+      "sourceBranchRevision": "65ebbf6a8eaafe707277eae0d8606b84c9db3ab3",
+      "executionCheckoutKind": "pull-request-merge",
+      "executionCheckoutRevision": "8986bb82818b78fdbf45dd5b7afdd1ad60f22c18",
+      "runUrl": "https://github.com/werg/megatoken/actions/runs/45128882426",
+      "completedSuiteCounts": null,
+      "log": "follow-up/hosted-consumer/consumer-65ebbf-hosted-cpu311-timeout.log.gz",
+      "scope": "No completed full CPU suite result; isolated smoke pass is not suite completion"
+    },
+    "hostedConsumerCpu312": {
+      "status": "job_timeout_incomplete",
+      "reportedJobBudgetMinutes": 45,
+      "budgetAttribution": "Coordinator reports45-minute job budget; original logs show cancellation near that elapsed time",
+      "pythonMatrix": "3.12",
+      "sourceBranchRevision": "65ebbf6a8eaafe707277eae0d8606b84c9db3ab3",
+      "executionCheckoutKind": "pull-request-merge",
+      "executionCheckoutRevision": "8986bb82818b78fdbf45dd5b7afdd1ad60f22c18",
+      "runUrl": "https://github.com/werg/megatoken/actions/runs/45128882426",
+      "completedSuiteCounts": null,
+      "log": "follow-up/hosted-consumer/consumer-65ebbf-hosted-cpu312-timeout.log.gz",
+      "scope": "No completed full CPU suite result; isolated smoke pass is not suite completion"
+    },
+    "hostedConsumerGallery": {
+      "status": "passed",
+      "producerRevision": "0b9ca73c70497f004ee81321d4ee98266aebb673",
+      "consumerRevision": "65ebbf6a8eaafe707277eae0d8606b84c9db3ab3",
+      "runUrl": "https://github.com/werg/megatoken/actions/runs/45128882436",
+      "pythonTests": {
+        "passed": 1282,
+        "durationSeconds": 1323.69
+      },
+      "gallery": {
+        "declared": 11,
+        "sourceQualified": 11,
+        "nativeAdmitted": 11
+      },
+      "model": "unmeasured",
+      "nativeServing": "unmeasured",
+      "defaultPromotion": "not-qualified",
+      "log": "follow-up/hosted-consumer/consumer-65ebbf-hosted-gallery-success.log.gz",
+      "scope": "Recorded gallery and packing checks, not learned usefulness or serving latency qualification"
+    },
+    "hostedConsumerInteropAttempt2": {
+      "status": "completed_with_failures",
+      "runId": 45128882436,
+      "jobId": 137551653560,
+      "url": "https://github.com/werg/megatoken/actions/runs/45128882436/job/137551653560",
+      "identityBasis": "Exact clean producer and consumer checkouts printed by the hosted bind step",
+      "producer": {
+        "revision": "a6e9c6ccf6f2b8b3d7bd7d75d0b5550d9c41fd2b",
+        "tree": "2b4db10e0a332d19259425c49ce4ce6fac1edd08"
+      },
+      "consumer": {
+        "revision": "65ebbf6a8eaafe707277eae0d8606b84c9db3ab3",
+        "tree": "ab14c149a39ad91cb8710d1bf23d42fa8a1cb13c"
+      },
+      "namespaceArtifact": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "transport": {
+        "tests": 85,
+        "pass": 85,
+        "fail": 0,
+        "skipped": 0
+      },
+      "nativeReplay": {
+        "tests": 1282,
+        "pass": 1282,
+        "fail": 0,
+        "skipped": 0,
+        "durationSeconds": 1331.43
+      },
+      "admission": {
+        "declared": 77,
+        "sourceQualified": 77,
+        "nativeAdmitted": 70,
+        "nativeFailed": 7,
+        "failedCaseIds": [
+          "source-promise-join-rejection-finally",
+          "source-promise-executor-retained-resolution",
+          "source-promise-executor-abrupt",
+          "source-promise-adoption-executor",
+          "source-promise-adoption-async-return",
+          "source-promise-adoption-reaction-return",
+          "promise-allsettled-nested-executor"
+        ]
+      },
+      "measurement": {
+        "sourceEpisodes": 77,
+        "tokenMeasuredEpisodes": 77,
+        "nativePackedEpisodes": 70,
+        "nativeUnmeasuredEpisodes": 7
+      },
+      "cause": "Six executor-profile inventories and one adoption source profile were rejected by stale consumer admission checks before live source recheck.",
+      "ordinaryLifecycle": "skipped_after_admission_failure",
+      "orchestrationLifecycle": "skipped_after_admission_failure",
+      "log": "follow-up/hosted-consumer/consumer-65ebbf-hosted-interop-attempt2.log.gz",
+      "retainedHostedArtifactId": 14801430145,
+      "scope": "Completed failure. Passing replay and source qualification do not establish full native admission; candidate repair is a separate seven-case observation."
+    },
+    "promiseAdmissionCandidateSevenCases": {
+      "status": "passed",
+      "counts": {
+        "cases": 7,
+        "pass": 7,
+        "fail": 0,
+        "skipped": 0
+      },
+      "before": {
+        "producer": {
+          "root": "/workspace/scratch/0952c3151b8f/producer-admission-evidence",
+          "revision": "a6e9c6ccf6f2b8b3d7bd7d75d0b5550d9c41fd2b",
+          "tree": "2b4db10e0a332d19259425c49ce4ce6fac1edd08",
+          "status": ""
+        },
+        "consumer": {
+          "root": "/workspace/scratch/0952c3151b8f/megatoken-promise-admission",
+          "revision": "0028cce9c23ca33563a74c06e9a5bb4a033dc27e",
+          "tree": "5288460e18ad9efceb225f2ef3b98c0e5764bb94",
+          "status": ""
+        }
+      },
+      "after": {
+        "producer": {
+          "root": "/workspace/scratch/0952c3151b8f/producer-admission-evidence",
+          "revision": "a6e9c6ccf6f2b8b3d7bd7d75d0b5550d9c41fd2b",
+          "tree": "2b4db10e0a332d19259425c49ce4ce6fac1edd08",
+          "status": ""
+        },
+        "consumer": {
+          "root": "/workspace/scratch/0952c3151b8f/megatoken-promise-admission",
+          "revision": "0028cce9c23ca33563a74c06e9a5bb4a033dc27e",
+          "tree": "5288460e18ad9efceb225f2ef3b98c0e5764bb94",
+          "status": ""
+        }
+      },
+      "unchangedCleanPair": true,
+      "runtime": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+        "executable": "/workspace/scratch/0952c3151b8f/semantic-runtime/bin/python",
+        "torch": "2.14.1+cpu",
+        "tokenizers": "0.23.3"
+      },
+      "hashLockedHostedRuntime": false,
+      "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+      "sourceFiles": "Exact failed hosted artifact bytes, individually hashed in the command report; no source bytes were rewritten",
+      "durationSeconds": 49.78326287800519,
+      "commandReport": "follow-up/promise-admission/command-report.json",
+      "log": "follow-up/promise-admission/candidate.log.gz",
+      "runner": "follow-up/promise-admission/recheck-command.py",
+      "receipts": [
+        {
+          "id": "source-promise-join-rejection-finally",
+          "receipt": "follow-up/promise-admission/receipts/source-promise-join-rejection-finally.json",
+          "receiptSha256": "5c219ab4b0b5518f8ada5bac761d9864766b6d42ee5b373c57b42392730da6d6",
+          "sourceSha256": "cb283cca24d1d76e1e6ad9d67dd84a6f01fab76d2aa501b3a971081cc7fd149d",
+          "durationSeconds": 7.5281317490007496,
+          "admitted": true,
+          "checks": {
+            "replay": "passed",
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "passed",
+            "sourceBinding": "passed",
+            "tokenizer": "passed"
+          },
+          "protocolProfile": "promise-adoption-source/1",
+          "protocolExtensions": [
+            "promise-adoption/1",
+            "promise-join/1"
+          ],
+          "generatedTokens": 786,
+          "physicalRecords": 84,
+          "nativeTrainingDigest": "21bbc75381ead74493da79b7e381a704f5700445b5677c21e2fec6c12d534b82"
+        },
+        {
+          "id": "source-promise-executor-retained-resolution",
+          "receipt": "follow-up/promise-admission/receipts/source-promise-executor-retained-resolution.json",
+          "receiptSha256": "fb35a14745d85e8961c1fca44a6e9df7fe7b594658906110f3b899b4ce070e83",
+          "sourceSha256": "d43de320f50cb54a678a926225f0d692fae8275bd192ed3ddfd6ed3d2f0f971e",
+          "durationSeconds": 5.131554875000802,
+          "admitted": true,
+          "checks": {
+            "replay": "passed",
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "passed",
+            "sourceBinding": "passed",
+            "tokenizer": "passed"
+          },
+          "protocolProfile": "promise-executors-source/1",
+          "protocolExtensions": [
+            "promise-adoption/1",
+            "promise-executor/1"
+          ],
+          "generatedTokens": 451,
+          "physicalRecords": 48,
+          "nativeTrainingDigest": "98a40faa3aac18a8f431871f02354c3d71156ae00ccca9663d45ccc2a82af31b"
+        },
+        {
+          "id": "source-promise-executor-abrupt",
+          "receipt": "follow-up/promise-admission/receipts/source-promise-executor-abrupt.json",
+          "receiptSha256": "f8fdf68afb45ae571cdafa13ee9dfe36b568513b1a35b2b402be1a21a6a1ab90",
+          "sourceSha256": "3331d2bae8d2bd40370586d930bd29b4216c49c124f49c7b188c975eb03ca27e",
+          "durationSeconds": 5.013773435000985,
+          "admitted": true,
+          "checks": {
+            "replay": "passed",
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "passed",
+            "sourceBinding": "passed",
+            "tokenizer": "passed"
+          },
+          "protocolProfile": "promise-executors-source/1",
+          "protocolExtensions": [
+            "promise-adoption/1",
+            "promise-executor/1"
+          ],
+          "generatedTokens": 380,
+          "physicalRecords": 40,
+          "nativeTrainingDigest": "545bfa10d0fb3a3d811f97e66b863849a977216f71ba3064a3e6b04fd8bcc06a"
+        },
+        {
+          "id": "source-promise-adoption-executor",
+          "receipt": "follow-up/promise-admission/receipts/source-promise-adoption-executor.json",
+          "receiptSha256": "7ba1899677f4d4aed4dfd183566e00d0beb685383d6e952b754cd447273e644b",
+          "sourceSha256": "58af41f816d3b649b668974de55688442f026e67e7a32257edc45c8f6f219cd5",
+          "durationSeconds": 7.396192369000346,
+          "admitted": true,
+          "checks": {
+            "replay": "passed",
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "passed",
+            "sourceBinding": "passed",
+            "tokenizer": "passed"
+          },
+          "protocolProfile": "promise-executors-source/1",
+          "protocolExtensions": [
+            "promise-adoption/1",
+            "promise-executor/1"
+          ],
+          "generatedTokens": 794,
+          "physicalRecords": 96,
+          "nativeTrainingDigest": "451559e88759ba3915faea5a07c7e3f273dacb4022bfbaa985bffe0051315ad2"
+        },
+        {
+          "id": "source-promise-adoption-async-return",
+          "receipt": "follow-up/promise-admission/receipts/source-promise-adoption-async-return.json",
+          "receiptSha256": "f72edf4e6085f229dbf9eebbe7c5301de5665abd76adb82cf5439248b928c3ed",
+          "sourceSha256": "dc22825da027ac8b308ec9987450f9d7441b3ec69072a023b944c8fb8c93e1a9",
+          "durationSeconds": 5.905854136000926,
+          "admitted": true,
+          "checks": {
+            "replay": "passed",
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "passed",
+            "sourceBinding": "passed",
+            "tokenizer": "passed"
+          },
+          "protocolProfile": "promise-executors-source/1",
+          "protocolExtensions": [
+            "async-scoped-call-source/1",
+            "promise-adoption/1",
+            "promise-executor/1"
+          ],
+          "generatedTokens": 565,
+          "physicalRecords": 59,
+          "nativeTrainingDigest": "ecee957bf2a6d7b6d92c36de7ff9953e326de7f603e162113a4f339b0e8917db"
+        },
+        {
+          "id": "source-promise-adoption-reaction-return",
+          "receipt": "follow-up/promise-admission/receipts/source-promise-adoption-reaction-return.json",
+          "receiptSha256": "78575e8e85935794681eb53c60db9d0c8b3eaa597c4d4ca4e3774dee71521dac",
+          "sourceSha256": "45b0ace9b4bb4d4735e824ceb544402212d42847e4bc4e865c823855b1a708eb",
+          "durationSeconds": 7.137474057000873,
+          "admitted": true,
+          "checks": {
+            "replay": "passed",
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "passed",
+            "sourceBinding": "passed",
+            "tokenizer": "passed"
+          },
+          "protocolProfile": "promise-executors-source/1",
+          "protocolExtensions": [
+            "promise-adoption/1",
+            "promise-executor/1"
+          ],
+          "generatedTokens": 776,
+          "physicalRecords": 89,
+          "nativeTrainingDigest": "d4269a1954ce45541e9cc79203d94915fde36f44b9857699bd9caea841b58402"
+        },
+        {
+          "id": "promise-allsettled-nested-executor",
+          "receipt": "follow-up/promise-admission/receipts/promise-allsettled-nested-executor.json",
+          "receiptSha256": "1506e3e4f95ec0995ea2c3999de5b4b5de0677352837d1b0056349e58bde1134",
+          "sourceSha256": "1bdb2092e86526ad6987f4f725e7a3fd00c98d3ddcd84ad7bd23b7f435978aa1",
+          "durationSeconds": 11.670282257000508,
+          "admitted": true,
+          "checks": {
+            "replay": "passed",
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "passed",
+            "sourceBinding": "passed",
+            "tokenizer": "passed"
+          },
+          "protocolProfile": "promise-executors-source/1",
+          "protocolExtensions": [
+            "promise-adoption/1",
+            "promise-executor/1",
+            "promise-join/1"
+          ],
+          "generatedTokens": 1063,
+          "physicalRecords": 127,
+          "nativeTrainingDigest": "2a0bf891be307be8cd712542a7cd3b3149c8747fe2e5aca0ca89b96ea72328f0"
+        }
+      ],
+      "publishedRepairRevision": "b3a6e25417db57a2968b2839dccdbccb54e4abe4",
+      "publishedRevisionWasExecutionIdentity": false,
+      "scope": "Seven exact formerly refused sources pass fresh source recheck, replay, continuations, contexts, real tokenizer and native packing/masks on recorded local commit0028cce. This is not a fresh all77 or full-suite qualification at the published revision."
+    },
+    "promiseAdmissionFocusedControls": {
+      "status": "passed",
+      "tests": 11,
+      "failures": 0,
+      "skipped": 0,
+      "runs": [
+        {
+          "passed": 9,
+          "deselected": 6,
+          "durationSeconds": 32.05,
+          "command": "TMPDIR=/workspace/scratch/0952c3151b8f/tmp PYTHONPATH=src OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 /workspace/scratch/0952c3151b8f/semantic-runtime/bin/python -m pytest -q tests/test_admit_semantic_v8.py -k 'not live and not verified_primitive'",
+          "log": "follow-up/promise-admission/focused-admission-tests.log.gz"
+        },
+        {
+          "passed": 2,
+          "deselected": 13,
+          "durationSeconds": 3.13,
+          "command": "TMPDIR=/workspace/scratch/0952c3151b8f/tmp PYTHONPATH=src OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 /workspace/scratch/0952c3151b8f/semantic-runtime/bin/python -m pytest -q tests/test_admit_semantic_v8.py -k 'specialized_promise or composed_protocol_profile'",
+          "log": "follow-up/promise-admission/focused-profile-boundaries.log.gz"
+        }
+      ],
+      "workingDirectory": "/workspace/scratch/0952c3151b8f/megatoken-promise-admission",
+      "executionIdentityCaptured": false,
+      "identityBasis": "Focused candidate working-tree runs based on65ebbf6; these logs have no clean before/after Git capture. The separate seven-case CLI check has exact committed identities.",
+      "publishedRepairRevision": "b3a6e25417db57a2968b2839dccdbccb54e4abe4",
+      "scope": "Complementary selected tests, preserving unknown/mismatched/reordered/wrong-profile refusal and non-admission for self-asserted evidence; not a full suite."
+    },
+    "hostedProducer764Node20": {
+      "status": "unit_suite_passed_later_source_contract_failed",
+      "jobConclusion": "failure",
+      "url": "https://github.com/werg/tracing-js-self/actions/runs/45136728020/job/137564793020",
+      "pullRequestHeadRevision": "764665dc5d4ad18645580603252f63052445d0b8",
+      "executionCheckoutRevision": "d0df0d6cbb858bc0be1a75dd917f769c73b0a637",
+      "executionCheckoutKind": "pull-request-merge",
+      "executionRef": "refs/remotes/pull/60/merge",
+      "mergeTargetRevision": "fc372fac62480310c6539f0669bd5106ef7cfce2",
+      "node": "v20.20.2",
+      "npmTest": {
+        "tests": 3226,
+        "passed": 3131,
+        "failed": 0,
+        "skipped": 95,
+        "durationMs": 1134501.499253
+      },
+      "typedContracts": "passed",
+      "v8SourceContract": "failed_reference_mismatch",
+      "canonicalSourceReasoning": "skipped_after_source_contract_failure",
+      "observation": "follow-up/hosted-producer-764665dc/node20-observation.json",
+      "log": "follow-up/hosted-producer-764665dc/node20-job-137564793020.log.gz",
+      "scope": "Unit tests passed with explicit skips on the recorded PR merge. Node20/22 whole-job failures remain failures; no later publication inherits this result."
+    },
+    "hostedProducer764Node22": {
+      "status": "unit_suite_passed_later_source_contract_failed",
+      "jobConclusion": "failure",
+      "url": "https://github.com/werg/tracing-js-self/actions/runs/45136728020/job/137564793295",
+      "pullRequestHeadRevision": "764665dc5d4ad18645580603252f63052445d0b8",
+      "executionCheckoutRevision": "d0df0d6cbb858bc0be1a75dd917f769c73b0a637",
+      "executionCheckoutKind": "pull-request-merge",
+      "executionRef": "refs/remotes/pull/60/merge",
+      "mergeTargetRevision": "fc372fac62480310c6539f0669bd5106ef7cfce2",
+      "node": "v22.23.5",
+      "npmTest": {
+        "tests": 3226,
+        "passed": 3131,
+        "failed": 0,
+        "skipped": 95,
+        "durationMs": 1466840.320687
+      },
+      "typedContracts": "passed",
+      "v8SourceContract": "failed_reference_mismatch",
+      "canonicalSourceReasoning": "skipped_after_source_contract_failure",
+      "observation": "follow-up/hosted-producer-764665dc/node22-observation.json",
+      "log": "follow-up/hosted-producer-764665dc/node22-job-137564793295.log.gz",
+      "scope": "Unit tests passed with explicit skips on the recorded PR merge. Node20/22 whole-job failures remain failures; no later publication inherits this result."
+    },
+    "hostedProducer764Node24": {
+      "status": "passed_with_skips",
+      "jobConclusion": "success",
+      "url": "https://github.com/werg/tracing-js-self/actions/runs/45136728020/job/137564793447",
+      "pullRequestHeadRevision": "764665dc5d4ad18645580603252f63052445d0b8",
+      "executionCheckoutRevision": "d0df0d6cbb858bc0be1a75dd917f769c73b0a637",
+      "executionCheckoutKind": "pull-request-merge",
+      "executionRef": "refs/remotes/pull/60/merge",
+      "mergeTargetRevision": "fc372fac62480310c6539f0669bd5106ef7cfce2",
+      "node": "v24.22.3",
+      "npmTest": {
+        "tests": 3226,
+        "passed": 3131,
+        "failed": 0,
+        "skipped": 95,
+        "durationMs": 1507295.294248
+      },
+      "typedContracts": "passed",
+      "v8SourceContract": "passed",
+      "canonicalSourceReasoning": "passed",
+      "observation": "follow-up/hosted-producer-764665dc/node24-observation.json",
+      "log": "follow-up/hosted-producer-764665dc/node24-job-137564793447.log.gz",
+      "scope": "Unit tests passed with explicit skips on the recorded PR merge. Node20/22 whole-job failures remain failures; no later publication inherits this result."
+    },
+    "hostedInstalled764": {
+      "status": "passed",
+      "producerRevision": "764665dc5d4ad18645580603252f63052445d0b8",
+      "executionCheckoutKind": "exact-pr-head",
+      "url": "https://github.com/werg/tracing-js-self/actions/runs/45136728089/job/137564985589",
+      "sourceResults": {
+        "all": {
+          "declared": 665,
+          "attempted": 665,
+          "sourceQualified": 665,
+          "sourceUnqualified": 0,
+          "untested": 0
+        },
+        "interoperability": {
+          "declared": 77,
+          "attempted": 77,
+          "sourceQualified": 77,
+          "sourceUnqualified": 0,
+          "untested": 0
+        }
+      },
+      "coverageComplete": true,
+      "native": "untested",
+      "model": "untested",
+      "observation": "follow-up/hosted-producer-764665dc/installed-v8-observation.json",
+      "log": "follow-up/hosted-producer-764665dc/installed-v8-job-137564985589.log.gz",
+      "scope": "Completed installed source qualification and authenticated population assertions on exact764. Native and model work remain untested in this job. The hosted payload archive was not downloaded into this packet."
+    },
+    "hostedNativeAdmission764": {
+      "status": "passed",
+      "runHeadRevision": "764665dc5d4ad18645580603252f63052445d0b8",
+      "runUrl": "https://github.com/werg/tracing-js-self/actions/runs/45136728266",
+      "matrixJobs": [
+        {
+          "id": 137564950731,
+          "name": "independent-native-import (engineering)",
+          "conclusion": "success"
+        },
+        {
+          "id": 137564951154,
+          "name": "independent-native-import (real-source)",
+          "conclusion": "success"
+        },
+        {
+          "id": 137564951175,
+          "name": "independent-native-import (generated-v1)",
+          "conclusion": "success"
+        },
+        {
+          "id": 137564951260,
+          "name": "independent-native-import (training-v4)",
+          "conclusion": "success"
+        },
+        {
+          "id": 137564951319,
+          "name": "independent-native-import (benchmark-v1)",
+          "conclusion": "success"
+        }
+      ],
+      "restore": {
+        "jobId": 137577513537,
+        "producerRevision": "764665dc5d4ad18645580603252f63052445d0b8",
+        "executionCheckoutKind": "exact-pr-head",
+        "status": "verified",
+        "scope": "Separate hosted job restored the original archive inventory and replayed positive attempts; native requalification untested",
+        "freshMachineQualification": false,
+        "nativeRequalification": "untested",
+        "log": "follow-up/hosted-producer-764665dc/native-restore-job-137577513537.log.gz"
+      },
+      "observation": "follow-up/hosted-producer-764665dc/native-admission-observation.json",
+      "scope": "Completed hosted job/step outcomes are retained. Population-specific skipped steps remain in the original observation; job success does not claim unperformed native requalification, full training, or learned success."
+    },
+    "completedHostedWorkflows764": {
+      "status": "completed_with_failures",
+      "pullRequestHeadRevision": "764665dc5d4ad18645580603252f63052445d0b8",
+      "workflowConclusions": {
+        "success": 10,
+        "failure": 1
+      },
+      "jobConclusions": {
+        "success": 23,
+        "failure": 2
+      },
+      "observation": "follow-up/hosted-producer-764665dc/completed-workflows-and-jobs.json",
+      "scope": "Completed status enumeration for this PR-head context, not a single common execution checkout or deduplicated test result. The two failed jobs are Node20/22 source-contract phases after passing unit suites."
+    },
+    "sourceReferenceRuntimePhaseRepair": {
+      "status": "passed",
+      "baseRevision": "764665dc5d4ad18645580603252f63052445d0b8",
+      "testedLocalCommit": "38cc672dfe384414c663d6107789223bb65708b9",
+      "workingTree": "",
+      "publishedRepairRevision": "bdbe40726c6dc6cb8646a2e299b955dd1f7425fb",
+      "publishedRevisionWasExecutionIdentity": false,
+      "referenceVersionFile": ".nvmrc",
+      "referenceRuntime": "v24.22.3",
+      "checks": [
+        {
+          "command": "workflow YAML parse and original-command/runtime-phase comparison",
+          "exitCode": 0
+        },
+        {
+          "command": "TMPDIR=/workspace/scratch/0952c3151b8f/tmp npm run semantic:v8:contract",
+          "exitCode": 0,
+          "examples": 6,
+          "protocolSources": 31,
+          "hostSources": 4
+        },
+        {
+          "command": "TMPDIR=/workspace/scratch/0952c3151b8f/tmp node tools/inspect-semantic-reasoning.mjs",
+          "exitCode": 0,
+          "fixtures": 8
+        }
+      ],
+      "observation": "follow-up/ci-reference-runtime/repair-evidence.json",
+      "workflowCheck": "follow-up/ci-reference-runtime/workflow-phase-check.json",
+      "sourceContractLog": "follow-up/ci-reference-runtime/semantic-v8-contract.log.gz",
+      "reasoningLog": "follow-up/ci-reference-runtime/semantic-reasoning.log.gz",
+      "scope": "Workflow-only change. Every existing command remains: matrix host tests and typed contracts; declared current reference for source-contract/reasoning; matrix runtime restored for demo/replay. Local candidate validation is not a hosted pass at the published revision."
+    },
+    "documentationReviewBeforeFollowUps": {
       "status": "passed",
       "scope": "Retained artifact hashes and inventory, relative links in both documents, shell syntax, and Git whitespace check",
       "artifactsVerified": 65,
       "relativeLinksVerified": 38,
+      "shellBlocksVerified": 6,
+      "countsAreOverlapping": true
+    },
+    "finalDocumentationReview": {
+      "status": "passed",
+      "scope": "Every retained raw/stored hash and byte count, exact inventory, deterministic gzip bytes, retained JSON parsing, relative documentation links and anchors, shell syntax, and Git whitespace check; no runtime tests rerun",
+      "artifactsVerified": 113,
+      "retainedJsonArtifactsParsed": 51,
+      "deterministicGzipArtifactsVerified": 62,
+      "relativeLinksVerified": 78,
+      "relativeAnchorsVerified": 5,
       "shellBlocksVerified": 6,
       "countsAreOverlapping": true
     }
@@ -449,20 +1233,19 @@
   },
   "pending": [
     {
-      "id": "hosted-native-aggregate-deadline",
-      "status": "local-repair-verified-hosted-rerun-pending",
-      "reportedProducerReference": "0b9ca73",
-      "reportedConsumerReference": "65ebbf6",
-      "hostedRunId": "45128882436",
-      "hostedJobId": "137539514197",
-      "reportedObservation": "77 of 78 transport controls passed; one aggregate exceeded its 120-second child deadline; the original eight source cases passed",
-      "plannedFollowUp": "Separate per-fixture subprocess controls with the unchanged 120-second bound and assertions",
-      "evidence": "historical/hosted-interop-aggregate-timeout.log.gz",
-      "followUpObservations": [
-        "asyncSourcePerCase",
-        "asyncBindingPerCase"
-      ],
-      "publishedRepairRevision": "a44621ceb9bcb25b1348b349b70056cdef902d65"
+      "id": "subsequent-consumer-b3-hosted-outcomes",
+      "status": "not_retained_in_this_packet",
+      "consumerRevision": "b3a6e25417db57a2968b2839dccdbccb54e4abe4",
+      "cpuRunId": 45138809073,
+      "pairedV8RunId": 45138809135,
+      "publishedCpuJobBudgetMinutes": 60,
+      "scope": "Both repairs are published. This packet retains completed earlier jobs and local candidate checks; subsequent hosted outcomes remain in the live PR tally until separately retained."
+    },
+    {
+      "id": "published-source-reference-phase-workflow-outcomes",
+      "status": "not_retained_in_this_packet",
+      "producerRevision": "bdbe40726c6dc6cb8646a2e299b955dd1f7425fb",
+      "scope": "The local38cc workflow-phase proof is retained separately from publication. No hosted result at the published workflow repair is inferred."
     }
   ],
   "notIncluded": [
@@ -470,16 +1253,24 @@
     "Tokenizer contents",
     "Training datasets and indexes",
     "Complete frozen source registry",
-    "Incomplete or still-running verification logs"
+    "Still-running verification logs",
+    "Large hosted artifact archives; their reported identities are preserved where recorded"
   ],
   "claims": {
-    "zeroFailureFullSuite": false,
     "deduplicatedAggregatePassCount": null,
     "finalHeadRanEarlier66NativeControls": false,
     "finalHeadRanEarlier40Test262Variants": false,
     "fullPopulationQualified": false,
     "learnedSuccess": null,
-    "reusableModelBundlePublished": false
+    "reusableModelBundlePublished": false,
+    "earlierBroadProducer9a17AndConsumer86e7RunsRemainFailed": true,
+    "hostedProducerUnitSuitePassesAreScopedToRecordedMergeCheckouts": true,
+    "hostedProducer764Node20AndNode22WholeJobsPassed": false,
+    "allHostedCiGreen": false,
+    "laterPublishedHeadInheritsEarlierSuiteResults": false,
+    "combined77NativePassClaimFromSeparate70And7Observations": false,
+    "freshSourceAdmissionForOlderReferenceRefusal": false,
+    "hostedRestoreNativeRequalification": "untested"
   },
   "artifacts": [
     {
@@ -574,6 +1365,798 @@
       "stored": {
         "bytes": 58598,
         "sha256": "233ce2065a5eebb85472eb2bdab714bedc26aa74536c6c0df73ea0081f204135"
+      }
+    },
+    {
+      "path": "follow-up/ci-reference-runtime/repair-evidence.json",
+      "sourcePath": "validation/ci-reference-runtime/repair-evidence.json",
+      "role": "Original local workflow-phase repair validation; tested candidate and publication remain distinct",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1268,
+        "sha256": "2b893884aeba89276718ebec4bfe98d88fca64b0e46d1c83ab481a527f31e778"
+      },
+      "stored": {
+        "bytes": 1268,
+        "sha256": "2b893884aeba89276718ebec4bfe98d88fca64b0e46d1c83ab481a527f31e778"
+      }
+    },
+    {
+      "path": "follow-up/ci-reference-runtime/semantic-reasoning.log.gz",
+      "sourcePath": "validation/ci-reference-runtime/semantic-reasoning.log",
+      "role": "Original local workflow-phase repair validation; tested candidate and publication remain distinct",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 10100,
+        "sha256": "6b7cf38619b595c73c54e1684e5fbb12b318e9bb970686f9a677a615c6a2d075"
+      },
+      "stored": {
+        "bytes": 1947,
+        "sha256": "938550ab008e7e7b8bf92ccd43eb222d1338e403f239872bdf628748723f4bfc"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/ci-reference-runtime/semantic-v8-contract.log.gz",
+      "sourcePath": "validation/ci-reference-runtime/semantic-v8-contract.log",
+      "role": "Original local workflow-phase repair validation; tested candidate and publication remain distinct",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 3263,
+        "sha256": "e078cbccc3844197654aaa3a7440c09bb8ccab6281236871f91c946c639962dd"
+      },
+      "stored": {
+        "bytes": 1141,
+        "sha256": "a74b6dab259a18f1f1a314f080660063224944f5ed251cf68bed7ed9054dd9b8"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/ci-reference-runtime/workflow-phase-check.json",
+      "sourcePath": "validation/ci-reference-runtime/workflow-phase-check.json",
+      "role": "Original local workflow-phase repair validation; tested candidate and publication remain distinct",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 922,
+        "sha256": "28eb699ec5b4457d784baaae4a439a0c6a1432c35e59c73cd1dfd02a6ad09777"
+      },
+      "stored": {
+        "bytes": 922,
+        "sha256": "28eb699ec5b4457d784baaae4a439a0c6a1432c35e59c73cd1dfd02a6ad09777"
+      }
+    },
+    {
+      "path": "follow-up/hosted-consumer/consumer-65ebbf-hosted-cpu311-timeout.log.gz",
+      "sourcePath": "validation/consumer-65ebbf-hosted-cpu311-timeout.log",
+      "role": "Original completed hosted job log, retaining its failure, timeout, or success disposition",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 63725,
+        "sha256": "84deaa6b83afa0aeaf247f974c4092f41c53e90c68360fd4a3fdc42c17f51964"
+      },
+      "stored": {
+        "bytes": 13140,
+        "sha256": "95f830ecd702b83cf906bc29b9898e6301057c0a0d6f612d8c0231bc9b0a8289"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/hosted-consumer/consumer-65ebbf-hosted-cpu312-timeout.log.gz",
+      "sourcePath": "validation/consumer-65ebbf-hosted-cpu312-timeout.log",
+      "role": "Original completed hosted job log, retaining its failure, timeout, or success disposition",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 66673,
+        "sha256": "954eec6b611703632f1365d6d70fad5d19c0c7f63f74685c469d0df9950ee0e3"
+      },
+      "stored": {
+        "bytes": 13553,
+        "sha256": "f81bfcab58c37048a792cb5b9317a77c4bedb8d3dae70393f328c0c4eaac3f7d"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/hosted-consumer/consumer-65ebbf-hosted-gallery-success.log.gz",
+      "sourcePath": "validation/consumer-65ebbf-hosted-gallery-success.log",
+      "role": "Original completed hosted job log, retaining its failure, timeout, or success disposition",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 117982,
+        "sha256": "d43261a84bb0a364422e4b05503d0ad5947b05a12c27014922fc7cdb39c585f1"
+      },
+      "stored": {
+        "bytes": 22843,
+        "sha256": "c4af361ca535dc3430a2e5f467fb600f22b17af9ed8747671a175111c0aadb0d"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/hosted-consumer/consumer-65ebbf-hosted-interop-attempt2.log.gz",
+      "sourcePath": "validation/consumer-65ebbf-hosted-interop-attempt2.log",
+      "role": "Original completed failed hosted attempt 2 log; passing stages and seven native admission refusals retained",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 167892,
+        "sha256": "83ab547d5f4b6a8accdd524b6353b51892054a9b761495590891ae58d8f162fa"
+      },
+      "stored": {
+        "bytes": 32550,
+        "sha256": "e86c446e5402672e38927d04804c0980c20042dbf5e3592e0510e367be039646"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer-764665dc/completed-workflows-and-jobs.json",
+      "sourcePath": "validation/hosted-ci-764665dc/completed-workflows-and-jobs.json",
+      "role": "Original recorded hosted observation or completed workflow/job enumeration; recorded identities are unchanged",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 6035,
+        "sha256": "a8b514ec6586fc3b2713790e901630f3144836d5ab6ded0451857ae3d44fdf6b"
+      },
+      "stored": {
+        "bytes": 6035,
+        "sha256": "a8b514ec6586fc3b2713790e901630f3144836d5ab6ded0451857ae3d44fdf6b"
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer-764665dc/installed-v8-job-137564985589.log.gz",
+      "sourcePath": "validation/hosted-ci-764665dc/installed-v8-job-137564985589.log",
+      "role": "Original completed hosted job log; unit-suite and whole-job outcomes retain their separate scopes",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 131730,
+        "sha256": "01c1afa6b9266af2f6a17f6c4bfbf32aeef0be467c744a9a8448f42abd61ffe1"
+      },
+      "stored": {
+        "bytes": 17811,
+        "sha256": "af8370de776f092f35e77e773f46bae355196fab512dbf75e7200be4302c41a7"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer-764665dc/installed-v8-observation.json",
+      "sourcePath": "validation/hosted-ci-764665dc/installed-v8-observation.json",
+      "role": "Original recorded hosted observation or completed workflow/job enumeration; recorded identities are unchanged",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1128,
+        "sha256": "33dfc14e53ac708f73973953087b8035f2621eb8af2a20f8ce778dbe0f7c497b"
+      },
+      "stored": {
+        "bytes": 1128,
+        "sha256": "33dfc14e53ac708f73973953087b8035f2621eb8af2a20f8ce778dbe0f7c497b"
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer-764665dc/native-admission-observation.json",
+      "sourcePath": "validation/hosted-ci-764665dc/native-admission-observation.json",
+      "role": "Original recorded hosted observation or completed workflow/job enumeration; recorded identities are unchanged",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 28008,
+        "sha256": "73a3ebaec8e06b73ce94e6f7bbf6a73468598780333d8ee1ce074596e97f2a07"
+      },
+      "stored": {
+        "bytes": 28008,
+        "sha256": "73a3ebaec8e06b73ce94e6f7bbf6a73468598780333d8ee1ce074596e97f2a07"
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer-764665dc/native-restore-job-137577513537.log.gz",
+      "sourcePath": "validation/hosted-ci-764665dc/native-restore-job-137577513537.log",
+      "role": "Original completed hosted job log; unit-suite and whole-job outcomes retain their separate scopes",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 33554,
+        "sha256": "b96315a527d8159d654505c59b03e26700986060c886fe685b7b28f3a61554ac"
+      },
+      "stored": {
+        "bytes": 8631,
+        "sha256": "77d79cc61d692533147e8173b5678e66ce65f6a5c3fba0dc5c5643e79512e038"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer-764665dc/node20-job-137564793020.log.gz",
+      "sourcePath": "validation/hosted-ci-764665dc/node20-job-137564793020.log",
+      "role": "Original completed hosted job log; unit-suite and whole-job outcomes retain their separate scopes",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 1189710,
+        "sha256": "aa77a834c0201526ec5a88077228b48dc63f4a0db011f9fcc9dfbf20a8dea127"
+      },
+      "stored": {
+        "bytes": 224461,
+        "sha256": "2dc4c7c9bdb2b1ce7471a51b550926bdc31975485daf48c9b30c0a37e9b37f51"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer-764665dc/node20-observation.json",
+      "sourcePath": "validation/hosted-ci-764665dc/node20-observation.json",
+      "role": "Original recorded hosted observation or completed workflow/job enumeration; recorded identities are unchanged",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1061,
+        "sha256": "9d315d20bf6c1e960af0e2cb0487cb6993bf4f3913dfb60b875fe8cff9cd7340"
+      },
+      "stored": {
+        "bytes": 1061,
+        "sha256": "9d315d20bf6c1e960af0e2cb0487cb6993bf4f3913dfb60b875fe8cff9cd7340"
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer-764665dc/node22-job-137564793295.log.gz",
+      "sourcePath": "validation/hosted-ci-764665dc/node22-job-137564793295.log",
+      "role": "Original completed hosted job log; unit-suite and whole-job outcomes retain their separate scopes",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 1332655,
+        "sha256": "ba349ea85b59739a67a81a56dbcdb58dbeeb09a3ac51769619aef02f8e9866bd"
+      },
+      "stored": {
+        "bytes": 246099,
+        "sha256": "50fca4d8879c79b4f165e396f7574df6c80ae3e0a08e010defcea711e93ad1a3"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer-764665dc/node22-observation.json",
+      "sourcePath": "validation/hosted-ci-764665dc/node22-observation.json",
+      "role": "Original recorded hosted observation or completed workflow/job enumeration; recorded identities are unchanged",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1061,
+        "sha256": "216cefdce9a2b0071132c405128a17b9c53ccdf8bc999e891541b68b0addf0ba"
+      },
+      "stored": {
+        "bytes": 1061,
+        "sha256": "216cefdce9a2b0071132c405128a17b9c53ccdf8bc999e891541b68b0addf0ba"
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer-764665dc/node24-job-137564793447.log.gz",
+      "sourcePath": "validation/hosted-ci-764665dc/node24-job-137564793447.log",
+      "role": "Original completed hosted job log; unit-suite and whole-job outcomes retain their separate scopes",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 459827,
+        "sha256": "6bce643b278af30bd9ff8d96a7199c35aec16c5900424d179b33d29a8b84d2c6"
+      },
+      "stored": {
+        "bytes": 132317,
+        "sha256": "e1ddc9e59eb85b4037c56a7ef1971be7bb3d1df332b862bb543954b301865b89"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer-764665dc/node24-observation.json",
+      "sourcePath": "validation/hosted-ci-764665dc/node24-observation.json",
+      "role": "Original recorded hosted observation or completed workflow/job enumeration; recorded identities are unchanged",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 807,
+        "sha256": "0e54fa735e76fad0f9a0ae3c165fc58aa09f7141b800cad25a3a8d05815647e7"
+      },
+      "stored": {
+        "bytes": 807,
+        "sha256": "0e54fa735e76fad0f9a0ae3c165fc58aa09f7141b800cad25a3a8d05815647e7"
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer/job-137550495934-node24.log.gz",
+      "sourcePath": "validation/installed-v8-a6e9c6cc/job-137550495934-node24.log",
+      "role": "Original hosted producer result; superseded Node20 remains incomplete",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 458138,
+        "sha256": "fb3a59aa54e1a3a0fcdc68387531f7f9aecde796e54561303dbe0176a74fd800"
+      },
+      "stored": {
+        "bytes": 131101,
+        "sha256": "8e15b58d9c7b308dd43d4c058098e41862ee98d971ac4a77473374c22b54c35a"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer/job-137550496269-node20-cancelled.log.gz",
+      "sourcePath": "validation/installed-v8-a6e9c6cc/job-137550496269-node20-cancelled.log",
+      "role": "Original hosted producer result; superseded Node20 remains incomplete",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 894251,
+        "sha256": "40efb1a59c2c286e0ee14fdd06243c087319036f881bac49cf4d049436a3b6f4"
+      },
+      "stored": {
+        "bytes": 171311,
+        "sha256": "e47745486bb90f1d8ed18ab62f23d54ef4f553e73e631611d14241d3a812e688"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/hosted-producer/job-137550496393-node22.log.gz",
+      "sourcePath": "validation/installed-v8-a6e9c6cc/job-137550496393-node22.log",
+      "role": "Original hosted producer result; superseded Node20 remains incomplete",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 1329630,
+        "sha256": "973824f6c0ddba4a35250b8ad258dc9f5698d33d2ac17caf06fc05fec8302735"
+      },
+      "stored": {
+        "bytes": 243257,
+        "sha256": "549719c11adbaf906c22dd9621bf8de0fb8601cee74f729af82e02ef34f3fff0"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/installed-gate/focused-tests.log.gz",
+      "sourcePath": "validation/installed-v8-a6e9c6cc/focused-tests.log",
+      "role": "Original installed qualification failure or completed local gate repair evidence",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 1736,
+        "sha256": "ec96ca0d52a243017024c47e4a36529458d8234334afa6d5145fdf2343f08220"
+      },
+      "stored": {
+        "bytes": 879,
+        "sha256": "7394f9ebb47a22153fb5cbdd5c87273dde23e3674ca53827fc5df7303f67ef44"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/installed-gate/gate-before.log.gz",
+      "sourcePath": "validation/installed-v8-a6e9c6cc/gate-before.log",
+      "role": "Original installed qualification failure or completed local gate repair evidence",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 1612,
+        "sha256": "5e1786014daf1036f43ffa2eb4c5d0d964f4fe4a07f1db6a7c3e212403c988a3"
+      },
+      "stored": {
+        "bytes": 679,
+        "sha256": "c127594e087bad85eb4fca388d0792324dada6a12bc28698df4b96863e959c9d"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/installed-gate/job-137550648216.log.gz",
+      "sourcePath": "validation/installed-v8-a6e9c6cc/job-137550648216.log",
+      "role": "Original installed qualification failure or completed local gate repair evidence",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 131399,
+        "sha256": "bddcfc01485f26ecb55559c12ba41c286969c49d89a021fc4213f34c19e6a405"
+      },
+      "stored": {
+        "bytes": 17854,
+        "sha256": "0138d1c44c64a093c316f71b2dce34e101cdf96b941e85e0307d81f5b6ecc0ef"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/installed-gate/repair-evidence.json",
+      "sourcePath": "validation/installed-v8-a6e9c6cc/repair-evidence.json",
+      "role": "Original installed qualification failure or completed local gate repair evidence",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 2256,
+        "sha256": "c2a050263c351e6ff2d63190e706c1b18dd12a4f51d3b8fc5cf9905564d0d8aa"
+      },
+      "stored": {
+        "bytes": 2256,
+        "sha256": "c2a050263c351e6ff2d63190e706c1b18dd12a4f51d3b8fc5cf9905564d0d8aa"
+      }
+    },
+    {
+      "path": "follow-up/node-reference/node20-after.json",
+      "sourcePath": "validation/node22-reference-fix/node20-after.json",
+      "role": "Completed focused reference-engine check and original execution identity metadata",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 275,
+        "sha256": "ee04ad12cdb0e0ef734185f6bed0207e4b649775e8add9880ee11ace3cd11195"
+      },
+      "stored": {
+        "bytes": 275,
+        "sha256": "ee04ad12cdb0e0ef734185f6bed0207e4b649775e8add9880ee11ace3cd11195"
+      }
+    },
+    {
+      "path": "follow-up/node-reference/node20-before.json",
+      "sourcePath": "validation/node22-reference-fix/node20-before.json",
+      "role": "Completed focused reference-engine check and original execution identity metadata",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1734,
+        "sha256": "b2df43c8222d5bfa0d26801c8a1f7ad4ea7251328a4406afaaf77ab24cc3f900"
+      },
+      "stored": {
+        "bytes": 1734,
+        "sha256": "b2df43c8222d5bfa0d26801c8a1f7ad4ea7251328a4406afaaf77ab24cc3f900"
+      }
+    },
+    {
+      "path": "follow-up/node-reference/node20.log.gz",
+      "sourcePath": "validation/node22-reference-fix/node20.log",
+      "role": "Completed focused reference-engine check and original execution identity metadata",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 14932,
+        "sha256": "c0b4d07e823a45a689bb29fd585240e545ff48f6ccfcb2ffff8a05dd81fa807c"
+      },
+      "stored": {
+        "bytes": 3072,
+        "sha256": "21eaa6402a5b61593b4303f4298de17b32643c10a3920013b263f3a6cb1dee44"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/node-reference/node22-after.json",
+      "sourcePath": "validation/node22-reference-fix/node22-after.json",
+      "role": "Completed focused reference-engine check and original execution identity metadata",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 185,
+        "sha256": "cbb4a630a9447783d500a24cda3be10ae759d595f4aaff1780ce6a80dc7ee0bb"
+      },
+      "stored": {
+        "bytes": 185,
+        "sha256": "cbb4a630a9447783d500a24cda3be10ae759d595f4aaff1780ce6a80dc7ee0bb"
+      }
+    },
+    {
+      "path": "follow-up/node-reference/node22-before-repair.log.gz",
+      "sourcePath": "validation/node22-reference-before.log",
+      "role": "Completed three-failure reproduction before test repair",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 4819,
+        "sha256": "43f6658e755d3a621682483609555148a3c10ee138f4a0994e53e05b19f4ee31"
+      },
+      "stored": {
+        "bytes": 1308,
+        "sha256": "e0cd6c0567929e2cc9263a4328e6342000fd3fc2fd7b6e3692bec0dd3e203e0e"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/node-reference/node22-before.json",
+      "sourcePath": "validation/node22-reference-fix/node22-before.json",
+      "role": "Completed focused reference-engine check and original execution identity metadata",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1809,
+        "sha256": "3057552a24d96c079ad981fe298f7f93fa89e22a20ef0fec0eadb6571e204dd6"
+      },
+      "stored": {
+        "bytes": 1809,
+        "sha256": "3057552a24d96c079ad981fe298f7f93fa89e22a20ef0fec0eadb6571e204dd6"
+      }
+    },
+    {
+      "path": "follow-up/node-reference/node22.log.gz",
+      "sourcePath": "validation/node22-reference-fix/node22.log",
+      "role": "Completed focused reference-engine check and original execution identity metadata",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 16433,
+        "sha256": "ce4149a305697809b6aa0de30267d28945e0651cdd628a861e39ddc2d201d4ee"
+      },
+      "stored": {
+        "bytes": 3256,
+        "sha256": "f7882efb52f8f3fa86b15c2a6af88290ab07c46fd804015b9e619678c9e220e3"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/node-reference/node24-after.json",
+      "sourcePath": "validation/node22-reference-fix/node24-after.json",
+      "role": "Completed focused reference-engine check and original execution identity metadata",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 185,
+        "sha256": "b63ecdf5e8716c13c511cb6cc01f297c2e12106b5318c09400f4548e633b8679"
+      },
+      "stored": {
+        "bytes": 185,
+        "sha256": "b63ecdf5e8716c13c511cb6cc01f297c2e12106b5318c09400f4548e633b8679"
+      }
+    },
+    {
+      "path": "follow-up/node-reference/node24-before.json",
+      "sourcePath": "validation/node22-reference-fix/node24-before.json",
+      "role": "Completed focused reference-engine check and original execution identity metadata",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1853,
+        "sha256": "cc9225f237df4049328d172f19c6974ff4e11c0f415600fd5198d04f8c4000eb"
+      },
+      "stored": {
+        "bytes": 1853,
+        "sha256": "cc9225f237df4049328d172f19c6974ff4e11c0f415600fd5198d04f8c4000eb"
+      }
+    },
+    {
+      "path": "follow-up/node-reference/node24.log.gz",
+      "sourcePath": "validation/node22-reference-fix/node24.log",
+      "role": "Completed focused reference-engine check and original execution identity metadata",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 8101,
+        "sha256": "0d84bf8950526cbd985ddb0f5f404ccdc798ca9e81d5b3d5d0e22be312b23ec8"
+      },
+      "stored": {
+        "bytes": 2484,
+        "sha256": "da6e32f0cc499730d3276aa8e25d1951e446056924793dd410490aae984a65ff"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/promise-admission/candidate.log.gz",
+      "sourcePath": "validation/promise-admission-candidate.log",
+      "role": "Original seven-case production admission execution log",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 7612,
+        "sha256": "ce64417a77a109f802f752738526b382c4c12cc7212ce6b1b7eebbbab0dbad69"
+      },
+      "stored": {
+        "bytes": 1020,
+        "sha256": "f9214f8d654d569b1e8309da13927039d6fcdcea671fc5913d7620c2dd3f6c1b"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/promise-admission/command-report.json",
+      "sourcePath": "validation/promise-admission-candidate/command-report.json",
+      "role": "Original candidate execution commands, source-file hashes, runtime, and clean pre/post Git identities",
+      "encoding": "utf-8",
+      "raw": {
+        "bytes": 10242,
+        "sha256": "97d46cc85e75a30cfd2e6616d299528b5b9b3c8ee647302d071bd41aa3a424b9"
+      },
+      "stored": {
+        "bytes": 10242,
+        "sha256": "97d46cc85e75a30cfd2e6616d299528b5b9b3c8ee647302d071bd41aa3a424b9"
+      }
+    },
+    {
+      "path": "follow-up/promise-admission/focused-admission-tests.log.gz",
+      "sourcePath": "validation/promise-admission-profile-tests.log",
+      "role": "Original focused admission test output: nine passed, six deselected",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 113,
+        "sha256": "0c6882600e03d6b12c28244137fbcde05f0fa2d8ae69d921d9e9a646622eef29"
+      },
+      "stored": {
+        "bytes": 66,
+        "sha256": "45dc9538f29bb150361df74dec60371c28eadb61bc9f1adcd63df5a54fb9e423"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/promise-admission/focused-profile-boundaries.log.gz",
+      "sourcePath": "validation/promise-admission-profile-boundary-tests.log",
+      "role": "Original complementary profile/source-boundary test output: two passed, thirteen deselected",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 113,
+        "sha256": "c788da566e1e15b7fc741e2d3454ed6a1e2e04a945f4a1cd3a76d8ad9af58f09"
+      },
+      "stored": {
+        "bytes": 65,
+        "sha256": "de8ff7c3f4e557d3cc5e64db337fc21fa0963c8df41334ac4d20c78c484c2be7"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "follow-up/promise-admission/receipts/promise-allsettled-nested-executor.json",
+      "sourcePath": "validation/promise-admission-candidate/promise-allsettled-nested-executor.receipt.json",
+      "role": "Original successful native admission receipt for one exact failed hosted source artifact",
+      "encoding": "utf-8",
+      "raw": {
+        "bytes": 2309,
+        "sha256": "1506e3e4f95ec0995ea2c3999de5b4b5de0677352837d1b0056349e58bde1134"
+      },
+      "stored": {
+        "bytes": 2309,
+        "sha256": "1506e3e4f95ec0995ea2c3999de5b4b5de0677352837d1b0056349e58bde1134"
+      }
+    },
+    {
+      "path": "follow-up/promise-admission/receipts/source-promise-adoption-async-return.json",
+      "sourcePath": "validation/promise-admission-candidate/source-promise-adoption-async-return.receipt.json",
+      "role": "Original successful native admission receipt for one exact failed hosted source artifact",
+      "encoding": "utf-8",
+      "raw": {
+        "bytes": 2318,
+        "sha256": "f72edf4e6085f229dbf9eebbe7c5301de5665abd76adb82cf5439248b928c3ed"
+      },
+      "stored": {
+        "bytes": 2318,
+        "sha256": "f72edf4e6085f229dbf9eebbe7c5301de5665abd76adb82cf5439248b928c3ed"
+      }
+    },
+    {
+      "path": "follow-up/promise-admission/receipts/source-promise-adoption-executor.json",
+      "sourcePath": "validation/promise-admission-candidate/source-promise-adoption-executor.receipt.json",
+      "role": "Original successful native admission receipt for one exact failed hosted source artifact",
+      "encoding": "utf-8",
+      "raw": {
+        "bytes": 2290,
+        "sha256": "7ba1899677f4d4aed4dfd183566e00d0beb685383d6e952b754cd447273e644b"
+      },
+      "stored": {
+        "bytes": 2290,
+        "sha256": "7ba1899677f4d4aed4dfd183566e00d0beb685383d6e952b754cd447273e644b"
+      }
+    },
+    {
+      "path": "follow-up/promise-admission/receipts/source-promise-adoption-reaction-return.json",
+      "sourcePath": "validation/promise-admission-candidate/source-promise-adoption-reaction-return.receipt.json",
+      "role": "Original successful native admission receipt for one exact failed hosted source artifact",
+      "encoding": "utf-8",
+      "raw": {
+        "bytes": 2289,
+        "sha256": "78575e8e85935794681eb53c60db9d0c8b3eaa597c4d4ca4e3774dee71521dac"
+      },
+      "stored": {
+        "bytes": 2289,
+        "sha256": "78575e8e85935794681eb53c60db9d0c8b3eaa597c4d4ca4e3774dee71521dac"
+      }
+    },
+    {
+      "path": "follow-up/promise-admission/receipts/source-promise-executor-abrupt.json",
+      "sourcePath": "validation/promise-admission-candidate/source-promise-executor-abrupt.receipt.json",
+      "role": "Original successful native admission receipt for one exact failed hosted source artifact",
+      "encoding": "utf-8",
+      "raw": {
+        "bytes": 2289,
+        "sha256": "f8fdf68afb45ae571cdafa13ee9dfe36b568513b1a35b2b402be1a21a6a1ab90"
+      },
+      "stored": {
+        "bytes": 2289,
+        "sha256": "f8fdf68afb45ae571cdafa13ee9dfe36b568513b1a35b2b402be1a21a6a1ab90"
+      }
+    },
+    {
+      "path": "follow-up/promise-admission/receipts/source-promise-executor-retained-resolution.json",
+      "sourcePath": "validation/promise-admission-candidate/source-promise-executor-retained-resolution.receipt.json",
+      "role": "Original successful native admission receipt for one exact failed hosted source artifact",
+      "encoding": "utf-8",
+      "raw": {
+        "bytes": 2289,
+        "sha256": "fb35a14745d85e8961c1fca44a6e9df7fe7b594658906110f3b899b4ce070e83"
+      },
+      "stored": {
+        "bytes": 2289,
+        "sha256": "fb35a14745d85e8961c1fca44a6e9df7fe7b594658906110f3b899b4ce070e83"
+      }
+    },
+    {
+      "path": "follow-up/promise-admission/receipts/source-promise-join-rejection-finally.json",
+      "sourcePath": "validation/promise-admission-candidate/source-promise-join-rejection-finally.receipt.json",
+      "role": "Original successful native admission receipt for one exact failed hosted source artifact",
+      "encoding": "utf-8",
+      "raw": {
+        "bytes": 2284,
+        "sha256": "5c219ab4b0b5518f8ada5bac761d9864766b6d42ee5b373c57b42392730da6d6"
+      },
+      "stored": {
+        "bytes": 2284,
+        "sha256": "5c219ab4b0b5518f8ada5bac761d9864766b6d42ee5b373c57b42392730da6d6"
+      }
+    },
+    {
+      "path": "follow-up/promise-admission/recheck-command.py",
+      "sourcePath": "validation/recheck_failed_promise_admission.py",
+      "role": "Original runner for the exact seven failed hosted source artifacts; input ZIP and source data are intentionally excluded",
+      "encoding": "utf-8",
+      "raw": {
+        "bytes": 5770,
+        "sha256": "ab5462a59d299d8b9bfe84a5c43d0a0bb7789a8bef7085589100da62d4123fda"
+      },
+      "stored": {
+        "bytes": 5770,
+        "sha256": "ab5462a59d299d8b9bfe84a5c43d0a0bb7789a8bef7085589100da62d4123fda"
       }
     },
     {
@@ -1587,5 +3170,12 @@
       }
     }
   ],
-  "updatedAt": "2026-11-23T07:33:45.942762+00:00"
+  "updatedAt": "2026-11-23T08:50:23.093469+00:00",
+  "publicationReferences": {
+    "asyncReferenceTestAccounting": "764665dc5d4ad18645580603252f63052445d0b8",
+    "installedPopulationGate": "938b80430f0b2acd272039536cd233042c73909f",
+    "sourceReferenceRuntimePhase": "bdbe40726c6dc6cb8646a2e299b955dd1f7425fb",
+    "cpuOverallBudget45To60Minutes": "2a35902ac93f4bf27adbfe255900091a90942aa4",
+    "promiseAdmissionProfiles": "b3a6e25417db57a2968b2839dccdbccb54e4abe4"
+  }
 }
