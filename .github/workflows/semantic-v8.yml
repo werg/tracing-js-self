@@ -179,13 +179,48 @@ jobs:
           cases = list(ET.parse(root / 'shared-async-source-tests.xml').getroot().iter('testcase'))
           if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
               raise ValueError('Every shared generator/Promise, async iteration and nested async control must run and pass')
-          for name, sources, contexts in [('shared-generator-source-evidence.json', 6, 189), ('nested-async-source-evidence.json', 10, 231)]:
+          for name, sources, contexts in [('shared-generator-source-evidence.json', 6, 191), ('nested-async-source-evidence.json', 10, 235)]:
               evidence = json.loads((root / name).read_text())
               if evidence['sourceCases'] != sources or evidence['actualNativeCases'] != sources or evidence['generatedContexts'] != contexts:
                   raise ValueError('Every original source and generated context requires independent native replay: ' + name)
               if evidence['moduleAdmission'] is not False or evidence['trainingAdmission'] is not False or evidence['optimizerUpdates'] != 0:
                   raise ValueError('Source composition cannot itself grant evaluated-module/data admission or optimizer exposure')
-          print(f'{len(cases)} source composition controls passed, zero skips; 6 generator/189 context and 10 async/231 context cases')
+          print(f'{len(cases)} source composition controls passed, zero skips; 6 generator/191 context and 10 async/235 context cases')
+          PY
+      - name: Check shared Promise objects and constructor getter jobs
+        if: ${{ matrix.population == 'interoperability' }}
+        working-directory: tracing-js-self
+        run: |
+          node --test --test-concurrency=1 --test-reporter=junit \
+            test/owned-promise-object-state.test.js \
+            test/semantic-promise-object-observations-v8.test.js \
+            test/semantic-promise-object-v8.test.js \
+            test/semantic-promise-object-source-v8.test.js \
+            test/semantic-protocol-promise-adoption-getter-v8.test.js \
+            test/semantic-promise-adoption-getter-source-v8.test.js \
+            2>&1 | tee "$RUNNER_TEMP/promise-object-tests.xml"
+          python - <<'PY'
+          import json, os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          cases = list(ET.parse(root / 'promise-object-tests.xml').getroot().iter('testcase'))
+          if len(cases) != 66 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('Every Promise object and constructor job control must pass with actual native replay')
+          for name, sources, contexts in [('promise-object-source-evidence.json', 15, 320), ('promise-adoption-getter-source-evidence.json', 5, 213)]:
+              evidence = json.loads((root / name).read_text())
+              if [evidence[key] for key in ('sourceCases', 'actualNativeCases', 'generatedContexts')] != [sources, sources, contexts]:
+                  raise ValueError('Promise source/native population differs: ' + name)
+              if evidence['moduleAdmission'] is not False or evidence['trainingAdmission'] is not False or evidence['optimizerUpdates'] != 0:
+                  raise ValueError('These source checks do not grant broader admission or training')
+          direct = json.loads((root / 'promise-object-public-native-evidence.json').read_text())
+          if direct['publicCases'] != 5 or direct['actualNativeCases'] != 5 or direct['sourceCorrespondence'] is not False:
+              raise ValueError('All five direct protocol controls require separate native replay')
+          if sum(row['rejectedAlterations'] for row in direct['nativeReceipts']) != 23 or sum(row['rejectedRestorations'] for row in direct['nativeReceipts']) != 32:
+              raise ValueError('Every retained altered record and checkpoint must be rejected')
+          adoption = json.loads((root / 'promise-adoption-getter-source-evidence.json').read_text())
+          if sum(row['rejectedRecords'] for row in adoption['nativeReceipts']) != 10 or sum(row['rejectedRestorations'] for row in adoption['nativeReceipts']) != 20:
+              raise ValueError('Every retained adoption getter record and checkpoint alteration must be rejected')
+          print(f'{len(cases)} Promise controls passed; 20 original sources and five direct protocols independently replayed')
           PY
       - id: qualification
         name: Recollect exact source and native admission receipts
@@ -327,6 +362,10 @@ jobs:
             ${{ runner.temp }}/shared-async-source-tests.xml
             ${{ runner.temp }}/shared-generator-source-evidence.json
             ${{ runner.temp }}/nested-async-source-evidence.json
+            ${{ runner.temp }}/promise-object-tests.xml
+            ${{ runner.temp }}/promise-object-source-evidence.json
+            ${{ runner.temp }}/promise-object-public-native-evidence.json
+            ${{ runner.temp }}/promise-adoption-getter-source-evidence.json
             ${{ runner.temp }}/semantic-v8-namespace-artifact.xml
             ${{ runner.temp }}/semantic-v8-namespace-artifact.log
             ${{ runner.temp }}/v8-namespace-artifact/

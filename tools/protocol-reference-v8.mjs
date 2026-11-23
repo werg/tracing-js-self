@@ -52,6 +52,9 @@ try{
     try{
       const root=context.__kind==='return'&&types.isPromise(context.__result)?context.__result:null;
       await new Promise(resolve=>setImmediate(resolve));
+      // An observer failure can interrupt the guest's settlement chain. Retain
+      // that original diagnostic before classifying its stranded root Promise.
+      if(failures.length)throw new TypeError(failures[0]);
       if(root){
         // A host `await` (including inspector Runtime.awaitPromise) adds guest
         // constructor/then/species lookups. Inspect actual native settlement

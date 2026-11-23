@@ -1,52 +1,52 @@
 {
   "schema": "semantic-v8-combined-gate/1",
-  "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+  "contractDigest": "38a5d7b90ad1da9cf3b56f29c4e730ac5bcec54427e2fe86e6a6afec3335f862",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
-  "interoperabilityDigest": "64f230e7b05dc6b33b3d0df359898e27158cb67a386c9cdeb63fd64b4729df2d",
-  "sourceExamples": 31,
+  "interoperabilityDigest": "84fe03aa5857dadf23a6025fe5de84758f9567d41920a703fe32110ec13816b3",
+  "sourceExamples": 51,
   "payloads": [
     {
       "source": "contracts/semantic-execution-v8.json",
       "native": "src/megatoken/data/contracts/semantic-execution-v8.json",
       "encoding": "copy",
-      "nativeSha256": "56bddf1a2f19eed917b425b5954d73d58f8b524c440617f4342c75d8fabb2d8b"
+      "nativeSha256": "c14e1cbee54710fb7f9b36ed6a57a7057d80cb7c2141815202f649b67177c490"
     },
     {
       "source": "test/fixtures/semantic-regions-v8.json",
       "native": "tests/fixtures/semantic-regions-v8.json.gz.b64",
       "encoding": "gzip-base64",
-      "nativeSha256": "44a3e01c2c62495d9388d4b2c3615f327e62344b794b7d4d94e1d5e72df6925a"
+      "nativeSha256": "595eb044df8538e48286120a3b2b61fece61787d589ca2f0cf9f587504281f68"
     },
     {
       "source": "test/fixtures/semantic-protocol-v8.json",
       "native": "tests/fixtures/semantic-protocol-v8.json",
       "encoding": "copy",
-      "nativeSha256": "704dcb2f7a34d7bd2089391020b1686a0e9ef118def323ed1db99227e05e5d58"
+      "nativeSha256": "fbc42b70185a6b70aa0b2d9d39509afe8962da80c1c3f09f9faa8a4bcb109f0f"
     },
     {
       "source": "test/fixtures/semantic-iterator-v8.json",
       "native": "tests/fixtures/semantic-iterator-v8.json",
       "encoding": "copy",
-      "nativeSha256": "f124dba091c3fa36463fd0c6b79b98e5566c14cc0807938b25954d68f8d1db69"
+      "nativeSha256": "31e4cb329edc1f2a996f58fb167c770571afe69d9d6fd5b8dffb4db31b747c1c"
     },
     {
       "source": "test/fixtures/semantic-protocol-source-v8.json",
       "native": "tests/fixtures/semantic-protocol-source-v8.json",
       "encoding": "copy",
-      "nativeSha256": "11f8b6883c054dd07b51e25267130bc8689e06ccbf9b56d7d52b4af5be6159f3"
+      "nativeSha256": "5498999309e26efd2f9a35cdd397ee99aef7ecb4a47246ff4ca28a2d8eb8b81f"
     },
     {
       "source": "test/fixtures/semantic-protocol-region-v8.json.gz.b64",
       "native": "tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
       "encoding": "gzip-base64",
-      "nativeSha256": "1e98d2a85cfee5a2e1b81daa3b14f8e6c793fd9cdd094db4c206dd3c7d5f7093",
+      "nativeSha256": "49cad29b1da6c2416f786062860077b8c59201c36ab999a35c619aebea6ebb07",
       "sourceEncoding": "gzip-base64"
     },
     {
       "source": "test/fixtures/semantic-host-protocol-v8.json.gz.b64",
       "native": "tests/fixtures/semantic-host-protocol-v8.json.gz.b64",
       "encoding": "copy",
-      "nativeSha256": "e49f63ebd804edae85e65338081ef20858c11a721ff522e0fb961b21caa4f6a9"
+      "nativeSha256": "3dc73ea3a665db8c1a6abaa9eb8bbacd5448a532f3d860cb409a004e1743a740"
     }
   ],
   "lanes": {
@@ -104,30 +104,35 @@
     "promise": {
       "producer": {
         "test/semantic-async-call-source-v8.test.js": 18,
+        "test/semantic-async-return-adoption-composition-source-v8.test.js": 4,
+        "test/semantic-promise-adoption-getter-source-v8.test.js": 7,
         "test/semantic-promise-mutation-profile-source-v8.test.js": 25,
         "test/semantic-promise-object-profile-source-v8.test.js": 23,
+        "test/semantic-promise-object-source-v8.test.js": 17,
+        "test/semantic-promise-object-v8.test.js": 7,
         "test/semantic-protocol-iterator-v8.test.js": 9,
+        "test/semantic-protocol-promise-adoption-getter-v8.test.js": 5,
         "test/semantic-protocol-promise-adoption-source-v8.test.js": 21,
         "test/semantic-protocol-promise-adoption-v8.test.js": 20,
         "test/semantic-protocol-promise-executor-source-v8.test.js": 10,
         "test/semantic-protocol-promise-executor-v8.test.js": 11,
-        "test/semantic-protocol-promise-join-v8.test.js": 10,
         "test/semantic-protocol-promise-join-source-v8.test.js": 5,
+        "test/semantic-protocol-promise-join-v8.test.js": 10,
         "test/semantic-protocol-v8.test.js": 14,
         "test/semantic-qualification-population-v8.test.js": 4,
         "test/semantic-shared-protocol-source-v8.test.js": 8,
-        "test/semantic-async-return-adoption-composition-source-v8.test.js": 4,
         "test/training-promise-job-projection.test.js": 3
       },
       "native": {
-        "tests/test_promise_executor_v8.py": 11,
         "tests/test_async_call_v8.py": 18,
-        "tests/test_promise_scheduler_v8.py": 10,
         "tests/test_promise_executor_boundaries_v8.py": 13,
+        "tests/test_promise_executor_v8.py": 11,
         "tests/test_promise_join_v8.py": 12,
-        "tests/test_protocol_v8.py": 22,
+        "tests/test_promise_scheduler_v8.py": 10,
+        "tests/test_protocol_host_composition_v8.py": 15,
         "tests/test_protocol_host_v8.py": 13,
-        "tests/test_protocol_host_composition_v8.py": 15
+        "tests/test_protocol_properties.py": 28,
+        "tests/test_protocol_v8.py": 22
       }
     }
   },
@@ -135,8 +140,11 @@
     "recovery": "GitHub Actions45042073863 original downloaded JUnit per-file leaves",
     "promise": "GitHub Actions45042386283 plus exact local original-source4 and public/native boundary20/10 groups, with twelve adjacent ordinary-contract leaves (join-source5, qualification-population4, training-projection3) added after six stale assertions reproduced on cc0d61e9 and all twelve passed on b79f7ae1. Required final185/106 is not qualified until this workflow succeeds.",
     "modelSelectionEvidence": "Original rejected-fragment model bookkeeping correction: the entire test_semantic_model_v8.py file passed17 actual leaves on native6d5ea691 (published source9bbc5342), preserving14 prior cases and adding3 controls. The original green JUnit is retained in native proof5f9ddd14; subcases are not counted as extra leaves.",
-    "currentPayloads": "Exact producer e21651f7d246d9bf30e575e61e3a056987fae6fe and consumer 21b7c80718244073dbf13263771da533d4ecbc25: all seven original payload byte comparisons passed, including decoding the tracked compressed source fixture; 31 original source examples retained. This byte-parity audit does not qualify complete native replay or any combined lane.",
-    "currentProducerLeaves": "The selected producer files are unchanged from e21651f7d246d9bf30e575e61e3a056987fae6fe. A working-tree audit emitted 25 mutation, 23 object-profile and 4 qualification-population JUnit leaves: 50 passed, two optional native controls skipped, zero failures. Leaf expectations remain unchanged; this is not a clean-pair gate pass, and the required combined gate still rejects any skipped leaf.",
-    "currentNativeLeaves": "Pytest 8.4.2 collected all 296 selected native leaves from clean consumer 21b7c80718244073dbf13263771da533d4ecbc25 in the exact hash-locked Python 3.12.14 environment: 182 structural and 114 Promise. Only tests/test_async_call_v8.py changed, from 10 to 18 leaves. Collection is not execution; no lane pass is inferred."
+    "priorPayloadAudit": "Exact producer e21651f7d246d9bf30e575e61e3a056987fae6fe and consumer 21b7c80718244073dbf13263771da533d4ecbc25: all seven original payload byte comparisons passed, including decoding the tracked compressed source fixture; 31 original source examples retained. This byte-parity audit does not qualify complete native replay or any combined lane.",
+    "priorProducerLeafAudit": "The selected producer files are unchanged from e21651f7d246d9bf30e575e61e3a056987fae6fe. A working-tree audit emitted 25 mutation, 23 object-profile and 4 qualification-population JUnit leaves: 50 passed, two optional native controls skipped, zero failures. Leaf expectations remain unchanged; this is not a clean-pair gate pass, and the required combined gate still rejects any skipped leaf.",
+    "priorNativeCollection": "Pytest 8.4.2 collected all 296 selected native leaves from clean consumer 21b7c80718244073dbf13263771da533d4ecbc25 in the exact hash-locked Python 3.12.14 environment: 182 structural and 114 Promise. Only tests/test_async_call_v8.py changed, from 10 to 18 leaves. Collection is not execution; no lane pass is inferred.",
+    "currentPayloads": "Producer d4b049c6392b7eb5a04465ddac36f1377138c73c and consumer 375063e4aa802f309eda611db289260d60507e4a contain the regenerated shared contract and fixture payloads. The source protocol population preserves all 31 original examples and adds 15 Promise object and 5 adoption getter examples, for 51. Contract regeneration and contracts:check passed; this does not itself qualify an installed native wheel or combined lane.",
+    "currentProducerLeaves": "The six new/related Promise object, adoption, observation and owned-runtime files passed 66 actual leaves with zero failures or skips in the paired working trees using Python 3.12.14 and the hash-locked native environment. Combined-lane per-file counts remain mandatory, and no broader gate pass is inferred from this focused run.",
+    "currentNativeLeaves": "The ordinary property suite collected 28 actual pytest leaves on consumer 375063e4aa802f309eda611db289260d60507e4a in the locked environment. It is now mandatory in the Promise lane, which requires 142 native leaves across nine files. Collection is not execution and does not qualify a lane."
   }
 }

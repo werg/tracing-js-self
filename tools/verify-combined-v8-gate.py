@@ -238,10 +238,12 @@ def command(argv, cwd, log, env):
 
 def verify_promise_packets(root):
     populations = [
-        ("promise-adoption-source-evidence.json", 15, 15, 423, 65, None),
-        ("promise-mutation-profile-evidence.json", 24, 5, 96, None, 19),
-        ("promise-object-profile-evidence.json", 22, 5, 51, None, 17),
-        ("async-return-adoption-composition-evidence.json", 2, 2, 78, 9, None),
+        ("promise-adoption-source-evidence.json", 15, 15, 458, 65, None),
+        ("promise-mutation-profile-evidence.json", 24, 7, 125, None, 17),
+        ("promise-object-profile-evidence.json", 22, 22, 230, None, 0),
+        ("async-return-adoption-composition-evidence.json", 2, 2, 86, 9, None),
+        ("promise-object-source-evidence.json", 15, 15, 320, None, None),
+        ("promise-adoption-getter-source-evidence.json", 5, 5, 213, None, None),
     ]
     result = []
     for name, total, eligible, contexts, cuts, refused in populations:
@@ -273,8 +275,11 @@ def verify_promise_packets(root):
         result.append({"file": name, "sourceCases": total, "actualNativeCases": eligible, "contexts": contexts,
                        "restoreCuts": cuts, "refusedSources": refused, "sha256": sha(root / name)})
     mutation = read(root / "promise-mutation-profile-evidence.json")
-    require(mutation["sourceAdmissionWasAlreadyRefusing"] is True and mutation["directCompilerProfileRefusalAdded"] is True,
-            "Earlier descriptor defect classification changed")
+    require([mutation[key] for key in ("ownedExecutionCases", "ownedRefusals", "sourceProjectionRefusals")] == [19, 5, 12],
+            "Owned execution and source projection refusal populations differ")
+    require(sum(row.get("refusalPhase") == "owned-execution" for row in mutation["observations"]) == 5 and
+            sum(row.get("refusalPhase") == "source-projection" for row in mutation["observations"]) == 12,
+            "A projection refusal cannot be relabeled as an owned execution refusal")
     shared = read(root / "promise-adoption-shared-realm-public.json")
     require(len(shared["states"]) == 2 and len(shared["artifact"]["contexts"]) == 19, "Shared realm FIFO proof changed")
     return result
