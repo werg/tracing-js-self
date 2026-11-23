@@ -67,8 +67,15 @@ getter effects, reentry, abrupt completion, and FIFO job behavior.
   protocol implementations, including unsupported callable restoration.
 - [x] Rerun the original 40 variants at clean producer `783cf78f` after the
   finally/species review corrections: parse, owned and reference each pass 40/40.
-- [ ] Finish native regression qualification, including the three stale
-  retained-fixture assertions exposed by the broader hosted run.
+- [x] Repair the second semantic review findings in reflection, async cleanup,
+  await dependencies, getter unwind authority, retained intrinsic state,
+  source receivers/updates, captured adoption methods and native observation.
+- [x] Canonically regenerate the three stale native fixtures from unchanged
+  original sources; all 20 tests in the affected complete files pass.
+- [x] Execute the latest original 40 variants at clean producer `f3f24579`:
+  parse, owned and independent reference each pass 40/40. Completed resume is
+  byte-identical; final packet verification is tracked in its retained report.
+- [ ] Finish native regression qualification and final live admission/packing.
 - [ ] Finish the installed combined gate, retaining its exact installed pair
   and final result. Local full attestation is blocked by the unavailable kernel
   time namespace; separate components and hosted CI remain explicitly distinct.
@@ -88,6 +95,7 @@ Node/V8-reference attempts. All use the exact full-catalog digest
 | `47cd67bc48921b55135f5cde02c49b06e2ab4bd8` | 40 passed | 40 passed | 40 passed | `artifacts/conformance/issue61-runtime/` |
 | `7336d7bacdb7e53025cd8e66ed0d844b19c6ab19` | 40 passed | 40 passed | 40 passed | `artifacts/conformance/issue61-current/` |
 | `783cf78fb039d1ca97261fc41b086096e343f06b` | 40 passed | 40 passed | 40 passed | `artifacts/conformance/issue61-review-final/` |
+| `f3f245798b3ac5de615c7aaf2cc2c472ea3d7abc` | 40 passed | 40 passed | 40 passed | `artifacts/conformance/issue61-qualified-final/` |
 
 The baseline diagnoses identify unsupported Promise own-property storage,
 `Object.prototype.hasOwnProperty` in the original async harness, and access to
@@ -100,6 +108,10 @@ exposes no new barrier. Its 74-file implementation fingerprint matched the
 integrated producer payload through `65ce0796`. The review fixes change that
 fingerprint, so the separate clean `783cf78f` campaign executes all 40 variants
 again and passes all three stages. Neither report is relabeled as a later run.
+The second review again changed runtime and reference-launcher fingerprints;
+the final `f3f24579` campaign executes the same complete population afresh and
+also passes all three stages. Gate checkpoint `2ace1440` changes required
+inventories and receipt checking, not that campaign's implementation.
 
 The retained projections were checked against every original file and harness
 hash at the pinned Test262 revision. All selected IDs and variant identities are
@@ -216,11 +228,13 @@ concurrent-edit limitation of the public run recorded explicitly. Native
 review controls separately pass 78/78: properties 31, primitive conversion 19,
 Number 15 and host protocol 13.
 
-The expanded required Promise gate selects 266 producer leaves across 22 files
-and 179 native leaves across 11 files. Its per-file JUnit counts, missing-test
-checks and zero-skip requirement remain strict. The dedicated interoperability
-workflow also requires the full 81-leaf object/adoption/runtime/review group.
-These expectations do not count as an executed gate result.
+The first expanded Promise gate selected 266 producer leaves across 22 files
+and 179 native leaves across 11 files. The final `2ace1440` gate adds all second
+review controls: **304 producer leaves across 27 files** and **191 native leaves
+across 12 files**. Its per-file JUnit counts, missing-test checks and zero-skip
+requirement remain strict. The dedicated interoperability workflow requires
+119 leaves across 12 files. These expectations alone do not count as an
+executed gate result.
 
 The earlier clean pair `65ce0796` / `fb82c671` independently replayed all 51
 source fixtures through a noneditable installed native wheel, with all seven
@@ -235,6 +249,80 @@ Full local combined attestation stops because this workspace does not expose
 `/proc/self/ns/time`. The actual namespace check has not been weakened or
 replaced. Separate installed replay and Promise test components do not qualify
 the six-lane recovery/Promise gate; hosted CI must produce that complete result.
+
+## Second review corrections and final qualification
+
+Producer reflection checkpoint `8bf97b73`, runtime checkpoint `310ee639` and
+source/observer checkpoint `f3f24579` address the second set of concrete review
+counterexamples. Native checkpoints `913afe46` and `acd86c65` independently
+enforce the corresponding adoption and retained-invocation boundaries.
+
+- Script global reflection reads the actual object-backed var/function binding
+  cells, including updates after declaration. Top-level lexical bindings remain
+  absent from the global object. Lazy function name/length presence checks do
+  not require an observable value read. Promise prototype lookup follows owned
+  function data and inherited ordinary accessors with the original receiver.
+  The independent `in` validator recognizes the same Promise storage. A private
+  on-demand heap view avoids copying every Promise row for each property read.
+- Async `finally` callbacks preserve the cleanup getter's active continuation
+  when the callback suspends or throws. Await records name the actual selected
+  Promise or new wrapper and the synchronous then-getter invocation. Generator
+  constructor/species getters refuse before entry; arrow getters preserve their
+  lexical receiver while the property lookup retains its Promise receiver.
+- Queued thenable entry authenticates the invocation cause, active frame and
+  captured environment. Constructor rejection authority derives from the
+  pre-event active unwind chain, including ordinary helper calls and explicit
+  nested constructor continuations. Every traversed frame newly throws the
+  exact completion, and the current destination must newly reject with the
+  exact reason. A historical getter or unrelated frame cannot authorize it.
+- Resolution captures the selected intrinsic then before queuing adoption.
+  Later target mutations cannot replace that selection during replay or
+  restoration. Constructor lookup remains live at its correct later step.
+  Newly retained invocations derive only an initialization marker from the
+  complete validated intrinsic group; they do not copy old frames, counters or
+  continuations. Generic restoration still rejects a missing marker.
+- Source projection checks actual `hasOwnProperty` method receivers and
+  primitive numeric Promise updates through read, conversion, arithmetic and
+  committed write, including BigInt, inherited data and prefix/postfix results.
+  Accessor and object-coercing updates remain explicit source refusals.
+- The observer no longer uses inspector property descriptions. On locked
+  Node 24.22.3, inspector access can invoke an unrelated Error.stack getter.
+  The trusted worker now uses native Promise slots, preserving actual result
+  identity with zero stack/then/constructor/species calls. Unavailable slot
+  access refuses outside guest catches; there is no inspector fallback.
+
+`artifacts/conformance/issue61-second-review/` retains 20 separate executed
+JUnit reports, their logs, original failures and corrective runs, original
+runtime counterexample archives, native fixture regeneration, and the new
+source/public packets. Its verifier checks every encoded and decoded hash,
+recomputes every JUnit count, and compares the originals when available. The
+working-tree receipts are explicitly not relabeled as clean revision runs.
+
+Final focused results include runtime 76/76, reflection 24/24, source/public
+15/15 with actual native validation, existing source 26/26 with actual native
+validation, and observer 8/8 including the real namespace worker. Native
+adoption/async/scheduler controls pass 40/40, retained detail 11/11, and the
+three canonically refreshed fixture files 20/20. Gate policy and release-driver
+controls pass 24/24. These runs overlap; they are not added as unique coverage.
+
+The eight additional source cases retain 196 contexts, and two direct public
+artifacts retain 30 contexts plus both invocation owners' checked shared states.
+Together with the initial 20 new source cases, this gives 28 issue-specific
+source examples and 729 contexts. The canonical installed fixture population
+remains 51; the eight review sources are a separately named control population.
+The final gate binds each receipt to its case, exact context count, successful
+native checks and, for direct artifacts, both retained invocation owners.
+
+The final clean component pair is producer
+`2ace1440ebeac3b2ffac5a0061684bfcdfac1370` and native
+`acd86c6513ec7af8b50365517f4bff9b7e2aad5a`. Installed-wheel replay and all
+304 producer / 191 native Promise leaves are being executed on this pair.
+`npm run contracts:check` passed at the final implementation checkpoint
+`f3f24579`; the subsequent gate checkpoint changes no contract payloads.
+Live CLI admission at clean `f3f24579` / `acd86c65` passes 29/29; actual
+tokenizer-backed module packing and final component retention are in progress.
+The unchanged full attestation still stops at the unavailable real kernel
+time namespace, and its original failure is retained separately.
 
 ## Explicit remaining profile boundaries
 
@@ -267,6 +355,14 @@ guest exceptions or successful negative tests:
   their Promise scheduling work in
   [#50](https://github.com/werg/tracing-js-self/issues/50) and shared object
   operations in [#51](https://github.com/werg/tracing-js-self/issues/51).
+- **Broader accessor/conversion and ordinary storage:** primitive Promise
+  updates are source-qualified, while accessor updates and object-coercing
+  updates need explicit bounded continuations. Generator constructor/species
+  getters refuse before invocation. General owned Object.prototype writes and
+  descriptor mutation remain ordinary-storage boundaries; public/native
+  mutable-prototype controls do not imply owned source support for those paths.
+  Continue under [#49](https://github.com/werg/tracing-js-self/issues/49) and
+  [#51](https://github.com/werg/tracing-js-self/issues/51).
 
 An additional shared `Promise.prototype.constructor` getter combined with
 async-return adoption source-qualified successfully. The producer audit also
@@ -295,14 +391,20 @@ Promise-resolution defect. A minimal probe also demonstrated that inspector
 `Runtime.awaitPromise` performs the same extra lookup; substituting it would not
 repair the evidence boundary.
 
-The worker now drains the actual native microtask queue under its existing
-parent deadline and reads V8's `[[PromiseState]]` and `[[PromiseResult]]` through
-descriptor-only inspector `Runtime.getProperties`. It transfers the real result
-reference into a private host record, preserving aliases and primitive edge
-values, without calling guest `then`, `constructor`, species or tag getters and
-without modifying source or prototypes. Rejection remains a guest throw; a root
-still pending at quiescence is an explicit resource limit. Unrelated unhandled
-rejections remain failures. No inspector network listener is opened.
+The first repair used inspector `Runtime.getProperties`. The second review
+demonstrated that even with previews disabled, describing Error-valued results
+or properties can invoke Error.stack. That approach is now replaced rather than
+treated as observationally neutral.
+
+The worker drains the actual native microtask queue under its existing parent
+deadline and reads the native util binding's Promise slots on the locked Node
+runtime. Only the exact trusted protocol worker receives `--expose-internals`,
+including its Linux namespace launch. No binding, require, process or additional
+global is exposed to the guest realm. Actual result references preserve aliases
+and primitive edge values without guest property reads or descriptions. Missing
+slot support produces `unsupported.native-promise-observer` outside guest
+catches. Rejection remains a guest throw; a root still pending at quiescence is
+an explicit resource limit. Unrelated unhandled rejections remain failures.
 
 Promise metadata likewise tracks ordinary descriptors, accessor identities,
 extensibility and prototype references. `Promise.prototype` is observed as one
