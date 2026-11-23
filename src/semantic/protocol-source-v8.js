@@ -265,11 +265,13 @@ export async function recheckProtocolRegionEvidence(exported,{nativeConsumer=nul
     projectionOptions:{maxGenerated:source.executionLimits.maxGenerated,
       ...(source.moduleNamespacePlan?{moduleNamespacePlan:source.moduleNamespacePlan}:{}),
       ...(source.moduleSchedulerPlan?{moduleSchedulerPlan:source.moduleSchedulerPlan}:{})}});
-  if(source.moduleNamespacePlan||source.moduleSchedulerPlan){
+  let moduleReference={status:'untested',applicable:false};
+  if(Object.hasOwn(source.sourceProvenance?.upstream??{},'moduleEvidence')||
+     source.moduleNamespacePlan||source.moduleSchedulerPlan){
     const {recheckModuleRegionEvidence}=await import('./module-v8.js');
-    const moduleCheck=await recheckModuleRegionEvidence(exported);
-    if(moduleCheck.status!=='passed'||!moduleCheck.applicable)
-      fail('experimental module source requires fresh original-module and ESM recheck');
+    moduleReference=await recheckModuleRegionEvidence(exported);
+    if(moduleReference.status!=='passed'||!moduleReference.applicable)
+      fail('module source requires fresh original-module and ESM recheck');
   }
   const fresh=await buildSourceArtifact(input);
   if(!eq(fresh,side.sourceArtifact))fail('source, owned archive or independent observations changed');
@@ -281,6 +283,6 @@ export async function recheckProtocolRegionEvidence(exported,{nativeConsumer=nul
   if(nativeConsumer){validateV8NativePolicy(nativePolicy);native=await nativeConsumer(exported);validateV8NativeReceipt(exported,native,nativePolicy);}
   else if(requireNative)fail('exact v8 native admission must be rechecked by the pinned consumer');
   return {valid:true,sourceValidated:true,projectionValidated:true,replayValidated:true,
-    source:{schema:PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA,valid:true,reference:fresh.sidecar.reference},native,
+    source:{schema:PROTOCOL_SOURCE_ARTIFACT_V8_SCHEMA,valid:true,reference:fresh.sidecar.reference},moduleReference,native,
     regionCoverage:copy(side.regionCoverage),completed:replay.invocations.size};
 }

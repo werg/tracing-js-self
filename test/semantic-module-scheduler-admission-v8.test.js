@@ -18,7 +18,9 @@ function rehash(value){const {digest,...body}=value;value.digest=hashAlgorithmDa
 test('explicit original module source evidence survives fresh source, projection and replay checks',async()=>{
   const result=await verifyRegionModuleTrainingCase(copy(moduleSchedulerSourceFixture));
   assert(result.exported,result.reason);assert.equal(result.moduleReference,'passed');assert.equal(result.moduleCorrespondence,'passed');
-  artifact=result.exported;assert.equal(artifact.contexts.length,708);
+  // Shared Promise state publishes the intrinsic identity/capture and both
+  // observable then reads in addition to the scheduler's existing records.
+  artifact=result.exported;assert.equal(artifact.contexts.length,712);
   assert.equal(artifact.sidecar.sourceArtifact.sidecar.compiler.moduleSchedulerOwnership.ownedEventCount,10);
   checked=await recheckRegionEvidence(artifact);
   assert(checked.sourceValidated&&checked.projectionValidated&&checked.replayValidated);
