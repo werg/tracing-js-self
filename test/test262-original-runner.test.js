@@ -229,6 +229,33 @@ test('incomplete function descriptors cannot manufacture a frozen-object runtime
   statuses(both('var f=function*(){};Object.preventExtensions(f);assert.sameValue(Object.isFrozen(f),false);'),'passed');
 });
 
+test('unmodeled Proxy object storage cannot manufacture constructor-negative or caught-error passes',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'new Proxy(function(){},{});',
+    'new Proxy(Promise.resolve(0),{});',
+    'new Proxy(Object.is,{});',
+    'new Proxy({},function(){});',
+    'new Proxy({},Promise.resolve(0));',
+    'new Proxy({},new Proxy({},{}));'
+  ]){
+    for(const {owned,reference} of both(body,{metadata})){
+      assert.equal(owned.status,'unsupported',owned.reason);
+      assert.match(owned.reason,/Proxy construction requires owned ordinary target and handler storage/);
+      assert.equal(reference.status,'failed',reference.reason);
+    }
+    for(const {owned,reference} of both('try{'+body+'}catch(error){}')){
+      assert.equal(owned.status,'unsupported',owned.reason);
+      assert.equal(reference.status,'passed',reference.reason);
+    }
+  }
+  for(const primitive of ['undefined','null','false','0','"value"','0n','Symbol("key")']){
+    statuses(both('new Proxy('+primitive+',{});',{metadata}),'passed');
+    statuses(both('new Proxy({},'+primitive+');',{metadata}),'passed');
+  }
+  statuses(both('new Proxy(function(){},0);',{metadata}),'passed');
+});
+
 test('raw preserves exact bytes and loads no implicit harness or wrapper',()=>{
   const [options]=fixture('if(typeof assert!=="undefined")throw 1;', {metadata:'flags: [raw]\n'});
   assert.equal(options.variant.mode,'raw');

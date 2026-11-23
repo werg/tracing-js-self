@@ -2170,9 +2170,11 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
         }
         case 'NEW_PROXY':{
           const handler=pop(),target=pop();
+          if(isPrimitiveValue(target.value)||isPrimitiveValue(handler.value))
+            guestFault('TypeError','Proxy target and handler must be objects');
           if(target.value[0]!=='ref'||!['object','array','proxy'].includes(s.heap[target.value[1]]?.kind)||
              handler.value[0]!=='ref'||!['object','array'].includes(s.heap[handler.value[1]]?.kind))
-            guestFault('TypeError','Proxy requires an ordinary owned target and handler');
+            throw new TypeError('Proxy construction requires owned ordinary target and handler storage');
           const id=this.next(s,'obj');
           s.heap[id]={id,kind:'proxy',targetId:target.value[1],handlerId:handler.value[1],
             properties:{},propertyVersions:{},shapeVersion:0,version:0};
