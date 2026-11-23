@@ -7,6 +7,15 @@ import {readPinnedEcma262Specification} from '../src/conformance/test262-specifi
 import {extractEcma262HtmlInventory,test262SpecificationReference,buildTest262EditionAudit}
   from '../src/conformance/test262-edition.js';
 
+// These controls deliberately rehash their changes so they reach the semantic
+// membership checks after the catalog's independent identity validation.
+function rehashCatalog(catalog){
+  for(const row of catalog.variants){const {id,...identity}=row;
+    row.id=conformanceDigest({suiteRevision:catalog.suiteRevision,profile:catalog.profile,...identity});}
+  const {digest,...body}=catalog;catalog.digest=conformanceDigest(body);
+  return catalog;
+}
+
 test('HTML inventory uses real tags, clause ancestry and explicit ambiguous anchors',()=>{
   const bytes=Buffer.from('<script>const fake=`<emu-clause id="fake">`;</script>'+
     '<!-- <emu-clause id="comment"> --><emu-clause id="root" normative-optional>'+
@@ -144,30 +153,26 @@ test('membership review binds suite, source closure, profile and normative claus
   assert.equal(validateTest262Catalog(input.catalog),true);
   const tampered=structuredClone(input.catalog),target=tampered.variants.find(row=>row.path==='test/core.js');
   target.classification.evidence.sourceDigest='f'.repeat(64);
-  const {digest,...body}=tampered;tampered.digest=conformanceDigest(body);
+  rehashCatalog(tampered);
   assert.throws(()=>validateTest262Catalog(tampered),/test source digest/);
   const wrongEdition=structuredClone(input.catalog),wrongEditionRow=wrongEdition.variants.find(row=>row.path==='test/core.js');
   wrongEditionRow.classification.evidence.editionSpecification.sha256='f'.repeat(64);
   wrongEditionRow.classification.evidence.normativeObligations[0].sha256='f'.repeat(64);
-  for(const row of wrongEdition.variants){const {id,...identity}=row;
-    row.id=conformanceDigest({suiteRevision:wrongEdition.suiteRevision,profile:wrongEdition.profile,...identity});}
-  const {digest:editionDigest,...editionBody}=wrongEdition;wrongEdition.digest=conformanceDigest(editionBody);
+  rehashCatalog(wrongEdition);
   assert.equal(validateTest262Catalog(wrongEdition),true);
   assert.throws(()=>buildTest262EditionAudit({...input,catalog:wrongEdition}),/different pinned edition specification/);
   const wrongProfile=structuredClone(input.catalog),variant=wrongProfile.variants.find(row=>row.path==='test/core.js');
   variant.classification.evidence.hostProfileDigest='f'.repeat(64);
-  const {digest:oldDigest,...wrongBody}=wrongProfile;wrongProfile.digest=conformanceDigest(wrongBody);
+  rehashCatalog(wrongProfile);
   assert.throws(()=>validateTest262Catalog(wrongProfile),/host profile digest/);
   const wrongClosure=structuredClone(input.catalog),closureRow=wrongClosure.variants.find(row=>row.path==='test/core.js');
   closureRow.classification.evidence.sourceInputs.push({path:'test/omitted-helper.js',sha256:'b'.repeat(64),kind:'test'});
-  const {digest:closureDigest,...closureBody}=wrongClosure;wrongClosure.digest=conformanceDigest(closureBody);
+  rehashCatalog(wrongClosure);
   assert.throws(()=>validateTest262Catalog(wrongClosure),/source input closure/);
   const missingClause=fixture({'test/core.js':{membership:'edition',requiredForThisRelease:false}});
   const invalid=structuredClone(missingClause.catalog),evidence=invalid.variants[0].classification.evidence;
   evidence.normativeObligations[0].clauseIds=['not-a-clause'];
-  for(const row of invalid.variants){const {id,...identity}=row;
-    row.id=conformanceDigest({suiteRevision:invalid.suiteRevision,profile:invalid.profile,...identity});}
-  const {digest:old,...invalidBody}=invalid;invalid.digest=conformanceDigest(invalidBody);
+  rehashCatalog(invalid);
   assert.throws(()=>buildTest262EditionAudit({...missingClause,catalog:invalid}),/clause absent/);
   assert.equal(input.catalog.variants.find(row=>row.path==='test/core.js').classification.requiredForThisRelease,true);
   assert.deepEqual(buildTest262EditionAudit(input).claims,
@@ -178,7 +183,8 @@ test('changed original bytes and rehashed missing variants cannot manufacture a 
   const input=fixture();
   assert.throws(()=>buildTest262EditionAudit({...input,sources:{...input.sources,'test/core.js':input.sources['test/core.js']+' '}}),/exact catalog test bytes/);
   const {digest,...body}=structuredClone(input.catalog);body.variants=body.variants.slice(1);
-  assert.throws(()=>buildTest262EditionAudit({...input,catalog:{...body,digest:conformanceDigest(body)}}),/every declared variant mode/);
+  assert.throws(()=>buildTest262EditionAudit({...input,catalog:{...body,digest:conformanceDigest(body)}}),
+    /catalog omits or changes required source variants: test\/core\.js/);
   const duplicate=structuredClone(input.catalog);duplicate.variants.push(structuredClone(duplicate.variants[0]));
   const {digest:ignored,...duplicateBody}=duplicate;
   assert.throws(()=>buildTest262EditionAudit({...input,catalog:{...duplicateBody,digest:conformanceDigest(duplicateBody)}}),/Duplicate or missing Test262 variants/);
@@ -226,7 +232,7 @@ test('reviewed modules require every pinned fixture and a complete dependency cl
   const rehashed=structuredClone(catalog);
   rehashed.variants[0].dependencies.status='unresolved';
   rehashed.variants[0].dependencies.unresolved=[dependency];
-  const {digest,...body}=rehashed;rehashed.digest=conformanceDigest(body);
+  rehashCatalog(rehashed);
   assert.throws(()=>validateTest262Catalog(rehashed),/complete source dependency closure/);
 });
 
@@ -235,6 +241,6 @@ test('an edition decision cannot simultaneously require an addition or external 
     catalog=structuredClone(input.catalog);
   catalog.variants[0].classification.evidence.normativeObligations.push({basis:'addition',
     uri:'https://example.invalid/required-addition',sha256:'a'.repeat(64),clauseIds:['addition']});
-  const {digest,...body}=catalog;catalog.digest=conformanceDigest(body);
+  rehashCatalog(catalog);
   assert.throws(()=>validateTest262Catalog(catalog),/Edition membership cannot require addition/);
 });
