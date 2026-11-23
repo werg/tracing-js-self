@@ -28,6 +28,7 @@ jobs:
     env:
       MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
       MEGATOKEN_PYTHON: python
+      SEMANTIC_V8_NATIVE_POLICY: ${{ runner.temp }}/semantic-native-policy-v8.json
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,15 +39,9 @@ jobs:
         with:
           node-version-file: tracing-js-self/.nvmrc
       - id: policy
-        name: Read the exact paired lifecycle checker
+        name: Resolve current paired checker and retain this run’s exact policy
         run: |
-          node --input-type=module <<'JS'
-          import {readFileSync,appendFileSync} from 'node:fs';
-          const policy=JSON.parse(readFileSync('contracts/semantic-native-policy-v8.json'));
-          if(policy.consumerRepository!=='werg/megatoken'||!/^[0-9a-f]{40}$/.test(policy.consumerRevision))
-            throw new Error('Exact paired consumer identity is required');
-          appendFileSync(process.env.GITHUB_OUTPUT,'consumer='+policy.consumerRevision+'\n');
-          JS
+          node tools/resolve-native-consumer.mjs --out "$SEMANTIC_V8_NATIVE_POLICY"
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
@@ -99,5 +94,6 @@ jobs:
           retention-days: 30
           if-no-files-found: error
           path: |
+            ${{ runner.temp }}/semantic-native-policy-v8.json*
             ${{ runner.temp }}/v8-continuation-tests.xml
             ${{ runner.temp }}/module-scheduler-source-evidence.json

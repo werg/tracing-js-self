@@ -81,7 +81,11 @@ const manifest=[...examples.map(row=>({id:row.id,publicDigest:hashAlgorithmData(
     publicDigest:hashAlgorithmData(row.public),contextDigest:hashAlgorithmData(row.contexts)}))];
 const contract=semanticV8Contract(records,manifest),interop={schema:'semantic-v8-interoperability/1',
   contractDigest:contract.digest,interoperabilityDigest:contract.interoperabilityDigest,examples};
-for(const [relative,value] of [['../contracts/semantic-execution-v8.json',contract],['../test/fixtures/semantic-regions-v8.json',interop]]){
+const policyPath=new URL('../contracts/semantic-native-policy-v8.json',import.meta.url),
+  policy={...JSON.parse(await readFile(policyPath,'utf8')),contractDigest:contract.digest,
+    fixtureDigest:contract.fixtureDigest,interoperabilityDigest:contract.interoperabilityDigest};
+for(const [relative,value] of [['../contracts/semantic-execution-v8.json',contract],['../test/fixtures/semantic-regions-v8.json',interop],
+  ['../contracts/semantic-native-policy-v8.json',policy]]){
   const path=fileURLToPath(new URL(relative,import.meta.url)),bytes=JSON.stringify(value,null,2)+'\n';
   if(check){if(await readFile(path,'utf8')!==bytes)throw new Error('Regenerate '+path);}
   else await writeFile(path,bytes);

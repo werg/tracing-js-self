@@ -122,6 +122,26 @@ accounting; rehashing a receipt cannot turn an unexplained missing candidate
 into a completed input. Partial shard receipts remain useful progress evidence,
 while final complete-run equivalence checks continue to require all shards.
 
+## Current paired code and per-run policy
+
+The active V8 native, continuation and original-module CI jobs resolve the
+consumer once before checkout. `tools/resolve-native-consumer.mjs` selects the
+matching branch in `werg/megatoken` when it exists, otherwise the repository's
+current default head. `MEGATOKEN_REF` explicitly selects a branch or commit;
+an absent explicit branch or a network failure is an error. A historical policy
+that already contains `consumerRevision` continues to require that exact code.
+
+Each run retains a policy snapshot with the observed 40-character revision and
+a resolution record outside the source checkout. Checkout, admission and
+preparation then use that immutable observation. The checked-in development
+policy binds the current contract, fixtures and tokenizer without freezing the
+companion repository to one old commit. Contract regeneration also updates the
+policy digests, and its check mode rejects stale policy evidence.
+
+Support-source and lifecycle counts in those jobs are derived from the actual
+authenticated registry. The complete source-ID set must match the qualification
+rows and the prepared inventory; a past corpus size is not an acceptance rule.
+
 ## Current artifacts and historical observations
 
 The schema labels evolve in place during pre-release development. Current

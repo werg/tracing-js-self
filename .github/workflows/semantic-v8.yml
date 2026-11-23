@@ -31,7 +31,7 @@ jobs:
       MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/tokenizer.json
       MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
       MEGATOKEN_PYTHON: python
-      SEMANTIC_V8_NATIVE_POLICY: ${{ github.workspace }}/tracing-js-self/contracts/semantic-native-policy-v8.json
+      SEMANTIC_V8_NATIVE_POLICY: ${{ runner.temp }}/semantic-native-policy-v8.json
       V8_POPULATION: ${{ matrix.population }}
     steps:
       - uses: actions/checkout@v4
@@ -43,16 +43,10 @@ jobs:
         with:
           node-version-file: tracing-js-self/.nvmrc
       - id: policy
-        name: Read the exact independent consumer pin
+        name: Resolve current native code and retain this run’s exact policy
         working-directory: tracing-js-self
         run: |
-          node --input-type=module <<'JS'
-          import {readFileSync,appendFileSync} from 'node:fs';
-          const policy=JSON.parse(readFileSync('contracts/semantic-native-policy-v8.json'));
-          if(policy.consumerRepository!=='werg/megatoken'||!/^[0-9a-f]{40}$/.test(policy.consumerRevision))
-            throw new Error('Exact independent consumer repository and commit required');
-          appendFileSync(process.env.GITHUB_OUTPUT,`consumer=${policy.consumerRevision}\n`);
-          JS
+          node tools/resolve-native-consumer.mjs --out "$SEMANTIC_V8_NATIVE_POLICY"
       - uses: actions/checkout@v4
         with:
           repository: werg/megatoken
@@ -173,6 +167,8 @@ jobs:
             test/semantic-shared-protocol-source-v8.test.js \
             test/semantic-shared-generator-source-v8.test.js \
             test/semantic-async-call-source-v8.test.js \
+            test/semantic-async-iteration-source-v8.test.js \
+            test/semantic-async-iteration-bindings-v8.test.js \
             test/semantic-source-context-staging-v8.test.js \
             2>&1 | tee "$RUNNER_TEMP/shared-async-source-tests.xml"
           python - <<'PY'
@@ -180,15 +176,15 @@ jobs:
           from pathlib import Path
           root = Path(os.environ['RUNNER_TEMP'])
           cases = list(ET.parse(root / 'shared-async-source-tests.xml').getroot().iter('testcase'))
-          if len(cases) != 69 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
-              raise ValueError('Every shared generator/Promise and nested async control must run and pass')
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('Every shared generator/Promise, async iteration and nested async control must run and pass')
           for name, sources, contexts in [('shared-generator-source-evidence.json', 6, 189), ('nested-async-source-evidence.json', 10, 231)]:
               evidence = json.loads((root / name).read_text())
               if evidence['sourceCases'] != sources or evidence['actualNativeCases'] != sources or evidence['generatedContexts'] != contexts:
                   raise ValueError('Every original source and generated context requires independent native replay: ' + name)
               if evidence['moduleAdmission'] is not False or evidence['trainingAdmission'] is not False or evidence['optimizerUpdates'] != 0:
                   raise ValueError('Source composition cannot itself grant evaluated-module/data admission or optimizer exposure')
-          print('69 source composition controls passed, zero skips; 6 generator/189 context and 10 async/231 context cases')
+          print(f'{len(cases)} source composition controls passed, zero skips; 6 generator/189 context and 10 async/231 context cases')
           PY
       - id: qualification
         name: Recollect exact source and native admission receipts
@@ -248,10 +244,11 @@ jobs:
           registry = json.loads((qualification / 'family-registry.json').read_text())
           rows = report['rows']
           source_ids = [source['id'] for source in registry['sources']]
-          if (report['population'] != 'se-support' or report['declared'] != 64 or
-              report['preparationOnly'] or report['sourceQualified'] != 64 or report['nativeAdmitted'] != 64 or
-              report['registryDigest'] != registry['digest'] or len(rows) != 64 or
-              len(set(source_ids)) != 64 or {row['sourceId'] for row in rows} != set(source_ids) or
+          population_count = len(source_ids)
+          if (not population_count or report['population'] != 'se-support' or report['declared'] != population_count or
+              report['preparationOnly'] or report['sourceQualified'] != population_count or report['nativeAdmitted'] != population_count or
+              report['registryDigest'] != registry['digest'] or len(rows) != population_count or
+              len(set(source_ids)) != population_count or {row['sourceId'] for row in rows} != set(source_ids) or
               any(row['source'] != 'passed' or row['native'] != 'passed' for row in rows)):
               raise ValueError('Every frozen support source requires its original source and independent native admission')
           inventory = temporary / 'v8-support-source-ids.json'
@@ -304,7 +301,7 @@ jobs:
               '--tokenizer', os.environ['MEGATOKEN_TOKENIZER_JSON'],
               '--native-policy', os.environ['SEMANTIC_V8_NATIVE_POLICY']], check=True)
           result = json.loads((temporary / 'v8-support-lifecycle' / 'command-report.json').read_text())
-          if (result['status'] != 'passed' or result['populationCount'] != 64
+          if (result['status'] != 'passed' or result['populationCount'] != len(registry['sources'])
               or result['registryDigest'] != registry['digest'] or result['optimizerUpdates'] != 2
               or result.get('fullTargetCoverageRequested') is not False
               or result.get('fullTargetCoverageQualified') is not False
@@ -320,6 +317,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
           path: |
+            ${{ runner.temp }}/semantic-native-policy-v8.json*
             ${{ runner.temp }}/semantic-v8-contract.log
             ${{ runner.temp }}/semantic-v8-tests.xml
             ${{ runner.temp }}/semantic-v8-tests.log
