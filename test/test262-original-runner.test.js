@@ -76,6 +76,37 @@ test('runtime negatives require actual owned error identity and cannot use names
   for(const options of missing)assert.equal(executeOfficialTest262Variant(options).status,'unsupported');
 });
 
+test('unsupported Object.defineProperty object storage cannot satisfy runtime-negative TypeError',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'Object.defineProperty(Promise.resolve(0),"constructor",{value:Promise});',
+    'var define=Object.defineProperty;define(Promise.resolve(0),"x",{value:1});',
+    'Object.defineProperty(function(){},"x",{value:1});',
+    'Object.defineProperty(Object.is,"x",{value:1});',
+    'Object.defineProperty({},"x",Promise.resolve(0));',
+    'Object.defineProperty({},"x",function(){});'
+  ])for(const {owned,reference} of both(body,{metadata})){
+    assert.equal(owned.status,'unsupported',owned.reason);
+    assert.match(owned.reason,/Object.defineProperty (?:descriptor )?requires owned ordinary storage/);
+    assert.equal(reference.status,'failed',reference.reason);
+  }
+});
+
+test('Object.defineProperty primitive targets and descriptors retain genuine guest TypeErrors',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const primitive of ['undefined','null','false','0','"value"','0n','Symbol("key")']){
+    statuses(both('Object.defineProperty('+primitive+',"x",{});',{metadata}),'passed');
+    statuses(both('Object.defineProperty({},"x",'+primitive+');',{metadata}),'passed');
+  }
+});
+
+test('catching unsupported Object.defineProperty storage cannot manufacture a passing original script',()=>{
+  for(const {owned,reference} of both('try{Object.defineProperty(Promise.resolve(0),"x",{value:1});}catch(error){}')){
+    assert.equal(owned.status,'unsupported',owned.reason);
+    assert.equal(reference.status,'passed',reference.reason);
+  }
+});
+
 test('raw preserves exact bytes and loads no implicit harness or wrapper',()=>{
   const [options]=fixture('if(typeof assert!=="undefined")throw 1;', {metadata:'flags: [raw]\n'});
   assert.equal(options.variant.mode,'raw');

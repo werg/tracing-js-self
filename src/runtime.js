@@ -3852,12 +3852,19 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             };
             const v=args[0]?.value??U, obj=v[0]==='ref'?s.heap[v[1]]:null;
             if(callable[1]==='Object.defineProperty'){
+              if(['undefined','null','bool','num','str','bigint','symbol'].includes(v[0]))
+                guestFault('TypeError','Object.defineProperty target must be an object');
+              // Promises, functions and other object identities are valid JS
+              // targets. Unmodeled storage must stop owned execution, not
+              // manufacture a guest TypeError that can satisfy a negative test.
               if(!obj||!['object','array','module-namespace'].includes(obj.kind))
-                guestFault('TypeError','Object.defineProperty requires an owned ordinary object');
+                throw new TypeError('Object.defineProperty requires owned ordinary storage');
               const key=args[1]?.value??U,descValue=args[2]?.value??U;
               const name=valueKey(key),descriptor=descValue[0]==='ref'?s.heap[descValue[1]]:null;
+              if(['undefined','null','bool','num','str','bigint','symbol'].includes(descValue[0]))
+                guestFault('TypeError','Property descriptor must be an object');
               if(!descriptor||!['object','array'].includes(descriptor.kind))
-                guestFault('TypeError','Accessor descriptor must be an owned data object');
+                throw new TypeError('Object.defineProperty descriptor requires owned ordinary storage');
               // ToPropertyDescriptor executes descriptor getters in source
               // order. Until that continuation is owned, this is a profile
               // refusal, never a substitute guest TypeError that a catch can

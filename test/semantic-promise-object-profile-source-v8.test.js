@@ -56,12 +56,19 @@ function archive(source){const runtime=createRuntime().startEntry({text:source,f
   runtime.drive();return runtime.exportRun();}
 for(const scenario of refusals)test('Promise object profile refuses '+scenario.name,async()=>{
   const original=originalOutcome(scenario.source);assert.deepEqual(original,{kind:'return',value:scenario.expected});
-  const bundle=archive(scenario.source);
-  assert.throws(()=>compileProtocolSourceV8(bundle),profileError);
-  assert.throws(()=>compileSourceProjection(bundle,{projectionClient:SOURCE_PROJECTION_CLIENT_V8}),profileError);
+  const ownedDescriptorRefusal=scenario.name==='promise-as-descriptor';
+  if(ownedDescriptorRefusal){
+    assert.throws(()=>archive(scenario.source),{
+      name:'TypeError',message:'Object.defineProperty descriptor requires owned ordinary storage'});
+  }else{
+    const bundle=archive(scenario.source);
+    assert.throws(()=>compileProtocolSourceV8(bundle),profileError);
+    assert.throws(()=>compileSourceProjection(bundle,{projectionClient:SOURCE_PROJECTION_CLIENT_V8}),profileError);
+  }
   const result=await verifyProtocolRegionTrainingCase({source:scenario.source,entry:'run',args:[],family:'promise-object-profile:'+scenario.name});
   assert.equal(result.exported,undefined,'unsupported storage cannot provide native admission input');
-  assert.equal(result.category,'unsupported.promise-source-object-operation');
+  assert.equal(result.category,ownedDescriptorRefusal?'unsupported.protocol-source':'unsupported.promise-source-object-operation');
+  if(ownedDescriptorRefusal)assert.equal(result.reason,'Object.defineProperty descriptor requires owned ordinary storage');
   observations.push({...scenario,original,refused:true,sourceCategory:result.category,sourceReason:result.reason});
 });
 for(const scenario of positives)test('Promise object profile preserves '+scenario.name,async()=>{
