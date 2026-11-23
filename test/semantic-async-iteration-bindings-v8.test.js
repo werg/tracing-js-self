@@ -53,20 +53,23 @@ test('restoration during an awaited binding preserves the inner and outer cleanu
   assert(restored,'the default initializer must suspend with both cleanup scopes retained');
 });
 
-test('native consumer checks async binding, rest and nested cleanup records',
+// Keep the existing native deadline per original binding case, with a fresh
+// interpreter so cases cannot share import or execution state.
+for(const fixture of cases)test('native consumer checks async binding, rest and nested cleanup records: '+fixture.name,
   {skip:!process.env.MEGATOKEN_ROOT},()=>{
   assert.equal(artifacts.length,cases.length);
+  const example=artifacts.find(row=>row.name===fixture.name);assert(example,fixture.name);
   const root=resolve(process.env.MEGATOKEN_ROOT),script=`
 import json,sys
 from megatoken.data.native_v8 import validate_v8_artifact,_replay_shared_state
-for row in json.load(sys.stdin):
-    receipt=validate_v8_artifact(row['exported'])
-    assert all(receipt['checks'][key]=='passed' for key in ['replay','contexts','continuation'])
-    state=_replay_shared_state(row['exported']['public']['timeline'],row['exported']['contexts'],{},roundtrip=True,boundary_invocation='invocation1')['state']
-    assert state==row['state'],row['name']
+row=json.load(sys.stdin)
+receipt=validate_v8_artifact(row['exported'])
+assert all(receipt['checks'][key]=='passed' for key in ['replay','contexts','continuation'])
+state=_replay_shared_state(row['exported']['public']['timeline'],row['exported']['contexts'],{},roundtrip=True,boundary_invocation='invocation1')['state']
+assert state==row['state'],row['name']
 print('checked')
 `;
   const result=spawnSync(process.env.MEGATOKEN_PYTHON||'python',['-c',script],{cwd:root,
-    env:{...process.env,PYTHONPATH:join(root,'src')},input:JSON.stringify(artifacts),encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024});
+    env:{...process.env,PYTHONPATH:join(root,'src')},input:JSON.stringify(example),encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024});
   assert.equal(result.status,0,result.stderr||String(result.error));
 });
