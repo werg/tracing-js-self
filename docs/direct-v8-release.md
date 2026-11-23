@@ -75,7 +75,7 @@ and checkpoint policy must name this same source pair. Old receipts are not
 relabeled to a new revision.
 
 Run in the locked environment with its exact Node, V8, npm, Python and native
-package versions. Install dependencies from `npm-shrinkwrap.json` and
+package versions. Install dependencies from `package-lock.json` and
 `tools/native-consumer/requirements.lock` before verification. The V8-specific
 runtime lock is `profiles/release-environment-v8.lock.json`; it does not load a
 V6 policy. Runtime receipts preserve the actual platform and runner/container

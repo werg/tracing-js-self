@@ -7,6 +7,7 @@ import {spawn} from 'node:child_process';
 import {dirname,join,relative,resolve,sep} from 'node:path';
 import {gunzipSync} from 'node:zlib';
 import {generationEnvironment} from './generation-process.mjs';
+import {readDependencyLock,PACKAGED_DEPENDENCY_LOCK} from '../dependency-lock.js';
 
 export const LEGACY_V8_CLIENT_FILES=Object.freeze([
   ...['format','trace-text','harness-v4','controller','render','model-driver','effectful-compiler',
@@ -92,24 +93,24 @@ export async function prepareInstalledV8Package({root,output,dependencyArchiveDi
   const sourceArchiveSha256=await installedFileHash(snapshot);
   await command('tar',['-xf',snapshot,'-C',staging]);await rm(snapshot);
   const metadata=JSON.parse(await readFile(join(staging,'package.json'),'utf8')),
-    lockBytes=await readFile(join(staging,'npm-shrinkwrap.json')),lock=JSON.parse(lockBytes);
+    lockBytes=readDependencyLock(staging),lock=JSON.parse(lockBytes);
   if(Object.keys(metadata.scripts??{}).some(name=>['prepack','prepare','postpack'].includes(name)))
     throw new Error('Complete package gate requires lifecycle-free packaging; pack hooks are not executed');
   if(lock.lockfileVersion!==3||lock.packages?.['']?.name!==metadata.name)
-    throw new Error('Exact npm shrinkwrap metadata is required');
+    throw new Error('Exact npm dependency lock metadata is required');
   const inheritedCache=resolve(dependencyCache??(await command('npm',['config','get','cache'])).stdout.trim());
   const npmEnv={...generationEnvironment(),npm_config_cache:inheritedCache,npm_config_offline:'true',
     npm_config_ignore_scripts:'true',npm_config_update_notifier:'false',npm_config_audit:'false',npm_config_fund:'false'};
   const packed=await command('npm',['pack','--offline','--ignore-scripts','--json','--pack-destination',archives],
     {cwd:staging,env:npmEnv});
-  const manifest=JSON.parse(packed.stdout);
-  if(manifest.length!==1||!manifest[0].files.some(file=>file.path==='npm-shrinkwrap.json')||
+  const manifest=Object.values(JSON.parse(packed.stdout));
+  if(manifest.length!==1||!manifest[0].files.some(file=>file.path===PACKAGED_DEPENDENCY_LOCK)||
     manifest[0].files.some(file=>file.path==='package-lock.json'))throw new Error('Incomplete publishable package lock evidence');
   const pack=manifest[0],packageArchive=join(archives,pack.filename);
   if(dirname(packageArchive)!==archives)throw new Error('Unsafe npm package archive name');
   await verifyInstalledArchiveIntegrity(packageArchive,pack.integrity);
   await writeFile(join(output,'npm-pack.json'),JSON.stringify(pack,null,2)+'\n');
-  await writeFile(join(output,'npm-shrinkwrap.json'),lockBytes);
+  await writeFile(join(output,'package-lock.json'),lockBytes);
   await rm(staging,{recursive:true,force:true});
   const packageCheck=join(work,'package-check');await mkdir(packageCheck);
   await command('tar',['-xzf',packageArchive,'-C',packageCheck]);
@@ -125,9 +126,12 @@ export async function prepareInstalledV8Package({root,output,dependencyArchiveDi
     if(dependencyArchiveDirectory){
       await cp(join(resolve(dependencyArchiveDirectory),filename),archive);source='provided-locked-archive';
     }else{
-      const result=await command('npm',['pack',resolved,'--offline',
+      // npm 12 classifies pack's second fetch of this explicit archive as a
+      // non-root request. This one offline command consumes only the locked
+      // URL from cache; it performs no dependency install or lifecycle scripts.
+      const result=await command('npm',['pack',resolved,'--offline','--allow-remote=all',
         '--ignore-scripts','--json','--pack-destination',archives],{cwd:application,env:npmEnv});
-      const packedDependency=JSON.parse(result.stdout);
+      const packedDependency=Object.values(JSON.parse(result.stdout));
       if(packedDependency.length!==1||packedDependency[0].filename!==filename)
         throw new Error('Unexpected dependency archive identity for locked URL: '+name);
       source='offline-locked-tarball-url';
@@ -140,14 +144,14 @@ export async function prepareInstalledV8Package({root,output,dependencyArchiveDi
     throw new Error('A required production dependency is absent from the locked archive inventory');
   await writeFile(join(application,'package.json'),JSON.stringify({name:'installed-v8-qualification',private:true,type:'module'})+'\n');
   const installEnv={...npmEnv,npm_config_cache:join(work,'empty-install-cache')};
-  await command('npm',['install','--offline','--ignore-scripts','--no-audit','--no-fund','--omit=dev','--save-exact',
+  await command('npm',['install','--offline','--ignore-scripts','--no-audit','--no-fund','--omit=dev','--save-exact','--allow-file=root',
     packageArchive,...dependencies.map(row=>join(output,row.archive))],{cwd:application,env:installEnv});
   const installed=join(application,'node_modules',metadata.name),before=await installedFileTree(installed);
   if(before.sha256!==packageTree.sha256)throw new Error('Installed package files differ from the complete npm archive');
-  const installedLock=await readFile(join(installed,'npm-shrinkwrap.json'));
+  const installedLock=await readFile(join(installed,PACKAGED_DEPENDENCY_LOCK));
   if(!lockBytes.equals(installedLock)||!Buffer.from(JSON.stringify(metadata)).equals(
     Buffer.from(JSON.stringify(JSON.parse(await readFile(join(installed,'package.json'),'utf8'))))))
-    throw new Error('Installed package metadata or shrinkwrap bytes differ');
+    throw new Error('Installed package metadata or dependency lock bytes differ');
   for(const dependency of dependencies){
     const path=join(application,'node_modules',dependency.name),value=JSON.parse(await readFile(join(path,'package.json'),'utf8'));
     if(value.name!==dependency.name||value.version!==dependency.version)throw new Error('Installed dependency version differs');
@@ -193,8 +197,8 @@ export async function restoreInstalledV8Package({output}={}){
     throw new Error('Incomplete installed qualification package identity');
   if(await installedFileHash(join(output,evidence.package.archive))!==evidence.package.sha256||
     await installedFileHash(join(output,'npm-pack.json'))!==evidence.package.packManifestSha256||
-    await installedFileHash(join(output,'npm-shrinkwrap.json'))!==evidence.packageLockSha256||
-    await installedFileHash(join(installed,'npm-shrinkwrap.json'))!==evidence.packageLockSha256||
+    await installedFileHash(join(output,'package-lock.json'))!==evidence.packageLockSha256||
+    await installedFileHash(join(installed,PACKAGED_DEPENDENCY_LOCK))!==evidence.packageLockSha256||
     await installedFileHash(join(output,'installed-application-lock.json'))!==evidence.applicationLockSha256||
     await installedFileHash(join(application,'package-lock.json'))!==evidence.applicationLockSha256||
     (await installedFileTree(installed)).sha256!==evidence.installation.packageAfterRemoval.sha256)

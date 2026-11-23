@@ -8,7 +8,7 @@
   "arch": "x64",
   "timezone": "UTC",
   "locale": "C.UTF-8",
-  "producerDependencies": "npm-shrinkwrap.json",
+  "producerDependencies": "package-lock.json",
   "consumerDependencies": "tools/native-consumer/requirements.lock",
   "consumerPolicy": "The complete release qualification journal pins the exact V8 pair and tokenizer",
   "containerDigest": null,

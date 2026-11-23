@@ -22,7 +22,7 @@ DEFAULT_LIMITS = release._archive.DEFAULT_LIMITS
 LOCKS = {"locks/environment.json": "profiles/release-environment.lock.json",
          "locks/native-policy.json": "contracts/native-admission-policy-v6.json",
          "locks/requirements.lock": "tools/native-consumer/requirements.lock",
-         "locks/producer-npm-shrinkwrap.json": "npm-shrinkwrap.json",
+         "locks/producer-package-lock.json": "package-lock.json",
          "locks/oracle-package-lock.json": "tools/spec-oracle/package-lock.json"}
 
 

@@ -146,7 +146,7 @@ test('archive drill extracts to a new tree, runs the original producer, and pres
 from pathlib import Path
 spec=importlib.util.spec_from_file_location('release',sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 root,producer,archive=map(Path,sys.argv[2:])
-locks={'locks/environment.json':'profiles/release-environment.lock.json','locks/native-policy.json':'contracts/native-admission-policy-v6.json','locks/requirements.lock':'tools/native-consumer/requirements.lock','locks/producer-npm-shrinkwrap.json':'npm-shrinkwrap.json','locks/oracle-package-lock.json':'tools/spec-oracle/package-lock.json'}
+locks={'locks/environment.json':'profiles/release-environment.lock.json','locks/native-policy.json':'contracts/native-admission-policy-v6.json','locks/requirements.lock':'tools/native-consumer/requirements.lock','locks/producer-package-lock.json':'package-lock.json','locks/oracle-package-lock.json':'tools/spec-oracle/package-lock.json'}
 rows,sources=m.inventory({'corpus':root/'corpus',**{name:producer/path for name,path in locks.items()}})
 payload=json.loads((root/'release-manifest.json').read_text());payload['files']=rows
 m.write_archive(archive,payload,sources)

@@ -343,7 +343,7 @@ def collect(producer, native):
             "sharedTrainingDefaults": stages["training_defaults"],
             "supplementalInputs": {
                 "producer": [producer.bind(path) for path in (
-                    "npm-shrinkwrap.json", "profiles/release-environment.lock.json",
+                    "package-lock.json", "profiles/release-environment.lock.json",
                     "profiles/targets.lock.json", "tools/native-consumer/requirements.lock",
                     "tools/native-consumer/requirements.in", "contracts/semantic-integration-lock.json",
                     "contracts/native-admission-policy-v6.json", "contracts/semantic-native-policy-v7.json",

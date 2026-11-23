@@ -31,7 +31,7 @@ export function generationIdentity(root,{producerRevision,recipe,native=null,bou
     consumerEnvironment={...JSON.parse(python),sourceTreeDigest:identityHash(tree)};
   }
   return {schema:'semantic-generation-identity/1',producerRevision,recipe,
-    producerSourceTreeDigest:identityHash(files),dependencyLockSha256:sha256(readFileSync(join(root,'npm-shrinkwrap.json'))),
+    producerSourceTreeDigest:identityHash(files),dependencyLockSha256:sha256(readFileSync(join(root,'package-lock.json'))),
     runtime:{node:process.version,v8:process.versions.v8,platform:process.platform,arch:process.arch,
       dependencies,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,
       locale:Intl.DateTimeFormat().resolvedOptions().locale},

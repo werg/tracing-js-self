@@ -79,14 +79,14 @@ test('packed public V8 installation certifies source and restores execution with
   // Package the runtime assets used by this gate with the repository's exact
   // package metadata. Large historical reports are not runtime dependencies;
   // full release-archive restoration remains a separate qualification.
-  for(const name of ['src','tools','contracts','catalog','bin','package.json','npm-shrinkwrap.json','README.md'])
+  for(const name of ['src','tools','contracts','catalog','bin','package.json','package-lock.json','README.md'])
     await cp(join(root,name),join(staging,name),{recursive:true});
   const env={...process.env,npm_config_cache:cache,npm_config_update_notifier:'false'};
   const packed=spawnSync('npm',['pack','--ignore-scripts','--json','--pack-destination',directory],
     {cwd:staging,env,encoding:'utf8',timeout:30000,maxBuffer:4*1024*1024});
   assert.equal(packed.status,0,packed.stderr||packed.error?.message);
-  const manifest=JSON.parse(packed.stdout)[0],filename=manifest.filename;
-  assert(manifest.files.some(file=>file.path==='npm-shrinkwrap.json'));
+  const manifest=Object.values(JSON.parse(packed.stdout))[0],filename=manifest.filename;
+  assert(manifest.files.some(file=>file.path==='contracts/npm-lock.json'));
   assert(!manifest.files.some(file=>file.path==='package-lock.json'));
   await writeFile(join(application,'package.json'),JSON.stringify({name:'public-v8-consumer',private:true,type:'module'}));
   // Archive the already-installed dependency bytes without invoking their build
@@ -105,7 +105,7 @@ test('packed public V8 installation certifies source and restores execution with
     archives.push(archive);
   }
   const install=spawnSync('npm',['install','--offline','--ignore-scripts','--no-audit','--no-fund',
-    '--package-lock=false','--omit=dev',...archives],
+    '--package-lock=false','--omit=dev','--allow-file=root',...archives],
     {cwd:application,env,encoding:'utf8',timeout:30000,maxBuffer:1024*1024});
   assert.equal(install.status,0,install.stderr||install.error?.message);
   for(const name of ['acorn','typescript']){
@@ -116,9 +116,9 @@ test('packed public V8 installation certifies source and restores execution with
   }
   assert.deepEqual(JSON.parse(await readFile(join(installed,'package.json'),'utf8')).exports,
     JSON.parse(await readFile(join(root,'package.json'),'utf8')).exports);
-  const lock=await readFile(join(root,'npm-shrinkwrap.json'));
-  await assert.rejects(readFile(join(root,'package-lock.json')),error=>error.code==='ENOENT');
-  assert.deepEqual(await readFile(join(installed,'npm-shrinkwrap.json')),lock);
+  const lock=await readFile(join(root,'package-lock.json'));
+  assert.deepEqual(await readFile(join(root,'contracts/npm-lock.json')),lock);
+  assert.deepEqual(await readFile(join(installed,'contracts/npm-lock.json')),lock);
   await assert.rejects(readFile(join(installed,'package-lock.json')),error=>error.code==='ENOENT');
   for(const path of legacyFiles){
     await rm(join(installed,path));
@@ -144,7 +144,7 @@ test('packed public V8 installation certifies source and restores execution with
 
   // Rechecking previously admitted bytes must reject changed dependency
   // evidence before consulting a native consumer, even when JSON stays valid.
-  await writeFile(join(installed,'npm-shrinkwrap.json'),Buffer.concat([lock,Buffer.from('\n')]));
+  await writeFile(join(installed,'contracts/npm-lock.json'),Buffer.concat([lock,Buffer.from('\n')]));
   const tamper=`import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
     import {recheckRegionEvidence,loadV8NativePolicy} from 'tracing-js-self/semantic/v8';
     const candidate=JSON.parse(readFileSync('source-evidence.json','utf8'));let nativeCalls=0;
@@ -155,12 +155,12 @@ test('packed public V8 installation certifies source and restores execution with
     {cwd:application,env,encoding:'utf8',timeout:30000,maxBuffer:1024*1024});
   assert.equal(tampered.status,0,tampered.stderr||tampered.error?.message);
 
-  await rm(join(installed,'npm-shrinkwrap.json'));
+  await rm(join(installed,'contracts/npm-lock.json'));
   const missing=`import assert from 'node:assert/strict';
     import {verifyRegionTrainingCase} from 'tracing-js-self/semantic/v8';
     await assert.rejects(verifyRegionTrainingCase({source:'"use strict";function run(){return 7;}',
       entry:'run',family:'missing-lock',fixture:{calls:[]}}),
-      error=>error.code==='ENOENT'&&error.path.endsWith('/npm-shrinkwrap.json'));`;
+      error=>error.code==='ENOENT'&&error.path.endsWith('/contracts/npm-lock.json'));`;
   const omitted=spawnSync(process.execPath,['--input-type=module','--eval',missing],
     {cwd:application,env,encoding:'utf8',timeout:30000,maxBuffer:1024*1024});
   assert.equal(omitted.status,0,omitted.stderr||omitted.error?.message);

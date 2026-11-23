@@ -79,7 +79,7 @@ def verify(consumer, tokenizer, policy_path):
     return {"schema": "semantic-v8-release-environment/1", "status": "verified",
             "consumerRevision": policy["consumerRevision"], "consumerTree": git("rev-parse", "HEAD^{tree}"),
             "nativePolicy": policy, "requirementsLockSha256": sha(lock_path),
-            "runtimeLockSha256": sha(runtime_path), "producerLockSha256": sha(root / "npm-shrinkwrap.json"),
+            "runtimeLockSha256": sha(runtime_path), "producerLockSha256": sha(root / "package-lock.json"),
             "node": node, "npm": npm, "python": sys.version, "packages": installed,
             "torch": str(torch.__version__), "cudaAvailable": torch.cuda.is_available(),
             "platform": platform.platform(), "machine": platform.machine(), "libc": list(platform.libc_ver()),

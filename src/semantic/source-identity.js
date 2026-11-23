@@ -8,6 +8,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {TRAINING_PROFILE,TRAINING_PARSER} from '../training/profile.js';
 import {verifyFrozenSplitIdentity,verifySourceRegistry,immutableSourceRegistry} from '../corpus/source-registry.mjs';
 import {referenceIsolationIdentity} from '../corpus/reference-isolation.mjs';
+import {readDependencyLock} from '../dependency-lock.js';
 
 const require=createRequire(import.meta.url);
 const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -77,9 +78,8 @@ export function admissionEnvironment(){
       node:process.versions.node,v8:process.versions.v8,platform:process.platform,arch:process.arch,
       timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,
       parser:require('acorn/package.json').version,typescript:require('typescript/package.json').version,
-      // Keep the existing receipt field name; hash the exact publishable root
-      // dependency lock. A package without this evidence cannot be admitted.
-      packageLockDigest:sha256(readFileSync(new URL('npm-shrinkwrap.json',root))),
+      // Both checkout and installed execution bind the same exact lock bytes.
+      packageLockDigest:sha256(readDependencyLock(root)),
       implementationDigest:identityDigest(files)};
   }
   return {...structuredClone(cachedEnvironment),

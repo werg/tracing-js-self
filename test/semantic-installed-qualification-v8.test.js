@@ -66,7 +66,7 @@ test('installed CLI refuses malformed bounds and keeps diagnostic selection expl
 
 test('public worker source, callback, Promise adoption and original module controls recheck and continue without a native receipt',async()=>{
   const population=installedQualificationInventory({producerRevision:'worker-control',population:'interoperability'}),
-    lock=installedSha256(await readFile(join(root,'npm-shrinkwrap.json')));
+    lock=installedSha256(await readFile(join(root,'package-lock.json')));
   for(const id of ['key-getter','return-callback-receiver-alias','module-scoped-var-isolation',
     'source-promise-adoption-executor','source-promise-adoption-async-return','source-promise-adoption-reaction-return']){
     const row=population.rows.find(row=>row.id===id);assert(row,id);
@@ -80,7 +80,7 @@ test('public worker source, callback, Promise adoption and original module contr
 test('installed continuation accepts callback-owned joins with ordered handler-close receipts',async()=>{
   const ids=['callback-owned-join','callback-owned-join-awaited'],
     population=installedQualificationInventory({producerRevision:'worker-control',population:'interoperability',requested:ids}),
-    lock=installedSha256(await readFile(join(root,'npm-shrinkwrap.json')));
+    lock=installedSha256(await readFile(join(root,'package-lock.json')));
   for(const id of ids){
     const row=population.rows.find(row=>row.id===id);assert(row,id);
     const result=await executeInstalledV8Task(row.task,{producerRevision:'worker-control',packageLockSha256:lock});
@@ -99,7 +99,7 @@ test('public worker checks original source separately and retains a disagreement
   const fixture={id:'original',family:'installed-original-control',entry:'run',args:[],fixture:{calls:[]},
     source:'"use strict";function run(){return 7;}',originalReferenceSource:'"use strict";function run(){return 9;}'};
   const result=await executeInstalledV8Task(encodeGenerationTask({kind:'source',traceVersion:8,fixture}),
-    {producerRevision:'worker-control',packageLockSha256:installedSha256(await readFile(join(root,'npm-shrinkwrap.json')))});
+    {producerRevision:'worker-control',packageLockSha256:installedSha256(await readFile(join(root,'package-lock.json')))});
   assert.equal(result.status,'original_source_mismatch');assert(!result.exported);
   assert.equal(result.originalSourceEvidence.input.source,fixture.originalReferenceSource);
   assert.equal(result.originalSourceEvidence.transformedSource,fixture.source);
@@ -110,7 +110,7 @@ test('a refused selected original-population source makes the installed gate fai
   const fixture={id:'deliberately-refused-original-control',family:'installed-refusal-control',entry:'run',args:[],fixture:{calls:[]},
     source:'"use strict";function run(){return new WeakMap();}'};
   const result=await executeInstalledV8Task(encodeGenerationTask({kind:'source',traceVersion:8,fixture}),
-    {producerRevision:'worker-control',packageLockSha256:installedSha256(await readFile(join(root,'npm-shrinkwrap.json')))});
+    {producerRevision:'worker-control',packageLockSha256:installedSha256(await readFile(join(root,'package-lock.json')))});
   assert(!result.exported);assert.equal(result.installedChecks.source,'refused');
   const rows=[{id:fixture.id,population:'all',selected:true,source:'unqualified',status:result.status,reason:result.reason}];
   const outcome=installedQualificationOutcome(rows);
@@ -123,7 +123,7 @@ test('canonical expected results remain an independent gate even when original a
     entry:'run',args:[],fixture:{calls:[]},source,originalReferenceSource:source,
     provenance:{inputOrigin:'upstream-canonical',canonicalExpected:9}};
   const result=await executeInstalledV8Task(encodeGenerationTask({kind:'source',traceVersion:8,fixture}),
-    {producerRevision:'worker-control',packageLockSha256:installedSha256(await readFile(join(root,'npm-shrinkwrap.json')))});
+    {producerRevision:'worker-control',packageLockSha256:installedSha256(await readFile(join(root,'package-lock.json')))});
   assert.equal(result.status,'canonical_mismatch');assert(!result.exported);
   assert.equal(result.originalSourceEvidence.originalReferenceDigest,result.originalSourceEvidence.transformedReferenceDigest);
   assert.equal(result.originalSourceEvidence.canonicalCheck.status,'disagreed');
@@ -154,9 +154,11 @@ test('complete Git package staging includes sparse files and installs exact lock
   const metadata={name:'tracing-js-self',version:'0.0.0',private:true,type:'module',
     exports:{'./semantic/v8':'./src/semantic/index-v8.js'},dependencies:{'installed-gate-dependency':'1.0.0'}};
   await writeFile(join(source,'package.json'),JSON.stringify(metadata)+'\n');
-  await writeFile(join(source,'npm-shrinkwrap.json'),JSON.stringify({name:metadata.name,version:metadata.version,lockfileVersion:3,
+  await writeFile(join(source,'package-lock.json'),JSON.stringify({name:metadata.name,version:metadata.version,lockfileVersion:3,
     packages:{'':metadata,'node_modules/installed-gate-dependency':{version:'1.0.0',
       resolved:dependencyUrl,integrity}}})+'\n');
+  await mkdir(join(source,'contracts'),{recursive:true});
+  await writeFile(join(source,'contracts/npm-lock.json'),await readFile(join(source,'package-lock.json')));
   const files=['tools/installed-v8-worker.mjs','src/semantic/index-v8.js','fixtures/not-curated/sparse-proof.txt',...LEGACY_V8_CLIENT_FILES];
   for(const file of files){await mkdir(dirname(join(source,file)),{recursive:true});await writeFile(join(source,file),'retained '+file+'\n');}
   await command('git',['init','-q']);await command('git',['config','user.email','installed-test@example.invalid']);
@@ -166,17 +168,20 @@ test('complete Git package staging includes sparse files and installs exact lock
   await command('git',['update-index','--skip-worktree',sparse]);await rm(join(source,sparse));
   assert.equal((await command('git',['status','--porcelain'])).stdout.trim(),'');
   const missingCache=join(directory,'missing-url-cache');
-  await assert.rejects(runInstalledCommand('npm',['pack',dependencyUrl,'--offline','--ignore-scripts','--json',
+  await assert.rejects(runInstalledCommand('npm',['pack',dependencyUrl,'--offline','--allow-remote=all','--ignore-scripts','--json',
     '--pack-destination',dependencyDirectory],{cwd:source,timeoutMs:60000,env:{...generationEnvironment(),npm_config_cache:missingCache,
       npm_config_offline:'true',npm_config_ignore_scripts:'true',npm_config_audit:'false',npm_config_fund:'false'}}),
     /ENOTCACHED|cache mode|offline/);
-  await runInstalledCommand('npm',['cache','add',dependencyUrl,'--ignore-scripts','--no-audit','--no-fund'],
+  await runInstalledCommand('npm',['cache','add',dependencyUrl,'--allow-remote=root','--ignore-scripts','--no-audit','--no-fund'],
     {cwd:source,timeoutMs:60000,env:{...generationEnvironment(),npm_config_cache:dependencyCache}});
   await new Promise(resolve=>server.close(resolve));
   const install=await prepareInstalledV8Package({root:source,output,dependencyCache});
   assert.equal(install.evidence.source.method,'complete-git-archive');assert(install.evidence.source.trackedFiles.includes(sparse));
   assert.equal(await readFile(join(install.installed,sparse),'utf8'),'retained '+sparse+'\n');
   const pack=JSON.parse(await readFile(join(output,'npm-pack.json'),'utf8'));assert(pack.files.some(row=>row.path===sparse));
+  assert(pack.files.some(row=>row.path==='contracts/npm-lock.json'));
+  assert(!pack.files.some(row=>row.path==='package-lock.json'));
+  assert.deepEqual(await readFile(join(install.installed,'contracts/npm-lock.json')),await readFile(join(source,'package-lock.json')));
   assert.equal(install.evidence.dependencies[0].lockIntegrity,integrity);
   assert.equal(install.evidence.dependencies[0].resolved,dependencyUrl);
   assert.equal(install.evidence.dependencies[0].source,'offline-locked-tarball-url');

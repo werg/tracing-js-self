@@ -55,7 +55,7 @@ IMPLEMENTATIONS = (
     "src/corpus/release-task-binding-v8.mjs",
     "tools/native-consumer/check_environment_v8.py",
     "tools/native-consumer/requirements.lock", "profiles/release-environment-v8.lock.json",
-    "npm-shrinkwrap.json",
+    "package-lock.json",
 )
 
 

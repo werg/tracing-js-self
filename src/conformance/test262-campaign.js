@@ -20,7 +20,7 @@ export function fingerprintTest262Implementation(){
   const paths=new Set(),pending=['tools/run-test262-campaign.mjs','tools/test262-original-worker.mjs',
     'src/conformance/test262-runner.js','src/conformance/test262-reference.js',
     'src/conformance/test262-acquisition.js','src/conformance/test262-catalog.js',
-    'src/conformance/test262-campaign.js','npm-shrinkwrap.json','package.json'];
+    'src/conformance/test262-campaign.js','package-lock.json','contracts/npm-lock.json','package.json'];
   while(pending.length){
     const path=pending.pop();if(paths.has(path))continue;
     paths.add(path);

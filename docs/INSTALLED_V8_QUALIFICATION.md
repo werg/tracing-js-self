@@ -17,7 +17,11 @@ manifest is retained alongside the exact tarball, package hash, Git revision,
 tree identity and complete tracked-file list.
 
 Production dependencies come from the exact `resolved` URLs in
-`npm-shrinkwrap.json`. By default, `npm pack <locked-url> --offline
+`package-lock.json`. Its exact generated copy, `contracts/npm-lock.json`, is
+included by ordinary `npm pack --ignore-scripts` because npm omits the root lock
+filename from archives. The packaging gate rejects divergent copies before
+packing and verifies the copy again after installation. By default,
+`npm pack <locked-url> --offline
 --ignore-scripts` retrieves the tarball directly from npm's offline cache; it
 does not resolve `<name>@<version>` through registry package metadata. A
 separate `--dependency-archives DIRECTORY` may supply files named like
@@ -26,6 +30,10 @@ fragments, and every archive must match the lock's SRI; rearchiving arbitrary
 installed bytes is not an integrity substitute. The app installs these
 archives offline with scripts disabled and an initially empty install cache.
 Its dependency files are then compared with the verified archive contents.
+The installer permits root local archives explicitly. The separate offline
+tarball command enables npm's remote-archive policy for its one locked URL;
+it reads only the local cache, performs no dependency installation, and still
+requires the original SRI before any artifact is used.
 
 Evidence records the publishable lock hash, application lock hash, archive
 hashes, dependency file inventories, complete package file inventories before

@@ -99,7 +99,7 @@ export async function runInstalledQualification(options){
       save('setup-failure.json',{phase:'installed-public-control',...control});
       throw new Error('Installed public control failed: '+(control.result.reason??control.result.status));
     }
-    const lockPath=join(installation.installed,'npm-shrinkwrap.json'),lock=await readFile(lockPath),guards=[];
+    const lockPath=join(installation.installed,'contracts/npm-lock.json'),lock=await readFile(lockPath),guards=[];
     try{
       for(const mutation of ['changed-lock','missing-lock']){
         if(mutation==='changed-lock')await writeFile(lockPath,Buffer.concat([lock,Buffer.from('\n')]));else await rm(lockPath);

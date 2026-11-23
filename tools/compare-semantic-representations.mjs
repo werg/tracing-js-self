@@ -27,7 +27,7 @@ if(existsSync(join(output,'comparison.json')))throw new Error('Choose a new outp
 const baselinePath=resolve(options.get('--baseline')??join(root,'docs/evidence/semantic-algorithm-v7/baseline-v6.json'));
 const baselineBytes=await readFile(baselinePath,'utf8'),baseline=JSON.parse(baselineBytes);
 const git=(...args)=>execFileSync('git',['-C',root,...args],{encoding:'utf8'}).trim();
-const implementationPaths=['src','tools','fixtures','contracts','package.json','npm-shrinkwrap.json'];
+const implementationPaths=['src','tools','fixtures','contracts','package.json','package-lock.json'];
 async function producerSnapshot(){
   const untracked=git('ls-files','--others','--exclude-standard','-z','--',...implementationPaths).split('\0').filter(Boolean);
   return {revision:git('rev-parse','HEAD'),tree:git('rev-parse','HEAD^{tree}'),

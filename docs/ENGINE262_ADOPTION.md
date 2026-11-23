@@ -24,7 +24,7 @@ executed slice does not implement the complete official harness.
   node tools/test262-baseline.mjs --output /tmp/test262-execution.json
   node scripts/run-runtime-conformance.mjs --oracle --output /tmp/test262-runtime.json
   ```
-  The GitHub Actions spec-reference job runs these commands, verifies the pinned source inventory, and publishes the arithmetic, parse and execution reports. These are **regression baselines**, not a Test262 conformance percentage. The optional engine262 oracle has an isolated committed manifest and integrity lock in `tools/spec-oracle`; the loader rejects a version that differs from either that lock or the target profile. The required Acorn parser has a version and integrity pin in the publishable root `npm-shrinkwrap.json`. The oracle retains its separate `tools/spec-oracle/package-lock.json`.
+  The GitHub Actions spec-reference job runs these commands, verifies the pinned source inventory, and publishes the arithmetic, parse and execution reports. These are **regression baselines**, not a Test262 conformance percentage. The optional engine262 oracle has an isolated committed manifest and integrity lock in `tools/spec-oracle`; the loader rejects a version that differs from either that lock or the target profile. The required Acorn parser has a version and integrity pin in the root `package-lock.json` and its publishable exact-byte copy `contracts/npm-lock.json`. The oracle retains its separate `tools/spec-oracle/package-lock.json`.
 
 ## Engine substitution feasibility
 
