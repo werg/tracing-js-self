@@ -87,7 +87,7 @@ for row in json.load(sys.stdin):
     assert all(receipt['checks'][key]=='passed' for key in ['replay','contexts','continuation'])
     state=_replay_shared_state(artifact['public']['timeline'],artifact['contexts'],{},roundtrip=True,boundary_invocation='invocation1')['state']
     assert state==row['state'],row['name']
-    out.append({'name':row['name'],'counts':receipt['counts']})
+    out.append({'name':row['name'],'counts':receipt['counts'],'checks':receipt['checks'],'admitted':receipt['admitted']})
 print(json.dumps(out))
 `;
     const result=spawnSync(process.env.MEGATOKEN_PYTHON||'python3',['-c',script],{cwd:root,

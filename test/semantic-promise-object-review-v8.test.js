@@ -117,7 +117,8 @@ for row in json.load(sys.stdin):
     for owner,expected in row['states']:
         state=_replay_shared_state(artifact['public']['timeline'],artifact['contexts'],{},roundtrip=True,boundary_invocation=owner)['state']
         assert state==expected,(row['name'],owner)
-    out.append({'name':row['name'],'counts':receipt['counts']})
+    out.append({'name':row['name'],'counts':receipt['counts'],'checks':receipt['checks'],'admitted':receipt['admitted'],
+                'checkedOwners':[owner for owner,_ in row['states']]})
 print(json.dumps(out))
 `;
     const result=spawnSync(process.env.MEGATOKEN_PYTHON||'python3',['-c',script],{cwd:root,
