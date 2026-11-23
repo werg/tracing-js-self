@@ -4107,6 +4107,12 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 const selected=ordinaryGet(descriptorHeap,descValue,field);
                 if(!selected)throw new TypeError('Accessor descriptor fields are outside the bounded profile');
                 d[field]=selected.method;
+                // ToPropertyDescriptor validates get before it even reads set.
+                // An invalid earlier field remains a guest error when a later
+                // field would require an unmodeled accessor continuation.
+                if((field==='get'||field==='set')&&selected.method.value[0]!=='undefined'&&
+                  primitiveUnary('typeof',selected.method.value,s.heap)[1]!=='function')
+                  guestFault('TypeError','Accessor must be a function or undefined');
               }
               if(obj.kind==='module-namespace'){
                 const outcome=this.moduleNamespaceDefine(s,f,obj,name,{...descriptor,properties:d},false,eventId);

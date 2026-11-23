@@ -65,10 +65,12 @@ test('only the trusted protocol reference worker receives native slot access',()
   const selected=referenceCommand(worker,{timeoutMs:100,isolation:'trusted-process',nativePromiseSlots:true});
   assert.deepEqual(original.args,[worker]);assert.deepEqual(selected.args,['--expose-internals',worker]);
   assert.equal(selected.env.NODE_OPTIONS,undefined);
-  assert.throws(()=>referenceCommand(import.meta.filename,{timeoutMs:100,nativePromiseSlots:true}),/restricted/);
-  const isolated=referenceCommand(worker,{timeoutMs:100,isolation:'linux-namespace',nativePromiseSlots:true});
-  try{assert(isolated.args.includes('--native-promise-slots'));assert.equal(isolated.env.NODE_OPTIONS,undefined);}
-  finally{isolated.cleanup();}
+  assert.throws(()=>referenceCommand(fileURLToPath(import.meta.url),{timeoutMs:100,nativePromiseSlots:true}),/restricted/);
+  if(process.platform==='linux'){
+    const isolated=referenceCommand(worker,{timeoutMs:100,isolation:'linux-namespace',nativePromiseSlots:true});
+    try{assert(isolated.args.includes('--native-promise-slots'));assert.equal(isolated.env.NODE_OPTIONS,undefined);}
+    finally{isolated.cleanup();}
+  }else assert.throws(()=>referenceCommand(worker,{timeoutMs:100,isolation:'linux-namespace',nativePromiseSlots:true}),/unavailable/);
 });
 
 test('independent original completion ignores unrelated Error stack hooks on returned Promises',async()=>{

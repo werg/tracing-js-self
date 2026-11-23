@@ -4,6 +4,8 @@ import {parse} from 'acorn';
 import {isDeepStrictEqual} from 'node:util';
 import {encode,decode} from '../values.js';
 import {stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
+import {ownedObjectHeap} from '../owned-object-storage.js';
+import {objectPrototype} from '../spec-operations.js';
 
 export const COMPLETION_OBSERVATION_SCHEMA='source-completions/1';
 export const COMPLETION_HOOK='__tracingSourceCompletion';
@@ -174,12 +176,37 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
     return ['identity',kind,identities.get(key)];
   };
   let observationEvent=null;
+  // Ordinary [[Set]] can fail silently in sloppy code. Inspect only the prior
+  // data descriptors: the expression still yields its RHS, while that rejected
+  // write must leave receiver storage unchanged. A missing patch alone cannot
+  // establish failure, because that would hide a dropped successful write.
+  const rejectedOrdinaryWrite=event=>{
+    if(event.operation!=='property.write'||bundle.programs[event.codeId]?.strict!==false)return null;
+    const [base,property]=event.operands??[];
+    if(!['ref','promise'].includes(base?.[0])&&!(base?.[0]==='intrinsic'&&base[1]==='Promise.prototype'))return null;
+    if(!['str','num','bool','null','undefined','bigint','symbol'].includes(property?.[0]))return null;
+    const heap=ownedObjectHeap(state),object=heap[base[1]];
+    if(!['object','array','promise'].includes(object?.kind))return null;
+    const key=property[0]==='symbol'?symbolPropertyKey(property[1]):stringPropertyKey(String(decode(property))),seen=new Set();
+    for(let current=object;current;current=heap[objectPrototype(current)]){
+      if(seen.has(current.id))throw new TypeError('Source assignment has a cyclic prototype chain');
+      seen.add(current.id);
+      if(Object.hasOwn(current.accessors??{},key))
+        return current.accessors[key].set.value[0]==='undefined'?{base,object}:null;
+      if(Object.hasOwn(current.properties??{},key)){
+        if(current.dataAttributes?.[key]?.writable===false)return {base,object};
+        break;
+      }
+    }
+    return object.extensible===false&&!Object.hasOwn(object.properties??{},key)?{base,object}:null;
+  };
   const emit=(key,kind,tag)=>{const row={site:key,kind,
     ...(!['finally','break','continue'].includes(kind)?{value:value(tag)}:{})};
     observations.push(row);if(onObservation)onObservation({row,tag,state,event:observationEvent});};
   for(const event of bundle.events){
     observationEvent=event;
     const previousFrame=state.frames[event.invocationId];
+    const rejectedWrite=rejectedOrdinaryWrite(event);
     for(const change of event.stateChanges){
       if(!state[change.table])continue;
       if(change.after===null)delete state[change.table][change.id];
@@ -253,7 +280,11 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
           const projected=assignmentValue?.({event,instruction,object,key,state});
           if(object.kind==='proxy'&&(projected===undefined||projected===null))
             throw new TypeError('Source Proxy assignment storage requires its independent target observer');
-          stored=projected??object.properties?.[key]?.value??['missing-storage'];
+          if(rejectedWrite){
+            if(!isDeepStrictEqual(object,rejectedWrite.object))
+              throw new TypeError('Rejected ordinary assignment changed receiver storage');
+            stored=event.result;
+          }else stored=projected??object.properties?.[key]?.value??['missing-storage'];
         }
         emit(key,'assign',stored);
       }

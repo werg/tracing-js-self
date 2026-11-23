@@ -83,7 +83,7 @@ export function validateCallAdapterEvent(state,event,programs,fail,sources=[]){
     if(!['undefined','null','bool','str','num','bigint','symbol'].includes(tagged[0]))
       fail('Own property key requires its source coercion');
     const key=tagged[0]==='symbol'?symbolPropertyKey(tagged[1]):stringPropertyKey(tagged[0]==='undefined'?'undefined':tagged[0]==='null'?'null':
-      tagged[0]==='num'&&tagged[1]==='-0'?'0':String(tagged[1]));
+      tagged[0]==='num'&&tagged[1]==='-0'?'0':tagged[0]==='num'&&tagged[1]==='+Infinity'?'Infinity':String(tagged[1]));
     let present;
     if(base[0]==='intrinsic'&&base[1]==='globalThis'){
       present=ownedGlobalProperty(state,key,sources)!==null;

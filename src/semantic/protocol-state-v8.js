@@ -42,6 +42,8 @@ export function initializeRetainedProtocolStateV8(controller){
   const protocol=createProtocolStateV8();
   protocol.promiseObjects={schema:PROMISE_OBJECT_STATE_V8,initialized:true};
   restorePromiseObjectStateV8(controller,protocol.promiseObjects,PROTOCOL_MACHINE_API_V8);
+  PROTOCOL_MACHINE_API_V8.require(controller.heap.get(promiseIntrinsicIdV8('Object.prototype'))?.prototype===null,
+    'Object.prototype has an immutable null prototype');
   controller.protocol=protocol;
 }
 function state(controller){return controller.protocol??=createProtocolStateV8();}

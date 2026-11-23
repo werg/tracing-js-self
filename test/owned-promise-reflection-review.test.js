@@ -98,3 +98,54 @@ test('ordinary property lookup does not enumerate unrelated Promise storage or m
   const materialized=ensurePromisePrototype(state);assert.equal(view['Promise.prototype'],materialized);
   assert.equal(state.heap.object,object);
 });
+
+test('adapted own-property reflection converts numeric special values to their actual string keys',()=>{
+  const archive=entry(`const value={Infinity:1,'+Infinity':2,'-Infinity':3,NaN:4,0:5};
+    return Object.hasOwn.call(null,value,Infinity)+':'+
+      Reflect.apply(Object.hasOwn,null,[value,Infinity])+':'+
+      Object.prototype.hasOwnProperty.apply(value,[Infinity])+':'+
+      Object.hasOwn.call(null,value,-Infinity)+':'+Object.hasOwn.call(null,value,NaN)+':'+
+      Object.hasOwn.call(null,value,-0)+':'+Object.hasOwn.call(null,{'+Infinity':1},Infinity);`);
+  const forged=wire(archive),event=forged.events.find(event=>event.operation==='call.enter'&&
+    event.operands[0]?.[0]==='method'&&event.operands[0][1]?.[1]==='Function.prototype.call'&&
+    event.operands.at(-1)?.[1]==='+Infinity');
+  assert(event);event.result=['bool',false];
+  assert.throws(()=>validateBundle(forged),/Own property adapter result differs/);
+});
+
+test('array hasOwnProperty inherits the Object builtin after own and explicit prototype overrides',()=>{
+  entry(`const a=[7];const before=a.hasOwnProperty('length')+':'+a.hasOwnProperty(0)+':'+a.hasOwnProperty('missing');
+    a.hasOwnProperty=function(key){return this===a&&key==='custom';};
+    const own=a.hasOwnProperty('custom'),b=[1];
+    Object.setPrototypeOf(b,{hasOwnProperty:Object.prototype.hasOwnProperty});
+    return before+':'+own+':'+b.hasOwnProperty('length')+':'+b.hasOwnProperty('hasOwnProperty');`);
+  const runtime=createRuntime().startEntry({text:'"use strict";function run(){try{return [].toLocaleString();}catch(error){return "caught";}}',
+    functionName:'run'});
+  assert.throws(()=>runtime.drive(),/Unmodeled ordinary \[\[Get\]\] or exotic property/);
+});
+
+test('descriptor conversion rejects invalid get before reading a later set accessor',()=>{
+  for(const target of ['{}','[]','Promise.resolve(1)'])for(const inherited of [false,true]){
+    entry(`const p=${target};let calls=0;const fields={get:1,get set(){calls++;return undefined;}};
+      const descriptor=${inherited?'Object.create(fields)':'fields'};
+      try{Object.defineProperty(p,'x',descriptor);return 'accepted';}
+      catch(error){return error.name+':'+calls+':'+Object.hasOwn(p,'x');}`);
+  }
+  entry(`const p=Promise.resolve(1);let calls=0;
+    try{Object.defineProperty(p,'x',{get(){calls++;},set:1});return 'accepted';}
+    catch(error){return error.name+':'+calls+':'+Object.hasOwn(p,'x');}`);
+});
+
+test('descriptor accessor fields that are actually reached retain their outside-guest refusal',()=>{
+  for(const [descriptor,expected]of [
+    ['{get:undefined,get set(){calls++;return undefined;}}','after:1'],
+    ['{get get(){calls++;return undefined;}}','after:1'],
+    ['{get value(){calls++;return 1;},get:1}','TypeError:1']
+  ]){
+    const text='"use strict";function run(){const p=Promise.resolve(1);let calls=0;try{'+
+      'Object.defineProperty(p,"x",'+descriptor+');return "after:"+calls;}catch(error){return error.name+":"+calls;}}';
+    assert.equal(vm.runInNewContext(text+';run()',{}, {timeout:1000}),expected);
+    const runtime=createRuntime().startEntry({text,functionName:'run'});
+    assert.throws(()=>runtime.drive(),/Accessor descriptor fields are outside the bounded profile/);
+  }
+});

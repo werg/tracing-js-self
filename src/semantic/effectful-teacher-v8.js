@@ -138,7 +138,17 @@ export function createEffectfulRegionAdapterV8({extensions=[],allowHost=false}={
     projectionStateProfiles:Object.freeze(ids.filter(id=>SHARED_PROTOCOL_SOURCE_IDS_V8.includes(id)||id==='promise-object-source/1')),
     createHarness:options=>facade(new RegionExecutionHarness(options),[],allowHost),
     replay:artifact=>RegionExecutionHarness.replay(artifact),
-    restore:packet=>facade(RegionExecutionHarness.restore(packet),[],allowHost),
+    restore(packet,previous=null){
+      const bridge=RegionExecutionHarness.restore(packet);
+      if(previous===null)return facade(bridge,[],allowHost);
+      // Execution checkpoints contain public state, not teacher observations.
+      // Continue the trusted projector's captured prefix only after proving
+      // that it belongs to the exact public history restored by this packet.
+      const prefix=facades.get(previous);
+      if(!prefix||!isDeepStrictEqual(prefix.bridge.exportEpisode(),bridge.exportEpisode()))
+        fail('checkpoint context prefix differs from its source history');
+      return facade(bridge,prefix.contexts.slice(),allowHost);
+    },
     encodeProtocol:encodeProtocolRecordV8,
     setup(ctx){context=ctx;
       const visit=node=>{if(!node||typeof node!=='object')return;

@@ -58,10 +58,11 @@ test('a new retained invocation derives intrinsic initialization without inherit
   for(const mutate of [heap=>heap.delete('intrinsicpromiseprototypethen'),
     heap=>{heap.get('intrinsicpromise').intrinsicName='Object';},
     heap=>{heap.get('intrinsicpromiseprototypethen').properties.set('extra',['num',1]);},
-    heap=>{heap.get('intrinsicpromiseprototype').kind='array';}]){
+    heap=>{heap.get('intrinsicpromiseprototype').kind='array';},
+    heap=>{heap.get('intrinsicobjectprototype').prototype=prototype;}]){
     const heap=structuredClone(second.heap);mutate(heap);
     assert.throws(()=>new SemanticControllerV8(context,{retainedState:{heap,locals:second.locals,scheduler:second.scheduler}}),
-      /initialized intrinsic|intrinsic callable|intrinsic prototype/);
+      /initialized intrinsic|intrinsic callable|intrinsic prototype|immutable null prototype/);
   }
   const missing=structuredClone(second.protocol);missing.promiseObjects=null;
   assert.throws(()=>restoreProtocolStateV8(second,missing),/declared protocol state|intrinsic accessor/);

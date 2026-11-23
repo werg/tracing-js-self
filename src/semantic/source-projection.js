@@ -727,6 +727,21 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       fields.returnPromise=current.asyncPromiseId;returnedPromises.add(current.asyncPromiseId);
     }
     emit(owner,'await',fields,event,'await');pendingAwaits.set(invocation,{continuation,promise:promiseId});
+    // Constructor-getter completion suspends through this same entry point;
+    // checkpoint the actual suspension regardless of which event reached it.
+    if(checkpointAtFirstAwait&&!checkpoints.length){
+      if([...harness.handlers.values()].some(handler=>handler.state!=='closed'))
+        refuse('native listener checkpoint needs explicit reattachment evidence absent from this source journal');
+      const packet=JSON.parse(JSON.stringify(harness.checkpoint()));
+      harness=regionAdapter?regionAdapter.restore(packet,harness):projectionClient.restore(packet);
+      harness.evictSource(trackId,programId);
+      harness.restoreSource(trackId,programId,{digest:harness.programs.get(programId).digest});
+      checkpoints.push({schema:'semantic-checkpoint-evidence/4',journalEvent:event.eventId,
+        publicSequence:packet.globalSequence,integrity:packet.integrity,
+        sourceDigest:harness.programs.get(programId).digest,
+        uncertainIntents:[...harness.intents].filter(([,intent])=>intent.status==='uncertain').map(([key])=>key),
+        publicReplayValidated:true,nativeRedispatches:0});
+    }
   }
   // Every adapter event runs on detached teacher and public state. A rejected
   // owner, handler or observer cannot publish a prefix, consume an identity or
@@ -945,19 +960,6 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       handled=true;
     }else if(row?.op==='await'){
       awaitFrame(row.invocation,row.promise,event);
-      if(checkpointAtFirstAwait&&!checkpoints.length){
-        if([...harness.handlers.values()].some(handler=>handler.state!=='closed'))
-          refuse('native listener checkpoint needs explicit reattachment evidence absent from this source journal');
-        const packet=JSON.parse(JSON.stringify(harness.checkpoint()));
-        harness=regionAdapter?regionAdapter.restore(packet):projectionClient.restore(packet);
-        harness.evictSource(trackId,programId);
-        harness.restoreSource(trackId,programId,{digest:harness.programs.get(programId).digest});
-        checkpoints.push({schema:'semantic-checkpoint-evidence/4',journalEvent:event.eventId,
-          publicSequence:packet.globalSequence,integrity:packet.integrity,
-          sourceDigest:harness.programs.get(programId).digest,
-          uncertainIntents:[...harness.intents].filter(([,intent])=>intent.status==='uncertain').map(([key])=>key),
-          publicReplayValidated:true,nativeRedispatches:0});
-      }
       handled=true;
     }else if(event.operation==='job.enter'){
       const changed=event.stateChanges.find(change=>change.table==='frames'&&

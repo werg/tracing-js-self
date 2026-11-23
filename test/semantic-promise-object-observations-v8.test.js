@@ -8,6 +8,10 @@ import {auditProtocolSourceV8,independentProtocolSourceReference} from '../src/s
 import {createPromiseObservationAdapterV8} from '../src/semantic/protocol-promise-observations-v8.js';
 import {createNativeProtocolMetadata,compareProtocolMetadata} from '../src/semantic/protocol-metadata-v8.js';
 import {ownedProtocolSourceObservations} from '../src/semantic/protocol-source-observations-v8.js';
+import {validateBundle} from '../src/validation.js';
+import {replayExact} from '../src/replay.js';
+import {ownedCompletionObservations,instrumentCompletionSource,createCompletionCapture,
+  COMPLETION_HOOK,compareCompletionObservations} from '../src/training/completion-reference.js';
 
 const cases=[
   ['ordinary assignment through a Promise alias',`"use strict";async function run(){
@@ -148,4 +152,58 @@ test('Promise assignment observation checks committed storage independently of i
   const assignment=ownedProtocolSourceObservations(altered,source).completions.find(row=>row.kind==='assign');
   assert.deepEqual(assignment.value,['num',8]);
   assert.deepEqual(ownedProtocolSourceObservations(bundle,source).completions.find(row=>row.kind==='assign').value,['num',7]);
+});
+
+test('silent rejected Promise and ordinary assignments observe the RHS while strict failures remain abrupt',()=>{
+  const setups=[
+    "Object.defineProperty(p,'x',{value:1,writable:false});",
+    "const parent={};Object.defineProperty(parent,'x',{value:1,writable:false});Object.setPrototypeOf(p,parent);",
+    "Object.defineProperty(p,'x',{get:function(){return 1;}});",
+    "const parent={};Object.defineProperty(parent,'x',{get:function(){return 1;}});Object.setPrototypeOf(p,parent);",
+    'Object.preventExtensions(p);'
+  ];
+  for(const strict of [false,true])for(const allocation of ['Promise.resolve(1)','{}'])for(const setup of setups){
+    const source=`${strict?'"use strict";':''}function run(){const p=${allocation};${setup}
+      let assigned='none';let error='';try{assigned=(p.x=2);}catch(e){error=e.name;}
+      return assigned+':'+error+':'+p.x;}var out=run();`;
+    const runtime=createRuntime().start(source);assert.equal(runtime.drive().kind,'terminated');
+    const bundle=runtime.exportRun();assert.equal(validateBundle(bundle).valid,true);assert.equal(replayExact(bundle).valid,true);
+    const capture=createCompletionCapture(),native=vm.runInNewContext(instrumentCompletionSource(source)+';out;',
+      {[COMPLETION_HOOK]:capture.capture});
+    assert.equal(native,vm.runInNewContext(source+';out;'));
+    const owned=ownedCompletionObservations(bundle,source),
+      propertyAssignment=row=>row.kind==='assign'&&source.slice(...row.site.split(':').map(Number))==='p.x=2',
+      comparison=compareCompletionObservations(owned.filter(propertyAssignment),capture.observations.filter(propertyAssignment));
+    const result=Object.values(runtime.state.envs).flatMap(env=>Object.entries(env.bindings))
+      .find(([name])=>name==='out')?.[1].token.value;
+    assert.deepEqual(result,['str',native]);
+    assert.equal(comparison.status,'agreed',JSON.stringify({strict,allocation,setup,comparison}));
+    const assignments=owned.filter(propertyAssignment);
+    assert.deepEqual(assignments.map(row=>row.value),strict?[]:[['num',2]]);
+  }
+});
+
+test('a silent assignment cannot hide a changed readonly slot or a dropped writable write',()=>{
+  for(const readonly of [false,true])for(const allocation of ['Promise.resolve(1)','{}']){
+    const source=`function run(){const p=${allocation};Object.defineProperty(p,'x',{value:1,writable:${!readonly}});
+      const assigned=(p.x=2);return assigned+':'+p.x;}var out=run();`;
+    const runtime=createRuntime().start(source);runtime.drive();const bundle=runtime.exportRun(),altered=structuredClone(bundle);
+    const write=altered.events.find(event=>event.operation==='property.write'&&event.operands[1]?.[1]==='x'),
+      table=write.operands[0][0]==='promise'?'promises':'heap',id=write.operands[0][1];
+    if(readonly){
+      const preceding=altered.events.slice(0,altered.events.indexOf(write)).flatMap(event=>event.stateChanges)
+        .filter(change=>change.table===table&&change.id===id).at(-1).after;
+      const after=structuredClone(preceding);after.properties.x.value=['num',9];
+      write.stateChanges.push({table,id,before:structuredClone(preceding),after});
+      assert.throws(()=>ownedCompletionObservations(altered,source),/Rejected ordinary assignment changed receiver storage/);
+    }else{
+      write.stateChanges=write.stateChanges.filter(change=>!(change.table===table&&change.id===id));
+      const capture=createCompletionCapture();vm.runInNewContext(instrumentCompletionSource(source)+';out;',
+        {[COMPLETION_HOOK]:capture.capture});
+      const assignments=archive=>ownedCompletionObservations(archive,source).filter(row=>row.kind==='assign'),
+        expected=capture.observations.filter(row=>row.kind==='assign');
+      assert.equal(compareCompletionObservations(assignments(bundle),expected).status,'agreed');
+      assert.equal(compareCompletionObservations(assignments(altered),expected).status,'mismatch');
+    }
+  }
 });

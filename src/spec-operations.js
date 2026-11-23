@@ -99,6 +99,10 @@ export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
       const method=token(['undefined']);
       return {method,observation:observation(method)};
     }
+    if((proto==='Object.prototype'||proto==='Array.prototype')&&name==='hasOwnProperty'){
+      const method=token(['builtinfn','Object.prototype.hasOwnProperty']);
+      return {method,observation:observation(method)};
+    }
     if(proto==='Array.prototype'){
       if(name===symbolPropertyKey('well-known:iterator')){
         const method=token(['builtinfn','Array.prototype.values']);
@@ -117,10 +121,6 @@ export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
       return {method,observation:observation(method)};
     }
     if(proto==='Object.prototype'){
-      if(name==='hasOwnProperty'){
-        const method=token(['builtinfn','Object.prototype.hasOwnProperty']);
-        return {method,observation:observation(method)};
-      }
       if(name==='valueOf'||name==='toString'){
         const method=token(['builtinfn',name==='valueOf'?'Object.valueOf':'Object.toString']);
         return {method,observation:observation(method)};

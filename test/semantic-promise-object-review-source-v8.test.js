@@ -9,6 +9,10 @@ import {sharedRegionState} from '../src/semantic/regions.js';
 import {encodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
 import {independentProtocolSourceReference} from '../src/semantic/protocol-source-reference-v8.js';
 import {encodeNativeGraph} from '../src/host/graph-codec.js';
+import {createRuntime} from '../src/runtime.js';
+import {compileEffectfulRegionWitnessV8} from '../src/semantic/effectful-teacher-v8.js';
+import {createPromiseObjectTeacherV8} from '../src/semantic/protocol-promise-object-source-v8.js';
+import {createPromiseExecutorTeacherV8} from '../src/semantic/protocol-promise-executor-source-v8.js';
 
 const fixtures=[
   ['captured-then-after-queued-mutation',`const p=Promise.resolve(1);const q=new Promise(resolve=>resolve(p));
@@ -35,7 +39,7 @@ const fixtures=[
     const previous=p.x++;return previous===2&&p.x===3&&Object.hasOwn(p,'x');`,true]
 ].map(([id,body,expected])=>({id:'promise-review-'+id,family:'promise-object-review',
   source:'"use strict";async function run(){'+body+'}',entry:'run',args:[],expected}));
-const artifacts=[],nativeReceipts=[];
+const artifacts=[],nativeReceipts=[],checkpointArtifacts=[],checkpointNativeReceipts=[];
 const tag=value=>[typeof value==='boolean'?'bool':typeof value==='string'?'str':'num',value];
 for(const fixture of fixtures)test('original/reference Promise review source: '+fixture.id,async()=>{
   const result=await verifyProtocolRegionTrainingCase(fixture);
@@ -74,9 +78,50 @@ test('accessor and object-coercing updates retain their precise source continuat
   }
 });
 
+test('the first actual await checkpoints once through ordinary and constructor-getter suspension',async()=>{
+  for(const [name,body,expected,operation]of [
+    ['ordinary',`const p=Promise.resolve(1);return await p;`,1,'async.await'],
+    ['constructor-getter',`let calls=0;const p=Promise.resolve(1);
+      Object.defineProperty(p,'constructor',{get(){calls++;return Promise;}});
+      const value=await p;await p;return value+calls;`,3,'call.return']
+  ]){
+    const source='"use strict";async function run(){'+body+'}',
+      runtime=createRuntime().startEntry({text:source,functionName:'run',allowAsync:true});
+    assert.equal(runtime.drive().kind,'terminated');const bundle=runtime.exportRun(),
+      reference=await independentProtocolSourceReference({source,entry:'run',inputGraph:encodeNativeGraph([]),
+        awaitReturnedPromise:true,mode:'original'}),
+      compiled=compileEffectfulRegionWitnessV8(bundle,{checkpointAtFirstAwait:true,
+        extensions:[createPromiseExecutorTeacherV8(),createPromiseObjectTeacherV8()]});
+    assert.deepEqual(reference.outcome,{kind:'return',graph:{roots:[['num',expected]],objects:[]}});
+    assert.deepEqual(compiled.outcome,reference.outcome);
+    const checkpoints=compiled.exported.sidecar.compiler.checkpoints;
+    assert.equal(checkpoints.length,1);assert.equal(checkpoints[0].publicReplayValidated,true);
+    assert.equal(checkpoints[0].nativeRedispatches,0);
+    assert.equal(compiled.exported.contexts.length,
+      compiled.exported.public.timeline.filter(event=>event.mode==='generated').length);
+    const checkpointEvent=bundle.events.find(event=>event.eventId===checkpoints[0].journalEvent);
+    assert.equal(checkpointEvent.operation,operation);
+    assert(checkpointEvent.stateChanges.some(change=>change.table==='frames'&&
+      change.before?.status!=='suspended'&&change.after?.status==='suspended'));
+    const replay=RegionExecutionHarness.replay(compiled.exported);
+    assert.deepEqual(replay.controller.completion,{kind:'return',value:['num',expected]});
+    checkpointArtifacts.push({name:'promise-review-checkpoint-'+name,exported:compiled.exported,
+      state:sharedRegionState(replay.controller)});
+  }
+});
+
+test('requesting an await checkpoint without any suspension remains an explicit refusal',()=>{
+  const runtime=createRuntime().startEntry({text:'"use strict";async function run(){const p=Promise.resolve(1);return 2;}',
+    functionName:'run',allowAsync:true});
+  assert.equal(runtime.drive().kind,'terminated');
+  assert.throws(()=>compileEffectfulRegionWitnessV8(runtime.exportRun(),{checkpointAtFirstAwait:true,
+    extensions:[createPromiseExecutorTeacherV8(),createPromiseObjectTeacherV8()]}),
+    /checkpoint profile requires an actual source await/);
+});
+
 test('native independently checks every Promise review source and retained continuation',
   {skip:!process.env.MEGATOKEN_ROOT},()=>{
-    assert.equal(artifacts.length,fixtures.length);
+    assert.equal(artifacts.length,fixtures.length);assert.equal(checkpointArtifacts.length,2);
     const root=resolve(process.env.MEGATOKEN_ROOT),script=`
 import json,sys
 from megatoken.data.native_v8 import validate_v8_artifact,_replay_shared_state
@@ -91,13 +136,17 @@ for row in json.load(sys.stdin):
 print(json.dumps(out))
 `;
     const result=spawnSync(process.env.MEGATOKEN_PYTHON||'python3',['-c',script],{cwd:root,
-      env:{...process.env,PYTHONPATH:join(root,'src')},input:JSON.stringify(artifacts),encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024});
-    assert.equal(result.status,0,result.stderr||String(result.error));nativeReceipts.push(...JSON.parse(result.stdout));
+      env:{...process.env,PYTHONPATH:join(root,'src')},input:JSON.stringify([...artifacts,...checkpointArtifacts]),encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024});
+    assert.equal(result.status,0,result.stderr||String(result.error));
+    for(const receipt of JSON.parse(result.stdout))
+      (receipt.name.startsWith('promise-review-checkpoint-')?checkpointNativeReceipts:nativeReceipts).push(receipt);
+    assert.equal(checkpointNativeReceipts.length,2);
   });
 after(()=>{
   if(process.env.REVIEW_SOURCE_CASES_OUT)writeFileSync(process.env.REVIEW_SOURCE_CASES_OUT,JSON.stringify(artifacts));
   if(process.env.RUNNER_TEMP)writeFileSync(join(process.env.RUNNER_TEMP,'promise-object-review-source-evidence.json'),JSON.stringify({
     schema:'promise-object-review-source-evidence/1',sourceCases:artifacts.length,actualNativeCases:nativeReceipts.length,nativeReceipts,
     generatedContexts:artifacts.reduce((sum,row)=>sum+row.exported.contexts.length,0),
-    moduleAdmission:false,trainingAdmission:false,optimizerUpdates:0,cases:artifacts}));
+    moduleAdmission:false,trainingAdmission:false,optimizerUpdates:0,cases:artifacts,
+    checkpointCases:checkpointArtifacts,checkpointNativeReceipts}));
 });
