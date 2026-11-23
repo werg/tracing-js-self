@@ -81,6 +81,15 @@ test('object-valued in keys convert once after evaluating a valid right operand'
   assert.deepEqual(value,[true,['receiver','string']]);
 });
 
+test('computed deletion retains its object-key conversion site and runs the key hook once',async()=>{
+  const artifact=await checked('const log=[];const object={x:1};'+
+    'const key={[Symbol.toPrimitive](hint){log.push(hint);return "x";}};'+
+    'const removed=delete object[key];return [removed,"x" in object,log];');
+  const value=RegionExecutionHarness.replay(artifact).controller.materialize(completion(artifact).value);
+  assert.deepEqual(value,[true,false,['string']]);
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
 test('invalid in RHS throws before key coercion in owned/native execution and remains a source refusal',async()=>{
   const fixture=issue51UnsupportedControls.find(row=>row.id==='issue51-control-in-invalid-rhs-before-key-coercion');
   assert(fixture);
@@ -154,7 +163,9 @@ test('issue51 original fixtures preserve sparse length, delete failure, key orde
     ['issue51-for-in-delete-prototype-candidate',['a','b']],
     ['issue51-delete-inherited-for-in-candidate',['first','b']],
     ['issue51-promise-property-composition',[true,true,true,false]],
-    ['issue51-promise-enumeration-mutation-composition',['a']]
+    ['issue51-promise-enumeration-mutation-composition',['a']],
+    ['issue51-promise-object-key-conversion-composition',[true,['string']]],
+    ['issue51-promise-symbol-and-escaped-string-keys',[true,true,false,true,9]]
   ];
   for(const [id,expected] of cases){
     const artifact=await checkedFixture(id),actual=RegionExecutionHarness.replay(artifact).controller.materialize(completion(artifact).value);

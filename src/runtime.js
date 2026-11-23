@@ -2070,18 +2070,23 @@ export class Runtime {
           if(!obj||!['object','array','function','promise','proxy'].includes(obj.kind))
             throw new TypeError('Delete requires an owned ordinary object');
           if(obj.kind==='proxy')throw new TypeError('Proxy deleteProperty trap requires its owned call boundary');
-          if(obj.kind==='function')this.functionProperties(s,obj,eventId,{prototype:property==='prototype'});
+          if(obj.kind==='function'&&['name','length'].includes(property)&&
+             !Object.hasOwn(obj.properties??{},property)&&!Object.hasOwn(obj.accessors??{},property))
+            throw new TypeError('Function name/length deletion requires owned function-property storage');
+          if(obj.kind==='function'&&property==='prototype'&&!obj.prototypeInitialized&&
+             !obj.arrow&&!obj.async&&!obj.nonConstructible&&!this.programs[obj.codeId]?.generator)
+            throw new TypeError('Function prototype deletion requires owned function-property storage');
           const accessor=obj.accessors?.[property],present=Object.hasOwn(obj.properties??{},property)||!!accessor,
             success=!present||!(obj.kind==='array'&&property==='length')&&
               (accessor??obj.dataAttributes?.[property])?.configurable!==false;
           if(!success&&this.programs[f.codeId].strict)
             guestFault('TypeError',`Cannot delete property '${property}' of #<Object>`);
-          deleteOrdinaryOwn(obj,property);
           const observation={kind:'property',objectId:obj.id,key:property,present,
             version:Object.hasOwn(obj.propertyVersions??{},property)?obj.propertyVersions[property]:0,
             shapeVersion:obj.shapeVersion??0,
             value:present?(Object.hasOwn(obj.properties??{},property)?obj.properties[property].value:U):U,
             supplyingEvent:present?obj.properties?.[property]?.origin??null:null};
+          deleteOrdinaryOwn(obj,property);
           return {...operands(base,key),...result(['bool',success]),reads:[observation]};
         }
         case 'MAKE_FUNCTION':{
@@ -3756,7 +3761,12 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             if(callable[1]==='Reflect.deleteProperty'&&object&&
                ['object','array','function','promise'].includes(object.kind)){
               const key=valueKey(args[1]?.value??U);
-              if(object.kind==='function')this.functionProperties(s,object,eventId,{prototype:key==='prototype'});
+              if(object.kind==='function'&&['name','length'].includes(key)&&
+                 !Object.hasOwn(object.properties??{},key)&&!Object.hasOwn(object.accessors??{},key))
+                throw new TypeError('Function name/length deletion requires owned function-property storage');
+              if(object.kind==='function'&&key==='prototype'&&!object.prototypeInitialized&&
+                 !object.arrow&&!object.async&&!object.nonConstructible&&!this.programs[object.codeId]?.generator)
+                throw new TypeError('Function prototype deletion requires owned function-property storage');
               const {success}=deleteOrdinaryOwn(object,key);
               return {...operands(fn,...args),...result(['bool',success])};
             }

@@ -117,3 +117,29 @@ for null/undefined keys, Reflect argument counts/primitive targets and lazy
 function descriptors; regenerate the full canonical artifacts; synchronize the
 consumer; run clean paired admission and actual-tokenizer preparation. Proxy
 `has` and `deleteProperty` traps remain outside this increment.
+
+## Checkpoint 3 — deletion audit and cross-feature keys
+
+Deletion now records its pre-delete descriptor and origin before mutation. Its
+independent validator checks actual stack operands, omitted/extra Reflect
+arguments and aliases, null/undefined keys, no-op state preservation, strict
+versus non-strict behavior, and the exact newly allocated TypeError identity.
+A primitive Reflect target throws before an object key can run its hook. An
+unmaterialized function name/length/prototype remains an explicit refusal;
+deleting an absent ordinary function property no longer creates lazy metadata.
+Existing immutable module-namespace Reflect deletion remains checked.
+
+The audit also exposed owned NUL-prefixed key escaping in deletion and `in`
+validation, and an internal Symbol storage key leaking into the Promise source
+projection as a string. The public projection now uses the shared property
+records for Symbol/escaped keys and a proper definition for literal properties.
+This allows object-key conversion with a Promise receiver and preserves the
+distinction between a Symbol and a lookalike guest string. Both counterexamples
+are retained as additional original positives: the final selection now contains
+20 intended supported originals and 3 explicit refusal controls. The earlier
+21-member results above remain historical checkpoints, not relabeled counts.
+
+The immediate direct runtime/public selection passes 22 tests. Full canonical
+source regeneration, a final affected regression run, contract checks and clean
+paired native preparation are the remaining gates at this checkpoint. Host
+interoperability regeneration passed all 4 examples without byte changes.

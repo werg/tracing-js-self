@@ -32,7 +32,9 @@ export function promiseObjectSourceEventV8(view,{event,row}){
   if(event.operation==='property.delete'||event.operation==='primitive.binary'&&view.instruction?.op==='BINARY'&&view.instruction.arg==='in')return true;
   if(['property.read','property.write','property.update'].includes(event.operation)){
     if(intrinsicPrototype(base)||base?.[0]==='promise')return true;
-    if(rich(nodeFor(view.owned,base))&&!sharedProtocolSourceEventV8(view,{event,row}))return true;
+    const property=event.operands?.[1],encodedKey=property?.[0]==='symbol'||
+      property?.[0]==='str'&&property[1].startsWith('\u0000');
+    if((rich(nodeFor(view.owned,base))||encodedKey)&&!sharedProtocolSourceEventV8(view,{event,row}))return true;
     if(base?.[0]==='intrinsic'&&['Promise','Object'].includes(base[1])&&event.operands?.[1]?.[1]==='prototype')return true;
   }
   return Boolean(row?.child&&event.stateChanges.some(change=>change.table==='frames'&&change.id===row.child&&
@@ -160,6 +162,12 @@ export function createPromiseObjectTeacherV8(){
         }
         const receiver=ctx.tag(base),property=key(event.operands[1]);
         if(receiver[0]!=='ref')ctx.refuse('ordinary property receiver required');
+        const frame=ctx.state.frames[event.invocationId],instruction=ctx.bundle.programs[frame?.codeId]?.instructions[frame?.pc];
+        if(event.operation==='property.write'&&instruction?.op==='DEFINE_LITERAL_PROP'){
+          ctx.emitProtocol(owner,{kind:'property.define',object:receiver[1],key:property,
+            descriptor:{kind:'data',value:ctx.tag(event.operands[2]),writable:true,enumerable:true,configurable:true},success:true},
+            event,'source-literal-property-definition/1');return true;
+        }
         if(row?.child){
           ctx.allocations(row,owner,event);
           const operation=event.operation==='property.read'?'get':'set',id='promiseaccess'+(++state.sequence),

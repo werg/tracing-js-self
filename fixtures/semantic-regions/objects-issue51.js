@@ -57,6 +57,12 @@ export const issue51ObjectFixtures=withIssue51Lineage([
     entry:'run',args:[4]}),
   Object.freeze({id:'issue51-promise-enumeration-mutation-composition',family:'issue51-promise-property-composition',
     source:'"use strict";function run(x){const promise=Promise.resolve(x);const object={a:1,b:2};const keys=[];for(const key in object){keys.push(key);if(key==="a")delete object.b;}return keys;}',
+    entry:'run',args:[4]}),
+  Object.freeze({id:'issue51-promise-object-key-conversion-composition',family:'issue51-promise-property-composition',
+    source:'"use strict";function run(x){const log=[];const promise=Promise.resolve(x);promise.x=2;const key={[Symbol.toPrimitive](hint){log.push(hint);return "x";}};return [key in promise,log];}',
+    entry:'run',args:[4]}),
+  Object.freeze({id:'issue51-promise-symbol-and-escaped-string-keys',family:'issue51-promise-property-composition',
+    source:'"use strict";function run(x){const promise=Promise.resolve(x);const object={};const key="\\u0000symbol:well-known:iterator";object[key]=7;object[Symbol.iterator]=9;const before=key in object;const removed=delete object[key];return [before,removed,key in object,Symbol.iterator in object,object[Symbol.iterator]];}',
     entry:'run',args:[4]})
 ]);
 

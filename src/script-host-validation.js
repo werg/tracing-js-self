@@ -1,5 +1,5 @@
 // Independent checks for the narrow original-Test262 host observations.
-import {symbolPropertyKey} from './property-keys.js';
+import {symbolPropertyKey,stringPropertyKey} from './property-keys.js';
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const clone=value=>structuredClone(value);
 const errorKinds=new Set(['Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError']);
@@ -17,7 +17,8 @@ const prototypeKeys={
   'Promise.prototype':new Set([...objectKeys,'then','catch','finally',symbolPropertyKey('well-known:toStringTag')])
 };
 function keyOf(value,fail){
-  if(value?.[0]==='str'||value?.[0]==='bigint')return value[1];
+  if(value?.[0]==='str')return stringPropertyKey(value[1]);
+  if(value?.[0]==='bigint')return value[1];
   if(value?.[0]==='symbol')return symbolPropertyKey(value[1]);
   if(value?.[0]==='num')return value[1]==='-0'?'0':value[1]==='+Infinity'?'Infinity':String(value[1]);
   if(value?.[0]==='undefined'||value?.[0]==='null')return value[0];

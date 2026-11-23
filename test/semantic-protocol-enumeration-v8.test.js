@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createProtocolStateV8,applyProtocolRecordV8,PROTOCOL_MACHINE_API_V8 as api} from '../src/semantic/protocol-state-v8.js';
 import {validateProtocolValueV8} from '../src/semantic/protocol-codec-v8.js';
 import {validateEnumerationRecordV8,applyEnumerationRecordV8,restoreEnumerationStateV8} from '../src/semantic/protocol-enumeration-v8.js';
+import {promiseIntrinsicIdV8} from '../src/semantic/protocol-promise-object-v8.js';
 
 function controller(){return {heap:new Map(),locals:new Map(),captureAliases:new Map(),receiver:['undefined'],stack:['root'],
   frameFunctions:new Map([['root','run']]),pending:null,lastReturn:null,completion:null,protocol:createProtocolStateV8()};}
@@ -84,6 +85,30 @@ test('enumeration uses shared existence for a deleted own name inherited from Ob
   create(c,'cursor',['ref','object']);next(c,'cursor','r0','a');
   applyProtocolRecordV8(c,{kind:'property.delete',object:'object',key:['str','toString'],success:true});
   next(c,'cursor','r1','toString');next(c,'cursor','end',undefined);
+});
+
+test('enumerable intrinsic properties require an explicit captured chain and later additions stay excluded',()=>{
+  const c=controller();allocate(c,'object',[property('a',1)]);
+  applyProtocolRecordV8(c,{kind:'promise.intrinsics'});
+  create(c,'before',['ref','object']);
+  const prototype=promiseIntrinsicIdV8('Object.prototype');
+  define(c,prototype,['str','late'],['num',2]);
+  next(c,'before','first','a');next(c,'before','end',undefined);
+  const unchanged=structuredClone(c);
+  assert.throws(()=>create(c,'implicit',['ref','object']),/explicit enumeration chain/);
+  assert.deepEqual(c,unchanged);
+  applyProtocolRecordV8(c,{kind:'property.prototype',object:'object',prototype:['ref',prototype],success:true});
+  create(c,'explicit',['ref','object']);
+  next(c,'explicit','explicitFirst','a');next(c,'explicit','explicitInherited','late');next(c,'explicit','explicitEnd',undefined);
+});
+
+test('initialized intrinsic storage controls inherited existence after deletion',()=>{
+  const c=controller();allocate(c,'object');applyProtocolRecordV8(c,{kind:'promise.intrinsics'});
+  const record={kind:'property.has',object:'object',key:['str','toString'],result:['bool',true]};
+  applyProtocolRecordV8(c,record);
+  applyProtocolRecordV8(c,{kind:'property.delete',object:promiseIntrinsicIdV8('Object.prototype'),key:['str','toString'],success:true});
+  applyProtocolRecordV8(c,{...record,result:['bool',false]});
+  assert.throws(()=>applyProtocolRecordV8(c,record),/inherited-property/);
 });
 
 test('inherited existence checks data/accessors/Symbols without reading values and rejects forged claims',()=>{
