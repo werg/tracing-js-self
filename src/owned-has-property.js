@@ -12,10 +12,10 @@ const arrayKeys=new Set(['length','constructor','at','concat','copyWithin','fill
 const functionKeys=new Set(['length','name','arguments','caller','constructor','apply','bind','call','toString',
   symbolPropertyKey('well-known:hasInstance')]);
 export function ownedHasProperty(heap,receiver,key){
-  let object=receiver?.[0]==='ref'?heap[receiver[1]]:null;
+  let object=['ref','promise','intrinsic'].includes(receiver?.[0])?heap[receiver[1]]:null;
   const seen=new Set();
   while(object){
-    if(!['object','array','function'].includes(object.kind)||seen.has(object.id))
+    if(!['object','array','function','promise'].includes(object.kind)||seen.has(object.id))
       throw new TypeError('Unsupported ordinary in-operator receiver or prototype');
     seen.add(object.id);
     if(Object.hasOwn(object.properties??{},key)||Object.hasOwn(object.accessors??{},key))return true;
@@ -23,7 +23,7 @@ export function ownedHasProperty(heap,receiver,key){
     if(object.kind==='function'&&key==='prototype'&&!object.arrow&&!object.async&&!object.nonConstructible)return true;
     if(object.declaredError&&key==='constructor')return true;
     const parent=Object.hasOwn(object,'prototype')?object.prototype:
-      object.kind==='array'?'Array.prototype':object.kind==='function'?'Function.prototype':'Object.prototype';
+      object.kind==='array'?'Array.prototype':object.kind==='function'?'Function.prototype':object.kind==='promise'?'Promise.prototype':'Object.prototype';
     if(parent===null)return false;
     if(parent==='Object.prototype')return objectKeys.has(key);
     if(parent==='Array.prototype')return arrayKeys.has(key)||objectKeys.has(key);

@@ -167,7 +167,8 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
       }else if(job?.kind==='thenable'){
          const p=state.promises[job.promiseId];
          if(!p||p.status!=='pending'||p.thenableSerial!==job.serial||
-            state.heap[job.thenId]?.kind!=='function'||!state.heap[job.thenableId]||
+            state.heap[job.thenId]?.kind!=='function'||!(state.heap[job.thenableId]??state.promises[job.thenableId])||
+            job.receiver!==undefined&&!eq(job.receiver,['promise',job.thenableId])||
             e.causes.filter(c=>c.kind==='promise'&&c.promiseId===p.id).length!==1||
             e.causes.filter(c=>c.kind==='invocation').length!==1)
            fail('Queued thenable is not backed by an owned function and promise',e.eventId);

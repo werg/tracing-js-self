@@ -62,11 +62,11 @@ function numeric(operator, left, right) {
 // A null return is a fail-closed exotic/accessor/intrinsic operation.
 export function objectPrototype(obj) {
   return Object.hasOwn(obj,'prototype')?obj.prototype:
-    obj.kind==='array'?'Array.prototype':obj.kind==='function'?'Function.prototype':'Object.prototype';
+    obj.kind==='array'?'Array.prototype':obj.kind==='function'?'Function.prototype':obj.kind==='promise'?'Promise.prototype':'Object.prototype';
 }
 export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
-  const original=receiver[0]==='ref'?heap[receiver[1]]:null;
-  if(!original||!['object','array','module-namespace'].includes(original.kind))return null;
+  const original=['ref','promise','intrinsic'].includes(receiver[0])?heap[receiver[1]]:null;
+  if(!original||!['object','array','promise','module-namespace'].includes(original.kind))return null;
   const observation=value=>({
     kind:'property',objectId:original.id,key:name,
     version:Object.hasOwn(original.propertyVersions??{},name)?original.propertyVersions[name]:0,shapeVersion:original.shapeVersion??0,
@@ -117,6 +117,10 @@ export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
       return {method,observation:observation(method)};
     }
     if(proto==='Object.prototype'){
+      if(name==='hasOwnProperty'){
+        const method=token(['builtinfn','Object.prototype.hasOwnProperty']);
+        return {method,observation:observation(method)};
+      }
       if(name==='valueOf'||name==='toString'){
         const method=token(['builtinfn',name==='valueOf'?'Object.valueOf':'Object.toString']);
         return {method,observation:observation(method)};
@@ -126,7 +130,7 @@ export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
       return {method,observation:observation(method)};
     }
     current=heap[proto];
-    if(!current||!['object','array'].includes(current.kind))return null;
+    if(!current||!['object','array','promise'].includes(current.kind))return null;
   }
 }
 export function ordinaryBuiltin(heap, receiver, name) {
