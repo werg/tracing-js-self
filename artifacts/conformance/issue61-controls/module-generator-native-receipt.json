@@ -1,0 +1,32 @@
+{
+  "schema": "issue61-module-generator-native-receipt/1",
+  "input": {
+    "retainedArtifact": "module-generator-source-artifact.json.gz",
+    "sourceBytes": 253634,
+    "sourceSha256": "df068fe1e3b79bb13b07f08cdeb481ee69a1845542662c586903af6fa4712277",
+    "sourceContexts": 24
+  },
+  "nativeOutput": "module-generator-native-replay.log.gz",
+  "checks": {
+    "replay": "passed",
+    "contexts": "passed",
+    "continuation": "passed",
+    "masks": "untested",
+    "sourceBinding": "untested",
+    "tokenizer": "untested"
+  },
+  "counts": {
+    "contexts": 24,
+    "generatedRecords": 24,
+    "algorithmRecords": 0,
+    "regionRecords": 0,
+    "detailedRecords": 17,
+    "protocolRecords": 7
+  },
+  "inputAssociation": "The executing task owner identified this exact source packet as the helper input; the original helper log does not embed its input digest.",
+  "producerRevision": null,
+  "consumerRevision": null,
+  "revisionAttribution": "The raw helper output records no revision. None is inferred from later checkout state.",
+  "fullNativeAdmissionClaim": false,
+  "trainingAdmissionClaim": false
+}

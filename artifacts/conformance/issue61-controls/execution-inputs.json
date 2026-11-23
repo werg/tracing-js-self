@@ -1,0 +1,104 @@
+{
+  "schema": "issue61-regression-execution-inputs/1",
+  "semanticInitial": {
+    "selectionFile": "semantic-selected-files.txt",
+    "fingerprints": "semantic-start.json",
+    "arguments": [
+      "node",
+      "--experimental-vm-modules",
+      "--test",
+      "--test-concurrency=4"
+    ],
+    "reporters": [
+      "spec",
+      "junit"
+    ],
+    "environment": {
+      "MEGATOKEN_ROOT": null,
+      "MEGATOKEN_PYTHON": null,
+      "TMPDIR": "/workspace/scratch/65ba865519f3/issue61-tmp",
+      "TRACING_TEST_FLOCK": "/workspace/scratch/65ba865519f3/issue61-tools/flock"
+    },
+    "cleanRevisionClaim": false
+  },
+  "semanticCorrections": {
+    "files": [
+      "test/semantic-protocol-promise-join-source-v8.test.js",
+      "test/semantic-protocol-reference-failure-v8.test.js",
+      "test/semantic-shared-protocol-source-v8.test.js"
+    ],
+    "arguments": [
+      "node",
+      "--experimental-vm-modules",
+      "--test",
+      "--test-concurrency=3"
+    ],
+    "sameEnvironmentAs": "semanticInitial",
+    "reporters": [
+      "spec",
+      "junit"
+    ],
+    "leaves": 15,
+    "passed": 15
+  },
+  "observerControls": {
+    "files": [
+      "test/semantic-protocol-reference-failure-v8.test.js",
+      "test/semantic-promise-object-observations-v8.test.js"
+    ],
+    "arguments": [
+      "node",
+      "--experimental-vm-modules",
+      "--test"
+    ],
+    "sameEnvironmentAs": "semanticInitial",
+    "reporter": "spec",
+    "junitAvailable": false,
+    "summary": {
+      "tests": 19,
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "todo": 0
+    },
+    "note": "The original executed run emitted a spec log only. No synthetic JUnit or duplicate rerun is supplied."
+  },
+  "nativePromiseSources": {
+    "files": [
+      "test/semantic-promise-object-source-v8.test.js"
+    ],
+    "arguments": [
+      "node",
+      "--experimental-vm-modules",
+      "--test"
+    ],
+    "reporters": [
+      "spec",
+      "junit"
+    ],
+    "environment": {
+      "MEGATOKEN_ROOT": "/workspace/scratch/65ba865519f3/megatoken",
+      "MEGATOKEN_PYTHON": "/workspace/scratch/65ba865519f3/issue61-native-env-system/bin/python",
+      "TMPDIR": "/workspace/scratch/65ba865519f3/issue61-tmp",
+      "TRACING_TEST_FLOCK": "/workspace/scratch/65ba865519f3/issue61-tools/flock"
+    },
+    "leaves": 17,
+    "passed": 17,
+    "originalSourceArtifactsIndependentlyReplayed": 15,
+    "fullTrainingAdmission": false
+  },
+  "nonsemantic": {
+    "initialReport": "nonsemantic-original-spec.log.gz",
+    "initialInputFingerprintAvailable": false,
+    "initialExactCommandAvailable": false,
+    "finalFiles": [
+      "test/capability-ledger.test.js",
+      "test/evaluated-module-namespace-exotics.test.js",
+      "test/native-request-journal-v8.test.js",
+      "test/selected-orchestration-execution-lock.test.js"
+    ],
+    "finalJUnit": "nonsemantic-corrected-junit.xml.gz",
+    "provenance": "Working-tree logs and final selected-file JUnit; no clean revision is inferred."
+  }
+}
