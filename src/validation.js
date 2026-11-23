@@ -18,6 +18,8 @@ import { readFileSync } from 'node:fs';
 import {validateSymbolReferences,validateSymbolAllocation} from './symbol-validation.js';
 import { validateHostJournal } from './host-journal.js';
 import { validateSpecEvent, applySpecCommand } from './spec-validation.js';
+import {decode} from './values.js';
+import {symbolPropertyKey} from './property-keys.js';
 const clone = x => structuredClone(x);
 const eq = (a,b) => JSON.stringify(a)===JSON.stringify(b);
 const operations = JSON.parse(readFileSync(new URL('../catalog/operations.json',import.meta.url),'utf8'));
@@ -32,6 +34,80 @@ export class TraceValidationError extends Error {
   constructor(message,eventId=null){super(eventId?`${message} at ${eventId}`:message);this.name='TraceValidationError';this.eventId=eventId;}
 }
 function fail(message,eventId=null){throw new TraceValidationError(message,eventId);}
+function validatePropertyDeleteEvent(state,event,programs){
+  const direct=event.operation==='property.delete',reflect=event.operation==='call.enter'&&
+    event.operands?.[0]?.[0]==='method'&&eq(event.operands[0][1],['builtinfn','Reflect.deleteProperty']);
+  if(!direct&&!reflect)return;
+  const frame=state.frames[event.invocationId],instruction=programs[frame?.codeId]?.instructions[frame?.pc];
+  const stack=frame?.stack,base=direct?stack?.at(-2):null,keyToken=direct?stack?.at(-1):null,
+    target=direct?base?.value:event.operands?.[1],keyValue=direct?keyToken?.value:event.operands?.[2],
+    expectedOperands=direct?[base?.value,keyValue]:stack?.slice(-3).map(slot=>slot.value),
+    expectedOrigins=direct?[base?.origin,keyToken?.origin]:stack?.slice(-3).map(slot=>slot.origin);
+  if((direct?instruction?.op!=='DELETE_PROP':instruction?.op!=='CALL')||
+     !event.completion&&(event.operands.length!==(direct?2:3)||!eq(event.operands,expectedOperands)||
+       !eq(event.operandOrigins,expectedOrigins))||
+     !['str','num','bool','bigint','symbol'].includes(keyValue?.[0]))
+    fail('Property deletion lacks its source reference and primitive key',event.eventId);
+  if(direct&&['null','undefined'].includes(target?.[0])){
+    if(event.completion?.type!=='throw'||event.completion.errorType!=='TypeError'||
+       event.stateChanges.some(change=>change.table==='promises'||change.table==='heap'&&
+         !(change.before===null&&change.after?.kind==='object'&&change.after.declaredError==='TypeError')))
+      fail('Nullish property deletion lacks its TypeError completion',event.eventId);
+    return;
+  }
+  if(direct&&['bool','num','str','bigint','symbol'].includes(target?.[0])){
+    const key=keyValue[0]==='symbol'?symbolPropertyKey(keyValue[1]):String(decode(keyValue)),
+      exists=target[0]==='str'&&(key==='length'||/^(0|[1-9]\d*)$/.test(key)&&Number(key)<target[1].length),
+      success=!exists;
+    if(event.completion){
+      if(success||event.completion.type!=='throw'||event.completion.errorType!=='TypeError')
+        fail('Primitive property deletion has an invalid abrupt completion',event.eventId);
+    }else if(event.result?.[0]!=='bool'||event.result[1]!==success)
+      fail('Primitive property deletion returned a false success value',event.eventId);
+    if(event.stateChanges.some(change=>change.table==='promises'||change.table==='heap'&&
+      !(event.completion&&change.before===null&&change.after?.kind==='object'&&change.after.declaredError==='TypeError')))
+      fail('Primitive property deletion changed owned storage',event.eventId);
+    return;
+  }
+  if(!['ref','promise'].includes(target?.[0]))fail('Property deletion target is not an object',event.eventId);
+  const object=state.heap[target[1]]??state.promises[target[1]],
+    key=keyValue[0]==='symbol'?symbolPropertyKey(keyValue[1]):String(decode(keyValue));
+  if(!object||!['object','array','function','promise'].includes(object.kind))
+    fail('Property deletion target is not owned ordinary storage',event.eventId);
+  const accessor=object.accessors?.[key],present=Object.hasOwn(object.properties??{},key)||!!accessor,
+    configurable=!(object.kind==='array'&&key==='length')&&
+      (accessor??object.dataAttributes?.[key])?.configurable!==false,
+    expected=!present||configurable;
+  if(event.completion){
+    if(expected||event.completion.type!=='throw'||event.completion.errorType!=='TypeError')
+      fail('Property deletion has an invalid abrupt completion',event.eventId);
+    const changes=event.stateChanges.filter(change=>(change.table==='heap'||change.table==='promises')&&change.id===object.id);
+    if(changes.length)fail('Abrupt property deletion changed its target',event.eventId);
+    return;
+  }
+  if(event.result?.[0]!=='bool'||event.result[1]!==expected)fail('Property deletion returned a false success value',event.eventId);
+  const table=state.promises[object.id]?'promises':'heap',
+    changes=event.stateChanges.filter(change=>(change.table==='heap'||change.table==='promises')&&change.id===object.id);
+  if(expected&&present){
+    if(changes.length!==1||changes[0].table!==table)fail('Successful property deletion lacks one target update',event.eventId);
+    const after=changes[0].after;
+    if(Object.hasOwn(after?.properties??{},key)||Object.hasOwn(after?.accessors??{},key)||
+       Object.hasOwn(after?.dataAttributes??{},key)||
+       after?.propertyVersions?.[key]!==((Object.hasOwn(object.propertyVersions??{},key)?object.propertyVersions[key]:0)+1)||
+       after?.shapeVersion!==(object.shapeVersion??0)+1)
+      fail('Successful property deletion did not remove the property and advance its versions',event.eventId);
+    const expectedAfter=clone(object);delete expectedAfter.properties?.[key];delete expectedAfter.accessors?.[key];
+    delete expectedAfter.dataAttributes?.[key];
+    if(expectedAfter.propertyOrder)expectedAfter.propertyOrder=expectedAfter.propertyOrder.filter(member=>member!==key);
+    expectedAfter.propertyVersions[key]=(Object.hasOwn(object.propertyVersions??{},key)?object.propertyVersions[key]:0)+1;
+    expectedAfter.shapeVersion=(object.shapeVersion??0)+1;
+    if(after.version!==object.version+1)fail('Property deletion changed the target version incorrectly',event.eventId);
+    expectedAfter.version=after.version;
+    if(!eq(after,expectedAfter))fail('Property deletion changed unrelated target state',event.eventId);
+    if(event.stateChanges.some(change=>(change.table==='heap'||change.table==='promises')&&change.id!==object.id))
+      fail('Property deletion changed unrelated owned objects',event.eventId);
+  }else if(changes.length)fail('Unsuccessful or absent property deletion changed its target',event.eventId);
+}
 // A bounded-profile stop is not a guest throw. Check its owning instruction and
 // complete terminal transition independently before accepting that distinction.
 function validateUnsupportedCompletion(state,event,programs){
@@ -94,6 +170,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     const e=bundle.events[i];
     if(e.eventId!==`a0:e${i+1}`||e.sequence!==i+1)fail('Event ordering/identity violation',e.eventId);
     if(!known.has(e.operation)||e.catalogRef!==`${e.operation}/1`)fail('Unknown catalog operation',e.eventId);
+    validatePropertyDeleteEvent(state,e,bundle.programs);
     if(e.siteId && !sites.has(e.siteId))fail('Unresolved source site',e.eventId);
     if(e.before!==`q${i}`||e.after!==`q${i+1}`)fail('Invalid state-root sequence',e.eventId);
     for(const origin of e.operandOrigins) {
@@ -213,7 +290,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     const patched=new Set();
     if(e.completion && !['spec.operation.complete','completion.throw','external.input.deliver',
       'job.enter','binding.read','binding.write','binding.update','primitive.unary',
-      'property.read','property.write','property.update','primitive.binary','reference.this','call.return','call.enter','proxy.allocate',
+      'property.read','property.write','property.update','property.delete','primitive.binary','reference.this','call.return','call.enter','proxy.allocate',
       'object.construct','completion.finally.end','execution.unsupported','regexp.allocate','intrinsic.number.resume',
       'property.key.convert','property.key.resume'].includes(e.operation))
       fail('Completion metadata without an owned completion operation',e.eventId);

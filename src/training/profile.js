@@ -14,7 +14,7 @@ const binaries=new Set(['+','-','*','/','%','**','<','<=','>','>=','===','!==','
 const logical=new Set(['&&','||','??']);
 const assignments=new Set(['=','&&=','||=','??=','+=','-=','*=','/=','%=','**=',
   '&=','|=','^=','<<=','>>=','>>>=']);
-const unary=new Set(['!','-','+','typeof','void','~']);
+const unary=new Set(['!','-','+','typeof','void','~','delete']);
 const ownedConstructors=new Set(['Set','Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError','Symbol','Promise','ArrayBuffer','SharedArrayBuffer','DataView',
   'Int8Array','Uint8Array','Int16Array','Uint16Array','Int32Array','Uint32Array',
   'BigInt64Array','BigUint64Array','Float32Array','Float64Array']);
@@ -186,6 +186,7 @@ function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){
         return {...loc,type:'Await',argument:expr(n.argument)};
       case 'UnaryExpression':
         if(!unary.has(n.operator))reject(n,'unary operator');
+        if(n.operator==='delete'&&n.argument.type!=='MemberExpression')reject(n,'delete target');
         return {...loc,type:'Unary',operator:n.operator,argument:expr(n.argument)};
       case 'BinaryExpression':case 'LogicalExpression':
         if(n.operator==='in'&&n.left.type==='PrivateIdentifier')return {...loc,type:'PrivateHas',name:n.left.name,object:expr(n.right)};

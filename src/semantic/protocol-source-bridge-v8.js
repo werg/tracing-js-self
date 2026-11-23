@@ -22,6 +22,7 @@ function sharedSyntax(adapter,node){
   const name=memberName(node);
   if(adapter.id==='synchronous-generator-source/1')return node.generator===true&&!node.async;
   if(adapter.id==='ordinary-array-map-source/1')return node.type==='MemberExpression'&&name==='map';
+  if(adapter.id==='ordinary-for-in/1')return node.type==='ForInStatement';
   if(['custom-iterator-source/1','ordinary-completions-source/1'].includes(adapter.id))
     return node.type==='ForOfStatement'&&node.await;
   if(adapter.id==='builtin-iterator/1')return node.type==='ForOfStatement'||
@@ -51,6 +52,7 @@ function selected(adapter,input){
   if(!SHARED_PROTOCOL_SOURCE_IDS_V8.includes(adapter.id))return false;
   return sourceHasSyntaxV8(input,node=>adapter.syntax?.(node)===true||sharedSyntax(adapter,node)||
     adapter.id==='primitive-conversion-source/1'&&(node.type==='CallExpression'&&node.callee.type==='Identifier'&&node.callee.name==='Number'||
+      node.type==='BinaryExpression'&&node.operator==='in'||
       node.computed&&['MemberExpression','Property','MethodDefinition','PropertyDefinition'].includes(node.type))||
     adapter.id==='owned-binary-memory/1'&&node.type==='MemberExpression'&&node.object.type==='Identifier'&&
       ['Atomics','ArrayBuffer'].includes(node.object.name));

@@ -280,6 +280,11 @@
       "kind": "algorithm"
     },
     {
+      "operationId": "property.delete",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
       "operationId": "object.construct",
       "version": 1,
       "kind": "algorithm"

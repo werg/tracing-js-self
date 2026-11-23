@@ -67,7 +67,7 @@ export function validateScriptHostEvent(state,event,programs,fail){
       fail('Owned Test262 print output or frame transition changed');
   }else if(controlPatch&&!same(controlPatch.after?.test262Output,control.test262Output))
     fail('Test262 print journal changed outside its original host call');
-  if(event.completion||!frame)return;
+  if(event.completion||!frame||['property.key.convert','property.key.resume'].includes(event.operation))return;
   if(instruction?.op==='BINARY'&&instruction.arg==='in'){
     const operands=frame.stack.slice(-2).map(item=>item.value);
     if(!same(event.operands,operands))fail('Ordinary in-operator operands changed');

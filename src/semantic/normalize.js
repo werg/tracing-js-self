@@ -221,7 +221,7 @@ export function normalizeJournal(bundle) {
         throw new Error('Malformed owned update');
       r.update={operator:update.operator,prefix:update.prefix};
     }
-    if(['property.write','property.update'].includes(e.operation)) {
+    if(['property.write','property.update','property.delete'].includes(e.operation)) {
       for(const p of e.stateChanges.filter(p=>p.table==='heap')) {
         const all=changes(p.before,p.after);
         for(const entry of all)r.writes.push({kind:'property',object:p.id,...entry,

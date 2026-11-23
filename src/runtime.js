@@ -57,7 +57,7 @@ function requireDataOnly(value,path='state',seen=new WeakSet()){
 const tableNames = ['counters','envs','heap','promises','frames','effects','inputs','control','operations'];
 const opNames = {
   CONST:'literal.materialize', GET:'binding.read',
-  DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', INIT:'binding.initialize', DECLARE:'binding.declare',
+  DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', DELETE_PROP:'property.delete', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
   CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', GENERATOR_START:'call.return', YIELD:'continuation.yield', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
   GET_TEMPLATE_OBJECT:'array.allocate', PROPERTY_KEY:'property.read', CLASS_CONSTRUCTOR_GUARD:'call.enter', CLASS_CREATE:'object.construct', CLASS_INITIALIZER:'property.write', CLASS_FINISH:'call.enter', PRIVATE_GET:'property.read', PRIVATE_GET_METHOD:'property.read', PRIVATE_HAS:'primitive.binary', PRIVATE_DEFINE:'property.write', PRIVATE_SET:'property.write', PRIVATE_UPDATE:'property.update',
@@ -98,8 +98,9 @@ function valueKey(tagged) {
 }
 function propertyKeySlot(frame,instruction){
   const op=instruction.op;
-  if(['GET_PROP','GET_METHOD','UPDATE_PROP','PROPERTY_KEY'].includes(op)||
+  if(['GET_PROP','GET_METHOD','UPDATE_PROP','DELETE_PROP','PROPERTY_KEY'].includes(op)||
     op==='DUP2'&&instruction.arg?.cachePropertyKey===true)return frame.stack.length-1;
+  if(op==='BINARY'&&instruction.arg==='in')return frame.stack.length-2;
   return op==='PUT_PROP'?frame.stack.length-2:null;
 }
 function retainedPropertyKey(frame,instruction,state){
@@ -107,7 +108,10 @@ function retainedPropertyKey(frame,instruction,state){
   if(stackIndex===null||key?.value[0]!=='ref')return null;
   // GetValue/PutValue perform ToObject before ToPropertyKey. A nullish base
   // must fail at the ordinary instruction without running the key's hooks.
-  if(instruction.op!=='PROPERTY_KEY'&&['null','undefined'].includes(frame.stack[stackIndex-1]?.value[0]))return null;
+  if(instruction.op==='BINARY'){
+    const target=frame.stack[stackIndex+1]?.value;
+    if(!['ref','promise','intrinsic','builtinfn','hostfn','host'].includes(target?.[0]))return null;
+  }else if(instruction.op!=='PROPERTY_KEY'&&['null','undefined'].includes(frame.stack[stackIndex-1]?.value[0]))return null;
   if(!['object','array'].includes(state.heap[key.value[1]]?.kind))
     throw new TypeError('PropertyKey conversion requires an owned ordinary object');
   let cacheBinding=null;
@@ -278,6 +282,22 @@ function enumerationSnapshot(heap,source){
   }
   return {chain,keys};
 }
+function enumerationStillCompatible(heap,cursor,snapshot){
+  if(snapshot.chain.length!==cursor.chain.length||snapshot.chain.some((row,index)=>
+    row.id!==cursor.chain[index].id||row.prototype!==cursor.chain[index].prototype))return false;
+  // Deletions are observed when a key is reached. Surviving captured
+  // descriptors must keep their enumerability; additions are ignored because
+  // the candidate sequence was fixed when the cursor was created.
+  for(const captured of cursor.chain){
+    const live=snapshot.chain.find(row=>row.id===captured.id);
+    if(!live)return false;
+    for(const [key,enumerable] of captured.keys){
+      const current=live.keys.find(row=>row[0]===key);
+      if(current&&current[1]!==enumerable)return false;
+    }
+  }
+  return true;
+}
 function functionProperty(heap,object,key){
   const seen=new Set();
   while(object){
@@ -380,6 +400,19 @@ function putOwn(obj,key,value,eventId,{literal=false}={}) {
     obj.properties.length = token(['num',Number(key)+1],eventId);
     obj.propertyVersions.length = (obj.propertyVersions.length ?? 0) + 1;
   }
+}
+function deleteOrdinaryOwn(object,key){
+  const accessor=object.accessors?.[key],present=Object.hasOwn(object.properties??{},key)||!!accessor,
+    success=!present||!(object.kind==='array'&&key==='length')&&
+      (accessor??object.dataAttributes?.[key])?.configurable!==false;
+  if(success&&present){
+    if(accessor)delete object.accessors[key];else delete object.properties[key];
+    if(object.dataAttributes)delete object.dataAttributes[key];
+    if(object.propertyOrder)object.propertyOrder=object.propertyOrder.filter(member=>member!==key);
+    object.propertyVersions[key]=(Object.hasOwn(object.propertyVersions??{},key)?object.propertyVersions[key]:0)+1;
+    object.shapeVersion++;
+  }
+  return {accessor,present,success};
 }
 function diff(oldState, nextState) {
   const patches=[];
@@ -1852,10 +1885,16 @@ export class Runtime {
         case 'FOR_IN_NEXT':{
           const value=pop(),cursor=value.value[0]==='ref'?s.heap[value.value[1]]:null;
           if(cursor?.kind!=='enumerator')throw new Error('For-in cursor identity missing');
-          if(!equal(enumerationSnapshot(s.heap,cursor.source).chain,cursor.chain))
-            throw new TypeError('For-in key descriptor or prototype mutation outside the stable enumeration profile');
-          const key=cursor.keys[cursor.nextIndex];
-          cursor.done=cursor.nextIndex>=cursor.keys.length;if(!cursor.done)cursor.nextIndex++;
+          if(cursor.done)return {...operands(value),...result(this.iteratorResult(s,U,true,eventId))};
+          const live=enumerationSnapshot(s.heap,cursor.source);
+          if(!enumerationStillCompatible(s.heap,cursor,live))
+            throw new TypeError('For-in surviving key descriptor or prototype mutation outside the owned profile');
+          let key;
+          while(cursor.nextIndex<cursor.keys.length){
+            const candidate=cursor.keys[cursor.nextIndex++];
+            if(cursor.source[0]==='str'||ownedHasProperty(ownedObjectHeap(s),cursor.source,stringPropertyKey(candidate))){key=candidate;break;}
+          }
+          cursor.done=key===undefined;
           return {...operands(value),...result(this.iteratorResult(s,cursor.done?U:['str',key],cursor.done,eventId))};
         }
         case 'INSTANCEOF_RESULT':{const value=pop();return {...operands(value),...result(['bool',truthy(value.value)])};}
@@ -2014,6 +2053,36 @@ export class Runtime {
           putOwn(obj,property,next,eventId);
           this.stackPush(f,returned,eventId);
           return {...operands(base,key,old),result:returned,reads:[found.observation]};
+        }
+        case 'DELETE_PROP':{
+          const key=pop(),base=pop();
+          if(['undefined','null'].includes(base.value[0]))
+            guestFault('TypeError','Cannot convert undefined or null to object');
+          const property=valueKey(key.value),obj=ownedObjectStorage(s,base.value);
+          if(['bool','num','bigint','symbol'].includes(base.value[0]))
+            return {...operands(base,key),...result(['bool',true])};
+          if(base.value[0]==='str'){
+            const nonConfigurable=property==='length'||arrayIndex(property)&&Number(property)<base.value[1].length;
+            if(nonConfigurable&&this.programs[f.codeId].strict)
+              guestFault('TypeError',`Cannot delete property '${property}' of [object String]`);
+            return {...operands(base,key),...result(['bool',!nonConfigurable])};
+          }
+          if(!obj||!['object','array','function','promise','proxy'].includes(obj.kind))
+            throw new TypeError('Delete requires an owned ordinary object');
+          if(obj.kind==='proxy')throw new TypeError('Proxy deleteProperty trap requires its owned call boundary');
+          if(obj.kind==='function')this.functionProperties(s,obj,eventId,{prototype:property==='prototype'});
+          const accessor=obj.accessors?.[property],present=Object.hasOwn(obj.properties??{},property)||!!accessor,
+            success=!present||!(obj.kind==='array'&&property==='length')&&
+              (accessor??obj.dataAttributes?.[property])?.configurable!==false;
+          if(!success&&this.programs[f.codeId].strict)
+            guestFault('TypeError',`Cannot delete property '${property}' of #<Object>`);
+          deleteOrdinaryOwn(obj,property);
+          const observation={kind:'property',objectId:obj.id,key:property,present,
+            version:Object.hasOwn(obj.propertyVersions??{},property)?obj.propertyVersions[property]:0,
+            shapeVersion:obj.shapeVersion??0,
+            value:present?(Object.hasOwn(obj.properties??{},property)?obj.properties[property].value:U):U,
+            supplyingEvent:present?obj.properties?.[property]?.origin??null:null};
+          return {...operands(base,key),...result(['bool',success]),reads:[observation]};
         }
         case 'MAKE_FUNCTION':{
           const id=this.next(s,'obj');
@@ -2388,7 +2457,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             else throw new TypeError('Unmodeled Symbol static property');
           }
           else if(base.value[0]==='intrinsic'&&base.value[1]==='Reflect'&&
-             ['ownKeys','apply','set','deleteProperty','defineProperty'].includes(property))v=['builtinfn','Reflect.'+property];
+             ['ownKeys','apply','set','deleteProperty','defineProperty','has'].includes(property))v=['builtinfn','Reflect.'+property];
           else if(base.value[0]==='symbol'){
             if(property==='description')v=this.symbolDescription(s,base.value);
             else if(['toString','valueOf'].includes(property))v=['builtinfn','Symbol.prototype.'+property];
@@ -3682,6 +3751,15 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
           if(callable[0]==='builtinfn'&&
              ['Reflect.set','Reflect.deleteProperty','Reflect.defineProperty'].includes(callable[1])){
             const value=args[0]?.value??U,object=ownedObjectStorage(s,value);
+            if(callable[1]==='Reflect.deleteProperty'&&isPrimitiveValue(value))
+              guestFault('TypeError','Reflect.deleteProperty called on non-object');
+            if(callable[1]==='Reflect.deleteProperty'&&object&&
+               ['object','array','function','promise'].includes(object.kind)){
+              const key=valueKey(args[1]?.value??U);
+              if(object.kind==='function')this.functionProperties(s,object,eventId,{prototype:key==='prototype'});
+              const {success}=deleteOrdinaryOwn(object,key);
+              return {...operands(fn,...args),...result(['bool',success])};
+            }
             if(!object||object.kind!=='module-namespace')
               throw new TypeError(callable[1]+' currently requires an owned module namespace');
             const key=valueKey(args[1]?.value??U);
@@ -3704,6 +3782,19 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             if(outcome.child)
               return {...operands(fn,...args),causes:[{kind:'invocation',frameId:outcome.child}]};
             return {...operands(fn,...args),...result(outcome.value)};
+          }
+          if(callable[0]==='builtinfn'&&callable[1]==='Reflect.has'){
+            const targetValue=args[0]?.value??U;
+            // Reflect.has checks its target before converting the property key.
+            // Keep the operand profile explicit: this path owns ordinary
+            // identities and leaves Proxy callbacks to their call boundary.
+            if(isPrimitiveValue(targetValue))guestFault('TypeError','Reflect.has called on non-object');
+            const target=ownedObjectStorage(s,targetValue);
+            if(!target||!['object','array','function','promise','proxy'].includes(target.kind))
+              throw new TypeError('Reflect.has requires owned ordinary storage');
+            if(target.kind==='proxy')throw new TypeError('Reflect.has Proxy trap requires its owned call boundary');
+            const key=valueKey(args[1]?.value??U);
+            return {...operands(fn,...args),...result(['bool',ownedHasProperty(ownedObjectHeap(s),targetValue,key)])};
           }
           if(callable[0]==='builtinfn' && callable[1]==='Object.assign'){
             const ref=args[0]?.value??U;

@@ -85,3 +85,35 @@ Work still in progress at this checkpoint:
   been bootstrapped for the new record; this intermediate definition alone is
   not a passing `contracts:check` or native admission receipt.
 - Actual-tokenizer ordinary preparation on clean paired revisions.
+
+## Checkpoint 2 — original-source coverage and shared runtime
+
+The owned runtime now lowers member deletion, handles ordinary `Reflect.has`
+and `Reflect.deleteProperty`, and resumes an object-valued `in` key through the
+existing property-key continuation after validating the right operand. For-in
+rechecks captured candidates against live ordinary storage. Promise composition
+uses the same public existence/deletion/enumeration operations.
+
+The complete source selection is `fixtures/semantic-regions/objects-issue51.js`:
+18 intended supported originals and 3 explicit refusal controls. Every selected
+member belongs to the shared `issue51-original-objects` ancestor before splitting.
+`node tools/export-issue51-evidence.mjs` exports original inputs, a full registry,
+per-member dispositions, and method counts. The current working-tree run passed
+all 18 originals and retained all 3 refusals (zero unexpected failures). Its
+operation counts are 24 `property.has`, 16 `property.delete`, 7 enumeration
+creations, 22 enumeration advances, and 5 conversion records. These are event
+counts from this cohort, not percentages of JavaScript support.
+
+The issue-specific source test file passes 10 tests, including an altered
+allocated receiver whose existence result remains true but whose original
+source claim is false. The affected runtime/public regression command passes
+77 tests across owned key conversion, calls, Proxy behavior, Promise objects,
+derived construction, super properties and for-in. Source observations still
+explicitly refuse the invalid-`in`-RHS intrinsic error object even though the
+owned/native executions agree on TypeError before the key hook runs.
+
+Before this checkpoint is review-ready: finish the deletion validator audit
+for null/undefined keys, Reflect argument counts/primitive targets and lazy
+function descriptors; regenerate the full canonical artifacts; synchronize the
+consumer; run clean paired admission and actual-tokenizer preparation. Proxy
+`has` and `deleteProperty` traps remain outside this increment.

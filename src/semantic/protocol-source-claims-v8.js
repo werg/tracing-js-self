@@ -29,7 +29,7 @@ const ordinaryOperations=new Set(['property.read','property.write','property.upd
 // These protocol families can participate in Promise source projection without
 // introducing an independent whole-episode teacher. Their events are still
 // claimed through the same prefix coordinator and retained-state transaction.
-export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy,iterator,map,generator,custom,completion]);
+export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy,iterator,map,enumeration,generator,custom,completion]);
 const callee=value=>value?.[0]==='method'?value[1]:value;
 const builtin=value=>['intrinsic','builtinfn'].includes(value?.[0])?value[1]:null;
 const selected=value=>value?.[0]==='method'?value[1]:value;

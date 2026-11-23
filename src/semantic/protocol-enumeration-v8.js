@@ -1,6 +1,7 @@
 // Ordinary for-in cursors on the authoritative shared heap. Candidate lists
 // are derived here, never supplied by a teacher or a native enumeration call.
 import {assertAlgorithmFields,assertAlgorithmDataArray,isAlgorithmDataRecord} from './ir.js';
+import {promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
 
 export const ENUMERATION_PROFILE_V8='ordinary-for-in/1';
 export const ENUMERATION_RECORD_FIELDS=Object.freeze({
@@ -62,6 +63,11 @@ export function applyEnumerationRecordV8(controller,record,api){
   if(!Object.hasOwn(ENUMERATION_RECORD_FIELDS,record.kind))return false;
   if(record.kind==='enumeration.create'){
     api.fresh(controller,record.name);const selected=snapshot(controller,record.source,api);
+    if(selected.chain.at(-1)?.prototype==='ordinary'&&controller.protocol?.promiseObjects?.initialized){
+      const intrinsic=api.heapNode(controller,promiseIntrinsicIdV8('Object.prototype'));
+      api.require(!api.order(intrinsic).some(key=>typeof key==='string'&&api.ownDescriptor(intrinsic,['str',key]).enumerable),
+        'enumerable intrinsic prototype requires an explicit enumeration chain');
+    }
     controller.heap.set(record.name,{kind:'enumerator',source:api.copy(record.source),...selected,nextIndex:0,done:false,properties:new Map()});
   }else{
     const node=controller.heap.get(record.object);api.require(node?.kind==='enumerator','enumeration cursor identity required');

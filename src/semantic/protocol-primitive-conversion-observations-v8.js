@@ -24,13 +24,15 @@ function inventory(source,{reserved=false}={}){
       throw new TypeError('Independent conversion observation: reserved observer name in source');
     if(node.type==='CallExpression'&&!node.optional&&node.callee.type==='Identifier'&&node.callee.name==='Number')
       numbers.push(node);
+    if(node.type==='BinaryExpression'&&node.operator==='in'&&node.left.type!=='PrivateIdentifier')
+      keys.push({key:node.left,site:site(node),unsupported:null});
     if(node.type==='MemberExpression'&&node.computed){
       const assignment=parent?.type==='AssignmentExpression'&&parent.left===node,
         update=parent?.type==='UpdateExpression'&&parent.argument===node,
         deletion=parent?.type==='UnaryExpression'&&parent.operator==='delete';
-      keys.push({key:node.property,site:site(assignment&&parent.operator==='='||update?parent:node),
+      keys.push({key:node.property,site:site(assignment&&parent.operator==='='||update||deletion?parent:node),
         unsupported:assignment&&parent.operator!=='='||update?'compound/logical/update object keys differ from the pinned reference edition':
-          deletion?'computed deletion has no owned source profile':node.object.type==='Super'?'computed super key has no owned conversion profile':null});
+          node.object.type==='Super'?'computed super key has no owned conversion profile':null});
     }else if(node.computed&&['Property','MethodDefinition','PropertyDefinition'].includes(node.type)){
       keys.push({key:node.key,site:site(node.type==='Property'?node.key:node),unsupported:null});
     }

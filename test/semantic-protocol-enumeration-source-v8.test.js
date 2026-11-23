@@ -88,7 +88,6 @@ test('enumeration checkpoint replay binds every prefix and rejects false keys wi
 
 test('structural mutation callable chains proxies and complex loop bindings stay outside the source profile',async()=>{
   for(const body of [
-    'const o={a:1,b:2};for(const key in o)o.added=3;return 7;',
     'const o={a:1,b:2};for(const key in o)Object.defineProperty(o,"b",{enumerable:false});return 7;',
     'const o={a:1,b:2};for(const key in o)Object.setPrototypeOf(o,{p:1});return 7;',
     'const o=new Proxy({a:1},{});for(const key in o){}return 7;',

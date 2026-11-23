@@ -1,0 +1,163 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {verifyProtocolRegionTrainingCase,recheckProtocolRegionEvidence} from '../src/semantic/protocol-source-v8.js';
+import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
+import {sharedRegionState} from '../src/semantic/regions.js';
+import {decodeProtocolRecordV8,encodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
+import {hashAlgorithmData} from '../src/semantic/program.js';
+import {issue51ObjectFixtures} from '../fixtures/semantic-regions/objects-issue51.js';
+import {issue51UnsupportedControls} from '../fixtures/semantic-regions/objects-issue51.js';
+import {runtimeDifferential} from './helpers/runtime-frontier.js';
+
+const fixture=(body,args=[4])=>({source:'"use strict";function run(x){'+body+'}',entry:'run',args,family:'issue51-property-enumeration-reference'});
+const fixtureById=new Map(issue51ObjectFixtures.map(row=>[row.id,row]));
+async function checked(body,args=[4]){
+  return checkedSource(fixture(body,args));
+}
+async function checkedFixture(id){
+  const selected=fixtureById.get(id);assert(selected,'Unknown issue51 positive source fixture '+id);
+  return checkedSource(structuredClone(selected));
+}
+async function checkedSource(input){
+  const result=await verifyProtocolRegionTrainingCase(input);
+  assert(result.exported,result.reason);
+  const reference=result.exported.sidecar.sourceArtifact.sidecar.reference;
+  assert.equal(reference.status,'agreed');
+  for(const name of ['operationAudit','branchAudit','completionAudit','metadataAudit'])
+    if(reference[name])assert.equal(reference[name].status,'agreed',name);
+  return result.exported;
+}
+const completion=artifact=>RegionExecutionHarness.replay(artifact).controller.completion;
+
+test('all issue51 source members share the frozen original-object ancestor',()=>{
+  for(const fixture of [...issue51ObjectFixtures,...issue51UnsupportedControls])
+    assert.deepEqual(fixture.ancestorIds,['issue51-original-objects'],fixture.id);
+});
+
+test('primitive in operator projects inherited property existence from original source',async()=>{
+  const artifact=await checked('const object=Object.create({present:1});return "present" in object;');
+  const claims=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record);
+  assert(claims.some(row=>row.kind==='property.has'&&row.key?.[0]==='str'&&row.key[1]==='present'&&row.result?.[1]===true));
+  assert.deepEqual(completion(artifact),{kind:'return',value:['bool',true]});
+  const timeline=artifact.public.timeline,at=timeline.findIndex(row=>row.fields.line?.includes('"kind":"property.has"'));
+  assert(at>0);const prefix={...artifact.public,timeline:timeline.slice(0,at)};
+  const harness=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(RegionExecutionHarness.replay(prefix,{requireTerminal:false}).checkpoint())));
+  const selected=decodeProtocolRecordV8(timeline[at].fields.line),before=sharedRegionState(harness.controller);
+  for(const changed of [
+    {...selected,object:'forged'},
+    {...selected,key:['str','absent']},
+    {...selected,result:['bool',false]}
+  ]){
+    assert.throws(()=>harness.select(timeline[at].fields.invocationId,encodeProtocolRecordV8(changed),{entry:timeline[at].fields.entry??null}));
+    assert.deepEqual(sharedRegionState(harness.controller),before);
+  }
+  for(const row of timeline.slice(at))harness.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+  assert.deepEqual(sharedRegionState(harness.controller),sharedRegionState(RegionExecutionHarness.replay(artifact).controller));
+  const forged=structuredClone(artifact),sourceArtifact=forged.sidecar.sourceArtifact,
+    propertyClaim=sourceArtifact.sidecar.compiler.claims.find(row=>row.record.kind==='property.has'),
+    alternate=sourceArtifact.sidecar.compiler.claims.find(row=>row.record.kind==='property.define')?.record.object;
+  assert(propertyClaim&&alternate&&alternate!==propertyClaim.record.object);
+  propertyClaim.record.object=alternate;
+  propertyClaim.line='protocol '+encodeProtocolRecordV8(propertyClaim.record);
+  forged.sidecar.sourceArtifactDigest=hashAlgorithmData(sourceArtifact);
+  await assert.rejects(()=>recheckProtocolRegionEvidence(forged),/source|projection|claim|target|ownership/i);
+});
+
+test('in and Reflect.has preserve receiver, effectful operand order, Symbols and accessor non-observation',async()=>{
+  const artifact=await checkedFixture('issue51-has-in-reflect-symbol-accessor'),claims=artifact.sidecar.sourceArtifact.sidecar.compiler.claims;
+  const has=claims.map(row=>row.record).filter(row=>row.kind==='property.has');
+  assert.equal(has.length,2);
+  assert.deepEqual(has.map(row=>row.result),[['bool',true],['bool',true]]);
+  assert(has.every(row=>typeof row.object==='string'&&row.object.length>0));
+  assert(has.some(row=>row.key?.[0]==='symbol'));
+  const value=RegionExecutionHarness.replay(artifact).controller.materialize(completion(artifact).value);
+  assert.deepEqual(value,[true,true,['key','receiver','receiver']]);
+});
+
+test('object-valued in keys convert once after evaluating a valid right operand',async()=>{
+  const artifact=await checkedFixture('issue51-in-object-key-to-primitive-order');
+  const value=RegionExecutionHarness.replay(artifact).controller.materialize(completion(artifact).value);
+  assert.deepEqual(value,[true,['receiver','string']]);
+});
+
+test('invalid in RHS throws before key coercion in owned/native execution and remains a source refusal',async()=>{
+  const fixture=issue51UnsupportedControls.find(row=>row.id==='issue51-control-in-invalid-rhs-before-key-coercion');
+  assert(fixture);
+  const oracle=vm.runInNewContext(fixture.source+';run(4)');
+  assert.deepEqual(structuredClone(oracle),[true,[]]);
+  const differential=runtimeDifferential('',{source:fixture.source,entry:fixture.entry,args:fixture.args});
+  assert.equal(differential.reference.kind,'return');
+  const result=await verifyProtocolRegionTrainingCase(structuredClone(fixture));
+  assert.equal(result.exported,undefined);
+  assert.match(result.reason,/outside|unsupported|protocol|profile/i);
+});
+
+test('for-in snapshots candidates, skips deleted keys, ignores additions, and checks live inherited fallback',async()=>{
+  const artifact=await checkedFixture('issue51-for-in-delete-fallback-addition');
+  assert.equal(completion(artifact).kind,'return');
+  const value=RegionExecutionHarness.replay(artifact).controller.materialize(completion(artifact).value);
+  assert.deepEqual(value,['a','b','c']);
+  assert.equal(artifact.sidecar.sourceArtifact.sidecar.reference.extensionAudit.status,'agreed');
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).sourceValidated,true);
+});
+
+test('for-in can observe new enumerable inherited fallback and omits a key deleted before its turn',async()=>{
+  const artifact=await checkedFixture('issue51-for-in-delete-prototype-candidate');
+  const value=RegionExecutionHarness.replay(artifact).controller.materialize(completion(artifact).value);
+  assert.deepEqual(value,['a','b']);
+  const rows=artifact.public.timeline.map(row=>row.fields.line).filter(line=>typeof line==='string'&&line.includes('enumeration.next'));
+  assert(rows.length>=3);
+});
+
+test('delete expressions expose strict completion and delete records distinguish own from inherited keys',async()=>{
+  const artifact=await checkedFixture('issue51-delete-own-and-inherited');
+  const value=RegionExecutionHarness.replay(artifact).controller.materialize(completion(artifact).value);
+  assert.deepEqual(value,[true,true,false,true]);
+  const records=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record).filter(row=>row.kind==='property.delete');
+  assert.equal(records.length,2);
+  assert(records.every(row=>typeof row.object==='string'&&row.key?.[0]==='str'&&typeof row.success==='boolean'));
+});
+
+test('restored enumeration checkpoint rejects forged receiver, key and outcome without state changes',async()=>{
+  const artifact=await checkedFixture('issue51-for-in-sparse-array');
+  const timeline=artifact.public.timeline,at=timeline.findIndex(row=>row.fields.line?.includes('"kind":"enumeration.next"'));
+  assert(at>0);const prefix={...artifact.public,timeline:timeline.slice(0,at)};
+  const harness=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(RegionExecutionHarness.replay(prefix,{requireTerminal:false}).checkpoint())));
+  const selected=decodeProtocolRecordV8(timeline[at].fields.line),before=sharedRegionState(harness.controller);
+  for(const changed of [
+    {...selected,object:'forged'},
+    {...selected,result:['str','forged']},
+    {...selected,done:!selected.done}
+  ]){
+    assert.throws(()=>harness.select(timeline[at].fields.invocationId,encodeProtocolRecordV8(changed),{entry:timeline[at].fields.entry??null}));
+    assert.deepEqual(sharedRegionState(harness.controller),before);
+  }
+  for(const row of timeline.slice(at))harness.select(row.fields.invocationId,row.fields.line,{entry:row.fields.entry??null});
+  assert.deepEqual(sharedRegionState(harness.controller),sharedRegionState(RegionExecutionHarness.replay(artifact).controller));
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
+test('issue51 original fixtures preserve sparse length, delete failure, key order, accessor and Symbol behavior',async()=>{
+  const cases=[
+    ['issue51-reflect-delete-property',[true,true,false,true]],
+    ['issue51-sparse-array-delete-preserves-length-and-holes',[true,4,false,false,true]],
+    ['issue51-reflect-delete-nonconfigurable-returns-false',[false,true]],
+    ['issue51-delete-and-readd-changes-key-order',['a','c','b']],
+    ['issue51-existence-distinguishes-missing-undefined-accessor',[false,true,true,0]],
+    ['issue51-delete-symbol-key',[true,true,false]],
+    ['issue51-delete-own-tostring-reveals-intrinsic',[true,true,true]],
+    ['issue51-delete-accessor-without-getter-call',[true,true,false,0]],
+    ['issue51-for-in-sparse-array',['1','4']],
+    ['issue51-accessor-existence-enumeration-no-read',[true,['value','other'],0]],
+    ['issue51-for-in-delete-fallback-addition',['a','b','c']],
+    ['issue51-for-in-delete-prototype-candidate',['a','b']],
+    ['issue51-delete-inherited-for-in-candidate',['first','b']],
+    ['issue51-promise-property-composition',[true,true,true,false]],
+    ['issue51-promise-enumeration-mutation-composition',['a']]
+  ];
+  for(const [id,expected] of cases){
+    const artifact=await checkedFixture(id),actual=RegionExecutionHarness.replay(artifact).controller.materialize(completion(artifact).value);
+    assert.deepEqual(actual,expected,id);
+  }
+});

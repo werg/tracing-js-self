@@ -125,7 +125,7 @@ export function parse(source) {
       if(args.length>3)throw new SyntaxError('Bounded constructor argument budget');
       return {type:'Construct',callee:callee.value,args,start:x.start,end:t[p-1].end};
     }
-    if (['!','-','+','typeof'].includes(x.value)) return {type:'Unary',operator:x.value,argument:expression(8),start:x.start,end:t[p-1].end};
+    if (['!','-','+','typeof','delete'].includes(x.value)) return {type:'Unary',operator:x.value,argument:expression(8),start:x.start,end:t[p-1].end};
     if (x.value === '(') { const e = expression(); need(')'); return {...e,parenthesized:true}; }
     if (x.value === '[') { const elements=[]; if(!match(']')){do{elements.push(expression(0,false));}while(match(','));need(']');} return {type:'Array',elements,start:x.start,end:t[p-1].end}; }
     if (x.value === '{') { const properties=[]; if(!match('}')){do{ const k=take(); if(k.kind!=='word'&&k.kind!=='literal')throw new SyntaxError('Invalid object key'); need(':'); if(String(k.value)==='__proto__')throw new SyntaxError('Object-literal prototype setters are not implemented');properties.push({key:String(k.value),value:expression(0,false)}); }while(match(','));need('}');}return {type:'Object',properties,start:x.start,end:t[p-1].end}; }
@@ -256,7 +256,9 @@ export function compile(ast) {
           // throwing on an unresolvable name. Owned TDZ remains observable.
           if(n.operator==='typeof' && n.argument.type==='Identifier')
             emit('TYPEOF_BINDING',n.argument.name,n);
-          else {expr(n.argument);emit('UNARY',n.operator,n);}
+          else if(n.operator==='delete'&&n.argument.type==='Member'){
+            expr(n.argument.object);expr(n.argument.property);emit('DELETE_PROP',null,n);
+          }else {expr(n.argument);emit('UNARY',n.operator,n);}
           break;
         case 'Update':
           if(n.argument?.type==='PrivateMember'){

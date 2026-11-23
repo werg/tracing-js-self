@@ -1,9 +1,13 @@
 // Independently reconstructed ordinary enumeration evidence. No evaluator calls.
-import {isSymbolPropertyKey,propertyKeyValue} from './property-keys.js';
+import {isSymbolPropertyKey,propertyKeyValue,stringPropertyKey} from './property-keys.js';
+import {ownedHasProperty} from './owned-has-property.js';
 const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const index=key=>/^(0|[1-9]\d*)$/.test(key)&&Number(key)<4294967295;
 function expectedSnapshot(heap,source,fail){
-  if(source[0]==='str')return {chain:[],keys:Array.from({length:source[1].length},(_,i)=>String(i))};
+  if(source[0]==='str'){
+    const keys=Array.from({length:source[1].length},(_,i)=>String(i));
+    return {chain:[],keys};
+  }
   if(['undefined','null','num','bool','bigint','symbol'].includes(source[0]))return {chain:[],keys:[]};
   if(source[0]!=='ref')fail('For-in snapshot has an unowned source');
   const chain=[],keys=[],seen=new Set(),identities=new Set();let object=heap[source[1]];
@@ -23,6 +27,19 @@ function expectedSnapshot(heap,source,fail){
   }
   return {chain,keys};
 }
+function compatible(heap,cursor,snapshot,fail){
+  if(snapshot.chain.length!==cursor.chain.length||snapshot.chain.some((row,index)=>
+    row.id!==cursor.chain[index].id||row.prototype!==cursor.chain[index].prototype))
+    fail('For-in prototype chain changed');
+  for(const captured of cursor.chain){
+    const live=snapshot.chain.find(row=>row.id===captured.id);
+    if(!live)fail('For-in prototype chain changed');
+    for(const [key,enumerable]of captured.keys){
+      const current=live.keys.find(row=>row[0]===key);
+      if(current&&current[1]!==enumerable)fail('For-in surviving key enumerability changed');
+    }
+  }
+}
 export function validateEnumerationEvent(state,event,programs,fail){
   const frame=state.frames[event.invocationId],instruction=programs[frame?.codeId]?.instructions[frame?.pc],op=instruction?.op;
   const cursors=event.stateChanges.filter(p=>p.table==='heap'&&(p.before?.kind==='enumerator'||p.after?.kind==='enumerator'));
@@ -34,11 +51,18 @@ export function validateEnumerationEvent(state,event,programs,fail){
       fail('For-in snapshot lost key order or nonenumerable shadowing');
   }else if(op==='FOR_IN_NEXT'){
     const ref=frame.stack.at(-1)?.value,cursor=ref?.[0]==='ref'?state.heap[ref[1]]:null;
-    if(cursor?.kind!=='enumerator'||!eq(expectedSnapshot(state.heap,cursor.source,fail).chain,cursor.chain))
+    if(cursor?.kind!=='enumerator')
       fail('For-in advance has an invalid or changed source');
-    const done=cursor.nextIndex>=cursor.keys.length,value=done?['undefined']:['str',cursor.keys[cursor.nextIndex]],
+    const snapshot=expectedSnapshot(state.heap,cursor.source,fail);
+    if(!cursor.done)compatible(state.heap,cursor,snapshot,fail);
+    let nextIndex=cursor.nextIndex,selected;
+    while(!cursor.done&&nextIndex<cursor.keys.length){
+      const key=cursor.keys[nextIndex++];
+      if(cursor.source[0]==='str'||ownedHasProperty(state.heap,cursor.source,stringPropertyKey(key))){selected=key;break;}
+    }
+    const done=cursor.done||selected===undefined,value=done?['undefined']:['str',selected],
       next=cursors.find(p=>p.id===cursor.id)?.after??cursor;
-    if(cursors.some(p=>p.id!==cursor.id)||next.nextIndex!==cursor.nextIndex+Number(!done)||next.done!==done||
+    if(cursors.some(p=>p.id!==cursor.id)||next.nextIndex!==nextIndex||next.done!==done||
        !eq(next.keys,cursor.keys)||!eq(next.chain,cursor.chain)||!eq(next.source,cursor.source))
       fail('For-in cursor advanced outside its retained sequence');
     const result=event.result?.[0]==='ref'?event.stateChanges.find(p=>p.table==='heap'&&p.before===null&&p.id===event.result[1])?.after:null;

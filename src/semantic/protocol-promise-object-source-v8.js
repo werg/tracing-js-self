@@ -17,7 +17,7 @@ const copy=structuredClone,select=value=>value?.[0]==='method'?value[1]:value;
 const objectCalls=new Set(['Object.defineProperty','Object.getOwnPropertyDescriptor','Object.hasOwn',
   'Object.prototype.hasOwnProperty','Object.setPrototypeOf','Object.getPrototypeOf',
   'Object.preventExtensions','Object.isExtensible','Object.create','Object.keys',
-  'Object.getOwnPropertyNames','Object.getOwnPropertySymbols','Reflect.ownKeys']);
+  'Object.getOwnPropertyNames','Object.getOwnPropertySymbols','Reflect.ownKeys','Reflect.has','Reflect.deleteProperty']);
 const nodeFor=(state,value)=>value?.[0]==='promise'?state.promises[value[1]]:
   value?.[0]==='ref'||value?.[0]==='intrinsic'&&value[1]==='Promise.prototype'?state.heap[value[1]]:null;
 const rich=node=>node&&(['promise'].includes(node.kind)||Object.keys(node.accessors??{}).length||
@@ -29,6 +29,7 @@ export function promiseObjectSourceEventV8(view,{event,row}){
   if(!view.components[PROMISE_OBJECT_SOURCE_V8])return false;
   const pending=view.components[PROMISE_OBJECT_SOURCE_V8].accessors??[],base=event.operands?.[0];
   if(event.operation==='call.enter'&&objectCalls.has(method(event)))return true;
+  if(event.operation==='property.delete'||event.operation==='primitive.binary'&&view.instruction?.op==='BINARY'&&view.instruction.arg==='in')return true;
   if(['property.read','property.write','property.update'].includes(event.operation)){
     if(intrinsicPrototype(base)||base?.[0]==='promise')return true;
     if(rich(nodeFor(view.owned,base))&&!sharedProtocolSourceEventV8(view,{event,row}))return true;
@@ -47,8 +48,7 @@ export function promiseObjectSourceCompletionV8(view,exit){
 function key(value){
   if(value?.[0]==='symbol')return copy(value);
   if(value?.[0]==='str')return copy(value);
-  if(['num','bool','null','undefined'].includes(value?.[0]))return ['str',String(value.length===1?
-    value[0]==='null'?null:undefined:value[1])];
+  if(['num','bigint','bool','null','undefined'].includes(value?.[0]))return ['str',String(decode(value))];
   throw new TypeError('Promise object source: observable key conversion requires its own protocol');
 }
 const storage=value=>value[0]==='symbol'?symbolPropertyKey(value[1]):stringPropertyKey(value[1]);
@@ -124,6 +124,18 @@ export function createPromiseObjectTeacherV8(){
         ctx.emitProtocol(owner,{kind:'property.get.call',id,child:invocation,object:receiver[1],key:property,receiver},event,'source-promise-constructor-call/1');
         parameters(ctx,event,child.id,owner);state.accessors.push([child.id,{id,operation:'get',value:null,owner,finished:false,lookup:copy(lookup)}]);return true;
       }
+      if(event.operation==='primitive.binary'){
+        const frame=ctx.state.frames[event.invocationId],instruction=ctx.bundle.programs[frame?.codeId]?.instructions[frame.pc],
+          receiver=ctx.tag(event.operands[1]);
+        if(instruction?.op!=='BINARY'||instruction.arg!=='in'||receiver?.[0]!=='ref'||raw?.[0]!=='bool')
+          ctx.refuse('property existence requires its original object and completed in expression');
+        ctx.emitProtocol(owner,{kind:'property.has',object:receiver[1],key:key(base),result:ctx.tag(raw)},event,'source-property-existence/1');return true;
+      }
+      if(event.operation==='property.delete'){
+        const receiver=ctx.tag(base);
+        if(receiver?.[0]!=='ref'||raw?.[0]!=='bool')ctx.refuse('property deletion requires its ordinary receiver and completed boolean');
+        ctx.emitProtocol(owner,{kind:'property.delete',object:receiver[1],key:key(event.operands[1]),success:raw[1]},event,'source-property-deletion/1');return true;
+      }
       if(event.operation==='property.update'){
         const receiver=ctx.tag(base),property=key(event.operands[1]),old=event.operands[2],
           after=event.stateChanges.find(change=>['heap','promises'].includes(change.table)&&change.id===base?.[1])?.after,
@@ -187,6 +199,13 @@ export function createPromiseObjectTeacherV8(){
       if(name==='Object.hasOwn'||ownMethod){
         if(ownMethod&&base?.[0]!=='method')ctx.refuse('hasOwnProperty requires its actual method receiver');
         ctx.emitProtocol(owner,{kind:'property.hasOwn',object,key:key(args[ownMethod?0:1]),result:ctx.tag(raw)},event,'source-own-property/1');return true;
+      }
+      if(name==='Reflect.has'){
+        ctx.emitProtocol(owner,{kind:'property.has',object,key:key(args[1]??['undefined']),result:ctx.tag(raw)},event,'source-property-existence/1');return true;
+      }
+      if(name==='Reflect.deleteProperty'){
+        if(raw?.[0]!=='bool')ctx.refuse('Reflect.deleteProperty requires its completed boolean');
+        ctx.emitProtocol(owner,{kind:'property.delete',object,key:key(args[1]??['undefined']),success:raw[1]},event,'source-property-deletion/1');return true;
       }
       if(name==='Object.getOwnPropertyDescriptor'){
         const property=key(args[1]),d=projectedDescriptor(ctx,current,storage(property)),identity=raw?.[0]==='ref'?ctx.identity(raw[1]):null;

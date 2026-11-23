@@ -10,12 +10,14 @@ const bindingFields=['envId','name','token','version'];
 const shape=(record,keys)=>record&&typeof record==='object'&&!Array.isArray(record)&&
   Object.keys(record).length===keys.length&&keys.every(key=>Object.hasOwn(record,key));
 function reference(frame,instruction,state,fail){
-  const op=instruction?.op,offset=op==='PUT_PROP'?2:
-    ['GET_PROP','GET_METHOD','UPDATE_PROP','PROPERTY_KEY'].includes(op)||op==='DUP2'&&instruction.arg?.cachePropertyKey===true?1:null;
+  const op=instruction?.op,offset=op==='PUT_PROP'?2:op==='BINARY'&&instruction.arg==='in'?2:
+    ['GET_PROP','GET_METHOD','UPDATE_PROP','DELETE_PROP','PROPERTY_KEY'].includes(op)||op==='DUP2'&&instruction.arg?.cachePropertyKey===true?1:null;
   if(offset===null)fail('PropertyKey continuation does not belong to a reference instruction');
   const stackIndex=frame.stack.length-offset,key=frame.stack[stackIndex],base=frame.stack[stackIndex-1];
+  const binaryTarget=op==='BINARY'?frame.stack[stackIndex+1]?.value:null;
   if(key?.value[0]!=='ref'||!['object','array'].includes(state.heap[key.value[1]]?.kind)||
-    op!=='PROPERTY_KEY'&&(!base||['null','undefined'].includes(base.value[0])))
+    op==='BINARY'&&!['ref','promise','intrinsic','builtinfn','hostfn','host'].includes(binaryTarget?.[0])||
+    op!=='PROPERTY_KEY'&&op!=='BINARY'&&(!base||['null','undefined'].includes(base.value[0])))
     fail('PropertyKey continuation lacks an owned key or coercible base');
   let cacheBinding=null;
   if(op==='GET_PROP'&&instruction.arg?.cachePropertyKey){
