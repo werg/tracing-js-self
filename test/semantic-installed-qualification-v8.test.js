@@ -45,6 +45,52 @@ test('installed inventory retains every current declared source and module input
   assert.throws(()=>installedQualificationInventory({population:'gallery'}),/Unknown/);
 });
 
+test('installed CI gate authenticates the current emitted inventory and preserves every qualification check',async t=>{
+  const directory=await mkdtemp(join(dirname(root.slice(0,-1)),'installed-v8-gate-test-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  await mkdir(join(directory,'v8-installed'));
+  const workflow=await readFile(join(root,'.github/workflows/installed-v8.yml'),'utf8'),
+    script=/node --input-type=module <<'JS'\n([\s\S]+?)\n\s+JS\n/.exec(workflow)?.[1];
+  assert(script,'the actual installed workflow gate is present');
+  const revision=(await runInstalledCommand('git',['rev-parse','HEAD'],{cwd:root})).stdout.trim(),
+    inventory=installedQualificationInventory({producerRevision:revision}),
+    digest=installedSha256(JSON.stringify(inventory)),population={...inventory,digest},
+    report={producerRevision:revision,populationDigest:digest,status:'completed',coverageComplete:true,
+      sourcePopulationQualified:true,totals:Object.fromEntries(Object.entries(inventory.declared).map(([name,count])=>
+        [name,{declared:count,attempted:count,sourceQualified:count,sourceUnqualified:0,untested:0}]))};
+  const check=async(candidate=report,retained=population)=>{
+    await writeFile(join(directory,'v8-installed','report.json'),JSON.stringify(candidate));
+    await writeFile(join(directory,'v8-installed','population.json'),JSON.stringify(retained));
+    return runInstalledCommand(process.execPath,['--input-type=module','-e',script],
+      {cwd:root,env:{...generationEnvironment(),RUNNER_TEMP:directory}});
+  };
+  await check();
+  for(const [key,value]of [['status','failed'],['coverageComplete',false],['sourcePopulationQualified',false]])
+    await assert.rejects(check({...report,[key]:value}),/requires every declared source\/public case/);
+  for(const name of Object.keys(inventory.declared)){
+    for(const key of ['declared','attempted','sourceQualified','sourceUnqualified','untested']){
+      const changed=structuredClone(report);
+      changed.totals[name][key]+=key==='sourceUnqualified'||key==='untested'?1:-1;
+      await assert.rejects(check(changed),/changed or failed the complete/);
+    }
+    const missing=structuredClone(report);delete missing.totals[name];
+    await assert.rejects(check(missing),/changed or failed the complete/);
+  }
+  await assert.rejects(check({...report,producerRevision:'0'.repeat(40)}),/current source inventory/);
+  await assert.rejects(check({...report,populationDigest:'0'.repeat(64)}),/current source inventory/);
+  await assert.rejects(check(report,{...population,digest:'0'.repeat(64)}),/current source inventory/);
+  const omitted=structuredClone(inventory),removed=omitted.rows.pop();
+  omitted.declared[removed.population]--;omitted.selected[removed.population]--;
+  const omittedDigest=installedSha256(JSON.stringify(omitted)),reduced=structuredClone(report);
+  reduced.populationDigest=omittedDigest;
+  for(const key of ['declared','attempted','sourceQualified'])reduced.totals[removed.population][key]--;
+  await assert.rejects(check(reduced,{...omitted,digest:omittedDigest}),/current source inventory/);
+  const changedInput=structuredClone(inventory);changedInput.rows[0].sourceInputDigest='0'.repeat(64);
+  const changedDigest=installedSha256(JSON.stringify(changedInput));
+  await assert.rejects(check({...report,populationDigest:changedDigest},{...changedInput,digest:changedDigest}),
+    /current source inventory/);
+});
+
 test('installed fixture transport preserves holes, cycles, null prototypes, special numbers and bigint',()=>{
   const shared=Object.assign(Object.create(null),{value:-0});shared.self=shared;
   const sparse=[,shared,undefined];
