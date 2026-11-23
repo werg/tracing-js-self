@@ -116,7 +116,12 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
       };
       const tag=value=>{
         if(value?.[0]==='ref'){
-          const identity=ctx.identity(value[1]),node=ctx.state.heap[value[1]];
+          // Allocation adapters run before this event's owned changes commit.
+          // A generator declaration, for example, publishes its function and
+          // prototype together; either descriptor can already name the other.
+          // Only this event's authenticated fresh node extends the pre-state.
+          const identity=ctx.identity(value[1]),node=ctx.state.heap[value[1]]??
+            event?.stateChanges.find(change=>change.table==='heap'&&change.id===value[1]&&change.before===null)?.after;
           if(!node)ctx.refuse('shared source reference is absent from the owned heap');
           if(!controller().heap.has(identity)){
             if(node.kind==='function')ctx.publishInitialClosure(value[1],owner,event);
