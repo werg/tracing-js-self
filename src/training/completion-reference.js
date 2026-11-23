@@ -167,8 +167,10 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
     if(['undefined','null','bool','str','num','bigint','missing-storage'].includes(tag[0]))return tag;
     const key=JSON.stringify(tag);
     if(!identities.has(key))identities.set(key,++next);
+    const objectIntrinsic=tag[0]==='intrinsic'&&(['Math','Reflect','Atomics','globalThis'].includes(tag[1])||
+      tag[1].endsWith('.prototype')&&tag[1]!=='Function.prototype');
     const kind=tag[0]==='symbol'?'symbol':tag[0]==='ref'?bundle.finalState.heap[tag[1]]?.kind==='function'?'function':'object':
-      tag[0]==='builtinfn'||tag[0]==='intrinsic'&&tag[1]!=='Math'&&tag[1]!=='Atomics'?'function':'object';
+      tag[0]==='builtinfn'||tag[0]==='intrinsic'&&!objectIntrinsic?'function':'object';
     return ['identity',kind,identities.get(key)];
   };
   let observationEvent=null;

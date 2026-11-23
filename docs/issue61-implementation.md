@@ -58,3 +58,28 @@ satisfy a negative test or become a caught-error success. Newly exposed semantic
 barriers remain visible instead of changing the harness or dropping a variant.
 
 Training and learned-execution evaluation are outside this issue's acceptance.
+
+## Independent observation lesson: returned Promise boundaries
+
+The source-reference worker's host `await` previously added a `constructor`
+lookup to a guest Promise. A shared `Promise.prototype.constructor` getter
+therefore ran once more, with the returned root Promise as receiver, than it did
+in the owned source execution. This was an observer effect, not an iteration or
+Promise-resolution defect. A minimal probe also demonstrated that inspector
+`Runtime.awaitPromise` performs the same extra lookup; substituting it would not
+repair the evidence boundary.
+
+The worker now drains the actual native microtask queue under its existing
+parent deadline and reads V8's `[[PromiseState]]` and `[[PromiseResult]]` through
+descriptor-only inspector `Runtime.getProperties`. It transfers the real result
+reference into a private host record, preserving aliases and primitive edge
+values, without calling guest `then`, `constructor`, species or tag getters and
+without modifying source or prototypes. Rejection remains a guest throw; a root
+still pending at quiescence is an explicit resource limit. Unrelated unhandled
+rejections remain failures. No inspector network listener is opened.
+
+Promise metadata likewise tracks ordinary descriptors, accessor identities,
+extensibility and prototype references. `Promise.prototype` is observed as one
+mutable shared object. Callable intrinsic identities remain explicit, and
+unsupported callable mutations or unregistered Proxy state are refused before
+guest getters or traps can run.

@@ -3,6 +3,7 @@
 // protocol evaluator, projector, or teacher archive. Trusted source only unless
 // invoked under the existing Linux namespace isolation profile.
 import vm from 'node:vm';
+import {types} from 'node:util';
 import {readFileSync} from 'node:fs';
 import {decodeOwnedGraph} from '../src/host/graph-codec.js';
 import {describeCompletionGraph} from '../src/training/exception-profile.js';
@@ -11,6 +12,7 @@ import {instrumentBranchSource} from '../src/training/branch-reference.js';
 import {instrumentCompletionSource,COMPLETION_HOOK} from '../src/training/completion-reference.js';
 import {createProtocolCompletionCapture,prepareProtocolObservationExtensionsV8} from '../src/semantic/protocol-source-observations-v8.js';
 import {encode} from '../src/values.js';
+import {inspectNativePromiseSettlementV8} from '../src/semantic/native-promise-result-v8.js';
 
 let mode='original',phase='input';
 try{
@@ -39,18 +41,32 @@ try{
   phase='compile';const script=new vm.Script(source+'\ntry { __result = '+input.entry+
     '.apply(undefined,__args); } catch (__guestThrown) { __kind="throw"; __result=__guestThrown; }',
     {filename:'independent-protocol-reference-v8.js'});
+  const unhandled=[],onUnhandled=(reason,promise)=>unhandled.push({reason,promise});
+  if(input.awaitReturnedPromise)process.on('unhandledRejection',onUnhandled);
   phase='execute';script.runInContext(context,{timeout:input.timeoutMs??5000});
-  // The parent process enforces the same hard deadline for asynchronous work.
-  // Only a source profile explicitly requesting this completion policy awaits.
-  if(input.awaitReturnedPromise&&context.__kind==='return'){
-    try{context.__result=await context.__result;}
-    catch(error){context.__kind='throw';context.__result=error;}
-  }
   // The owned scheduler runs the whole current microtask queue, including
   // detached async work after a scalar root return. One host turn boundary
   // drains that queue to quiescence; a fixed number of Promise awaits would
   // truncate longer chains. The parent deadline still bounds infinite jobs.
-  if(input.awaitReturnedPromise)await new Promise(resolve=>setImmediate(resolve));
+  if(input.awaitReturnedPromise){
+    try{
+      const root=context.__kind==='return'&&types.isPromise(context.__result)?context.__result:null;
+      await new Promise(resolve=>setImmediate(resolve));
+      if(root){
+        // A host `await` (including inspector Runtime.awaitPromise) adds guest
+        // constructor/then/species lookups. Inspect actual native settlement
+        // after the required drain instead, without modifying guest objects.
+        const settled=await inspectNativePromiseSettlementV8(root);
+        if(settled.status==='pending'){
+          const error=new RangeError('Returned Promise remains pending after native microtask drain');
+          error.code='ERR_PROTOCOL_PROMISE_PENDING';throw error;
+        }
+        context.__kind=settled.kind;context.__result=settled.value;
+      }
+      if(unhandled.some(row=>row.promise!==root))
+        throw new TypeError('Unhandled independent guest Promise rejection outside the returned root');
+    }finally{process.removeListener('unhandledRejection',onUnhandled);}
+  }
   if(failures.length)throw new TypeError(failures[0]);
   phase='observe';
   const outcome={kind:context.__kind,graph:describeCompletionGraph(args,context.__result,context.__kind)};
@@ -59,4 +75,4 @@ try{
     operations,decisions,completions:completion.observations,metadata:completion.metadata,
     ...(extensionObservations.length?{extensionObservations}:{})})+'\n');
 }catch(error){process.stdout.write(JSON.stringify({schema:'protocol-source-reference/1',error:String(error.message),
-  category:error.code==='ERR_SCRIPT_EXECUTION_TIMEOUT'?'resource_limited':'unsupported.protocol-reference',mode,phase})+'\n');process.exitCode=1;}
+  category:['ERR_SCRIPT_EXECUTION_TIMEOUT','ERR_PROTOCOL_PROMISE_PENDING'].includes(error.code)?'resource_limited':'unsupported.protocol-reference',mode,phase})+'\n');process.exitCode=1;}

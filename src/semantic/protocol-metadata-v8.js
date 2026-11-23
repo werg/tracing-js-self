@@ -109,17 +109,19 @@ function ownedKeys(node){
 export function createOwnedProtocolMetadata(bundle,{adapters=[]}={}){
   let currentState=bundle.initialState,currentObservation=null;
   adapters=instantiate([...PROTOCOL_METADATA_ADAPTERS_V8,...adapters],{side:'owned',bundle});
-  function defaultNode(value,{includeFunctions=false}={}){
-    if(value[0]!=='ref')return {kind:'function'};
-    const node=currentState.heap[value[1]];if(!node||!['object','array','function'].includes(node.kind))fail('nonordinary owned object');
+  function defaultNode(value,{includeFunctions=false,node:storage=null}={}){
+    if(value[0]!=='ref'&&storage===null)return {kind:'function'};
+    const node=storage??currentState.heap[value[1]];
+    if(!node||!['object','array','function','promise'].includes(node.kind))fail('nonordinary owned object');
     if(node.kind==='function'&&!includeFunctions){
       if(Object.keys(node.properties??{}).length||Object.keys(node.accessors??{}).length||node.prototypeInitialized||node.classConstructor)
         fail('function own-state observation requires the construction profile');
       return {kind:'function'};
     }
-    const prototype=node.prototype===undefined?(node.kind==='array'?'Array.prototype':node.kind==='function'?'Function.prototype':'Object.prototype'):
+    const reference=id=>id==='Promise.prototype'?['intrinsic',id]:currentState.promises[id]?['promise',id]:['ref',id];
+    const prototype=node.prototype===undefined?(node.kind==='array'?'Array.prototype':node.kind==='function'?'Function.prototype':node.kind==='promise'?['intrinsic','Promise.prototype']:'Object.prototype'):
       ['Object.prototype','Array.prototype','Function.prototype'].includes(node.prototype)?node.prototype:
-      node.prototype===null?null:typeof node.prototype==='string'?['ref',node.prototype]:fail('unmodeled owned prototype');
+      node.prototype===null?null:typeof node.prototype==='string'?reference(node.prototype):fail('unmodeled owned prototype');
     return {kind:node.kind,prototype,extensible:node.extensible!==false,properties:ownedKeys(node).map(key=>{
       const accessor=Object.hasOwn(node.accessors??{},key)?node.accessors[key]:null;
       const descriptor=accessor?{kind:'accessor',get:accessor.get?.value??['undefined'],set:accessor.set?.value??['undefined'],
