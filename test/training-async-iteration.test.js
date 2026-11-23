@@ -76,14 +76,27 @@ test('sync completion still reads and awaits value while async completion skips 
     return(){order+='!';return {};}};for await(const value of values)order+='!';return 'unreachable';`,{expected:['',7]});
 });
 
-test('current sync fallback closes a rejected value exactly once with original-error precedence',async()=>{
+test('current sync fallback closes a rejected value exactly once and exposes older reference behavior',async t=>{
   // AsyncFromSyncIteratorContinuation closes on rejected values in the current
-  // specification; old observations that expected no close are not a target.
+  // specification. Keep the owned rule even if an older reference omits close.
+  // https://tc39.es/ecma262/#sec-asyncfromsynciteratorcontinuation
   for(const close of ['return(){order+="c";return {};}',
-    'return(){order+="c";throw 9;}', 'get return(){order+="c";throw 9;}'])
-    await differential(`const values={[Symbol.iterator](){return this;},next(){
+    'return(){order+="c";throw 9;}', 'get return(){order+="c";throw 9;}']){
+    const source=script(`const values={[Symbol.iterator](){return this;},next(){
       return {done:false,value:Promise.reject(7)};},${close}};
-      for await(const value of values)order+='!';return 'unreachable';`,{expected:['c',7]});
+      for await(const value of values)order+='!';return 'unreachable';`),runtime=start(source);
+    assert.equal(runtime.drive().kind,'terminated');
+    assert.deepEqual([read(runtime,'order'),read(runtime,'outcome')],[encode('c'),encode(7)]);
+    assert.equal(validateBundle(runtime.exportRun()).valid,true);
+    assert.equal(replayExact(runtime.exportRun()).valid,true);
+    const context=vm.createContext({queueMicrotask});vm.runInContext(source,context,{timeout:1000});
+    await new Promise(resolve=>setImmediate(resolve));
+    const reference=vm.runInContext('order',context);
+    assert(['','c'].includes(reference),'unexpected reference cleanup: '+reference);
+    assert.deepEqual(read(runtime,'outcome'),encode(vm.runInContext('outcome',context)));
+    t.diagnostic(JSON.stringify({close,node:process.version,v8:process.versions.v8,
+      ownedCloseCount:1,referenceCloseCount:reference.length,sourceAgreement:reference==='c'}));
+  }
 });
 
 test('async close awaits return and preserves throws while replacing normal exits',async()=>{

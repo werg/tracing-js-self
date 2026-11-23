@@ -14,17 +14,50 @@ import {sharedRegionState} from '../src/semantic/regions.js';
 import {restoreProtocolStateV8} from '../src/semantic/protocol-state-v8.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 import {hasAsyncIterationSourceCallableV8} from '../src/semantic/async-iteration-source-v8.js';
+import {SYNC_REJECTION_FIXTURE_ID,SYNC_REJECTION_REFERENCE_MISMATCH,observeSyncRejectionReference,
+  assertSyncRejectionRefusal,committedProtocolRegionCases,authenticateCommittedSyncRejection} from './helpers/async-iteration-reference.js';
 
-const artifacts=[],protocol=row=>row.kind==='protocol'?decodeProtocolRecordV8(row.fields.line):null;
+const artifacts=[],sourceResults=[],protocol=row=>row.kind==='protocol'?decodeProtocolRecordV8(row.fields.line):null;
 const value=input=>[typeof input==='number'?'num':typeof input==='boolean'?'bool':'str',input];
-for(const fixture of ASYNC_ITERATION_FIXTURES_V8)test('async iterator source: '+fixture.id,async()=>{
-  const result=await verifyProtocolRegionTrainingCase(fixture);assert(result.exported,result.reason);
-  const checked=await recheckProtocolRegionEvidence(result.exported);
-  assert(checked.sourceValidated&&checked.projectionValidated&&checked.replayValidated);
-  const controller=RegionExecutionHarness.replay(result.exported).controller;
+for(const fixture of ASYNC_ITERATION_FIXTURES_V8)test('async iterator source: '+fixture.id,async t=>{
+  const result=await verifyProtocolRegionTrainingCase(fixture);
+  sourceResults.push(result);
+  const reference=fixture.id===SYNC_REJECTION_FIXTURE_ID?await observeSyncRejectionReference():null;
+  let exported=result.exported,evidenceOrigin='fresh-source';
+  if(reference&&!reference.sourceAgreement){
+    assertSyncRejectionRefusal(result);
+    const runtime=createRuntime({maxSteps:10000}).startEntry({text:fixture.source,functionName:fixture.entry,args:fixture.args,allowAsync:true});
+    assert.equal(runtime.drive().kind,'terminated');
+    assert.deepEqual(compileProtocolSourceV8(runtime.exportRun()).outcome.graph.roots.at(-1),value(fixture.expected));
+    const retained=committedProtocolRegionCases().filter(row=>row.id===fixture.id);
+    assert.equal(retained.length,1);
+    exported=authenticateCommittedSyncRejection(retained[0],fixture);
+    await assert.rejects(()=>recheckProtocolRegionEvidence(exported),
+      error=>error.category==='reference_mismatch'&&SYNC_REJECTION_REFERENCE_MISMATCH.test(error.message));
+    evidenceOrigin='committed-source-observation';
+    t.diagnostic(JSON.stringify({id:fixture.id,node:process.version,v8:process.versions.v8,
+      ownedOutcome:fixture.expected,referenceOutcome:reference.referenceOutcome,sourceAgreement:false,
+      freshDisposition:result.regionDisposition,replayEvidence:'historical committed artifact; no fresh source admission'}));
+  }else{
+    assert(exported,result.reason);
+    const checked=await recheckProtocolRegionEvidence(exported);
+    assert(checked.sourceValidated&&checked.projectionValidated&&checked.replayValidated);
+  }
+  const controller=RegionExecutionHarness.replay(exported).controller;
   assert.deepEqual(controller.completion,{kind:'return',value:value(fixture.expected)});
-  assert(result.exported.sidecar.protocolExtensions.includes('ordinary-completions-source/1'));
-  artifacts.push({id:fixture.id,exported:result.exported,state:sharedRegionState(controller)});
+  assert(exported.sidecar.protocolExtensions.includes('ordinary-completions-source/1'));
+  artifacts.push({id:fixture.id,exported,state:sharedRegionState(controller),evidenceOrigin});
+});
+
+test('every declared async source retains a fresh qualification result and a separate replay observation',()=>{
+  const declared=ASYNC_ITERATION_FIXTURES_V8.map(row=>row.id);
+  assert.deepEqual(sourceResults.map(row=>row.id),declared);
+  assert.deepEqual(artifacts.map(row=>row.id),declared);
+  for(const row of artifacts){
+    const result=sourceResults.find(item=>item.id===row.id);
+    if(row.evidenceOrigin==='fresh-source')assert.equal(row.exported,result.exported);
+    else{assert.equal(row.evidenceOrigin,'committed-source-observation');assertSyncRejectionRefusal(result);}
+  }
 });
 
 test('async iterator source closures name only exact awaited-loop roles and retain cached method captures',()=>{
@@ -104,7 +137,7 @@ test('reference-engine disagreements cannot become source agreement and thenable
 // Each original source case retains its own bounded native replay. A growing
 // source population must not consume the next case's timeout or import state.
 for(const fixture of ASYNC_ITERATION_FIXTURES_V8)test('native consumer replays awaited iterator helpers and restored cleanup scopes: '+fixture.id,
-  {skip:!process.env.MEGATOKEN_ROOT},()=>{
+  {skip:!process.env.MEGATOKEN_ROOT},t=>{
   assert.equal(artifacts.length,ASYNC_ITERATION_FIXTURES_V8.length);
   const example=artifacts.find(row=>row.id===fixture.id);assert(example,fixture.id);
   const root=resolve(process.env.MEGATOKEN_ROOT),script=`
@@ -120,4 +153,8 @@ print('checked')
   const result=spawnSync(process.env.MEGATOKEN_PYTHON||'python',['-c',script],{cwd:root,
     env:{...process.env,PYTHONPATH:join(root,'src')},input:JSON.stringify(example),encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024});
   assert.equal(result.status,0,result.stderr||String(result.error));
+  const sourceResult=sourceResults.find(row=>row.id===fixture.id);
+  if(example.evidenceOrigin==='committed-source-observation')assertSyncRejectionRefusal(sourceResult);
+  t.diagnostic(JSON.stringify({id:fixture.id,replayEvidence:example.evidenceOrigin,
+    freshSourceAgreement:Boolean(sourceResult.exported),nativeReplay:'passed'}));
 });
