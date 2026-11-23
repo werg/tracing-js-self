@@ -11,6 +11,7 @@ export function assertPlainPromiseResolutionWithApiV8(controller,value,api){
   const method=descriptor.value;
   if(method[0]==='ref'){
     const node=controller.heap.get(method[1]);
-    if(!node||['closure','proxy'].includes(node.kind))fail('Callable Promise then requires explicit assimilation jobs');
+    if(!node||['closure','proxy'].includes(node.kind)||node.kind==='intrinsic'&&
+      ['function','constructor'].includes(node.callableKind))fail('Callable Promise then requires explicit assimilation jobs');
   }else if(!primitiveKinds.has(method[0]))fail('Unmodeled Promise then requires an explicit resolution protocol');
 }

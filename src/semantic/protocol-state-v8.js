@@ -109,15 +109,17 @@ function effectivePrototype(controller,id,node=heapNode(controller,id)){
      id!==promiseIntrinsicIdV8('Object.prototype'))return ['ref',promiseIntrinsicIdV8('Object.prototype')];
   return prototype;
 }
-function missingIntrinsic(node,key){
+function unmodeledPrototypeMember(node,key){
   if(key[0]==='symbol')return ['well-known:iterator','well-known:unscopables'].includes(key[1])&&node.kind==='array'||
     key[1]==='well-known:hasInstance'&&node.kind==='closure';
   const arrayNames=['at','concat','copyWithin','entries','every','fill','filter','find','findIndex','findLast','findLastIndex',
     'flat','flatMap','forEach','includes','indexOf','join','keys','lastIndexOf','map','pop','push','reduce','reduceRight',
-    'reverse','shift','slice','some','sort','splice','toReversed','toSorted','toSpliced','unshift','values','with'];
-  return objectIntrinsicNames.includes(key[1])||node.kind==='array'&&arrayNames.includes(key[1])||
-    node.kind==='closure'&&['call','apply','bind','length','name','prototype','arguments','caller'].includes(key[1]);
+    'reverse','shift','slice','some','sort','splice','toReversed','toSorted','toSpliced','unshift','values','with',
+    'constructor','toString','toLocaleString'];
+  return node.kind==='array'&&arrayNames.includes(key[1])||
+    node.kind==='closure'&&['constructor','toString','call','apply','bind','length','name','prototype','arguments','caller'].includes(key[1]);
 }
+function missingIntrinsic(node,key){return key[0]==='str'&&objectIntrinsicNames.includes(key[1])||unmodeledPrototypeMember(node,key);}
 function resolveProperty(controller,object,key,{forSet=false}={}){
   const visited=new Set();let current=object;
   for(;;){
@@ -127,7 +129,11 @@ function resolveProperty(controller,object,key,{forSet=false}={}){
     const prototype=node.prototype===undefined?'ordinary':node.prototype;
     if(prototype===null)return {owner:null,node:null,descriptor:null};
     if(prototype==='ordinary'){
-      if(node.kind==='object'&&controller.protocol?.promiseObjects?.initialized&&current!==promiseIntrinsicIdV8('Object.prototype')){
+      // Array.prototype and Function.prototype override some Object members.
+      // Follow shared Object state only after excluding those unmodeled slots;
+      // an explicitly stored prototype above always selects its actual chain.
+      if(['object','array','closure'].includes(node.kind)&&!unmodeledPrototypeMember(node,key)&&
+        controller.protocol?.promiseObjects?.initialized&&current!==promiseIntrinsicIdV8('Object.prototype')){
         current=promiseIntrinsicIdV8('Object.prototype');continue;
       }
       // OrdinarySet needs only writability here. Do not invent the inherited
