@@ -50,4 +50,4 @@ print(json.dumps(out))
 after(()=>{if(process.env.RUNNER_TEMP)writeFileSync(join(process.env.RUNNER_TEMP,'promise-object-source-evidence.json'),JSON.stringify({
   schema:'promise-object-source-evidence/1',sourceCases:artifacts.length,actualNativeCases:nativeReceipts.length,
   nativeReceipts,generatedContexts:artifacts.reduce((sum,row)=>sum+row.exported.contexts.length,0),
-  trainingAdmission:false,optimizerUpdates:0,cases:artifacts}));});
+  moduleAdmission:false,trainingAdmission:false,optimizerUpdates:0,cases:artifacts}));});

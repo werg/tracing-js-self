@@ -7,6 +7,7 @@ import {describeProtocolObjectV8} from './protocol-state-v8.js';
 import {isPromiseIntrinsicValueV8,promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
 import {sourceHasSyntaxV8} from './source-projection-base-v8.js';
 import {sharedProtocolSourceEventV8} from './protocol-source-claims-v8.js';
+import {finishSourcePromiseAdoptionGetterV8} from './protocol-promise-adoption-source-v8.js';
 
 export const PROMISE_OBJECT_SOURCE_V8='promise-object-source/1';
 const copy=structuredClone,select=value=>value?.[0]==='method'?value[1]:value;
@@ -70,6 +71,9 @@ export function createPromiseObjectTeacherV8(){
     pending=state.accessors.find(([frame])=>frame===exit.invocation)?.[1];
     if(!pending)ctx.refuse('Promise accessor completion lacks its original receiver and call');
     if(pending.finished)return;
+    if(pending.lookup?.continuation.kind==='adopt'){
+      finishSourcePromiseAdoptionGetterV8(ctx,event,exit.invocation);pending.finished=true;return;
+    }
     const changed=event.stateChanges.find(c=>c.table==='frames'&&c.id===exit.invocation)?.after,
       completion=changed?.completion;
     if(!['return','throw'].includes(completion?.type))ctx.refuse('Promise accessor completion kind');
@@ -92,15 +96,16 @@ export function createPromiseObjectTeacherV8(){
       initialize(ctx,event);return true;},
     beforeEvent(ctx,event){
       if(!event)return;
-      const view={owned:ctx.state,components:{[PROMISE_OBJECT_SOURCE_V8]:ctx.componentState(PROMISE_OBJECT_SOURCE_V8)}};
-      if(promiseObjectSourceEventV8(view,{event})||event.stateChanges.some(c=>c.table==='heap'&&c.id==='Promise.prototype'))initialize(ctx,event);
+      if(event.stateChanges.some(c=>c.table==='heap'&&c.id==='Promise.prototype'))initialize(ctx,event);
       // A getter can synchronously create a reaction or begin an await when it
       // returns. Finish its checked property call before publishing those jobs.
       for(const [frame,pending]of ctx.componentState(PROMISE_OBJECT_SOURCE_V8).accessors)
-        if(!pending.finished&&event.stateChanges.some(c=>c.table==='frames'&&c.id===frame&&['completed','thrown'].includes(c.after?.status)))
+        if(!pending.finished&&pending.lookup?.continuation.kind!=='adopt'&&
+          event.stateChanges.some(c=>c.table==='frames'&&c.id===frame&&['completed','thrown'].includes(c.after?.status)))
           finish(ctx,event,{invocation:frame});
     },
-    event(ctx,event,row){const owner=ctx.rootFor(event.invocationId),base=event.operands?.[0],
+    event(ctx,event,row){initialize(ctx,event);
+      const owner=ctx.rootFor(event.invocationId),base=event.operands?.[0],
       raw=select(event.result),name=method(event),state=ctx.componentState(PROMISE_OBJECT_SOURCE_V8),
       child=event.stateChanges.find(c=>c.table==='frames'&&c.before===null&&c.after?.promiseConstructorLookup)?.after;
       if(child){

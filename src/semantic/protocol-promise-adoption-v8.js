@@ -11,6 +11,8 @@ export const PROMISE_ADOPTION_STATE_V8='semantic-promise-adoption-state/1';
 export const PROMISE_ADOPTION_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.entries({
   'promise.adopt.enqueue':['kind','promise','target','job'],
   'promise.adopt.enter':['kind','promise','target','job','forwarding'],
+  'promise.adopt.get':['kind','promise','target','job','child'],
+  'promise.adopt.finish':['kind','promise','target','job','child','completion','forwarding'],
   'promise.adopt.forward':['kind','promise','target','job','status','value'],
   'promise.adopt.self':['kind','promise','error'],
   'promise.reaction.complete':['kind','job','owner','promise','target']
@@ -21,6 +23,24 @@ const id=value=>{if(typeof value!=='string'||!value||value.length>256)fail('boun
 const entries=controller=>[...controller.heap].filter(([,node])=>node.adoption!==undefined);
 function promise(controller,identity,api){const node=controller.heap.get(identity);
   api.require(node?.kind==='promise'&&node.external===null,'owned internal Promise required');return node;}
+function defaultConstructor(controller,value,api){
+  return value?.[0]==='undefined'||api.eq(value,['ref',promiseIntrinsicIdV8('Promise')]);
+}
+function constructorDescriptor(controller,identity,api){
+  if(!controller.protocol?.promiseObjects?.initialized){
+    const node=promise(controller,identity,api),own=api.ownDescriptor(node,['str','constructor']);
+    api.require(!own||own.kind==='data'&&own.value[0]==='undefined',
+      'observable adoption constructor requires initialized intrinsic identities');return null;
+  }
+  return api.resolveProperty(controller,identity,['str','constructor']).descriptor;
+}
+function assertDefaultConstructor(controller,identity,api){
+  const descriptor=constructorDescriptor(controller,identity,api),value=descriptor?.kind==='data'?descriptor.value:['undefined'];
+  api.require(!descriptor||descriptor.kind==='data'||descriptor.get[0]==='undefined',
+    'adoption constructor getter requires its owned job continuation');
+  api.require(defaultConstructor(controller,value,api),
+    'custom adoption constructor/species requires its own continuation');
+}
 
 // The source-owned Promise representation has the unmodified intrinsic then.
 // A public Promise brand alone cannot authorize bypassing an own then, getter,
@@ -71,7 +91,14 @@ export function hasPromiseAdoptionResolutionV8(controller,identity,target,resolu
 export function validatePromiseAdoptionRecordV8(record,{value:validate}={}){
   const fields=PROMISE_ADOPTION_RECORD_FIELDS[record?.kind];if(!fields)return false;
   assertAlgorithmFields(record,fields,'Promise adoption record');
-  for(const field of fields)if(!['kind','status','value'].includes(field))id(record[field]);
+  for(const field of fields)if(!['kind','status','value','completion'].includes(field)&&
+    !(record.kind==='promise.adopt.finish'&&field==='forwarding'&&record.forwarding===null))id(record[field]);
+  if(record.kind==='promise.adopt.finish'){
+    assertAlgorithmFields(record.completion,['kind','value'],'adoption getter completion');
+    if(!['return','throw'].includes(record.completion.kind))fail('adoption getter completion kind');
+    if(validate)validate(record.completion.value);
+    if((record.completion.kind==='throw')!==(record.forwarding===null))fail('adoption getter forwarding completion');
+  }
   if(record.kind==='promise.adopt.forward'){
     if(!['fulfilled','rejected'].includes(record.status))fail('forwarding settlement');
     if(validate)validate(record.value);
@@ -91,6 +118,13 @@ function turn(controller,identity,job,api){
     ![...controller.jobs.values()].some(row=>row.status==='running')&&
     controller.ready[0]===identity&&job?.status==='queued'&&job.owner===controller.rootInvocation,
     'adoption step violates FIFO or active turn ownership');
+}
+function subscribe(controller,record,adoption,api){
+  freshJob(controller,record.forwarding,api);adoption.phase='observing';adoption.forwarding=record.forwarding;
+  controller.jobs.set(record.forwarding,{status:'waiting',owner:adoption.owner,promise:record.target,
+    reaction:'adoption',closure:null,rejectionClosure:null,target:null,
+    sequence:++controller.scheduler.registration,adoptionPromise:record.promise,adoptionTarget:record.target});
+  controller.refreshReady();
 }
 export function applyPromiseAdoptionRecordV8(controller,record,api){
   if(!validatePromiseAdoptionRecordV8(record,{value:value=>api.known(controller,value)}))return false;
@@ -134,19 +168,50 @@ export function applyPromiseAdoptionRecordV8(controller,record,api){
     controller.ready.push(record.job);return true;
   }
   const {node,adoption}=current(controller,record,api),job=controller.jobs.get(record.job);
+  if(record.kind==='promise.adopt.finish'){
+    const lookup=adoption.lookup;
+    api.require(adoption.phase==='reading'&&adoption.job===record.job&&lookup?.child===record.child&&
+      node.state==='pending'&&node.result===null&&node.adopted===null&&
+      job?.status==='running'&&job.reaction==='adopt'&&job.owner===adoption.owner&&
+      job.adoptionPromise===record.promise&&job.adoptionTarget===record.target&&
+      controller.activeJob===record.job&&controller.stack.length===1&&controller.stack[0]===record.child&&
+      !controller.protocol.pendingCalls.length&&!controller.protocol.callFrames.length&&
+      ![...controller.continuations.values()].some(row=>row.activeJob===record.job&&row.state!=='resumed'),
+      'adoption getter completion lacks its exact active job and returned scope');
+    api.known(controller,record.completion.value);
+    if(record.completion.kind==='return')api.require(defaultConstructor(controller,record.completion.value,api),
+      'custom adoption constructor/species requires its own continuation');
+    controller.stack.pop();controller.captureAliases=new Map(job.priorAliases);controller.receiver=copy(job.priorReceiver);
+    controller.activeJob=null;job.status='completed';job.returned=copy(record.completion);
+    if(record.completion.kind==='throw'){
+      adoption.phase='rejected';controller.settlePromise(record.promise,'rejected',record.completion.value);
+    }else subscribe(controller,record,adoption,api);
+    return true;
+  }
   turn(controller,record.job,job,api);
   api.require(node.state==='pending'&&node.result===null&&node.adopted===null&&
     job.adoptionPromise===record.promise&&job.adoptionTarget===record.target,
     'adoption scheduler linkage differs');
-  if(record.kind==='promise.adopt.enter'){
+  if(['promise.adopt.enter','promise.adopt.get'].includes(record.kind)){
     api.require(adoption.phase==='queued'&&adoption.job===record.job&&job.reaction==='adopt',
       'assimilation job is not this Promise resolution');
-    freshJob(controller,record.forwarding,api);
-    controller.ready.shift();job.status='completed';adoption.phase='observing';adoption.forwarding=record.forwarding;
-    controller.jobs.set(record.forwarding,{status:'waiting',owner:adoption.owner,promise:record.target,
-      reaction:'adoption',closure:null,rejectionClosure:null,target:null,
-      sequence:++controller.scheduler.registration,adoptionPromise:record.promise,adoptionTarget:record.target});
-    controller.refreshReady();return true;
+    if(record.kind==='promise.adopt.get'){
+      const descriptor=constructorDescriptor(controller,record.target,api),callee=descriptor?.kind==='accessor'?descriptor.get:null,
+        closure=callee?.[0]==='ref'?controller.heap.get(callee[1]):null;
+      api.require(closure?.kind==='closure'&&!closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver,
+        'adoption constructor requires its selected synchronous owned getter');
+      api.require(!controller.protocol.callFrames.length&&!controller.protocol.pendingCalls.length,
+        'adoption getter cannot inherit another call continuation');
+      // A job has no guest caller. Use the common checked activation machinery,
+      // retaining its caller state on the job rather than an absent call frame.
+      api.call(controller,{child:record.child,callee,receiver:['ref',record.target],arguments:[]});
+      const scope=controller.protocol.callFrames.pop();
+      job.priorAliases=scope.priorAliases;job.priorReceiver=scope.priorReceiver;job.closure=callee[1];
+      controller.ready.shift();job.status='running';controller.activeJob=record.job;
+      adoption.phase='reading';adoption.lookup={child:record.child,callee:copy(callee)};return true;
+    }
+    assertDefaultConstructor(controller,record.target,api);
+    controller.ready.shift();job.status='completed';subscribe(controller,record,adoption,api);return true;
   }
   api.require(adoption.phase==='observing'&&adoption.forwarding===record.job&&job.reaction==='adoption'&&
     job.promise===record.target,'forwarding job is not this registered dependency');
@@ -162,6 +227,8 @@ export function assertPromiseAdoptionNextV8(controller,record){
     intent=owned.find(([,node])=>node.adoption.phase==='intent');
   if(intent)return (record.kind==='promise.adopt.enqueue'&&fields.target===intent[1].adoption.target||
     record.kind==='promise.adopt.self'&&intent[0]===intent[1].adoption.target)&&fields.promise===intent[0];
+  const reading=owned.find(([,node])=>node.adoption.phase==='reading');
+  if(reading&&controller.stack.at(-1)===reading[1].adoption.lookup.child&&['return','throw','await'].includes(record.kind))return false;
   if(record.kind==='promise'&&['resolve','reject','adopt'].includes(fields.action)&&controller.heap.get(fields.promise)?.adoption)return false;
   if(['promise.join','promise.executor.enter','async.call'].includes(record.kind)&&
     controller.heap.get(fields.result??fields.promise)?.adoption)return false;
@@ -171,7 +238,7 @@ export function assertPromiseAdoptionNextV8(controller,record){
   if(record.kind==='job'&&fields.action==='complete'&&selected?.status==='running')return true;
   const head=controller.ready?.[0],job=controller.jobs?.get(head);
   if(controller.stack.length===0&&!controller.activeJob&&['adopt','adoption'].includes(job?.reaction))
-    return record.kind===(job.reaction==='adopt'?'promise.adopt.enter':'promise.adopt.forward')&&fields.job===head;
+    return (job.reaction==='adopt'?['promise.adopt.enter','promise.adopt.get'].includes(record.kind):record.kind==='promise.adopt.forward')&&fields.job===head;
   return true;
 }
 export function allowsPromiseAdoptionWithoutStackV8(_controller,record){
@@ -181,15 +248,16 @@ export function allowsPromiseAdoptionInternalSchedulerV8(controller,record){
   return Object.hasOwn(PROMISE_ADOPTION_RECORD_FIELDS,record?.kind)||entries(controller).length>0;
 }
 export function restorePromiseAdoptionStateV8(controller,api){
-  const ownedJobs=new Set(),pending=[];
+  const ownedJobs=new Set(),pending=[],reading=[];
   for(const [identity,node]of entries(controller)){
-    const adoption=node.adoption;
-    assertAlgorithmFields(adoption,['schema','owner','target','phase','cause','job','forwarding','error'],'Promise adoption state');
+    const adoption=node.adoption,lookup=adoption.lookup;
+    assertAlgorithmFields(adoption,['schema','owner','target','phase','cause','job','forwarding','error',
+      ...(lookup===undefined?[]:['lookup'])],'Promise adoption state');
     id(adoption.owner);id(adoption.target);cause(adoption.cause);
     api.require(adoption.schema===PROMISE_ADOPTION_STATE_V8&&node.kind==='promise'&&node.external===null&&
-      node.adopted===null&&!node.join&&['intent','queued','observing','completed','self'].includes(adoption.phase),
+      node.adopted===null&&!node.join&&['intent','queued','reading','observing','completed','rejected','self'].includes(adoption.phase),
       'retained adoption state shape');
-    const target=assertIntrinsicPromiseThenV8(controller,adoption.target,api),settled=['completed','self'].includes(adoption.phase);
+    const target=assertIntrinsicPromiseThenV8(controller,adoption.target,api),settled=['completed','rejected','self'].includes(adoption.phase);
     api.require(settled?node.state!=='pending':node.state==='pending'&&node.result===null,'adoption phase contradicts result settlement');
     if(adoption.phase==='self'){
       id(adoption.error);api.require(adoption.target===identity&&adoption.job===null&&adoption.forwarding===null&&
@@ -200,6 +268,24 @@ export function restorePromiseAdoptionStateV8(controller,api){
       if(adoption.phase!=='intent')api.require(identity!==adoption.target,'self resolution cannot enqueue jobs');
       if(adoption.phase==='completed')api.require(target.state===node.state&&api.eq(target.result,node.result),'forwarded result differs from target');
     }
+    if(lookup!==undefined){
+      assertAlgorithmFields(lookup,['child','callee'],'adoption constructor lookup');id(lookup.child);api.known(controller,lookup.callee);
+      const closure=lookup.callee?.[0]==='ref'?controller.heap.get(lookup.callee[1]):null,
+        receiver=closure?.functionKind==='arrow'?closure.lexicalReceiver:['ref',adoption.target];
+      api.require(['reading','observing','completed','rejected'].includes(adoption.phase)&&closure?.kind==='closure'&&
+        !closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver,'retained adoption getter identity');
+      if(adoption.owner===controller.rootInvocation){
+        api.require(controller.frameFunctions.get(lookup.child)===closure.code&&
+          api.eq(controller.locals.get(lookup.child+':this'),receiver),'retained adoption getter identity or receiver');
+        if(adoption.phase==='reading'){
+          reading.push(identity);api.require(controller.activeJob===adoption.job&&controller.stack[0]===lookup.child,
+            'retained adoption getter lost its active job scope');
+          if(controller.stack.at(-1)===lookup.child)api.require(api.eq(controller.receiver,receiver)&&
+            api.eq([...controller.captureAliases],closure.captures.map(row=>[row.binding,row.cell])),
+            'retained adoption getter receiver or captures differ');
+        }else api.require(!controller.stack.includes(lookup.child),'finished adoption getter remains active');
+      }
+    }else api.require(!['reading','rejected'].includes(adoption.phase),'adoption getter phase lacks its selected lookup');
     if(adoption.owner!==controller.rootInvocation)continue;
     const origin=adoption.cause;
     if(origin.kind==='resolver'){
@@ -219,12 +305,24 @@ export function restorePromiseAdoptionStateV8(controller,api){
     if(adoption.phase==='intent'){pending.push(identity);api.require(adoption.job===null&&adoption.forwarding===null,'intent contains future job identities');}
     else if(adoption.phase!=='self'){
       id(adoption.job);const first=controller.jobs.get(adoption.job);
-      if(first)assertAlgorithmFields(first,['status','owner','closure','reaction','adoptionPromise','adoptionTarget','readySequence'],
+      if(first)assertAlgorithmFields(first,['status','owner','closure','reaction','adoptionPromise','adoptionTarget','readySequence',
+        ...(lookup?['priorAliases','priorReceiver',...(adoption.phase==='reading'?[]:['returned'])]:[])],
         'retained assimilation job');
-      api.require(!ownedJobs.has(adoption.job)&&first?.owner===adoption.owner&&first.reaction==='adopt'&&first.closure===null&&
+      api.require(!ownedJobs.has(adoption.job)&&first?.owner===adoption.owner&&first.reaction==='adopt'&&first.closure===(lookup?lookup.callee[1]:null)&&
         first.adoptionPromise===identity&&first.adoptionTarget===adoption.target&&
-        first.status===(adoption.phase==='queued'?'queued':'completed'),'retained assimilation job linkage');ownedJobs.add(adoption.job);
-      if(adoption.phase==='queued')api.require(adoption.forwarding===null,'queued assimilation contains future forwarding identity');
+        first.status===(adoption.phase==='queued'?'queued':adoption.phase==='reading'?'running':'completed'),'retained assimilation job linkage');ownedJobs.add(adoption.job);
+      if(lookup){
+        api.known(controller,first.priorReceiver);
+        api.require(Array.isArray(first.priorAliases)&&first.priorAliases.every(pair=>Array.isArray(pair)&&pair.length===2&&
+          pair.every(value=>typeof value==='string')&&controller.locals.has(pair[1]))&&
+          new Set(first.priorAliases.map(pair=>pair[0])).size===first.priorAliases.length,'adoption getter prior capture aliases');
+        if(adoption.phase!=='reading'){
+          assertAlgorithmFields(first.returned,['kind','value'],'retained adoption getter completion');api.known(controller,first.returned.value);
+          api.require(adoption.phase==='rejected'?first.returned.kind==='throw'&&node.state==='rejected'&&api.eq(node.result,first.returned.value):
+            first.returned.kind==='return'&&defaultConstructor(controller,first.returned.value,api),'retained adoption getter completion differs');
+        }
+      }
+      if(['queued','reading','rejected'].includes(adoption.phase))api.require(adoption.forwarding===null,'unfinished or rejected assimilation contains forwarding identity');
       else{
         id(adoption.forwarding);const forwarding=controller.jobs.get(adoption.forwarding);
         if(forwarding)assertAlgorithmFields(forwarding,['status','owner','promise','reaction','closure','rejectionClosure','target',
@@ -238,9 +336,9 @@ export function restorePromiseAdoptionStateV8(controller,api){
       }
     }
   }
-  api.require(entries(controller).length<=bound&&pending.length<=1,'retained adoption count or pending intent bound');
+  api.require(entries(controller).length<=bound&&pending.length<=1&&reading.length<=1,'retained adoption count or pending intent bound');
   for(const [identity,job]of controller.jobs)if(['adopt','adoption'].includes(job.reaction)){
-    api.require(ownedJobs.has(identity)&&['waiting','queued','completed'].includes(job.status),'orphan adoption job');
+    api.require(ownedJobs.has(identity)&&['waiting','queued','running','completed'].includes(job.status),'orphan adoption job');
     api.require((job.status==='queued')===controller.ready.includes(identity),'adoption ready queue differs from lifecycle');
     if(job.status!=='waiting')api.require(Number.isSafeInteger(job.readySequence)&&job.readySequence>0&&
       job.readySequence<=controller.scheduler.ready,'adoption ready ordinal');

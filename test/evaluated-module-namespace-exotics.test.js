@@ -233,7 +233,7 @@ test('namespace definitions preserve SameValue and omitted descriptor fields',as
   assert.equal(replayExact(bundle).valid,true);
 });
 
-test('namespace descriptor getters and inherited fields keep explicit profile refusals',async()=>{
+test('namespace descriptor conversion supports inherited Object data and retains explicit profile refusals',async()=>{
   for(const operation of ['Object.defineProperty','Reflect.defineProperty']){
     for(const [descriptor,expected,message]of [
       ['{get value(){calls++;return 1;}}',[true,1],'Accessor descriptor fields'],
@@ -247,8 +247,39 @@ test('namespace descriptor getters and inherited fields keep explicit profile re
       };
       const native=await originalVmRun(modules,[{exportName:'run',args:[]}]);
       assert.deepEqual(native[0],expected);
+      if(operation==='Object.defineProperty'&&descriptor==='Object.create({value:1})'){
+        const owned=await executeEvaluatedModules({modules,entryModule:'main.js',exportName:'run'});
+        assert.deepEqual(owned.result,native[0]);
+        const bundle=JSON.parse(JSON.stringify(owned.bundle));
+        assert.equal(validateBundle(bundle).valid,true);
+        assert.equal(replayExact(bundle).valid,true);
+      }else{
+        await assert.rejects(()=>executeEvaluatedModules({modules,entryModule:'main.js',exportName:'run'}),
+          new RegExp(message));
+      }
+    }
+    const modules={
+      'base.js':'export const x=1;',
+      'main.js':`import * as ns from './base.js';export function run(){
+        try{const result=${operation}(ns,'x',Object.create({value:2}));
+          return [result===ns||result===true,ns.x];}
+        catch(error){return [error.name,ns.x];}}`
+    };
+    const native=await originalVmRun(modules,[{exportName:'run',args:[]}]);
+    assert.deepEqual(native[0],operation==='Object.defineProperty'?['TypeError',1]:[false,1]);
+    if(operation==='Object.defineProperty'){
+      // Reading the inherited value makes this a real guest TypeError. Dropping
+      // that descriptor field would incorrectly accept the empty definition.
+      const owned=await executeEvaluatedModules({modules,entryModule:'main.js',exportName:'run'});
+      assert.deepEqual(owned.result,native[0]);
+      const bundle=JSON.parse(JSON.stringify(owned.bundle));
+      assert.equal(validateBundle(bundle).valid,true);
+      assert.equal(replayExact(bundle).valid,true);
+    }else{
+      // The bounded Reflect implementation still refuses inherited conversion;
+      // the guest catch must not turn that implementation limit into a result.
       await assert.rejects(()=>executeEvaluatedModules({modules,entryModule:'main.js',exportName:'run'}),
-        new RegExp(message));
+        /Inherited descriptor fields/);
     }
   }
 });
