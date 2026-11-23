@@ -4,6 +4,7 @@
 import {assertAlgorithmFields} from './ir.js';
 import {assertPlainPromiseResolutionWithApiV8} from './promise-resolution-shape-v8.js';
 import {isDeepStrictEqual as eq} from 'node:util';
+import {promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
 
 export const PROMISE_ADOPTION_PROFILE_V8='promise-adoption/1';
 export const PROMISE_ADOPTION_STATE_V8='semantic-promise-adoption-state/1';
@@ -26,11 +27,16 @@ function promise(controller,identity,api){const node=controller.heap.get(identit
 // proxy or a different prototype. Those need their own lookup/call protocol.
 export function assertIntrinsicPromiseThenV8(controller,identity,api){
   const node=promise(controller,identity,api);
-  api.require(node.properties instanceof Map&&node.properties.size===0&&
-    (node.descriptors===undefined||node.descriptors instanceof Map&&node.descriptors.size===0)&&
-    [undefined,'ordinary'].includes(node.prototype)&&node.extensible!==false&&
-    node.callable===undefined&&node.proxy===undefined,
-    'owned Promise adoption requires its unchanged intrinsic then lookup');
+  api.require(node.properties instanceof Map&&node.callable===undefined&&node.proxy===undefined,
+    'owned Promise adoption requires ordinary property storage');
+  if(controller.protocol?.promiseObjects?.initialized){
+    const descriptor=api.resolveProperty(controller,identity,['str','then']).descriptor,
+      method=controller.heap.get(promiseIntrinsicIdV8('Promise.prototype.then'));
+    api.require(descriptor?.kind==='data'&&api.eq(descriptor.value,['ref',promiseIntrinsicIdV8('Promise.prototype.then')])&&
+      method?.kind==='intrinsic'&&method.intrinsicName==='Promise.prototype.then'&&method.callableKind==='function',
+      'owned Promise adoption requires its resolved intrinsic then');
+  }else api.require(!node.properties.has('then')&&!node.descriptors?.has('then')&&
+    [undefined,'ordinary'].includes(node.prototype),'owned Promise adoption requires its unchanged intrinsic then lookup');
   return node;
 }
 function cause(value){

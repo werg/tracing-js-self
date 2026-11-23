@@ -21,6 +21,7 @@ import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIEL
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8} from './protocol-promise-executor-v8.js';
 import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_STATE_V8} from './protocol-promise-adoption-v8.js';
+import {PROMISE_OBJECT_PROFILE_V8,PROMISE_OBJECT_STATE_V8,PROMISE_OBJECT_INTRINSICS_V8} from './protocol-promise-object-v8.js';
 import {ASYNC_CALL_PROFILE_V8,ASYNC_CALL_STATE_V8,ASYNC_CALL_FIELDS_V8} from './protocol-async-call-v8.js';
 import {BOUND_MODULE_SCHEDULER_PLAN_V8} from './module-scheduler-plan-v8.js';
 import {MODULE_SCHEDULER_PROFILE_V8,MODULE_SCHEDULER_LEDGER_FIELDS_V8} from './protocol-module-scheduler-v8.js';
@@ -61,6 +62,13 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
     'receiver','captureAliases','continuations','reactionSequence','blockedSync','callReturn','activeJob','scheduler','frameFunctions','jobErrors','protocol'],
   protocolState:{schema:PROTOCOL_STATE_V8_SCHEMA,fields:PROTOCOL_STATE_V8_FIELDS,initial:null,
     heap:'Existing heap nodes with property, descriptor and private-element Maps serialized as entry arrays; Symbol keys remain tagged pairs.',
+    promiseObjects:{profile:PROMISE_OBJECT_PROFILE_V8,schema:PROMISE_OBJECT_STATE_V8,fields:['schema','initialized'],
+      intrinsicNames:PROMISE_OBJECT_INTRINSICS_V8,
+      intrinsicIdentity:'intrinsic followed by the lowercase intrinsic name with all non-ASCII-alphanumeric characters removed; names are a fixed unique set, never selected aliases.',
+      storage:'Promise properties, descriptors, prototype links and extensibility occupy the same shared heap node as settlement and reactions. Intrinsic prototype objects are mutable; intrinsic callable identity markers are opaque and immutable.',
+      initialization:'One deterministic intrinsic-group transition materializes all identities and upgrades implicit Promise prototype links without consuming ordinary object identities. Duplicate or partial initialization is rejected.',
+      reflection:'Ordinary descriptor, hasOwn, key, get, set, delete, prototype and extensibility operations use the shared object machine. Accessors retain the original receiver, child call and exact normal or abrupt completion.',
+      boundaries:'Opaque intrinsic callable own-state reflection, custom Promise species construction and modified then-call protocols require their separately declared operations. Unsupported behavior remains outside guest exceptions.'},
     asyncCalls:{profile:ASYNC_CALL_PROFILE_V8,schema:ASYNC_CALL_STATE_V8,fields:ASYNC_CALL_FIELDS_V8,
       storage:'Retained asyncCall metadata belongs to its internal execution Promise; asyncFunction marks its callable closure.',
       resumeScopeFields:['receiver','aliases','pending'],continuationScopeFields:['receiver','captureAliases','pending'],

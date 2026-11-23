@@ -70,7 +70,7 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   adapters=adapters.map(adapter=>typeof adapter==='function'?adapter({bundle,source}):adapter).filter(Boolean);
   // Nested async bodies still call ordinary source helpers. The existing
   // synchronous callable peer retains those scopes even without new Promise.
-  if(adapters.some(adapter=>adapter.id==='async-scoped-call-source/1')&&!adapters.some(adapter=>adapter.id==='promise-executor/1'))
+  if(adapters.some(adapter=>['async-scoped-call-source/1','promise-object-source/1'].includes(adapter.id))&&!adapters.some(adapter=>adapter.id==='promise-executor/1'))
     adapters.push({id:'promise-executor/1',sourceComponent:createPromiseExecutorTeacherV8()});
   if(moduleNamespacePlan)adapters.push(createExperimentalModuleNamespaceSourceAdapterV8({source,moduleNamespacePlan,bundle}));
   if(adapters.some(adapter=>typeof adapter.id!=='string'||!adapter.id||adapter.id.length>128)||

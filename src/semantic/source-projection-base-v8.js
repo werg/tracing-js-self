@@ -1,6 +1,7 @@
 import {parse} from 'acorn';
 import {sharedProtocolSourceEventV8,sharedProtocolSourceCompletionV8,
   sharedProtocolSourceAllocationV8} from './protocol-source-claims-v8.js';
+import {promiseObjectSourceEventV8,promiseObjectSourceAllocationV8,promiseObjectSourceCompletionV8} from './protocol-promise-object-source-v8.js';
 
 // The ordinary projector is an explicit peer, not a fallback after extension
 // handlers decline. These are the bounded grammar distinctions already used
@@ -40,6 +41,7 @@ export function sourcePromiseJoinEventV8(view,{event,row}){
     event.operation==='job.enter'&&view.owned.control.a0.queue?.[0]?.kind==='combinator';
 }
 export function sourcePromiseExecutorEventV8(view,{event,row}){
+  if(promiseObjectSourceEventV8(view,{event,row}))return false;
   const callee=row?.operands?.[0],method=callee?.[0]==='method'?callee[1]:callee;
   return sourcePromiseConstructorV8(event)||event.operation==='call.enter'&&sourcePromiseResolverV8(method)!==null||
     row?.op==='call'&&event.operation!=='job.enter'&&!sharedProtocolSourceEventV8(view,{event,row})&&
@@ -59,11 +61,12 @@ const ordinaryFamilies=new Set(['request','observe','await','call','alloc','valu
 export function createBaseSourceComponentV8(){return {id:BASE_SOURCE_COMPONENT_V8,
   claims:{
     value:(_view,value)=>ordinarySourceValueV8(value),
-    allocation:(view,fields)=>['object','array','closure','promise'].includes(fields.kind)&&!sourceJoinAllocationV8(view,fields)&&
+    allocation:(view,fields)=>['object','array','closure','promise'].includes(fields.kind)&&!promiseObjectSourceAllocationV8(view,fields)&&!sourceJoinAllocationV8(view,fields)&&
       !sharedProtocolSourceAllocationV8(view,fields)&&
       !sourceAsyncCallAllocationV8(view,fields)&&
       !(fields.kind==='closure'&&Object.hasOwn(view.components,PROMISE_EXECUTOR_COMPONENT_V8)),
     event(view,input){
+      if(promiseObjectSourceEventV8(view,input))return false;
       if(sharedProtocolSourceEventV8(view,input))return false;
       if(sourceAsyncCallEventV8(view,input))return false;
       if(sourcePromiseAdoptionEventV8(view,input))return false;
@@ -73,7 +76,7 @@ export function createBaseSourceComponentV8(){return {id:BASE_SOURCE_COMPONENT_V
       if(Object.hasOwn(view.components,PROMISE_EXECUTOR_COMPONENT_V8)&&sourcePromiseExecutorEventV8(view,input))return false;
       return !input.row||ordinaryFamilies.has(input.row.op);
     },
-    completion:(view,exit)=>!sharedProtocolSourceCompletionV8(view,exit)&&!sourceAsyncCallCompletionV8(view,exit)&&
+    completion:(view,exit)=>!promiseObjectSourceCompletionV8(view,exit)&&!sharedProtocolSourceCompletionV8(view,exit)&&!sourceAsyncCallCompletionV8(view,exit)&&
       (!['return','throw','unhandled-throw'].includes(exit.operation)||!sourceExecutorCompletionV8(view,exit))
   },
   prepare:{

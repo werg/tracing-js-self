@@ -20,6 +20,7 @@ import {inspectSemanticRegion,evaluateSemanticRegion,checkSemanticRegionClaim} f
 import {checkEffectfulProjectionState} from '../training/projection-state-profile.js';
 import {inspectOwnedDataEntity} from '../training/data-graph-contract.js';
 import {asyncIterationSourceSitesV8,asyncIterationSourceCodeV8} from './async-iteration-source-v8.js';
+import {promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
 
 const copy=value=>structuredClone(value);
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
@@ -264,7 +265,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     }
   const rootFor=frame=>roots.get(frame)??invocationId;
   const frameId=frame=>{if(!frames.has(frame))frames.set(frame,'guest'+(++frameOrdinal));return frames.get(frame);};
-  const identity=id=>publicIdentities.get(id)??id;
+  const identity=id=>id==='Promise.prototype'?promiseIntrinsicIdV8(id):publicIdentities.get(id)??id;
   const tag=value=>{
     const extended=regionAdapter?.tag?.(value);if(extended!==undefined&&extended!==null)return copy(extended);
     if(!graphValue(value))refuse('unrepresentable value '+JSON.stringify(value));
@@ -709,13 +710,24 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
   const extensionContext={bundle,source,semantic,controller,identity,tag,frameId,rootFor,cell,
     get state(){return state;},
     componentState:id=>regionAdapter.componentState(id),
-    emit,emitProtocol,allocations,writes,publishInitialClosure,refuse,copy,
+    emit,emitProtocol,allocations,writes,publishInitialClosure,refuse,copy,awaitFrame,
     preparePromiseAdoption:(event,owner,promise,target)=>prepareSourcePromiseAdoptionV8(extensionContext,event,owner,promise,target),
     publishPromiseAdoption:(event,owner,promise,target)=>publishSourcePromiseAdoptionV8(extensionContext,event,owner,promise,target),
     registerFrame(frame,owner){roots.set(frame,owner);return frameId(frame);},
     get harness(){return harness;},
     claimDataIdentity(id){certifiedDataIdentities.add(identity(id));},
     get rootInvocation(){return invocationId;}};
+  function awaitFrame(invocation,promiseId,event){
+    const current=state.frames[invocation],changed=event.stateChanges.find(change=>change.table==='frames'&&change.id===invocation)?.after;
+    if(!current||changed?.status!=='suspended'||changed.awaiting!==promiseId)
+      refuse('await requires its actual suspended source frame and Promise');
+    const owner=rootFor(invocation),continuation='continuation'+(++continuationOrdinal),
+      fields={promise:promiseId,continuation,invocation:frameId(invocation)};
+    if(current.asyncPromiseId&&invocation===semantic.rootInvocation&&!returnedPromises.has(current.asyncPromiseId)){
+      fields.returnPromise=current.asyncPromiseId;returnedPromises.add(current.asyncPromiseId);
+    }
+    emit(owner,'await',fields,event,'await');pendingAwaits.set(invocation,{continuation,promise:promiseId});
+  }
   // Every adapter event runs on detached teacher and public state. A rejected
   // owner, handler or observer cannot publish a prefix, consume an identity or
   // leave a partially changed capture/scheduler behind.
@@ -932,12 +944,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       }
       handled=true;
     }else if(row?.op==='await'){
-      const continuation='continuation'+(++continuationOrdinal),frame=state.frames[row.invocation];
-      const fields={promise:row.promise,continuation,invocation:frameId(row.invocation)};
-      if(frame.asyncPromiseId&&row.invocation===semantic.rootInvocation&&!returnedPromises.has(frame.asyncPromiseId)){
-        fields.returnPromise=frame.asyncPromiseId;returnedPromises.add(frame.asyncPromiseId);
-      }
-      emit(owner,'await',fields,event,'await');pendingAwaits.set(row.invocation,{continuation,promise:row.promise});
+      awaitFrame(row.invocation,row.promise,event);
       if(checkpointAtFirstAwait&&!checkpoints.length){
         if([...harness.handlers.values()].some(handler=>handler.state!=='closed'))
           refuse('native listener checkpoint needs explicit reattachment evidence absent from this source journal');

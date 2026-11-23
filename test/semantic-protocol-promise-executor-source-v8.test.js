@@ -122,7 +122,7 @@ test('common v8 admission routes executors and rechecks each source/context auth
   // Computed array access selects the conversion-capable source composition,
   // while its scalar index needs no guest conversion continuation.
   assert.equal(result.profile,'composed-protocol-source/1');
-  assert.deepEqual(result.exported.sidecar.protocolExtensions,['primitive-conversion-source/1','promise-adoption/1','promise-executor/1']);
+  assert.deepEqual(result.exported.sidecar.protocolExtensions,['primitive-conversion-source/1','promise-adoption/1','promise-executor/1','promise-object-source/1']);
   assert(!result.exported.public.timeline.filter(row=>row.kind==='protocol')
     .map(row=>decodeProtocolRecordV8(row.fields.line)).some(record=>record.kind.startsWith('conversion.')));
   assert.equal((await recheckProtocolRegionEvidence(result.exported)).sourceValidated,true);

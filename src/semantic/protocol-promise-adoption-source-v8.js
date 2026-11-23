@@ -1,51 +1,18 @@
 // Source-only job identities are declared at the event that actually queues or
 // subscribes them. No future settlement chooses a present registration.
 import {isDeepStrictEqual as eq} from 'node:util';
+import {ordinaryGet} from '../spec-operations.js';
+import {ownedObjectHeap} from '../owned-object-storage.js';
 import {PROMISE_ADOPTION_COMPONENT_V8 as id,sourcePromiseAdoptionEventV8,sourceHasSyntaxV8} from './source-projection-base-v8.js';
 
-// An unsupported intrinsic can leave a valid owned guest-throw event with no
-// operands. The validated CALL's before-stack still binds the actual callable
-// and evaluated arguments. Do not certify that implementation limit as a guest
-// TypeError or primitive result: Promise object storage requires a separate
-// source profile. These positions cover the intrinsics that currently complete
-// without modeling that storage. Other object reflection/mutation intrinsics
-// already refuse during execution. Object.is is identity-only, and isFrozen is
-// correct for an intact, extensible Promise; neither needs object storage here.
-// Argument positions matter: a Promise can be the new prototype or descriptor
-// of an ordinary object, not just the operation's first operand.
-const promiseObjectArguments=new Map([
-  ['Object.defineProperty',[0,2]],['Object.create',[0,1]],
-  ['Object.setPrototypeOf',[0,1]],['Object.getPrototypeOf',[0]],
-  ['Object.preventExtensions',[0]],['Object.isExtensible',[0]]
-]);
+// Promise own properties are now shared ordinary state. Validate that the
+// archive actually contains that state; later source transitions check every
+// descriptor and the resolved intrinsic then instead of assuming a pristine
+// object from its Promise brand alone.
 export function assertPromiseSourceObjectProfileV8(bundle){
-  for(const event of bundle.events){
-    if(event.operation!=='call.enter')continue;
-    const frame=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId)?.before,
-      instruction=bundle.programs[frame?.codeId]?.instructions[frame?.pc];
-    if(instruction?.op!=='CALL')continue;
-    const count=typeof instruction.arg==='number'?instruction.arg:instruction.arg?.count;
-    if(!Number.isSafeInteger(count)||count<1||frame.stack.length<count+1)continue;
-    const inputs=frame.stack.slice(-count-1),raw=inputs[0]?.value,
-      callee=raw?.[0]==='method'?raw[1]:raw;
-    if(callee?.[0]!=='builtinfn'||!promiseObjectArguments.has(callee[1]))continue;
-    const args=[];
-    for(let index=0;index<count;index++){
-      const value=inputs[index+1]?.value;
-      if(instruction.arg?.spread?.includes(index)){
-        if(value?.[0]!=='spread'||!Array.isArray(value[1]))
-          throw new TypeError('Protocol source projection: invalid evaluated mutation arguments');
-        args.push(...value[1]);
-      }else args.push(value);
-    }
-    if(callee[1]==='Object.defineProperty'&&args[0]?.[0]==='promise'){
-      const error=new TypeError('Protocol source projection: Promise own-property mutation requires its declared source profile');
-      error.category='unsupported.promise-source-mutation';throw error;
-    }
-    if(promiseObjectArguments.get(callee[1]).some(index=>args[index]?.[0]==='promise')){
-      const error=new TypeError('Protocol source projection: Promise object operation '+callee[1]+' requires its declared source profile');
-      error.category='unsupported.promise-source-object-operation';throw error;
-    }
+  for(const state of [bundle.initialState,bundle.finalState])for(const node of Object.values(state.promises??{})){
+    if(node.kind!=='promise'||!node.properties||!node.propertyVersions||typeof node.extensible!=='boolean'||
+      node.proxy!==undefined)throw new TypeError('Protocol source projection: Promise object storage is not declared');
   }
 }
 
@@ -53,8 +20,12 @@ function data(ctx){const result=ctx.componentState(id);
   if(!result)ctx.refuse('Promise adoption lacks its source component');return result;}
 function ownedPromise(ctx,event,identity){
   const node=event.stateChanges.find(change=>change.table==='promises'&&change.id===identity)?.after??ctx.state.promises[identity];
-  if(!node||['properties','prototype','descriptors','accessors','proxy'].some(key=>Object.hasOwn(node,key)))
-    ctx.refuse('owned Promise adoption requires unchanged intrinsic then lookup');
+  if(!node||node.kind!=='promise'||!node.properties||node.proxy!==undefined)
+    ctx.refuse('owned Promise adoption requires shared ordinary object storage');
+  const state={...ctx.state,promises:{...ctx.state.promises,[identity]:node}},
+    selected=ordinaryGet(ownedObjectHeap(state),['promise',identity],'then',{accessors:true});
+  if(selected?.accessor||!eq(selected?.method?.value,['builtinfn','Promise.prototype.then']))
+    ctx.refuse('owned Promise adoption requires its resolved intrinsic then lookup');
   if(node.thenableLocked||node.thenableSerial||node.thenableSeen?.length)
     ctx.refuse('thenable resolving state requires its separate protocol');
   return node;

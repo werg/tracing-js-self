@@ -135,7 +135,7 @@ export function createEffectfulRegionAdapterV8({extensions=[],allowHost=false}={
     return result;
   }
   return Object.freeze({schema:EFFECTFUL_REGION_TEACHER_SCHEMA_V8,
-    projectionStateProfiles:Object.freeze(ids.filter(id=>SHARED_PROTOCOL_SOURCE_IDS_V8.includes(id))),
+    projectionStateProfiles:Object.freeze(ids.filter(id=>SHARED_PROTOCOL_SOURCE_IDS_V8.includes(id)||id==='promise-object-source/1')),
     createHarness:options=>facade(new RegionExecutionHarness(options),[],allowHost),
     replay:artifact=>RegionExecutionHarness.replay(artifact),
     restore:packet=>facade(RegionExecutionHarness.restore(packet),[],allowHost),
