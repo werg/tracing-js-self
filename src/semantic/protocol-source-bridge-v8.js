@@ -63,6 +63,12 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
     sourceHasSyntaxV8({source,bundle},node=>node.type==='YieldExpression'&&node.delegate))
     throw new TypeError('Shared generator source: yield delegation requires its explicit composition profile');
   const syntax=inventory(source,bundle);
+  // Setup declares source capabilities shared by the direct adapters (for
+  // example, the exact destructuring patterns and cleanup scope profile).
+  // Preserve those declarations when the same adapters join the coordinator.
+  // Each event receives a copy, so observers cannot mutate a peer's authority.
+  const extensionState=new Map();
+  for(const adapter of chosen)adapter.setup?.({extensionState});
   return chosen.map(adapter=>{
     const id=adapter.id,claims=adapter.claims??protocolSourceClaimsV8(id),
       stateful=typeof adapter.captureState==='function'&&typeof adapter.restoreState==='function';
@@ -170,7 +176,7 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
         markPublished(identity){if(!controller().heap.has(ctx.identity(identity)))ctx.refuse('protocol allocation was not published');},
         get published(){return new Set(controller().heap.keys());},
         getOwnedFrame:frame=>ctx.state.frames[frame],
-        get extensionState(){return new Map();},
+        get extensionState(){return copy(extensionState);},
         key(value){
           if(value?.[0]==='symbol')return copy(value);
           if(!['undefined','null','str','num','bool','bigint'].includes(value?.[0]))

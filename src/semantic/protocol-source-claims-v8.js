@@ -75,7 +75,7 @@ const eventClaims={
     if(!inst)return false;
     const base=heap(view,event.operands?.[0]),output=selected(event.result);
     if(own.asyncLoop&&event.operands.length>=2&&['object','array','function'].includes(base?.kind)&&
-      (event.operation==='property.write'||event.operation==='property.read'&&
+      (event.operation==='property.write'&&inst.op!=='APPEND_ARRAY'||event.operation==='property.read'&&
         !['builtinfn','intrinsic'].includes(output?.[0])))return true;
     if(own.defaults?.includes(point)&&inst.op==='BINARY'||own.rests?.includes(point)&&inst.op==='APPEND_ARRAY')return true;
     const pattern=node?.type==='ArrayPattern'&&own.patterns?.includes(point);

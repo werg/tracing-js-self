@@ -84,6 +84,24 @@ The native portion of this test runs when `MEGATOKEN_ROOT` selects an actual
 consumer checkout. These are source and interoperability checks, not evidence
 of training admission or model performance.
 
+`test/semantic-async-iteration-bindings-v8.test.js` covers array binding headers
+with holes, default initializers, and rest elements. A loop header has no
+declarator initializer, so its exact pattern must still be included in the
+source inventory. The composed source path retains the same pattern and
+cleanup declarations as the direct adapters. Rest appends keep their own
+checked array operation rather than being treated as an ordinary keyed write.
+The tests also exercise a default that throws while both iterators need closing,
+and a default that awaits while the inner and outer cleanup scopes are retained.
+They compare original source, recheck public evidence, and restore the latter
+suspension before finishing the trace; the native replay check is enabled by
+the same `MEGATOKEN_ROOT` setting.
+
+Source publication also distinguishes a current event's fresh allocations from
+the already committed owned heap. A generator function and its prototype can
+refer to one another within their allocation event. The shared bridge accepts
+those authenticated current-event identities while continuing to reject
+references absent from both the committed heap and that event.
+
 One current reference discrepancy remains explicit. Node v24.22.3 with V8
 13.6.233.17-node.63 calls a sync iterator's `return` when its `next` throws,
 returns a non-object, or its result's `done` or `value` getter throws. The current
@@ -97,6 +115,6 @@ The compiler supports callable thenables through its existing owned Promise
 machinery. Public source projection of those thenables still requires its own
 qualified resolving-function protocol and remains a refusal. Async generators,
 Symbol-valued cleanup completions, malformed intrinsic-error projection, and
-additional nested or assignment-pattern source combinations also require
+additional nested or assignment-target source combinations also require
 further source/public qualification. Runtime success alone does not remove any
 of those boundaries.

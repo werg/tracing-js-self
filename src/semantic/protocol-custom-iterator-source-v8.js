@@ -9,7 +9,9 @@ export function createCustomIteratorSourceAdapterV8({bundle,source}){
   const patterns=new Set(),defaults=new Set(),rests=new Set();let asyncLoop=false;
   function visit(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(visit);return;}
     if(node.type==='ForOfStatement'&&node.await)asyncLoop=true;
-    if(node.type==='VariableDeclarator'&&node.init&&node.id.type==='ArrayPattern'&&node.id.elements.every(element=>element===null||
+    // For-in/of declarations receive their value from the loop and have no
+    // initializer, but their binding patterns use the same checked iterator.
+    if(node.type==='VariableDeclarator'&&node.id.type==='ArrayPattern'&&node.id.elements.every(element=>element===null||
       element.type==='Identifier'||element.type==='AssignmentPattern'&&element.left.type==='Identifier'||
       element.type==='RestElement'&&element.argument.type==='Identifier')){
       patterns.add(node.id.start+':'+node.id.end);
@@ -32,7 +34,8 @@ export function createCustomIteratorSourceAdapterV8({bundle,source}){
       const base=event.operands[0],baseNode=base?.[0]==='ref'?ctx.state.heap[base[1]]:null,
         output=event.result?.[0]==='method'?event.result[1]:event.result;
       if(asyncLoop&&event.operands.length>=2&&['object','array','function'].includes(baseNode?.kind)&&
-        (event.operation==='property.write'||event.operation==='property.read'&&!['builtinfn','intrinsic'].includes(output?.[0]))){
+        (event.operation==='property.write'&&inst.op!=='APPEND_ARRAY'||
+          event.operation==='property.read'&&!['builtinfn','intrinsic'].includes(output?.[0]))){
         const key=ctx.key(event.operands[1]),receiver=ctx.tag(base,event);
         if(row?.child){
           const operation=event.operation==='property.read'?'get':'set',id='iteratoraccess'+(++accessorSequence),
