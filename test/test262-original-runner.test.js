@@ -107,6 +107,111 @@ test('catching unsupported Object.defineProperty storage cannot manufacture a pa
   }
 });
 
+test('unsupported prototype and extensibility storage cannot manufacture runtime-negative TypeErrors',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'Object.getPrototypeOf(Promise.resolve(0));',
+    'Object.getPrototypeOf(0);',
+    'Object.getPrototypeOf(Object);',
+    'Object.setPrototypeOf(Promise.resolve(0),null);',
+    'Object.create(Promise.resolve(0));',
+    'Object.create(Object);',
+    'Object.setPrototypeOf({},Promise.resolve(0));',
+    'if(!Object.isExtensible(Promise.resolve(0)))throw new TypeError();',
+    'var object={};Object.preventExtensions(object);'+
+      'if(!Object.isFrozen(new Proxy(object,{})))throw new TypeError();'
+  ])for(const {owned,reference} of both(body,{metadata})){
+    assert.equal(owned.status,'unsupported',owned.reason);
+    assert.match(owned.reason,/requires owned ordinary storage/);
+    assert.equal(reference.status,'failed',reference.reason);
+  }
+});
+
+test('prototype primitive errors, invalid prototypes and ordinary invariants remain genuine guest errors',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'Object.create(undefined);','Object.create(0);','Object.create(Symbol("key"));',
+    'Object.getPrototypeOf(null);','Object.getPrototypeOf(undefined);',
+    'Object.setPrototypeOf(null,null);','Object.setPrototypeOf(undefined,null);',
+    'Object.setPrototypeOf({},0);','Object.setPrototypeOf(1,0);',
+    'Object.setPrototypeOf(Promise.resolve(0),0);',
+    'var object={};Object.setPrototypeOf(object,object);',
+    'var object={};Object.preventExtensions(object);Object.setPrototypeOf(object,null);'
+  ])statuses(both(body,{metadata}),'passed');
+  statuses(both('assert.sameValue(Object.setPrototypeOf(1,null),1);'+
+    'assert.sameValue(Object.setPrototypeOf(false,{}),false);'+
+    'assert.sameValue(Object.setPrototypeOf("value",Object.prototype),"value");'+
+    'assert.sameValue(Object.setPrototypeOf(0n,null),0n);'+
+    'var key=Symbol("key");assert.sameValue(Object.setPrototypeOf(key,null),key);'),'passed');
+});
+
+test('prototype and extensibility implementation refusals cannot be caught by original source',()=>{
+  for(const body of [
+    'Object.getPrototypeOf(Promise.resolve(0));',
+    'Object.setPrototypeOf(Promise.resolve(0),null);',
+    'Object.create(Promise.resolve(0));',
+    'Object.setPrototypeOf({},Promise.resolve(0));',
+    'Object.preventExtensions(Promise.resolve(0));',
+    'Object.isExtensible(Promise.resolve(0));',
+    'Object.isFrozen(new Proxy({},{}));'
+  ])for(const {owned,reference} of both('try{'+body+'}catch(error){}')){
+    assert.equal(owned.status,'unsupported',owned.reason);
+    assert.match(owned.reason,/requires owned ordinary storage/);
+    assert.equal(reference.status,'passed',reference.reason);
+  }
+});
+
+test('namespace Reflect.defineProperty distinguishes unsupported descriptors from primitive errors',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n',
+    dependencies={'test/dep_FIXTURE.js':'export const value=1;'};
+  for(const descriptor of ['Promise.resolve(0)','function(){}','0','null']){
+    const [options]=moduleFixture('import * as ns from "./dep_FIXTURE.js";Reflect.defineProperty(ns,"value",'+descriptor+');',
+      {metadata,dependencies});
+    const owned=executeOfficialTest262Variant(options),reference=executeOfficialTest262Reference(options);
+    const primitive=['0','null'].includes(descriptor);
+    assert.equal(owned.status,primitive?'passed':'unsupported',owned.reason);
+    assert.equal(reference.status,primitive?'passed':'failed',reference.reason);
+    if(!primitive)assert.match(owned.reason,/Reflect.defineProperty descriptor requires owned ordinary storage/);
+  }
+});
+
+test('unowned callable and prototype-named accessor definitions cannot manufacture guest outcomes',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'Object.defineProperty({},"x",{get:Object.is});',
+    'Object.defineProperty({},"x",{set:Number});',
+    'Object.defineProperty({},"x",{get:Object.getPrototypeOf(function(){})});',
+    'Object.defineProperty({},"__proto__",{get:function(){return 1;}});',
+    'Object.defineProperty({},"__proto__",{set:function(value){}});'
+  ]){
+    for(const {owned,reference} of both(body,{metadata})){
+      assert.equal(owned.status,'unsupported',owned.reason);
+      assert.match(owned.reason,/Accessor definition requires owned (?:callable|prototype-named) storage/);
+      assert.equal(reference.status,'failed',reference.reason);
+    }
+    for(const {owned,reference} of both('try{'+body+'}catch(error){}')){
+      assert.equal(owned.status,'unsupported',owned.reason);
+      assert.equal(reference.status,'passed',reference.reason);
+    }
+  }
+});
+
+test('invalid accessor types and non-configurable property invariants retain genuine guest TypeErrors',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'Object.defineProperty({},"x",{get:0});',
+    'Object.defineProperty({},"x",{set:{}});',
+    'Object.defineProperty({},"x",{get:Promise.resolve(0)});',
+    'Object.defineProperty({},"x",{get:function(){},value:0});',
+    'Object.defineProperty([],"length",{get:function(){}});',
+    'Object.defineProperty([],"length",{get:Object.is});',
+    'var object={};Object.defineProperty(object,"x",{get:function(){}});'+
+      'Object.defineProperty(object,"x",{get:Object.is});',
+    'var object={};Object.defineProperty(object,"__proto__",{value:1});'+
+      'Object.defineProperty(object,"__proto__",{get:function(){}});'
+  ])statuses(both(body,{metadata}),'passed');
+});
+
 test('raw preserves exact bytes and loads no implicit harness or wrapper',()=>{
   const [options]=fixture('if(typeof assert!=="undefined")throw 1;', {metadata:'flags: [raw]\n'});
   assert.equal(options.variant.mode,'raw');

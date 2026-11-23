@@ -5,15 +5,13 @@ import {writeFileSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {createRuntime} from '../src/runtime.js';
 import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-v8.js';
-import {compileSourceProjection} from '../src/semantic/source-projection.js';
-import {SOURCE_PROJECTION_CLIENT_V8} from '../src/semantic/source-compiler-v8.js';
 import {verifyProtocolRegionTrainingCase,recheckProtocolRegionEvidence} from '../src/semantic/protocol-source-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {sharedRegionState} from '../src/semantic/regions.js';
 
-// These operations either treat an owned Promise as a primitive or manufacture
-// a guest TypeError for storage the interpreter does not model. A matching final
-// value after catching that error does not make the intermediate trace sound.
+// These object operations require storage the interpreter does not model.
+// Refuse during owned execution, before a guest catch can hide the limitation
+// or an incorrect primitive default can become public source evidence.
 const refusals=[
   ['prototype-null','Object.setPrototypeOf(p,null);return 7;',7],
   ['prototype-object','Object.setPrototypeOf(p,{});return 7;',7],
@@ -42,8 +40,8 @@ const positives=[
 ].map(([name,source,expected])=>({name,source,expected}));
 const observations=[],artifacts=[];let nativeReceipts=[];
 const tagged=value=>[typeof value==='boolean'?'bool':typeof value==='string'?'str':'num',value];
-const profileError=error=>error?.category==='unsupported.promise-source-object-operation'&&
-  /Promise object operation .* requires its declared source profile/.test(error.message);
+const profileError=error=>error instanceof TypeError&&
+  /^(?:Object\.(?:setPrototypeOf|getPrototypeOf|preventExtensions|isExtensible)|Object\.defineProperty descriptor|Prototype value) requires owned ordinary storage$/.test(error.message);
 if(process.env.REQUIRE_PROMISE_ADOPTION_V8==='1')
   assert(process.env.MEGATOKEN_ROOT,'Mandatory Promise object gate requires its exact native checkout');
 function originalOutcome(source){
@@ -56,19 +54,11 @@ function archive(source){const runtime=createRuntime().startEntry({text:source,f
   runtime.drive();return runtime.exportRun();}
 for(const scenario of refusals)test('Promise object profile refuses '+scenario.name,async()=>{
   const original=originalOutcome(scenario.source);assert.deepEqual(original,{kind:'return',value:scenario.expected});
-  const ownedDescriptorRefusal=scenario.name==='promise-as-descriptor';
-  if(ownedDescriptorRefusal){
-    assert.throws(()=>archive(scenario.source),{
-      name:'TypeError',message:'Object.defineProperty descriptor requires owned ordinary storage'});
-  }else{
-    const bundle=archive(scenario.source);
-    assert.throws(()=>compileProtocolSourceV8(bundle),profileError);
-    assert.throws(()=>compileSourceProjection(bundle,{projectionClient:SOURCE_PROJECTION_CLIENT_V8}),profileError);
-  }
+  assert.throws(()=>archive(scenario.source),profileError);
   const result=await verifyProtocolRegionTrainingCase({source:scenario.source,entry:'run',args:[],family:'promise-object-profile:'+scenario.name});
   assert.equal(result.exported,undefined,'unsupported storage cannot provide native admission input');
-  assert.equal(result.category,ownedDescriptorRefusal?'unsupported.protocol-source':'unsupported.promise-source-object-operation');
-  if(ownedDescriptorRefusal)assert.equal(result.reason,'Object.defineProperty descriptor requires owned ordinary storage');
+  assert.equal(result.category,'unsupported.protocol-source');
+  assert(profileError(new TypeError(result.reason)),result.reason);
   observations.push({...scenario,original,refused:true,sourceCategory:result.category,sourceReason:result.reason});
 });
 for(const scenario of positives)test('Promise object profile preserves '+scenario.name,async()=>{
