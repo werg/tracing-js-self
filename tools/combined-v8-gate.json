@@ -104,16 +104,17 @@
     "promise": {
       "producer": {
         "test/owned-promise-object-state.test.js": 17,
-        "test/owned-promise-reflection-review.test.js": 7,
+        "test/owned-promise-reflection-review.test.js": 11,
         "test/owned-promise-review-boundaries.test.js": 8,
         "test/semantic-async-call-source-v8.test.js": 18,
         "test/semantic-async-return-adoption-composition-source-v8.test.js": 4,
         "test/semantic-native-promise-slots-v8.test.js": 8,
+        "test/semantic-native-source-reader-v8.test.js": 6,
         "test/semantic-promise-adoption-getter-source-v8.test.js": 7,
         "test/semantic-promise-mutation-profile-source-v8.test.js": 25,
-        "test/semantic-promise-object-observations-v8.test.js": 17,
+        "test/semantic-promise-object-observations-v8.test.js": 19,
         "test/semantic-promise-object-profile-source-v8.test.js": 23,
-        "test/semantic-promise-object-review-source-v8.test.js": 11,
+        "test/semantic-promise-object-review-source-v8.test.js": 13,
         "test/semantic-promise-object-review-v8.test.js": 4,
         "test/semantic-promise-object-source-v8.test.js": 17,
         "test/semantic-promise-object-v8.test.js": 7,
@@ -133,7 +134,7 @@
       },
       "native": {
         "tests/test_async_call_v8.py": 18,
-        "tests/test_native_detail_regressions_v8.py": 11,
+        "tests/test_native_detail_regressions_v8.py": 12,
         "tests/test_number_v8.py": 15,
         "tests/test_primitive_conversion_v8.py": 19,
         "tests/test_promise_executor_boundaries_v8.py": 13,
@@ -159,7 +160,10 @@
     "priorObjectNativeCollection": "The ordinary property suite collected 28 actual pytest leaves on consumer 375063e4aa802f309eda611db289260d60507e4a in the locked environment. It is now mandatory in the Promise lane, which requires 142 native leaves across nine files. Collection is not execution and does not qualify a lane.",
     "priorReviewProducerLeaves": "Producer review controls passed 17 owned-runtime leaves and 51 existing runtime leaves; retained public review executions passed 90 of 91 leaves with one optional-native skip, including all 11 shared-intrinsic boundary leaves. These working-tree receipts are retained separately at artifacts/conformance/issue61-review-controls. The expanded Promise lane requires 266 actual producer leaves across 22 files, including owned-runtime 17, observation 17 and shared-intrinsic 11. A final clean-pair execution remains required; counts are never inferred from collection or earlier receipts.",
     "priorReviewNativeLeaves": "Native review corrections passed 78 actual leaves across four files: 31 properties, 19 primitive conversion, 15 Number and 13 host protocol. Restoration controls reject unsupported intrinsic/Proxy methods in derived faults and retained complete/abrupt Number continuations. The Promise lane now requires all 179 leaves across 11 files to execute with zero skips on the exact frozen native revision. Earlier 142-leaf execution at fb82 retained 136 passes and 6 host protocol failures; that failure is not relabeled as a passing lane.",
-    "currentProducerLeaves": "Actual working-tree JUnit receipts establish all five newly required producer files: reflection review 7 (second-review/reflection-corrected.xml), runtime boundary review 8 (runtime-review-second/focused-final.xml), native slot observer 8 (review-observer-slots-namespace.xml), source review 11 and direct public review 4 (review-source-protocol-native.xml). Every new leaf passed with zero skips, including actual Python replay for eight new source artifacts (196 contexts) and two direct artifacts (30 contexts). The prior 266-leaf inventory remains intact; the Promise lane now requires 304 leaves across 27 files. These split focused runs are not a clean combined-lane pass; the frozen-pair gate must execute the complete inventory without failures or skips.",
-    "currentNativeLeaves": "Actual working-tree JUnit confirms tests/test_promise_executor_v8.py now has 12 leaves (native-adoption-review/adoption.xml), adding one to the prior 11, and tests/test_native_detail_regressions_v8.py has 11 leaves (native-retained-boundary/detail.xml). Both receipts have zero failures, errors or skips. The other prior native per-file requirements remain intact, making 191 required leaves across 12 files. The final exact-pair gate must execute the full inventory; focused correction receipts alone do not qualify the lane."
+    "priorSecondReviewProducerLeaves": "Actual working-tree JUnit receipts establish all five newly required producer files: reflection review 7 (second-review/reflection-corrected.xml), runtime boundary review 8 (runtime-review-second/focused-final.xml), native slot observer 8 (review-observer-slots-namespace.xml), source review 11 and direct public review 4 (review-source-protocol-native.xml). Every new leaf passed with zero skips, including actual Python replay for eight new source artifacts (196 contexts) and two direct artifacts (30 contexts). The prior 266-leaf inventory remains intact; the Promise lane now requires 304 leaves across 27 files. These split focused runs are not a clean combined-lane pass; the frozen-pair gate must execute the complete inventory without failures or skips.",
+    "priorSecondReviewNativeLeaves": "Actual working-tree JUnit confirms tests/test_promise_executor_v8.py now has 12 leaves (native-adoption-review/adoption.xml), adding one to the prior 11, and tests/test_native_detail_regressions_v8.py has 11 leaves (native-retained-boundary/detail.xml). Both receipts have zero failures, errors or skips. The other prior native per-file requirements remain intact, making 191 required leaves across 12 files. The final exact-pair gate must execute the full inventory; focused correction receipts alone do not qualify the lane.",
+    "priorFrozenPromiseComponents": "Exact clean producer 2ace1440ebeac3b2ffac5a0061684bfcdfac1370 and consumer acd86c6513ec7af8b50365517f4bff9b7e2aad5a executed all 304 producer and 191 native Promise leaves: 495 passed, zero failures, errors or skips. Receipts are paired-qualified-components/producer.xml, native.xml and local-promise-result.json. Installed replay also passed. This is historical component evidence for those exact revisions; completeCombinedGate remains not-qualified because strict platform attestation was blocked by the unavailable /proc/self/ns/time. The expanded final inventory must run again on its frozen pair.",
+    "currentProducerLeaves": "Actual working-tree JUnit final-summary-review/controls-final.xml has 28 passing leaves: reflection review 11, source review 13 and direct public review 4. It independently verifies the unchanged source population of eight cases/196 contexts and direct population of two cases/30 contexts, plus two separately named first-await checkpoint cases/37 contexts with successful native replay, context and continuation receipts. source-artifact-bound/focused-final.xml has six passing source-ingestion controls. last-review-observer/property-and-slot-final.xml has 27 passing leaves: Promise observations 19 and native slot observer 8, zero failures, errors or skips. Its new sloppy-script controls compare property-assignment observations and original script outcomes, not full-script source qualification; the earlier 54-leaf run with one broader-observation failure remains historical evidence. These increments make 318 required producer leaves across 28 files, retaining every earlier requirement; focused correction receipts do not qualify the full expanded lane.",
+    "currentNativeLeaves": "Actual working-tree JUnit native-retained-boundary/detail-final.xml has 12 passing native detail regression leaves, zero failures, errors or skips, including the immutable null Object.prototype check at a new retained invocation. All other native file requirements are unchanged from the historical 191-leaf execution, making 192 required leaves across 12 files. The complete expanded inventory must execute without skips on the final frozen native revision."
   }
 }

@@ -243,6 +243,7 @@ def verify_review_promise_packets(root):
         ("promise-object-review-protocol-evidence.json", 2, 30, "publicCases", "artifact"),
     ):
         packet = read(root / name)
+        checkpoint_summary = None
         require(packet[population] == packet["actualNativeCases"] == total,
                 "Review source/native population changed: " + name)
         cases, receipts = packet["cases"], packet["nativeReceipts"]
@@ -262,6 +263,28 @@ def verify_review_promise_packets(root):
         if population == "sourceCases":
             require(packet["moduleAdmission"] is False and packet["generatedContexts"] == contexts,
                     "Review source context or admission boundary differs: " + name)
+            expected_checkpoints = {"promise-review-checkpoint-ordinary": 9,
+                                    "promise-review-checkpoint-constructor-getter": 28}
+            checkpoint_cases, checkpoint_receipts = packet["checkpointCases"], packet["checkpointNativeReceipts"]
+            require(len(checkpoint_cases) == len(checkpoint_receipts) == 2 and
+                    {case["name"] for case in checkpoint_cases} == set(expected_checkpoints) and
+                    {receipt["name"] for receipt in checkpoint_receipts} == set(expected_checkpoints),
+                    "Review checkpoint source/native identity differs: " + name)
+            require(all(len(case["exported"]["contexts"]) == expected_checkpoints[case["name"]] and
+                        sum(event["mode"] == "generated" for event in case["exported"]["public"]["timeline"]) ==
+                        expected_checkpoints[case["name"]] for case in checkpoint_cases) and
+                    all(receipt["counts"]["contexts"] == expected_checkpoints[receipt["name"]]
+                        for receipt in checkpoint_receipts),
+                    "Review checkpoint native context population differs: " + name)
+            require(all(receipt["admitted"] is False and all(receipt["checks"][key] == "passed"
+                        for key in ("replay", "contexts", "continuation")) for receipt in checkpoint_receipts),
+                    "Review checkpoint native replay, contexts or continuation did not pass: " + name)
+            for case in checkpoint_cases:
+                checkpoints = case["exported"]["sidecar"]["compiler"]["checkpoints"]
+                require(len(checkpoints) == 1 and checkpoints[0]["publicReplayValidated"] is True and
+                        checkpoints[0]["nativeRedispatches"] == 0,
+                        "Review first-await checkpoint boundary differs: " + case["name"])
+            checkpoint_summary = {"cases": 2, "actualNativeCases": 2, "contexts": 37}
         else:
             receipts_by_name = {receipt["name"]: receipt for receipt in receipts}
             for case in cases:
@@ -273,7 +296,8 @@ def verify_review_promise_packets(root):
                         set(owners) == set(checked) == invocations,
                         "Review native retained invocation identity differs: " + case["name"])
         result.append({"file": name, population: total, "actualNativeCases": total, "contexts": contexts,
-                       "sha256": sha(root / name)})
+                       "sha256": sha(root / name),
+                       **({"checkpoints": checkpoint_summary} if checkpoint_summary is not None else {})})
     return result
 
 

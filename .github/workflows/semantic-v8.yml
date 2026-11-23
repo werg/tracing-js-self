@@ -196,6 +196,7 @@ jobs:
             test/owned-promise-reflection-review.test.js \
             test/owned-promise-review-boundaries.test.js \
             test/semantic-native-promise-slots-v8.test.js \
+            test/semantic-native-source-reader-v8.test.js \
             test/semantic-promise-object-observations-v8.test.js \
             test/semantic-promise-object-v8.test.js \
             test/semantic-promise-object-source-v8.test.js \
@@ -210,7 +211,7 @@ jobs:
           from pathlib import Path
           root = Path(os.environ['RUNNER_TEMP'])
           cases = list(ET.parse(root / 'promise-object-tests.xml').getroot().iter('testcase'))
-          if len(cases) != 119 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+          if len(cases) != 133 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
               raise ValueError('Every Promise object and constructor job control must pass with actual native replay')
           for name, sources, contexts in [('promise-object-source-evidence.json', 15, 320), ('promise-adoption-getter-source-evidence.json', 5, 213), ('promise-object-review-source-evidence.json', 8, 196)]:
               evidence = json.loads((root / name).read_text())
@@ -227,7 +228,7 @@ jobs:
           if sum(row['rejectedRecords'] for row in adoption['nativeReceipts']) != 10 or sum(row['rejectedRestorations'] for row in adoption['nativeReceipts']) != 20:
               raise ValueError('Every retained adoption getter record and checkpoint alteration must be rejected')
           runpy.run_path('tools/verify-combined-v8-gate.py')['verify_review_promise_packets'](root)
-          print(f'{len(cases)} Promise controls passed; 28 original sources and seven direct protocols independently replayed')
+          print(f'{len(cases)} Promise and source-ingestion controls passed; 28 original sources, seven direct protocols and two first-await checkpoints independently replayed')
           PY
       - id: qualification
         name: Recollect exact source and native admission receipts

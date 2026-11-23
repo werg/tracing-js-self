@@ -238,9 +238,23 @@ class RunPolicyTests(unittest.TestCase):
             packet = {population: len(counts), "actualNativeCases": len(counts), "cases": cases,
                       "nativeReceipts": receipts, "trainingAdmission": False, "moduleAdmission": False,
                       "optimizerUpdates": 0, "generatedContexts": sum(counts)}
+            if population == "sourceCases":
+                packet["checkpointCases"], packet["checkpointNativeReceipts"] = [], []
+                for identity, count in [("promise-review-checkpoint-ordinary", 9),
+                                        ("promise-review-checkpoint-constructor-getter", 28)]:
+                    packet["checkpointCases"].append({"name": identity, "exported": {
+                        "contexts": [{} for _ in range(count)],
+                        "public": {"timeline": [{"mode": "generated"} for _ in range(count)]},
+                        "sidecar": {"compiler": {"checkpoints": [
+                            {"publicReplayValidated": True, "nativeRedispatches": 0}]}}}})
+                    packet["checkpointNativeReceipts"].append({"name": identity, "admitted": False,
+                        "counts": {"contexts": count},
+                        "checks": {key: "passed" for key in ["replay", "contexts", "continuation"]}})
             originals.append(packet)
             save(self.root / name, packet)
-        self.assertEqual([row["contexts"] for row in gate.verify_review_promise_packets(self.root)], [196, 30])
+        verified = gate.verify_review_promise_packets(self.root)
+        self.assertEqual([row["contexts"] for row in verified], [196, 30])
+        self.assertEqual(verified[0]["checkpoints"], {"cases": 2, "actualNativeCases": 2, "contexts": 37})
         for index, mutation, message in (
             (0, lambda p: p["nativeReceipts"][0]["checks"].update(replay="failed"), "did not pass"),
             (0, lambda p: p["nativeReceipts"][0].update(admitted=True), "did not pass"),
@@ -248,6 +262,13 @@ class RunPolicyTests(unittest.TestCase):
             (0, lambda p: p["nativeReceipts"].pop(), "identity differs"),
             (1, lambda p: p["nativeReceipts"][0]["counts"].update(contexts=17), "context population differs"),
             (1, lambda p: p["nativeReceipts"][0].update(checkedOwners=["first", "unrelated"]), "invocation identity differs"),
+            (0, lambda p: p["checkpointNativeReceipts"][0].update(name="unrelated"), "checkpoint source/native identity differs"),
+            (0, lambda p: p["checkpointNativeReceipts"].pop(), "checkpoint source/native identity differs"),
+            (0, lambda p: p["checkpointNativeReceipts"][0]["counts"].update(contexts=28), "checkpoint native context population differs"),
+            (0, lambda p: p["checkpointCases"][0]["exported"]["contexts"].pop(), "checkpoint native context population differs"),
+            (0, lambda p: p["checkpointNativeReceipts"][0]["checks"].update(continuation="failed"), "checkpoint native replay, contexts or continuation did not pass"),
+            (0, lambda p: p["checkpointNativeReceipts"][0].update(admitted=True), "checkpoint native replay, contexts or continuation did not pass"),
+            (0, lambda p: p["checkpointCases"][0]["exported"]["sidecar"]["compiler"]["checkpoints"][0].update(nativeRedispatches=1), "first-await checkpoint boundary differs"),
         ):
             with self.subTest(packet=names[index], rejection=message):
                 changed = copy.deepcopy(originals[index]);mutation(changed);save(self.root / names[index], changed)
