@@ -66,11 +66,11 @@ export function objectPrototype(obj) {
 }
 export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
   const original=['ref','promise','intrinsic'].includes(receiver[0])?heap[receiver[1]]:null;
-  if(!original||!['object','array','promise','module-namespace'].includes(original.kind))return null;
+  if(!original||!['object','array','function','promise','module-namespace'].includes(original.kind))return null;
   const observation=value=>({
     kind:'property',objectId:original.id,key:name,
     version:Object.hasOwn(original.propertyVersions??{},name)?original.propertyVersions[name]:0,shapeVersion:original.shapeVersion??0,
-    present:Object.hasOwn(original.properties,name),
+    present:Object.hasOwn(original.properties??{},name),
     value:value.value,supplyingEvent:value.origin??null
   });
   let current=original;
@@ -85,7 +85,7 @@ export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
       return accessors&&accessor?.get?.value?
         {accessor,observation:observation(accessor.get)}:null;
     }
-    if(Object.hasOwn(current.properties,name)){
+    if(Object.hasOwn(current.properties??{},name)){
       const method=current.properties[name];
       if(!method||!Array.isArray(method.value))return null;
       return {method,observation:observation(method)};
@@ -130,7 +130,7 @@ export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
       return {method,observation:observation(method)};
     }
     current=heap[proto];
-    if(!current||!['object','array','promise'].includes(current.kind))return null;
+    if(!current||!['object','array','function','promise'].includes(current.kind))return null;
   }
 }
 export function ordinaryBuiltin(heap, receiver, name) {

@@ -14,10 +14,10 @@ import { specStep, ENGINE_REVISION } from './spec-schema.js';
 import {supportsPinnedRegExp,testPinnedRegExp,scanPinnedReplacement} from './owned-pinned-regexp.js';
 import {createNumberConversion,advanceNumberConversion} from './owned-number-conversion.js';
 import {createPrimitiveConversion,advancePrimitiveConversion} from './owned-primitive-conversion.js';
-import {ownedHasProperty} from './owned-has-property.js';
+import {ownedHasProperty,ownedHasOwnProperty} from './owned-has-property.js';
 import {ensurePromisePrototype,ownedObjectStorage,ownedObjectHeap,ownedObjectValue} from './owned-object-storage.js';
 import {validateExternalCallbackJob} from './external-callback-validation.js';
-import {unavailableOwnedStandardGlobal} from './conformance/test262-capabilities.js';
+import {ownedGlobalProperty} from './owned-global-object.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
@@ -95,17 +95,6 @@ function valueKey(tagged) {
   if (!['str','num','bool','null','undefined','bigint'].includes(tagged[0]))
     throw new TypeError('Property keys requiring guest coercion are unsupported');
   return stringPropertyKey(String(decode(tagged)));
-}
-// Script globals are cells owned by the script environment. Reflection reads
-// those same live cells, so later scripts and aliases cannot see a stale copy.
-function globalProperty(state,key){
-  const control=state.control.a0,script=state.envs[control.scriptSequence?.environmentId],
-    binding=script?.bindings[key];
-  if(binding&&['var','function'].includes(binding.kind))return binding.token;
-  const global=state.envs[control.globalEnvId]?.bindings[key]?.token;
-  if(global)return global;
-  if(unavailableOwnedStandardGlobal(key))throw new TypeError('Global object property requires owned intrinsic storage: '+key);
-  return null;
 }
 function propertyKeySlot(frame,instruction){
   const op=instruction.op;
@@ -225,10 +214,10 @@ function scalarUpdate(previous,operator) {
 function propertyAccessor(heap, receiver, key) {
   let obj=heap[receiver[1]];
   const visited=new Set();
-  while(obj && ['object','array','promise','module-namespace'].includes(obj.kind)){
+  while(obj && ['object','array','function','promise','module-namespace'].includes(obj.kind)){
     if(visited.has(obj.id))throw new Error('Cyclic owned prototype graph');
     visited.add(obj.id);
-    if(Object.hasOwn(obj.properties,key))return null;
+    if(Object.hasOwn(obj.properties??{},key))return null;
     if(Object.hasOwn(obj.accessors??{},key))return obj.accessors[key];
     const proto=objectPrototype(obj);
     if(proto===null||proto==='Object.prototype'||proto==='Array.prototype')return null;
@@ -2358,7 +2347,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
           }
           if(base.value[0]==='host')v=['hostfn',base.value[1]==='demo'?(HOST_METHODS[property]??`demo.${property}`):`${base.value[1]}.${property}`];
           else if(base.value[0]==='intrinsic'&&base.value[1]==='globalThis'){
-            const own=globalProperty(s,property);
+            const own=ownedGlobalProperty(s,property,this.sources);
             if(own)v=own.value;
             else if(property==='hasOwnProperty')v=['builtinfn','Object.prototype.hasOwnProperty'];
             else if(property in Object.prototype)throw new TypeError('Global inherited property requires owned ordinary storage');
@@ -3016,7 +3005,7 @@ if(object.kind==='regexp'){
               key=valueKey(args[callable[1]==='Object.hasOwn'?1:0]?.value??U);
             if(['undefined','null'].includes(base[0]))guestFault('TypeError','Cannot convert undefined or null to object');
             let present;
-            if(base[0]==='intrinsic'&&base[1]==='globalThis')present=globalProperty(s,key)!==null;
+            if(base[0]==='intrinsic'&&base[1]==='globalThis')present=ownedGlobalProperty(s,key,this.sources)!==null;
             else if(base[0]==='str')present=key==='length'||arrayIndex(key)&&Number(key)<base[1].length;
             else if(isPrimitiveValue(base))present=false;
             else{
@@ -3030,7 +3019,7 @@ if(object.kind==='regexp'){
               if(!object||!['object','array','function','generator','promise'].includes(object.kind))
                 throw new TypeError('Own property reflection requires owned ordinary storage');
               if(object.kind==='function')this.functionProperties(s,object,eventId,{prototype:key==='prototype'});
-              present=Object.hasOwn(object.properties,key)||Object.hasOwn(object.accessors??{},key);
+              present=ownedHasOwnProperty(object,key);
             }
             return {...operands(fn,...sourceCallArgs),reads:adapterReads,...result(['bool',present])};
           }

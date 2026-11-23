@@ -218,7 +218,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     validateTemplateEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateEnumerationEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateReceiverEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
-    validateCallAdapterEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
+    validateCallAdapterEvent(state,e,bundle.programs,message=>fail(message,e.eventId),bundle.sources);
     validateConstructionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateSuperEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validateBinaryMemoryEvent(e,message=>fail(message,e.eventId));

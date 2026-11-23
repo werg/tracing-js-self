@@ -30,9 +30,15 @@ export function ownedObjectHeap(state){
   // exposed to a property/prototype operation. Its fixed identity is the same
   // before and after materialization; an ordinary Promise allocation does not
   // allocate an unrelated guest object or consume an object counter.
-  const view=Object.assign(Object.create(state.heap),state.promises);
-  if(!state.heap['Promise.prototype'])view['Promise.prototype']=promisePrototypeRecord();
-  return view;
+  // Lookup borrows one row on demand. An ordinary property read must not
+  // enumerate or copy every unrelated Promise in the realm.
+  let pristine;
+  return new Proxy(Object.create(null),{get(_target,id){
+    if(Object.hasOwn(state.promises,id))return state.promises[id];
+    if(Object.hasOwn(state.heap,id))return state.heap[id];
+    if(id==='Promise.prototype')return pristine??=promisePrototypeRecord();
+    return undefined;
+  }});
 }
 
 export function ownedObjectValue(state,id){

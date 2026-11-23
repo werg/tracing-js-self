@@ -1,6 +1,8 @@
 // Read-only source linkage for call/apply. The public call still enters the
 // original closure; adapter arguments are not the closure's argument list.
 import {symbolPropertyKey,stringPropertyKey} from './property-keys.js';
+import {ownedGlobalProperty} from './owned-global-object.js';
+import {ownedHasOwnProperty} from './owned-has-property.js';
 const names=new Set(['Function.prototype.call','Function.prototype.apply','Reflect.apply']);
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),undefinedValue=['undefined'];
 export function callAdapterInvocation(event){
@@ -41,7 +43,7 @@ function scalarLength(value,fail){
   if(!Number.isSafeInteger(length)||length>10000)fail('Apply argument length exceeds the owned bound');
   return length;
 }
-export function validateCallAdapterEvent(state,event,programs,fail){
+export function validateCallAdapterEvent(state,event,programs,fail,sources=[]){
   const adapter=callAdapterInvocation(event);if(!adapter)return;
   const child=event.causes?.find(cause=>cause.kind==='invocation');
   const ownBuiltin=adapter.callee?.[0]==='builtinfn'&&
@@ -84,15 +86,13 @@ export function validateCallAdapterEvent(state,event,programs,fail){
       tagged[0]==='num'&&tagged[1]==='-0'?'0':String(tagged[1]));
     let present;
     if(base[0]==='intrinsic'&&base[1]==='globalThis'){
-      const control=state.control.a0,local=state.envs[control.scriptSequence?.environmentId]?.bindings[key];
-      present=!!(local&&['var','function'].includes(local.kind)||state.envs[control.globalEnvId]?.bindings[key]);
+      present=ownedGlobalProperty(state,key,sources)!==null;
     }else if(base[0]==='str')present=key==='length'||/^(0|[1-9]\d*)$/.test(key)&&Number(key)<base[1].length;
     else if(['bool','num','bigint','symbol'].includes(base[0]))present=false;
     else{
       const object=base[0]==='promise'?state.promises[base[1]]:base[0]==='ref'||base[0]==='intrinsic'?state.heap[base[1]]:null;
       if(!object||!['object','array','function','generator','promise'].includes(object.kind))fail('Own property adapter lost receiver storage');
-      present=Object.hasOwn(object.properties??{},key)||Object.hasOwn(object.accessors??{},key)||
-        object.kind==='function'&&(['name','length'].includes(key)||key==='prototype'&&!object.arrow&&!object.async&&!object.nonConstructible);
+      present=ownedHasOwnProperty(object,key);
     }
     if(!same(event.result,['bool',!!present]))fail('Own property adapter result differs from its actual receiver');
     const changed=event.stateChanges.find(patch=>patch.table==='frames'&&patch.id===frame.id)?.after;
