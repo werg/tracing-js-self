@@ -3551,6 +3551,12 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               const primitive=isPrimitiveValue(base);
               if(!primitive&&(!object||!['object','array','function','generator','module-namespace'].includes(object.kind)))
                 throw new TypeError('Object.isFrozen requires owned ordinary storage');
+              // Ordinary function name/length storage is still lazy. An empty
+              // modeled key set cannot prove that a non-extensible function
+              // has no configurable own properties.
+              if(object?.kind==='function'&&object.extensible===false&&
+                 !(object.properties?.name&&object.properties?.length))
+                throw new TypeError('Object.isFrozen requires owned complete function descriptors');
               if(object?.kind==='module-namespace'){
                 const outcome=this.startModuleNamespaceInspection(s,f,object,
                   callable[1],null,eventId);

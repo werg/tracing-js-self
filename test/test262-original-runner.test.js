@@ -212,6 +212,23 @@ test('invalid accessor types and non-configurable property invariants retain gen
   ])statuses(both(body,{metadata}),'passed');
 });
 
+test('incomplete function descriptors cannot manufacture a frozen-object runtime-negative pass',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const initializer of ['function(){}','async function(){}','()=>{}']){
+    const body='var f='+initializer+';Object.preventExtensions(f);if(Object.isFrozen(f))throw new TypeError();';
+    for(const {owned,reference} of both(body,{metadata})){
+      assert.equal(owned.status,'unsupported',owned.reason);
+      assert.match(owned.reason,/Object.isFrozen requires owned complete function descriptors/);
+      assert.equal(reference.status,'failed',reference.reason);
+    }
+    for(const {owned,reference} of both('try{'+body+'}catch(error){}')){
+      assert.equal(owned.status,'unsupported',owned.reason);
+      assert.equal(reference.status,'passed',reference.reason);
+    }
+  }
+  statuses(both('var f=function*(){};Object.preventExtensions(f);assert.sameValue(Object.isFrozen(f),false);'),'passed');
+});
+
 test('raw preserves exact bytes and loads no implicit harness or wrapper',()=>{
   const [options]=fixture('if(typeof assert!=="undefined")throw 1;', {metadata:'flags: [raw]\n'});
   assert.equal(options.variant.mode,'raw');
