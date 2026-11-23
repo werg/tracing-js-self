@@ -1,0 +1,395 @@
+{
+  "behavior_coverage": {
+    "episodes": {
+      "train|semantic_execution|semantic_async": 1,
+      "train|semantic_execution|semantic_code_invocation": 1,
+      "train|semantic_execution|semantic_v8": 1
+    },
+    "original_families": {
+      "train|semantic_execution|semantic_async": 1,
+      "train|semantic_execution|semantic_code_invocation": 1,
+      "train|semantic_execution|semantic_v8": 1
+    },
+    "original_family_ids": {
+      "train|semantic_execution|semantic_async": [
+        "semantic-region-component:69906c16aeb5d865989cdac96c4bfb6b933e2da0a86dd03b3491c4052f5574fa"
+      ],
+      "train|semantic_execution|semantic_code_invocation": [
+        "semantic-region-component:69906c16aeb5d865989cdac96c4bfb6b933e2da0a86dd03b3491c4052f5574fa"
+      ],
+      "train|semantic_execution|semantic_v8": [
+        "semantic-region-component:69906c16aeb5d865989cdac96c4bfb6b933e2da0a86dd03b3491c4052f5574fa"
+      ]
+    },
+    "version": 2
+  },
+  "census": {
+    "U": 587642,
+    "U_definition": "Raw-codec tokens in accepted deduplicated complete transcripts, including shared context.",
+    "accepted_episodes": 1,
+    "duplicates": 0,
+    "executed_transcript_U": 0,
+    "filtered_rows": 0,
+    "free_position_candidates": 6872,
+    "free_position_candidates_definition": "The static masked target inventory: positions that could carry loss.",
+    "incomplete_transcript_U": 0,
+    "independent_families": 1,
+    "parser_review_rows": 0,
+    "quarantined": 0,
+    "rejected_rows": 0,
+    "simulated_transcript_U": 0,
+    "strata": [
+      {
+        "U": 587642,
+        "eligible_assistant_tokens": 6872,
+        "episodes": 1,
+        "executed_observation_tokens": 580770,
+        "families": 1,
+        "free_position_candidates": 6872,
+        "source_id": "semantic-execution-v8",
+        "split": "train",
+        "stream": "semantic_execution",
+        "tool_observation_tokens": 0
+      }
+    ],
+    "verified_success_U": 0
+  },
+  "chunking": {
+    "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "config": {
+      "chat_template": "auto",
+      "code_tree_scale": 1.5,
+      "hard_max_tokens": 128,
+      "limits": {
+        "isolate_native": true,
+        "max_depth": 12,
+        "max_injections": 2048,
+        "max_nodes": 100000,
+        "max_parse_bytes": 1048576,
+        "max_parse_milliseconds": 0,
+        "max_regions": 20000,
+        "max_tree_depth": 128,
+        "worker_timeout_ms": 5000
+      },
+      "max_bytes": 16384,
+      "parser_backend": "tree_sitter",
+      "planner_max_edges": 64,
+      "soft_max_tokens": 128,
+      "target_tokens": 128,
+      "tree_distance_budget": 4.0,
+      "tree_distance_weight": 0.15,
+      "use_icu": false,
+      "version": "recursive-parser-v2"
+    },
+    "config_fingerprint": "b98231237a9ccd74a2bc4bd40384cbca0d027af3f1be145ed26423fc14afd9ae",
+    "fingerprint": "09a55e6b4e1697c8eb05579ab63bed60cdcbbcf46fdfa875bfc37108d2ccb8b5",
+    "parsers": {
+      "chat": {
+        "templates": {
+          "chatml": {
+            "aliases": [
+              "qwen"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3c7c696d5f656e647c3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "chatml",
+            "prefixes": [],
+            "separator": "0a",
+            "start": "3c7c696d5f73746172747c3e"
+          },
+          "deepseek": {
+            "aliases": [
+              "deepseek-v3",
+              "deepseek-r1"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3cefbd9c656e64e296816f66e2968173656e74656e6365efbd9c3e"
+            ],
+            "format_markers": [],
+            "mode": "deepseek",
+            "name": "deepseek",
+            "prefixes": [
+              "3cefbd9c626567696ee296816f66e2968173656e74656e6365efbd9c3e"
+            ],
+            "separator": "3cefbd9c417373697374616e74efbd9c3e",
+            "start": "3cefbd9c55736572efbd9c3e"
+          },
+          "gemma": {
+            "aliases": [
+              "gemma2",
+              "gemma3"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3c656e645f6f665f7475726e3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "gemma",
+            "prefixes": [
+              "3c626f733e"
+            ],
+            "separator": "0a",
+            "start": "3c73746172745f6f665f7475726e3e"
+          },
+          "harmony": {
+            "aliases": [],
+            "allow_named_tools": true,
+            "body_newlines": 0,
+            "channel_markers": [
+              "3c7c6368616e6e656c7c3e"
+            ],
+            "ends": [
+              "3c7c656e647c3e",
+              "3c7c72657475726e7c3e",
+              "3c7c63616c6c7c3e"
+            ],
+            "format_markers": [
+              "3c7c636f6e73747261696e7c3e"
+            ],
+            "mode": "delimited",
+            "name": "harmony",
+            "prefixes": [],
+            "separator": "3c7c6d6573736167657c3e",
+            "start": "3c7c73746172747c3e"
+          },
+          "harmony_legacy": {
+            "aliases": [],
+            "allow_named_tools": true,
+            "body_newlines": 0,
+            "channel_markers": [
+              "3c7c6d6574615f7365707c3e"
+            ],
+            "ends": [
+              "3c7c696d5f656e647c3e",
+              "3c7c66696d5f7375666669787c3e",
+              "3c7c676869737375657c3e"
+            ],
+            "format_markers": [
+              "3c7c6d6574615f73746172747c3e"
+            ],
+            "mode": "delimited",
+            "name": "harmony_legacy",
+            "prefixes": [
+              "3c7c656e646f66746578747c3e"
+            ],
+            "separator": "3c7c696d5f7365707c3e",
+            "start": "3c7c696d5f73746172747c3e"
+          },
+          "inst": {
+            "aliases": [
+              "llama2",
+              "llama-2",
+              "mistral"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 0,
+            "channel_markers": [],
+            "ends": [
+              "3c2f733e"
+            ],
+            "format_markers": [],
+            "mode": "inst",
+            "name": "inst",
+            "prefixes": [
+              "3c733e"
+            ],
+            "separator": "5b2f494e53545d",
+            "start": "5b494e53545d"
+          },
+          "llama3": {
+            "aliases": [
+              "llama-3",
+              "llama3.1",
+              "llama3.2",
+              "llama3.3"
+            ],
+            "allow_named_tools": true,
+            "body_newlines": 2,
+            "channel_markers": [],
+            "ends": [
+              "3c7c656f745f69647c3e",
+              "3c7c656f6d5f69647c3e",
+              "3c7c656e645f6f665f746578747c3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "llama3",
+            "prefixes": [
+              "3c7c626567696e5f6f665f746578747c3e"
+            ],
+            "separator": "3c7c656e645f6865616465725f69647c3e",
+            "start": "3c7c73746172745f6865616465725f69647c3e"
+          },
+          "phi3": {
+            "aliases": [
+              "phi-3",
+              "phi4"
+            ],
+            "allow_named_tools": false,
+            "body_newlines": 1,
+            "channel_markers": [],
+            "ends": [
+              "3c7c656e647c3e",
+              "3c7c656e646f66746578747c3e"
+            ],
+            "format_markers": [],
+            "mode": "delimited",
+            "name": "phi3",
+            "prefixes": [],
+            "separator": "7c3e",
+            "start": "3c7c"
+          }
+        },
+        "version": "chat-framing-v1"
+      },
+      "implementation": "bfd48445630387eb441499ae13aafc3315c12e75ffc4795cc6a88bd7c8f993d9",
+      "prose": {
+        "icu": null,
+        "rules": "unicode-prose-v1",
+        "unicode": "16.0.0",
+        "uniseg": "0.10.1"
+      },
+      "syntax": {
+        "backend": "tree_sitter",
+        "grammar_dependencies": {
+          "tree-sitter-c-sharp": "0.23.5",
+          "tree-sitter-embedded-template": "0.25.0",
+          "tree-sitter-yaml": "0.7.2"
+        },
+        "markdown_it_py": "4.0.0",
+        "network": "disabled",
+        "providers": [],
+        "registry": "offline-grammar-registry-v1",
+        "tree_sitter": "0.25.2",
+        "tree_sitter_language_pack": "0.13.0"
+      }
+    }
+  },
+  "chunking_stats": {
+    "boundaries": {
+      "end": 360,
+      "word": 4527
+    },
+    "bytes": 1866500,
+    "diagnostics": {
+      "semantic_boundary_projected": 335
+    },
+    "forced_splits": 0,
+    "histogram": {
+      "0": 0,
+      "1024": 0,
+      "128": 4712,
+      "192": 0,
+      "256": 0,
+      "32": 89,
+      "384": 0,
+      "512": 0,
+      "64": 71,
+      "768": 0,
+      "96": 15,
+      ">1024": 0
+    },
+    "histogram_kind": "disjoint buckets, inclusive upper bounds",
+    "languages": {
+      "text": 4887
+    },
+    "max_positions": 128,
+    "mean_positions": 120.24595866584816,
+    "over_soft_max": 0,
+    "positions": 587642,
+    "records": 4887,
+    "reference_tokens": 587642,
+    "unversioned_records": 0
+  },
+  "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "complete": true,
+  "counts": {
+    "*": 1,
+    "split:train": 1,
+    "split:train|stream:semantic_execution": 1,
+    "stream:semantic_execution": 1
+  },
+  "dedup": {
+    "anchor_count": 8,
+    "evaluation_after": null,
+    "max_candidates": 4096,
+    "max_descendants_per_parent": null,
+    "min_near_words": 40,
+    "near_threshold": 0.94,
+    "shingle_words": 5,
+    "sketch_size": 256,
+    "split_seed": "semantic-region-family-components/1",
+    "train_fraction": 0.98,
+    "validation_fraction": 0.01
+  },
+  "feature_counts": {},
+  "feature_extractors": [],
+  "fingerprint": "4a8d3e3f050aad9b5790ed0730fcba5f3f9b0065cfeaaef3c2305a1423d018e8",
+  "index": {
+    "path": "index.sqlite",
+    "sha256": "94b0f6773e9f7f41068fe23b4c0b86be0a7c781800655777b152a6f55f6bbd68"
+  },
+  "parser_review": {},
+  "pipeline_fingerprint": "5ded90c2fab364c40be9a24b4d0f0bd3a89c11f076b83cc8f19156a19435f507",
+  "schema_version": 10,
+  "scored_media_counts": {},
+  "shards": [
+    {
+      "bytes": 14226892,
+      "episodes": 1,
+      "path": "episodes-000000.jsonl",
+      "sha256": "3078038dab0296df8d8f4757931c069fe96292e02f8f7b54cc561a9755f2c75f"
+    }
+  ],
+  "sources": [
+    {
+      "consumerRevision": "aab637f002323a7820759763652df7a5ad50fe04",
+      "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+      "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+      "learningClaim": null,
+      "maxHistory": 128,
+      "maxPositions": 128,
+      "optimizerSteps": 0,
+      "producerRevision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+      "registryDigest": "05a5ef09516a0b1e4e46fedcb0a31c71eed7f3680acadb303f628bde9f3ebead",
+      "representation": "mixed",
+      "schema": "semantic-preparation/8",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+    }
+  ],
+  "structured_supply": {
+    "counts": {
+      "train|semantic_execution|episode_views": 1,
+      "train|semantic_execution|event_modality:text": 4887,
+      "train|semantic_execution|group_clock:unknown": 4887,
+      "train|semantic_execution|group_modalities:text": 4887,
+      "train|semantic_execution|group_width:1": 4887,
+      "train|semantic_execution|record_provenance:executed": 4706,
+      "train|semantic_execution|record_provenance:teacher": 181
+    },
+    "denominators": "group_* count committed groups; event_* and availability count events; record_* count physical records; language_pair and episode_views count episodes; original_families deduplicate each dimension",
+    "original_families": {
+      "train|semantic_execution|episode_views": 1,
+      "train|semantic_execution|event_modality:text": 1,
+      "train|semantic_execution|group_clock:unknown": 1,
+      "train|semantic_execution|group_modalities:text": 1,
+      "train|semantic_execution|group_width:1": 1,
+      "train|semantic_execution|record_provenance:executed": 1,
+      "train|semantic_execution|record_provenance:teacher": 1
+    },
+    "version": 1
+  }
+}

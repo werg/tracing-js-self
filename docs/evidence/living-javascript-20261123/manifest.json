@@ -1,0 +1,1591 @@
+{
+  "schema": "living-javascript-verification-evidence/1",
+  "assembledAt": "2026-11-23T07:24:55.666142+00:00",
+  "intendedRepositoryDirectory": "docs/evidence/living-javascript-20261123/",
+  "scope": "Completed original verification outputs; historical failures and focused follow-ups remain separate observations",
+  "identityPolicy": "Exact clean pair identities are used only where recorded. Published fix references are code attribution, not invented run-boundary identities.",
+  "observations": {
+    "broadProducer": {
+      "status": "completed_with_failures",
+      "counts": {
+        "tests": 3202,
+        "pass": 3106,
+        "fail": 10,
+        "cancelled": 0,
+        "skipped": 86,
+        "todo": 0
+      },
+      "reportedProducerReference": "9a17",
+      "identityBasis": "Stable checkout recorded in the session; supplied log has no before/after Git capture",
+      "log": "producer/full-suite.log.gz",
+      "failureClassification": {
+        "helperOwnershipEnvironment": 6,
+        "staleEditionFixtureVariantIdentities": 4,
+        "basis": "Original error traces and the coordinator classification; original failed run is retained unchanged"
+      },
+      "separateClosures": [
+        "kernelHelperFocused",
+        "kernelHelperComplete",
+        "editionIdentityControls"
+      ],
+      "rerunAsZeroFailureFullSuite": false
+    },
+    "kernelHelperInitial": {
+      "status": "completed_with_failures",
+      "counts": {
+        "tests": 14,
+        "pass": 9,
+        "fail": 5,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "log": "historical/kernel-helper-ownership.log.gz",
+      "executionIdentityCaptured": false
+    },
+    "kernelHelperFocused": {
+      "status": "passed",
+      "counts": {
+        "tests": 14,
+        "pass": 14,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "log": "producer/kernel-helper-focused.log.gz",
+      "executionIdentityCaptured": false
+    },
+    "kernelHelperComplete": {
+      "status": "passed_with_explicit_skips",
+      "counts": {
+        "tests": 25,
+        "pass": 15,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 10,
+        "todo": 0
+      },
+      "log": "producer/kernel-helper-complete.log.gz",
+      "executionIdentityCaptured": false,
+      "skipReason": "Ten optional paired native runtime controls were unavailable in this particular run"
+    },
+    "editionIdentityControls": {
+      "status": "passed",
+      "counts": {
+        "tests": 28,
+        "pass": 28,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "relatedPublishedFixReference": "d4ceb074",
+      "executionIdentityCaptured": false,
+      "log": "producer/test262-edition-identities.log.gz"
+    },
+    "pairedNativeSources": {
+      "status": "passed",
+      "counts": {
+        "tests": 66,
+        "pass": 66,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "producerRevision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+      "consumerRevision": "aab637f002323a7820759763652df7a5ad50fe04",
+      "before": "paired-native/before.json",
+      "after": "paired-native/after.json",
+      "log": "paired-native/tests.log.gz",
+      "beforeAfterUnchangedCleanPair": true,
+      "originalTestLogSha256": "e6db9ba5a5f42b16cf1b3f5a03250bd57243be5169c4e0191c2be9e758246b90"
+    },
+    "contractsEarlierProducer": {
+      "status": "completed",
+      "reportedProducerReference": "5f321",
+      "executionIdentityCaptured": false,
+      "log": "producer/contracts-5f321.log.gz"
+    },
+    "contractsFinalRuntime": {
+      "status": "passed",
+      "reportedProducerRevision": "ce364792c03998e45a1d01675d85235df8c9e97c",
+      "reportedExitCode": 0,
+      "executionIdentityCaptured": false,
+      "identityBasis": "Coordinator recorded the exact clean producer and successful command; original log contains check results but no before/after Git capture",
+      "command": "npm run contracts:check",
+      "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+      "log": "producer/contracts-ce364792.log.gz"
+    },
+    "referenceFinalRuntime": {
+      "status": "passed",
+      "reportedProducerRevision": "ce364792c03998e45a1d01675d85235df8c9e97c",
+      "reportedExitCode": 0,
+      "executionIdentityCaptured": false,
+      "passedChecks": [
+        "getterReadOnce",
+        "bufferCoherenceAcrossCallback",
+        "synchronousThrowPreserved",
+        "reverseCompletionOrder",
+        "internalAwaitSuspends",
+        "permittedBatchingEquivalent",
+        "transcriptStoreDoesNotRepeatMockEffect",
+        "duplicateConversionDetected"
+      ],
+      "log": "producer/reference-ce364792.log.gz"
+    },
+    "referenceFixture": {
+      "status": "passed",
+      "passedChecks": [
+        "getterReadOnce",
+        "bufferCoherenceAcrossCallback",
+        "synchronousThrowPreserved",
+        "reverseCompletionOrder",
+        "internalAwaitSuspends",
+        "permittedBatchingEquivalent",
+        "transcriptStoreDoesNotRepeatMockEffect",
+        "duplicateConversionDetected"
+      ],
+      "reportedProducerReference": "9a17",
+      "executionIdentityCaptured": false,
+      "log": "producer/reference-fixture.log.gz"
+    },
+    "directReleasePython": {
+      "status": "passed",
+      "tests": 110,
+      "reportedCodeContext": "Local driver-repair tree associated with 45a1806d",
+      "executionIdentityCaptured": false,
+      "producerRevision": null,
+      "consumerRevision": null,
+      "log": "producer/direct-release-python.log.gz"
+    },
+    "broadConsumer": {
+      "status": "completed_with_failures",
+      "counts": {
+        "passed": 1152,
+        "failed": 2,
+        "skipped": 3,
+        "total": 1157,
+        "durationSeconds": 2570.15
+      },
+      "reportedConsumerReference": "86e7",
+      "executionIdentityCaptured": false,
+      "log": "consumer/full-contract-suite.log.gz",
+      "failures": [
+        "One deadline covered the entire growing no-legacy population",
+        "Fresh child Python process could not import Torch"
+      ],
+      "skips": "Three live-source admission controls lacked their required environment",
+      "separateClosures": [
+        "noLegacyCases",
+        "inputRelocation",
+        "liveSourceControls"
+      ],
+      "rerunAsZeroFailureFullSuite": false
+    },
+    "noLegacyCases": {
+      "status": "passed",
+      "counts": {
+        "passed": 71,
+        "failed": 0,
+        "skipped": 0,
+        "total": 71,
+        "durationSeconds": 732.24
+      },
+      "log": "consumer/no-legacy-cases.log.gz",
+      "executionIdentityCaptured": false,
+      "relatedPublishedConsumerFixReferences": [
+        "5a97318",
+        "65ebbf6"
+      ],
+      "scope": "All seven fixture populations; every case gets a fresh child with its own unchanged 240-second bound"
+    },
+    "inputRelocation": {
+      "status": "passed",
+      "counts": {
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "total": 1,
+        "durationSeconds": 28.91
+      },
+      "log": "consumer/input-relocation-venv.log.gz",
+      "executionIdentityCaptured": false,
+      "scope": "Fresh-process relocation under the proper Python environment"
+    },
+    "liveSourceControls": {
+      "status": "passed",
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "total": 3,
+        "durationSeconds": 51.0
+      },
+      "log": "consumer/live-source-controls.log.gz",
+      "executionIdentityCaptured": false
+    },
+    "objectReflectionStorage": {
+      "status": "passed",
+      "counts": {
+        "tests": 139,
+        "pass": 139,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "publishedFixRevision": "d9f7984779095b3656cd2ea94150d4c4eea3cea8",
+      "executionIdentityCaptured": false,
+      "log": "producer/object-reflection-storage.log.gz"
+    },
+    "frozenFunctionStorage": {
+      "status": "passed",
+      "counts": {
+        "tests": 29,
+        "pass": 29,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "publishedFixRevision": "d5eb323cdb914c8f5bbfa87ce18858644d32e2b3",
+      "executionIdentityCaptured": false,
+      "log": "producer/frozen-function-storage.log.gz"
+    },
+    "proxyStorageRefusal": {
+      "status": "passed",
+      "counts": {
+        "tests": 15,
+        "pass": 15,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "publishedFixRevision": "ce364792c03998e45a1d01675d85235df8c9e97c",
+      "executionIdentityCaptured": false,
+      "log": "producer/proxy-storage-refusal.log.gz"
+    },
+    "hostedInteropAggregateTimeout": {
+      "status": "failed",
+      "producerRevision": "0b9ca73c70497f004ee81321d4ee98266aebb673",
+      "consumerRevision": "65ebbf6a8eaafe707277eae0d8606b84c9db3ab3",
+      "transportControls": {
+        "passed": 77,
+        "failed": 1,
+        "total": 78
+      },
+      "jobUrl": "https://github.com/werg/megatoken/actions/runs/45128882436/job/137539514197",
+      "log": "historical/hosted-interop-aggregate-timeout.log.gz",
+      "failure": "One Python child attempted all eight async source artifacts under a single 120000 ms deadline and timed out; all original source cases passed before that replay aggregate."
+    },
+    "asyncSourcePerCase": {
+      "status": "passed",
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 206.585,
+      "slowestNativeCaseSeconds": 28.811,
+      "childTimeoutMs": 120000,
+      "producerBaseRevision": "ce364792c03998e45a1d01675d85235df8c9e97c",
+      "consumerRevision": "65ebbf6a8eaafe707277eae0d8606b84c9db3ab3",
+      "identityBasis": "Focused candidate test-only worktree based on ce364792; source and binding files changed separately. These are not clean-boundary captures or a repeat of the earlier 66-test pair.",
+      "log": "producer/async-source-per-case.log.gz",
+      "publishedRepairRevision": "a44621ceb9bcb25b1348b349b70056cdef902d65",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/semantic-async-iteration-source-v8.test.js"
+      ],
+      "cwd": "/workspace/scratch/0952c3151b8f/producer-native-ci",
+      "environment": {
+        "TMPDIR": "/workspace/scratch/0952c3151b8f/tmp",
+        "MEGATOKEN_ROOT": "/workspace/scratch/0952c3151b8f/megatoken",
+        "MEGATOKEN_PYTHON": "/workspace/scratch/0952c3151b8f/semantic-runtime/bin/python",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1"
+      }
+    },
+    "asyncBindingPerCase": {
+      "status": "passed",
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 108.755,
+      "slowestNativeCaseSeconds": 34.1,
+      "childTimeoutMs": 120000,
+      "producerBaseRevision": "ce364792c03998e45a1d01675d85235df8c9e97c",
+      "consumerRevision": "65ebbf6a8eaafe707277eae0d8606b84c9db3ab3",
+      "identityBasis": "Focused candidate test-only worktree based on ce364792; source and binding files changed separately. These are not clean-boundary captures or a repeat of the earlier 66-test pair.",
+      "log": "producer/async-binding-per-case.log.gz",
+      "publishedRepairRevision": "a44621ceb9bcb25b1348b349b70056cdef902d65",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/semantic-async-iteration-bindings-v8.test.js"
+      ],
+      "cwd": "/workspace/scratch/0952c3151b8f/producer-native-ci",
+      "environment": {
+        "TMPDIR": "/workspace/scratch/0952c3151b8f/tmp",
+        "MEGATOKEN_ROOT": "/workspace/scratch/0952c3151b8f/megatoken",
+        "MEGATOKEN_PYTHON": "/workspace/scratch/0952c3151b8f/semantic-runtime/bin/python",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1"
+      }
+    },
+    "finalDocumentationReview": {
+      "status": "passed",
+      "scope": "Retained artifact hashes and inventory, relative links in both documents, shell syntax, and Git whitespace check",
+      "artifactsVerified": 65,
+      "relativeLinksVerified": 38,
+      "shellBlocksVerified": 6,
+      "countsAreOverlapping": true
+    }
+  },
+  "lifecycles": [
+    {
+      "id": "ordinary-lifecycle-venv",
+      "status": "passed",
+      "sourceId": "promise-number-proxy-memory-join",
+      "producerRevision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+      "consumerRevision": "aab637f002323a7820759763652df7a5ad50fe04",
+      "identityBasis": "Revisions and original commands retained in command-report.json; no substituted later HEAD",
+      "declaredCandidateCount": 77,
+      "preparedSourceCount": 1,
+      "optimizerUpdates": 2,
+      "optimizerUpdateCounts": {
+        "lifecycle": 2,
+        "coverage": 0,
+        "total": 2
+      },
+      "firstCheckpointStep": 1,
+      "resumedCheckpointStep": 2,
+      "torchVersion": "2.14.1+cpu",
+      "fullPopulationQualified": false,
+      "fullTargetCoverageQualified": false,
+      "learnedSuccess": null,
+      "firstSelectionStatus": "rejected",
+      "nextSelectionExactAfterRestoration": true,
+      "acknowledgedModelSelections": 0,
+      "scope": "One predeclared training source, two ordinary optimizer updates, checkpoint resume, export and real service restoration. No held-out, accepted-record recovery or whole-program success claim.",
+      "limits": [
+        "Executed plain-text positions are independently checked for the observed two-update subset; complete-population positions require the separate full-pass gate. Hidden routing rows and unsupported objective positions remain unmeasured.",
+        "Two optimizer updates do not qualify learned execution quality or prove every positive-loss target was exposed.",
+        "One source family and two optimizer steps do not qualify learned execution quality.",
+        "Fresh-process recovery retained original failed/unacknowledged selections; accepted-record recovery was not exercised.",
+        "Artifact hashes identify local complete bundles. Durable external bundle publication is a separate recorded step."
+      ],
+      "report": "lifecycles/ordinary-lifecycle-venv/command-report.json",
+      "qualification": "lifecycles/ordinary-lifecycle-venv/qualification/summary.json"
+    },
+    {
+      "id": "ordinary-async-lifecycle",
+      "status": "passed",
+      "sourceId": "source-async-iterator-sibling-cleanup",
+      "producerRevision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+      "consumerRevision": "aab637f002323a7820759763652df7a5ad50fe04",
+      "identityBasis": "Revisions and original commands retained in command-report.json; no substituted later HEAD",
+      "declaredCandidateCount": 77,
+      "preparedSourceCount": 1,
+      "optimizerUpdates": 2,
+      "optimizerUpdateCounts": {
+        "lifecycle": 2,
+        "coverage": 0,
+        "total": 2
+      },
+      "firstCheckpointStep": 1,
+      "resumedCheckpointStep": 2,
+      "torchVersion": "2.14.1+cpu",
+      "fullPopulationQualified": false,
+      "fullTargetCoverageQualified": false,
+      "learnedSuccess": null,
+      "firstSelectionStatus": "awaiting-commit",
+      "nextSelectionExactAfterRestoration": true,
+      "acknowledgedModelSelections": 0,
+      "scope": "One predeclared training source, two ordinary optimizer updates, checkpoint resume, export and real service restoration. No held-out, accepted-record recovery or whole-program success claim.",
+      "limits": [
+        "Executed plain-text positions are independently checked for the observed two-update subset; complete-population positions require the separate full-pass gate. Hidden routing rows and unsupported objective positions remain unmeasured.",
+        "Two optimizer updates do not qualify learned execution quality or prove every positive-loss target was exposed.",
+        "One source family and two optimizer steps do not qualify learned execution quality.",
+        "Fresh-process recovery retained original failed/unacknowledged selections; accepted-record recovery was not exercised.",
+        "Artifact hashes identify local complete bundles. Durable external bundle publication is a separate recorded step."
+      ],
+      "report": "lifecycles/ordinary-async-lifecycle/command-report.json",
+      "qualification": "lifecycles/ordinary-async-lifecycle/qualification/summary.json"
+    }
+  ],
+  "historicalEnvironmentFailure": {
+    "status": "failed",
+    "producerRevision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+    "consumerRevision": "aab637f002323a7820759763652df7a5ad50fe04",
+    "report": "historical/python-wrapper/command-report.json",
+    "diagnostic": "historical/python-wrapper/service-stderr.log.gz",
+    "reason": "Wrapper-visible Torch did not survive a fresh child service interpreter; original stderr reports ModuleNotFoundError",
+    "laterSeparateRuns": [
+      "ordinary-lifecycle-venv",
+      "ordinary-async-lifecycle"
+    ]
+  },
+  "environmentDifference": {
+    "localExecutedTorch": "2.14.1+cpu",
+    "ciLockedTorch": "2.10.0+cpu",
+    "localRuntimeRecords": [
+      "lifecycles/ordinary-lifecycle-venv/fit/runtime.json",
+      "lifecycles/ordinary-async-lifecycle/fit/runtime.json"
+    ],
+    "ciReference": "environment/ci-requirements.lock",
+    "ciEnvironmentQualifiedByTheseLocalRuns": false
+  },
+  "test262Evidence": {
+    "repositoryPath": "artifacts/conformance/test262-current-pr60/",
+    "relativeLinkFromThisDirectory": "../../../artifacts/conformance/test262-current-pr60/README.md",
+    "producerRevision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+    "sourceRevision": "2a1ade303f72d3de80565c921d685222405c32ce",
+    "duplicatedHere": false
+  },
+  "pending": [
+    {
+      "id": "hosted-native-aggregate-deadline",
+      "status": "local-repair-verified-hosted-rerun-pending",
+      "reportedProducerReference": "0b9ca73",
+      "reportedConsumerReference": "65ebbf6",
+      "hostedRunId": "45128882436",
+      "hostedJobId": "137539514197",
+      "reportedObservation": "77 of 78 transport controls passed; one aggregate exceeded its 120-second child deadline; the original eight source cases passed",
+      "plannedFollowUp": "Separate per-fixture subprocess controls with the unchanged 120-second bound and assertions",
+      "evidence": "historical/hosted-interop-aggregate-timeout.log.gz",
+      "followUpObservations": [
+        "asyncSourcePerCase",
+        "asyncBindingPerCase"
+      ],
+      "publishedRepairRevision": "a44621ceb9bcb25b1348b349b70056cdef902d65"
+    }
+  ],
+  "notIncluded": [
+    "Model weights",
+    "Tokenizer contents",
+    "Training datasets and indexes",
+    "Complete frozen source registry",
+    "Incomplete or still-running verification logs"
+  ],
+  "claims": {
+    "zeroFailureFullSuite": false,
+    "deduplicatedAggregatePassCount": null,
+    "finalHeadRanEarlier66NativeControls": false,
+    "finalHeadRanEarlier40Test262Variants": false,
+    "fullPopulationQualified": false,
+    "learnedSuccess": null,
+    "reusableModelBundlePublished": false
+  },
+  "artifacts": [
+    {
+      "path": "consumer/full-contract-suite.log.gz",
+      "sourcePath": "native-contract-complete-tests.log",
+      "role": "Historical broad consumer run, including failures and skips",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 34857,
+        "sha256": "800261425d91f396a53eb58ed6f6a94313e84dbb1cddf24c646a21c733c78a4f"
+      },
+      "stored": {
+        "bytes": 7140,
+        "sha256": "bc0d8d439dd5d9b40d5a4c25f19f12b7ab430e0a8b82008ca5e49f4eb94f3d80"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "consumer/input-relocation-venv.log.gz",
+      "sourcePath": "native-relocation-venv-tests.log",
+      "role": "Completed fresh-process relocation check in the proper environment",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 99,
+        "sha256": "3bf8120ba04f122cdb0f0aa2473f52c9f01456ba1d685ec3126441f995688c58"
+      },
+      "stored": {
+        "bytes": 50,
+        "sha256": "41e07028a37c31d8aa4c30800037b1f97ff11a06211e1b9fe4159d244000ae7f"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "consumer/live-source-controls.log.gz",
+      "sourcePath": "native-live-source-controls-final.log",
+      "role": "Completed actual-source checks",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 99,
+        "sha256": "28db58d8136982bd42554b1322742dffe67b5a6e52567d6ad4dcc4dbe4db519e"
+      },
+      "stored": {
+        "bytes": 52,
+        "sha256": "2e1103ff8690200e25067d887704e64ae198feb0027554c81028bc656e9bc0f7"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "consumer/no-legacy-cases.log.gz",
+      "sourcePath": "native-without-legacy-case-tests.log",
+      "role": "Completed per-case fresh-process replay/recovery controls",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 2093,
+        "sha256": "c8c4ff1d31de47ccdc1b4721ec835c788ae997b29f8471e70e697fc521d5540a"
+      },
+      "stored": {
+        "bytes": 378,
+        "sha256": "9980b06b64b81e4f85b5c1b1959d1f68d07f70ee50e172aa86c1594386d8cb99"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "environment/ci-requirements.lock",
+      "role": "CI dependency reference, not the local executed environment",
+      "sourceGit": {
+        "repository": "werg/tracing-js-self",
+        "revision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+        "path": "tools/native-consumer/requirements.lock"
+      },
+      "encoding": "identity",
+      "raw": {
+        "bytes": 58598,
+        "sha256": "233ce2065a5eebb85472eb2bdab714bedc26aa74536c6c0df73ea0081f204135"
+      },
+      "stored": {
+        "bytes": 58598,
+        "sha256": "233ce2065a5eebb85472eb2bdab714bedc26aa74536c6c0df73ea0081f204135"
+      }
+    },
+    {
+      "path": "historical/hosted-interop-aggregate-timeout.log.gz",
+      "sourcePath": "validation/consumer-65ebbf-hosted-interop-failure.log",
+      "role": "Completed hosted interoperability failure at the eight-fixture aggregate child deadline",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 139392,
+        "sha256": "8791b1bf273fa217070c681ced8df7b57c2088d096bfdae15a9c4aa8914acad3"
+      },
+      "stored": {
+        "bytes": 28045,
+        "sha256": "494146b56627debc63276fd55e6157628ecde15cd1ffb03f90c3f2f704ff1d74"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "historical/kernel-helper-ownership.log.gz",
+      "sourcePath": "validation/kernel-lease-check.log",
+      "role": "Earlier focused helper ownership failure",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 5660,
+        "sha256": "3ee43e61c94469988df61fa1e44565e2939c04e6f8a730a907885acb0852a664"
+      },
+      "stored": {
+        "bytes": 1330,
+        "sha256": "65834699a449e39d57531598dbd8b441b3a4d40339d4f34efb05c46505ec5ab4"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "historical/python-wrapper/command-report.json",
+      "sourcePath": "validation/ordinary-lifecycle-final/command-report.json",
+      "role": "Historical failed wrapper environment; preserved without relabeling it as a pass",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 5481,
+        "sha256": "cfd321f4cbf884134ce74dd8140e62789d0df6999500bd1a9594411b68cec9c0"
+      },
+      "stored": {
+        "bytes": 5481,
+        "sha256": "cfd321f4cbf884134ce74dd8140e62789d0df6999500bd1a9594411b68cec9c0"
+      }
+    },
+    {
+      "path": "historical/python-wrapper/driver.log.gz",
+      "sourcePath": "validation/ordinary-lifecycle-final.log",
+      "role": "Historical failed wrapper environment; preserved without relabeling it as a pass",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 1893,
+        "sha256": "ca889a5c13609e2630ee6bee99b037ca4cd8e7fffe4adbb72eacd76f1aee4d29"
+      },
+      "stored": {
+        "bytes": 622,
+        "sha256": "5bae9c4f779915b230ddceb0f1c946442d3ae6b9e7b05f5c2d3d35d029b8a77a"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "historical/python-wrapper/qualify-lifecycle.log.gz",
+      "sourcePath": "validation/ordinary-lifecycle-final/qualify-lifecycle.log",
+      "role": "Historical failed wrapper environment; preserved without relabeling it as a pass",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 1216,
+        "sha256": "57357e61bf07e0453ca3f82c18fbc8a639621a04c548dbf20be8e2ecb8945965"
+      },
+      "stored": {
+        "bytes": 406,
+        "sha256": "37642553caffaeaeecb181bd4d46bfed3ce808a9f93c6d6061739fd1e5d46bee"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "historical/python-wrapper/service-stderr.log.gz",
+      "sourcePath": "validation/ordinary-lifecycle-final/qualification/original-stderr.log",
+      "role": "Historical failed wrapper environment; preserved without relabeling it as a pass",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 209,
+        "sha256": "1a4c9b42f68019b6148e1c6569aff1cc1b5ccc370d3de2daee501dfcf4c988c3"
+      },
+      "stored": {
+        "bytes": 186,
+        "sha256": "b7a45a6968b4a529d5b49ae302d3ba86837ef9e7941f28a0a0e12a21a82350fe"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "historical/python-wrapper/training-runtime.json",
+      "sourcePath": "validation/ordinary-lifecycle-final/fit/runtime.json",
+      "role": "Historical failed wrapper environment; preserved without relabeling it as a pass",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 413,
+        "sha256": "4b05e7c796e0dde33e4257c667277320bb270fd834a8c44cbfac7981a340120b"
+      },
+      "stored": {
+        "bytes": 413,
+        "sha256": "4b05e7c796e0dde33e4257c667277320bb270fd834a8c44cbfac7981a340120b"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/command-report.json",
+      "sourcePath": "validation/ordinary-async-lifecycle/command-report.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 67347,
+        "sha256": "fc9cf6308a7f400a5aae4b582a414f6900d1d979fbaad0baf7a0102a4a261b2f"
+      },
+      "stored": {
+        "bytes": 67347,
+        "sha256": "fc9cf6308a7f400a5aae4b582a414f6900d1d979fbaad0baf7a0102a4a261b2f"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/driver.log.gz",
+      "sourcePath": "validation/ordinary-async-lifecycle.log",
+      "role": "Completed lifecycle driver output",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 2888,
+        "sha256": "b7be67022f6e15b66d2a595b8d23b89a38998cfd177f93356e612a800e3fa9c5"
+      },
+      "stored": {
+        "bytes": 1082,
+        "sha256": "03410e52ed7380520bcbe9cc2dee15c88c1f9491ffc77719211c962b911629ac"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/export.log.gz",
+      "sourcePath": "validation/ordinary-async-lifecycle/export.log",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 8075,
+        "sha256": "7547d2ac22f4a395a93f89fef2913eab268eaec90119e33ec60799b0bc6c22a5"
+      },
+      "stored": {
+        "bytes": 2134,
+        "sha256": "7adffea5738849089a6891730093cda0a84489a4f72d79b2ab37e04ffba9e38a"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/first-checkpoint/metadata.json",
+      "sourcePath": "validation/ordinary-async-lifecycle/first-checkpoint/metadata.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1129,
+        "sha256": "ac70b09c0042bc76bc3077a5897258b47c91b0d9a186257929b0f4d8df2a3132"
+      },
+      "stored": {
+        "bytes": 1129,
+        "sha256": "ac70b09c0042bc76bc3077a5897258b47c91b0d9a186257929b0f4d8df2a3132"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/fit/checkpoints/SC-000000002-periodic/metadata.json",
+      "sourcePath": "validation/ordinary-async-lifecycle/fit/checkpoints/SC-000000002-periodic/metadata.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1129,
+        "sha256": "6ff504488455d17c32b2f62ed54c95356f3db222061c20210b997b040f11e4ee"
+      },
+      "stored": {
+        "bytes": 1129,
+        "sha256": "6ff504488455d17c32b2f62ed54c95356f3db222061c20210b997b040f11e4ee"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/fit/runtime.json",
+      "sourcePath": "validation/ordinary-async-lifecycle/fit/runtime.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 413,
+        "sha256": "4b05e7c796e0dde33e4257c667277320bb270fd834a8c44cbfac7981a340120b"
+      },
+      "stored": {
+        "bytes": 413,
+        "sha256": "4b05e7c796e0dde33e4257c667277320bb270fd834a8c44cbfac7981a340120b"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/prepare.log.gz",
+      "sourcePath": "validation/ordinary-async-lifecycle/prepare.log",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 836,
+        "sha256": "f4477b45e4bff9905dd3eabb10e43d1afd9f1eda222c8200f812117d6999d79f"
+      },
+      "stored": {
+        "bytes": 548,
+        "sha256": "47113e86276179d9f49c1905554846ec12cb45c73af2cb10d727e8ab14bc8a2a"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/prepared/manifest.json",
+      "sourcePath": "validation/ordinary-async-lifecycle/prepared/manifest.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 12615,
+        "sha256": "2dccd32d68a0e7817d047d717ab3594e170c708abd1efd1096960c51fa6b6b1c"
+      },
+      "stored": {
+        "bytes": 12615,
+        "sha256": "2dccd32d68a0e7817d047d717ab3594e170c708abd1efd1096960c51fa6b6b1c"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/prepared/semantic-v8-report.json",
+      "sourcePath": "validation/ordinary-async-lifecycle/prepared/semantic-v8-report.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 812,
+        "sha256": "bc84b368b7a4d7afa0945e76b877ec817c16ca7b6a6cb98aab5fd562bb884371"
+      },
+      "stored": {
+        "bytes": 812,
+        "sha256": "bc84b368b7a4d7afa0945e76b877ec817c16ca7b6a6cb98aab5fd562bb884371"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/qualification/summary.json",
+      "sourcePath": "validation/ordinary-async-lifecycle/qualification/summary.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 90715,
+        "sha256": "dfcdb598c433245a4805ad51543f8ba91a6ba2e38dd3ea746963b31e94b08572"
+      },
+      "stored": {
+        "bytes": 90715,
+        "sha256": "dfcdb598c433245a4805ad51543f8ba91a6ba2e38dd3ea746963b31e94b08572"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/qualify-lifecycle.log.gz",
+      "sourcePath": "validation/ordinary-async-lifecycle/qualify-lifecycle.log",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 554,
+        "sha256": "1b6ff71dc1522f4754d2b23836565407b091de71a2a3d809219ea9f265d10ec9"
+      },
+      "stored": {
+        "bytes": 373,
+        "sha256": "cb858025224daf00c19f8ac020a81ab4a9e3535aed5f1ea420af666f84426ff8"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/served/manifest.json",
+      "sourcePath": "validation/ordinary-async-lifecycle/served/manifest.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 7985,
+        "sha256": "343be0472c4f4b7223b6c3f670e71836706e88d895ec35701896fdeda98f7193"
+      },
+      "stored": {
+        "bytes": 7985,
+        "sha256": "343be0472c4f4b7223b6c3f670e71836706e88d895ec35701896fdeda98f7193"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/served/model_config.json",
+      "sourcePath": "validation/ordinary-async-lifecycle/served/model_config.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1399,
+        "sha256": "58ecc08ec1d67efae07baef003b192e4fe41b1d4edbb834e9eeebc4f7ffb7b21"
+      },
+      "stored": {
+        "bytes": 1399,
+        "sha256": "58ecc08ec1d67efae07baef003b192e4fe41b1d4edbb834e9eeebc4f7ffb7b21"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/served/semantic-v8-lineage.json",
+      "sourcePath": "validation/ordinary-async-lifecycle/served/semantic-v8-lineage.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1811,
+        "sha256": "db355cdb83886ad1f2539f5ef44863743f2f33cb7c76967c680e2aa88cf0e921"
+      },
+      "stored": {
+        "bytes": 1811,
+        "sha256": "db355cdb83886ad1f2539f5ef44863743f2f33cb7c76967c680e2aa88cf0e921"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/train-first.log.gz",
+      "sourcePath": "validation/ordinary-async-lifecycle/train-first.log",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 18584,
+        "sha256": "2a5ddb9b350e88ec870d832aaff5ba00d29b4166521b17c9cf0447b32c6b695b"
+      },
+      "stored": {
+        "bytes": 3875,
+        "sha256": "4fa98a20ff6432c68ac5df1047da562504558b2f6e212e9c0f9b9b346d776707"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/train-resume.log.gz",
+      "sourcePath": "validation/ordinary-async-lifecycle/train-resume.log",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 20512,
+        "sha256": "c2654a435501144e4ad936463180a8e3a8f07c6572f92958f7071ce41d967506"
+      },
+      "stored": {
+        "bytes": 4188,
+        "sha256": "915580df40d4ca2640f3721bad79070d910694cf62ea74d06a21f7e0f1b61265"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-async-lifecycle/training-config.json",
+      "sourcePath": "validation/ordinary-async-lifecycle/training-config.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1131,
+        "sha256": "0e47d69cefac83ae620e8f56997f582002d2fc92cf35670afad3622f755f056b"
+      },
+      "stored": {
+        "bytes": 1131,
+        "sha256": "0e47d69cefac83ae620e8f56997f582002d2fc92cf35670afad3622f755f056b"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/command-report.json",
+      "sourcePath": "validation/ordinary-lifecycle-venv/command-report.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 42005,
+        "sha256": "e5d0b54bc84c47ce262d67f935c3156f74b7d958e43830fda681d8de46c8d41d"
+      },
+      "stored": {
+        "bytes": 42005,
+        "sha256": "e5d0b54bc84c47ce262d67f935c3156f74b7d958e43830fda681d8de46c8d41d"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/driver.log.gz",
+      "sourcePath": "validation/ordinary-lifecycle-venv.log",
+      "role": "Completed lifecycle driver output",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 2881,
+        "sha256": "60c98c9a0c7bde6b26e68b9e9d4cad6d03369aeb4abee14d40e66d9007724529"
+      },
+      "stored": {
+        "bytes": 1081,
+        "sha256": "7e13904a4ccbacae6ba3824229e25da1d228a10b1eb352fdea455d114b7632b3"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/export.log.gz",
+      "sourcePath": "validation/ordinary-lifecycle-venv/export.log",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 8074,
+        "sha256": "61795161f38a7bfdc36e1808faf0ccdd4e2e2213e9ed45cfa94648149919bb7e"
+      },
+      "stored": {
+        "bytes": 2127,
+        "sha256": "3a3d43b2feb18bfce699d213af826cd15784279708899724be9e5c536fcca8c4"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/first-checkpoint/metadata.json",
+      "sourcePath": "validation/ordinary-lifecycle-venv/first-checkpoint/metadata.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1129,
+        "sha256": "7f249c4ba9933dc258a712bed1063ef4a11734fe75ae69c668b2c01d885fdf9b"
+      },
+      "stored": {
+        "bytes": 1129,
+        "sha256": "7f249c4ba9933dc258a712bed1063ef4a11734fe75ae69c668b2c01d885fdf9b"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/fit/checkpoints/SC-000000002-periodic/metadata.json",
+      "sourcePath": "validation/ordinary-lifecycle-venv/fit/checkpoints/SC-000000002-periodic/metadata.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1129,
+        "sha256": "8030fcc362b23747df766f20aaf682d7c3cc90a37278f3e3cf3e42b300affd4b"
+      },
+      "stored": {
+        "bytes": 1129,
+        "sha256": "8030fcc362b23747df766f20aaf682d7c3cc90a37278f3e3cf3e42b300affd4b"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/fit/runtime.json",
+      "sourcePath": "validation/ordinary-lifecycle-venv/fit/runtime.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 413,
+        "sha256": "4b05e7c796e0dde33e4257c667277320bb270fd834a8c44cbfac7981a340120b"
+      },
+      "stored": {
+        "bytes": 413,
+        "sha256": "4b05e7c796e0dde33e4257c667277320bb270fd834a8c44cbfac7981a340120b"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/prepare.log.gz",
+      "sourcePath": "validation/ordinary-lifecycle-venv/prepare.log",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 836,
+        "sha256": "7b455c6819a4906ef27eb66f5e6181caaca8b36c10a7178c9ab96600fcfe5cbc"
+      },
+      "stored": {
+        "bytes": 549,
+        "sha256": "86f4468d176ab61e7f7e81f1b9e01da0c4f7031b6b93685c0b912c897cddedc6"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/prepared/manifest.json",
+      "sourcePath": "validation/ordinary-lifecycle-venv/prepared/manifest.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 12653,
+        "sha256": "6e8cd62c7decdb44111b0ea20d82824d667aae77e0c6216fc1ed62617ac23c69"
+      },
+      "stored": {
+        "bytes": 12653,
+        "sha256": "6e8cd62c7decdb44111b0ea20d82824d667aae77e0c6216fc1ed62617ac23c69"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/prepared/semantic-v8-report.json",
+      "sourcePath": "validation/ordinary-lifecycle-venv/prepared/semantic-v8-report.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 812,
+        "sha256": "bc84b368b7a4d7afa0945e76b877ec817c16ca7b6a6cb98aab5fd562bb884371"
+      },
+      "stored": {
+        "bytes": 812,
+        "sha256": "bc84b368b7a4d7afa0945e76b877ec817c16ca7b6a6cb98aab5fd562bb884371"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/qualification/summary.json",
+      "sourcePath": "validation/ordinary-lifecycle-venv/qualification/summary.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 66369,
+        "sha256": "f6867019be8c7a58c0e6fb4d4bd2c2a1d4ebc5065d662dbaa9d0a44d3df567c5"
+      },
+      "stored": {
+        "bytes": 66369,
+        "sha256": "f6867019be8c7a58c0e6fb4d4bd2c2a1d4ebc5065d662dbaa9d0a44d3df567c5"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/qualify-lifecycle.log.gz",
+      "sourcePath": "validation/ordinary-lifecycle-venv/qualify-lifecycle.log",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 555,
+        "sha256": "d65d0adaf5b9b98d91d95d9e1d70c57c4c9ed51b92156ad248dbef0d68ec3b8a"
+      },
+      "stored": {
+        "bytes": 372,
+        "sha256": "04122000bd9222bd7570da40533a72f6df520cfe83c95b60d3b6a0f8ca00d700"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/served/manifest.json",
+      "sourcePath": "validation/ordinary-lifecycle-venv/served/manifest.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 7985,
+        "sha256": "cd08d194ceaf81039a87135b21aee7d46f1ce90602ba7c13eef131c6c17e156b"
+      },
+      "stored": {
+        "bytes": 7985,
+        "sha256": "cd08d194ceaf81039a87135b21aee7d46f1ce90602ba7c13eef131c6c17e156b"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/served/model_config.json",
+      "sourcePath": "validation/ordinary-lifecycle-venv/served/model_config.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1399,
+        "sha256": "58ecc08ec1d67efae07baef003b192e4fe41b1d4edbb834e9eeebc4f7ffb7b21"
+      },
+      "stored": {
+        "bytes": 1399,
+        "sha256": "58ecc08ec1d67efae07baef003b192e4fe41b1d4edbb834e9eeebc4f7ffb7b21"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/served/semantic-v8-lineage.json",
+      "sourcePath": "validation/ordinary-lifecycle-venv/served/semantic-v8-lineage.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1811,
+        "sha256": "b34a11f93d1ec7ba967d7e260c06c0441f8ad000a73da1aeece39ee21e9d0b01"
+      },
+      "stored": {
+        "bytes": 1811,
+        "sha256": "b34a11f93d1ec7ba967d7e260c06c0441f8ad000a73da1aeece39ee21e9d0b01"
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/train-first.log.gz",
+      "sourcePath": "validation/ordinary-lifecycle-venv/train-first.log",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 18567,
+        "sha256": "4fdde98f2c0e6e93420469d6c47234503c0d4b19031614a5c8847725b54e3e27"
+      },
+      "stored": {
+        "bytes": 3862,
+        "sha256": "1c5667fcc17d08032a47625dea1d5c5edcd29726874f3b02e1ec46292266840e"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/train-resume.log.gz",
+      "sourcePath": "validation/ordinary-lifecycle-venv/train-resume.log",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 20525,
+        "sha256": "cd87e93839ed5247d9050d9c6975ffbe16d58c6f9a4f54b581628c925b62dc50"
+      },
+      "stored": {
+        "bytes": 4168,
+        "sha256": "1c51464857f8a983b82410759e97f87e4acce3c88486f170257a1ef2b86202e8"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "lifecycles/ordinary-lifecycle-venv/training-config.json",
+      "sourcePath": "validation/ordinary-lifecycle-venv/training-config.json",
+      "role": "Original completed bounded lifecycle report, metadata or stage log",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1129,
+        "sha256": "28e32ed5b9d57b0893c2c3bce4dcc16100380fd791a7985be7b2203b4afb26d2"
+      },
+      "stored": {
+        "bytes": 1129,
+        "sha256": "28e32ed5b9d57b0893c2c3bce4dcc16100380fd791a7985be7b2203b4afb26d2"
+      }
+    },
+    {
+      "path": "paired-native/after.json",
+      "sourcePath": "validation/native-source-5f321f0c-aab637f0/after.json",
+      "role": "Completed native source check with before/after clean-pair identity captures",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 672,
+        "sha256": "e4c24f17f1e980fbb8d929d1ac7ae4b6a221d5df57561d91aef5ab866ff83ea4"
+      },
+      "stored": {
+        "bytes": 672,
+        "sha256": "e4c24f17f1e980fbb8d929d1ac7ae4b6a221d5df57561d91aef5ab866ff83ea4"
+      }
+    },
+    {
+      "path": "paired-native/before.json",
+      "sourcePath": "validation/native-source-5f321f0c-aab637f0/before.json",
+      "role": "Completed native source check with before/after clean-pair identity captures",
+      "encoding": "identity",
+      "raw": {
+        "bytes": 1478,
+        "sha256": "06a3274a81f070b88994f23e7cfc964c561bdbe769d7df04725582370711dce4"
+      },
+      "stored": {
+        "bytes": 1478,
+        "sha256": "06a3274a81f070b88994f23e7cfc964c561bdbe769d7df04725582370711dce4"
+      }
+    },
+    {
+      "path": "paired-native/promise-mutation-profile-evidence.json.gz",
+      "sourcePath": "validation/native-source-5f321f0c-aab637f0/promise-mutation-profile-evidence.json",
+      "role": "Completed native source check with before/after clean-pair identity captures",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 878428,
+        "sha256": "aa484f4a92cdbaadf9699bf00fa8fe65426b3fa6e3b4d143a86598dda2be88e0"
+      },
+      "stored": {
+        "bytes": 68207,
+        "sha256": "0115c794cc710353d67534591d67374a64167d6d4d30f38032d9f45de95980f9"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "paired-native/promise-object-profile-evidence.json.gz",
+      "sourcePath": "validation/native-source-5f321f0c-aab637f0/promise-object-profile-evidence.json",
+      "role": "Completed native source check with before/after clean-pair identity captures",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 493045,
+        "sha256": "43391794127f384a97f57c3cf801feed713e542fc11ad2ecbd44e5c340f2845d"
+      },
+      "stored": {
+        "bytes": 45552,
+        "sha256": "11581ed34308a3ca94eac34e741b4553afe39bb41b17bf65694e368c10710ff1"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "paired-native/tests.log.gz",
+      "sourcePath": "validation/native-source-5f321f0c-aab637f0/tests.log",
+      "role": "Completed native source check with before/after clean-pair identity captures",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 5772,
+        "sha256": "e6db9ba5a5f42b16cf1b3f5a03250bd57243be5169c4e0191c2be9e758246b90"
+      },
+      "stored": {
+        "bytes": 1683,
+        "sha256": "1e55545300dd474ef681eaad178ffce571f5a44a2bf7920add9738ae95e641e4"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/async-binding-per-case.log.gz",
+      "sourcePath": "validation/async-native-binding-case-budget-tests.log",
+      "role": "Completed native binding replay after per-fixture child isolation",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 968,
+        "sha256": "981885beb0343ce0143e9bd949952ec5efd3890c12dcbe48095e0b14ff446982"
+      },
+      "stored": {
+        "bytes": 375,
+        "sha256": "6a285e8f891cfddcf5dc957e8d52aca2e06aa8778ed60ae56d2d611e2c1c80c7"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/async-source-per-case.log.gz",
+      "sourcePath": "validation/async-native-case-budget-tests.log",
+      "role": "Completed native source replay after per-fixture child isolation",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 2420,
+        "sha256": "76c32df3354b4d360881c171fc869a7789d79f36d58b6750fb2b47e3968ccc8d"
+      },
+      "stored": {
+        "bytes": 735,
+        "sha256": "4edee4e7f166e2c333f52501fbebcacdc483f824816562d3f749dda60b63b43a"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/contracts-5f321.log.gz",
+      "sourcePath": "validation/all-contracts-final.log",
+      "role": "Completed generated-contract check attributed to the earlier producer",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 4056,
+        "sha256": "45f299a5183d5d08b3adbd8687e16ccaa68615a2aa43713caf6c5d216f4c52ab"
+      },
+      "stored": {
+        "bytes": 1460,
+        "sha256": "4fe8681bd6570325b9f3c6e71fae0f32454805fdd573dca9d6da201d10eec6a2"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/contracts-ce364792.log.gz",
+      "sourcePath": "validation/contracts-current-ce364792.log",
+      "role": "Completed generated-contract check after all runtime guard repairs",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 4056,
+        "sha256": "45f299a5183d5d08b3adbd8687e16ccaa68615a2aa43713caf6c5d216f4c52ab"
+      },
+      "stored": {
+        "bytes": 1460,
+        "sha256": "4fe8681bd6570325b9f3c6e71fae0f32454805fdd573dca9d6da201d10eec6a2"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/direct-release-python.log.gz",
+      "sourcePath": "validation/direct-release-python-tests.log",
+      "role": "Completed focused Python controls without captured Git boundaries",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 210,
+        "sha256": "717f765cf1ffaabb953fa8d39ba71e3a54434016c0ed99d9ff934fb0a464f8ae"
+      },
+      "stored": {
+        "bytes": 57,
+        "sha256": "462709ec873e631b5f5dc5a3d868571e1b871c7b639dfd296a8c980597888eb7"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/frozen-function-storage.log.gz",
+      "sourcePath": "frozen-function-storage-final.log",
+      "role": "Completed focused incomplete-function-storage controls",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 2963,
+        "sha256": "1682b74f975c5bcc11d95ac6993347eb244fe4f1605539da67bd5611b346becf"
+      },
+      "stored": {
+        "bytes": 1326,
+        "sha256": "a5e8f8c53afc09722276acbe4d10a868ea391c74461ba73d8f1866796c5452f8"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/full-suite.log.gz",
+      "sourcePath": "validation/full-producer-tests.log",
+      "role": "Historical broad producer run, including all ten failures",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 332557,
+        "sha256": "2409e054db94a556e65bfbfe74cf7b35edde0b5fc59cf1b0b766ef13417d73ea"
+      },
+      "stored": {
+        "bytes": 103078,
+        "sha256": "5b2250668210755d78c34f82b8c87b3d965d31912052f51a83ff5c1535ae4f22"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/kernel-helper-complete.log.gz",
+      "sourcePath": "validation/kernel-lease-complete-owned-helper.log",
+      "role": "Completed helper/transport check with explicit optional skips",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 2971,
+        "sha256": "2e8f547e3341f78f8e5feb096b58541298c11b8ef582094c9ff9634665e9b70d"
+      },
+      "stored": {
+        "bytes": 1225,
+        "sha256": "15fd2975b69af46782e3e4364412613d53033551814d90d723da8231b0cfd795"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/kernel-helper-focused.log.gz",
+      "sourcePath": "validation/kernel-lease-owned-helper.log",
+      "role": "Completed focused check with an owned helper",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 1483,
+        "sha256": "81076930e373e6edc5896cc1eb902334a54c5ee5a14a9ab621afe3431527ed2f"
+      },
+      "stored": {
+        "bytes": 799,
+        "sha256": "0ae71b8df44c3f34985bfb5293c7308155e79cb4b7382ea176fba7e3ec068a1a"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/object-reflection-storage.log.gz",
+      "sourcePath": "object-reflection-storage-final-regressions.log",
+      "role": "Completed focused reflection/storage guard controls",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 12750,
+        "sha256": "6d83f87a85550d2f2a81c642ada96393947111bb3ad36f6267dd22cb063f389b"
+      },
+      "stored": {
+        "bytes": 4376,
+        "sha256": "4dcdb526ebd1a9682169cd2264c120f7b881d83ffb743241010de80e06271b40"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/proxy-storage-refusal.log.gz",
+      "sourcePath": "proxy-storage-refusal-regressions.log",
+      "role": "Completed focused unsupported Proxy storage controls",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 1562,
+        "sha256": "1a9adb54e665a0509fa3cf1cc8fe1aa845544839b837f5ae76b74e3e264cc402"
+      },
+      "stored": {
+        "bytes": 762,
+        "sha256": "4c7fc9abfd38ad2cf94670fca1c5661e91174238b8aa64934f6cd01612ab9d15"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/reference-ce364792.log.gz",
+      "sourcePath": "validation/reference-current-ce364792.log",
+      "role": "Completed reference fixture after all runtime guard repairs",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 393,
+        "sha256": "fc53ef9d327aa46a3968f073e1c35d1ca05af8710d42c3cfc903c8db54d9e560"
+      },
+      "stored": {
+        "bytes": 272,
+        "sha256": "ad0c0a71fdaab9279a7cc8b7890bac31c0fa017272ba915029162a4468c9307f"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/reference-fixture.log.gz",
+      "sourcePath": "validation/reference-fixture.log",
+      "role": "Completed earlier reference fixture",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 393,
+        "sha256": "fc53ef9d327aa46a3968f073e1c35d1ca05af8710d42c3cfc903c8db54d9e560"
+      },
+      "stored": {
+        "bytes": 272,
+        "sha256": "ad0c0a71fdaab9279a7cc8b7890bac31c0fa017272ba915029162a4468c9307f"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    },
+    {
+      "path": "producer/test262-edition-identities.log.gz",
+      "sourcePath": "validation/test262-edition-identity-check.log",
+      "role": "Completed fixture-identity regression check",
+      "encoding": "gzip",
+      "raw": {
+        "bytes": 3329,
+        "sha256": "162cdb3e5bee64047933484318b5cde306d91e6f11089a85182cd9a4e8b54ded"
+      },
+      "stored": {
+        "bytes": 1571,
+        "sha256": "bff4ed4222478198afb3b0afbf120de49afd8d9b020df1d1f8f39c3b7e9cd302"
+      },
+      "gzip": {
+        "level": 9,
+        "mtime": 0,
+        "filename": ""
+      }
+    }
+  ],
+  "updatedAt": "2026-11-23T07:33:45.942762+00:00"
+}

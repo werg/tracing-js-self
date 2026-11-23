@@ -1,0 +1,27 @@
+{
+  "checkpoint_name": "SC-000000001-periodic",
+  "chunking_fingerprint": "09a55e6b4e1697c8eb05579ab63bed60cdcbbcf46fdfa875bfc37108d2ccb8b5",
+  "codec_fingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+  "config_fingerprint": "d39d3b0f1cc3b5d0d0b5e2bdbb04b4f82d1f3d6d63c55967c52fbc279fbd222c",
+  "dataset_fingerprint": "dc1ec25d234c9378c8c401bbdbaaac7ff76511f9cd6b1fe32d73fe73de764f5f",
+  "format_version": 22,
+  "global_step": 1,
+  "packs_fingerprint": null,
+  "phase": "SC",
+  "phase_consumed": 134,
+  "pinned": false,
+  "routing_version": 4,
+  "semantic_v8_lineage_digest": "7b29625bd5e3cb2ddf823bb43cd7a776011fb53ecac96f53a984bd5cbeeff016",
+  "semantic_v8_position_digest": "99c65100ad198a50450bfc3c6d0140b14b68946782c49bb712764a9d9c890ccc",
+  "source_sampling": {
+    "complete_history": true,
+    "source_windows": {
+      "semantic-execution-v8": 1
+    }
+  },
+  "state_sha256": "e4793a7a78a8571810d3bfc63aad67931b584b1f4a0acbc8c9ad328eb627d8f6",
+  "transducer_checkpoint": {
+    "file": "transducer.pt",
+    "sha256": "77e7c3b7209b3b7cd2eb57313a52e2036055aa498cd4c29501f9ba7c4689c45e"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "time": "2026-11-23T06:49:46.200469+00:00",
+  "identities": {
+    "producer": {
+      "path": "/workspace/scratch/0952c3151b8f/producer-release-fix",
+      "revision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+      "tree": "ce6fb46b872c4768fd28b352f06f68c7b03b7365",
+      "status": ""
+    },
+    "consumer": {
+      "path": "/workspace/scratch/0952c3151b8f/megatoken-lifecycle",
+      "revision": "aab637f002323a7820759763652df7a5ad50fe04",
+      "tree": "5c3b82e1fa0c8b3c6eca21db0fcd876aa6712037",
+      "status": ""
+    }
+  },
+  "command": [
+    "node",
+    "--experimental-vm-modules",
+    "--test",
+    "--test-concurrency=1",
+    "test/semantic-async-iteration-source-v8.test.js",
+    "test/semantic-async-iteration-bindings-v8.test.js",
+    "test/semantic-promise-object-profile-source-v8.test.js",
+    "test/semantic-promise-mutation-profile-source-v8.test.js"
+  ],
+  "cwd": "/workspace/scratch/0952c3151b8f/producer-release-fix",
+  "environment": {
+    "TMPDIR": "/workspace/scratch/0952c3151b8f/tmp",
+    "MEGATOKEN_ROOT": "/workspace/scratch/0952c3151b8f/megatoken-lifecycle",
+    "MEGATOKEN_PYTHON": "/workspace/scratch/0952c3151b8f/semantic-test-python",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "RUNNER_TEMP": "/workspace/scratch/0952c3151b8f/validation/native-source-5f321f0c-aab637f0"
+  },
+  "node": "v24.22.3",
+  "python": "Python 3.12.14",
+  "pythonWrapperSha256": "647435b0af64c7e80a9e4eaeb457b8ea6a08ee5f1d8457cb0eada72ba4ca311d"
+}
