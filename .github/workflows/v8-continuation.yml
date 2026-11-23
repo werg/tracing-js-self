@@ -28,7 +28,6 @@ jobs:
     env:
       MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
       MEGATOKEN_PYTHON: python
-      SEMANTIC_V8_NATIVE_POLICY: ${{ runner.temp }}/semantic-native-policy-v8.json
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,6 +40,8 @@ jobs:
       - id: policy
         name: Resolve current paired checker and retain this run’s exact policy
         run: |
+          export SEMANTIC_V8_NATIVE_POLICY="$RUNNER_TEMP/semantic-native-policy-v8.json"
+          printf 'SEMANTIC_V8_NATIVE_POLICY=%s\n' "$SEMANTIC_V8_NATIVE_POLICY" >> "$GITHUB_ENV"
           node tools/resolve-native-consumer.mjs --out "$SEMANTIC_V8_NATIVE_POLICY"
       - uses: actions/checkout@v4
         with:

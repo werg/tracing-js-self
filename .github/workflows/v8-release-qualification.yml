@@ -12,6 +12,8 @@ on:
       - 'tools/package-semantic-release-v8.py'
       - 'tools/restore-semantic-release-v8.py'
       - 'tools/semantic_release_v8.py'
+      - 'tools/release_archive.py'
+      - 'tools/native-consumer/check_environment_v8.py'
       - 'tools/qualify-semantic-v8.mjs'
       - 'tools/qualify-ordinary-v8-lifecycle.mjs'
       - 'tools/support-lifecycle-inventory.mjs'
@@ -51,7 +53,6 @@ jobs:
       MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
       MEGATOKEN_PYTHON: python
       MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/production-tokenizer.json
-      SEMANTIC_V8_NATIVE_POLICY: ${{ runner.temp }}/semantic-native-policy-v8.json
     defaults:
       run:
         shell: bash
@@ -69,6 +70,8 @@ jobs:
         working-directory: tracing-js-self
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          export SEMANTIC_V8_NATIVE_POLICY="$RUNNER_TEMP/semantic-native-policy-v8.json"
+          printf 'SEMANTIC_V8_NATIVE_POLICY=%s\n' "$SEMANTIC_V8_NATIVE_POLICY" >> "$GITHUB_ENV"
           node tools/resolve-native-consumer.mjs --out "$SEMANTIC_V8_NATIVE_POLICY"
       - uses: actions/checkout@v4
         with:

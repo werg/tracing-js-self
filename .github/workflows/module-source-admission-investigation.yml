@@ -42,7 +42,6 @@ jobs:
       MEGATOKEN_NATIVE_SOURCE_PRODUCER: ${{ github.workspace }}/tracing-js-self
       MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
       MEGATOKEN_PYTHON: python
-      SEMANTIC_V8_NATIVE_POLICY: ${{ runner.temp }}/semantic-native-policy-v8.json
       MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/semantic-v8-tokenizer.json
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -54,6 +53,8 @@ jobs:
         name: Resolve current native code and retain this run’s exact policy
         working-directory: tracing-js-self
         run: |
+          export SEMANTIC_V8_NATIVE_POLICY="$RUNNER_TEMP/semantic-native-policy-v8.json"
+          printf 'SEMANTIC_V8_NATIVE_POLICY=%s\n' "$SEMANTIC_V8_NATIVE_POLICY" >> "$GITHUB_ENV"
           node tools/resolve-native-consumer.mjs --out "$SEMANTIC_V8_NATIVE_POLICY"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
