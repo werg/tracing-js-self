@@ -226,14 +226,14 @@ protocol examples. A separate process repeats the source checks in a checkout
 with historical imports blocked by their resolved paths. Both reject a forged
 native receipt.
 
-Source identity binds the exact bytes of the publishable root
-`npm-shrinkwrap.json`. Its receipt field keeps the historical name
-`packageLockDigest`; this name now refers to the root shrinkwrap's SHA-256.
-The initial rename preserved every lock byte, dependency version and integrity
-pin. npm had omitted the previous root `package-lock.json` from archives, leaving
-installed source admission without its required evidence. The package now ships
-one authoritative root lock. The installed gate checks its exact bytes and
-refuses changed or missing lock evidence before native admission. Nested oracle
+Source identity's `packageLockDigest` binds the exact root `package-lock.json`
+bytes. Current npm no longer reads shrinkwrap files and omits `package-lock.json`
+from published archives, so `contracts/npm-lock.json` is a generated exact-byte
+copy that ordinary packing includes. `npm run contracts:check` rejects divergence;
+installed qualification compares the archive and installed copy against the
+authoritative root lock. The rename preserves every dependency version and
+integrity pin. Changed or missing packaged evidence is rejected before native
+admission. Nested oracle
 locks and historical receipts retain their original inputs and meaning; changing
 the implementation or environment requires fresh source checks, never resigning
 an old artifact.

@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
-import {loadNativeSettings} from '../src/corpus/native-admission-client.mjs';
+import {loadNativeSettings,captureNativeConsumerRevision,createNativeConsumer} from '../src/corpus/native-admission-client.mjs';
 
 test('native settings reject modified tracked consumers and an interpreter importing another checkout',t=>{
   const root=mkdtempSync(join(tmpdir(),'native-pin-check-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
@@ -35,4 +35,31 @@ test('native settings reject modified tracked consumers and an interpreter impor
   const elsewhere=join(root,'other-megatoken.py');writeFileSync(elsewhere,'# unrelated installed module\n');
   queryResult(elsewhere);
   assert.throws(()=>loadNativeSettings(options),/outside the pinned consumer checkout/);
+});
+
+test('current native policy observes each clean checkout and refuses drift within a run',async t=>{
+  const root=mkdtempSync(join(tmpdir(),'native-current-check-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
+  const repo=join(root,'consumer'),module=join(repo,'src/megatoken/__init__.py');
+  mkdirSync(join(repo,'src/megatoken'),{recursive:true});writeFileSync(module,'# first implementation\n');
+  const git=(...args)=>execFileSync('git',['-C',repo,...args],{encoding:'utf8'}).trim();
+  git('init','--quiet');git('add','.');git('-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-qm','first');
+  const tokenizer=join(root,'tokenizer.json'),policyFile=join(root,'policy.json'),python=join(root,'python-fixture');
+  writeFileSync(tokenizer,'{}');
+  const declared={tokenizerSha256:createHash('sha256').update('{}').digest('hex'),tokenizerIdentity:'unit-fixture'};
+  writeFileSync(policyFile,JSON.stringify(declared));
+  writeFileSync(python,'#!/usr/bin/env node\nprocess.stdout.write('+JSON.stringify(JSON.stringify({moduleFile:module}))+');\n',{mode:0o755});
+  const options={megatoken:repo,tokenizer,policyFile,python,temporaryDirectory:root};
+  const first=loadNativeSettings(options),firstRevision=git('rev-parse','HEAD');
+  assert.equal(first.policy.consumerRevision,firstRevision);
+  assert.equal(captureNativeConsumerRevision(repo),firstRevision);
+  writeFileSync(module,'# next implementation\n');git('add','.');
+  git('-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-qm','next');
+  const next=loadNativeSettings(options);
+  assert.notEqual(next.policy.consumerRevision,firstRevision);
+  assert.equal(next.policy.consumerRevision,git('rev-parse','HEAD'));
+  await assert.rejects(createNativeConsumer(first)({}),/recorded consumer revision/);
+  writeFileSync(policyFile,JSON.stringify({...declared,consumerRevision:firstRevision}));
+  assert.throws(()=>loadNativeSettings(options),/recorded consumer revision/);
+  writeFileSync(policyFile,JSON.stringify({...declared,consumerRevision:null}));
+  assert.throws(()=>loadNativeSettings(options),/valid optional consumerRevision/);
 });

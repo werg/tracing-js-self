@@ -17,8 +17,12 @@ test('token meter policy rejects other assets, dirty consumers, and false native
     value=>value.identity.tokenizerSha256='0'.repeat(64),value=>value.identity.fingerprint='0'.repeat(64),
     value=>value.qualification.consumerRevision='0'.repeat(40),value=>value.qualification.consumerClean=false,
     value=>value.qualification.nativeAdmission=true,value=>value.qualification.scope='native-supervision',
-    value=>value.qualification.tokenizersVersion='0.99.0'
+    value=>value.qualification.tokenizersVersion=''
   ]){const wrong=structuredClone(valid);mutate(wrong);assert.throws(()=>validateAlgorithmTokenizerEvidence(wrong,policy));}
+});
+
+test('token meter records the actual library version without freezing its development target',()=>{
+  assert(validateAlgorithmTokenizerEvidence({identity,qualification:{...qualification,tokenizersVersion:'0.99.0'}},policy));
 });
 
 test('token meter fails explicitly when an independently pinned consumer is unavailable',async()=>{

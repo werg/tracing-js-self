@@ -1,0 +1,20 @@
+{
+  "time": "2026-11-23T06:58:06.672025+00:00",
+  "identities": {
+    "producer": {
+      "path": "/workspace/scratch/0952c3151b8f/producer-release-fix",
+      "revision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+      "tree": "ce6fb46b872c4768fd28b352f06f68c7b03b7365",
+      "status": ""
+    },
+    "consumer": {
+      "path": "/workspace/scratch/0952c3151b8f/megatoken-lifecycle",
+      "revision": "aab637f002323a7820759763652df7a5ad50fe04",
+      "tree": "5c3b82e1fa0c8b3c6eca21db0fcd876aa6712037",
+      "status": ""
+    }
+  },
+  "exitCode": 0,
+  "testLogSha256": "e6db9ba5a5f42b16cf1b3f5a03250bd57243be5169c4e0191c2be9e758246b90",
+  "unchangedCleanPair": true
+}

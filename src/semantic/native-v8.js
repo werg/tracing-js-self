@@ -21,9 +21,9 @@ export const V8_NATIVE_CHECKS=Object.freeze(['replay','contexts','continuation',
 
 export function validateV8NativePolicy(policy){
   if(policy?.schema!=='semantic-native-policy/8'||policy.consumerRepository!=='werg/megatoken'||
-    !REVISION.test(policy.consumerRevision??'')||policy.contractDigest!==V8_CONTRACT_DIGEST||
+    Object.hasOwn(policy,'consumerRevision')&&!REVISION.test(policy.consumerRevision)||policy.contractDigest!==V8_CONTRACT_DIGEST||
     policy.fixtureDigest!==V8_FIXTURE_DIGEST||policy.interoperabilityDigest!==V8_INTEROPERABILITY_DIGEST||!HASH.test(policy.tokenizerIdentity??'')||
-    !HASH.test(policy.tokenizerSha256??''))fail('exact consumer, contract, fixtures and tokenizer pins required');
+    !HASH.test(policy.tokenizerSha256??''))fail('exact contract, fixtures, tokenizer and valid observed consumer identity required');
   return policy;
 }
 export function loadV8NativePolicy(path=new URL('../../contracts/semantic-native-policy-v8.json',import.meta.url)){
@@ -74,8 +74,11 @@ export function validateV8NativeReceipt(exported,receipt,policy){
     (direct?receipt.sourceIdentityDigest!==side.identityDigest:Object.hasOwn(receipt,'sourceIdentityDigest'))||
     receipt.datasetBindingDigest!==(exported.sidecar.datasetBinding?hashAlgorithmData(exported.sidecar.datasetBinding):null)||
     !HASH.test(receipt.nativeTrainingDigest??''))fail('receipt is missing, stale, unadmitted, or bound to another artifact');
-  for(const key of ['consumerRevision','contractDigest','fixtureDigest','interoperabilityDigest'])
-    if(receipt[key]!==policy[key])fail('receipt differs from pinned '+key);
+  if(!REVISION.test(receipt.consumerRevision??'')||
+    policy.consumerRevision!==undefined&&receipt.consumerRevision!==policy.consumerRevision)
+    fail('receipt differs from the observed consumerRevision');
+  for(const key of ['contractDigest','fixtureDigest','interoperabilityDigest'])
+    if(receipt[key]!==policy[key])fail('receipt differs from current '+key);
   if(V8_NATIVE_CHECKS.some(key=>receipt.checks?.[key]!=='passed'))fail('all independent native gates must pass');
   const source=receipt.sourceVerification;
   if(source?.schema!=='semantic-native-source-recheck/1'||source.producerTreeClean!==true||

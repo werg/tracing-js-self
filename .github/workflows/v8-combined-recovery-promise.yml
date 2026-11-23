@@ -1,6 +1,35 @@
 name: Exact paired recovery and Promise qualification
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/v8-combined-recovery-promise.yml'
+      - 'tools/verify-combined-v8-gate.py'
+      - 'tools/combined-v8-gate.json'
+      - 'tools/native-consumer/test_combined_v8_gate.py'
+      - 'tools/resolve-native-consumer.mjs'
+      - 'contracts/semantic-native-policy-v8.json'
+      - 'contracts/semantic-execution-v8.json'
+      - 'tools/generate-semantic-region-contract.mjs'
+      - 'test/fixtures/semantic-*-v8.json*'
+      - 'test/native-request-journal-v8.test.js'
+      - 'test/selected-orchestration-clock.test.js'
+      - 'test/semantic-known-*.test.js'
+      - 'test/semantic-selected-history*.test.js'
+      - 'test/semantic-selected-orchestration*.test.js'
+      - 'test/semantic-native-durable-*.test.js'
+      - 'test/semantic-native-orchestration-recovery-v8.test.js'
+      - 'test/semantic-protocol-*.test.js'
+      - 'test/semantic-promise-*-source-v8.test.js'
+      - 'test/semantic-async-call-source-v8.test.js'
+      - 'test/semantic-async-return-adoption-composition-source-v8.test.js'
+      - 'test/semantic-shared-protocol-source-v8.test.js'
+      - 'test/semantic-qualification-population-v8.test.js'
+      - 'test/training-promise-job-projection.test.js'
+      - 'tools/native-consumer/requirements.lock'
+      - 'profiles/release-environment.lock.json'
+      - '.nvmrc'
+      - 'package-lock.json'
   push:
     branches: [codex/language-coverage-v8-cutover]
     paths-ignore: ['docs/**']
@@ -14,8 +43,48 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  resolve-pair:
+    name: Freeze one native revision for every lane
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    outputs:
+      consumer: ${{ steps.policy.outputs.consumer }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: tracing-js-self/.nvmrc
+      - name: Verify exact run-policy custody controls
+        working-directory: tracing-js-self
+        run: |
+          mkdir -p "$RUNNER_TEMP/combined-v8-policy"
+          PYTHONDONTWRITEBYTECODE=1 python3 tools/native-consumer/test_combined_v8_gate.py \
+            2>&1 | tee "$RUNNER_TEMP/combined-v8-policy/controls.log"
+      - id: policy
+        name: Resolve the current paired checker and retain this run's exact policy
+        working-directory: tracing-js-self
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          mkdir -p "$RUNNER_TEMP/combined-v8-policy"
+          node tools/resolve-native-consumer.mjs --out "$RUNNER_TEMP/combined-v8-policy/semantic-native-policy-v8.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: combined-v8-policy
+          retention-days: 90
+          if-no-files-found: error
+          path: ${{ runner.temp }}/combined-v8-policy/
+
   paired:
     name: Required ${{ matrix.lane }} controls
+    needs: resolve-pair
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
@@ -45,22 +114,14 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version-file: tracing-js-self/.nvmrc
-      - id: policy
-        name: Read the exact native commit from the checked-out producer policy
-        working-directory: tracing-js-self
-        run: |
-          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          node --input-type=module <<'JS'
-          import {readFileSync,appendFileSync} from 'node:fs';
-          const policy=JSON.parse(readFileSync('contracts/semantic-native-policy-v8.json'));
-          if(policy.consumerRepository!=='werg/megatoken'||!/^[0-9a-f]{40}$/.test(policy.consumerRevision))
-            throw new Error('The paired gate requires an exact independent consumer commit');
-          appendFileSync(process.env.GITHUB_OUTPUT,`consumer=${policy.consumerRevision}\n`);
-          JS
+      - uses: actions/download-artifact@v4
+        with:
+          name: combined-v8-policy
+          path: ${{ runner.temp }}/combined-v8-policy
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: werg/megatoken
-          ref: ${{ steps.policy.outputs.consumer }}
+          ref: ${{ needs.resolve-pair.outputs.consumer }}
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
@@ -68,6 +129,7 @@ jobs:
           python-version: '3.12.14'
       - name: Install locked dependencies and build the exact native wheel
         run: |
+          printf 'SEMANTIC_V8_NATIVE_POLICY=%s\n' "$RUNNER_TEMP/combined-v8-policy/semantic-native-policy-v8.json" >> "$GITHUB_ENV"
           test -L /proc/self/ns/time
           mkdir -p "$RUNNER_TEMP/combined-v8/native-wheel"
           npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
@@ -81,7 +143,8 @@ jobs:
         run: |
           python -I tracing-js-self/tools/verify-combined-v8-gate.py attest \
             --producer tracing-js-self --native megatoken \
-            --producer-revision "$GITHUB_SHA" --native-revision "${{ steps.policy.outputs.consumer }}" \
+            --producer-revision "$GITHUB_SHA" --native-revision "${{ needs.resolve-pair.outputs.consumer }}" \
+            --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \
             --lane "${{ matrix.lane }}" --out "$RUNNER_TEMP/combined-v8" \
             2>&1 | tee "$RUNNER_TEMP/combined-v8/attestation.log"
       - name: Independently rebuild source-bound interoperability evidence
@@ -93,7 +156,8 @@ jobs:
         run: |
           python -I tracing-js-self/tools/verify-combined-v8-gate.py run \
             --producer tracing-js-self --native megatoken \
-            --producer-revision "$GITHUB_SHA" --native-revision "${{ steps.policy.outputs.consumer }}" \
+            --producer-revision "$GITHUB_SHA" --native-revision "${{ needs.resolve-pair.outputs.consumer }}" \
+            --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \
             --lane "${{ matrix.lane }}" --out "$RUNNER_TEMP/combined-v8"
       - uses: actions/upload-artifact@v4
         if: always()
@@ -105,7 +169,7 @@ jobs:
 
   qualified-pair:
     name: Required exact combined pair
-    needs: paired
+    needs: [resolve-pair, paired]
     if: ${{ always() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -130,6 +194,8 @@ jobs:
         run: |
           python -I tools/verify-combined-v8-gate.py aggregate --producer . \
             --producer-revision "$GITHUB_SHA" --artifacts "$RUNNER_TEMP/combined-v8-artifacts" \
+            --native-revision "${{ needs.resolve-pair.outputs.consumer }}" \
+            --native-policy "$RUNNER_TEMP/combined-v8-artifacts/combined-v8-policy/semantic-native-policy-v8.json" \
             --out "$RUNNER_TEMP/combined-v8-qualification.json"
       - uses: actions/upload-artifact@v4
         if: always()
@@ -137,4 +203,6 @@ jobs:
           name: combined-v8-qualification
           retention-days: 90
           if-no-files-found: error
-          path: ${{ runner.temp }}/combined-v8-qualification.json
+          path: |
+            ${{ runner.temp }}/combined-v8-qualification.json
+            ${{ runner.temp }}/combined-v8-artifacts/combined-v8-policy/

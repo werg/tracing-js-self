@@ -1,0 +1,1021 @@
+{
+  "schema": "semantic-ordinary-command-lifecycle/8",
+  "status": "passed",
+  "producerRevision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+  "consumerRevision": "aab637f002323a7820759763652df7a5ad50fe04",
+  "selectedId": "promise-number-proxy-memory-join",
+  "seed": 17,
+  "orchestrationTeacher": false,
+  "populationCount": 77,
+  "registryDigest": "05a5ef09516a0b1e4e46fedcb0a31c71eed7f3680acadb303f628bde9f3ebead",
+  "nativePolicy": {
+    "schema": "semantic-native-policy/8",
+    "consumerRepository": "werg/megatoken",
+    "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+    "interoperabilityDigest": "64f230e7b05dc6b33b3d0df359898e27158cb67a386c9cdeb63fd64b4729df2d",
+    "consumerRevision": "aab637f002323a7820759763652df7a5ad50fe04"
+  },
+  "runnerSha256": "4a43ce2d202c239a7598dca87b061282bf21ddc2d2f66e5bfd2a04c4392de3c9",
+  "optimizerUpdates": 2,
+  "learnedSuccess": null,
+  "stages": [
+    {
+      "stage": "prepare",
+      "command": [
+        "/workspace/scratch/0952c3151b8f/semantic-runtime/bin/python",
+        "/workspace/scratch/0952c3151b8f/megatoken-lifecycle/scripts/prepare_semantic_v8.py",
+        "--input",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/source.json",
+        "--output",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/prepared",
+        "--producer-root",
+        "/workspace/scratch/0952c3151b8f/producer-release-fix",
+        "--producer-revision",
+        "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+        "--consumer-revision",
+        "aab637f002323a7820759763652df7a5ad50fe04",
+        "--tokenizer-json",
+        "/workspace/scratch/0952c3151b8f/semantic-v8-tokenizer.json",
+        "--max-positions",
+        "128",
+        "--max-history",
+        "128"
+      ],
+      "log": "prepare.log",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 22167
+    },
+    {
+      "stage": "train-first",
+      "command": [
+        "/workspace/scratch/0952c3151b8f/semantic-runtime/bin/python",
+        "-m",
+        "megatoken",
+        "train",
+        "--config",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/training-config.json"
+      ],
+      "log": "train-first.log",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 27091
+    },
+    {
+      "stage": "train-resume",
+      "command": [
+        "/workspace/scratch/0952c3151b8f/semantic-runtime/bin/python",
+        "-m",
+        "megatoken",
+        "train",
+        "--config",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/training-config.json",
+        "--resume",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/first-checkpoint"
+      ],
+      "log": "train-resume.log",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 31337
+    },
+    {
+      "stage": "export",
+      "command": [
+        "/workspace/scratch/0952c3151b8f/semantic-runtime/bin/python",
+        "-m",
+        "megatoken",
+        "export",
+        "--checkpoint",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/fit/checkpoints/SC-000000002-periodic",
+        "--output",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/served",
+        "--codec",
+        "/workspace/scratch/0952c3151b8f/semantic-v8-tokenizer.json"
+      ],
+      "log": "export.log",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 10016
+    },
+    {
+      "stage": "qualify-lifecycle",
+      "command": [
+        "/workspace/scratch/0952c3151b8f/semantic-runtime/bin/python",
+        "/workspace/scratch/0952c3151b8f/megatoken-lifecycle/scripts/qualify_semantic_v8_lifecycle.py",
+        "--consumer-root",
+        "/workspace/scratch/0952c3151b8f/megatoken-lifecycle",
+        "--prepared",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/prepared",
+        "--source",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/source.json",
+        "--first-checkpoint",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/first-checkpoint",
+        "--resumed-checkpoint",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/fit/checkpoints/SC-000000002-periodic",
+        "--served",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/served",
+        "--output",
+        "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/qualification"
+      ],
+      "log": "qualify-lifecycle.log",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 23699
+    }
+  ],
+  "fullTargetCoverageRequested": false,
+  "fullTargetCoverageQualified": false,
+  "targetCoverageStatus": "not-requested",
+  "scope": "One predeclared training source, two ordinary optimizer updates, checkpoint resume, export and real service restoration. No held-out, accepted-record recovery or whole-program success claim.",
+  "qualification": "qualification/summary.json",
+  "optimizerTargetExposure": {
+    "schema": "semantic-v8-optimizer-target-exposure/2",
+    "registryDigest": "05a5ef09516a0b1e4e46fedcb0a31c71eed7f3680acadb303f628bde9f3ebead",
+    "historyContinued": true,
+    "firstCheckpointDigest": "8210fa048bf5354664a0b823910b95b9bc0f31366da67e252d22c2bedc1280d6",
+    "resumedCheckpointDigest": "4e42bf37c370bb04d48130ebd8905b3251535fa3c4c4fb44e9061030b8473d77",
+    "firstCheckpointCounts": {
+      "sourceCount": 1,
+      "logicalTargetCount": 2,
+      "physicalTargetRecordCount": 2,
+      "scoredOccurrences": 2,
+      "lossDenominators": {
+        "lexical": 67,
+        "reconstruction": 67,
+        "structure": 8,
+        "terminal": 4,
+        "router_z": 2
+      }
+    },
+    "resumedCounts": {
+      "sourceCount": 1,
+      "logicalTargetCount": 4,
+      "physicalTargetRecordCount": 4,
+      "scoredOccurrences": 4,
+      "lossDenominators": {
+        "lexical": 126,
+        "reconstruction": 126,
+        "structure": 16,
+        "terminal": 8,
+        "router_z": 4
+      }
+    },
+    "positiveWeightLossDenominators": {
+      "lexical": 126,
+      "reconstruction": 126,
+      "structure": 16,
+      "terminal": 8,
+      "router_z": 4
+    },
+    "sources": {
+      "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5": {
+        "split": "train",
+        "logicalTargetIds": [
+          "semantic:v8:target:3",
+          "semantic:v8:target:4",
+          "semantic:v8:target:5",
+          "semantic:v8:target:6"
+        ],
+        "physicalTargetRecords": {
+          "semantic:v8:target:3": {
+            "893aca3a4755e6a19a0464d4f05b5e3206929f584333b5150d831964060d050e": {
+              "windowIndices": [
+                0
+              ],
+              "lossDenominators": {
+                "lexical": 18,
+                "reconstruction": 18,
+                "structure": 4,
+                "terminal": 2,
+                "router_z": 1
+              },
+              "scoredOccurrences": 1,
+              "optimizerUpdates": 1,
+              "firstGlobalStep": 1,
+              "lastGlobalStep": 1
+            }
+          },
+          "semantic:v8:target:4": {
+            "4842ceff69278c864bf7279507ae8dd35e544e346e0f8261e780780c4d60306f": {
+              "windowIndices": [
+                0
+              ],
+              "lossDenominators": {
+                "lexical": 49,
+                "reconstruction": 49,
+                "structure": 4,
+                "terminal": 2,
+                "router_z": 1
+              },
+              "scoredOccurrences": 1,
+              "optimizerUpdates": 1,
+              "firstGlobalStep": 1,
+              "lastGlobalStep": 1
+            }
+          },
+          "semantic:v8:target:5": {
+            "99cd9182de61bc23ec738d59752a521871175569e1c0099cfbbfac9b213c4324": {
+              "windowIndices": [
+                1
+              ],
+              "lossDenominators": {
+                "lexical": 18,
+                "reconstruction": 18,
+                "structure": 4,
+                "terminal": 2,
+                "router_z": 1
+              },
+              "scoredOccurrences": 1,
+              "optimizerUpdates": 1,
+              "firstGlobalStep": 2,
+              "lastGlobalStep": 2
+            }
+          },
+          "semantic:v8:target:6": {
+            "ac4a32d20da0c62f25c93c6bf54f2c26acb79b862469e8b6ae9baf4f02c590a7": {
+              "windowIndices": [
+                1
+              ],
+              "lossDenominators": {
+                "lexical": 41,
+                "reconstruction": 41,
+                "structure": 4,
+                "terminal": 2,
+                "router_z": 1
+              },
+              "scoredOccurrences": 1,
+              "optimizerUpdates": 1,
+              "firstGlobalStep": 2,
+              "lastGlobalStep": 2
+            }
+          }
+        }
+      }
+    },
+    "allTargetsExposed": false
+  },
+  "optimizerPositionExposure": {
+    "registryDigest": "05a5ef09516a0b1e4e46fedcb0a31c71eed7f3680acadb303f628bde9f3ebead",
+    "historyContinued": true,
+    "firstCheckpointDigest": "99c65100ad198a50450bfc3c6d0140b14b68946782c49bb712764a9d9c890ccc",
+    "resumedCheckpointDigest": "1ddad8cefa89d580966c801b3bcb76a443f1616976ef42d1a4b87b0279f7f29e",
+    "firstCheckpointCounts": {
+      "schema": "semantic-v8-optimizer-position-exposure/1",
+      "digest": "99c65100ad198a50450bfc3c6d0140b14b68946782c49bb712764a9d9c890ccc",
+      "startingGlobalStep": 0,
+      "lastGlobalStep": 1,
+      "optimizerUpdates": 1,
+      "previousStageDigest": null,
+      "sourceCount": 1,
+      "logicalTargetCount": 2,
+      "physicalTargetRecordCount": 2,
+      "verifiedPhysicalTargets": 2,
+      "unmeasuredPhysicalTargets": 0,
+      "scoredOccurrences": 2,
+      "positiveWeightPositionCounts": {
+        "lexical": 67,
+        "reconstruction": 67,
+        "structure": 8,
+        "terminal": 4,
+        "modality": 2
+      },
+      "unmeasuredObjectiveCounts": {
+        "router_z": 2
+      },
+      "routerInternalPositionCounts": {
+        "adapter_c": 212,
+        "adapter_e": 40,
+        "adapter_p": 216,
+        "adapter_r": 14,
+        "p": 1296,
+        "shape_bootstrap": 568,
+        "shape_pool_linear_128_32__pool": 0,
+        "shape_pool_linear_32_1024__pool": 0,
+        "shape_pool_linear_32_128__pool": 12,
+        "shape_pool_linear_32_32__pool": 8043,
+        "shape_pool_linear_32_64__pool": 313,
+        "shape_pool_linear_512_32__pool": 0,
+        "shape_pool_linear_64_32__pool": 63,
+        "shape_pool_swiglu_32__pool": 1316,
+        "shape_pool_swiglu_64__pool": 1296,
+        "u": 212
+      },
+      "routerInternalPositionCount": 13601,
+      "routerInternalAssignmentCounts": {
+        "adapter_c": 424,
+        "adapter_e": 80,
+        "adapter_p": 432,
+        "adapter_r": 28,
+        "p": 1296,
+        "shape_bootstrap": 568,
+        "shape_pool_linear_128_32__pool": 0,
+        "shape_pool_linear_32_1024__pool": 0,
+        "shape_pool_linear_32_128__pool": 12,
+        "shape_pool_linear_32_32__pool": 8043,
+        "shape_pool_linear_32_64__pool": 313,
+        "shape_pool_linear_512_32__pool": 0,
+        "shape_pool_linear_64_32__pool": 63,
+        "shape_pool_swiglu_32__pool": 1316,
+        "shape_pool_swiglu_64__pool": 1296,
+        "u": 212
+      },
+      "routerInternalAssignmentCount": 14083,
+      "routerInternalPositionAuditUpdates": 1,
+      "routerInternalPositionAccounting": "complete-per-update",
+      "positionScope": "Actual plain-text lexical/reconstruction rows and length/mode/terminal/modality categorical labels and public supports",
+      "routerInternalPositionCoverage": "unmeasured",
+      "otherObjectiveScope": "Routing regularizers, representation coordinates, media/structured-action masks and transducer/retrieval losses are not granted token-position credit by this audit",
+      "learnedSuccess": null
+    },
+    "resumedCounts": {
+      "schema": "semantic-v8-optimizer-position-exposure/1",
+      "digest": "1ddad8cefa89d580966c801b3bcb76a443f1616976ef42d1a4b87b0279f7f29e",
+      "startingGlobalStep": 0,
+      "lastGlobalStep": 2,
+      "optimizerUpdates": 2,
+      "previousStageDigest": null,
+      "sourceCount": 1,
+      "logicalTargetCount": 4,
+      "physicalTargetRecordCount": 4,
+      "verifiedPhysicalTargets": 4,
+      "unmeasuredPhysicalTargets": 0,
+      "scoredOccurrences": 4,
+      "positiveWeightPositionCounts": {
+        "lexical": 126,
+        "reconstruction": 126,
+        "structure": 16,
+        "terminal": 8,
+        "modality": 4
+      },
+      "unmeasuredObjectiveCounts": {
+        "router_z": 4
+      },
+      "routerInternalPositionCounts": {
+        "adapter_c": 328,
+        "adapter_e": 60,
+        "adapter_p": 384,
+        "adapter_r": 24,
+        "p": 2304,
+        "shape_bootstrap": 929,
+        "shape_pool_linear_128_32__pool": 0,
+        "shape_pool_linear_32_1024__pool": 0,
+        "shape_pool_linear_32_128__pool": 24,
+        "shape_pool_linear_32_32__pool": 13578,
+        "shape_pool_linear_32_64__pool": 560,
+        "shape_pool_linear_512_32__pool": 0,
+        "shape_pool_linear_64_32__pool": 117,
+        "shape_pool_swiglu_32__pool": 2232,
+        "shape_pool_swiglu_64__pool": 2304,
+        "u": 416
+      },
+      "routerInternalPositionCount": 23260,
+      "routerInternalAssignmentCounts": {
+        "adapter_c": 656,
+        "adapter_e": 120,
+        "adapter_p": 768,
+        "adapter_r": 48,
+        "p": 2304,
+        "shape_bootstrap": 929,
+        "shape_pool_linear_128_32__pool": 0,
+        "shape_pool_linear_32_1024__pool": 0,
+        "shape_pool_linear_32_128__pool": 24,
+        "shape_pool_linear_32_32__pool": 13578,
+        "shape_pool_linear_32_64__pool": 560,
+        "shape_pool_linear_512_32__pool": 0,
+        "shape_pool_linear_64_32__pool": 117,
+        "shape_pool_swiglu_32__pool": 2232,
+        "shape_pool_swiglu_64__pool": 2304,
+        "u": 416
+      },
+      "routerInternalAssignmentCount": 24056,
+      "routerInternalPositionAuditUpdates": 2,
+      "routerInternalPositionAccounting": "complete-per-update",
+      "positionScope": "Actual plain-text lexical/reconstruction rows and length/mode/terminal/modality categorical labels and public supports",
+      "routerInternalPositionCoverage": "unmeasured",
+      "otherObjectiveScope": "Routing regularizers, representation coordinates, media/structured-action masks and transducer/retrieval losses are not granted token-position credit by this audit",
+      "learnedSuccess": null
+    },
+    "independentPreparedPositionInventoryDigest": "5a6ea883266ac9aa8673172efcf9010c7cae349b31390532294e51f053769b03",
+    "independentPreparedPhysicalTargetCount": 56,
+    "fullPopulationComparison": {
+      "independentPreparedPhysicalTargets": 56,
+      "observedPhysicalTargets": 4,
+      "missingPhysicalTargets": [
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:10",
+          "d1b4f1dc181cbeb884ad8a911f51324559fd9092463bca693aa08671795b8f80"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:11",
+          "385b5f66253bcb9f94e00383d5ba3c71a42e8d381a8bb75866d3d259003e9b41"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:12",
+          "d62dcc12d9d46693fe9b91705ebb21ac8dc7236b56c466bf0a4294da360deced"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:13",
+          "cbbebaab381e8b7badb3bc7ce67a67d1c539a0c77c1a2b0a560686dbf281fa63"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:14",
+          "93fefc9e9450de4c39b551e80a2b692ad03d15b40a65c92df621e327eb819045"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:15",
+          "3b8216b6849f5e163b4c90c0167253f78d83c3c106d98c8df094009c4ed0d350"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:16",
+          "67636373fb872cb75a6bf2d6cb53a49b42f3cd0c6d4c58d061b6693d7f252581"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:17",
+          "87407d11d190fa905e1a9938faa7ccfc84accb4560ff8e05080f73571b3d62f2"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:18",
+          "01b510fc0dfaf043ceb059e25b03b82dd8439238dc7c12b213a3c56dd94d84c1"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:19",
+          "82d8cac433c28601978813afb9114b3fee6a0c575a191cea1a75d5a9e18aa152"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:20",
+          "98ab77ed9597320921480046179bfea40c5ad7bf2a44e5f4ac19e1f1659674fb"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:21",
+          "e2b9c073f3c63c6c8960ec5fbb33ebe7d3ac91d83ab86beee9e938a4601a1be3"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:22",
+          "000463bbf82caba26039a7ef9912157d756562094cfa1d8c0abf00bc7914d434"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:23",
+          "d3cb4108306bef44b6971400befdb5676bc3600f4af6258797ea9ef1f79aeca7"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:24",
+          "a711953b97108e4a24a071dac6d8fbaea639ef912031052a67eb3fafadd262f0"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:25",
+          "0f61fb399c9cad3cd92d3377bcd98a7fca54c33e7c7c902b3e6e6643e984f2f0"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:26",
+          "ede37373b9e5c190b75746c3c4a907073a467f4459e5b20f2cea0fa30cef58cb"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:27",
+          "82fa5631fad62ef0f975bb7299e06c0157e7c37dcd9893333d273f5f31e8271c"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:28",
+          "6c4cb723bb75171058b6d81556f514094a2f7d9253373b568d0d44a609a1488d"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:29",
+          "3fc76cbd15fc1df5ebcfaad2f86769b9f221844a59d8e56343ce4d361db7a074"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:30",
+          "3ab2f2759c19938f26e79cbc5a1e9ceb6cc058e64aca445a40b6e46c5b487bd3"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:31",
+          "cbca1586ae4a57d879709718fdf443f3a6c68014326eb73b5a04c7932109d3a5"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:32",
+          "e7f28bbf38f5cd0672a43eea36c3472433ec9695b753f6820224bf9f3fa2ae39"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:33",
+          "59e2c208b48b2c408395d0d21f337b8c8ce36249da50cc3c6cc4f65597d90667"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:34",
+          "e9ec385260356b814a4b670d4658ea8058a198b4303badb1ce4e700eabb97855"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:35",
+          "14c1a9b9b871154568d8f12e9268503d5ecbd957ef85cc6a649467a5b11d7629"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:36",
+          "9377abe67abd25dec1925f340c2e3ae146d0d7f8473d62d10db7f05ca83c9132"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:37",
+          "5f7ee87840fce14789009c6a116d066486b542390b7ec6df4c67795334c9ea55"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:38",
+          "4d0071aab42954efe0389166082746af2e439e49eca5d9a35360f22f3421023c"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:39",
+          "37301a238366e29059f7856a2eb4181313993964e2f780b0b9b0107f209a2773"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:40",
+          "1ea8ad72523c9603d2e23fac010cc75052f8c0902e02d9339a9297633d1248ac"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:41",
+          "0b33d68f5980def88f48f4ef56a7ba1c28600db26618c70dc22acd3b89fc2cd8"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:42",
+          "73da979ec05574c06e17972c245885bf474ca5c98c1c26ffadcc74fd7f5a6739"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:43",
+          "1f78d917999e72396a0762f4b3ec04103aa217baad90d4fcef4347122e6279f0"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:44",
+          "54d8dbb21bbf42828803570ceea5b32e810f5158b379b0f75fa9f3d3506db15f"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:45",
+          "9e9a2a15c237e2e8ad21e6223b5e99925d33e61a23203914ae85abe74561b484"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:46",
+          "7411d98874ee4b0b0c0a73aeeb33b182d02ddd539bb852be11f03c9eb325c1bb"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:47",
+          "1dddf8fda7c7384d079ffecec510c853f3bcaa51675e2685cf6c09e5b1d41250"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:48",
+          "fbafcadc39b13eec068ef359a060ccb0dbf6bfb72b4b23be095fecfda925ae0e"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:49",
+          "0d3ea9ed418d7363ca2a69be3b97b09dda163a172b64bf60efbabf9b3f8ac8b7"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:50",
+          "5d3c1720a8baab86ab080ea6e14539585eb2c577bda5c41a2134eb9cd5f41d83"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:51",
+          "d737bf5ab7fd512d64adb11c5c578d6c15d48488096d4e29dfa0636bc99bfe1f"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:52",
+          "f036c3c48f1afc2e2ed902d9a46176aa72bbdfed26ac0a238de26d9b0c840bba"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:53",
+          "c8835c051a5d363a8b8b387a8f619678c7e4ed776f0ff4bf41178251bcfd8ae2"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:54",
+          "c37eb3de71f769ebde14f0bfafcb21a1377c9eb6a704c5d1675e8f20f32a99ad"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:55",
+          "1f5c75e91da4446b559e3c36c3ca3cec1bdc04a4e75a2d0eadb7550b67be84be"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:56",
+          "a47507fd24ce5142dc7ef6283e209e0d544fb7a393edf3456c9766138ede0bb7"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:57",
+          "d310b4aa59edb76ed47fdd1931e013df6d4df328fa2d162bd028db27ad51ebda"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:58",
+          "854f663157b8feb98aef00032b9c783ab3c77034b03915ae9311367b2d92c4b0"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:7",
+          "9f3097e237f53a4ca2fc68c17dd7894196d15eb3c3369965141a6ab3f264c15f"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:8",
+          "de3cc01b1797212fb2ab591351bda9c073da6d95b6ab10fe289908da46517a66"
+        ],
+        [
+          "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+          "semantic:v8:target:9",
+          "4f2a9c9c2e11310e3751e9abe5b2b3e9b155d9a830f2c24d7f4367de6b2bc5bc"
+        ]
+      ],
+      "unexpectedPhysicalTargets": [],
+      "preparedOracleMismatches": [],
+      "independentOccurrenceMismatches": [],
+      "targetCensusWindowOrOccurrenceMismatches": [],
+      "targetCensusWithoutPositionReceipt": [],
+      "unmeasuredPhysicalTargets": [],
+      "positiveWeightPositionCountsMatch": false,
+      "exactOnePassPreparedTextPositions": false,
+      "routerInternalPositionCounts": {
+        "adapter_c": 328,
+        "adapter_e": 60,
+        "adapter_p": 384,
+        "adapter_r": 24,
+        "p": 2304,
+        "shape_bootstrap": 929,
+        "shape_pool_linear_128_32__pool": 0,
+        "shape_pool_linear_32_1024__pool": 0,
+        "shape_pool_linear_32_128__pool": 24,
+        "shape_pool_linear_32_32__pool": 13578,
+        "shape_pool_linear_32_64__pool": 560,
+        "shape_pool_linear_512_32__pool": 0,
+        "shape_pool_linear_64_32__pool": 117,
+        "shape_pool_swiglu_32__pool": 2232,
+        "shape_pool_swiglu_64__pool": 2304,
+        "u": 416
+      },
+      "routerInternalPositionCount": 23260,
+      "routerInternalAssignmentCounts": {
+        "adapter_c": 656,
+        "adapter_e": 120,
+        "adapter_p": 768,
+        "adapter_r": 48,
+        "p": 2304,
+        "shape_bootstrap": 929,
+        "shape_pool_linear_128_32__pool": 0,
+        "shape_pool_linear_32_1024__pool": 0,
+        "shape_pool_linear_32_128__pool": 24,
+        "shape_pool_linear_32_32__pool": 13578,
+        "shape_pool_linear_32_64__pool": 560,
+        "shape_pool_linear_512_32__pool": 0,
+        "shape_pool_linear_64_32__pool": 117,
+        "shape_pool_swiglu_32__pool": 2232,
+        "shape_pool_swiglu_64__pool": 2304,
+        "u": 416
+      },
+      "routerInternalAssignmentCount": 24056,
+      "routerInternalPositionAuditUpdates": 2,
+      "routerInternalPositionAccounting": "complete-per-update",
+      "routerInternalPositionCoverage": "unmeasured",
+      "learnedSuccess": null
+    },
+    "fullPopulationQualified": false,
+    "scope": "Only the actual two-update prepared-text subset and its exact resume history; a dedicated fresh complete pass is required for full qualification",
+    "routerInternalPositionCoverage": "unmeasured",
+    "learnedSuccess": null
+  },
+  "optimizerUpdateCounts": {
+    "lifecycle": 2,
+    "coverage": 0,
+    "total": 2
+  },
+  "optimizerUpdatesScope": "optimizerUpdates retains the original two-step lifecycle count; optimizerUpdateCounts reports lifecycle, separate coverage-fit and combined counts",
+  "limits": [
+    "Executed plain-text positions are independently checked for the observed two-update subset; complete-population positions require the separate full-pass gate. Hidden routing rows and unsupported objective positions remain unmeasured.",
+    "Two optimizer updates do not qualify learned execution quality or prove every positive-loss target was exposed.",
+    "One source family and two optimizer steps do not qualify learned execution quality.",
+    "Fresh-process recovery retained original failed/unacknowledged selections; accepted-record recovery was not exercised.",
+    "Artifact hashes identify local complete bundles. Durable external bundle publication is a separate recorded step."
+  ],
+  "serving": {
+    "initialization": {
+      "schema": "semantic-inference-identity/8",
+      "adapter": "native-semantic-v8/1",
+      "seed": 17,
+      "checkpointIdentity": "6675cf97554c02e3897e337e7efd904d501dab32f0875fbb5beeee57d3cdbc7c",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "trainingIdentity": "c4b8ba50f959b9eab71be35e5eda44693fda2b161c06b8524ed5956665b65964",
+      "nativeAdmissionClaim": false,
+      "generationSettings": {
+        "device": "cpu",
+        "maxTokens": 4,
+        "maxFragments": 1,
+        "effort": 1
+      }
+    },
+    "identityRefusals": [
+      {
+        "kind": "omitted",
+        "error": {
+          "category": "NativeSelectionV8Error",
+          "message": "Loaded v8 checkpoint, tokenizer or training-lineage identity differs",
+          "evidence": null
+        }
+      },
+      {
+        "kind": "null",
+        "error": {
+          "category": "NativeSelectionV8Error",
+          "message": "Loaded v8 checkpoint, tokenizer or training-lineage identity differs",
+          "evidence": null
+        }
+      },
+      {
+        "kind": "substituted",
+        "error": {
+          "category": "NativeSelectionV8Error",
+          "message": "Loaded v8 checkpoint, tokenizer or training-lineage identity differs",
+          "evidence": null
+        }
+      }
+    ],
+    "firstSelection": {
+      "adapter": "native-semantic-v8/1",
+      "selectionId": "v8:0",
+      "session": "protocol-source",
+      "invocationId": "invocation1",
+      "checkpointIdentity": "6675cf97554c02e3897e337e7efd904d501dab32f0875fbb5beeee57d3cdbc7c",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "trainingIdentity": "c4b8ba50f959b9eab71be35e5eda44693fda2b161c06b8524ed5956665b65964",
+      "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "prefixDigest": "54a28fb4da85eb1d3c927989a2ac93ce2ac29fa1ffd0ca990a56e18f48166634",
+      "contextDigest": "d82fdc75a75ac2dac733fac077d0a779edda4d179abcdbc316db30b88f3e4099",
+      "publicDigest": "10ddfb8eb419d9fff4ca5f77451a13f2cc6134a9709495d833280e97681b94d4",
+      "origin": "actual-model-selected",
+      "modelSelected": true,
+      "status": "rejected",
+      "fragments": [
+        {
+          "selectedEventId": "v8:0:fragment:0",
+          "meridian": 36,
+          "modelTrack": "assistant",
+          "payloadHex": "e6ada3e5b8b8e79a84",
+          "emittedTokenIds": [
+            25265
+          ],
+          "tokenIds": [
+            25265
+          ],
+          "terminal": false,
+          "validation": {
+            "shapeValid": true,
+            "runtimeValid": true,
+            "tokenIdsValid": true,
+            "tokenBytesMatch": true,
+            "tokenDecodeError": null,
+            "utf8Valid": true
+          }
+        }
+      ],
+      "payloadHex": "e6ada3e5b8b8e79a84",
+      "generatedTokens": 1,
+      "observedTokens": 2426,
+      "contextTokens": 530,
+      "observedBytes": 6293,
+      "contextBytes": 1506,
+      "observedPhysicalRecords": 20,
+      "contextPhysicalRecords": 5,
+      "instructionTokens": 75,
+      "instructionBytes": 374,
+      "generationSeconds": 0.1170661440000913,
+      "preparationSeconds": 2.2250141660001646,
+      "contextBefore": {
+        "policy": {
+          "cross_events": 16,
+          "local_events": 256,
+          "max_pins": 8,
+          "pins": [],
+          "version": 1,
+          "windows": []
+        },
+        "resident_events": 36,
+        "cache_bytes": 18432,
+        "cache_storage_bytes_including_snapshots": 18432,
+        "event_budget": 128,
+        "archived_events": 25,
+        "host_payload_bytes": 7799,
+        "last_cache_evictions": [],
+        "visible_events": [
+          "4d6a41152a8753b4b0e8d45cb8db9f400454c59c9c19e284362f5b82bc2304bb",
+          "aa341e5a9b378bdcfb274b0864268b2841ee0571c59194e02583303a9975d22b",
+          "43e9b5188659cb0e4a610d5f091e35b02d36ab925ff8e873d74d3512a114e27c",
+          "ba22057ef507ad1a088e9fc232b21371806dbbc1b04b513f6593078ce9132409",
+          "34d19323c31b6986bc357cd3044d4a8eed80df1ef916f076060592dbca9ef7fb",
+          "6235e59b5abd8578b1ba2e97759f7ee9d4b55f334687b6ff8bbdc8b8c46b1a81",
+          "f640ed7a4273271c6a209fc8315be3d9e6e1e8b5ebd272b2ea06ac250aba8182",
+          "a1904455d51d4fb27563a4db459b23b8fe92cfc2903cb5eefbe9487a8069dcd1",
+          "54e621d80e7d0e238f321417de513d09f3c9c10dd2563ff2391e50404f61f1d8",
+          "1ad12ee67d1ea770603c761633f626d7b9f9c762a168e7457c2dd8bdcf94689c",
+          "3cca0e100b88803d3327f79e7f19851e4c598490057361006ec069970f00b594",
+          "ebc078a31121b761fffe7e9f47f74acf79e1388d659cce239900d0c05baaf38f",
+          "4518da1c18dbea8ae8515650d8762f56a1b213624708ee946ec10fde3772adae",
+          "204e7d0ca73fd770574ee6d716d791d383739a27068d1ce1827907839ebd1ed6",
+          "1bb6efa142c1b95f73080770c66672c030eff1edb93b52ba51e4dc285c6c4960",
+          "cddbe11bee86f647544b4ddb358006b0cb8523600ba4e39f3292227f2516e33d",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "d4ecc0c3a667baa7b37793ad516fe5ba3657cac2485c807ea4456e67d7e355dd",
+          "9976d78a56410f9e362655cd2de220b280d9f04c781f530bc24b93fb53fb3b5c",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "7f2732df2a37b902cab9fe512c476a497559e07fcc5aa74b70c32d7a4fbd3412",
+          "d0e15ab650dd1d0c06bd0ff2edcfa2dcd0572db9ea9add91bf0efce25000fb7b",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "934c0187d3aeadc78d68ce1b3e5522134010b97745573dc2eb19b426f0b57f7f",
+          "f70b4c105b2f5aa857548b8d57e9572588e52e3bfacdfd478aa9b095db20d5a4",
+          "1cf59b7542b0591dcdfc491f219ba37b666fab2c6381e833a3d46af210fd2ad5",
+          "3b2116a39e4bcf2498600335ce37a25cd2da36bf44edfc6144636620d919108a",
+          "76ad8a16ab624e2fc5a46d1b179ed128f3d160bfbfd80023382e6f632a90ea3f"
+        ]
+      },
+      "rawPayloadHex": "e6ada3e5b8b8e79a84",
+      "failure": "Native v8 record exhausted its fragment budget without termination",
+      "totalSeconds": 2.3420830750001187
+    },
+    "firstSelectionError": {
+      "category": "NativeSelectionV8Error",
+      "message": "Native v8 record exhausted its fragment budget without termination",
+      "evidence": {
+        "adapter": "native-semantic-v8/1",
+        "selectionId": "v8:0",
+        "session": "protocol-source",
+        "invocationId": "invocation1",
+        "checkpointIdentity": "6675cf97554c02e3897e337e7efd904d501dab32f0875fbb5beeee57d3cdbc7c",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "trainingIdentity": "c4b8ba50f959b9eab71be35e5eda44693fda2b161c06b8524ed5956665b65964",
+        "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "prefixDigest": "54a28fb4da85eb1d3c927989a2ac93ce2ac29fa1ffd0ca990a56e18f48166634",
+        "contextDigest": "d82fdc75a75ac2dac733fac077d0a779edda4d179abcdbc316db30b88f3e4099",
+        "publicDigest": "10ddfb8eb419d9fff4ca5f77451a13f2cc6134a9709495d833280e97681b94d4",
+        "origin": "actual-model-selected",
+        "modelSelected": true,
+        "status": "rejected",
+        "fragments": [
+          {
+            "selectedEventId": "v8:0:fragment:0",
+            "meridian": 36,
+            "modelTrack": "assistant",
+            "payloadHex": "e6ada3e5b8b8e79a84",
+            "emittedTokenIds": [
+              25265
+            ],
+            "tokenIds": [
+              25265
+            ],
+            "terminal": false,
+            "validation": {
+              "shapeValid": true,
+              "runtimeValid": true,
+              "tokenIdsValid": true,
+              "tokenBytesMatch": true,
+              "tokenDecodeError": null,
+              "utf8Valid": true
+            }
+          }
+        ],
+        "payloadHex": "e6ada3e5b8b8e79a84",
+        "generatedTokens": 1,
+        "observedTokens": 2426,
+        "contextTokens": 530,
+        "observedBytes": 6293,
+        "contextBytes": 1506,
+        "observedPhysicalRecords": 20,
+        "contextPhysicalRecords": 5,
+        "instructionTokens": 75,
+        "instructionBytes": 374,
+        "generationSeconds": 0.1170661440000913,
+        "preparationSeconds": 2.2250141660001646,
+        "contextBefore": {
+          "policy": {
+            "cross_events": 16,
+            "local_events": 256,
+            "max_pins": 8,
+            "pins": [],
+            "version": 1,
+            "windows": []
+          },
+          "resident_events": 36,
+          "cache_bytes": 18432,
+          "cache_storage_bytes_including_snapshots": 18432,
+          "event_budget": 128,
+          "archived_events": 25,
+          "host_payload_bytes": 7799,
+          "last_cache_evictions": [],
+          "visible_events": [
+            "4d6a41152a8753b4b0e8d45cb8db9f400454c59c9c19e284362f5b82bc2304bb",
+            "aa341e5a9b378bdcfb274b0864268b2841ee0571c59194e02583303a9975d22b",
+            "43e9b5188659cb0e4a610d5f091e35b02d36ab925ff8e873d74d3512a114e27c",
+            "ba22057ef507ad1a088e9fc232b21371806dbbc1b04b513f6593078ce9132409",
+            "34d19323c31b6986bc357cd3044d4a8eed80df1ef916f076060592dbca9ef7fb",
+            "6235e59b5abd8578b1ba2e97759f7ee9d4b55f334687b6ff8bbdc8b8c46b1a81",
+            "f640ed7a4273271c6a209fc8315be3d9e6e1e8b5ebd272b2ea06ac250aba8182",
+            "a1904455d51d4fb27563a4db459b23b8fe92cfc2903cb5eefbe9487a8069dcd1",
+            "54e621d80e7d0e238f321417de513d09f3c9c10dd2563ff2391e50404f61f1d8",
+            "1ad12ee67d1ea770603c761633f626d7b9f9c762a168e7457c2dd8bdcf94689c",
+            "3cca0e100b88803d3327f79e7f19851e4c598490057361006ec069970f00b594",
+            "ebc078a31121b761fffe7e9f47f74acf79e1388d659cce239900d0c05baaf38f",
+            "4518da1c18dbea8ae8515650d8762f56a1b213624708ee946ec10fde3772adae",
+            "204e7d0ca73fd770574ee6d716d791d383739a27068d1ce1827907839ebd1ed6",
+            "1bb6efa142c1b95f73080770c66672c030eff1edb93b52ba51e4dc285c6c4960",
+            "cddbe11bee86f647544b4ddb358006b0cb8523600ba4e39f3292227f2516e33d",
+            "__transducer_query__",
+            "__transducer_knowledge__",
+            "d4ecc0c3a667baa7b37793ad516fe5ba3657cac2485c807ea4456e67d7e355dd",
+            "9976d78a56410f9e362655cd2de220b280d9f04c781f530bc24b93fb53fb3b5c",
+            "__transducer_query__",
+            "__transducer_knowledge__",
+            "7f2732df2a37b902cab9fe512c476a497559e07fcc5aa74b70c32d7a4fbd3412",
+            "d0e15ab650dd1d0c06bd0ff2edcfa2dcd0572db9ea9add91bf0efce25000fb7b",
+            "__transducer_query__",
+            "__transducer_knowledge__",
+            "934c0187d3aeadc78d68ce1b3e5522134010b97745573dc2eb19b426f0b57f7f",
+            "f70b4c105b2f5aa857548b8d57e9572588e52e3bfacdfd478aa9b095db20d5a4",
+            "1cf59b7542b0591dcdfc491f219ba37b666fab2c6381e833a3d46af210fd2ad5",
+            "3b2116a39e4bcf2498600335ce37a25cd2da36bf44edfc6144636620d919108a",
+            "76ad8a16ab624e2fc5a46d1b179ed128f3d160bfbfd80023382e6f632a90ea3f"
+          ]
+        },
+        "rawPayloadHex": "e6ada3e5b8b8e79a84",
+        "failure": "Native v8 record exhausted its fragment budget without termination",
+        "totalSeconds": 2.3420830750001187
+      }
+    },
+    "restoration": {
+      "schema": "semantic-model-restore/8",
+      "checkpointDigest": "5f3986d7ed477aee33db5666c4d87edbc7aa72ed0bebabc06e77bbe522254a91",
+      "restoredSessions": 1,
+      "reexecutedSelections": 0,
+      "consumedAttempts": 1,
+      "hostDispatches": 0,
+      "equivalence": "verified-model-reexecution",
+      "restored": true
+    },
+    "nextSelectionComparedFields": [
+      "selectionId",
+      "fragments",
+      "payloadHex",
+      "generatedTokens",
+      "checkpointIdentity",
+      "tokenizerIdentity",
+      "trainingIdentity"
+    ],
+    "nextSelectionExact": true,
+    "acknowledgedModelSelections": 0,
+    "selectionFamily": "semantic",
+    "learnedSuccess": null,
+    "scope": "Actual trained CPU weights and pinned tokenizer; original token selection and fresh-process initial-state/RNG continuation. No semantic record was acknowledged."
+  }
+}

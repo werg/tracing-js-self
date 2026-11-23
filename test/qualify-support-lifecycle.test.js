@@ -2,6 +2,10 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {dirname,join} from 'node:path';
+import test from 'node:test';
+import {buildRegionFamilyRegistry} from '../src/semantic/family-registry-v8.js';
+import {buildSemanticRegionSupportCohortV8} from '../fixtures/semantic-regions/support-cohort.js';
+import {verifyLifecycleSourcePopulation,verifyLifecycleTargetPopulation} from '../tools/support-lifecycle-inventory.mjs';
 
 const root=dirname(fileURLToPath(import.meta.url));
 const runner=join(root,'..','tools','qualify-ordinary-v8-lifecycle.mjs');
@@ -54,3 +58,42 @@ const complete=['--prepared-root','/tmp/prepared','--source-inventory','/tmp/inv
   assert.notEqual(result.status,0);
   assert.match(result.stderr,/outside both pinned checkouts/);
 }
+
+const populationFor=registry=>({schema:'semantic-v8-source-population/1',registryDigest:registry.digest,
+  sourceIds:registry.sources.map(source=>source.id)});
+
+test('lifecycle inventory derives all current members without a fixed population size',()=>{
+  for(const count of [3,65]){
+    const registry=buildRegionFamilyRegistry(Array.from({length:count},(_,i)=>({id:'source-'+i,
+      family:'same-source',source:'function run(x){return x;}',entry:'run'})),{seed:17});
+    const inventory=populationFor(registry),population=verifyLifecycleSourcePopulation(registry,inventory);
+    assert.equal(population.populationCount,count);
+    assert.equal(Object.values(population.splitCounts).reduce((a,b)=>a+b,0),count);
+    assert.equal(population.trainSourceIds.length,population.splitCounts.train);
+    assert.throws(()=>verifyLifecycleSourcePopulation(registry,{...inventory,sourceIds:inventory.sourceIds.slice(1)}),/differs/);
+    assert.throws(()=>verifyLifecycleSourcePopulation(registry,{...inventory,sourceIds:inventory.sourceIds.map((id,i)=>i?'substituted-'+i:id)}),/differs/);
+    assert.throws(()=>verifyLifecycleSourcePopulation(registry,{...inventory,sourceIds:[...inventory.sourceIds.slice(1),inventory.sourceIds[1]]}),/unique/);
+    const forged=structuredClone(registry);forged.components[0].split='changed';
+    assert.throws(()=>verifyLifecycleSourcePopulation(forged,inventory),/digest|changed/);
+  }
+});
+
+test('lifecycle target inventory binds exact authenticated training IDs and actual split counts',()=>{
+  const {registry}=buildSemanticRegionSupportCohortV8();
+  const population=verifyLifecycleSourcePopulation(registry,populationFor(registry));
+  const target={sourceIds:[...population.trainSourceIds].reverse(),trainEpisodeCount:population.splitCounts.train,
+    registryDigest:registry.digest,windowCount:3,optimizerWindowCount:2,
+    phaseMeter:'P',onePassMeterCount:10,phaseBudget:100};
+  assert.equal(verifyLifecycleTargetPopulation(target,population).valid,true);
+  const changed={...target,sourceIds:[...target.sourceIds]};changed.sourceIds[0]='unregistered';
+  assert.throws(()=>verifyLifecycleTargetPopulation(changed,population),/authenticated/);
+  changed.sourceIds[0]=population.sourceIds.find(id=>!population.trainSourceIds.includes(id));
+  assert.throws(()=>verifyLifecycleTargetPopulation(changed,population),/authenticated/);
+  for(const key of ['windowCount','optimizerWindowCount','phaseBudget','onePassMeterCount']){
+    assert.throws(()=>verifyLifecycleTargetPopulation({...target,[key]:undefined},population),/job budget/);
+    assert.throws(()=>verifyLifecycleTargetPopulation({...target,[key]:NaN},population),/job budget/);
+  }
+  assert.throws(()=>verifyLifecycleTargetPopulation({...target,trainEpisodeCount:target.trainEpisodeCount+1},population),/authenticated/);
+  assert.throws(()=>verifyLifecycleTargetPopulation({...target,optimizerWindowCount:4},population),/job budget/);
+  assert.throws(()=>verifyLifecycleTargetPopulation({...target,onePassMeterCount:101},population),/job budget/);
+});

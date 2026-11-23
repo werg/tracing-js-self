@@ -20,7 +20,8 @@ test('the retained normative HTML is the pinned ECMA-262 17th edition with its n
   assert.equal(verifyEcma262SpecificationBytes(bytes,specification,manifest),true);
   const profile=ownedTest262Profile({specification});
   assert.deepEqual(profile.specification,specification);
-  assert.match(profile.limits[0],/edition membership remains unclassified/i);
+  assert.equal(profile.edition,'ECMAScript (living)');
+  assert.match(profile.limits[0],/current observed inventory/i);
 });
 
 test('a declared annual pin is rejected when actual bytes or URI/hash metadata differ',()=>{

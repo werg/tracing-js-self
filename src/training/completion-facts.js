@@ -46,6 +46,10 @@ export function normalizeCompletionFacts(bundle,{generators=false}={}) {
     }else if(event.operation==='completion.catch.bind'){
       const introduced=event.stateChanges.filter(p=>p.table==='envs'&&p.after &&
         p.before===null).flatMap(p=>Object.entries(p.after.bindings??{}));
+      const instruction=bundle.programs[frame.before?.codeId]?.instructions[frame.before?.pc];
+      // Optional catch bindings, including the compiler's throw-preserving
+      // IteratorClose cleanup, consume the caught value without creating a cell.
+      if(!introduced.length&&instruction?.op==='BIND_CATCH'&&instruction.arg===null&&instruction.siteId===event.siteId)continue;
       if(introduced.length!==1||introduced[0][1].kind!=='catch'||
          !Array.isArray(introduced[0][1].token?.value))
         throw new TypeError('Catch binding lacks committed owned data cell');

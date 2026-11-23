@@ -19,6 +19,7 @@ import {DECLARED_EXCEPTION_PROFILE} from '../training/exception-profile.js';
 import {inspectSemanticRegion,evaluateSemanticRegion,checkSemanticRegionClaim} from '../training/semantic-regions.js';
 import {checkEffectfulProjectionState} from '../training/projection-state-profile.js';
 import {inspectOwnedDataEntity} from '../training/data-graph-contract.js';
+import {asyncIterationSourceSitesV8,asyncIterationSourceCodeV8} from './async-iteration-source-v8.js';
 
 const copy=value=>structuredClone(value);
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
@@ -238,7 +239,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     {generators:regionAdapter?.projectionStateProfiles.includes('synchronous-generator-source/1')===true});
   let state=copy(bundle.initialState);
   let roots=new Map([[semantic.rootInvocation,invocationId]]),frames=new Map([[semantic.rootInvocation,invocationId]]);
-  const functionNames=new Map();
+  const functionNames=new Map(),asyncIterationSites=asyncIterationSourceSitesV8(source);
   let cellNames=new Map(),usedCellNames=new Set(),pendingAwaits=new Map(),callbackArrivals=[];
   let publicIdentities=new Map();
   let emittedPromises=new Set(),settledPromises=new Set(),returnedPromises=new Set(),reactionJobs=new Map();
@@ -252,9 +253,13 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
   let cellOrdinal=0,frameOrdinal=0,continuationOrdinal=0,eventOrdinal=0,generated=0,jobOrdinal=0;
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
     if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op)){
-      functionNames.set(instruction.arg.codeId,instruction.op==='DEF_FN'?
+      const helper=bundle.programs[instruction.arg.codeId]?.sourceRole;
+      functionNames.set(instruction.arg.codeId,helper?
+        asyncIterationSourceCodeV8(helper,instruction.start,instruction.end,asyncIterationSites):instruction.op==='DEF_FN'?
         instruction.arg.name:'function:'+instruction.start);
-      functionReferences.set(instruction.arg.codeId,sourceReferences.get(instruction.start)??new Set());
+      functionReferences.set(instruction.arg.codeId,helper?new Set(bundle.programs[instruction.arg.codeId].instructions
+        .filter(row=>row.op==='GET'&&/^\[\[(?:async iterator|sync iterator next) [0-9]+\]\]$/.test(row.arg))
+        .map(row=>row.arg)):sourceReferences.get(instruction.start)??new Set());
       functionParameters.set(instruction.arg.codeId,sourceParameters.get(instruction.start)??[]);
     }
   const rootFor=frame=>roots.get(frame)??invocationId;
@@ -543,6 +548,14 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
               // The nearest declaration shadows all outer namesakes, even
               // before initialization. Never substitute an outer/final value.
               if(!binding.initialized&&binding.kind!=='parameter'){unresolvedLexical=true;continue;}
+              if(bundle.programs[allocation.codeId]?.sourceRole&&binding.token?.value?.[0]==='method'){
+                const methods=regionAdapter.componentState('custom-iterator-source/1').methods,
+                  method=methods.find(([key])=>key===env+':'+name)?.[1];
+                if(!method||!isDeepStrictEqual(method.method,binding.token.value)||
+                  !controller(owner).locals.has(method.callee)||!controller(owner).locals.has(method.receiver))
+                  refuse('async iterator helper lost its checked cached method and receiver');
+                fields.captures.push({binding:name,cell:method.callee},{binding:name+' receiver',cell:method.receiver});continue;
+              }
               if(binding.initialized&&!sourceValue(binding.token?.value))continue;
               captureBindings.push({environment:env,name,cell:cell(env,name)});
             }

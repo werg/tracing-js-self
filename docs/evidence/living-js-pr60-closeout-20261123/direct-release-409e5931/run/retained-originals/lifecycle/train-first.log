@@ -1,0 +1,198 @@
+{"budget": 200000000, "elapsed_seconds": 92.631469285001, "event": "start", "meter": "P", "mode": "synchronous", "model": "tiny", "phase": "SE", "served_parameters": 4039640, "world_size": 1}
+{"D_per_second": 473.33933719375204, "G_per_second": 4.12553041022798, "I_per_second": 473.33933719375204, "P_per_second": 30.706479509038637, "Q_per_second": 0.20888761570774583, "batch_sizes": [1], "budget_overshoot": 0, "counters": {"D": 9064, "G": 79, "I": 9064, "P": 588, "Q": 4, "audio_samples": 0, "control_encodes": 0, "facet_encodes": 4, "image_events": 0, "media_events": 0, "raw_facet_replays": 0, "reconstruction_records": 0, "reconstruction_tokens": 0, "record_ingestions": 79, "scored_windows": 1, "source_bytes": 25444, "video_frames": 0, "writer_reader_windows": 1}, "decoupled": null, "decoupled_step": {}, "denominators": {"audio_prediction": 0, "audio_reconstruction": 0, "binding": 0, "encoder_alignment": 0, "facet_prediction": 0, "lexical": 294, "modality": 4, "placement": 0, "policy_outcome": 0, "query_alignment": 0, "reconstruction": 294, "relation": 0, "relation_semantic": 0, "retrieval_ranking": 0, "router_balance": 4, "router_z": 4, "structure": 16, "terminal": 8, "visual_prediction": 0, "visual_reconstruction": 0}, "efforts": [6], "elapsed_seconds": 111.78280566600006, "event": "train", "experts": {"p": {"active_experts": 8, "dispatches": 960.0, "eligible_counts": [720.0, 720.0, 720.0, 720.0, 720.0, 720.0, 720.0, 720.0], "learning_rows": [331.0, 636.0, 394.0, 373.0, 807.0, 515.0, 1372.0, 1332.0], "load_entropy": 1.9397607130485945, "normalized_load_entropy": 0.9328277204088157, "padded_rows": 119552.0, "padding_ratio": 20.755555555555556, "routed_rows": [331.0, 636.0, 394.0, 373.0, 807.0, 515.0, 1372.0, 1332.0], "total_rows": 5760}, "u": {"active_experts": 8, "dispatches": 1446.0, "eligible_counts": [1402.0, 1420.0, 1409.0, 1442.0, 1405.0, 1410.0, 1442.0, 1446.0], "learning_rows": [921.0, 729.0, 692.0, 898.0, 523.0, 572.0, 784.0, 569.0], "load_entropy": 2.067800839382423, "normalized_load_entropy": 0.9944020055076861, "padded_rows": 226624.0, "padding_ratio": 18.91686143572621, "routed_rows": [1795.0, 1735.0, 1531.0, 1586.0, 1130.0, 1166.0, 1471.0, 1566.0], "total_rows": 11980}}, "generator": {"balance_adapter_c_assignments": 880.0, "balance_adapter_c_loss": 0.0039171623066067696, "balance_adapter_e_assignments": 158.0, "balance_adapter_e_loss": 0.0040956223383545876, "balance_adapter_p_assignments": 1008.0, "balance_adapter_p_loss": 0.0050244759768247604, "balance_adapter_r_assignments": 68.0, "balance_adapter_r_loss": 0.005455211736261845, "balance_p_assignments": 2880.0, "balance_p_loss": 0.0024962727911770344, "balance_shape_bootstrap_assignments": 1189.0, "balance_shape_bootstrap_loss": 0.00250313151627779, "balance_shape_pool_linear_128_32__pool_assignments": 0.0, "balance_shape_pool_linear_32_1024__pool_assignments": 0.0, "balance_shape_pool_linear_32_128__pool_assignments": 24.0, "balance_shape_pool_linear_32_128__pool_loss": 0.00249540526419878, "balance_shape_pool_linear_32_32__pool_assignments": 18920.0, "balance_shape_pool_linear_32_32__pool_loss": 0.002500128000974655, "balance_shape_pool_linear_32_64__pool_assignments": 918.0, "balance_shape_pool_linear_32_64__pool_loss": 0.0024980278685688972, "balance_shape_pool_linear_512_32__pool_assignments": 0.0, "balance_shape_pool_linear_64_32__pool_assignments": 205.0, "balance_shape_pool_linear_64_32__pool_loss": 0.002499666763469577, "balance_shape_pool_swiglu_32__pool_assignments": 3208.0, "balance_shape_pool_swiglu_32__pool_loss": 0.002499943831935525, "balance_shape_pool_swiglu_64__pool_assignments": 2880.0, "balance_shape_pool_swiglu_64__pool_loss": 0.00250026467256248, "balance_u_assignments": 752.0, "balance_u_loss": 0.0025004397612065077, "causal_student_windows": 1.0, "context_cache_bytes_sum": 57344.0, "context_retained_events_sum": 112.0, "context_windows": 1.0, "encoded_facet_norm": 7.499062538146973, "encoded_facet_norm_sum": 29.99625015258789, "encoder_alignment_coordinates": 0.0, "encoder_alignment_loss_sum": 0.0, "facet_alignment_coordinates": 512.0, "facet_alignment_squared_error_sum": 674.458984375, "facet_examples": 4.0, "facet_prediction_coordinates": 0.0, "facet_prediction_loss_sum": 0.0, "forecast_encoder_distance_mse": 1.3173027038574219, "grouped_native_replays": 0.0, "grouped_selected_events": 4.0, "grouped_supervised_meridians": 4.0, "grouped_training_windows": 1.0, "modality_correct": 0.0, "modality_events": 0.0, "prediction_facet_norm": 10.473596572875977, "prediction_facet_norm_sum": 41.894386291503906, "prior_examples": 4.0, "prior_lexical_ce": 12.074945359002976, "prior_lexical_loss_sum": 3550.033935546875, "prior_lexical_positions": 294.0, "reconstruction_contextual_examples": 0.0, "reconstruction_direct_examples": 4.0, "reconstruction_examples": 4.0, "reconstruction_lexical_ce": 12.068184988839286, "reconstruction_lexical_loss_sum": 3548.04638671875, "reconstruction_lexical_positions": 294.0, "relation_semantic_loss_sum": 0.0, "relation_semantic_pairs": 0.0, "teacher_forced_action_continuations": 4.0, "transducer_lookups": 16.0, "transducer_observed": 16.0, "transducer_writes": 0.0}, "global_step": 1, "gradient_norm": 1.386502981185913, "gradient_norm_encoder": 0.17007823288440704, "gradient_norm_model": 1.2304126024246216, "gradient_norm_shared": 0.6160752177238464, "loss": {"lexical": 12.074945359002976, "modality": 0.0, "reconstruction": 12.068184988839286, "router_balance": 6.318154811859131, "router_z": 44.551429748535156, "structure": 2.415560245513916, "terminal": 0.6807234883308411}, "lr": 1.0000000000000002e-06, "media_events_per_second": 0.0, "optimizer_seconds": 0.03767845299989858, "peak_memory_bytes": 0, "phase": "SE", "phase_consumed": 588, "phase_meter": "P", "reconstruction_tokens_per_second": 0.0, "record_ingestions_per_second": 4.12553041022798, "semantic_v8_position_exposure": {"digest": "4f28d6a4ae4c3e485bcca2836e218187dff33a1a28d9ae1a152ee6a06cc19e43", "lastGlobalStep": 1, "learnedSuccess": null, "logicalTargetCount": 2, "optimizerUpdates": 1, "otherObjectiveScope": "Routing regularizers, representation coordinates, media/structured-action masks and transducer/retrieval losses are not granted token-position credit by this audit", "physicalTargetRecordCount": 4, "positionScope": "Actual plain-text lexical/reconstruction rows and length/mode/terminal/modality categorical labels and public supports", "positiveWeightPositionCounts": {"lexical": 294, "modality": 4, "reconstruction": 294, "structure": 16, "terminal": 8}, "previousStageDigest": null, "routerInternalAssignmentCount": 33090, "routerInternalAssignmentCounts": {"adapter_c": 880, "adapter_e": 158, "adapter_p": 1008, "adapter_r": 68, "p": 2880, "shape_bootstrap": 1189, "shape_pool_linear_128_32__pool": 0, "shape_pool_linear_32_1024__pool": 0, "shape_pool_linear_32_128__pool": 24, "shape_pool_linear_32_32__pool": 18920, "shape_pool_linear_32_64__pool": 918, "shape_pool_linear_512_32__pool": 0, "shape_pool_linear_64_32__pool": 205, "shape_pool_swiglu_32__pool": 3208, "shape_pool_swiglu_64__pool": 2880, "u": 752}, "routerInternalPositionAccounting": "complete-per-update", "routerInternalPositionAuditUpdates": 1, "routerInternalPositionCount": 32033, "routerInternalPositionCounts": {"adapter_c": 440, "adapter_e": 79, "adapter_p": 504, "adapter_r": 34, "p": 2880, "shape_bootstrap": 1189, "shape_pool_linear_128_32__pool": 0, "shape_pool_linear_32_1024__pool": 0, "shape_pool_linear_32_128__pool": 24, "shape_pool_linear_32_32__pool": 18920, "shape_pool_linear_32_64__pool": 918, "shape_pool_linear_512_32__pool": 0, "shape_pool_linear_64_32__pool": 205, "shape_pool_swiglu_32__pool": 3208, "shape_pool_swiglu_64__pool": 2880, "u": 752}, "routerInternalPositionCoverage": "unmeasured", "schema": "semantic-v8-optimizer-position-exposure/1", "scoredOccurrences": 4, "sourceCount": 1, "startingGlobalStep": 0, "unmeasuredObjectiveCounts": {"router_z": 4}, "unmeasuredPhysicalTargets": 0, "verifiedPhysicalTargets": 4}, "semantic_v8_target_exposure_step": {"logicalTargetCount": 2, "lossDenominators": {"lexical": 294, "reconstruction": 294, "router_z": 4, "structure": 16, "terminal": 8}, "physicalTargetRecordCount": 4, "scoredOccurrences": 4, "sourceCount": 1}, "semantic_v8_target_exposure_totals": {"logicalTargetCount": 2, "lossDenominators": {"lexical": 294, "reconstruction": 294, "router_z": 4, "structure": 16, "terminal": 8}, "physicalTargetRecordCount": 4, "scoredOccurrences": 4, "sourceCount": 1}, "source_bytes_per_second": 1328.7341235169713, "step_counters": {"D": 9064, "G": 79, "I": 9064, "P": 588, "Q": 4, "audio_samples": 0, "control_encodes": 0, "facet_encodes": 4, "image_events": 0, "media_events": 0, "raw_facet_replays": 0, "reconstruction_records": 0, "reconstruction_tokens": 0, "record_ingestions": 79, "scored_windows": 1, "source_bytes": 25444, "video_frames": 0, "writer_reader_windows": 1}, "step_seconds": 19.149052883998593, "transducer_edges": 0, "transducer_updated_fields": 0, "transducer_writeouts": 0, "transducer_written_values": 0}
+{"checkpoint": "/workspace/scratch/0f9e11f5b3cf/pr60-evidence/direct-release-409e5931/original-inputs/lifecycle/fit/checkpoints/SE-000000001-periodic", "complete": false, "counters": {"D": 9064, "G": 79, "I": 9064, "P": 588, "Q": 4, "audio_samples": 0, "control_encodes": 0, "facet_encodes": 4, "image_events": 0, "media_events": 0, "raw_facet_replays": 0, "reconstruction_records": 0, "reconstruction_tokens": 0, "record_ingestions": 79, "scored_windows": 1, "source_bytes": 25444, "video_frames": 0, "writer_reader_windows": 1}, "elapsed_seconds": 111.86794326100062, "event": "finished", "global_step": 1, "phase": "SE", "phase_consumed": 588, "semantic_v8_position_exposure": {"digest": "4f28d6a4ae4c3e485bcca2836e218187dff33a1a28d9ae1a152ee6a06cc19e43", "lastGlobalStep": 1, "learnedSuccess": null, "logicalTargetCount": 2, "optimizerUpdates": 1, "otherObjectiveScope": "Routing regularizers, representation coordinates, media/structured-action masks and transducer/retrieval losses are not granted token-position credit by this audit", "physicalTargetRecordCount": 4, "positionScope": "Actual plain-text lexical/reconstruction rows and length/mode/terminal/modality categorical labels and public supports", "positiveWeightPositionCounts": {"lexical": 294, "modality": 4, "reconstruction": 294, "structure": 16, "terminal": 8}, "previousStageDigest": null, "routerInternalAssignmentCount": 33090, "routerInternalAssignmentCounts": {"adapter_c": 880, "adapter_e": 158, "adapter_p": 1008, "adapter_r": 68, "p": 2880, "shape_bootstrap": 1189, "shape_pool_linear_128_32__pool": 0, "shape_pool_linear_32_1024__pool": 0, "shape_pool_linear_32_128__pool": 24, "shape_pool_linear_32_32__pool": 18920, "shape_pool_linear_32_64__pool": 918, "shape_pool_linear_512_32__pool": 0, "shape_pool_linear_64_32__pool": 205, "shape_pool_swiglu_32__pool": 3208, "shape_pool_swiglu_64__pool": 2880, "u": 752}, "routerInternalPositionAccounting": "complete-per-update", "routerInternalPositionAuditUpdates": 1, "routerInternalPositionCount": 32033, "routerInternalPositionCounts": {"adapter_c": 440, "adapter_e": 79, "adapter_p": 504, "adapter_r": 34, "p": 2880, "shape_bootstrap": 1189, "shape_pool_linear_128_32__pool": 0, "shape_pool_linear_32_1024__pool": 0, "shape_pool_linear_32_128__pool": 24, "shape_pool_linear_32_32__pool": 18920, "shape_pool_linear_32_64__pool": 918, "shape_pool_linear_512_32__pool": 0, "shape_pool_linear_64_32__pool": 205, "shape_pool_swiglu_32__pool": 3208, "shape_pool_swiglu_64__pool": 2880, "u": 752}, "routerInternalPositionCoverage": "unmeasured", "schema": "semantic-v8-optimizer-position-exposure/1", "scoredOccurrences": 4, "sourceCount": 1, "startingGlobalStep": 0, "unmeasuredObjectiveCounts": {"router_z": 4}, "unmeasuredPhysicalTargets": 0, "verifiedPhysicalTargets": 4}, "semantic_v8_target_exposure": {"digest": "ab1b18e3bd200c020a96baaea1e788f3c99c6d6b14a273d44b754bb211f58501", "lastGlobalStep": 1, "logicalTargetCount": 2, "lossDenominators": {"lexical": 294, "reconstruction": 294, "router_z": 4, "structure": 16, "terminal": 8}, "optimizerUpdates": 1, "physicalTargetRecordCount": 4, "previousDigest": "14041da1e1f03165558993a36ae621904676db3e8def11b91a326f5abcec1941", "registryDigest": "985330b78ce655b0bfb4181f02298fcb471c599d8a1f8abe5c82ea0a20e6fbb7", "schema": "semantic-v8-optimizer-target-exposure/2", "scoredOccurrences": 4, "sourceCount": 1, "sources": {"se-support-rectangle-perimeter-child-teacher": {"logicalTargetIds": ["semantic:v8:orchestration:target:1", "semantic:v8:orchestration:target:4"], "physicalTargetRecords": {"semantic:v8:orchestration:target:1": {"18250edd1987fe8800574a10d0f0f9fe0f82236ef755846b5699be92bac3b46c": {"firstGlobalStep": 1, "lastGlobalStep": 1, "lossDenominators": {"lexical": 122, "reconstruction": 122, "router_z": 1, "structure": 4, "terminal": 2}, "optimizerUpdates": 1, "scoredOccurrences": 1, "windowIndices": [0]}, "e13992b2c44197293f88f41c8db51b1bd3c126819f80ea268b2a02f715cf643b": {"firstGlobalStep": 1, "lastGlobalStep": 1, "lossDenominators": {"lexical": 31, "reconstruction": 31, "router_z": 1, "structure": 4, "terminal": 2}, "optimizerUpdates": 1, "scoredOccurrences": 1, "windowIndices": [0]}, "f074c39d5d23a3dc9552c7a8ee2ed363efe78428e913b85991910fee656fafdb": {"firstGlobalStep": 1, "lastGlobalStep": 1, "lossDenominators": {"lexical": 86, "reconstruction": 86, "router_z": 1, "structure": 4, "terminal": 2}, "optimizerUpdates": 1, "scoredOccurrences": 1, "windowIndices": [0]}}, "semantic:v8:orchestration:target:4": {"4b18d2294d1d16b3a839f599a5697e578732c3935ef95459ba94302d4cca05ad": {"firstGlobalStep": 1, "lastGlobalStep": 1, "lossDenominators": {"lexical": 55, "reconstruction": 55, "router_z": 1, "structure": 4, "terminal": 2}, "optimizerUpdates": 1, "scoredOccurrences": 1, "windowIndices": [0]}}}, "split": "train"}}, "startingGlobalStep": 0}, "termination": "step_limit"}
+{
+  "checkpoint": "/workspace/scratch/0f9e11f5b3cf/pr60-evidence/direct-release-409e5931/original-inputs/lifecycle/fit/checkpoints/SE-000000001-periodic",
+  "complete": false,
+  "counters": {
+    "D": 9064,
+    "G": 79,
+    "I": 9064,
+    "P": 588,
+    "Q": 4,
+    "audio_samples": 0,
+    "control_encodes": 0,
+    "facet_encodes": 4,
+    "image_events": 0,
+    "media_events": 0,
+    "raw_facet_replays": 0,
+    "reconstruction_records": 0,
+    "reconstruction_tokens": 0,
+    "record_ingestions": 79,
+    "scored_windows": 1,
+    "source_bytes": 25444,
+    "video_frames": 0,
+    "writer_reader_windows": 1
+  },
+  "global_step": 1,
+  "phase": "SE",
+  "phase_consumed": 588,
+  "semantic_v8_position_exposure": {
+    "digest": "4f28d6a4ae4c3e485bcca2836e218187dff33a1a28d9ae1a152ee6a06cc19e43",
+    "lastGlobalStep": 1,
+    "learnedSuccess": null,
+    "logicalTargetCount": 2,
+    "optimizerUpdates": 1,
+    "otherObjectiveScope": "Routing regularizers, representation coordinates, media/structured-action masks and transducer/retrieval losses are not granted token-position credit by this audit",
+    "physicalTargetRecordCount": 4,
+    "positionScope": "Actual plain-text lexical/reconstruction rows and length/mode/terminal/modality categorical labels and public supports",
+    "positiveWeightPositionCounts": {
+      "lexical": 294,
+      "modality": 4,
+      "reconstruction": 294,
+      "structure": 16,
+      "terminal": 8
+    },
+    "previousStageDigest": null,
+    "routerInternalAssignmentCount": 33090,
+    "routerInternalAssignmentCounts": {
+      "adapter_c": 880,
+      "adapter_e": 158,
+      "adapter_p": 1008,
+      "adapter_r": 68,
+      "p": 2880,
+      "shape_bootstrap": 1189,
+      "shape_pool_linear_128_32__pool": 0,
+      "shape_pool_linear_32_1024__pool": 0,
+      "shape_pool_linear_32_128__pool": 24,
+      "shape_pool_linear_32_32__pool": 18920,
+      "shape_pool_linear_32_64__pool": 918,
+      "shape_pool_linear_512_32__pool": 0,
+      "shape_pool_linear_64_32__pool": 205,
+      "shape_pool_swiglu_32__pool": 3208,
+      "shape_pool_swiglu_64__pool": 2880,
+      "u": 752
+    },
+    "routerInternalPositionAccounting": "complete-per-update",
+    "routerInternalPositionAuditUpdates": 1,
+    "routerInternalPositionCount": 32033,
+    "routerInternalPositionCounts": {
+      "adapter_c": 440,
+      "adapter_e": 79,
+      "adapter_p": 504,
+      "adapter_r": 34,
+      "p": 2880,
+      "shape_bootstrap": 1189,
+      "shape_pool_linear_128_32__pool": 0,
+      "shape_pool_linear_32_1024__pool": 0,
+      "shape_pool_linear_32_128__pool": 24,
+      "shape_pool_linear_32_32__pool": 18920,
+      "shape_pool_linear_32_64__pool": 918,
+      "shape_pool_linear_512_32__pool": 0,
+      "shape_pool_linear_64_32__pool": 205,
+      "shape_pool_swiglu_32__pool": 3208,
+      "shape_pool_swiglu_64__pool": 2880,
+      "u": 752
+    },
+    "routerInternalPositionCoverage": "unmeasured",
+    "schema": "semantic-v8-optimizer-position-exposure/1",
+    "scoredOccurrences": 4,
+    "sourceCount": 1,
+    "startingGlobalStep": 0,
+    "unmeasuredObjectiveCounts": {
+      "router_z": 4
+    },
+    "unmeasuredPhysicalTargets": 0,
+    "verifiedPhysicalTargets": 4
+  },
+  "semantic_v8_target_exposure": {
+    "digest": "ab1b18e3bd200c020a96baaea1e788f3c99c6d6b14a273d44b754bb211f58501",
+    "lastGlobalStep": 1,
+    "logicalTargetCount": 2,
+    "lossDenominators": {
+      "lexical": 294,
+      "reconstruction": 294,
+      "router_z": 4,
+      "structure": 16,
+      "terminal": 8
+    },
+    "optimizerUpdates": 1,
+    "physicalTargetRecordCount": 4,
+    "previousDigest": "14041da1e1f03165558993a36ae621904676db3e8def11b91a326f5abcec1941",
+    "registryDigest": "985330b78ce655b0bfb4181f02298fcb471c599d8a1f8abe5c82ea0a20e6fbb7",
+    "schema": "semantic-v8-optimizer-target-exposure/2",
+    "scoredOccurrences": 4,
+    "sourceCount": 1,
+    "sources": {
+      "se-support-rectangle-perimeter-child-teacher": {
+        "logicalTargetIds": [
+          "semantic:v8:orchestration:target:1",
+          "semantic:v8:orchestration:target:4"
+        ],
+        "physicalTargetRecords": {
+          "semantic:v8:orchestration:target:1": {
+            "18250edd1987fe8800574a10d0f0f9fe0f82236ef755846b5699be92bac3b46c": {
+              "firstGlobalStep": 1,
+              "lastGlobalStep": 1,
+              "lossDenominators": {
+                "lexical": 122,
+                "reconstruction": 122,
+                "router_z": 1,
+                "structure": 4,
+                "terminal": 2
+              },
+              "optimizerUpdates": 1,
+              "scoredOccurrences": 1,
+              "windowIndices": [
+                0
+              ]
+            },
+            "e13992b2c44197293f88f41c8db51b1bd3c126819f80ea268b2a02f715cf643b": {
+              "firstGlobalStep": 1,
+              "lastGlobalStep": 1,
+              "lossDenominators": {
+                "lexical": 31,
+                "reconstruction": 31,
+                "router_z": 1,
+                "structure": 4,
+                "terminal": 2
+              },
+              "optimizerUpdates": 1,
+              "scoredOccurrences": 1,
+              "windowIndices": [
+                0
+              ]
+            },
+            "f074c39d5d23a3dc9552c7a8ee2ed363efe78428e913b85991910fee656fafdb": {
+              "firstGlobalStep": 1,
+              "lastGlobalStep": 1,
+              "lossDenominators": {
+                "lexical": 86,
+                "reconstruction": 86,
+                "router_z": 1,
+                "structure": 4,
+                "terminal": 2
+              },
+              "optimizerUpdates": 1,
+              "scoredOccurrences": 1,
+              "windowIndices": [
+                0
+              ]
+            }
+          },
+          "semantic:v8:orchestration:target:4": {
+            "4b18d2294d1d16b3a839f599a5697e578732c3935ef95459ba94302d4cca05ad": {
+              "firstGlobalStep": 1,
+              "lastGlobalStep": 1,
+              "lossDenominators": {
+                "lexical": 55,
+                "reconstruction": 55,
+                "router_z": 1,
+                "structure": 4,
+                "terminal": 2
+              },
+              "optimizerUpdates": 1,
+              "scoredOccurrences": 1,
+              "windowIndices": [
+                0
+              ]
+            }
+          }
+        },
+        "split": "train"
+      }
+    },
+    "startingGlobalStep": 0
+  },
+  "termination": "step_limit"
+}

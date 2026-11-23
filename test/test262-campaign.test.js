@@ -1,16 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,readFileSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
-import {dirname,join} from 'node:path';
-import {execFileSync} from 'node:child_process';
+import {dirname,join,relative} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+import {execFileSync,spawn} from 'node:child_process';
 import {acquireTest262GitSnapshot,discoverTest262ModuleDependencies} from '../src/conformance/test262-acquisition.js';
-import {buildTest262Catalog,bindTest262CatalogProfile,createTest262Campaign,recordTest262Stages} from '../src/conformance/test262-catalog.js';
-import {ownedTest262Profile} from '../src/conformance/test262-runner.js';
-import {readPinnedEcma262Specification} from '../src/conformance/test262-specification.js';
+import {buildTest262Catalog,bindTest262CatalogProfile,createTest262Campaign,recordTest262Stages,conformanceDigest} from '../src/conformance/test262-catalog.js';
+import {ownedTest262Profile,executeOfficialTest262Variant} from '../src/conformance/test262-runner.js';
 import {readTest262Json,writeTest262Json,createTest262CampaignReport,validateOriginalTest262Report,fingerprintTest262Implementation,
   runOriginalTest262Worker} from '../src/conformance/test262-campaign.js';
 
-function syntheticSuite(){
+function syntheticSuite(overrides={}){
   const directory=mkdtempSync(join(process.cwd(),'test262-campaign-'));
   const suiteRoot=join(directory,'suite');mkdirSync(suiteRoot);
   const git=args=>execFileSync('git',['-C',suiteRoot,...args],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
@@ -25,7 +26,8 @@ function syntheticSuite(){
     'test/raw.js':fixture('var raw=1;','flags: [raw]\n'),
     'test/module.js':fixture('import {value} from "./value_FIXTURE.js";assert.sameValue(value,42);','flags: [module]\n'),
     'test/value_FIXTURE.js':'export const value=42;',
-    'test/negative.js':fixture('let = ;','flags: [noStrict]\nnegative:\n  phase: parse\n  type: SyntaxError\n')
+    'test/negative.js':fixture('let = ;','flags: [noStrict]\nnegative:\n  phase: parse\n  type: SyntaxError\n'),
+    ...overrides
   };
   for(const [path,bytes] of Object.entries(files)){
     mkdirSync(dirname(join(suiteRoot,path)),{recursive:true});writeFileSync(join(suiteRoot,path),bytes);
@@ -52,7 +54,7 @@ test('campaign CLI retains the frozen full denominator while executing an explic
     assert.equal(report.summary.stages.independentReference.passed,2);
     assert.equal(report.summary.stages.nativeReplay.passed,0);
     assert.equal(report.summary.stages.parseStatic.not_selected,7);
-    assert.deepEqual(report.profile.specification,readPinnedEcma262Specification().specification);
+    assert.equal(report.profile.specification,null);
     assert(report.campaign.rows.filter(row=>!row.selected).every(row=>Object.values(row.stages).every(stage=>stage.status==='not_selected')));
     assert.equal(validateOriginalTest262Report(report,{baseCatalog:suite.catalog,
       implementation:report.campaign.implementation}).valid,true);
@@ -95,6 +97,20 @@ test('disposable worker deadlines and source drift stay failures in their own au
     const drift=await runOriginalTest262Worker({authority:'reference',options,implementation:stale});
     assert.equal(drift.status,'infrastructure_error');assert.match(drift.reason,/implementation file identity/);
   }finally{rmSync(suite.directory,{recursive:true,force:true});}
+});
+
+test('campaign identity includes resolved package imports and installed compiler code',()=>{
+  const implementation=fingerprintTest262Implementation();
+  const root=fileURLToPath(new URL('..',import.meta.url));
+  for(const specifier of ['acorn','typescript','#owned-proxy-check']){
+    const entry=fileURLToPath(import.meta.resolve(specifier)),path=relative(root,entry);
+    assert.deepEqual(implementation.files.find(file=>file.path===path),{
+      path,sha256:createHash('sha256').update(readFileSync(entry)).digest('hex')
+    },'missing executable dependency '+specifier);
+  }
+  for(const path of ['node_modules/acorn/package.json','node_modules/typescript/package.json'])
+    assert(implementation.files.some(file=>file.path===path),'missing resolver metadata '+path);
+  assert.equal(new Set(implementation.files.map(file=>file.path)).size,implementation.files.length);
 });
 
 test('resuming a completed campaign preserves all original successes and failures without rerunning',()=>{
@@ -157,9 +173,122 @@ test('partial selection typos and incompatible retries fail before overwriting r
     const args=['tools/run-test262-campaign.mjs','--catalog',suite.catalogPath,
       '--suite-root',suite.suiteRoot,'--out',out];
     assert.throws(()=>execFileSync(process.execPath,[...args,'--paths','test/good.js,test/typo.js'],
-      {stdio:'pipe',timeout:30000}),/path with no frozen variants/);
+      {stdio:'pipe',timeout:30000}),/path with no catalog variants/);
     assert.throws(()=>execFileSync(process.execPath,[...args,'--paths','test/good.js','--retry','failed'],
       {stdio:'pipe',timeout:30000}),/requires --resume/);
     assert.equal(readFileSync(out,'utf8'),'retained');
+  }finally{rmSync(suite.directory,{recursive:true,force:true});}
+});
+
+test('a rehashed omitted module edge cannot manufacture a passing resolution negative',()=>{
+  const suite=syntheticSuite({'test/module.js':
+    '/*---\ndescription: acquired dependency integrity control\nflags: [raw, module]\nnegative:\n  phase: resolution\n  type: SyntaxError\n---*/\nimport {value} from "./value_FIXTURE.js";'});
+  try{
+    const original=suite.catalog.variants.find(row=>row.path==='test/module.js');
+    const result=executeOfficialTest262Variant({variant:original,profile:suite.catalog.profile,
+      suiteRevision:suite.catalog.suiteRevision,sources:suite.sources});
+    assert.equal(result.status,'failed');
+    assert.match(result.reason,/pinned graph linked/);
+    const changed=structuredClone(suite.catalog),row=changed.variants.find(row=>row.path===original.path);
+    row.dependencies.files=row.dependencies.files.filter(file=>file.path===row.path);
+    const {id,...variant}=row;row.id=conformanceDigest({suiteRevision:changed.suiteRevision,profile:changed.profile,...variant});
+    const {digest,...identity}=changed;changed.digest=conformanceDigest(identity);
+    writeFileSync(suite.catalogPath,JSON.stringify(changed));
+    const out=join(suite.directory,'result.json');writeFileSync(out,'retained');
+    // Reconcile even unselected modules; selecting an unrelated script cannot
+    // make a manipulated catalog a valid full-population observation.
+    for(const path of ['test/module.js','test/good.js']){
+      assert.throws(()=>execFileSync(process.execPath,['tools/run-test262-campaign.mjs',
+        '--catalog',suite.catalogPath,'--suite-root',suite.suiteRoot,'--paths',path,'--out',out],
+      {stdio:'pipe',timeout:30000}),/module dependency closure differs/);
+      assert.equal(readFileSync(out,'utf8'),'retained');
+    }
+  }finally{rmSync(suite.directory,{recursive:true,force:true});}
+});
+
+test('default campaigns acquire the current complete checkout and preserve earlier observations after growth',()=>{
+  const suite=syntheticSuite();
+  try{
+    const out=join(suite.directory,'current.json.gz');
+    const args=['tools/run-test262-campaign.mjs','--suite-root',suite.suiteRoot,'--stages','parse','--out',out];
+    execFileSync(process.execPath,args,{timeout:30000});
+    const before=readTest262Json(out),retained=readFileSync(out);
+    assert.equal(before.summary.catalogVariants,9);assert.equal(before.summary.selected,9);
+    assert.equal(before.profile.specification,null);
+    assert.equal(before.runPolicy.selection.all,true);
+    assert.equal(validateOriginalTest262Report(before).valid,true);
+    execFileSync(process.execPath,['tools/run-test262-campaign.mjs','--check',out],{timeout:30000});
+    writeFileSync(join(suite.suiteRoot,'test/new.js'),'/*---\ndescription: newly acquired source\n---*/\nvar added=1;');
+    execFileSync('git',['-C',suite.suiteRoot,'add','test/new.js']);
+    execFileSync('git',['-C',suite.suiteRoot,'-c','user.name=Campaign Control','-c','user.email=campaign@example.invalid',
+      'commit','--quiet','-m','Grow the input inventory']);
+    assert.throws(()=>execFileSync(process.execPath,[...args,'--resume',out],{stdio:'pipe',timeout:30000}),/HEAD differs/);
+    assert.deepEqual(readFileSync(out),retained);
+    const next=join(suite.directory,'grown.json.gz');
+    execFileSync(process.execPath,[...args.slice(0,-1),next],{timeout:30000});
+    const after=readTest262Json(next);
+    assert.equal(after.summary.catalogVariants,11);assert.equal(after.summary.selected,11);
+    assert.notEqual(after.baseCatalog.suiteRevision,before.baseCatalog.suiteRevision);
+    assert.deepEqual(readFileSync(out),retained);
+    assert.equal(validateOriginalTest262Report(before).valid,true);
+    const forged=structuredClone(after);forged.baseCatalog=before.baseCatalog;
+    assert.throws(()=>validateOriginalTest262Report(forged),/frozen inventory/);
+  }finally{rmSync(suite.directory,{recursive:true,force:true});}
+});
+
+test('worker cancellation distinguishes unknown execution from an unstarted dispatch',async()=>{
+  const suite=syntheticSuite();
+  try{
+    const implementation=fingerprintTest262Implementation();
+    const profile=ownedTest262Profile(),catalog=bindTest262CatalogProfile(suite.catalog,profile);
+    const variant=catalog.variants.find(row=>row.path==='test/good.js');
+    const options={variant,profile,suiteRevision:catalog.suiteRevision,
+      sources:Object.fromEntries(Object.entries(suite.sources).map(([path,bytes])=>[path,bytes.toString('utf8')]))};
+    const controller=new AbortController();controller.abort();
+    const cancelled=await runOriginalTest262Worker({authority:'reference',options,implementation,signal:controller.signal});
+    assert.equal(cancelled.status,'interrupted');assert.equal(cancelled.executionPerformed,false);
+    assert.equal(cancelled.worker.started,false);
+    const active=new AbortController();
+    const pending=runOriginalTest262Worker({authority:'owned',options,implementation,signal:active.signal});
+    const timer=setTimeout(()=>active.abort(),25);
+    const interrupted=await pending;clearTimeout(timer);
+    assert.equal(interrupted.status,'interrupted');assert.equal(interrupted.executionPerformed,null);
+    assert.equal(interrupted.worker.started,true);
+    assert.equal(interrupted.worker.command[0],process.execPath);
+  }finally{rmSync(suite.directory,{recursive:true,force:true});}
+});
+
+test('SIGTERM checkpoints interrupted workers and unrun cases, and resume retries only unfinished work',async()=>{
+  const suite=syntheticSuite();
+  try{
+    writeFileSync(join(suite.suiteRoot,'test/000-infinite.js'),'/*---\nflags: [noStrict]\n---*/\nwhile(true){}');
+    execFileSync('git',['-C',suite.suiteRoot,'add','test/000-infinite.js']);
+    execFileSync('git',['-C',suite.suiteRoot,'-c','user.name=Campaign Control','-c','user.email=campaign@example.invalid',
+      'commit','--quiet','-m','Add interruption control']);
+    const out=join(suite.directory,'interrupt.json');
+    const args=['tools/run-test262-campaign.mjs','--suite-root',suite.suiteRoot,'--out',out,
+      '--paths','test/000-infinite.js,test/good.js','--stages','parse,reference','--jobs','1','--reference-timeout-ms','1000'];
+    const child=spawn(process.execPath,args,{stdio:['ignore','pipe','pipe']});
+    let stdout='',stderr='',sent=false,timer;
+    child.stderr.on('data',data=>{stderr+=data;});
+    child.stdout.on('data',data=>{
+      stdout+=data;
+      if(!sent&&stdout.includes('"phase":"parse"')){sent=true;timer=setTimeout(()=>child.kill('SIGTERM'),100);}
+    });
+    const code=await new Promise((resolve,reject)=>{child.on('error',reject);child.on('close',resolve);});
+    clearTimeout(timer);
+    assert.equal(code,143,stderr);assert.equal(sent,true);
+    const interrupted=readTest262Json(out);
+    assert.equal(interrupted.summary.stages.independentReference.interrupted,1);
+    assert.equal(interrupted.summary.stages.independentReference.not_run,2);
+    const row=interrupted.campaign.rows.find(row=>row.path==='test/000-infinite.js');
+    assert.equal(row.attempts.at(-1).evidence.executionPerformed,null);
+    execFileSync(process.execPath,[...args,'--resume',out],{timeout:30000});
+    const resumed=readTest262Json(out);
+    assert.equal(resumed.summary.stages.independentReference.interrupted,0);
+    assert.equal(resumed.summary.stages.independentReference.resource_limited,1);
+    assert.equal(resumed.summary.stages.independentReference.passed,2);
+    assert.deepEqual(resumed.campaign.rows.find(next=>next.id===row.id).attempts.slice(0,2),row.attempts);
+    assert.equal(validateOriginalTest262Report(resumed).valid,true);
   }finally{rmSync(suite.directory,{recursive:true,force:true});}
 });

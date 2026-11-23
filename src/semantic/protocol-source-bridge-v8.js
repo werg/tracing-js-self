@@ -9,6 +9,7 @@ import {sourceHasSyntaxV8} from './source-projection-base-v8.js';
 import {propertyKeyValue} from '../property-keys.js';
 import {describeProtocolObjectV8} from './protocol-state-v8.js';
 import {guardHeap,prototype,orderedKeys,frameFields} from './protocol-source-shapes-v8.js';
+import {asyncIterationSourceSitesV8,asyncIterationSourceCodeV8} from './async-iteration-source-v8.js';
 
 const copy=structuredClone;
 function memberName(node){
@@ -21,14 +22,16 @@ function sharedSyntax(adapter,node){
   const name=memberName(node);
   if(adapter.id==='synchronous-generator-source/1')return node.generator===true&&!node.async;
   if(adapter.id==='ordinary-array-map-source/1')return node.type==='MemberExpression'&&name==='map';
-  if(adapter.id==='builtin-iterator/1')return node.type==='ForOfStatement'&&!node.await||
+  if(['custom-iterator-source/1','ordinary-completions-source/1'].includes(adapter.id))
+    return node.type==='ForOfStatement'&&node.await;
+  if(adapter.id==='builtin-iterator/1')return node.type==='ForOfStatement'||
     node.type==='MemberExpression'&&(['values','keys','entries','next'].includes(name)||
       node.computed&&node.property?.type==='MemberExpression'&&node.property.object?.name==='Symbol'&&
       node.property.property?.name==='iterator');
   return false;
 }
 function inventory(source,bundle){
-  const nodes=new Map(),functions=new Map(),codes=new Map();
+  const nodes=new Map(),functions=new Map(),codes=new Map(),asyncSites=asyncIterationSourceSitesV8(source);
   function visit(node){
     if(!node||typeof node!=='object')return;
     if(Array.isArray(node)){node.forEach(visit);return;}
@@ -39,7 +42,9 @@ function inventory(source,bundle){
   visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
     if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op))
-      codes.set(instruction.arg.codeId,instruction.op==='DEF_FN'?instruction.arg.name:'function:'+instruction.start);
+      codes.set(instruction.arg.codeId,bundle.programs[instruction.arg.codeId]?.sourceRole?
+        asyncIterationSourceCodeV8(bundle.programs[instruction.arg.codeId].sourceRole,instruction.start,instruction.end,asyncSites):
+        instruction.op==='DEF_FN'?instruction.arg.name:'function:'+instruction.start);
   return {nodes,functions,codes};
 }
 function selected(adapter,input){
@@ -58,6 +63,12 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
     sourceHasSyntaxV8({source,bundle},node=>node.type==='YieldExpression'&&node.delegate))
     throw new TypeError('Shared generator source: yield delegation requires its explicit composition profile');
   const syntax=inventory(source,bundle);
+  // Setup declares source capabilities shared by the direct adapters (for
+  // example, the exact destructuring patterns and cleanup scope profile).
+  // Preserve those declarations when the same adapters join the coordinator.
+  // Each event receives a copy, so observers cannot mutate a peer's authority.
+  const extensionState=new Map();
+  for(const adapter of chosen)adapter.setup?.({extensionState});
   return chosen.map(adapter=>{
     const id=adapter.id,claims=adapter.claims??protocolSourceClaimsV8(id),
       stateful=typeof adapter.captureState==='function'&&typeof adapter.restoreState==='function';
@@ -111,7 +122,12 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
       };
       const tag=value=>{
         if(value?.[0]==='ref'){
-          const identity=ctx.identity(value[1]),node=ctx.state.heap[value[1]];
+          // Allocation adapters run before this event's owned changes commit.
+          // A generator declaration, for example, publishes its function and
+          // prototype together; either descriptor can already name the other.
+          // Only this event's authenticated fresh node extends the pre-state.
+          const identity=ctx.identity(value[1]),node=ctx.state.heap[value[1]]??
+            event?.stateChanges.find(change=>change.table==='heap'&&change.id===value[1]&&change.before===null)?.after;
           if(!node)ctx.refuse('shared source reference is absent from the owned heap');
           if(!controller().heap.has(identity)){
             if(node.kind==='function')ctx.publishInitialClosure(value[1],owner,event);
@@ -123,8 +139,10 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
         return ctx.tag(value);
       };
       const baseCheckHeap=node=>{
+        const projected=descriptor=>descriptor?.kind==='data'?{...descriptor,value:tag(descriptor.value)}:
+          descriptor?{...descriptor,get:tag(descriptor.get),set:tag(descriptor.set)}:null;
         const expected={kind:node.kind==='function'?'closure':node.kind,prototype:prototype(node),extensible:node.extensible!==false,
-          properties:orderedKeys(node).map(key=>({key:propertyKeyValue(key),descriptor:descriptor(node,key)})),
+          properties:orderedKeys(node).map(key=>({key:propertyKeyValue(key),descriptor:projected(descriptor(node,key))})),
           ...(node.kind==='function'?{code:syntax.codes.get(node.codeId),functionKind:node.arrow?'arrow':'ordinary',
             lexicalReceiver:node.arrow?node.lexicalThis:null}:{})};
         if(!eq(expected,describeProtocolObjectV8(controller(),ctx.identity(node.id))))
@@ -158,7 +176,7 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
         markPublished(identity){if(!controller().heap.has(ctx.identity(identity)))ctx.refuse('protocol allocation was not published');},
         get published(){return new Set(controller().heap.keys());},
         getOwnedFrame:frame=>ctx.state.frames[frame],
-        get extensionState(){return new Map();},
+        get extensionState(){return copy(extensionState);},
         key(value){
           if(value?.[0]==='symbol')return copy(value);
           if(!['undefined','null','str','num','bool','bigint'].includes(value?.[0]))
@@ -214,6 +232,8 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
       },
       beforeEvent:(ctx,event,row)=>invoke(ctx,event,context=>adapter.beforeEvent?.(context,event,row)),
       checkEvent(ctx,event,row){return invoke(ctx,event,context=>{
+        if(id==='ordinary-completions-source/1'&&adapter.afterEvent?.(context,event,row)===false)
+          ctx.refuse('shared protocol observer rejected: '+id);
         for(const change of event.stateChanges)if(change.after){
           if(change.table==='heap'){
             const fields=adapter.heapFields?.(change.after);
@@ -235,7 +255,8 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
               ctx.refuse('shared protocol frame comparison failed: '+id);
           }
         }
-        if(adapter.afterEvent?.(context,event,row)===false)ctx.refuse('shared protocol observer rejected: '+id);
+        if(id!=='ordinary-completions-source/1'&&adapter.afterEvent?.(context,event,row)===false)
+          ctx.refuse('shared protocol observer rejected: '+id);
         return true;
       });}
     };

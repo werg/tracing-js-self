@@ -1,0 +1,48 @@
+{
+  "startedAt": "2026-11-23T08:08:54.247140+00:00",
+  "identity": {
+    "producerRevision": "d382d93510d77d1462fd0f93e86affa17f023838",
+    "producerTree": "8007aaa84041f92af8000fddd130c88621f2250a",
+    "producerStatus": "",
+    "consumerRevision": "65ebbf6a8eaafe707277eae0d8606b84c9db3ab3",
+    "testFiles": {
+      "test/helpers/async-iteration-reference.js": "72f9d6e36518b2313ef79f126a47dd161bcb0c2552e791376377c0e392cfa1f8",
+      "test/semantic-async-iteration-source-v8.test.js": "93979d48819fff7075c604943e4605ee593eab7f1be7a6989eafbd21427d4d8f",
+      "test/semantic-protocol-source-v8.test.js": "96fe588c03d4ee675960d5eb9297bed4d4cf6e604c0d4b74529cfee1d2bd0841",
+      "test/training-async-iteration.test.js": "65e2cc2bf8e3c794d4d062f953a05719d94a04139c1da92979f190aca4f9ed21"
+    }
+  },
+  "command": [
+    "/workspace/scratch/0952c3151b8f/node20-reference-runtime/node",
+    "--experimental-vm-modules",
+    "--test",
+    "--test-concurrency=1",
+    "test/semantic-async-iteration-source-v8.test.js",
+    "test/semantic-protocol-source-v8.test.js",
+    "test/training-async-iteration.test.js"
+  ],
+  "nodeVersions": {
+    "node": "20.20.2",
+    "acorn": "8.16.0",
+    "ada": "2.9.2",
+    "ares": "1.34.6",
+    "brotli": "1.1.0",
+    "cjs_module_lexer": "2.2.0",
+    "cldr": "48.0",
+    "icu": "78.2",
+    "llhttp": "9.3.1",
+    "modules": "115",
+    "napi": "9",
+    "nghttp2": "1.61.0",
+    "openssl": "3.0.19",
+    "simdutf": "6.4.2",
+    "tz": "2025c",
+    "undici": "6.24.1",
+    "unicode": "17.0",
+    "uv": "1.46.0",
+    "uvwasi": "0.0.23",
+    "v8": "11.3.244.8-node.38",
+    "zlib": "1.3.1-e00f703"
+  },
+  "scope": "Focused changed tests plus all eight native replay cases on the exact local test-only commit"
+}

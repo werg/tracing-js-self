@@ -1,0 +1,29 @@
+[
+  {
+    "argv": [
+      "/workspace/scratch/0f9e11f5b3cf/pr60-venv/bin/python",
+      "-I",
+      "/workspace/scratch/0f9e11f5b3cf/tracing-combined-verify/tools/verify-combined-v8-gate.py",
+      "attest",
+      "--producer",
+      "/workspace/scratch/0f9e11f5b3cf/tracing-combined-verify",
+      "--native",
+      "/workspace/scratch/0f9e11f5b3cf/megatoken",
+      "--producer-revision",
+      "52b35fb0fb121c5fd82d9d70674789516b2cc853",
+      "--native-revision",
+      "21b7c80718244073dbf13263771da533d4ecbc25",
+      "--native-policy",
+      "/workspace/scratch/0f9e11f5b3cf/pr60-evidence/combined-52b35fb0/combined-v8-policy/semantic-native-policy-v8.json",
+      "--lane",
+      "structural",
+      "--out",
+      "/workspace/scratch/0f9e11f5b3cf/pr60-evidence/combined-52b35fb0/combined-v8-structural"
+    ],
+    "cwd": "/workspace/scratch/0f9e11f5b3cf/tracing-combined-verify",
+    "log": "/workspace/scratch/0f9e11f5b3cf/pr60-evidence/combined-52b35fb0/combined-v8-structural/attestation.log",
+    "exitCode": 1,
+    "seconds": 0.215,
+    "logSha256": "cf43e246e9e167880a0bb7b149e4a395932c9458e7375697a87a4f661acf195e"
+  }
+]

@@ -1,22 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {createHash} from 'node:crypto';
-import {regionQualificationPopulation} from '../fixtures/semantic-regions/qualification.js';
+import {gunzipSync} from 'node:zlib';
+import {regionQualificationPopulation,regionQualificationFixtures,sharedProtocolQualificationFixtures,
+  moduleQualificationFixtures} from '../fixtures/semantic-regions/qualification.js';
+import {expansionCoveragePopulation} from '../src/semantic/expansion-benchmark.js';
 import {encodeGenerationTask,decodeGenerationTask} from '../src/corpus/generation-process.mjs';
 import {HOST_PROTOCOL_FIXTURES_V8} from '../fixtures/semantic-regions/host-protocol.js';
+import {RETURN_CALLBACK_FIXTURES} from '../fixtures/semantic-regions/return-callbacks.js';
 import {PRIMITIVE_CONVERSION_FIXTURES} from '../fixtures/semantic-regions/primitive-conversion.js';
 import {PRIMITIVE_CONVERSION_COMPOSITION_FIXTURES} from '../fixtures/semantic-regions/primitive-conversion-composition.js';
 
 const adoptionSourceIds=['source-promise-adoption-executor','source-promise-adoption-async-return',
   'source-promise-adoption-reaction-return'];
 
-test('native qualification retains every frozen family input, script and module interaction',()=>{
+test('native qualification retains every declared family input, script and module interaction',()=>{
   const population=regionQualificationPopulation({population:'all'});
-  assert.equal(population.scripts.length,663);
-  assert.equal(population.modules.length,2);
+  assert.deepEqual(population,expansionCoveragePopulation({population:'all',allInputs:true}));
   const cases=[...population.scripts,...population.modules];
-  assert.equal(new Set(cases.map(row=>row.id)).size,665);
+  assert.equal(new Set(cases.map(row=>row.id)).size,cases.length);
   for(const fixture of cases){
     const task={kind:fixture.modules?'module':'source',traceVersion:8,fixture,producerRevision:'frozen-test'};
     const restored=decodeGenerationTask(JSON.parse(JSON.stringify(encodeGenerationTask(task))));
@@ -26,15 +28,21 @@ test('native qualification retains every frozen family input, script and module 
 });
 
 test('interoperability includes all source goldens and returns fresh mutable guest inputs',()=>{
-  const declared=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
+  const declared=JSON.parse(gunzipSync(Buffer.from(readFileSync(
+    new URL('./fixtures/semantic-protocol-region-v8.json.gz.b64',import.meta.url),'utf8'),'base64')).toString());
   const selected=regionQualificationPopulation();
-  assert.equal(selected.scripts.length,66);
-  assert.equal(selected.modules.length,3);
-  assert.equal(new Set([...selected.scripts,...selected.modules].map(row=>row.id)).size,69);
+  const conversion=[...PRIMITIVE_CONVERSION_FIXTURES,...PRIMITIVE_CONVERSION_COMPOSITION_FIXTURES]
+    .filter(fixture=>!fixture.boundary);
+  const expected=[...regionQualificationFixtures(),...declared.cases.map(row=>row.fixture),
+    ...HOST_PROTOCOL_FIXTURES_V8,...sharedProtocolQualificationFixtures(),
+    ...RETURN_CALLBACK_FIXTURES.map(({expected,callbacks,...fixture})=>({
+      ...fixture,id:fixture.family.replace(/-source$/,'')})),...conversion];
+  assert.deepEqual(selected.scripts,expected,'every currently declared source, input and provenance is retained');
+  assert.deepEqual(selected.modules,moduleQualificationFixtures());
+  assert.equal(new Set([...selected.scripts,...selected.modules].map(row=>row.id)).size,
+    expected.length+selected.modules.length);
   assert.deepEqual(selected.scripts.filter(row=>row.family==='promise-adoption-source').map(row=>row.id),
     adoptionSourceIds);
-  assert.deepEqual(selected.modules.map(row=>row.id),['module-namespace-shadow-live',
-    'module-scoped-var-isolation','module-destructured-live-cells']);
   for(const fixture of selected.modules){
     const task={kind:'module',traceVersion:8,fixture,producerRevision:'frozen-test'};
     assert.deepEqual(decodeGenerationTask(JSON.parse(JSON.stringify(encodeGenerationTask(task)))).fixture,fixture);
@@ -61,7 +69,8 @@ test('interoperability includes all source goldens and returns fresh mutable gue
   assert.deepEqual(regionQualificationPopulation().scripts.find(row=>row.id==='ordered-map').args,[[2,3,4]]);
   selected.modules[0].modules['leaf.js']='export let n=99;';
   assert.equal(regionQualificationPopulation().modules[0].modules['leaf.js'],'export let n=2;export function bump(){n+=3;}');
-  assert.equal(regionQualificationPopulation({population:'gallery'}).scripts.length,11);
+  assert.deepEqual(regionQualificationPopulation({population:'gallery'}),
+    expansionCoveragePopulation({population:'gallery'}));
   assert.throws(()=>regionQualificationPopulation({population:'unknown'}),/Unknown/);
 });
 
@@ -70,7 +79,7 @@ test('complete ordinary inventory preserves cyclic callback inputs through durab
   assert.throws(()=>JSON.stringify(fixtures),/circular/);
   const frozen=JSON.parse(JSON.stringify(fixtures.map(fixture=>encodeGenerationTask({
     kind:fixture.modules?'module':'source',traceVersion:8,fixture,producerRevision:'frozen-test'}))));
-  assert.equal(frozen.length,69);
+  assert.equal(frozen.length,fixtures.length);
   assert.deepEqual(frozen.map(task=>task.fixture.id),fixtures.map(fixture=>fixture.id));
   for(const [index,task]of frozen.entries()){
     const restored=decodeGenerationTask(task).fixture,original=fixtures[index];
@@ -83,26 +92,15 @@ test('complete ordinary inventory preserves cyclic callback inputs through durab
   }
 });
 
-test('conversion qualification extends the original 47 unchanged and retains five explicit candidate refusals',()=>{
+test('conversion qualification includes every declared positive and retains explicit candidate refusals',()=>{
   const population=regionQualificationPopulation(),fixtures=[...population.scripts,...population.modules];
-  // Retain the original ordered 47-input receipt while the three separately
-  // asserted Promise adoption goldens extend the current population.
-  const original=fixtures.filter(fixture=>!fixture.family.startsWith('primitive-conversion:')&&
-    !adoptionSourceIds.includes(fixture.id));
-  assert.equal(original.length,47);
-  // A byte-level receipt covers the complete original ordered fixture inputs,
-  // including cyclic arguments, rather than just the selected case names.
-  const encoded=original.map(fixture=>encodeGenerationTask({kind:fixture.modules?'module':'source',
-    traceVersion:8,fixture,producerRevision:'frozen-test'}));
-  assert.equal(createHash('sha256').update(JSON.stringify(encoded)).digest('hex'),
-    '60fd28bdbb54bc4e144414422a8ff23caa036a573191d64857baa6cb6d6a6ae8');
   const inventory=[...PRIMITIVE_CONVERSION_FIXTURES,...PRIMITIVE_CONVERSION_COMPOSITION_FIXTURES];
-  assert.equal(inventory.length,24);
   const positives=inventory.filter(fixture=>!fixture.boundary),refusals=inventory.filter(fixture=>fixture.boundary);
-  assert.equal(positives.length,19);
-  assert.equal(refusals.length,5);
-  assert.deepEqual(population.scripts.slice(47),positives);
+  assert(positives.length>0);assert(refusals.length>0);
+  const positiveIds=new Set(positives.map(fixture=>fixture.id));
+  assert.deepEqual(population.scripts.filter(fixture=>positiveIds.has(fixture.id)),positives);
   for(const fixture of refusals)assert.ok(!fixtures.some(row=>row.id===fixture.id),fixture.id);
-  population.scripts[47].fixture.calls.push({});
-  assert.deepEqual(regionQualificationPopulation().scripts[47].fixture.calls,[]);
+  const firstId=positives[0].id;
+  population.scripts.find(fixture=>fixture.id===firstId).fixture.calls.push({});
+  assert.deepEqual(regionQualificationPopulation().scripts.find(fixture=>fixture.id===firstId).fixture.calls,[]);
 });

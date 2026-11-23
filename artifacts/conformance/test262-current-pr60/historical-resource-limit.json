@@ -1,0 +1,348 @@
+{
+  "kind": "historical-test262-resource-observation",
+  "sourceRevision": "2a1ade303f72d3de80565c921d685222405c32ce",
+  "producerRevision": "c71c5425e8ca84b9e62942990aefadea1a9b7163",
+  "catalogDigest": "67799da9e7d4dd08333fe38a75b7d738d9fd14ffc40a2e17d4d00254781a47de",
+  "fullReport": {
+    "bytes": 17316868,
+    "sha256": "01cd759fa1da44b01628bdd8df397c5dff95d0fa604251874b955bb64e4598e6"
+  },
+  "runPolicy": {
+    "stages": [
+      "parse",
+      "owned",
+      "reference"
+    ],
+    "jobs": 2,
+    "workerTimeoutMs": 10000,
+    "heapMb": 384,
+    "selection": {
+      "paths": "test/language/statements/for-await-of/async-from-sync-iterator-continuation-abrupt-completion-get-constructor.js,test/language/statements/for-await-of/iterator-close-non-throw-get-method-abrupt.js,test/language/statements/for-await-of/iterator-close-non-throw-get-method-is-null.js,test/language/statements/for-await-of/iterator-close-non-throw-get-method-non-callable.js,test/language/statements/for-await-of/iterator-close-throw-get-method-abrupt.js,test/language/statements/for-await-of/iterator-close-throw-get-method-non-callable.js,test/language/statements/for-await-of/ticks-with-async-iter-resolved-promise-and-constructor-lookup-two.js,test/language/statements/for-await-of/ticks-with-async-iter-resolved-promise-and-constructor-lookup.js,test/language/statements/for-await-of/ticks-with-sync-iter-resolved-promise-and-constructor-lookup.js,test/language/statements/for-of/iterator-close-non-object.js,test/language/statements/for-of/iterator-close-non-throw-get-method-abrupt.js,test/language/statements/for-of/iterator-close-non-throw-get-method-is-null.js,test/language/statements/for-of/iterator-close-non-throw-get-method-non-callable.js,test/language/statements/for-of/iterator-close-throw-get-method-abrupt.js,test/language/statements/for-of/iterator-close-throw-get-method-non-callable.js,test/language/statements/for-of/iterator-close-via-break.js,test/language/statements/for-of/iterator-close-via-continue.js,test/language/statements/for-of/iterator-close-via-return.js,test/language/statements/for-of/iterator-close-via-throw.js,test/language/statements/for-of/iterator-next-reference.js",
+      "cases": null,
+      "limit": null,
+      "all": false,
+      "shard": null
+    }
+  },
+  "summary": {
+    "catalogVariants": 103360,
+    "selected": 40,
+    "attempts": 120,
+    "stages": {
+      "parseStatic": {
+        "passed": 40,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 0,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "ownedExecution": {
+        "passed": 29,
+        "failed": 0,
+        "unsupported": 10,
+        "resource_limited": 1,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 0,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "independentReference": {
+        "passed": 40,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 0,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "sourceCorrespondence": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 29,
+        "blocked_by_prior_stage": 11,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "publicReplay": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "nativeReplay": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "checkpointRestore": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "datasetExport": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "ordinaryTraining": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "serving": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "learnedUsefulness": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      }
+    }
+  },
+  "resumeVerification": {
+    "reportSha256Before": "01cd759fa1da44b01628bdd8df397c5dff95d0fa604251874b955bb64e4598e6",
+    "reportSha256After": "01cd759fa1da44b01628bdd8df397c5dff95d0fa604251874b955bb64e4598e6",
+    "attemptsBefore": 120,
+    "attemptsAfter": 120
+  },
+  "row": {
+    "id": "5934c038a1f4cedaf9261150160b06bdda6373354f3db9e402b171f78489ff19",
+    "path": "test/language/statements/for-of/iterator-close-via-continue.js",
+    "mode": "sloppy",
+    "selected": true,
+    "stages": {
+      "parseStatic": {
+        "status": "passed",
+        "reason": "Original source parsed in its declared goal and variant",
+        "attempt": 1,
+        "evidenceDigest": "85606eab0368e6c689079e81b1f4378120e4b808572604247525d5e2dd9654a8"
+      },
+      "ownedExecution": {
+        "status": "resource_limited",
+        "reason": "Isolated worker wall-time budget exceeded",
+        "attempt": 2,
+        "evidenceDigest": "c074c36b8b0bdd639cfb91d30bbb2cb7392efe2e1cbbdb4286b509d11c3f7059"
+      },
+      "independentReference": {
+        "status": "passed",
+        "reason": "Original source and original reference assertions completed",
+        "attempt": 3,
+        "evidenceDigest": "583dc93a3ef321d2b984ced2ce729269dfb2f1d3308e02f167960b98ec50dfed"
+      },
+      "sourceCorrespondence": {
+        "status": "blocked_by_prior_stage",
+        "blockedBy": [
+          "ownedExecution"
+        ]
+      },
+      "publicReplay": {
+        "status": "blocked_by_prior_stage",
+        "blockedBy": [
+          "sourceCorrespondence"
+        ]
+      },
+      "nativeReplay": {
+        "status": "blocked_by_prior_stage",
+        "blockedBy": [
+          "publicReplay"
+        ]
+      },
+      "checkpointRestore": {
+        "status": "blocked_by_prior_stage",
+        "blockedBy": [
+          "nativeReplay"
+        ]
+      },
+      "datasetExport": {
+        "status": "blocked_by_prior_stage",
+        "blockedBy": [
+          "checkpointRestore"
+        ]
+      },
+      "ordinaryTraining": {
+        "status": "blocked_by_prior_stage",
+        "blockedBy": [
+          "datasetExport"
+        ]
+      },
+      "serving": {
+        "status": "blocked_by_prior_stage",
+        "blockedBy": [
+          "ordinaryTraining"
+        ]
+      },
+      "learnedUsefulness": {
+        "status": "blocked_by_prior_stage",
+        "blockedBy": [
+          "serving"
+        ]
+      }
+    },
+    "attempts": [
+      {
+        "sequence": 1,
+        "stage": "parseStatic",
+        "status": "passed",
+        "reason": "Original source parsed in its declared goal and variant",
+        "evidence": {
+          "errorType": null,
+          "mode": "sloppy",
+          "parseOnly": false,
+          "parser": {
+            "ecmaVersion": "latest",
+            "implementationDigest": "a69b05e6cfb5a3a1d9fa060590fb31e7b069a87c817324926788c3eafa946def",
+            "lowering": "owned-script/1",
+            "name": "acorn",
+            "version": "8.15.0"
+          },
+          "phase": "parse",
+          "sourceDigest": "3e8e8844d4476d7fe69a113cecbe02b415eb3352f3c03e065ae408850d6dfcc8"
+        },
+        "evidenceDigest": "85606eab0368e6c689079e81b1f4378120e4b808572604247525d5e2dd9654a8"
+      },
+      {
+        "sequence": 2,
+        "stage": "ownedExecution",
+        "status": "resource_limited",
+        "reason": "Isolated worker wall-time budget exceeded",
+        "evidence": {
+          "caseId": "5934c038a1f4cedaf9261150160b06bdda6373354f3db9e402b171f78489ff19",
+          "executionPerformed": null,
+          "phase": "worker",
+          "reason": "Isolated worker wall-time budget exceeded",
+          "status": "resource_limited",
+          "worker": {
+            "authority": "owned",
+            "command": [
+              "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "--max-old-space-size=384",
+              "/workspace/scratch/0952c3151b8f/test262-campaign-producer/tools/test262-original-worker.mjs"
+            ],
+            "environment": {
+              "LANG": "C.UTF-8",
+              "LC_ALL": "C.UTF-8",
+              "PATH": "/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback"
+            },
+            "exitCode": 0,
+            "heapMb": 384,
+            "signal": null,
+            "started": true,
+            "wallTimeoutMs": 10000
+          }
+        },
+        "evidenceDigest": "c074c36b8b0bdd639cfb91d30bbb2cb7392efe2e1cbbdb4286b509d11c3f7059"
+      },
+      {
+        "sequence": 3,
+        "stage": "independentReference",
+        "status": "passed",
+        "reason": "Original source and original reference assertions completed",
+        "evidence": {
+          "admitted": false,
+          "authority": "native-v8-reference-only",
+          "caseId": "5934c038a1f4cedaf9261150160b06bdda6373354f3db9e402b171f78489ff19",
+          "engine": {
+            "node": "v24.22.3",
+            "v8": "13.6.233.17-node.63"
+          },
+          "executionPerformed": true,
+          "harness": [
+            "harness/assert.js",
+            "harness/sta.js"
+          ],
+          "ownedExecution": false,
+          "phase": "runtime",
+          "printCount": 0,
+          "reason": "Original source and original reference assertions completed",
+          "schema": "original-test262-reference/1",
+          "sourceCorrespondence": false,
+          "status": "passed",
+          "worker": {
+            "authority": "reference",
+            "command": [
+              "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "--max-old-space-size=384",
+              "/workspace/scratch/0952c3151b8f/test262-campaign-producer/tools/test262-original-worker.mjs"
+            ],
+            "environment": {
+              "LANG": "C.UTF-8",
+              "LC_ALL": "C.UTF-8",
+              "PATH": "/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override:/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin:/opt/codex/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/bin:/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/fallback"
+            },
+            "exitCode": 0,
+            "heapMb": 384,
+            "signal": null,
+            "started": true,
+            "wallTimeoutMs": 10000
+          }
+        },
+        "evidenceDigest": "583dc93a3ef321d2b984ced2ce729269dfb2f1d3308e02f167960b98ec50dfed"
+      }
+    ]
+  },
+  "disposition": "Retained unchanged; a later run with a larger explicit budget is a separate observation."
+}

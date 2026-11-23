@@ -6,9 +6,19 @@ checkpoint and served state. They use the neutral archive implementation and
 the direct native V8 verifier. They never import the old semantic packager or
 restorer, and never execute code supplied inside an archive as its verifier.
 
-This is an isolated implementation candidate. The focused archive, identity,
-lock and refusal controls pass; an actual fresh paired production-tokenizer
-package/restore gate is still required. No production default, learned-quality,
+The complete fresh production-tokenizer package/restore gate passed in
+[the hosted PR 60 run](https://github.com/werg/tracing-js-self/actions/runs/45151917597)
+at producer head `409e5931` (actual merge checkout `8b4cbfae`) and native
+`21b7c807`. It qualified all 64 current support sources, prepared the complete
+population, performed exactly two optimizer updates with fresh-process resume,
+and packaged the matching checkpoint and served export. It then restored them
+after relocating the original inputs and package payload. The archive, identity,
+lock, refusal and current population controls also passed in that job.
+The [closeout evidence](evidence/living-js-pr60-closeout-20261123/README.md)
+retains this hosted observation and the separate clean direct-head local run;
+later implementation revisions require their own observations.
+This is bounded release evidence;
+no production default, complete optimizer exposure, learned quality,
 accepted-history recovery, deployment or rollback qualification is implied.
 
 ## First explicit profile
@@ -75,7 +85,7 @@ and checkpoint policy must name this same source pair. Old receipts are not
 relabeled to a new revision.
 
 Run in the locked environment with its exact Node, V8, npm, Python and native
-package versions. Install dependencies from `npm-shrinkwrap.json` and
+package versions. Install dependencies from `package-lock.json` and
 `tools/native-consumer/requirements.lock` before verification. The V8-specific
 runtime lock is `profiles/release-environment-v8.lock.json`; it does not load a
 V6 policy. Runtime receipts preserve the actual platform and runner/container
@@ -201,8 +211,11 @@ archive controls do not execute source admission or optimization.
 ## Fresh paired package and restore gate
 
 `tools/qualify-v8-release.py` creates a new complete qualification of all 64
-frozen support sources (48 training, 12 validation and four test), prepares
-their original source documents and runs the ordinary two-update resume/export
+frozen support sources. It independently rebuilds the current authored cohort,
+exact tasks and family registry, then verifies complete admission and derives
+the training, validation and test counts from that authenticated registry.
+A past split distribution is not the population authority. It prepares
+the original source documents and runs the ordinary two-update resume/export
 lifecycle. It packages that two-update checkpoint with its matching served
 weights, moves the original runtime asset paths and temporary package payload
 out of the way, then restores using only the archive, its separately retained
@@ -210,11 +223,35 @@ checksum and the exact trusted source checkouts. It also requires a wrong
 external checksum to refuse before any restoration destination is created.
 
 The `Direct V8 source model package and restore` workflow freezes the triggering
-producer commit and reads its exact 40-character native consumer revision from
-the committed policy before checking out that native source. It verifies that
-the resulting source pair still matches the frozen policy before qualification.
-It runs the 19 producer archive, 83 task-binding/campaign-history and 69 native verifier controls without skips,
-then the full paired gate in the exact release runtime. Every subprocess streams
+producer commit and resolves the consumer once with
+`tools/resolve-native-consumer.mjs`. It selects the matching development branch
+when present, otherwise the current default head. `MEGATOKEN_REF` can explicitly
+select a branch or commit; an absent explicit branch or a lookup error fails the
+run. A supplied policy with `consumerRevision` retains that exact revision.
+The workflow saves the resolved policy and resolution record outside both
+source checkouts, checks out the observed 40-character consumer revision, and
+uses that same policy for qualification.
+
+For a local invocation, the driver binds a development policy without
+`consumerRevision` to the clean checkout explicitly selected by `--megatoken`.
+An existing policy revision must match that checkout. The driver retains the
+declared policy bytes, the resolved policy and its selection record in the
+qualification output, separately from the original runtime inputs moved during
+restoration. These files are `declared-native-policy-v8.json`,
+`semantic-native-policy-v8.json` and
+`semantic-native-policy-v8.json.resolution.json`. The record identifies whether
+the revision came from the selected checkout or an existing recorded revision,
+and retains the declared policy's SHA-256. Every qualification and lifecycle
+stage uses the retained policy. The driver checks all three retained files
+before and after every stage and records their hashes in the final receipt;
+missing, changed or replaced evidence refuses qualification. Source identity
+checks continue to require exact clean checkouts. A policy
+snapshot records the chosen code; it does not establish that the later stages
+passed.
+
+The workflow runs its complete selected producer archive,
+task-binding/campaign-history and native verifier controls without skips, then
+the full paired gate in the exact release runtime. Every subprocess streams
 progress and retains its original stdout/stderr. A complete tar archive retains
 hidden campaign locks, immutable history, original inputs, package, restoration
 and logs even on failure. The original bytes remain distinct from the newly

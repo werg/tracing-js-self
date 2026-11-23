@@ -96,7 +96,7 @@ export function createAsyncCallTeacherV8(){return {id,
 };}
 
 export function createAsyncCallSourceAdapterV8(input={}){
-  if(!sourceHasSyntaxV8(input,node=>/Function/.test(node.type)&&node.async===true&&
+  if(!sourceHasSyntaxV8(input,node=>node.type==='ForOfStatement'&&node.await||/Function/.test(node.type)&&node.async===true&&
     (node.type!=='FunctionDeclaration'||node.id?.name!==input.bundle?.entrySpec?.functionName)))return null;
   return {id,sourceComponent:createAsyncCallTeacherV8(),sourceProfile:'async-scoped-call-source/1'};
 }

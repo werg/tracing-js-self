@@ -7,11 +7,12 @@ import {createContext,runInContext,Script,SourceTextModule} from 'node:vm';
 import {parse} from 'acorn';
 import {test262HostCapabilities} from './test262-capabilities.js';
 import {createModuleEvaluationCoordinator} from './test262-module-evaluation.js';
+import {createTest262ReferenceCompletion} from './test262-reference-completion.js';
 
 const input=JSON.parse(readFileSync(0,'utf8'));
 const {variant,profile,sources}=input;
 const negative=variant.metadata.negative;
-const output=[];
+const completion=createTest262ReferenceCompletion(),output=completion.output;
 let unhandledRejection=null;
 process.on('unhandledRejection',error=>{unhandledRejection=error;});
 const syntaxError=error=>error instanceof SyntaxError||error?.name==='SyntaxError';
@@ -44,7 +45,7 @@ async function main(){
   });
   const print=value=>{
     if(output.length>=10000){const error=new RangeError('Reference print budget exceeded');error.code='ERR_TEST262_PRINT_LIMIT';throw error;}
-    output.push(String(value));
+    completion.print(String(value));
   };
   Object.setPrototypeOf(print,null);Object.freeze(print);
   Object.defineProperty(context,'print',{value:print,writable:false,configurable:false});
@@ -119,7 +120,7 @@ async function main(){
   const missing=[];
   for(const path of paths){
     try{
-      const ast=parse(sources[path],{ecmaVersion:2026,sourceType:'module'});
+      const ast=parse(sources[path],{ecmaVersion:'latest',sourceType:'module'});
       missing.push(...test262HostCapabilities(ast));
     }catch{
       // Native module parsing above remains the reference authority. If the
@@ -138,6 +139,7 @@ async function main(){
   try{
     for(const file of input.harness??[]){
       new Script(file.text,{filename:file.path}).runInContext(context,{timeout,displayErrors:false});
+      if(file.path==='harness/doneprintHandle.js')completion.bind(context);
       harness.push(file.path);
     }
   }catch(error){
@@ -192,8 +194,8 @@ async function main(){
   // Drain the immediate Promise turn so literal dynamic imports and their
   // guest reactions are observed before a synchronous module can pass.
   await new Promise(resolve=>setImmediate(resolve));
-  const asyncDone=()=>output.some(value=>value==='Test262:AsyncTestComplete'||
-    value.startsWith('Test262:AsyncTestFailure:'));
+  const asyncDone=()=>output.some(({text})=>text==='Test262:AsyncTestComplete'||
+    text.startsWith('Test262:AsyncTestFailure:'));
   while(dynamicPending.size||variant.metadata.flags.includes('async')&&!asyncDone()){
     if(unavailableModuleRequests.length){clearTimeout(timer);return moduleRequestUnavailable();}
     if(unhandledRejection){clearTimeout(timer);return {status:'failed',
@@ -210,15 +212,16 @@ async function main(){
   if(unhandledRejection)return {status:'failed',reason:'Module graph produced an unhandled rejection',
     phase:'runtime',errorType:guestErrorType(unhandledRejection,context),harness};
   if(negative)return {status:'failed',reason:'Expected a module runtime error but evaluation completed',phase:'runtime',harness};
-  const prints=output;
+  const prints=output.map(item=>item.text);
+  if(variant.metadata.flags.includes('async')){
+    return {...completion.result(),phase:'runtime',harness,printCount:prints.length};
+  }
   const completions=prints.filter(value=>value==='Test262:AsyncTestComplete');
   const failures=prints.filter(value=>value.startsWith('Test262:AsyncTestFailure:'));
   if(failures.length)return {status:'failed',reason:'Original reference async harness reported failure',
     phase:'runtime',completionPrints:completions.length,failurePrints:failures.length,harness};
   if(completions.length>1)return {status:'failed',reason:'Reference async completion occurred more than once',
     phase:'runtime',completionPrints:completions.length,harness};
-  if(variant.metadata.flags.includes('async')&&completions.length!==1)return {status:'resource_limited',
-    reason:'No original reference async completion before quiescence',phase:'runtime',completionPrints:completions.length,harness};
   return {status:'passed',reason:'Original module graph and reference assertions completed',
     phase:'runtime',harness,printCount:prints.length};
 }

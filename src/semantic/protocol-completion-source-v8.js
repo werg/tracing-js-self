@@ -44,7 +44,7 @@ export function createCompletionSourceAdapterV8({bundle}){
   }
   function update(ctx,node,event){
     if(!tracked.has(node.id))return;
-    require(ctx,!node.generatorId&&!node.asyncPromiseId&&!node.awaiting,'only ordinary synchronous handlers are qualified');
+    require(ctx,!node.generatorId,'generator handlers require their own retained scope');
     const declared=scopes.get(node.id)??[];
     require(ctx,node.handlers.length<=declared.length&&node.handlers.length<=64,'handler appeared without its source entry');
     const current=[];
@@ -106,6 +106,7 @@ export function createCompletionSourceAdapterV8({bundle}){
           handler.catchPc===inst.arg.catchPc&&handler.finallyPc===inst.arg.finallyPc&&handler.afterPc===inst.arg.afterPc,
           'handler entry differs from its exact source declaration');
         scopes.set(current.id,[...entries,{id:'handler'+(++sequence),definition:Object.fromEntries(staticFields.map(key=>[key,handler[key]]))}]);
+        tracked.add(current.id);
         return true;
       }
       if(inst?.op==='BIND_CATCH'){
@@ -144,6 +145,17 @@ export function createCompletionSourceAdapterV8({bundle}){
       update(ctx,node,event);
       if(ctx.controller.stack.includes(ctx.frame(node.id))&&(scopes.get(node.id)?.length||ctx.controller.pending?.handler?.schema===schema))
         require(ctx,ctx.eq(ctx.controller.pending?.handler,publicScopes(ctx)),'public cleanup obligations differ from source handlers');
+      if(node.status==='suspended'&&node.awaiting){
+        const invocation=ctx.frame(node.id),continuations=[...ctx.controller.continuations.values()].filter(continuation=>
+          continuation.invocation===invocation&&['waiting','ready'].includes(continuation.state)),entries=scopes.get(node.id)??[],
+          loops=targets.get(node.id)??[];
+        require(ctx,continuations.length===1,'suspended cleanup lacks its single retained continuation');
+        const handler=continuations[0].pending?.handler;
+        if(entries.length)require(ctx,ctx.eq(handler,{schema,frames:[{invocation,handlers:entries.map(entry=>entry.public),
+          ...(loops.length?{targets:loops.map(entry=>({id:entry.id,continue:entry.definition.continuePc!==null}))}:{})}]}),
+          'suspended cleanup obligations differ from source handlers');
+        else require(ctx,handler?.schema!==schema||handler.frames.length===0,'suspended continuation invented cleanup obligations');
+      }
       return true;
     }
   };

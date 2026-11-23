@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {defineRegionProgram,REGION_TRACE_VERSION} from './regions.js';
 import {hashAlgorithmData} from './program.js';
+import {fingerprintOwnedSource,clusterOwnedSources,sourceCloneBudget} from '../corpus/source-clusters.mjs';
 
 export const REGION_FAMILY_REGISTRY_SCHEMA='semantic-region-family-registry/1';
 export const REGION_FAMILY_SPLIT_SCHEMA='semantic-region-split-identity/1';
@@ -39,16 +40,31 @@ export function deriveRegionCoreIdentity(source,entry){
   return program.algorithm===null?{coreDigest:null,coreStatus:'detailed'}:
     {coreDigest:hashAlgorithmData(program.algorithm),coreStatus:'algorithm'};
 }
-function canonicalSource(row){
+function sourceFingerprint(source){
+  try{return {sourceFingerprint:fingerprintOwnedSource(source),sourceFingerprintStatus:'tokenized'};}
+  catch(error){
+    if(error instanceof SyntaxError)return {sourceFingerprint:null,sourceFingerprintStatus:'tokenization-refused'};
+    if(error.message==='Empty owned source')return {sourceFingerprint:null,sourceFingerprintStatus:'empty-token-stream'};
+    throw error;
+  }
+}
+function canonicalSource(row,coreCache=new Map(),fingerprintCache=new Map()){
   if(!row||!text(row.id)||row.id.length>256||!text(row.family)||row.family.length>256||
     !text(row.source)||Buffer.byteLength(row.source,'utf8')>2000000||
     !text(row.entry)||row.entry.length>256)fail('invalid exact source membership');
-  const derived=deriveRegionCoreIdentity(row.source,row.entry),sourceDigest=sha(row.source);
+  const coreKey=JSON.stringify([row.source,row.entry]);
+  if(!coreCache.has(coreKey))coreCache.set(coreKey,deriveRegionCoreIdentity(row.source,row.entry));
+  if(!fingerprintCache.has(row.source))fingerprintCache.set(row.source,sourceFingerprint(row.source));
+  const derived=coreCache.get(coreKey),fingerprint=fingerprintCache.get(row.source),sourceDigest=sha(row.source);
   if(row.sourceDigest!==undefined&&row.sourceDigest!==sourceDigest)fail('declared exact source digest differs');
   if(row.coreDigest!==undefined&&row.coreDigest!==derived.coreDigest)fail('declared core differs from source-derived /2 core');
   if(row.coreStatus!==undefined&&row.coreStatus!==derived.coreStatus)fail('declared core status differs');
+  if(row.sourceFingerprint!==undefined&&!isDeepStrictEqual(row.sourceFingerprint,fingerprint.sourceFingerprint))
+    fail('declared source fingerprint differs from exact source');
+  if(row.sourceFingerprintStatus!==undefined&&row.sourceFingerprintStatus!==fingerprint.sourceFingerprintStatus)
+    fail('declared source fingerprint status differs');
   return {id:row.id,family:row.family,ancestors:ancestorsOf(row.ancestors,row.family),
-    source:row.source,entry:row.entry,sourceDigest,...derived};
+    source:row.source,entry:row.entry,sourceDigest,...derived,...fingerprint};
 }
 function normalizeHoldouts(options){
   const result={};
@@ -62,11 +78,14 @@ function normalizeHoldouts(options){
   return result;
 }
 
-export function buildRegionFamilyRegistry(input,{seed,families=[],sourceDigests=[],coreDigests=[]}={}){
-  if(!Array.isArray(input)||!input.length||input.length>20000||!Number.isSafeInteger(seed))
+export function buildRegionFamilyRegistry(input,{seed,families=[],sourceDigests=[],coreDigests=[],
+    nearThreshold=0.92,cloneBudget={}}={}){
+  if(!Array.isArray(input)||!input.length||!Number.isSafeInteger(seed))
     fail('complete nonempty source inventory and explicit seed are required');
+  cloneBudget=sourceCloneBudget(cloneBudget);
   const holdouts=normalizeHoldouts({families,sourceDigests,coreDigests});
-  const sources=input.map(canonicalSource).sort((a,b)=>compare(a.id,b.id));
+  const coreCache=new Map(),fingerprintCache=new Map();
+  const sources=input.map(row=>canonicalSource(row,coreCache,fingerprintCache)).sort((a,b)=>compare(a.id,b.id));
   if(new Set(sources.map(row=>row.id)).size!==sources.length)fail('duplicate source ID');
   const parent=sources.map((_,index)=>index),find=index=>{
     while(parent[index]!==index){parent[index]=parent[parent[index]];index=parent[index];}return index;
@@ -81,6 +100,23 @@ export function buildRegionFamilyRegistry(input,{seed,families=[],sourceDigests=
     if(row.coreDigest!==null)keys.push('core:'+row.coreDigest);
     for(const key of keys){if(edges.has(key))join(index,edges.get(key));else edges.set(key,index);}
   }
+  // Inputs and schedules of the same exact source already share a component.
+  // Compare one representative per source digest so input expansion cannot
+  // consume a quadratic clone budget or invent additional source diversity.
+  const representatives=[...new Map(sources.filter(row=>row.sourceFingerprint!==null)
+    .map(row=>[row.sourceDigest,row])).values()];
+  const cloneAudit=clusterOwnedSources(representatives.map(row=>({family:row.id,split:'train',
+    sourceFingerprint:row.sourceFingerprint})),{nearThreshold,cloneBudget});
+  const byId=new Map(sources.map((row,index)=>[row.id,index])),clones=new Map();
+  for(const row of representatives){
+    const key=cloneAudit.keyByFamily[row.id],index=byId.get(row.id);
+    if(clones.has(key))join(index,clones.get(key));else clones.set(key,index);
+  }
+  const unassessed=sources.filter(row=>row.sourceFingerprint===null);
+  // Lexical refusals remain visible, and cannot be presented as independently
+  // separated train/evaluation families. Do not turn them into a shared null
+  // normalized core: this is an explicit conservative uncertainty edge.
+  for(let index=1;index<unassessed.length;index++)join(byId.get(unassessed[0].id),byId.get(unassessed[index].id));
   const groups=new Map();
   for(const [index,row] of sources.entries()){
     const root=find(index),rows=groups.get(root)??[];rows.push(row);groups.set(root,rows);
@@ -101,10 +137,13 @@ export function buildRegionFamilyRegistry(input,{seed,families=[],sourceDigests=
   for(const key of holdoutKeys)for(const value of holdouts[key])
     if(!known[key].has(value))fail('unknown '+key+' holdout: '+value);
   const body={schema:REGION_FAMILY_REGISTRY_SCHEMA,policy:REGION_FAMILY_POLICY,
-    traceFormat:REGION_TRACE_VERSION,coreSchema:'semantic-algorithm/2',seed,holdouts,sources,components,
+    traceFormat:REGION_TRACE_VERSION,coreSchema:'semantic-algorithm/2',seed,holdouts,nearThreshold,cloneBudget,sources,components,
     diagnostics:{sourceMembers:sources.length,exactSourceVariants:new Set(sources.map(row=>row.sourceDigest+':'+row.entry)).size,
       declaredFamilies:new Set(sources.map(row=>row.family)).size,
       normalizedCores:known.coreDigests.size,withoutNormalizedCore:sources.filter(row=>row.coreDigest===null).length,
+      nearPairs:cloneAudit.nearPairs,cloneAudit:{...cloneAudit.audit,complete:unassessed.length===0,
+        assessedSources:sources.length-unassessed.length,comparedSourceVariants:representatives.length,
+        unassessedSources:unassessed.map(row=>row.id),unassessedPolicy:'same-component'},
       connectedComponents:components.length,splitComponents:Object.fromEntries(REGION_DATASET_SPLITS.map(split=>
         [split,components.filter(row=>row.split===split).length]))}};
   return {...body,digest:hashAlgorithmData(body)};
@@ -116,7 +155,8 @@ export function verifyRegionFamilyRegistry(registry){
     registry.traceFormat!==REGION_TRACE_VERSION||registry.coreSchema!=='semantic-algorithm/2'||
     !Array.isArray(registry.sources)||!Array.isArray(registry.components))fail('unsupported registry schema or profile');
   const {digest,...body}=registry;if(digest!==hashAlgorithmData(body))fail('registry digest differs');
-  const expected=buildRegionFamilyRegistry(registry.sources,{seed:registry.seed,...registry.holdouts});
+  const expected=buildRegionFamilyRegistry(registry.sources,{seed:registry.seed,...registry.holdouts,
+    nearThreshold:registry.nearThreshold,cloneBudget:registry.cloneBudget});
   if(!isDeepStrictEqual(expected,registry))fail('source relation, complete membership, split or holdout changed');
   return {valid:true,digest,components:registry.components.length};
 }

@@ -203,8 +203,13 @@ for(const scenario of cases)test('Promise mutation source boundary: '+scenario.n
   if(scenario.refuse){
     assert(error,'unsupported Promise mutation must refuse direct compilation');assert.equal(projected,undefined);
     if(scenario.profileRefusal){
-      assert(profileError(error),error.message);
-      assert.throws(()=>compileSourceProjection(bundle,{projectionClient:SOURCE_PROJECTION_CLIENT_V8}),profileError);
+      if(bundle){
+        assert(profileError(error),error.message);
+        assert.throws(()=>compileSourceProjection(bundle,{projectionClient:SOURCE_PROJECTION_CLIENT_V8}),profileError);
+      }else{
+        assert.equal(error.name,'TypeError');
+        assert.equal(error.message,'Object.defineProperty requires owned ordinary storage');
+      }
     }
   }else{
     assert.equal(error,undefined,error?.message);
@@ -213,7 +218,10 @@ for(const scenario of cases)test('Promise mutation source boundary: '+scenario.n
   const result=await verifyProtocolRegionTrainingCase({source:scenario.source,entry:'run',args:[],family:'promise-mutation-profile:'+scenario.name});
   if(scenario.refuse){
     assert.equal(result.exported,undefined,'refused source cannot provide native admission input');
-    if(scenario.profileRefusal)assert.equal(result.category,'unsupported.promise-source-mutation');
+    if(scenario.profileRefusal){
+      assert.equal(result.category,bundle?'unsupported.promise-source-mutation':'unsupported.protocol-source');
+      if(!bundle)assert.equal(result.reason,'Object.defineProperty requires owned ordinary storage');
+    }
     observations.push({name:scenario.name,source:scenario.source,original,refused:true,
       directCategory:error.category??null,directReason:error.message,sourceCategory:result.category,sourceReason:result.reason});
   }else{

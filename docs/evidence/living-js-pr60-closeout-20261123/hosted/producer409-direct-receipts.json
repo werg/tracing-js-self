@@ -1,0 +1,117 @@
+{
+  "sourceLog": "producer-409-direct-release-137616138336.log",
+  "bytes": 457636,
+  "sha256": "a02ae1063fc3e91383eb51f55eb21c4b5cebbab9d7b3123b914d26196ec04ad4",
+  "receipts": {
+    "semantic-v8-release-package-result/1": {
+      "archive": {
+        "bytes": 72981629,
+        "path": "semantic-v8-release.tar.gz",
+        "sha256": "3db2ab4db811197e251c1c5e5f118d7474b3bdeb64e4b18c52c9c16622c29a69"
+      },
+      "decoderForwardPassesPerformed": 0,
+      "defaultPromotion": false,
+      "learnedSuccess": null,
+      "manifestIdentity": "2b8e6c2d0f8b142ffcbd7bf41740b19b11eb7cf5afcf00c544a11403e53c3604",
+      "memberVerification": {
+        "archiveSha256": "3db2ab4db811197e251c1c5e5f118d7474b3bdeb64e4b18c52c9c16622c29a69",
+        "files": 351,
+        "identityDigest": "2b8e6c2d0f8b142ffcbd7bf41740b19b11eb7cf5afcf00c544a11403e53c3604",
+        "schema": "semantic-release-verification/1",
+        "status": "verified"
+      },
+      "optimizerUpdatesPerformed": 0,
+      "schema": "semantic-v8-release-package-result/1",
+      "sourcePair": {
+        "consumer": {
+          "clean": true,
+          "revision": "21b7c80718244073dbf13263771da533d4ecbc25",
+          "tree": "7341a8c46b192842a1773a5a7ec98f23776b8a6e"
+        },
+        "producer": {
+          "clean": true,
+          "revision": "8b4cbfae35f78df714b48a98df73f8f745cd7e48",
+          "tree": "9dcd6fbc3d31927b1b3a419db77d8fcf9bbc38b0"
+        }
+      },
+      "status": "verified"
+    },
+    "semantic-v8-release-restore-result/1": {
+      "acceptedHistoryRecovery": "unmeasured",
+      "actualCheckpointAndServedStateCompared": true,
+      "archiveSha256": "3db2ab4db811197e251c1c5e5f118d7474b3bdeb64e4b18c52c9c16622c29a69",
+      "decoderForwardPassesPerformed": 0,
+      "defaultPromotion": false,
+      "freshSourceNativePreparation": true,
+      "learnedSuccess": null,
+      "manifestIdentity": "2b8e6c2d0f8b142ffcbd7bf41740b19b11eb7cf5afcf00c544a11403e53c3604",
+      "optimizerUpdatesPerformed": 0,
+      "restoredFiles": {
+        "bytes": 322997920,
+        "files": 351,
+        "status": "verified"
+      },
+      "schema": "semantic-v8-release-restore-result/1",
+      "sourcePair": {
+        "consumer": {
+          "clean": true,
+          "revision": "21b7c80718244073dbf13263771da533d4ecbc25",
+          "tree": "7341a8c46b192842a1773a5a7ec98f23776b8a6e"
+        },
+        "producer": {
+          "clean": true,
+          "revision": "8b4cbfae35f78df714b48a98df73f8f745cd7e48",
+          "tree": "9dcd6fbc3d31927b1b3a419db77d8fcf9bbc38b0"
+        }
+      },
+      "status": "verified"
+    },
+    "semantic-v8-release-qualification/1": {
+      "acceptedHistoryRecovery": "unmeasured",
+      "archiveBytes": 72981629,
+      "archiveSha256": "3db2ab4db811197e251c1c5e5f118d7474b3bdeb64e4b18c52c9c16622c29a69",
+      "consumerRevision": "21b7c80718244073dbf13263771da533d4ecbc25",
+      "declaredSources": 64,
+      "defaultPromotion": false,
+      "freshSourceNativePreparationAtPackageAndRestore": true,
+      "fullTargetCoverageQualified": false,
+      "learnedSuccess": null,
+      "manifestIdentity": "2b8e6c2d0f8b142ffcbd7bf41740b19b11eb7cf5afcf00c544a11403e53c3604",
+      "nativeAdmitted": 64,
+      "nativePolicyEvidenceSha256": {
+        "declared-native-policy-v8.json": "59b5966271d5ebb7fad487a738a81b64835282437f03ce02c1f051ae0ec374f3",
+        "semantic-native-policy-v8.json": "59b5966271d5ebb7fad487a738a81b64835282437f03ce02c1f051ae0ec374f3",
+        "semantic-native-policy-v8.json.resolution.json": "3ef3efc5048f17ea1e8193be28d5172960d982df81845aa1fb614c79bb900395"
+      },
+      "nativePolicyResolution": {
+        "declaredPolicySha256": "59b5966271d5ebb7fad487a738a81b64835282437f03ce02c1f051ae0ec374f3",
+        "kind": "recorded-revision",
+        "ref": "21b7c80718244073dbf13263771da533d4ecbc25",
+        "repository": "werg/megatoken",
+        "requestedBranch": null,
+        "revision": "21b7c80718244073dbf13263771da533d4ecbc25",
+        "schema": "semantic-native-resolution/1"
+      },
+      "nativePolicySha256": "59b5966271d5ebb7fad487a738a81b64835282437f03ce02c1f051ae0ec374f3",
+      "ordinaryLifecycleOptimizerUpdates": 2,
+      "originalRuntimeAssetLocatorsAbsentAtRestore": true,
+      "originalTaskArtifactBindingsVerified": true,
+      "packageOptimizerUpdates": 0,
+      "producerRevision": "8b4cbfae35f78df714b48a98df73f8f745cd7e48",
+      "registryDigest": "985330b78ce655b0bfb4181f02298fcb471c599d8a1f8abe5c82ea0a20e6fbb7",
+      "releaseDecoderForwardPasses": 0,
+      "restoreOptimizerUpdates": 0,
+      "schema": "semantic-v8-release-qualification/1",
+      "sourceQualified": 64,
+      "splitCounts": {
+        "test": 4,
+        "train": 52,
+        "validation": 8
+      },
+      "status": "passed",
+      "supportCohortDigest": "141894d8c8fc684c207dc340955da8b9826d378ce45fc0a20d31bab89c3d955b",
+      "supportPopulationSha256": "644461d08d8c52f940527db51d05657e825aad6aabc2d86105b68003804d4b0d",
+      "wrongExternalChecksumRefusedBeforeExtraction": true
+    }
+  }
+}

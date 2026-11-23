@@ -11,9 +11,14 @@ saved formats change in place; affected producers, consumers and fixtures are
 updated together. Existing numeric labels identify implementation paths and
 do not promise compatibility. See the [development instructions](AGENTS.md).
 
-The root `npm-shrinkwrap.json` is the single dependency lock for both `npm ci`
-and packed installations. It preserves exact dependency versions and integrity
-pins and ships the dependency evidence needed by original-source certification.
+The root `package-lock.json` is the authoritative dependency lock for `npm ci`.
+It preserves exact dependency versions and integrity pins. Because npm omits that
+filename from package archives, `contracts/npm-lock.json` retains an exact-byte
+generated copy for original-source certification after installation. Run
+`node tools/generate-dependency-lock.mjs` after changing the root lock;
+`npm run contracts:check` rejects a stale copy. Ordinary `npm pack --ignore-scripts`
+includes that evidence without a lifecycle hook. This works with current npm,
+[which removed shrinkwrap support in npm 12](https://github.com/npm/cli/blob/v12.2.2/CHANGELOG.md).
 The optional specification oracle keeps its separate lock in `tools/spec-oracle`.
 
 The [compositional v8 candidate](docs/SEMANTIC_REGIONS_V8.md) combines compact

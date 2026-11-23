@@ -1,0 +1,100 @@
+name: Current Test262 source inventory and parsing
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/test262-current.yml'
+      - 'tools/catalog-test262.mjs'
+      - 'tools/run-test262-campaign.mjs'
+      - 'src/conformance/test262-*.js'
+      - 'src/frontend.js'
+      - 'src/training/profile.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'contracts/npm-lock.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/test262-current.yml'
+      - 'tools/catalog-test262.mjs'
+      - 'tools/run-test262-campaign.mjs'
+      - 'src/conformance/test262-*.js'
+      - 'src/frontend.js'
+      - 'src/training/profile.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'contracts/npm-lock.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: producer
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: tc39/test262
+          path: test262
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: current
+      - name: Record actual toolchain and source revision
+        run: |
+          mkdir -p evidence
+          node --version | tee evidence/toolchain.log
+          npm --version | tee -a evidence/toolchain.log
+          git -C producer rev-parse HEAD | tee evidence/producer-revision.txt
+          git -C test262 rev-parse HEAD | tee evidence/test262-revision.txt
+      - name: Install current repository dependencies
+        working-directory: producer
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check installed dependency evidence
+        working-directory: producer
+        run: node tools/generate-dependency-lock.mjs --check
+      - name: Acquire every original source and harness file
+        working-directory: producer
+        run: |
+          node tools/catalog-test262.mjs --suite-root ../test262 \
+            --out ../evidence/catalog.json.gz | tee ../evidence/catalog.log
+          git -C ../test262 archive --format=tar.gz HEAD test harness LICENSE \
+            > ../evidence/source-inputs.tar.gz
+      - name: Parse all acquired variants with the current parser
+        working-directory: producer
+        run: |
+          timeout --signal=TERM --kill-after=30s 40m \
+            node tools/run-test262-campaign.mjs \
+              --suite-root ../test262 --catalog ../evidence/catalog.json.gz \
+              --stages parse --out ../evidence/report.json.gz \
+            | tee ../evidence/campaign.log
+      - name: Check current report and complete population accounting
+        working-directory: producer
+        run: |
+          node tools/run-test262-campaign.mjs --check ../evidence/report.json.gz
+          node --input-type=module <<'JS'
+          import {readTest262Json} from './src/conformance/test262-campaign.js';
+          import {readFileSync} from 'node:fs';
+          const report=readTest262Json('../evidence/report.json.gz');
+          if(report.baseCatalog.suiteRevision!==readFileSync('../evidence/test262-revision.txt','utf8').trim()||
+             report.summary.selected!==report.summary.catalogVariants||
+             report.summary.stages.parseStatic.not_run!==0||
+             report.profile.parser.ecmaVersion!=='latest'||report.claims.datasetAdmission!==false)
+            throw new Error('Current source population or execution boundary changed');
+          for(const counts of Object.values(report.summary.stages))
+            if(Object.values(counts).reduce((sum,value)=>sum+value,0)!==report.summary.catalogVariants)
+              throw new Error('A source variant disappeared from stage accounting');
+          JS
+      - name: Hash retained inputs and observations
+        if: always()
+        run: find evidence -maxdepth 1 -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 -r sha256sum > evidence/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: current-test262-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 30

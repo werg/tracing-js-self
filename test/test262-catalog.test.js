@@ -6,8 +6,7 @@ import {join} from 'node:path';
 import {gitBlobSha} from '../src/test262-baseline.js';
 import {buildTest262Catalog,parseTest262Header,test262VariantModes,createTest262Campaign,
   recordTest262Stage,recordTest262Stages,bindTest262CatalogProfile,summarizeTest262Campaign,validateTest262Campaign,validateTest262Catalog,
-  conformanceDigest,CONFORMANCE_STAGES} from '../src/conformance/test262-catalog.js';
-import {readPinnedEcma262Specification} from '../src/conformance/test262-specification.js';
+  conformanceDigest,CONFORMANCE_STAGES,selectTest262Shard} from '../src/conformance/test262-catalog.js';
 
 const fixture=(body='',metadata='')=>`/*---\ndescription: synthetic runner control\n${metadata}---*/\n${body}`;
 const profile={name:'synthetic-runner-controls',edition:'ECMAScript 2026',specification:null,
@@ -123,6 +122,38 @@ test('selection retains all catalog rows and cannot inherit passed later stages'
   assert.throws(()=>createTest262Campaign({catalog,implementation,selectedIds:['unknown']}),/catalog IDs/);
 });
 
+test('self-rehashed retained catalogs cannot shrink or relabel the acquired variant population',()=>{
+  const catalog=make({'test/a.js':fixture(),'test/b.js':fixture('','flags: [raw]\n')});
+  const rehash=changed=>{const {digest,...value}=changed;changed.digest=conformanceDigest(value);return changed;};
+  for(const mutate of [
+    changed=>{changed.variants.splice(1,1);changed.summary.knownVariants--;},
+    changed=>{changed.variants.pop();changed.summary.knownVariants--;},
+    changed=>{changed.files.push(structuredClone(changed.files[0]));},
+    changed=>{changed.variants[0].mode='raw';},
+    changed=>{changed.summary.knownVariants++;}
+  ]){
+    const changed=structuredClone(catalog);mutate(changed);rehash(changed);
+    assert.throws(()=>validateTest262Catalog(changed),/variant|source files|summary/);
+    assert.throws(()=>createTest262Campaign({catalog:changed,implementation}),TypeError);
+  }
+});
+
+test('source-family shards partition all variants and remain stable as the inventory grows',()=>{
+  const catalog=make(Object.fromEntries(Array.from({length:30},(_,i)=>['test/source-'+i+'.js',fixture()])));
+  const shards=Array.from({length:4},(_,index)=>selectTest262Shard(catalog.variants,{index,count:4}));
+  assert.equal(new Set(shards.flat().map(row=>row.id)).size,catalog.variants.length);
+  assert.equal(shards.flat().length,catalog.variants.length);
+  for(const variants of shards)for(const row of variants)
+    assert.equal(variants.filter(other=>other.path===row.path).length,2);
+  const grown=make(Object.fromEntries([...Array.from({length:30},(_,i)=>['test/source-'+i+'.js',fixture()]),
+    ['test/new.js',fixture()]]));
+  for(let index=0;index<4;index++)assert.deepEqual(
+    selectTest262Shard(grown.variants,{index,count:4}).filter(row=>row.path!=='test/new.js').map(row=>[row.path,row.mode]),
+    shards[index].map(row=>[row.path,row.mode]));
+  for(const options of [{index:-1,count:4},{index:4,count:4},{index:0,count:0},{index:0,count:1.5}])
+    assert.throws(()=>selectTest262Shard(catalog.variants,options),/shard requires/);
+});
+
 test('attempt history keeps failures and invalidates downstream receipts on retry',()=>{
   const catalog=make({'test/a.js':fixture('','flags: [noStrict]\n')});
   const caseId=catalog.variants[0].id;
@@ -167,15 +198,17 @@ test('retained snapshot catalog can be generated without claiming missing harnes
   const directory=mkdtempSync(join(process.cwd(),'test262-catalog-'));
   try{
     const output=join(directory,'catalog.json');
-    execFileSync(process.execPath,['tools/catalog-test262.mjs','--out',output],
+    execFileSync(process.execPath,['tools/catalog-test262.mjs','--out',output,
+      '--snapshot','corpus/extension/snapshots/test262/snapshot.lock.json'],
       {cwd:new URL('..',import.meta.url),stdio:'pipe'});
     const result=JSON.parse(readFileSync(output,'utf8'));
     assert.equal(result.catalog.suiteRevision,'d53ebc8b1931d9f1541e43d59650776e4b766248');
     assert.equal(result.catalog.summary.testFiles,42);
     assert(result.catalog.summary.knownVariants>42);
     assert(result.catalog.summary.missingHarnessFiles.includes('harness/assert.js'));
-    assert.deepEqual(result.catalog.profile.specification,readPinnedEcma262Specification().specification);
-    assert.equal(result.catalog.summary.specificationPinned,true);
+    assert.equal(result.catalog.profile.specification,null);
+    assert.equal(result.catalog.profile.edition,'ECMAScript (living)');
+    assert.equal(result.catalog.summary.specificationPinned,false);
     assert.equal(result.catalog.claims.ownedConformance,false);
     assert(result.campaign.rows.every(row=>Object.values(row.stages).every(stage=>stage.status==='not_run')));
     assert.equal(result.catalog.digest,conformanceDigest(Object.fromEntries(

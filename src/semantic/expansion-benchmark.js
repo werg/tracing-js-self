@@ -144,7 +144,8 @@ export function validateExpansionReferencePopulation({traceVersion=7}={}){
   return {schema:'semantic-expansion-reference-report/1',manifestDigest:expansionManifest().digest,traceVersion,
     normalizedCoreSchema:traceVersion===8?'semantic-algorithm/2':'semantic-algorithm/1',
     engine:process.version,scope:'Independent V8 execution of trusted frozen fixtures; not owned/runtime/native admission',
-    totals:{families:families.length,positiveInputs:positive.length,positiveExecutions:positive.length*3,
+    totals:{families:families.length,positiveInputs:positive.length,
+      positiveExecutions:positive.reduce((sum,row)=>sum+row.outcomes.length,0),
       positivePassed:positive.filter(row=>row.status==='passed').length,
       distinguishingPairs:negative.length,distinguishingPassed:negative.filter(row=>row.status==='passed').length},families,
     qualification:{ownedExecution:'untested',independentIntermediate:'untested',native:'untested',model:'untested'}};

@@ -8,7 +8,8 @@ import * as v8 from 'tracing-js-self/semantic/v8';
 const installed=process.argv.includes('--installed');
 const entry=import.meta.resolve('tracing-js-self/semantic/v8');
 if(installed)assert.match(entry,/\/node_modules\/tracing-js-self\/src\/semantic\/index-v8\.js$/);
-const lockDigest=createHash('sha256').update(readFileSync(new URL('../../npm-shrinkwrap.json',entry))).digest('hex');
+const lockDigest=createHash('sha256').update(readFileSync(new URL(installed?
+  '../../contracts/npm-lock.json':'../../package-lock.json',entry))).digest('hex');
 assert.equal(v8.REGION_EXECUTION_VERSION,'semantic-execution/8');
 assert.equal(v8.V8_LIFECYCLE_CONTRACT.checkpointVersion,'semantic-checkpoint/8');
 assert.equal(v8.SOURCE_ADMISSION_CONTRACT_V8.execution,'semantic-lifecycle/8');

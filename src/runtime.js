@@ -19,6 +19,7 @@ import {validateExternalCallbackJob} from './external-callback-validation.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
+const isPrimitiveValue=value=>['undefined','null','bool','num','str','bigint','symbol'].includes(value[0]);
 const ERROR_CONSTRUCTORS=['Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError'];
 function binaryGuest(operation){
   try{return operation();}catch(error){
@@ -2169,9 +2170,11 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
         }
         case 'NEW_PROXY':{
           const handler=pop(),target=pop();
+          if(isPrimitiveValue(target.value)||isPrimitiveValue(handler.value))
+            guestFault('TypeError','Proxy target and handler must be objects');
           if(target.value[0]!=='ref'||!['object','array','proxy'].includes(s.heap[target.value[1]]?.kind)||
              handler.value[0]!=='ref'||!['object','array'].includes(s.heap[handler.value[1]]?.kind))
-            guestFault('TypeError','Proxy requires an ordinary owned target and handler');
+            throw new TypeError('Proxy construction requires owned ordinary target and handler storage');
           const id=this.next(s,'obj');
           s.heap[id]={id,kind:'proxy',targetId:target.value[1],handlerId:handler.value[1],
             properties:{},propertyVersions:{},shapeVersion:0,version:0};
@@ -3479,8 +3482,10 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 !Object.hasOwn(object.accessors??{},key)&&!Object.hasOwn(object.properties,key)])};
             const descriptorValue=args[2]?.value??U,
               descriptor=descriptorValue[0]==='ref'?s.heap[descriptorValue[1]]:null;
-            if(!descriptor||!['object','array'].includes(descriptor.kind))
+            if(isPrimitiveValue(descriptorValue))
               guestFault('TypeError','Property descriptor must be an object');
+            if(!descriptor||!['object','array'].includes(descriptor.kind))
+              throw new TypeError('Reflect.defineProperty descriptor requires owned ordinary storage');
             if(Object.keys(descriptor.accessors??{}).length)
               throw new TypeError('Accessor descriptor fields are outside the bounded profile');
             if(![null,'Object.prototype','Array.prototype'].includes(objectPrototype(descriptor)))
@@ -3520,6 +3525,9 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
           if(callable[0]==='builtinfn'&&['Object.preventExtensions','Object.isExtensible',
              'Object.seal','Object.isSealed','Object.freeze'].includes(callable[1])){
             const value=args[0]?.value??U,object=value[0]==='ref'?s.heap[value[1]]:null;
+            if(['Object.preventExtensions','Object.isExtensible'].includes(callable[1])&&
+              !isPrimitiveValue(value)&&(!object||!['object','array','function','generator','module-namespace'].includes(object.kind)))
+              throw new TypeError(callable[1]+' requires owned ordinary storage');
             if(callable[1]==='Object.isExtensible')
               return {...operands(fn,...args),...result(['bool',!!object&&object.extensible!==false])};
             if(callable[1]==='Object.preventExtensions'){
@@ -3538,6 +3546,19 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
           if(callable[0]==='builtinfn'&&['Object.isFrozen','Object.getOwnPropertyDescriptor'].includes(callable[1])){
             const base=args[0]?.value??U,object=base[0]==='ref'?s.heap[base[1]]:null;
             if(callable[1]==='Object.isFrozen'){
+              // Owned Promise identities remain extensible: every operation
+              // that could change their object storage refuses execution.
+              if(base[0]==='promise'&&s.promises[base[1]])
+                return {...operands(fn,...args),...result(['bool',false])};
+              const primitive=isPrimitiveValue(base);
+              if(!primitive&&(!object||!['object','array','function','generator','module-namespace'].includes(object.kind)))
+                throw new TypeError('Object.isFrozen requires owned ordinary storage');
+              // Ordinary function name/length storage is still lazy. An empty
+              // modeled key set cannot prove that a non-extensible function
+              // has no configurable own properties.
+              if(object?.kind==='function'&&object.extensible===false&&
+                 !(object.properties?.name&&object.properties?.length))
+                throw new TypeError('Object.isFrozen requires owned complete function descriptors');
               if(object?.kind==='module-namespace'){
                 const outcome=this.startModuleNamespaceInspection(s,f,object,
                   callable[1],null,eventId);
@@ -3545,7 +3566,6 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                   return {...operands(fn,...args),causes:[{kind:'invocation',frameId:outcome.child}]};
                 return {...operands(fn,...args),...result(outcome.value)};
               }
-              const primitive=!['ref','promise','intrinsic','builtinfn','hostfn'].includes(base[0]);
               const frozen=primitive||object?.extensible===false&&ownPropertyKeys(object).every(key=>{
                 const accessor=object.accessors?.[key],data=object.dataAttributes?.[key];
                 return accessor?accessor.configurable===false:data?.configurable===false&&data.writable===false;
@@ -3848,16 +3868,24 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               if(v?.[0]==='null')return null;
               if(v?.[0]==='intrinsic' && ['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(v[1]))return v[1];
               if(v?.[0]==='ref' && ['object','array','function','generator','module-namespace'].includes(s.heap[v[1]]?.kind))return v[1];
-              guestFault('TypeError','Prototype must be null or an owned ordinary object');
+              if(isPrimitiveValue(v))guestFault('TypeError','Prototype must be null or an object');
+              throw new TypeError('Prototype value requires owned ordinary storage');
             };
             const v=args[0]?.value??U, obj=v[0]==='ref'?s.heap[v[1]]:null;
             if(callable[1]==='Object.defineProperty'){
+              if(isPrimitiveValue(v))
+                guestFault('TypeError','Object.defineProperty target must be an object');
+              // Promises, functions and other object identities are valid JS
+              // targets. Unmodeled storage must stop owned execution, not
+              // manufacture a guest TypeError that can satisfy a negative test.
               if(!obj||!['object','array','module-namespace'].includes(obj.kind))
-                guestFault('TypeError','Object.defineProperty requires an owned ordinary object');
+                throw new TypeError('Object.defineProperty requires owned ordinary storage');
               const key=args[1]?.value??U,descValue=args[2]?.value??U;
               const name=valueKey(key),descriptor=descValue[0]==='ref'?s.heap[descValue[1]]:null;
+              if(isPrimitiveValue(descValue))
+                guestFault('TypeError','Property descriptor must be an object');
               if(!descriptor||!['object','array'].includes(descriptor.kind))
-                guestFault('TypeError','Accessor descriptor must be an owned data object');
+                throw new TypeError('Object.defineProperty descriptor requires owned ordinary storage');
               // ToPropertyDescriptor executes descriptor getters in source
               // order. Until that continuation is owned, this is a profile
               // refusal, never a substitute guest TypeError that a catch can
@@ -3911,15 +3939,15 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               const getter=d.get??previous?.get??token(U),
                 setter=d.set??previous?.set??token(U);
               for(const method of [getter,setter])
-                if(method.value[0]!=='undefined'&&!this.callableGuest(s,method.value))
-                  guestFault('TypeError','Accessor must be a guest function or undefined');
+                if(method.value[0]!=='undefined'&&primitiveUnary('typeof',method.value,s.heap)[1]!=='function')
+                  guestFault('TypeError','Accessor must be a function or undefined');
               // Indexed accessors need ArraySetLength's non-configurable
               // deletion and ordered array-method continuations. Refuse the
               // combination until those invariants are modeled together.
               if(obj.kind==='array'&&arrayIndex(name))
                 throw new TypeError('Array index accessor descriptors are outside the bounded profile');
-              if(name==='__proto__'||(obj.kind==='array'&&name==='length'))
-                guestFault('TypeError','Cannot redefine a non-configurable or reserved property');
+              if(obj.kind==='array'&&name==='length')
+                guestFault('TypeError','Cannot redefine non-configurable array length');
               const existingData=Object.hasOwn(obj.properties,name),
                 enumerable=Object.hasOwn(d,'enumerable')?truthy(d.enumerable.value):
                   previous?.enumerable??obj.dataAttributes?.[name]?.enumerable??existingData,
@@ -3930,6 +3958,13 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                   !ownedSameValue(getter.value,previous.get.value)||
                   !ownedSameValue(setter.value,previous.set.value)))
                 guestFault('TypeError','Cannot redefine a non-configurable property');
+              // Valid native accessors can still require storage or call
+              // continuations this profile does not own. Check the real
+              // descriptor invariants first, then refuse before mutation.
+              if(name==='__proto__')
+                throw new TypeError('Accessor definition requires owned prototype-named storage');
+              if([getter,setter].some(method=>method.value[0]!=='undefined'&&!this.callableGuest(s,method.value)))
+                throw new TypeError('Accessor definition requires owned callable storage');
               if(!previous&&!existingData)(obj.propertyOrder??=ownPropertyKeys(obj)).push(name);
               obj.accessors??={};
               obj.accessors[name]={get:getter,set:setter,enumerable,configurable};
@@ -3954,15 +3989,22 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               return {...operands(fn,...args),...result(['intrinsic',generatorIntrinsicParent(v[1])])};
             if(callable[1]==='Object.getPrototypeOf'&&v[0]==='intrinsic'&&['Object.prototype','Array.prototype','Function.prototype'].includes(v[1]))
               return {...operands(fn,...args),...result(v[1]==='Object.prototype'?['null']:['intrinsic','Object.prototype'])};
-            if(!obj||!['object','array','function','generator','module-namespace'].includes(obj.kind))
-              guestFault('TypeError','Prototype operation requires an owned ordinary object');
+            if(['undefined','null'].includes(v[0]))
+              guestFault('TypeError','Prototype operation target must not be null or undefined');
             if(callable[1]==='Object.getPrototypeOf'){
+              if(!obj||!['object','array','function','generator','module-namespace'].includes(obj.kind))
+                throw new TypeError('Object.getPrototypeOf requires owned ordinary storage');
               const proto=objectPrototype(obj);
               const out=proto===null?['null']:
                 ['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(proto)?['intrinsic',proto]:['ref',proto];
               return {...operands(fn,...args),...result(out)};
             }
             const proto=primitiveProto(args[1]?.value??U);
+            // SetPrototypeOf validates the prototype before returning a
+            // non-null primitive unchanged; no boxed storage is involved.
+            if(isPrimitiveValue(v))return {...operands(fn,...args),...result(v)};
+            if(!obj||!['object','array','function','generator','module-namespace'].includes(obj.kind))
+              throw new TypeError('Object.setPrototypeOf requires owned ordinary storage');
             const visited=new Set([obj.id]);
             let current=proto;
             while(current!==null && !['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(current)){

@@ -23,9 +23,19 @@ jobs:
       - run: npm test
       - name: Verify typed algorithm contract and decoder fixtures
         run: npm run semantic:contract
+      # Fresh source agreement uses the repository's current reference engine;
+      # the matrix tests above retain older-engine disagreements as refusals.
+      - name: Use current reference runtime for source qualification
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
       - name: Recheck v8 source-bound interoperability and contract snapshot
         run: npm run semantic:v8:contract
       - name: Verify canonical semantic reasoning fixtures
         run: node tools/inspect-semantic-reasoning.mjs
+      - name: Restore matrix runtime for demo and replay
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
       - run: node bin/tracing.js demo --output "${RUNNER_TEMP}/demo.trace.json"
       - run: node bin/tracing.js replay "${RUNNER_TEMP}/demo.trace.json"

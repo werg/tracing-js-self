@@ -3,12 +3,13 @@
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {posix} from 'node:path';
-import {parse as parseSyntax} from 'acorn';
+import {parse as parseSyntax,version as acornVersion} from 'acorn';
 import {createRuntime} from '../runtime.js';
 import {linkEvaluatedModules} from '../evaluated-modules.js';
 import {unresolvedOriginalModuleBindings} from './test262-module-resolution.js';
 import {validateBundle,TraceValidationError} from '../validation.js';
 import {replayExact,TraceReplayError} from '../replay.js';
+import {truthy} from '../values.js';
 import {conformanceDigest,parseTest262Header,test262VariantModes} from './test262-catalog.js';
 import {test262HostCapabilities,unsupportedOwnedGlobals,
   unavailableOwnedStandardGlobal,requiresScriptGlobalThis} from './test262-capabilities.js';
@@ -38,17 +39,18 @@ export function test262VariantSource(source,mode){
 
 export function ownedTest262Profile({specification=null,maxSteps=20000,maxSourceBytes=1048576,
   referenceTimeoutMs=300}={}){
-  if(!Number.isSafeInteger(referenceTimeoutMs)||referenceTimeoutMs<10||referenceTimeoutMs>1000)
-    throw new TypeError('Reference timeout must be between 10 and 1000 ms');
+  if(!Number.isSafeInteger(referenceTimeoutMs)||referenceTimeoutMs<10||referenceTimeoutMs>2147482147)
+    throw new TypeError('Reference timeout must fit a positive Node timer including worker shutdown allowance');
   if(!Number.isSafeInteger(maxSteps)||maxSteps<1||!Number.isSafeInteger(maxSourceBytes)||maxSourceBytes<1)
     throw new TypeError('Owned Test262 resource limits must be positive integers');
-  return {name:OWNED_TEST262_RUNNER,edition:'ECMAScript 2026',specification,
-    parser:{name:'acorn',version:'8.15.0',ecmaVersion:2026,lowering:'owned-script/1',
+  return {name:OWNED_TEST262_RUNNER,edition:'ECMAScript (living)',specification,
+    languageTarget:{uri:'https://tc39.es/ecma262/',policy:'current-language-and-Test262-inventory'},
+    parser:{name:'acorn',version:acornVersion,ecmaVersion:'latest',lowering:'owned-script/1',
       implementationDigest:conformanceDigest(['../training/profile.js','../frontend.js'].map(path=>
         [path,sha(readFileSync(new URL(path,import.meta.url)))]))},
     hostProfile:{name:'single-agent-owned-test262/1',harness:'original-test262-files',
       completion:'original-doneprintHandle-and-owned-print',realms:'fresh-per-variant',
-      moduleResolver:'frozen-static-relative-graph/1',
+      moduleResolver:'content-bound-static-relative-graph/1',
       moduleExecution:{profile:'evaluated-module/1',entry:'evaluation-only',
         sourceHandling:'original-bytes-bound-and-lowered-to-owned-entry',
         staticResolution:'original-module-records/1',
@@ -58,8 +60,7 @@ export function ownedTest262Profile({specification=null,maxSteps=20000,maxSource
       test262HostObject:'unavailable',
       reference:{node:process.version,v8:process.versions.v8,timeoutMs:referenceTimeoutMs}},
     resourcePolicy:{maxSteps,maxSourceBytes},
-    limits:[specification?'Test262 edition membership remains unclassified although the normative specification bytes are pinned.':
-      'Edition membership is unclassified until the normative specification inventory is pinned.',
+    limits:['The acquired Test262 tree is the current observed inventory, not a ceiling or a claim of complete language conformance. Metadata and unsupported features remain visible.',
       'Owned modules use the bounded evaluated-module/1 lowering recorded in the runner profile; namespace exotics execute only in the owned module runner and do not qualify public/native projection; dynamic import, import.meta, import attributes, host loading, retained sessions and source correspondence remain unqualified.',
       'Owned structural validation and exact replay do not establish public or native semantic admission.']};
 }
@@ -68,6 +69,11 @@ export function ownedTest262Profile({specification=null,maxSteps=20000,maxSource
 export function prepareOfficialTest262Variant({variant,profile,suiteRevision,sources}={}){
   if(profile?.name!==OWNED_TEST262_RUNNER||!variant||!sources)
     throw new TypeError('Original Test262 runner requires its explicitly bound profile and sources');
+  const actualProfile=ownedTest262Profile({specification:profile.specification,
+    maxSteps:profile.resourcePolicy?.maxSteps,maxSourceBytes:profile.resourcePolicy?.maxSourceBytes,
+    referenceTimeoutMs:profile.hostProfile?.reference?.timeoutMs});
+  if(!equivalent(profile,actualProfile))
+    throw new TypeError('Test262 runner profile differs from the actual parser, runtime or execution settings');
   const {id,...identity}=variant;
   if(conformanceDigest({suiteRevision,profile,...identity})!==id)
     throw new TypeError('Test262 variant identity does not match the runner profile');
@@ -107,7 +113,7 @@ export function checkOfficialTest262Syntax(prepared,variant){
   if(negative?.phase==='early')return {stage:outcome('unsupported',
     'The integrated parser cannot independently certify a distinct early-error phase'),ast:null,parseOnly:true};
   let ast;
-  try{ast=parseSyntax(prepared.code,{ecmaVersion:2026,sourceType:variant.mode==='module'?'module':'script',
+  try{ast=parseSyntax(prepared.code,{ecmaVersion:'latest',sourceType:variant.mode==='module'?'module':'script',
     allowAwaitOutsideFunction:false,allowReturnOutsideFunction:false});}
   catch(error){
     if(error instanceof SyntaxError)return {stage:outcome(
@@ -157,7 +163,7 @@ export function checkOfficialTest262ModuleGraph({variant,profile,sources}={}){
   while(pending.length){
     const path=pending.shift(),text=graph.get(path);
     let ast;
-    try{ast=parseSyntax(text,{ecmaVersion:2026,sourceType:'module',allowHashBang:true,
+    try{ast=parseSyntax(text,{ecmaVersion:'latest',sourceType:'module',allowHashBang:true,
       allowAwaitOutsideFunction:true,allowReturnOutsideFunction:false});parsed.set(path,ast);}
     catch(error){
       if(!(error instanceof SyntaxError))return {stage:outcome('infrastructure_error',
@@ -250,16 +256,51 @@ function asyncCompletion(bundle,variant){
   const failures=output.filter(item=>item.value?.[0]==='str'&&item.value[1].startsWith('Test262:AsyncTestFailure:'));
   const doneSource=bundle.sources.find(source=>source.url==='harness/doneprintHandle.js');
   const definition=doneSource&&bundle.programs[doneSource.entry].instructions.find(inst=>inst.op==='DEF_FN'&&inst.arg.name==='$DONE');
-  const calls=definition?Object.values(bundle.finalState.frames).filter(frame=>frame.codeId===definition.arg.codeId).length:null;
+  const doneFrames=definition?Object.values(bundle.finalState.frames).filter(frame=>frame.codeId===definition.arg.codeId):[];
+  const calls=definition?doneFrames.length:null;
+  let completionErrorCalls=0;
+  const completionAbruptCalls=doneFrames.filter(frame=>frame.completion?.type==='throw').length;
+  // Completed frames have cleared caller links. Inspect their retained state
+  // at each print event, not the final heap, to establish original call ownership.
+  const frames=new Map(Object.entries(bundle.initialState.frames));
+  const wanted=new Set(completions.map(item=>item.origin));let originalCompletionPrints=0;
+  if(definition)for(const event of bundle.events){
+    if(wanted.has(event.eventId)){
+      let frame=frames.get(event.invocationId);const seen=new Set();
+      while(frame&&!seen.has(frame.id)){
+        if(frame.codeId===definition.arg.codeId){originalCompletionPrints++;break;}
+        seen.add(frame.id);frame=frames.get(frame.callerFrameId);
+      }
+    }
+    for(const patch of event.stateChanges??[])if(patch.table==='frames'){
+      if(!patch.before&&patch.after?.codeId===definition.arg.codeId){
+        const environment=event.stateChanges.find(change=>change.table==='envs'&&change.id===patch.after.envId)?.after;
+        const argument=environment?.bindings[bundle.programs[definition.arg.codeId].params[0]]?.token?.value;
+        if(!argument)throw new TypeError('Original async completion lost its invocation argument');
+        if(truthy(argument))completionErrorCalls++;
+      }
+      if(patch.after)frames.set(patch.id,patch.after);else frames.delete(patch.id);
+    }
+  }
+  if(completionErrorCalls||completionAbruptCalls)return outcome('failed',
+    'Original $DONE received an error or exited abruptly',
+    {completionCalls:calls,completionPrints:completions.length,originalCompletionPrints,
+      completionErrorCalls,completionAbruptCalls});
   if(failures.length)return outcome('failed','Original async harness reported failure',
     {completionCalls:calls,completionPrints:completions.length,failurePrints:failures.length});
   if(completions.length>1||calls!==null&&calls>1)return outcome('failed','Async completion occurred more than once',
     {completionCalls:calls,completionPrints:completions.length});
+  if(completions.length&&definition&&calls!==1)return outcome('failed',
+    'Async completion output was printed without the original harness $DONE call',
+    {completionCalls:calls,completionPrints:completions.length});
   if(completions.length!==1||!variant.metadata.flags.includes('raw')&&calls!==1)
     return outcome('resource_limited','No original async completion before the bounded owned turn became quiescent',
       {completionCalls:calls,completionPrints:completions.length});
+  if(definition&&originalCompletionPrints!==1)return outcome('failed',
+    'Async completion output did not originate in the original harness $DONE call',
+    {completionCalls:calls,completionPrints:completions.length,originalCompletionPrints});
   return outcome('passed','Original async completion protocol completed exactly once',
-    {completionCalls:calls,completionPrints:1});
+    {completionCalls:calls,completionPrints:1,originalCompletionPrints});
 }
 function executeOwnedTest262Module({options,prepared,profile,result,includeBundle=false}){
   const {variant,sources}=options;
@@ -463,6 +504,7 @@ export function executeOfficialTest262Variant(options={}){
     observed=outcome('environment_unavailable','Original script is waiting for unavailable external progress');
   else observed=outcome('passed','Original script and original assertions completed without an uncaught error',{phase:'runtime'});
   result.stages.ownedExecution={...observed,trace};
-  return finish(observed.status,observed.reason,{phase:observed.phase??'runtime',trace,
-    ...(includeBundle?{bundle}:{}),...(observed.completionCalls!==undefined?{completionCalls:observed.completionCalls}:{})});
+  const {status,reason,...details}=observed;
+  return finish(status,reason,{...details,phase:observed.phase??'runtime',trace,
+    ...(includeBundle?{bundle}:{})});
 }

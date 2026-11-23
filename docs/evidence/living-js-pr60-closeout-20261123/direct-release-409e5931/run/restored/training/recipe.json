@@ -1,0 +1,36 @@
+{
+  "accumulate_ingested": 1,
+  "accumulate_scored": 1,
+  "checkpoint_every": 1,
+  "codec": "tokenizer/tokenizer.json",
+  "datasets": [
+    "prepared/000"
+  ],
+  "device": "cpu",
+  "expert_backend": "torch",
+  "generated_capacity": 128,
+  "gradient_checkpointing": false,
+  "keep_checkpoints": 2,
+  "max_accumulation_windows": 1,
+  "max_history_tokens": 16384,
+  "max_steps": 1,
+  "max_window_records": 128,
+  "microbatch_episodes": 1,
+  "model": "tiny",
+  "model_overrides": {
+    "max_capacity": 128,
+    "max_history_chunks": 128,
+    "vocab_size": 157184
+  },
+  "output": "training/resume-output",
+  "phase": "SE",
+  "precision": "fp32",
+  "purpose": "diagnostic",
+  "seed": 17,
+  "semantic_v8_policy": {
+    "consumerRevision": "21b7c80718244073dbf13263771da533d4ecbc25",
+    "producerRevision": "409e5931c4a9289909d57008008a8ea5b4a491fc",
+    "registryDigest": "985330b78ce655b0bfb4181f02298fcb471c599d8a1f8abe5c82ea0a20e6fbb7",
+    "schema": "semantic-training-policy/8"
+  }
+}

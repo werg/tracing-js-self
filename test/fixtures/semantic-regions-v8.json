@@ -1,7 +1,7 @@
 {
   "schema": "semantic-v8-interoperability/1",
-  "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
-  "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
+  "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+  "interoperabilityDigest": "64f230e7b05dc6b33b3d0df359898e27158cb67a386c9cdeb63fd64b4729df2d",
   "examples": [
     {
       "id": "ordered-map",
@@ -6196,7 +6196,7 @@
                 "region": "r0",
                 "regionDigest": "f4d8806b701090b3f0a0195dcdc45f95fd4100f4b07b29592ba3f13625bcd9c0",
                 "visibleThrough": 10,
-                "stateDigest": "fd8494e57394f679b649eaaa13166ec7ea2fb02fce2c02c1442386248a6eb021"
+                "stateDigest": "74ffb8bde071b38eaa0fd7c224ab88ef44c51449f5790eb3f15af84fad55002d"
               },
               "line": "region {\"bindings\":[[\"next\",[\"num\",8]]],\"completion\":{\"kind\":\"normal\"},\"decisions\":[],\"region\":\"r0\"}"
             }
@@ -7301,6 +7301,7 @@
                       "a0b0"
                     ]
                   ],
+                  "pending": null,
                   "readySequence": 1
                 }
               ]
@@ -7590,6 +7591,7 @@
                       "a0b0"
                     ]
                   ],
+                  "pending": null,
                   "readySequence": 1
                 }
               ]
@@ -7886,6 +7888,7 @@
                       "a0b0"
                     ]
                   ],
+                  "pending": null,
                   "readySequence": 1
                 }
               ]
@@ -8189,6 +8192,7 @@
                       "a0b0"
                     ]
                   ],
+                  "pending": null,
                   "readySequence": 1
                 }
               ]
@@ -8266,7 +8270,7 @@
             "closureQueue": []
           },
           "visibleThrough": 11,
-          "prefixDigest": "86886cc7fcdb9524599b954e0d2b4e7ceec185a0c493e69183a10e6246b72b84"
+          "prefixDigest": "f4af0b6e49343b7a2647920e6cb378fdb0ddf995bfc9bfc72287b0c10cc9f396"
         },
         {
           "schema": "semantic-context/8",
@@ -8521,6 +8525,7 @@
                       "a0b0"
                     ]
                   ],
+                  "pending": null,
                   "readySequence": 1
                 }
               ]
@@ -8629,7 +8634,7 @@
             "closureQueue": []
           },
           "visibleThrough": 14,
-          "prefixDigest": "03d51e6ccc76e49bc1540bc65720fa0487437b745ab380a67d284c69313ff77e"
+          "prefixDigest": "97232e64a201bcb624b948da358d93da85913da934a17abecc84ebe84c4731ce"
         },
         {
           "schema": "semantic-context/8",
@@ -8887,6 +8892,7 @@
                       "a0b0"
                     ]
                   ],
+                  "pending": null,
                   "readySequence": 1
                 }
               ]
@@ -8995,7 +9001,7 @@
             "closureQueue": []
           },
           "visibleThrough": 15,
-          "prefixDigest": "13d5640c8c57ba41c8d3b11cb40fd9e4d04faae91715ea13c422ffb8b290e6b9"
+          "prefixDigest": "f74687b27fb41617d18c526619ff5894b80b0db0822140910c106caf457d9fb0"
         },
         {
           "schema": "semantic-context/8",
@@ -9257,6 +9263,7 @@
                       "a0b0"
                     ]
                   ],
+                  "pending": null,
                   "readySequence": 1
                 }
               ]
@@ -9365,7 +9372,7 @@
             "closureQueue": []
           },
           "visibleThrough": 16,
-          "prefixDigest": "ee4a93a1ca95d0271d9a2b915bb6a9d39fcaf12a63628c71755d28f0221a391b"
+          "prefixDigest": "40bc54b4289da5680f20bec84e87d000f4ecfc36060439aa38fcd48f9dceff15"
         }
       ],
       "sourceCheck": "agreed",

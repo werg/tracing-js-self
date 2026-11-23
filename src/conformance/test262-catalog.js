@@ -10,7 +10,7 @@ export const CONFORMANCE_STAGES=Object.freeze([
 ]);
 export const CONFORMANCE_DISPOSITIONS=Object.freeze([
   'passed','failed','unsupported','resource_limited','environment_unavailable',
-  'not_selected','not_run','blocked_by_prior_stage','infrastructure_error'
+  'not_selected','not_run','blocked_by_prior_stage','infrastructure_error','interrupted'
 ]);
 const prerequisites={
   parseStatic:[],ownedExecution:['parseStatic'],independentReference:[],
@@ -127,6 +127,29 @@ export function test262VariantModes(metadata){
     flags.includes('onlyStrict')?['strict']:flags.includes('noStrict')?['sloppy']:['sloppy','strict'];
 }
 
+/** Traverse one discovered source graph identically during catalog construction
+ * and acquisition reconciliation. Retained closure declarations are not input. */
+export function test262ModuleDependencyClosure({path,files,moduleDependencies}){
+  const seen=new Set(),missing=new Set(),pending=[path];
+  while(pending.length){
+    const current=pending.pop();if(seen.has(current))continue;seen.add(current);
+    if(!own(moduleDependencies,current)){missing.add(current);continue;}
+    const declared=moduleDependencies[current],paths=Array.isArray(declared)?declared:declared.paths;
+    const unresolved=Array.isArray(declared)?[]:declared.unresolved;
+    if(!Array.isArray(paths)||new Set(paths).size!==paths.length||!Array.isArray(unresolved)||
+      unresolved.some(item=>typeof item!=='string'))
+      throw new TypeError('Module dependency list must be unique');
+    for(const reason of unresolved)missing.add(current+': '+reason);
+    for(const dependency of paths){
+      if(!safeTest262Path(dependency)||!dependency.startsWith('test/')||!files.has(dependency))
+        throw new TypeError('Unpinned module dependency: '+dependency);
+      pending.push(dependency);
+    }
+  }
+  return {status:missing.size?'unresolved':'complete',unresolved:[...missing].sort(),
+    files:[...seen].sort().map(name=>({path:name,sha256:files.get(name).sha256}))};
+}
+
 function validateMembershipClassification(classification,{suiteRevision,profile,sourceInputs,sourceDigest,
   metadataResolved=true,dependencies={status:'not_required',unresolved:[]}}={}){
   if(!classification||!membershipValues.has(classification.membership)||
@@ -220,26 +243,6 @@ export function buildTest262Catalog({snapshot,sources,profile,moduleDependencies
   for(const map of [moduleDependencies,classifications])
     if(Object.keys(map).some(path=>!texts.has(path)))throw new TypeError('Catalog annotation names an unpinned file');
   const byPath=new Map(files.map(file=>[file.path,file]));
-  const closure=path=>{
-    const seen=new Set(),missing=new Set(),pending=[path];
-    while(pending.length){
-      const current=pending.pop();if(seen.has(current))continue;seen.add(current);
-      if(!own(moduleDependencies,current)){missing.add(current);continue;}
-      const declared=moduleDependencies[current],paths=Array.isArray(declared)?declared:declared.paths;
-      const unresolved=Array.isArray(declared)?[]:declared.unresolved;
-      if(!Array.isArray(paths)||new Set(paths).size!==paths.length||!Array.isArray(unresolved)||
-        unresolved.some(item=>typeof item!=='string'))
-        throw new TypeError('Module dependency list must be unique');
-      for(const reason of unresolved)missing.add(current+': '+reason);
-      for(const dependency of paths){
-        if(!safeTest262Path(dependency)||!dependency.startsWith('test/')||!byPath.has(dependency))
-          throw new TypeError('Unpinned module dependency: '+dependency);
-        pending.push(dependency);
-      }
-    }
-    return {status:missing.size?'unresolved':'complete',unresolved:[...missing].sort(),
-      files:[...seen].sort().map(name=>({path:name,sha256:byPath.get(name).sha256}))};
-  };
   const variants=[];
   for(const file of files.filter(file=>file.kind==='test')){
     let metadata=null,metadataError=null;
@@ -251,7 +254,8 @@ export function buildTest262Catalog({snapshot,sources,profile,moduleDependencies
     for(const mode of modes){
       const harness=metadata&&!metadata.flags.includes('raw')?[...new Set(['assert.js','sta.js',
         ...(metadata.flags.includes('async')?['doneprintHandle.js']:[]),...metadata.includes])]:[];
-      const dependencies=mode==='module'?closure(file.path):{status:'not_required',unresolved:[],files:[]},
+      const dependencies=mode==='module'?test262ModuleDependencyClosure({path:file.path,files:byPath,moduleDependencies}):
+          {status:'not_required',unresolved:[],files:[]},
         moduleFiles=dependencies.files.filter(row=>row.path!==file.path),
         sourceInputs=[{path:file.path,sha256:file.sha256,kind:'test'},
           ...harness.map(name=>({path:'harness/'+name,sha256:byPath.get('harness/'+name)?.sha256??null,kind:'harness'})),
@@ -294,9 +298,23 @@ export function validateTest262Catalog(catalog){
   if(conformanceDigest(identity)!==digest)throw new TypeError('Test262 catalog digest mismatch');
   if(!Array.isArray(catalog.variants)||new Set(catalog.variants.map(row=>row.id)).size!==catalog.variants.length)
     throw new TypeError('Duplicate or missing Test262 variants');
+  if(!Array.isArray(catalog.files)||new Set(catalog.files.map(file=>file.path)).size!==catalog.files.length||
+    catalog.files.some(file=>!safeTest262Path(file.path)||!hex40.test(file.gitBlobSha??'')||
+      !hex64.test(file.sha256??'')||!Number.isSafeInteger(file.bytes)||file.bytes<0||
+      file.kind!==(!file.path.endsWith('.js')?'resource':file.path.startsWith('harness/')?'harness':
+        file.path.split('/').at(-1).includes('_FIXTURE')?'fixture':'test')))
+    throw new TypeError('Invalid or duplicate Test262 source files');
   const files=new Map((catalog.files??[]).map(file=>[file.path,file]));
-  const classifications=new Map();
+  const classifications=new Map(),populations=new Map();
   for(const row of catalog.variants){
+    const {id,...variant}=row;
+    if(conformanceDigest({suiteRevision:catalog.suiteRevision,profile:catalog.profile,...variant})!==id)
+      throw new TypeError('Test262 variant identity differs from its original inputs');
+    const siblings=populations.get(row.path)??[];
+    if(siblings.some(other=>other.mode===row.mode||
+      conformanceDigest(other.metadata)!==conformanceDigest(row.metadata)||other.metadataError!==row.metadataError))
+      throw new TypeError('Test262 variants duplicate or disagree on original metadata: '+row.path);
+    siblings.push(row);populations.set(row.path,siblings);
     const sourceInputs=[{path:row.path,sha256:row.sourceDigest,kind:'test'},
       ...(row.harness??[]).map(file=>({path:file.path,sha256:file.sha256,kind:'harness'})),
       ...(row.dependencies?.files??[]).filter(file=>file.path!==row.path)
@@ -306,7 +324,7 @@ export function validateTest262Catalog(catalog){
       sourceInputs,sourceDigest:row.sourceDigest,metadataResolved:row.metadata!==null&&row.metadataError===null,
       dependencies:row.dependencies});
     const sourceFile=files.get(row.path);
-    if(!sourceFile||sourceFile.kind!=='test'||sourceFile.sha256!==row.sourceDigest||
+    if(!sourceFile||sourceFile.kind!=='test'||sourceFile.sha256!==row.sourceDigest||sourceFile.gitBlobSha!==row.gitBlobSha||
       row.classification.membership!=='unclassified'&&row.classification.evidence.sourceInputs.some(input=>{
         const file=files.get(input.path);return !file||file.sha256!==input.sha256||
           input.kind==='harness'&&file.kind!=='harness'||
@@ -316,6 +334,22 @@ export function validateTest262Catalog(catalog){
       conformanceDigest(row.classification))throw new TypeError('Test262 variants disagree on file membership review: '+row.path);
     classifications.set(row.path,row.classification);
   }
+  for(const file of catalog.files.filter(file=>file.kind==='test')){
+    const variants=populations.get(file.path),metadata=variants?.[0].metadata;
+    const expectedModes=metadata?test262VariantModes(metadata):['unclassified'];
+    if(!variants||conformanceDigest(variants.map(row=>row.mode))!==conformanceDigest(expectedModes))
+      throw new TypeError('Test262 catalog omits or changes required source variants: '+file.path);
+  }
+  const summary={discoveredFiles:catalog.files.length,testFiles:catalog.files.filter(file=>file.kind==='test').length,
+    fixtureFiles:catalog.files.filter(file=>file.kind==='fixture').length,harnessFiles:catalog.files.filter(file=>file.kind==='harness').length,
+    resourceFiles:catalog.files.filter(file=>file.kind==='resource').length,
+    knownVariants:catalog.variants.filter(row=>row.mode!=='unclassified').length,
+    unresolvedMetadataFiles:catalog.variants.filter(row=>row.mode==='unclassified').length,
+    variantPopulationComplete:catalog.variants.every(row=>row.mode!=='unclassified'),
+    missingHarnessFiles:[...new Set(catalog.variants.flatMap(row=>row.harness.filter(file=>file.sha256===null).map(file=>file.path)))].sort(),
+    specificationPinned:catalog.profile.specification!==null};
+  if(conformanceDigest(summary)!==conformanceDigest(catalog.summary))
+    throw new TypeError('Test262 catalog summary differs from its complete source population');
   return true;
 }
 
@@ -357,6 +391,18 @@ export function createTest262Campaign({catalog,selectedIds=null,implementation}=
     rows:catalog.variants.map(variant=>({id:variant.id,path:variant.path,mode:variant.mode,selected:selected.has(variant.id),
       stages:Object.fromEntries(CONFORMANCE_STAGES.map(stage=>[stage,{status:selected.has(variant.id)?'not_run':'not_selected'}])),
       attempts:[]}))};
+}
+
+/** Stable source-family shards: strict/sloppy variants stay together and adding
+ * another source never shifts previously assigned paths to another shard. */
+export function selectTest262Shard(variants,{index,count}={}){
+  if(!Array.isArray(variants)||!Number.isSafeInteger(count)||count<1||
+     !Number.isSafeInteger(index)||index<0||index>=count)
+    throw new TypeError('Test262 shard requires a positive count and an index between zero and count - 1');
+  return variants.filter(variant=>{
+    if(!safeTest262Path(variant.path))throw new TypeError('Unsafe Test262 shard source path');
+    return BigInt('0x'+sha(variant.path).slice(0,16))%BigInt(count)===BigInt(index);
+  });
 }
 
 /** Reject incompatible resume before consuming an old row or writing evidence. */

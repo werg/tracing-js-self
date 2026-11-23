@@ -9,6 +9,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {createSourceClaimCoordinatorV8,immutableSourceDataV8} from './source-claim-coordinator-v8.js';
 import {createBaseSourceComponentV8,BASE_SOURCE_COMPONENT_V8} from './source-projection-base-v8.js';
 import {SHARED_PROTOCOL_SOURCE_IDS_V8} from './protocol-source-claims-v8.js';
+import {parse} from 'acorn';
 
 export const EFFECTFUL_REGION_TEACHER_SCHEMA_V8='semantic-region-teacher-adapter/1';
 const copy=structuredClone;
@@ -102,7 +103,7 @@ export function createEffectfulRegionAdapterV8({extensions=[],allowHost=false}={
     fail('distinct source extension identities required');
   const components=[createBaseSourceComponentV8(),...extensions].sort((a,b)=>a.id.localeCompare(b.id)),
     byId=new Map(components.map(component=>[component.id,component])),coordinator=createSourceClaimCoordinatorV8(components);
-  let states={},current=null,context=null,eventView=null;
+  let states={},current=null,context=null,eventView=null,sourceNodes=new Map();
   function view(){return current?.view??{source:context.source,owned:context.state,components:states,...eventView};}
   function currentValues(claimView,...sources){
     const values=new Map();
@@ -140,6 +141,11 @@ export function createEffectfulRegionAdapterV8({extensions=[],allowHost=false}={
     restore:packet=>facade(RegionExecutionHarness.restore(packet),[],allowHost),
     encodeProtocol:encodeProtocolRecordV8,
     setup(ctx){context=ctx;
+      const visit=node=>{if(!node||typeof node!=='object')return;
+        if(Array.isArray(node)){node.forEach(visit);return;}
+        if(typeof node.type==='string')sourceNodes.set(node.start+':'+node.end,node);
+        for(const [key,child]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(child);
+      };visit(copy(parse(ctx.source,{ecmaVersion:'latest',sourceType:'script'})));
       for(const component of components)states[component.id]=copy(immutableSourceDataV8(component.initialize?.(
         immutableSourceDataV8({source:ctx.source,programs:ctx.bundle.programs}))??{}));
     },
@@ -149,7 +155,9 @@ export function createEffectfulRegionAdapterV8({extensions=[],allowHost=false}={
       const frame=event&&context.state.frames[event.invocationId],
         instruction=frame&&context.bundle.programs[frame.codeId]?.instructions[frame.pc];
       eventView={event:event??null,row:row??null,fact:fact??null,
-        instruction:instruction&&event&&instruction.siteId===event.siteId&&frame.codeId===event.codeId?instruction:null};
+        instruction:instruction&&event&&instruction.siteId===event.siteId&&frame.codeId===event.codeId?instruction:null,
+        sourceNode:instruction&&event&&instruction.siteId===event.siteId&&frame.codeId===event.codeId?
+          sourceNodes.get(instruction.start+':'+instruction.end)??null:null};
       const priorStates=states,claimView=immutableSourceDataV8(view());
       states=copy(states);current={priorStates,view:claimView};
       const exits=fact?[fact,...(fact.unwound??[])]:[],allocations=new Map();

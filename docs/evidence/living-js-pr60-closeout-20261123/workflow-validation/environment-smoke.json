@@ -1,0 +1,37 @@
+[
+  {
+    "workflow": "semantic-v8.yml",
+    "consumer": "21b7c80718244073dbf13263771da533d4ecbc25",
+    "policy": "/workspace/scratch/0f9e11f5b3cf/pr60-hosted-audit/environment-smoke/semantic-v8/semantic-native-policy-v8.json",
+    "resolutionKind": "explicit-ref",
+    "environmentPropagation": "passed"
+  },
+  {
+    "workflow": "v8-continuation.yml",
+    "consumer": "21b7c80718244073dbf13263771da533d4ecbc25",
+    "policy": "/workspace/scratch/0f9e11f5b3cf/pr60-hosted-audit/environment-smoke/v8-continuation/semantic-native-policy-v8.json",
+    "resolutionKind": "explicit-ref",
+    "environmentPropagation": "passed"
+  },
+  {
+    "workflow": "module-source-admission-investigation.yml",
+    "consumer": "21b7c80718244073dbf13263771da533d4ecbc25",
+    "policy": "/workspace/scratch/0f9e11f5b3cf/pr60-hosted-audit/environment-smoke/module-source-admission-investigation/semantic-native-policy-v8.json",
+    "resolutionKind": "explicit-ref",
+    "environmentPropagation": "passed"
+  },
+  {
+    "workflow": "v8-release-qualification.yml",
+    "consumer": "21b7c80718244073dbf13263771da533d4ecbc25",
+    "policy": "/workspace/scratch/0f9e11f5b3cf/pr60-hosted-audit/environment-smoke/v8-release-qualification/semantic-native-policy-v8.json",
+    "resolutionKind": "explicit-ref",
+    "environmentPropagation": "passed"
+  },
+  {
+    "workflow": "v8-combined-recovery-promise.yml",
+    "consumer": "21b7c80718244073dbf13263771da533d4ecbc25",
+    "policy": "/workspace/scratch/0f9e11f5b3cf/pr60-hosted-audit/environment-smoke/v8-combined-recovery-promise/combined-v8-policy/semantic-native-policy-v8.json",
+    "resolutionKind": "explicit-ref",
+    "environmentPropagation": "passed"
+  }
+]

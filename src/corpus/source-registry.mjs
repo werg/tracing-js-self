@@ -3,7 +3,7 @@
 import {createHash} from 'node:crypto';
 import {tokenizer} from 'acorn';
 import {isDeepStrictEqual} from 'node:util';
-import {fingerprintOwnedSource,clusterOwnedSources} from './source-clusters.mjs';
+import {fingerprintOwnedSource,clusterOwnedSources,sourceCloneBudget} from './source-clusters.mjs';
 
 const ordered=value=>Array.isArray(value)?value.map(ordered):
   value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,ordered(value[key])])):value;
@@ -44,10 +44,11 @@ function sourceRecord(row){
     composition:row.composition??null};
 }
 export function buildSourceRegistry(input,{seed=17,nearThreshold=0.92,
-    holdoutProjects=[],holdoutCompositions=[]}={}){
-  if(!Array.isArray(input)||input.length===0||input.length>10000||
+    holdoutProjects=[],holdoutCompositions=[],cloneBudget={}}={}){
+  if(!Array.isArray(input)||input.length===0||
     !Number.isSafeInteger(seed)||!list(holdoutProjects)||!list(holdoutCompositions))
     throw new TypeError('Invalid source registry policy');
+  cloneBudget=sourceCloneBudget(cloneBudget);
   const sources=input.map(sourceRecord).sort((a,b)=>a.id.localeCompare(b.id));
   if(new Set(sources.map(row=>row.id)).size!==sources.length)throw new Error('Repeated source registry ID');
   const byId=new Map(sources.map((row,index)=>[row.id,index]));
@@ -68,7 +69,7 @@ export function buildSourceRegistry(input,{seed=17,nearThreshold=0.92,
   // per literal-insensitive shape to keep input expansion out of clone budgets.
   const representatives=[...new Map(sources.map(row=>[row.literalInsensitiveHash,row])).values()];
   const cloneAudit=clusterOwnedSources(representatives.map(row=>({family:row.id,split:'train',
-    sourceFingerprint:row.sourceFingerprint})),{nearThreshold});
+    sourceFingerprint:row.sourceFingerprint})),{nearThreshold,cloneBudget});
   const clones=new Map();
   for(const row of representatives){
     const key=cloneAudit.keyByFamily[row.id],index=byId.get(row.id);
@@ -92,10 +93,11 @@ export function buildSourceRegistry(input,{seed=17,nearThreshold=0.92,
     throw new Error('Unknown upstream holdout project: '+project);
   for(const composition of holdoutCompositions)if(!sources.some(row=>row.composition===composition))
     throw new Error('Unknown compositional holdout: '+composition);
-  return {schema:'semantic-source-registry/1',policy:'source-components/1',seed,nearThreshold,
+  return {schema:'semantic-source-registry/1',policy:'source-components/1',seed,nearThreshold,cloneBudget,
     holdoutProjects:sort(holdoutProjects),holdoutCompositions:sort(holdoutCompositions),sources,components,
     diagnostics:{sourceVariants:sources.length,sourceFamilies:new Set(sources.map(row=>row.family)).size,
       independentComponents:components.length,nearPairs:cloneAudit.nearPairs,
+      cloneAudit:cloneAudit.audit,
       splitComponents:Object.fromEntries(['train','validation','test'].map(split=>[split,components.filter(row=>row.split===split).length]))},
     warnings:[...cloneAudit.warnings,
       'Literal-insensitive and upstream-path grouping is conservative and may merge distinct computations.',

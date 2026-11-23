@@ -1,0 +1,70 @@
+{
+  "schema": "semantic-native-admission/8",
+  "traceFormat": "semantic-trace/8",
+  "contextFormat": "semantic-context/8",
+  "representation": "mixed",
+  "componentGate": "native-consumer-only",
+  "publicDigest": "6311cf911a76a77e3e6a71a485a94636466430f847135e6b24f906b22993242a",
+  "contextsDigest": "cdc6aef5a7a8c0f238946f252f58a26e97a7f290c398550889136cb8afbc5bc9",
+  "sourceArtifactDigest": "a80b35da45e6c488de366bf04d6b0ce414196dd8318ed31a9407330b774404b6",
+  "sourceVerification": {
+    "schema": "semantic-native-source-recheck/1",
+    "producerRevision": "409e5931c4a9289909d57008008a8ea5b4a491fc",
+    "producerTreeClean": true,
+    "artifactSha256": "a5f96501712fa7a366fbbecc00756a0edc3209647cfc03c35678381de8d8b974",
+    "sourceArtifactDigest": "a80b35da45e6c488de366bf04d6b0ce414196dd8318ed31a9407330b774404b6",
+    "publicDigest": "6311cf911a76a77e3e6a71a485a94636466430f847135e6b24f906b22993242a",
+    "contextDigest": "cdc6aef5a7a8c0f238946f252f58a26e97a7f290c398550889136cb8afbc5bc9",
+    "sourceValidated": true,
+    "projectionValidated": true,
+    "replayValidated": true,
+    "orchestrationTranscriptDigest": "bca7aa11ff5b0eeaebb97ca202a38fe06e7d49bdd47200bfd78f186c87d926f0",
+    "orchestrationValidated": true,
+    "regionRecords": null
+  },
+  "sourceProfile": "compositional-regions/1",
+  "protocolProfile": null,
+  "protocolExtensions": [],
+  "datasetBindingDigest": "3b1320b9851ed44f5a5481d4c94aa616da48a9a6dbc409f9973446f18f7ab492",
+  "consumerRevision": "21b7c80718244073dbf13263771da533d4ecbc25",
+  "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+  "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+  "interoperabilityDigest": "64f230e7b05dc6b33b3d0df359898e27158cb67a386c9cdeb63fd64b4729df2d",
+  "tokenizer": {
+    "status": "passed",
+    "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "checks": {
+    "replay": "passed",
+    "contexts": "passed",
+    "continuation": "passed",
+    "masks": "passed",
+    "sourceBinding": "passed",
+    "tokenizer": "passed",
+    "orchestration": "passed"
+  },
+  "counts": {
+    "records": 4,
+    "contexts": 2,
+    "generatedRecords": 2,
+    "algorithmRecords": 1,
+    "regionRecords": 0,
+    "detailedRecords": 1,
+    "protocolRecords": 0,
+    "generatedTokens": 410,
+    "observedTokens": 15845,
+    "orchestrationRecords": 4
+  },
+  "framing": {
+    "kind": "native-physical-record-boundaries/1",
+    "eosTokenId": null,
+    "terminalTokens": 0,
+    "physicalRecords": 40
+  },
+  "nativeTrainingDigest": "fb586346ee87e7eacd086e3f0727248cf87048bf7b1fb6a87fc59c2b6c4c942d",
+  "optimizerSteps": 0,
+  "learningClaim": null,
+  "admitted": true,
+  "orchestrationTranscriptDigest": "bca7aa11ff5b0eeaebb97ca202a38fe06e7d49bdd47200bfd78f186c87d926f0"
+}

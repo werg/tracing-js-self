@@ -50,20 +50,16 @@ jobs:
           path: tracing-js-self
           persist-credentials: false
       - id: native-pin
-        name: Read the exact paired consumer from policy
+        name: Resolve current native code and retain this run’s exact policy
         working-directory: tracing-js-self
         run: |
-          node --input-type=module <<'JS'
-          import {readFileSync,appendFileSync} from 'node:fs';
-          const policy=JSON.parse(readFileSync('contracts/semantic-native-policy-v8.json'));
-          if(policy.consumerRepository!=='werg/megatoken'||!/^[0-9a-f]{40}$/.test(policy.consumerRevision))
-            throw new Error('Module admission requires an exact native consumer');
-          appendFileSync(process.env.GITHUB_OUTPUT,'revision='+policy.consumerRevision+'\n');
-          JS
+          export SEMANTIC_V8_NATIVE_POLICY="$RUNNER_TEMP/semantic-native-policy-v8.json"
+          printf 'SEMANTIC_V8_NATIVE_POLICY=%s\n' "$SEMANTIC_V8_NATIVE_POLICY" >> "$GITHUB_ENV"
+          node tools/resolve-native-consumer.mjs --out "$SEMANTIC_V8_NATIVE_POLICY"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: werg/megatoken
-          ref: ${{ steps.native-pin.outputs.revision }}
+          ref: ${{ steps.native-pin.outputs.consumer }}
           path: megatoken
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -171,14 +167,16 @@ jobs:
       - name: Verify exact paired checkouts at completion
         if: ${{ !cancelled() }}
         run: |
-          test -z "$(git -C megatoken status --porcelain --untracked-files=all)"
-          test -z "$(git -C tracing-js-self status --porcelain --untracked-files=all)"
-          git -C megatoken rev-parse HEAD
-          git -C tracing-js-self rev-parse HEAD
+          test -z "$(git -C "$MEGATOKEN_ROOT" status --porcelain --untracked-files=all)"
+          test -z "$(git -C "$TRACING_JS_SELF_ROOT" status --porcelain --untracked-files=all)"
+          git -C "$MEGATOKEN_ROOT" rev-parse HEAD
+          git -C "$TRACING_JS_SELF_ROOT" rev-parse HEAD
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.0
         if: ${{ !cancelled() }}
         with:
           name: original-module-source-admission-and-packing
           if-no-files-found: error
           retention-days: 30
-          path: ${{ runner.temp }}/module-artifact-*
+          path: |
+            ${{ runner.temp }}/module-artifact-*
+            ${{ runner.temp }}/semantic-native-policy-v8.json*

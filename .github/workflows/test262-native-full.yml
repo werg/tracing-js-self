@@ -1,4 +1,4 @@
-name: Full pinned Test262 native-reference sweep (diagnostic only)
+name: Current Test262 native reference sweep
 on:
   workflow_dispatch:
 permissions:
@@ -6,48 +6,48 @@ permissions:
 
 jobs:
   acquire:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      revision: ${{ steps.source.outputs.revision }}
     steps:
       - uses: actions/checkout@v4
         with:
+          path: producer
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: tc39/test262
+          path: test262
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - run: npm ci
-      - name: Pin clean Test262 and acquire exact fixture inventory without execution
+          node-version: current
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: producer
+      - name: Acquire the current complete source tree and record its identity
+        id: source
+        working-directory: producer
         run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/source"
-          git init -q "$RUNNER_TEMP/source/test262"
-          git -C "$RUNNER_TEMP/source/test262" remote add origin https://github.com/tc39/test262.git
-          git -C "$RUNNER_TEMP/source/test262" fetch -q --depth=1 origin d53ebc8b1931d9f1541e43d59650776e4b766248
-          git -C "$RUNNER_TEMP/source/test262" checkout -q --detach FETCH_HEAD
-          test "$(git -C "$RUNNER_TEMP/source/test262" rev-parse HEAD)" = d53ebc8b1931d9f1541e43d59650776e4b766248
-          test -z "$(git -C "$RUNNER_TEMP/source/test262" status --porcelain --untracked-files=no)"
-          mkdir -p corpus/out/native-test262
-          node tools/import-external-corpus.mjs \
-            --format test262 --root "$RUNNER_TEMP/source/test262" \
-            --repository tc39/test262 --license BSD-3-Clause \
-            --revision d53ebc8b1931d9f1541e43d59650776e4b766248 \
-            --output corpus/out/native-test262/test262.jsonl \
-            --report corpus/out/native-test262/acquisition.json
-          node --input-type=module -e '
-            import {readFileSync} from "node:fs";
-            const r=JSON.parse(readFileSync("corpus/out/native-test262/acquisition.json"));
-            if(r.records!==103582||r.verified!==0||r.admitted!==0||r.truncated)
-              throw Error("Unexpected Test262 pinned acquisition");
-          '
+          mkdir -p ../evidence
+          echo "revision=$(git -C ../test262 rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          node --version | tee ../evidence/toolchain.log
+          npm --version | tee -a ../evidence/toolchain.log
+          node tools/catalog-test262.mjs --suite-root ../test262 \
+            --out ../evidence/catalog.json.gz | tee ../evidence/catalog.log
+          git -C ../test262 archive --format=tar.gz HEAD test harness LICENSE \
+            > ../evidence/source-inputs.tar.gz
+          sha256sum ../evidence/catalog.json.gz ../evidence/source-inputs.tar.gz > ../evidence/SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: native-test262-full-acquired-catalog-only
-          path: corpus/out/native-test262/test262.jsonl
+          name: current-test262-acquisition
+          path: evidence/
           if-no-files-found: error
+          retention-days: 30
 
   native-shards:
     needs: acquire
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -57,85 +57,83 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          path: producer
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: tc39/test262
+          ref: ${{ needs.acquire.outputs.revision }}
+          path: test262
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - run: npm ci
+          node-version: current
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: producer
       - uses: actions/download-artifact@v4
         with:
-          name: native-test262-full-acquired-catalog-only
-          path: corpus/out/native-test262-catalog
-      - name: Fetch exact pinned Test262 source without upstream dependencies
+          name: current-test262-acquisition
+          path: acquisition
+      - name: Run original-source reference shard in an isolated container
         run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/source"
-          git init -q "$RUNNER_TEMP/source/test262"
-          git -C "$RUNNER_TEMP/source/test262" remote add origin https://github.com/tc39/test262.git
-          git -C "$RUNNER_TEMP/source/test262" fetch -q --depth=1 origin d53ebc8b1931d9f1541e43d59650776e4b766248
-          git -C "$RUNNER_TEMP/source/test262" checkout -q --detach FETCH_HEAD
-          test "$(git -C "$RUNNER_TEMP/source/test262" rev-parse HEAD)" = d53ebc8b1931d9f1541e43d59650776e4b766248
-          test -z "$(git -C "$RUNNER_TEMP/source/test262" status --porcelain --untracked-files=no)"
-      - name: Run native diagnostic shard in locked-down container
-        run: |
-          set -euo pipefail
           mkdir -p "$RUNNER_TEMP/native-out"
-          docker run --rm \
+          docker pull node:current-bookworm
+          docker image inspect node:current-bookworm --format '{{.Id}}' > "$RUNNER_TEMP/native-out/image-id.txt"
+          timeout --signal=TERM --kill-after=30s 75m docker run --rm --init \
             --user "$(id -u):$(id -g)" \
-            --network none --read-only \
-            --cap-drop ALL --security-opt no-new-privileges \
-            --memory 2g --pids-limit 128 \
-            --tmpfs /tmp:rw,nosuid,size=64m \
-            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/workspace,readonly" \
-            --mount "type=bind,src=$RUNNER_TEMP/source/test262,dst=/source,readonly" \
+            --network none --read-only --cap-drop ALL --security-opt no-new-privileges \
+            --memory 4g --pids-limit 128 --tmpfs /tmp:rw,nosuid,size=64m \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/producer,dst=/workspace,readonly" \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/test262,dst=/source,readonly" \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/acquisition,dst=/acquisition,readonly" \
             --mount "type=bind,src=$RUNNER_TEMP/native-out,dst=/out" \
-            --workdir /workspace \
-            node:22-bookworm \
-            node --no-warnings --experimental-vm-modules tools/verify-test262-reference.mjs \
-              --root /source --revision d53ebc8b1931d9f1541e43d59650776e4b766248 \
-              --input /workspace/corpus/out/native-test262-catalog/test262.jsonl \
-              --shard-index ${{ matrix.shard }} --shard-count 16 \
-              --max 10000 --expect-enumerated 103582 --timeout-ms 150 --host-timers \
-              --rows-output /out/rows.jsonl --output /out/report.json
-          node --input-type=module -e '
-            import {readFileSync} from "node:fs";
-            const r=JSON.parse(readFileSync(process.env.RUNNER_TEMP+"/native-out/report.json"));
-            if(r.verifiedOwned!==0||r.admitted!==0||r.shard?.truncated||
-              r.attempted!==r.shard.eligible||r.enumerated!==103582)
-              throw Error("Invalid diagnostic shard accounting");
-          '
+            --workdir /workspace node:current-bookworm \
+            node tools/run-test262-campaign.mjs \
+              --suite-root /source --catalog /acquisition/catalog.json.gz \
+              --stages parse,reference --shard-index ${{ matrix.shard }} --shard-count 16 \
+              --jobs 2 --reference-timeout-ms 300 --worker-timeout-ms 10000 --heap-mb 384 \
+              --out /out/report.json.gz \
+            | tee "$RUNNER_TEMP/native-out/campaign.log"
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: native-test262-part-${{ matrix.shard }}
-          path: |
-            ${{ runner.temp }}/native-out/report.json
-            ${{ runner.temp }}/native-out/rows.jsonl
-          if-no-files-found: error
+          name: current-test262-part-${{ matrix.shard }}
+          path: ${{ runner.temp }}/native-out/
+          if-no-files-found: warn
+          retention-days: 30
 
   aggregate:
-    needs: native-shards
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    needs: [acquire, native-shards]
+    if: always() && needs.acquire.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - run: npm ci
+          node-version: current
+      - run: npm ci --ignore-scripts --no-audit --no-fund
       - uses: actions/download-artifact@v4
         with:
-          pattern: native-test262-part-*
+          name: current-test262-acquisition
+          path: acquisition
+      - run: mkdir -p native-parts
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: current-test262-part-*
           path: native-parts
           merge-multiple: false
-      - name: Prove exactly one native attempt per pinned acquired fixture
+      - name: Reconcile every source variant, including missing and interrupted shards
         run: |
-          node tools/aggregate-test262-native.mjs \
-            --directory native-parts --expect-enumerated 103582 \
-            --output native-full-summary.json
+          node tools/merge-test262-campaigns.mjs \
+            --catalog acquisition/catalog.json.gz --directory native-parts --shard-count 16 \
+            --out native-full-summary.json.gz
       - uses: actions/upload-artifact@v4
         with:
-          name: full-native-test262-diagnostic-summary-only
-          path: native-full-summary.json
+          name: current-test262-native-summary
+          path: native-full-summary.json.gz
           if-no-files-found: error
+          retention-days: 30

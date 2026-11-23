@@ -1,12 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
 import {verifyRegionTrainingCase,recheckRegionEvidence,buildRegionDataset,
   PROTOCOL_REGION_EVIDENCE_V8_SCHEMA} from '../src/semantic/index.js';
 import {verifyEffectfulTrainingCase} from '../src/training/effectful-admit.js';
 import {auditProtocolSourceV8} from '../src/semantic/protocol-source-reference-v8.js';
 
-const fixtures=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url))).cases;
+const fixtures=JSON.parse(gunzipSync(Buffer.from(readFileSync(
+  new URL('./fixtures/semantic-protocol-region-v8.json.gz.b64',import.meta.url),'utf8'),'base64')).toString()).cases;
 const cache=new Map();
 async function qualified(id){
   if(!cache.has(id))cache.set(id,verifyRegionTrainingCase(fixtures.find(row=>row.id===id).fixture));

@@ -35,12 +35,22 @@ jobs:
             --out "$RUNNER_TEMP/v8-installed" \
             2>&1 | tee "$RUNNER_TEMP/semantic-v8-installed.log"
           node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
           import {readFileSync} from 'node:fs';
           import {join} from 'node:path';
+          import {installedQualificationInventory} from './tools/qualify-installed-v8.mjs';
+          import {installedSha256} from './src/corpus/installed-v8-qualification.mjs';
           const report=JSON.parse(readFileSync(join(process.env.RUNNER_TEMP,'v8-installed','report.json')));
+          const revision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),
+            inventory=installedQualificationInventory({producerRevision:revision,population:'both'}),
+            expectedDigest=installedSha256(JSON.stringify(inventory)),
+            {digest,...retained}=JSON.parse(readFileSync(join(process.env.RUNNER_TEMP,'v8-installed','population.json')));
+          if(report.producerRevision!==revision||report.populationDigest!==expectedDigest||digest!==expectedDigest||
+            installedSha256(JSON.stringify(retained))!==expectedDigest)
+            throw new Error('Installed qualification differs from the current source inventory');
           if(report.status!=='completed'||report.coverageComplete!==true||report.sourcePopulationQualified!==true)
             throw new Error('Installed qualification requires every declared source/public case to pass');
-          for(const [name,declared]of [['all',665],['interoperability',69]]){
+          for(const [name,declared]of Object.entries(inventory.declared)){
             const count=report.totals[name];
             if(count?.declared!==declared||count.attempted!==declared||count.sourceQualified!==declared||
               count.sourceUnqualified!==0||count.untested!==0)

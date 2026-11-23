@@ -171,7 +171,7 @@ async function main(){
       result={status:'unexpectedly_accepted',nativeCalls};
     }catch(error){result={status:'refused',reason:String(error.message),code:error.code??null,nativeCalls};}
   }else{
-    const lock=readFileSync(new URL('../../npm-shrinkwrap.json',entry));
+    const lock=readFileSync(new URL('../../contracts/npm-lock.json',entry));
     try{result=await executeInstalledV8Task(request.task,{producerRevision:request.producerRevision,packageLockSha256:sha256(lock)});}
     catch(error){result={status:'installed_worker_failure',reason:String(error.message),phase:'installed-public-entry'};}
   }

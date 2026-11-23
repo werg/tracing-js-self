@@ -1,5 +1,10 @@
 # Real-source observation corpus
 
+For the current continuing work, source-family checking, adjustable job budgets,
+and complete candidate accounting, see
+[Continuous corpus generation](../docs/continuous-corpus.md). The measurements
+and older observation formats below describe their recorded runs.
+
 This directory holds unmodified, pinned open-source JS/TS utility source
 snapshots for extracting individual production functions. The code is not a
 synthetic exercise. The invocations in cases.mjs are deterministic fixtures.

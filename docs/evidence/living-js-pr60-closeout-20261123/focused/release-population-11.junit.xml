@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="release population derives exact current splits from every authored support source" time="0.140572" classname="test" file="/workspace/scratch/0f9e11f5b3cf/tracing-js-self/test/v8-release-population.test.js"/>
+	<testcase name="release population refuses missing, extra, duplicate and substituted source rows" time="0.515667" classname="test" file="/workspace/scratch/0f9e11f5b3cf/tracing-js-self/test/v8-release-population.test.js"/>
+	<testcase name="release population refuses reduced or reordered selection even with a rehashed population" time="0.193446" classname="test" file="/workspace/scratch/0f9e11f5b3cf/tracing-js-self/test/v8-release-population.test.js"/>
+	<testcase name="release population refuses a self-consistent replacement source registry and cohort" time="0.141359" classname="test" file="/workspace/scratch/0f9e11f5b3cf/tracing-js-self/test/v8-release-population.test.js"/>
+	<testcase name="release population refuses missing or extra registry members after rehashing" time="0.276345" classname="test" file="/workspace/scratch/0f9e11f5b3cf/tracing-js-self/test/v8-release-population.test.js"/>
+	<testcase name="release population refuses rehashed split changes and balanced wrong row assignments" time="0.254339" classname="test" file="/workspace/scratch/0f9e11f5b3cf/tracing-js-self/test/v8-release-population.test.js"/>
+	<testcase name="release population refuses historical split totals as a substitute for the current registry" time="0.075877" classname="test" file="/workspace/scratch/0f9e11f5b3cf/tracing-js-self/test/v8-release-population.test.js"/>
+	<testcase name="release population binds actual inputs and teacher requests despite consistent rehashing" time="0.203807" classname="test" file="/workspace/scratch/0f9e11f5b3cf/tracing-js-self/test/v8-release-population.test.js"/>
+	<testcase name="release population requires every recorded source and native pass without broader claims" time="0.713834" classname="test" file="/workspace/scratch/0f9e11f5b3cf/tracing-js-self/test/v8-release-population.test.js"/>
+	<testcase name="release population CLI retains exact metadata byte hashes without changing original evidence" time="0.777237" classname="test" file="/workspace/scratch/0f9e11f5b3cf/tracing-js-self/test/v8-release-population.test.js"/>
+	<testcase name="release population directory verification rejects changed metadata bytes with stale report bindings" time="0.105100" classname="test" file="/workspace/scratch/0f9e11f5b3cf/tracing-js-self/test/v8-release-population.test.js"/>
+	<!-- tests 11 -->
+	<!-- suites 0 -->
+	<!-- pass 11 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 3986.595437 -->
+</testsuites>

@@ -1,0 +1,1493 @@
+{
+  "schema": "semantic-ordinary-lifecycle-qualification/8",
+  "consumerRevision": "aab637f002323a7820759763652df7a5ad50fe04",
+  "driver": {
+    "path": "/workspace/scratch/0952c3151b8f/megatoken-lifecycle/scripts/qualify_semantic_v8_lifecycle.py",
+    "bytes": 35829,
+    "sha256": "da397072a2890a879ffb5fb7f4996325cbe0c38dbd1b5f56ab1f2c6e8c70ab45"
+  },
+  "preparation": {
+    "consumerRevision": "aab637f002323a7820759763652df7a5ad50fe04",
+    "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+    "counts": {
+      "admitted": 1,
+      "attempted": 1
+    },
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "learningClaim": null,
+    "maxHistory": 128,
+    "maxPositions": 128,
+    "optimizerSteps": 0,
+    "producerRevision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+    "refusals": [],
+    "registryDigest": "05a5ef09516a0b1e4e46fedcb0a31c71eed7f3680acadb303f628bde9f3ebead",
+    "representation": "mixed",
+    "schema": "semantic-preparation/8",
+    "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "preparedManifestFingerprint": "90d95fda9e763900c0191016b9a7158b5d86b9cff54c7093fae763b16d7ddc0e",
+  "preparedPopulation": {
+    "registryDigest": "05a5ef09516a0b1e4e46fedcb0a31c71eed7f3680acadb303f628bde9f3ebead",
+    "sourceCount": 1,
+    "sourceInventory": [
+      "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5"
+    ],
+    "trainSourceIds": [
+      "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5"
+    ],
+    "splitCounts": {
+      "train": 1,
+      "validation": 0,
+      "test": 0
+    },
+    "sampleSourceId": "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+    "sampleDatasetBinding": {
+      "schema": "semantic-region-dataset-binding/1",
+      "traceFormat": "semantic-trace/8",
+      "episodeDigest": "5c8dd78be23f594b2b83686442bc89ba8ce22433d33161d52d875dcb40962aa7",
+      "contextsDigest": "ab254761f7737dd1840ce3a36ee56889b24655581fa1a697bf8e4997f37fe931",
+      "sourceArtifactDigest": "cb5ed43386890fba43d740669183b3881bc084afa7aef64a9b54420db241d3f3",
+      "registryDigest": "05a5ef09516a0b1e4e46fedcb0a31c71eed7f3680acadb303f628bde9f3ebead",
+      "componentId": "semantic-region-component:9c9fb4bb5e3fbe1a9164985694778f9208ecb1f320ebb2de950f1f62714e97c1",
+      "split": "train",
+      "sourceId": "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+      "family": "v8-contract-shared-protocol-source",
+      "sourceDigest": "fc5028e60c6a7fb614fbac8ec17adb14cc0319801b82495e2d87ed61485a90cc",
+      "coreDigest": null
+    },
+    "sampleMember": {
+      "ancestors": [],
+      "coreDigest": null,
+      "coreStatus": "detailed",
+      "entry": "run",
+      "family": "v8-contract-shared-protocol-source",
+      "id": "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+      "source": "\"use strict\";async function run(){const p=new Promise(resolve=>{const bytes=new Uint8Array(2);const proxy=new Proxy({x:3},{get:function(object,key){bytes[0]=object[key];return bytes[0]+1;}});resolve(Number({valueOf:function(){return proxy.x;}}));});const values=await Promise.all([p,Promise.resolve(2)]);return values[0]+values[1];}",
+      "sourceDigest": "fc5028e60c6a7fb614fbac8ec17adb14cc0319801b82495e2d87ed61485a90cc",
+      "sourceFingerprint": {
+        "alphaHash": "be4eead168aeb3092f8c3c0622199c1070b2705a538f536d74fb7d9cbddd4620",
+        "exactHash": "58fc2a9df3edd0f3f0c809d192cbde8410b729516b4d69586fff429d2e6c63a7",
+        "schema": "owned-source-fingerprint/1",
+        "shingles": [
+          "018521e2ba12bf51cff67b4b",
+          "02d32bd777574d3e5567b198",
+          "0322e5205d0b36c89f9d5c51",
+          "0358edb04b8fe504128836dd",
+          "06e3d378eaf7fdd5224fd74a",
+          "08aec29e089636c0a239f945",
+          "0956b2337994e56ad9aac1ae",
+          "0d0951fe9937e777c54ec271",
+          "0dff0d90a50d707ccf3b0d7f",
+          "125be49f80c6889b4da24f8e",
+          "157b40a85c5f0bc84cfb004c",
+          "1671b305b8a78bd76eebc150",
+          "17babf50a4a8b873d2bb962c",
+          "189247e1d01f2c0919ac3fe8",
+          "19b4118fb4137690ce3c7466",
+          "1fd601a01f091112dbd1d11e",
+          "215115cffd25b83cc16ae3eb",
+          "223197d20a98efff7ce78163",
+          "22b9cef2d56bac9809e6ca15",
+          "2350a7e3090a305ea21bb83b",
+          "2383c5e578d52180f706ead7",
+          "241686dfd813fbdd0c2f7df2",
+          "242cd5030ab60f93182bb0c7",
+          "253c9efc472a30405263c0f0",
+          "25a558db23c3d1c188d723f2",
+          "2d3e2ccdf53fc26cb30e13c4",
+          "30bad149fe0e81850a8845e6",
+          "335f782ccaf0b8b1ff1420a5",
+          "3701b1a041ea02532365fb72",
+          "40ca9cdf39de312f98dfb9d0",
+          "411072a35148f5d3c30a68f1",
+          "440e6cdf077e52bcdc771e3a",
+          "4553cc47ba199843ce4e97b0",
+          "459f1fa4ae4603cab3f8923f",
+          "47290747493d6df8e63c3e32",
+          "4a40761feda4ea2694010ed2",
+          "52aaaf1754233234bb71a34a",
+          "5630d4b88bb490ac9cf16a62",
+          "5a56f1ceea9834bc6b494c92",
+          "5c72603c777ac55dabab5bfd",
+          "5e982cb995225659245232b4",
+          "5eb1ca8fef1a03a2b9c891e5",
+          "61e8093233768715b338ae48",
+          "624cbb20883d9f8b0ea93130",
+          "638428e8f5e70f1046dca936",
+          "68dbe0ba0231d892a892ebb6",
+          "6ad6a3ba4142b0f9537fc608",
+          "6eb3ab716d00b17552a26e98",
+          "6ffa52a6230b72554d7b22a5",
+          "7628d5481e9149f92ca9bd9d",
+          "7717cceb46adcc29b860c479",
+          "792cd98897a50ce7919c6f7d",
+          "7941791c1a2049c81b410c3e",
+          "7d9c8effa2799f5affccc1ac",
+          "7e15f183c247cd15fbd09d47",
+          "7e411bc4c26122ad63f66c60",
+          "7e8316fd65cffdb73f8f55d6",
+          "7f523896baebdcb51c35981c",
+          "7f58a4e303dbb94b908504e8",
+          "831a2cb167f994fd883a6806",
+          "84eb5d22164fddcc06c94de9",
+          "861a6cd5f743f1e4e86059fb",
+          "88a57861270206311dcb2ce2",
+          "89ffb4a773c90c9a1a37ac84",
+          "8d83d92b7785221f237d6a2a",
+          "8e33400a9595f365e066178e",
+          "8f96f6d1b920453cbec1d291",
+          "928eafde4e44ab463010995e",
+          "93ccbebfb2bc537aa3aed436",
+          "95ae2e55e8de4f32fddea28c",
+          "96a7fedc7f0b14cb95cc0f85",
+          "981cc730837c0aea8cfd3514",
+          "9906551aa40e4e22dabfe6b3",
+          "9a103fb0aae1f247d58981bf",
+          "9b081d79a39f2dea19841599",
+          "a00f8911ecc312b1963b203f",
+          "a4a2d5c3924a7a92f9abd6b2",
+          "a5fd8b949d7ccda76c827459",
+          "a7b1b71ab511fbef2ad71d09",
+          "aab447565ee30eea5875e766",
+          "ab2b316f1744403b86c348f0",
+          "ab38c26e6292d581727a4cf8",
+          "ad1a549ca0e349bbc2fc79d4",
+          "b525f3c79fed4e82d34cb296",
+          "b9e95c2933fd80a23463be1a",
+          "bd26db0dd069e250696ef6ad",
+          "bf3d1d92134c69975b7f17c1",
+          "bf72275a742f0fa59459630f",
+          "c0397132865b199e152ca546",
+          "c04ccdcbd52699e0a598ed0e",
+          "c0b9ed147886ad03c249a52d",
+          "c19abf2ec6f0869c28181bfd",
+          "c1bb37d78c3bee8932fd6be0",
+          "c22475e08a6f80837437497c",
+          "c23aae02e36d15a0c629f3d3",
+          "c5b46c781839f49b28559c3c",
+          "cd8fd2e32a91f7b8b5f3ade2",
+          "cdfba005a81dca1abc8e34b4",
+          "ce53c2e1484b03cdda839d8a",
+          "ce685191a628c782b8afa15b",
+          "cfb7edbd4b2e99431eb675ea",
+          "d0201b8272fa5ced3dd0159e",
+          "d751b5aee707967bc4ad49f5",
+          "d89cc2f8e9c4bed4ab5c3a8c",
+          "da41bc34bc99e03dc7a7b6a6",
+          "db0e9e3badc318a74375daf4",
+          "dce58bc5a68a79f13b9a9a21",
+          "eabad934d504b63dd3a93919",
+          "eabb960f2c16ec37104a4f56",
+          "eb9f6ed488cf0c0c592a8f53",
+          "ed37650750d591ae6d3d4e2a",
+          "f0e3dc1dad813f7811d87da3",
+          "f12b89d9ba997aaa0659e4e0",
+          "f2084b4cf4166e02d87f62c1",
+          "f2ca3965c3de6872633d2043",
+          "f3ebeb887693482d15763f81",
+          "fa7c8bf2e0d46829b0d68077",
+          "fb8fa7141ffd13e44006077f",
+          "fc7acdcfd2a7efe0591a2f30",
+          "fd5f7fea52935e801c602af8",
+          "fdd3b45676c266cc3fc5b2e6",
+          "febb1b113d64578e980e825f"
+        ],
+        "tokenCount": 126
+      },
+      "sourceFingerprintStatus": "tokenized"
+    }
+  },
+  "optimizerResumeExport": {
+    "firstGlobalStep": 1,
+    "resumedGlobalStep": 2,
+    "firstCheckpointSha256": "e4793a7a78a8571810d3bfc63aad67931b584b1f4a0acbc8c9ad328eb627d8f6",
+    "resumedCheckpointSha256": "c8d1100a21e525922290873b2ccbe67c900fbbe7d374c1116e8d55542cd3c8a3",
+    "retainedMomentOwners": 315,
+    "advancedMomentOwners": 311,
+    "changedMasterWeights": 305,
+    "changedMasterWeightNames": [
+      "core.stage_codes",
+      "core.u_gate",
+      "core.lexical_gate",
+      "core.expert_pools.router_bootstrap_codes",
+      "core.expert_pools.pools.swiglu_32__pool.gate_up",
+      "core.expert_pools.pools.swiglu_32__pool.down",
+      "core.expert_pools.pools.swiglu_64__pool.gate_up",
+      "core.expert_pools.pools.swiglu_64__pool.down",
+      "core.expert_pools.pools.linear_32_32__pool.weight",
+      "core.expert_pools.pools.linear_64_32__pool.weight",
+      "core.expert_pools.pools.linear_32_64__pool.weight",
+      "core.expert_pools.pools.linear_32_128__pool.weight",
+      "core.expert_pools.router_bank.gate_up",
+      "core.expert_pools.router_bank.down",
+      "core.expert_pools.router_semantic_projection.weight",
+      "core.expert_pools.router_role_embedding.weight",
+      "core.expert_pools.router_stage_embedding.weight",
+      "core.expert_pools.pool_codes.swiglu_32__pool__codes",
+      "core.expert_pools.pool_codes.swiglu_64__pool__codes",
+      "core.expert_pools.pool_codes.linear_32_32__pool__codes",
+      "core.expert_pools.pool_codes.linear_64_32__pool__codes",
+      "core.expert_pools.pool_codes.linear_32_64__pool__codes",
+      "core.expert_pools.pool_codes.linear_32_128__pool__codes",
+      "core.frontend.residual_gate",
+      "core.frontend.facet_queries",
+      "core.frontend.facet_gates",
+      "core.frontend.bytes.weight",
+      "core.frontend.ngrams.embedding.weight",
+      "core.frontend.ordered_projection.output_gain",
+      "core.frontend.ngram_projection.output_gain",
+      "core.frontend.ngram_mixture.weight",
+      "core.frontend.norm.weight",
+      "core.frontend.reduction.residual_gates",
+      "core.frontend.reduction.pair_norm.weight",
+      "core.frontend.reduction.ordered_merge.output_gain",
+      "core.frontend.reduction.occupancy.output_gain",
+      "core.frontend.reduction.level_projection.output_gain",
+      "core.frontend.reduction.attention.query_norm.weight",
+      "core.frontend.reduction.attention.query.output_gain",
+      "core.frontend.reduction.attention.output.output_gain",
+      "core.frontend.reduction.attention.source_norm.weight",
+      "core.frontend.reduction.attention.key_value.output_gain",
+      "core.frontend.reduction.ffn_norm.weight",
+      "core.frontend.reduction.output_norm.weight",
+      "core.frontend.aligned_projection.output_gain",
+      "core.frontend.facet_attention.query_norm.weight",
+      "core.frontend.facet_attention.query.output_gain",
+      "core.frontend.facet_attention.output.output_gain",
+      "core.frontend.facet_attention.source_norm.weight",
+      "core.frontend.facet_attention.key_value.output_gain",
+      "core.frontend.facet_ffn_norm.weight",
+      "core.frontend.refinement.0.residual_gates",
+      "core.frontend.refinement.0.attention.query_norm.weight",
+      "core.frontend.refinement.0.attention.query.output_gain",
+      "core.frontend.refinement.0.attention.output.output_gain",
+      "core.frontend.refinement.0.kv.source_norm.weight",
+      "core.frontend.refinement.0.kv.key_value.output_gain",
+      "core.frontend.refinement.0.ffn_norm.weight",
+      "core.frontend.refinement.1.residual_gates",
+      "core.frontend.refinement.1.attention.query_norm.weight",
+      "core.frontend.refinement.1.attention.query.output_gain",
+      "core.frontend.refinement.1.attention.output.output_gain",
+      "core.frontend.refinement.1.kv.source_norm.weight",
+      "core.frontend.refinement.1.kv.key_value.output_gain",
+      "core.frontend.refinement.1.ffn_norm.weight",
+      "core.control_encoder.norm.weight",
+      "core.control_encoder.projection.output_gain",
+      "core.control_encoder.output.output_gain",
+      "core.central.layer_codes",
+      "core.central.slot_embedding",
+      "core.central.slot_gate",
+      "core.central.temporary_memories.0.source_norm.weight",
+      "core.central.temporary_memories.0.key_value.output_gain",
+      "core.central.temporary_memories.1.source_norm.weight",
+      "core.central.temporary_memories.1.key_value.output_gain",
+      "core.central.temporary_memories.2.source_norm.weight",
+      "core.central.temporary_memories.2.key_value.output_gain",
+      "core.central.memory.source_norm.weight",
+      "core.central.memory.key_value.output_gain",
+      "core.central.layers.0.residual_gates",
+      "core.central.layers.0.attention.same_track_bias",
+      "core.central.layers.0.attention.sink_key",
+      "core.central.layers.0.attention.sink_value",
+      "core.central.layers.0.attention.query_norm.weight",
+      "core.central.layers.0.attention.query.output_gain",
+      "core.central.layers.0.attention.output.output_gain",
+      "core.central.layers.0.ffn_norm.weight",
+      "core.central.layers.1.residual_gates",
+      "core.central.layers.1.temporary_gate",
+      "core.central.layers.1.attention.same_track_bias",
+      "core.central.layers.1.attention.sink_key",
+      "core.central.layers.1.attention.sink_value",
+      "core.central.layers.1.attention.query_norm.weight",
+      "core.central.layers.1.attention.query.output_gain",
+      "core.central.layers.1.attention.output.output_gain",
+      "core.central.layers.1.ffn_norm.weight",
+      "core.central.layers.2.residual_gates",
+      "core.central.layers.2.temporary_gate",
+      "core.central.layers.2.attention.same_track_bias",
+      "core.central.layers.2.attention.sink_key",
+      "core.central.layers.2.attention.sink_value",
+      "core.central.layers.2.attention.query_norm.weight",
+      "core.central.layers.2.attention.query.output_gain",
+      "core.central.layers.2.attention.output.output_gain",
+      "core.central.layers.2.ffn_norm.weight",
+      "core.central.layers.3.residual_gates",
+      "core.central.layers.3.temporary_gate",
+      "core.central.layers.3.attention.same_track_bias",
+      "core.central.layers.3.attention.sink_key",
+      "core.central.layers.3.attention.sink_value",
+      "core.central.layers.3.attention.query_norm.weight",
+      "core.central.layers.3.attention.query.output_gain",
+      "core.central.layers.3.attention.output.output_gain",
+      "core.central.layers.3.ffn_norm.weight",
+      "core.central.role_embedding.weight",
+      "core.central.modality_embedding.weight",
+      "core.adapters.owners.e.bias",
+      "core.adapters.owners.e.router.weight",
+      "core.adapters.owners.e.semantic_preference.weight",
+      "core.adapters.owners.e.stage_preference.weight",
+      "core.adapters.owners.c.bias",
+      "core.adapters.owners.c.router.weight",
+      "core.adapters.owners.c.semantic_preference.weight",
+      "core.adapters.owners.c.stage_preference.weight",
+      "core.adapters.owners.p.bias",
+      "core.adapters.owners.p.router.weight",
+      "core.adapters.owners.p.semantic_preference.weight",
+      "core.adapters.owners.p.stage_preference.weight",
+      "core.adapters.owners.r.bias",
+      "core.adapters.owners.r.router.weight",
+      "core.adapters.owners.r.semantic_preference.weight",
+      "core.adapters.owners.r.stage_preference.weight",
+      "core.effort_embedding.weight",
+      "core.control_injection.output_gain",
+      "core.remix.norm.weight",
+      "core.remix.slots.weight",
+      "core.stages.0.attention_gate",
+      "core.stages.0.residual_gates",
+      "core.stages.0.attention.same_track_bias",
+      "core.stages.0.attention.sink_key",
+      "core.stages.0.attention.sink_value",
+      "core.stages.0.attention.query_norm.weight",
+      "core.stages.0.attention.query.output_gain",
+      "core.stages.0.attention.output.output_gain",
+      "core.stages.0.norm.weight",
+      "core.stages.1.attention_gate",
+      "core.stages.1.residual_gates",
+      "core.stages.1.attention.same_track_bias",
+      "core.stages.1.attention.sink_key",
+      "core.stages.1.attention.sink_value",
+      "core.stages.1.attention.query_norm.weight",
+      "core.stages.1.attention.query.output_gain",
+      "core.stages.1.attention.output.output_gain",
+      "core.stages.1.norm.weight",
+      "core.stages.2.attention_gate",
+      "core.stages.2.residual_gates",
+      "core.stages.2.attention.same_track_bias",
+      "core.stages.2.attention.sink_key",
+      "core.stages.2.attention.sink_value",
+      "core.stages.2.attention.query_norm.weight",
+      "core.stages.2.attention.query.output_gain",
+      "core.stages.2.attention.output.output_gain",
+      "core.stages.2.norm.weight",
+      "core.stages.3.attention_gate",
+      "core.stages.3.residual_gates",
+      "core.stages.3.attention.same_track_bias",
+      "core.stages.3.attention.sink_key",
+      "core.stages.3.attention.sink_value",
+      "core.stages.3.attention.query_norm.weight",
+      "core.stages.3.attention.query.output_gain",
+      "core.stages.3.attention.output.output_gain",
+      "core.stages.3.norm.weight",
+      "core.stages.4.attention_gate",
+      "core.stages.4.residual_gates",
+      "core.stages.4.attention.same_track_bias",
+      "core.stages.4.attention.sink_key",
+      "core.stages.4.attention.sink_value",
+      "core.stages.4.attention.query_norm.weight",
+      "core.stages.4.attention.query.output_gain",
+      "core.stages.4.attention.output.output_gain",
+      "core.stages.4.norm.weight",
+      "core.stages.5.attention_gate",
+      "core.stages.5.residual_gates",
+      "core.stages.5.attention.same_track_bias",
+      "core.stages.5.attention.sink_key",
+      "core.stages.5.attention.sink_value",
+      "core.stages.5.attention.query_norm.weight",
+      "core.stages.5.attention.query.output_gain",
+      "core.stages.5.attention.output.output_gain",
+      "core.stages.5.norm.weight",
+      "core.stages.6.attention_gate",
+      "core.stages.6.residual_gates",
+      "core.stages.6.attention.same_track_bias",
+      "core.stages.6.attention.sink_key",
+      "core.stages.6.attention.sink_value",
+      "core.stages.6.attention.query_norm.weight",
+      "core.stages.6.attention.query.output_gain",
+      "core.stages.6.attention.output.output_gain",
+      "core.stages.6.norm.weight",
+      "core.stages.7.attention_gate",
+      "core.stages.7.residual_gates",
+      "core.stages.7.attention.same_track_bias",
+      "core.stages.7.attention.sink_key",
+      "core.stages.7.attention.sink_value",
+      "core.stages.7.attention.query_norm.weight",
+      "core.stages.7.attention.query.output_gain",
+      "core.stages.7.attention.output.output_gain",
+      "core.stages.7.norm.weight",
+      "core.stages.8.attention_gate",
+      "core.stages.8.residual_gates",
+      "core.stages.8.attention.same_track_bias",
+      "core.stages.8.attention.sink_key",
+      "core.stages.8.attention.sink_value",
+      "core.stages.8.attention.query_norm.weight",
+      "core.stages.8.attention.query.output_gain",
+      "core.stages.8.attention.output.output_gain",
+      "core.stages.8.norm.weight",
+      "core.stages.9.attention_gate",
+      "core.stages.9.residual_gates",
+      "core.stages.9.attention.same_track_bias",
+      "core.stages.9.attention.sink_key",
+      "core.stages.9.attention.sink_value",
+      "core.stages.9.attention.query_norm.weight",
+      "core.stages.9.attention.query.output_gain",
+      "core.stages.9.attention.output.output_gain",
+      "core.stages.9.norm.weight",
+      "core.stages.10.attention_gate",
+      "core.stages.10.residual_gates",
+      "core.stages.10.attention.same_track_bias",
+      "core.stages.10.attention.sink_key",
+      "core.stages.10.attention.sink_value",
+      "core.stages.10.attention.query_norm.weight",
+      "core.stages.10.attention.query.output_gain",
+      "core.stages.10.attention.output.output_gain",
+      "core.stages.10.norm.weight",
+      "core.stages.11.attention_gate",
+      "core.stages.11.residual_gates",
+      "core.stages.11.attention.same_track_bias",
+      "core.stages.11.attention.sink_key",
+      "core.stages.11.attention.sink_value",
+      "core.stages.11.attention.query_norm.weight",
+      "core.stages.11.attention.query.output_gain",
+      "core.stages.11.attention.output.output_gain",
+      "core.stages.11.norm.weight",
+      "core.p_router.palette_codes",
+      "core.p_router.row_codes",
+      "core.u_router.palette_codes",
+      "core.u_router.row_codes",
+      "core.u_norm.weight",
+      "core.lexical_norm.weight",
+      "facet_distribution.log_scale.bias",
+      "facet_distribution.log_scale.output_gain",
+      "decoder.header_start.output_gain",
+      "decoder.header_cell.input_bias",
+      "decoder.header_cell.hidden_bias",
+      "decoder.mode_codes.weight",
+      "decoder.length_codes.weight",
+      "decoder.terminal_codes.weight",
+      "decoder.realizer.seed_codes",
+      "decoder.realizer.seed.output_gain",
+      "decoder.realizer.split.output_gain",
+      "decoder.realizer.growth_norm.weight",
+      "decoder.realizer.growth_attention.query_norm.weight",
+      "decoder.realizer.growth_attention.query.output_gain",
+      "decoder.realizer.growth_attention.output.output_gain",
+      "decoder.realizer.growth_attention.source_norm.weight",
+      "decoder.realizer.growth_attention.key_value.output_gain",
+      "decoder.realizer.plan_attention.query_norm.weight",
+      "decoder.realizer.plan_attention.query.output_gain",
+      "decoder.realizer.plan_attention.output.output_gain",
+      "decoder.realizer.plan_attention.source_norm.weight",
+      "decoder.realizer.plan_attention.key_value.output_gain",
+      "decoder.realizer.local_attention.query_norm.weight",
+      "decoder.realizer.local_attention.query.output_gain",
+      "decoder.realizer.local_attention.output.output_gain",
+      "decoder.realizer.local_attention.source_norm.weight",
+      "decoder.realizer.local_attention.key_value.output_gain",
+      "decoder.realizer.global_attention.query_norm.weight",
+      "decoder.realizer.global_attention.query.output_gain",
+      "decoder.realizer.global_attention.output.output_gain",
+      "decoder.realizer.global_attention.source_norm.weight",
+      "decoder.realizer.global_attention.key_value.output_gain",
+      "decoder.realizer.final_norm.weight",
+      "decoder.vocabulary.projection.weight",
+      "decoder.vocabulary.embedding.weight",
+      "transducer.bank.sink_value",
+      "transducer.query_realizer.facet_codes",
+      "transducer.query_realizer.role_slot",
+      "transducer.query_realizer.norm.weight",
+      "transducer.query_realizer.norm.bias",
+      "transducer.query_realizer.address.output_gain",
+      "transducer.query_realizer.payload.output_gain",
+      "transducer.readout.row_identifiers",
+      "transducer.readout.facet_queries",
+      "transducer.readout.sink_key",
+      "transducer.readout.sink_value",
+      "transducer.readout.row_adapter.0.weight",
+      "transducer.readout.row_adapter.0.bias",
+      "transducer.readout.row_adapter.1.bias",
+      "transducer.readout.row_adapter.1.output_gain",
+      "transducer.readout.row_adapter.3.bias",
+      "transducer.readout.row_adapter.3.output_gain",
+      "transducer.readout.key_norm.weight",
+      "transducer.readout.key_norm.bias",
+      "transducer.readout.condition.output_gain"
+    ],
+    "trainingLineage": {
+      "schema": "semantic-training-lineage/8",
+      "policy": {
+        "schema": "semantic-training-policy/8",
+        "producerRevision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+        "consumerRevision": "aab637f002323a7820759763652df7a5ad50fe04",
+        "registryDigest": "05a5ef09516a0b1e4e46fedcb0a31c71eed7f3680acadb303f628bde9f3ebead"
+      },
+      "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+      "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+      "interoperabilityDigest": "64f230e7b05dc6b33b3d0df359898e27158cb67a386c9cdeb63fd64b4729df2d",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "tokenizerSha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60",
+      "preparedManifestFingerprints": [
+        "90d95fda9e763900c0191016b9a7158b5d86b9cff54c7093fae763b16d7ddc0e"
+      ],
+      "preparedCorpusDigest": "1060aaf398d35fc7237abc8c132de876d7f316913071dd4a438fa56c5712d644",
+      "streamDigest": "dc1ec25d234c9378c8c401bbdbaaac7ff76511f9cd6b1fe32d73fe73de764f5f",
+      "chunkingFingerprint": "09a55e6b4e1697c8eb05579ab63bed60cdcbbcf46fdfa875bfc37108d2ccb8b5",
+      "digest": "7b29625bd5e3cb2ddf823bb43cd7a776011fb53ecac96f53a984bd5cbeeff016"
+    },
+    "servingLineageDigest": "c4b8ba50f959b9eab71be35e5eda44693fda2b161c06b8524ed5956665b65964",
+    "optimizerTargetExposure": {
+      "schema": "semantic-v8-optimizer-target-exposure/2",
+      "registryDigest": "05a5ef09516a0b1e4e46fedcb0a31c71eed7f3680acadb303f628bde9f3ebead",
+      "historyContinued": true,
+      "firstCheckpointDigest": "8210fa048bf5354664a0b823910b95b9bc0f31366da67e252d22c2bedc1280d6",
+      "resumedCheckpointDigest": "4e42bf37c370bb04d48130ebd8905b3251535fa3c4c4fb44e9061030b8473d77",
+      "firstCheckpointCounts": {
+        "sourceCount": 1,
+        "logicalTargetCount": 2,
+        "physicalTargetRecordCount": 2,
+        "scoredOccurrences": 2,
+        "lossDenominators": {
+          "lexical": 67,
+          "reconstruction": 67,
+          "structure": 8,
+          "terminal": 4,
+          "router_z": 2
+        }
+      },
+      "resumedCounts": {
+        "sourceCount": 1,
+        "logicalTargetCount": 4,
+        "physicalTargetRecordCount": 4,
+        "scoredOccurrences": 4,
+        "lossDenominators": {
+          "lexical": 126,
+          "reconstruction": 126,
+          "structure": 16,
+          "terminal": 8,
+          "router_z": 4
+        }
+      },
+      "positiveWeightLossDenominators": {
+        "lexical": 126,
+        "reconstruction": 126,
+        "structure": 16,
+        "terminal": 8,
+        "router_z": 4
+      },
+      "sources": {
+        "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5": {
+          "split": "train",
+          "logicalTargetIds": [
+            "semantic:v8:target:3",
+            "semantic:v8:target:4",
+            "semantic:v8:target:5",
+            "semantic:v8:target:6"
+          ],
+          "physicalTargetRecords": {
+            "semantic:v8:target:3": {
+              "893aca3a4755e6a19a0464d4f05b5e3206929f584333b5150d831964060d050e": {
+                "windowIndices": [
+                  0
+                ],
+                "lossDenominators": {
+                  "lexical": 18,
+                  "reconstruction": 18,
+                  "structure": 4,
+                  "terminal": 2,
+                  "router_z": 1
+                },
+                "scoredOccurrences": 1,
+                "optimizerUpdates": 1,
+                "firstGlobalStep": 1,
+                "lastGlobalStep": 1
+              }
+            },
+            "semantic:v8:target:4": {
+              "4842ceff69278c864bf7279507ae8dd35e544e346e0f8261e780780c4d60306f": {
+                "windowIndices": [
+                  0
+                ],
+                "lossDenominators": {
+                  "lexical": 49,
+                  "reconstruction": 49,
+                  "structure": 4,
+                  "terminal": 2,
+                  "router_z": 1
+                },
+                "scoredOccurrences": 1,
+                "optimizerUpdates": 1,
+                "firstGlobalStep": 1,
+                "lastGlobalStep": 1
+              }
+            },
+            "semantic:v8:target:5": {
+              "99cd9182de61bc23ec738d59752a521871175569e1c0099cfbbfac9b213c4324": {
+                "windowIndices": [
+                  1
+                ],
+                "lossDenominators": {
+                  "lexical": 18,
+                  "reconstruction": 18,
+                  "structure": 4,
+                  "terminal": 2,
+                  "router_z": 1
+                },
+                "scoredOccurrences": 1,
+                "optimizerUpdates": 1,
+                "firstGlobalStep": 2,
+                "lastGlobalStep": 2
+              }
+            },
+            "semantic:v8:target:6": {
+              "ac4a32d20da0c62f25c93c6bf54f2c26acb79b862469e8b6ae9baf4f02c590a7": {
+                "windowIndices": [
+                  1
+                ],
+                "lossDenominators": {
+                  "lexical": 41,
+                  "reconstruction": 41,
+                  "structure": 4,
+                  "terminal": 2,
+                  "router_z": 1
+                },
+                "scoredOccurrences": 1,
+                "optimizerUpdates": 1,
+                "firstGlobalStep": 2,
+                "lastGlobalStep": 2
+              }
+            }
+          }
+        }
+      },
+      "allTargetsExposed": false
+    },
+    "optimizerPositionExposure": {
+      "registryDigest": "05a5ef09516a0b1e4e46fedcb0a31c71eed7f3680acadb303f628bde9f3ebead",
+      "historyContinued": true,
+      "firstCheckpointDigest": "99c65100ad198a50450bfc3c6d0140b14b68946782c49bb712764a9d9c890ccc",
+      "resumedCheckpointDigest": "1ddad8cefa89d580966c801b3bcb76a443f1616976ef42d1a4b87b0279f7f29e",
+      "firstCheckpointCounts": {
+        "schema": "semantic-v8-optimizer-position-exposure/1",
+        "digest": "99c65100ad198a50450bfc3c6d0140b14b68946782c49bb712764a9d9c890ccc",
+        "startingGlobalStep": 0,
+        "lastGlobalStep": 1,
+        "optimizerUpdates": 1,
+        "previousStageDigest": null,
+        "sourceCount": 1,
+        "logicalTargetCount": 2,
+        "physicalTargetRecordCount": 2,
+        "verifiedPhysicalTargets": 2,
+        "unmeasuredPhysicalTargets": 0,
+        "scoredOccurrences": 2,
+        "positiveWeightPositionCounts": {
+          "lexical": 67,
+          "reconstruction": 67,
+          "structure": 8,
+          "terminal": 4,
+          "modality": 2
+        },
+        "unmeasuredObjectiveCounts": {
+          "router_z": 2
+        },
+        "routerInternalPositionCounts": {
+          "adapter_c": 212,
+          "adapter_e": 40,
+          "adapter_p": 216,
+          "adapter_r": 14,
+          "p": 1296,
+          "shape_bootstrap": 568,
+          "shape_pool_linear_128_32__pool": 0,
+          "shape_pool_linear_32_1024__pool": 0,
+          "shape_pool_linear_32_128__pool": 12,
+          "shape_pool_linear_32_32__pool": 8043,
+          "shape_pool_linear_32_64__pool": 313,
+          "shape_pool_linear_512_32__pool": 0,
+          "shape_pool_linear_64_32__pool": 63,
+          "shape_pool_swiglu_32__pool": 1316,
+          "shape_pool_swiglu_64__pool": 1296,
+          "u": 212
+        },
+        "routerInternalPositionCount": 13601,
+        "routerInternalAssignmentCounts": {
+          "adapter_c": 424,
+          "adapter_e": 80,
+          "adapter_p": 432,
+          "adapter_r": 28,
+          "p": 1296,
+          "shape_bootstrap": 568,
+          "shape_pool_linear_128_32__pool": 0,
+          "shape_pool_linear_32_1024__pool": 0,
+          "shape_pool_linear_32_128__pool": 12,
+          "shape_pool_linear_32_32__pool": 8043,
+          "shape_pool_linear_32_64__pool": 313,
+          "shape_pool_linear_512_32__pool": 0,
+          "shape_pool_linear_64_32__pool": 63,
+          "shape_pool_swiglu_32__pool": 1316,
+          "shape_pool_swiglu_64__pool": 1296,
+          "u": 212
+        },
+        "routerInternalAssignmentCount": 14083,
+        "routerInternalPositionAuditUpdates": 1,
+        "routerInternalPositionAccounting": "complete-per-update",
+        "positionScope": "Actual plain-text lexical/reconstruction rows and length/mode/terminal/modality categorical labels and public supports",
+        "routerInternalPositionCoverage": "unmeasured",
+        "otherObjectiveScope": "Routing regularizers, representation coordinates, media/structured-action masks and transducer/retrieval losses are not granted token-position credit by this audit",
+        "learnedSuccess": null
+      },
+      "resumedCounts": {
+        "schema": "semantic-v8-optimizer-position-exposure/1",
+        "digest": "1ddad8cefa89d580966c801b3bcb76a443f1616976ef42d1a4b87b0279f7f29e",
+        "startingGlobalStep": 0,
+        "lastGlobalStep": 2,
+        "optimizerUpdates": 2,
+        "previousStageDigest": null,
+        "sourceCount": 1,
+        "logicalTargetCount": 4,
+        "physicalTargetRecordCount": 4,
+        "verifiedPhysicalTargets": 4,
+        "unmeasuredPhysicalTargets": 0,
+        "scoredOccurrences": 4,
+        "positiveWeightPositionCounts": {
+          "lexical": 126,
+          "reconstruction": 126,
+          "structure": 16,
+          "terminal": 8,
+          "modality": 4
+        },
+        "unmeasuredObjectiveCounts": {
+          "router_z": 4
+        },
+        "routerInternalPositionCounts": {
+          "adapter_c": 328,
+          "adapter_e": 60,
+          "adapter_p": 384,
+          "adapter_r": 24,
+          "p": 2304,
+          "shape_bootstrap": 929,
+          "shape_pool_linear_128_32__pool": 0,
+          "shape_pool_linear_32_1024__pool": 0,
+          "shape_pool_linear_32_128__pool": 24,
+          "shape_pool_linear_32_32__pool": 13578,
+          "shape_pool_linear_32_64__pool": 560,
+          "shape_pool_linear_512_32__pool": 0,
+          "shape_pool_linear_64_32__pool": 117,
+          "shape_pool_swiglu_32__pool": 2232,
+          "shape_pool_swiglu_64__pool": 2304,
+          "u": 416
+        },
+        "routerInternalPositionCount": 23260,
+        "routerInternalAssignmentCounts": {
+          "adapter_c": 656,
+          "adapter_e": 120,
+          "adapter_p": 768,
+          "adapter_r": 48,
+          "p": 2304,
+          "shape_bootstrap": 929,
+          "shape_pool_linear_128_32__pool": 0,
+          "shape_pool_linear_32_1024__pool": 0,
+          "shape_pool_linear_32_128__pool": 24,
+          "shape_pool_linear_32_32__pool": 13578,
+          "shape_pool_linear_32_64__pool": 560,
+          "shape_pool_linear_512_32__pool": 0,
+          "shape_pool_linear_64_32__pool": 117,
+          "shape_pool_swiglu_32__pool": 2232,
+          "shape_pool_swiglu_64__pool": 2304,
+          "u": 416
+        },
+        "routerInternalAssignmentCount": 24056,
+        "routerInternalPositionAuditUpdates": 2,
+        "routerInternalPositionAccounting": "complete-per-update",
+        "positionScope": "Actual plain-text lexical/reconstruction rows and length/mode/terminal/modality categorical labels and public supports",
+        "routerInternalPositionCoverage": "unmeasured",
+        "otherObjectiveScope": "Routing regularizers, representation coordinates, media/structured-action masks and transducer/retrieval losses are not granted token-position credit by this audit",
+        "learnedSuccess": null
+      },
+      "independentPreparedPositionInventoryDigest": "5a6ea883266ac9aa8673172efcf9010c7cae349b31390532294e51f053769b03",
+      "independentPreparedPhysicalTargetCount": 56,
+      "fullPopulationComparison": {
+        "independentPreparedPhysicalTargets": 56,
+        "observedPhysicalTargets": 4,
+        "missingPhysicalTargets": [
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:10",
+            "d1b4f1dc181cbeb884ad8a911f51324559fd9092463bca693aa08671795b8f80"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:11",
+            "385b5f66253bcb9f94e00383d5ba3c71a42e8d381a8bb75866d3d259003e9b41"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:12",
+            "d62dcc12d9d46693fe9b91705ebb21ac8dc7236b56c466bf0a4294da360deced"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:13",
+            "cbbebaab381e8b7badb3bc7ce67a67d1c539a0c77c1a2b0a560686dbf281fa63"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:14",
+            "93fefc9e9450de4c39b551e80a2b692ad03d15b40a65c92df621e327eb819045"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:15",
+            "3b8216b6849f5e163b4c90c0167253f78d83c3c106d98c8df094009c4ed0d350"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:16",
+            "67636373fb872cb75a6bf2d6cb53a49b42f3cd0c6d4c58d061b6693d7f252581"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:17",
+            "87407d11d190fa905e1a9938faa7ccfc84accb4560ff8e05080f73571b3d62f2"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:18",
+            "01b510fc0dfaf043ceb059e25b03b82dd8439238dc7c12b213a3c56dd94d84c1"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:19",
+            "82d8cac433c28601978813afb9114b3fee6a0c575a191cea1a75d5a9e18aa152"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:20",
+            "98ab77ed9597320921480046179bfea40c5ad7bf2a44e5f4ac19e1f1659674fb"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:21",
+            "e2b9c073f3c63c6c8960ec5fbb33ebe7d3ac91d83ab86beee9e938a4601a1be3"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:22",
+            "000463bbf82caba26039a7ef9912157d756562094cfa1d8c0abf00bc7914d434"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:23",
+            "d3cb4108306bef44b6971400befdb5676bc3600f4af6258797ea9ef1f79aeca7"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:24",
+            "a711953b97108e4a24a071dac6d8fbaea639ef912031052a67eb3fafadd262f0"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:25",
+            "0f61fb399c9cad3cd92d3377bcd98a7fca54c33e7c7c902b3e6e6643e984f2f0"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:26",
+            "ede37373b9e5c190b75746c3c4a907073a467f4459e5b20f2cea0fa30cef58cb"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:27",
+            "82fa5631fad62ef0f975bb7299e06c0157e7c37dcd9893333d273f5f31e8271c"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:28",
+            "6c4cb723bb75171058b6d81556f514094a2f7d9253373b568d0d44a609a1488d"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:29",
+            "3fc76cbd15fc1df5ebcfaad2f86769b9f221844a59d8e56343ce4d361db7a074"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:30",
+            "3ab2f2759c19938f26e79cbc5a1e9ceb6cc058e64aca445a40b6e46c5b487bd3"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:31",
+            "cbca1586ae4a57d879709718fdf443f3a6c68014326eb73b5a04c7932109d3a5"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:32",
+            "e7f28bbf38f5cd0672a43eea36c3472433ec9695b753f6820224bf9f3fa2ae39"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:33",
+            "59e2c208b48b2c408395d0d21f337b8c8ce36249da50cc3c6cc4f65597d90667"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:34",
+            "e9ec385260356b814a4b670d4658ea8058a198b4303badb1ce4e700eabb97855"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:35",
+            "14c1a9b9b871154568d8f12e9268503d5ecbd957ef85cc6a649467a5b11d7629"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:36",
+            "9377abe67abd25dec1925f340c2e3ae146d0d7f8473d62d10db7f05ca83c9132"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:37",
+            "5f7ee87840fce14789009c6a116d066486b542390b7ec6df4c67795334c9ea55"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:38",
+            "4d0071aab42954efe0389166082746af2e439e49eca5d9a35360f22f3421023c"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:39",
+            "37301a238366e29059f7856a2eb4181313993964e2f780b0b9b0107f209a2773"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:40",
+            "1ea8ad72523c9603d2e23fac010cc75052f8c0902e02d9339a9297633d1248ac"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:41",
+            "0b33d68f5980def88f48f4ef56a7ba1c28600db26618c70dc22acd3b89fc2cd8"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:42",
+            "73da979ec05574c06e17972c245885bf474ca5c98c1c26ffadcc74fd7f5a6739"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:43",
+            "1f78d917999e72396a0762f4b3ec04103aa217baad90d4fcef4347122e6279f0"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:44",
+            "54d8dbb21bbf42828803570ceea5b32e810f5158b379b0f75fa9f3d3506db15f"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:45",
+            "9e9a2a15c237e2e8ad21e6223b5e99925d33e61a23203914ae85abe74561b484"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:46",
+            "7411d98874ee4b0b0c0a73aeeb33b182d02ddd539bb852be11f03c9eb325c1bb"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:47",
+            "1dddf8fda7c7384d079ffecec510c853f3bcaa51675e2685cf6c09e5b1d41250"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:48",
+            "fbafcadc39b13eec068ef359a060ccb0dbf6bfb72b4b23be095fecfda925ae0e"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:49",
+            "0d3ea9ed418d7363ca2a69be3b97b09dda163a172b64bf60efbabf9b3f8ac8b7"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:50",
+            "5d3c1720a8baab86ab080ea6e14539585eb2c577bda5c41a2134eb9cd5f41d83"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:51",
+            "d737bf5ab7fd512d64adb11c5c578d6c15d48488096d4e29dfa0636bc99bfe1f"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:52",
+            "f036c3c48f1afc2e2ed902d9a46176aa72bbdfed26ac0a238de26d9b0c840bba"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:53",
+            "c8835c051a5d363a8b8b387a8f619678c7e4ed776f0ff4bf41178251bcfd8ae2"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:54",
+            "c37eb3de71f769ebde14f0bfafcb21a1377c9eb6a704c5d1675e8f20f32a99ad"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:55",
+            "1f5c75e91da4446b559e3c36c3ca3cec1bdc04a4e75a2d0eadb7550b67be84be"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:56",
+            "a47507fd24ce5142dc7ef6283e209e0d544fb7a393edf3456c9766138ede0bb7"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:57",
+            "d310b4aa59edb76ed47fdd1931e013df6d4df328fa2d162bd028db27ad51ebda"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:58",
+            "854f663157b8feb98aef00032b9c783ab3c77034b03915ae9311367b2d92c4b0"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:7",
+            "9f3097e237f53a4ca2fc68c17dd7894196d15eb3c3369965141a6ab3f264c15f"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:8",
+            "de3cc01b1797212fb2ab591351bda9c073da6d95b6ab10fe289908da46517a66"
+          ],
+          [
+            "promise-number-proxy-memory-join:7e2c3db39b4eae312a3d22adb443bc0f8feacdb5",
+            "semantic:v8:target:9",
+            "4f2a9c9c2e11310e3751e9abe5b2b3e9b155d9a830f2c24d7f4367de6b2bc5bc"
+          ]
+        ],
+        "unexpectedPhysicalTargets": [],
+        "preparedOracleMismatches": [],
+        "independentOccurrenceMismatches": [],
+        "targetCensusWindowOrOccurrenceMismatches": [],
+        "targetCensusWithoutPositionReceipt": [],
+        "unmeasuredPhysicalTargets": [],
+        "positiveWeightPositionCountsMatch": false,
+        "exactOnePassPreparedTextPositions": false,
+        "routerInternalPositionCounts": {
+          "adapter_c": 328,
+          "adapter_e": 60,
+          "adapter_p": 384,
+          "adapter_r": 24,
+          "p": 2304,
+          "shape_bootstrap": 929,
+          "shape_pool_linear_128_32__pool": 0,
+          "shape_pool_linear_32_1024__pool": 0,
+          "shape_pool_linear_32_128__pool": 24,
+          "shape_pool_linear_32_32__pool": 13578,
+          "shape_pool_linear_32_64__pool": 560,
+          "shape_pool_linear_512_32__pool": 0,
+          "shape_pool_linear_64_32__pool": 117,
+          "shape_pool_swiglu_32__pool": 2232,
+          "shape_pool_swiglu_64__pool": 2304,
+          "u": 416
+        },
+        "routerInternalPositionCount": 23260,
+        "routerInternalAssignmentCounts": {
+          "adapter_c": 656,
+          "adapter_e": 120,
+          "adapter_p": 768,
+          "adapter_r": 48,
+          "p": 2304,
+          "shape_bootstrap": 929,
+          "shape_pool_linear_128_32__pool": 0,
+          "shape_pool_linear_32_1024__pool": 0,
+          "shape_pool_linear_32_128__pool": 24,
+          "shape_pool_linear_32_32__pool": 13578,
+          "shape_pool_linear_32_64__pool": 560,
+          "shape_pool_linear_512_32__pool": 0,
+          "shape_pool_linear_64_32__pool": 117,
+          "shape_pool_swiglu_32__pool": 2232,
+          "shape_pool_swiglu_64__pool": 2304,
+          "u": 416
+        },
+        "routerInternalAssignmentCount": 24056,
+        "routerInternalPositionAuditUpdates": 2,
+        "routerInternalPositionAccounting": "complete-per-update",
+        "routerInternalPositionCoverage": "unmeasured",
+        "learnedSuccess": null
+      },
+      "fullPopulationQualified": false,
+      "scope": "Only the actual two-update prepared-text subset and its exact resume history; a dedicated fresh complete pass is required for full qualification",
+      "routerInternalPositionCoverage": "unmeasured",
+      "learnedSuccess": null
+    }
+  },
+  "serving": {
+    "initialization": {
+      "schema": "semantic-inference-identity/8",
+      "adapter": "native-semantic-v8/1",
+      "seed": 17,
+      "checkpointIdentity": "6675cf97554c02e3897e337e7efd904d501dab32f0875fbb5beeee57d3cdbc7c",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "trainingIdentity": "c4b8ba50f959b9eab71be35e5eda44693fda2b161c06b8524ed5956665b65964",
+      "nativeAdmissionClaim": false,
+      "generationSettings": {
+        "device": "cpu",
+        "maxTokens": 4,
+        "maxFragments": 1,
+        "effort": 1
+      }
+    },
+    "identityRefusals": [
+      {
+        "kind": "omitted",
+        "error": {
+          "category": "NativeSelectionV8Error",
+          "message": "Loaded v8 checkpoint, tokenizer or training-lineage identity differs",
+          "evidence": null
+        }
+      },
+      {
+        "kind": "null",
+        "error": {
+          "category": "NativeSelectionV8Error",
+          "message": "Loaded v8 checkpoint, tokenizer or training-lineage identity differs",
+          "evidence": null
+        }
+      },
+      {
+        "kind": "substituted",
+        "error": {
+          "category": "NativeSelectionV8Error",
+          "message": "Loaded v8 checkpoint, tokenizer or training-lineage identity differs",
+          "evidence": null
+        }
+      }
+    ],
+    "firstSelection": {
+      "adapter": "native-semantic-v8/1",
+      "selectionId": "v8:0",
+      "session": "protocol-source",
+      "invocationId": "invocation1",
+      "checkpointIdentity": "6675cf97554c02e3897e337e7efd904d501dab32f0875fbb5beeee57d3cdbc7c",
+      "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "trainingIdentity": "c4b8ba50f959b9eab71be35e5eda44693fda2b161c06b8524ed5956665b65964",
+      "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+      "prefixDigest": "54a28fb4da85eb1d3c927989a2ac93ce2ac29fa1ffd0ca990a56e18f48166634",
+      "contextDigest": "d82fdc75a75ac2dac733fac077d0a779edda4d179abcdbc316db30b88f3e4099",
+      "publicDigest": "10ddfb8eb419d9fff4ca5f77451a13f2cc6134a9709495d833280e97681b94d4",
+      "origin": "actual-model-selected",
+      "modelSelected": true,
+      "status": "rejected",
+      "fragments": [
+        {
+          "selectedEventId": "v8:0:fragment:0",
+          "meridian": 36,
+          "modelTrack": "assistant",
+          "payloadHex": "e6ada3e5b8b8e79a84",
+          "emittedTokenIds": [
+            25265
+          ],
+          "tokenIds": [
+            25265
+          ],
+          "terminal": false,
+          "validation": {
+            "shapeValid": true,
+            "runtimeValid": true,
+            "tokenIdsValid": true,
+            "tokenBytesMatch": true,
+            "tokenDecodeError": null,
+            "utf8Valid": true
+          }
+        }
+      ],
+      "payloadHex": "e6ada3e5b8b8e79a84",
+      "generatedTokens": 1,
+      "observedTokens": 2426,
+      "contextTokens": 530,
+      "observedBytes": 6293,
+      "contextBytes": 1506,
+      "observedPhysicalRecords": 20,
+      "contextPhysicalRecords": 5,
+      "instructionTokens": 75,
+      "instructionBytes": 374,
+      "generationSeconds": 0.1170661440000913,
+      "preparationSeconds": 2.2250141660001646,
+      "contextBefore": {
+        "policy": {
+          "cross_events": 16,
+          "local_events": 256,
+          "max_pins": 8,
+          "pins": [],
+          "version": 1,
+          "windows": []
+        },
+        "resident_events": 36,
+        "cache_bytes": 18432,
+        "cache_storage_bytes_including_snapshots": 18432,
+        "event_budget": 128,
+        "archived_events": 25,
+        "host_payload_bytes": 7799,
+        "last_cache_evictions": [],
+        "visible_events": [
+          "4d6a41152a8753b4b0e8d45cb8db9f400454c59c9c19e284362f5b82bc2304bb",
+          "aa341e5a9b378bdcfb274b0864268b2841ee0571c59194e02583303a9975d22b",
+          "43e9b5188659cb0e4a610d5f091e35b02d36ab925ff8e873d74d3512a114e27c",
+          "ba22057ef507ad1a088e9fc232b21371806dbbc1b04b513f6593078ce9132409",
+          "34d19323c31b6986bc357cd3044d4a8eed80df1ef916f076060592dbca9ef7fb",
+          "6235e59b5abd8578b1ba2e97759f7ee9d4b55f334687b6ff8bbdc8b8c46b1a81",
+          "f640ed7a4273271c6a209fc8315be3d9e6e1e8b5ebd272b2ea06ac250aba8182",
+          "a1904455d51d4fb27563a4db459b23b8fe92cfc2903cb5eefbe9487a8069dcd1",
+          "54e621d80e7d0e238f321417de513d09f3c9c10dd2563ff2391e50404f61f1d8",
+          "1ad12ee67d1ea770603c761633f626d7b9f9c762a168e7457c2dd8bdcf94689c",
+          "3cca0e100b88803d3327f79e7f19851e4c598490057361006ec069970f00b594",
+          "ebc078a31121b761fffe7e9f47f74acf79e1388d659cce239900d0c05baaf38f",
+          "4518da1c18dbea8ae8515650d8762f56a1b213624708ee946ec10fde3772adae",
+          "204e7d0ca73fd770574ee6d716d791d383739a27068d1ce1827907839ebd1ed6",
+          "1bb6efa142c1b95f73080770c66672c030eff1edb93b52ba51e4dc285c6c4960",
+          "cddbe11bee86f647544b4ddb358006b0cb8523600ba4e39f3292227f2516e33d",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "d4ecc0c3a667baa7b37793ad516fe5ba3657cac2485c807ea4456e67d7e355dd",
+          "9976d78a56410f9e362655cd2de220b280d9f04c781f530bc24b93fb53fb3b5c",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "7f2732df2a37b902cab9fe512c476a497559e07fcc5aa74b70c32d7a4fbd3412",
+          "d0e15ab650dd1d0c06bd0ff2edcfa2dcd0572db9ea9add91bf0efce25000fb7b",
+          "__transducer_query__",
+          "__transducer_knowledge__",
+          "934c0187d3aeadc78d68ce1b3e5522134010b97745573dc2eb19b426f0b57f7f",
+          "f70b4c105b2f5aa857548b8d57e9572588e52e3bfacdfd478aa9b095db20d5a4",
+          "1cf59b7542b0591dcdfc491f219ba37b666fab2c6381e833a3d46af210fd2ad5",
+          "3b2116a39e4bcf2498600335ce37a25cd2da36bf44edfc6144636620d919108a",
+          "76ad8a16ab624e2fc5a46d1b179ed128f3d160bfbfd80023382e6f632a90ea3f"
+        ]
+      },
+      "rawPayloadHex": "e6ada3e5b8b8e79a84",
+      "failure": "Native v8 record exhausted its fragment budget without termination",
+      "totalSeconds": 2.3420830750001187
+    },
+    "firstSelectionError": {
+      "category": "NativeSelectionV8Error",
+      "message": "Native v8 record exhausted its fragment budget without termination",
+      "evidence": {
+        "adapter": "native-semantic-v8/1",
+        "selectionId": "v8:0",
+        "session": "protocol-source",
+        "invocationId": "invocation1",
+        "checkpointIdentity": "6675cf97554c02e3897e337e7efd904d501dab32f0875fbb5beeee57d3cdbc7c",
+        "tokenizerIdentity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "trainingIdentity": "c4b8ba50f959b9eab71be35e5eda44693fda2b161c06b8524ed5956665b65964",
+        "codecFingerprint": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+        "prefixDigest": "54a28fb4da85eb1d3c927989a2ac93ce2ac29fa1ffd0ca990a56e18f48166634",
+        "contextDigest": "d82fdc75a75ac2dac733fac077d0a779edda4d179abcdbc316db30b88f3e4099",
+        "publicDigest": "10ddfb8eb419d9fff4ca5f77451a13f2cc6134a9709495d833280e97681b94d4",
+        "origin": "actual-model-selected",
+        "modelSelected": true,
+        "status": "rejected",
+        "fragments": [
+          {
+            "selectedEventId": "v8:0:fragment:0",
+            "meridian": 36,
+            "modelTrack": "assistant",
+            "payloadHex": "e6ada3e5b8b8e79a84",
+            "emittedTokenIds": [
+              25265
+            ],
+            "tokenIds": [
+              25265
+            ],
+            "terminal": false,
+            "validation": {
+              "shapeValid": true,
+              "runtimeValid": true,
+              "tokenIdsValid": true,
+              "tokenBytesMatch": true,
+              "tokenDecodeError": null,
+              "utf8Valid": true
+            }
+          }
+        ],
+        "payloadHex": "e6ada3e5b8b8e79a84",
+        "generatedTokens": 1,
+        "observedTokens": 2426,
+        "contextTokens": 530,
+        "observedBytes": 6293,
+        "contextBytes": 1506,
+        "observedPhysicalRecords": 20,
+        "contextPhysicalRecords": 5,
+        "instructionTokens": 75,
+        "instructionBytes": 374,
+        "generationSeconds": 0.1170661440000913,
+        "preparationSeconds": 2.2250141660001646,
+        "contextBefore": {
+          "policy": {
+            "cross_events": 16,
+            "local_events": 256,
+            "max_pins": 8,
+            "pins": [],
+            "version": 1,
+            "windows": []
+          },
+          "resident_events": 36,
+          "cache_bytes": 18432,
+          "cache_storage_bytes_including_snapshots": 18432,
+          "event_budget": 128,
+          "archived_events": 25,
+          "host_payload_bytes": 7799,
+          "last_cache_evictions": [],
+          "visible_events": [
+            "4d6a41152a8753b4b0e8d45cb8db9f400454c59c9c19e284362f5b82bc2304bb",
+            "aa341e5a9b378bdcfb274b0864268b2841ee0571c59194e02583303a9975d22b",
+            "43e9b5188659cb0e4a610d5f091e35b02d36ab925ff8e873d74d3512a114e27c",
+            "ba22057ef507ad1a088e9fc232b21371806dbbc1b04b513f6593078ce9132409",
+            "34d19323c31b6986bc357cd3044d4a8eed80df1ef916f076060592dbca9ef7fb",
+            "6235e59b5abd8578b1ba2e97759f7ee9d4b55f334687b6ff8bbdc8b8c46b1a81",
+            "f640ed7a4273271c6a209fc8315be3d9e6e1e8b5ebd272b2ea06ac250aba8182",
+            "a1904455d51d4fb27563a4db459b23b8fe92cfc2903cb5eefbe9487a8069dcd1",
+            "54e621d80e7d0e238f321417de513d09f3c9c10dd2563ff2391e50404f61f1d8",
+            "1ad12ee67d1ea770603c761633f626d7b9f9c762a168e7457c2dd8bdcf94689c",
+            "3cca0e100b88803d3327f79e7f19851e4c598490057361006ec069970f00b594",
+            "ebc078a31121b761fffe7e9f47f74acf79e1388d659cce239900d0c05baaf38f",
+            "4518da1c18dbea8ae8515650d8762f56a1b213624708ee946ec10fde3772adae",
+            "204e7d0ca73fd770574ee6d716d791d383739a27068d1ce1827907839ebd1ed6",
+            "1bb6efa142c1b95f73080770c66672c030eff1edb93b52ba51e4dc285c6c4960",
+            "cddbe11bee86f647544b4ddb358006b0cb8523600ba4e39f3292227f2516e33d",
+            "__transducer_query__",
+            "__transducer_knowledge__",
+            "d4ecc0c3a667baa7b37793ad516fe5ba3657cac2485c807ea4456e67d7e355dd",
+            "9976d78a56410f9e362655cd2de220b280d9f04c781f530bc24b93fb53fb3b5c",
+            "__transducer_query__",
+            "__transducer_knowledge__",
+            "7f2732df2a37b902cab9fe512c476a497559e07fcc5aa74b70c32d7a4fbd3412",
+            "d0e15ab650dd1d0c06bd0ff2edcfa2dcd0572db9ea9add91bf0efce25000fb7b",
+            "__transducer_query__",
+            "__transducer_knowledge__",
+            "934c0187d3aeadc78d68ce1b3e5522134010b97745573dc2eb19b426f0b57f7f",
+            "f70b4c105b2f5aa857548b8d57e9572588e52e3bfacdfd478aa9b095db20d5a4",
+            "1cf59b7542b0591dcdfc491f219ba37b666fab2c6381e833a3d46af210fd2ad5",
+            "3b2116a39e4bcf2498600335ce37a25cd2da36bf44edfc6144636620d919108a",
+            "76ad8a16ab624e2fc5a46d1b179ed128f3d160bfbfd80023382e6f632a90ea3f"
+          ]
+        },
+        "rawPayloadHex": "e6ada3e5b8b8e79a84",
+        "failure": "Native v8 record exhausted its fragment budget without termination",
+        "totalSeconds": 2.3420830750001187
+      }
+    },
+    "restoration": {
+      "schema": "semantic-model-restore/8",
+      "checkpointDigest": "5f3986d7ed477aee33db5666c4d87edbc7aa72ed0bebabc06e77bbe522254a91",
+      "restoredSessions": 1,
+      "reexecutedSelections": 0,
+      "consumedAttempts": 1,
+      "hostDispatches": 0,
+      "equivalence": "verified-model-reexecution",
+      "restored": true
+    },
+    "nextSelectionComparedFields": [
+      "selectionId",
+      "fragments",
+      "payloadHex",
+      "generatedTokens",
+      "checkpointIdentity",
+      "tokenizerIdentity",
+      "trainingIdentity"
+    ],
+    "nextSelectionExact": true,
+    "acknowledgedModelSelections": 0,
+    "selectionFamily": "semantic",
+    "learnedSuccess": null,
+    "scope": "Actual trained CPU weights and pinned tokenizer; original token selection and fresh-process initial-state/RNG continuation. No semantic record was acknowledged."
+  },
+  "artifacts": [
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/source.json",
+      "bytes": 1874497,
+      "sha256": "cf747c6db102126ec02235a4ff652cb5742db4996a3968f419d7b467aab2f34e"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/prepared/manifest.json",
+      "bytes": 12653,
+      "sha256": "6e8cd62c7decdb44111b0ea20d82824d667aae77e0c6216fc1ed62617ac23c69"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/prepared/semantic-v8-report.json",
+      "bytes": 812,
+      "sha256": "bc84b368b7a4d7afa0945e76b877ec817c16ca7b6a6cb98aab5fd562bb884371"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/first-checkpoint/metadata.json",
+      "bytes": 1129,
+      "sha256": "7f249c4ba9933dc258a712bed1063ef4a11734fe75ae69c668b2c01d885fdf9b"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/first-checkpoint/state.pt",
+      "bytes": 39275150,
+      "sha256": "e4793a7a78a8571810d3bfc63aad67931b584b1f4a0acbc8c9ad328eb627d8f6"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/first-checkpoint/transducer.pt",
+      "bytes": 21705,
+      "sha256": "77e7c3b7209b3b7cd2eb57313a52e2036055aa498cd4c29501f9ba7c4689c45e"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/fit/checkpoints/SC-000000002-periodic/metadata.json",
+      "bytes": 1129,
+      "sha256": "8030fcc362b23747df766f20aaf682d7c3cc90a37278f3e3cf3e42b300affd4b"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/fit/checkpoints/SC-000000002-periodic/state.pt",
+      "bytes": 39281294,
+      "sha256": "c8d1100a21e525922290873b2ccbe67c900fbbe7d374c1116e8d55542cd3c8a3"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/fit/checkpoints/SC-000000002-periodic/transducer.pt",
+      "bytes": 21705,
+      "sha256": "e0a8368ae310d8a8d4fcfa9da1ff05937bbf39c5357be152d7a83f5306000e7e"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/served/manifest.json",
+      "bytes": 7985,
+      "sha256": "cd08d194ceaf81039a87135b21aee7d46f1ce90602ba7c13eef131c6c17e156b"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/served/model.safetensors",
+      "bytes": 16201016,
+      "sha256": "6675cf97554c02e3897e337e7efd904d501dab32f0875fbb5beeee57d3cdbc7c"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/served/model_config.json",
+      "bytes": 1399,
+      "sha256": "58ecc08ec1d67efae07baef003b192e4fe41b1d4edbb834e9eeebc4f7ffb7b21"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/served/semantic-v8-lineage.json",
+      "bytes": 1811,
+      "sha256": "b34a11f93d1ec7ba967d7e260c06c0441f8ad000a73da1aeece39ee21e9d0b01"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/served/tokenizer.json",
+      "bytes": 12205732,
+      "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+    },
+    {
+      "path": "/workspace/scratch/0952c3151b8f/validation/ordinary-lifecycle-venv/served/transducer.pt",
+      "bytes": 4853,
+      "sha256": "c73e8d3a135354b75c8cd71fc153e7a7d9a8f46ce8080033a1503b7464e000dd"
+    }
+  ],
+  "learnedSuccess": null,
+  "limits": [
+    "Executed plain-text positions are independently checked for the observed two-update subset; complete-population positions require the separate full-pass gate. Hidden routing rows and unsupported objective positions remain unmeasured.",
+    "Two optimizer updates do not qualify learned execution quality or prove every positive-loss target was exposed.",
+    "One source family and two optimizer steps do not qualify learned execution quality.",
+    "Fresh-process recovery retained original failed/unacknowledged selections; accepted-record recovery was not exercised.",
+    "Artifact hashes identify local complete bundles. Durable external bundle publication is a separate recorded step."
+  ]
+}

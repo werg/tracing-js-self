@@ -45,21 +45,29 @@ function entry(controller,record,api){
   api.require(call?.schema===ASYNC_CALL_STATE_V8&&call.owner===controller.rootInvocation&&call.invocation===record.invocation,
     'execution Promise does not own this async invocation');return {node,call};
 }
-function scope(controller){return {receiver:copy(controller.receiver??U),aliases:[...controller.captureAliases]};}
-function restoreScope(controller,saved){controller.receiver=copy(saved.receiver);controller.captureAliases=new Map(saved.aliases);}
+function scope(controller){return {receiver:copy(controller.receiver??U),aliases:[...controller.captureAliases],
+  pending:copy(controller.pending??null)};}
+function restoreScope(controller,saved){controller.receiver=copy(saved.receiver);controller.captureAliases=new Map(saved.aliases);
+  controller.pending=copy(saved.pending);}
+function ownPending(controller,invocation){
+  const pending=controller.pending;
+  if(pending?.handler?.schema!=='semantic-handler-scopes/1')return copy(pending??null);
+  const frames=pending.handler.frames.filter(frame=>frame.invocation===invocation);
+  return frames.length?{kind:'cleanup',value:U,handler:{schema:pending.handler.schema,frames:copy(frames)}}:null;
+}
 function detach(controller,call,api){
-  api.require(controller.stack.at(-1)===call.invocation,'async body is not active');
+  api.require(controller.stack.at(-1)===call.invocation&&call.resumeScope,'async body is not active or lost its caller scope');
   if(call.attached){
     const frame=controller.protocol.callFrames.at(-1);
     api.require(frame?.child===call.invocation&&frame.parent===call.parent&&controller.stack.at(-2)===call.parent,
       'async first suspension lost its caller scope');
     controller.protocol.callFrames.pop();controller.stack.pop();
-    restoreScope(controller,{receiver:frame.priorReceiver,aliases:frame.priorAliases});
   }else{
     api.require(controller.stack.length===1&&!controller.activeJob&&call.resumeScope,
       'detached async turn has a foreign caller or job');
-    controller.stack.pop();restoreScope(controller,call.resumeScope);call.resumeScope=null;
+    controller.stack.pop();
   }
+  restoreScope(controller,call.resumeScope);call.resumeScope=null;
 }
 export function applyAsyncCallRecordV8(controller,record,api){
   if(!validateAsyncCallRecordV8(record,{value:value=>api.known(controller,value)}))return false;
@@ -76,11 +84,11 @@ export function applyAsyncCallRecordV8(controller,record,api){
       !controller.protocol.promiseExecutors?.capabilities.some(row=>row.promise===record.promise),
       'async call requires a fresh unclaimed execution Promise');
     api.require(entries(controller).length<bound,'async call bound');
-    const parent=controller.stack.at(-1);api.require(parent,'async call requires its active parent');
+    const parent=controller.stack.at(-1),prior=scope(controller);api.require(parent,'async call requires its active parent');
     api.call(controller,{child:record.child,callee:record.callee,receiver:record.receiver,arguments:record.arguments},{async:true});
     node.asyncCall={schema:ASYNC_CALL_STATE_V8,owner:controller.rootInvocation,invocation:record.child,
       callee:copy(record.callee),receiver:copy(controller.receiver),arguments:copy(record.arguments),parent,
-      phase:'running',attached:true,continuations:[],resumeScope:null,completion:null};return true;
+      phase:'running',attached:true,continuations:[],resumeScope:prior,completion:null};return true;
   }
   const {node,call}=entry(controller,record,api);
   if(record.kind==='async.await'){
@@ -90,10 +98,10 @@ export function applyAsyncCallRecordV8(controller,record,api){
     api.require(!controller.continuations.has(record.continuation)&&!controller.jobs.has(record.continuation),
       'continuation identity is not fresh');
     api.require(call.continuations.length<bound,'async await bound');
-    const saved=scope(controller),attached=call.attached;
+    const saved=scope(controller),pending=ownPending(controller,call.invocation),attached=call.attached;
     detach(controller,call,api);
     controller.continuations.set(record.continuation,{state:'waiting',promise:record.awaited,invocation:call.invocation,
-      sequence:++controller.scheduler.registration,activeJob:null,captureAliases:saved.aliases,receiver:saved.receiver});
+      sequence:++controller.scheduler.registration,activeJob:null,captureAliases:saved.aliases,receiver:saved.receiver,pending});
     call.attached=false;call.phase='suspended';call.continuations.push(record.continuation);
     if(attached)controller.lastReturn={kind:'return',value:['ref',record.promise]};
     controller.refreshReady();return true;
@@ -109,7 +117,8 @@ export function applyAsyncCallRecordV8(controller,record,api){
     const awaited=controller.promise(continuation.promise);
     api.require(awaited.state===record.status&&api.eq(awaited.result,record.value),'async resume contradicts settled dependency');
     call.resumeScope=scope(controller);controller.ready.shift();continuation.state='resumed';
-    controller.stack.push(call.invocation);restoreScope(controller,{receiver:continuation.receiver,aliases:continuation.captureAliases});
+    controller.stack.push(call.invocation);restoreScope(controller,{receiver:continuation.receiver,
+      aliases:continuation.captureAliases,pending:continuation.pending});
     call.phase='running';return true;
   }
   api.require(call.phase==='running'&&node.state==='pending'&&controller.stack.at(-1)===call.invocation,
@@ -185,6 +194,7 @@ export function restoreAsyncCallStateV8(controller,api){
       api.require(controller.heap.get(continuation.promise)?.kind==='promise','retained async awaited Promise identity');
       api.require(api.eq(continuation.receiver,call.receiver)&&api.eq(continuation.captureAliases,fn.captures.map(row=>[row.binding,row.cell])),
         'retained async continuation receiver or captured cells');
+      api.validatePendingScope(controller,continuation.pending,[call.invocation]);
       api.require(index===call.continuations.length-1&&call.phase==='suspended'?
         ['waiting','ready'].includes(continuation.state):continuation.state==='resumed','retained async continuation phase');
     }
@@ -192,7 +202,7 @@ export function restoreAsyncCallStateV8(controller,api){
     if(call.phase==='running'){
       api.require(node.state==='pending'&&call.completion===null&&controller.stack.includes(call.invocation),
         'retained running async body');
-      api.require(call.attached?frame?.parent===call.parent&&call.resumeScope===null:
+      api.require(call.attached?frame?.parent===call.parent&&call.resumeScope!==null:
         !frame&&controller.stack[0]===call.invocation&&call.resumeScope!==null&&!controller.activeJob,'retained async call scope');
       if(controller.stack.at(-1)===call.invocation){
         api.require(api.eq(controller.receiver,call.receiver)&&api.eq([...controller.captureAliases],fn.captures.map(row=>[row.binding,row.cell])),
@@ -211,7 +221,8 @@ export function restoreAsyncCallStateV8(controller,api){
       }
     }
     if(call.resumeScope!==null){
-      assertAlgorithmFields(call.resumeScope,['receiver','aliases'],'async idle scope');api.known(controller,call.resumeScope.receiver);
+      assertAlgorithmFields(call.resumeScope,['receiver','aliases','pending'],'async idle scope');api.known(controller,call.resumeScope.receiver);
+      api.validatePendingScope(controller,call.resumeScope.pending,call.attached?controller.stack.slice(0,controller.stack.indexOf(call.invocation)):[]);
       assertAlgorithmDataArray(call.resumeScope.aliases,'async idle aliases');
       const aliases=new Set();for(const pair of call.resumeScope.aliases){assertAlgorithmDataArray(pair,'async idle alias');
         api.require(pair.length===2&&pair.every(value=>typeof value==='string')&&!aliases.has(pair[0])&&controller.locals.has(pair[1]),

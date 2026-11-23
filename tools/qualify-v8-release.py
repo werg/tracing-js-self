@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -24,7 +25,7 @@ def require(condition, message):
         raise ValueError(message)
 
 
-def read(path):
+def decode(data):
     def unique(items):
         value = {}
         for key, item in items:
@@ -32,8 +33,12 @@ def read(path):
             value[key] = item
         return value
 
-    return json.loads(path.read_bytes(), object_pairs_hook=unique,
+    return json.loads(data, object_pairs_hook=unique,
                       parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
+
+
+def read(path):
+    return decode(path.read_bytes())
 
 
 def write(path, value):
@@ -45,6 +50,29 @@ def write(path, value):
 def git(root, *args):
     environment = {name: value for name, value in os.environ.items() if not name.startswith("GIT_")}
     return subprocess.check_output(["git", *args], cwd=root, env=environment, text=True).strip()
+
+
+def resolve_native_policy(path, native_revision):
+    """Bind this run to its explicitly selected checkout without changing the declaration."""
+    declared = path.read_bytes()
+    policy = decode(declared)
+    require(isinstance(policy, dict) and policy.get("schema") == "semantic-native-policy/8" and
+            policy.get("consumerRepository") == "werg/megatoken",
+            "Qualification requires the current independent native consumer policy")
+    require(isinstance(native_revision, str) and re.fullmatch(r"[0-9a-f]{40}", native_revision),
+            "Qualification requires an exact native checkout revision")
+    recorded = "consumerRevision" in policy
+    if recorded:
+        require(isinstance(policy["consumerRevision"], str) and
+                re.fullmatch(r"[0-9a-f]{40}", policy["consumerRevision"]),
+                "Qualification policy has an invalid recorded consumer revision")
+        require(policy["consumerRevision"] == native_revision,
+                "Qualification consumer differs from its exact recorded revision")
+    resolution = {"schema": "semantic-native-resolution/1", "repository": policy["consumerRepository"],
+                  "requestedBranch": None, "ref": native_revision, "revision": native_revision,
+                  "kind": "recorded-revision" if recorded else "selected-checkout",
+                  "declaredPolicySha256": hashlib.sha256(declared).hexdigest()}
+    return {**policy, "consumerRevision": native_revision}, declared, resolution
 
 
 def verify_task_binding_snapshot(rows, registry, snapshot):
@@ -106,12 +134,13 @@ def verify_task_binding_snapshot(rows, registry, snapshot):
 def qualify(args):
     producer = Path(__file__).resolve().parents[1]
     native = args.megatoken.resolve(strict=True)
-    output = args.out.absolute()
+    output = args.out.resolve()
     tokenizer = args.tokenizer.resolve(strict=True)
     policy_path = (args.native_policy or producer / "contracts/semantic-native-policy-v8.json").resolve(strict=True)
-    policy = read(policy_path)
     producer_revision, native_revision = git(producer, "rev-parse", "HEAD"), git(native, "rev-parse", "HEAD")
-    require(native_revision == policy["consumerRevision"], "Qualification consumer differs from its exact pin")
+    policy, declared_policy, resolution = resolve_native_policy(policy_path, native_revision)
+    require(all(Path(git(root, "rev-parse", "--show-toplevel")).resolve() == root
+                for root in (producer, native)), "Qualification requires repository roots")
     require(not git(producer, "status", "--porcelain", "--untracked-files=all") and
             not git(native, "status", "--porcelain", "--untracked-files=all"),
             "Qualification requires clean committed source checkouts")
@@ -120,6 +149,27 @@ def qualify(args):
                 for root in (producer, native, tokenizer, policy_path)),
             "Qualification output must be disjoint from source and supplied assets")
     output.mkdir(mode=0o700)
+    # Keep the exact supplied declaration and the run's resolved policy outside
+    # original-inputs: that directory is deliberately relocated during restore.
+    with (output / "declared-native-policy-v8.json").open("xb") as stream:
+        stream.write(declared_policy)
+    policy_path = output / "semantic-native-policy-v8.json"
+    if resolution["kind"] == "recorded-revision":
+        with policy_path.open("xb") as stream:
+            stream.write(declared_policy)
+    else:
+        write(policy_path, policy)
+    write(output / "semantic-native-policy-v8.json.resolution.json", resolution)
+    policy_evidence = {name: hashlib.sha256((output / name).read_bytes()).hexdigest() for name in
+                       ("declared-native-policy-v8.json", "semantic-native-policy-v8.json",
+                        "semantic-native-policy-v8.json.resolution.json")}
+
+    def verify_policy_evidence():
+        require(all((output / name).is_file() and not (output / name).is_symlink() and
+                    hashlib.sha256((output / name).read_bytes()).hexdigest() == digest
+                    for name, digest in policy_evidence.items()),
+                "Retained run policy evidence changed after resolution")
+
     inputs, logs = output / "original-inputs", output / "logs"
     inputs.mkdir(mode=0o700)
     logs.mkdir(mode=0o700)
@@ -140,6 +190,7 @@ def qualify(args):
         print(json.dumps(stage), flush=True)
         started = time.monotonic()
         try:
+            verify_policy_evidence()
             with (logs / (name + ".stdout.log")).open("xb") as stdout, \
                     (logs / (name + ".stderr.log")).open("xb") as stderr:
                 process = subprocess.Popen(stage["command"], cwd=producer, env=environment,
@@ -167,6 +218,7 @@ def qualify(args):
                     for reader in readers:
                         reader.join()
             stage["exitCode"] = process.returncode
+            verify_policy_evidence()
             require((process.returncode == 0) is expected_success,
                     "Release qualification stage has an unexpected outcome: " + name)
             stage["status"] = "passed" if expected_success else "refused-as-required"
@@ -185,11 +237,24 @@ def qualify(args):
                        "--inputs", "all", "--workers", "2", "--out", qualification,
                        "--megatoken", native, "--python", args.python, "--tokenizer", local_tokenizer,
                        "--native-policy", policy_path])
+    population_path = inputs / "support-population.json"
+    run("verify-current-support-population", ["node", producer / "tools/verify-v8-release-population.mjs",
+                                             qualification, "--output", population_path])
+    population = read(population_path)
+    population_sha256 = hashlib.sha256(population_path.read_bytes()).hexdigest()
     report = read(qualification / "report.json")
     registry = read(qualification / "family-registry.json")
     rows, ids = report["rows"], [row["id"] for row in registry["sources"]]
     split_by_id = {source: component["split"] for component in registry["components"]
                    for source in component["sourceIds"]}
+    split_counts = population["splitCounts"]
+    require(population["schema"] == "semantic-v8-release-population/1" and
+            population["status"] == "verified" and population["producerRevision"] == producer_revision and
+            population["populationCount"] == 64 and population["registryDigest"] == registry["digest"] and
+            len(population["sourceIds"]) == 64 and set(population["sourceIds"]) == set(ids) and
+            set(split_counts) == {"train", "validation", "test"} and
+            all(type(count) is int and count > 0 for count in split_counts.values()),
+            "Release population differs from the complete current support cohort")
     require(report["population"] == "se-support" and report["declared"] == 64 and
             report["sourceQualified"] == report["nativeAdmitted"] == 64 and not report["preparationOnly"] and
             len(rows) == len(set(ids)) == len(ids) == len(split_by_id) == 64 and
@@ -197,7 +262,7 @@ def qualify(args):
             {row["sourceId"] for row in rows} == set(ids) == set(split_by_id) and
             all(row["source"] == row["native"] == "passed" for row in rows) and
             {split: list(split_by_id.values()).count(split) for split in ("train", "validation", "test")}
-            == {"train": 48, "validation": 12, "test": 4}, "Complete frozen 64-source admission did not pass")
+            == split_counts, "Complete frozen 64-source admission did not pass")
     task_binding = inputs / "task-binding-snapshot.json"
     run("bind-original-64-source-tasks", ["node", producer / "tools/verify-v8-release-campaign.mjs",
                                          qualification, "--output", task_binding])
@@ -273,10 +338,18 @@ def qualify(args):
             restored_result["optimizerUpdatesPerformed"] == restored_result["decoderForwardPassesPerformed"] == 0 and
             restored_result["learnedSuccess"] is None and restored_result["defaultPromotion"] is False,
             "Restoration did not prove the exact bounded release claims")
+    verify_policy_evidence()
+    require(hashlib.sha256((retained / population_path.name).read_bytes()).hexdigest() == population_sha256,
+            "Retained support population evidence changed during qualification")
     result = {"schema": "semantic-v8-release-qualification/1", "status": "passed",
               "producerRevision": producer_revision, "consumerRevision": native_revision,
+              "nativePolicySha256": policy_evidence[policy_path.name],
+              "nativePolicyEvidenceSha256": policy_evidence,
+              "nativePolicyResolution": resolution,
               "declaredSources": 64, "sourceQualified": 64, "nativeAdmitted": 64,
-              "splitCounts": {"train": 48, "validation": 12, "test": 4},
+              "splitCounts": split_counts,
+              "supportCohortDigest": population["cohortDigest"],
+              "supportPopulationSha256": population_sha256,
               "registryDigest": registry["digest"], "archiveSha256": checksum,
               "archiveBytes": package_result["archive"]["bytes"],
               "manifestIdentity": package_result["manifestIdentity"],

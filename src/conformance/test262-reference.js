@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {parse as parseSyntax} from 'acorn';
 import {prepareOfficialTest262Variant,requiredOriginalHostCapabilities,test262VariantSource} from './test262-runner.js';
+import {createTest262ReferenceCompletion} from './test262-reference-completion.js';
 
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const decode=bytes=>typeof bytes==='string'?bytes:
@@ -96,17 +97,17 @@ export function executeOfficialTest262Reference(options={}){
   }
   if(negative?.phase==='parse')return answer('failed','Expected a parse-time error but original source parsed successfully',{phase:'parse'});
   let ast;
-  try{ast=parseSyntax(code,{ecmaVersion:2026,sourceType:'script'});}
+  try{ast=parseSyntax(code,{ecmaVersion:'latest',sourceType:'script'});}
   catch{return answer('unsupported','Reference host-capability preflight does not support this grammar',{phase:'environment'});}
   const missing=requiredOriginalHostCapabilities(ast,variant);
   if(prepared.missingHarness)missing.push(prepared.missingHarness);
   if(missing.length)return answer('environment_unavailable','Unavailable reference capabilities: '+missing.join(', '),
     {phase:'environment',missingCapabilities:missing});
-  const output=[],timeout=profile.hostProfile.reference.timeoutMs;
+  const completion=createTest262ReferenceCompletion(),output=completion.output,timeout=profile.hostProfile.reference.timeoutMs;
   const context=createContext(Object.create(null),{codeGeneration:{strings:true,wasm:false},microtaskMode:'afterEvaluate'});
   Object.defineProperty(context,'print',{value:message=>{
     if(output.length>=10000)throw new RangeError('Reference print budget exceeded');
-    output.push(String(message));
+    completion.print(String(message));
   },writable:true,configurable:true});
   const classifyError=(error,phase)=>{
     if(error?.code==='ERR_SCRIPT_EXECUTION_TIMEOUT'||/Reference print budget exceeded/.test(error?.message??''))
@@ -114,8 +115,10 @@ export function executeOfficialTest262Reference(options={}){
     return null;
   };
   try{
-    for(const file of prepared.harness)
+    for(const file of prepared.harness){
       new Script(file.text,{filename:file.path}).runInContext(context,{timeout,displayErrors:false});
+      if(file.path==='harness/doneprintHandle.js')completion.bind(context);
+    }
   }catch(error){return classifyError(error,'harness')??answer('failed',
     'Original reference harness failed before the test: '+error.name,{phase:'harness',errorType:error.name});}
   // Capture the original realm constructor before test declaration
@@ -140,14 +143,9 @@ export function executeOfficialTest262Reference(options={}){
   }
   if(negative)return answer('failed','Expected a runtime error but original source completed',{phase:'runtime'});
   if(variant.metadata.flags.includes('async')){
-    const completions=output.filter(text=>text==='Test262:AsyncTestComplete');
-    const failures=output.filter(text=>text.startsWith('Test262:AsyncTestFailure:'));
-    if(failures.length)return answer('failed','Original reference async harness reported failure',
-      {phase:'runtime',completionPrints:completions.length,failurePrints:failures.length});
-    if(completions.length>1)return answer('failed','Reference async completion occurred more than once',
-      {phase:'runtime',completionPrints:completions.length});
-    if(completions.length!==1)return answer('resource_limited','No original reference async completion before quiescence',
-      {phase:'runtime',completionPrints:0});
+    const {status,reason,...details}=completion.result();
+    return answer(status,reason,{phase:'runtime',harness:prepared.harness.map(file=>file.path),
+      printCount:output.length,...details});
   }
   return answer('passed','Original source and original reference assertions completed',
     {phase:'runtime',harness:prepared.harness.map(file=>file.path),printCount:output.length});

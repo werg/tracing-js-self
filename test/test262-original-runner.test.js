@@ -76,6 +76,186 @@ test('runtime negatives require actual owned error identity and cannot use names
   for(const options of missing)assert.equal(executeOfficialTest262Variant(options).status,'unsupported');
 });
 
+test('unsupported Object.defineProperty object storage cannot satisfy runtime-negative TypeError',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'Object.defineProperty(Promise.resolve(0),"constructor",{value:Promise});',
+    'var define=Object.defineProperty;define(Promise.resolve(0),"x",{value:1});',
+    'Object.defineProperty(function(){},"x",{value:1});',
+    'Object.defineProperty(Object.is,"x",{value:1});',
+    'Object.defineProperty({},"x",Promise.resolve(0));',
+    'Object.defineProperty({},"x",function(){});'
+  ])for(const {owned,reference} of both(body,{metadata})){
+    assert.equal(owned.status,'unsupported',owned.reason);
+    assert.match(owned.reason,/Object.defineProperty (?:descriptor )?requires owned ordinary storage/);
+    assert.equal(reference.status,'failed',reference.reason);
+  }
+});
+
+test('Object.defineProperty primitive targets and descriptors retain genuine guest TypeErrors',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const primitive of ['undefined','null','false','0','"value"','0n','Symbol("key")']){
+    statuses(both('Object.defineProperty('+primitive+',"x",{});',{metadata}),'passed');
+    statuses(both('Object.defineProperty({},"x",'+primitive+');',{metadata}),'passed');
+  }
+});
+
+test('catching unsupported Object.defineProperty storage cannot manufacture a passing original script',()=>{
+  for(const {owned,reference} of both('try{Object.defineProperty(Promise.resolve(0),"x",{value:1});}catch(error){}')){
+    assert.equal(owned.status,'unsupported',owned.reason);
+    assert.equal(reference.status,'passed',reference.reason);
+  }
+});
+
+test('unsupported prototype and extensibility storage cannot manufacture runtime-negative TypeErrors',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'Object.getPrototypeOf(Promise.resolve(0));',
+    'Object.getPrototypeOf(0);',
+    'Object.getPrototypeOf(Object);',
+    'Object.setPrototypeOf(Promise.resolve(0),null);',
+    'Object.create(Promise.resolve(0));',
+    'Object.create(Object);',
+    'Object.setPrototypeOf({},Promise.resolve(0));',
+    'if(!Object.isExtensible(Promise.resolve(0)))throw new TypeError();',
+    'var object={};Object.preventExtensions(object);'+
+      'if(!Object.isFrozen(new Proxy(object,{})))throw new TypeError();'
+  ])for(const {owned,reference} of both(body,{metadata})){
+    assert.equal(owned.status,'unsupported',owned.reason);
+    assert.match(owned.reason,/requires owned ordinary storage/);
+    assert.equal(reference.status,'failed',reference.reason);
+  }
+});
+
+test('prototype primitive errors, invalid prototypes and ordinary invariants remain genuine guest errors',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'Object.create(undefined);','Object.create(0);','Object.create(Symbol("key"));',
+    'Object.getPrototypeOf(null);','Object.getPrototypeOf(undefined);',
+    'Object.setPrototypeOf(null,null);','Object.setPrototypeOf(undefined,null);',
+    'Object.setPrototypeOf({},0);','Object.setPrototypeOf(1,0);',
+    'Object.setPrototypeOf(Promise.resolve(0),0);',
+    'var object={};Object.setPrototypeOf(object,object);',
+    'var object={};Object.preventExtensions(object);Object.setPrototypeOf(object,null);'
+  ])statuses(both(body,{metadata}),'passed');
+  statuses(both('assert.sameValue(Object.setPrototypeOf(1,null),1);'+
+    'assert.sameValue(Object.setPrototypeOf(false,{}),false);'+
+    'assert.sameValue(Object.setPrototypeOf("value",Object.prototype),"value");'+
+    'assert.sameValue(Object.setPrototypeOf(0n,null),0n);'+
+    'var key=Symbol("key");assert.sameValue(Object.setPrototypeOf(key,null),key);'),'passed');
+});
+
+test('prototype and extensibility implementation refusals cannot be caught by original source',()=>{
+  for(const body of [
+    'Object.getPrototypeOf(Promise.resolve(0));',
+    'Object.setPrototypeOf(Promise.resolve(0),null);',
+    'Object.create(Promise.resolve(0));',
+    'Object.setPrototypeOf({},Promise.resolve(0));',
+    'Object.preventExtensions(Promise.resolve(0));',
+    'Object.isExtensible(Promise.resolve(0));',
+    'Object.isFrozen(new Proxy({},{}));'
+  ])for(const {owned,reference} of both('try{'+body+'}catch(error){}')){
+    assert.equal(owned.status,'unsupported',owned.reason);
+    assert.match(owned.reason,/requires owned ordinary storage/);
+    assert.equal(reference.status,'passed',reference.reason);
+  }
+});
+
+test('namespace Reflect.defineProperty distinguishes unsupported descriptors from primitive errors',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n',
+    dependencies={'test/dep_FIXTURE.js':'export const value=1;'};
+  for(const descriptor of ['Promise.resolve(0)','function(){}','0','null']){
+    const [options]=moduleFixture('import * as ns from "./dep_FIXTURE.js";Reflect.defineProperty(ns,"value",'+descriptor+');',
+      {metadata,dependencies});
+    const owned=executeOfficialTest262Variant(options),reference=executeOfficialTest262Reference(options);
+    const primitive=['0','null'].includes(descriptor);
+    assert.equal(owned.status,primitive?'passed':'unsupported',owned.reason);
+    assert.equal(reference.status,primitive?'passed':'failed',reference.reason);
+    if(!primitive)assert.match(owned.reason,/Reflect.defineProperty descriptor requires owned ordinary storage/);
+  }
+});
+
+test('unowned callable and prototype-named accessor definitions cannot manufacture guest outcomes',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'Object.defineProperty({},"x",{get:Object.is});',
+    'Object.defineProperty({},"x",{set:Number});',
+    'Object.defineProperty({},"x",{get:Object.getPrototypeOf(function(){})});',
+    'Object.defineProperty({},"__proto__",{get:function(){return 1;}});',
+    'Object.defineProperty({},"__proto__",{set:function(value){}});'
+  ]){
+    for(const {owned,reference} of both(body,{metadata})){
+      assert.equal(owned.status,'unsupported',owned.reason);
+      assert.match(owned.reason,/Accessor definition requires owned (?:callable|prototype-named) storage/);
+      assert.equal(reference.status,'failed',reference.reason);
+    }
+    for(const {owned,reference} of both('try{'+body+'}catch(error){}')){
+      assert.equal(owned.status,'unsupported',owned.reason);
+      assert.equal(reference.status,'passed',reference.reason);
+    }
+  }
+});
+
+test('invalid accessor types and non-configurable property invariants retain genuine guest TypeErrors',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'Object.defineProperty({},"x",{get:0});',
+    'Object.defineProperty({},"x",{set:{}});',
+    'Object.defineProperty({},"x",{get:Promise.resolve(0)});',
+    'Object.defineProperty({},"x",{get:function(){},value:0});',
+    'Object.defineProperty([],"length",{get:function(){}});',
+    'Object.defineProperty([],"length",{get:Object.is});',
+    'var object={};Object.defineProperty(object,"x",{get:function(){}});'+
+      'Object.defineProperty(object,"x",{get:Object.is});',
+    'var object={};Object.defineProperty(object,"__proto__",{value:1});'+
+      'Object.defineProperty(object,"__proto__",{get:function(){}});'
+  ])statuses(both(body,{metadata}),'passed');
+});
+
+test('incomplete function descriptors cannot manufacture a frozen-object runtime-negative pass',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const initializer of ['function(){}','async function(){}','()=>{}']){
+    const body='var f='+initializer+';Object.preventExtensions(f);if(Object.isFrozen(f))throw new TypeError();';
+    for(const {owned,reference} of both(body,{metadata})){
+      assert.equal(owned.status,'unsupported',owned.reason);
+      assert.match(owned.reason,/Object.isFrozen requires owned complete function descriptors/);
+      assert.equal(reference.status,'failed',reference.reason);
+    }
+    for(const {owned,reference} of both('try{'+body+'}catch(error){}')){
+      assert.equal(owned.status,'unsupported',owned.reason);
+      assert.equal(reference.status,'passed',reference.reason);
+    }
+  }
+  statuses(both('var f=function*(){};Object.preventExtensions(f);assert.sameValue(Object.isFrozen(f),false);'),'passed');
+});
+
+test('unmodeled Proxy object storage cannot manufacture constructor-negative or caught-error passes',()=>{
+  const metadata='negative:\n  phase: runtime\n  type: TypeError\n';
+  for(const body of [
+    'new Proxy(function(){},{});',
+    'new Proxy(Promise.resolve(0),{});',
+    'new Proxy(Object.is,{});',
+    'new Proxy({},function(){});',
+    'new Proxy({},Promise.resolve(0));',
+    'new Proxy({},new Proxy({},{}));'
+  ]){
+    for(const {owned,reference} of both(body,{metadata})){
+      assert.equal(owned.status,'unsupported',owned.reason);
+      assert.match(owned.reason,/Proxy construction requires owned ordinary target and handler storage/);
+      assert.equal(reference.status,'failed',reference.reason);
+    }
+    for(const {owned,reference} of both('try{'+body+'}catch(error){}')){
+      assert.equal(owned.status,'unsupported',owned.reason);
+      assert.equal(reference.status,'passed',reference.reason);
+    }
+  }
+  for(const primitive of ['undefined','null','false','0','"value"','0n','Symbol("key")']){
+    statuses(both('new Proxy('+primitive+',{});',{metadata}),'passed');
+    statuses(both('new Proxy({},'+primitive+');',{metadata}),'passed');
+  }
+  statuses(both('new Proxy(function(){},0);',{metadata}),'passed');
+});
+
 test('raw preserves exact bytes and loads no implicit harness or wrapper',()=>{
   const [options]=fixture('if(typeof assert!=="undefined")throw 1;', {metadata:'flags: [raw]\n'});
   assert.equal(options.variant.mode,'raw');
@@ -126,8 +306,62 @@ test('async uses original doneprintHandle with exact completion and meaningful f
   statuses(both('$DONE(new Error("bad"));',settings),'failed');
   statuses(both('$DONE();$DONE();',settings),'failed');
   statuses(both('Promise.resolve(1);',settings),'resource_limited');
-  for(const options of fixture('function $DONE(){print("Test262:AsyncTestComplete");}$DONE();',settings))
-    assert.equal(executeOfficialTest262Variant(options).status,'resource_limited');
+  statuses(both('function $DONE(){print("Test262:AsyncTestComplete");}$DONE();',settings),'failed');
+  statuses(both('print("Test262:AsyncTestComplete");',settings),'failed');
+  statuses(both('__consolePrintHandle__=function(){};$DONE();print("Test262:AsyncTestComplete");',settings),'failed');
+  statuses(both('var done=$DONE;$DONE=function(){};done();',settings),'passed');
+  statuses(both('new $DONE();',settings),'passed');
+  statuses(both('var n=0;__consolePrintHandle__=function(){if(++n===1)print("Test262:AsyncTestComplete");};$DONE();$DONE();',settings),'failed');
+});
+
+test('module reference async completion requires the original harness call and its output',()=>{
+  for(const [body,status] of [
+    ['await Promise.resolve();$DONE();','passed'],
+    ['print("Test262:AsyncTestComplete");','failed'],
+    ['$DONE=function(){print("Test262:AsyncTestComplete");};$DONE();','failed'],
+    ['__consolePrintHandle__=function(){};$DONE();print("Test262:AsyncTestComplete");','failed'],
+    ['var done=$DONE;$DONE=function(){};done();','passed'],
+    ['new $DONE();','passed'],
+    ['var n=0;__consolePrintHandle__=function(){if(++n===1)print("Test262:AsyncTestComplete");};$DONE();$DONE();','failed']
+  ]){
+    const [options]=moduleFixture(body,{flags:'module, async'});
+    const result=executeOfficialTest262Reference(options);
+    assert.equal(result.status,status,body+': '+result.reason);
+  }
+});
+
+test('async error arguments and caught completion exceptions cannot be rewritten into success',()=>{
+  const controls=[
+    '__consolePrintHandle__=function(){print("Test262:AsyncTestComplete");};$DONE(new Error("bad"));',
+    '__consolePrintHandle__=function(){print("Test262:AsyncTestComplete");};new $DONE("bad");',
+    '__consolePrintHandle__=function(){print("Test262:AsyncTestComplete");throw new Error("print failed");};try{$DONE();}catch(error){}',
+    'try{$DONE({get name(){print("Test262:AsyncTestComplete");throw new Error("getter failed");}});}catch(error){}'
+  ];
+  for(const body of controls){
+    const options=[...fixture(body,{metadata:'flags: [async]\n'}),...moduleFixture(body,{flags:'module, async'})];
+    for(const option of options)for(const execute of [executeOfficialTest262Variant,executeOfficialTest262Reference]){
+      const result=execute(option);
+      assert.equal(result.status,'failed',option.variant.mode+': '+body+': '+result.reason);
+      assert.equal(result.completionCalls,1);
+      assert.equal(result.completionPrints,1);
+      assert(result.completionErrorCalls>0||result.completionAbruptCalls>0);
+    }
+  }
+  for(const argument of ['undefined','null','false','0','-0','NaN','""','0n'])
+    statuses(both('$DONE('+argument+');',{metadata:'flags: [async]\n'}),'passed');
+});
+
+test('raw async metadata has no declared completion facility and cannot yield successful evidence',()=>{
+  // The current routing contract rejects raw+async: raw does not install the
+  // original doneprintHandle harness. Keep that gap visible before execution.
+  const [options]=fixture('print("Test262:AsyncTestComplete");',{metadata:'flags: [raw, async]\n'});
+  assert.equal(options.variant.mode,'unclassified');
+  assert.match(options.variant.metadataError,/Conflicting or unknown/);
+  for(const execute of [executeOfficialTest262Variant,executeOfficialTest262Reference]){
+    const result=execute(options);
+    assert.equal(result.status,'infrastructure_error');
+    assert.equal(result.executionPerformed,false);
+  }
 });
 
 test('fresh machine and realm prevent script globals leaking between variants or retries',()=>{
@@ -136,6 +370,20 @@ test('fresh machine and realm prevent script globals leaking between variants or
     assert.equal(executeOfficialTest262Variant(input).status,'passed');
     assert.equal(executeOfficialTest262Reference(input).status,'passed');
   }
+});
+
+test('source-bound variants cannot substitute parser, engine or host settings for the actual runner',()=>{
+  const profile=ownedTest262Profile();
+  for(const changed of [
+    {...profile,parser:{...profile.parser,version:'substituted'}},
+    {...profile,parser:{...profile.parser,ecmaVersion:2015}},
+    {...profile,hostProfile:{...profile.hostProfile,reference:{...profile.hostProfile.reference,node:'substituted'}}}
+  ])for(const {owned,reference} of both('assert.sameValue(1,1);',{profile:changed})){
+    assert.equal(owned.status,'infrastructure_error');assert.equal(reference.status,'infrastructure_error');
+    assert.equal(owned.executionPerformed,false);assert.equal(reference.executionPerformed,false);
+    assert.match(owned.reason,/actual parser, runtime or execution settings/);
+  }
+  assert.equal(ownedTest262Profile({referenceTimeoutMs:5000}).hostProfile.reference.timeoutMs,5000);
 });
 
 test('missing original includes, changed bytes, hosts and modules keep distinct dispositions',()=>{
@@ -156,7 +404,7 @@ test('missing original includes, changed bytes, hosts and modules keep distinct 
 
 test('owned and native module runners bind the complete pinned fixture graph',()=>{
   const runnerProfile=ownedTest262Profile();
-  assert.equal(runnerProfile.hostProfile.moduleResolver,'frozen-static-relative-graph/1');
+  assert.equal(runnerProfile.hostProfile.moduleResolver,'content-bound-static-relative-graph/1');
   assert.equal(runnerProfile.hostProfile.moduleExecution.profile,'evaluated-module/1');
   assert.equal(runnerProfile.hostProfile.moduleExecution.sourceCorrespondence,false);
   assert.equal(runnerProfile.hostProfile.moduleExecution.dynamicImport,'unsupported');
@@ -610,6 +858,20 @@ test('known absent global intrinsics and the global receiver cannot create false
   const globals=freeTest262Identifiers(parse('let Map=1;function f(JSON){return JSON.x+missing;}if(1){let Date=2;}Date;',
     {ecmaVersion:2026}));
   assert.deepEqual(globals,['Date','missing']);
+});
+
+test('missing Boolean support cannot pass a later expected ReferenceError or hide guest-error details',()=>{
+  for(const {owned,reference} of both('Boolean(true);throw new ReferenceError("later");',{
+    metadata:'negative:\n  phase: runtime\n  type: ReferenceError\n'
+  })){
+    assert.equal(owned.status,'unsupported');assert.match(owned.reason,/Boolean/);
+    assert.equal(reference.status,'passed');
+  }
+  for(const {owned} of both('throw new TypeError("visible failure");')){
+    assert.equal(owned.status,'failed');assert.equal(owned.errorType,'TypeError');
+    assert.equal(owned.completion.type,'throw');
+    assert.deepEqual(owned.completion,owned.stages.ownedExecution.completion);
+  }
 });
 
 test('resource bounds and corrupt trace validation never satisfy a runtime-negative test',t=>{

@@ -4,11 +4,13 @@ import {mkdtempSync,rmSync,writeFileSync,readFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
+import {gunzipSync} from 'node:zlib';
 import {qualificationProfiles,readQualificationCostInputs,summarizeQualificationCosts} from '../src/semantic/qualification-costs-v8.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
 
 test('qualification retains actual bounded execution profiles separately from frontend acceptance',()=>{
-  const fixtures=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url)));
+  const fixtures=JSON.parse(gunzipSync(Buffer.from(readFileSync(
+    new URL('./fixtures/semantic-protocol-region-v8.json.gz.b64',import.meta.url),'utf8'),'base64')).toString());
   const ordinary=fixtures.cases.find(row=>row.artifact.sidecar.protocolProfile==='symbols-ordinary-properties/1'),
     extended=fixtures.cases.find(row=>row.artifact.sidecar.protocolExtensions?.length);
   assert(ordinary&&extended,'both base and extended source profiles must remain in interoperability');

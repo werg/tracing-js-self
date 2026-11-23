@@ -35,7 +35,8 @@ for(const fixture of fixtures){
 }
 const protocolFixtures=JSON.parse(await readFile(new URL('../test/fixtures/semantic-protocol-v8.json',import.meta.url),'utf8'));
 const iteratorFixtures=JSON.parse(await readFile(new URL('../test/fixtures/semantic-iterator-v8.json',import.meta.url),'utf8'));
-const protocolSources=JSON.parse(await readFile(new URL('../test/fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
+const protocolSources=JSON.parse(gunzipSync(Buffer.from(await readFile(
+  new URL('../test/fixtures/semantic-protocol-region-v8.json.gz.b64',import.meta.url),'utf8'),'base64')).toString());
 if(protocolSources.schema!=='semantic-protocol-region-fixtures/1'||!Array.isArray(protocolSources.cases)||!protocolSources.cases.length)
   throw new Error('Missing source-qualified protocol interoperability fixtures');
 // A manifest digest proves only that bytes were pinned. Before pinning those
@@ -80,7 +81,11 @@ const manifest=[...examples.map(row=>({id:row.id,publicDigest:hashAlgorithmData(
     publicDigest:hashAlgorithmData(row.public),contextDigest:hashAlgorithmData(row.contexts)}))];
 const contract=semanticV8Contract(records,manifest),interop={schema:'semantic-v8-interoperability/1',
   contractDigest:contract.digest,interoperabilityDigest:contract.interoperabilityDigest,examples};
-for(const [relative,value] of [['../contracts/semantic-execution-v8.json',contract],['../test/fixtures/semantic-regions-v8.json',interop]]){
+const policyPath=new URL('../contracts/semantic-native-policy-v8.json',import.meta.url),
+  policy={...JSON.parse(await readFile(policyPath,'utf8')),contractDigest:contract.digest,
+    fixtureDigest:contract.fixtureDigest,interoperabilityDigest:contract.interoperabilityDigest};
+for(const [relative,value] of [['../contracts/semantic-execution-v8.json',contract],['../test/fixtures/semantic-regions-v8.json',interop],
+  ['../contracts/semantic-native-policy-v8.json',policy]]){
   const path=fileURLToPath(new URL(relative,import.meta.url)),bytes=JSON.stringify(value,null,2)+'\n';
   if(check){if(await readFile(path,'utf8')!==bytes)throw new Error('Regenerate '+path);}
   else await writeFile(path,bytes);

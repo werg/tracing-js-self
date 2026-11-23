@@ -1,0 +1,403 @@
+{
+  "schema": "test262-current-observation/1",
+  "sourceRevision": "2a1ade303f72d3de80565c921d685222405c32ce",
+  "producerRevision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+  "catalogDigest": "67799da9e7d4dd08333fe38a75b7d738d9fd14ffc40a2e17d4d00254781a47de",
+  "fullCatalogSummary": {
+    "discoveredFiles": 54159,
+    "testFiles": 53801,
+    "fixtureFiles": 294,
+    "harnessFiles": 43,
+    "resourceFiles": 21,
+    "knownVariants": 103360,
+    "unresolvedMetadataFiles": 0,
+    "variantPopulationComplete": true,
+    "missingHarnessFiles": [],
+    "specificationPinned": false
+  },
+  "acquiredPopulation": 103360,
+  "selected": 40,
+  "attempts": 120,
+  "runPolicy": {
+    "stages": [
+      "parse",
+      "owned",
+      "reference"
+    ],
+    "jobs": 2,
+    "workerTimeoutMs": 60000,
+    "heapMb": 384,
+    "selection": {
+      "paths": "test/language/statements/for-await-of/async-from-sync-iterator-continuation-abrupt-completion-get-constructor.js,test/language/statements/for-await-of/iterator-close-non-throw-get-method-abrupt.js,test/language/statements/for-await-of/iterator-close-non-throw-get-method-is-null.js,test/language/statements/for-await-of/iterator-close-non-throw-get-method-non-callable.js,test/language/statements/for-await-of/iterator-close-throw-get-method-abrupt.js,test/language/statements/for-await-of/iterator-close-throw-get-method-non-callable.js,test/language/statements/for-await-of/ticks-with-async-iter-resolved-promise-and-constructor-lookup-two.js,test/language/statements/for-await-of/ticks-with-async-iter-resolved-promise-and-constructor-lookup.js,test/language/statements/for-await-of/ticks-with-sync-iter-resolved-promise-and-constructor-lookup.js,test/language/statements/for-of/iterator-close-non-object.js,test/language/statements/for-of/iterator-close-non-throw-get-method-abrupt.js,test/language/statements/for-of/iterator-close-non-throw-get-method-is-null.js,test/language/statements/for-of/iterator-close-non-throw-get-method-non-callable.js,test/language/statements/for-of/iterator-close-throw-get-method-abrupt.js,test/language/statements/for-of/iterator-close-throw-get-method-non-callable.js,test/language/statements/for-of/iterator-close-via-break.js,test/language/statements/for-of/iterator-close-via-continue.js,test/language/statements/for-of/iterator-close-via-return.js,test/language/statements/for-of/iterator-close-via-throw.js,test/language/statements/for-of/iterator-next-reference.js",
+      "cases": null,
+      "limit": null,
+      "all": false,
+      "shard": null
+    }
+  },
+  "runtime": {
+    "node": "v24.22.3",
+    "v8": "13.6.233.17-node.63"
+  },
+  "summary": {
+    "catalogVariants": 103360,
+    "selected": 40,
+    "attempts": 120,
+    "stages": {
+      "parseStatic": {
+        "passed": 40,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 0,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "ownedExecution": {
+        "passed": 30,
+        "failed": 0,
+        "unsupported": 10,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 0,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "independentReference": {
+        "passed": 40,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 0,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "sourceCorrespondence": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 30,
+        "blocked_by_prior_stage": 10,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "publicReplay": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "nativeReplay": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "checkpointRestore": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "datasetExport": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "ordinaryTraining": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "serving": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      },
+      "learnedUsefulness": {
+        "passed": 0,
+        "failed": 0,
+        "unsupported": 0,
+        "resource_limited": 0,
+        "environment_unavailable": 0,
+        "not_selected": 103320,
+        "not_run": 0,
+        "blocked_by_prior_stage": 40,
+        "infrastructure_error": 0,
+        "interrupted": 0
+      }
+    }
+  },
+  "claims": {
+    "fullSuiteAcquired": true,
+    "fullEditionConformance": false,
+    "publicSemanticReplay": false,
+    "nativeReplay": false,
+    "datasetAdmission": false,
+    "ordinaryTraining": false,
+    "serving": false,
+    "learnedUsefulness": false
+  },
+  "fullReport": {
+    "path": "bounded-report.json.gz",
+    "bytes": 17316813,
+    "sha256": "bae9af1dd5738cd1a8cea1be18d29ccccc1d2ce6ffd5736eb5b80d1cfde898cf",
+    "jsonBytes": 179435636,
+    "jsonSha256": "db85c57ece70b4d0209a85bb731bff2de59f5bc5e8d44d3bdc63b2026bececb3"
+  },
+  "completedResume": {
+    "byteIdentical": true,
+    "sha256Before": "bae9af1dd5738cd1a8cea1be18d29ccccc1d2ce6ffd5736eb5b80d1cfde898cf",
+    "sha256After": "bae9af1dd5738cd1a8cea1be18d29ccccc1d2ce6ffd5736eb5b80d1cfde898cf",
+    "attemptsBefore": 120,
+    "attemptsAfter": 120
+  },
+  "fullReportCheck": {
+    "valid": true,
+    "catalogDigest": "67799da9e7d4dd08333fe38a75b7d738d9fd14ffc40a2e17d4d00254781a47de",
+    "summary": {
+      "catalogVariants": 103360,
+      "selected": 40,
+      "attempts": 120,
+      "stages": {
+        "parseStatic": {
+          "passed": 40,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 0,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "ownedExecution": {
+          "passed": 30,
+          "failed": 0,
+          "unsupported": 10,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 0,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "independentReference": {
+          "passed": 40,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 0,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "sourceCorrespondence": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 30,
+          "blocked_by_prior_stage": 10,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "publicReplay": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "nativeReplay": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "checkpointRestore": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "datasetExport": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "ordinaryTraining": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "serving": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        },
+        "learnedUsefulness": {
+          "passed": 0,
+          "failed": 0,
+          "unsupported": 0,
+          "resource_limited": 0,
+          "environment_unavailable": 0,
+          "not_selected": 103320,
+          "not_run": 0,
+          "blocked_by_prior_stage": 40,
+          "infrastructure_error": 0,
+          "interrupted": 0
+        }
+      }
+    }
+  },
+  "sourceArchive": {
+    "bytes": 9025995,
+    "sha256": "74ad7f3f1c3e6e2303209ecad903b48b0c72db9990dcaa28688138c966571669"
+  },
+  "artifacts": {
+    "selected-catalog.json": {
+      "bytes": 64552,
+      "sha256": "9fe82a032f474b976cac6c2e8e9c614a6c8128c5a53f673590e672e458bc0118"
+    },
+    "selected-report.json": {
+      "bytes": 393707,
+      "sha256": "42cf4035033dec920ca893cf368b86503af1202ccada9f67b4c73fa7aec42245"
+    },
+    "selected-paths.txt": {
+      "bytes": 1609,
+      "sha256": "0e79198a78fca057027c89e9644e454d4222200cde3031131be8336e33cfcb0d"
+    },
+    "restore-report.mjs": {
+      "bytes": 3577,
+      "sha256": "e1ced874bdbbd0c117cb35a77fe134593f7c76e93ecb9409368f6b5a633353b1"
+    },
+    "reproduce.sh": {
+      "bytes": 2170,
+      "sha256": "659f2a0e4cfa3ac53c4247b5bd7e56b5bfd35f2e943ee2201332c816a54fba8b"
+    },
+    "historical-resource-limit.json": {
+      "bytes": 12977,
+      "sha256": "ef895f155e0e07937253c4fcbf8812bb99f02ea4838dc898ef22d081ac96d025"
+    },
+    "unsupported-diagnostics.json": {
+      "bytes": 23790,
+      "sha256": "576e3a015235cfe6acc93880c45c49d0382676cf8812e056084b87980b9f1a65"
+    },
+    "README.md": {
+      "bytes": 7610,
+      "sha256": "33306ce2130711cd62f333e6b216fadf9e594bc8993c53075bd6cb0493cb1d9a"
+    },
+    "restoration-verification.json": {
+      "bytes": 423,
+      "sha256": "d95ab5d1f432f283b25d2ee43c58f19f6c315a112f79ef857cd455930ba8cd1d"
+    }
+  },
+  "compactReconstruction": {
+    "valid": true,
+    "reconstructed": true,
+    "guestExecutions": 0,
+    "sourceRevision": "2a1ade303f72d3de80565c921d685222405c32ce",
+    "producerRevision": "5f321f0c634773bbccdb12b9ab6d18f69954f1ef",
+    "catalogVariants": 103360,
+    "selected": 40,
+    "attempts": 120,
+    "jsonSha256": "db85c57ece70b4d0209a85bb731bff2de59f5bc5e8d44d3bdc63b2026bececb3",
+    "archiveSha256": "bae9af1dd5738cd1a8cea1be18d29ccccc1d2ce6ffd5736eb5b80d1cfde898cf",
+    "archiveByteIdentical": true
+  }
+}

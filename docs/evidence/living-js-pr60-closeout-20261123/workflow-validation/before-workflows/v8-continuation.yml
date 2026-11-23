@@ -1,0 +1,99 @@
+name: V8 continuation regression controls
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'tools/**'
+      - 'contracts/**'
+      - 'fixtures/**'
+      - '.github/workflows/v8-continuation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v8-continuation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  producer-controls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tracing-js-self
+    env:
+      MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+      MEGATOKEN_PYTHON: python
+      SEMANTIC_V8_NATIVE_POLICY: ${{ runner.temp }}/semantic-native-policy-v8.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: tracing-js-self/.nvmrc
+      - id: policy
+        name: Resolve current paired checker and retain this run’s exact policy
+        run: |
+          node tools/resolve-native-consumer.mjs --out "$SEMANTIC_V8_NATIVE_POLICY"
+      - uses: actions/checkout@v4
+        with:
+          repository: werg/megatoken
+          ref: ${{ steps.policy.outputs.consumer }}
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install the exact paired checker dependencies
+        run: |
+          python -m pip install --require-hashes -r tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ../megatoken
+      - name: Check coordinator history, namespace boundaries and exact source supply
+        shell: bash
+        run: |
+          set -o pipefail
+          node --experimental-vm-modules --test --test-concurrency=1 --test-reporter=junit \
+            test/semantic-selected-orchestration*.test.js \
+            test/semantic-selected-history*.test.js \
+            test/semantic-service-coordinator-v8.test.js \
+            test/semantic-service-fence-v8.test.js \
+            test/semantic-module*.test.js \
+            test/module-region-reference-worker.test.js \
+            test/selected-orchestration-execution-lock.test.js \
+            test/native-request-journal-v8.test.js \
+            test/semantic-source-session-v8.test.js \
+            test/semantic-region-support-cohort.test.js \
+            test/qualify-support-lifecycle.test.js \
+            2>&1 | tee "$RUNNER_TEMP/v8-continuation-tests.xml"
+          python - <<'PY'
+          import json, os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'v8-continuation-tests.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('Every focused continuation control must run and pass')
+          print(f'{len(cases)} focused continuation controls passed with zero skips')
+          source=json.loads((Path(os.environ['RUNNER_TEMP'])/'module-scheduler-source-evidence.json').read_text())
+          if source['sourceCases']!=6 or source['actualNativeCases']!=6 or source['ownedTransitions']!=64:
+              raise ValueError('All six original module cases and 64 lifecycle transitions require actual native comparison')
+          if source['publicAdmission'] is not False or source['trainingAdmission'] is not False or source['optimizerUpdates']!=0:
+              raise ValueError('Source lifecycle checks cannot claim artifact admission or optimizer exposure')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v8-continuation-controls
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/semantic-native-policy-v8.json*
+            ${{ runner.temp }}/v8-continuation-tests.xml
+            ${{ runner.temp }}/module-scheduler-source-evidence.json

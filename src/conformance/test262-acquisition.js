@@ -1,18 +1,21 @@
 // Acquire exact local Git blobs. No network fetch, source execution, or implicit
 // checkout update occurs here. A changed working file fails its pinned blob check.
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {readFileSync,lstatSync} from 'node:fs';
 import {join,resolve,posix} from 'node:path';
 import {parse} from 'acorn';
 import {gitBlobSha} from '../test262-baseline.js';
-import {safeTest262Path,parseTest262Header} from './test262-catalog.js';
+import {safeTest262Path,parseTest262Header,test262VariantModes,test262ModuleDependencyClosure,
+  validateTest262Catalog,conformanceDigest} from './test262-catalog.js';
 
 export function acquireTest262GitSnapshot({suiteRoot,revision}={}){
-  if(typeof suiteRoot!=='string'||!/^[a-f0-9]{40}$/.test(revision??''))
-    throw new TypeError('Test262 acquisition requires a local Git root and exact commit');
+  if(typeof suiteRoot!=='string'||revision!==undefined&&!/^[a-f0-9]{40}$/.test(revision))
+    throw new TypeError('Test262 acquisition requires a local Git root and an optional exact commit');
   const root=resolve(suiteRoot);
   const git=args=>execFileSync('git',['-C',root,...args],{encoding:'utf8',maxBuffer:64*1024*1024});
   const head=git(['rev-parse','HEAD']).trim();
+  revision??=head;
   if(head!==revision)throw new TypeError('Test262 checkout HEAD differs from the requested exact revision');
   const treeSha=git(['rev-parse',revision+'^{tree}']).trim();
   const entries=git(['ls-tree','-r','-z',revision,'--','test','harness']).split('\0').filter(Boolean);
@@ -38,6 +41,45 @@ export function acquireTest262GitSnapshot({suiteRoot,revision}={}){
     acquisition:{kind:'exact-git-tree',treeSha,fullUpstreamTree:true,scope:['test','harness']}},sources};
 }
 
+/** A retained catalog is an observation to reconcile, not authority to omit
+ * original modes or relabel their metadata. Recheck every acquired input even
+ * when execution selects only a small shard of the population. */
+export function verifyTest262AcquiredCatalog({catalog,snapshot,sources}={}){
+  validateTest262Catalog(catalog);
+  if(catalog.repository!==snapshot.repository||catalog.suiteRevision!==snapshot.revision||
+    Object.keys(snapshot.files).length!==catalog.files.length)
+    throw new TypeError('Acquired exact Git tree differs from the retained catalog population');
+  const variants=new Map();
+  for(const row of catalog.variants){
+    const rows=variants.get(row.path)??[];rows.push(row);variants.set(row.path,rows);
+  }
+  for(const file of catalog.files){
+    const source=sources[file.path],bytes=typeof source==='string'?Buffer.from(source):source;
+    if(!(bytes instanceof Uint8Array)||snapshot.files[file.path]!==file.gitBlobSha||bytes.length!==file.bytes||
+      createHash('sha256').update(bytes).digest('hex')!==file.sha256)
+      throw new TypeError('Acquired source bytes differ from the retained catalog: '+file.path);
+    if(file.kind!=='test')continue;
+    let metadata=null;
+    try{metadata=parseTest262Header(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes));}catch{}
+    const rows=variants.get(file.path),modes=metadata?test262VariantModes(metadata):['unclassified'];
+    if(conformanceDigest(rows.map(row=>row.mode))!==conformanceDigest(modes)||
+      rows.some(row=>conformanceDigest(row.metadata)!==conformanceDigest(metadata)))
+      throw new TypeError('Retained Test262 variants differ from original source metadata: '+file.path);
+  }
+  // A self-consistent retained closure can still omit an acquired dependency.
+  // Missing edges could manufacture the expected error in a resolution-negative
+  // test, so rediscover the complete graph before selecting any campaign work.
+  const moduleDependencies=discoverTest262ModuleDependencies(sources),
+    files=new Map(catalog.files.map(file=>[file.path,file]));
+  for(const row of catalog.variants){
+    const expected=row.mode==='module'?test262ModuleDependencyClosure({path:row.path,files,moduleDependencies}):
+      {status:'not_required',unresolved:[],files:[]};
+    if(conformanceDigest(row.dependencies)!==conformanceDigest(expected))
+      throw new TypeError('Retained Test262 module dependency closure differs from acquired sources: '+row.path);
+  }
+  return true;
+}
+
 /** Static module requests are extracted by the pinned parser. Unsupported
  * grammar and computed imports remain explicit unresolved closure obligations.
  * The interpreter's module loader, not this inventory, owns resolution semantics. */
@@ -53,7 +95,7 @@ export function discoverTest262ModuleDependencies(sources){
     const path=pending.pop();if(Object.hasOwn(result,path))continue;
     const paths=new Set(),unresolved=[];
     let ast;
-    try{ast=parse(text(path),{ecmaVersion:2026,sourceType:'module'});}
+    try{ast=parse(text(path),{ecmaVersion:'latest',sourceType:'module'});}
     catch(error){result[path]={paths:[],unresolved:['Module parser: '+error.message]};continue;}
     function request(specifier){
       if(typeof specifier!=='string'){unresolved.push('Computed dynamic import requires execution-time resolution');return;}

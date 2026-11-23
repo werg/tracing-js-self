@@ -6,6 +6,8 @@ import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-
 import {auditProtocolSourceV8} from '../src/semantic/protocol-source-reference-v8.js';
 import {encodeDetailedRecord} from '../src/semantic/detailed-v7.js';
 import {createProtocolCompletionCapture} from '../src/semantic/protocol-source-observations-v8.js';
+import {SYNC_REJECTION_FIXTURE_ID,SYNC_REJECTION_REFERENCE_MISMATCH,observeSyncRejectionReference,
+  committedProtocolRegionCases,authenticateCommittedSyncRejection} from './helpers/async-iteration-reference.js';
 
 const getter='"use strict";function run(x){const before=x+2;const s=Symbol("key");const o={};let calls=0;Object.defineProperty(o,s,{get:()=>{calls++;return x+3;}});const a=o[s];return before+a+calls;}';
 function build(source,args=[]){const runtime=createRuntime({maxSteps:10000}).startEntry({text:source,functionName:'run',args});runtime.drive();
@@ -150,12 +152,23 @@ test('source null-prototype reads and abrupt setters preserve protocol distincti
   }
 });
 
-test('committed source-region fixture rechecks its full public contexts and private source evidence',async()=>{
-  const {readFileSync}=await import('node:fs');
+test('committed source-region fixture rechecks every case and retains genuine reference-engine refusal',async t=>{
   const {recheckProtocolRegionEvidence}=await import('../src/semantic/protocol-source-v8.js');
-  const fixtures=JSON.parse(readFileSync(new URL('./fixtures/semantic-protocol-region-v8.json',import.meta.url),'utf8'));
-  assert.equal(fixtures.schema,'semantic-protocol-region-fixtures/1');
-  for(const row of fixtures.cases)assert.equal((await recheckProtocolRegionEvidence(row.artifact)).valid,true,row.id);
+  const fixtures=committedProtocolRegionCases(),reference=await observeSyncRejectionReference();
+  let validated=0,refused=0;
+  for(const row of fixtures){
+    if(row.id===SYNC_REJECTION_FIXTURE_ID&&!reference.sourceAgreement){
+      authenticateCommittedSyncRejection(row,reference.fixture);
+      await assert.rejects(()=>recheckProtocolRegionEvidence(row.artifact),
+        error=>error.category==='reference_mismatch'&&SYNC_REJECTION_REFERENCE_MISMATCH.test(error.message));
+      refused++;
+    }else{assert.equal((await recheckProtocolRegionEvidence(row.artifact)).valid,true,row.id);validated++;}
+  }
+  assert.equal(validated+refused,fixtures.length);
+  assert.equal(refused,reference.sourceAgreement?0:1);
+  t.diagnostic(JSON.stringify({node:process.version,v8:process.versions.v8,
+    declared:fixtures.length,sourceValidated:validated,sourceRefused:refused,
+    refusedIds:refused?[SYNC_REJECTION_FIXTURE_ID]:[]}));
 });
 
 test('independent metadata receipts reject descriptor, prototype and Symbol mutants with an identical scalar result',async()=>{

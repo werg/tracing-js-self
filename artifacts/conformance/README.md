@@ -1,4 +1,9 @@
-# Frozen Test262 inventory
+# Retained Test262 observations
+
+Current acquisition and execution follow the selected checkout's actual `HEAD`,
+the installed parser's latest grammar and the complete discovered population.
+See [Current Test262 campaigns](../../docs/TEST262_CAMPAIGNS.md). The artifacts
+below preserve earlier observations; they do not cap or pin the current target.
 
 `test262-d53ebc8b-frozen-catalog.json.xz` retains the complete catalog of the
 `test/` and `harness/` trees at upstream `tc39/test262` commit
@@ -10,8 +15,8 @@ The catalog has 53,974 files: 53,616 standalone tests, 294 fixture files, 43
 JavaScript harness files, and 21 other resources. It has 102,994 variants, no
 unresolved metadata, and no missing default or named harness files. Every
 edition classification is `unclassified`. This original catalog retains its
-pre-pin profile and remains unchanged; later campaigns derive a new profile
-bound to the pinned specification below. Acquiring the full Test262 tree does
+pre-pin profile and remains unchanged; some historical campaigns derived a profile
+bound to the retained specification below. Acquiring the full Test262 tree does
 not establish full ECMAScript edition coverage or any passing conformance result.
 
 | Identity | Value |
@@ -44,7 +49,7 @@ contains the complete Ecma copyright notice and license in section 39 without
 source modification. That notice grants redistribution subject to its stated
 notice, disclaimer, and change-notice conditions.
 
-Verify the retained bytes using the same loader that new campaigns call:
+Verify the retained historical bytes using their dedicated loader:
 
 ```sh
 node --input-type=module - <<'JS'
@@ -55,10 +60,9 @@ JS
 ```
 
 The historical catalog still has `specification: null` and all edition
-classifications remain `unclassified`. New campaign execution verifies the
-actual decompressed HTML bytes against the pinned URL, size, and digest before
-binding the profile. This establishes the selected annual specification bytes,
-not a full edition inventory or conformance result.
+classifications remain `unclassified`. Historical reports that declare this
+annual specification can verify the decompressed bytes against its URL, size and
+digest. Current campaigns do not select this annual target by default.
 
 ## Reproduce and inspect
 
@@ -131,14 +135,14 @@ import {spawnSync} from 'node:child_process';
 import {readTest262Json} from './src/conformance/test262-campaign.js';
 import {bindTest262CatalogProfile} from './src/conformance/test262-catalog.js';
 import {ownedTest262Profile} from './src/conformance/test262-runner.js';
-import {readPinnedEcma262Specification} from './src/conformance/test262-specification.js';
 const loaded=readTest262Json('artifacts/conformance/test262-d53ebc8b-frozen-catalog.json.xz');
 const base=loaded.catalog??loaded;
-const profile=ownedTest262Profile({specification:readPinnedEcma262Specification().specification});
+const profile=ownedTest262Profile();
 const catalog=bindTest262CatalogProfile(base,profile);
 const ids=catalog.variants.filter(row=>row.mode==='module').map(row=>row.id);
 if(ids.length!==843)throw new Error('Frozen module population changed: '+ids.length);
 const result=spawnSync(process.execPath,['tools/run-test262-campaign.mjs',
+  '--catalog','artifacts/conformance/test262-d53ebc8b-frozen-catalog.json.xz',
   '--suite-root','../test262-upstream',
   '--out','../test262-d53ebc8b-module-reference-campaign.json',
   '--stages','parse,owned,reference','--cases',ids.join(',')],{stdio:'inherit'});

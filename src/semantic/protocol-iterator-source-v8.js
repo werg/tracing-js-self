@@ -73,7 +73,8 @@ export function createIteratorSourceAdapterV8(){let arrayLoops=new Set();return 
     if(!done&&iterator.iterationKind==='entries'&&(value[0]!=='ref'||pair?.kind!=='array'))ctx.refuse('iterator entry pair allocation missing');
     const allowed=new Set([receiver[1],result.id,...(pair?[pair.id]:[])]);
     if(changes.some(change=>!allowed.has(change.id)))ctx.refuse('iterator next has an undeclared heap effect');
-    ctx.emit({kind:'iterator.next',object:receiver[1],name:result.id,entry:pair?.id??null,result:ctx.copy(value),done},event,'source-iterator-next/1');
+    ctx.emit({kind:'iterator.next',object:receiver[1],name:result.id,entry:pair?.id??null,
+      result:value[0]==='promise'?ctx.tag(value,event):ctx.copy(value),done},event,'source-iterator-next/1');
     if(pair)ctx.markPublished(pair.id);ctx.markPublished(result.id);return true;
   }
 };}

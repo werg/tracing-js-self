@@ -110,7 +110,8 @@ test('support registry rejects changed split, membership and source-derived core
 
 test('support-only mutable materialization round-trips all 64 authored fixtures',()=>{
   const cohort=buildSemanticRegionSupportCohortV8(),recipes=semanticRecipeFamilies(),
-    recipeByTemplate=new Map(recipes.map(family=>[family.template,family]));
+    recipeByTemplate=new Map(recipes.map(family=>[family.template,family])),
+    originalCounts=structuredClone(cohort.sourceCounts);
   const authoredFixture=fixture=>{
     const family=recipeByTemplate.get(fixture.supportCohort.template);
     switch(fixture.supportCohort.variant){
@@ -147,7 +148,9 @@ test('support-only mutable materialization round-trips all 64 authored fixtures'
   }
   assert.equal(cohort.fixtures.length,64);
   assert.equal(cohort.registry.sources.length,64);
-  assert.deepEqual(cohort.sourceCounts,{train:48,validation:12,test:4});
+  assert.deepEqual(cohort.sourceCounts,originalCounts,
+    'worker materialization preserves the assignments actually derived for this registry');
+  assert.equal(cohort.registry.diagnostics.cloneAudit.complete,true);
   assert.equal(cohort.digest,buildSemanticRegionSupportCohortV8().digest,
     'encoding operates on worker copies and leaves the frozen inventory identity unchanged');
 });
