@@ -1,0 +1,26 @@
+{
+  "startedAtUtc": "2026-11-23T11:11:43.497628+00:00",
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=junit",
+    "test/source-clusters.test.js",
+    "test/source-registry.test.js",
+    "test/semantic-v8-dataset.test.js",
+    "test/semantic-region-support-cohort.test.js",
+    "test/v8-release-population.test.js"
+  ],
+  "before": {
+    "revision": "bbcb3c56efbb8a3fc7834af0a82c4ee73284d9f3",
+    "tree": "9b8f13497bc441c1d1c5ee0dc03ab0a66b2f775b",
+    "status": "M docs/direct-v8-release.md"
+  },
+  "scope": "Producer controls on bbcb; only documentation is modified in this working tree. No native-pair or full-release result is claimed.",
+  "exitCode": 0,
+  "seconds": 12.255626490001305,
+  "after": {
+    "revision": "bbcb3c56efbb8a3fc7834af0a82c4ee73284d9f3",
+    "tree": "9b8f13497bc441c1d1c5ee0dc03ab0a66b2f775b",
+    "status": "M docs/direct-v8-release.md"
+  }
+}

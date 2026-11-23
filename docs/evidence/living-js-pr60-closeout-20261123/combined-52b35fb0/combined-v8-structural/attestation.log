@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/0f9e11f5b3cf/tracing-combined-verify/tools/verify-combined-v8-gate.py", line 460, in <module>
+    main()
+  File "/workspace/scratch/0f9e11f5b3cf/tracing-combined-verify/tools/verify-combined-v8-gate.py", line 456, in main
+    {"attest": attest, "run": run_lane, "aggregate": aggregate}[args.command](args)
+  File "/workspace/scratch/0f9e11f5b3cf/tracing-combined-verify/tools/verify-combined-v8-gate.py", line 188, in attest
+    require(clock.is_symlink(), "Recovery needs the real kernel time namespace")
+  File "/workspace/scratch/0f9e11f5b3cf/tracing-combined-verify/tools/verify-combined-v8-gate.py", line 29, in require
+    raise ValueError(message)
+ValueError: Recovery needs the real kernel time namespace

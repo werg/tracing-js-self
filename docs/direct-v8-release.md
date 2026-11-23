@@ -6,9 +6,19 @@ checkpoint and served state. They use the neutral archive implementation and
 the direct native V8 verifier. They never import the old semantic packager or
 restorer, and never execute code supplied inside an archive as its verifier.
 
-This is an isolated implementation candidate. The focused archive, identity,
-lock and refusal controls pass; an actual fresh paired production-tokenizer
-package/restore gate is still required. No production default, learned-quality,
+The complete fresh production-tokenizer package/restore gate passed in
+[the hosted PR 60 run](https://github.com/werg/tracing-js-self/actions/runs/45151917597)
+at producer head `409e5931` (actual merge checkout `8b4cbfae`) and native
+`21b7c807`. It qualified all 64 current support sources, prepared the complete
+population, performed exactly two optimizer updates with fresh-process resume,
+and packaged the matching checkpoint and served export. It then restored them
+after relocating the original inputs and package payload. The archive, identity,
+lock, refusal and current population controls also passed in that job.
+The [closeout evidence](evidence/living-js-pr60-closeout-20261123/README.md)
+retains this hosted observation and the separate clean direct-head local run;
+later implementation revisions require their own observations.
+This is bounded release evidence;
+no production default, complete optimizer exposure, learned quality,
 accepted-history recovery, deployment or rollback qualification is implied.
 
 ## First explicit profile

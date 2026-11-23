@@ -1,0 +1,422 @@
+{
+  "combined52b35fb0": {
+    "fullCombinedGateQualified": false,
+    "identitiesAfter": {
+      "native": {
+        "revision": "21b7c80718244073dbf13263771da533d4ecbc25",
+        "status": "",
+        "tree": "7341a8c46b192842a1773a5a7ec98f23776b8a6e"
+      },
+      "producer": {
+        "revision": "52b35fb0fb121c5fd82d9d70674789516b2cc853",
+        "status": "",
+        "tree": "fcd3f0c9f8701e3f3a0978d451637072a9c24462"
+      }
+    },
+    "identitiesBefore": {
+      "native": {
+        "revision": "21b7c80718244073dbf13263771da533d4ecbc25",
+        "status": "",
+        "tree": "7341a8c46b192842a1773a5a7ec98f23776b8a6e"
+      },
+      "producer": {
+        "revision": "52b35fb0fb121c5fd82d9d70674789516b2cc853",
+        "status": "",
+        "tree": "fcd3f0c9f8701e3f3a0978d451637072a9c24462"
+      }
+    },
+    "lanesCompleted": 0,
+    "reason": "Actual combined gate requires the real /proc/self/ns/time symlink; it is absent in this execution environment. No bypass or fallback was used.",
+    "scope": "Isolated installed wheel source replay and shared payload parity only; full combined gate blocked by absent /proc/self/ns/time",
+    "scopedInstalledChecks": {
+      "contexts": 1746,
+      "importMode": "isolated-installed-wheel",
+      "payloadComparisons": 7,
+      "pythonModuleByteComparisons": 268,
+      "sourceArtifacts": 31
+    }
+  },
+  "companion21b": {
+    "allEventWorkflows": {
+      "passed": 4,
+      "total": 4
+    },
+    "cpuMatrix": {
+      "3.11": {
+        "passed": 4212,
+        "skipped": 85,
+        "warnings": 20
+      },
+      "3.12": {
+        "passed": 4212,
+        "skipped": 85,
+        "warnings": 20
+      }
+    },
+    "cpuMerge": "c9a295c5d722e0088657338f733b611bf7df4dbb",
+    "galleryAndInteroperabilityProducer": "e21651f7d246d9bf30e575e61e3a056987fae6fe",
+    "head": "21b7c80718244073dbf13263771da533d4ecbc25",
+    "metadata": "hosted/consumer21b-final-workflows.json"
+  },
+  "concurrentProducerBbcb": {
+    "cohort": {
+      "cohortDigest": "141894d8c8fc684c207dc340955da8b9826d378ce45fc0a20d31bab89c3d955b",
+      "componentCounts": {
+        "test": 1,
+        "train": 13,
+        "validation": 2
+      },
+      "producerRevision": "bbcb3c56efbb8a3fc7834af0a82c4ee73284d9f3",
+      "producerTree": "9b8f13497bc441c1d1c5ee0dc03ab0a66b2f775b",
+      "registryDigest": "985330b78ce655b0bfb4181f02298fcb471c599d8a1f8abe5c82ea0a20e6fbb7",
+      "sourceCounts": {
+        "test": 4,
+        "train": 52,
+        "validation": 8
+      },
+      "status": "M docs/direct-v8-release.md"
+    },
+    "command": {
+      "after": {
+        "revision": "bbcb3c56efbb8a3fc7834af0a82c4ee73284d9f3",
+        "status": "M docs/direct-v8-release.md",
+        "tree": "9b8f13497bc441c1d1c5ee0dc03ab0a66b2f775b"
+      },
+      "before": {
+        "revision": "bbcb3c56efbb8a3fc7834af0a82c4ee73284d9f3",
+        "status": "M docs/direct-v8-release.md",
+        "tree": "9b8f13497bc441c1d1c5ee0dc03ab0a66b2f775b"
+      },
+      "command": [
+        "node",
+        "--test",
+        "--test-reporter=junit",
+        "test/source-clusters.test.js",
+        "test/source-registry.test.js",
+        "test/semantic-v8-dataset.test.js",
+        "test/semantic-region-support-cohort.test.js",
+        "test/v8-release-population.test.js"
+      ],
+      "exitCode": 0,
+      "scope": "Producer controls on bbcb; only documentation is modified in this working tree. No native-pair or full-release result is claimed.",
+      "seconds": 12.255626490001305,
+      "startedAtUtc": "2026-11-23T11:11:43.497628+00:00"
+    },
+    "consumerFollowupHead": "5631c4a519537f64f4ce1e4f5836e87c89220524",
+    "counts": {
+      "errors": 0,
+      "failures": 0,
+      "passed": 47,
+      "skipped": 0,
+      "tests": 47
+    },
+    "fullUpdatedPairQualification": false
+  },
+  "continuingValidation": "Updated producer/consumer pair validation is tracked in the live PR; no old observation is relabeled as a pass at bbcb or native5631.",
+  "directRelease1a971f99": {
+    "consumerRevision": "21b7c80718244073dbf13263771da533d4ecbc25",
+    "declared": 64,
+    "failureInterpretation": "The retained console stops at the post-qualification split assertion in the exact 1a971f99 driver; the completed report records 52/8/4.",
+    "nativeAdmitted": 64,
+    "observedSplitCounts": {
+      "test": 4,
+      "train": 52,
+      "validation": 8
+    },
+    "outcome": "failed-after-successful-source-native-qualification",
+    "producerRevision": "1a971f99da68dd97d61e30c1149ba1c1a7ded2f9",
+    "qualificationStageSeconds": 343.14729927699955,
+    "retentionScope": "Original console, stage/policy records and four complete metadata files; per-source artifacts and the full campaign object store are omitted.",
+    "snapshotNote": "later-population-diagnostic.json is a separate metadata check preserving the original report revision, not a rerun or relabeling of qualification.",
+    "sourceQualified": 64,
+    "staleDriverExpectedSplitCounts": {
+      "test": 4,
+      "train": 48,
+      "validation": 12
+    }
+  },
+  "directRelease409e": {
+    "packet": "direct-release-409e5931/README.md",
+    "qualification": {
+      "acceptedHistoryRecovery": "unmeasured",
+      "archiveBytes": 73179925,
+      "archiveSha256": "8336b51933e6427514cf0606f1fcc1a2e0882168b79c400caf2df5e64b0edb7d",
+      "consumerRevision": "21b7c80718244073dbf13263771da533d4ecbc25",
+      "declaredSources": 64,
+      "defaultPromotion": false,
+      "freshSourceNativePreparationAtPackageAndRestore": true,
+      "fullTargetCoverageQualified": false,
+      "learnedSuccess": null,
+      "manifestIdentity": "e1b63622fe5232af2358eed4d320d2b57f9251d04362e678f34f0f2dee228f94",
+      "nativeAdmitted": 64,
+      "nativePolicyEvidenceSha256": {
+        "declared-native-policy-v8.json": "d7d3c2b9860b6563ef3478c0ebd05c2f6f422d6c1e085b08bc38ea9ab9d68e0e",
+        "semantic-native-policy-v8.json": "c0bbcea4d11bfea6937f2dfa5036a3de5829d136ad576d2bc8237f08ba8a7000",
+        "semantic-native-policy-v8.json.resolution.json": "daf7ba4441e756ee116bf216352b06a5a39e14757b82c39e7f924d8296208fe5"
+      },
+      "nativePolicyResolution": {
+        "declaredPolicySha256": "d7d3c2b9860b6563ef3478c0ebd05c2f6f422d6c1e085b08bc38ea9ab9d68e0e",
+        "kind": "selected-checkout",
+        "ref": "21b7c80718244073dbf13263771da533d4ecbc25",
+        "repository": "werg/megatoken",
+        "requestedBranch": null,
+        "revision": "21b7c80718244073dbf13263771da533d4ecbc25",
+        "schema": "semantic-native-resolution/1"
+      },
+      "nativePolicySha256": "c0bbcea4d11bfea6937f2dfa5036a3de5829d136ad576d2bc8237f08ba8a7000",
+      "ordinaryLifecycleOptimizerUpdates": 2,
+      "originalRuntimeAssetLocatorsAbsentAtRestore": true,
+      "originalTaskArtifactBindingsVerified": true,
+      "packageOptimizerUpdates": 0,
+      "producerRevision": "409e5931c4a9289909d57008008a8ea5b4a491fc",
+      "registryDigest": "985330b78ce655b0bfb4181f02298fcb471c599d8a1f8abe5c82ea0a20e6fbb7",
+      "releaseDecoderForwardPasses": 0,
+      "restoreOptimizerUpdates": 0,
+      "schema": "semantic-v8-release-qualification/1",
+      "sourceQualified": 64,
+      "splitCounts": {
+        "test": 4,
+        "train": 52,
+        "validation": 8
+      },
+      "status": "passed",
+      "supportCohortDigest": "141894d8c8fc684c207dc340955da8b9826d378ce45fc0a20d31bab89c3d955b",
+      "supportPopulationSha256": "ef86030aeef78efbc53637b8d57e637d6779bf081c0aa8f5e09daf1723cbeb02",
+      "wrongExternalChecksumRefusedBeforeExtraction": true
+    },
+    "retentionScope": "169 original artifacts plus the complete 1,131-file run inventory; full model, tokenizer, prepared-data and archive bytes are excluded.",
+    "sourceIdentityAfter": "direct-release-409e5931/after.json",
+    "sourceIdentityBefore": "direct-release-409e5931/before.json"
+  },
+  "focusedControls": {
+    "combined-policy-12": {
+      "cases": 12,
+      "cleanCheckoutReceipt": null,
+      "errors": 0,
+      "failures": 0,
+      "passed": 12,
+      "producerRevision": null,
+      "provenanceLimit": "Original focused output does not record a Git revision or before/after checkout identity.",
+      "skipped": 0
+    },
+    "release-javascript-140": {
+      "cases": 140,
+      "cleanCheckoutReceipt": null,
+      "errors": 0,
+      "failures": 0,
+      "passed": 140,
+      "producerRevision": null,
+      "provenanceLimit": "Original focused output does not record a Git revision or before/after checkout identity.",
+      "skipped": 0
+    },
+    "release-population-11": {
+      "cases": 11,
+      "cleanCheckoutReceipt": null,
+      "errors": 0,
+      "failures": 0,
+      "passed": 11,
+      "producerRevision": null,
+      "provenanceLimit": "Original focused output does not record a Git revision or before/after checkout identity.",
+      "skipped": 0
+    },
+    "release-python-105": {
+      "cases": 105,
+      "cleanCheckoutReceipt": null,
+      "errors": 0,
+      "failures": 0,
+      "passed": 105,
+      "producerRevision": null,
+      "provenanceLimit": "Original focused output does not record a Git revision or before/after checkout identity.",
+      "skipped": 0
+    }
+  },
+  "hosted409e": {
+    "allEventWorkflows": {
+      "cancelled": 1,
+      "failed": 0,
+      "jobs": {
+        "cancelled": 2,
+        "success": 38
+      },
+      "passed": 15,
+      "scope": "The final broader workflow was superseded by concurrent producer commit bbcb3c56; two populations did not finish.",
+      "total": 16
+    },
+    "combined": {
+      "aggregateLog": "hosted/producer-409-combined-aggregate-137628721216.log.gz.b64",
+      "lanes": [
+        "structural",
+        "transport",
+        "commit-history",
+        "bootstrap-history",
+        "terminal-history",
+        "promise"
+      ],
+      "nativeSelectedTests": 296,
+      "producerSelectedTests": 378,
+      "status": "passed"
+    },
+    "continuation": {
+      "passed": 218,
+      "skipped": 0
+    },
+    "directRelease": {
+      "acceptedHistoryRecovery": "unmeasured",
+      "archiveBytes": 72981629,
+      "archiveSha256": "3db2ab4db811197e251c1c5e5f118d7474b3bdeb64e4b18c52c9c16622c29a69",
+      "consumerRevision": "21b7c80718244073dbf13263771da533d4ecbc25",
+      "declaredSources": 64,
+      "defaultPromotion": false,
+      "freshSourceNativePreparationAtPackageAndRestore": true,
+      "fullTargetCoverageQualified": false,
+      "learnedSuccess": null,
+      "manifestIdentity": "2b8e6c2d0f8b142ffcbd7bf41740b19b11eb7cf5afcf00c544a11403e53c3604",
+      "nativeAdmitted": 64,
+      "nativePolicyEvidenceSha256": {
+        "declared-native-policy-v8.json": "59b5966271d5ebb7fad487a738a81b64835282437f03ce02c1f051ae0ec374f3",
+        "semantic-native-policy-v8.json": "59b5966271d5ebb7fad487a738a81b64835282437f03ce02c1f051ae0ec374f3",
+        "semantic-native-policy-v8.json.resolution.json": "3ef3efc5048f17ea1e8193be28d5172960d982df81845aa1fb614c79bb900395"
+      },
+      "nativePolicyResolution": {
+        "declaredPolicySha256": "59b5966271d5ebb7fad487a738a81b64835282437f03ce02c1f051ae0ec374f3",
+        "kind": "recorded-revision",
+        "ref": "21b7c80718244073dbf13263771da533d4ecbc25",
+        "repository": "werg/megatoken",
+        "requestedBranch": null,
+        "revision": "21b7c80718244073dbf13263771da533d4ecbc25",
+        "schema": "semantic-native-resolution/1"
+      },
+      "nativePolicySha256": "59b5966271d5ebb7fad487a738a81b64835282437f03ce02c1f051ae0ec374f3",
+      "ordinaryLifecycleOptimizerUpdates": 2,
+      "originalRuntimeAssetLocatorsAbsentAtRestore": true,
+      "originalTaskArtifactBindingsVerified": true,
+      "packageOptimizerUpdates": 0,
+      "producerRevision": "8b4cbfae35f78df714b48a98df73f8f745cd7e48",
+      "registryDigest": "985330b78ce655b0bfb4181f02298fcb471c599d8a1f8abe5c82ea0a20e6fbb7",
+      "releaseDecoderForwardPasses": 0,
+      "restoreOptimizerUpdates": 0,
+      "schema": "semantic-v8-release-qualification/1",
+      "sourceQualified": 64,
+      "splitCounts": {
+        "test": 4,
+        "train": 52,
+        "validation": 8
+      },
+      "status": "passed",
+      "supportCohortDigest": "141894d8c8fc684c207dc340955da8b9826d378ce45fc0a20d31bab89c3d955b",
+      "supportPopulationSha256": "644461d08d8c52f940527db51d05657e825aad6aabc2d86105b68003804d4b0d",
+      "wrongExternalChecksumRefusedBeforeExtraction": true
+    },
+    "head": "409e5931c4a9289909d57008008a8ea5b4a491fc",
+    "legacyV6": {
+      "consumerRevision": "3a0eb90e3e7282e9b3cb2ca0da27454451b50e21",
+      "otherPreparedPopulations": {
+        "benchmark": 128,
+        "engineering": 25,
+        "generated": 64,
+        "training": 50
+      },
+      "realSource": {
+        "admittedAndNativeQualified": 196,
+        "prepared": 140,
+        "sourceUnsupported": 2,
+        "teacherFailures": 2,
+        "unsupported": 10,
+        "upstreamTrainingOmissions": 56
+      },
+      "scope": "These are bounded retained V6 gates; their consumer pin and source dispositions are distinct from the V8 pair and do not claim universal admission.",
+      "status": "passed-with-recorded-bounded-scope"
+    },
+    "merge": "8b4cbfae35f78df714b48a98df73f8f745cd7e48",
+    "modulePacking": {
+      "actualProducerRevision": "409e5931c4a9289909d57008008a8ea5b4a491fc",
+      "logicalContextsAndTargets": 708,
+      "maximumWindowPositions": 8192,
+      "packedWindows": 900,
+      "scoredPositions": 22974,
+      "status": "passed"
+    },
+    "nodeMatrix": {
+      "20": {
+        "failed": 0,
+        "passed": 3142,
+        "skipped": 95,
+        "tests": 3237
+      },
+      "22": {
+        "failed": 0,
+        "passed": 3142,
+        "skipped": 95,
+        "tests": 3237
+      },
+      "24": {
+        "failed": 0,
+        "passed": 3142,
+        "skipped": 95,
+        "tests": 3237
+      }
+    },
+    "producerTree": "9dcd6fbc3d31927b1b3a419db77d8fcf9bbc38b0",
+    "supersession": {
+      "fullPopulationQualification": false,
+      "newProducerHead": "bbcb3c56efbb8a3fc7834af0a82c4ee73284d9f3",
+      "partialAdmissionOutput": {
+        "all": {
+          "declared": 665,
+          "emittedAdmittedRows": 540
+        },
+        "interoperability": {
+          "declared": 77,
+          "emittedAdmittedRows": 4
+        }
+      }
+    },
+    "v8ConsumerRevision": "21b7c80718244073dbf13263771da533d4ecbc25"
+  },
+  "nonClaims": [
+    "No aggregate test total across overlapping observations",
+    "No full local combined recovery qualification",
+    "No full training exposure, learned usefulness, accepted-history recovery, deployment or default promotion"
+  ],
+  "pendingAdditions": [],
+  "schema": "pr60-closeout-evidence-summary/1",
+  "status": "completed-observations-through-409e-with-bbcb-integration-controls",
+  "workflowValidation": {
+    "afterExitCode": 0,
+    "assemblyTimeBeforeSourceComparison": [
+      {
+        "matchesCommit52b35fb0": true,
+        "path": ".github/workflows/module-source-admission-investigation.yml",
+        "sha256": "95631124eda061ad372e2e67ea2f4f15700aad1362eae1aecf9be573b8f679e9"
+      },
+      {
+        "matchesCommit52b35fb0": true,
+        "path": ".github/workflows/semantic-v8.yml",
+        "sha256": "228f74c96db3120b8b4a9a1937ec7f9398d6b609c8de44e12a331a216184dd0a"
+      },
+      {
+        "matchesCommit52b35fb0": true,
+        "path": ".github/workflows/v8-combined-recovery-promise.yml",
+        "sha256": "0c7786d9b208c5a4a87b0df7c5771663a352e82df668295d8b57be9aed7d636a"
+      },
+      {
+        "matchesCommit52b35fb0": true,
+        "path": ".github/workflows/v8-continuation.yml",
+        "sha256": "60c037a8aa989820462a96a814a7247a6ac08349ff60edb7f3dba4d55f82f6b3"
+      },
+      {
+        "matchesCommit52b35fb0": true,
+        "path": ".github/workflows/v8-release-qualification.yml",
+        "sha256": "3f3b17a86cac124073988ba0d26effa36c86793147c35d7e80a288d3e3ccd3de"
+      }
+    ],
+    "beforeExitCode": 1,
+    "consumerRevisions": [
+      "21b7c80718244073dbf13263771da533d4ecbc25"
+    ],
+    "emptyLogLimit": "The all-workflows log is retained verbatim and is empty; it does not by itself record a process exit code.",
+    "environmentSmokeCount": 5,
+    "provenanceNote": "Original reports do not retain a Git before/after receipt or full argv. At assembly, retained before-YAML bytes match commit 52b35fb0. Workflow-agent retrospective context says after checks used uncommitted edits atop 52b35fb0 later published as 6f3d38db; no clean checkout is claimed.",
+    "runtimeGitIdentity": null
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "schema": "semantic-native-admission/8",
+  "traceFormat": "semantic-trace/8",
+  "contextFormat": "semantic-context/8",
+  "representation": "mixed",
+  "componentGate": "native-consumer-only",
+  "publicDigest": "18a81c90c3ff4a740b8f7c4f7a30f5e4bd605ea81306849bf31887da890d9644",
+  "contextsDigest": "1f833dcff9931874b2db2ee80d641e11734284aad40dffa16a6742ed3cb2295d",
+  "sourceArtifactDigest": "0dffb7b194b2caf6a12bd3efdbb294e9d719db1668751860993b179c3baa74c0",
+  "sourceVerification": {
+    "schema": "semantic-native-source-recheck/1",
+    "producerRevision": "409e5931c4a9289909d57008008a8ea5b4a491fc",
+    "producerTreeClean": true,
+    "artifactSha256": "b447323812b20892db0d9c2e8583c5eb58b129b110bf3e25a929b6739613bded",
+    "sourceArtifactDigest": "0dffb7b194b2caf6a12bd3efdbb294e9d719db1668751860993b179c3baa74c0",
+    "publicDigest": "18a81c90c3ff4a740b8f7c4f7a30f5e4bd605ea81306849bf31887da890d9644",
+    "contextDigest": "1f833dcff9931874b2db2ee80d641e11734284aad40dffa16a6742ed3cb2295d",
+    "sourceValidated": true,
+    "projectionValidated": true,
+    "replayValidated": true,
+    "regionRecords": null
+  },
+  "sourceProfile": "compositional-regions/1",
+  "protocolProfile": null,
+  "protocolExtensions": [],
+  "datasetBindingDigest": "dad25acef55bc78ed0dd4df58e585f44d8950f8ad4b8a63cd292905fb7a7dcda",
+  "consumerRevision": "21b7c80718244073dbf13263771da533d4ecbc25",
+  "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+  "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+  "interoperabilityDigest": "64f230e7b05dc6b33b3d0df359898e27158cb67a386c9cdeb63fd64b4729df2d",
+  "tokenizer": {
+    "status": "passed",
+    "identity": "7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2",
+    "sha256": "40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60"
+  },
+  "checks": {
+    "replay": "passed",
+    "contexts": "passed",
+    "continuation": "passed",
+    "masks": "passed",
+    "sourceBinding": "passed",
+    "tokenizer": "passed"
+  },
+  "counts": {
+    "records": 35,
+    "contexts": 24,
+    "generatedRecords": 24,
+    "algorithmRecords": 0,
+    "regionRecords": 2,
+    "detailedRecords": 22,
+    "protocolRecords": 0,
+    "generatedTokens": 754,
+    "observedTokens": 44441
+  },
+  "framing": {
+    "kind": "native-physical-record-boundaries/1",
+    "eosTokenId": null,
+    "terminalTokens": 0,
+    "physicalRecords": 107
+  },
+  "nativeTrainingDigest": "7b3c929e7a359722789996cd950b244f886f3ef2ed455470f7e5b683030849dc",
+  "optimizerSteps": 0,
+  "learningClaim": null,
+  "admitted": true
+}

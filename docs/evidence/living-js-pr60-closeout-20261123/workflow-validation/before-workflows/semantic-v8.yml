@@ -1,0 +1,345 @@
+name: Independent v8 native execution and exact token costs
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  paired-v8:
+    # Populations run independently; new PR revisions supersede obsolete checks.
+    # Manually launched evidence runs retain their complete results.
+    concurrency:
+      group: semantic-v8-${{ github.ref }}-${{ matrix.population }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        population: [interoperability, gallery, all, se-support]
+    defaults:
+      run:
+        shell: bash
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      TRACING_JS_SELF_ROOT: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_NATIVE_SOURCE_PRODUCER: ${{ github.workspace }}/tracing-js-self
+      MEGATOKEN_TOKENIZER_JSON: ${{ github.workspace }}/tokenizer.json
+      MEGATOKEN_ROOT: ${{ github.workspace }}/megatoken
+      MEGATOKEN_PYTHON: python
+      SEMANTIC_V8_NATIVE_POLICY: ${{ runner.temp }}/semantic-native-policy-v8.json
+      V8_POPULATION: ${{ matrix.population }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: tracing-js-self
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: tracing-js-self/.nvmrc
+      - id: policy
+        name: Resolve current native code and retain this run’s exact policy
+        working-directory: tracing-js-self
+        run: |
+          node tools/resolve-native-consumer.mjs --out "$SEMANTIC_V8_NATIVE_POLICY"
+      - uses: actions/checkout@v4
+        with:
+          repository: werg/megatoken
+          ref: ${{ steps.policy.outputs.consumer }}
+          path: megatoken
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - name: Install pinned native dependencies and producer
+        run: |
+          npm ci --prefix tracing-js-self --ignore-scripts --no-audit --no-fund
+          python -m pip install --require-hashes -r tracing-js-self/tools/native-consumer/requirements.lock
+          python -m pip install --no-deps --no-build-isolation -e ./megatoken
+      - name: Acquire the exact production tokenizer
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, shutil
+          from pathlib import Path
+          from huggingface_hub import hf_hub_download
+          from megatoken.generation.codec import LING_REPOSITORY, LING_REVISION, LING_TOKENIZER_SHA256
+          path = Path(os.environ['MEGATOKEN_TOKENIZER_JSON'])
+          shutil.copyfile(hf_hub_download(LING_REPOSITORY, 'tokenizer.json', revision=LING_REVISION), path)
+          policy = json.loads(Path(os.environ['SEMANTIC_V8_NATIVE_POLICY']).read_text())
+          digest = hashlib.sha256(path.read_bytes()).hexdigest()
+          assert digest == LING_TOKENIZER_SHA256 == policy['tokenizerSha256']
+          PY
+      - name: Check identical contracts and source-bound interoperability
+        run: |
+          npm run semantic:v8:contract --prefix tracing-js-self 2>&1 | tee "$RUNNER_TEMP/semantic-v8-contract.log"
+          cmp tracing-js-self/contracts/semantic-execution-v8.json megatoken/src/megatoken/data/contracts/semantic-execution-v8.json
+      - name: Admit and pack the actual original-module namespace artifact
+        if: ${{ matrix.population == 'interoperability' }}
+        working-directory: megatoken
+        run: |
+          python -m pytest -q -s tests/integration/test_module_namespace_artifact_packing.py \
+            --basetemp="$RUNNER_TEMP/v8-namespace-artifact" \
+            --junitxml="$RUNNER_TEMP/semantic-v8-namespace-artifact.xml" \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-namespace-artifact.log"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-namespace-artifact.xml').getroot().iter('testcase'))
+          if len(cases) != 1 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('The actual namespace artifact must pass source/native/token/packing checks with zero skips')
+          print('One actual namespace artifact passed; six operation kinds packed; zero optimizer updates')
+          PY
+      - name: Check independent v8 semantics and malformed boundaries
+        working-directory: megatoken
+        run: |
+          python -m pytest -q tests/test_*v8*.py tests/test_algorithm_v7.py tests/test_protocol_properties.py tests/test_semantic_launch.py \
+            --junitxml="$RUNNER_TEMP/semantic-v8-tests.xml" 2>&1 | tee "$RUNNER_TEMP/semantic-v8-tests.log"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          suites = ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-tests.xml').getroot().iter('testsuite')
+          counts = {key: 0 for key in ('tests', 'failures', 'errors', 'skipped')}
+          for suite in suites:
+              for key in counts:
+                  counts[key] += int(suite.get(key, 0))
+          if counts['tests'] == 0 or any(counts[key] for key in ('failures', 'errors', 'skipped')):
+              raise ValueError(f'Native v8 tests, including live source checks, must all run and pass: {counts}')
+          PY
+      - name: Check the ordinary coordinator and source-qualified teacher boundaries
+        working-directory: tracing-js-self
+        run: |
+          node --test --test-reporter=junit test/semantic-native-process-v8.test.js test/semantic-native-orchestration-transport-v8.test.js \
+            test/semantic-selected-orchestration-v8.test.js test/semantic-selected-orchestration-checkpoint-v8.test.js \
+            test/semantic-native-orchestration-recovery-v8.test.js \
+            test/semantic-native-durable-commit-v8.test.js \
+            test/semantic-native-module-namespace-state-v8.test.js \
+            test/semantic-orchestration-training-v8.test.js test/semantic-native-v8.test.js \
+            test/semantic-source-session-v8.test.js test/semantic-region-support-cohort.test.js \
+            test/semantic-qualification-population-v8.test.js test/qualify-support-lifecycle.test.js \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-transport-tests.xml"
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          cases = list(ET.parse(Path(os.environ['RUNNER_TEMP']) / 'semantic-v8-transport-tests.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('Every paired V8 transport control, including the Python contract check, must run and pass')
+          print(f'{len(cases)} paired transport controls passed with zero skips')
+          PY
+      - name: Bind original module scheduling to actual native lifecycle state
+        if: ${{ matrix.population == 'interoperability' }}
+        working-directory: tracing-js-self
+        run: |
+          node --experimental-vm-modules --test --test-concurrency=1 --test-reporter=junit \
+            test/evaluated-module-scheduler.test.js \
+            test/semantic-module-scheduler-state-v8.test.js \
+            test/semantic-native-module-scheduler-state-v8.test.js \
+            test/semantic-module-scheduler-source-v8.test.js \
+            2>&1 | tee "$RUNNER_TEMP/module-scheduler-js.xml"
+          python - <<'PY'
+          import json, os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          cases = list(ET.parse(root / 'module-scheduler-js.xml').getroot().iter('testcase'))
+          if len(cases) != 40 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('All 40 source, owned scheduler and actual native controls must run and pass')
+          state = json.loads((root / 'module-scheduler-state-evidence.json').read_text())
+          source = json.loads((root / 'module-scheduler-source-evidence.json').read_text())
+          if state['publicAdmission'] is not False or state['acceptedCuts'] < 1 or state['refusedCuts'] < 1:
+              raise ValueError('Standalone lifecycle checks must retain accepted and refused states without claiming admission')
+          if source['sourceCases'] != 6 or source['actualNativeCases'] != 6 or source['ownedTransitions'] != 64:
+              raise ValueError('Every original module case and all 64 owned lifecycle transitions require native replay')
+          if source['publicAdmission'] is not False or source['trainingAdmission'] is not False or source['optimizerUpdates'] != 0:
+              raise ValueError('Source ownership alone cannot grant artifact admission or optimizer exposure')
+          print('40 module scheduler controls passed, zero skips; 6 original sources and 64 native lifecycle transitions')
+          PY
+      - name: Qualify shared generators and nested async scopes against actual native replay
+        if: ${{ matrix.population == 'interoperability' }}
+        working-directory: tracing-js-self
+        run: |
+          node --test --test-concurrency=1 --test-reporter=junit \
+            test/semantic-protocol-generator-source-v8.test.js \
+            test/semantic-protocol-promise-executor-source-v8.test.js \
+            test/semantic-shared-protocol-source-v8.test.js \
+            test/semantic-shared-generator-source-v8.test.js \
+            test/semantic-async-call-source-v8.test.js \
+            test/semantic-async-iteration-source-v8.test.js \
+            test/semantic-async-iteration-bindings-v8.test.js \
+            test/semantic-source-context-staging-v8.test.js \
+            2>&1 | tee "$RUNNER_TEMP/shared-async-source-tests.xml"
+          python - <<'PY'
+          import json, os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          cases = list(ET.parse(root / 'shared-async-source-tests.xml').getroot().iter('testcase'))
+          if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+              raise ValueError('Every shared generator/Promise, async iteration and nested async control must run and pass')
+          for name, sources, contexts in [('shared-generator-source-evidence.json', 6, 189), ('nested-async-source-evidence.json', 10, 231)]:
+              evidence = json.loads((root / name).read_text())
+              if evidence['sourceCases'] != sources or evidence['actualNativeCases'] != sources or evidence['generatedContexts'] != contexts:
+                  raise ValueError('Every original source and generated context requires independent native replay: ' + name)
+              if evidence['moduleAdmission'] is not False or evidence['trainingAdmission'] is not False or evidence['optimizerUpdates'] != 0:
+                  raise ValueError('Source composition cannot itself grant evaluated-module/data admission or optimizer exposure')
+          print(f'{len(cases)} source composition controls passed, zero skips; 6 generator/189 context and 10 async/231 context cases')
+          PY
+      - id: qualification
+        name: Recollect exact source and native admission receipts
+        working-directory: tracing-js-self
+        run: |
+          node tools/qualify-semantic-v8.mjs --population "$V8_POPULATION" --inputs all --workers 2 \
+            --out "$RUNNER_TEMP/v8-admitted" --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \
+            --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-qualification.log"
+      - name: Measure complete causal sequences and retained native packing
+        if: ${{ !cancelled() && steps.qualification.outcome != 'skipped' }}
+        working-directory: tracing-js-self
+        run: |
+          node tools/measure-semantic-v8.mjs --qualification "$RUNNER_TEMP/v8-admitted" \
+            --out "$RUNNER_TEMP/v8-costs" --tokenizer-module tools/semantic-v8-tokenizer-adapter.mjs \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-costs.log"
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          const read=directory=>JSON.parse(readFileSync(join(process.env.RUNNER_TEMP,directory,'report.json')));
+          const qualification=read('v8-admitted'),costs=read('v8-costs'),declared=qualification.declared;
+          if(!Number.isSafeInteger(declared)||declared<1||qualification.preparationOnly||
+            qualification.sourceQualified!==declared||qualification.nativeAdmitted!==declared)
+            throw new Error('Every declared CI case requires fresh source and native admission');
+          if(!costs.tokenizerEvidence||costs.summary.declared!==declared||
+            costs.summary.flat.measured!==declared||costs.summary.flat.tokenMeasuredEpisodes!==declared||
+            costs.summary.flat.tokenMeasurement!=='passed'||costs.summary.nativePacking.measuredEpisodes!==declared)
+            throw new Error('Every declared CI case requires complete production-tokenizer and native-packing measurements');
+          JS
+      - name: Qualify ordinary V8 training resume export and real service restoration
+        if: ${{ matrix.population == 'interoperability' }}
+        working-directory: tracing-js-self
+        run: |
+          node tools/qualify-ordinary-v8-lifecycle.mjs --out "$RUNNER_TEMP/v8-ordinary-lifecycle" \
+            --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \
+            --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-ordinary-lifecycle.log"
+      - name: Qualify source-qualified orchestration through ordinary training and serving
+        if: ${{ matrix.population == 'interoperability' }}
+        working-directory: tracing-js-self
+        run: |
+          node tools/qualify-ordinary-v8-lifecycle.mjs --orchestration-teacher \
+            --out "$RUNNER_TEMP/v8-ordinary-orchestration" \
+            --megatoken "$MEGATOKEN_ROOT" --python "$MEGATOKEN_PYTHON" \
+            --tokenizer "$MEGATOKEN_TOKENIZER_JSON" --native-policy "$SEMANTIC_V8_NATIVE_POLICY" \
+            2>&1 | tee "$RUNNER_TEMP/semantic-v8-ordinary-orchestration.log"
+      - name: Prepare all frozen support sources and require production SE behavior in both splits
+        if: ${{ matrix.population == 'se-support' }}
+        working-directory: tracing-js-self
+        run: |
+          python - <<'PY' 2>&1 | tee "$RUNNER_TEMP/semantic-v8-support-supply.log"
+          import json, os, subprocess
+          from pathlib import Path
+          temporary = Path(os.environ['RUNNER_TEMP'])
+          qualification = temporary / 'v8-admitted'
+          report = json.loads((qualification / 'report.json').read_text())
+          registry = json.loads((qualification / 'family-registry.json').read_text())
+          rows = report['rows']
+          source_ids = [source['id'] for source in registry['sources']]
+          population_count = len(source_ids)
+          if (not population_count or report['population'] != 'se-support' or report['declared'] != population_count or
+              report['preparationOnly'] or report['sourceQualified'] != population_count or report['nativeAdmitted'] != population_count or
+              report['registryDigest'] != registry['digest'] or len(rows) != population_count or
+              len(set(source_ids)) != population_count or {row['sourceId'] for row in rows} != set(source_ids) or
+              any(row['source'] != 'passed' or row['native'] != 'passed' for row in rows)):
+              raise ValueError('Every frozen support source requires its original source and independent native admission')
+          inventory = temporary / 'v8-support-source-ids.json'
+          inventory.write_text(json.dumps({'schema': 'semantic-v8-source-population/1',
+              'registryDigest': registry['digest'], 'sourceIds': source_ids}, indent=2) + '\n')
+          prepared = temporary / 'v8-support-prepared'
+          consumer = Path(os.environ['MEGATOKEN_ROOT'])
+          policy = json.loads(Path(os.environ['SEMANTIC_V8_NATIVE_POLICY']).read_text())
+          command = [os.environ['MEGATOKEN_PYTHON'], str(consumer / 'scripts/prepare_semantic_v8.py')]
+          for row in rows:
+              command.extend(['--input', str(qualification / row['sourceArtifact'])])
+          command.extend(['--output', str(prepared), '--producer-root', os.environ['TRACING_JS_SELF_ROOT'],
+              '--producer-revision', report['producerRevision'], '--consumer-revision', policy['consumerRevision'],
+              '--tokenizer-json', os.environ['MEGATOKEN_TOKENIZER_JSON'], '--max-positions', '128', '--max-history', '128'])
+          subprocess.run(command, check=True)
+          subprocess.run([os.environ['MEGATOKEN_PYTHON'], str(consumer / 'scripts/qualify_semantic_v8_supply.py'),
+              '--prepared-root', str(prepared), '--expected-source-ids', str(inventory),
+              '--producer-revision', report['producerRevision'], '--consumer-revision', policy['consumerRevision'],
+              '--registry-digest', registry['digest'], '--tokenizer-json', os.environ['MEGATOKEN_TOKENIZER_JSON'],
+              '--max-positions', '128', '--max-history', '128',
+              '--output', str(temporary / 'semantic-v8-support-supply.json')], check=True)
+          PY
+      - name: Train and restore the exact prepared support corpus
+        if: ${{ matrix.population == 'se-support' }}
+        working-directory: tracing-js-self
+        run: |
+          python - <<'PY' 2>&1 | tee "$RUNNER_TEMP/semantic-v8-support-lifecycle.log"
+          import json, os, subprocess
+          from pathlib import Path
+          temporary = Path(os.environ['RUNNER_TEMP'])
+          qualification = temporary / 'v8-admitted'
+          report = json.loads((qualification / 'report.json').read_text())
+          registry = json.loads((qualification / 'family-registry.json').read_text())
+          train_ids = {source for component in registry['components'] if component['split'] == 'train'
+                       for source in component['sourceIds']}
+          candidates = sorted((row for row in report['rows']
+                               if row['sourceId'] in train_ids and row['id'].endswith('-child-teacher')),
+                              key=lambda row: row['id'])
+          if not candidates:
+              raise ValueError('The frozen support corpus must contain a source-qualified training child teacher')
+          sample = (qualification / candidates[0]['sourceArtifact']).resolve(strict=True)
+          if not sample.is_relative_to(qualification.resolve()) or not sample.is_file():
+              raise ValueError('The support serving sample must be a retained qualification artifact')
+          subprocess.run(['node', 'tools/qualify-ordinary-v8-lifecycle.mjs',
+              '--prepared-root', str(temporary / 'v8-support-prepared'),
+              '--source-inventory', str(temporary / 'v8-support-source-ids.json'),
+              '--sample-source', str(sample),
+              '--out', str(temporary / 'v8-support-lifecycle'),
+              '--megatoken', os.environ['MEGATOKEN_ROOT'], '--python', os.environ['MEGATOKEN_PYTHON'],
+              '--tokenizer', os.environ['MEGATOKEN_TOKENIZER_JSON'],
+              '--native-policy', os.environ['SEMANTIC_V8_NATIVE_POLICY']], check=True)
+          result = json.loads((temporary / 'v8-support-lifecycle' / 'command-report.json').read_text())
+          if (result['status'] != 'passed' or result['populationCount'] != len(registry['sources'])
+              or result['registryDigest'] != registry['digest'] or result['optimizerUpdates'] != 2
+              or result.get('fullTargetCoverageRequested') is not False
+              or result.get('fullTargetCoverageQualified') is not False
+              or result.get('targetCoverageStatus') != 'not-requested'
+              or result.get('optimizerUpdateCounts') != {'lifecycle': 2, 'coverage': 0, 'total': 2}
+              or result['learnedSuccess'] is not None):
+              raise ValueError('Support optimizer qualification changed corpus identity or completion evidence')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semantic-v8-${{ matrix.population }}-native-evidence
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            ${{ runner.temp }}/semantic-native-policy-v8.json*
+            ${{ runner.temp }}/semantic-v8-contract.log
+            ${{ runner.temp }}/semantic-v8-tests.xml
+            ${{ runner.temp }}/semantic-v8-tests.log
+            ${{ runner.temp }}/semantic-v8-transport-tests.xml
+            ${{ runner.temp }}/module-scheduler-*
+            ${{ runner.temp }}/shared-async-source-tests.xml
+            ${{ runner.temp }}/shared-generator-source-evidence.json
+            ${{ runner.temp }}/nested-async-source-evidence.json
+            ${{ runner.temp }}/semantic-v8-namespace-artifact.xml
+            ${{ runner.temp }}/semantic-v8-namespace-artifact.log
+            ${{ runner.temp }}/v8-namespace-artifact/
+            ${{ runner.temp }}/semantic-v8-qualification.log
+            ${{ runner.temp }}/semantic-v8-costs.log
+            ${{ runner.temp }}/v8-admitted/
+            ${{ runner.temp }}/v8-costs/
+            ${{ runner.temp }}/semantic-v8-ordinary-lifecycle.log
+            ${{ runner.temp }}/v8-ordinary-lifecycle/
+            ${{ runner.temp }}/semantic-v8-ordinary-orchestration.log
+            ${{ runner.temp }}/v8-ordinary-orchestration/
+            ${{ runner.temp }}/semantic-v8-support-supply.log
+            ${{ runner.temp }}/semantic-v8-support-supply.json
+            ${{ runner.temp }}/v8-support-source-ids.json
+            ${{ runner.temp }}/v8-support-prepared/
+            ${{ runner.temp }}/semantic-v8-support-lifecycle.log
+            ${{ runner.temp }}/v8-support-lifecycle/

@@ -1,0 +1,47 @@
+{
+  "acceptedHistoryRecovery": "unmeasured",
+  "archiveBytes": 73179925,
+  "archiveSha256": "8336b51933e6427514cf0606f1fcc1a2e0882168b79c400caf2df5e64b0edb7d",
+  "consumerRevision": "21b7c80718244073dbf13263771da533d4ecbc25",
+  "declaredSources": 64,
+  "defaultPromotion": false,
+  "freshSourceNativePreparationAtPackageAndRestore": true,
+  "fullTargetCoverageQualified": false,
+  "learnedSuccess": null,
+  "manifestIdentity": "e1b63622fe5232af2358eed4d320d2b57f9251d04362e678f34f0f2dee228f94",
+  "nativeAdmitted": 64,
+  "nativePolicyEvidenceSha256": {
+    "declared-native-policy-v8.json": "d7d3c2b9860b6563ef3478c0ebd05c2f6f422d6c1e085b08bc38ea9ab9d68e0e",
+    "semantic-native-policy-v8.json": "c0bbcea4d11bfea6937f2dfa5036a3de5829d136ad576d2bc8237f08ba8a7000",
+    "semantic-native-policy-v8.json.resolution.json": "daf7ba4441e756ee116bf216352b06a5a39e14757b82c39e7f924d8296208fe5"
+  },
+  "nativePolicyResolution": {
+    "declaredPolicySha256": "d7d3c2b9860b6563ef3478c0ebd05c2f6f422d6c1e085b08bc38ea9ab9d68e0e",
+    "kind": "selected-checkout",
+    "ref": "21b7c80718244073dbf13263771da533d4ecbc25",
+    "repository": "werg/megatoken",
+    "requestedBranch": null,
+    "revision": "21b7c80718244073dbf13263771da533d4ecbc25",
+    "schema": "semantic-native-resolution/1"
+  },
+  "nativePolicySha256": "c0bbcea4d11bfea6937f2dfa5036a3de5829d136ad576d2bc8237f08ba8a7000",
+  "ordinaryLifecycleOptimizerUpdates": 2,
+  "originalRuntimeAssetLocatorsAbsentAtRestore": true,
+  "originalTaskArtifactBindingsVerified": true,
+  "packageOptimizerUpdates": 0,
+  "producerRevision": "409e5931c4a9289909d57008008a8ea5b4a491fc",
+  "registryDigest": "985330b78ce655b0bfb4181f02298fcb471c599d8a1f8abe5c82ea0a20e6fbb7",
+  "releaseDecoderForwardPasses": 0,
+  "restoreOptimizerUpdates": 0,
+  "schema": "semantic-v8-release-qualification/1",
+  "sourceQualified": 64,
+  "splitCounts": {
+    "test": 4,
+    "train": 52,
+    "validation": 8
+  },
+  "status": "passed",
+  "supportCohortDigest": "141894d8c8fc684c207dc340955da8b9826d378ce45fc0a20d31bab89c3d955b",
+  "supportPopulationSha256": "ef86030aeef78efbc53637b8d57e637d6779bf081c0aa8f5e09daf1723cbeb02",
+  "wrongExternalChecksumRefusedBeforeExtraction": true
+}

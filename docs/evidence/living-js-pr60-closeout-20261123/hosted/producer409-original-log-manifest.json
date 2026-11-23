@@ -1,0 +1,22 @@
+[
+  {
+    "path": "producer-409-combined-aggregate-137628721216.log",
+    "bytes": 36567,
+    "sha256": "993436ee2c87de862b0f4dfed765ee1985f0f60466b79da9e3cde916f23bf7e7"
+  },
+  {
+    "path": "producer-409-node20-137615315728.log",
+    "bytes": 1215766,
+    "sha256": "bc61f38ed47a4dce252bf80cd7a3b120e9fb6365122a78e0c46a2d5617f7bd04"
+  },
+  {
+    "path": "producer-409-node22-137615316264.log",
+    "bytes": 1357539,
+    "sha256": "a07800d2654931c6da068fbd957a2c0045acf5b6c06bf3fbdd6001c1dc01436f"
+  },
+  {
+    "path": "producer-409-node24-137615316187.log",
+    "bytes": 461719,
+    "sha256": "21d9c50351dddfa2fddd5eedb9df35138c36828f243b9bfa120d6d78ae7546f7"
+  }
+]

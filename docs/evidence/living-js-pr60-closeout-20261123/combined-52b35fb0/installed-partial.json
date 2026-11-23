@@ -1,0 +1,847 @@
+{
+  "fullCombinedGateQualified": false,
+  "installed": {
+    "contractSha256": "56bddf1a2f19eed917b425b5954d73d58f8b524c440617f4342c75d8fabb2d8b",
+    "importMode": "isolated-installed-wheel",
+    "packageFilesSha256": "d800d06abc1f5302fb3c6da3d9f1335359a668f0d40dc2739853a8cab611292d",
+    "root": "/workspace/scratch/0f9e11f5b3cf/pr60-venv/lib/python3.12/site-packages/megatoken",
+    "sourceReceipts": [
+      {
+        "id": "source-symbol-getter-arithmetic",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 22,
+            "detailedRecords": 8,
+            "generatedRecords": 22,
+            "protocolRecords": 11,
+            "regionRecords": 3
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "typed-views-shared-backing",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 21,
+            "detailedRecords": 8,
+            "generatedRecords": 21,
+            "protocolRecords": 13,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-derived-private-arithmetic",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 87,
+            "detailedRecords": 21,
+            "generatedRecords": 87,
+            "protocolRecords": 64,
+            "regionRecords": 2
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "builtin-iterator-mixed-arithmetic",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 30,
+            "detailedRecords": 12,
+            "generatedRecords": 30,
+            "protocolRecords": 16,
+            "regionRecords": 2
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-promise-all-reaction-arithmetic",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 34,
+            "detailedRecords": 29,
+            "generatedRecords": 34,
+            "protocolRecords": 3,
+            "regionRecords": 2
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-promise-join-rejection-finally",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 28,
+            "detailedRecords": 24,
+            "generatedRecords": 28,
+            "protocolRecords": 3,
+            "regionRecords": 1
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-number-private-arithmetic",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 68,
+            "detailedRecords": 15,
+            "generatedRecords": 68,
+            "protocolRecords": 51,
+            "regionRecords": 2
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-generator-cleanup-suspension",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 36,
+            "detailedRecords": 6,
+            "generatedRecords": 36,
+            "protocolRecords": 30,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-generator-delegated-cleanup",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 78,
+            "detailedRecords": 30,
+            "generatedRecords": 78,
+            "protocolRecords": 48,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-proxy-traps-arithmetic",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 50,
+            "detailedRecords": 25,
+            "generatedRecords": 50,
+            "protocolRecords": 22,
+            "regionRecords": 3
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-base-initializer-throw",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 30,
+            "detailedRecords": 8,
+            "generatedRecords": 30,
+            "protocolRecords": 22,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-derived-initializer-throw",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 53,
+            "detailedRecords": 15,
+            "generatedRecords": 53,
+            "protocolRecords": 38,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-promise-executor-first-call",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 23,
+            "detailedRecords": 16,
+            "generatedRecords": 23,
+            "protocolRecords": 5,
+            "regionRecords": 2
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-promise-executor-retained-resolution",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 16,
+            "detailedRecords": 10,
+            "generatedRecords": 16,
+            "protocolRecords": 5,
+            "regionRecords": 1
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-promise-executor-abrupt",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 14,
+            "detailedRecords": 11,
+            "generatedRecords": 14,
+            "protocolRecords": 3,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-ordinary-constructor-prototype",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 33,
+            "detailedRecords": 8,
+            "generatedRecords": 33,
+            "protocolRecords": 25,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-enumeration-map-callback",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 24,
+            "detailedRecords": 6,
+            "generatedRecords": 24,
+            "protocolRecords": 18,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "generator-own-symbol-alias",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 39,
+            "detailedRecords": 12,
+            "generatedRecords": 39,
+            "protocolRecords": 27,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-logical-left-operands",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 49,
+            "detailedRecords": 19,
+            "generatedRecords": 49,
+            "protocolRecords": 29,
+            "regionRecords": 1
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-for-in-own-keys",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 40,
+            "detailedRecords": 19,
+            "generatedRecords": 40,
+            "protocolRecords": 21,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-promise-adoption-executor",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 27,
+            "detailedRecords": 14,
+            "generatedRecords": 27,
+            "protocolRecords": 12,
+            "regionRecords": 1
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-promise-adoption-async-return",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 21,
+            "detailedRecords": 12,
+            "generatedRecords": 21,
+            "protocolRecords": 9,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-promise-adoption-reaction-return",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 26,
+            "detailedRecords": 17,
+            "generatedRecords": 26,
+            "protocolRecords": 9,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-async-iterator-array",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 129,
+            "detailedRecords": 79,
+            "generatedRecords": 129,
+            "protocolRecords": 49,
+            "regionRecords": 1
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-async-iterator-getters",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 138,
+            "detailedRecords": 75,
+            "generatedRecords": 138,
+            "protocolRecords": 62,
+            "regionRecords": 1
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-async-iterator-value-identity",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 50,
+            "detailedRecords": 33,
+            "generatedRecords": 50,
+            "protocolRecords": 17,
+            "regionRecords": 0
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-async-iterator-throw-precedence",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 82,
+            "detailedRecords": 57,
+            "generatedRecords": 82,
+            "protocolRecords": 24,
+            "regionRecords": 1
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-async-iterator-return-replaced",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 76,
+            "detailedRecords": 43,
+            "generatedRecords": 76,
+            "protocolRecords": 32,
+            "regionRecords": 1
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-async-iterator-sync-rejection",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 80,
+            "detailedRecords": 46,
+            "generatedRecords": 80,
+            "protocolRecords": 33,
+            "regionRecords": 1
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-async-iterator-sibling-cleanup",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 179,
+            "detailedRecords": 100,
+            "generatedRecords": 179,
+            "protocolRecords": 78,
+            "regionRecords": 1
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      },
+      {
+        "id": "source-async-iterator-idle-completion",
+        "receipt": {
+          "admitted": false,
+          "checks": {
+            "contexts": "passed",
+            "continuation": "passed",
+            "masks": "untested",
+            "replay": "passed",
+            "sourceBinding": "untested",
+            "tokenizer": "untested"
+          },
+          "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+          "counts": {
+            "algorithmRecords": 0,
+            "contexts": 163,
+            "detailedRecords": 84,
+            "generatedRecords": 163,
+            "protocolRecords": 78,
+            "regionRecords": 1
+          },
+          "schema": "semantic-native-admission/8"
+        }
+      }
+    ],
+    "verifiedPythonFiles": 268
+  },
+  "pair": {
+    "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
+    "declaredPolicySha256": "d7d3c2b9860b6563ef3478c0ebd05c2f6f422d6c1e085b08bc38ea9ab9d68e0e",
+    "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
+    "gateSpecSha256": "bf490f89098deb3b09dd20047cf7f52349004e59cbc7f51bc305531fd9dca26b",
+    "interoperabilityDigest": "64f230e7b05dc6b33b3d0df359898e27158cb67a386c9cdeb63fd64b4729df2d",
+    "native": {
+      "revision": "21b7c80718244073dbf13263771da533d4ecbc25",
+      "tree": "7341a8c46b192842a1773a5a7ec98f23776b8a6e"
+    },
+    "policySha256": "59b5966271d5ebb7fad487a738a81b64835282437f03ce02c1f051ae0ec374f3",
+    "producer": {
+      "revision": "52b35fb0fb121c5fd82d9d70674789516b2cc853",
+      "tree": "fcd3f0c9f8701e3f3a0978d451637072a9c24462"
+    },
+    "resolutionSha256": "07d727de0315ff7128e0f6f65bb02245b1dbf020808e3276f8b42476aaa96f75"
+  },
+  "payloads": [
+    {
+      "decodedBytes": 85542,
+      "encoding": "copy",
+      "native": "src/megatoken/data/contracts/semantic-execution-v8.json",
+      "nativeBytes": 85542,
+      "nativeSha256": "56bddf1a2f19eed917b425b5954d73d58f8b524c440617f4342c75d8fabb2d8b",
+      "source": "contracts/semantic-execution-v8.json",
+      "sourceBytes": 85542,
+      "sourceSha256": "56bddf1a2f19eed917b425b5954d73d58f8b524c440617f4342c75d8fabb2d8b"
+    },
+    {
+      "decodedBytes": 2045848,
+      "encoding": "gzip-base64",
+      "native": "tests/fixtures/semantic-regions-v8.json.gz.b64",
+      "nativeBytes": 66373,
+      "nativeSha256": "44a3e01c2c62495d9388d4b2c3615f327e62344b794b7d4d94e1d5e72df6925a",
+      "source": "test/fixtures/semantic-regions-v8.json",
+      "sourceBytes": 2045848,
+      "sourceSha256": "17c9a6b6feff4029c0713754e9b3a95fe41cbc602ac1efc5482f6684633b11a1"
+    },
+    {
+      "decodedBytes": 29227,
+      "encoding": "copy",
+      "native": "tests/fixtures/semantic-protocol-v8.json",
+      "nativeBytes": 29227,
+      "nativeSha256": "704dcb2f7a34d7bd2089391020b1686a0e9ef118def323ed1db99227e05e5d58",
+      "source": "test/fixtures/semantic-protocol-v8.json",
+      "sourceBytes": 29227,
+      "sourceSha256": "704dcb2f7a34d7bd2089391020b1686a0e9ef118def323ed1db99227e05e5d58"
+    },
+    {
+      "decodedBytes": 32084,
+      "encoding": "copy",
+      "native": "tests/fixtures/semantic-iterator-v8.json",
+      "nativeBytes": 32084,
+      "nativeSha256": "f124dba091c3fa36463fd0c6b79b98e5566c14cc0807938b25954d68f8d1db69",
+      "source": "test/fixtures/semantic-iterator-v8.json",
+      "sourceBytes": 32084,
+      "sourceSha256": "f124dba091c3fa36463fd0c6b79b98e5566c14cc0807938b25954d68f8d1db69"
+    },
+    {
+      "decodedBytes": 354544,
+      "encoding": "copy",
+      "native": "tests/fixtures/semantic-protocol-source-v8.json",
+      "nativeBytes": 354544,
+      "nativeSha256": "11f8b6883c054dd07b51e25267130bc8689e06ccbf9b56d7d52b4af5be6159f3",
+      "source": "test/fixtures/semantic-protocol-source-v8.json",
+      "sourceBytes": 354544,
+      "sourceSha256": "11f8b6883c054dd07b51e25267130bc8689e06ccbf9b56d7d52b4af5be6159f3"
+    },
+    {
+      "decodedBytes": 21585388,
+      "encoding": "gzip-base64",
+      "native": "tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
+      "nativeBytes": 1329321,
+      "nativeSha256": "1e98d2a85cfee5a2e1b81daa3b14f8e6c793fd9cdd094db4c206dd3c7d5f7093",
+      "source": "test/fixtures/semantic-protocol-region-v8.json.gz.b64",
+      "sourceBytes": 1329321,
+      "sourceEncoding": "gzip-base64",
+      "sourceSha256": "1e98d2a85cfee5a2e1b81daa3b14f8e6c793fd9cdd094db4c206dd3c7d5f7093"
+    },
+    {
+      "decodedBytes": 60633,
+      "encoding": "copy",
+      "native": "tests/fixtures/semantic-host-protocol-v8.json.gz.b64",
+      "nativeBytes": 60633,
+      "nativeSha256": "e49f63ebd804edae85e65338081ef20858c11a721ff522e0fb961b21caa4f6a9",
+      "source": "test/fixtures/semantic-host-protocol-v8.json.gz.b64",
+      "sourceBytes": 60633,
+      "sourceSha256": "e49f63ebd804edae85e65338081ef20858c11a721ff522e0fb961b21caa4f6a9"
+    }
+  ],
+  "scope": "Isolated installed wheel source replay and shared payload parity only; full combined gate blocked by absent /proc/self/ns/time"
+}
