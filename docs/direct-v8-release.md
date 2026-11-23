@@ -210,11 +210,33 @@ checksum and the exact trusted source checkouts. It also requires a wrong
 external checksum to refuse before any restoration destination is created.
 
 The `Direct V8 source model package and restore` workflow freezes the triggering
-producer commit and reads its exact 40-character native consumer revision from
-the committed policy before checking out that native source. It verifies that
-the resulting source pair still matches the frozen policy before qualification.
-It runs the 19 producer archive, 83 task-binding/campaign-history and 69 native verifier controls without skips,
-then the full paired gate in the exact release runtime. Every subprocess streams
+producer commit and resolves the consumer once with
+`tools/resolve-native-consumer.mjs`. It selects the matching development branch
+when present, otherwise the current default head. `MEGATOKEN_REF` can explicitly
+select a branch or commit; an absent explicit branch or a lookup error fails the
+run. A supplied policy with `consumerRevision` retains that exact revision.
+The workflow saves the resolved policy and resolution record outside both
+source checkouts, checks out the observed 40-character consumer revision, and
+uses that same policy for qualification.
+
+For a local invocation, the driver binds a development policy without
+`consumerRevision` to the clean checkout explicitly selected by `--megatoken`.
+An existing policy revision must match that checkout. The driver retains the
+declared policy bytes, the resolved policy and its selection record in the
+qualification output, separately from the original runtime inputs moved during
+restoration. These files are `declared-native-policy-v8.json`,
+`semantic-native-policy-v8.json` and
+`semantic-native-policy-v8.json.resolution.json`. The record identifies whether
+the revision came from the selected checkout or an existing recorded revision,
+and retains the declared policy's SHA-256. Every qualification and lifecycle
+stage uses the retained policy,
+and source identity checks continue to require exact clean checkouts. A policy
+snapshot records the chosen code; it does not establish that the later stages
+passed.
+
+The workflow runs its complete selected producer archive,
+task-binding/campaign-history and native verifier controls without skips, then
+the full paired gate in the exact release runtime. Every subprocess streams
 progress and retains its original stdout/stderr. A complete tar archive retains
 hidden campaign locks, immutable history, original inputs, package, restoration
 and logs even on failure. The original bytes remain distinct from the newly
