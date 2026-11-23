@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -99,13 +100,16 @@ class ReleasePolicyDriverTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Repeated qualification JSON key"):
             qualifier.resolve_native_policy(self.path, self.revision)
 
-    def repositories(self):
+    def repositories(self, qualification_script=None):
         producer, native = self.root / "producer", self.root / "native"
         for repo in (producer, native):
             repo.mkdir()
             subprocess.run(["git", "init", "--quiet", str(repo)], check=True)
         (producer / "contracts").mkdir()
         (producer / "contracts/semantic-native-policy-v8.json").write_bytes(self.path.read_bytes())
+        if qualification_script is not None:
+            (producer / "tools").mkdir()
+            (producer / "tools/qualify-semantic-v8.mjs").write_text(qualification_script)
         (native / "implementation.py").write_text("# controlled checkout\n")
         for repo in (producer, native):
             subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
@@ -157,6 +161,56 @@ class ReleasePolicyDriverTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "differs from its exact recorded revision"):
                 qualifier.qualify(args)
         self.assertFalse(output.exists())
+
+    def test_driver_preserves_supplied_pinned_policy_bytes_exactly(self):
+        producer, native, tokenizer = self.repositories()
+        self.declared["consumerRevision"] = qualifier.git(native, "rev-parse", "HEAD")
+        self.save()
+        original = self.path.read_bytes()
+        output = self.root / "qualification"
+        args = argparse.Namespace(megatoken=native, tokenizer=tokenizer, out=output,
+                                  native_policy=self.path, python="python3")
+        real_popen = subprocess.Popen
+
+        def launch(command, **kwargs):
+            if command[0] == "node":
+                raise StopBeforeQualification
+            return real_popen(command, **kwargs)
+
+        with patch.object(qualifier, "__file__", str(producer / "tools/qualify-v8-release.py")), \
+                patch.object(qualifier.subprocess, "Popen", side_effect=launch):
+            with self.assertRaises(StopBeforeQualification):
+                qualifier.qualify(args)
+        self.assertEqual((output / "semantic-native-policy-v8.json").read_bytes(), original)
+        self.assertEqual((output / "declared-native-policy-v8.json").read_bytes(), original)
+        resolution = qualifier.read(output / "semantic-native-policy-v8.json.resolution.json")
+        self.assertEqual(resolution["kind"], "recorded-revision")
+
+    def test_driver_refuses_stage_mutation_or_deletion_of_every_policy_evidence_asset(self):
+        producer, native, tokenizer = self.repositories("""
+import {appendFileSync, unlinkSync} from 'node:fs';
+import {dirname, join} from 'node:path';
+const file = join(dirname(process.env.SEMANTIC_V8_NATIVE_POLICY), process.env.QUALIFICATION_TAMPER_FILE);
+if (process.env.QUALIFICATION_TAMPER_DELETE === '1') unlinkSync(file);
+else appendFileSync(file, '\\n');
+""")
+        for name in ("declared-native-policy-v8.json", "semantic-native-policy-v8.json",
+                     "semantic-native-policy-v8.json.resolution.json"):
+            for delete in (False, True):
+                with self.subTest(name=name, delete=delete):
+                    output = self.root / (name + ("-delete" if delete else "-mutate"))
+                    args = argparse.Namespace(megatoken=native, tokenizer=tokenizer, out=output,
+                                              native_policy=None, python="python3")
+                    with patch.object(qualifier, "__file__", str(producer / "tools/qualify-v8-release.py")), \
+                            patch.dict(os.environ, {"QUALIFICATION_TAMPER_FILE": name,
+                                                    "QUALIFICATION_TAMPER_DELETE": "1" if delete else "0"}):
+                        with self.assertRaisesRegex(ValueError, "Retained run policy evidence changed"):
+                            qualifier.qualify(args)
+                    stages = qualifier.read(output / "stages.json")
+                    self.assertEqual(len(stages), 1)
+                    self.assertEqual(stages[0]["exitCode"], 0)
+                    self.assertEqual(stages[0]["status"], "failed")
+                    self.assertFalse((output / "qualification-result.json").exists())
 
 
 if __name__ == "__main__":

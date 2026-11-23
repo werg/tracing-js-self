@@ -124,8 +124,9 @@ while final complete-run equivalence checks continue to require all shards.
 
 ## Current paired code and per-run policy
 
-The active V8 native, continuation and original-module CI jobs resolve the
-consumer once before checkout. `tools/resolve-native-consumer.mjs` selects the
+The V8 native, continuation, original-module, direct-release and combined
+recovery/Promise CI jobs resolve the consumer once before checkout.
+`tools/resolve-native-consumer.mjs` selects the
 matching branch in `werg/megatoken` when it exists, otherwise the repository's
 current default head. `MEGATOKEN_REF` explicitly selects a branch or commit;
 an absent explicit branch or a network failure is an error. A historical policy
@@ -137,6 +138,19 @@ preparation then use that immutable observation. The checked-in development
 policy binds the current contract, fixtures and tokenizer without freezing the
 companion repository to one old commit. Contract regeneration also updates the
 policy digests, and its check mode rejects stale policy evidence.
+
+The combined recovery/Promise workflow resolves its policy in one prerequisite
+job and distributes those exact bytes to all six lanes and the final aggregate.
+The verifier checks the retained policy digest with each lane's source trees,
+contract and fixture evidence; it does not resolve a moving branch separately
+for each lane. Compressed source fixtures are read from their tracked paths and
+compared with the independently checked consumer payloads.
+
+Local commands that already take an explicit consumer checkout bind an unpinned
+development policy to that checkout's actual clean revision. An explicitly
+recorded revision remains a constraint and cannot be silently replaced. The
+direct-release driver retains the original declaration, resolved policy and
+selection record outside the inputs it later relocates for restoration.
 
 Support-source and lifecycle counts in those jobs are derived from the actual
 authenticated registry. The complete source-ID set must match the qualification

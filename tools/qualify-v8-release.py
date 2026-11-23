@@ -159,8 +159,17 @@ def qualify(args):
             stream.write(declared_policy)
     else:
         write(policy_path, policy)
-    policy_sha256 = hashlib.sha256(policy_path.read_bytes()).hexdigest()
     write(output / "semantic-native-policy-v8.json.resolution.json", resolution)
+    policy_evidence = {name: hashlib.sha256((output / name).read_bytes()).hexdigest() for name in
+                       ("declared-native-policy-v8.json", "semantic-native-policy-v8.json",
+                        "semantic-native-policy-v8.json.resolution.json")}
+
+    def verify_policy_evidence():
+        require(all((output / name).is_file() and not (output / name).is_symlink() and
+                    hashlib.sha256((output / name).read_bytes()).hexdigest() == digest
+                    for name, digest in policy_evidence.items()),
+                "Retained run policy evidence changed after resolution")
+
     inputs, logs = output / "original-inputs", output / "logs"
     inputs.mkdir(mode=0o700)
     logs.mkdir(mode=0o700)
@@ -181,8 +190,7 @@ def qualify(args):
         print(json.dumps(stage), flush=True)
         started = time.monotonic()
         try:
-            require(hashlib.sha256(policy_path.read_bytes()).hexdigest() == policy_sha256,
-                    "Run native policy changed after resolution")
+            verify_policy_evidence()
             with (logs / (name + ".stdout.log")).open("xb") as stdout, \
                     (logs / (name + ".stderr.log")).open("xb") as stderr:
                 process = subprocess.Popen(stage["command"], cwd=producer, env=environment,
@@ -210,8 +218,7 @@ def qualify(args):
                     for reader in readers:
                         reader.join()
             stage["exitCode"] = process.returncode
-            require(hashlib.sha256(policy_path.read_bytes()).hexdigest() == policy_sha256,
-                    "Run native policy changed during qualification")
+            verify_policy_evidence()
             require((process.returncode == 0) is expected_success,
                     "Release qualification stage has an unexpected outcome: " + name)
             stage["status"] = "passed" if expected_success else "refused-as-required"
@@ -318,9 +325,11 @@ def qualify(args):
             restored_result["optimizerUpdatesPerformed"] == restored_result["decoderForwardPassesPerformed"] == 0 and
             restored_result["learnedSuccess"] is None and restored_result["defaultPromotion"] is False,
             "Restoration did not prove the exact bounded release claims")
+    verify_policy_evidence()
     result = {"schema": "semantic-v8-release-qualification/1", "status": "passed",
               "producerRevision": producer_revision, "consumerRevision": native_revision,
-              "nativePolicySha256": policy_sha256,
+              "nativePolicySha256": policy_evidence[policy_path.name],
+              "nativePolicyEvidenceSha256": policy_evidence,
               "nativePolicyResolution": resolution,
               "declaredSources": 64, "sourceQualified": 64, "nativeAdmitted": 64,
               "splitCounts": {"train": 48, "validation": 12, "test": 4},

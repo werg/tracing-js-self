@@ -34,7 +34,17 @@ def sha(path):
 
 
 def read(path):
-    return json.loads(path.read_text())
+    def unique(items):
+        value = {}
+        for key, item in items:
+            require(key not in value, "Repeated gate JSON key: " + key)
+            value[key] = item
+        return value
+
+    def reject_constant(value):
+        raise ValueError("Non-finite gate JSON number: " + value)
+
+    return json.loads(path.read_text(), object_pairs_hook=unique, parse_constant=reject_constant)
 
 
 def write(path, value):
@@ -45,16 +55,52 @@ def write(path, value):
 
 
 def git(root, *args):
-    return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
+    environment = {name: value for name, value in os.environ.items() if not name.startswith("GIT_")}
+    return subprocess.check_output(["git", "-C", str(root), *args], env=environment, text=True).strip()
 
 
-def identity(producer, native, expected_producer, expected_native):
-    policy_path = producer / "contracts/semantic-native-policy-v8.json"
+def run_policy(producer, policy_path, expected_native):
+    """Authenticate the frozen run policy against its unchanged declaration."""
+    declared_path = producer / "contracts/semantic-native-policy-v8.json"
+    declared = read(declared_path)
     policy = read(policy_path)
-    require(policy["consumerRepository"] == "werg/megatoken", "Unexpected consumer repository")
-    require(re.fullmatch(r"[0-9a-f]{40}", expected_native) is not None, "Exact native commit required")
-    require(policy["consumerRevision"] == expected_native, "Policy changed after choosing native checkout")
-    result = {"policySha256": sha(policy_path), "gateSpecSha256": sha(SPEC_PATH)}
+    require(declared.get("schema") == "semantic-native-policy/8" and
+            declared.get("consumerRepository") == "werg/megatoken", "Unexpected consumer policy declaration")
+    require(isinstance(expected_native, str) and re.fullmatch(r"[0-9a-f]{40}", expected_native) is not None,
+            "Exact native commit required")
+    require(declared.get("consumerRevision", expected_native) == expected_native,
+            "Recorded native revision cannot be overridden")
+    require(policy == {**declared, "consumerRevision": expected_native},
+            "Run policy differs from its declaration or chosen native revision")
+    resolution_path = Path(str(policy_path) + ".resolution.json")
+    resolution = read(resolution_path)
+    require(resolution.get("schema") == "semantic-native-resolution/1" and
+            resolution.get("repository") == policy["consumerRepository"] and
+            resolution.get("revision") == expected_native and
+            resolution.get("declaredPolicySha256") == sha(declared_path),
+            "Run resolution does not authenticate the declared policy and chosen revision")
+    kind, ref, branch = resolution.get("kind"), resolution.get("ref"), resolution.get("requestedBranch")
+    require((kind == "recorded-revision" and ref == expected_native and "consumerRevision" in declared) or
+            (kind == "explicit-ref" and isinstance(ref, str) and
+             (ref == expected_native or ref.startswith("refs/heads/"))) or
+            (kind == "matching-branch" and isinstance(branch, str) and branch and ref == "refs/heads/" + branch) or
+            (kind == "default-head" and ref == "HEAD"), "Invalid run resolution selection")
+    return policy, {"policySha256": sha(policy_path), "resolutionSha256": sha(resolution_path),
+                    "declaredPolicySha256": sha(declared_path)}
+
+
+def retained_policy(root, policy_path):
+    """Recheck the exact policy and resolution retained with each lane."""
+    for suffix in ("", ".resolution.json"):
+        source = Path(str(policy_path) + suffix)
+        retained = root / ("semantic-native-policy-v8.json" + suffix)
+        require(retained.is_file() and retained.read_bytes() == source.read_bytes(),
+                "Retained run policy or resolution bytes differ")
+
+
+def identity(producer, native, expected_producer, expected_native, policy_path):
+    policy, bindings = run_policy(producer, policy_path, expected_native)
+    result = {**bindings, "gateSpecSha256": sha(SPEC_PATH)}
     for name, root, expected in (("producer", producer, expected_producer), ("native", native, expected_native)):
         require(git(root, "rev-parse", "HEAD") == expected, name + " checkout differs from exact pin")
         require(not git(root, "status", "--porcelain"), name + " checkout has changed files")
@@ -74,8 +120,12 @@ def payload_parity(producer, native):
         actual = target.read_bytes()
         require(hashlib.sha256(actual).hexdigest() == row["nativeSha256"], "Native payload changed: " + row["native"])
         decoded = gzip.decompress(base64.b64decode(actual)) if row["encoding"] == "gzip-base64" else actual
-        require(decoded == source.read_bytes(), "Paired payload differs: " + row["source"])
-        rows.append({**row, "sourceSha256": sha(source), "sourceBytes": len(decoded)})
+        source_bytes = source.read_bytes()
+        if row.get("sourceEncoding") == "gzip-base64":
+            source_bytes = gzip.decompress(base64.b64decode(source_bytes))
+        require(decoded == source_bytes, "Paired payload differs: " + row["source"])
+        rows.append({**row, "sourceSha256": sha(source), "sourceBytes": source.stat().st_size,
+                     "nativeBytes": len(actual), "decodedBytes": len(decoded)})
     require(len(rows) == 7, "Require one contract and six shared fixture payloads")
     return rows
 
@@ -108,7 +158,8 @@ def installed_consumer(producer, native, replay_sources):
     if replay_sources:
         from megatoken.data.native_v8 import validate_v8_artifact
 
-        cases = read(producer / "test/fixtures/semantic-protocol-region-v8.json")["cases"]
+        cases = json.loads(gzip.decompress(base64.b64decode(
+            (producer / "test/fixtures/semantic-protocol-region-v8.json.gz.b64").read_bytes())))["cases"]
         require(len(cases) == SPEC["sourceExamples"], "Original source fixture population changed")
         require(len({case["id"] for case in cases}) == len(cases), "Duplicate original source fixture")
         for case in cases:
@@ -123,7 +174,12 @@ def installed_consumer(producer, native, replay_sources):
 
 
 def attest(args):
-    pair = identity(args.producer, args.native, args.producer_revision, args.native_revision)
+    pair = identity(args.producer, args.native, args.producer_revision, args.native_revision, args.native_policy)
+    for suffix in ("", ".resolution.json"):
+        target = args.out / ("semantic-native-policy-v8.json" + suffix)
+        with target.open("xb") as stream:
+            stream.write(Path(str(args.native_policy) + suffix).read_bytes())
+    retained_policy(args.out, args.native_policy)
     environment = read(args.producer / "profiles/release-environment.lock.json")
     require(platform.python_version() == environment["python"], "Python runtime differs from lock")
     node = subprocess.check_output(["node", "--version"], text=True).strip().removeprefix("v")
@@ -264,11 +320,21 @@ def verify_controlled_position_proof(path, expected_native):
             "routerInternalPositionCoverage": "unmeasured", "learnedSuccess": None}
 
 
+def lane_environment(args):
+    environment = {name: value for name, value in os.environ.items() if not name.startswith("GIT_")}
+    return {**environment, "RUNNER_TEMP": str(args.out), "SEMANTIC_V8_NATIVE_POLICY": str(args.native_policy),
+            "MEGATOKEN_ROOT": str(args.native), "MEGATOKEN_PYTHON": sys.executable,
+            "PYTHONPATH": str(args.native / "src"), "PYTHONDONTWRITEBYTECODE": "1",
+            "TRACING_JS_SELF_ROOT": str(args.producer), "MEGATOKEN_NATIVE_SOURCE_PRODUCER": str(args.producer)}
+
+
 def run_lane(args):
     original = read(args.out / "pair-identity.json")
-    require(original["pair"] == identity(args.producer, args.native, args.producer_revision, args.native_revision),
+    require(original["pair"] == identity(args.producer, args.native, args.producer_revision, args.native_revision,
+                                         args.native_policy),
             "Pair changed after attestation")
-    env = {**os.environ, "RUNNER_TEMP": str(args.out)}
+    retained_policy(args.out, args.native_policy)
+    env = lane_environment(args)
     results, controlled_training = {}, None
     for kind in ("native", "producer"):
         files = SPEC["lanes"][args.lane][kind]
@@ -299,8 +365,10 @@ def run_lane(args):
             command(argv, repo, args.out / (kind + ".log"), env)
         results[kind] = verify_junit(xml, kind, files)
     packets = verify_promise_packets(args.out) if args.lane == "promise" else []
-    require(original["pair"] == identity(args.producer, args.native, args.producer_revision, args.native_revision),
+    require(original["pair"] == identity(args.producer, args.native, args.producer_revision, args.native_revision,
+                                         args.native_policy),
             "Test execution changed the exact pair")
+    retained_policy(args.out, args.native_policy)
     files = [{"path": str(path.relative_to(args.out)), "bytes": path.stat().st_size, "sha256": sha(path)}
              for path in sorted(args.out.rglob("*")) if path.is_file()]
     write(args.out / "lane-result.json", {"schema": "semantic-v8-combined-lane/1", "status": "passed",
@@ -309,7 +377,7 @@ def run_lane(args):
 
 
 def aggregate(args):
-    policy = read(args.producer / "contracts/semantic-native-policy-v8.json")
+    policy, bindings = run_policy(args.producer, args.native_policy, args.native_revision)
     require(git(args.producer, "rev-parse", "HEAD") == args.producer_revision, "Aggregate producer checkout changed")
     require(not git(args.producer, "status", "--porcelain"), "Aggregate producer is not clean")
     reports, pair, controlled_training = {}, None, None
@@ -320,7 +388,9 @@ def aggregate(args):
         require(report["pair"]["producer"]["revision"] == args.producer_revision, "Lane checked another producer")
         require(report["pair"]["producer"]["tree"] == git(args.producer, "rev-parse", "HEAD^{tree}"), "Lane checked another producer tree")
         require(report["pair"]["native"]["revision"] == policy["consumerRevision"], "Lane checked another native policy")
-        require(report["pair"]["policySha256"] == sha(args.producer / "contracts/semantic-native-policy-v8.json"), "Lane policy bytes differ")
+        require(all(report["pair"].get(key) == value for key, value in bindings.items()),
+                "Lane policy or resolution bytes differ")
+        retained_policy(root, args.native_policy)
         require(report["pair"]["gateSpecSha256"] == sha(SPEC_PATH), "Lane used another gate specification")
         require(pair is None or report["pair"] == pair, "Required lanes disagree about exact source trees")
         pair = report["pair"]
@@ -342,9 +412,16 @@ def aggregate(args):
         else:
             require(report["controlledTraining"] is None, "Controlled training evidence belongs to the structural lane")
         reports[lane] = report["tests"]
+    model_cases = SPEC["lanes"].get("structural", {}).get("native", {}).get("tests/test_semantic_model_v8.py", 0)
+    required_groups = {
+        "recovery": {kind: sum(sum(groups[kind].values()) for lane, groups in SPEC["lanes"].items()
+                               if lane != "promise") - (model_cases if kind == "native" else 0)
+                     for kind in ("native", "producer")},
+        "promise": {kind: sum(SPEC["lanes"].get("promise", {}).get(kind, {}).values())
+                    for kind in ("native", "producer")},
+        "modelSelectionEvidence": {"native": model_cases}}
     write(args.out, {"schema": "semantic-v8-combined-qualification/1", "status": "passed", "pair": pair,
-          "lanes": reports, "requiredGroups": {"recovery": {"native": 165, "producer": 193},
-          "promise": {"native": 106, "producer": 185}, "modelSelectionEvidence": {"native": 17}},
+          "lanes": reports, "requiredGroups": required_groups,
           "optimizerUpdates": None,
           "optimizerUpdateScope": "No global update tally across all tests; the emitted controlled position proof is counted below",
           "controlledTraining": controlled_training,
@@ -358,16 +435,20 @@ def main():
     parser.add_argument("--producer", type=Path, required=True)
     parser.add_argument("--native", type=Path)
     parser.add_argument("--producer-revision", required=True)
-    parser.add_argument("--native-revision")
+    parser.add_argument("--native-revision", required=True)
+    parser.add_argument("--native-policy", type=Path, required=True)
     parser.add_argument("--lane", choices=tuple(SPEC["lanes"]))
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--artifacts", type=Path)
     args = parser.parse_args()
     args.producer = args.producer.resolve()
     args.out = args.out.resolve()
+    args.native_policy = args.native_policy.resolve(strict=True)
+    require(not args.native_policy.is_relative_to(args.producer), "Run policy must be outside the producer checkout")
     if args.command != "aggregate":
         require(args.native and args.native_revision and args.lane, "Lane requires the exact native checkout")
         args.native = args.native.resolve()
+        require(not args.native_policy.is_relative_to(args.native), "Run policy must be outside the native checkout")
         args.out.mkdir(parents=True, exist_ok=True)
     else:
         require(args.artifacts is not None, "Aggregate needs all downloaded lane artifacts")

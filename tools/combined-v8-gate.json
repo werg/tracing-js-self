@@ -1,21 +1,21 @@
 {
   "schema": "semantic-v8-combined-gate/1",
-  "contractDigest": "fd1e64f60ad5b6bb9431db3cd34513a5bd34041cdf7e710a99c5df1205502bf4",
+  "contractDigest": "910859ac83e9b8bad83528397fcd12de616f05246586755f15f985cabb3513eb",
   "fixtureDigest": "56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce",
-  "interoperabilityDigest": "b004c2bde15007278d0c26189560ac0362530585f8b7d49d5b1999525fcce975",
-  "sourceExamples": 23,
+  "interoperabilityDigest": "64f230e7b05dc6b33b3d0df359898e27158cb67a386c9cdeb63fd64b4729df2d",
+  "sourceExamples": 31,
   "payloads": [
     {
       "source": "contracts/semantic-execution-v8.json",
       "native": "src/megatoken/data/contracts/semantic-execution-v8.json",
       "encoding": "copy",
-      "nativeSha256": "ad09b9ad4f777165c00763b42519c152de7c0f5b02964a19821d3b22667ef58b"
+      "nativeSha256": "56bddf1a2f19eed917b425b5954d73d58f8b524c440617f4342c75d8fabb2d8b"
     },
     {
       "source": "test/fixtures/semantic-regions-v8.json",
       "native": "tests/fixtures/semantic-regions-v8.json.gz.b64",
       "encoding": "gzip-base64",
-      "nativeSha256": "f3e5225516e4db740665e746226c76be65dff4fcb73d0aae545e0d4f215393ca"
+      "nativeSha256": "44a3e01c2c62495d9388d4b2c3615f327e62344b794b7d4d94e1d5e72df6925a"
     },
     {
       "source": "test/fixtures/semantic-protocol-v8.json",
@@ -33,19 +33,20 @@
       "source": "test/fixtures/semantic-protocol-source-v8.json",
       "native": "tests/fixtures/semantic-protocol-source-v8.json",
       "encoding": "copy",
-      "nativeSha256": "8d4943e57e4033a1a4dfc3649d53ae9e1b8d42039375c618b35a6664c040f382"
+      "nativeSha256": "11f8b6883c054dd07b51e25267130bc8689e06ccbf9b56d7d52b4af5be6159f3"
     },
     {
-      "source": "test/fixtures/semantic-protocol-region-v8.json",
+      "source": "test/fixtures/semantic-protocol-region-v8.json.gz.b64",
       "native": "tests/fixtures/semantic-protocol-region-v8.json.gz.b64",
       "encoding": "gzip-base64",
-      "nativeSha256": "f6f5e37868bc0350d6901a7a8df0140d7f7ad6b4c5608675cdec1eaed8838b04"
+      "nativeSha256": "1e98d2a85cfee5a2e1b81daa3b14f8e6c793fd9cdd094db4c206dd3c7d5f7093",
+      "sourceEncoding": "gzip-base64"
     },
     {
       "source": "test/fixtures/semantic-host-protocol-v8.json.gz.b64",
       "native": "tests/fixtures/semantic-host-protocol-v8.json.gz.b64",
       "encoding": "copy",
-      "nativeSha256": "d55fb40d10b582e861b2099e03c10a95e04213a09fca404e2367ee1489a0f5ab"
+      "nativeSha256": "e49f63ebd804edae85e65338081ef20858c11a721ff522e0fb961b21caa4f6a9"
     }
   ],
   "lanes": {
@@ -120,7 +121,7 @@
       },
       "native": {
         "tests/test_promise_executor_v8.py": 11,
-        "tests/test_async_call_v8.py": 10,
+        "tests/test_async_call_v8.py": 18,
         "tests/test_promise_scheduler_v8.py": 10,
         "tests/test_promise_executor_boundaries_v8.py": 13,
         "tests/test_promise_join_v8.py": 12,
@@ -133,6 +134,9 @@
   "expectationEvidence": {
     "recovery": "GitHub Actions45042073863 original downloaded JUnit per-file leaves",
     "promise": "GitHub Actions45042386283 plus exact local original-source4 and public/native boundary20/10 groups, with twelve adjacent ordinary-contract leaves (join-source5, qualification-population4, training-projection3) added after six stale assertions reproduced on cc0d61e9 and all twelve passed on b79f7ae1. Required final185/106 is not qualified until this workflow succeeds.",
-    "modelSelectionEvidence": "Original rejected-fragment model bookkeeping correction: the entire test_semantic_model_v8.py file passed17 actual leaves on native6d5ea691 (published source9bbc5342), preserving14 prior cases and adding3 controls. The original green JUnit is retained in native proof5f9ddd14; subcases are not counted as extra leaves."
+    "modelSelectionEvidence": "Original rejected-fragment model bookkeeping correction: the entire test_semantic_model_v8.py file passed17 actual leaves on native6d5ea691 (published source9bbc5342), preserving14 prior cases and adding3 controls. The original green JUnit is retained in native proof5f9ddd14; subcases are not counted as extra leaves.",
+    "currentPayloads": "Exact producer e21651f7d246d9bf30e575e61e3a056987fae6fe and consumer 21b7c80718244073dbf13263771da533d4ecbc25: all seven original payload byte comparisons passed, including decoding the tracked compressed source fixture; 31 original source examples retained. This byte-parity audit does not qualify complete native replay or any combined lane.",
+    "currentProducerLeaves": "The selected producer files are unchanged from e21651f7d246d9bf30e575e61e3a056987fae6fe. A working-tree audit emitted 25 mutation, 23 object-profile and 4 qualification-population JUnit leaves: 50 passed, two optional native controls skipped, zero failures. Leaf expectations remain unchanged; this is not a clean-pair gate pass, and the required combined gate still rejects any skipped leaf.",
+    "currentNativeLeaves": "Pytest 8.4.2 collected all 296 selected native leaves from clean consumer 21b7c80718244073dbf13263771da533d4ecbc25 in the exact hash-locked Python 3.12.14 environment: 182 structural and 114 Promise. Only tests/test_async_call_v8.py changed, from 10 to 18 leaves. Collection is not execution; no lane pass is inferred."
   }
 }

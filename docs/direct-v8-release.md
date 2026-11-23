@@ -229,8 +229,10 @@ restoration. These files are `declared-native-policy-v8.json`,
 `semantic-native-policy-v8.json.resolution.json`. The record identifies whether
 the revision came from the selected checkout or an existing recorded revision,
 and retains the declared policy's SHA-256. Every qualification and lifecycle
-stage uses the retained policy,
-and source identity checks continue to require exact clean checkouts. A policy
+stage uses the retained policy. The driver checks all three retained files
+before and after every stage and records their hashes in the final receipt;
+missing, changed or replaced evidence refuses qualification. Source identity
+checks continue to require exact clean checkouts. A policy
 snapshot records the chosen code; it does not establish that the later stages
 passed.
 
