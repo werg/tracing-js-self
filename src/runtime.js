@@ -1413,6 +1413,12 @@ export class Runtime {
     }
     if(continuation.kind!=='reaction')throw new Error('Unknown Promise constructor continuation');
     if(continuation.method==='finally'&&!continuation.finallySpecies){
+      // finally computes SpeciesConstructor before Invoke(promise, "then").
+      // Either lookup can change the live method. Check the method selected
+      // here before entering the intrinsic then's own constructor lookup.
+      const then=ordinaryGet(ownedObjectHeap(draft),continuation.receiver,'then');
+      if(!then||!ownedSameValue(then.method.value,['builtinfn','Promise.prototype.then']))
+        throw new TypeError('Promise finally then override requires its owned call continuation');
       this.lookupPromiseConstructor(draft,continuation.receiver,{...continuation,phase:'constructor',finallySpecies:true},origin);return;
     }
     const promiseId=this.newPromise(draft),method=continuation.method,args=continuation.args,
@@ -4060,10 +4066,10 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
              if(receiver[0]!=='promise'||!s.promises[receiver[1]])
                guestFault('TypeError','Promise method called on an incompatible receiver');
              const method=callable[1].slice('Promise.prototype.'.length);
-             if(['catch','finally'].includes(method)){
+             if(method==='catch'){
                const then=ordinaryGet(ownedObjectHeap(s),receiver,'then');
                if(!then||!ownedSameValue(then.method.value,['builtinfn','Promise.prototype.then']))
-                 throw new TypeError('Promise catch/finally then override requires its owned call continuation');
+                 throw new TypeError('Promise catch then override requires its owned call continuation');
              }
              const lookup=this.lookupPromiseConstructor(s,receiver,{kind:'reaction',frameId:f.id,receiver,
                method,args:args.map(arg=>arg.value)},eventId);

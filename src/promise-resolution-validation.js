@@ -1,6 +1,8 @@
 // Structural authority for synchronous Promise resolution continuations. This
 // module inspects owned data only; it never imports or invokes the evaluator.
+import {symbolPropertyKey} from './property-keys.js';
 const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const speciesKey=symbolPropertyKey('well-known:species');
 const intrinsicPrototypes=new Set(['Object.prototype','Array.prototype','Function.prototype',
   'Generator.prototype','GeneratorFunction.prototype']);
 const prototype=object=>Object.hasOwn(object,'prototype')?object.prototype:
@@ -31,6 +33,30 @@ function selectedLookup(state,resolution,fail){
     object=state.heap[object.targetId];
   }
   return {method:descriptor(state,object,'then',fail).getter,receiver:resolution,target:null};
+}
+function validateConstructorSelection(state,event,lookup,receiver,fail){
+  const continuation=lookup.continuation;
+  if(continuation.phase!=='species'){
+    if(lookup.property!=='constructor'||!equal(lookup.receiver,receiver))
+      fail('Promise constructor lookup changed its source receiver');
+    return;
+  }
+  if(lookup.property!==speciesKey)fail('Promise species lookup changed its selected property');
+  let object=(receiver?.[0]==='promise'?state.promises:state.heap)[receiver?.[1]];
+  // A finally callback can return a primitive, allocate its cleanup Promise,
+  // and select an inherited species getter in this same event. Its fresh
+  // ordinary state is fixed; the constructor still comes from the prior realm.
+  if(!object&&continuation.kind==='finally'&&continuation.stage==='then'&&
+     equal(receiver,['promise',continuation.cleanupId])){
+    const allocated=event.stateChanges.find(change=>change.table==='promises'&&
+      change.id===continuation.cleanupId&&change.before===null)?.after;
+    if(allocated?.kind==='promise'&&allocated.prototype==='Promise.prototype'&&allocated.extensible===true&&
+       allocated.shapeVersion===0&&!Object.keys(allocated.properties??{}).length&&!Object.keys(allocated.accessors??{}).length)
+      object=allocated;
+  }
+  const constructor=descriptor(state,object,'constructor',fail);
+  if(!Object.hasOwn(constructor,'value')||!equal(constructor.value,lookup.receiver))
+    fail('Promise species lookup changed its original data constructor');
 }
 function validateResume(state,resume,fail,depth=0){
   if(!resume||depth>3||typeof resume!=='object'||Array.isArray(resume))fail('Invalid Promise lookup resume');
@@ -79,6 +105,9 @@ export function validatePromiseResolutionState(state,fail){
       if(!equal(Object.keys(c).sort(),expected.sort())||c.phase!==undefined&&!['constructor','species'].includes(c.phase)||
          c.finallySpecies!==undefined&&(c.kind!=='reaction'||c.method!=='finally'||c.finallySpecies!==true))
         fail('Unknown Promise constructor continuation fields');
+      if(c.phase==='species'?(constructor.property!==speciesKey||['resolve','await'].includes(c.kind)||
+          c.kind==='finally'&&c.stage!=='then'):constructor.property!=='constructor')
+        fail('Promise constructor phase and selected property differ');
       if(c.kind==='adopt'){
         if(!state.promises[c.promiseId]||!state.promises[c.targetId]||c.promiseId===c.targetId)
           fail('Unknown Promise constructor adoption owner');
@@ -141,26 +170,35 @@ export function validatePromiseResolutionEvent(before,event,fail){
           if(!equal(owner.finallyReaction,c.reaction)||c.frameId!==event.invocationId)
             fail('Finally constructor lookup changed its reaction owner');
           const input=owner.asyncPromiseId?['promise',owner.asyncPromiseId]:event.operands.at(-1);
-          if(!equal(c.value,input)||!equal(receiver,c.stage==='resolve'?c.value:['promise',c.cleanupId]))
+          if(!equal(c.value,input))
             fail('Finally constructor lookup changed its cleanup result');
+          validateConstructorSelection(before,event,constructor,c.stage==='resolve'?c.value:['promise',c.cleanupId],fail);
         }else if(thenLookup?.resume?.kind==='finally-cleanup'){
-          if(!equal(thenLookup.resume.continuation,c)||!equal(receiver,['promise',c.cleanupId]))
+          const expected=thenLookup.resume.continuation;
+          if(!equal(c.phase==='species'?{...c,phase:expected.phase}:c,expected))
             fail('Finally constructor lookup changed its pending cleanup');
+          validateConstructorSelection(before,event,constructor,['promise',c.cleanupId],fail);
         }else fail('Finally constructor lookup lacks its callback boundary');
       }else if(c.kind==='adopt'){
         const job=before.control.a0.queue[0];
-        if(event.operation!=='job.enter'||job?.kind!=='promise-adopt'||job.promiseId!==c.promiseId||job.targetId!==c.targetId||
-           !equal(receiver,['promise',c.targetId]))fail('Promise constructor adoption changed its queued source');
+        if(event.operation!=='job.enter'||job?.kind!=='promise-adopt'||job.promiseId!==c.promiseId||job.targetId!==c.targetId)
+          fail('Promise constructor adoption changed its queued source');
+        validateConstructorSelection(before,event,constructor,['promise',c.targetId],fail);
       }else{
-        if(c.frameId!==event.invocationId||constructor.property!=='constructor')fail('Promise constructor lookup changed its source binding');
+        if(c.frameId!==event.invocationId)fail('Promise constructor lookup changed its source binding');
         if(c.kind==='await'){
-          if(event.operation!=='async.await'||!equal(event.operands,[c.value])||!equal(receiver,c.value))fail('Promise await constructor changed its input');
+          if(event.operation!=='async.await'||!equal(event.operands,[c.value]))fail('Promise await constructor changed its input');
+          validateConstructorSelection(before,event,constructor,c.value,fail);
         }else if(c.kind==='resolve'){
-          if(event.operation!=='call.enter'||!equal(method,['builtinfn','Promise.resolve'])||!equal(event.operands[1],c.value)||!equal(receiver,c.value))
+          if(event.operation!=='call.enter'||!equal(method,['builtinfn','Promise.resolve'])||!equal(event.operands[1],c.value))
             fail('PromiseResolve constructor changed its input');
-        }else if(event.operation!=='call.enter'||!equal(method,['builtinfn','Promise.prototype.'+c.method])||
-          !equal(raw?.[2],c.receiver)||!equal(event.operands.slice(1),c.args)||!equal(receiver,c.receiver))
-          fail('Promise reaction constructor changed its receiver or arguments');
+          validateConstructorSelection(before,event,constructor,c.value,fail);
+        }else{
+          if(event.operation!=='call.enter'||!equal(method,['builtinfn','Promise.prototype.'+c.method])||
+            !equal(raw?.[2],c.receiver)||!equal(event.operands.slice(1),c.args))
+            fail('Promise reaction constructor changed its receiver or arguments');
+          validateConstructorSelection(before,event,constructor,c.receiver,fail);
+        }
       }
     }
     const old=patch.before?.promiseThenLookup,lookup=patch.after?.promiseThenLookup;
