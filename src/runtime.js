@@ -1312,15 +1312,19 @@ export class Runtime {
     if(!selected)throw new TypeError('Promise constructor lookup requires owned ordinary storage');
     const getter=selected.accessor?.get.value??U;
     if(getter[0]==='undefined'){
-      try{this.continuePromiseConstructor(draft,selected.method?.value??U,continuation,origin);}
+      let outcome;
+      try{outcome=this.continuePromiseConstructor(draft,selected.method?.value??U,continuation,origin);}
       catch(error){
         if(!(error instanceof GuestFault)||!['finally','adopt'].includes(continuation.kind))throw error;
         this.rejectPromiseConstructor(draft,continuation,{type:'throw',errorType:error.name,message:error.message},origin);
       }
-      return {read:selected.observation};
+      return {read:selected.observation,...outcome};
     }
     if(!this.callableGuest(draft,getter))throw new TypeError('Promise constructor lookup requires an owned getter');
-    const target=draft.heap[getter[1]],inner=target.async?this.newPromise(draft):null,
+    const target=draft.heap[getter[1]];
+    if(this.programs[target.codeId].generator)
+      throw new TypeError('Generator Promise constructor getters are outside the owned profile');
+    const inner=target.async?this.newPromise(draft):null,
       child=this.newFrame(draft,target.codeId,target.closureEnvId,null,inner,[],this.functionThis(target,receiver),target.id);
     draft.frames[child].promiseConstructorLookup={receiver:copy(receiver),property,origin,
       continuation:copy(continuation),delivered:false};
@@ -1367,10 +1371,10 @@ export class Runtime {
         promiseId=same?value[1]:this.newPromise(draft);
       draft.control.a0.activeFrameId=frame.id;
       const waiting=same?null:this.resolvePromise(draft,promiseId,value,origin);
-      if(continuation.kind==='resolve')this.stackPush(frame,['promise',promiseId],origin);
-      else if(waiting)draft.frames[waiting].promiseThenLookup.resume={kind:'await',frameId:frame.id,promiseId};
+      if(continuation.kind==='resolve'){this.stackPush(frame,['promise',promiseId],origin);return;}
+      if(waiting)draft.frames[waiting].promiseThenLookup.resume={kind:'await',frameId:frame.id,promiseId};
       else this.awaitPromise(draft,frame,promiseId);
-      return;
+      return {promiseId,...(waiting?{child:waiting}:{})};
     }
     // SpeciesConstructor must read the constructor once, followed by @@species
     // only for object constructors. Custom species allocation remains an
@@ -1588,7 +1592,7 @@ export class Runtime {
   }
   suspendAsync(draft,frame) {
     frame.status='suspended';
-    this.deliverReactionValue(draft,frame,['promise',frame.asyncPromiseId],null);
+    if(this.deliverReactionValue(draft,frame,['promise',frame.asyncPromiseId],null))return;
     if(frame.promiseThenLookup&&!frame.promiseThenLookup.delivered){
       this.finishPromiseThenLookup(draft,frame,['promise',frame.asyncPromiseId],null);return;
     }
@@ -1682,7 +1686,7 @@ export class Runtime {
          // Async throws reject a guest promise, never the whole agent.
         const reason=this.caughtError(draft,completion,eventId);
         this.rejectPromise(draft,frame.asyncPromiseId,reason.value,reason.origin);
-        this.deliverReactionValue(draft,frame,['promise',frame.asyncPromiseId],eventId);
+        if(this.deliverReactionValue(draft,frame,['promise',frame.asyncPromiseId],eventId))return;
         if(frame.promiseThenLookup&&!frame.promiseThenLookup.delivered){
           this.finishPromiseThenLookup(draft,frame,['promise',frame.asyncPromiseId],eventId);return;
         }
@@ -4311,14 +4315,16 @@ if(callable[0]==='builtinfn' && ['Promise.all','Promise.race','Promise.allSettle
           const a=pop(),v=a.value;if(!f.asyncPromiseId)throw new SyntaxError('await outside async function');
           if(v[0]==='promise'){
             const lookup=this.lookupPromiseConstructor(s,v,{kind:'await',frameId:f.id,value:v},a.origin);
-            return {...operands(a),reads:[lookup.read],causes:lookup.child?
-              [{kind:'invocation',frameId:lookup.child}]:[{kind:'promise',promiseId:f.awaiting}]};
+            return {...operands(a),reads:[lookup.read],causes:[
+              ...(lookup.promiseId?[{kind:'promise',promiseId:lookup.promiseId}]:[]),
+              ...(lookup.child?[{kind:'invocation',frameId:lookup.child}]:[])]};
           }
           const promiseId=v[0]==='promise'?v[1]:this.newPromise(s);
           const waiting=v[0]!=='promise'?this.resolvePromise(s,promiseId,v,a.origin):null;
           if(waiting)s.frames[waiting].promiseThenLookup.resume={kind:'await',frameId:f.id,promiseId};
           else this.awaitPromise(s,f,promiseId);
-          return {...operands(a),causes:[{kind:'promise',promiseId}]};
+          return {...operands(a),causes:[{kind:'promise',promiseId},
+            ...(waiting?[{kind:'invocation',frameId:waiting}]:[])]};
         }
         case 'GENERATOR_START':{
           const output=this.suspendGenerator(s,f,U,eventId,true);return {result:output};

@@ -9,7 +9,7 @@ import {validateSuperEvent} from './super-validation.js';
 import {isBinaryMemoryKind,validateBinaryMemoryState,validateBinaryMemoryEvent} from './binary-memory-validation.js';
 import {validateNumberConversionState,validateNumberConversionEvent} from './number-conversion-validation.js';
 import {validatePropertyKeyConversionState,validatePropertyKeyConversionEvent} from './property-key-conversion-validation.js';
-import {validatePromiseResolutionState,validatePromiseResolutionEvent} from './promise-resolution-validation.js';
+import {validatePromiseResolutionState,validatePromiseResolutionEvent,isPromiseConstructorRejection} from './promise-resolution-validation.js';
 import {validateScriptSequenceState,validateScriptSequenceEvent} from './script-validation.js';
 import {validateScriptHostEvent} from './script-host-validation.js';
 import {validateExternalCallbackJob,validateExternalCallbackEntry} from './external-callback-validation.js';
@@ -172,12 +172,17 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
             e.causes.filter(c=>c.kind==='promise'&&c.promiseId===p.id).length!==1||
             e.causes.filter(c=>c.kind==='invocation').length!==1)
            fail('Queued thenable is not backed by an owned function and promise',e.eventId);
-         const fn=state.heap[job.thenId],child=e.stateChanges.find(patch=>patch.table==='frames'&&patch.before===null&&patch.after?.thenableJob),
+         const fn=state.heap[job.thenId],invocation=e.causes.find(c=>c.kind==='invocation').frameId,
+           child=e.stateChanges.find(patch=>patch.table==='frames'&&patch.id===invocation&&patch.before===null),
+           control=e.stateChanges.find(patch=>patch.table==='control'&&patch.id==='a0')?.after,
+           environment=e.stateChanges.find(patch=>patch.table==='envs'&&patch.id===child?.after?.envId&&patch.before===null)?.after,
            receiver=fn.arrow?fn.lexicalThisFrameId?state.frames[fn.lexicalThisFrameId]?.thisValue:fn.lexicalThis:
              job.receiver??['ref',job.thenableId];
-         if(!child||child.after.codeId!==fn.codeId||!eq(child.after.thisValue,receiver)||
+         if(!child||e.causes.length!==2||control?.activeFrameId!==invocation||
+            environment?.parent!==fn.closureEnvId||child.after.status!=='running'||child.after.callerFrameId!==null||
+            child.after.codeId!==fn.codeId||!eq(child.after.thisValue,receiver)||
             !eq(child.after.thenableJob,{promiseId:p.id,serial:job.serial}))
-           fail('Queued thenable changed its selected function, receiver or resolving pair',e.eventId);
+           fail('Queued thenable changed its invocation, capture, selected function, receiver or resolving pair',e.eventId);
        }else if(!job || !state.promises[job.promiseId] ||
          state.promises[job.promiseId].status==='pending' ||
          e.causes.filter(c=>c.kind==='promise').length!==1 ||
@@ -225,6 +230,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     validateNumberConversionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validatePropertyKeyConversionEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     validatePromiseResolutionEvent(state,e,message=>fail(message,e.eventId));
+    const constructorRejection=isPromiseConstructorRejection(state,e);
     validateScriptSequenceEvent(state,e,bundle,message=>fail(message,e.eventId));
     validateScriptHostEvent(state,e,bundle.programs,message=>fail(message,e.eventId));
     if(e.operation==='execution.unsupported'||e.completion?.type==='unsupported'&&
@@ -306,12 +312,6 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
           const resolutionRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
             f.promiseThenLookup?.delivered&&eq(f.completion,c)&&
             state.promises[f.promiseThenLookup.promiseId]?.status==='rejected');
-          const constructorRejection=Object.values(state.frames).some(f=>f.status==='thrown'&&
-            f.promiseConstructorLookup?.delivered&&eq(f.completion,c)&&
-            (f.promiseConstructorLookup.continuation.kind==='adopt'&&
-             state.promises[f.promiseConstructorLookup.continuation.promiseId]?.status==='rejected'||
-             f.promiseConstructorLookup.continuation.kind==='finally'&&
-             state.promises[f.promiseConstructorLookup.continuation.reaction?.resultId]?.status==='rejected'));
           const pendingCoercion=Object.values(state.frames).some(f=>{
             const pending=f.pendingCoercionThrow, operation=state.operations[f.operationId];
             const methodId=operation?.coercion?.waitingFrameId;

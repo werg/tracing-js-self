@@ -86,6 +86,80 @@ function validateResume(state,resume,fail,depth=0){
     validateResume(state,continuation.after,fail,depth+1);
   }else fail('Unknown Promise lookup resume kind');
 }
+function validateAwaitSelection(before,event,fail){
+  if(event.operation!=='async.await')return;
+  const frame=before.frames[event.invocationId],created=event.stateChanges.filter(change=>
+    change.table==='frames'&&change.before===null),
+    constructor=created.find(change=>change.after?.promiseConstructorLookup?.continuation.kind==='await'),
+    then=created.find(change=>change.after?.promiseThenLookup?.resume.kind==='await');
+  if(!frame?.asyncPromiseId||frame.status!=='running'||before.control.a0.activeFrameId!==frame.id||event.operands.length!==1)
+    fail('Promise await lacks its active async caller');
+  if(constructor){
+    if(then||constructor.after.promiseConstructorLookup.continuation.frameId!==frame.id||
+       !equal(event.causes,[{kind:'invocation',frameId:constructor.id}]))
+      fail('Promise await constructor invocation evidence changed');
+    return;
+  }
+  const lookup=then?.after.promiseThenLookup,
+    suspended=event.stateChanges.find(change=>change.table==='frames'&&change.id===frame.id)?.after,
+    promiseId=lookup?.resume.promiseId??suspended?.awaiting,input=event.operands[0];
+  if(lookup&&(lookup.resume.frameId!==frame.id||lookup.promiseId!==promiseId||!equal(lookup.resolution,input)))
+    fail('Promise await then lookup changed its wrapper or input');
+  let same=false;
+  if(input?.[0]==='promise'){
+    const selected=descriptor(before,before.promises[input[1]],'constructor',fail);
+    if(selected.getter&&selected.getter[0]!=='undefined')fail('Promise await skipped its constructor getter');
+    same=equal(selected.value,['intrinsic','Promise']);
+  }
+  const allocated=event.stateChanges.find(change=>change.table==='promises'&&change.id===promiseId&&change.before===null);
+  if(typeof promiseId!=='string'||(same?promiseId!==input[1]:allocated?.after?.kind!=='promise'))
+    fail('Promise await lacks its selected Promise or fresh wrapper');
+  if(!equal(event.causes,[{kind:'promise',promiseId},...(then?[{kind:'invocation',frameId:then.id}]:[])]))
+    fail('Promise await dependency or getter invocation evidence changed');
+}
+export function isPromiseConstructorRejection(before,event){
+  const completion=event.completion;
+  if(completion?.type!=='throw')return false;
+  let invocation=event.invocationId;
+  if(invocation===null&&event.operation==='external.input.deliver'){
+    const effect=before.effects[event.causes.find(cause=>cause.kind==='effect')?.effectId];
+    if(effect?.kind!=='synchronous'||before.frames[effect.frameId]?.blockedOn!==effect.id)return false;
+    invocation=effect.frameId;
+  }
+  if(!invocation||invocation!==before.control.a0.activeFrameId)return false;
+  const seen=new Set();let continuation;
+  while(invocation){
+    if(seen.has(invocation))return false;seen.add(invocation);
+    const original=before.frames[invocation],patch=event.stateChanges.find(change=>
+      change.table==='frames'&&change.id===invocation);
+    if(!original||!equal(patch?.before,original)||patch.after?.status!=='thrown'||
+       original.asyncPromiseId||!equal(patch.after.completion,completion))return false;
+    const lookup=original.promiseConstructorLookup;
+    if(lookup&&!lookup.delivered){
+      if(!patch.after.promiseConstructorLookup?.delivered)return false;
+      if(['adopt','finally'].includes(lookup.continuation.kind)){continuation=lookup.continuation;break;}
+      // These lookups retain their synchronous caller explicitly instead of
+      // using callerFrameId. An inner getter can unwind into the outer getter.
+      invocation=lookup.continuation.frameId;
+    }else{
+      if(original.promiseThenLookup&&!original.promiseThenLookup.delivered||original.thenableJob||
+         original.finallyReaction||original.reactionPromiseId||original.externalCallbackReturn)return false;
+      invocation=original.callerFrameId;
+    }
+  }
+  const destination=continuation?.kind==='adopt'?continuation.promiseId:
+    continuation?.kind==='finally'?continuation.reaction.resultId:null;
+  if(!destination)return false;
+  const rejected=event.stateChanges.find(change=>change.table==='promises'&&change.id===destination);
+  if(rejected?.before?.status!=='pending'||rejected.after?.status!=='rejected')return false;
+  if(completion.value)return equal(rejected.after.value,completion.value);
+  const reason=rejected.after.value,allocation=event.stateChanges.find(change=>
+    change.table==='heap'&&change.id===reason?.value?.[1]&&change.before===null)?.after;
+  return typeof completion.errorType==='string'&&reason?.value?.[0]==='ref'&&reason.origin===event.eventId&&
+    allocation?.declaredError===completion.errorType&&equal(allocation.properties?.name,
+      {value:['str',completion.errorType],origin:event.eventId})&&equal(allocation.properties?.message,
+      {value:['str',completion.message??''],origin:event.eventId});
+}
 export function validatePromiseResolutionState(state,fail){
   for(const frame of Object.values(state.frames)){
     const constructor=frame.promiseConstructorLookup;
@@ -137,6 +211,7 @@ export function validatePromiseResolutionState(state,fail){
   }
 }
 export function validatePromiseResolutionEvent(before,event,fail){
+  validateAwaitSelection(before,event,fail);
   for(const patch of event.stateChanges){
     if(patch.table!=='frames')continue;
     const oldConstructor=patch.before?.promiseConstructorLookup,constructor=patch.after?.promiseConstructorLookup;
@@ -145,6 +220,9 @@ export function validatePromiseResolutionEvent(before,event,fail){
         fail('Promise constructor lookup identity or continuation changed');
       if(!oldConstructor.delivered&&constructor.delivered&&!['completed','thrown','suspended'].includes(patch.after.status))
         fail('Promise constructor lookup completed without a callback boundary');
+      if(!oldConstructor.delivered&&constructor.delivered&&patch.after.status==='thrown'&&!patch.after.asyncPromiseId&&
+         ['adopt','finally'].includes(oldConstructor.continuation.kind)&&!isPromiseConstructorRejection(before,event))
+        fail('Promise constructor throw did not reject its current destination with the exact reason');
     }else if(constructor){
       if(patch.before!==null||constructor.delivered)fail('Promise constructor lookup must start in a new callback');
       const receiver=constructor.receiver,object=(receiver[0]==='promise'?before.promises:before.heap)[receiver[1]],
