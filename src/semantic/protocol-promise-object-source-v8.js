@@ -2,6 +2,9 @@
 // same public heap, descriptors and accessor calls as ordinary objects.
 import {isDeepStrictEqual as eq} from 'node:util';
 import {propertyKeyValue,stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
+import {decode,encode} from '../values.js';
+import {ordinaryGet} from '../spec-operations.js';
+import {ownedObjectHeap} from '../owned-object-storage.js';
 import {descriptor,orderedKeys} from './protocol-source-shapes-v8.js';
 import {describeProtocolObjectV8} from './protocol-state-v8.js';
 import {isPromiseIntrinsicValueV8,promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
@@ -112,9 +115,32 @@ export function createPromiseObjectTeacherV8(){
         const lookup=child.promiseConstructorLookup,receiver=ctx.tag(lookup.receiver),
           property=propertyKeyValue(lookup.property),id='promiseaccess'+(++state.sequence),invocation=ctx.registerFrame(child.id,owner);
         if(lookup.continuation.kind==='adopt')ctx.refuse('adoption constructor access requires its active intrinsic call scope');
-        if(!eq(child.thisValue,lookup.receiver)||row?.child!==child.id)ctx.refuse('constructor getter receiver or child differs');
+        const selected=ordinaryGet(ownedObjectHeap(ctx.state),lookup.receiver,lookup.property,{accessors:true}),
+          getter=selected?.accessor?.get.value,fn=getter?.[0]==='ref'?ctx.state.heap[getter[1]]:null,
+          effectiveReceiver=fn?.arrow?(fn.lexicalThisFrameId?ctx.state.frames[fn.lexicalThisFrameId]?.thisValue:fn.lexicalThis):lookup.receiver,
+          environment=event.stateChanges.find(change=>change.table==='envs'&&change.id===child.envId)?.after;
+        if(!fn||fn.async||fn.generatorFunction||child.codeId!==fn.codeId||environment?.parent!==fn.closureEnvId||
+          !eq(child.thisValue,effectiveReceiver)||row?.child!==child.id)ctx.refuse('constructor getter receiver or child differs');
         ctx.emitProtocol(owner,{kind:'property.get.call',id,child:invocation,object:receiver[1],key:property,receiver},event,'source-promise-constructor-call/1');
         parameters(ctx,event,child.id,owner);state.accessors.push([child.id,{id,operation:'get',value:null,owner,finished:false,lookup:copy(lookup)}]);return true;
+      }
+      if(event.operation==='property.update'){
+        const receiver=ctx.tag(base),property=key(event.operands[1]),old=event.operands[2],
+          after=event.stateChanges.find(change=>['heap','promises'].includes(change.table)&&change.id===base?.[1])?.after,
+          next=after?.properties?.[storage(property)]?.value;
+        if(receiver?.[0]!=='ref'||row?.child||!['undefined','null','bool','str','num','bigint'].includes(old?.[0]))
+          ctx.refuse('Promise property update requires primitive numeric conversion and data storage');
+        if(!next||!['++','--'].includes(row?.update?.operator)||typeof row.update.prefix!=='boolean')
+          ctx.refuse('Promise property update lacks its committed data value or source update mode');
+        const literal=value=>({op:'literal',value}),numeric=old[0]==='bigint'?old:encode(Number(decode(old)));
+        ctx.emitProtocol(owner,{kind:'property.get',object:receiver[1],key:property,receiver,result:ctx.tag(old)},event,'source-promise-update-read/1');
+        ctx.emitProtocol(owner,{kind:'compute',expr:old[0]==='bigint'?literal(old):{op:'unary',operator:'+',arg:literal(old)},
+          result:ctx.tag(numeric),bind:null},event,'source-promise-update-conversion/1');
+        ctx.emitProtocol(owner,{kind:'compute',expr:{op:'binary',operator:row.update.operator==='++'?'+':'-',left:literal(numeric),
+          right:literal(old[0]==='bigint'?['bigint','1']:['num',1])},result:ctx.tag(next),bind:null},event,'source-promise-update-computation/1');
+        ctx.emitProtocol(owner,{kind:'property.set',object:receiver[1],key:property,receiver,value:ctx.tag(next),success:true},event,'source-promise-update-write/1');
+        if(!eq(raw,row.update.prefix?next:numeric))ctx.refuse('Promise property update completion differs from its prefix/postfix mode');
+        return true;
       }
       if(event.operation==='property.read'||event.operation==='property.write'){
         if(base?.[0]==='intrinsic'&&['Promise','Object'].includes(base[1])&&event.operands[1]?.[1]==='prototype'){
@@ -135,7 +161,8 @@ export function createPromiseObjectTeacherV8(){
         else ctx.emitProtocol(owner,{kind:'property.set',object:receiver[1],key:property,receiver,value:ctx.tag(event.operands[2]),success:true},event,'source-promise-property-write/1');
         return true;
       }
-      const args=event.operands.slice(1),target=args[0],object=ctx.tag(target)?.[1],
+      const args=event.operands.slice(1),ownMethod=name==='Object.prototype.hasOwnProperty',
+        target=ownMethod&&base?.[0]==='method'?base[2]:args[0],object=ctx.tag(target)?.[1],
         changed=event.stateChanges.find(c=>['heap','promises'].includes(c.table)&&c.id===target?.[1])?.after,
         current=nodeFor(ctx.state,target);
       if(name==='Object.create'){
@@ -157,8 +184,9 @@ export function createPromiseObjectTeacherV8(){
         if(!d||!eq(raw,target))ctx.refuse('property definition did not complete on its original receiver');
         ctx.emitProtocol(owner,{kind:'property.define',object,key:property,descriptor:d,success:true},event,'source-promise-property-definition/1');return true;
       }
-      if(name==='Object.hasOwn'){
-        ctx.emitProtocol(owner,{kind:'property.hasOwn',object,key:key(args[1]),result:ctx.tag(raw)},event,'source-own-property/1');return true;
+      if(name==='Object.hasOwn'||ownMethod){
+        if(ownMethod&&base?.[0]!=='method')ctx.refuse('hasOwnProperty requires its actual method receiver');
+        ctx.emitProtocol(owner,{kind:'property.hasOwn',object,key:key(args[ownMethod?0:1]),result:ctx.tag(raw)},event,'source-own-property/1');return true;
       }
       if(name==='Object.getOwnPropertyDescriptor'){
         const property=key(args[1]),d=projectedDescriptor(ctx,current,storage(property)),identity=raw?.[0]==='ref'?ctx.identity(raw[1]):null;

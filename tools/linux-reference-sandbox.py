@@ -112,6 +112,7 @@ def main():
     parser.add_argument("--repo", required=True)
     parser.add_argument("--node", required=True)
     parser.add_argument("--worker", required=True)
+    parser.add_argument("--native-promise-slots", action="store_true")
     parser.add_argument("--cpu-seconds", required=True, type=int)
     parser.add_argument("--timezone", required=True)
     parser.add_argument("--lang", required=True)
@@ -168,6 +169,7 @@ def main():
     # JITless avoids V8's large executable CodeRange reservation, allowing a
     # meaningful 1 GiB whole-process virtual-address cap in addition to the heap.
     os.execve("/bin/node", ["/bin/node", "--jitless", "--max-old-space-size=256",
+                           *(["--expose-internals"] if options.native_promise_slots else []),
                            "/app/tools/reference.mjs"], environment)
 
 

@@ -20,7 +20,7 @@ export function independentProtocolSourceReference(input,{timeoutMs=10000,maxOut
   if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||!Number.isSafeInteger(maxOutputBytes)||maxOutputBytes<1)
     throw new TypeError('Protocol source reference: positive deadline and byte bound required');
   return new Promise((resolve,reject)=>{
-    let command;try{command=referenceCommand(worker,{timeoutMs,isolation});}catch(error){reject(error);return;}
+    let command;try{command=referenceCommand(worker,{timeoutMs,isolation,nativePromiseSlots:true});}catch(error){reject(error);return;}
     const child=spawn(command.command,command.args,{stdio:['pipe','pipe','pipe'],shell:false,env:command.env});
     const chunks=[];let bytes=0,stderr='',finished=false;
     const finish=(error,value)=>{if(finished)return;finished=true;clearTimeout(timer);

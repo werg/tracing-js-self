@@ -42,13 +42,17 @@ function assertDefaultConstructor(controller,identity,api){
     'custom adoption constructor/species requires its own continuation');
 }
 
-// The source-owned Promise representation has the unmodified intrinsic then.
-// A public Promise brand alone cannot authorize bypassing an own then, getter,
-// proxy or a different prototype. Those need their own lookup/call protocol.
-export function assertIntrinsicPromiseThenV8(controller,identity,api){
+function ownedPromiseStorage(controller,identity,api){
   const node=promise(controller,identity,api);
   api.require(node.properties instanceof Map&&node.callable===undefined&&node.proxy===undefined,
     'owned Promise adoption requires ordinary property storage');
+  return node;
+}
+// Resolution captures the selected then before queuing its call. A Promise
+// brand alone cannot authorize that selection, but later property mutations
+// cannot replace it either. Only this initial stage reads the live descriptor.
+export function assertIntrinsicPromiseThenV8(controller,identity,api){
+  const node=ownedPromiseStorage(controller,identity,api);
   if(controller.protocol?.promiseObjects?.initialized){
     const descriptor=api.resolveProperty(controller,identity,['str','then']).descriptor,
       method=controller.heap.get(promiseIntrinsicIdV8('Promise.prototype.then'));
@@ -257,7 +261,9 @@ export function restorePromiseAdoptionStateV8(controller,api){
     api.require(adoption.schema===PROMISE_ADOPTION_STATE_V8&&node.kind==='promise'&&node.external===null&&
       node.adopted===null&&!node.join&&['intent','queued','reading','observing','completed','rejected','self'].includes(adoption.phase),
       'retained adoption state shape');
-    const target=assertIntrinsicPromiseThenV8(controller,adoption.target,api),settled=['completed','rejected','self'].includes(adoption.phase);
+    // The checked resolution intent already selected intrinsic then. Restore
+    // its target storage and lifecycle authority, not a new historical lookup.
+    const target=ownedPromiseStorage(controller,adoption.target,api),settled=['completed','rejected','self'].includes(adoption.phase);
     api.require(settled?node.state!=='pending':node.state==='pending'&&node.result===null,'adoption phase contradicts result settlement');
     if(adoption.phase==='self'){
       id(adoption.error);api.require(adoption.target===identity&&adoption.job===null&&adoption.forwarding===null&&

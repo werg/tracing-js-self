@@ -57,7 +57,7 @@ try{
       if(failures.length)throw new TypeError(failures[0]);
       if(root){
         // A host `await` (including inspector Runtime.awaitPromise) adds guest
-        // constructor/then/species lookups. Inspect actual native settlement
+        // constructor/then/species lookups. Read actual native settlement slots
         // after the required drain instead, without modifying guest objects.
         const settled=await inspectNativePromiseSettlementV8(root);
         if(settled.status==='pending'){
@@ -78,4 +78,5 @@ try{
     operations,decisions,completions:completion.observations,metadata:completion.metadata,
     ...(extensionObservations.length?{extensionObservations}:{})})+'\n');
 }catch(error){process.stdout.write(JSON.stringify({schema:'protocol-source-reference/1',error:String(error.message),
-  category:['ERR_SCRIPT_EXECUTION_TIMEOUT','ERR_PROTOCOL_PROMISE_PENDING'].includes(error.code)?'resource_limited':'unsupported.protocol-reference',mode,phase})+'\n');process.exitCode=1;}
+  category:['ERR_SCRIPT_EXECUTION_TIMEOUT','ERR_PROTOCOL_PROMISE_PENDING'].includes(error.code)?'resource_limited':
+    error.category==='unsupported.native-promise-observer'?error.category:'unsupported.protocol-reference',mode,phase})+'\n');process.exitCode=1;}

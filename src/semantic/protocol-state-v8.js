@@ -9,7 +9,7 @@ import {assertAlgorithmFields,assertAlgorithmDataArray,isAlgorithmDataRecord} fr
 import {validateProtocolRecordV8,validateProtocolValueV8,validateProtocolKeyV8,
   validateProtocolDescriptorV8,PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
-import {promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
+import {promiseIntrinsicIdV8,PROMISE_OBJECT_STATE_V8,restorePromiseObjectStateV8} from './protocol-promise-object-v8.js';
 
 export const PROTOCOL_STATE_V8_SCHEMA='semantic-protocol-state/1';
 const baseStateFields=['schema','symbols','pendingCalls','callFrames','sequence'];
@@ -32,6 +32,18 @@ const scalarDescription=row=>row.kind==='well-known'?['str','Symbol.'+row.name]:
 export function createProtocolStateV8(){return {schema:PROTOCOL_STATE_V8_SCHEMA,
   symbols:WELL_KNOWN_SYMBOLS.map(name=>({id:'well-known:'+name,kind:'well-known',name})),pendingCalls:[],callFrames:[],sequence:0,
   ...Object.fromEntries(extensionStateFields.map(field=>[field,null]))};}
+// The lifecycle shares a checked realm heap, not invocation-local call frames
+// or extension continuations. Materialized intrinsic identities survive that
+// boundary. A new V8 controller derives just their initialization marker after
+// validating the complete canonical group; ordinary restoration never repairs
+// a missing marker in a supplied state packet.
+export function initializeRetainedProtocolStateV8(controller){
+  if(![...controller.heap.values()].some(node=>node.kind==='intrinsic'))return;
+  const protocol=createProtocolStateV8();
+  protocol.promiseObjects={schema:PROMISE_OBJECT_STATE_V8,initialized:true};
+  restorePromiseObjectStateV8(controller,protocol.promiseObjects,PROTOCOL_MACHINE_API_V8);
+  controller.protocol=protocol;
+}
 function state(controller){return controller.protocol??=createProtocolStateV8();}
 export function protocolReservedIdentitiesV8(controller){
   return new Set([...controller.heap.keys(),...state(controller).symbols.map(row=>row.id),
