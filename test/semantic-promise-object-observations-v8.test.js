@@ -7,8 +7,15 @@ import {ownedEffectfulOutcome} from '../src/training/effectful-compiler.js';
 import {auditProtocolSourceV8,independentProtocolSourceReference} from '../src/semantic/protocol-source-reference-v8.js';
 import {createPromiseObservationAdapterV8} from '../src/semantic/protocol-promise-observations-v8.js';
 import {createNativeProtocolMetadata,compareProtocolMetadata} from '../src/semantic/protocol-metadata-v8.js';
+import {ownedProtocolSourceObservations} from '../src/semantic/protocol-source-observations-v8.js';
 
 const cases=[
+  ['ordinary assignment through a Promise alias',`"use strict";async function run(){
+    const p=Promise.resolve(1);const alias=p;p.x=7;alias.x=9;return [p.x,alias===p];}`],
+  ['accessor assignment keeps its receiver and expression result',`"use strict";async function run(){
+    const p=Promise.resolve(1);let receiver=false;
+    Object.defineProperty(p,"x",{set:function(value){receiver=this===p;this.y=value*2;},configurable:true});
+    const written=(p.x=7);return [written,p.y,receiver,p.x];}`],
   ['data descriptor, alias and extensibility',`"use strict";async function run(){
     const p=Promise.resolve(1);const alias=p;
     Object.defineProperty(p,"x",{value:7,writable:false,enumerable:true,configurable:false});
@@ -129,4 +136,16 @@ test('unsettled native returned Promise remains an explicit resource limit',asyn
   await assert.rejects(independentProtocolSourceReference({source:'function run(){return new Promise(()=>{});}',
     entry:'run',inputGraph:encodeNativeGraph([]),mode:'original',awaitReturnedPromise:true}),
   error=>error.category==='resource_limited'&&/remains pending/.test(error.message));
+});
+test('Promise assignment observation checks committed storage independently of its expression result',()=>{
+  const source='"use strict";async function run(){const p=Promise.resolve(1);p.x=7;return p.x;}';
+  const runtime=createRuntime().startEntry({text:source,functionName:'run',args:[],allowAsync:true});runtime.drive();
+  const bundle=runtime.exportRun(),altered=structuredClone(bundle),write=altered.events.find(event=>
+    event.operation==='property.write'&&event.operands[0]?.[0]==='promise');
+  assert(write);assert.deepEqual(write.result,['num',7]);
+  const change=write.stateChanges.find(change=>change.table==='promises'&&change.after?.properties?.x);
+  assert(change);change.after.properties.x.value=['num',8];
+  const assignment=ownedProtocolSourceObservations(altered,source).completions.find(row=>row.kind==='assign');
+  assert.deepEqual(assignment.value,['num',8]);
+  assert.deepEqual(ownedProtocolSourceObservations(bundle,source).completions.find(row=>row.kind==='assign').value,['num',7]);
 });

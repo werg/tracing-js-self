@@ -237,9 +237,11 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
         }
         else{
           const [base,property]=event.operands??[];
-          if(base?.[0]!=='ref'||!['str','num','bool','null','undefined','bigint','symbol'].includes(property?.[0]))
+          const ordinaryReceiver=base?.[0]==='ref'||base?.[0]==='promise'||
+            base?.[0]==='intrinsic'&&base[1]==='Promise.prototype';
+          if(!ordinaryReceiver||!['str','num','bool','null','undefined','bigint','symbol'].includes(property?.[0]))
             throw new TypeError('Source assignment storage is outside the independently observed property profile');
-          const object=state.heap[base[1]];
+          const object=base[0]==='promise'?state.promises[base[1]]:state.heap[base[1]];
           if(!object)throw new TypeError('Source assignment storage requires a known receiver');
           const key=property[0]==='symbol'?symbolPropertyKey(property[1]):stringPropertyKey(String(decode(property)));
           // A successful ordinary assignment must leave its stored value in
