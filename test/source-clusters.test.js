@@ -54,6 +54,25 @@ const syntheticProfile=(id,shingles,split='train')=>({family:'source-'+id,split,
   exactHash:id.toString(16).padStart(64,'0'),alphaHash:(id+100000).toString(16).padStart(64,'0'),
   shingles:[...new Set(shingles)].sort((a,b)=>a-b).map(n=>n.toString(16).padStart(24,'0'))}});
 
+for(const sizes of [[29,35],[35,29]]){
+ test('exact-threshold subset clones remain discoverable in family order '+sizes.join('/'),()=>{
+  const profiles=sizes.map((size,id)=>syntheticProfile(id,Array.from({length:size},(_,i)=>i)));
+  const nearThreshold=29/35;
+  // Multiplication rounds upward here although the actual score equals the threshold.
+  assert(nearThreshold*35>29);
+  const result=clusterOwnedSources(profiles,{nearThreshold});
+  assert.equal(result.nearPairs,1);
+  assert.equal(result.distinctSourceClusters,1);
+  assert.equal(result.audit.costs.comparisons,1);
+  assert.deepEqual(result,clusterOwnedSources([...profiles].reverse(),{nearThreshold}));
+  assert.throws(()=>clusterOwnedSources(profiles.map((row,i)=>({...row,split:i?'test':'train'})),
+   {nearThreshold}),/leakage/);
+  const above=clusterOwnedSources(profiles,{nearThreshold:nearThreshold+Number.EPSILON});
+  assert.equal(above.nearPairs,0);
+  assert.equal(above.distinctSourceClusters,2);
+ });
+}
+
 test('common shingles are never silently discarded as an inventory grows',()=>{
  const common=Array.from({length:20},(_,i)=>i);
  const profiles=Array.from({length:140},(_,i)=>syntheticProfile(i,[...common,1000+i]));

@@ -64,6 +64,14 @@ function similarity(a,b){
  }
  return n/(x.length+y.length-n||1);
 }
+function minimumAcceptedOverlap(size,threshold){
+ let low=0,high=size;
+ while(low<high){
+  const middle=Math.floor((low+high)/2);
+  if(middle/size<threshold)low=middle+1;else high=middle;
+ }
+ return low;
+}
 export function clusterOwnedSources(profiles,{nearThreshold=0.92,cloneBudget={}}={}){
  if(!Array.isArray(profiles)||
    !Number.isFinite(nearThreshold)||nearThreshold<0.8||nearThreshold>1)
@@ -101,7 +109,9 @@ export function clusterOwnedSources(profiles,{nearThreshold=0.92,cloneBudget={}}
   }
  }
  // A pair with Jaccard similarity >= t shares an element in both prefixes
- // of length |S| - ceil(t * |S|) + 1 under one total token order. Index those
+ // of length |S| - minimum accepted overlap + 1 under one total token order.
+ // Derive that overlap using the final score's rounded division comparison:
+ // ceil(t * |S|) can round upward and omit an exact-threshold pair. Index those
  // prefixes, rare tokens first. Unlike dropping popular postings, this is a
  // complete filter. Keep candidates only for the current row (linear space),
  // and fail closed when a caller's explicit work or memory budget is spent.
@@ -114,7 +124,7 @@ export function clusterOwnedSources(profiles,{nearThreshold=0.92,cloneBudget={}}
  for(let i=0;i<rows.length;i++){
   const fp=rows[i].fp,size=fp.shingles.length;
   if(!size)continue;
-  const prefix=[...fp.shingles].sort(order).slice(0,size-Math.ceil(nearThreshold*size)+1);
+  const prefix=[...fp.shingles].sort(order).slice(0,size-minimumAcceptedOverlap(size,nearThreshold)+1);
   const candidates=new Set();
   for(const shingle of prefix)for(const j of postings.get(shingle)??[]){
    spend('candidateVisits','maxCandidateVisits');
