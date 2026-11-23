@@ -85,6 +85,22 @@ test('per-run candidate budgets preserve the complete inventory and resume only 
   assert.equal(executions,tasks.length);
 });
 
+test('rehashing a complete flag cannot turn cancelled attempts into a completed shard',async t=>{
+  const directory=temporary(t),frozen=plan(1);
+  const cancelled=await runGenerationShard({plan:frozen,index:0,directory,currentIdentity:identity,
+    execute:async()=>({result:{status:'cancelled',reason:'interrupted worker'},durationMs:0,peakRssBytes:null})});
+  assert.equal(cancelled.rows.length,tasks.length);assert.equal(cancelled.unrun.length,0);
+  assert.equal(cancelled.complete,false);
+  const forged=structuredClone(cancelled);forged.complete=true;
+  const {digest,...payload}=forged;forged.digest=identityHash(payload);
+  assert.throws(()=>mergeGenerationShardReceipts(frozen,[forged]),/incomplete or cancelled/);
+  let rerun=0;
+  const resumed=await runGenerationShard({plan:frozen,index:0,directory,currentIdentity:identity,resume:true,
+    execute:async()=>{rerun++;return {result:{status:'unsupported',reason:'checked after resume'},durationMs:0,peakRssBytes:null};}});
+  assert.equal(rerun,tasks.length);assert(resumed.rows.every(row=>row.attempts.length===2));
+  assert.equal(mergeGenerationShardReceipts(frozen,[resumed]).candidates,tasks.length);
+});
+
 test('plans retain more than 10000 candidates and allow more than 64 shards',()=>{
   const expanded=Array.from({length:10001},(_,i)=>({...tasks[0],fixture:{...tasks[0].fixture,id:'large-'+i}}));
   const large=buildGenerationShardPlan({tasks:expanded,registry,identity,shardCount:65});

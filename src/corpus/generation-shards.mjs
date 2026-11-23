@@ -150,7 +150,8 @@ export function mergeGenerationShardReceipts(plan,receipts){
       receipt.registryDigest===plan.registryDigest&&receipt.shardCount===plan.shardCount,
       'Shard producer, registry or candidate inventory differs');
     const expected=plan.candidates.filter(row=>row.shard===receipt.index);
-    ensure(receipt.complete===true&&receipt.expected===expected.length&&receipt.rows.length===expected.length,
+    ensure(receipt.complete===true&&receipt.expected===expected.length&&receipt.rows.length===expected.length&&
+      receipt.rows.every(row=>row.status!=='cancelled'),
       'Shard is incomplete or cancelled; resume durable candidates before merging');
     ensure(receipt.attempted===receipt.rows.length&&Array.isArray(receipt.unrun)&&receipt.unrun.length===0,
       'Complete shard receipt has inconsistent attempted/unrun accounting');
