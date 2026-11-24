@@ -191,14 +191,14 @@ test('Proxy completion checks reject false setters and honor SameValue for froze
 });
 
 
-function selectHasGetter(f,{id='lookup',getter='getHas',method='hasTrap',child='getterCall'}={}){
+function selectHasGetter(f,{id='lookup',getter='getHas',method='hasTrap',child='getterCall',call=true}={}){
   for(const name of [getter,method])f.apply({kind:'allocate',name,objectKind:'closure',length:null,properties:[],
     code:name,captures:[],functionKind:'ordinary',lexicalReceiver:null});
   f.apply({kind:'property.define',object:'handler',key:key('has'),
     descriptor:{kind:'accessor',get:ref(getter),set:['undefined'],enumerable:true,configurable:true},success:true});
   f.apply({kind:'proxy.getMethod.begin',id,operation:'has',object:'proxy',target:ref('target'),
     handler:ref('handler'),receiver:ref('handler'),key:key('x'),child,getter:ref(getter)});
-  f.apply({kind:'property.get.call',id,child,object:'handler',key:key('has'),receiver:ref('handler')});
+  if(call)f.apply({kind:'property.get.call',id,child,object:'handler',key:key('has'),receiver:ref('handler')});
   return {id,getter,method,child};
 }
 function finishHasGetter(f,selection,value){
@@ -211,15 +211,45 @@ function finishHasGetter(f,selection,value){
     completion:{kind:thrown?'throw':'normal',value:result}});
 }
 test('Proxy has GetMethod getter retains target, handler, receiver and selected closure through mutation',()=>{
-  const f=fixture(),selection=selectHasGetter(f);
+  const f=fixture(),selection=selectHasGetter(f,{call:false});
+  assert.equal(restore(f.controller).lookups,1,'the retained begin checkpoint is restorable');
+  const beforeBeginGuard=structuredClone(f.controller);
+  assert.throws(()=>f.apply({kind:'bind',name:'skip-getter',value:['num',1]}),/selection requires its exact handler getter call/);
+  assert.deepEqual(f.controller,beforeBeginGuard);
+  const forgedBegin=structuredClone(f.controller);
+  forgedBegin.protocol.proxyCalls.getMethods[0].rawReturn=['undefined'];
+  assert.throws(()=>restore(forgedBegin),/selection is not awaiting/);
+  const forgedSelection=structuredClone(f.controller);
+  forgedSelection.protocol.proxyCalls.getMethods[0].getter=ref('hasTrap');
+  assert.throws(()=>restore(forgedSelection),/selected accessor/);
+  for(const [field,value] of [['target',ref('handler')],['handler',ref('target')],['receiver',ref('target')]]){
+    const forged=structuredClone(f.controller);
+    forged.protocol.proxyCalls.getMethods[0][field]=value;
+    assert.throws(()=>restore(forged));
+  }
+  f.apply({kind:'property.get.call',id:selection.id,child:selection.child,
+    object:'handler',key:key('has'),receiver:ref('handler')});
   assert.deepEqual(f.controller.receiver,ref('handler'));
   assert.deepEqual(f.controller.protocol.callFrames.at(-1).arguments,[]);
   const forgedActive=structuredClone(f.controller);
   forgedActive.protocol.proxyCalls.getMethods[0].getter=ref('hasTrap');
-  assert.throws(()=>restore(forgedActive),/getter source identity|selected accessor/);
+  assert.throws(()=>restore(forgedActive),/getter invocation source differs/);
+  const forgedActiveReturn=structuredClone(f.controller);
+  forgedActiveReturn.protocol.proxyCalls.getMethods[0].rawReturn=['undefined'];
+  assert.throws(()=>restore(forgedActiveReturn),/shared property getter call/);
   f.apply({kind:'property.define',object:'handler',key:key('has'),
     descriptor:{kind:'data',value:['null'],writable:true,enumerable:true,configurable:true},success:true});
-  finishHasGetter(f,selection,ref('hasTrap'));
+  f.apply({kind:'return',invocation:selection.child,value:ref('hasTrap')});
+  f.apply({kind:'property.finish',id:selection.id,
+    completion:{kind:'normal',value:ref('hasTrap')}});
+  const beforeSelectedGuard=structuredClone(f.controller);
+  assert.throws(()=>f.apply({kind:'bind',name:'skip-getmethod-finish',value:['num',1]}),/property completion requires its retained finish/);
+  assert.deepEqual(f.controller,beforeSelectedGuard);
+  f.apply({kind:'proxy.getMethod.finish',id:selection.id,
+    completion:{kind:'normal',value:ref('hasTrap')}});
+  const beforeReturnedGuard=structuredClone(f.controller);
+  assert.throws(()=>f.apply({kind:'bind',name:'skip-has',value:['num',1]}),/result requires its matching has operation/);
+  assert.deepEqual(f.controller,beforeReturnedGuard);
   assert.equal(f.controller.protocol.proxyCalls.getMethods[0].phase,'returned');
   const forgedReturned=structuredClone(f.controller);
   forgedReturned.protocol.proxyCalls.getMethods[0].method=ref('getHas');

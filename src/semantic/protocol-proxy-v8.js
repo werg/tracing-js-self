@@ -549,46 +549,52 @@ export function restoreProxyStateV8(controller,snapshot,api){
     api.known(controller,lookup.receiver);api.require(api.eq(lookup.receiver,lookup.handler),
       'Proxy GetMethod getter receiver differs from its handler');
     api.knownKey(controller,lookup.key);api.known(controller,lookup.getter);
-    const getter=api.heapNode(controller,lookup.getter[1]);
-    api.require(lookup.getter[0]==='ref'&&getter.kind==='closure'&&
-      controller.frameFunctions.get(lookup.child)===getter.code&&controller.frameFunctions.has(lookup.parent),
+    api.require(lookup.getter[0]==='ref','Proxy GetMethod getter identity');
+    const getter=api.heapNode(controller,lookup.getter[1]),
+      pendingCall=controller.protocol.pendingCalls.find(row=>row.id===lookup.id);
+    api.require(getter.kind==='closure'&&controller.frameFunctions.has(lookup.parent),
       'Proxy GetMethod getter source identity');
-    const effectiveReceiver=constructionCallReceiverV8(controller,lookup.getter,lookup.receiver,api)??lookup.receiver;
-    api.require(api.eq(controller.locals.get(lookup.child+':this'),effectiveReceiver),
-      'Proxy GetMethod getter receiver activation');
-    const pendingCall=controller.protocol.pendingCalls.find(row=>row.id===lookup.id);
-    if(!controller.frameFunctions.has(lookup.child)){
+    const childActive=controller.frameFunctions.has(lookup.child);
+    if(!childActive){
       api.require(lookup.phase==='selected'&&!pendingCall&&!controller.stack.includes(lookup.child)&&
         controller.stack.at(-1)===lookup.parent&&lookup.rawReturn===null&&lookup.method===null,
         'Proxy GetMethod selection is not awaiting its exact getter call');
       const descriptor=api.ownDescriptor(handler,['str','has']);
       api.require(descriptor?.kind==='accessor'&&api.eq(descriptor.get,lookup.getter),
         'Proxy GetMethod selected accessor differs from the live handler getter');
-    }else if(pendingCall){
-      api.require(lookup.phase==='selected'&&pendingCall.operation==='get'&&pendingCall.child===lookup.child&&
-        pendingCall.object===lookup.handler[1]&&api.eq(pendingCall.key,['str','has'])&&
-        api.eq(pendingCall.receiver,lookup.receiver)&&api.eq(pendingCall.callee,lookup.getter)&&
-        pendingCall.parent===lookup.parent&&pendingCall.value===null,
-        'Proxy GetMethod differs from its shared property getter call');
-      const call=controller.protocol.callFrames.find(frame=>frame.child===lookup.child);
-      if(call)api.require(api.eq(call.callee,lookup.getter)&&call.parent===lookup.parent&&
-        api.eq(call.arguments,[]),'Proxy GetMethod active getter call frame differs');
-      if(controller.stack.includes(lookup.child))api.require(controller.stack.indexOf(lookup.child)>
-        controller.stack.indexOf(lookup.parent),'Proxy GetMethod getter stack order');
-      else api.require(controller.stack.at(-1)===lookup.parent&&
-        ['return','throw'].includes(controller.lastReturn?.kind),'Proxy GetMethod getter has no returned completion');
-    }else if(lookup.phase==='selected'){
-      api.require(!controller.stack.includes(lookup.child)&&controller.stack.at(-1)===lookup.parent&&
-        ['return','throw'].includes(controller.lastReturn?.kind)&&lookup.rawReturn===null&&lookup.method===null,
-        'Proxy GetMethod property completion is not retained');
     }else{
-      api.require(!controller.stack.includes(lookup.child)&&controller.stack.at(-1)===lookup.parent&&
-        controller.lastReturn?.kind==='return'&&api.eq(controller.lastReturn.value,lookup.rawReturn),
-        'Proxy GetMethod returned value differs from its retained completion');
-      const method=['undefined','null'].includes(lookup.rawReturn?.[0])?['undefined']:lookup.rawReturn;
-      api.require(lookup.rawReturn!==null&&api.eq(lookup.method,method)&&
-        (method[0]==='undefined'||method[0]==='ref'&&api.heapNode(controller,method[1]).kind==='closure'),
-        'Proxy GetMethod method identity differs from its raw return');
+      api.require(controller.frameFunctions.get(lookup.child)===getter.code,
+        'Proxy GetMethod getter invocation source differs');
+      const effectiveReceiver=constructionCallReceiverV8(controller,lookup.getter,lookup.receiver,api)??lookup.receiver;
+      api.require(api.eq(controller.locals.get(lookup.child+':this'),effectiveReceiver),
+        'Proxy GetMethod getter receiver activation');
+      if(pendingCall){
+        api.require(lookup.phase==='selected'&&lookup.rawReturn===null&&lookup.method===null&&
+          pendingCall.operation==='get'&&pendingCall.child===lookup.child&&
+          pendingCall.object===lookup.handler[1]&&api.eq(pendingCall.key,['str','has'])&&
+          api.eq(pendingCall.receiver,lookup.receiver)&&api.eq(pendingCall.callee,lookup.getter)&&
+          pendingCall.parent===lookup.parent&&pendingCall.value===null,
+          'Proxy GetMethod differs from its shared property getter call');
+        const call=controller.protocol.callFrames.find(frame=>frame.child===lookup.child);
+        if(call)api.require(api.eq(call.callee,lookup.getter)&&call.parent===lookup.parent&&
+          api.eq(call.arguments,[]),'Proxy GetMethod active getter call frame differs');
+        if(controller.stack.includes(lookup.child))api.require(controller.stack.indexOf(lookup.child)>
+          controller.stack.indexOf(lookup.parent),'Proxy GetMethod getter stack order');
+        else api.require(controller.stack.at(-1)===lookup.parent&&
+          ['return','throw'].includes(controller.lastReturn?.kind),'Proxy GetMethod getter has no returned completion');
+      }else if(lookup.phase==='selected'){
+        api.require(!controller.stack.includes(lookup.child)&&controller.stack.at(-1)===lookup.parent&&
+          ['return','throw'].includes(controller.lastReturn?.kind)&&lookup.rawReturn===null&&lookup.method===null,
+          'Proxy GetMethod property completion is not retained');
+      }else{
+        api.require(!controller.stack.includes(lookup.child)&&controller.stack.at(-1)===lookup.parent&&
+          controller.lastReturn?.kind==='return'&&api.eq(controller.lastReturn.value,lookup.rawReturn),
+          'Proxy GetMethod returned value differs from its retained completion');
+        const method=['undefined','null'].includes(lookup.rawReturn?.[0])?['undefined']:lookup.rawReturn;
+        api.require(lookup.rawReturn!==null&&api.eq(lookup.method,method)&&
+          (method[0]==='undefined'||method[0]==='ref'&&api.heapNode(controller,method[1]).kind==='closure'),
+          'Proxy GetMethod method identity differs from its raw return');
+      }
     }
   }
   return {valid:true,proxies:count,calls:snapshot.pending.length,lookups:snapshot.getMethods.length};
