@@ -556,6 +556,8 @@ export function restoreProxyStateV8(controller,snapshot,api){
       'Proxy GetMethod getter source identity');
     const childActive=controller.frameFunctions.has(lookup.child);
     if(!childActive){
+      api.require(api.eq(node.target,lookup.target)&&api.eq(node.handler,lookup.handler),
+        'Proxy GetMethod selection cannot be revoked before its getter call');
       api.require(lookup.phase==='selected'&&!pendingCall&&!controller.stack.includes(lookup.child)&&
         controller.stack.at(-1)===lookup.parent&&lookup.rawReturn===null&&lookup.method===null,
         'Proxy GetMethod selection is not awaiting its exact getter call');

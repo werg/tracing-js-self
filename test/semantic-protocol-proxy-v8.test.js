@@ -216,6 +216,10 @@ test('Proxy has GetMethod getter retains target, handler, receiver and selected 
   const beforeBeginGuard=structuredClone(f.controller);
   assert.throws(()=>f.apply({kind:'bind',name:'skip-getter',value:['num',1]}),/selection requires its exact handler getter call/);
   assert.deepEqual(f.controller,beforeBeginGuard);
+  const revokedBegin=structuredClone(f.controller);
+  revokedBegin.heap.get('proxy').target=['null'];
+  revokedBegin.heap.get('proxy').handler=['null'];
+  assert.throws(()=>restore(revokedBegin),/cannot be revoked before its getter call/);
   const forgedBegin=structuredClone(f.controller);
   forgedBegin.protocol.proxyCalls.getMethods[0].rawReturn=['undefined'];
   assert.throws(()=>restore(forgedBegin),/selection is not awaiting/);
