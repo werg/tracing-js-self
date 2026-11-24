@@ -194,6 +194,18 @@ test('restored enumeration checkpoint rejects forged receiver, key and outcome w
   assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
 });
 
+test('strict false Proxy set source preserves trap effects and exact native TypeError details',async()=>{
+  const artifact=await checkedFixture('issue51-proxy-strict-false-set-error'),
+    controller=RegionExecutionHarness.replay(artifact).controller,
+    records=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record);
+  assert.deepEqual(controller.materialize(completion(artifact).value),
+    ['TypeError',"'set' on proxy: trap returned falsish for property 'x'",1,2]);
+  const calls=records.filter(row=>row.kind==='proxy.set.call');
+  assert.equal(calls.length,1);assert.equal(calls[0].strict,true);
+  assert.equal(records.filter(row=>row.kind==='proxy.fault'&&row.id===calls[0].id).length,1);
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
 test('issue51 original fixtures preserve sparse length, delete failure, key order, accessor and Symbol behavior',async()=>{
   const cases=[
     ['issue51-reflect-delete-property',[true,true,false,true]],

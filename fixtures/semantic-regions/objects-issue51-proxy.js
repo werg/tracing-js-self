@@ -19,6 +19,10 @@ export const issue51ProxyFixtures=Object.freeze([
   fixture('issue51-proxy-strict-false-delete-error','issue51-proxy-intrinsic-error',
     'const proxy=new Proxy({}, {deleteProperty:function(){return false;}});'+
     'try{delete proxy.x;return "none";}catch(error){return [error.name,error.message];}'),
+  fixture('issue51-proxy-strict-false-set-error','issue51-proxy-intrinsic-error',
+    'let calls=0;const target={x:2},handler={set:function(){calls++;return false;}};'+
+    'const proxy=new Proxy(target,handler);try{proxy.x=7;return ["missed",calls,target.x];}'+
+    'catch(error){return [error.name,error.message,calls,target.x];}'),
   fixture('issue51-proxy-strict-transparent-delete-error','issue51-proxy-intrinsic-error',
     'const target={};Object.defineProperty(target,"x",{value:1,configurable:false});const proxy=new Proxy(target,{});'+
     'try{delete proxy.x;return "none";}catch(error){return [error.name,error.message];}'),
@@ -54,7 +58,5 @@ export const issue51ProxyUnsupportedControls=Object.freeze([
   fixture('issue51-control-proxy-nested-target','issue51-unsupported-control',
     'const target=new Proxy({x:2},{});return new Proxy(target,{}).x;'),
   fixture('issue51-control-proxy-trap-getter','issue51-unsupported-control',
-    'const proxy=new Proxy({x:1},{get has(){return function(){return true;};}});return "x" in proxy;'),
-  fixture('issue51-control-proxy-strict-false-set','issue51-unsupported-control',
-    'const proxy=new Proxy({x:2},{set:function(){return false;}});proxy.x=7;return 1;')
+    'const proxy=new Proxy({x:1},{get has(){return function(){return true;};}});return "x" in proxy;')
 ]);
