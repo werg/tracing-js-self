@@ -18,20 +18,20 @@ its broader construction, Proxy, collection and interaction work is complete.
 
 ## Implementation checklist
 
-- [ ] Carry ordinary inherited property existence through a shared `property.has`
+- [x] Carry ordinary inherited property existence through a shared `property.has`
   operation, including symbols, accessors without getter invocation, prototype
   traversal, absent versus undefined values, and authenticated source operands.
-- [ ] Extend owned `Reflect.has` and check target validation/key conversion order.
-- [ ] Support deletion and addition during ordinary `for…in`: retain the captured
+- [x] Extend owned `Reflect.has` and check target validation/key conversion order.
+- [x] Support deletion and addition during ordinary `for…in`: retain the captured
   candidate sequence, skip deleted candidates, preserve inherited fallback, and
   never repeat a completed cursor. Keep unsupported prototype/enumerability
   mutations explicit rather than claiming a native result without evidence.
-- [ ] Mirror these transitions in the independent consumer, with forged result,
+- [x] Mirror these transitions in the independent consumer, with forged result,
   receiver, key and restored-state refusal tests.
-- [ ] Exercise original-source/native agreement, replay, interrupted restoration,
+- [x] Exercise original-source/native agreement, replay, interrupted restoration,
   and affected ordinary preparation/contract paths across both repositories.
-- [ ] Regenerate current affected contracts/data and record exact test receipts.
-- [ ] Document remaining method/interaction gaps and continuation commands in
+- [x] Regenerate current affected contracts/data and record exact test receipts.
+- [x] Document remaining method/interaction gaps and continuation commands in
   both PRs, without describing partial umbrella coverage as completion.
 
 ## Recovery and coordination
@@ -147,9 +147,10 @@ interoperability regeneration passed all 4 examples without byte changes.
 ## Remaining operations and combinations
 
 - `in` and computed deletion use the retained ordinary object-key conversion.
-  The new Reflect paths accept primitive property keys. A valid Reflect target
-  with an object-valued key still needs a retained builtin key-conversion path.
-  Invalid Reflect targets are genuine owned TypeErrors before key hooks run.
+  Direct Reflect calls now retain object-valued keys with ordinary receivers.
+  Aliased calls have owned-runtime support but still need explicit public
+  builtin callable identity; spread calls and unsupported exotic receivers
+  remain outside this source profile. Invalid targets throw before key hooks.
 - Owned TypeError outcomes and their identities are checked, but the invalid
   `in`-RHS source control still refuses the intrinsic error-object projection.
   That refusal is retained in the source population; it is not an admitted
@@ -175,3 +176,70 @@ duplicated protocol prefix, so that earlier negative test did not isolate source
 correspondence. The corrected targeted test passes. A separate 11-test owned
 run includes both Reflect target checks with a `Symbol.toPrimitive` hook and
 confirms that the hook never runs for a primitive target.
+
+## Checkpoint 4 — clean cross-repository gate and retained Reflect calls
+
+The baseline producer `c3e1a55f19eb04fc17957dd8fdea01031ca35ecd` passed
+`npm run contracts:check` on Node v24.22.3: 71 source-qualified protocol
+examples, 4 mixed host/protocol examples and 6 region examples. Clean source
+export reproduced all 20 supported originals and 3 explicit refusals without
+unexpected failures. The consumer synchronized the byte-identical contract in
+`c3df6a32436233f714b365c3a7b2f3e5ce967b5c`, passed 68 focused native tests,
+and retained the complete original cohort with 25 independent replay,
+context, continuation and forgery/restoration tests in `4c8ee314`.
+
+Ordinary preparation on those exact clean revisions admitted 20/20 originals
+with zero preparation refusals, 8192 positions, 1024 history, zero optimizer
+steps and no learning claim. The frozen registry includes the three refused
+source identities. Receipt:
+
+- Contract: `9e5946f6745460ad45698eed882641cbc8bb171feb58a98ee53b60984ba23658`.
+- Fixture: `56f7f36d3b25b3b11a208be3de337e637b9782e6759faea1e1ec107b0a90f0ce`.
+- Interoperability: `813034bfdedd09a779cc6f45109099fe8231621baac8b770f23379329fbd9218`.
+- Registry: `e24d9baecb211cf77479b5d81daab0a775936dd6dc6a05c365bc41d8570b22f6`.
+- Manifest fingerprint: `5d279e992f64ecd1ab2b3e1089d7356670614c0b7af2afe5c06ee0769d1fc5ec`.
+- Pinned Ling tokenizer SHA256:
+  `40fb9d7d7795b8bd305aeff39ce9963f3f450915b9553f2938e009be9a1fed60`;
+  codec identity `7f52faca2fe82273a889023defd2f1a6fd6080a21096ec77e97f4798a0a370b2`.
+
+Producer `5fea23aa` extends the existing retained PropertyKey continuation to
+the actual selected Reflect.has or Reflect.deleteProperty call with ordinary
+target and non-spread argument list. The original stack, including evaluated
+target, extra arguments and key, is retained across the getter/callback. Target
+validation precedes conversion, and a thrown hook preserves guest identity and
+partial effects. The structural validator checks the selected call independently.
+All 13 focused owned runtime tests passed.
+
+Producer `152b8f50` extends the independent native conversion observer to
+direct syntactic Reflect.has/deleteProperty calls. It resolves the real method
+before arguments, compares its identity against the captured realm builtin,
+and only observes object-key conversion for valid object targets. Shadowed
+Reflect calls receive the original key unchanged. The observer verifies the
+owned source anchor, selected callee and exact original stack key, and uses
+the guest realm's actual ToPropertyKey behavior. All 22 conversion-observation
+tests passed, including abrupt completion, symbol identity, shadowing,
+invalid targets and stale computed-deletion expectation correction.
+
+Direct source projection reuses the existing conversion/property records,
+including Promise targets with string keys. Aliased Reflect methods are
+supported at the owned runtime boundary, but currently fail closed in source
+projection because builtin callable identity is not represented. Spread calls,
+Proxy/exotic target traps and Promise/Symbol composition requiring additional
+allocation ownership are not promoted by this work. These are continuation
+targets, not successful admitted exceptions. The broader #51 umbrella remains
+open.
+
+Reproduction commands: see `docs/issue51-object-semantics.md` in megatoken for
+the exact clean paired preparation invocation. Producer commands:
+
+```sh
+node --experimental-vm-modules --test test/owned-issue51-runtime.test.js test/owned-property-key-conversion.test.js test/semantic-primitive-conversion-observations-v8.test.js test/semantic-issue51-source-v8.test.js
+node tools/generate-protocol-source-fixtures.mjs
+node tools/generate-semantic-region-contract.mjs
+npm run contracts:check
+node tools/export-issue51-evidence.mjs --out /tmp/issue51-cohort.json
+```
+
+Do not reuse an older preparation manifest as a receipt for a later code
+revision or a larger source population. Synchronize generated contract bytes
+and the full frozen source registry before rechecking ordinary preparation.
