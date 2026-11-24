@@ -1,3 +1,4 @@
+import {issue51CollectionFixtures} from './objects-issue51-collections.js';
 import {issue51ProxyReflectionFixtures} from './objects-issue51-proxy-reflection.js';
 import {issue51EnumerationFixtures} from './objects-issue51-enumeration.js';
 import {issue51ErrorFixtures} from './objects-issue51-errors.js';
@@ -14,6 +15,7 @@ export const issue51ObjectFixtures=withIssue51Lineage([
     source:'"use strict";function run(x){const object=new Proxy({a:1},{});for(const key in object){}return 7;}',
     entry:'run',args:[4]}),
   ...issue51ConstructionFixtures,
+  ...issue51CollectionFixtures,
   ...issue51ErrorFixtures,
   ...issue51EnumerationFixtures,
   Object.freeze({"id":"issue51-for-in-transparent-proxy-value-writes","family":"issue51-mutation-for-in","source":"\"use strict\";function run(x){const target={a:1,b:2};const object=new Proxy(target,{});const seen=[];for(const key in object){seen.push(key);target[key]++;}return [seen,target.a,target.b];}","entry":"run","args":[4]}),
