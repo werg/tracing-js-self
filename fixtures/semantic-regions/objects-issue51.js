@@ -1,3 +1,4 @@
+import {issue51ProxyReflectionFixtures} from './objects-issue51-proxy-reflection.js';
 import {issue51EnumerationFixtures} from './objects-issue51-enumeration.js';
 import {issue51ErrorFixtures} from './objects-issue51-errors.js';
 import {issue51ProxyFixtures,issue51ProxyUnsupportedControls} from './objects-issue51-proxy.js';
@@ -18,6 +19,7 @@ export const issue51ObjectFixtures=withIssue51Lineage([
 
   ...issue51ConstructionFaultFixtures,
   ...issue51ProxyFixtures,
+  ...issue51ProxyReflectionFixtures,
   Object.freeze({id:'issue51-has-in-reflect-symbol-accessor',family:'issue51-property-existence',
     source:'"use strict";function run(x){let events=[];const token=Symbol("token");const proto={get inherited(){events.push("get");return 1;}};Object.defineProperty(proto,token,{value:3,enumerable:true});const object=Object.create(proto);function receiver(){events.push("receiver");return object;}function key(){events.push("key");return "inherited";}const first=key() in receiver();const second=Reflect.has(receiver(),token);return [first,second,events];}',
     entry:'run',args:[4]}),

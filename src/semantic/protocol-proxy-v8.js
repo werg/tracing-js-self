@@ -361,3 +361,5 @@ export function restoreProxyStateV8(controller,snapshot,api){
   return {valid:true,proxies:count,calls:seen.size};
 }
 export const hasProxyStateV8=node=>node?.kind==='proxy';
+
+export {deriveRoute as deriveProxyRouteV8,retainedRoute as validateRetainedProxyRouteV8};

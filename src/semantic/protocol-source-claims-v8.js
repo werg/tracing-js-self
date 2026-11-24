@@ -7,7 +7,7 @@ export const ORDINARY_PROTOCOL_SOURCE_V8='ordinary-protocol-source/1';
 const memory='owned-binary-memory/1',iterator='builtin-iterator/1',generator='synchronous-generator-source/1',
   construction='class-private-source/1',custom='custom-iterator-source/1',completion='ordinary-completions-source/1',
   number='primitive-conversion-source/1',proxy='ordinary-data-proxy-source/1',map='ordinary-array-map-source/1',enumeration='ordinary-for-in/1',
-  collection='owned-collections/1';
+  collection='owned-collections/1',reflection='proxy-reflection-source/1';
 const memoryKinds=new Set(['array-buffer','shared-int32-buffer','typed-array','shared-int32-view','data-view','shared-data-view']);
 const constructors=new Set(['ArrayBuffer','SharedArrayBuffer','DataView',...Object.keys(SHARED_TYPES)]);
 const iteratorNames=new Set(['Array.prototype.values','Array.prototype.keys','Array.prototype.entries',
@@ -30,7 +30,7 @@ const ordinaryOperations=new Set(['property.read','property.write','property.upd
 // These protocol families can participate in Promise source projection without
 // introducing an independent whole-episode teacher. Their events are still
 // claimed through the same prefix coordinator and retained-state transaction.
-export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy,iterator,map,enumeration,generator,custom,completion,collection]);
+export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy,reflection,iterator,map,enumeration,generator,custom,completion,collection]);
 const callee=value=>value?.[0]==='method'?value[1]:value;
 const builtin=value=>['intrinsic','builtinfn'].includes(value?.[0])?value[1]:null;
 const selected=value=>value?.[0]==='method'?value[1]:value;
@@ -46,6 +46,12 @@ const ordinaryPrototype=view=>view.event.stateChanges.some(change=>change.table=
   change.after.prototypeInitialized&&!change.before?.prototypeInitialized&&!change.after.classConstructor&&!change.after.generatorFunction);
 
 const eventClaims={
+  [reflection](view,{event,row}){
+    const name=builtin(callee(row?.operands?.[0]??event.operands?.[0]));
+    return event.operation==='call.return'&&has(state(view,reflection).callbacks,event.invocationId)||
+      event.operation==='call.enter'&&['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions'].some(
+        op=>name==='Object.'+op||name==='Reflect.'+op)&&heap(view,row?.operands?.[1]??event.operands?.[1])?.kind==='proxy';
+  },
   [memory](view,{event,row}){
     if(!row)return false;
     const raw=row.operands[0],name=builtin(callee(raw));
@@ -178,7 +184,7 @@ function completionOwners(view,change){
   return [...(change.after?.generatorId||routedGenerator?.length===1?[generator]:[]),
     ...(enabled(view,moduleNamespace)&&(state(view,moduleNamespace).operations??[]).some(([,operation])=>
       operation.waitingFrameId===change.id)?[moduleNamespace]:[]),
-    ...[[construction,'roles'],[number,'callbacks'],[proxy,'callbacks'],[map,'callbacks'],[custom,'accessors']]
+    ...[[construction,'roles'],[number,'callbacks'],[proxy,'callbacks'],[reflection,'callbacks'],[map,'callbacks'],[custom,'accessors']]
       .filter(([id,key])=>has(state(view,id)[key],change.id)).map(([id])=>id)];
 }
 function allocationOwner(view,node){

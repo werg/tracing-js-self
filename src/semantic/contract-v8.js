@@ -1,3 +1,5 @@
+import {PROXY_REFLECTION_PROFILE_V8,PROXY_REFLECTION_STATE_V8,PROXY_REFLECTION_CALL_FIELDS_V8,
+  PROXY_REFLECTION_OPERATIONS_V8} from './protocol-proxy-reflection-v8.js';
 import {REGION_LIMITS,REGION_PROGRAM_VERSION,REGION_EXECUTION_VERSION,REGION_TRACE_VERSION,
   REGION_CONTEXT_VERSION,REGION_CONTINUATION_VERSION,REGION_PROFILE} from './regions.js';
 import {ALGORITHM_V8_SCHEMA,ALGORITHM_V8_PROFILE,ALGORITHM_V8_LIMITS,ALGORITHM_V8_INPUT_TYPES,
@@ -125,6 +127,10 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       handlerFields:['name','catch','finally','phase','caught','pending'],
       delegationFields:['iterator','next','request','phase','result'],
       capabilities:'Retained invocations, receivers, arguments and captures; sent values, catch/finally cleanup, suspension and cached-next delegation through declared builtin iterators and synchronous generators.'},
+    proxyReflection:{profile:PROXY_REFLECTION_PROFILE_V8,schema:PROXY_REFLECTION_STATE_V8,
+      fields:['schema','pending'],initial:null,callFields:PROXY_REFLECTION_CALL_FIELDS_V8,
+      operations:PROXY_REFLECTION_OPERATIONS_V8,
+      capabilities:'Retained synchronous reflection traps use live target prototype and extensibility after callback mutations. Object and Reflect caller behavior, Boolean normalization and derived intrinsic faults are explicit.'},
     proxyCalls:{profile:PROXY_PROFILE_V8,schema:PROXY_STATE_V8_SCHEMA,fields:['schema','pending'],initial:null,
       heapFields:PROXY_HEAP_FIELDS,callFields:PROXY_CALL_FIELDS,
       faultFields:{callback:['kind','id','error'],directStrictDelete:['kind','object','key','error']},

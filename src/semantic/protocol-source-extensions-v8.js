@@ -1,3 +1,4 @@
+import {createProxyReflectionSourceAdapterV8} from './protocol-proxy-reflection-source-v8.js';
 // Statically registered teacher-only source adapters. Serving input cannot
 // install these adapters, and the independent worker never imports this file.
 import {createCompletionSourceAdapterV8} from './protocol-completion-source-v8.js';
@@ -16,4 +17,4 @@ import {createEnumerationSourceAdapterV8} from './protocol-enumeration-source-v8
 import {createAsyncCallSourceAdapterV8} from './protocol-async-call-source-v8.js';
 import {createPromiseAdoptionSourceAdapterV8} from './protocol-promise-adoption-source-v8.js';
 import {createPromiseObjectSourceAdapterV8} from './protocol-promise-object-source-v8.js';
-export const PROTOCOL_SOURCE_ADAPTERS_V8=Object.freeze([memorySourceAdapterV8,createGeneratorSourceAdapterV8,createConstructionSourceAdapterV8,createCollectionSourceAdapterV8,createIteratorSourceAdapterV8,createCustomIteratorSourceAdapterV8,createPromiseJoinSourceAdapterV8,createPromiseExecutorSourceAdapterV8,createAsyncCallSourceAdapterV8,createPromiseAdoptionSourceAdapterV8,createPromiseObjectSourceAdapterV8,createPrimitiveConversionSourceAdapterV8,createProxySourceAdapterV8,createArrayMapSourceAdapterV8,createEnumerationSourceAdapterV8,createCompletionSourceAdapterV8]);
+export const PROTOCOL_SOURCE_ADAPTERS_V8=Object.freeze([memorySourceAdapterV8,createGeneratorSourceAdapterV8,createConstructionSourceAdapterV8,createCollectionSourceAdapterV8,createIteratorSourceAdapterV8,createCustomIteratorSourceAdapterV8,createPromiseJoinSourceAdapterV8,createPromiseExecutorSourceAdapterV8,createAsyncCallSourceAdapterV8,createPromiseAdoptionSourceAdapterV8,createPromiseObjectSourceAdapterV8,createPrimitiveConversionSourceAdapterV8,createProxySourceAdapterV8,createProxyReflectionSourceAdapterV8,createArrayMapSourceAdapterV8,createEnumerationSourceAdapterV8,createCompletionSourceAdapterV8]);

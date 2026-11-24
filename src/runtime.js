@@ -1,3 +1,4 @@
+import {startOwnedProxyReflection,finishOwnedProxyReflection} from './owned-proxy-reflection.js';
 import { encode, decode, U, token, truthy, primitiveBinary, primitiveUnary } from './values.js';
 import {WELL_KNOWN_SYMBOLS,wellKnownSymbol,stringPropertyKey,symbolPropertyKey,isSymbolPropertyKey,propertyKeyValue} from './property-keys.js';
 import {SHARED_TYPES,SHARED_TYPE_NAMES,newArrayBuffer,isOwnedBuffer,isOwnedTypedView,isOwnedDataView,newSharedBuffer,newSharedView,newSharedDataView,effectiveDataViewLength,DATA_VIEW_GETTERS,DATA_VIEW_SETTERS,readSharedDataView,writeSharedDataView,growSharedBuffer,effectiveSharedLength,readSharedElement,writeSharedElement,atomicSharedElement} from './owned-shared-memory.js';
@@ -1202,6 +1203,9 @@ export class Runtime {
         value=['str',replacing.output+replacing.text.slice(replacing.lastEnd)];
         delete caller.pendingStringReplace;
       }
+      const reflected=finishOwnedProxyReflection(this,draft,caller,frame,value,origin,{objectPrototype,truthy});
+      if(reflected?.abrupt)return;
+      if(reflected)value=reflected.value;
       const pending=caller.pendingProperty;
       if(pending?.waitingFrameId===frame.id){
         caller.pendingProperty=null;
@@ -1795,6 +1799,7 @@ export class Runtime {
            draft.control.a0.activeFrameId=caller.id;return;
          }
          if(caller.pendingProperty?.waitingFrameId===frame.id)caller.pendingProperty=null;
+         if(caller.pendingProxyReflection?.waitingFrameId===frame.id)delete caller.pendingProxyReflection;
          if(caller.pendingNumberConversion?.waitingFrameId===frame.id)delete caller.pendingNumberConversion;
          if(caller.pendingPropertyKeyConversion?.conversion.waitingFrameId===frame.id)delete caller.pendingPropertyKeyConversion;
          if(caller.pendingArrayMethod?.waitingFrameId===frame.id)delete caller.pendingArrayMethod;
@@ -2538,7 +2543,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             else throw new TypeError('Unmodeled Symbol static property');
           }
           else if(base.value[0]==='intrinsic'&&base.value[1]==='Reflect'&&
-             ['ownKeys','apply','set','deleteProperty','defineProperty','has'].includes(property))v=['builtinfn','Reflect.'+property];
+             ['ownKeys','apply','set','deleteProperty','defineProperty','has','getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions'].includes(property))v=['builtinfn','Reflect.'+property];
           else if(base.value[0]==='symbol'){
             if(property==='description')v=this.symbolDescription(s,base.value);
             else if(['toString','valueOf'].includes(property))v=['builtinfn','Symbol.prototype.'+property];
@@ -3902,6 +3907,11 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
             }
             for(const [key,value] of copies)putOwn(target,key,value,eventId);
             return {...operands(fn,...args),...result(ref)};
+          }
+          if(callable[0]==='builtinfn'){
+            const reflection=startOwnedProxyReflection(this,s,f,callable[1],args,eventId,{proxyRoute,objectPrototype,truthy,guestFault});
+            if(reflection)return {...operands(fn,...args),reads:reflection.reads,
+              ...(reflection.child?{causes:[{kind:'invocation',frameId:reflection.child}]}:result(reflection.value))};
           }
           if(callable[0]==='builtinfn'&&['Object.preventExtensions','Object.isExtensible',
              'Object.seal','Object.isSealed','Object.freeze'].includes(callable[1])){

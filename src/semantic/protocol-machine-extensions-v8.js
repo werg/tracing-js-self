@@ -40,6 +40,8 @@ import {INTRINSIC_ERROR_PROFILE_V8,INTRINSIC_ERROR_RECORD_FIELDS,validateIntrins
   applyIntrinsicErrorRecordV8,restoreIntrinsicErrorStateV8} from './protocol-intrinsic-error-v8.js';
 import {COLLECTION_PROFILE_V8,COLLECTION_RECORD_FIELDS,validateCollectionRecordV8,applyCollectionRecordV8,
   restoreCollectionStateV8,hasCollectionStateV8} from './protocol-collection-v8.js';
+import {PROXY_REFLECTION_PROFILE_V8,PROXY_REFLECTION_FIELDS_V8,validateProxyReflectionV8,applyProxyReflectionV8,
+  restoreProxyReflectionV8,assertProxyReflectionNextV8} from './protocol-proxy-reflection-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:PROMISE_OBJECT_PROFILE_V8,recordFields:PROMISE_OBJECT_RECORD_FIELDS,
   validateRecord:validatePromiseObjectRecordV8,applyRecord:applyPromiseObjectRecordV8,
@@ -105,6 +107,9 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   intrinsicPrototypes:GENERATOR_INTRINSICS_V8,resolveIntrinsicProperty:resolveGeneratorIntrinsicV8,
   assertNext:assertGeneratorNextV8,assertCall:assertGeneratorCallV8,
   restoreState:(controller,_snapshot,api)=>restoreGeneratorStateV8(controller,api)
+}),Object.freeze({
+  id:PROXY_REFLECTION_PROFILE_V8,recordFields:PROXY_REFLECTION_FIELDS_V8,validateRecord:validateProxyReflectionV8,
+  applyRecord:applyProxyReflectionV8,stateField:'proxyReflection',restoreState:restoreProxyReflectionV8,assertNext:assertProxyReflectionNextV8
 }),Object.freeze({
   id:PROXY_PROFILE_V8,recordFields:PROXY_RECORD_FIELDS,validateRecord:validateProxyRecordV8,
   applyRecord:applyProxyRecordV8,hasRichState:hasProxyStateV8,stateField:'proxyCalls',
