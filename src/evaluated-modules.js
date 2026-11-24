@@ -1155,7 +1155,7 @@ export async function executeEvaluatedModules({modules,entryModule,
   if(!settled||settled.status==='pending')
     throw new TypeError('Evaluated module root promise remains unsettled');
   if(settled.status==='rejected'){
-    const value=realizeGraph(runtime.state.heap,[settled.value.value])[0];
+    const value=realizeGraph(runtime.state.heap,[settled.value.value],{exceptionProfile:true})[0];
     throw new Error('Owned module evaluation rejected: '+String(
       value&&typeof value==='object'?value.message??value.name??'guest object':value));
   }
@@ -1197,7 +1197,7 @@ export function executeEvaluatedModulesSync({modules,entryModule,
   if(!settled||settled.status==='pending')
     throw new TypeError('Synchronous module root promise did not settle');
   if(settled.status==='rejected'){
-    const value=realizeGraph(runtime.state.heap,[settled.value.value])[0];
+    const value=realizeGraph(runtime.state.heap,[settled.value.value],{exceptionProfile:true})[0];
     throw new Error('Owned module evaluation rejected: '+String(
       value&&typeof value==='object'?value.message??value.name??'guest object':value));
   }

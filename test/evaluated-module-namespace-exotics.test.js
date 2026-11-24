@@ -515,7 +515,7 @@ test('uncaught namespace freeze TypeError propagates through module evaluation',
     promiseId=runtime.initialState.frames[root].asyncPromiseId,
     rejected=runtime.state.promises[promiseId];
   assert.equal(rejected.status,'rejected');
-  const reason=realizeGraph(runtime.state.heap,[rejected.value.value])[0];
+  const reason=realizeGraph(runtime.state.heap,[rejected.value.value],{exceptionProfile:true})[0];
   assert.equal(reason.name,'TypeError');
   assert.match(reason.message,/Cannot redefine property: aFirst/);
   const bundle=JSON.parse(JSON.stringify(runtime.exportRun()));
