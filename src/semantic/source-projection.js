@@ -413,6 +413,24 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       if(record===true)return null;
       if(record)return emitProtocol(owner,record,event,'source-owned-closure/1');
     }
+    // Symbols use the existing protocol value domain. Detailed scalar records
+    // cannot encode their identity, even inside a composed Promise source.
+    if(regionAdapter){
+      const symbolIn=value=>{
+        if(!value||typeof value!=='object')return false;
+        if(Array.isArray(value)&&value[0]==='symbol')return true;
+        if(value.op==='local'){
+          const selected=controller(owner),name=selected.captureAliases.get(value.name)??value.name;
+          if(selected.locals.get(name)?.[0]==='symbol')return true;
+        }
+        return Object.values(value).some(symbolIn);
+      };
+      if(symbolIn(fields)){
+        if(kind==='bind')return emitProtocol(owner,{kind:'bind',name:fields.name,value:fields.value},event,rule);
+        if(kind==='compute')return emitProtocol(owner,{kind:'compute',expr:fields.expr,result:fields.result,bind:fields.bind??null},event,rule);
+        if(kind==='return'||kind==='throw')return emitProtocol(owner,{kind,invocation:fields.invocation,value:fields.value},event,rule);
+      }
+    }
     // Canonical production reduction over an already committed local cell.
     // A normal assignment to an already published lexical cell is idempotent
     // only when the exact cell and tagged value already match. This cannot

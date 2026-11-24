@@ -1,3 +1,4 @@
+import {symbolCompositionEventV8} from './protocol-symbol-composition-v8.js';
 import {parse} from 'acorn';
 import {sharedProtocolSourceEventV8,sharedProtocolSourceCompletionV8,
   sharedProtocolSourceAllocationV8} from './protocol-source-claims-v8.js';
@@ -41,7 +42,7 @@ export function sourcePromiseJoinEventV8(view,{event,row}){
     event.operation==='job.enter'&&view.owned.control.a0.queue?.[0]?.kind==='combinator';
 }
 export function sourcePromiseExecutorEventV8(view,{event,row}){
-  if(promiseObjectSourceEventV8(view,{event,row}))return false;
+  if(promiseObjectSourceEventV8(view,{event,row})||symbolCompositionEventV8(view,{event,row}))return false;
   const callee=row?.operands?.[0],method=callee?.[0]==='method'?callee[1]:callee;
   return sourcePromiseConstructorV8(event)||event.operation==='call.enter'&&sourcePromiseResolverV8(method)!==null||
     row?.op==='call'&&event.operation!=='job.enter'&&!sharedProtocolSourceEventV8(view,{event,row})&&
@@ -66,7 +67,7 @@ export function createBaseSourceComponentV8(){return {id:BASE_SOURCE_COMPONENT_V
       !sourceAsyncCallAllocationV8(view,fields)&&
       !(fields.kind==='closure'&&Object.hasOwn(view.components,PROMISE_EXECUTOR_COMPONENT_V8)),
     event(view,input){
-      if(promiseObjectSourceEventV8(view,input))return false;
+      if(promiseObjectSourceEventV8(view,input)||symbolCompositionEventV8(view,input))return false;
       if(sharedProtocolSourceEventV8(view,input))return false;
       if(sourceAsyncCallEventV8(view,input))return false;
       if(sourcePromiseAdoptionEventV8(view,input))return false;

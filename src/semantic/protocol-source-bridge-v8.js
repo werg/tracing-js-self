@@ -1,6 +1,7 @@
 // Adapt individual direct protocol events to the shared source coordinator.
 // Each component uses the real invocation controller, cell/frame names and
 // publication transaction. There is no second replay or whole-episode trace.
+import {createSymbolCompositionSourceV8} from './protocol-symbol-composition-v8.js';
 import {parse} from 'acorn';
 import {isDeepStrictEqual as eq} from 'node:util';
 import {decode} from '../values.js';
@@ -60,7 +61,8 @@ function selected(adapter,input){
 
 export function createSharedProtocolSourceComponentsV8({source,bundle,adapters}){
   const chosen=adapters.filter(adapter=>selected(adapter,{source,bundle}));
-  if(!chosen.length)return [];
+  const symbol=sourceHasSyntaxV8({source,bundle},node=>node.type==='Identifier'&&node.name==='Symbol')?createSymbolCompositionSourceV8():null;
+  if(!chosen.length)return symbol?[symbol]:[];
   if(chosen.some(adapter=>adapter.id==='synchronous-generator-source/1')&&
     sourceHasSyntaxV8({source,bundle},node=>node.type==='YieldExpression'&&node.delegate))
     throw new TypeError('Shared generator source: yield delegation requires its explicit composition profile');
@@ -71,7 +73,7 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
   // Each event receives a copy, so observers cannot mutate a peer's authority.
   const extensionState=new Map();
   for(const adapter of chosen)adapter.setup?.({extensionState});
-  return chosen.map(adapter=>{
+  const components=chosen.map(adapter=>{
     const id=adapter.id,claims=adapter.claims??protocolSourceClaimsV8(id),
       stateful=typeof adapter.captureState==='function'&&typeof adapter.restoreState==='function';
     if((adapter.captureState!==undefined||adapter.restoreState!==undefined)&&!stateful)
@@ -263,4 +265,5 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
       });}
     };
   });
+  return symbol?[...components,symbol]:components;
 }
