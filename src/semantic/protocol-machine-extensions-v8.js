@@ -38,6 +38,8 @@ import {PROMISE_OBJECT_PROFILE_V8,PROMISE_OBJECT_RECORD_FIELDS,validatePromiseOb
   applyPromiseObjectRecordV8,restorePromiseObjectStateV8} from './protocol-promise-object-v8.js';
 import {INTRINSIC_ERROR_PROFILE_V8,INTRINSIC_ERROR_RECORD_FIELDS,validateIntrinsicErrorRecordV8,
   applyIntrinsicErrorRecordV8,restoreIntrinsicErrorStateV8} from './protocol-intrinsic-error-v8.js';
+import {COLLECTION_PROFILE_V8,COLLECTION_RECORD_FIELDS,validateCollectionRecordV8,applyCollectionRecordV8,
+  restoreCollectionStateV8,hasCollectionStateV8} from './protocol-collection-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:PROMISE_OBJECT_PROFILE_V8,recordFields:PROMISE_OBJECT_RECORD_FIELDS,
   validateRecord:validatePromiseObjectRecordV8,applyRecord:applyPromiseObjectRecordV8,
@@ -118,4 +120,9 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   applyRecord:applyPromiseAdoptionRecordV8,restoreState:(controller,_snapshot,api)=>restorePromiseAdoptionStateV8(controller,api),
   assertNext:assertPromiseAdoptionNextV8,hasRichState:node=>node.adoption!==undefined,
   allowsInternalScheduler:allowsPromiseAdoptionInternalSchedulerV8,allowsWithoutStack:allowsPromiseAdoptionWithoutStackV8
+}),Object.freeze({
+  id:COLLECTION_PROFILE_V8,recordFields:COLLECTION_RECORD_FIELDS,
+  validateRecord:validateCollectionRecordV8,applyRecord:applyCollectionRecordV8,
+  stateField:'collections',hasRichState:hasCollectionStateV8,
+  restoreState:restoreCollectionStateV8
 })]);

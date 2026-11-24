@@ -6,7 +6,8 @@ import {SHARED_TYPES} from '../owned-shared-memory.js';
 export const ORDINARY_PROTOCOL_SOURCE_V8='ordinary-protocol-source/1';
 const memory='owned-binary-memory/1',iterator='builtin-iterator/1',generator='synchronous-generator-source/1',
   construction='class-private-source/1',custom='custom-iterator-source/1',completion='ordinary-completions-source/1',
-  number='primitive-conversion-source/1',proxy='ordinary-data-proxy-source/1',map='ordinary-array-map-source/1',enumeration='ordinary-for-in/1';
+  number='primitive-conversion-source/1',proxy='ordinary-data-proxy-source/1',map='ordinary-array-map-source/1',enumeration='ordinary-for-in/1',
+  collection='owned-collections/1';
 const memoryKinds=new Set(['array-buffer','shared-int32-buffer','typed-array','shared-int32-view','data-view','shared-data-view']);
 const constructors=new Set(['ArrayBuffer','SharedArrayBuffer','DataView',...Object.keys(SHARED_TYPES)]);
 const iteratorNames=new Set(['Array.prototype.values','Array.prototype.keys','Array.prototype.entries',
@@ -29,7 +30,7 @@ const ordinaryOperations=new Set(['property.read','property.write','property.upd
 // These protocol families can participate in Promise source projection without
 // introducing an independent whole-episode teacher. Their events are still
 // claimed through the same prefix coordinator and retained-state transaction.
-export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy,iterator,map,enumeration,generator,custom,completion]);
+export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy,iterator,map,enumeration,generator,custom,completion,collection]);
 const callee=value=>value?.[0]==='method'?value[1]:value;
 const builtin=value=>['intrinsic','builtinfn'].includes(value?.[0])?value[1]:null;
 const selected=value=>value?.[0]==='method'?value[1]:value;
@@ -89,6 +90,17 @@ const eventClaims={
     return ['REQUIRE_OBJECT','LOGICAL_JUMP','PENDING_THROW'].includes(inst.op)||node.await&&inst.op==='UNARY'||
       ['INIT','GET'].includes(inst.op)&&(/^\[\[(?:(?:async|sync) )?iterator next [0-9]+\]\]$/.test(inst.arg)&&event.result?.[0]==='method'||
         pattern&&event.result?.[0]==='method');
+  },
+  [collection](view,{event,row}){
+    const raw=row?.operands?.[0]??event.operands?.[0],name=builtin(callee(raw));
+    if(event.operation==='object.construct'&&raw?.[0]==='intrinsic'&&raw[1]==='Set')return true;
+    const baseValue=event.operation==='property.read'?row?.operands?.[0]:
+      raw?.[0]==='method'?raw[2]:null,base=heap(view,baseValue);
+    if(event.operation==='property.read'&&base?.kind==='set'){
+      const key=row?.operands?.[1];return key?.[0]==='str'&&['add','has'].includes(key[1]);
+    }
+    return event.operation==='call.enter'&&['Set.prototype.add','Set.prototype.has'].includes(name)&&
+      heap(view,raw?.[0]==='method'?raw[2]:null)?.kind==='set';
   },
   [iterator](view,{event,row}){
     const inst=view.instruction;
@@ -173,6 +185,7 @@ function allocationOwner(view,node){
   if(node.generatorFunction||node.kind==='generator')return generator;
   if(node.kind==='function'&&enabled(view,construction))return construction;
   if(memoryKinds.has(node.kind))return memory;
+  if(node.kind==='set')return collection;
   if(node.kind==='iterator')return iterator;
   if(node.kind==='enumerator')return enumeration;
   if(node.kind==='proxy')return proxy;
