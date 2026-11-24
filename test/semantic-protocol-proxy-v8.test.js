@@ -8,15 +8,21 @@ function fixture(){
   const controller={heap:new Map(),locals:new Map(),captureAliases:new Map(),receiver:['undefined'],stack:['root'],
     frameFunctions:new Map([['root','run']]),pending:null,lastReturn:null,completion:null,protocol:createProtocolStateV8()};
   const apply=record=>{
-    if(record.kind?.startsWith('proxy.')&&!['proxy.create','proxy.revocable','proxy.revoke','proxy.revoked.fault','proxy.finish','proxy.fault'].includes(record.kind)){
+    if(record.kind?.startsWith('proxy.')&&!['proxy.create','proxy.revocable','proxy.revoke','proxy.revoked.fault',
+      'proxy.getMethod.begin','proxy.getMethod.finish','proxy.finish','proxy.fault'].includes(record.kind)){
       const operation=record.kind.split('.')[1],trapName=operation==='delete'?'deleteProperty':operation,
-        route=[];let current=record.object,node=controller.heap.get(current),seen=new Set();
-      while(node?.kind==='proxy'){
-        if(seen.has(current))throw new TypeError('cyclic test Proxy route');seen.add(current);
-        const handler=controller.heap.get(node.handler[1]),method=handler?.properties.get(trapName)??['undefined'];
-        route.push({object:current,target:structuredClone(node.target),handler:structuredClone(node.handler),method:structuredClone(method)});
-        if(!['undefined','null'].includes(method[0]))break;
-        current=node.target[1];node=controller.heap.get(current);
+        lookup=typeof record.id==='string'?controller.protocol.proxyCalls?.getMethods?.find(row=>row.id===record.id):null,
+        route=[];let current=record.object,node=controller.heap.get(current);
+      if(lookup)route.push({object:lookup.object,target:structuredClone(lookup.target),handler:structuredClone(lookup.handler),method:structuredClone(lookup.method)});
+      else{
+        const seen=new Set();
+        while(node?.kind==='proxy'){
+          if(seen.has(current))throw new TypeError('cyclic test Proxy route');seen.add(current);
+          const handler=controller.heap.get(node.handler[1]),method=handler?.properties.get(trapName)??['undefined'];
+          route.push({object:current,target:structuredClone(node.target),handler:structuredClone(node.handler),method:structuredClone(method)});
+          if(!['undefined','null'].includes(method[0]))break;
+          current=node.target[1];node=controller.heap.get(current);
+        }
       }
       record={...record,route};
       if(record.kind.endsWith('.call'))record={...record,owner:route.at(-1).object,receiver:ref(record.object)};
@@ -182,4 +188,68 @@ test('Proxy completion checks reject false setters and honor SameValue for froze
   falseSet.apply({kind:'proxy.fault',id:'write',error:'strict-set-error'});
   assert.equal(falseSet.controller.heap.get('strict-set-error').properties.get('message')[1],
     "'set' on proxy: trap returned falsish for property 'x'");
+});
+
+
+function selectHasGetter(f,{id='lookup',getter='getHas',method='hasTrap',child='getterCall'}={}){
+  for(const name of [getter,method])f.apply({kind:'allocate',name,objectKind:'closure',length:null,properties:[],
+    code:name,captures:[],functionKind:'ordinary',lexicalReceiver:null});
+  f.apply({kind:'property.define',object:'handler',key:key('has'),
+    descriptor:{kind:'accessor',get:ref(getter),set:['undefined'],enumerable:true,configurable:true},success:true});
+  f.apply({kind:'proxy.getMethod.begin',id,operation:'has',object:'proxy',target:ref('target'),
+    handler:ref('handler'),receiver:ref('handler'),key:key('x'),child,getter:ref(getter)});
+  f.apply({kind:'property.get.call',id,child,object:'handler',key:key('has'),receiver:ref('handler')});
+  return {id,getter,method,child};
+}
+function finishHasGetter(f,selection,value){
+  const thrown=value[0]==='throw';
+  const result=thrown?value.value:value;
+  f.apply(thrown?{kind:'throw',invocation:selection.child,value:result}:
+    {kind:'return',invocation:selection.child,value:result});
+  f.apply({kind:'property.finish',id:selection.id,completion:{kind:thrown?'throw':'normal',value:result}});
+  f.apply({kind:'proxy.getMethod.finish',id:selection.id,
+    completion:{kind:thrown?'throw':'normal',value:result}});
+}
+test('Proxy has GetMethod getter retains target, handler, receiver and selected closure through mutation',()=>{
+  const f=fixture(),selection=selectHasGetter(f);
+  assert.deepEqual(f.controller.receiver,ref('handler'));
+  assert.deepEqual(f.controller.protocol.callFrames.at(-1).arguments,[]);
+  const forgedActive=structuredClone(f.controller);
+  forgedActive.protocol.proxyCalls.getMethods[0].getter=ref('hasTrap');
+  assert.throws(()=>restore(forgedActive),/getter source identity|selected accessor/);
+  f.apply({kind:'property.define',object:'handler',key:key('has'),
+    descriptor:{kind:'data',value:['null'],writable:true,enumerable:true,configurable:true},success:true});
+  finishHasGetter(f,selection,ref('hasTrap'));
+  assert.equal(f.controller.protocol.proxyCalls.getMethods[0].phase,'returned');
+  const forgedReturned=structuredClone(f.controller);
+  forgedReturned.protocol.proxyCalls.getMethods[0].method=ref('getHas');
+  assert.throws(()=>restore(forgedReturned),/method identity/);
+  f.apply({kind:'proxy.has.call',id:selection.id,object:'proxy',key:key('x'),child:'hasBody'});
+  assert.deepEqual(f.controller.protocol.callFrames.at(-1).callee,ref('hasTrap'),
+    'replacement handler value does not replace the selected getter result');
+  assert.deepEqual(f.controller.receiver,ref('handler'));
+  f.apply({kind:'return',invocation:'hasBody',value:['bool',true]});
+  f.apply({kind:'proxy.finish',id:selection.id,completion:{kind:'normal',value:['bool',true]}});
+  assert.equal(f.controller.protocol.proxyCalls.getMethods.length,0);
+  assert.equal(restore(f.controller).calls,0);
+});
+test('Proxy has GetMethod propagates getter throws unchanged and nullish fallback uses saved target after revocation',()=>{
+  const marker=ref('handler');
+  const failed=fixture(),throwingGetter=selectHasGetter(failed,{id:'throwing'});
+  failed.apply({kind:'throw',invocation:throwingGetter.child,value:marker});
+  failed.apply({kind:'property.finish',id:throwingGetter.id,completion:{kind:'throw',value:marker}});
+  failed.apply({kind:'proxy.getMethod.finish',id:throwingGetter.id,completion:{kind:'throw',value:marker}});
+  assert.deepEqual(failed.controller.lastReturn,{kind:'throw',value:marker});
+  assert.equal(failed.controller.protocol.proxyCalls.getMethods.length,0);
+  assert.equal(restore(failed.controller).calls,0);
+
+  const direct=fixture(),selection=selectHasGetter(direct,{id:'direct'});
+  direct.apply({kind:'proxy.revoke',object:'proxy'});
+  finishHasGetter(direct,selection,['null']);
+  direct.apply({kind:'proxy.has',id:selection.id,object:'proxy',key:key('x'),result:['bool',true]});
+  assert.deepEqual(direct.controller.protocol.proxyCalls.getMethods,[]);
+  assert.equal(restore(direct.controller).proxies,1);
+  const target={x:2};let pair;
+  pair=Proxy.revocable(target,{get has(){pair.revoke();return null;}});
+  assert.equal('x' in pair.proxy,true);
 });

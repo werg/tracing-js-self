@@ -12,6 +12,8 @@ export const PROXY_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.entries
   'proxy.create':['kind','name','target','handler'],
   'proxy.revocable':['kind','proxy','revoke','result','target','handler'],
   'proxy.revoke':['kind','object'],
+  'proxy.getMethod.begin':['kind','id','operation','object','target','handler','receiver','key','child','getter'],
+  'proxy.getMethod.finish':['kind','id','completion'],
   'proxy.revoked.fault':['kind','object','operation','error'],
   'proxy.get':['kind','object','key','result','route'],
   'proxy.set':['kind','object','key','value','success','route'],
@@ -27,6 +29,7 @@ export const PROXY_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.entries
 }).map(([kind,fields])=>[kind,Object.freeze(fields)])));
 export const PROXY_HEAP_FIELDS=Object.freeze(['kind','target','handler','properties']);
 export const PROXY_CALL_FIELDS=Object.freeze(['id','operation','parent','child','object','owner','receiver','target','handler','route','key','value','callee','strict']);
+export const PROXY_GET_METHOD_FIELDS=Object.freeze(['id','phase','operation','parent','child','object','target','handler','receiver','key','getter','rawReturn','method']);
 const traps=['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor',
   'defineProperty','has','get','set','deleteProperty','ownKeys','apply','construct'];
 const id=value=>{if(typeof value!=='string'||!value||value.length>256)throw new TypeError('Proxy identity');};
@@ -57,13 +60,24 @@ export function hasProxySourceCallableV8(source,code){
 
 export function validateProxyRecordV8(record,{value}){
   if(!isAlgorithmDataRecord(record))throw new TypeError('Proxy record must be ordinary data');
-  const fields=PROXY_RECORD_FIELDS[record.kind];if(!fields)return false;
+  let fields=PROXY_RECORD_FIELDS[record.kind];if(!fields)return false;
+  if(record.kind==='proxy.has'&&Object.hasOwn(record,'id'))fields=[...fields,'id'];
   assertAlgorithmFields(record,fields,'ordinary Proxy record');
   if(record.kind==='proxy.create'){id(record.name);value(record.target);value(record.handler);}
   else if(record.kind==='proxy.revocable'){id(record.proxy);id(record.revoke);id(record.result);value(record.target);value(record.handler);
     if(new Set([record.proxy,record.revoke,record.result]).size!==3)throw new TypeError('Proxy revocable identities');}
   else if(record.kind==='proxy.revoke'){id(record.object);}
-  else if(record.kind==='proxy.revoked.fault'){id(record.object);id(record.error);
+  else if(record.kind==='proxy.getMethod.begin'){
+    id(record.id);id(record.child);id(record.object);value(record.target);value(record.handler);value(record.receiver);
+    value(record.key);value(record.getter);
+    if(record.operation!=='has'||record.target[0]!=='ref'||record.handler[0]!=='ref'||
+      record.receiver[0]!=='ref'||record.getter[0]!=='ref'||!['str','symbol'].includes(record.key[0]))
+      throw new TypeError('Proxy GetMethod getter selection');
+  }else if(record.kind==='proxy.getMethod.finish'){
+    id(record.id);assertAlgorithmFields(record.completion,['kind','value'],'Proxy GetMethod completion');
+    if(!['normal','throw'].includes(record.completion.kind))throw new TypeError('Proxy GetMethod completion kind');
+    value(record.completion.value);
+  }else if(record.kind==='proxy.revoked.fault'){id(record.object);id(record.error);
     if(!['get','set','has','deleteProperty'].includes(record.operation))throw new TypeError('Proxy revoked operation');}
   else if(record.kind==='proxy.fault'){id(record.id);id(record.error);}
   else if(record.kind==='proxy.delete.fault'){id(record.object);id(record.error);value(record.key);
@@ -75,6 +89,7 @@ export function validateProxyRecordV8(record,{value}){
   }
   else{id(record.object);value(record.key);if(!['str','symbol'].includes(record.key[0]))throw new TypeError('Proxy property key');
     validateRouteSnapshot(record.route,value);
+    if(record.kind==='proxy.has'&&Object.hasOwn(record,'id'))id(record.id);
     if(record.kind.endsWith('.call')){id(record.id);id(record.child);id(record.owner);value(record.receiver);
       if(record.receiver[0]!=='ref')throw new TypeError('Proxy operation receiver identity');}
     if(['proxy.delete.call','proxy.set.call'].includes(record.kind)&&typeof record.strict!=='boolean')throw new TypeError('Proxy caller strict flag');
@@ -160,7 +175,7 @@ function retainedRoute(controller,row,api,{selectedTrap=true}={}){
   }
   return controller.heap.get(row.route.at(-1).target[1]);
 }
-function state(controller,api){return api.state(controller).proxyCalls??={schema:PROXY_STATE_V8_SCHEMA,pending:[]};}
+function state(controller,api){return api.state(controller).proxyCalls??={schema:PROXY_STATE_V8_SCHEMA,pending:[],getMethods:[]};}
 function removeOwn(target,key,api){
   const wanted=key[0]==='symbol'?symbolPropertyKey(key[1]):stringPropertyKey(key[1]);
   const match=map=>{for(const stored of map?.keys?.()??[])if(api.eq(stored,wanted))return stored;return undefined;};
@@ -233,7 +248,25 @@ function proxyFaultMessage(controller,pending,api){
   return null;
 }
 export function assertProxyNextV8(controller,record,api){
-  const pending=controller.protocol?.proxyCalls?.pending.at(-1);
+  const proxyState=controller.protocol?.proxyCalls,lookup=proxyState?.getMethods?.at(-1),
+    propertyCall=lookup&&controller.protocol?.pendingCalls?.find(row=>row.id===lookup.id);
+  if(lookup?.phase==='selected'){
+    if(!controller.frameFunctions.has(lookup.child))
+      api.require(record.kind==='property.get.call'&&record.id===lookup.id&&record.child===lookup.child&&
+        record.object===lookup.handler[1]&&api.eq(record.key,['str','has'])&&api.eq(record.receiver,lookup.receiver),
+        'Proxy GetMethod selection requires its exact handler getter call');
+    else if(propertyCall&&!controller.stack.includes(lookup.child))
+      api.require(record.kind==='property.finish'&&record.id===lookup.id,
+        'Proxy GetMethod getter completion requires property.finish');
+    else if(!propertyCall&&!controller.stack.includes(lookup.child))
+      api.require(record.kind==='proxy.getMethod.finish'&&record.id===lookup.id,
+        'Proxy GetMethod property completion requires its retained finish');
+  }else if(lookup?.phase==='returned'){
+    const expected=lookup.method[0]==='undefined'?'proxy.has':'proxy.has.call';
+    api.require(record.kind===expected&&record.id===lookup.id,
+      'Proxy GetMethod result requires its matching has operation');
+  }
+  const pending=proxyState?.pending.at(-1);
   if(pending&&!controller.stack.includes(pending.child))
     api.require(['proxy.finish','proxy.fault'].includes(record.kind)&&record.id===pending.id,
       'pending Proxy callback requires its finish or derived fault');
@@ -247,6 +280,46 @@ export function applyProxyRecordV8(controller,record,api){
       node.target=['null'];node.handler=['null'];
     }
     state(controller,api);return true;
+  }
+  if(record.kind==='proxy.getMethod.begin'){
+    const proxyState=state(controller,api),node=controller.heap.get(record.object);
+    api.require(proxyState.getMethods.length<64&&!proxyState.getMethods.some(row=>row.id===record.id)&&
+      !proxyState.pending.some(row=>row.id===record.id)&&!controller.protocol.pendingCalls.some(row=>row.id===record.id),
+      'Proxy GetMethod identity or bound');
+    api.require(node?.kind==='proxy'&&api.eq(node.target,record.target)&&api.eq(node.handler,record.handler),
+      'Proxy GetMethod requires the live selected target and handler');
+    ordinary(controller,record.target,api,'Proxy GetMethod target');
+    const handler=ordinary(controller,record.handler,api,'Proxy GetMethod handler'),
+      descriptor=api.ownDescriptor(handler,['str','has']);
+    api.knownKey(controller,record.key);api.known(controller,record.receiver);api.known(controller,record.getter);
+    api.require(api.eq(record.receiver,record.handler)&&descriptor?.kind==='accessor'&&
+      api.eq(descriptor.get,record.getter)&&record.getter[0]==='ref'&&
+      api.heapNode(controller,record.getter[1]).kind==='closure',
+      'Proxy GetMethod must retain its exact own getter and handler receiver');
+    api.require(!controller.frameFunctions.has(record.child)&&controller.stack.length>0,
+      'Proxy GetMethod getter child is not fresh');
+    proxyState.getMethods.push({id:record.id,phase:'selected',operation:record.operation,parent:controller.stack.at(-1),
+      child:record.child,object:record.object,target:api.copy(record.target),handler:api.copy(record.handler),
+      receiver:api.copy(record.receiver),key:api.copy(record.key),getter:api.copy(record.getter),rawReturn:null,method:null});
+    return true;
+  }
+  if(record.kind==='proxy.getMethod.finish'){
+    const proxyState=state(controller,api),lookup=proxyState.getMethods.at(-1),returned=controller.lastReturn;
+    api.require(lookup?.id===record.id&&lookup.phase==='selected'&&controller.stack.at(-1)===lookup.parent&&
+      !controller.stack.includes(lookup.child)&&controller.frameFunctions.has(lookup.child)&&
+      !controller.protocol.pendingCalls.some(row=>row.id===lookup.id)&&returned&&['return','throw'].includes(returned.kind),
+      'Proxy GetMethod finish lacks its exact returned getter call');
+    const expected={kind:returned.kind==='throw'?'throw':'normal',value:api.copy(returned.value)};
+    api.require(api.eq(record.completion,expected),'false Proxy GetMethod completion');
+    if(returned.kind==='throw'){proxyState.getMethods.pop();return true;}
+    let method;
+    if(['undefined','null'].includes(returned.value[0]))method=['undefined'];
+    else{
+      api.require(returned.value[0]==='ref'&&api.heapNode(controller,returned.value[1]).kind==='closure',
+        'non-callable Proxy GetMethod result is outside the bounded profile');
+      method=api.copy(returned.value);
+    }
+    lookup.phase='returned';lookup.rawReturn=api.copy(returned.value);lookup.method=method;return true;
   }
   if(record.kind==='proxy.revoked.fault'){
     const node=controller.heap.get(record.object);api.require(node?.kind==='proxy'&&
@@ -330,11 +403,32 @@ export function applyProxyRecordV8(controller,record,api){
   }
   const node=controller.heap.get(record.object);api.require(node?.kind==='proxy','known Proxy identity required');
   api.knownKey(controller,record.key);
-  const operation=record.kind.split('.')[1],derived=deriveRoute(controller,record.object,operation,api),
-    selected=derived.selected,targetRef=derived.target,handlerRef=derived.rows.at(-1).handler;
+  const operation=record.kind.split('.')[1],proxyState=state(controller,api),
+    lookup=(operation==='has'&&typeof record.id==='string')?
+      proxyState.getMethods.find(row=>row.id===record.id):null;
+  let derived;
+  if(lookup){
+    api.require(lookup.phase==='returned'&&lookup.operation==='has'&&lookup.object===record.object&&
+      api.eq(lookup.key,record.key)&&controller.lastReturn?.kind==='return'&&
+      api.eq(controller.lastReturn.value,lookup.rawReturn),
+      'Proxy has differs from its retained GetMethod result');
+    const proxyNode=controller.heap.get(lookup.object);
+    api.require(proxyNode?.kind==='proxy'&&(
+      api.eq(proxyNode.target,['null'])&&api.eq(proxyNode.handler,['null'])||
+      api.eq(proxyNode.target,lookup.target)&&api.eq(proxyNode.handler,lookup.handler)),
+      'Proxy GetMethod lost its retained target or handler');
+    const rows=[{object:lookup.object,target:api.copy(lookup.target),handler:api.copy(lookup.handler),method:api.copy(lookup.method)}];
+    derived={rows,owner:lookup.object,target:api.copy(lookup.target),handler:api.copy(lookup.handler),
+      selected:api.copy(lookup.method),terminal:controller.heap.get(lookup.target[1])};
+  }else{
+    if(record.kind==='proxy.has'&&Object.hasOwn(record,'id'))
+      api.require(false,'Proxy has lookup identity is not retained');
+    derived=deriveRoute(controller,record.object,operation,api);
+  }
+  const selected=derived.selected,targetRef=derived.target,handlerRef=derived.handler??derived.rows.at(-1).handler;
   api.require(api.eq(record.route,derived.rows),'Proxy operation route differs from live entry lookup');
   if(record.kind.endsWith('.call')){
-    const pending=state(controller,api).pending;
+    const pending=proxyState.pending;
     api.require(pending.length<64&&!pending.some(row=>row.id===record.id),'Proxy pending call identity/bound');
     api.require(record.owner===derived.owner&&api.eq(record.receiver,['ref',record.object]),
       'Proxy original receiver or trap owner differs');
@@ -347,13 +441,14 @@ export function applyProxyRecordV8(controller,record,api){
       target:api.copy(targetRef),handler:api.copy(handlerRef),key:api.copy(record.key),value:operation==='set'?api.copy(record.value):null,
       callee:api.copy(selected),strict};
     api.call(controller,{child:row.child,callee:row.callee,receiver:row.handler,arguments:argumentsFor(row)});
-    pending.push(row);return true;
+    pending.push(row);if(lookup)proxyState.getMethods.pop();return true;
   }
   api.require(['undefined','null'].includes(selected[0]),'Proxy trap requires its explicit call boundary');
   ordinary(controller,targetRef,api,'Proxy target');
   if(record.kind==='proxy.has'){
     const found=api.resolveProperty(controller,targetRef[1],record.key,{forHas:true});
     api.require(api.eq(record.result,['bool',found.descriptor!==null]),'false Proxy existence result');
+    if(lookup)proxyState.getMethods.pop();
   }else if(record.kind==='proxy.delete'){
     const descriptor=api.ownDescriptor(controller.heap.get(targetRef[1]),record.key),
       success=!descriptor||descriptor.configurable===true;
@@ -395,10 +490,12 @@ export function restoreProxyStateV8(controller,snapshot,api){
       target=controller.heap.get(target.target?.[1]);
     }
   }
-  if(snapshot===null){api.require(!count,'Proxy heap lacks its declared call state');return {valid:true,proxies:0,calls:0};}
-  assertAlgorithmFields(snapshot,['schema','pending'],'Proxy call state');
+  if(snapshot===null){api.require(!count,'Proxy heap lacks its declared call state');return {valid:true,proxies:0,calls:0,lookups:0};}
+  assertAlgorithmFields(snapshot,['schema','pending','getMethods'],'Proxy call state');
   api.require(snapshot.schema===PROXY_STATE_V8_SCHEMA,'Proxy call state schema');
   assertAlgorithmDataArray(snapshot.pending,'pending Proxy calls');api.require(snapshot.pending.length<=64,'Proxy call bound');
+  assertAlgorithmDataArray(snapshot.getMethods,'pending Proxy GetMethod calls');
+  api.require(snapshot.getMethods.length<=64,'Proxy GetMethod call bound');
   const seen=new Set();let priorDepth=-1;
   for(const row of snapshot.pending){
     assertAlgorithmFields(row,PROXY_CALL_FIELDS,'Proxy pending call');
@@ -437,6 +534,63 @@ export function restoreProxyStateV8(controller,snapshot,api){
     }else api.require(row===snapshot.pending.at(-1)&&controller.stack.at(-1)===row.parent&&
       ['return','throw'].includes(controller.lastReturn?.kind),'Proxy finished callback owner');
   }
-  return {valid:true,proxies:count,calls:seen.size};
+  for(const lookup of snapshot.getMethods){
+    assertAlgorithmFields(lookup,PROXY_GET_METHOD_FIELDS,'Proxy GetMethod call');
+    for(const identity of [lookup.id,lookup.parent,lookup.child,lookup.object])id(identity);
+    api.require(!seen.has(lookup.id)&&lookup.operation==='has'&&['selected','returned'].includes(lookup.phase),
+      'Proxy GetMethod identity or phase');seen.add(lookup.id);
+    const node=controller.heap.get(lookup.object);
+    api.require(node?.kind==='proxy'&&(
+      api.eq(node.target,['null'])&&api.eq(node.handler,['null'])||
+      api.eq(node.target,lookup.target)&&api.eq(node.handler,lookup.handler)),
+      'Proxy GetMethod lost its retained Proxy target/handler');
+    ordinary(controller,lookup.target,api,'Proxy GetMethod target');
+    const handler=ordinary(controller,lookup.handler,api,'Proxy GetMethod handler');
+    api.known(controller,lookup.receiver);api.require(api.eq(lookup.receiver,lookup.handler),
+      'Proxy GetMethod getter receiver differs from its handler');
+    api.knownKey(controller,lookup.key);api.known(controller,lookup.getter);
+    const getter=api.heapNode(controller,lookup.getter[1]);
+    api.require(lookup.getter[0]==='ref'&&getter.kind==='closure'&&
+      controller.frameFunctions.get(lookup.child)===getter.code&&controller.frameFunctions.has(lookup.parent),
+      'Proxy GetMethod getter source identity');
+    const effectiveReceiver=constructionCallReceiverV8(controller,lookup.getter,lookup.receiver,api)??lookup.receiver;
+    api.require(api.eq(controller.locals.get(lookup.child+':this'),effectiveReceiver),
+      'Proxy GetMethod getter receiver activation');
+    const pendingCall=controller.protocol.pendingCalls.find(row=>row.id===lookup.id);
+    if(!controller.frameFunctions.has(lookup.child)){
+      api.require(lookup.phase==='selected'&&!pendingCall&&!controller.stack.includes(lookup.child)&&
+        controller.stack.at(-1)===lookup.parent&&lookup.rawReturn===null&&lookup.method===null,
+        'Proxy GetMethod selection is not awaiting its exact getter call');
+      const descriptor=api.ownDescriptor(handler,['str','has']);
+      api.require(descriptor?.kind==='accessor'&&api.eq(descriptor.get,lookup.getter),
+        'Proxy GetMethod selected accessor differs from the live handler getter');
+    }else if(pendingCall){
+      api.require(lookup.phase==='selected'&&pendingCall.operation==='get'&&pendingCall.child===lookup.child&&
+        pendingCall.object===lookup.handler[1]&&api.eq(pendingCall.key,['str','has'])&&
+        api.eq(pendingCall.receiver,lookup.receiver)&&api.eq(pendingCall.callee,lookup.getter)&&
+        pendingCall.parent===lookup.parent&&pendingCall.value===null,
+        'Proxy GetMethod differs from its shared property getter call');
+      const call=controller.protocol.callFrames.find(frame=>frame.child===lookup.child);
+      if(call)api.require(api.eq(call.callee,lookup.getter)&&call.parent===lookup.parent&&
+        api.eq(call.arguments,[]),'Proxy GetMethod active getter call frame differs');
+      if(controller.stack.includes(lookup.child))api.require(controller.stack.indexOf(lookup.child)>
+        controller.stack.indexOf(lookup.parent),'Proxy GetMethod getter stack order');
+      else api.require(controller.stack.at(-1)===lookup.parent&&
+        ['return','throw'].includes(controller.lastReturn?.kind),'Proxy GetMethod getter has no returned completion');
+    }else if(lookup.phase==='selected'){
+      api.require(!controller.stack.includes(lookup.child)&&controller.stack.at(-1)===lookup.parent&&
+        ['return','throw'].includes(controller.lastReturn?.kind)&&lookup.rawReturn===null&&lookup.method===null,
+        'Proxy GetMethod property completion is not retained');
+    }else{
+      api.require(!controller.stack.includes(lookup.child)&&controller.stack.at(-1)===lookup.parent&&
+        controller.lastReturn?.kind==='return'&&api.eq(controller.lastReturn.value,lookup.rawReturn),
+        'Proxy GetMethod returned value differs from its retained completion');
+      const method=['undefined','null'].includes(lookup.rawReturn?.[0])?['undefined']:lookup.rawReturn;
+      api.require(lookup.rawReturn!==null&&api.eq(lookup.method,method)&&
+        (method[0]==='undefined'||method[0]==='ref'&&api.heapNode(controller,method[1]).kind==='closure'),
+        'Proxy GetMethod method identity differs from its raw return');
+    }
+  }
+  return {valid:true,proxies:count,calls:snapshot.pending.length,lookups:snapshot.getMethods.length};
 }
 export const hasProxyStateV8=node=>node?.kind==='proxy';
