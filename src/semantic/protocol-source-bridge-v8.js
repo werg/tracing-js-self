@@ -24,8 +24,8 @@ function sharedSyntax(adapter,node){
   if(adapter.id==='synchronous-generator-source/1')return node.generator===true&&!node.async;
   if(adapter.id==='ordinary-array-map-source/1')return node.type==='MemberExpression'&&name==='map';
   if(adapter.id==='ordinary-for-in/1')return node.type==='ForInStatement';
-  if(['custom-iterator-source/1','ordinary-completions-source/1'].includes(adapter.id))
-    return node.type==='ForOfStatement'&&node.await;
+  if(adapter.id==='ordinary-completions-source/1')return node.type==='TryStatement'||node.type==='ForOfStatement'&&node.await;
+  if(adapter.id==='custom-iterator-source/1')return node.type==='ForOfStatement'&&node.await;
   if(adapter.id==='builtin-iterator/1')return node.type==='ForOfStatement'||
     node.type==='MemberExpression'&&(['values','keys','entries','next'].includes(name)||
       node.computed&&node.property?.type==='MemberExpression'&&node.property.object?.name==='Symbol'&&

@@ -1,3 +1,4 @@
+import {promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
 // Version-neutral typed execution state. Wire clients own parsing and rendering.
 // No teacher records, VM instructions or source interpreter are loaded here.
 import {canonicalCompletionPolicy,assertValue,validateTypedSemanticRecord} from './record-schema.js';
@@ -197,10 +198,26 @@ export class SemanticExecutionController {
   }
   observedGraph(){
     if(!this.completion)return null;
-    const seen=new Map();
+    const seen=new Map(),value=this.completion.value,
+      error=value?.[0]==='ref'?this.heap.get(value[1]):null;
+    let completed;
+    // The declared exception boundary observes name/message without changing
+    // the ordinary live Error representation or evaluating any getter.
+    if(this.completion.kind==='throw'&&error?.declaredError){
+      const name=error.declaredError,prototype=this.heap.get(promiseIntrinsicIdV8(name+'.prototype')),
+        message=error.properties.get('message')??['str',''],descriptor=error.descriptors?.get('message');
+      if(JSON.stringify(error.prototype)!==JSON.stringify(['ref',promiseIntrinsicIdV8(name+'.prototype')])||
+        error.extensible===false||[...error.properties.keys()].some(key=>key!=='message')||
+        [...(error.descriptors?.keys()??[])].some(key=>key!=='message')||
+        message[0]!=='str'||error.properties.has('message')&&(!descriptor||descriptor.kind!=='data'||
+          descriptor.enumerable||!descriptor.writable||!descriptor.configurable)||
+        prototype?.properties.get('name')?.[1]!==name||
+        prototype?.properties.get('constructor')?.[1]!==promiseIntrinsicIdV8(name))
+        fail('unsupported-boundary','Altered Error requires its ordinary exception boundary');
+      completed={name,message:message[1]};
+    }else completed=this.materialize(value,seen);
     return describeGraph([
-      ...this.input.graph.roots.map(v=>this.materialize(v,seen)),
-      this.materialize(this.completion.value,seen)
+      ...this.input.graph.roots.map(v=>this.materialize(v,seen)),completed
     ]);
   }
   commitRecord(record,{mode='generated',track=this.trackId}={}){

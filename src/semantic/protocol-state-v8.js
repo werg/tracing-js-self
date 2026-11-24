@@ -148,6 +148,10 @@ function resolveProperty(controller,object,key,{forSet=false,forHas=false}={}){
     require(!visited.has(current),'cyclic prototype chain');visited.add(current);
     const node=heapNode(controller,current),descriptor=ownDescriptor(node,key);
     if(descriptor)return {owner:current,node,descriptor};
+    if(node.kind==='closure'&&[undefined,'ordinary'].includes(node.prototype)&&
+      key[0]==='symbol'&&key[1]==='well-known:hasInstance'&&controller.protocol?.promiseObjects?.initialized)
+      return {owner:null,node,descriptor:{kind:'data',value:['ref',promiseIntrinsicIdV8('Function.prototype.hasInstance')],
+        writable:false,enumerable:false,configurable:false}};
     const prototype=node.prototype===undefined?'ordinary':node.prototype;
     if(forHas&&node.kind==='promise'&&prototype==='ordinary')
       require(false,'Promise property existence requires initialized intrinsic state');

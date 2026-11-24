@@ -15,7 +15,7 @@ const iteratorNames=new Set(['Array.prototype.values','Array.prototype.keys','Ar
 const baseBuiltins=new Set(['Array.prototype.push','Array.prototype.pop','Symbol','Symbol.for','Symbol.keyFor',
   'Symbol.prototype.toString','Symbol.prototype.valueOf','Object.hasOwn','Reflect.has','Reflect.deleteProperty','Reflect.ownKeys','Object.keys',
   'Object.getOwnPropertyNames','Object.getOwnPropertySymbols','Object.entries','Object.values','Object.defineProperty','Object.preventExtensions',
-  'Object.setPrototypeOf','Object.create','Object.getPrototypeOf','Object.getOwnPropertyDescriptor','Object.isExtensible']);
+  'Function.prototype.hasInstance','Object.setPrototypeOf','Object.create','Object.getPrototypeOf','Object.getOwnPropertyDescriptor','Object.isExtensible']);
 const constructionOps=new Set(['CLASS_CREATE','SET_HOME_OBJECT','CLASS_INITIALIZER','CLASS_FINISH','CLASS_CONSTRUCTOR_GUARD',
   'SUPER_CONSTRUCTOR','SUPER_CALL','SUPER_FORWARD_CALL','SUPER_BIND','THIS','NEW_TARGET','PROPERTY_KEY',
   'PRIVATE_DEFINE','PRIVATE_GET','PRIVATE_GET_METHOD','PRIVATE_SET','PRIVATE_HAS','PRIVATE_UPDATE','DEFINE_LITERAL_PROP']);

@@ -40,7 +40,7 @@ function intrinsicRecord(name){
   return record;
 }
 const intrinsicNames=new Set(['Promise','Object',...['then','catch','finally'].map(name=>'Promise.prototype.'+name),
-  ...objectMethods.map(name=>'Object.prototype.'+name),'Object.prototype.__proto__.get','Object.prototype.__proto__.set',...errorNames,'Error.prototype.toString']);
+  ...objectMethods.map(name=>'Object.prototype.'+name),'Object.prototype.__proto__.get','Object.prototype.__proto__.set',...errorNames,'Error.prototype.toString','Function.prototype.hasInstance']);
 const functionNode=name=>({kind:'function',annotations:[{name:'intrinsic-identity/1',values:[],data:{name}}]});
 function unchanged(value,captured){
   if(getPrototype(value)!==captured.prototype||extensible(value)!==captured.extensible)return false;
@@ -63,6 +63,7 @@ export function createPromiseObservationAdapterV8(){
     const errors=evaluate('['+errorNames.join(',')+']');
     errors.forEach((constructor,index)=>capture(errorNames[index],constructor));
     capture('Error.prototype.toString',own(own(errors[0]).prototype.value).toString.value);
+    capture('Function.prototype.hasInstance',evaluate('Function.prototype[Symbol.hasInstance]'));
     const promises=own(promisePrototype),objects=own(objectPrototype);
     for(const name of ['then','catch','finally'])capture('Promise.prototype.'+name,promises[name].value);
     for(const name of objectMethods)capture('Object.prototype.'+name,objects[name].value);

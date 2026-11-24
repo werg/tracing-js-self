@@ -159,10 +159,9 @@ test('Proxy source fault receipts reject an unrelated Error property origin',()=
   const unrelated=bundle.events.find(row=>row.eventId!==event.eventId).eventId,
     errorId=event.stateChanges.find(change=>change.table==='heap'&&change.after?.declaredError==='TypeError').id;
   for(const change of event.stateChanges)if(change.table==='heap'&&change.id===errorId&&change.after){
-    change.after.properties.name.origin=unrelated;change.after.properties.message.origin=unrelated;
+    change.after.properties.message.origin=unrelated;
   }
   for(const state of [bundle.finalState,...Object.values(bundle.checkpoints)])if(state.heap[errorId]){
-    state.heap[errorId].properties.name.origin=unrelated;
     state.heap[errorId].properties.message.origin=unrelated;
   }
   // Exact source replay may reject the causal forgery before adapter projection.

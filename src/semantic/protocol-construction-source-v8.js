@@ -169,10 +169,10 @@ export function createConstructionSourceAdapterV8({bundle,source}){
     require(ctx,completion?.type==='throw'&&completion.errorType==='ReferenceError'&&completion.message===message&&
       completion.origin===event.eventId&&completion.value?.origin===event.eventId&&
       completion.value.value?.[0]==='ref'&&error?.kind==='object'&&error.declaredError==='ReferenceError'&&
-      Object.keys(error.properties??{}).sort().join(',')==='message,name'&&
-      ctx.eq(error.properties.name?.value,['str','ReferenceError'])&&
+      error.prototype==='ReferenceError.prototype'&&Object.keys(error.properties??{}).join(',')==='message'&&
+      ctx.eq(error.dataAttributes?.message,{writable:true,enumerable:false,configurable:true})&&
       ctx.eq(error.properties.message?.value,['str',message])&&
-      error.properties.name?.origin===event.eventId&&error.properties.message?.origin===event.eventId,
+      error.properties.message?.origin===event.eventId,
       'fault lacks the exact current ReferenceError allocation');
     emit(ctx,{kind:'construct.this.fault',invocation:ctx.publicInvocation,error:errorId},event,'owned-derived-this-fault/1');
     ctx.markPublished(errorId);

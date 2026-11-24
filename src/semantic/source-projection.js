@@ -17,6 +17,7 @@ import {verifyExperimentalModuleNamespacePlan} from './module-namespace-state-v8
 import {sourceLinkedComputation,sourceLinkedDecision} from '../training/semantic-source.js';
 import {DECLARED_EXCEPTION_PROFILE} from '../training/exception-profile.js';
 import {inspectSemanticRegion,evaluateSemanticRegion,checkSemanticRegionClaim} from '../training/semantic-regions.js';
+import {ERROR_PROTOTYPES} from '../owned-error-objects.js';
 import {ownedExceptionFields} from '../training/owned-exception-profile.js';
 import {checkEffectfulProjectionState} from '../training/projection-state-profile.js';
 import {inspectOwnedDataEntity} from '../training/data-graph-contract.js';
@@ -266,7 +267,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     }
   const rootFor=frame=>roots.get(frame)??invocationId;
   const frameId=frame=>{if(!frames.has(frame))frames.set(frame,'guest'+(++frameOrdinal));return frames.get(frame);};
-  const identity=id=>id==='Promise.prototype'?promiseIntrinsicIdV8(id):publicIdentities.get(id)??id;
+  const identity=id=>['Promise.prototype',...ERROR_PROTOTYPES].includes(id)?promiseIntrinsicIdV8(id):publicIdentities.get(id)??id;
   const tag=value=>{
     const extended=regionAdapter?.tag?.(value);if(extended!==undefined&&extended!==null)return copy(extended);
     if(!graphValue(value))refuse('unrepresentable value '+JSON.stringify(value));
@@ -825,7 +826,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       event.stateChanges.some(change=>['envs','heap','effects','inputs','promises','control'].includes(change.table))))
       flushComputations();
     let owner=rootFor(event.invocationId),handled=false;
-    if(row?.op==='throw'&&row.allocations?.length)allocations(row,owner,event);
+    if(!regionAdapter&&row?.op==='throw'&&row.allocations?.length)allocations(row,owner,event);
     const promiseChanges=event.stateChanges.filter(change=>change.table==='promises');
     const effectCreated=event.stateChanges.find(change=>change.table==='effects'&&change.before===null);
     const queued=state.control.a0.queue?.[0];
@@ -1142,6 +1143,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     // One owned throw may close helper and executor scopes before reaching an
     // ordinary root/job completion. Extensions consume only their exact exits;
     // the remaining lifecycle stays with the shared completion projector.
+    if(regionAdapter&&!handled&&row?.op==='throw'&&row.allocations?.length)allocations(row,owner,event);
     const completionResult=regionAdapter?.completion?.(extensionContext,event,row,fact),
       handledCompletion=completionResult===true,
       completedInvocations=new Set(completionResult?.invocations??[]);

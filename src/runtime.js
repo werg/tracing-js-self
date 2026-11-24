@@ -23,7 +23,7 @@ import {invalidInMessage} from './intrinsic-error-diagnostics.js';
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
 const isPrimitiveValue=value=>['undefined','null','bool','num','str','bigint','symbol'].includes(value[0]);
-import {ERROR_CONSTRUCTORS,ERROR_PROTOTYPES,ensureErrorPrototype,ownedIntrinsicError} from './owned-error-objects.js';
+import {ERROR_CONSTRUCTORS,ERROR_PROTOTYPES,errorPrototypeRecord,ensureErrorPrototype,ownedIntrinsicError} from './owned-error-objects.js';
 function binaryGuest(operation){
   try{return operation();}catch(error){
     if(error instanceof BinaryProfileError)throw error;
@@ -302,7 +302,7 @@ function enumerationSnapshot(heap,source){
       visited.add(key);if(enumerable)keys.push(propertyKeyValue(key)[1]);
       if(visited.size>10000)throw new RangeError('For-in key budget exceeded');
     }
-    if(prototype===null||['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(prototype))break;
+    if(prototype===null||['Object.prototype','Array.prototype','Function.prototype',...ERROR_PROTOTYPES,...GENERATOR_INTRINSIC_PROTOTYPES].includes(prototype))break;
     object=heap[prototype];if(!object)throw new Error('For-in prototype identity missing');
   }
   return {chain,keys};
@@ -717,7 +717,7 @@ export class Runtime {
   }
   ordinaryHasInstance(draft,constructor,candidate,eventId){
     const target=constructor[0]==='ref'?draft.heap[constructor[1]]:null;
-    const intrinsic=constructor[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(constructor[1]);
+    const intrinsic=constructor[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype',...ERROR_PROTOTYPES,...GENERATOR_INTRINSIC_PROTOTYPES].includes(constructor[1]);
     if(target?.kind!=='function'&&!intrinsic&&constructor[0]!=='builtinfn')return false;
     if(!['ref','promise','intrinsic','builtinfn','hostfn'].includes(candidate[0]))return false;
     let sought;
@@ -728,7 +728,7 @@ export class Runtime {
       else if(prototype[0]==='intrinsic'&&['Object.prototype','Array.prototype','Function.prototype'].includes(prototype[1]))sought=prototype[1];
       else if(['promise','builtinfn','hostfn','intrinsic'].includes(prototype[0]))throw new TypeError('Exotic constructor prototype outside ordinary instanceof profile');
       else guestFault('TypeError','Function has non-object prototype in instanceof check');
-    }else if(intrinsic&&['Object','Array'].includes(constructor[1]))sought=constructor[1]+'.prototype';
+    }else if(intrinsic&&['Object','Array','Promise',...ERROR_CONSTRUCTORS].includes(constructor[1]))sought=constructor[1]+'.prototype';
     else if(constructor[0]==='builtinfn')guestFault('TypeError','Function has non-object prototype in instanceof check');
     else throw new TypeError('Intrinsic instanceof requires its owned prototype profile');
     let current=candidate,seen=new Set();
@@ -740,13 +740,14 @@ export class Runtime {
         if(object.kind==='proxy')throw new TypeError('Proxy GetPrototypeOf requires an owned instanceof continuation');
         if(seen.has(object.id))throw new Error('Cyclic instanceof prototype');seen.add(object.id);
         prototype=objectPrototype(object);
-      }else if(current[0]==='intrinsic'&&GENERATOR_INTRINSIC_PROTOTYPES.includes(current[1]))prototype=generatorIntrinsicParent(current[1]);
+      }else if(current[0]==='intrinsic'&&ERROR_PROTOTYPES.includes(current[1]))prototype=(draft.heap[current[1]]??errorPrototypeRecord(current[1])).prototype;
+      else if(current[0]==='intrinsic'&&GENERATOR_INTRINSIC_PROTOTYPES.includes(current[1]))prototype=generatorIntrinsicParent(current[1]);
       else if(current[0]==='intrinsic'&&current[1]==='Object.prototype')prototype=null;
       else prototype='Object.prototype';
       if(prototype===null)return false;
       if(prototype===sought)return true;
       current=['intrinsic',prototype];
-      if(!['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(prototype))current=['ref',prototype];
+      if(!['Object.prototype','Array.prototype','Function.prototype',...ERROR_PROTOTYPES,...GENERATOR_INTRINSIC_PROTOTYPES].includes(prototype))current=['ref',prototype];
       else if(prototype==='Object.prototype')return false;
     }
   }
@@ -1926,7 +1927,7 @@ export class Runtime {
         case 'INSTANCEOF_DEFAULT':{
           const constructor=pop(),value=pop(),target=constructor.value[0]==='ref'?s.heap[constructor.value[1]]:null;
           if(target?.kind!=='function'&&!['builtinfn','hostfn'].includes(constructor.value[0])&&
-             !(constructor.value[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(constructor.value[1])))
+             !(constructor.value[0]==='intrinsic'&&!['Math','Reflect','Atomics','Object.prototype','Array.prototype',...ERROR_PROTOTYPES,...GENERATOR_INTRINSIC_PROTOTYPES].includes(constructor.value[1])))
             guestFault('TypeError','Right-hand side of instanceof is not callable');
           return {...operands(value,constructor),...result(['bool',this.ordinaryHasInstance(s,constructor.value,value.value,eventId)])};
         }
@@ -4390,7 +4391,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
               throw new TypeError('Object.setPrototypeOf requires owned ordinary storage');
             const visited=new Set([obj.id]);
             let current=proto;
-            while(current!==null && !['Object.prototype','Array.prototype','Function.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(current)){
+            while(current!==null && !['Object.prototype','Array.prototype','Function.prototype',...ERROR_PROTOTYPES,...GENERATOR_INTRINSIC_PROTOTYPES].includes(current)){
               if(visited.has(current))guestFault('TypeError','Cyclic prototype value');
               visited.add(current);
               const next=ownedObjectHeap(s)[current];

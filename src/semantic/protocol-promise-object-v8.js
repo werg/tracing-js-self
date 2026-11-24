@@ -11,6 +11,7 @@ export const PROMISE_OBJECT_RECORD_FIELDS=Object.freeze({
   'promise.intrinsic.get':Object.freeze(['kind','base','key','result']),
   'property.getPrototypeOf':Object.freeze(['kind','object','result']),
   'property.isExtensible':Object.freeze(['kind','object','result']),
+  'object.hasInstance':Object.freeze(['kind','constructor','value','result']),
   'property.descriptor':Object.freeze(['kind','object','key','descriptor','name'])
 });
 const objectMethods=['__defineGetter__','__defineSetter__','hasOwnProperty','__lookupGetter__',
@@ -18,7 +19,7 @@ const objectMethods=['__defineGetter__','__defineSetter__','hasOwnProperty','__l
 export const PROMISE_OBJECT_INTRINSICS_V8=Object.freeze(['Promise','Promise.prototype',
   'Promise.prototype.then','Promise.prototype.catch','Promise.prototype.finally','Object','Object.prototype',
   ...objectMethods.map(name=>'Object.prototype.'+name),'Object.prototype.__proto__.get','Object.prototype.__proto__.set',
-  ...ERROR_CONSTRUCTORS,...ERROR_PROTOTYPES,'Error.prototype.toString']);
+  ...ERROR_CONSTRUCTORS,...ERROR_PROTOTYPES,'Error.prototype.toString','Function.prototype.hasInstance']);
 export const promiseIntrinsicIdV8=name=>'intrinsic'+name.replace(/[^a-z0-9]/gi,'').toLowerCase();
 const intrinsicCallables=PROMISE_OBJECT_INTRINSICS_V8.filter(name=>!['Promise.prototype','Object.prototype',...ERROR_PROTOTYPES].includes(name));
 const copy=structuredClone;
@@ -64,9 +65,10 @@ export function validatePromiseObjectRecordV8(record,{value:validate}={}){
   assertAlgorithmFields(record,fields,'Promise object record');
   if(record.object!==undefined)id(record.object);
   if(record.kind==='promise.intrinsic.get'){
-    if(!['Promise','Object',...ERROR_CONSTRUCTORS].includes(record.base)||!['prototype','name','length'].includes(record.key?.[1])||record.key[0]!=='str'||!ERROR_CONSTRUCTORS.includes(record.base)&&record.key[1]!=='prototype')fail('intrinsic member');
+    if(!['Promise','Object',...ERROR_CONSTRUCTORS].includes(record.base)||!(record.key?.[0]==='symbol'&&record.key[1]==='well-known:hasInstance')&&(!['prototype','name','length'].includes(record.key?.[1])||record.key[0]!=='str'||!ERROR_CONSTRUCTORS.includes(record.base)&&record.key[1]!=='prototype'))fail('intrinsic member');
     validate?.(record.result);
   }
+  if(record.kind==='object.hasInstance'){validate?.(record.constructor);validate?.(record.value);validate?.(record.result);if(record.result?.[0]!=='bool')fail('hasInstance result');}
   if(record.kind==='property.getPrototypeOf'){
     validate?.(record.result);if(!['null','ref'].includes(record.result?.[0]))fail('prototype result');
   }
@@ -86,7 +88,37 @@ export function applyPromiseObjectRecordV8(controller,record,api){
   api.require(controller.protocol?.promiseObjects?.initialized,'intrinsics are not initialized');
   if(record.kind==='promise.intrinsic.get'){
     api.require(controller.protocol?.promiseObjects?.initialized&&
-      api.eq(record.result,record.key[1]==='prototype'?['ref',promiseIntrinsicIdV8(record.base+'.prototype')]:record.key[1]==='name'?['str',record.base]:['num',1]),'intrinsic prototype identity differs');return true;
+      api.eq(record.result,record.key[0]==='symbol'?['ref',promiseIntrinsicIdV8('Function.prototype.hasInstance')]:record.key[1]==='prototype'?['ref',promiseIntrinsicIdV8(record.base+'.prototype')]:record.key[1]==='name'?['str',record.base]:['num',1]),'intrinsic prototype identity differs');return true;
+  }
+  if(record.kind==='object.hasInstance'){
+    api.known(controller,record.constructor);api.known(controller,record.value);
+    const constructor=record.constructor[0]==='ref'?controller.heap.get(record.constructor[1]):null;
+    let answer=false;
+    if(constructor?.kind==='closure'||constructor?.kind==='intrinsic'){
+      if(record.value[0]==='ref'){
+        let sought;
+        if(constructor.kind==='intrinsic'){
+          api.require(['Object','Promise',...ERROR_CONSTRUCTORS].includes(constructor.intrinsicName),'hasInstance intrinsic constructor');
+          sought=['ref',promiseIntrinsicIdV8(constructor.intrinsicName+'.prototype')];
+        }else{
+          const {descriptor}=api.resolveProperty(controller,record.constructor[1],['str','prototype']);
+          api.require(descriptor?.kind==='data'&&descriptor.value?.[0]==='ref','hasInstance requires its ordinary object prototype');
+          sought=descriptor.value;
+        }
+        const seen=new Set();let current=record.value;
+        while(current?.[0]==='ref'){
+          api.require(!seen.has(current[1]),'hasInstance cyclic prototype chain');seen.add(current[1]);
+          const node=controller.heap.get(current[1]);
+          api.require(node&&!node.proxy&&['object','array','closure','promise'].includes(node.kind),'hasInstance prototype requires its internal-method continuation');
+          let prototype=node.prototype;
+          if(prototype===undefined||prototype==='ordinary')prototype=['ref',promiseIntrinsicIdV8('Object.prototype')];
+          if(prototype===null)break;
+          api.require(Array.isArray(prototype)&&prototype[0]==='ref','hasInstance prototype value');
+          if(api.eq(prototype,sought)){answer=true;break;}current=prototype;
+        }
+      }
+    }
+    api.require(api.eq(record.result,['bool',answer]),'hasInstance result differs from live prototype chain');return true;
   }
   const node=api.heapNode(controller,record.object);
   if(record.kind==='property.getPrototypeOf'){

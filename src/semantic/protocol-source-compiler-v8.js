@@ -24,9 +24,9 @@ import {createSharedProtocolSourceComponentsV8} from './protocol-source-bridge-v
 import {createPromiseExecutorTeacherV8} from './protocol-promise-executor-source-v8.js';
 import {assertPromiseSourceObjectProfileV8} from './protocol-promise-adoption-source-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
-import {invalidInMessage} from '../intrinsic-error-diagnostics.js';
+import {sourceInvalidInFaultV8} from './protocol-intrinsic-error-source-v8.js';
 import {ERROR_CONSTRUCTORS,ERROR_PROTOTYPES} from '../owned-error-objects.js';
-import {isPromiseIntrinsicValueV8,promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
+import {isPromiseIntrinsicValueV8,promiseIntrinsicIdV8,PROMISE_OBJECT_INTRINSICS_V8} from './protocol-promise-object-v8.js';
 import {bindModuleSchedulerSourceProjectionV8} from './module-scheduler-source-bridge-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual,lit=value=>({op:'literal',value:copy(value)});
@@ -167,7 +167,8 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   }
   const publicIdentity=id=>ERROR_PROTOTYPES.includes(id)?promiseIntrinsicIdV8(id):id;
   function initializeIntrinsics(event){if(!controller.protocol?.promiseObjects?.initialized)
-    emit({kind:'promise.intrinsics'},event,'owned-source-ordinary-intrinsics/1');}
+    emit({kind:'promise.intrinsics'},event,'owned-source-ordinary-intrinsics/1');
+    for(const name of PROMISE_OBJECT_INTRINSICS_V8)published.add(promiseIntrinsicIdV8(name));}
   function publicDescriptor(node,key,event=null){const value=descriptor(node,key);
     return value?.kind==='data'?{...value,value:tag(value.value,event)}:value?{...value,get:tag(value.get,event),set:tag(value.set,event)}:null;}
   function tag(value,event=null){
@@ -238,27 +239,11 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   }
   function key(value){if(value?.[0]==='symbol')return copy(value);if(!['undefined','null','str','num','bool','bigint'].includes(value?.[0]))refuse('observable ToPropertyKey requires a coercion protocol');return ['str',String(decode(value))];}
   function projectInvalidInFault(event,row,error,heapChanges){
-    const sourceNode=inventory.nodes.get(row.source?.start+':'+row.source?.end),
-      before=state.frames[event.invocationId],instruction=bundle.programs[before?.codeId]?.instructions[before?.pc],
-      operands=before?.stack?.slice(-2)??[],left=operands[0]?.value,right=operands[1]?.value;
-    if(event.operation!=='primitive.binary'||sourceNode?.type!=='BinaryExpression'||sourceNode.operator!=='in'||
-      instruction?.op!=='BINARY'||instruction.arg!=='in'||instruction.siteId!==event.siteId||
-      instruction.start!==sourceNode.start||instruction.end!==sourceNode.end||operands.length!==2||
-      !left||!right||!['undefined','null','bool','str','num','bigint','symbol'].includes(right[0])||
-      row.allocations?.length!==1||row.allocations[0].identity!==error.id||heapChanges.length!==1||
-      heapChanges[0].before!==null||heapChanges[0].id!==error.id||heapChanges[0].after!==error||
-      event.completion?.type!=='throw'||event.completion.errorType!=='TypeError'||
-      event.completion.message!==invalidInMessage(left,right,{node:id=>state.heap[id],symbolDescription:id=>state.heap[id]?.description})||
-      event.completion.origin!==event.eventId||event.completion.value?.origin!==event.eventId||
-      !eq(event.completion.value?.value,['ref',error.id])||error.kind!=='object'||
-      error.declaredError!=='TypeError'||error.prototype!=='TypeError.prototype'||!eq(Object.keys(error.properties??{}),['message'])||
-      !eq(error.dataAttributes?.message,{writable:true,enumerable:false,configurable:true})||
-      !eq(error.properties.message?.value,['str',event.completion.message])||
-      error.properties.message?.origin!==event.eventId)
-      refuse('invalid in-operator RHS lacks its exact current TypeError allocation');
-    emit({kind:'property.fault',operation:'has',target:tag(right,event),key:tag(left,event),error:error.id},
+    const fault=sourceInvalidInFaultV8(bundle,state,event,row);
+    if(fault.error!==error.id||heapChanges.length!==1)refuse('invalid in fault allocation differs');
+    emit({kind:'property.fault',operation:'has',target:tag(fault.target,event),key:tag(fault.key,event),error:fault.error},
       event,'owned-source-in-invalid-rhs/1');
-    published.add(error.id);return true;
+    published.add(fault.error);return true;
   }
   function checkNode(node){guardedHeap(node);
     for(const adapter of heapOwners.get(node.id)??[])if(adapter.checkHeap(context,node)!==true)refuse('extension failed its complete heap comparison: '+adapter.id);
@@ -287,6 +272,10 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   }
   function builtin(event,row,changes){
     const raw=row.operands[0],callee=raw?.[0]==='method'?raw[1]:raw,args=row.operands.slice(1),name=callee?.[0]==='intrinsic'?callee[1]:callee?.[0]==='builtinfn'?callee[1]:null;
+    if(name==='Function.prototype.hasInstance'){
+      if(raw?.[0]!=='method'||args.length!==1)refuse('hasInstance requires its selected builtin method and original receiver');
+      initializeIntrinsics(event);emit({kind:'object.hasInstance',constructor:tag(raw[2],event),value:tag(args[0],event),result:tag(row.result,event)},event,'owned-source-has-instance/1');return;
+    }
     if(['Array.prototype.push','Array.prototype.pop'].includes(name)){
       if(raw[0]!=='method')refuse('array mutation requires its original method receiver');
       const receiver=tag(raw[2],event),node=arrayMutationReceiver(receiver,name),length=node.properties.length.value[1];
@@ -526,8 +515,12 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       }
       else if(event.operation==='property.read'){
         const [base,property]=row.operands;
-        const output=row.result?.[0]==='method'?row.result[1]:row.result;
-        if(output?.[0]==='builtinfn'&&['Array.prototype.push','Array.prototype.pop'].includes(output[1])){
+        const output=row.result?.[0]==='method'?row.result[1]:row.result,
+          owner=state.frames[event.invocationId],inst=bundle.programs[owner?.codeId]?.instructions[owner?.pc];
+        if(inst?.op==='REQUIRE_OBJECT'){
+          if(row.operands.length!==1||!['ref','promise','intrinsic','builtinfn','hostfn'].includes(base?.[0])||!eq(row.result,base))refuse('object guard requires its original reference value');
+          compute(lit(tag(base,event)),row.result,event);
+        }else if(output?.[0]==='builtinfn'&&['Array.prototype.push','Array.prototype.pop'].includes(output[1])){
           // A builtin method is not a public first-class value. Its direct call
           // is expanded into checked length reads and ordinary property writes.
           // Capturing or replacing the method still requires a callable profile.
@@ -576,13 +569,16 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
         const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);
         compute({op:'binary',operator:row.arithmetic.operator,left:operand(row.operands[0],node?.left,event),right:operand(row.operands[1],node?.right,event)},row.result,event);
       }else if(event.operation==='primitive.binary'){
-        const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);if(!node?.operator)refuse('binary source operator missing');
+        const owner=state.frames[event.invocationId],inst=bundle.programs[owner?.codeId]?.instructions[owner?.pc];
+        if(inst?.op==='INSTANCEOF_RESULT'){compute({op:'unary',operator:'!',arg:{op:'unary',operator:'!',arg:lit(tag(row.operands[0],event))}},row.result,event);}
+        else if(inst?.op==='INSTANCEOF_DEFAULT'){initializeIntrinsics(event);emit({kind:'object.hasInstance',constructor:tag(row.operands[1],event),value:tag(row.operands[0],event),result:tag(row.result,event)},event,'owned-source-default-has-instance/1');}
+        else {const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);if(!node?.operator)refuse('binary source operator missing');
         if(node.operator==='in'&&event.completion?.type==='throw'){
           refuse('invalid in-operator RHS allocation was not claimed by its derived fault transition');
         }else if(node.operator==='in'){
           if(row.operands[1]?.[0]!=='ref'||heapChanges.length)refuse('in requires an ordinary object and separately checked key conversion');
           emit({kind:'property.has',object:tag(row.operands[1],event)[1],key:key(row.operands[0]),result:tag(row.result,event)},event,'owned-source-property-existence/1');
-        }else compute({op:'binary',operator:node.operator,left:operand(row.operands[0],node.left,event),right:operand(row.operands[1],node.right,event)},row.result,event);
+        }else compute({op:'binary',operator:node.operator,left:operand(row.operands[0],node.left,event),right:operand(row.operands[1],node.right,event)},row.result,event);}
       }else if(event.operation==='primitive.unary'){
         const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);if(!node?.operator)refuse('unary source operator missing');
         compute({op:'unary',operator:node.operator,arg:operand(row.operands[0],node.argument,event)},row.result,event);
@@ -603,16 +599,17 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
         }else{
           const node=inventory.nodes.get(row.source?.start+':'+row.source?.end),
             optional=['MemberExpression','CallExpression'].includes(node?.type)&&node.optional===true,
+            hasInstance=node?.type==='BinaryExpression'&&node.operator==='instanceof',
             instruction=bundle.programs[event.codeId]?.instructions.find(item=>item.siteId===event.siteId&&item.op==='LOGICAL_JUMP'),
-            operator=optional?'??':node?.type==='LogicalExpression'?node.operator:
+            operator=optional||hasInstance?'??':node?.type==='LogicalExpression'?node.operator:
               node?.type==='AssignmentExpression'?node.operator.slice(0,-1):null;
           if(!['&&','||','??'].includes(operator))refuse('logical choice lacks its exact source operator');
           if(instruction?.arg.operator!==operator)refuse('logical choice differs from its immutable instruction');
           // This record commits before the right operand executes. Publish the
           // actual left operand and its operator, never a teacher-only decision
           // literal or a value from the future right-hand computation.
-          const value=optional&&row.test[0]==='method'?row.test[1]:row.test,
-            left=optional?(node.type==='MemberExpression'?node.object:node.callee):node.left;
+          const value=(optional||hasInstance)&&row.test[0]==='method'?row.test[1]:row.test,
+            left=hasInstance?null:optional?(node.type==='MemberExpression'?node.object:node.callee):node.left;
           emit({kind:'choose',expr:{op:'logical-test',operator,arg:operand(tag(value,event),left,event)},
             decision:row.result,path:optional?(row.result[1]?'then':'else'):row.path},event,
             optional?'owned-source-optional-choice/1':'owned-source-logical-choice/1');

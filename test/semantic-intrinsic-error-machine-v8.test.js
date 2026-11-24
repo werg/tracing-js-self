@@ -65,3 +65,17 @@ test('intrinsic Error restoration requires exact retained allocation provenance'
 test('the public registry has no free-standing Error allocation record',()=>{
   assert.equal(PROTOCOL_MACHINE_ADAPTERS_V8.some(adapter=>adapter.recordFields?.['error.create']),false);
 });
+
+test('hasInstance derives live prototype membership independently of the Error allocation brand',()=>{
+  const c=controller();apply(c,{kind:'property.fault',operation:'has',target:['null'],key:key('x'),error:'error'});
+  const intrinsic=name=>'intrinsic'+name.replace(/[^a-z0-9]/gi,'').toLowerCase();
+  const check=(name,result)=>({kind:'object.hasInstance',constructor:ref(intrinsic(name)),value:ref('error'),result:['bool',result]});
+  apply(c,check('TypeError',true),check('Error',true),check('Object',true),check('RangeError',false));
+  const before=structuredClone(c);
+  assert.throws(()=>apply(c,check('RangeError',true)),/live prototype chain/);assert.deepEqual(c,before);
+  apply(c,{kind:'property.prototype',object:'error',prototype:ref(intrinsic('RangeError.prototype')),success:true},
+    check('TypeError',false),check('RangeError',true),check('Error',true));
+  assert.equal(c.heap.get('error').declaredError,'TypeError');
+  assert.equal(restoreProtocolStateV8(c,c.protocol).valid,true);
+  apply(c,{kind:'object.hasInstance',constructor:ref(intrinsic('TypeError')),value:['num',7],result:['bool',false]});
+});
