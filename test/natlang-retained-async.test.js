@@ -39,6 +39,16 @@ test('owned async rejection reaches natlang EvalFailure, never a successful trac
   assert.equal(traces.length,0);
 });
 
+test('declared Error rejections project their message through both owned async paths',async()=>{
+  const {env,traces}=create();
+  const source='throw new Error("declared-error");';
+  await assert.rejects(env.executeAsync(request(source)),
+    error=>error instanceof EvalFailure && /declared-error/.test(error.message));
+  assert.throws(()=>env.run(request(source),true),
+    error=>error instanceof EvalFailure && /declared-error/.test(error.message));
+  assert.equal(traces.length,0);
+});
+
 test('live data mutations retain host aliases and the identity of returned values',()=>{
   const {env,traces}=create();
   const cell={value:2};

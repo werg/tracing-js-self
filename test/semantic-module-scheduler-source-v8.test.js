@@ -56,7 +56,7 @@ function owned(modules){
   assert.equal(runtime.drive().kind,'terminated');
   const bundle=wire(runtime.exportRun()),promise=bundle.finalState.promises[
     bundle.initialState.frames[bundle.initialState.control.a0.activeFrameId].asyncPromiseId],
-    value=realizeGraph(bundle.finalState.heap,[promise.value.value])[0];
+    value=realizeGraph(bundle.finalState.heap,[promise.value.value],{exceptionProfile:promise.status==='rejected'})[0];
   return {request,bundle,outcome:{status:promise.status,value:promise.status==='rejected'&&value&&typeof value==='object'?{name:value.name}:value}};
 }
 function nativeCuts(projection){

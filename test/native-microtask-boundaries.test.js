@@ -16,7 +16,7 @@ async function differential(source,plan,expected){
   const run=await executeWithNativeServices({entry:{text:source,functionName:'run'},services:broker.services});
   const runtime=run.runtime,root=runtime.initialState.control.a0.activeFrameId;
   const promise=runtime.state.promises[runtime.initialState.frames[root].asyncPromiseId];
-  const value=realizeGraph(runtime.state.heap,[promise.value.value])[0];
+  const value=realizeGraph(runtime.state.heap,[promise.value.value],{exceptionProfile:promise.status==='rejected'})[0];
   assert.deepEqual(value,expected);
   const outcome={kind:promise.status==='rejected'?'throw':'return',
     graph:describeCompletionGraph([],value,promise.status==='rejected'?'throw':'return')};
