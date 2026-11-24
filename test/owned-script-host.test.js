@@ -46,7 +46,8 @@ test('ordinary in checks owned descriptor presence, prototype ancestry and symbo
   const forged=structuredClone(valid);
   forged.events.find(event=>event.operation==='primitive.binary'&&event.operands[0]?.[1]==='x').result=['bool',false];
   assert.throws(()=>validateBundle(forged),/observation result changed/);
-  assert.throws(()=>run('var proxy=new Proxy({x:1},{});"x" in proxy;'),/Unsupported ordinary in-operator/);
+  assert.equal(run('var proxy=new Proxy({x:1},{});"x" in proxy;').exit.kind,'terminated');
+  assert.equal(run('var proxy=new Proxy({x:1},{});assert.sameValue("x" in proxy,true);').exit.kind,'terminated');
 });
 
 test('original async harness records owned print after Promise reaction jobs and rejects forged output',()=>{
