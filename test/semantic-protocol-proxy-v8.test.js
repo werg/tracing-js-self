@@ -8,7 +8,7 @@ function fixture(){
   const controller={heap:new Map(),locals:new Map(),captureAliases:new Map(),receiver:['undefined'],stack:['root'],
     frameFunctions:new Map([['root','run']]),pending:null,lastReturn:null,completion:null,protocol:createProtocolStateV8()};
   const apply=record=>{
-    if(record.kind?.startsWith('proxy.')&&!['proxy.create','proxy.finish','proxy.fault'].includes(record.kind)){
+    if(record.kind?.startsWith('proxy.')&&!['proxy.create','proxy.revoke','proxy.revoked.fault','proxy.finish','proxy.fault'].includes(record.kind)){
       const operation=record.kind.split('.')[1],trapName=operation==='delete'?'deleteProperty':operation,
         route=[];let current=record.object,node=controller.heap.get(current),seen=new Set();
       while(node?.kind==='proxy'){
@@ -41,6 +41,25 @@ test('transparent Proxy reads and writes share target aliases and retain separat
   assert.equal(restore(controller).proxies,1);
   const target={x:2},handler={},proxy=new Proxy(target,handler);target.x=4;assert.equal(proxy.x,4);proxy.x=7;proxy.self=proxy;
   assert.equal(target.x,7);assert.equal(target.self,proxy);assert.notEqual(proxy,target);
+});
+test('revocable Proxy clears both internal slots and preserves an already selected trap',()=>{
+  const {controller,apply}=fixture();
+  apply({kind:'proxy.revoke',object:'proxy'});
+  assert.deepEqual(controller.heap.get('proxy').target,['null']);
+  assert.deepEqual(controller.heap.get('proxy').handler,['null']);
+  apply({kind:'proxy.revoke',object:'proxy'});
+  apply({kind:'proxy.revoked.fault',object:'proxy',operation:'get',error:'revokedError'});
+  assert.equal(controller.lastReturn.kind,'throw');
+  assert.deepEqual(controller.lastReturn.value,ref('revokedError'));
+  assert.deepEqual(controller.heap.get('revokedError').properties.get('message'),['str',"Cannot perform 'get' on a proxy that has been revoked"]);
+  const active=fixture();trap(active,'has');
+  active.apply({kind:'proxy.has.call',id:'has',object:'proxy',key:key('x'),child:'reader'});
+  const selected=structuredClone(active.controller.protocol.proxyCalls.pending[0]);
+  active.apply({kind:'proxy.revoke',object:'proxy'});
+  active.apply({kind:'return',invocation:'reader',value:['bool',true]});
+  active.apply({kind:'proxy.finish',id:'has',completion:{kind:'normal',value:['bool',true]}});
+  assert.equal(active.controller.protocol.proxyCalls.pending.length,0);
+  assert.deepEqual(selected.target,ref('target'));
 });
 test('Proxy descriptors and extensibility reuse ordinary assignment failure atomically',()=>{
   const {controller,apply}=fixture();

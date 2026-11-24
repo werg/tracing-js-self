@@ -8,7 +8,7 @@ function fixture(){
   const controller={heap:new Map(),locals:new Map(),captureAliases:new Map(),receiver:['undefined'],stack:['root'],
     frameFunctions:new Map([['root','run']]),pending:null,lastReturn:null,completion:null,protocol:createProtocolStateV8()};
   const apply=record=>{
-    if(record.kind?.startsWith('proxy.')&&!['proxy.create','proxy.finish','proxy.fault'].includes(record.kind)){
+    if(record.kind?.startsWith('proxy.')&&!['proxy.create','proxy.revoke','proxy.revoked.fault','proxy.finish','proxy.fault'].includes(record.kind)){
       const operation=record.kind.split('.')[1],trapName=operation==='delete'?'deleteProperty':operation,
         route=[];let current=record.object,node=controller.heap.get(current),seen=new Set();
       while(node?.kind==='proxy'){

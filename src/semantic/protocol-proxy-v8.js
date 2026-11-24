@@ -9,6 +9,8 @@ export const PROXY_PROFILE_V8='ordinary-data-proxy/1';
 export const PROXY_STATE_V8_SCHEMA='semantic-proxy-call-state/1';
 export const PROXY_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.entries({
   'proxy.create':['kind','name','target','handler'],
+  'proxy.revoke':['kind','object'],
+  'proxy.revoked.fault':['kind','object','operation','error'],
   'proxy.get':['kind','object','key','result','route'],
   'proxy.set':['kind','object','key','value','success','route'],
   'proxy.has':['kind','object','key','result','route'],
@@ -39,6 +41,9 @@ export function validateProxyRecordV8(record,{value}){
   const fields=PROXY_RECORD_FIELDS[record.kind];if(!fields)return false;
   assertAlgorithmFields(record,fields,'ordinary Proxy record');
   if(record.kind==='proxy.create'){id(record.name);value(record.target);value(record.handler);}
+  else if(record.kind==='proxy.revoke'){id(record.object);}
+  else if(record.kind==='proxy.revoked.fault'){id(record.object);id(record.error);
+    if(!['get','set','has','deleteProperty'].includes(record.operation))throw new TypeError('Proxy revoked operation');}
   else if(record.kind==='proxy.fault'){id(record.id);id(record.error);}
   else if(record.kind==='proxy.delete.fault'){id(record.object);id(record.error);value(record.key);
     if(!['str','symbol'].includes(record.key[0]))throw new TypeError('Proxy property key');
@@ -68,6 +73,10 @@ function ordinary(controller,reference,api,label){
 function route(controller,node,api){
   // Target identity may itself be a Proxy. Internal-method dispatch is retained
   // by deriveRoute; this structural check never re-reads a selected trap.
+  if(api.eq(node.target,['null'])||api.eq(node.handler,['null'])){
+    api.require(api.eq(node.target,['null'])&&api.eq(node.handler,['null']),'Proxy partial revocation');
+    return {target:null,handler:null,revoked:true};
+  }
   api.known(controller,node.target);api.require(node.target[0]==='ref','Proxy target identity');
   const target=controller.heap.get(node.target[1]);
   api.require(target&&['object','array','proxy'].includes(target.kind),'Proxy target object identity');
@@ -81,10 +90,27 @@ function method(controller,node,api,operation){
   api.require(!selected||selected.kind==='data','Proxy trap accessor requires its explicit getter boundary');
   return selected?.value??['undefined'];
 }
+export function selectProxyTrapV8(controller,handlerRef,operation,api){
+  const handler=ordinary(controller,handlerRef,api,'Proxy handler'),name=trapName(operation),
+    descriptor=api.resolveProperty(controller,handlerRef[1],['str',name],{forHas:true}).descriptor;
+  return {descriptor:descriptor?api.copy(descriptor):null,
+    value:descriptor?.kind==='data'?api.copy(descriptor.value):null,
+    getter:descriptor?.kind==='accessor'?api.copy(descriptor.get):null};
+}
+export function deriveProxyRouteV8(controller,object,operation,api){
+  const result=deriveRoute(controller,object,operation,api);
+  return {route:api.copy(result.rows),owner:result.owner,target:api.copy(result.target),
+    handler:result.rows.length?api.copy(result.rows.at(-1).handler):null,
+    method:api.copy(result.selected),terminal:result.terminal};
+}
+export function validateRetainedProxyRouteV8(controller,row,api,options){
+  return retainedRoute(controller,row,api,options);
+}
 function deriveRoute(controller,object,operation,api){
   const rows=[],visited=new Set();let identity=object,node=controller.heap.get(identity),target=null,owner=null,selected=['undefined'];
   while(node?.kind==='proxy'){
     api.require(!visited.has(identity)&&rows.length<64,'Proxy target route cycle/bound');visited.add(identity);
+    api.require(!api.eq(node.target,['null'])&&!api.eq(node.handler,['null']),'Proxy route is revoked and requires its derived abrupt record');
     const found=method(controller,node,api,operation),entry={object:identity,target:api.copy(node.target),
       handler:api.copy(node.handler),method:api.copy(found)};
     rows.push(entry);target=api.copy(node.target);owner=identity;selected=found;
@@ -100,7 +126,9 @@ function retainedRoute(controller,row,api,{selectedTrap=true}={}){
     'Proxy retained route endpoints');
   for(let index=0;index<row.route.length;index++){
     const entry=row.route[index],node=controller.heap.get(entry.object);
-    api.require(node?.kind==='proxy'&&api.eq(node.target,entry.target)&&api.eq(node.handler,entry.handler),
+    api.require(node?.kind==='proxy'&&(
+      api.eq(node.target,['null'])&&api.eq(node.handler,['null'])||
+      api.eq(node.target,entry.target)&&api.eq(node.handler,entry.handler)),
       'Proxy retained route target/handler identities');
     api.known(controller,entry.method);
     if(index<row.route.length-1){
@@ -192,6 +220,21 @@ export function assertProxyNextV8(controller,record,api){
 }
 export function applyProxyRecordV8(controller,record,api){
   if(!PROXY_RECORD_FIELDS[record.kind])return false;
+  if(record.kind==='proxy.revoke'){
+    const node=controller.heap.get(record.object);api.require(node?.kind==='proxy','known Proxy identity required');
+    if(!api.eq(node.target,['null'])&&!api.eq(node.handler,['null'])){
+      node.target=['null'];node.handler=['null'];
+    }
+    state(controller,api);return true;
+  }
+  if(record.kind==='proxy.revoked.fault'){
+    const node=controller.heap.get(record.object);api.require(node?.kind==='proxy'&&
+      api.eq(node.target,['null'])&&api.eq(node.handler,['null']),'revoked Proxy fault requires both cleared internal slots');
+    api.fresh(controller,record.error);
+    const value=allocateIntrinsicErrorV8(controller,{identity:record.error,errorType:'TypeError',
+      message:"Cannot perform '"+record.operation+"' on a proxy that has been revoked"},api);
+    controller.lastReturn={kind:'throw',value};return true;
+  }
   if(record.kind==='proxy.delete.fault'){
     const node=controller.heap.get(record.object);api.require(node?.kind==='proxy','known Proxy identity required');
     api.knownKey(controller,record.key);
@@ -311,7 +354,7 @@ export function restoreProxyStateV8(controller,snapshot,api){
     api.require(node.properties instanceof Map&&node.properties.size===0,'Proxy has invented own storage');
     route(controller,node,api);count++;
   }
-  for(const [identity,node]of controller.heap)if(node.kind==='proxy'){
+  for(const [identity,node]of controller.heap)if(node.kind==='proxy'&&!api.eq(node.target,['null'])){
     const visited=new Set([identity]);let target=controller.heap.get(node.target[1]);
     while(target?.kind==='proxy'){
       api.require(!visited.has(target.id),'Proxy target graph contains a cycle');visited.add(target.id);
@@ -331,8 +374,10 @@ export function restoreProxyStateV8(controller,snapshot,api){
       row.route?.[0]?.object===row.object&&row.route.at(-1)?.object===row.owner,
       'Proxy pending route identities');
     retainedRoute(controller,row,api);
+    const ownerNode=controller.heap.get(row.owner),ownerRevoked=ownerNode?.kind==='proxy'&&
+      api.eq(ownerNode.target,['null'])&&api.eq(ownerNode.handler,['null']);
     api.require(api.eq(row.target,row.route.at(-1).target)&&api.eq(row.handler,row.route.at(-1).handler)&&
-      api.eq(controller.heap.get(row.owner)?.handler,row.handler),'Proxy pending target/handler identities');
+      (ownerRevoked||api.eq(ownerNode?.handler,row.handler)),'Proxy pending target/handler identities');
     api.known(controller,row.receiver);api.require(api.eq(row.receiver,['ref',row.object]),'Proxy retained receiver differs from original operation');
 
     api.require(typeof row.strict==='boolean'&&(['delete','set'].includes(row.operation)||row.strict===false),
