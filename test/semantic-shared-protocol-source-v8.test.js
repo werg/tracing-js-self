@@ -193,12 +193,21 @@ test('one thrown callback unwinds Proxy, Number and executor completions through
   assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion.value,['num',8]);
 });
 
-test('shared discovery is static and does not loosen unrelated continuation or construction gates',()=>{
+test('shared discovery is static and retains unrelated asynchronous conversion boundaries',()=>{
   const source=fixture().source,bundle={programs:{},get events(){throw new Error('future events cannot choose components');}},
     adapters=PROTOCOL_SOURCE_ADAPTERS_V8.map(adapter=>typeof adapter==='function'?adapter({source,bundle}):adapter).filter(Boolean);
   assert.deepEqual(createSharedProtocolSourceComponentsV8({source,bundle,adapters}).map(row=>row.id).sort(),[number,proxy,memory].sort());
   const asynchronous='"use strict";async function run(){const values=await Promise.all([2]);return Number({valueOf:function(){return values[0];}});}';
   assert.throws(()=>compileProtocolSourceV8(archive(asynchronous)),/async conversion requires its own profile/);
-  const construction='"use strict";async function run(){const p=new Promise(resolve=>{class Box{constructor(){this.x=1;}}resolve(new Box().x);});return await p;}';
-  assert.throws(()=>compileProtocolSourceV8(archive(construction)),/class\/private|construction|prototype/);
+});
+
+test('construction inside a Promise executor preserves the original source and independent observations',async()=>{
+  const source='"use strict";async function run(){const p=new Promise(resolve=>{class Box{constructor(){this.x=1;}}resolve(new Box().x);});return await p;}';
+  const result=await verifyProtocolRegionTrainingCase({source,entry:'run',family:'shared-construction-executor'});
+  assert(result.exported,result.reason);
+  assert(result.exported.sidecar.protocolExtensions.includes('class-private-source/1'));
+  assert(result.exported.sidecar.protocolExtensions.includes('promise-executor/1'));
+  assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion,{kind:'return',value:['num',1]});
+  const reference=result.exported.sidecar.sourceArtifact.sidecar.reference;
+  assert.equal(reference.completionAudit.status,'agreed');assert.equal(reference.metadataAudit.status,'agreed');
 });

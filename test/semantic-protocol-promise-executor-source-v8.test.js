@@ -78,7 +78,10 @@ test('checkpoint inside a reaction executor helper restores the same job and nes
   const prefix=RegionExecutionHarness.replay({...result.exported.public,timeline:timeline.slice(0,cut)},{requireTerminal:false}),
     resumed=RegionExecutionHarness.restore(JSON.parse(JSON.stringify(prefix.checkpoint()))),controller=resumed.controller,
     executor=controller.protocol.promiseExecutors.executors[0],before=sharedRegionState(controller);
-  assert(controller.activeJob);assert.equal(controller.protocol.callFrames.length,2);
+  assert(controller.activeJob);assert.equal(controller.protocol.callFrames.length,3);
+  assert.equal(controller.protocol.callFrames[0].child,'job:'+controller.activeJob);
+  assert.deepEqual(controller.protocol.callFrames.map(row=>[row.parent,row.child]),
+    controller.stack.slice(1).map((child,index)=>[controller.stack[index],child]));
   assert.equal(controller.stack.at(-2),executor.child);
   assert.throws(()=>resumed.select('invocation1',encodeProtocolRecordV8({kind:'promise.executor.finish',promise:executor.promise,
     invocation:executor.child,completion:{kind:'return',value:['undefined']}})),/active call/);

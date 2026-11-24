@@ -423,6 +423,11 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   const context={bundle,source,inventory,
     get state(){return state;},get beforeState(){return state;},get controller(){return controller;},get claims(){return claims;},
     emit,bind,tag,cell,frame,codeFor,publish,baseAllocate,baseCheckHeap,
+    bindDerived(name,value,event=null){
+      if(!Array.isArray(value)||!['undefined','null','bool','str','num','bigint'].includes(value[0]))
+        refuse('derived source binding must be a checked primitive');
+      return bind(name,value,event);
+    },
     functionCodes,functionNodes,get published(){return published;},get pendingAccessors(){return pendingAccessors;},
     key,descriptor,prototype,orderedKeys,refuse,copy,eq,
     markPublished(id){published.add(id);},

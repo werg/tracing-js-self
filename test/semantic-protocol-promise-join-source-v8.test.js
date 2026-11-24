@@ -22,7 +22,8 @@ test('source Promise joins preserve current-event allocations, duplicate depende
     const result=await verifyProtocolRegionTrainingCase(fixture(source));assert(result.exported,result.reason);
     assert.deepEqual(result.exported.sidecar.protocolExtensions,source===mixed?
       ['primitive-conversion-source/1','promise-adoption/1','promise-executor/1','promise-join/1','promise-object-source/1']:
-      ['promise-adoption/1','promise-executor/1','promise-join/1','promise-object-source/1']);
+      [...(source===rejected?['ordinary-completions-source/1']:[]),
+        'promise-adoption/1','promise-executor/1','promise-join/1','promise-object-source/1']);
     const replay=RegionExecutionHarness.replay(result.exported),restored=RegionExecutionHarness.restore(replay.checkpoint());
     assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(replay.controller));
     const records=result.exported.public.timeline.filter(row=>row.kind==='protocol').map(row=>decodeProtocolRecordV8(row.fields.line));
@@ -37,7 +38,7 @@ test('source Promise joins preserve current-event allocations, duplicate depende
 });
 test('Promise join projection routes through common admission and independently rechecks exact contexts',async()=>{
   const result=await verifyRegionTrainingCase(fixture(rejected));assert(result.exported,result.reason);
-  assert.equal(result.profile,'promise-executors-source/1');
+  assert.equal(result.profile,'composed-protocol-source/1');
   const audit=await recheckProtocolRegionEvidence(result.exported);assert.equal(audit.sourceValidated,true);
   const changed=structuredClone(result.exported);changed.contexts.at(-1).state.scheduler.ready++;
   await assert.rejects(recheckProtocolRegionEvidence(changed),/altered|changed|differs/);
