@@ -73,10 +73,12 @@ const eventClaims={
     event.operation==='call.enter'&&directRevoker||revokeProperty||
     ['property.read','property.write'].includes(event.operation)&&(
       heap(view,row?.operands[0])?.kind==='proxy'||event.completion?.type==='throw'&&
-      ['GET_PROP','GET_METHOD'].includes(view.instruction?.op)&&
-      heap(view,frame(view)?.stack?.at(-2)?.value)?.kind==='proxy')||
-    event.operation==='primitive.binary'&&view.instruction?.op==='BINARY'&&view.instruction.arg==='in'&&
-      heap(view,row?.operands[1])?.kind==='proxy'||
+      (['GET_PROP','GET_METHOD'].includes(view.instruction?.op)&&
+        heap(view,frame(view)?.stack?.at(-2)?.value)?.kind==='proxy'||
+       view.instruction?.op==='PUT_PROP'&&heap(view,frame(view)?.stack?.at(-3)?.value)?.kind==='proxy'))||
+    event.operation==='primitive.binary'&&view.instruction?.op==='BINARY'&&view.instruction.arg==='in'&&(
+      heap(view,row?.operands[1])?.kind==='proxy'||event.completion?.type==='throw'&&
+      heap(view,frame(view)?.stack?.at(-1)?.value)?.kind==='proxy')||
     event.operation==='property.delete'&&(heap(view,row?.operands[0])?.kind==='proxy'||
       event.completion?.type==='throw'&&view.instruction?.op==='DELETE_PROP'&&
       heap(view,frame(view)?.stack?.at(-2)?.value)?.kind==='proxy')||

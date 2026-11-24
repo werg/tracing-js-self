@@ -10,6 +10,7 @@ import {verifyProtocolRegionTrainingCase,recheckProtocolRegionEvidence} from '..
 import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
+import {issue51ProxyFixtures} from '../fixtures/semantic-regions/objects-issue51-proxy.js';
 
 const source=body=>'"use strict";function run(){'+body+'}';
 function archive(text){const runtime=createRuntime().startEntry({text,functionName:'run',args:[]});runtime.drive();return runtime.exportRun();}
@@ -299,5 +300,21 @@ test('source Proxy traps preserve nested calls, Symbol keys, lexical receivers, 
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
     assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion,{kind,value:['num',value]});
     assert.equal(result.exported.sidecar.sourceArtifact.sidecar.reference.extensionAudit.status,'agreed');
+  }
+});
+
+
+test('revoked property operations retain operation-specific intrinsic errors through fresh source replay',async()=>{
+  for(const operation of ['get','set','has','deleteProperty']){
+    const input=issue51ProxyFixtures.find(row=>row.id==='issue51-proxy-revoked-'+operation);
+    assert(input);
+    const result=await verifyProtocolRegionTrainingCase(input);assert(result.exported,result.reason);
+    const artifact=result.exported,controller=RegionExecutionHarness.replay(artifact).controller,
+      reference=artifact.sidecar.sourceArtifact.sidecar.reference;
+    assert.deepEqual(controller.materialize(controller.completion.value),
+      ['TypeError',"Cannot perform '"+operation+"' on a proxy that has been revoked",true]);
+    assert.equal(reference.status,'agreed');assert.equal(reference.metadataAudit.status,'agreed');
+    assert.equal(reference.completionAudit.status,'agreed');assert.equal(reference.extensionAudit.status,'agreed');
+    assert.equal((await recheckProtocolRegionEvidence(artifact)).sourceValidated,true);
   }
 });

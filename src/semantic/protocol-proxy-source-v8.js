@@ -155,10 +155,14 @@ export function createProxySourceAdapterV8(){
       stack=sourceFrame?.stack??[],
       directStack=event.completion?.type==='throw'&&instruction?.op==='DELETE_PROP'?stack:[],
       failedRead=event.completion?.type==='throw'&&['GET_PROP','GET_METHOD'].includes(instruction?.op)?stack:[],
-      base=has?row?.operands?.[1]:row?.operands?.[0]??directStack.at(-2)?.value??failedRead.at(-2)?.value,
+      failedWrite=event.completion?.type==='throw'&&instruction?.op==='PUT_PROP'?stack:[],
+      failedHas=event.completion?.type==='throw'&&has?stack:[],
+      base=has?row?.operands?.[1]??failedHas.at(-1)?.value:
+        row?.operands?.[0]??directStack.at(-2)?.value??failedRead.at(-2)?.value??failedWrite.at(-3)?.value,
       node=base?.[0]==='ref'?ctx.state.heap[base[1]]:null;
     if(node?.kind!=='proxy'||!property&&!has&&!deletion)return false;
-    const key=ctx.key(has?row.operands[0]:row?.operands?.[1]??directStack.at(-1)?.value??failedRead.at(-1)?.value);
+    const key=ctx.key(has?row?.operands?.[0]??failedHas.at(-2)?.value:
+      row?.operands?.[1]??directStack.at(-1)?.value??failedRead.at(-1)?.value??failedWrite.at(-2)?.value);
     if(event.completion?.type==='throw'){
       const operation=has?'has':deletion?'deleteProperty':event.operation==='property.read'?'get':'set';
       if(node?.targetId===null&&node?.handlerId===null){
