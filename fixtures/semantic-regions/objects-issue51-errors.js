@@ -20,5 +20,6 @@ export const issue51ErrorFixtures=Object.freeze([
   {"id":"issue51-async-caught-error-standard-properties","family":"issue51-intrinsic-error","source":"\"use strict\";async function run(x){try{\"x\" in null;}catch(error){return [error.name,error.message,Object.getPrototypeOf(error)===TypeError.prototype];}}","entry":"run","args":[4]},
   {"id":"issue51-async-caught-error-instanceof","family":"issue51-intrinsic-error","source":"\"use strict\";async function run(x){try{\"x\" in null;}catch(error){return error instanceof TypeError;}}","entry":"run","args":[4]},
   {"id":"issue51-shared-promise-caught-error-properties","family":"issue51-intrinsic-error","source":"\"use strict\";function run(x){const p=Promise.resolve(1);try{\"x\" in null;}catch(error){return [error.name,error.message,Object.getPrototypeOf(error)===TypeError.prototype];}}","entry":"run","args":[4]},
-  {"id":"issue51-async-unhandled-derived-typeerror","family":"issue51-intrinsic-error","source":"\"use strict\";async function run(x){\"x\" in null;}","entry":"run","args":[4]}
+  {"id":"issue51-async-unhandled-derived-typeerror","family":"issue51-intrinsic-error","source":"\"use strict\";async function run(x){\"x\" in null;}","entry":"run","args":[4]},
+  {"id":"issue51-promise-reaction-caught-error-properties","family":"issue51-intrinsic-error","source":"\"use strict\";function run(x){return Promise.resolve(1).then(()=>{try{\"x\" in null;}catch(error){return [error.name,error.message];}});}","entry":"run","args":[4]}
 ].map(Object.freeze));
