@@ -464,7 +464,7 @@ export function restoreProtocolStateV8(controller,snapshot){
     require(controller.frameFunctions.has(pending.child)&&controller.frameFunctions.has(pending.parent),'pending call frames');
     if(pending.operation==='get')require(pending.value===null,'getter has no assignment operand');else known(temporary,pending.value);
     const callee=heapNode(temporary,pending.callee[1]),receiver=callee.functionKind==='arrow'?
-      protocolCallReceiverV8(controller,pending.callee,callee.lexicalReceiver):pending.receiver,
+      protocolCallReceiverV8(temporary,pending.callee,callee.lexicalReceiver):pending.receiver,
       active=snapshot.callFrames.find(frame=>frame.child===pending.child);
     require(controller.frameFunctions.get(pending.child)===callee.code&&
       eq(controller.locals.get(pending.child+':this'),receiver),'pending accessor receiver or callable differs from its activation');
@@ -483,10 +483,17 @@ export function restoreProtocolStateV8(controller,snapshot){
       controller.stack.indexOf(frame.child)===controller.stack.indexOf(frame.parent)+1&&
       controller.stack.includes(frame.child)&&(!i||snapshot.callFrames[i-1].child===frame.parent),'call frame stack relationship');
     known(temporary,frame.callee);require(frame.callee[0]==='ref'&&
+      heapNode(temporary,frame.callee[1]).kind==='closure'&&
       controller.frameFunctions.get(frame.child)===heapNode(temporary,frame.callee[1]).code,'call frame callee identity');
     const called=heapNode(temporary,frame.callee[1]);
+    if(controller.stack.at(-1)===frame.child){
+      require(controller.locals.has(frame.child+':this')&&
+        eq(controller.receiver,controller.locals.get(frame.child+':this')),'active call frame receiver');
+      require(eq([...controller.captureAliases],called.captures.map(row=>[row.binding,row.cell])),
+        'active call frame captures');
+    }
     if(called.functionKind==='arrow'){
-      const captured=protocolCallReceiverV8(controller,frame.callee,called.lexicalReceiver);
+      const captured=protocolCallReceiverV8(temporary,frame.callee,called.lexicalReceiver);
       require(eq(controller.locals.get(frame.child+':this'),captured),'call frame arrow receiver/callee identity');
       if(called.callable?.lexicalConstruction){
         const observedTarget=controller.locals.get(frame.child+':lexical-newTarget'),capture=called.callable.lexicalConstruction,

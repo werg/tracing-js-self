@@ -119,6 +119,8 @@ test('retained constructor frame, receiver cell and active arrow callee reject f
   restoreForged((controller)=>{controller.heap.get(callable).callable.lexicalConstruction.frame=alternate.id;});
   restoreForged((controller)=>{controller.heap.get(callable).callable.lexicalConstruction.thisCell=alternate.bodyInvocation+':this';});
   restoreForged((_controller,protocol)=>{protocol.callFrames.at(-1).callee=['ref',captures[1].record.object];});
+  restoreForged((controller)=>{controller.receiver=['undefined'];});
+  restoreForged((controller)=>{controller.captureAliases.set('forged',lexical.thisCell);});
 });
 
 test('default derived constructors and separately branded private methods share public identities',async()=>{
