@@ -125,11 +125,18 @@ test('protocol metadata authenticates intrinsic Error type without reading mutab
     for(const key of ['name','message','stack',Symbol.toStringTag])Object.defineProperty(error,key,{get(){calls++;throw 99;},configurable:true});
     return error;})()`,context);
   const receipt=metadata.observe('error','catch',error);
-  assert.deepEqual(receipt.objects.find(node=>node.kind==='error'),{id:'r1',kind:'error',errorType:'TypeError'});
+  assert.deepEqual(receipt.objects.find(node=>node.kind==='error'),{
+    id:'r1',kind:'error',errorType:'TypeError',prototype:'TypeError.prototype',extensible:true,
+    properties:[
+      {key:['str','message'],descriptor:{kind:'accessor',get:['ref','r2'],set:['undefined'],enumerable:false,configurable:true}},
+      {key:['str','name'],descriptor:{kind:'accessor',get:['ref','r3'],set:['undefined'],enumerable:false,configurable:true}},
+      {key:['symbol','s1'],descriptor:{kind:'accessor',get:['ref','r4'],set:['undefined'],enumerable:false,configurable:true}}
+    ]
+  });
   assert.equal(context.calls,0);
   const forged=vm.runInContext('(()=>{const error=new TypeError();Object.setPrototypeOf(error,Object.create(TypeError.prototype));return error;})()',context),
     unregistered=createNativeProtocolMetadata();unregistered.setIntrinsicPrototypes(prototypes,labels);
-  assert.throws(()=>unregistered.observe('error','catch',forged),/native Error prototype is outside/);
+  assert.throws(()=>unregistered.observe('error','catch',forged),/native Error origin was not observed before its prototype changed/);
 });
 
 test('native slot access adds no process, require or internal binding to the guest realm',async()=>{

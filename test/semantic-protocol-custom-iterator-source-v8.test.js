@@ -72,11 +72,19 @@ test('nested close callbacks retain exact loop targets and pending completion ac
   }
 });
 
-test('unrepresented intrinsic iterator errors and generator cleanup remain explicit source refusals',async()=>{
+test('unrepresented intrinsic iterator errors remain explicit source refusals',async()=>{
   for(const body of [
     'const it={[Symbol.iterator](){return this;},next(){return 1;}};for(const n of it){}',
     'const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return(){return 3;}};for(const n of it){break;}',
-    'const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return:3};for(const n of it){break;}',
-    'function* g(){const it={[Symbol.iterator](){return this;},next(){return {done:true};}};for(const n of it){yield n;}}return g().next().done;'
+    'const it={[Symbol.iterator](){return this;},next(){return {done:false,value:1};},return:3};for(const n of it){break;}'
   ]){const result=await verifyProtocolRegionTrainingCase(fixture(body));assert.equal(result.status,'unsupported',result.reason);assert(!result.exported);}
+});
+
+test('an exhausted custom iterator inside a generator preserves independent public replay',async()=>{
+  const body='function* g(){const it={[Symbol.iterator](){return this;},next(){return {done:true};}};for(const n of it){yield n;}}return g().next().done;',
+    result=await verifyProtocolRegionTrainingCase(fixture(body));
+  assert(result.exported,result.reason);
+  assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion,{kind:'return',value:['bool',true]});
+  const checked=await recheckProtocolRegionEvidence(result.exported);
+  assert(checked.sourceValidated&&checked.projectionValidated&&checked.replayValidated);
 });

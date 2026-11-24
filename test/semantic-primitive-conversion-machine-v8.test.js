@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {applyProtocolRecordV8,createProtocolStateV8,restoreProtocolStateV8,PROTOCOL_MACHINE_API_V8} from '../src/semantic/protocol-state-v8.js';
 import {validateProtocolValueV8,encodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
+import {promiseIntrinsicIdV8} from '../src/semantic/protocol-promise-object-v8.js';
 import {PRIMITIVE_CONVERSION_RECORD_FIELDS,PRIMITIVE_CONVERSION_FAULTS_V8,
   validatePrimitiveConversionRecordV8,assertPrimitiveConversionNextV8,applyPrimitiveConversionRecordV8,
   restorePrimitiveConversionStateV8} from '../src/semantic/protocol-primitive-conversion-v8.js';
@@ -161,7 +162,9 @@ test('four fault causes are derived and fault records allocate only fresh bounde
     assert.equal(row(c).fault,cause);refuse(c,{kind:'conversion.fault',id:'convert',error:'occupied'},/duplicate allocation identity/);
     refuse(c,{kind:'conversion.fault',id:'convert',error:'error',message:'invented'},/fields/);
     apply(c,{kind:'conversion.fault',id:'convert',error:'error'});
-    assert.deepEqual([...c.heap.get('error').properties],[['name',['str','TypeError']],['message',['str',PRIMITIVE_CONVERSION_FAULTS_V8[cause]]]]);
+    assert.deepEqual([...c.heap.get('error').properties],[['message',['str',PRIMITIVE_CONVERSION_FAULTS_V8[cause]]]]);
+    assert.deepEqual(c.heap.get('error').prototype,['ref',promiseIntrinsicIdV8('TypeError.prototype')]);
+    apply(c,{kind:'property.get',object:'error',key:['str','name'],receiver:['ref','error'],result:['str','TypeError']});
     // The caught object is ordinary mutable state. A later mutation must not
     // invalidate the retained fact that conversion originally produced it.
     apply(c,define('error',['str','message'],data(['str','changed by catch'])));

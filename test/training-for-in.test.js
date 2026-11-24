@@ -48,10 +48,12 @@ test('enumeration cursor is serialized independently and forged order is rejecte
   event.stateChanges.find(p=>p.after?.kind==='enumerator').after.keys.reverse();
   assert.throws(()=>validateBundle(forged),/lost key order/);
 });
-test('proxy enumeration requires its trap protocol',()=>{
-  for(const body of ['for(const k in new Proxy({a:1},{})){}']){
+test('transparent Proxy enumeration matches native keys while effectful traps require their protocol',()=>{
+  runtimeDifferential('const out=[];for(const key in new Proxy({a:1},{}))out.push(key);return out;');
+  runtimeDifferential('const out=[];for(const key in new Proxy(new Proxy({a:1},{}),{}))out.push(key);return out;');
+  for(const body of ['for(const k in new Proxy({a:1},{ownKeys(){return ["a"];}})){}']){
     const runtime=createRuntime().startEntry({text:'"use strict";function run(){'+body+'}',functionName:'run'});
-    assert.throws(()=>runtime.drive(),/For-in/);
+    assert.throws(()=>runtime.drive(),/Proxy enumeration trap requires ordered owned internal-method continuation/);
   }
 });
 

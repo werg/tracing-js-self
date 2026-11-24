@@ -276,9 +276,9 @@ test('every inherited-getter benchmark input preserves callable capability and o
   }
 });
 
-test('independent callable observations reject a consistently nonconstructible teacher and public replay',async()=>{
+test('forged nonconstructible function metadata fails projection and independent observations',async()=>{
   const source='"use strict";function run(){function helper(){return 99;}const kept={helper};const proto={get n(){return 3;}};const o=Object.create(proto);return o.n;}',
-    original=Runtime.prototype.commit;let mutant;
+    expected=build(source),original=Runtime.prototype.commit;let mutant;
   try{
     Runtime.prototype.commit=function(operation,callback,options){return original.call(this,operation,(draft,eventId)=>{
       const result=callback(draft,eventId),code=Object.values(this.programs).flatMap(program=>program.instructions)
@@ -286,11 +286,14 @@ test('independent callable observations reject a consistently nonconstructible t
       if(code)for(const node of Object.values(draft.heap))if(node.kind==='function'&&node.codeId===code)node.nonConstructible=true;
       return result;
     },options);};
-    mutant=build(source); // The archive and its public replay agree on the same incorrect capability.
+    const runtime=createRuntime({maxSteps:10000}).startEntry({text:source,functionName:'run',args:[]});
+    runtime.drive();mutant=runtime.exportRun();
+    assert.throws(()=>compileProtocolSourceV8(mutant,{adapters:[createConstructionSourceAdapterV8]}),
+      /method construction capability requires explicit function metadata/);
   }finally{Runtime.prototype.commit=original;}
-  assert.deepEqual(mutant.compiled.outcome.graph.roots.at(-1),['num',3]);replay(mutant.compiled);
-  await assert.rejects(()=>auditProtocolSourceV8({bundle:mutant.bundle,
-    referenceInput:{source,entry:'run',inputGraph:encodeNativeGraph([])},outcome:mutant.compiled.outcome}),/metadataAudit.*mismatch/);
+  assert.deepEqual(expected.compiled.outcome.graph.roots.at(-1),['num',3]);replay(expected.compiled);
+  await assert.rejects(()=>auditProtocolSourceV8({bundle:mutant,
+    referenceInput:{source,entry:'run',inputGraph:encodeNativeGraph([])},outcome:expected.compiled.outcome}),/metadataAudit.*mismatch/);
 });
 
 test('every ordinary-constructor benchmark input qualifies through shared public construction and prototype records',async()=>{

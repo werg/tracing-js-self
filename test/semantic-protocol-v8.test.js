@@ -203,20 +203,26 @@ test('nested protocol completions preserve their active scheduler job and restor
     const c=controller();apply(c,
       {kind:'bind',name:'captured',value:['num',1]},
       allocation('receiver'),
+      allocation('callback',[],{objectKind:'closure',code:'callback',functionKind:'ordinary',captures:[{binding:'parent',cell:'captured'}]}),
       allocation('helper',[],{objectKind:'closure',code:'helper',functionKind:'ordinary',captures:[{binding:'value',cell:'captured'}]}));
-    c.activeJob='job1';c.captureAliases=new Map([['parent','captured']]);
+    c.rootInvocation='invocation1';c.activeJob='job1';c.captureAliases=new Map([['parent','captured']]);
+    c.jobs.set('job1',{status:'running',owner:'invocation1',closure:'callback'});
     const before=wire(c);
     assert.throws(()=>apply(c,{kind,invocation:'invocation1',value:['num',2]}),/scheduler profile/);
     assert.deepEqual(wire(c),before);
+    apply(c,{kind:'call',child:'job:job1',callee:['ref','callback'],receiver:['undefined'],arguments:[]});
     apply(c,{kind:'call',child:'helper1',callee:['ref','helper'],receiver:['ref','receiver'],arguments:[]});
     assert.deepEqual(c.receiver,['ref','receiver']);
     assert.equal(c.captureAliases.get('value'),'captured');
     assert.throws(()=>assertProtocolDetailCompatible(c,{kind,fields:{value:['num',2]}}),/scoped/);
     apply(c,{kind,invocation:'helper1',value:['num',2]});
-    assert.equal(c.activeJob,'job1');assert.deepEqual(c.stack,['invocation1']);
+    assert.equal(c.activeJob,'job1');assert.deepEqual(c.stack,['invocation1','job:job1']);
     assert.deepEqual(c.receiver,['undefined']);assert.deepEqual([...c.captureAliases],[['parent','captured']]);
-    assert.deepEqual(c.lastReturn,{kind,value:['num',2]});assert.equal(c.protocol.callFrames.length,0);
-    assert.throws(()=>apply(c,{kind,invocation:'invocation1',value:['num',2]}),/scheduler profile/);
+    assert.deepEqual(c.lastReturn,{kind,value:['num',2]});assert.equal(c.protocol.callFrames.length,1);
+    assert.throws(()=>apply(c,{kind,invocation:'invocation1',value:['num',2]}),/wrong active invocation/);
+    apply(c,{kind,invocation:'job:job1',value:['num',2]});
+    assert.deepEqual(c.jobs.get('job1').returned,{kind,value:['num',2]});
+    assert.deepEqual(c.stack,[]);assert.equal(c.protocol.callFrames.length,0);
   }
 });
 

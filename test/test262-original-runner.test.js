@@ -960,8 +960,14 @@ test('both authorities apply the original byte budget before parse-negative succ
   statuses(both(body,{profile:ownedTest262Profile({maxSourceBytes:Buffer.byteLength(source(body))})}),'passed');
 });
 
-test('unimplemented declared Error mutations and async generators refuse instead of forging conformance',()=>{
-  for(const body of ['var error=new TypeError();error.constructor=RangeError;',
-    'Object.defineProperty(new TypeError(),"constructor",{value:RangeError});','async function* values(){}'])
-    for(const options of fixture(body))assert.equal(executeOfficialTest262Variant(options).status,'unsupported');
+test('declared Error constructor mutations agree with the original source reference',()=>{
+  for(const body of [
+    'var error=new TypeError();error.constructor=RangeError;assert.sameValue(error.constructor,RangeError);assert.sameValue(error instanceof TypeError,true);',
+    'var error=new TypeError();Object.defineProperty(error,"constructor",{value:RangeError});assert.sameValue(error.constructor,RangeError);assert.sameValue(error instanceof TypeError,true);'
+  ])statuses(both(body),'passed');
+});
+
+test('unimplemented async generators refuse instead of forging conformance',()=>{
+  for(const options of fixture('async function* values(){}'))
+    assert.equal(executeOfficialTest262Variant(options).status,'unsupported');
 });
