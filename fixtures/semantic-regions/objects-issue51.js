@@ -1,3 +1,4 @@
+import {issue51ProxyFixtures,issue51ProxyUnsupportedControls} from './objects-issue51-proxy.js';
 import {issue51ConstructionFixtures,issue51ConstructionUnsupportedControls} from './objects-issue51-construction.js';
 
 // Original-source fixtures for issue 51. These exact source strings are also
@@ -7,6 +8,7 @@ const withIssue51Lineage=rows=>Object.freeze(rows.map(row=>Object.freeze({...row
 
 export const issue51ObjectFixtures=withIssue51Lineage([
   ...issue51ConstructionFixtures,
+  ...issue51ProxyFixtures,
   Object.freeze({id:'issue51-has-in-reflect-symbol-accessor',family:'issue51-property-existence',
     source:'"use strict";function run(x){let events=[];const token=Symbol("token");const proto={get inherited(){events.push("get");return 1;}};Object.defineProperty(proto,token,{value:3,enumerable:true});const object=Object.create(proto);function receiver(){events.push("receiver");return object;}function key(){events.push("key");return "inherited";}const first=key() in receiver();const second=Reflect.has(receiver(),token);return [first,second,events];}',
     entry:'run',args:[4]}),
@@ -95,6 +97,7 @@ export const issue51ObjectFixtures=withIssue51Lineage([
 
 export const issue51UnsupportedControls=withIssue51Lineage([
   ...issue51ConstructionUnsupportedControls,
+  ...issue51ProxyUnsupportedControls,
   Object.freeze({id:'issue51-control-for-in-prototype-replacement',family:'issue51-unsupported-control',
     source:'"use strict";function run(x){const object={a:1,b:2};for(const key in object)Object.setPrototypeOf(object,{p:1});return 7;}',
     entry:'run',args:[4]}),
