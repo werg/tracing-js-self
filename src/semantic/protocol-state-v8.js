@@ -271,6 +271,62 @@ function scheduledChild(controller,identity,job){
   }
   return 'job:'+identity;
 }
+function scheduledCallbackFrame(controller,frame){
+  const identity=controller.activeJob,job=identity===null||identity===undefined?null:controller.jobs?.get(identity),
+    callback=scheduledCallback(job);
+  return Boolean(job?.status==='running'&&!['adopt','adoption'].includes(job.reaction)&&callback&&
+    frame.child===scheduledChild(controller,identity,job)&&eq(frame.callee,['ref',callback]));
+}
+function scheduledParameterAliases(controller,identity,job,callback,frame){
+  const node=controller.heap.get(callback),definition=job.callbackDefinition,bindings=job.parameterBindings;
+  require(node?.kind==='closure'&&definition&&
+    Object.keys(definition).length===4&&['code','name','start','params'].every(key=>Object.hasOwn(definition,key))&&
+    definition.code===node.code&&(definition.name===null||typeof definition.name==='string'&&definition.name.length>0)&&
+    Number.isSafeInteger(definition.start)&&definition.start>=0&&
+    (definition.code===definition.name||definition.code==='function:'+definition.start)&&
+    Array.isArray(definition.params)&&definition.params.length<=256&&
+    definition.params.every(name=>name===null||typeof name==='string'&&name.length>0)&&
+    Array.isArray(bindings),'scheduled callback source parameter definition');
+  const sourceFunctions=analyzeSemanticProgram(controller.source.source).functions,
+    sourceFunction=sourceFunctions.find(fn=>fn.start===definition.start);
+  require(sourceFunction&&sourceFunction.name===definition.name&&eq(sourceFunction.params,definition.params)&&
+    (node.code===sourceFunction.name||node.code==='function:'+sourceFunction.start),
+    'scheduled callback parameter definition differs from immutable source');
+  const indices=definition.params.map((name,index)=>name===null?null:index).filter(index=>index!==null);
+  require(bindings.length===indices.length,'scheduled callback parameter binding count');
+  const aliases=new Map((node.captures??[]).map(row=>[row.binding,row.cell]));
+  bindings.forEach((row,offset)=>{
+    const index=indices[offset],name=definition.params[index],base='j'+identity+'p'+index,
+      initial=frame.arguments[index]??['undefined'];
+    const suffix=typeof row?.cell==='string'?row.cell.slice(base.length):'',
+      validCell=row?.cell===base||row?.cell.startsWith(base+'x')&&/^[1-9][0-9]*$/.test(suffix.slice(1));
+    require(row&&Object.keys(row).length===4&&['binding','index','cell','initialValue'].every(key=>Object.hasOwn(row,key))&&
+      row.binding===name&&row.index===index&&typeof row.cell==='string'&&
+      row.cell.length>0&&row.cell.length<=256&&validCell&&
+      eq(row.initialValue,initial)&&controller.locals.has(row.cell),
+      'scheduled callback parameter binding receipt');
+    known(controller,row.initialValue);known(controller,controller.locals.get(row.cell));
+    aliases.set(row.binding,row.cell);
+  });
+  return aliases;
+}
+function validateScheduledCallerCompletion(controller,job){
+  require(Object.hasOwn(job,'priorPending')&&Object.hasOwn(job,'priorLastReturn'),
+    'active scheduler job lacks its saved caller completion');
+  const priorPending=job.priorPending;
+  if(priorPending!==null){
+    assertAlgorithmFields(priorPending,['kind','value',...(Object.hasOwn(priorPending,'handler')?['handler']:[])],
+      'scheduled caller completion');
+    require(['return','throw','cleanup'].includes(priorPending.kind),'scheduled caller completion kind');
+    known(controller,priorPending.value);
+  }
+  const priorLastReturn=job.priorLastReturn;
+  if(priorLastReturn!==null){
+    assertAlgorithmFields(priorLastReturn,['kind','value'],'scheduled caller return');
+    require(['return','throw'].includes(priorLastReturn.kind),'scheduled caller return kind');
+    known(controller,priorLastReturn.value);
+  }
+}
 export function activateProtocolCallV8(controller,record){
   call(controller,record);
   return copy(state(controller).callFrames.at(-1));
@@ -532,9 +588,16 @@ export function restoreProtocolStateV8(controller,snapshot){
       require(frame.proxyReflectionScope.kind==='proxy.defineProperty'&&isAlgorithmDataRecord(frame.proxyReflectionScope.definition),
         'Proxy reflection call scope kind/definition');
     }
+    const suspendedCallback=[...(controller.continuations?.values()??[])].some(continuation=>
+      continuation.invocation===frame.child&&continuation.activeJob!==undefined&&continuation.activeJob!==null&&
+      ['waiting','ready'].includes(continuation.state));
+    const activeRelationship=controller.stack.includes(frame.child)&&controller.stack.includes(frame.parent)&&
+      controller.stack.indexOf(frame.child)===controller.stack.indexOf(frame.parent)+1;
+    const suspendedRelationship=suspendedCallback&&!controller.stack.includes(frame.child)&&
+      controller.stack.includes(frame.parent)&&frame.parent===controller.rootInvocation;
     require(typeof frame.child==='string'&&typeof frame.parent==='string'&&
-      controller.stack.indexOf(frame.child)===controller.stack.indexOf(frame.parent)+1&&
-      controller.stack.includes(frame.child)&&(!i||snapshot.callFrames[i-1].child===frame.parent),'call frame stack relationship');
+      (activeRelationship||suspendedRelationship)&&
+      (!i||snapshot.callFrames[i-1].child===frame.parent),'call frame stack relationship');
     known(temporary,frame.callee);require(frame.callee[0]==='ref'&&
       heapNode(temporary,frame.callee[1]).kind==='closure'&&
       controller.frameFunctions.get(frame.child)===heapNode(temporary,frame.callee[1]).code,'call frame callee identity');
@@ -542,8 +605,9 @@ export function restoreProtocolStateV8(controller,snapshot){
     if(controller.stack.at(-1)===frame.child){
       require(controller.locals.has(frame.child+':this')&&
         eq(controller.receiver,controller.locals.get(frame.child+':this')),'active call frame receiver');
-      require(eq([...controller.captureAliases],called.captures.map(row=>[row.binding,row.cell])),
-        'active call frame captures');
+      if(!scheduledCallbackFrame(controller,frame))
+        require(eq([...controller.captureAliases],called.captures.map(row=>[row.binding,row.cell])),
+          'active call frame captures');
     }
     if(called.functionKind==='arrow'){
       const captured=protocolCallReceiverV8(temporary,frame.callee,called.lexicalReceiver);
@@ -571,19 +635,7 @@ export function restoreProtocolStateV8(controller,snapshot){
     require(job?.status==='running'&&job.owner===controller.rootInvocation&&callback&&
       Object.hasOwn(job,'priorPending')&&Object.hasOwn(job,'priorLastReturn'),
       'active scheduler job lacks its selected callback or saved caller completion');
-    const priorPending=job.priorPending;
-    if(priorPending!==null){
-      assertAlgorithmFields(priorPending,['kind','value',...(Object.hasOwn(priorPending,'handler')?['handler']:[])],
-        'scheduled caller completion');
-      require(['return','throw','cleanup'].includes(priorPending.kind),'scheduled caller completion kind');
-      known(temporary,priorPending.value);
-    }
-    const priorLastReturn=job.priorLastReturn;
-    if(priorLastReturn!==null){
-      assertAlgorithmFields(priorLastReturn,['kind','value'],'scheduled caller return');
-      require(['return','throw'].includes(priorLastReturn.kind),'scheduled caller return kind');
-      known(temporary,priorLastReturn.value);
-    }
+    validateScheduledCallerCompletion(temporary,job);
     if(job.returned!==undefined){
       assertAlgorithmFields(job.returned,['kind','value'],'scheduled callback completion');
       require(['return','throw'].includes(job.returned.kind)&&!frame&&!controller.stack.includes(child),
@@ -596,7 +648,31 @@ export function restoreProtocolStateV8(controller,snapshot){
         eq(job.priorAliases,frame.priorAliases)&&controller.stack.includes(child)&&
         controller.stack.indexOf(child)===controller.stack.indexOf(controller.rootInvocation)+1,
         'active scheduler callback differs from its retained call frame');
+      const aliases=scheduledParameterAliases(controller,controller.activeJob,job,callback,frame);
+      if(controller.stack.at(-1)===child)
+        require(eq([...controller.captureAliases],[...aliases]),'active scheduler callback parameter aliases');
     }
+  }
+  for(const [continuationId,continuation]of controller.continuations??[]){
+    if(!['waiting','ready'].includes(continuation.state)||continuation.activeJob===undefined||
+       continuation.activeJob===null||continuation.activeJob===controller.activeJob)continue;
+    const identity=continuation.activeJob,job=controller.jobs?.get(identity);
+    if(!job||['adopt','adoption'].includes(job.reaction))continue;
+    const callback=scheduledCallback(job),child=scheduledChild(controller,identity,job),
+      frame=snapshot.callFrames.find(row=>row.child===child),
+      expectedArguments=job.promise&&job.reaction!=='finally'?[job.originalResult]:[];
+    require(job.status==='running'&&job.owner===controller.rootInvocation&&callback&&
+      continuation.invocation===child&&!controller.stack.includes(child)&&
+      controller.stack.includes(controller.rootInvocation)&&frame&&frame.parent===controller.rootInvocation&&
+      eq(frame.callee,['ref',callback])&&eq(frame.arguments,expectedArguments)&&
+      eq(job.priorReceiver,frame.priorReceiver)&&eq(job.priorAliases,frame.priorAliases)&&
+      job.returned===undefined,'suspended scheduler callback differs from its retained frame');
+    validateScheduledCallerCompletion(controller,job);
+    const aliases=scheduledParameterAliases(controller,identity,job,callback,frame);
+    require(eq(continuation.captureAliases,[...aliases])&&
+      eq(continuation.receiver,controller.locals.get(child+':this'))&&
+      eq([...controller.captureAliases],job.priorAliases)&&eq(controller.receiver,job.priorReceiver),
+      'suspended scheduler callback lost its retained receiver or parameter aliases');
   }
   for(const row of snapshot.symbols)require(!controller.heap.has(row.id),'Symbol/object identity collision');
   for(const [id,node]of controller.heap){

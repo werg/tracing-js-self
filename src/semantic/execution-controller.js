@@ -356,8 +356,8 @@ export class SemanticExecutionController {
         this.frameFunctions.set(f.child,callee);
         this.stack.push(f.child);
       }else if(kind==='return'||kind==='throw'){
-        if(this.protocol&&this.activeJob&&this.stack.length===2&&this.stack.at(-1)===invocation){
-          PROTOCOL_MACHINE_API_V8.complete(this,{kind,invocation,value:structuredClone(f.value)});
+        if(this.protocol&&this.activeJob&&this.stack.length===2&&this.stack.at(-1)===f.invocation){
+          PROTOCOL_MACHINE_API_V8.complete(this,{kind,invocation:f.invocation,value:structuredClone(f.value)});
         }else if(this.stack.length===1&&this.activeJob){
           this.stack.pop();this.jobs.get(this.activeJob).returned={kind,value:structuredClone(f.value)};
         }else if(this.stack.length>1){
@@ -494,7 +494,9 @@ export class SemanticExecutionController {
         this.refreshReady();
       }else if(kind==='resume'){
         const continuation=this.continuations.get(f.continuation);
-        if(this.stack.length||this.ready[0]!==f.continuation||
+        const suspendedJobRoot=Boolean(continuation?.activeJob)&&this.stack.length===1&&
+          this.stack[0]===this.rootInvocation;
+        if(this.stack.length&&!suspendedJobRoot||this.ready[0]!==f.continuation||
            continuation?.state!=='ready'||continuation.invocation!==f.invocation)
           fail('continuation','Resume violates owned dependency, turn ownership or FIFO order');
         const promise=this.promise(continuation.promise);
@@ -551,13 +553,23 @@ export class SemanticExecutionController {
               const fn=analyzeSemanticProgram(this.source.source).functions.find(fn=>
                 fn.name===closure.code||'function:'+fn.start===closure.code);
               if(!fn)fail('capture','Promise reaction closure has no source site');
-              for(const [index,name] of fn.params.entries())if(name){
+              if(!Array.isArray(fn.params)||fn.params.length>256||
+                 fn.params.some(name=>name!==null&&(typeof name!=='string'||!name))||
+                 fn.name!==null&&(typeof fn.name!=='string'||!fn.name)||!Number.isSafeInteger(fn.start)||fn.start<0)
+                fail('capture','Promise reaction has malformed immutable parameter definitions');
+              job.callbackDefinition={code:closure.code,name:fn.name,start:fn.start,
+                params:structuredClone(fn.params)};
+              const parameterBindings=[];
+              for(const [index,name] of fn.params.entries())if(name!==null){
                 const base='j'+f.job+'p'+index;
                 let cell=base,ordinal=0;
                 while(this.locals.has(cell))cell=base+'x'+(++ordinal);
                 this.captureAliases.set(name,cell);
-                this.locals.set(cell,index===0?structuredClone(argument):['undefined']);
+                const initialValue=index===0?structuredClone(argument):['undefined'];
+                this.locals.set(cell,initialValue);
+                parameterBindings.push({binding:name,index,cell,initialValue:structuredClone(initialValue)});
               }
+              job.parameterBindings=parameterBindings;
               this.activeJob=f.job;
           }
         }else{
@@ -565,11 +577,11 @@ export class SemanticExecutionController {
           if(this.jobs.get(f.job)?.status!=='running')
             fail('job','Complete requires a running owned job');
           const job=this.jobs.get(f.job);
-          if(this.stack.length||this.activeJob&&this.activeJob!==f.job)
-            fail('job','Cannot complete a running callback frame');
           if([...this.continuations.values()].some(continuation=>
             continuation.activeJob===f.job&&continuation.state!=='resumed'))
             fail('job','Cannot complete a suspended callback frame');
+          if(this.stack.length||this.activeJob&&this.activeJob!==f.job)
+            fail('job','Cannot complete a running callback frame');
           job.status='completed';
           if(this.activeJob===f.job){
             this.captureAliases=new Map(job.priorAliases);
