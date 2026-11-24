@@ -1,7 +1,7 @@
 {
   "schema": "semantic-v8-interoperability/1",
-  "contractDigest": "39a27911db67db3d1848a503a4d743f3c1cc9b699b6d2404d363dc37ce8d0a9d",
-  "interoperabilityDigest": "62e5f6862fc1498a3b56b823b5d7f5a6573a09bb0831075786d0ea92226a22f7",
+  "contractDigest": "ef501aa5c4e5a41b77a7c7c58e0f38dc2ee6d0ae3ef1aa6b6c91e304ddbf6c2f",
+  "interoperabilityDigest": "96e88ce302fd61ac508291eb4e6c7549b76d8b24e2cef6a3c4fbe0b9c215dbd6",
   "examples": [
     {
       "id": "ordered-map",
@@ -9966,8 +9966,10 @@
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -10143,8 +10145,10 @@
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -10333,8 +10337,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -10546,8 +10552,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -10767,8 +10775,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -11011,8 +11021,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -11277,8 +11289,10 @@
                 ]
               },
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -11543,8 +11557,10 @@
                 ]
               },
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -11812,8 +11828,10 @@
                 ]
               },
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -12108,8 +12126,10 @@
                 ]
               },
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -12394,8 +12414,10 @@
                 ]
               },
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -12683,8 +12705,10 @@
                 ]
               },
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -12978,8 +13002,10 @@
                 ]
               },
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -13248,8 +13274,10 @@
                 ]
               },
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -14249,7 +14277,7 @@
                 "region": "r1",
                 "regionDigest": "8d791fead76f581795a4dddaac5813a2b12b365a01ba3c2dc7b71ed2127d6537",
                 "visibleThrough": 54,
-                "stateDigest": "dabd01bcfe30d5dde8a251f72ab7cb22421998430c731e0a1de0d2f96157600e"
+                "stateDigest": "1e331e1b4c668dd1077998ee99a71ab6845f9a7255954ea629b994bd36f678da"
               },
               "line": "region {\"bindings\":[],\"completion\":{\"kind\":\"return\",\"value\":[\"num\",1]},\"decisions\":[],\"region\":\"r1\"}"
             }
@@ -14813,8 +14841,10 @@
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -15067,8 +15097,10 @@
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -15333,8 +15365,10 @@
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -15612,8 +15646,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -15923,8 +15959,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -16246,8 +16284,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -16577,8 +16617,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -16925,8 +16967,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -17290,8 +17334,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -17663,8 +17709,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -18053,8 +18101,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -18450,8 +18500,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -18854,8 +18906,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -19258,8 +19312,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -19662,8 +19718,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -20066,8 +20124,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -20497,8 +20557,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -20928,8 +20990,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -21349,8 +21413,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -21777,8 +21843,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -22205,8 +22273,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -22640,8 +22710,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -23082,8 +23154,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -23530,8 +23604,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -23985,8 +24061,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -24463,8 +24541,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -24947,8 +25027,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -25431,8 +25513,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -25942,8 +26026,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -26463,8 +26549,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -27007,8 +27095,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -27568,8 +27658,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -28113,8 +28205,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -28659,8 +28753,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -29205,8 +29301,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -29751,8 +29849,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -30297,8 +30397,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -30843,8 +30945,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -31396,8 +31500,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -31943,8 +32049,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -32495,8 +32603,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -33047,8 +33157,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -33599,8 +33711,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -34151,8 +34265,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -34703,8 +34819,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -35287,8 +35405,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -35871,8 +35991,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -36455,8 +36577,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -37049,8 +37173,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -37622,8 +37748,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -38176,8 +38304,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -38725,8 +38855,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -38751,7 +38883,7 @@
             "closureQueue": []
           },
           "visibleThrough": 55,
-          "prefixDigest": "7d2a61751ecb20688babe7e29377fc45093545c1850bda839b30d4f8a6e3b285"
+          "prefixDigest": "261391ec0f2b48c6dd77bb439a4dba04bed7c48cc2beca6f51582152fa4f9beb"
         }
       ],
       "sourceCheck": "agreed",
@@ -39775,7 +39907,7 @@
                 "region": "r1",
                 "regionDigest": "5d032d93ec0e28bbddc69bd2cf7ac70401a46ea478ccf335086fab0f18c3caef",
                 "visibleThrough": 56,
-                "stateDigest": "361dd0eb913a55f9d311a84080aa22e5eb16ea2dc50623a48c6b882957e8b1fa"
+                "stateDigest": "95adcde519fb9531243f35df6867ce08d417f88b35ff3da3ddf5f2f28b942780"
               },
               "line": "region {\"bindings\":[],\"completion\":{\"kind\":\"return\",\"value\":[\"num\",2]},\"decisions\":[],\"region\":\"r1\"}"
             }
@@ -40369,8 +40501,10 @@
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -40633,8 +40767,10 @@
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -40909,8 +41045,10 @@
               "construction": null,
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -41198,8 +41336,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -41519,8 +41659,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -41852,8 +41994,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -42193,8 +42337,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -42551,8 +42697,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -42926,8 +43074,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -43309,8 +43459,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -43709,8 +43861,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -44116,8 +44270,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -44530,8 +44686,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -44944,8 +45102,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -45358,8 +45518,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -45779,8 +45941,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -46200,8 +46364,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -46648,8 +46814,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -47096,8 +47264,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -47534,8 +47704,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -47979,8 +48151,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -48424,8 +48598,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -48876,8 +49052,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -49335,8 +49513,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -49800,8 +49980,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -50272,8 +50454,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -50767,8 +50951,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -51268,8 +51454,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -51769,8 +51957,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -52270,8 +52460,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -52798,8 +52990,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -53336,8 +53530,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -53897,8 +54093,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -54475,8 +54673,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -55037,8 +55237,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -55600,8 +55802,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -56163,8 +56367,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -56726,8 +56932,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -57289,8 +57497,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -57853,8 +58063,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -58417,8 +58629,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -58988,8 +59202,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -59564,8 +59780,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -60140,8 +60358,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -60716,8 +60936,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -61292,8 +61514,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -61868,8 +62092,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -62476,8 +62702,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -63084,8 +63312,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -63692,8 +63922,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -64310,8 +64542,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -64907,8 +65141,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -65485,8 +65721,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -66058,8 +66296,10 @@
               },
               "primitiveConversions": null,
               "numberConversions": null,
+              "proxyReflection": null,
               "proxyCalls": null,
-              "promiseExecutors": null
+              "promiseExecutors": null,
+              "collections": null
             }
           },
           "regionCursor": {
@@ -66084,7 +66324,7 @@
             "closureQueue": []
           },
           "visibleThrough": 57,
-          "prefixDigest": "8021f12b8aa2f2c7f5d45eb701ee58e18b0a254c02b2365f97965ce6fc5d8ce9"
+          "prefixDigest": "045e4aa34d00ca44ffe210e12d6bc5af064807bc92373120ab99f5fab46dd0e0"
         }
       ],
       "sourceCheck": "agreed",
