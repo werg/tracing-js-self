@@ -87,9 +87,9 @@ Parsing a class does not qualify its constructor continuation. An owned Promise 
 
 ### 2.3 What is already supported, and what expands next
 
-The following matrix is a starting inventory, not a replacement for executable per-case dispositions.
+This matrix preserves an earlier planning inventory, with incremental updates to selected rows; its expansion column is not a complete statement of current support. Ordinary nested-array bindings, standard Error properties, and live enumeration have since gained verified bounded support. For present scope claims, use the [verified V8 coverage matrix](../SEMANTIC_REGIONS_V8.md#current-bounded-coverage-and-qualification) and [issue51 scope and evidence](../issue51-object-semantics.md).
 
-| Family | Current bounded starting point | Expansion beyond it |
+| Family | Bounded starting point (planning baseline) | Expansion beyond it |
 | --- | --- | --- |
 | Primitive/local computation | Arithmetic, lazy choices, mutable cells, and compact blocks around checked boundaries. | Nested-frame compact regions, richer local inputs, wider numeric/operator coverage, and operation-specific guards. |
 | Ordinary objects and closures | Symbols, descriptors, prototypes, accessors, live captured cells, receiver restoration, and selected array mutation. | General references/internal methods, first-class intrinsic identities, partial failures, and wider observable lookup. |
