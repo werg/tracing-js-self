@@ -11,7 +11,8 @@ const memory='owned-binary-memory/1',iterator='builtin-iterator/1',generator='sy
 const memoryKinds=new Set(['array-buffer','shared-int32-buffer','typed-array','shared-int32-view','data-view','shared-data-view']);
 const constructors=new Set(['ArrayBuffer','SharedArrayBuffer','DataView',...Object.keys(SHARED_TYPES)]);
 const iteratorNames=new Set(['Array.prototype.values','Array.prototype.keys','Array.prototype.entries',
-  'String.prototype.iterator','Iterator.next','Iterator.identity']);
+  'String.prototype.iterator','Set.prototype.values','Set.prototype.keys','Set.prototype.entries',
+  'Map.prototype.keys','Map.prototype.values','Map.prototype.entries','Iterator.next','Iterator.identity']);
 const baseBuiltins=new Set(['Array.prototype.push','Array.prototype.pop','Symbol','Symbol.for','Symbol.keyFor',
   'Symbol.prototype.toString','Symbol.prototype.valueOf','Object.hasOwn','Reflect.has','Reflect.deleteProperty','Reflect.ownKeys','Object.keys',
   'Object.getOwnPropertyNames','Object.getOwnPropertySymbols','Object.entries','Object.values','Object.defineProperty','Object.preventExtensions',
@@ -99,14 +100,17 @@ const eventClaims={
   },
   [collection](view,{event,row}){
     const raw=row?.operands?.[0]??event.operands?.[0],name=builtin(callee(raw));
-    if(event.operation==='object.construct'&&raw?.[0]==='intrinsic'&&raw[1]==='Set')return true;
+    if(event.operation==='object.construct'&&raw?.[0]==='intrinsic'&&['Set','Map'].includes(raw[1]))return true;
     const baseValue=event.operation==='property.read'?row?.operands?.[0]:
-      raw?.[0]==='method'?raw[2]:null,base=heap(view,baseValue);
-    if(event.operation==='property.read'&&base?.kind==='set'){
-      const key=row?.operands?.[1];return key?.[0]==='str'&&['add','has'].includes(key[1]);
+      raw?.[0]==='method'?raw[2]:null,base=heap(view,baseValue),kind=base?.kind;
+    if(event.operation==='property.read'&&['set','map'].includes(kind)){
+      const key=row?.operands?.[1],methods=kind==='set'?['add','has','delete','clear']:['get','set','has','delete','clear'];
+      return key?.[0]==='str'&&(key[1]==='size'||methods.includes(key[1]));
     }
-    return event.operation==='call.enter'&&['Set.prototype.add','Set.prototype.has'].includes(name)&&
-      heap(view,raw?.[0]==='method'?raw[2]:null)?.kind==='set';
+    return event.operation==='call.enter'&&
+      (name?.startsWith('Set.prototype.')&&['add','has','delete','clear'].includes(name.slice(14))||
+       name?.startsWith('Map.prototype.')&&['get','set','has','delete','clear'].includes(name.slice(14)))&&
+      ['set','map'].includes(heap(view,raw?.[0]==='method'?raw[2]:null)?.kind);
   },
   [iterator](view,{event,row}){
     const inst=view.instruction;
@@ -191,7 +195,7 @@ function allocationOwner(view,node){
   if(node.generatorFunction||node.kind==='generator')return generator;
   if(node.kind==='function'&&enabled(view,construction))return construction;
   if(memoryKinds.has(node.kind))return memory;
-  if(node.kind==='set')return collection;
+  if(node.kind==='set'||node.kind==='map')return collection;
   if(node.kind==='iterator')return iterator;
   if(node.kind==='enumerator')return enumeration;
   if(node.kind==='proxy')return proxy;

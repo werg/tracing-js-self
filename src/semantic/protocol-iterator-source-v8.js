@@ -3,7 +3,9 @@
 const id='builtin-iterator/1';
 const fields=['iterated','nextIndex','done','iterationKind','properties','propertyVersions','shapeVersion'];
 const factories=new Map([['Array.prototype.values','values'],['Array.prototype.keys','keys'],
-  ['Array.prototype.entries','entries'],['String.prototype.iterator','string']]);
+  ['Array.prototype.entries','entries'],['String.prototype.iterator','string'],
+  ['Set.prototype.values','set-values'],['Set.prototype.entries','set-entries'],
+  ['Map.prototype.keys','map-keys'],['Map.prototype.values','map-values'],['Map.prototype.entries','map-entries']]);
 const builtinNames=new Set([...factories.keys(),'Iterator.next','Iterator.identity']);
 function instruction(ctx,event){const frame=ctx.getOwnedFrame(event.invocationId);
   return ctx.bundle.programs[frame?.codeId]?.instructions[frame.pc];}
@@ -71,8 +73,9 @@ export function createIteratorSourceAdapterV8(){let arrayLoops=new Set();return 
       ctx.refuse('iterator step lacks its exact result object');
     const done=result.properties.done.value[1],value=result.properties.value?.value;
     if(!value)ctx.refuse('iterator result lacks a value slot');
-    const pair=!done&&iterator.iterationKind==='entries'?changes.find(change=>change.id===value[1]&&change.before===null)?.after:null;
-    if(!done&&iterator.iterationKind==='entries'&&(value[0]!=='ref'||pair?.kind!=='array'))ctx.refuse('iterator entry pair allocation missing');
+    const entryKind=iterator.iterationKind==='entries'||iterator.iterationKind.endsWith('-entries'),
+      pair=!done&&entryKind?changes.find(change=>change.id===value[1]&&change.before===null)?.after:null;
+    if(!done&&entryKind&&(value[0]!=='ref'||pair?.kind!=='array'))ctx.refuse('iterator entry pair allocation missing');
     const allowed=new Set([receiver[1],result.id,...(pair?[pair.id]:[])]);
     if(changes.some(change=>!allowed.has(change.id)))ctx.refuse('iterator next has an undeclared heap effect');
     ctx.emit({kind:'iterator.next',object:receiver[1],name:result.id,entry:pair?.id??null,

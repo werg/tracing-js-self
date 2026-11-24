@@ -857,7 +857,7 @@ export class Runtime {
     if(source.parser===OWNED_SCRIPT_PARSER){
       for(const [name,value] of [['NaN',['num','NaN']],['Infinity',['num','+Infinity']]])
         s.envs[global].bindings[name]={kind:'const',initialized:true,token:token(value),version:0};
-      for(const name of ['Set',...ERROR_CONSTRUCTORS])
+      for(const name of ['Set','Map',...ERROR_CONSTRUCTORS])
         s.envs[global].bindings[name]={kind:'const',initialized:true,token:token(['intrinsic',name]),version:0};
       for(const name of ['parseInt','isNaN','print'])
         s.envs[global].bindings[name]={kind:'const',initialized:true,token:token(['builtinfn',name]),version:0};
@@ -953,7 +953,7 @@ export class Runtime {
     for(const name of ['parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['builtinfn',name]),version:0};
-    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set',...ERROR_CONSTRUCTORS,'ArrayBuffer','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
+    for(const name of ['Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Map',...ERROR_CONSTRUCTORS,'ArrayBuffer','SharedArrayBuffer','DataView',...SHARED_TYPE_NAMES,'Atomics'])
       state.envs[global].bindings[name]={kind:'const',initialized:true,
         token:token(['intrinsic',name]),version:0};
     if(moduleNamespaceIntrinsic)
@@ -2427,36 +2427,46 @@ if(fn.value[0]==='intrinsic'&&Object.hasOwn(SHARED_TYPES,fn.value[1])){
   s.heap[id]=binaryGuest(()=>newSharedView(id,b,fn.value[1],offset,length));
   return {...operands(fn,...args),...result(['ref',id])};
 }
-if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
+if(fn.value[0]!=='intrinsic'||!['Set','Map'].includes(fn.value[1])){
             if(!['ref','intrinsic'].includes(fn.value[0])||fn.value[0]==='ref'&&s.heap[fn.value[1]]?.kind!=='proxy')guestFault('TypeError','Value is not a constructor');
             const completion={type:'unsupported',feature:'Constructor requires owned semantics: '+String(fn.value[1])};
             this.failFrame(s,f,completion);return {...operands(fn,...args),completion};
           }
-          const input=args[0]?.value??U;
-          const iterable=input[0]==='ref'?s.heap[input[1]]:null;
-          if(input[0]!=='undefined'&&input[0]!=='null' &&
-             (iterable?.kind!=='array'||Object.keys(iterable.accessors??{}).length))
-            throw new TypeError('Set constructor requires an owned ordinary array iterable');
-          const elements=[];
+          const collectionKind=fn.value[1]==='Set'?'set':'map',input=args[0]?.value??U,
+            iterable=input[0]==='ref'?s.heap[input[1]]:null,elements=[];
+          const ordinaryIterable=iterable?.kind==='array'&&objectPrototype(iterable)==='Array.prototype'&&
+            !Object.keys(iterable.accessors??{}).length&&!Object.hasOwn(iterable.properties,symbolPropertyKey('well-known:iterator'));
+          if(input[0]!=='undefined'&&input[0]!=='null'&&!ordinaryIterable)
+            throw new TypeError(collectionKind+' constructor requires an unmodified dense ordinary array iterable');
           if(iterable){
             const length=decode(iterable.properties.length.value);
             if(!Number.isSafeInteger(length)||length<0||length>10000)
-              throw new RangeError('Set constructor iterable exceeds bounded profile');
+              throw new RangeError(collectionKind+' constructor iterable exceeds bounded profile');
             for(let i=0;i<length;i++){
-              const entry=iterable.properties[String(i)];
-              if(!entry)throw new TypeError('Sparse Set constructor iterable is unsupported');
-              if(!elements.some(v=>ownedSameValue(v,entry.value,true)))
-                elements.push(entry.value[0]==='num'&&decode(entry.value)===0?['num',0]:entry.value);
+              const item=iterable.properties[String(i)];
+              if(!item)throw new TypeError('Sparse '+collectionKind+' constructor iterable is unsupported');
+              if(collectionKind==='set'){
+                if(!elements.some(value=>ownedSameValue(value,item.value,true)))
+                  elements.push(item.value[0]==='num'&&decode(item.value)===0?['num',0]:item.value);
+              }else{
+                const pair=item.value[0]==='ref'?s.heap[item.value[1]]:null,
+                  valid=pair?.kind==='array'&&objectPrototype(pair)==='Array.prototype'&&
+                    !Object.keys(pair.accessors??{}).length&&!Object.hasOwn(pair.properties,symbolPropertyKey('well-known:iterator'));
+                if(!valid)throw new TypeError('Map constructor entry must be an ordinary two-element array');
+                const pairLength=decode(pair.properties.length.value),key=pair.properties['0']?.value,value=pair.properties['1']?.value;
+                if(pairLength!==2||!key||!value)throw new TypeError('Map constructor entry must be an ordinary two-element array');
+                const existing=elements.findIndex(entry=>ownedSameValue(entry[1],key,true));
+                const normalized=key[0]==='num'&&decode(key)===0?['num',0]:key;
+                if(existing<0)elements.push(['map-entry',normalized,value]);
+                else elements[existing]=['map-entry',elements[existing][1],value];
+              }
             }
           }
-          const id=this.next(s,'obj');
-          const properties={'[[Size]]':token(['num',elements.length],eventId)};
-          const propertyVersions={'[[Size]]':0};
-          elements.forEach((value,i)=>{properties[String(i)]=token(value,eventId);propertyVersions[String(i)]=0;});
-          // These are serializable, model-visible INTERNAL slots; Set property
-          // access never exposes their string names to guest code.
-          s.heap[id]={id,kind:'set',properties,propertyVersions,
-            shapeVersion:elements.length+1,version:0};
+          const id=this.next(s,'obj'),properties={
+            '[[Size]]':token(['num',elements.length],eventId),'[[EntryCount]]':token(['num',elements.length],eventId)},
+            propertyVersions={'[[Size]]':0,'[[EntryCount]]':0};
+          elements.forEach((value,index)=>{properties[String(index)]=token(value,eventId);propertyVersions[String(index)]=0;});
+          s.heap[id]={id,kind:collectionKind,properties,propertyVersions,shapeVersion:elements.length+2,version:0};
           return {...operands(fn,...args),...result(['ref',id])};
         }
         case 'NEW_PROXY':{
@@ -2628,7 +2638,9 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
                if(slot)v=slot.value;
                else if(property==='next')v=['builtinfn','Iterator.next'];
                else if(property===symbolPropertyKey('well-known:iterator'))v=['builtinfn','Iterator.identity'];
-               else if(property===symbolPropertyKey('well-known:toStringTag'))v=['str',obj.iterationKind==='string'?'String Iterator':'Array Iterator'];
+               else if(property===symbolPropertyKey('well-known:toStringTag'))v=['str',
+                 obj.iterationKind==='string'?'String Iterator':obj.iterationKind.startsWith('set-')?'Set Iterator':
+                   obj.iterationKind.startsWith('map-')?'Map Iterator':'Array Iterator'];
                else if(['constructor','__proto__','toString','valueOf'].includes(property))throw new TypeError('Unmodeled iterator prototype property');
                else v=U;
                return {...operands(base,key),...result(op==='GET_METHOD'?['method',v,base.value]:v),...(slot?{reads:[{
@@ -2699,13 +2711,21 @@ if(isOwnedTypedView(obj)){
   if(index===undefined)throw new BinaryProfileError('Typed-array ordinary property needs its own profile');
   return {...operands(base,key),...result(binaryValidIndex(index,length)?readSharedElement(s.heap[obj.bufferId],obj,index):U)};
 }
-if(obj.kind==='set'){
-               if(['has','add'].includes(property)){
-                 const v=['builtinfn','Set.prototype.'+property];
-                 const output=op==='GET_METHOD'?['method',v,base.value]:v;
+if(['set','map'].includes(obj.kind)){
+               const name=obj.kind==='set'?'Set':'Map',methods=obj.kind==='set'?
+                 ['has','add','delete','clear','values','keys','entries']:
+                 ['get','set','has','delete','clear','keys','values','entries'];
+               if(property==='size')return {...operands(base,key),...result(obj.properties['[[Size]]'].value)};
+               if(property===symbolPropertyKey('well-known:iterator')){
+                 const method=['builtinfn',name+'.prototype.'+(obj.kind==='set'?'values':'entries')];
+                 return {...operands(base,key),...result(op==='GET_METHOD'?['method',method,base.value]:method)};
+               }
+               if(methods.includes(property)){
+                 const intrinsicMethod=obj.kind==='set'&&property==='keys'?'Set.prototype.values':name+'.prototype.'+property,
+                   v=['builtinfn',intrinsicMethod],output=op==='GET_METHOD'?['method',v,base.value]:v;
                  return {...operands(base,key),...result(output)};
                }
-               throw new TypeError('Unmodeled Set property '+property);
+               throw new TypeError('Unmodeled '+name+' property '+property);
              }
              const route=obj.kind==='proxy'?proxyRoute(s.heap,base.value,'get'):
                {kind:'ordinary',target:base.value,receiver:base.value,route:[],observations:[]};
@@ -3276,13 +3296,18 @@ if(object.kind==='regexp'){
             return {...operands(fn,...args),causes:[{kind:'invocation',frameId:target.id}],
               ...(method==='throw'&&!delegated?{completion}:{})};
           }
-          if(callable[0]==='builtinfn'&&['Array.prototype.values','Array.prototype.keys','Array.prototype.entries','String.prototype.iterator'].includes(callable[1])){
-            const string=callable[1]==='String.prototype.iterator';
-            if(string?receiver[0]!=='str':receiver[0]!=='ref'||s.heap[receiver[1]]?.kind!=='array')
+          if(callable[0]==='builtinfn'&&['Array.prototype.values','Array.prototype.keys','Array.prototype.entries',
+            'String.prototype.iterator','Set.prototype.values','Set.prototype.entries',
+            'Map.prototype.keys','Map.prototype.values','Map.prototype.entries'].includes(callable[1])){
+            const string=callable[1]==='String.prototype.iterator',collection=/^(?:Set|Map)\.prototype\./.test(callable[1]);
+            const collectionKind=callable[1].startsWith('Set.')?'set':'map',source=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(string?receiver[0]!=='str':collection?source?.kind!==collectionKind:
+              receiver[0]!=='ref'||s.heap[receiver[1]]?.kind!=='array')
               guestFault('TypeError','Iterator method requires its owned receiver');
             const id=this.next(s,'obj');
             s.heap[id]={id,kind:'iterator',iterated:copy(receiver),nextIndex:0,done:false,
-              iterationKind:string?'string':callable[1].slice('Array.prototype.'.length),
+              iterationKind:string?'string':collection?collectionKind+'-'+callable[1].slice(callable[1].lastIndexOf('.')+1):
+                callable[1].slice('Array.prototype.'.length),
               properties:{},propertyVersions:{},shapeVersion:0,version:0};
             return {...operands(fn,...args),...result(['ref',id])};
           }
@@ -3302,7 +3327,7 @@ if(object.kind==='regexp'){
                     code>=0xd800&&code<=0xdbff&&next>=0xdc00&&next<=0xdfff?2:1;
                   value=['str',text.slice(index,index+width)];iterator.nextIndex+=width;
                 }
-              }else{
+              }else if(['values','keys','entries'].includes(iterator.iterationKind)){
                 const array=s.heap[iterator.iterated[1]],length=decode(array.properties.length.value);
                 if(index>=length)iterator.done=true;
                 else{
@@ -3317,6 +3342,28 @@ if(object.kind==='regexp'){
                         0:token(['num',index],eventId),1:token(value,eventId),length:token(['num',2],eventId)},
                         propertyVersions:{0:1,1:1,length:1},shapeVersion:3,version:0};value=['ref',pair];
                     }
+                  }
+                }
+              }else{
+                const collection=s.heap[iterator.iterated[1]],count=decode(collection.properties['[[EntryCount]]'].value);
+                let position=index;
+                while(position<count&&collection.properties[String(position)]?.value?.[0]==='deleted')position++;
+                if(position>=count){iterator.nextIndex=position;iterator.done=true;}
+                else{
+                  const slot=collection.properties[String(position)]?.value;iterator.nextIndex=position+1;
+                  if(collection.kind==='set'){
+                    value=slot;
+                    if(iterator.iterationKind==='set-entries'){
+                      const pair=this.next(s,'obj');s.heap[pair]={id:pair,kind:'array',properties:{
+                        0:token(value,eventId),1:token(value,eventId),length:token(['num',2],eventId)},
+                        propertyVersions:{0:1,1:1,length:1},shapeVersion:3,version:0};value=['ref',pair];
+                    }
+                  }else if(iterator.iterationKind==='map-keys')value=slot[1];
+                  else if(iterator.iterationKind==='map-values')value=slot[2];
+                  else{
+                    const pair=this.next(s,'obj');s.heap[pair]={id:pair,kind:'array',properties:{
+                      0:token(slot[1],eventId),1:token(slot[2],eventId),length:token(['num',2],eventId)},
+                      propertyVersions:{0:1,1:1,length:1},shapeVersion:3,version:0};value=['ref',pair];
                   }
                 }
               }
@@ -3537,23 +3584,48 @@ if(callable[0]==='builtinfn'&&callable[1]==='SharedArrayBuffer.prototype.slice')
   out.bytes=b.bytes.slice(a,a+len);s.heap[id]=out;
   return {...operands(fn,...args),...result(['ref',id])};
 }
-if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
-            const set=receiver[0]==='ref'?s.heap[receiver[1]]:null;
-            if(set?.kind!=='set')guestFault('TypeError','Set method on incompatible receiver');
-            const value=args[0]?.value??U;
-            const size=decode(set.properties['[[Size]]'].value);
-            const present=Array.from({length:size},(_,i)=>set.properties[String(i)].value)
-              .some(v=>ownedSameValue(v,value,true));
-            if(callable[1]==='Set.prototype.has')
-              return {...operands(fn,...sourceCallArgs),reads:adapterReads,...result(['bool',present])};
-            if(callable[1]!=='Set.prototype.add')throw new TypeError('Unsupported Set method');
-            if(!present){
-              if(size>=10000)throw new RangeError('Set size limit');
-              const normalized=value[0]==='num'&&decode(value)===0?['num',0]:value;
-              putOwn(set,String(size),normalized,eventId);
-              putOwn(set,'[[Size]]',['num',size+1],eventId);
+if(callable[0]==='builtinfn'&&/^(?:Set|Map)\.prototype\./.test(callable[1])){
+            const [name,operation]=callable[1].split('.prototype.'),kind=name==='Set'?'set':'map',node=receiver[0]==='ref'?s.heap[receiver[1]]:null;
+            if(node?.kind!==kind)guestFault('TypeError',name+' method on incompatible receiver');
+            const size=decode(node.properties['[[Size]]'].value),count=decode(node.properties['[[EntryCount]]'].value),
+              first=args[0]?.value??U,second=args[1]?.value??U;
+            const keyAt=index=>{
+              const slot=node.properties[String(index)]?.value;
+              if(!slot||slot[0]==='deleted')return null;
+              return kind==='set'?slot:slot[0]==='map-entry'?slot:null;
+            };
+            let found=-1;
+            for(let index=0;index<count;index++){
+              const entry=keyAt(index);if(entry&&ownedSameValue(kind==='set'?entry:entry[1],first,true)){found=index;break;}
             }
-            return {...operands(fn,...args),...result(receiver)};
+            if(operation==='size')return {...operands(fn,...args),...result(['num',size])};
+            if(operation==='has')return {...operands(fn,...sourceCallArgs),reads:adapterReads,...result(['bool',found>=0])};
+            if(operation==='get')return {...operands(fn,...sourceCallArgs),reads:adapterReads,...result(found<0?U:node.properties[String(found)].value[2])};
+            if(operation==='delete'){
+              if(found>=0){putOwn(node,String(found),['deleted'],eventId);putOwn(node,'[[Size]]',['num',size-1],eventId);}
+              return {...operands(fn,...sourceCallArgs),reads:adapterReads,...result(['bool',found>=0])};
+            }
+            if(operation==='clear'){
+              for(let index=0;index<count;index++)if(keyAt(index)!==null)putOwn(node,String(index),['deleted'],eventId);
+              if(size)putOwn(node,'[[Size]]',['num',0],eventId);
+              return {...operands(fn,...sourceCallArgs),...result(U)};
+            }
+            if(kind==='set'&&operation==='add'){
+              if(found<0){if(size>=10000||count>=10000)throw new RangeError('Set size or entry limit');
+                const normalized=first[0]==='num'&&decode(first)===0?['num',0]:first;
+                putOwn(node,String(count),normalized,eventId);putOwn(node,'[[EntryCount]]',['num',count+1],eventId);
+                putOwn(node,'[[Size]]',['num',size+1],eventId);}
+              return {...operands(fn,...args),...result(receiver)};
+            }
+            if(kind==='map'&&operation==='set'){
+              if(found<0){if(size>=10000||count>=10000)throw new RangeError('Map size or entry limit');
+                const normalized=first[0]==='num'&&decode(first)===0?['num',0]:first;
+                putOwn(node,String(count),['map-entry',normalized,second],eventId);
+                putOwn(node,'[[EntryCount]]',['num',count+1],eventId);putOwn(node,'[[Size]]',['num',size+1],eventId);}
+              else{const prior=node.properties[String(found)].value;putOwn(node,String(found),['map-entry',prior[1],second],eventId);}
+              return {...operands(fn,...args),...result(receiver)};
+            }
+            throw new TypeError('Unsupported '+name+' method '+operation);
           }
           if(callable[0]==='intrinsic' && callable[1]==='Array'){
             // Array(length) creates holes, not present undefined slots. The

@@ -15,7 +15,7 @@ const logical=new Set(['&&','||','??']);
 const assignments=new Set(['=','&&=','||=','??=','+=','-=','*=','/=','%=','**=',
   '&=','|=','^=','<<=','>>=','>>>=']);
 const unary=new Set(['!','-','+','typeof','void','~','delete']);
-const ownedConstructors=new Set(['Set','Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError','Symbol','Promise','ArrayBuffer','SharedArrayBuffer','DataView',
+const ownedConstructors=new Set(['Set','Map','Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError','Symbol','Promise','ArrayBuffer','SharedArrayBuffer','DataView',
   'Int8Array','Uint8Array','Int16Array','Uint16Array','Int32Array','Uint32Array',
   'BigInt64Array','BigUint64Array','Float32Array','Float64Array']);
 export function parseTraining(source,{moduleNamespaceIntrinsic=false}={}) {
@@ -536,6 +536,6 @@ function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){
       init:{type:'Literal'},pattern:parsed.pattern},{names:new Set(params),parent});
     statements.forEach(n=>statement(n,env));
   }
-  scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','ArrayBuffer','SharedArrayBuffer','DataView',...ownedConstructors,'Atomics']),parent:null},[],false,true);
+  scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Map','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','ArrayBuffer','SharedArrayBuffer','DataView',...ownedConstructors,'Atomics']),parent:null},[],false,true);
   return {type:'Program',body,start:0,end:source.length,profile};
 }

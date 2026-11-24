@@ -115,3 +115,4 @@ test('frozen source iterator artifact rechecks original execution, metadata, pub
   const fixtures=JSON.parse(await readFile(new URL('./fixtures/semantic-iterator-region-v8.json',import.meta.url),'utf8'));
   for(const {artifact}of fixtures.cases)assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
 });
+
