@@ -33,7 +33,7 @@ function finishOwned(run){
   assert.equal(replayExact(bundle).valid,true);
   const root=runtime.initialState.control.a0.activeFrameId;
   const promise=runtime.state.promises[runtime.initialState.frames[root].asyncPromiseId];
-  const value=realizeGraph(runtime.state.heap,[promise.value.value])[0];
+  const value=realizeGraph(runtime.state.heap,[promise.value.value],{exceptionProfile:promise.status==='rejected'})[0];
   const index=linked.metadata.evaluationOrder.indexOf('state.js')+1;
   const log=binding(runtime,'__traced_eval_m'+index+'_log')?.[1];
   return {...run,bundle,outcome:{status:promise.status,
