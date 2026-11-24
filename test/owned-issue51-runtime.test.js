@@ -157,3 +157,33 @@ test('delete retains strict failures and boxed-string exotic indices',()=>{
   assert.equal(vm.runInNewContext(strict),'TypeError');
 });
 
+
+test('Reflect retained object keys run after all arguments and preserve the actual target',()=>{
+  const source="let log=[];let object={x:1};let other={x:2};"+
+    "function target(){log.push('target');return object;}"+
+    "function convert(hint){log.push(hint);return 'x';}function readHook(){log.push('getter');return convert;}let key={};Object.defineProperty(key,Symbol.toPrimitive,{get:readHook});"+
+    "function extra(){log.push('extra');object.x=3;return other;}"+
+    "let present=Reflect.has(target(),key,extra());let remove=Reflect.deleteProperty;"+
+    "let removed=remove(target(),key,extra());let result=[present,removed,Object.hasOwn(object,'x'),Object.hasOwn(other,'x'),log.join('|')].join(',');result;";
+  const expected=vm.runInNewContext(source),runtime=execute(source);
+  assert.equal(expected,'true,true,false,true,target|extra|getter|string|target|extra|getter|string');
+  assert.deepEqual(value(runtime,'result'),['str',expected]);
+  const calls=runtime.events.filter(event=>event.operation==='property.key.convert');
+  assert.equal(calls.length,2);
+  const forged=JSON.parse(JSON.stringify(runtime.exportRun()));
+  const start=forged.events.find(event=>event.eventId===calls[0].eventId);
+  const parent=start.stateChanges.find(change=>change.after?.pendingPropertyKeyConversion);
+  assert(parent);
+  parent.after.pendingPropertyKeyConversion.stackIndex--;
+  assert.throws(()=>validateBundle(forged),/PropertyKey/i);
+});
+
+test('Reflect object-key coercion retains thrown identity and does not mutate target',()=>{
+  const source="let object={x:1};let token={};let caught=false;let calls=0;"+
+    "function hook(){calls=calls+1;throw token;}let key={};key[Symbol.toPrimitive]=hook;"+
+    "try{Reflect.deleteProperty(object,key);}catch(e){caught=e===token;}"+
+    "let result=[caught,calls,Object.hasOwn(object,'x')].join(',');result;";
+  const runtime=execute(source);
+  assert.equal(vm.runInNewContext(source),'true,1,true');
+  assert.deepEqual(value(runtime,'result'),['str','true,1,true']);
+});

@@ -101,6 +101,12 @@ function propertyKeySlot(frame,instruction){
   if(['GET_PROP','GET_METHOD','UPDATE_PROP','DELETE_PROP','PROPERTY_KEY'].includes(op)||
     op==='DUP2'&&instruction.arg?.cachePropertyKey===true)return frame.stack.length-1;
   if(op==='BINARY'&&instruction.arg==='in')return frame.stack.length-2;
+  if(op==='CALL'&&Number.isSafeInteger(instruction.arg)&&instruction.arg>=2){
+    const start=frame.stack.length-instruction.arg-1,
+      raw=frame.stack[start]?.value,callee=raw?.[0]==='method'?raw[1]:raw;
+    if(callee?.[0]==='builtinfn'&&['Reflect.has','Reflect.deleteProperty'].includes(callee[1]))
+      return start+2;
+  }
   return op==='PUT_PROP'?frame.stack.length-2:null;
 }
 function retainedPropertyKey(frame,instruction,state){
@@ -111,6 +117,17 @@ function retainedPropertyKey(frame,instruction,state){
   if(instruction.op==='BINARY'){
     const target=frame.stack[stackIndex+1]?.value;
     if(!['ref','promise','intrinsic','builtinfn','hostfn','host'].includes(target?.[0]))return null;
+  }else if(instruction.op==='CALL'){
+    // Reflect first validates the target, then converts the key; all call
+    // arguments have already been evaluated. Refuse unrepresented exotics
+    // without entering a conversion that their operation cannot finish.
+    const target=frame.stack[stackIndex-1]?.value,raw=frame.stack[stackIndex-2]?.value,
+      callee=raw?.[0]==='method'?raw[1]:raw,
+      object=target?.[0]==='ref'?state.heap[target[1]]:
+        target?.[0]==='promise'?state.promises[target[1]]:
+          target?.[0]==='intrinsic'&&target[1]==='Promise.prototype'?{kind:'object'}:null;
+    if(!object||!(['object','array','function','promise'].includes(object.kind)||
+      callee[1]==='Reflect.deleteProperty'&&object.kind==='module-namespace'))return null;
   }else if(instruction.op!=='PROPERTY_KEY'&&['null','undefined'].includes(frame.stack[stackIndex-1]?.value[0]))return null;
   if(!['object','array'].includes(state.heap[key.value[1]]?.kind))
     throw new TypeError('PropertyKey conversion requires an owned ordinary object');
