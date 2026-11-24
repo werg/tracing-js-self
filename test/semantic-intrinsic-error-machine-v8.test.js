@@ -18,6 +18,8 @@ test('property.fault derives invalid in target and authenticates a fresh mutable
   assert.deepEqual(c,before);
   apply(c,{kind:'property.fault',operation:'has',target:['null'],key:ref('key'),error:'error'});
   const error=c.heap.get('error');
+  assert.deepEqual(c.protocol.intrinsicErrors,{schema:'semantic-intrinsic-error-state/1',
+    errors:[{id:'error',errorType:'TypeError'}]});
   assert.equal(error.declaredError,'TypeError');
   assert.deepEqual(error.properties.get('name'),['str','TypeError']);
   assert.deepEqual(error.properties.get('message'),['str','Right-hand side of in is not an object']);
@@ -38,6 +40,24 @@ test('intrinsic Error brand restoration rejects forged kind or unknown type',()=
   error.kind='array';assert.throws(()=>restoreProtocolStateV8(c,c.protocol),/intrinsic Error brand/);
   error.kind=originalKind;error.declaredError='ForgedError';
   assert.throws(()=>restoreProtocolStateV8(c,c.protocol),/intrinsic Error brand/);
+});
+
+test('intrinsic Error restoration requires exact retained allocation provenance',()=>{
+  const forged=controller();apply(forged,allocation('ordinary'));
+  forged.heap.get('ordinary').declaredError='TypeError';
+  assert.throws(()=>restoreProtocolStateV8(forged,forged.protocol),/intrinsic Error|extension heap state/);
+
+  const c=controller();apply(c,{kind:'property.fault',operation:'has',target:['null'],key:['str','x'],error:'error'});
+  for(const mutate of [
+    state=>{state.intrinsicErrors.errors=[];},
+    state=>{state.intrinsicErrors.errors[0].errorType='RangeError';},
+    state=>{state.intrinsicErrors.errors[0].id='missing';},
+    state=>{state.intrinsicErrors.errors.push({...state.intrinsicErrors.errors[0]});}
+  ]){
+    const snapshot=structuredClone(c.protocol);mutate(snapshot);
+    assert.throws(()=>restoreProtocolStateV8(c,snapshot),/intrinsic Error/);
+  }
+  assert.equal(restoreProtocolStateV8(c,c.protocol).valid,true);
 });
 
 test('the public registry has no free-standing Error allocation record',()=>{

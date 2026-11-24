@@ -46,6 +46,7 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
 }),Object.freeze({
   id:INTRINSIC_ERROR_PROFILE_V8,recordFields:INTRINSIC_ERROR_RECORD_FIELDS,
   validateRecord:validateIntrinsicErrorRecordV8,applyRecord:applyIntrinsicErrorRecordV8,
+  stateField:'intrinsicErrors',hasRichState:node=>Object.hasOwn(node,'declaredError'),
   restoreState:restoreIntrinsicErrorStateV8
 }),Object.freeze({
   id:MODULE_SCHEDULER_PROFILE_V8,recordFields:MODULE_SCHEDULER_RECORD_FIELDS,

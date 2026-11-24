@@ -22,6 +22,8 @@ import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js'
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8} from './protocol-promise-executor-v8.js';
 import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_STATE_V8} from './protocol-promise-adoption-v8.js';
 import {PROMISE_OBJECT_PROFILE_V8,PROMISE_OBJECT_STATE_V8,PROMISE_OBJECT_INTRINSICS_V8} from './protocol-promise-object-v8.js';
+import {INTRINSIC_ERROR_PROFILE_V8,INTRINSIC_ERROR_STATE_V8_SCHEMA,INTRINSIC_ERROR_STATE_V8_FIELDS,
+  INTRINSIC_ERROR_STATE_V8_ROW_FIELDS} from './protocol-intrinsic-error-v8.js';
 import {ASYNC_CALL_PROFILE_V8,ASYNC_CALL_STATE_V8,ASYNC_CALL_FIELDS_V8} from './protocol-async-call-v8.js';
 import {BOUND_MODULE_SCHEDULER_PLAN_V8} from './module-scheduler-plan-v8.js';
 import {MODULE_SCHEDULER_PROFILE_V8,MODULE_SCHEDULER_LEDGER_FIELDS_V8} from './protocol-module-scheduler-v8.js';
@@ -64,6 +66,9 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
     heap:'Existing heap nodes with property, descriptor and private-element Maps serialized as entry arrays; Symbol keys remain tagged pairs.',
     callFrames:{fields:['child','parent','callee','priorReceiver','priorAliases','arguments'],
       restoration:'Retained callee identity binds source code, argument list, live lexical receiver and capture cells. Active receiver/captures and parent-child stack order are checked independently.'},
+    intrinsicErrors:{profile:INTRINSIC_ERROR_PROFILE_V8,schema:INTRINSIC_ERROR_STATE_V8_SCHEMA,
+      fields:INTRINSIC_ERROR_STATE_V8_FIELDS,rowFields:INTRINSIC_ERROR_STATE_V8_ROW_FIELDS,initial:null,maxErrors:4096,
+      meaning:'Private fault allocators register each fresh intrinsic Error identity after deriving its operation. Restoration requires an exact one-to-one match between registry rows and heap brands; guest writes may change ordinary name/message properties without changing the brand. No public free-standing Error creation record exists.'},
     promiseObjects:{profile:PROMISE_OBJECT_PROFILE_V8,schema:PROMISE_OBJECT_STATE_V8,fields:['schema','initialized'],
       intrinsicNames:PROMISE_OBJECT_INTRINSICS_V8,
       intrinsicIdentity:'intrinsic followed by the lowercase intrinsic name with all non-ASCII-alphanumeric characters removed; names are a fixed unique set, never selected aliases.',
