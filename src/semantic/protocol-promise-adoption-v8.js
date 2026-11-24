@@ -204,14 +204,14 @@ export function applyPromiseAdoptionRecordV8(controller,record,api){
         closure=callee?.[0]==='ref'?controller.heap.get(callee[1]):null;
       api.require(callee?.[0]==='ref',
         'adoption getter requires its selected synchronous owned getter');
-      api.require(closure?.kind==='closure'&&!closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver&&
-        !closure.callable?.lexicalConstruction,
-        'adoption getter cannot use an unauthenticated constructor capture');
+      api.require(closure?.kind==='closure'&&!closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver,
+        'adoption getter requires its selected synchronous owned getter');
       api.require(!controller.protocol.callFrames.length&&!controller.protocol.pendingCalls.length,
         'adoption getter cannot inherit another call continuation');
       // A job has no guest caller. Use the common checked activation machinery,
       // retaining its caller state on the job rather than an absent call frame.
-      api.call(controller,{child:record.child,callee,receiver:['ref',record.target],arguments:[]});
+      const receiver=api.callReceiver(controller,callee,closure.functionKind==='arrow'?closure.lexicalReceiver:['ref',record.target]);
+      api.call(controller,{child:record.child,callee,receiver,arguments:[]});
       const scope=controller.protocol.callFrames.pop();
       job.priorAliases=scope.priorAliases;job.priorReceiver=scope.priorReceiver;job.closure=callee[1];
       controller.ready.shift();job.status='running';controller.activeJob=record.job;
@@ -291,10 +291,11 @@ export function restorePromiseAdoptionStateV8(controller,api){
     if(lookup!==undefined){
       assertAlgorithmFields(lookup,['child','callee'],'adoption constructor lookup');id(lookup.child);api.known(controller,lookup.callee);
       const closure=lookup.callee?.[0]==='ref'?controller.heap.get(lookup.callee[1]):null,
-        receiver=closure?.functionKind==='arrow'?closure.lexicalReceiver:['ref',adoption.target];
+        rawReceiver=closure?.functionKind==='arrow'?closure.lexicalReceiver:['ref',adoption.target],
+        receiver=closure?api.callReceiver(controller,lookup.callee,rawReceiver):rawReceiver;
       api.require(['reading','observing','completed','rejected'].includes(adoption.phase)&&closure?.kind==='closure'&&
-        !closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver&&
-        !closure.callable?.lexicalConstruction,'retained adoption getter identity or unauthenticated constructor capture');
+        !closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver,
+        'retained adoption getter identity or receiver');
       if(adoption.owner===controller.rootInvocation){
         api.require(controller.frameFunctions.get(lookup.child)===closure.code&&
           api.eq(controller.locals.get(lookup.child+':this'),receiver),'retained adoption getter identity or receiver');
