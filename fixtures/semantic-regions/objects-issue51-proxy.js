@@ -9,6 +9,23 @@ export const issue51ProxyFixtures=Object.freeze([
     .map(([operation,expression])=>fixture('issue51-proxy-revoked-'+operation,'issue51-proxy-revocation',
       'const pair=Proxy.revocable({x:1},{});const proxy=pair.proxy;pair.revoke();try{'+expression+';}'+
       'catch(error){return [error.name,error.message,Object.getPrototypeOf(error)===TypeError.prototype];}')),
+  fixture('issue51-control-proxy-trap-getter','issue51-unsupported-control',
+    'const proxy=new Proxy({x:1},{get has(){return function(){return true;};}});return "x" in proxy;'),
+  fixture('issue51-proxy-getmethod-handler-mutation','issue51-proxy-getmethod',
+    'let calls=0;const holder={handler:null};const handler={get has(){calls=calls+1;'+
+    'Object.defineProperty(holder.handler,"has",{value:null,configurable:true});'+
+    'return function(t,k){return t.x===1&&k==="x";};}};holder.handler=handler;'+
+    'const proxy=new Proxy({x:1},handler);const present="x" in proxy;'+
+    'return [present,calls,handler.has===null];'),
+  fixture('issue51-proxy-getmethod-revocation','issue51-proxy-getmethod',
+    'let revoke;const handler={get has(){revoke();return function(t,k){return t.x===1&&k==="x";};}};'+
+    'const pair=Proxy.revocable({x:1},handler);revoke=pair.revoke;return "x" in pair.proxy;'),
+  fixture('issue51-proxy-getmethod-nullish-after-revocation','issue51-proxy-getmethod',
+    'let revoke,calls=0;const handler={get has(){calls++;revoke();return null;}};'+
+    'const pair=Proxy.revocable({x:1},handler);revoke=pair.revoke;return ["x" in pair.proxy,calls];'),
+  fixture('issue51-proxy-getmethod-throw-identity','issue51-proxy-getmethod',
+    'const reason={tag:7};const proxy=new Proxy({x:1},{get has(){throw reason;}});'+
+    'try{return "x" in proxy;}catch(error){return error===reason;}'),
   fixture('issue51-proxy-revocable-revoke-idempotent','issue51-proxy-revocation',
     'const pair=Proxy.revocable({x:1},{});const proxy=pair.proxy;'+
     'pair.revoke();pair.revoke();let name="",message="";try{proxy.x;}catch(error){name=error.name;message=error.message;}'+
@@ -67,6 +84,6 @@ export const issue51ProxyFixtures=Object.freeze([
 ]);
 
 export const issue51ProxyUnsupportedControls=Object.freeze([
-  fixture('issue51-control-proxy-trap-getter','issue51-unsupported-control',
-    'const proxy=new Proxy({x:1},{get has(){return function(){return true;};}});return "x" in proxy;')
+  fixture('issue51-control-proxy-trap-getter-noncallable','issue51-unsupported-control',
+    'const proxy=new Proxy({x:1},{get has(){return 7;}});return "x" in proxy;')
 ]);

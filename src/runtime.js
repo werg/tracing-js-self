@@ -266,14 +266,21 @@ function proxyRoute(heap,receiver,operation) {
     const handler=heap[obj.handlerId];
     if(!handler||!['object','array'].includes(handler.kind))
       throw new TypeError('Unsupported proxy handler identity');
-    const trap=ordinaryGet(heap,['ref',handler.id],operation);
+    const trap=ordinaryGet(heap,['ref',handler.id],operation,{accessors:operation==='has'});
     if(!trap)throw new TypeError('Proxy handler accessor trap unmodeled');
-    const method=copy(trap.method.value),entry={object:obj.id,target:['ref',obj.targetId],
-      handler:['ref',handler.id],method};
-    route.push(entry);observations.push(trap.observation);
-    if(!['undefined','null'].includes(method[0]))
-      return {kind:'trap',method,observations,object:['ref',obj.id],owner:obj.id,
-        target:['ref',obj.targetId],handler:['ref',handler.id],receiver,route};
+    const target=['ref',obj.targetId],handlerRef=['ref',handler.id];
+    if(trap.accessor){
+      const getter=copy(trap.accessor.get?.value??U),entry={object:obj.id,target,handler:handlerRef,method:U};
+      route.push(entry);observations.push(trap.observation);
+      if(getter[0]!=='undefined')return {kind:'get-method',getter,observations,object:['ref',obj.id],
+        owner:obj.id,target,handler:handlerRef,receiver,route};
+    }else{
+      const method=copy(trap.method.value),entry={object:obj.id,target,handler:handlerRef,method};
+      route.push(entry);observations.push(trap.observation);
+      if(!['undefined','null'].includes(method[0]))
+        return {kind:'trap',method,observations,object:['ref',obj.id],owner:obj.id,
+          target,handler:handlerRef,receiver,route};
+    }
     obj=heap[obj.targetId];
   }
   if(!obj||!['object','array'].includes(obj.kind))
@@ -1140,6 +1147,10 @@ export class Runtime {
         const nextFrame=this.finishModuleNamespaceRead(draft,caller,pending,value,origin);
         draft.control.a0.activeFrameId=nextFrame===undefined?caller.id:nextFrame;return;
       }
+      if(caller.pendingProperty?.kind==='proxy-get-method'&&caller.pendingProperty.waitingFrameId===frame.id){
+        const pending=caller.pendingProperty;pending.waitingFrameId=null;pending.phase='getter-returned';pending.result=copy(value);
+        draft.control.a0.activeFrameId=caller.id;return;
+      }
       if(caller.pendingNumberConversion?.waitingFrameId===frame.id){
         const pending=caller.pendingNumberConversion;
         if(!['waiting','getter-waiting'].includes(pending.phase))throw new Error('Number conversion callback returned twice');
@@ -1865,6 +1876,34 @@ export class Runtime {
     const c=this.state.control.a0,frame=c.activeFrameId&&this.state.frames[c.activeFrameId];
     if(!frame||frame.status!=='running')return null;
     if(frame.operationId)return this.stepArithmetic(frame);
+    if(frame.pendingProperty?.kind==='proxy-get-method'&&frame.pendingProperty.phase==='getter-returned'){
+      const retained=copy(frame.pendingProperty),siteId=retained.proxyGetMethod.siteId;
+      return this.commit('call.enter',(s,eventId)=>{
+        const parent=s.frames[frame.id],pending=parent.pendingProperty;
+        if(pending?.kind!=='proxy-get-method'||pending.phase!=='getter-returned'||
+          pending.waitingFrameId!==null||!equal(pending.proxyGetMethod,retained.proxyGetMethod)||
+          !equal(pending.result,retained.result))throw new TypeError('Stale Proxy GetMethod continuation');
+        const method=copy(pending.result),selection=pending.proxyGetMethod;
+        delete parent.pendingProperty;
+        if(['undefined','null'].includes(method[0])){
+          const target=s.heap[selection.target[1]];
+          if(!['object','array'].includes(target?.kind))
+            throw new TypeError('Nullish Proxy has getter result requires ordinary target storage');
+          const result=['bool',ownedHasProperty(ownedObjectHeap(s),selection.target,selection.key)];
+          this.stackPush(parent,result,eventId);return {operands:[token(selection.key,eventId),token(selection.object,eventId)],result};
+        }
+        if(!this.callableGuest(s,method)||method[0]!=='ref'||s.heap[method[1]]?.async)
+          throw new TypeError('Proxy has getter result must be a synchronous guest function');
+        const fn=s.heap[method[1]],route=selection.route.map((row,index)=>index===selection.route.length-1?{...row,method}:row),
+          id=this.newFrame(s,fn.codeId,fn.closureEnvId,parent.id,null,
+            [token(selection.target,eventId),token(selection.keyValue,eventId)],this.functionThis(fn,selection.handler),fn.id);
+        parent.pendingProperty={kind:'has',waitingFrameId:id,proxy:{object:selection.object,owner:selection.owner,
+          receiver:selection.object,target:selection.target,handler:selection.handler,route,key:selection.key,strict:false}};
+        s.control.a0.activeFrameId=id;
+        return {operands:[token(method,eventId),token(selection.target,eventId),token(selection.key,eventId)],
+          causes:[{kind:'invocation',frameId:id}]};
+      },{siteId,sourceId:frame.codeId.split(':')[0],codeId:frame.codeId,invocationId:frame.id});
+    }
     if(['returned','getter-returned'].includes(frame.pendingNumberConversion?.phase)){
       const siteId=frame.pendingNumberConversion.siteId;
       return this.commit('intrinsic.number.resume',(s,eventId)=>{
@@ -2291,6 +2330,18 @@ export class Runtime {
             const property=valueKey(a.value),object=ownedObjectStorage(s,b.value);
             if(object?.kind==='proxy'){
               const route=proxyRoute(s.heap,b.value,'has');
+              if(route.kind==='get-method'){
+                const getter=route.getter;
+                if(!this.callableGuest(s,getter)||getter[0]!=='ref'||s.heap[getter[1]]?.async)
+                  throw new TypeError('Proxy has accessor getter must be a synchronous guest function');
+                const fn=s.heap[getter[1]],id=this.newFrame(s,fn.codeId,fn.closureEnvId,f.id,null,[],
+                  this.functionThis(fn,route.handler),fn.id);
+                f.pendingProperty={kind:'proxy-get-method',waitingFrameId:id,phase:'getter-waiting',result:null,
+                  proxyGetMethod:{operation:'has',object:b.value,owner:route.owner,receiver:route.handler,
+                    target:route.target,handler:route.handler,route:route.route,key:property,keyValue:a.value,getter,siteId:inst.siteId}};
+                s.control.a0.activeFrameId=id;
+                return {...operands(a,b),causes:[{kind:'invocation',frameId:id}],reads:route.observations};
+              }
               if(route.kind==='trap'){
                 const target=ownedObjectStorage(s,route.target);
                 if(!['object','array'].includes(target?.kind))

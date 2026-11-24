@@ -79,6 +79,8 @@ const eventClaims={
     event.operation==='primitive.binary'&&view.instruction?.op==='BINARY'&&view.instruction.arg==='in'&&(
       heap(view,row?.operands[1])?.kind==='proxy'||event.completion?.type==='throw'&&
       heap(view,frame(view)?.stack?.at(-1)?.value)?.kind==='proxy')||
+    event.operation==='call.enter'&&at(state(view,proxy).getMethods,event.invocationId)?.phase==='returned'||
+    event.operation==='call.return'&&has(state(view,proxy).getMethodCallbacks,event.invocationId)||
     event.operation==='property.delete'&&(heap(view,row?.operands[0])?.kind==='proxy'||
       event.completion?.type==='throw'&&view.instruction?.op==='DELETE_PROP'&&
       heap(view,frame(view)?.stack?.at(-2)?.value)?.kind==='proxy')||
@@ -201,7 +203,8 @@ function completionOwners(view,change){
     ...(enabled(view,moduleNamespace)&&(state(view,moduleNamespace).operations??[]).some(([,operation])=>
       operation.waitingFrameId===change.id)?[moduleNamespace]:[]),
     ...[[construction,'roles'],[number,'callbacks'],[proxy,'callbacks'],[reflection,'callbacks'],[map,'callbacks'],[custom,'accessors']]
-      .filter(([id,key])=>has(state(view,id)[key],change.id)).map(([id])=>id)];
+      .filter(([id,key])=>has(state(view,id)[key],change.id)).map(([id])=>id),
+    ...(has(state(view,proxy).getMethodCallbacks,change.id)?[proxy]:[])];
 }
 function constructionCallable(view,node){
   if(node.kind!=='function'||node.generatorFunction||node.async)return false;

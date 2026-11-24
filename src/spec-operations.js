@@ -81,9 +81,11 @@ export function ordinaryGet(heap, receiver, name, {accessors=false}={}) {
     // Accessor [[Get]] needs a guest callback continuation, never silently
     // skip a getter and fall back to an inherited/default conversion method.
     if(Object.hasOwn(current.accessors??{},name)){
-      const accessor=current.accessors[name];
-      return accessors&&accessor?.get?.value?
-        {accessor,observation:observation(accessor.get)}:null;
+      const accessor=current.accessors[name],getter=accessor?.get??token(['undefined']);
+      if(!accessors)return null;
+      if(getter.value?.[0]==='undefined')
+        return {method:token(['undefined']),observation:observation(token(['undefined']))};
+      return {accessor,observation:observation(getter)};
     }
     if(Object.hasOwn(current.properties??{},name)){
       const method=current.properties[name];

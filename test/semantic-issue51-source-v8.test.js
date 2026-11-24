@@ -89,6 +89,72 @@ test('original transparent nested-target control now follows both Proxy internal
   assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
 });
 
+test('own has accessor GetMethod invokes once and retains the selected trap',async()=>{
+  const artifact=await checkedFixture('issue51-control-proxy-trap-getter'),
+    records=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record),
+    observations=artifact.sidecar.sourceArtifact.sidecar.reference.observations.extensions;
+  assert.deepEqual(completion(artifact),{kind:'return',value:['bool',true]});
+  assert.equal(records.filter(row=>row.kind==='proxy.getMethod.begin').length,1);
+  assert.equal(records.filter(row=>row.kind==='proxy.getMethod.finish').length,1);
+  assert.equal(records.filter(row=>row.kind==='property.get.call').length,1);
+  assert(observations.some(row=>row.profile==='ordinary-data-proxy-metadata/1'&&
+    row.rows.some(item=>item.kind==='get-method')));
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
+test('GetMethod selection survives handler mutation inside its getter',async()=>{
+  const artifact=await checkedFixture('issue51-proxy-getmethod-handler-mutation'),
+    controller=RegionExecutionHarness.replay(artifact).controller,
+    records=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record);
+  assert.deepEqual(controller.materialize(completion(artifact).value),[true,1,true]);
+  assert.equal(records.filter(row=>row.kind==='proxy.getMethod.begin').length,1);
+  assert.equal(records.filter(row=>row.kind==='proxy.has.call').length,1);
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
+test('GetMethod keeps the originally selected trap after its getter revokes the Proxy',async()=>{
+  const artifact=await checkedFixture('issue51-proxy-getmethod-revocation'),
+    controller=RegionExecutionHarness.replay(artifact).controller,
+    records=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record);
+  assert.deepEqual(completion(artifact),{kind:'return',value:['bool',true]});
+  assert.equal(records.filter(row=>row.kind==='proxy.revoke').length,1);
+  assert.equal(records.filter(row=>row.kind==='proxy.has.call').length,1);
+  assert.equal(records.filter(row=>row.kind==='proxy.revoked.fault').length,0);
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
+test('nullish GetMethod fallback uses the saved target after its getter revokes the Proxy',async()=>{
+  const artifact=await checkedFixture('issue51-proxy-getmethod-nullish-after-revocation'),
+    controller=RegionExecutionHarness.replay(artifact).controller,
+    records=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record);
+  assert.deepEqual(controller.materialize(completion(artifact).value),[true,1]);
+  assert.equal(records.filter(row=>row.kind==='proxy.revoke').length,1);
+  assert.equal(records.filter(row=>row.kind==='proxy.has').length,1);
+  assert.equal(records.filter(row=>row.kind==='proxy.has.call').length,0);
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
+test('throwing GetMethod getter preserves the thrown object identity',async()=>{
+  const artifact=await checkedFixture('issue51-proxy-getmethod-throw-identity'),
+    records=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record),
+    finish=records.find(row=>row.kind==='proxy.getMethod.finish');
+  assert.deepEqual(completion(artifact),{kind:'return',value:['bool',true]});
+  assert.equal(finish?.completion.kind,'throw');
+  assert.equal(records.filter(row=>row.kind==='proxy.has.call').length,0);
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
+test('non-callable has getter result remains an explicit unsupported boundary',async()=>{
+  const control=issue51UnsupportedControls.find(row=>row.id==='issue51-control-proxy-trap-getter-noncallable');
+  assert(control);
+  const result=await verifyProtocolRegionTrainingCase(structuredClone(control));
+  assert.equal(result.exported,undefined);
+  assert.equal(result.status,'unsupported');
+  assert.equal(result.category,'unsupported.protocol-source');
+  assert.match(result.reason,/getter result must be a synchronous guest function/);
+  assert.throws(()=>vm.runInNewContext(control.source+';run()'),error=>error?.name==='TypeError');
+});
+
 test('Proxy.revocable retains its callable identity and revokes idempotently',async()=>{
   const artifact=await checkedFixture('issue51-proxy-revocable-revoke-idempotent'),
     controller=RegionExecutionHarness.replay(artifact).controller,

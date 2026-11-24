@@ -9,7 +9,7 @@ const truthy=value=>value?.[0]==='ref'||value?.[0]==='symbol'||
     value?.[0]==='num'?Number(value[1])!==0&&!Number.isNaN(Number(value[1])):
     value?.[0]==='bigint'?BigInt(value[1])!==0n:value?.[0]==='str'?value[1].length>0:true);
 export function createProxySourceAdapterV8(){
-  let active=new Map(),callbacks=new Map(),faultEvidence=new Map(),revokers=new Map(),next=0;
+  let active=new Map(),callbacks=new Map(),getMethods=new Map(),getMethodCallbacks=new Map(),getterCandidates=new Set(),faultEvidence=new Map(),revokers=new Map(),next=0;
   const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('Proxy source: '+message);};
   const freshTypeError=(event,value)=>value?.[0]==='ref'&&event.stateChanges.some(change=>
     change.table==='heap'&&change.id===value[1]&&change.before===null&&change.after?.declaredError==='TypeError');
@@ -65,9 +65,25 @@ export function createProxySourceAdapterV8(){
     return {route,observations,owner:route.at(-1)?.object??null,
       target:route.at(-1)?.target??['ref',node.id],handler:route.at(-1)?.handler??null,selected,terminal:node};
   };
+  const ownHasGetterRoute=(ctx,object,event)=>{
+    const node=object?.[0]==='ref'?ctx.state.heap[object[1]]:null;
+    require(ctx,node?.kind==='proxy'&&node.targetId!==null&&node.handlerId!==null,
+      'has getter requires a live direct Proxy');
+    const target=['ref',node.targetId],handler=['ref',node.handlerId],handlerNode=ctx.state.heap[handler[1]],
+      found=ordinaryGet(ctx.state.heap,handler,'has',{accessors:true}),descriptor=handlerNode?.accessors?.has,
+      getter=descriptor?.get?.value;
+    require(ctx,!!found?.accessor&&!!descriptor&&getter?.[0]==='ref'&&ctx.eq(found.accessor.get?.value,getter),
+      'has GetMethod is limited to its exact own accessor getter');
+    const route=[{object:node.id,target,handler,method:['undefined']}];
+    return {object,target,handler,owner:node.id,getter:ctx.tag(getter,event),route,observation:found.observation};
+  };
   return {id:PROXY_SOURCE_PROFILE_V8,
-  captureState:()=>({active:[...active],callbacks:[...callbacks],faultEvidence:[...faultEvidence],revokers:[...revokers],next}),
-  restoreState(state){active=new Map(state.active);callbacks=new Map(state.callbacks);faultEvidence=new Map(state.faultEvidence??[]);revokers=new Map(state.revokers??[]);next=state.next;},
+  captureState:()=>({active:[...active],callbacks:[...callbacks],getMethods:[...getMethods],
+    getMethodCallbacks:[...getMethodCallbacks],getterCandidates:[...getterCandidates],
+    faultEvidence:[...faultEvidence],revokers:[...revokers],next}),
+  restoreState(state){active=new Map(state.active);callbacks=new Map(state.callbacks);getMethods=new Map(state.getMethods??[]);
+    getMethodCallbacks=new Map(state.getMethodCallbacks??[]);getterCandidates=new Set(state.getterCandidates??[]);
+    faultEvidence=new Map(state.faultEvidence??[]);revokers=new Map(state.revokers??[]);next=state.next;},
   syntax(node){return node.type==='NewExpression'&&node.callee.type==='Identifier'&&node.callee.name==='Proxy'||
     node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&!node.callee.computed&&
     node.callee.object.type==='Identifier'&&node.callee.object.name==='Proxy'&&node.callee.property.name==='revocable';},
@@ -76,7 +92,14 @@ export function createProxySourceAdapterV8(){
     return prior?['ref',prior.revoke]:undefined;
   },
   heapFields(node){return node.kind==='proxy'?fields:null;},
-  frameFields(node){return node.pendingProperty?.proxy?['pendingProperty']:null;},
+  beforeEvent(ctx,event,row){
+    if(event.operation==='primitive.binary'&&row?.child){
+      const parent=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId)?.after;
+      if(parent?.pendingProperty?.kind==='proxy-get-method')getterCandidates.add(row.child);
+    }
+  },
+  frameFields(node){return node.pendingProperty?.proxy||node.pendingProperty?.kind==='proxy-get-method'?['pendingProperty']:
+    getterCandidates.has(node.id)||getMethodCallbacks.has(node.id)?[]:null;},
   checkHeap(ctx,node){
     if(Object.keys(node.properties??{}).length||Object.keys(node.propertyVersions??{}).length||node.shapeVersion!==0)
       ctx.refuse('Proxy has undeclared own storage');
@@ -85,6 +108,7 @@ export function createProxySourceAdapterV8(){
   },
   allocate(ctx,node){if(node.kind==='proxy')ctx.refuse('Proxy allocation must follow its source constructor');return false;},
   event(ctx,event,row){
+    if(event.operation==='call.return'&&getMethodCallbacks.has(event.invocationId))return true;
     if(event.operation==='call.return'&&callbacks.has(event.invocationId)){
       const entry=callbacks.get(event.invocationId),owner=event.stateChanges.find(item=>
         item.table==='frames'&&item.id===entry.owner)?.after,token=faultToken(owner),
@@ -128,6 +152,55 @@ export function createProxySourceAdapterV8(){
       }
     }
     if(event.operation==='call.enter'){
+      const selected=getMethods.get(event.invocationId);
+      if(selected?.phase==='returned'){
+        const parentChange=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId),
+          before=parentChange?.before,after=parentChange?.after,prior=before?.pendingProperty?.proxyGetMethod,
+          pending=after?.pendingProperty,method=selected.method;
+        require(ctx,event.siteId===selected.siteId&&before?.pendingProperty?.kind==='proxy-get-method'&&
+          before.pendingProperty.phase==='getter-returned'&&prior&&prior.object?.[1]===selected.object&&
+          ctx.eq(prior.target,selected.target)&&ctx.eq(prior.handler,selected.handler)&&
+          ctx.eq(prior.keyValue,selected.key)&&ctx.eq(prior.getter,selected.getter),
+          'GetMethod resume differs from its retained getter selection');
+        if(method[0]==='undefined'){
+          const result=event.result??row?.result;
+          require(ctx,!pending&&event.stateChanges.every(change=>change.table!=='frames'||change.id===event.invocationId)&&
+            result?.[0]==='bool','nullish GetMethod must transparently continue the saved has target');
+          emit(ctx,{kind:'proxy.has',id:selected.id,object:selected.object,key:selected.key,
+            result:ctx.tag(result,event),route:selected.route},event);
+          getMethods.delete(event.invocationId);return true;
+        }
+        const child=pending?.proxy&&pending.waitingFrameId?
+            event.stateChanges.find(change=>change.table==='frames'&&change.id===pending.waitingFrameId)?.after:null,
+          route=selected.route.map((item,index)=>index===selected.route.length-1?{...item,method}:item),
+          parentProgram=ctx.bundle.programs[after?.codeId],
+          parentInstruction=parentProgram?.instructions.find(instruction=>instruction.siteId===event.siteId);
+        require(ctx,child&&pending.kind==='has'&&pending.proxy.strict===false&&
+          parentInstruction?.op==='BINARY'&&parentInstruction.arg==='in'&&
+          pending.proxy.owner===selected.object&&ctx.eq(pending.proxy.object,['ref',selected.object])&&
+          ctx.eq(pending.proxy.target,selected.target)&&ctx.eq(pending.proxy.handler,selected.handler)&&
+          ctx.eq(pending.proxy.route,route)&&ctx.eq(selected.route.at(-1)?.method,['undefined']),
+          'selected has trap lost its retained GetMethod target or route');
+        const invocation=ctx.frame(child.id),receiver=['ref',selected.object];
+        emit(ctx,{kind:'proxy.has.call',id:selected.id,object:selected.object,owner:selected.trapOwner,
+          receiver,key:selected.key,child:invocation,route},event);
+        require(ctx,ctx.eq(ctx.controller.receiver,child.thisValue),'has trap effective receiver differs');
+        const call=ctx.controller.protocol.proxyCalls.pending.at(-1),fn=ctx.state.heap[method[1]],
+          program=ctx.bundle.programs[fn?.codeId],
+          environment=event.stateChanges.find(change=>change.table==='envs'&&change.id===child.envId)?.after,
+          args=[call.target,selected.key];
+        require(ctx,fn?.kind==='function'&&!fn.async&&!program.generator&&child.codeId===fn.codeId&&
+          environment?.parent===fn.closureEnvId,'selected has trap must retain its synchronous source closure');
+        require(ctx,program.params.every((name,index)=>environment.bindings[name]?.initialized&&
+          ctx.eq(environment.bindings[name].token?.value,args[index]??['undefined'])),
+          'selected has trap parameters differ from native arguments');
+        for(const [name,binding]of Object.entries(environment?.bindings??{}))if(binding.initialized)
+          ctx.bind(ctx.cell(environment.id,name),binding.token.value,event);
+        const entry={id:selected.id,owner:event.invocationId,child:child.id,object:selected.object,
+          trapOwner:selected.trapOwner,receiver,key:selected.key,operation:'has',strict:false,value:null,route};
+        active.set(event.invocationId,entry);callbacks.set(child.id,entry);
+        getMethods.delete(event.invocationId);return true;
+      }
       const raw=event.operands?.[0],callee=raw?.[0]==='method'?raw[1]:raw,
         code=callee?.[0]==='builtinfn'&&callee[1].startsWith('Proxy.revoke:')?callee[1]:null,
         prior=code&&revokers.get(code),identity=prior?.proxy,
@@ -163,6 +236,30 @@ export function createProxySourceAdapterV8(){
     if(node?.kind!=='proxy'||!property&&!has&&!deletion)return false;
     const key=ctx.key(has?row?.operands?.[0]??failedHas.at(-2)?.value:
       row?.operands?.[1]??directStack.at(-1)?.value??failedRead.at(-1)?.value??failedWrite.at(-2)?.value);
+    if(has&&row?.child){
+      const parent=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId)?.after,
+        pending=parent?.pendingProperty;
+      if(pending?.kind==='proxy-get-method'){
+        const selection=pending.proxyGetMethod,route=ownHasGetterRoute(ctx,base,event),
+          child=event.stateChanges.find(change=>change.table==='frames'&&change.id===row.child)?.after,
+          getter=ctx.tag(selection?.getter,event),id='proxygetmethod'+(++next),childToken=child&&ctx.frame(child.id);
+        require(ctx,child&&selection?.operation==='has'&&ctx.eq(selection.object,base)&&
+          ctx.eq(selection.target,route.target)&&ctx.eq(selection.handler,route.handler)&&
+          ctx.eq(selection.receiver,route.handler)&&ctx.eq(selection.route,route.route)&&
+          ctx.eq(selection.keyValue,row.operands[0])&&ctx.eq(getter,route.getter)&&
+          selection.key===(key[0]==='symbol'?symbolPropertyKey(key[1]):stringPropertyKey(key[1])),
+          'runtime has getter differs from the exact source GetMethod lookup');
+        const entry={id,parent:event.invocationId,child:child.id,childToken,object:base[1],
+          target:route.target,handler:route.handler,receiver:route.handler,key:ctx.copy(key),getter,
+          trapOwner:route.owner,route:route.route,siteId:event.siteId,phase:'getting',method:null,rawReturn:null};
+        emit(ctx,{kind:'proxy.getMethod.begin',id,operation:'has',object:entry.object,target:entry.target,
+          handler:entry.handler,receiver:entry.receiver,key:entry.key,child:childToken,getter},event);
+        emit(ctx,{kind:'property.get.call',id,child:childToken,object:entry.handler[1],key:['str','has'],
+          receiver:entry.receiver},event,'owned-source-accessor-call/1');
+        getMethods.set(event.invocationId,entry);getMethodCallbacks.set(child.id,entry);
+        getterCandidates.delete(child.id);return true;
+      }
+    }
     if(event.completion?.type==='throw'){
       const operation=has?'has':deletion?'deleteProperty':event.operation==='property.read'?'get':'set';
       if(node?.targetId===null&&node?.handlerId===null){
@@ -245,6 +342,25 @@ export function createProxySourceAdapterV8(){
     return true;
   },
   completeFrame(ctx,change,event){
+    const getter=getMethodCallbacks.get(change.id);
+    if(getter){
+      const completion=change.after.completion,raw=completion?.value?.value,invocation=ctx.frame(change.id);
+      require(ctx,['return','throw'].includes(completion?.type)&&raw&&ctx.publicInvocation===invocation,
+        'GetMethod getter completion differs from its exact handler invocation');
+      const value=ctx.tag(raw,event),kind=completion.type==='throw'?'throw':'return';
+      emit(ctx,{kind,invocation,value},event);
+      emit(ctx,{kind:'property.finish',id:getter.id,completion:{kind:kind==='throw'?'throw':'normal',value}},event,
+        'owned-source-accessor-completion/1');
+      emit(ctx,{kind:'proxy.getMethod.finish',id:getter.id,
+        completion:{kind:kind==='throw'?'throw':'normal',value}},event);
+      getMethodCallbacks.delete(change.id);getterCandidates.delete(change.id);
+      if(kind==='throw')getMethods.delete(getter.parent);
+      else{
+        getter.phase='returned';getter.rawReturn=ctx.copy(raw);
+        getter.method=['undefined','null'].includes(raw[0])?['undefined']:ctx.copy(value);
+      }
+      return true;
+    }
     const entry=callbacks.get(change.id);if(!entry)return false;
     const completion=change.after.completion,value=completion?.value?.value,invocation=ctx.frame(change.id);
     require(ctx,['return','throw'].includes(completion?.type)&&value&&ctx.publicInvocation===invocation,
@@ -277,7 +393,26 @@ export function createProxySourceAdapterV8(){
   },
   checkFrame(ctx,node){
     const entry=active.get(node.id),pending=node.pendingProperty;
-    if(!entry){require(ctx,!pending?.proxy,'unregistered Proxy continuation');return true;}
+    if(!entry){
+      const getter=getMethods.get(node.id);
+      if(getter){
+        const selected=ctx.controller.protocol.proxyCalls.getMethods.find(row=>row.id===getter.id),
+          retained=pending?.proxyGetMethod,waiting=pending?.phase==='getter-waiting';
+        require(ctx,pending?.kind==='proxy-get-method'&&retained&&
+          selected?.phase===(getter.phase==='returned'?'returned':'selected')&&
+          selected.parent===ctx.frame(node.id)&&selected.child===getter.childToken&&
+          selected.object===getter.object&&ctx.eq(selected.target,getter.target)&&
+          ctx.eq(selected.handler,getter.handler)&&ctx.eq(selected.receiver,getter.receiver)&&
+          ctx.eq(selected.key,getter.key)&&ctx.eq(selected.getter,getter.getter)&&
+          ctx.eq(retained.object,['ref',getter.object])&&ctx.eq(retained.target,getter.target)&&
+          ctx.eq(retained.handler,getter.handler)&&ctx.eq(retained.receiver,getter.receiver)&&
+          ctx.eq(retained.keyValue,getter.key)&&ctx.eq(retained.getter,getter.getter)&&
+          (waiting?pending.waitingFrameId===getter.child:pending.waitingFrameId===null&&getter.phase==='returned'),
+          'retained GetMethod getter checkpoint differs');
+        return true;
+      }
+      require(ctx,!pending?.proxy&&pending?.kind!=='proxy-get-method','unregistered Proxy continuation');return true;
+    }
     require(ctx,(!node.handlers?.length||ctx.extensionState.has('ordinary-completions-source/1'))&&
       !node.awaiting&&!node.asyncPromiseId,'async or unowned cleanup Proxy caller needs its own profile');
     const current=ctx.controller.protocol.proxyCalls.pending.find(row=>row.id===entry.id),

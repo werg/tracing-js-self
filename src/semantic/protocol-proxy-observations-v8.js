@@ -57,7 +57,50 @@ function ownedObservations(bundle,allocations){
       reflection=event.operation==='call.enter'&&raw?.[0]==='builtinfn'&&
         ['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys','defineProperty'].includes(raw[1].split('.')[1]),
       base=has||reflection?event.operands[1]:event.operands[0],node=base?.[0]==='ref'?state.heap[base[1]]:null;
-    if(node?.kind==='proxy'&&(property||has||deletion||reflection)&&node.targetId!==null&&node.handlerId!==null){
+    let getMethodStart=false;
+    if(node?.kind==='proxy'&&has){
+      const parent=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId)?.after,
+        pending=parent?.pendingProperty,selection=pending?.proxyGetMethod,
+        child=selection&&event.stateChanges.find(change=>change.table==='frames'&&change.id===pending.waitingFrameId)?.after;
+      if(pending?.kind==='proxy-get-method'&&selection){
+        if(!child)fail('GetMethod getter child identity differs');
+        const getter=selection.getter,proxy=['ref',selection.object[1]],handler=selection.handler;
+        add('get-method',{object:value(proxy),key:value(['str','has']),getter:value(getter)});
+        add('call',{operation:'getMethod',object:value(proxy),method:value(getter),receiver:value(handler),arguments:[]});
+        children.set(child.id,{operation:'getMethod',object:proxy,method:getter});getMethodStart=true;
+      }
+    }
+    if(event.operation==='call.enter'&&frame?.pendingProperty?.kind==='proxy-get-method'&&
+      frame.pendingProperty.phase==='getter-returned'){
+      const selection=frame.pendingProperty.proxyGetMethod,method=frame.pendingProperty.result,
+        parent=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId)?.after,
+        pending=parent?.pendingProperty;
+      if(['undefined','null'].includes(method?.[0])){
+        if(pending)fail('nullish GetMethod did not continue through the saved target');
+      }else{
+        const child=pending?.proxy&&event.stateChanges.find(change=>change.table==='frames'&&
+          change.id===pending.waitingFrameId)?.after;
+        if(!child||pending.kind!=='has'||!selection||JSON.stringify(pending.proxy.target)!==JSON.stringify(selection.target)||
+          JSON.stringify(pending.proxy.handler)!==JSON.stringify(selection.handler))
+          fail('selected has trap lost its retained GetMethod state');
+        const route=selection.route.map((item,index)=>index===selection.route.length-1?{...item,method}:item),
+          key=selection.keyValue,target=selection.target,handler=selection.handler,fn=state.heap[method[1]],
+          environment=event.stateChanges.find(change=>change.table==='envs'&&change.id===child.envId)?.after;
+        if(JSON.stringify(pending.proxy.route)!==JSON.stringify(route)||fn?.kind!=='function'||
+          child.codeId!==fn.codeId||environment?.parent!==fn.closureEnvId)
+          fail('selected has trap route or closure differs');
+        const args=[target,key],effective=fn.arrow?(fn.lexicalThisFrameId?state.frames[fn.lexicalThisFrameId]?.thisValue:fn.lexicalThis):handler;
+        if(JSON.stringify(child.thisValue)!==JSON.stringify(effective)||
+          !bundle.programs[fn.codeId].params.every((name,index)=>environment.bindings[name]?.initialized&&
+            JSON.stringify(environment.bindings[name].token?.value)===JSON.stringify(args[index]??['undefined'])))
+          fail('selected has trap receiver or parameters differ');
+        add('select',{operation:'has',object:value(['ref',selection.object[1]]),key:value(key),method:value(method)});
+        add('call',{operation:'has',object:value(['ref',selection.object[1]]),method:value(method),receiver:value(handler),
+          arguments:[target,key].map(value)});
+        children.set(child.id,{operation:'has',object:['ref',selection.object[1]],method});
+      }
+    }
+    if(node?.kind==='proxy'&&(property||has||deletion||reflection)&&node.targetId!==null&&node.handlerId!==null&&!getMethodStart){
       const operation=reflection?raw[1].split('.')[1]:has?'has':deletion?'delete':event.operation==='property.read'?'get':'set',
         trapName=operation==='delete'?'deleteProperty':operation,
         key=reflection?(['getOwnPropertyDescriptor','defineProperty'].includes(operation)?event.operands[2]:['undefined']):(has?event.operands[0]:event.operands[1])?.[0]==='symbol'?(has?event.operands[0]:event.operands[1]):
@@ -68,6 +111,7 @@ function ownedObservations(bundle,allocations){
         visited.add(ownerId);
         const handler=state.heap[owner.handlerId],found=ordinaryGet(state.heap,['ref',owner.handlerId],trapName);
         if(!handler||!found)fail('handler accessor lookup requires its call boundary');
+      if(found.accessor)fail('GetMethod accessor missed its retained continuation');
         selected=found.method.value;
         route.push({object:ownerId,target:['ref',owner.targetId],handler:['ref',owner.handlerId],method:selected});
         if(!['undefined','null'].includes(selected[0]))break;
@@ -118,7 +162,18 @@ function ownedObservations(bundle,allocations){
 export function createProxyObservationAdapterV8({source,side='native',bundle=null,initialValues=[]}={}){
   const original=allocations(source);if(!original.length)return null;
   const registered=new WeakMap(),rows=[],identities=new Map(),failures=[],ordinaryPrototypes=new Set([Object.prototype]),
-    revokedProxyHistory=new Map();
+    revokedProxyHistory=new Map(),revokerCodes=new Set(),nativeRevokers=new WeakSet();
+  if(side==='owned'&&bundle)for(const event of bundle.events)if(event.operation==='proxy.revocable.allocate'){
+    const proxyChange=event.stateChanges.find(change=>change.table==='heap'&&change.after?.kind==='proxy'),
+      wrapperChange=event.stateChanges.find(change=>change.table==='heap'&&change.id===event.result?.[1]),
+      wrapper=wrapperChange?.after,proxy=proxyChange?.after,code=proxyChange&&'Proxy.revoke:'+proxyChange.id,
+      revoke=wrapper?.properties?.revoke?.value;
+    if(event.operands.length===2&&event.result?.[0]==='ref'&&wrapper?.kind==='object'&&proxy?.kind==='proxy'&&
+      wrapper.properties?.proxy?.value?.[0]==='ref'&&wrapper.properties.proxy.value[1]===proxyChange.id&&
+      Object.keys(wrapper.properties).sort().join(',')==='proxy,revoke'&&
+      revoke?.[0]==='builtinfn'&&revoke[1]===code&&proxy.targetId===event.operands[0]?.[1]&&
+      proxy.handlerId===event.operands[1]?.[1])revokerCodes.add(code);
+  }
   if(side==='owned'&&bundle)for(const event of bundle.events)for(const change of event.stateChanges??[])
     if(change.table==='heap'&&change.before?.kind==='proxy'&&change.after?.kind==='proxy'&&
       change.before.targetId!==null&&change.after.targetId===null&&change.after.handlerId===null)
@@ -166,8 +221,18 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
       !allowAccessors&&Object.keys(node.accessors??{}).length)
       ctx.fail(label+' must be an ordinary data object');return node;
   }
-  function nativeHandler(value,ctx){return nativeOrdinary(value,ctx,'Proxy handler');}
-  function ownedHandler(value,ctx){return ownedOrdinary(value,ctx,'Proxy handler');}
+  function nativeHandler(value,ctx){
+    const descriptors=nativeOrdinary(value,ctx,'Proxy handler',{allowAccessors:true});
+    for(const key of Reflect.ownKeys(descriptors))if(!Object.hasOwn(descriptors[key],'value')&&key!=='has')
+      ctx.fail('Proxy handler accessor outside own has GetMethod boundary');
+    return descriptors;
+  }
+  function ownedHandler(value,ctx){
+    const node=ownedOrdinary(value,ctx,'Proxy handler',{allowAccessors:true});
+    if(Object.keys(node.accessors??{}).some(key=>key!=='has'))
+      ctx.fail('Proxy handler accessor outside own has GetMethod boundary');
+    return node;
+  }
   const metadataTraps=['getOwnPropertyDescriptor','ownKeys','getPrototypeOf','isExtensible'];
   function ownedMetadataTarget(tag,ctx){
     let current=tag,node=current?.[0]==='ref'?ctx.state.heap[current[1]]:null,seen=new Set();
@@ -201,8 +266,23 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
   function observedHandler(target,handler,ctx,readResult){
     return new Proxy({}, {get(_target,operation){
       const descriptors=nativeHandler(handler,ctx),descriptor=descriptors[operation];
-      const method=descriptor&&Object.hasOwn(descriptor,'value')?descriptor.value:Reflect.get(handler,operation,handler);
       nativeTarget(target,ctx,'Proxy target',{allowAccessors:['has','deleteProperty'].includes(operation)});
+      let method;
+      if(descriptor&&!Object.hasOwn(descriptor,'value')){
+        if(operation!=='has')ctx.fail('Proxy accessor GetMethod is only bounded for has');
+        const getter=descriptor.get,proxy=readResult();
+        if(getter===undefined)method=undefined;
+        else{
+          if(typeof getter!=='function')ctx.fail('Proxy has accessor getter is not callable');
+          add('get-method',{object:value(proxy),key:value('has'),getter:value(getter)});
+          add('call',{operation:'getMethod',object:value(proxy),method:value(getter),receiver:value(handler),arguments:[]});
+          try{method=invoke({callee:getter,receiver:handler,arguments:[]});
+            add('return',{operation:'getMethod',object:value(proxy),method:value(getter),value:value(method)});
+          }catch(error){
+            add('throw',{operation:'getMethod',object:value(proxy),method:value(getter),value:value(error)});throw error;
+          }
+        }
+      }else method=descriptor&&Object.hasOwn(descriptor,'value')?descriptor.value:Reflect.get(handler,operation,handler);
       if(!['get','set','has','deleteProperty','getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys','defineProperty'].includes(operation)||method==null||typeof method!=='function')return method;
       const semanticOperation=operation==='deleteProperty'?'delete':operation;
       return (...trapArgs)=>{
@@ -226,7 +306,7 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
       const originalRevoke=pair.revoke,revoke=(...args)=>{
         add('revoke',{object:value(result)});revoked.add(result);return Reflect.apply(originalRevoke,undefined,args);
       };
-      Object.defineProperty(revoke,'name',{value:'',configurable:true});
+      Object.defineProperty(revoke,'name',{value:'',configurable:true});nativeRevokers.add(revoke);
       Object.defineProperty(pair,'revoke',{value:revoke,writable:true,enumerable:true,configurable:true});
       add('create',{site,object:value(result),target:value(target),handler:value(handler)});return pair;
     }
@@ -276,6 +356,8 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
       for(const edit of edits)text=text.slice(0,edit.start)+edit.text+text.slice(edit.end);return text;
     },
     metadataAdapter:side==='owned'?{ownedNode(value,ctx){
+      if(value?.[0]==='builtinfn'&&revokerCodes.has(value[1]))return {kind:'function',annotations:[{
+        name:'ordinary-nonconstructible/1',values:[],data:{}}]};
       const node=value[0]==='ref'?ctx.state.heap[value[1]]:null;if(node?.kind!=='proxy')return null;
       const revoked=node.targetId===null&&node.handlerId===null,history=revokedProxyHistory.get(node.id);
       if(revoked&&!history)ctx.fail('revoked Proxy lacks its retained metadata identities');
@@ -286,7 +368,9 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
         ctx.fail('Proxy has invented own state');
       return {...ctx.defaultNode(metadataTarget),kind:'proxy',annotations:[{name:'proxy-target-handler/1',
         values:revoked?[['null'],['null']]:[target,handler],data:{}}]};
-    }}:{nativeProxyNode(value,ctx){
+    }}:{nativeNode(value){
+      return nativeRevokers.has(value)?{kind:'function',annotations:[{name:'ordinary-nonconstructible/1',values:[],data:{}}]}:null;
+    },nativeProxyNode(value,ctx){
       const captured=registered.get(value);if(!captured)return null;
       if(revoked.has(value))return {...ctx.defaultNode(captured.target),kind:'proxy',annotations:[{
         name:'proxy-target-handler/1',values:[null,null],data:{}}]};
