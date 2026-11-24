@@ -8,7 +8,8 @@ import {encode,decode} from '../values.js';
 import {propertyKeyValue,symbolPropertyKey} from '../property-keys.js';
 
 export const PRIMITIVE_CONVERSION_OBSERVATION_PROFILE_V8='primitive-conversion-observations/1';
-const numberHook='__tracingProtocolConversionNumber',keyHook='__tracingProtocolConversionKey';
+const numberHook='__tracingProtocolConversionNumber',keyHook='__tracingProtocolConversionKey',
+  reflectHook='__tracingProtocolConversionReflect';
 const apply=Reflect.apply,getOwn=Object.getOwnPropertyDescriptor,getPrototype=Object.getPrototypeOf,
   functionSource=Function.prototype.toString;
 const reference=value=>value!==null&&['object','function'].includes(typeof value);
@@ -16,7 +17,7 @@ const site=node=>node.start+':'+node.end;
 const same=(left,right)=>JSON.stringify(left)===JSON.stringify(right);
 
 function inventory(source,{reserved=false}={}){
-  const numbers=[],keys=[];
+  const numbers=[],keys=[],reflects=[];
   function visit(node,parent=null){
     if(!node||typeof node!=='object')return;
     if(Array.isArray(node)){for(const child of node)visit(child,parent);return;}
@@ -24,6 +25,11 @@ function inventory(source,{reserved=false}={}){
       throw new TypeError('Independent conversion observation: reserved observer name in source');
     if(node.type==='CallExpression'&&!node.optional&&node.callee.type==='Identifier'&&node.callee.name==='Number')
       numbers.push(node);
+    if(node.type==='CallExpression'&&!node.optional&&node.arguments.length>=2&&
+      !node.arguments.some(argument=>argument.type==='SpreadElement')&&node.callee.type==='MemberExpression'&&
+      !node.callee.computed&&!node.callee.optional&&node.callee.object.type==='Identifier'&&
+      node.callee.object.name==='Reflect'&&['has','deleteProperty'].includes(node.callee.property.name))
+      reflects.push(node);
     if(node.type==='BinaryExpression'&&node.operator==='in'&&node.left.type!=='PrivateIdentifier')
       keys.push({key:node.left,site:site(node),unsupported:null});
     if(node.type==='MemberExpression'&&node.computed){
@@ -38,11 +44,12 @@ function inventory(source,{reserved=false}={}){
     }
     for(const [key,child]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(child,node);
   }
-  visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));return {numbers,keys};
+  visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));return {numbers,keys,reflects};
 }
 
 function ownedObservations(bundle,original){
-  const numberSites=new Set(original.numbers.map(site)),keySites=new Map(original.keys.map(row=>[row.site,row])),
+  const numberSites=new Set(original.numbers.map(site)),keySites=new Map([...original.keys.map(row=>[row.site,row]),
+      ...original.reflects.map(node=>[site(node),{reflect:node.callee.property.name}])]),
     siteById=new Map(bundle.sites.map(row=>[row.siteId,site(row)])),state=structuredClone(bundle.initialState),
     rows=[],identities=new Map(),active=new Map(),children=new Map();let next=0;
   const fail=message=>{throw new TypeError('Independent owned conversion observation: '+message);};
@@ -142,6 +149,15 @@ function ownedObservations(bundle,original){
       const goal=numberStart?'Number':'PropertyKey',keySite=keySites.get(location);
       if(numberStart?!numberSites.has(location):!keySite)fail('unanchored '+goal+' source conversion');
       if(keySite?.unsupported&&!numberStart)fail(keySite.unsupported);
+      if(keySite?.reflect&&!numberStart){
+        const frame=state.frames[event.invocationId],instruction=bundle.programs[frame?.codeId]?.instructions[frame?.pc],
+          argc=instruction?.arg,raw=frame?.stack[frame.stack.length-argc-1]?.value,
+          actual=raw?.[0]==='method'?raw[1]:raw;
+        if(instruction?.op!=='CALL'||!Number.isSafeInteger(argc)||argc<2||
+          !same(actual,['builtinfn','Reflect.'+keySite.reflect])||
+          !same(frame.stack[frame.stack.length-argc+1]?.value,event.operands[0]))
+          fail('Reflect conversion differs from the original selected call and key');
+      }
       if(active.has(event.invocationId))fail('overlapping conversions in one frame');
       const entry={site:location,goal,input:numberStart?event.operands[1]??['num',0]:event.operands[0],
         owner:event.invocationId,selected:null};
@@ -197,10 +213,10 @@ function ownedObservations(bundle,original){
 }
 
 export function createPrimitiveConversionObservationAdapterV8({source,side='native',bundle=null,initialValues=[]}={}){
-  const original=inventory(source,{reserved:true});if(!original.numbers.length&&!original.keys.length)return null;
+  const original=inventory(source,{reserved:true});if(!original.numbers.length&&!original.keys.length&&!original.reflects.length)return null;
   if(side==='owned')return {id:PRIMITIVE_CONVERSION_OBSERVATION_PROFILE_V8,observations:()=>ownedObservations(bundle,original)};
   const rows=[],identities=new Map(),builtins=new Map(),builtinHomes=new Set(),failures=[];
-  let next=0,nativeNumber=null,nativePropertyKey=null,nativeArrayJoin=null,
+  let next=0,nativeNumber=null,nativePropertyKey=null,nativeArrayJoin=null,nativeReflect=null,nativeLookup=null,
     invoke=call=>apply(call.callee,call.receiver,call.arguments);
   const fail=message=>{failures.push(message);throw new TypeError('Independent native conversion observation: '+message);};
   function value(raw){
@@ -293,6 +309,12 @@ export function createPrimitiveConversionObservationAdapterV8({source,side='nati
     setCallObserver(observer){invoke=observer;},
     globals:{
       [numberHook]:(location,callee)=>(...args)=>invoke({callee,receiver:undefined,arguments:args,site:location}),
+      [reflectHook]:(location,receiver,name)=>{
+        // Select the actual method before evaluating any argument. A shadowed
+        // Reflect binding must never receive an observer-wrapped key.
+        const callee=nativeLookup(receiver,name);
+        return (...args)=>invoke({callee,receiver,arguments:args,site:location});
+      },
       [keyHook]:(index,input)=>{
         if(!reference(input))return input;
         const key=original.keys[index];if(!key)fail('unanchored property key');
@@ -306,8 +328,9 @@ export function createPrimitiveConversionObservationAdapterV8({source,side='nati
       }
     },
     initializeRealm(evaluate){
-      const intrinsics=evaluate('({Number,object:Object.prototype,array:Array.prototype,valueOf:Object.prototype.valueOf,toString:Object.prototype.toString,arrayToString:Array.prototype.toString,join:Array.prototype.join})');
-      nativeNumber=intrinsics.Number;nativeArrayJoin=intrinsics.join;
+      const intrinsics=evaluate('({Number,object:Object.prototype,array:Array.prototype,valueOf:Object.prototype.valueOf,toString:Object.prototype.toString,arrayToString:Array.prototype.toString,join:Array.prototype.join,reflectHas:Reflect.has,reflectDelete:Reflect.deleteProperty,lookup:(receiver,key)=>receiver[key]})');
+      nativeNumber=intrinsics.Number;nativeArrayJoin=intrinsics.join;nativeLookup=intrinsics.lookup;
+      nativeReflect=new Map([[intrinsics.reflectHas,'has'],[intrinsics.reflectDelete,'deleteProperty']]);
       for(const [fn,name]of [[intrinsics.valueOf,'Object.valueOf'],[intrinsics.toString,'Object.toString'],[intrinsics.arrayToString,'Array.toString'],
         [Object.prototype.valueOf,'Object.valueOf'],[Object.prototype.toString,'Object.toString'],[Array.prototype.toString,'Array.toString']])builtins.set(fn,name);
       for(const home of [intrinsics.object,intrinsics.array,Object.prototype,Array.prototype])builtinHomes.add(home);
@@ -315,9 +338,15 @@ export function createPrimitiveConversionObservationAdapterV8({source,side='nati
     },
     instrument(text){
       const current=inventory(text);
-      if(current.numbers.length!==original.numbers.length||current.keys.length!==original.keys.length)fail('source conversion inventory changed');
+      if(current.numbers.length!==original.numbers.length||current.keys.length!==original.keys.length||current.reflects.length!==original.reflects.length)fail('source conversion inventory changed');
       const edits=current.numbers.map((node,index)=>({start:node.callee.start,end:node.callee.end,
         text:numberHook+'('+JSON.stringify(site(original.numbers[index]))+',Number)'}));
+      for(let index=0;index<current.reflects.length;index++){
+        const node=current.reflects[index],originalNode=original.reflects[index],name=node.callee.property.name;
+        if(name!==originalNode.callee.property.name)fail('Reflect source operation changed');
+        edits.push({start:node.callee.start,end:node.callee.end,
+          text:reflectHook+'('+JSON.stringify(site(originalNode))+',Reflect,'+JSON.stringify(name)+')'});
+      }
       for(let index=0;index<current.keys.length;index++){
         const key=current.keys[index].key;
         edits.push({start:key.start,end:key.start,text:keyHook+'('+index+',('}, {start:key.end,end:key.end,text:'))'});
@@ -326,6 +355,18 @@ export function createPrimitiveConversionObservationAdapterV8({source,side='nati
       for(const edit of edits)text=text.slice(0,edit.start)+edit.text+text.slice(edit.end);return text;
     },
     observeCall(call,nextCall){
+      const reflect=nativeReflect?.get(call.callee);
+      if(reflect){
+        const [target,input]=call.arguments;
+        // Reflect validates its target first. Observe no conversion for
+        // primitive targets or already-primitive keys.
+        if(!reference(target)||!reference(input))return nextCall();
+        if(!original.reflects.some(node=>site(node)===call.site&&node.callee.property.name===reflect))
+          fail('unanchored Reflect source call');
+        if(types.isProxy(target))fail('Reflect Proxy target is outside the conversion profile');
+        const property=convert('PropertyKey',call.site,input,raw=>nativePropertyKey(raw));
+        return apply(call.callee,call.receiver,[target,property,...call.arguments.slice(2)]);
+      }
       if(call.callee!==nativeNumber)return nextCall();
       if(typeof call.site!=='string')fail('unanchored Number source call');
       const input=call.arguments.length?call.arguments[0]:0;

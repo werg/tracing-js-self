@@ -99,6 +99,22 @@ test('computed calls preserve receiver and argument order, private brands and op
   }
 });
 
+test('Reflect conversion observes original selection, argument order, symbol identity and abrupt completion',()=>{
+  const cases=[
+    ['const log=[];const object={x:1};const key={get [Symbol.toPrimitive](){log.push("getter");return function(hint){log.push(hint);return "x";};}};function extra(){log.push("extra");return 1;}return [Reflect.has(object,key,extra()),Reflect.deleteProperty(object,key,extra()),"x" in object,log];',
+      [true,true,false,['extra','getter','string','extra','getter','string']]],
+    ['const object={};const token=Symbol("key");object[token]=1;const key={[Symbol.toPrimitive](){return token;}};return [Reflect.has(object,key),Reflect.deleteProperty(object,key),token in object];',[true,true,false]],
+    ['const key={toString(){throw 7;}};const object={x:1};try{Reflect.deleteProperty(object,key);}catch(error){return [error,"x" in object];}',[7,true]],
+    ['let calls=0;const key={toString(){calls++;return "x";}};try{Reflect.has(null,key);}catch(error){}try{Reflect.deleteProperty(1,key);}catch(error){}return calls;',0],
+    ['const key={toString(){throw 7;}};const Reflect={has(target,property){return property===key;}};return Reflect.has({},key);',true]
+  ];
+  for(const [body,expected]of cases)checked(body,{expected,completions:true});
+  const {text,bundle}=checked(cases[0][0]);
+  const forged=structuredClone(bundle);
+  forged.events.find(event=>event.operation==='property.key.convert').operands[0]=['ref','forged'];
+  assert.throws(()=>factory({source:text,side:'owned',bundle:forged}).observations(),/original selected call and key/);
+});
+
 test('computed literal, class and destructuring keys retain their source anchors and timing',()=>{
   for(const body of [
     'let log="";const key={toString(){log+="k";return "x";}};const o={[key]:(log+="v",3)};return [o.x,log];',
@@ -212,9 +228,8 @@ test('Node24 compound, logical and update differences are refused while primitiv
     assert.throws(()=>factory({source:text,side:'owned',bundle:archive(text)}).observations(),/compound\/logical\/update/);
   }
   checked('const key="x",object={x:1};object[key]+=2;object[key]++;return object.x;',{expected:4});
-  const deletion=source('const key={toString(){return "x";}};const object={x:1};try{delete object[key];}catch(e){}return 0;');
-  assert.throws(()=>observed(deletion),/computed deletion/);
-  assert.throws(()=>archive(deletion),/Unsupported.*unary operator/);
+  checked('let calls=0;const key={toString(){calls++;return "x";}};const object={x:1};const removed=delete object[key];return [removed,"x" in object,calls];',
+    {expected:[true,false,1],completions:true});
 });
 
 test('reserved hook names and altered instrumentation inventories are rejected',()=>{

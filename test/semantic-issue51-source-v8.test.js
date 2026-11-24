@@ -94,6 +94,21 @@ test('computed deletion retains its object-key conversion site and runs the key 
   assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
 });
 
+test('Reflect object keys project conversion and property operations at the original call sites',async()=>{
+  const artifact=await checked('const log=[];const object={x:1};'+
+    'const key={get [Symbol.toPrimitive](){log.push("getter");return function(hint){log.push(hint);return "x";};}};'+
+    'function extra(){log.push("extra");return 1;}return [Reflect.has(object,key,extra()),Reflect.deleteProperty(object,key,extra()),"x" in object,log];');
+  const controller=RegionExecutionHarness.replay(artifact).controller;
+  assert.deepEqual(controller.materialize(controller.completion.value),
+    [true,true,false,['extra','getter','string','extra','getter','string']]);
+  const records=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record);
+  assert.equal(records.filter(row=>row.kind==='conversion.begin').length,2);
+  assert.equal(records.filter(row=>row.kind==='property.delete').length,1);
+  assert.equal(records.filter(row=>row.kind==='property.has').length,2);
+  assert.equal(artifact.sidecar.sourceArtifact.sidecar.reference.extensionAudit.status,'agreed');
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
 test('invalid in RHS throws before key coercion in owned/native execution and remains a source refusal',async()=>{
   const fixture=issue51UnsupportedControls.find(row=>row.id==='issue51-control-in-invalid-rhs-before-key-coercion');
   assert(fixture);
