@@ -185,9 +185,16 @@ test('Proxy source deletion authenticates the caller strict mode',()=>{
   assert.throws(()=>compileProtocolSourceV8(bundle),/Replay divergence: semantic event|strict-delete context/);
 });
 
+test('strict false-set callback errors are source-qualified with the native message',async()=>{
+  const result=await verifyProtocolRegionTrainingCase(fixture('const proxy=new Proxy({}, {set:function(){return false;}});'+
+    'try{proxy.x=7;return "missed";}catch(error){return error.message;}'));
+  assert(result.exported,result.reason);
+  assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion,
+    {kind:'return',value:['str',"'set' on proxy: trap returned falsish for property 'x'"]});
+});
+
 test('unsupported Proxy traps, accessor targets, nesting and callable profiles remain explicit source refusals',async()=>{
   for(const body of [
-    'const proxy=new Proxy({x:2},{set:function(){return false;}});proxy.x=7;return 1;',
     'return new Proxy({x:2},{get:async function(){return 2;}}).x;',
     'return new Proxy({x:2},{get:function*(){yield 2;}}).x;',
     'return new Proxy({get x(){return 2;}},{}).x;',

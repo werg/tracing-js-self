@@ -14,7 +14,7 @@ export const PROXY_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.entries
   'proxy.has':['kind','object','key','result'],
   'proxy.delete':['kind','object','key','success'],
   'proxy.get.call':['kind','id','object','key','child'],
-  'proxy.set.call':['kind','id','object','key','value','child'],
+  'proxy.set.call':['kind','id','object','key','value','child','strict'],
   'proxy.has.call':['kind','id','object','key','child'],
   'proxy.delete.call':['kind','id','object','key','child','strict'],
   'proxy.delete.fault':['kind','object','key','error'],
@@ -40,7 +40,7 @@ export function validateProxyRecordV8(record,{value}){
   }
   else{id(record.object);value(record.key);if(!['str','symbol'].includes(record.key[0]))throw new TypeError('Proxy property key');
     if(record.kind.endsWith('.call')){id(record.id);id(record.child);}
-    if(record.kind==='proxy.delete.call'&&typeof record.strict!=='boolean')throw new TypeError('Proxy strict delete flag');
+    if(['proxy.delete.call','proxy.set.call'].includes(record.kind)&&typeof record.strict!=='boolean')throw new TypeError('Proxy caller strict flag');
     if(['proxy.get','proxy.has'].includes(record.kind))value(record.result);
     if(record.kind==='proxy.has'&&record.result[0]!=='bool')throw new TypeError('Proxy has result must be Boolean');
     if(record.kind==='proxy.set'||record.kind==='proxy.set.call')value(record.value);
@@ -94,6 +94,9 @@ function displayPropertyKey(controller,key){
 function strictDeleteMessage(controller,key){
   return "'deleteProperty' on proxy: trap returned falsish for property '"+displayPropertyKey(controller,key)+"'";
 }
+function strictSetMessage(controller,key){
+  return "'set' on proxy: trap returned falsish for property '"+displayPropertyKey(controller,key)+"'";
+}
 function directDeleteMessage(controller,object,key){
   const proxy=controller.heap.get(object),target=controller.heap.get(proxy?.target?.[1]),
     brand=target?.kind==='array'?'[object Array]':target?.prototype===null?'[object Object]':'#<Object>';
@@ -122,6 +125,8 @@ function proxyFaultMessage(controller,pending,api){
   }
   if(pending.operation==='delete'&&pending.strict&&!truth)
     return strictDeleteMessage(controller,pending.key);
+  if(pending.operation==='set'&&pending.strict&&!truth)
+    return strictSetMessage(controller,pending.key);
   if(['get','set'].includes(pending.operation)&&descriptor&&!descriptor.configurable){
     if(pending.operation==='set'&&!truth)return null;
     if(descriptor.kind==='data'&&!descriptor.writable&&
@@ -177,7 +182,7 @@ export function applyProxyRecordV8(controller,record,api){
       api.require(proxyFaultMessage(controller,pending,api)===null,
         'Proxy operation requires its derived abrupt boundary');
       const truth=api.truthy(completion.value),descriptor=api.ownDescriptor(target,pending.key);
-      if(pending.operation==='set')api.require(truth,'false Proxy set trap needs its abrupt completion boundary');
+      if(pending.operation==='set')api.require(truth||!pending.strict,'strict false Proxy set trap needs its caller fault');
       if(pending.operation==='has'&&!truth&&descriptor){
         api.require(descriptor.configurable===true&&target.extensible!==false,'Proxy has trap violates target invariant');
       }else if(pending.operation==='delete'&&truth&&descriptor){
@@ -209,7 +214,7 @@ export function applyProxyRecordV8(controller,record,api){
     api.require(pending.length<64&&!pending.some(row=>row.id===record.id),'Proxy pending call identity/bound');
     api.require(selected[0]==='ref'&&api.heapNode(controller,selected[1]).kind==='closure','Proxy call requires a live owned trap');
     if(operation==='set')api.known(controller,record.value);
-    const strict=operation==='delete'?record.strict:false,
+    const strict=['delete','set'].includes(operation)?record.strict:false,
       row={id:record.id,operation,parent:controller.stack.at(-1),child:record.child,object:record.object,
       target:api.copy(node.target),handler:api.copy(node.handler),key:api.copy(record.key),value:operation==='set'?api.copy(record.value):null,
       callee:api.copy(selected),strict};
@@ -264,7 +269,7 @@ export function restoreProxyStateV8(controller,snapshot,api){
     api.require(!seen.has(row.id)&&['get','set','has','delete'].includes(row.operation),'Proxy pending call identity');seen.add(row.id);
     const node=controller.heap.get(row.object);api.require(node?.kind==='proxy'&&api.eq(node.target,row.target)&&api.eq(node.handler,row.handler),
       'Proxy pending target/handler identities');route(controller,node,api);
-    api.require(typeof row.strict==='boolean'&&(row.operation==='delete'||row.strict===false),
+    api.require(typeof row.strict==='boolean'&&(['delete','set'].includes(row.operation)||row.strict===false),
       'Proxy pending strict-delete context');
     api.knownKey(controller,row.key);api.known(controller,row.callee);
     const callee=api.heapNode(controller,row.callee[1]);

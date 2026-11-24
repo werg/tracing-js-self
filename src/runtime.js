@@ -1233,7 +1233,7 @@ export class Runtime {
               message="'deleteProperty' on proxy: trap returned falsish for property '"+
                 proxyDeletePropertyDisplay(draft.heap,key)+"'";
           }else if(pending.kind==='set'&&!truthy(value)){
-            if(pending.proxy.strict)message="'set' on proxy: trap returned falsish for property '"+key+"'";
+            if(pending.proxy.strict)message="'set' on proxy: trap returned falsish for property '"+proxyDeletePropertyDisplay(draft.heap,key)+"'";
           }else if(data&&attributes?.configurable===false&&attributes.writable===false&&
               !ownedSameValue(data.value,pending.kind==='get'?value:pending.value))
             message='Proxy '+pending.kind+' trap contradicted a non-configurable, non-writable target property';

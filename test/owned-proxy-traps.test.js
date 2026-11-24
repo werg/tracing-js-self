@@ -13,6 +13,17 @@ test('Proxy set trap false results throw in strict callers after the callback co
     'const result=(proxy.x=2);return [result,target.x];');
 });
 
+test('strict false Proxy set preserves the native caller message and loose assignment value',()=>{
+  runtimeDifferential('\"use strict\";const proxy=new Proxy({}, {set:function(){return false;}});'+
+    'try{proxy.x=1;return "missed";}catch(error){return error.message;}');
+  runtimeDifferential('\"use strict\";const key=\"\\u0000x\";const proxy=new Proxy({}, {set:function(){return false;}});'+
+    'try{proxy[key]=1;return "missed";}catch(error){return error.message;}');
+  runtimeDifferential('\"use strict\";const key=Symbol(\"x\");const proxy=new Proxy({}, {set:function(){return false;}});'+
+    'try{proxy[key]=1;return "missed";}catch(error){return error.message;}');
+  runtimeDifferential('const proxy=new Proxy({}, {set:function(){return false;}});'+
+    'const assigned=(proxy.x=7);return [assigned,Object.hasOwn(proxy,"x")];');
+});
+
 test('Proxy get and set invariants preserve frozen target data and actual reference identities',()=>{
   runtimeDifferential('function check(target){const proxy=new Proxy(target,{get:function(t,k){return t[k];},'+
     'set:function(){return true;}});const first=proxy[0];proxy[0]="fixed";return [first,proxy.raw===target.raw];}return check`fixed`;');

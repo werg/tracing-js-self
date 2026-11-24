@@ -120,15 +120,17 @@ export function createProxySourceAdapterV8(){
         'callback lacks its owned Proxy continuation');
       const parentProgram=ctx.bundle.programs[parent.codeId],parentInstruction=parentProgram?.instructions[
         ctx.getOwnedFrame(parent.id)?.pc],
-        sourceStrict=['get','set'].includes(operation)?pending.proxy.strict===!!parentProgram?.strict:
+        sourceStrict=operation==='get'?pending.proxy.strict===!!parentProgram?.strict:
+          operation==='set'?typeof pending.proxy.strict==='boolean'&&pending.proxy.strict===!!parentProgram?.strict&&
+            parentInstruction?.op==='PUT_PROP':
           operation==='delete'?typeof pending.proxy.strict==='boolean'&&pending.proxy.strict===!!parentProgram?.strict&&
             parentInstruction?.op==='DELETE_PROP':pending.proxy.strict===false;
       require(ctx,sourceStrict,'Proxy source strict-delete context differs');
-      const receiver=pending.proxy.object?.[1]??node.id,strict=operation==='delete'?pending.proxy.strict===true:false,
+      const receiver=pending.proxy.object?.[1]??node.id,strict=['delete','set'].includes(operation)?pending.proxy.strict===true:false,
         entry={id,owner:parent.id,child:child.id,object:receiver,key,operation,strict,
           value:operation==='set'?ctx.tag(row.operands[2],event):null};
       emit(ctx,{kind:'proxy.'+operation+'.call',id,object:receiver,key,child:ctx.frame(child.id),
-        ...(operation==='set'?{value:entry.value}:{}),...(operation==='delete'?{strict}:{})},event);
+        ...(operation==='set'?{value:entry.value}:{}),...(['delete','set'].includes(operation)?{strict}:{})},event);
       require(ctx,ctx.eq(ctx.controller.receiver,child.thisValue),'trap effective receiver differs');
       const selected=ctx.controller.protocol.proxyCalls.pending.at(-1),fn=ctx.state.heap[selected.callee[1]],
         program=ctx.bundle.programs[fn?.codeId],environment=event.stateChanges.find(change=>change.table==='envs'&&change.id===child.envId)?.after,
@@ -165,8 +167,9 @@ export function createProxySourceAdapterV8(){
         boundaryError=handler.pending.value.value;break;
       }
     }
-    const operationFault=completion.type==='return'&&['has','delete'].includes(entry.operation)&&
-      freshTypeError(event,boundaryError),evidence=faultEvidence.get(entry.id);
+    const strictSetFault=entry.operation==='set'&&entry.strict&&!truthy(value),
+      operationFault=completion.type==='return'&&(['has','delete'].includes(entry.operation)||strictSetFault)&&
+        freshTypeError(event,boundaryError),evidence=faultEvidence.get(entry.id);
     if(operationFault){
       require(ctx,evidence?.error===boundaryError[1]&&evidence.origin===completion.value.origin&&
         ctx.eq(evidence.message,event.stateChanges.find(item=>item.table==='heap'&&item.id===boundaryError[1])?.after?.properties?.message?.value),

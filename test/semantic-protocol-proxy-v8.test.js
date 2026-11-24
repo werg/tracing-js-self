@@ -75,7 +75,7 @@ test('Proxy traps enter the shared call scope with live selection, arguments and
   assert.throws(()=>f.apply({kind:'proxy.finish',id:'read',completion:{kind:'normal',value:['num',2]}}),/false Proxy callback/);
   f.apply({kind:'proxy.finish',id:'read',completion:{kind:'normal',value:['num',3]}});
   assert.deepEqual(f.controller.receiver,['undefined']);
-  f.apply({kind:'proxy.set.call',id:'write',object:'proxy',key:key('x'),value:['num',7],child:'writer'});
+  f.apply({kind:'proxy.set.call',id:'write',object:'proxy',key:key('x'),value:['num',7],child:'writer',strict:false});
   assert.deepEqual(f.controller.protocol.callFrames[0].arguments,[ref('target'),key('x'),['num',7],ref('proxy')]);
   f.apply({kind:'property.set',object:'target',key:key('x'),receiver:ref('target'),value:['num',8],success:true});
   f.apply({kind:'return',invocation:'writer',value:ref('target')});
@@ -101,7 +101,7 @@ test('Proxy nested callbacks retain selected source identities, arrow receivers 
 });
 test('Proxy set traps accept declared Symbols as truthy without storing the trap result',()=>{
   const f=fixture();trap(f,'set');
-  f.apply({kind:'proxy.set.call',id:'write',object:'proxy',key:key('x'),value:['num',7],child:'writer'});
+  f.apply({kind:'proxy.set.call',id:'write',object:'proxy',key:key('x'),value:['num',7],child:'writer',strict:false});
   f.apply({kind:'return',invocation:'writer',value:['symbol','well-known:iterator']});
   f.apply({kind:'proxy.finish',id:'write',completion:{kind:'normal',value:['num',7]}});
   assert.equal(restore(f.controller).calls,0);
@@ -125,7 +125,10 @@ test('Proxy completion checks reject false setters and honor SameValue for froze
   assert.throws(()=>bad.apply({kind:'proxy.finish',id:'read',completion:{kind:'normal',value:['num',0]}}),/derived abrupt boundary/);
   assert.deepEqual(bad.controller,before);
   const falseSet=fixture();trap(falseSet,'set');
-  falseSet.apply({kind:'proxy.set.call',id:'write',object:'proxy',key:key('x'),value:['num',7],child:'writer'});
+  falseSet.apply({kind:'proxy.set.call',id:'write',object:'proxy',key:key('x'),value:['num',7],child:'writer',strict:true});
   falseSet.apply({kind:'return',invocation:'writer',value:['bool',false]});
-  assert.throws(()=>falseSet.apply({kind:'proxy.finish',id:'write',completion:{kind:'normal',value:['num',7]}}),/abrupt completion/);
+  assert.throws(()=>falseSet.apply({kind:'proxy.finish',id:'write',completion:{kind:'normal',value:['num',7]}}),/derived abrupt boundary/);
+  falseSet.apply({kind:'proxy.fault',id:'write',error:'strict-set-error'});
+  assert.equal(falseSet.controller.heap.get('strict-set-error').properties.get('message')[1],
+    "'set' on proxy: trap returned falsish for property 'x'");
 });

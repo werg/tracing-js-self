@@ -132,7 +132,7 @@ test('Proxy fault derivation preserves frozen data SameValue and accessor invari
   matchingGet.apply({kind:'proxy.finish',id:'matching-get',completion:{kind:'normal',value:['num',0]}});
 
   const wrongSet=fixed();trap(wrongSet,'set');
-  wrongSet.apply({kind:'proxy.set.call',id:'fixed-set',object:'proxy',key:key('x'),value:['num','-0'],child:'setTrapFrame'});
+  wrongSet.apply({kind:'proxy.set.call',id:'fixed-set',object:'proxy',key:key('x'),value:['num','-0'],child:'setTrapFrame',strict:false});
   wrongSet.apply({kind:'return',invocation:'setTrapFrame',value:['bool',true]});
   assert.throws(()=>wrongSet.apply({kind:'proxy.finish',id:'fixed-set',completion:{kind:'normal',value:['num','-0']}}),
     /derived abrupt boundary/);
@@ -155,7 +155,7 @@ test('Proxy fault derivation preserves frozen data SameValue and accessor invari
   goodGet.apply({kind:'proxy.finish',id:'undefined-get',completion:{kind:'normal',value:['undefined']}});
 
   const badSet=accessor();trap(badSet,'set');
-  badSet.apply({kind:'proxy.set.call',id:'accessor-set',object:'proxy',key:key('x'),value:['num',2],child:'setTrapFrame'});
+  badSet.apply({kind:'proxy.set.call',id:'accessor-set',object:'proxy',key:key('x'),value:['num',2],child:'setTrapFrame',strict:false});
   badSet.apply({kind:'return',invocation:'setTrapFrame',value:['bool',true]});
   badSet.apply({kind:'proxy.fault',id:'accessor-set',error:'o99'});
   assert.equal(badSet.controller.heap.get('o99').properties.get('message')[1],
@@ -177,6 +177,23 @@ test('strict Proxy delete turns a false trap result into a fresh operation-deriv
     "'deleteProperty' on proxy: trap returned falsish for property 'x'");
 });
 
+
+test('strict false Proxy set is a caller TypeError while sloppy false remains an assignment result',()=>{
+  const strict=fixture();trap(strict,'set');
+  strict.apply({kind:'proxy.set.call',id:'strict-set',object:'proxy',key:key('x'),value:['num',7],child:'setTrapFrame',strict:true});
+  strict.apply({kind:'return',invocation:'setTrapFrame',value:['num',0]});
+  assert.throws(()=>strict.apply({kind:'proxy.finish',id:'strict-set',completion:{kind:'normal',value:['num',7]}}),
+    /derived abrupt boundary/);
+  strict.apply({kind:'proxy.fault',id:'strict-set',error:'strictSetError'});
+  assert.equal(strict.controller.heap.get('strictSetError').declaredError,'TypeError');
+  assert.equal(strict.controller.heap.get('strictSetError').properties.get('message')[1],
+    "'set' on proxy: trap returned falsish for property 'x'");
+
+  const sloppy=fixture();trap(sloppy,'set');
+  sloppy.apply({kind:'proxy.set.call',id:'sloppy-set',object:'proxy',key:key('x'),value:['num',7],child:'setTrapFrame',strict:false});
+  sloppy.apply({kind:'return',invocation:'setTrapFrame',value:['bool',false]});
+  sloppy.apply({kind:'proxy.finish',id:'sloppy-set',completion:{kind:'normal',value:['num',7]}});
+});
 
 test('direct Proxy strict delete fault requires absent trap and a live non-configurable target property',()=>{
   const f=fixture();
