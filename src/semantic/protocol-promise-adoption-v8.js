@@ -255,9 +255,15 @@ export function allowsPromiseAdoptionInternalSchedulerV8(controller,record){
 export function restorePromiseAdoptionStateV8(controller,api){
   const ownedJobs=new Set(),pending=[],reading=[];
   for(const job of controller.jobs?.values()??[])for(const identity of [job.closure,job.rejectionClosure])if(identity){
-    const closure=controller.heap.get(identity);
-    api.require(!closure?.callable?.lexicalConstruction,
-      'scheduled callback cannot use an unauthenticated constructor capture');
+    const closure=controller.heap.get(identity),capture=closure?.callable?.lexicalConstruction;
+    if(capture!==undefined&&capture!==null){
+      api.require(closure?.kind==='closure'&&closure.functionKind==='arrow',
+        'scheduled constructor capture requires its exact arrow');
+      // Re-resolve the arrow's receiver from the retained constructor cell at
+      // every checkpoint. This authenticates the constructor frame and rejects
+      // forged or stale lexical receiver metadata without trusting the job row.
+      api.callReceiver(controller,['ref',identity],closure.lexicalReceiver);
+    }
   }
   for(const [identity,node]of entries(controller)){
     const adoption=node.adoption,lookup=adoption.lookup;
