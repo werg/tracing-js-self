@@ -62,13 +62,21 @@ invoking a getter or consulting prototypes; it represents the common filter
 that keeps only own keys from a prototype walk.
 
 The profile permits at most 128 prototype levels and 4,096 distinct keys.
-Functions, callable prototype-chain members, Proxies, complex loop binding
-patterns, and mutable enumeration semantics remain explicit refusals. A
-changed key set, enumerability or prototype causes the next cursor step to
-refuse. A checkpoint immediately after such a write remains a legitimate
-prefix, including a loop that then breaks. Restore validates the stored
-snapshot's shape, key order, shadowing, links and cursor bounds; exact public
-prefix replay binds its provenance. The next step checks the live structure.
+The captured list retains the original key order and shadowing. Later additions
+are ignored; candidates that no longer exist anywhere on the live chain are
+skipped. Value writes are visible. Prototype replacement and enumerable-flag
+changes keep the captured candidate order; the next step checks live property
+existence without rebuilding that order. A checkpoint immediately after such a
+write remains a legitimate prefix, including a loop that then breaks. Restore
+validates the stored snapshot's shape, key order, shadowing, links and cursor
+bounds; exact public prefix replay binds its provenance.
+
+Stable transparent Proxy enumeration retains the original Proxy identity and
+captured target keys/descriptors/prototype when the relevant traps are absent.
+Effectful enumeration traps, active Proxy shape/prototype mutation, functions,
+callable prototype-chain members and complex loop binding patterns remain
+explicit refusals. These cases need ordered continuations beyond this bounded
+snapshot profile.
 
 Independent native observations inspect descriptors without invoking getters
 and record each key actually yielded by the source's own `for...in` loop. The
