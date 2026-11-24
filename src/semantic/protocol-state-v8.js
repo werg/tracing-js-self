@@ -239,9 +239,16 @@ function call(controller,record,options={}){
     'resumed invocation must be inactive and retain the same source callable');
   else require(!controller.frameFunctions.has(record.child),'duplicate invocation');
   const protocol=state(controller);require(protocol.callFrames.length<PROTOCOL_V8_LIMITS.calls,'call stack bound');
-  protocol.callFrames.push({child:record.child,parent:controller.stack.at(-1),callee:copy(record.callee),
+  const frame={child:record.child,parent:controller.stack.at(-1),callee:copy(record.callee),
     priorReceiver:copy(controller.receiver??['undefined']),priorAliases:[...(controller.captureAliases??new Map())],
-    arguments:copy(record.arguments)});
+    arguments:copy(record.arguments)};
+  if(options.proxyReflectionScope!==undefined){
+    assertAlgorithmFields(options.proxyReflectionScope,['kind','definition'],'Proxy reflection call scope');
+    require(options.proxyReflectionScope.kind==='proxy.defineProperty'&&isAlgorithmDataRecord(options.proxyReflectionScope.definition),
+      'Proxy reflection call scope kind/definition');
+    frame.proxyReflectionScope=copy(options.proxyReflectionScope);
+  }
+  protocol.callFrames.push(frame);
   controller.receiver=protocolCallReceiverV8(controller,record.callee,
     node.functionKind==='arrow'?node.lexicalReceiver:record.receiver);
   controller.captureAliases=new Map(node.captures.map(row=>[row.binding,row.cell]));
@@ -287,7 +294,8 @@ function complete(controller,record){  const protocol=state(controller);
       job.returned={kind:record.kind,value:copy(record.value)};
     }else require(!controller.activeJob||controller.stack.length>1,
       'scheduled callback must complete through its retained call frame');
-    controller.lastReturn={kind:record.kind,value:copy(record.value)};
+    controller.lastReturn={kind:record.kind,value:copy(record.value),
+      ...(frame.proxyReflectionScope?{proxyReflectionScope:copy(frame.proxyReflectionScope)}:{})};
   }else{
     require(!controller.activeJob,'job completion needs its declared scheduler profile');
     controller.stack.pop();controller.pending={kind:record.kind,value:copy(record.value)};
@@ -511,7 +519,14 @@ export function restoreProtocolStateV8(controller,snapshot){
   require(snapshot.callFrames.length<=PROTOCOL_V8_LIMITS.calls,'call frame bound');
   for(let i=0;i<snapshot.callFrames.length;i++){
     const frame=snapshot.callFrames[i];
-    assertAlgorithmFields(frame,['child','parent','callee','priorReceiver','priorAliases','arguments'],'protocol call frame');
+    const callFrameFields=['child','parent','callee','priorReceiver','priorAliases','arguments'];
+    if(Object.hasOwn(frame,'proxyReflectionScope'))callFrameFields.push('proxyReflectionScope');
+    assertAlgorithmFields(frame,callFrameFields,'protocol call frame');
+    if(Object.hasOwn(frame,'proxyReflectionScope')){
+      assertAlgorithmFields(frame.proxyReflectionScope,['kind','definition'],'Proxy reflection call scope');
+      require(frame.proxyReflectionScope.kind==='proxy.defineProperty'&&isAlgorithmDataRecord(frame.proxyReflectionScope.definition),
+        'Proxy reflection call scope kind/definition');
+    }
     require(typeof frame.child==='string'&&typeof frame.parent==='string'&&
       controller.stack.indexOf(frame.child)===controller.stack.indexOf(frame.parent)+1&&
       controller.stack.includes(frame.child)&&(!i||snapshot.callFrames[i-1].child===frame.parent),'call frame stack relationship');

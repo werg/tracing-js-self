@@ -83,6 +83,9 @@ export function createProxyReflectionSourceAdapterV8(){
       const completion=change.after.completion,raw=completion?.value?.value;
       require(ctx,['return','throw'].includes(completion?.type)&&raw&&ctx.publicInvocation===ctx.frame(change.id),
         'completion belongs to selected callback');
+      const callScope=ctx.controller.protocol.callFrames.find(frame=>frame.child===ctx.frame(entry.child))?.proxyReflectionScope,
+        expectedScope=entry.operation==='defineProperty'?{kind:'proxy.defineProperty',definition:entry.definition}:undefined;
+      require(ctx,ctx.eq(callScope,expectedScope),'callback completion lost its checked call-scope snapshot');
       const value=ctx.tag(raw,event);emit(ctx,{kind:completion.type,invocation:ctx.frame(change.id),value},event);
       const owner=event.stateChanges.find(c=>c.table==='frames'&&c.id===entry.parent)?.after,error=thrown(owner),
         fresh=event.stateChanges.filter(c=>c.table==='heap'&&c.before===null&&c.id===error?.value?.[1]&&c.after?.declaredError==='TypeError');
@@ -109,7 +112,10 @@ export function createProxyReflectionSourceAdapterV8(){
     checkFrame(ctx,frame){
       const entry=active.get(frame.id),pending=frame.pendingProxyReflection;
       if(!entry){require(ctx,!pending,'unregistered continuation');return true;}
-      const current=ctx.controller.protocol.proxyReflection?.pending.find(p=>p.id===entry.id);
+      const current=ctx.controller.protocol.proxyReflection?.pending.find(p=>p.id===entry.id),
+        callScope=ctx.controller.protocol.callFrames.find(call=>call.child===ctx.frame(entry.child))?.proxyReflectionScope,
+        expectedScope=entry.operation==='defineProperty'?{kind:'proxy.defineProperty',definition:entry.definition}:undefined;
+      require(ctx,ctx.eq(callScope,expectedScope),'retained call-scope snapshot differs');
       require(ctx,current&&pending&&pending.waitingFrameId===entry.child&&pending.operation===entry.operation&&
         pending.caller===entry.caller&&ctx.eq(pending.object,['ref',entry.object])&&ctx.eq(pending.route,entry.route)&&
         ctx.eq(pending.target,entry.target)&&ctx.eq(pending.handler,entry.handler)&&ctx.eq(pending.callee,entry.callee)&&

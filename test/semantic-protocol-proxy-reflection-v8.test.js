@@ -80,3 +80,38 @@ test('thrown trap values retain identity and suppress normal invariant checks',(
   f.apply({kind:'proxy.reflect.finish',id:'reflection',completion:{kind:'throw',value:ref('other')}});
   assert.deepEqual(f.c.lastReturn,{kind:'throw',value:ref('other')});
 });
+
+test('defineProperty snapshot remains bound to active and returned callback scope',()=>{
+  const f=fixture('defineProperty');
+  f.apply({kind:'allocate',name:'input',objectKind:'object',length:null,properties:[{key:str('writable'),value:['bool',false]}],
+    code:null,captures:[],functionKind:null,lexicalReceiver:null});
+  f.start('defineProperty','Reflect.defineProperty',[str('x'),ref('input')]);
+  const expected={kind:'proxy.defineProperty',definition:{writable:false}};
+  assert.deepEqual(f.c.protocol.callFrames.at(-1).proxyReflectionScope,expected);
+  const forgedRow=structuredClone(f.c);forgedRow.protocol.proxyReflection.pending[0].definition.writable=true;
+  assert.throws(()=>f.restore(forgedRow),/active callback scope/);
+  const forgedScope=structuredClone(f.c);forgedScope.protocol.callFrames.at(-1).proxyReflectionScope.definition.writable=true;
+  assert.throws(()=>f.restore(forgedScope),/active callback scope/);
+
+  f.apply({kind:'return',invocation:'callback',value:['bool',true]});
+  assert.deepEqual(f.c.lastReturn.proxyReflectionScope,expected);
+  const forgedReturn=structuredClone(f.c);forgedReturn.lastReturn.proxyReflectionScope.definition.writable=true;
+  assert.throws(()=>f.restore(forgedReturn),/returned callback scope/);
+  f.finish(['bool',true]);
+  assert.equal(Object.hasOwn(f.c.lastReturn,'proxyReflectionScope'),false);
+});
+
+test('defineProperty invariant uses retained snapshot after callback copy mutation and consumes receipt',()=>{
+  const f=fixture('defineProperty');
+  f.apply({kind:'property.define',object:'target',key:str('x'),
+    descriptor:{kind:'data',value:['num',1],writable:true,enumerable:false,configurable:false},success:true});
+  f.apply({kind:'allocate',name:'input',objectKind:'object',length:null,properties:[{key:str('writable'),value:['bool',false]}],
+    code:null,captures:[],functionKind:null,lexicalReceiver:null});
+  f.start('defineProperty','Reflect.defineProperty',[str('x'),ref('input')]);
+  f.apply({kind:'property.set',object:'descriptor',key:str('writable'),receiver:ref('descriptor'),value:['bool',true],success:true});
+  f.apply({kind:'return',invocation:'callback',value:['bool',true]});
+  assert.deepEqual(f.c.lastReturn.proxyReflectionScope.definition,{writable:false});
+  assert.throws(()=>f.finish(['bool',true]),/derived fault/);
+  f.apply({kind:'proxy.reflect.fault',id:'reflection',error:'error'});
+  assert.equal(Object.hasOwn(f.c.lastReturn,'proxyReflectionScope'),false);
+});

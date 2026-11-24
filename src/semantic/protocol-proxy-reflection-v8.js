@@ -63,6 +63,13 @@ function definitionApi(c,api){
 }
 const callbackArguments=row=>[row.target,...(row.operation==='defineProperty'?
   [row.arguments[0],['ref',row.descriptorObject]]:row.arguments)];
+const callbackScope=row=>row.operation==='defineProperty'?
+  {kind:'proxy.defineProperty',definition:row.definition}:null;
+function checkCallbackScope(receipt,row,api,label){
+  const expected=callbackScope(row);
+  if(expected===null)api.require(receipt===undefined,label+' on non-definition callback');
+  else api.require(api.eq(receipt,expected),label+' differs from retained ToPropertyDescriptor');
+}
 function reflectionData(c,row,returned,api,direct=false){
   const target=ordinary(c,row.target,api),objectApi={
     eq:api.eq,truthy:api.truthy,extensible:()=>target.extensible!==false,
@@ -165,6 +172,7 @@ export function applyProxyReflectionV8(c,record,api){
     api.require(row?.id===record.id&&c.stack.at(-1)===row.parent&&!c.stack.includes(row.child)&&
       ['return','throw'].includes(completion?.kind),'Proxy reflection lacks callback completion');
     validateRetainedProxyRouteV8(c,{...row,receiver:['ref',row.object]},api);
+    checkCallbackScope(completion.proxyReflectionScope,row,api,'completed callback scope');
     if(record.kind==='proxy.reflect.fault'){
       api.require(completion.kind==='return','Proxy reflection fault requires normal trap completion');
       const message=proxyReflectionFaultV8(c,row,completion.value,api);
@@ -179,6 +187,7 @@ export function applyProxyReflectionV8(c,record,api){
           ['getOwnPropertyDescriptor','ownKeys'].includes(row.operation)?
             materializeReflection(c,row,completion.value,record.completion.value,api):normalize(c,row,completion.value,api)};
       api.require(api.eq(record.completion,expected),'false Proxy reflection completion');
+      delete completion.proxyReflectionScope;
     }
     state(c,api).pending.pop();return true;
   }
@@ -202,11 +211,16 @@ export function applyProxyReflectionV8(c,record,api){
   if(row.operation==='defineProperty')api.allocate(c,{name:row.descriptorObject,objectKind:'object',length:null,
     properties:proxyPartialDescriptorFields(definition).map(([key,value])=>({key:['str',key],value})),
     code:null,captures:[],functionKind:null,lexicalReceiver:null});
-  api.call(c,{child:row.child,callee:row.callee,receiver:row.handler,arguments:callbackArguments(row)});
+  api.call(c,{child:row.child,callee:row.callee,receiver:row.handler,arguments:callbackArguments(row)},
+    row.operation==='defineProperty'?{proxyReflectionScope:callbackScope(row)}:{});
   pending.push(row);return true;
 }
 export function restoreProxyReflectionV8(c,snapshot,api){
-  if(snapshot===null)return {valid:true,calls:0};
+  if(snapshot===null){
+    api.require(!c.protocol?.callFrames?.some(frame=>Object.hasOwn(frame,'proxyReflectionScope'))&&
+      !Object.hasOwn(c.lastReturn??{},'proxyReflectionScope'),'orphaned Proxy reflection callback scope');
+    return {valid:true,calls:0};
+  }
   assertAlgorithmFields(snapshot,['schema','pending'],'Proxy reflection state');
   api.require(snapshot.schema===PROXY_REFLECTION_STATE_V8,'Proxy reflection schema');
   assertAlgorithmDataArray(snapshot.pending,'Proxy reflection pending');api.require(snapshot.pending.length<=64,'Proxy reflection bound');
@@ -242,8 +256,18 @@ export function restoreProxyReflectionV8(c,snapshot,api){
       api.require(depth===c.stack.indexOf(row.parent)+1&&depth>priorDepth,'Proxy reflection callback stack order');priorDepth=depth;
       api.require(call&&api.eq(call.callee,row.callee)&&api.eq(call.arguments,callbackArguments(row)),
         'Proxy reflection callback arguments');
-    }else api.require(row===snapshot.pending.at(-1)&&c.stack.at(-1)===row.parent&&['return','throw'].includes(c.lastReturn?.kind),
-      'Proxy reflection returned callback owner');
+      checkCallbackScope(call.proxyReflectionScope,row,api,'active callback scope');
+    }else{
+      api.require(row===snapshot.pending.at(-1)&&c.stack.at(-1)===row.parent&&['return','throw'].includes(c.lastReturn?.kind),
+        'Proxy reflection returned callback owner');
+      checkCallbackScope(c.lastReturn?.proxyReflectionScope,row,api,'returned callback scope');
+    }
   }
+  const scopedFrames=c.protocol.callFrames.filter(frame=>Object.hasOwn(frame,'proxyReflectionScope'));
+  api.require(scopedFrames.every(frame=>snapshot.pending.some(row=>row.child===frame.child&&row.operation==='defineProperty')),
+    'orphaned active Proxy reflection scope');
+  if(Object.hasOwn(c.lastReturn??{},'proxyReflectionScope'))
+    api.require(snapshot.pending.at(-1)?.operation==='defineProperty'&&!c.stack.includes(snapshot.pending.at(-1).child),
+      'orphaned returned Proxy reflection scope');
   return {valid:true,calls:seen.size};
 }
