@@ -268,6 +268,10 @@ test('Proxy has GetMethod getter retains target, handler, receiver and selected 
   assert.equal(restore(f.controller).calls,0);
 });
 test('Proxy has GetMethod propagates getter throws unchanged and nullish fallback uses saved target after revocation',()=>{
+  const unselected=fixture();
+  assert.throws(()=>unselected.apply({kind:'proxy.has',id:'stray',object:'proxy',key:key('x'),result:['bool',true]}),
+    /lookup identity is not retained/);
+  unselected.apply({kind:'proxy.has',object:'proxy',key:key('x'),result:['bool',true]});
   const marker=ref('handler');
   const failed=fixture(),throwingGetter=selectHasGetter(failed,{id:'throwing'});
   failed.apply({kind:'throw',invocation:throwingGetter.child,value:marker});
