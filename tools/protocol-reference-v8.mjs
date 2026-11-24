@@ -32,7 +32,7 @@ try{
       operator==='&&'?!value:operator==='||'?Boolean(value):value!==null&&value!==undefined]});return value;},
     [COMPLETION_HOOK]:(...values)=>{try{return completion.capture(...values);}catch(error){failures.push(error.message);throw error;}}
   },{codeGeneration:{strings:false,wasm:false}});
-  completion.setIntrinsicPrototypes(vm.runInContext('[Object.prototype,Array.prototype,Function.prototype]',context));
+  completion.setIntrinsicPrototypes(vm.runInContext('[Object.prototype,Array.prototype,Function.prototype,Error.prototype,EvalError.prototype,RangeError.prototype,ReferenceError.prototype,SyntaxError.prototype,TypeError.prototype,URIError.prototype]',context),['Object.prototype','Array.prototype','Function.prototype','Error.prototype','EvalError.prototype','RangeError.prototype','ReferenceError.prototype','SyntaxError.prototype','TypeError.prototype','URIError.prototype']);
   extensions.initializeRealm(expression=>vm.runInContext(expression,context));
   phase='instrumentation';
   const source=mode==='operations'?instrumentOperationSource(input.source):

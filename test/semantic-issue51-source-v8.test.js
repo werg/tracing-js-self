@@ -8,7 +8,6 @@ import {decodeProtocolRecordV8,encodeProtocolRecordV8} from '../src/semantic/pro
 import {hashAlgorithmData} from '../src/semantic/program.js';
 import {issue51ObjectFixtures} from '../fixtures/semantic-regions/objects-issue51.js';
 import {issue51UnsupportedControls} from '../fixtures/semantic-regions/objects-issue51.js';
-import {runtimeDifferential} from './helpers/runtime-frontier.js';
 
 const fixture=(body,args=[4])=>({source:'"use strict";function run(x){'+body+'}',entry:'run',args,family:'issue51-property-enumeration-reference'});
 const fixtureById=new Map(issue51ObjectFixtures.map(row=>[row.id,row]));
@@ -107,16 +106,47 @@ test('Reflect object keys project conversion and property operations at the orig
   assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
 });
 
-test('invalid in RHS throws before key coercion in owned/native execution and remains a source refusal',async()=>{
+test('invalid in RHS projects an authenticated TypeError before key coercion',async()=>{
   const fixture=issue51UnsupportedControls.find(row=>row.id==='issue51-control-in-invalid-rhs-before-key-coercion');
   assert(fixture);
   const oracle=vm.runInNewContext(fixture.source+';run(4)');
   assert.deepEqual(structuredClone(oracle),[true,[]]);
-  const differential=runtimeDifferential('',{source:fixture.source,entry:fixture.entry,args:fixture.args});
-  assert.equal(differential.reference.kind,'return');
-  const result=await verifyProtocolRegionTrainingCase(structuredClone(fixture));
-  assert.equal(result.exported,undefined);
-  assert.match(result.reason,/outside|unsupported|protocol|profile/i);
+  const artifact=await checkedSource(structuredClone(fixture)),claims=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record),
+    faults=claims.filter(row=>row.kind==='property.fault');
+  assert.equal(faults.length,1);
+  assert.deepEqual(faults[0].target,['null']);
+  assert.equal(faults[0].operation,'has');
+  assert.equal(typeof faults[0].error,'string');
+  assert.equal(claims.some(row=>row.kind==='conversion.begin'),false);
+  const controller=RegionExecutionHarness.replay(artifact).controller;
+  assert.equal(controller.heap.get(faults[0].error)?.declaredError,'TypeError');
+  assert.deepEqual(controller.materialize(completion(artifact).value),[true,[]]);
+  assert(artifact.sidecar.sourceArtifact.sidecar.reference.metadata.some(row=>row.objects
+    .some(node=>node.kind==='error'&&node.errorType==='TypeError')));
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
+test('invalid in RHS preserves earlier operand effects and caught error identity',async()=>{
+  const artifact=await checkedFixture('issue51-invalid-in-rhs-caught-error-identity-partial-effects'),
+    controller=RegionExecutionHarness.replay(artifact).controller,
+    claims=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record),
+    faults=claims.filter(row=>row.kind==='property.fault');
+  assert.deepEqual(controller.materialize(completion(artifact).value),[true,'TypeError',['left','right','caught']]);
+  assert.equal(faults.length,1);assert.deepEqual(faults[0].target,['null']);
+  assert.equal(claims.some(row=>row.kind==='conversion.begin'),false);
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
+test('caught TypeError identity survives mutable name and message writes',async()=>{
+  const artifact=await checked('const events=[];const key={[Symbol.toPrimitive](){events.push("key");return "p";}};'+
+    'try{key in null;}catch(error){const alias=error;error.name="changed";error.message="changed";'+
+    'return [alias===error,error.name,error.message,events];}return [false];');
+  const controller=RegionExecutionHarness.replay(artifact).controller;
+  assert.deepEqual(controller.materialize(completion(artifact).value),[true,'changed','changed',[]]);
+  const records=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record);
+  const fault=records.find(row=>row.kind==='property.fault');assert(fault);
+  assert.equal(records.filter(row=>row.kind==='property.set'&&row.object===fault.error).length,2);
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
 });
 
 test('for-in snapshots candidates, skips deleted keys, ignores additions, and checks live inherited fallback',async()=>{

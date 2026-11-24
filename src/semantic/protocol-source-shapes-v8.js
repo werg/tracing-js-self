@@ -4,7 +4,7 @@ import {PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
 const copy=structuredClone;
 const refuse=message=>{const error=new TypeError('Protocol source projection: '+message);
   error.category='unsupported.protocol-source';throw error;};
-const ordinaryFields=new Set(['id','kind','properties','propertyVersions','shapeVersion','version','propertyOrder','prototype','accessors','dataAttributes','extensible']);
+const ordinaryFields=new Set(['id','kind','properties','propertyVersions','shapeVersion','version','propertyOrder','prototype','accessors','dataAttributes','extensible','declaredError']);
 const functionFields=new Set([...ordinaryFields,'codeId','closureEnvId','async','arrow','lexicalThis','nonConstructible']);
 const symbolFields=new Set(['id','kind','description','registeredKey','properties','propertyVersions','shapeVersion','version']);
 export const frameFields=new Set(['id','codeId','pc','stack','envId','callerFrameId','asyncPromiseId','status','blockedOn','awaiting','operationId','pendingCoercionThrow','handlers','loops','thisValue','version','pendingProperty','completion','thisBindingFrameId']);

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {referenceCommand,referenceEnvironment} from '../src/corpus/reference-isolation.mjs';
@@ -112,6 +113,23 @@ test('metadata and final Error boundaries never invoke name, tag or stack getter
     await assert.rejects(independentProtocolSourceReference({source,entry:'run',inputGraph:encodeNativeGraph([]),
       awaitReturnedPromise:true,mode:'original'}),failure=>failure.category==='unsupported.protocol-reference'&&reason.test(failure.message));
   }
+});
+
+test('protocol metadata authenticates intrinsic Error type without reading mutable own fields',()=>{
+  const context=vm.createContext({}),prototypes=vm.runInContext(
+    '[Object.prototype,Array.prototype,Function.prototype,Error.prototype,EvalError.prototype,RangeError.prototype,ReferenceError.prototype,SyntaxError.prototype,TypeError.prototype,URIError.prototype]',context),
+    labels=['Object.prototype','Array.prototype','Function.prototype','Error.prototype','EvalError.prototype','RangeError.prototype',
+      'ReferenceError.prototype','SyntaxError.prototype','TypeError.prototype','URIError.prototype'];
+  context.calls=0;const metadata=createNativeProtocolMetadata();metadata.setIntrinsicPrototypes(prototypes,labels);
+  const error=vm.runInContext(`(()=>{const error=new TypeError('expected');
+    for(const key of ['name','message','stack',Symbol.toStringTag])Object.defineProperty(error,key,{get(){calls++;throw 99;},configurable:true});
+    return error;})()`,context);
+  const receipt=metadata.observe('error','catch',error);
+  assert.deepEqual(receipt.objects.find(node=>node.kind==='error'),{id:'r1',kind:'error',errorType:'TypeError'});
+  assert.equal(context.calls,0);
+  const forged=vm.runInContext('(()=>{const error=new TypeError();Object.setPrototypeOf(error,Object.create(TypeError.prototype));return error;})()',context),
+    unregistered=createNativeProtocolMetadata();unregistered.setIntrinsicPrototypes(prototypes,labels);
+  assert.throws(()=>unregistered.observe('error','catch',forged),/native Error prototype is outside/);
 });
 
 test('native slot access adds no process, require or internal binding to the guest realm',async()=>{

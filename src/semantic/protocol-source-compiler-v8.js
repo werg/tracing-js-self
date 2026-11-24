@@ -182,7 +182,9 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     use(adapter);published.add(node.id);
   }
   function baseAllocate(node,event){
-    guardedHeap(node);if(published.has(node.id))return;if(publishing.has(node.id))refuse('recursive unpublished closure capture');publishing.add(node.id);
+    guardedHeap(node);if(published.has(node.id))return;
+    if(node.declaredError)refuse('intrinsic Error allocation requires its derived fault transition');
+    if(publishing.has(node.id))refuse('recursive unpublished closure capture');publishing.add(node.id);
     if(node.kind==='symbol'){
       emit(node.registeredKey===undefined?{kind:'symbol.create',id:node.id,description:copy(node.description)}:
         {kind:'symbol.for',id:node.id,key:node.registeredKey},event,'owned-source-symbol/1');published.add(node.id);publishing.delete(node.id);return;
@@ -223,6 +225,29 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     }else emit({kind:'compute',expr,result,bind:name},event,'owned-source-computation/1');
   }
   function key(value){if(value?.[0]==='symbol')return copy(value);if(!['undefined','null','str','num','bool','bigint'].includes(value?.[0]))refuse('observable ToPropertyKey requires a coercion protocol');return ['str',String(decode(value))];}
+  function projectInvalidInFault(event,row,error,heapChanges){
+    const sourceNode=inventory.nodes.get(row.source?.start+':'+row.source?.end),
+      before=state.frames[event.invocationId],instruction=bundle.programs[before?.codeId]?.instructions[before?.pc],
+      operands=before?.stack?.slice(-2)??[],left=operands[0]?.value,right=operands[1]?.value;
+    if(event.operation!=='primitive.binary'||sourceNode?.type!=='BinaryExpression'||sourceNode.operator!=='in'||
+      instruction?.op!=='BINARY'||instruction.arg!=='in'||instruction.siteId!==event.siteId||
+      instruction.start!==sourceNode.start||instruction.end!==sourceNode.end||operands.length!==2||
+      !left||!right||!['undefined','null','bool','str','num','bigint','symbol'].includes(right[0])||
+      row.allocations?.length!==1||row.allocations[0].identity!==error.id||heapChanges.length!==1||
+      heapChanges[0].before!==null||heapChanges[0].id!==error.id||heapChanges[0].after!==error||
+      event.completion?.type!=='throw'||event.completion.errorType!=='TypeError'||
+      event.completion.message!=='Right-hand side of in is not an object'||
+      event.completion.origin!==event.eventId||event.completion.value?.origin!==event.eventId||
+      !eq(event.completion.value?.value,['ref',error.id])||error.kind!=='object'||
+      error.declaredError!=='TypeError'||!eq(Object.keys(error.properties??{}).sort(),['message','name'])||
+      !eq(error.properties.name?.value,['str','TypeError'])||
+      !eq(error.properties.message?.value,['str',event.completion.message])||
+      error.properties.name?.origin!==event.eventId||error.properties.message?.origin!==event.eventId)
+      refuse('invalid in-operator RHS lacks its exact current TypeError allocation');
+    emit({kind:'property.fault',operation:'has',target:tag(right,event),key:tag(left,event),error:error.id},
+      event,'owned-source-in-invalid-rhs/1');
+    published.add(error.id);return true;
+  }
   function checkNode(node){guardedHeap(node);
     for(const adapter of heapOwners.get(node.id)??[])if(adapter.checkHeap(context,node)!==true)refuse('extension failed its complete heap comparison: '+adapter.id);
     if(!['object','array','function','symbol'].includes(node.kind))return;
@@ -235,6 +260,8 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       properties:orderedKeys(node).map(key=>({key:propertyKeyValue(key),descriptor:descriptor(node,key)})),
       ...(node.kind==='function'?{code:codeFor(node),functionKind:node.arrow?'arrow':'ordinary',lexicalReceiver:node.arrow?node.lexicalThis:null}:{})};
     if(!eq(expected,describeProtocolObjectV8(controller,node.id)))refuse('shared descriptor/heap state differs after owned transition '+node.id);
+    if(node.declaredError&&controller.heap.get(node.id)?.declaredError!==node.declaredError)
+      refuse('intrinsic Error type differs from its derived public fault '+node.id);
   }
   function arrayMutationReceiver(value,method){
     const node=value?.[0]==='ref'?state.heap[value[1]]:null;
@@ -460,7 +487,11 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
         const environment=event.stateChanges.find(change=>change.table==='envs'&&change.before===null)?.after;
         for(const [name,binding]of Object.entries(environment?.bindings??{}))if(binding.initialized)bind(cell(environment.id,name),binding.token.value,event);
       }else if(event.operation==='call.enter')builtin(event,row,heapChanges);
-      else if(row.allocations?.length)for(const allocation of row.allocations){const node=heapChanges.find(change=>change.id===allocation.identity)?.after;if(!node)refuse('allocation patch missing');publish(node,event);}
+      else if(row.allocations?.length)for(const allocation of row.allocations){
+        const node=heapChanges.find(change=>change.id===allocation.identity)?.after;if(!node)refuse('allocation patch missing');
+        if(node.declaredError){projectInvalidInFault(event,row,node,heapChanges);continue;}
+        publish(node,event);
+      }
       else if(event.operation==='property.read'){
         const [base,property]=row.operands;
         const output=row.result?.[0]==='method'?row.result[1]:row.result;
@@ -512,7 +543,9 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
         compute({op:'binary',operator:row.arithmetic.operator,left:operand(row.operands[0],node?.left,event),right:operand(row.operands[1],node?.right,event)},row.result,event);
       }else if(event.operation==='primitive.binary'){
         const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);if(!node?.operator)refuse('binary source operator missing');
-        if(node.operator==='in'){
+        if(node.operator==='in'&&event.completion?.type==='throw'){
+          refuse('invalid in-operator RHS allocation was not claimed by its derived fault transition');
+        }else if(node.operator==='in'){
           if(row.operands[1]?.[0]!=='ref'||heapChanges.length)refuse('in requires an ordinary object and separately checked key conversion');
           emit({kind:'property.has',object:tag(row.operands[1],event)[1],key:key(row.operands[0]),result:tag(row.result,event)},event,'owned-source-property-existence/1');
         }else compute({op:'binary',operator:node.operator,left:operand(row.operands[0],node.left,event),right:operand(row.operands[1],node.right,event)},row.result,event);

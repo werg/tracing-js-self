@@ -9,6 +9,7 @@ export const PROTOCOL_METADATA_SCHEMA='source-protocol-metadata/1';
 const copy=structuredClone;
 const fail=message=>{throw new TypeError('Protocol metadata observation: '+message);};
 const cap=4096;
+const errorTypes=['Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError'];
 function tracker(adapter){
   const references=new Map(),symbols=new Map(),objects=[],symbolRows=[];
   function value(raw){const kind=adapter.type(raw);
@@ -41,6 +42,10 @@ function tracker(adapter){
   function snapshot(){const rows=[];
     for(let index=0;index<objects.length;index++){
       const {id,raw}=objects[index],node=adapter.object(raw);
+      if(node.kind==='error'){
+        if(!errorTypes.includes(node.errorType))fail('unknown intrinsic Error type');
+        rows.push({id,kind:'error',errorType:node.errorType});continue;
+      }
       if(node.kind==='function'&&!Array.isArray(node.properties)){
         const annotations=annotationRows(node);rows.push({id,kind:'function',...(annotations?{annotations}:{})});continue;
       }
@@ -65,11 +70,19 @@ function extended(adapters,method,value,context){
 export function createNativeProtocolMetadata({initialValues=[],intrinsicPrototypes=[],adapters=[]}={}){
   const names=['Object.prototype','Array.prototype','Function.prototype'];
   const ordinaryPrototypes=new Map([[Object.prototype,names[0]],[Array.prototype,names[1]],[Function.prototype,names[2]]]);
+  const errorPrototypes=new Map();
+  for(const errorType of errorTypes){const prototype=globalThis[errorType]?.prototype;
+    if(prototype){ordinaryPrototypes.set(prototype,errorType+'.prototype');errorPrototypes.set(prototype,errorType);}}
   intrinsicPrototypes.forEach((value,index)=>ordinaryPrototypes.set(value,names[index%3]));
   adapters=instantiate([...PROTOCOL_METADATA_ADAPTERS_V8,...adapters],{side:'native'});
   const intrinsicPrototype=value=>value===null?null:ordinaryPrototypes.get(value)??value;
   function defaultNode(value,{includeFunctions=false}={}){
     if(types.isProxy(value))fail('Proxy metadata is outside the profile');
+    if(types.isNativeError(value)){
+      const errorType=errorPrototypes.get(Object.getPrototypeOf(value));
+      if(!errorType)fail('native Error prototype is outside the registered intrinsic profile');
+      return {kind:'error',errorType};
+    }
     if(typeof value==='function'&&!includeFunctions)return {kind:'function'};
     const descriptors=Object.getOwnPropertyDescriptors(value),prototype=Object.getPrototypeOf(value);
     return {kind:typeof value==='function'?'function':Array.isArray(value)?'array':'object',prototype:intrinsicPrototype(prototype),
@@ -95,7 +108,17 @@ export function createNativeProtocolMetadata({initialValues=[],intrinsicPrototyp
     }
   });
   for(const value of initialValues)metadata.value(value);metadata.snapshot();
-  return {setIntrinsicPrototypes(values){values.forEach((value,index)=>ordinaryPrototypes.set(value,names[index%3]));},
+  return {setIntrinsicPrototypes(values,labels=null){
+      if(!Array.isArray(values))fail('intrinsic prototype list required');
+      if(labels===null){values.forEach((value,index)=>ordinaryPrototypes.set(value,names[index%3]));return;}
+      if(!Array.isArray(labels)||labels.length!==values.length)fail('intrinsic prototype labels do not align');
+      values.forEach((value,index)=>{
+        const label=labels[index];if(typeof label!=='string')fail('intrinsic prototype label');
+        ordinaryPrototypes.set(value,label);
+        const match=/^(Error|EvalError|RangeError|ReferenceError|SyntaxError|TypeError|URIError)\.prototype$/.exec(label);
+        if(match)errorPrototypes.set(value,match[1]);
+      });
+    },
     observe(site,kind,value){if(!['finally','break','continue'].includes(kind))metadata.value(value);
       return {schema:PROTOCOL_METADATA_SCHEMA,site,kind,...metadata.snapshot()};}};
 }
@@ -113,6 +136,10 @@ export function createOwnedProtocolMetadata(bundle,{adapters=[]}={}){
     if(value[0]!=='ref'&&storage===null)return {kind:'function'};
     const node=storage??currentState.heap[value[1]];
     if(!node||!['object','array','function','promise'].includes(node.kind))fail('nonordinary owned object');
+    if(node.declaredError!==undefined){
+      if(node.kind!=='object'||!errorTypes.includes(node.declaredError))fail('invalid owned intrinsic Error brand');
+      return {kind:'error',errorType:node.declaredError};
+    }
     if(node.kind==='function'&&!includeFunctions){
       if(Object.keys(node.properties??{}).length||Object.keys(node.accessors??{}).length||node.prototypeInitialized||node.classConstructor)
         fail('function own-state observation requires the construction profile');
@@ -158,7 +185,7 @@ export function compareProtocolMetadata(expected,observed){
   for(let index=0;index<Math.max(expected.length,observed.length);index++)if(!isDeepStrictEqual(expected[index],observed[index]))
     return {schema:PROTOCOL_METADATA_SCHEMA,status:'mismatch',checked:index,index,expected:expected[index]??null,observed:observed[index]??null};
   return {schema:PROTOCOL_METADATA_SCHEMA,status:'agreed',checked:expected.length,
-    coverage:['ordinary-own-key-order','data-descriptor-values-and-flags','accessor-identities-and-flags','prototype-identity','extensibility','Symbol-identity-description-registry'],
+    coverage:['ordinary-own-key-order','data-descriptor-values-and-flags','accessor-identities-and-flags','prototype-identity','extensibility','Symbol-identity-description-registry','intrinsic-error-type-and-identity'],
     extensionAnnotations:[...new Set(expected.flatMap(row=>row.objects??[]).flatMap(node=>node.annotations??[]).map(row=>row.name))].sort(),
-    scope:'Observed descriptors and declared extension annotations; unregistered exotic state is refused'};
+    scope:'Observed ordinary descriptors and declared annotations; intrinsic Error nodes carry type identity only, and unregistered exotic state is refused'};
 }
