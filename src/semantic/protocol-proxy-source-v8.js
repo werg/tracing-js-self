@@ -93,7 +93,7 @@ export function createProxySourceAdapterV8(){
   },
   heapFields(node){return node.kind==='proxy'?fields:null;},
   beforeEvent(ctx,event,row){
-    if(event.operation==='primitive.binary'&&row?.child){
+    if(event?.operation==='primitive.binary'&&row?.child){
       const parent=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId)?.after;
       if(parent?.pendingProperty?.kind==='proxy-get-method')getterCandidates.add(row.child);
     }
