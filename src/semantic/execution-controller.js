@@ -8,7 +8,7 @@ import {analyzeSemanticProgram} from '../training/semantic-program.js';
 import {materializeHostArguments,decodeHostPayload} from '../host/materialize.js';
 import {hostOperation} from '../host/operations.js';
 import {checkSemanticRegionClaim} from '../training/semantic-regions.js';
-import {activateProtocolCallV8} from './protocol-state-v8.js';
+import {activateProtocolCallV8,PROTOCOL_MACHINE_API_V8} from './protocol-state-v8.js';
 
 const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 function arrayIndex(key){
@@ -356,7 +356,9 @@ export class SemanticExecutionController {
         this.frameFunctions.set(f.child,callee);
         this.stack.push(f.child);
       }else if(kind==='return'||kind==='throw'){
-        if(this.stack.length===1&&this.activeJob){
+        if(this.protocol&&this.activeJob&&this.stack.length===2&&this.stack.at(-1)===invocation){
+          PROTOCOL_MACHINE_API_V8.complete(this,{kind,invocation,value:structuredClone(f.value)});
+        }else if(this.stack.length===1&&this.activeJob){
           this.stack.pop();this.jobs.get(this.activeJob).returned={kind,value:structuredClone(f.value)};
         }else if(this.stack.length>1){
           this.stack.pop();

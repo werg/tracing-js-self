@@ -202,6 +202,8 @@ export function applyPromiseAdoptionRecordV8(controller,record,api){
     if(record.kind==='promise.adopt.get'){
       const descriptor=constructorDescriptor(controller,record.target,api),callee=descriptor?.kind==='accessor'?descriptor.get:null,
         closure=callee?.[0]==='ref'?controller.heap.get(callee[1]):null;
+      api.require(callee?.[0]==='ref',
+        'adoption getter requires its selected synchronous owned getter');
       api.require(closure?.kind==='closure'&&!closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver&&
         !closure.callable?.lexicalConstruction,
         'adoption getter cannot use an unauthenticated constructor capture');

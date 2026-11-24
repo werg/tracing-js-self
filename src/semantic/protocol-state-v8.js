@@ -292,8 +292,13 @@ function complete(controller,record){  const protocol=state(controller);
         job.returned===undefined,'scheduled callback completion differs from its retained job');
       controller.stack.pop();
       job.returned={kind:record.kind,value:copy(record.value)};
-    }else require(!controller.activeJob||controller.stack.length>1,
-      'scheduled callback must complete through its retained call frame');
+    }else if(controller.activeJob){
+      const job=controller.jobs?.get(controller.activeJob),child=scheduledChild(controller,controller.activeJob,job);
+      if(['adopt','adoption'].includes(job?.reaction))
+        require(job.status==='running'&&controller.stack.length>=1&&controller.stack[0]===child,
+          'adoption getter nested call must return to its retained getter scope');
+      else require(controller.stack.length>1,'scheduled callback must complete through its retained call frame');
+    }
     controller.lastReturn={kind:record.kind,value:copy(record.value),
       ...(frame.proxyReflectionScope?{proxyReflectionScope:copy(frame.proxyReflectionScope)}:{})};
   }else{
@@ -554,8 +559,14 @@ export function restoreProtocolStateV8(controller,snapshot){
       require(pair.length===2&&pair.every(value=>typeof value==='string')&&!aliases.has(pair[0])&&controller.locals.has(pair[1]),'capture alias binding');aliases.add(pair[0]);}
     assertAlgorithmDataArray(frame.arguments,'call arguments');frame.arguments.forEach(value=>known(temporary,value));
   }
-  if(controller.activeJob!==null&&controller.activeJob!==undefined){
-    const job=controller.jobs?.get(controller.activeJob),callback=scheduledCallback(job),
+  const currentScheduledJob=controller.activeJob===null||controller.activeJob===undefined?
+    null:controller.jobs?.get(controller.activeJob);
+  // Promise adoption owns its getter frame and validates it from the adoption
+  // extension. It has no ordinary scheduled-callback call frame or saved
+  // caller completion to validate here.
+  if(controller.activeJob!==null&&controller.activeJob!==undefined&&
+    !['adopt','adoption'].includes(currentScheduledJob?.reaction)){
+    const job=currentScheduledJob,callback=scheduledCallback(job),
       child=scheduledChild(controller,controller.activeJob,job),frame=snapshot.callFrames.find(row=>row.child===child);
     require(job?.status==='running'&&job.owner===controller.rootInvocation&&callback&&
       Object.hasOwn(job,'priorPending')&&Object.hasOwn(job,'priorLastReturn'),
