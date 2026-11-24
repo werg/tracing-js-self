@@ -194,6 +194,19 @@ test('restored enumeration checkpoint rejects forged receiver, key and outcome w
   assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
 });
 
+test('the original strict false-set Proxy source now has checked error evidence',async()=>{
+  const artifact=await checkedFixture('issue51-control-proxy-strict-false-set'),
+    controller=RegionExecutionHarness.replay(artifact).controller,
+    records=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record);
+  assert.equal(controller.completion.kind,'throw');
+  const error=controller.heap.get(controller.completion.value[1]);
+  assert(error);assert.equal(error.declaredError,'TypeError');
+  assert.equal(error.properties.get('message')[1],"'set' on proxy: trap returned falsish for property 'x'");
+  const call=records.find(row=>row.kind==='proxy.set.call');assert(call);assert.equal(call.strict,true);
+  assert(records.some(row=>row.kind==='proxy.fault'&&row.id===call.id));
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
 test('strict false Proxy set source preserves trap effects and exact native TypeError details',async()=>{
   const artifact=await checkedFixture('issue51-proxy-strict-false-set-error'),
     controller=RegionExecutionHarness.replay(artifact).controller,
