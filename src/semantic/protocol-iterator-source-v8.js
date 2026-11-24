@@ -24,8 +24,10 @@ export function createIteratorSourceAdapterV8(){let arrayLoops=new Set();return 
     if(instruction(ctx,event)?.op==='ITERATOR_ARRAY_GUARD'){
       if(event.result?.[0]!=='bool')ctx.refuse('iterator selection guard must be boolean');
       const source=ctx.bundle.sites.find(site=>site.siteId===event.siteId),node=ctx.inventory.nodes.get(source?.start+':'+source?.end);
-      const pattern=node?.type==='ArrayPattern'&&ctx.extensionState.get('custom-iterator-source/1')?.patterns.has(source.start+':'+source.end);
+      const custom=ctx.extensionState.get('custom-iterator-source/1'),point=source?.start+':'+source?.end,
+        pattern=node?.type==='ArrayPattern'&&custom?.patterns.has(point),nested=pattern&&custom?.nestedPatterns?.has(point);
       if((node?.type!=='ForOfStatement'||node.await)&&!pattern)ctx.refuse('array iteration guard lacks its qualified synchronous loop or binding pattern');
+      if(nested&&!event.result[1])ctx.refuse('nested custom iterable binding requires an independently scoped iterator observer');
       ctx.emit({kind:'iterator.arrayGuard',iterated:ctx.tag(event.operands[0],event),result:event.result[1]},event,'source-iterator-array-selection/1');
       if(event.result[1])arrayLoops.add(event.invocationId+':'+source.start+':'+source.end);
       return true;

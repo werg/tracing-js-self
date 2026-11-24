@@ -9,11 +9,11 @@ export const CUSTOM_ITERATOR_OBSERVATION_PROFILE_V8='custom-iterator-observation
 const hook='__tracingProtocolCustomIterable',apply=Reflect.apply;
 const reference=value=>value!==null&&['object','function'].includes(typeof value);
 function loops(source){const rows=[];
+  const supported=pattern=>pattern?.type==='Identifier'||pattern?.type==='ArrayPattern'&&pattern.elements.every(element=>element===null||supported(element))||
+    pattern?.type==='AssignmentPattern'&&supported(pattern.left)||pattern?.type==='RestElement'&&supported(pattern.argument);
   function visit(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(visit);return;}
     if(node.type==='ForOfStatement'&&!node.await)rows.push(node);
-    if(node.type==='VariableDeclarator'&&node.init&&node.id.type==='ArrayPattern'&&node.id.elements.every(element=>element===null||
-      element.type==='Identifier'||element.type==='AssignmentPattern'&&element.left.type==='Identifier'||
-      element.type==='RestElement'&&element.argument.type==='Identifier'))rows.push({...node.id,right:node.init});
+    if(node.type==='VariableDeclarator'&&node.init&&node.id.type==='ArrayPattern'&&supported(node.id))rows.push({...node.id,right:node.init});
     for(const [key,value]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(value);
   }visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));return rows;
 }
