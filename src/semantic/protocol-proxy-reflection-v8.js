@@ -1,4 +1,4 @@
-import {proxyDescriptorTrapResult,proxyOwnKeysTrapResult,proxyDescriptorFields} from '../proxy-reflection-descriptors.js';
+import {proxyDescriptorTrapResult,proxyOwnKeysTrapResult,proxyDescriptorFields,readProxyPartialDescriptor,proxyPartialDescriptorFields,completeProxyDescriptor,compatibleProxyDescriptor,proxyDefineTrapFault} from '../proxy-reflection-descriptors.js';
 // Proxy reflection keeps each selected trap and caller algorithm explicit.
 // Ordinary target queries occur after callback completion, never at entry.
 import {assertAlgorithmFields,assertAlgorithmDataArray,isAlgorithmDataRecord} from './ir.js';
@@ -7,15 +7,15 @@ import {promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
 import {deriveProxyRouteV8,validateRetainedProxyRouteV8} from './protocol-proxy-v8.js';
 export const PROXY_REFLECTION_PROFILE_V8='proxy-reflection/1';
 export const PROXY_REFLECTION_STATE_V8='semantic-proxy-reflection/1';
-export const PROXY_REFLECTION_OPERATIONS_V8=Object.freeze(['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys']);
+export const PROXY_REFLECTION_OPERATIONS_V8=Object.freeze(['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys','defineProperty']);
 export const PROXY_REFLECTION_FIELDS_V8=Object.freeze({
-  'proxy.reflect.call':['kind','id','object','operation','caller','arguments','child','route'],
+  'proxy.reflect.call':['kind','id','object','operation','caller','arguments','child','route','descriptorObject'],
   'proxy.reflect.direct':['kind','object','operation','caller','arguments','result','route'],
   'proxy.reflect.finish':['kind','id','completion'],
   'proxy.reflect.fault':['kind','id','error']
 });
 export const PROXY_REFLECTION_CALL_FIELDS_V8=Object.freeze(['id','object','operation','caller','arguments','parent','child',
-  'owner','target','handler','callee','route']);
+  'owner','target','handler','callee','route','definition','descriptorObject']);
 const id=value=>{if(typeof value!=='string'||!value||value.length>256)throw new TypeError('Proxy reflection identity');};
 export function validateProxyReflectionV8(record,{value}){
   if(!isAlgorithmDataRecord(record)||!PROXY_REFLECTION_FIELDS_V8[record.kind])return false;
@@ -31,10 +31,13 @@ export function validateProxyReflectionV8(record,{value}){
      !(record.operation==='ownKeys'?['Reflect.ownKeys']:['Object.'+record.operation,'Reflect.'+record.operation]).includes(record.caller))
     throw new TypeError('Proxy reflection operation/caller');
   assertAlgorithmDataArray(record.arguments,'Proxy reflection arguments');
-  if(record.arguments.length!==(['setPrototypeOf','getOwnPropertyDescriptor'].includes(record.operation)?1:0))throw new TypeError('Proxy reflection argument count');
+  if(record.arguments.length!==(record.operation==='defineProperty'?2:['setPrototypeOf','getOwnPropertyDescriptor'].includes(record.operation)?1:0))throw new TypeError('Proxy reflection argument count');
   record.arguments.forEach(value);
   assertAlgorithmDataArray(record.route,'Proxy reflection route');
-  if(record.kind==='proxy.reflect.call'){id(record.id);id(record.child);}else value(record.result);
+  if(record.kind==='proxy.reflect.call'){id(record.id);id(record.child);
+    if(record.operation==='defineProperty')id(record.descriptorObject);
+    else if(record.descriptorObject!==null)throw new TypeError('Only defineProperty has a descriptor object');
+  }else value(record.result);
   return true;
 }
 function state(c,api){return api.state(c).proxyReflection??={schema:PROXY_REFLECTION_STATE_V8,pending:[]};}
@@ -48,6 +51,18 @@ export function proxyReflectionPrototypeV8(c,node,api){
     node.prototype===null?['null']:node.prototype;
   api.require(Array.isArray(proto),'Proxy reflection target prototype representation');api.known(c,proto);return proto;
 }
+function definitionApi(c,api){
+  return {truthy:api.truthy,
+    callable:value=>value[0]==='ref'&&['closure','intrinsic'].includes(c.heap.get(value[1])?.kind),
+    read(object,key){
+      api.known(c,object);api.require(object[0]==='ref','Proxy input descriptor object identity');
+      const found=api.resolveProperty(c,object[1],key,{forHas:true}).descriptor;
+      api.require(!found||found.kind==='data','Proxy input descriptor getter requires its explicit continuation');
+      return {present:!!found,value:found?.value??['undefined']};
+    }};
+}
+const callbackArguments=row=>[row.target,...(row.operation==='defineProperty'?
+  [row.arguments[0],['ref',row.descriptorObject]]:row.arguments)];
 function reflectionData(c,row,returned,api,direct=false){
   const target=ordinary(c,row.target,api),objectApi={
     eq:api.eq,truthy:api.truthy,extensible:()=>target.extensible!==false,
@@ -66,6 +81,7 @@ function reflectionData(c,row,returned,api,direct=false){
       return 'Symbol('+(symbol?.kind==='well-known'?'Symbol.'+symbol.name:symbol?.description?.[1]??'')+')';
     }
   };
+  if(row.operation==='defineProperty')return {fault:proxyDefineTrapFault(returned,row.arguments[0],row.definition,row.caller,objectApi)};
   if(row.operation==='getOwnPropertyDescriptor')
     return direct?{descriptor:objectApi.ownDescriptor(row.arguments[0])??null}:proxyDescriptorTrapResult(returned,row.arguments[0],objectApi);
   return direct?{keys:objectApi.keys()}:proxyOwnKeysTrapResult(returned,objectApi);
@@ -89,7 +105,7 @@ function normalize(c,row,value,api){
   return ['ref',row.object];
 }
 export function proxyReflectionFaultV8(c,row,returned,api){
-  if(['getOwnPropertyDescriptor','ownKeys'].includes(row.operation))return reflectionData(c,row,returned,api).fault??null;
+  if(['getOwnPropertyDescriptor','ownKeys','defineProperty'].includes(row.operation))return reflectionData(c,row,returned,api).fault??null;
   const target=ordinary(c,row.target,api),extensible=target.extensible!==false,truth=api.truthy(returned);
   if(row.operation==='getPrototypeOf'){
     if(!['ref','null'].includes(returned[0]))return "'getPrototypeOf' on proxy: trap returned neither object nor null";
@@ -107,10 +123,17 @@ export function proxyReflectionFaultV8(c,row,returned,api){
 }
 function validateArguments(c,row,api){
   row.arguments.forEach(v=>api.known(c,v));
-  if(row.operation==='getOwnPropertyDescriptor')api.knownKey(c,row.arguments[0]);
+  if(['getOwnPropertyDescriptor','defineProperty'].includes(row.operation))api.knownKey(c,row.arguments[0]);
   if(row.operation==='setPrototypeOf')api.require(['ref','null'].includes(row.arguments[0][0]),'Proxy prototype argument must be object or null');
 }
 function direct(c,row,target,api){
+  if(row.operation==='defineProperty'){
+    const current=api.ownDescriptor(target,row.arguments[0]),completed=completeProxyDescriptor(row.definition,current),
+      success=compatibleProxyDescriptor(current,completed,target.extensible!==false,api.eq);
+    api.require(success||row.caller==='Reflect.defineProperty','Object.defineProperty failure requires ordinary fault boundary');
+    if(success)api.installDescriptor(target,row.arguments[0],completed);
+    return row.caller==='Reflect.defineProperty'?['bool',success]:['ref',row.object];
+  }
   if(['getOwnPropertyDescriptor','ownKeys'].includes(row.operation))return materializeReflection(c,row,null,row.result,api,true);
   if(row.operation==='getPrototypeOf')return proxyReflectionPrototypeV8(c,target,api);
   if(row.operation==='isExtensible')return ['bool',target.extensible!==false];
@@ -161,20 +184,25 @@ export function applyProxyReflectionV8(c,record,api){
   }
   const node=c.heap.get(record.object);api.require(node?.kind==='proxy','Proxy reflection object identity');
   validateArguments(c,record,api);
+  const definition=record.operation==='defineProperty'?readProxyPartialDescriptor(record.arguments[1],definitionApi(c,api)):null;
   const derived=deriveProxyRouteV8(c,record.object,record.operation,api);
   api.require(api.eq(record.route,derived.route),'Proxy reflection route differs from live lookup');
   const target=ordinary(c,derived.target,api);
   if(record.kind==='proxy.reflect.direct'){
     api.require(['undefined','null'].includes(derived.method[0]),'Proxy reflection requires explicit trap call');
-    api.require(api.eq(record.result,direct(c,{...record,target:derived.target},target,api)),'false direct Proxy reflection result');return true;
+    api.require(api.eq(record.result,direct(c,{...record,target:derived.target,definition},target,api)),'false direct Proxy reflection result');return true;
   }
   const pending=state(c,api).pending;
   api.require(pending.length<64&&!pending.some(row=>row.id===record.id),'Proxy reflection call identity/bound');
   api.require(derived.method[0]==='ref'&&api.heapNode(c,derived.method[1]).kind==='closure','Proxy reflection selected trap must be callable');
   const row={id:record.id,object:record.object,operation:record.operation,caller:record.caller,arguments:api.copy(record.arguments),
     parent:c.stack.at(-1),child:record.child,owner:derived.owner,target:api.copy(derived.target),
-    handler:api.copy(derived.route.at(-1).handler),callee:api.copy(derived.method),route:api.copy(derived.route)};
-  api.call(c,{child:row.child,callee:row.callee,receiver:row.handler,arguments:[row.target,...row.arguments]});
+    handler:api.copy(derived.route.at(-1).handler),callee:api.copy(derived.method),route:api.copy(derived.route),
+    definition:api.copy(definition),descriptorObject:record.descriptorObject};
+  if(row.operation==='defineProperty')api.allocate(c,{name:row.descriptorObject,objectKind:'object',length:null,
+    properties:proxyPartialDescriptorFields(definition).map(([key,value])=>({key:['str',key],value})),
+    code:null,captures:[],functionKind:null,lexicalReceiver:null});
+  api.call(c,{child:row.child,callee:row.callee,receiver:row.handler,arguments:callbackArguments(row)});
   pending.push(row);return true;
 }
 export function restoreProxyReflectionV8(c,snapshot,api){
@@ -186,12 +214,24 @@ export function restoreProxyReflectionV8(c,snapshot,api){
   for(const row of snapshot.pending){
     assertAlgorithmFields(row,PROXY_REFLECTION_CALL_FIELDS_V8,'Proxy reflection retained call');
     validateProxyReflectionV8({kind:'proxy.reflect.call',id:row.id,object:row.object,operation:row.operation,caller:row.caller,
-      arguments:row.arguments,child:row.child,route:row.route},{value:v=>api.known(c,v)});
+      arguments:row.arguments,child:row.child,route:row.route,descriptorObject:row.descriptorObject},{value:v=>api.known(c,v)});
     for(const identity of [row.parent,row.owner])id(identity);
     api.require(!seen.has(row.id),'Proxy reflection duplicate call');seen.add(row.id);validateArguments(c,row,api);
     validateRetainedProxyRouteV8(c,{...row,receiver:['ref',row.object]},api);
     api.require(api.eq(row.target,row.route.at(-1).target)&&api.eq(row.handler,row.route.at(-1).handler)&&
       api.eq(row.callee,row.route.at(-1).method),'Proxy reflection retained identities');
+    if(row.operation==='defineProperty'){
+      api.require(isAlgorithmDataRecord(row.definition),'retained descriptor snapshot');
+      api.require(Object.keys(row.definition).every(key=>['value','writable','get','set','enumerable','configurable'].includes(key)),
+        'retained descriptor fields');
+      for(const [key,value]of Object.entries(row.definition)){
+        if(['writable','enumerable','configurable'].includes(key))api.require(typeof value==='boolean','retained descriptor flag');
+        else api.known(c,value);
+      }
+      api.require(!('get'in row.definition||'set'in row.definition)||!('value'in row.definition||'writable'in row.definition),
+        'retained descriptor data/accessor conflict');
+      api.known(c,['ref',row.descriptorObject]);
+    }else api.require(row.definition===null&&row.descriptorObject===null,'non-definition descriptor snapshot');
     const callee=api.heapNode(c,row.callee[1]);
     api.require(callee.kind==='closure'&&c.frameFunctions.get(row.child)===callee.code&&c.frameFunctions.has(row.parent),
       'Proxy reflection callback source identity');
@@ -200,7 +240,7 @@ export function restoreProxyReflectionV8(c,snapshot,api){
     if(c.stack.includes(row.child)){
       const depth=c.stack.indexOf(row.child),call=c.protocol.callFrames.find(call=>call.child===row.child);
       api.require(depth===c.stack.indexOf(row.parent)+1&&depth>priorDepth,'Proxy reflection callback stack order');priorDepth=depth;
-      api.require(call&&api.eq(call.callee,row.callee)&&api.eq(call.arguments,[row.target,...row.arguments]),
+      api.require(call&&api.eq(call.callee,row.callee)&&api.eq(call.arguments,callbackArguments(row)),
         'Proxy reflection callback arguments');
     }else api.require(row===snapshot.pending.at(-1)&&c.stack.at(-1)===row.parent&&['return','throw'].includes(c.lastReturn?.kind),
       'Proxy reflection returned callback owner');

@@ -8,7 +8,7 @@ export function compatibleProxyDescriptor(current,descriptor,extensible,eq){
   if(current.kind==='accessor')return eq(current.get,descriptor.get)&&eq(current.set,descriptor.set);
   return current.writable||!descriptor.writable&&eq(current.value,descriptor.value);
 }
-export function readProxyDescriptor(value,api){
+export function readProxyPartialDescriptor(value,api){
   const descriptor={};
   for(const field of ['enumerable','configurable','value','writable','get','set']){
     const selected=api.read(value,['str',field]);if(!selected.present)continue;
@@ -19,11 +19,41 @@ export function readProxyDescriptor(value,api){
   }
   const accessor=own(descriptor,'get')||own(descriptor,'set'),data=own(descriptor,'value')||own(descriptor,'writable');
   if(accessor&&data)throw new TypeError('Proxy descriptor mixed data/accessor requires its intrinsic fault');
-  return accessor?{kind:'accessor',get:descriptor.get??['undefined'],set:descriptor.set??['undefined'],
-    enumerable:descriptor.enumerable??false,configurable:descriptor.configurable??false}:
-    {kind:'data',value:descriptor.value??['undefined'],writable:descriptor.writable??false,
-      enumerable:descriptor.enumerable??false,configurable:descriptor.configurable??false};
+  return descriptor;
 }
+export function completeProxyDescriptor(descriptor,current=null){
+  const accessor=own(descriptor,'get')||own(descriptor,'set'),
+    data=own(descriptor,'value')||own(descriptor,'writable'),kind=accessor?'accessor':data?'data':current?.kind??'data';
+  return kind==='accessor'?{kind,get:descriptor.get??(current?.kind==='accessor'?current.get:['undefined']),
+    set:descriptor.set??(current?.kind==='accessor'?current.set:['undefined']),
+    enumerable:descriptor.enumerable??current?.enumerable??false,configurable:descriptor.configurable??current?.configurable??false}:
+    {kind,value:descriptor.value??(current?.kind==='data'?current.value:['undefined']),
+      writable:descriptor.writable??(current?.kind==='data'?current.writable:false),
+      enumerable:descriptor.enumerable??current?.enumerable??false,configurable:descriptor.configurable??current?.configurable??false};
+}
+export const readProxyDescriptor=(value,api)=>completeProxyDescriptor(readProxyPartialDescriptor(value,api));
+export function proxyPartialDescriptorFields(descriptor){
+  return ['value','writable','get','set','enumerable','configurable'].filter(field=>own(descriptor,field))
+    .map(field=>[field,['writable','enumerable','configurable'].includes(field)?['bool',descriptor[field]]:descriptor[field]]);
+}
+export function proxyDefineTrapFault(returned,key,descriptor,caller,api){
+  const display=api.display(key),prefix="'defineProperty' on proxy: ",truth=api.truthy(returned);
+  if(!truth)return caller==='Object.defineProperty'?prefix+"trap returned falsish for property '"+display+"'":null;
+  const current=api.ownDescriptor(key),extensible=api.extensible(),settingFixed=own(descriptor,'configurable')&&!descriptor.configurable;
+  if(!current){
+    if(!extensible)return prefix+"trap returned truish for adding property '"+display+"'  to the non-extensible proxy target";
+    if(settingFixed)return prefix+"trap returned truish for defining non-configurable property '"+display+"' which is either non-existent or configurable in the proxy target";
+  }else{
+    if(!compatibleProxyDescriptor(current,completeProxyDescriptor(descriptor,current),extensible,api.eq))
+      return prefix+"trap returned truish for adding property '"+display+"'  that is incompatible with the existing property in the proxy target";
+    if(settingFixed&&current.configurable)
+      return prefix+"trap returned truish for defining non-configurable property '"+display+"' which is either non-existent or configurable in the proxy target";
+    if(current.kind==='data'&&!current.configurable&&current.writable&&own(descriptor,'writable')&&!descriptor.writable)
+      return prefix+"trap returned truish for defining non-configurable property '"+display+"' which cannot be non-writable, unless there exists a corresponding non-configurable, non-writable own property of the target object.";
+  }
+  return null;
+}
+
 export function proxyDescriptorFields(descriptor){
   return descriptor.kind==='accessor'?
     [['get',descriptor.get],['set',descriptor.set],['enumerable',['bool',descriptor.enumerable]],['configurable',['bool',descriptor.configurable]]]:

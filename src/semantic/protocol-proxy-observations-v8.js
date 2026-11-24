@@ -45,12 +45,12 @@ function ownedObservations(bundle,allocations){
       property=event.operation==='property.read'||event.operation==='property.write',
       raw=event.operands[0]?.[0]==='method'?event.operands[0][1]:event.operands[0],
       reflection=event.operation==='call.enter'&&raw?.[0]==='builtinfn'&&
-        ['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys'].includes(raw[1].split('.')[1]),
+        ['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys','defineProperty'].includes(raw[1].split('.')[1]),
       base=has||reflection?event.operands[1]:event.operands[0],node=base?.[0]==='ref'?state.heap[base[1]]:null;
     if(node?.kind==='proxy'&&(property||has||deletion||reflection)){
       const operation=reflection?raw[1].split('.')[1]:has?'has':deletion?'delete':event.operation==='property.read'?'get':'set',
         trapName=operation==='delete'?'deleteProperty':operation,
-        key=reflection?(operation==='getOwnPropertyDescriptor'?event.operands[2]:['undefined']):(has?event.operands[0]:event.operands[1])?.[0]==='symbol'?(has?event.operands[0]:event.operands[1]):
+        key=reflection?(['getOwnPropertyDescriptor','defineProperty'].includes(operation)?event.operands[2]:['undefined']):(has?event.operands[0]:event.operands[1])?.[0]==='symbol'?(has?event.operands[0]:event.operands[1]):
           ['str',String(decode(has?event.operands[0]:event.operands[1]))],
         route=[],visited=new Set();let ownerId=base[1],owner=state.heap[ownerId],selected=['undefined'];
       while(owner?.kind==='proxy'){
@@ -75,7 +75,8 @@ function ownedObservations(bundle,allocations){
         const child=event.stateChanges.find(change=>change.table==='frames'&&change.id===pending.waitingFrameId)?.after;
         if(!child||selected[0]!=='ref'||JSON.stringify((reflection?pending:pending.proxy).route)!==JSON.stringify(route))
           fail('missing selected trap frame or retained route');
-        const receiver=base,args=reflection?[['ref',ownerNode.targetId],...(['setPrototypeOf','getOwnPropertyDescriptor'].includes(operation)?[event.operands[2]]:[])]:
+        const receiver=base,args=reflection?[['ref',ownerNode.targetId],...(operation==='defineProperty'?
+            [event.operands[2],['ref',pending.descriptorObject]]:['setPrototypeOf','getOwnPropertyDescriptor'].includes(operation)?[event.operands[2]]:[])]:
           [['ref',ownerNode.targetId],key,...(operation==='set'?[event.operands[2]]:[]),
             ...(['get','set'].includes(operation)?[receiver]:[])],fn=state.heap[selected[1]],
           environment=event.stateChanges.find(change=>change.table==='envs'&&change.id===child.envId)?.after;
@@ -199,7 +200,7 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
       const observedHandler=new Proxy({}, {get(_target,operation){
         const descriptors=nativeHandler(handler,ctx),method=descriptors[operation]?.value;
         nativeTarget(target,ctx,'Proxy target',{allowAccessors:['has','deleteProperty'].includes(operation)});
-        if(!['get','set','has','deleteProperty','getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys'].includes(operation)||method==null||typeof method!=='function')return method;
+        if(!['get','set','has','deleteProperty','getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys','defineProperty'].includes(operation)||method==null||typeof method!=='function')return method;
         const semanticOperation=operation==='deleteProperty'?'delete':operation;
         return (...trapArgs)=>{
           const key=['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','ownKeys'].includes(operation)?undefined:trapArgs[1];add('select',{operation:semanticOperation,object:value(result),key:value(key),method:value(method)});

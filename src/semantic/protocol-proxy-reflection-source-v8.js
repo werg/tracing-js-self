@@ -47,7 +47,8 @@ export function createProxyReflectionSourceAdapterV8(){
       require(ctx,event.completion?.type!=='throw','direct reflection fault requires its explicit source boundary');
       ctx.tag(['intrinsic','Object.prototype'],event);
       const args=operation==='setPrototypeOf'?[ctx.tag(row.operands[2]??['undefined'],event)]:
-        operation==='getOwnPropertyDescriptor'?[ctx.key(row.operands[2]??['undefined'])]:[],selectedRoute=route(ctx,node.id,operation,event);
+        operation==='getOwnPropertyDescriptor'?[ctx.key(row.operands[2]??['undefined'])]:
+        operation==='defineProperty'?[ctx.key(row.operands[2]??['undefined']),ctx.tag(row.operands[3]??['undefined'],event)]:[],selectedRoute=route(ctx,node.id,operation,event);
       if(!row.child){
         const creates=['getOwnPropertyDescriptor','ownKeys'].includes(operation),value=creates?row.result:ctx.tag(row.result,event);
         emit(ctx,{kind:'proxy.reflect.direct',object:node.id,operation,caller,arguments:args,result:value,route:selectedRoute},event);
@@ -65,10 +66,12 @@ export function createProxyReflectionSourceAdapterV8(){
       require(ctx,fn?.kind==='function'&&!fn.async&&!program.generator&&child.codeId===fn.codeId&&env?.parent===fn.closureEnvId,
         'selected synchronous source callback/closure');
       const id='proxyreflection'+(++next),entry={id,parent:parent.id,child:child.id,object:node.id,operation,caller,
-        arguments:args,route:selectedRoute,target:last.target,handler:last.handler,callee};
-      emit(ctx,{kind:'proxy.reflect.call',id,object:node.id,operation,caller,arguments:args,child:ctx.frame(child.id),route:selectedRoute},event);
+        arguments:args,route:selectedRoute,target:last.target,handler:last.handler,callee,
+        descriptorObject:pending.descriptorObject??null,definition:pending.definition??null};
+      emit(ctx,{kind:'proxy.reflect.call',id,object:node.id,operation,caller,arguments:args,child:ctx.frame(child.id),route:selectedRoute,descriptorObject:entry.descriptorObject},event);
+      if(entry.descriptorObject)ctx.markPublished(entry.descriptorObject);
       require(ctx,ctx.eq(ctx.controller.receiver,ctx.tag(child.thisValue,event)),'effective callback receiver');
-      const expected=[last.target,...args];
+      const expected=[last.target,...(operation==='defineProperty'?[args[0],['ref',entry.descriptorObject]]:args)];
       require(ctx,program.params.every((name,i)=>env.bindings[name]?.initialized&&
         ctx.eq(ctx.tag(env.bindings[name].token.value,event),expected[i]??['undefined'])),'callback parameter values');
       active.set(parent.id,entry);callbacks.set(child.id,entry);
@@ -111,6 +114,8 @@ export function createProxyReflectionSourceAdapterV8(){
         pending.caller===entry.caller&&ctx.eq(pending.object,['ref',entry.object])&&ctx.eq(pending.route,entry.route)&&
         ctx.eq(pending.target,entry.target)&&ctx.eq(pending.handler,entry.handler)&&ctx.eq(pending.callee,entry.callee)&&
         pending.arguments.length===entry.arguments.length&&pending.arguments.every((v,i)=>ctx.eq(ctx.tag(v),entry.arguments[i]))&&
+        ctx.eq(pending.definition??null,entry.definition)&&pending.descriptorObject===entry.descriptorObject&&
+        ctx.eq(current.definition,entry.definition)&&current.descriptorObject===entry.descriptorObject&&
         current.parent===ctx.frame(frame.id)&&current.child===ctx.frame(entry.child),'retained continuation mismatch');
       return true;
     }

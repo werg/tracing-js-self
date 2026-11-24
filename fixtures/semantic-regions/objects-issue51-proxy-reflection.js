@@ -206,5 +206,59 @@ export const issue51ProxyReflectionFixtures=Object.freeze([
     "args": [
       4
     ]
+  },
+  {
+    "id": "issue51-proxy-definition-from-descriptor",
+    "family": "issue51-proxy-reflection",
+    "source": "\"use strict\";function run(x){const target={};let seen=[];const proxy=new Proxy(target,{defineProperty(t,k,d){seen=[k,Object.keys(d),d.value];Object.defineProperty(t,k,d);return 1;}});const result=Object.defineProperty(proxy,\"x\",{value:7,writable:true,configurable:true});return [result===proxy,target.x,seen];}",
+    "entry": "run",
+    "args": [
+      4
+    ]
+  },
+  {
+    "id": "issue51-proxy-definition-reflect-false",
+    "family": "issue51-proxy-reflection",
+    "source": "\"use strict\";function run(x){const proxy=new Proxy({}, {defineProperty(){return false;}});return Reflect.defineProperty(proxy,\"x\",{value:1});}",
+    "entry": "run",
+    "args": [
+      4
+    ]
+  },
+  {
+    "id": "issue51-proxy-definition-object-false",
+    "family": "issue51-proxy-reflection",
+    "source": "\"use strict\";function run(x){const proxy=new Proxy({}, {defineProperty(){return false;}});try{Object.defineProperty(proxy,\"x\",{value:1});}catch(error){return error.message;}}",
+    "entry": "run",
+    "args": [
+      4
+    ]
+  },
+  {
+    "id": "issue51-proxy-definition-nonextensible-fault",
+    "family": "issue51-proxy-reflection",
+    "source": "\"use strict\";function run(x){const target={};Object.preventExtensions(target);const proxy=new Proxy(target,{defineProperty(){return true;}});try{Reflect.defineProperty(proxy,\"x\",{value:1});}catch(error){return error.message;}}",
+    "entry": "run",
+    "args": [
+      4
+    ]
+  },
+  {
+    "id": "issue51-proxy-definition-copy-mutation",
+    "family": "issue51-proxy-reflection",
+    "source": "\"use strict\";function run(x){const target={};Object.defineProperty(target,\"x\",{value:1,writable:true});const proxy=new Proxy(target,{defineProperty(t,k,d){d.writable=true;return true;}});try{Reflect.defineProperty(proxy,\"x\",{writable:false});}catch(error){return error.message;}}",
+    "entry": "run",
+    "args": [
+      4
+    ]
+  },
+  {
+    "id": "issue51-proxy-definition-forward-omitted-fields",
+    "family": "issue51-proxy-reflection",
+    "source": "\"use strict\";function run(x){const target={x:1};const proxy=new Proxy(target,{});Object.defineProperty(proxy,\"x\",{enumerable:false});return [target.x,Object.keys(target),Reflect.defineProperty(proxy,\"y\",{value:3}),target.y];}",
+    "entry": "run",
+    "args": [
+      4
+    ]
   }
 ].map(Object.freeze));

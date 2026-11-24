@@ -1,10 +1,10 @@
-import {proxyDescriptorTrapResult,proxyOwnKeysTrapResult,proxyDescriptorFields} from './proxy-reflection-descriptors.js';
+import {proxyDescriptorTrapResult,proxyOwnKeysTrapResult,proxyDescriptorFields,readProxyPartialDescriptor,proxyPartialDescriptorFields,completeProxyDescriptor,compatibleProxyDescriptor,proxyDefineTrapFault} from './proxy-reflection-descriptors.js';
 import {ordinaryGet} from './spec-operations.js';
 import {ownedHasProperty} from './owned-has-property.js';
 import {propertyKeyValue} from './property-keys.js';
 // Owned Proxy reflection. Selected callbacks are ordinary guest frames.
 // This module performs no host operation on guest values.
-const operations=new Set(['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys']);
+const operations=new Set(['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys','defineProperty']);
 const primitive=value=>!['ref','intrinsic','builtinfn','promise'].includes(value?.[0]);
 const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 function prototype(state,node,api){
@@ -37,6 +37,7 @@ function reflectData(state,pending,value,api,direct=false){
     },
     display:key=>api.proxyDeletePropertyDisplay(state.heap,api.valueKey(key))
   };
+  if(pending.operation==='defineProperty')return {fault:proxyDefineTrapFault(value,pending.arguments[0],pending.definition,pending.caller,context)};
   if(pending.operation==='getOwnPropertyDescriptor')
     return direct?{descriptor:context.ownDescriptor(pending.arguments[0])}:proxyDescriptorTrapResult(value,pending.arguments[0],context);
   return direct?{keys:context.keys()}:proxyOwnKeysTrapResult(value,context);
@@ -53,7 +54,7 @@ function materialize(runtime,state,pending,value,origin,api,direct=false){
   return {value:['ref',id]};
 }
 function fault(state,pending,value,api){
-  if(['getOwnPropertyDescriptor','ownKeys'].includes(pending.operation))return reflectData(state,pending,value,api).fault??null;
+  if(['getOwnPropertyDescriptor','ownKeys','defineProperty'].includes(pending.operation))return reflectData(state,pending,value,api).fault??null;
   const node=target(state,pending),extensible=node.extensible!==false,truth=api.truthy(value),op=pending.operation;
   if(op==='getPrototypeOf'){
     if(primitive(value)&&value[0]!=='null')return "'getPrototypeOf' on proxy: trap returned neither object nor null";
@@ -77,21 +78,57 @@ function normal(pending,value,api){
 export function startOwnedProxyReflection(runtime,state,frame,caller,args,origin,api){
   const operation=caller.split('.')[1],object=args[0]?.value??['undefined'],node=object[0]==='ref'?state.heap[object[1]]:null;
   if(!operations.has(operation)||!['Object','Reflect'].includes(caller.split('.')[0])||node?.kind!=='proxy')return null;
-  const parameters=['setPrototypeOf','getOwnPropertyDescriptor'].includes(operation)?[args[1]?.value??['undefined']]:[];
-  if(operation==='getOwnPropertyDescriptor')parameters[0]=propertyKeyValue(api.valueKey(parameters[0]));
+  const parameters=operation==='defineProperty'?[args[1]?.value??['undefined'],args[2]?.value??['undefined']]:
+    ['setPrototypeOf','getOwnPropertyDescriptor'].includes(operation)?[args[1]?.value??['undefined']]:[];
+  if(['getOwnPropertyDescriptor','defineProperty'].includes(operation))parameters[0]=propertyKeyValue(api.valueKey(parameters[0]));
   if(operation==='setPrototypeOf'&&primitive(parameters[0])&&parameters[0][0]!=='null')
     api.guestFault('TypeError','Object prototype may only be an Object or null: '+String(parameters[0][1]));
+  const definition=operation==='defineProperty'?readProxyPartialDescriptor(parameters[1],{
+    truthy:api.truthy,callable:value=>runtime.callableGuest(state,value),
+    read(value,key){
+      const name=api.valueKey(key),found=ordinaryGet(state.heap,value,name);
+      if(!found)throw new TypeError('Proxy input descriptor getter requires owned continuation');
+      return {present:ownedHasProperty(state.heap,value,name),value:found.method.value};
+    }
+  }):null;
   const routed=api.proxyRoute(state.heap,object,operation);
   const pending={operation,caller,object,arguments:parameters,route:routed.route,target:routed.target,
-    handler:routed.handler??routed.route.at(-1).handler,callee:routed.method??['undefined'],waitingFrameId:null};
+    handler:routed.handler??routed.route.at(-1).handler,callee:routed.method??['undefined'],waitingFrameId:null,definition,descriptorObject:null};
   const storage=target(state,pending);
   if(routed.kind==='trap'){
     if(!runtime.callableGuest(state,routed.method)||state.heap[routed.method[1]]?.async)
       throw new TypeError('Proxy reflection trap must be a synchronous owned callable');
+    if(operation==='defineProperty'){
+      const id=runtime.next(state,'obj'),descriptor=state.heap[id]={id,kind:'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};
+      for(const [key,value]of proxyPartialDescriptorFields(definition))api.putOwn(descriptor,key,value,origin);
+      pending.descriptorObject=id;
+    }
+    const callbackArgs=operation==='defineProperty'?[parameters[0],['ref',pending.descriptorObject]]:parameters;
     const callable=state.heap[routed.method[1]],child=runtime.newFrame(state,callable.codeId,callable.closureEnvId,frame.id,null,
-      [routed.target,...parameters].map(value=>({value,origin})),runtime.functionThis(callable,routed.handler),callable.id);
+      [routed.target,...callbackArgs].map(value=>({value,origin})),runtime.functionThis(callable,routed.handler),callable.id);
     pending.waitingFrameId=child;frame.pendingProxyReflection=pending;state.control.a0.activeFrameId=child;
     return {child,reads:routed.observations};
+  }
+  if(operation==='defineProperty'){
+    const name=api.valueKey(parameters[0]),accessor=storage.accessors?.[name],slot=storage.properties?.[name],
+      current=accessor?{kind:'accessor',get:accessor.get.value,set:accessor.set.value,enumerable:accessor.enumerable,configurable:accessor.configurable}:
+        slot?{kind:'data',value:slot.value,writable:true,enumerable:true,configurable:true,...storage.dataAttributes?.[name]}:null,
+      completed=completeProxyDescriptor(definition,current),success=compatibleProxyDescriptor(current,completed,storage.extensible!==false,equal);
+    if(!success&&caller==='Object.defineProperty')api.guestFault('TypeError','Cannot redefine a non-configurable property');
+    if(success){
+      if(completed.kind==='data'){
+        api.putOwn(storage,name,completed.value,origin,{literal:true});
+        if(storage.accessors)delete storage.accessors[name];
+        storage.dataAttributes??={};storage.dataAttributes[name]={writable:completed.writable,enumerable:completed.enumerable,configurable:completed.configurable};
+      }else{
+        if(!current)(storage.propertyOrder??=api.ownPropertyKeys(storage)).push(name);
+        storage.accessors??={};storage.accessors[name]={get:{value:completed.get,origin},set:{value:completed.set,origin},
+          enumerable:completed.enumerable,configurable:completed.configurable};
+        delete storage.properties[name];if(storage.dataAttributes)delete storage.dataAttributes[name];
+        storage.propertyVersions[name]=(storage.propertyVersions[name]??0)+1;storage.shapeVersion++;
+      }
+    }
+    return {value:normal(pending,['bool',success],api),reads:routed.observations};
   }
   if(['getOwnPropertyDescriptor','ownKeys'].includes(operation)){
     const output=materialize(runtime,state,pending,null,origin,api,true);return {...output,reads:routed.observations};

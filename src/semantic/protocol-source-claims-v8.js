@@ -50,7 +50,7 @@ const eventClaims={
   [reflection](view,{event,row}){
     const name=builtin(callee(row?.operands?.[0]??event.operands?.[0]));
     return event.operation==='call.return'&&has(state(view,reflection).callbacks,event.invocationId)||
-      event.operation==='call.enter'&&['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys'].some(
+      event.operation==='call.enter'&&['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys','defineProperty'].some(
         op=>name==='Object.'+op||name==='Reflect.'+op)&&heap(view,row?.operands?.[1]??event.operands?.[1])?.kind==='proxy';
   },
   [memory](view,{event,row}){

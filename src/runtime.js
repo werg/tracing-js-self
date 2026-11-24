@@ -3900,6 +3900,11 @@ if(callable[0]==='builtinfn'&&/^(?:Set|Map)\.prototype\./.test(callable[1])){
             return {...operands(fn,...args),...result(['bool',
               ownedSameValue(args[0]?.value??U,args[1]?.value??U)])};
           }
+          if(callable[0]==='builtinfn'){
+            const reflection=startOwnedProxyReflection(this,s,f,callable[1],args,eventId,{proxyRoute,objectPrototype,truthy,guestFault,valueKey,ownPropertyKeys,putOwn,proxyDeletePropertyDisplay});
+            if(reflection)return {...operands(fn,...args),reads:reflection.reads,
+              ...(reflection.child?{causes:[{kind:'invocation',frameId:reflection.child}]}:result(reflection.value))};
+          }
           if(callable[0]==='builtinfn'&&
              ['Reflect.set','Reflect.deleteProperty','Reflect.defineProperty'].includes(callable[1])){
             const value=args[0]?.value??U,object=ownedObjectStorage(s,value);
@@ -3980,11 +3985,7 @@ if(callable[0]==='builtinfn'&&/^(?:Set|Map)\.prototype\./.test(callable[1])){
             for(const [key,value] of copies)putOwn(target,key,value,eventId);
             return {...operands(fn,...args),...result(ref)};
           }
-          if(callable[0]==='builtinfn'){
-            const reflection=startOwnedProxyReflection(this,s,f,callable[1],args,eventId,{proxyRoute,objectPrototype,truthy,guestFault,valueKey,ownPropertyKeys,putOwn,proxyDeletePropertyDisplay});
-            if(reflection)return {...operands(fn,...args),reads:reflection.reads,
-              ...(reflection.child?{causes:[{kind:'invocation',frameId:reflection.child}]}:result(reflection.value))};
-          }
+
           if(callable[0]==='builtinfn'&&['Object.preventExtensions','Object.isExtensible',
              'Object.seal','Object.isSealed','Object.freeze'].includes(callable[1])){
             const value=args[0]?.value??U,object=ownedObjectStorage(s,value);

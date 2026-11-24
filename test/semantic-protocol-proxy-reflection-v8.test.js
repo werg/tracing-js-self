@@ -13,7 +13,7 @@ function fixture(operation){
   apply({kind:'proxy.create',name:'proxy',target:ref('target'),handler:ref('handler')});
   if(operation){allocate('trap','closure');apply({kind:'property.set',object:'handler',key:str(operation),receiver:ref('handler'),value:ref('trap'),success:true});}
   const start=(op=operation,caller='Reflect.'+op,args=[])=>apply({kind:'proxy.reflect.call',id:'reflection',object:'proxy',operation:op,
-    caller,arguments:args,child:'callback',route:deriveProxyRouteV8(c,'proxy',op,PROTOCOL_MACHINE_API_V8).route});
+    caller,arguments:args,child:'callback',descriptorObject:op==='defineProperty'?'descriptor':null,route:deriveProxyRouteV8(c,'proxy',op,PROTOCOL_MACHINE_API_V8).route});
   const finish=value=>apply({kind:'proxy.reflect.finish',id:'reflection',completion:{kind:'normal',value}});
   const restore=(controller=c)=>restoreProxyReflectionV8(controller,controller.protocol.proxyReflection,PROTOCOL_MACHINE_API_V8);
   return {c,apply,start,finish,restore};
