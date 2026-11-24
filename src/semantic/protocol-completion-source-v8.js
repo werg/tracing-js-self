@@ -10,7 +10,12 @@ export function createCompletionSourceAdapterV8({bundle}){
   let tracked=new Set(),scopes=new Map(),targets=new Map(),sequence=0,targetSequence=0;
   const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('ordinary completion: '+message);};
   const instruction=(ctx,event)=>{
-    const frame=ctx.getOwnedFrame(event.invocationId),inst=bundle.programs[frame?.codeId]?.instructions[frame?.pc];
+    // Completion-source checks run after the owned event has advanced frame.pc.
+    // Attribute the event to its authenticated pre-state instruction instead
+    // of accidentally checking the following instruction.
+    const frame=event.stateChanges.find(change=>change.table==='frames'&&
+      change.id===event.invocationId)?.before??ctx.getOwnedFrame(event.invocationId),
+      inst=bundle.programs[frame?.codeId]?.instructions[frame?.pc];
     return inst?.siteId===event.siteId?inst:null;
   };
   function completion(ctx,node,pending,event){

@@ -20,7 +20,7 @@ test('explicit original module source evidence survives fresh source, projection
   assert(result.exported,result.reason);assert.equal(result.moduleReference,'passed');assert.equal(result.moduleCorrespondence,'passed');
   // Shared Promise state publishes the intrinsic identity/capture and both
   // observable then reads in addition to the scheduler's existing records.
-  artifact=result.exported;assert.equal(artifact.contexts.length,712);
+  artifact=result.exported;assert.equal(artifact.contexts.length,724);
   assert.equal(artifact.sidecar.sourceArtifact.sidecar.compiler.moduleSchedulerOwnership.ownedEventCount,10);
   checked=await recheckRegionEvidence(artifact);
   assert(checked.sourceValidated&&checked.projectionValidated&&checked.replayValidated);
