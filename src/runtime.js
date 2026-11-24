@@ -756,7 +756,7 @@ export class Runtime {
       else if(prototype[0]==='intrinsic'&&['Object.prototype','Array.prototype','Function.prototype'].includes(prototype[1]))sought=prototype[1];
       else if(['promise','builtinfn','hostfn','intrinsic'].includes(prototype[0]))throw new TypeError('Exotic constructor prototype outside ordinary instanceof profile');
       else guestFault('TypeError','Function has non-object prototype in instanceof check');
-    }else if(intrinsic&&['Object','Array','Promise',...ERROR_CONSTRUCTORS].includes(constructor[1]))sought=constructor[1]+'.prototype';
+    }else if(intrinsic&&['Object','Array',...ERROR_CONSTRUCTORS].includes(constructor[1]))sought=constructor[1]+'.prototype';
     else if(constructor[0]==='builtinfn')guestFault('TypeError','Function has non-object prototype in instanceof check');
     else throw new TypeError('Intrinsic instanceof requires its owned prototype profile');
     let current=candidate,seen=new Set();
