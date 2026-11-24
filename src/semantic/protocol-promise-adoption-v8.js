@@ -254,7 +254,7 @@ export function allowsPromiseAdoptionInternalSchedulerV8(controller,record){
 }
 export function restorePromiseAdoptionStateV8(controller,api){
   const ownedJobs=new Set(),pending=[],reading=[];
-  for(const job of controller.jobs.values())for(const identity of [job.closure,job.rejectionClosure])if(identity){
+  for(const job of controller.jobs?.values()??[])for(const identity of [job.closure,job.rejectionClosure])if(identity){
     const closure=controller.heap.get(identity);
     api.require(!closure?.callable?.lexicalConstruction,
       'scheduled callback cannot use an unauthenticated constructor capture');
