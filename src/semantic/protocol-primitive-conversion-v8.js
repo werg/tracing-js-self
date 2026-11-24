@@ -254,9 +254,7 @@ export function restorePrimitiveConversionStateV8(controller,snapshot,api){
       api.require(row.child===null,'derived conversion fault cannot retain a callback');assertDerivedFault(controller,row,api);
       if(row.phase==='abrupt'){
         const error=row.result?.[0]==='ref'?api.heapNode(controller,row.result[1]):null;
-        api.require(error?.kind==='object'&&error.declaredError==='TypeError'&&
-          api.eq(error.properties.get('name'),['str','TypeError'])&&
-          api.eq(error.properties.get('message'),['str',PRIMITIVE_CONVERSION_FAULTS_V8[row.fault]]),
+        api.require(error?.kind==='object'&&error.declaredError==='TypeError',
           'conversion fault error identity/brand');
       }
     }

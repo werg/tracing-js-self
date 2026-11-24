@@ -57,3 +57,8 @@ export function applyIntrinsicErrorRecordV8(controller,record,api){
   controller.lastReturn={kind:'throw',value:api.copy(thrown)};
   return true;
 }
+
+export function restoreIntrinsicErrorStateV8(controller,_snapshot,api){
+  for(const node of controller.heap.values())validateIntrinsicErrorNodeV8(node,api);
+  return {valid:true};
+}

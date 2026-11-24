@@ -386,8 +386,8 @@ function putOwn(obj,key,value,eventId,{literal=false}={}) {
   if(!literal&&obj.dataAttributes?.[key]?.writable===false)guestFault('TypeError','Cannot assign to read only property');
   if(obj.extensible===false&&!Object.hasOwn(obj.properties,key)&&!Object.hasOwn(obj.accessors??{},key))
     guestFault('TypeError','Cannot add property to non-extensible object');
-  if(obj.declaredError)
-    throw new TypeError('Declared error mutation is outside the bounded error profile');
+  if(obj.declaredError&&!['name','message'].includes(key))
+    throw new TypeError('Declared error exposes only mutable name and message fields');
   if (key === '__proto__'&&!literal) throw new TypeError('Prototype mutation is not implemented by the bounded profile');
   if (obj.kind === 'array' && key === 'length') {
     if (value[0] !== 'num') throw new TypeError('Array length coercion is outside the profile');

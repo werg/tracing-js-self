@@ -498,8 +498,6 @@ export function restoreProtocolStateV8(controller,snapshot){
   }
   for(const row of snapshot.symbols)require(!controller.heap.has(row.id),'Symbol/object identity collision');
   for(const [id,node]of controller.heap){
-    for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.validateHeapNode)
-      require(adapter.validateHeapNode(node,PROTOCOL_MACHINE_API_V8)===true,'extension heap metadata: '+adapter.id);
     if(!ordinaryHeapKinds.has(node.kind)){
       require(PROTOCOL_MACHINE_ADAPTERS_V8.some(adapter=>adapter.hasRichState?.(node)),'undeclared protocol heap kind');continue;
     }
