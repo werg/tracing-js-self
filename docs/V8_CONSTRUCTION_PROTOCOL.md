@@ -16,8 +16,8 @@ private writes and wrong initializer homes reject before the shared transaction
 commits.
 
 Callable metadata lives on the existing shared closure node as `callable`, with
-`constructorKind`, `classConstructor`, `homeObject`, `instanceInitializer` and
-`staticInitializer`. Private elements live on the actual shared object as a
+`constructorKind`, `classConstructor`, `homeObject`, `instanceInitializer`, `staticInitializer`, and `lexicalConstruction`. The latter retains the exact constructor `frame` and live `thisCell` for an admitted constructor-captured arrow. A `callable.capture` record binds the arrow to those identities; it does not copy a receiver.
+Private elements live on the actual shared object as a
 `privateElements` map, retaining element kind, value and update version. The
 construction state declares private identities as `{id, owner, name}` records;
 the owner is a class identity. Private identities occupy the same reserved
@@ -78,7 +78,7 @@ These operations retain frame and call identities, never VM stack snapshots.
 Base primitive returns select the allocated receiver; explicit object returns
 select that object. Derived undefined returns require initialized this. The
 normal result or the body's thrown value is then delivered to the parent.
-`construct.target` and `construct.this` validate reads from the active invocation.
+`construct.target` and `construct.this` validate reads from the active invocation. `construct.this.fault` carries `{invocation, error}` and allocates an operation-derived `ReferenceError` only for a direct or authenticated captured-arrow read while the active derived receiver is uninitialized. The source proof binds the exact source read, construction frame, call frame, live this cell, and current error allocation.
 Ordinary nested calls and field initializers observe undefined newTarget.
 
 The construction state retains frames with `id`, `parent`, `bodyInvocation`,
@@ -97,10 +97,18 @@ This option is never a generated public record field.
 The component tests cover actual-newTarget prototype selection, primitive return
 substitution, base and derived initializer ordering, retained arguments,
 checkpoint validation and rollback of false claims, including abrupt base and
-derived field initialization. Arrow lexical constructor contexts, derived invalid-return guest errors
-and repeated-super guest errors remain explicit unsupported continuation
-profiles here; the owned runtime supports them separately. Until their public
-records exist, the source adapter must refuse those executions.
+derived field initialization. The source adapter also qualifies constructor-
+captured arrows: they retain lexical this and newTarget through super, field
+initialization, constructor exit and object-return substitution. A derived-this
+read before super, directly or through a captured arrow, produces the exact
+operation-derived ReferenceError. Authenticated arrow calls are also qualified
+in synchronous property/conversion/Proxy callbacks, Promise reaction jobs and
+the selected Promise adoption constructor-getter job; each restored frame,
+receiver, capture cell and caller/job completion remains linked to its source.
+Derived invalid-return and repeated-super guest errors remain unsupported
+continuation profiles. Constructor exception-handler continuations, exotic
+constructors, super-property references and async/generator suspension inside
+these callback scopes still require separate profiles.
 
 ## Source identities for implicit callable bodies
 
@@ -206,12 +214,12 @@ Unused class declarations still receive metadata
 evidence. This is local source/public qualification; native consumer admission
 is a separate required gate.
 
-The adapter explicitly refuses private accessors and object-valued
-private update conversion, constructor arrows, constructor exception handlers,
-exotic constructors, uninitialized closure captures and super-property references.
-These refusals do not remove the corresponding owned runtime support. They
-identify the additional public continuation or source proof required before
-the cases can receive full source/native admission.
+The adapter explicitly refuses private accessors and object-valued private
+update conversion, constructor exception handlers, exotic constructors,
+uninitialized closure captures outside the authenticated constructor this cell,
+and super-property references. Derived invalid-return and repeated-super guest
+errors also lack public fault continuations. These are source/public profile
+boundaries; they do not remove the corresponding owned-runtime semantics.
 
 Pinned semantics: [ECMAScript 2026 class evaluation](https://tc39.es/ecma262/2026/multipage/ecmascript-language-functions-and-classes.html#sec-runtime-semantics-classdefinitionevaluation)
 and [private element operations](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-privatefieldadd).
