@@ -95,9 +95,7 @@ test('computed deletion retains its object-key conversion site and runs the key 
 });
 
 test('Reflect object keys project conversion and property operations at the original call sites',async()=>{
-  const artifact=await checked('const log=[];const object={x:1};'+
-    'const key={get [Symbol.toPrimitive](){log.push("getter");return function(hint){log.push(hint);return "x";};}};'+
-    'function extra(){log.push("extra");return 1;}return [Reflect.has(object,key,extra()),Reflect.deleteProperty(object,key,extra()),"x" in object,log];');
+  const artifact=await checkedFixture('issue51-reflect-object-key-getter-and-argument-order');
   const controller=RegionExecutionHarness.replay(artifact).controller;
   assert.deepEqual(controller.materialize(controller.completion.value),
     [true,true,false,['extra','getter','string','extra','getter','string']]);
@@ -181,6 +179,8 @@ test('issue51 original fixtures preserve sparse length, delete failure, key orde
     ['issue51-for-in-delete-fallback-addition',['a','b','c']],
     ['issue51-for-in-delete-prototype-candidate',['a','b']],
     ['issue51-delete-inherited-for-in-candidate',['first','b']],
+    ['issue51-reflect-object-key-symbol',[true,true,false,['string','string']]],
+    ['issue51-promise-reflect-object-key',[true,true,false,['string','string']]],
     ['issue51-promise-property-composition',[true,true,true,false]],
     ['issue51-promise-enumeration-mutation-composition',['a']],
     ['issue51-promise-object-key-conversion-composition',[true,['string']]],
