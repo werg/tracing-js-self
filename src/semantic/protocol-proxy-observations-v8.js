@@ -14,7 +14,9 @@ const traps=['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions
   'defineProperty','has','get','set','deleteProperty','ownKeys','apply','construct'];
 function allocations(source){const nodes=[];
   function visit(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(visit);return;}
-    if(node.type==='NewExpression'&&node.callee.type==='Identifier'&&node.callee.name==='Proxy')nodes.push(node);
+    if(node.type==='NewExpression'&&node.callee.type==='Identifier'&&node.callee.name==='Proxy'||
+      node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&!node.callee.computed&&
+      node.callee.object.type==='Identifier'&&node.callee.object.name==='Proxy'&&node.callee.property.name==='revocable')nodes.push(node);
     for(const [key,child]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(child);
   }visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));return nodes;
 }
@@ -35,9 +37,17 @@ function ownedObservations(bundle,allocations){
   bundle.entrySpec.arguments.forEach(seed);
   const add=(kind,fields)=>{if(rows.length>=32768)fail('observation bound');rows.push({kind,...fields});};
   for(const event of bundle.events){
-    if(event.operation==='proxy.allocate'){
+    if(['proxy.allocate','proxy.revocable.allocate'].includes(event.operation)){
       const site=siteById.get(event.siteId);if(!sites.has(site))fail('unanchored Proxy allocation');
-      add('create',{site,object:value(event.result),target:value(event.operands[0]),handler:value(event.operands[1])});
+      const proxyId=event.operation==='proxy.allocate'?event.result?.[1]:
+        event.stateChanges.find(change=>change.table==='heap'&&change.after?.kind==='proxy')?.id,
+        object=event.operation==='proxy.allocate'?event.result:['ref',proxyId];
+      add('create',{site,object:value(object),target:value(event.operands[0]),handler:value(event.operands[1])});
+    }
+    if(event.operation==='call.enter'){
+      const raw=event.operands?.[0],callee=raw?.[0]==='method'?raw[1]:raw;
+      if(callee?.[0]==='builtinfn'&&callee[1].startsWith('Proxy.revoke:'))
+        add('revoke',{object:value(['ref',callee[1].slice('Proxy.revoke:'.length)])});
     }
     const frame=state.frames[event.invocationId],instruction=bundle.programs[frame?.codeId]?.instructions[frame?.pc],
       has=event.operation==='primitive.binary'&&instruction?.op==='BINARY'&&instruction.arg==='in',
@@ -47,7 +57,7 @@ function ownedObservations(bundle,allocations){
       reflection=event.operation==='call.enter'&&raw?.[0]==='builtinfn'&&
         ['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys','defineProperty'].includes(raw[1].split('.')[1]),
       base=has||reflection?event.operands[1]:event.operands[0],node=base?.[0]==='ref'?state.heap[base[1]]:null;
-    if(node?.kind==='proxy'&&(property||has||deletion||reflection)){
+    if(node?.kind==='proxy'&&(property||has||deletion||reflection)&&node.targetId!==null&&node.handlerId!==null){
       const operation=reflection?raw[1].split('.')[1]:has?'has':deletion?'delete':event.operation==='property.read'?'get':'set',
         trapName=operation==='delete'?'deleteProperty':operation,
         key=reflection?(['getOwnPropertyDescriptor','defineProperty'].includes(operation)?event.operands[2]:['undefined']):(has?event.operands[0]:event.operands[1])?.[0]==='symbol'?(has?event.operands[0]:event.operands[1]):
@@ -107,7 +117,12 @@ function ownedObservations(bundle,allocations){
 }
 export function createProxyObservationAdapterV8({source,side='native',bundle=null,initialValues=[]}={}){
   const original=allocations(source);if(!original.length)return null;
-  const registered=new WeakMap(),rows=[],identities=new Map(),failures=[],ordinaryPrototypes=new Set([Object.prototype]);
+  const registered=new WeakMap(),rows=[],identities=new Map(),failures=[],ordinaryPrototypes=new Set([Object.prototype]),
+    revokedProxyHistory=new Map();
+  if(side==='owned'&&bundle)for(const event of bundle.events)for(const change of event.stateChanges??[])
+    if(change.table==='heap'&&change.before?.kind==='proxy'&&change.after?.kind==='proxy'&&
+      change.before.targetId!==null&&change.after.targetId===null&&change.after.handlerId===null)
+      revokedProxyHistory.set(change.id,{targetId:change.before.targetId,handlerId:change.before.handlerId});
   let nativeProxy=null,next=0,invoke=call=>apply(call.callee,call.receiver,call.arguments);
   const fail=message=>{failures.push(message);throw new TypeError('Independent native Proxy observation: '+message);};
   function value(raw){
@@ -182,6 +197,42 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
     }
     return current;
   }
+  const revoked=new WeakSet();
+  function observedHandler(target,handler,ctx,readResult){
+    return new Proxy({}, {get(_target,operation){
+      const descriptors=nativeHandler(handler,ctx),descriptor=descriptors[operation];
+      const method=descriptor&&Object.hasOwn(descriptor,'value')?descriptor.value:Reflect.get(handler,operation,handler);
+      nativeTarget(target,ctx,'Proxy target',{allowAccessors:['has','deleteProperty'].includes(operation)});
+      if(!['get','set','has','deleteProperty','getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys','defineProperty'].includes(operation)||method==null||typeof method!=='function')return method;
+      const semanticOperation=operation==='deleteProperty'?'delete':operation;
+      return (...trapArgs)=>{
+        const key=['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','ownKeys'].includes(operation)?undefined:trapArgs[1],result=readResult();
+        add('select',{operation:semanticOperation,object:value(result),key:value(key),method:value(method)});
+        add('call',{operation:semanticOperation,object:value(result),method:value(method),receiver:value(handler),arguments:trapArgs.map(value)});
+        try{const returned=invoke({callee:method,receiver:handler,arguments:trapArgs});
+          add('return',{operation:semanticOperation,object:value(result),method:value(method),value:value(returned)});return returned;
+        }catch(error){add('throw',{operation:semanticOperation,object:value(result),method:value(method),value:value(error)});throw error;}
+      };
+    }});
+  }
+  function observedProxy(site,target,handler,{revocable=false}={}){
+    const ctx={fail,intrinsicPrototype:value=>ordinaryPrototypes.has(value)?'Object.prototype':value};
+    nativeTarget(target,ctx,'Proxy target');nativeHandler(handler,ctx);
+    let result=null;
+    const wrapped=observedHandler(target,handler,ctx,()=>result);
+    if(revocable){
+      const pair=Reflect.apply(nativeProxy.revocable,nativeProxy,[target,wrapped]);result=pair.proxy;
+      registered.set(result,{target,handler});
+      const originalRevoke=pair.revoke,revoke=(...args)=>{
+        add('revoke',{object:value(result)});revoked.add(result);return Reflect.apply(originalRevoke,undefined,args);
+      };
+      Object.defineProperty(revoke,'name',{value:'',configurable:true});
+      Object.defineProperty(pair,'revoke',{value:revoke,writable:true,enumerable:true,configurable:true});
+      add('create',{site,object:value(result),target:value(target),handler:value(handler)});return pair;
+    }
+    result=construct(nativeProxy,[target,wrapped]);registered.set(result,{target,handler});
+    add('create',{site,object:value(result),target:value(target),handler:value(handler)});return result;
+  }
   return {id:PROXY_OBSERVATION_PROFILE_V8,
     setCallObserver(observer){invoke=observer;},
     nativeEnumerationTarget(raw){
@@ -210,48 +261,35 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
       return target.properties?.[key]?.value??['missing-storage'];
     },
     initializeRealm(evaluate){nativeProxy=evaluate('Proxy');ordinaryPrototypes.add(evaluate('Object.prototype'));},
-    globals:{[hook]:(site,callee)=>(...args)=>{
-      if(callee!==nativeProxy)return construct(callee,args);
-      const ctx={fail,intrinsicPrototype:value=>ordinaryPrototypes.has(value)?'Object.prototype':value},target=args[0],handler=args[1];
-      nativeTarget(target,ctx,'Proxy target');nativeHandler(handler,ctx);
-      let result;
-      const observedHandler=new Proxy({}, {get(_target,operation){
-        const descriptors=nativeHandler(handler,ctx),method=descriptors[operation]?.value;
-        nativeTarget(target,ctx,'Proxy target',{allowAccessors:['has','deleteProperty'].includes(operation)});
-        if(!['get','set','has','deleteProperty','getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys','defineProperty'].includes(operation)||method==null||typeof method!=='function')return method;
-        const semanticOperation=operation==='deleteProperty'?'delete':operation;
-        return (...trapArgs)=>{
-          const key=['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','ownKeys'].includes(operation)?undefined:trapArgs[1];add('select',{operation:semanticOperation,object:value(result),key:value(key),method:value(method)});
-          if(method==null){
-            if(operation==='get')return Reflect.get(target,key,trapArgs[2]);
-            if(operation==='set')return Reflect.set(target,key,trapArgs[2],trapArgs[3]);
-            if(operation==='has')return Reflect.has(target,key);
-            return Reflect.deleteProperty(target,key);
-          }
-          add('call',{operation:semanticOperation,object:value(result),method:value(method),receiver:value(handler),arguments:trapArgs.map(value)});
-          try{const returned=invoke({callee:method,receiver:handler,arguments:trapArgs});
-            add('return',{operation:semanticOperation,object:value(result),method:value(method),value:value(returned)});return returned;
-          }catch(error){add('throw',{operation:semanticOperation,object:value(result),method:value(method),value:value(error)});throw error;}
-        };
-      }});
-      result=construct(callee,[target,observedHandler,...args.slice(2)]);registered.set(result,{target,handler});
-      add('create',{site,object:value(result),target:value(target),handler:value(handler)});return result;
+    globals:{[hook]:(site,callee)=>{
+      const constructor=(...args)=>callee===nativeProxy?observedProxy(site,args[0],args[1]):construct(callee,args);
+      constructor.revocable=(target,handler)=>callee===nativeProxy?observedProxy(site,target,handler,{revocable:true}):
+        Reflect.apply(callee.revocable,callee,[target,handler]);
+      return constructor;
     }},
     instrument(text){
       const nodes=allocations(text);if(nodes.length!==original.length)throw new TypeError('Proxy source constructor inventory changed');
-      const edits=nodes.map((node,index)=>({start:node.start,end:node.callee.end,
-        text:hook+'('+JSON.stringify(original[index].start+':'+original[index].end)+',Proxy)'})).sort((a,b)=>b.start-a.start);
+      const edits=nodes.map((node,index)=>node.type==='NewExpression'?
+        {start:node.start,end:node.callee.end,text:hook+'('+JSON.stringify(original[index].start+':'+original[index].end)+',Proxy)'}:
+        {start:node.callee.start,end:node.callee.end,text:hook+'('+JSON.stringify(original[index].start+':'+original[index].end)+',Proxy).revocable'}
+      ).sort((a,b)=>b.start-a.start);
       for(const edit of edits)text=text.slice(0,edit.start)+edit.text+text.slice(edit.end);return text;
     },
     metadataAdapter:side==='owned'?{ownedNode(value,ctx){
       const node=value[0]==='ref'?ctx.state.heap[value[1]]:null;if(node?.kind!=='proxy')return null;
-      const target=['ref',node.targetId],handler=['ref',node.handlerId];ownedTarget(target,ctx,'Proxy target',{allowAccessors:true});
-      ownedHandler(handler,ctx);const metadataTarget=ownedMetadataTarget(target,ctx);
+      const revoked=node.targetId===null&&node.handlerId===null,history=revokedProxyHistory.get(node.id);
+      if(revoked&&!history)ctx.fail('revoked Proxy lacks its retained metadata identities');
+      const target=['ref',revoked?history.targetId:node.targetId],handler=revoked?null:['ref',node.handlerId];
+      ownedTarget(target,ctx,'Proxy target',{allowAccessors:true});
+      if(handler)ownedHandler(handler,ctx);const metadataTarget=ownedMetadataTarget(target,ctx);
       if(Object.keys(node.properties??{}).length||Object.keys(node.propertyVersions??{}).length||node.shapeVersion!==0)
         ctx.fail('Proxy has invented own state');
-      return {...ctx.defaultNode(metadataTarget),kind:'proxy',annotations:[{name:'proxy-target-handler/1',values:[target,handler],data:{}}]};
+      return {...ctx.defaultNode(metadataTarget),kind:'proxy',annotations:[{name:'proxy-target-handler/1',
+        values:revoked?[['null'],['null']]:[target,handler],data:{}}]};
     }}:{nativeProxyNode(value,ctx){
       const captured=registered.get(value);if(!captured)return null;
+      if(revoked.has(value))return {...ctx.defaultNode(captured.target),kind:'proxy',annotations:[{
+        name:'proxy-target-handler/1',values:[null,null],data:{}}]};
       nativeTarget(captured.target,ctx,'Proxy target',{allowAccessors:true});nativeHandler(captured.handler,ctx);
       const metadataTarget=nativeMetadataTarget(captured.target,ctx);
       return {...ctx.defaultNode(metadataTarget),kind:'proxy',annotations:[{

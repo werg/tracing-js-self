@@ -333,7 +333,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
     const patched=new Set();
     if(e.completion && !['spec.operation.complete','completion.throw','external.input.deliver',
       'job.enter','binding.read','binding.write','binding.update','primitive.unary',
-      'property.read','property.write','property.update','property.delete','primitive.binary','reference.this','call.return','call.enter','proxy.allocate',
+      'property.read','property.write','property.update','property.delete','primitive.binary','reference.this','call.return','call.enter','proxy.allocate','proxy.revocable.allocate',
       'object.construct','completion.finally.end','execution.unsupported','regexp.allocate','intrinsic.number.resume',
       'property.key.convert','property.key.resume'].includes(e.operation))
       fail('Completion metadata without an owned completion operation',e.eventId);

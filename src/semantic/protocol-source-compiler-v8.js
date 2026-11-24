@@ -171,7 +171,14 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     for(const name of PROMISE_OBJECT_INTRINSICS_V8)published.add(promiseIntrinsicIdV8(name));}
   function publicDescriptor(node,key,event=null){const value=descriptor(node,key);
     return value?.kind==='data'?{...value,value:tag(value.value,event)}:value?{...value,get:tag(value.get,event),set:tag(value.set,event)}:null;}
+  function normalizeValueTag(value,event=null){
+    const normalized=extension('normalizeTag',context,value,event);
+    if(normalized===null)return value;
+    if(!valueTag(normalized))refuse('callable normalization produced an invalid protocol value');
+    validateProtocolValueV8(normalized);return normalized;
+  }
   function tag(value,event=null){
+    value=normalizeValueTag(value,event);
     if(isPromiseIntrinsicValueV8(value)){initializeIntrinsics(event);return ['ref',promiseIntrinsicIdV8(value[1])];}
     if(!valueTag(value))refuse('value requires an explicit callable/protocol interface: '+JSON.stringify(value));
     if(value[0]==='ref'&&!published.has(value[1])){

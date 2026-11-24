@@ -254,6 +254,11 @@ function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){
           reject(n,'spread/optional call');
         if(n.callee.type==='Identifier' && ['eval','Function','require'].includes(n.callee.name))
           reject(n,'dynamic source or host call');
+        if(n.callee.type==='MemberExpression'&&!n.callee.computed&&n.callee.object.type==='Identifier'&&
+           n.callee.object.name==='Proxy'&&n.callee.property.name==='revocable'){
+          if(n.arguments.length!==2||n.arguments.some(a=>a.type==='SpreadElement'))reject(n,'Proxy.revocable arguments');
+          return {...loc,type:'ProxyRevocable',args:n.arguments.map(expr)};
+        }
         return {...loc,type:n.callee.type==='Super'?'SuperCall':'Call',...(n.callee.type==='Super'?{}:{callee:expr(n.callee)}),
           args:n.arguments.map(a=>a.type==='SpreadElement'?
             {...span(a),type:'Spread',argument:expr(a.argument)}:expr(a))};
@@ -444,6 +449,7 @@ function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){
         case 'DeferredRegExp':case 'OwnedPinnedRegExp':break;
         case 'Array':n.elements.forEach(x=>{if(x)value(x.type==='Spread'?x.argument:x,e);});break;
         case 'Proxy':value(n.target,e);value(n.handler,e);break;
+        case 'ProxyRevocable':n.args.forEach(argument=>value(argument,e));break;
         case 'Object':n.properties.forEach(p=>{if(p.computedKey)value(p.computedKey,e);value(p.value,e);});break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
         case 'PatternAssignment':statement(n,e);break;

@@ -297,6 +297,13 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
       if(!event.causes.some(c=>c.kind==='invocation')&&Array.isArray(event.result)){emit(key,'call',event.result);calls.add(key);}
       else if(patch?.after)pending.set(event.invocationId,{site:key,kind:'call',depth:patch.after.stack.length,pc:patch.after.pc});
     }
+    // Proxy.revocable is lowered as a bounded intrinsic allocation rather than
+    // a generic CALL frame, but the independent native source observer still
+    // wraps its original CallExpression and records that expression result.
+    if(!abrupt&&event.operation==='proxy.revocable.allocate'&&location&&
+      plan.sites.has('call:'+key)&&Array.isArray(event.result)){
+      emit(key,'call',event.result);calls.add(key);
+    }
     if(event.operation==='stack.pop'&&plan.sites.has('statement:'+key))emit(key,'statement',event.operands[0]);
     if(event.operation==='call.return'&&plan.sites.has('return:'+key))emit(key,'return',event.result);
     if(event.operation==='completion.throw'&&plan.sites.has('throw:'+key))emit(key,'throw',event.completion.value.value);

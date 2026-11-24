@@ -64,8 +64,17 @@ const eventClaims={
   [enumeration](view){return ['FOR_IN_CREATE','FOR_IN_NEXT'].includes(view.instruction?.op);},
   [number](_view,{event}){return ['intrinsic.number.resume','property.key.convert','property.key.resume'].includes(event.operation)||
     event.operation==='call.enter'&&builtin(callee(event.operands[0]))==='Number';},
-  [proxy](view,{event,row}){return event.operation==='proxy.allocate'||
-    ['property.read','property.write'].includes(event.operation)&&heap(view,row?.operands[0])?.kind==='proxy'||
+  [proxy](view,{event,row}){const raw=row?.operands?.[0],selectedCall=callee(raw),
+      selectedProperty=row?.result?.[0]==='method'?row.result[1]:row?.result,
+      directRevoker=selectedCall?.[0]==='builtinfn'&&selectedCall[1].startsWith('Proxy.revoke:'),
+      revokeProperty=event.operation==='property.read'&&selectedProperty?.[0]==='builtinfn'&&
+        selectedProperty[1].startsWith('Proxy.revoke:');
+    return ['proxy.allocate','proxy.revocable.allocate'].includes(event.operation)||
+    event.operation==='call.enter'&&directRevoker||revokeProperty||
+    ['property.read','property.write'].includes(event.operation)&&(
+      heap(view,row?.operands[0])?.kind==='proxy'||event.completion?.type==='throw'&&
+      ['GET_PROP','GET_METHOD'].includes(view.instruction?.op)&&
+      heap(view,frame(view)?.stack?.at(-2)?.value)?.kind==='proxy')||
     event.operation==='primitive.binary'&&view.instruction?.op==='BINARY'&&view.instruction.arg==='in'&&
       heap(view,row?.operands[1])?.kind==='proxy'||
     event.operation==='property.delete'&&(heap(view,row?.operands[0])?.kind==='proxy'||

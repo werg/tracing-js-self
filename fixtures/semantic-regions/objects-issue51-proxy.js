@@ -5,6 +5,10 @@ const fixture=(id,family,body)=>Object.freeze({
 });
 
 export const issue51ProxyFixtures=Object.freeze([
+  fixture('issue51-proxy-revocable-revoke-idempotent','issue51-proxy-revocation',
+    'const pair=Proxy.revocable({x:1},{});const proxy=pair.proxy;'+
+    'pair.revoke();pair.revoke();let name="",message="";try{proxy.x;}catch(error){name=error.name;message=error.message;}'+
+    'return [pair.revoke===pair.revoke,name,message];'),
   fixture('issue51-control-proxy-nested-target','issue51-unsupported-control',
     'const target=new Proxy({x:2},{});return new Proxy(target,{}).x;'),
   fixture('issue51-proxy-key-order-and-trap-replacement','issue51-proxy-has-delete',

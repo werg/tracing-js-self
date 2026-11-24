@@ -89,6 +89,18 @@ test('original transparent nested-target control now follows both Proxy internal
   assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
 });
 
+test('Proxy.revocable retains its callable identity and revokes idempotently',async()=>{
+  const artifact=await checkedFixture('issue51-proxy-revocable-revoke-idempotent'),
+    controller=RegionExecutionHarness.replay(artifact).controller,
+    records=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record);
+  assert.deepEqual(controller.materialize(completion(artifact).value),
+    [true,'TypeError',"Cannot perform 'get' on a proxy that has been revoked"]);
+  assert.equal(records.filter(row=>row.kind==='proxy.revocable').length,1);
+  assert.equal(records.filter(row=>row.kind==='proxy.revoke').length,2);
+  assert.equal(records.filter(row=>row.kind==='proxy.revoked.fault').length,1);
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
 test('object-valued in keys convert once after evaluating a valid right operand',async()=>{
   const artifact=await checkedFixture('issue51-in-object-key-to-primitive-order');
   const value=RegionExecutionHarness.replay(artifact).controller.materialize(completion(artifact).value);

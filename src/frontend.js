@@ -137,7 +137,12 @@ export function parse(source) {
     for (;;) {
       if (peek().value === '.' && 9 >= min) { take(); const key=take(); if(key.kind!=='word') throw new SyntaxError('Expected property name');left={type:'Member',object:left,property:{type:'Literal',value:encode(key.value),start:key.start,end:key.end},start:left.start,end:key.end};continue; }
       if (peek().value === '[' && 9>=min) {take();const key=expression();need(']');left={type:'Member',object:left,property:key,start:left.start,end:t[p-1].end};continue;}
-      if (peek().value === '(' && 9>=min) {take();const args=[];if(!match(')')){do{args.push(expression(0,false));}while(match(','));need(')');}left={type:'Call',callee:left,args,start:left.start,end:t[p-1].end};continue;}
+      if (peek().value === '(' && 9>=min) {take();const args=[];if(!match(')')){do{args.push(expression(0,false));}while(match(','));need(')');}
+        const revocable=left.type==='Member'&&left.object.type==='Identifier'&&left.object.name==='Proxy'&&
+          left.property.type==='Literal'&&left.property.value?.[0]==='str'&&left.property.value[1]==='revocable';
+        if(revocable){if(args.length!==2)throw new SyntaxError('Proxy.revocable needs target and handler');
+          left={type:'ProxyRevocable',args,start:left.start,end:t[p-1].end};}
+        else left={type:'Call',callee:left,args,start:left.start,end:t[p-1].end};continue;}
       const op=peek().value;
       if (['=','+=','-='].includes(op) && min<=0) {take(); const right=expression(0);if(!['Identifier','Member'].includes(left.type))throw new SyntaxError('Invalid assignment target');left={type:'Assign',operator:op,left,right,start:left.start,end:right.end};continue;}
       const prec=precedence[op];if (!prec || prec < min) break;
@@ -348,6 +353,7 @@ export function compile(ast) {
             {count:n.args.length,spread:n.args.flatMap((a,i)=>a.type==='Spread'?[i]:[])}:
             n.args.length,n);break;
         case 'Proxy':expr(n.target);expr(n.handler);emit('NEW_PROXY',null,n);break;
+        case 'ProxyRevocable':for(const argument of n.args)expr(argument);emit('NEW_PROXY_REVOCABLE',null,n);break;
         case 'Array':
           emit('NEW_ARRAY',n.elements.includes(null)&&!n.elements.some(element=>element?.type==='Spread')?
             {length:n.elements.length}:null,n);

@@ -8,7 +8,7 @@ function fixture(){
   const controller={heap:new Map(),locals:new Map(),captureAliases:new Map(),receiver:['undefined'],stack:['root'],
     frameFunctions:new Map([['root','run']]),pending:null,lastReturn:null,completion:null,protocol:createProtocolStateV8()};
   const apply=record=>{
-    if(record.kind?.startsWith('proxy.')&&!['proxy.create','proxy.revoke','proxy.revoked.fault','proxy.finish','proxy.fault'].includes(record.kind)){
+    if(record.kind?.startsWith('proxy.')&&!['proxy.create','proxy.revocable','proxy.revoke','proxy.revoked.fault','proxy.finish','proxy.fault'].includes(record.kind)){
       const operation=record.kind.split('.')[1],trapName=operation==='delete'?'deleteProperty':operation,
         route=[];let current=record.object,node=controller.heap.get(current),seen=new Set();
       while(node?.kind==='proxy'){
@@ -42,6 +42,23 @@ test('transparent Proxy reads and writes share target aliases and retain separat
   const target={x:2},handler={},proxy=new Proxy(target,handler);target.x=4;assert.equal(proxy.x,4);proxy.x=7;proxy.self=proxy;
   assert.equal(target.x,7);assert.equal(target.self,proxy);assert.notEqual(proxy,target);
 });
+test('Proxy.revocable retains a real callable identity and an ordinary pair result',()=>{
+  const {controller,apply}=fixture();
+  apply({kind:'proxy.revocable',proxy:'revocable',revoke:'revoker',result:'pair',
+    target:ref('target'),handler:ref('handler')});
+  const pair=controller.heap.get('pair'),revoker=controller.heap.get('revoker');
+  assert.deepEqual(pair.properties.get('proxy'),ref('revocable'));
+  assert.deepEqual(pair.properties.get('revoke'),ref('revoker'));
+  assert.equal(revoker.kind,'closure');
+  assert.equal(revoker.code,'Proxy.revoke:revocable');
+  assert.deepEqual(revoker.properties.get('length'),['num',0]);
+  assert.deepEqual(revoker.properties.get('name'),['str','']);
+  assert.equal(restore(controller).proxies,2);
+  apply({kind:'proxy.revoke',object:'revocable'});
+  assert.deepEqual(controller.heap.get('revocable').target,['null']);
+  assert.deepEqual(controller.heap.get('revocable').handler,['null']);
+});
+
 test('revocable Proxy clears both internal slots and preserves an already selected trap',()=>{
   const {controller,apply}=fixture();
   apply({kind:'proxy.revoke',object:'proxy'});

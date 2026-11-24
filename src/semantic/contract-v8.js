@@ -19,7 +19,7 @@ import {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_STATE_V8} from './protocol-promise-
 import {PRIMITIVE_CONVERSION_PROFILE_V8,PRIMITIVE_CONVERSION_STATE_V8_SCHEMA,PRIMITIVE_CONVERSION_OPERATION_FIELDS,PRIMITIVE_CONVERSION_PHASES_V8,PRIMITIVE_CONVERSION_FAULTS_V8} from './protocol-primitive-conversion-v8.js';
 import {NUMBER_STATE_V8_SCHEMA,NUMBER_OPERATION_FIELDS} from './protocol-number-v8.js';
 import {GENERATOR_PROFILE_V8,GENERATOR_HEAP_FIELDS,GENERATOR_INTRINSICS_V8} from './protocol-generator-v8.js';
-import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIELDS} from './protocol-proxy-v8.js';
+import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIELDS,PROXY_RECORD_FIELDS} from './protocol-proxy-v8.js';
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8} from './protocol-promise-executor-v8.js';
 import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_STATE_V8} from './protocol-promise-adoption-v8.js';
@@ -133,13 +133,13 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       operations:PROXY_REFLECTION_OPERATIONS_V8,
       capabilities:'Retained synchronous reflection traps use live target prototype and extensibility after callback mutations. Object and Reflect caller behavior, Boolean normalization and derived intrinsic faults are explicit.'},
     proxyCalls:{profile:PROXY_PROFILE_V8,schema:PROXY_STATE_V8_SCHEMA,fields:['schema','pending'],initial:null,
-      heapFields:PROXY_HEAP_FIELDS,callFields:PROXY_CALL_FIELDS,
+      heapFields:PROXY_HEAP_FIELDS,callFields:PROXY_CALL_FIELDS,allocationFields:PROXY_RECORD_FIELDS['proxy.revocable'],
       faultFields:{callback:['kind','id','error'],directStrictDelete:['kind','object','key','error'],
         revoked:['kind','object','operation','error']},
       resultSemantics:{has:'Boolean(ToBoolean(raw trap result))',delete:'Boolean(ToBoolean(raw trap result))',
         get:'raw callback result',set:'assigned value when trap returns truthy'},
-      capabilities:'Distinct Proxy, target, handler and retained callee identities; transparent nested target routes, synchronous owned get/set/has/deleteProperty traps, and idempotent revocation with cleared target/handler internal slots. Callback completion checks current target descriptors and extensibility after trap mutations. Has/delete return normalized booleans; operation-derived TypeErrors cover strict false set/delete trap results and live Proxy invariants, including frozen get/set data and accessor restrictions. Direct strict delete faults require an absent deleteProperty trap and a live non-configurable target property.',
-      boundaries:'Nested target internal-method invariants, accessor trap getter continuation, and asynchronous or otherwise unowned trap calls require their dedicated continuations. Source-derived abrupt faults are qualified for has/delete and strict delete; get/set invariant and strict false-set source faults require their own source evidence.'},
+      capabilities:'Distinct Proxy, target, handler and retained callee identities; Proxy.revocable returns an ordinary result pair with a stable callable revoker identity; revocation clears target/handler internal slots once and repeated calls have no further effect. Transparent nested target routes and synchronous owned get/set/has/deleteProperty traps are supported. Callback completion checks current target descriptors and extensibility after trap mutations. Has/delete return normalized booleans; operation-derived TypeErrors cover strict false set/delete trap results and live Proxy invariants, including frozen get/set data and accessor restrictions. Direct strict delete faults require an absent deleteProperty trap and a live non-configurable target property.',
+      boundaries:'Nested target internal-method invariants, accessor trap getter continuation, and asynchronous or otherwise unowned trap calls require their dedicated continuations. Source-derived abrupt faults are qualified for revoked operations, has/delete invariants and strict delete; get/set invariant and strict false-set source faults require their own source evidence.'},
     promiseExecutors:{profile:PROMISE_EXECUTOR_PROFILE_V8,schema:PROMISE_EXECUTOR_STATE_V8,
       fields:['schema','capabilities','executors'],capabilityFields:['promise','resolve','reject','called','resolution'],
       executorFields:['promise','parent','child','phase','completion'],

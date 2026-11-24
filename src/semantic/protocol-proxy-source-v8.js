@@ -9,7 +9,7 @@ const truthy=value=>value?.[0]==='ref'||value?.[0]==='symbol'||
     value?.[0]==='num'?Number(value[1])!==0&&!Number.isNaN(Number(value[1])):
     value?.[0]==='bigint'?BigInt(value[1])!==0n:value?.[0]==='str'?value[1].length>0:true);
 export function createProxySourceAdapterV8(){
-  let active=new Map(),callbacks=new Map(),faultEvidence=new Map(),next=0;
+  let active=new Map(),callbacks=new Map(),faultEvidence=new Map(),revokers=new Map(),next=0;
   const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('Proxy source: '+message);};
   const freshTypeError=(event,value)=>value?.[0]==='ref'&&event.stateChanges.some(change=>
     change.table==='heap'&&change.id===value[1]&&change.before===null&&change.after?.declaredError==='TypeError');
@@ -53,6 +53,7 @@ export function createProxySourceAdapterV8(){
     const name=operation==='delete'?'deleteProperty':operation;
     while(node?.kind==='proxy'){
       require(ctx,!visited.has(identity)&&route.length<64,'cyclic or excessive retained target route');visited.add(identity);
+      require(ctx,node.targetId!==null&&node.handlerId!==null,'revoked route requires its derived TypeError boundary');
       const target=['ref',node.targetId],handler=['ref',node.handlerId],found=ordinaryGet(ctx.state.heap,handler,name);
       require(ctx,!!found,'handler trap getter requires its explicit continuation');
       selected=ctx.tag(found.method.value,event);
@@ -65,15 +66,22 @@ export function createProxySourceAdapterV8(){
       target:route.at(-1)?.target??['ref',node.id],handler:route.at(-1)?.handler??null,selected,terminal:node};
   };
   return {id:PROXY_SOURCE_PROFILE_V8,
-  captureState:()=>({active:[...active],callbacks:[...callbacks],faultEvidence:[...faultEvidence],next}),
-  restoreState(state){active=new Map(state.active);callbacks=new Map(state.callbacks);faultEvidence=new Map(state.faultEvidence??[]);next=state.next;},
-  syntax(node){return node.type==='NewExpression'&&node.callee.type==='Identifier'&&node.callee.name==='Proxy';},
+  captureState:()=>({active:[...active],callbacks:[...callbacks],faultEvidence:[...faultEvidence],revokers:[...revokers],next}),
+  restoreState(state){active=new Map(state.active);callbacks=new Map(state.callbacks);faultEvidence=new Map(state.faultEvidence??[]);revokers=new Map(state.revokers??[]);next=state.next;},
+  syntax(node){return node.type==='NewExpression'&&node.callee.type==='Identifier'&&node.callee.name==='Proxy'||
+    node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&!node.callee.computed&&
+    node.callee.object.type==='Identifier'&&node.callee.object.name==='Proxy'&&node.callee.property.name==='revocable';},
+  normalizeTag(_ctx,value){
+    const prior=value?.[0]==='builtinfn'?revokers.get(value[1]):null;
+    return prior?['ref',prior.revoke]:undefined;
+  },
   heapFields(node){return node.kind==='proxy'?fields:null;},
   frameFields(node){return node.pendingProperty?.proxy?['pendingProperty']:null;},
   checkHeap(ctx,node){
     if(Object.keys(node.properties??{}).length||Object.keys(node.propertyVersions??{}).length||node.shapeVersion!==0)
       ctx.refuse('Proxy has undeclared own storage');
-    return ctx.eq(ctx.controller.heap.get(node.id),{kind:'proxy',target:['ref',node.targetId],handler:['ref',node.handlerId],properties:new Map()});
+    return ctx.eq(ctx.controller.heap.get(node.id),{kind:'proxy',target:node.targetId===null?['null']:['ref',node.targetId],
+      handler:node.handlerId===null?['null']:['ref',node.handlerId],properties:new Map()});
   },
   allocate(ctx,node){if(node.kind==='proxy')ctx.refuse('Proxy allocation must follow its source constructor');return false;},
   event(ctx,event,row){
@@ -94,6 +102,46 @@ export function createProxySourceAdapterV8(){
         item.after?.declaredError!=='TypeError'))ctx.publish(change.after,event);
       return true;
     }
+    if(event.operation==='proxy.revocable.allocate'){
+      const proxyChange=event.stateChanges.find(change=>change.table==='heap'&&change.before===null&&change.after?.kind==='proxy'),
+        wrapperChange=event.stateChanges.find(change=>change.table==='heap'&&change.id===event.result?.[1]&&change.after?.kind==='object'),
+        wrapper=wrapperChange?.after??null,proxyNode=proxyChange?.after,proxyRef=proxyNode?['ref',proxyChange.id]:null,
+        revoke=wrapper?.properties?.revoke?.value,code='Proxy.revoke:'+proxyChange?.id,
+        revokeId='proxyrevoker'+proxyChange?.id,target=event.operands[0],handler=event.operands[1];
+      if(!proxyNode||event.operands.length!==2||wrapper?.kind!=='object'||
+        !ctx.eq(wrapper.properties.proxy?.value,proxyRef)||!ctx.eq(revoke,['builtinfn',code])||
+        Object.keys(wrapper.properties).sort().join(',')!=='proxy,revoke'||proxyNode.targetId!==target[1]||
+        proxyNode.handlerId!==handler[1])
+        ctx.refuse('Proxy.revocable allocation lacks its exact proxy/revoker result');
+      emit(ctx,{kind:'proxy.revocable',proxy:proxyChange.id,revoke:revokeId,result:wrapper.id,
+        target:ctx.tag(target,event),handler:ctx.tag(handler,event)},event);
+      revokers.set(code,{proxy:proxyChange.id,result:wrapper.id,revoke:revokeId});
+      ctx.markPublished(proxyChange.id);ctx.markPublished(revokeId);ctx.markPublished(wrapper.id);return true;
+    }
+    if(event.operation==='property.read'){
+      const base=row?.operands?.[0],key=row?.operands?.[1],selected=row?.result?.[0]==='method'?row.result[1]:row?.result,
+        code=selected?.[0]==='builtinfn'&&selected[1].startsWith('Proxy.revoke:')?selected[1]:null,
+        prior=code&&revokers.get(code);
+      if(prior&&base?.[0]==='ref'&&base[1]===prior.result&&ctx.eq(key,['str','revoke'])){
+        emit(ctx,{kind:'property.get',object:prior.result,key:['str','revoke'],receiver:ctx.tag(base,event),
+          result:['ref',prior.revoke]},event,'owned-source-property-read/1');return true;
+      }
+    }
+    if(event.operation==='call.enter'){
+      const raw=event.operands?.[0],callee=raw?.[0]==='method'?raw[1]:raw,
+        code=callee?.[0]==='builtinfn'&&callee[1].startsWith('Proxy.revoke:')?callee[1]:null,
+        prior=code&&revokers.get(code),identity=prior?.proxy,
+        change=identity&&event.stateChanges.find(item=>item.table==='heap'&&item.id===identity),
+        after=change?.after??(identity?ctx.state.heap[identity]:null);
+      if(prior){
+        require(ctx,after?.kind==='proxy'&&after.targetId===null&&after.handlerId===null&&
+          (!change||change.before?.kind==='proxy'&&change.before.targetId!==null&&change.before.handlerId!==null&&
+            change.after?.targetId===null&&change.after?.handlerId===null)&&
+          event.stateChanges.every(item=>item.table!=='heap'||item.id===identity),
+          'revoker call did not clear the retained Proxy internal slots');
+        emit(ctx,{kind:'proxy.revoke',object:identity},event);return true;
+      }
+    }
     if(event.operation==='proxy.allocate'){
       const node=event.stateChanges.find(change=>change.table==='heap'&&change.before===null&&change.id===event.result?.[1])?.after;
       if(node?.kind!=='proxy'||event.operands.length!==2||event.completion?.type==='throw')
@@ -104,12 +152,22 @@ export function createProxySourceAdapterV8(){
     const sourceFrame=ctx.getOwnedFrame(event.invocationId),instruction=ctx.bundle.programs[sourceFrame?.codeId]?.instructions[sourceFrame?.pc],
       has=event.operation==='primitive.binary'&&instruction?.op==='BINARY'&&instruction.arg==='in',
       deletion=event.operation==='property.delete',property=event.operation==='property.read'||event.operation==='property.write',
-      directStack=deletion&&event.completion?.type==='throw'&&instruction?.op==='DELETE_PROP'?sourceFrame?.stack??[]:[],
-      base=has?row?.operands?.[1]:row?.operands?.[0]??directStack.at(-2)?.value,
+      stack=sourceFrame?.stack??[],
+      directStack=event.completion?.type==='throw'&&instruction?.op==='DELETE_PROP'?stack:[],
+      failedRead=event.completion?.type==='throw'&&['GET_PROP','GET_METHOD'].includes(instruction?.op)?stack:[],
+      base=has?row?.operands?.[1]:row?.operands?.[0]??directStack.at(-2)?.value??failedRead.at(-2)?.value,
       node=base?.[0]==='ref'?ctx.state.heap[base[1]]:null;
     if(node?.kind!=='proxy'||!property&&!has&&!deletion)return false;
-    const key=ctx.key(has?row.operands[0]:row?.operands?.[1]??directStack.at(-1)?.value);
+    const key=ctx.key(has?row.operands[0]:row?.operands?.[1]??directStack.at(-1)?.value??failedRead.at(-1)?.value);
     if(event.completion?.type==='throw'){
+      const operation=has?'has':deletion?'deleteProperty':event.operation==='property.read'?'get':'set';
+      if(node?.targetId===null&&node?.handlerId===null){
+        const thrown=event.completion?.type==='throw'?event.completion.value?.value:null;
+        require(ctx,freshTypeError(event,thrown),'revoked Proxy operation lacks its exact TypeError allocation');
+        const sourceError=requireFaultError(ctx,event,row,thrown,event.eventId);
+        emit(ctx,{kind:'proxy.revoked.fault',object:node.id,operation,error:thrown[1]},event);
+        publicFaultMessage(ctx,thrown[1],sourceError.properties.message.value);ctx.markPublished(thrown[1]);return true;
+      }
       const program=ctx.bundle.programs[ctx.getOwnedFrame(event.invocationId)?.codeId];
       if(deletion&&!row.child&&instruction?.op==='DELETE_PROP'&&program?.strict===true){
         const owner=event.stateChanges.find(item=>item.table==='frames'&&item.id===event.invocationId)?.after;

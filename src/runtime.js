@@ -61,7 +61,7 @@ const opNames = {
   CONST:'literal.materialize', GET:'binding.read',
   DEFAULT_GUARD:'binding.default.guard', PARAM_INIT:'binding.initialize', ENTER_BODY_ENV:'environment.enter', SET:'binding.write', UPDATE_BINDING:'binding.update', UPDATE_PROP:'property.update', DELETE_PROP:'property.delete', INIT:'binding.initialize', DECLARE:'binding.declare',
   DEF_FN:'function.define', BINARY:'primitive.binary', UNARY:'primitive.unary', POP:'stack.pop', DUP:'stack.duplicate', DUP2:'stack.duplicate',
-  CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', GENERATOR_START:'call.return', YIELD:'continuation.yield', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate',
+  CALL:'call.enter', CONSTRUCT:'object.construct', NEW_PINNED_REGEXP:'regexp.allocate', UNSUPPORTED_EXPRESSION:'execution.unsupported', RETURN:'call.return', GENERATOR_START:'call.return', YIELD:'continuation.yield', THROW:'completion.throw', AWAIT:'async.await', TYPEOF_BINDING:'primitive.unary', MAKE_FUNCTION:'function.define', NEW_OBJECT:'object.allocate', NEW_ARRAY:'array.allocate', NEW_PROXY:'proxy.allocate', NEW_PROXY_REVOCABLE:'proxy.revocable.allocate',
   GET_TEMPLATE_OBJECT:'array.allocate', PROPERTY_KEY:'property.read', CLASS_CONSTRUCTOR_GUARD:'call.enter', CLASS_CREATE:'object.construct', CLASS_INITIALIZER:'property.write', CLASS_FINISH:'call.enter', PRIVATE_GET:'property.read', PRIVATE_GET_METHOD:'property.read', PRIVATE_HAS:'primitive.binary', PRIVATE_DEFINE:'property.write', PRIVATE_SET:'property.write', PRIVATE_UPDATE:'property.update',
   SET_HOME_OBJECT:'function.home', SUPER_REFERENCE:'reference.super', SUPER_GET:'property.read', SUPER_GET_METHOD:'property.read', SUPER_SET:'property.write', SUPER_CONSTRUCTOR:'property.read',
   DELEGATE_YIELD:'continuation.yield', DELEGATE_RESUME_KIND:'completion.pending.read', DELEGATE_RESUME_VALUE:'completion.pending.read', ITERATOR_THROW_MISSING:'call.enter',
@@ -259,6 +259,7 @@ function proxyRoute(heap,receiver,operation) {
   let obj=heap[receiver[1]];
   const visited=new Set(),route=[],observations=[];
   while(obj?.kind==='proxy'){
+    if(obj.targetId===null||obj.handlerId===null)guestFault('TypeError',`Cannot perform '${operation}' on a proxy that has been revoked`);
     if(visited.has(obj.id))throw new TypeError('Cyclic proxy target chain');
     if(route.length>=64)throw new TypeError('Proxy target route bound exceeded');
     visited.add(obj.id);
@@ -2500,6 +2501,25 @@ if(fn.value[0]!=='intrinsic'||!['Set','Map'].includes(fn.value[1])){
             properties:{},propertyVersions:{},shapeVersion:0,version:0};
           return {...operands(target,handler),...result(['ref',id])};
         }
+        case 'NEW_PROXY_REVOCABLE':{
+          const handler=pop(),target=pop();
+          if(isPrimitiveValue(target.value)||isPrimitiveValue(handler.value))
+            guestFault('TypeError','Proxy target and handler must be objects');
+          if(target.value[0]!=='ref'||!['object','array','proxy'].includes(s.heap[target.value[1]]?.kind)||
+             handler.value[0]!=='ref'||!['object','array'].includes(s.heap[handler.value[1]]?.kind))
+            throw new TypeError('Proxy.revocable requires owned ordinary target and handler storage');
+          const proxyId=this.next(s,'obj'),resultId=this.next(s,'obj');
+          s.heap[proxyId]={id:proxyId,kind:'proxy',targetId:target.value[1],handlerId:handler.value[1],
+            properties:{},propertyVersions:{},shapeVersion:0,version:0};
+          const proxyRevoke=['builtinfn','Proxy.revoke:'+proxyId];
+          s.heap[resultId]={id:resultId,kind:'object',properties:{
+            proxy:token(['ref',proxyId],eventId),revoke:token(proxyRevoke,eventId)},
+            dataAttributes:{proxy:{writable:true,enumerable:true,configurable:true},
+              revoke:{writable:true,enumerable:true,configurable:true}},
+            propertyOrder:['proxy','revoke'],propertyVersions:{proxy:0,revoke:0},
+            shapeVersion:2,version:0};
+          return {...operands(target,handler),...result(['ref',resultId])};
+        }
         case 'NEW_OBJECT':case 'NEW_ARRAY':{const id=this.next(s,'obj');s.heap[id]={id,kind:op==='NEW_ARRAY'?'array':'object',properties:{},propertyVersions:{},shapeVersion:0,version:0};if(op==='NEW_ARRAY'){s.heap[id].properties.length=token(['num',arg?.length??0],eventId);s.heap[id].propertyVersions.length=0;}return result(['ref',id]);}
         case 'SPREAD':{
           const source=pop(),snapshot=spreadSnapshot(s.heap,source);
@@ -3183,6 +3203,12 @@ if(object.kind==='regexp'){
           let adapterReads=[];
           let receiver=callable[0]==='method'?callable[2]:U;
           if(callable[0]==='method')callable=callable[1];
+          if(callable[0]==='builtinfn'&&callable[1].startsWith('Proxy.revoke:')){
+            const proxyId=callable[1].slice('Proxy.revoke:'.length),proxy=s.heap[proxyId];
+            if(proxy?.kind!=='proxy')throw new TypeError('Invalid owned Proxy revoker');
+            proxy.targetId=null;proxy.handlerId=null;
+            return {...operands(fn,...sourceCallArgs),...result(U)};
+          }
           // Builtin targets use the same dispatcher after Call/Apply has
           // selected the receiver and arguments. Guest functions keep their
           // existing owned frame path below.

@@ -18,7 +18,7 @@ import {NUMBER_RECORD_FIELDS,validateNumberRecordV8,applyNumberRecordV8,restoreN
 import {GENERATOR_PROFILE_V8,GENERATOR_RECORD_FIELDS,GENERATOR_INTRINSICS_V8,validateGeneratorRecordV8,
   applyGeneratorRecordV8,restoreGeneratorStateV8,hasGeneratorStateV8,assertGeneratorCallV8,
   assertGeneratorNextV8,resolveGeneratorIntrinsicV8} from './protocol-generator-v8.js';
-import {PROXY_PROFILE_V8,PROXY_RECORD_FIELDS,validateProxyRecordV8,applyProxyRecordV8,restoreProxyStateV8,hasProxyStateV8,assertProxyNextV8} from './protocol-proxy-v8.js';
+import {PROXY_PROFILE_V8,PROXY_RECORD_FIELDS,validateProxyRecordV8,applyProxyRecordV8,restoreProxyStateV8,hasProxyStateV8,assertProxyNextV8,hasProxySourceCallableV8} from './protocol-proxy-v8.js';
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_RECORD_FIELDS,validatePromiseExecutorRecordV8,applyPromiseExecutorRecordV8,
   restorePromiseExecutorStateV8,assertPromiseExecutorNextV8,assertPromiseExecutorCallV8,
   allowsPromiseExecutorInternalSchedulerV8,allowsPromiseExecutorDetailedCallV8} from './protocol-promise-executor-v8.js';
@@ -113,7 +113,7 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
 }),Object.freeze({
   id:PROXY_PROFILE_V8,recordFields:PROXY_RECORD_FIELDS,validateRecord:validateProxyRecordV8,
   applyRecord:applyProxyRecordV8,hasRichState:hasProxyStateV8,stateField:'proxyCalls',
-  restoreState:restoreProxyStateV8,assertNext:assertProxyNextV8
+  restoreState:restoreProxyStateV8,assertNext:assertProxyNextV8,hasSourceCallable:hasProxySourceCallableV8
 }),Object.freeze({
   id:PROMISE_EXECUTOR_PROFILE_V8,recordFields:PROMISE_EXECUTOR_RECORD_FIELDS,validateRecord:validatePromiseExecutorRecordV8,
   applyRecord:applyPromiseExecutorRecordV8,stateField:'promiseExecutors',restoreState:restorePromiseExecutorStateV8,

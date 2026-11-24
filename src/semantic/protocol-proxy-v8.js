@@ -1,6 +1,7 @@
 // Bounded Proxy operations reuse the shared ordinary-property and call
 // semantics. Target, handler, callback and receiver keep their identities.
 import {assertAlgorithmFields,assertAlgorithmDataArray,isAlgorithmDataRecord} from './ir.js';
+import {parse} from 'acorn';
 import {stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
 import {allocateIntrinsicErrorV8} from './protocol-intrinsic-error-v8.js';
 import {constructionCallReceiverV8} from './protocol-construction-v8.js';
@@ -9,6 +10,7 @@ export const PROXY_PROFILE_V8='ordinary-data-proxy/1';
 export const PROXY_STATE_V8_SCHEMA='semantic-proxy-call-state/1';
 export const PROXY_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.entries({
   'proxy.create':['kind','name','target','handler'],
+  'proxy.revocable':['kind','proxy','revoke','result','target','handler'],
   'proxy.revoke':['kind','object'],
   'proxy.revoked.fault':['kind','object','operation','error'],
   'proxy.get':['kind','object','key','result','route'],
@@ -36,11 +38,30 @@ function validateRouteSnapshot(route,value){
     if(row.target[0]!=='ref'||row.handler[0]!=='ref')throw new TypeError('Proxy route identities');
   }
 }
+
+export function hasProxySourceCallableV8(source,code){
+  if(typeof code!=='string'||!/^Proxy\.revoke:[^\s]{1,256}$/.test(code)||typeof source!=='string')return false;
+  try{
+    const ast=parse(source,{ecmaVersion:'latest',sourceType:'script'});let found=false;
+    const visit=node=>{
+      if(!node||typeof node!=='object'||found)return;
+      if(Array.isArray(node)){for(const child of node)visit(child);return;}
+      if(node.type==='CallExpression'&&node.callee?.type==='MemberExpression'&&
+        node.callee.computed===false&&node.callee.object?.type==='Identifier'&&node.callee.object.name==='Proxy'&&
+        node.callee.property?.type==='Identifier'&&node.callee.property.name==='revocable'){found=true;return;}
+      for(const [key,value] of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(value);
+    };
+    visit(ast);return found;
+  }catch{return false;}
+}
+
 export function validateProxyRecordV8(record,{value}){
   if(!isAlgorithmDataRecord(record))throw new TypeError('Proxy record must be ordinary data');
   const fields=PROXY_RECORD_FIELDS[record.kind];if(!fields)return false;
   assertAlgorithmFields(record,fields,'ordinary Proxy record');
   if(record.kind==='proxy.create'){id(record.name);value(record.target);value(record.handler);}
+  else if(record.kind==='proxy.revocable'){id(record.proxy);id(record.revoke);id(record.result);value(record.target);value(record.handler);
+    if(new Set([record.proxy,record.revoke,record.result]).size!==3)throw new TypeError('Proxy revocable identities');}
   else if(record.kind==='proxy.revoke'){id(record.object);}
   else if(record.kind==='proxy.revoked.fault'){id(record.object);id(record.error);
     if(!['get','set','has','deleteProperty'].includes(record.operation))throw new TypeError('Proxy revoked operation');}
@@ -293,6 +314,19 @@ export function applyProxyRecordV8(controller,record,api){
   if(record.kind==='proxy.create'){
     api.fresh(controller,record.name);const node={kind:'proxy',target:api.copy(record.target),handler:api.copy(record.handler),properties:new Map()};
     route(controller,node,api);controller.heap.set(record.name,node);state(controller,api);return true;
+  }
+  if(record.kind==='proxy.revocable'){
+    api.fresh(controller,record.proxy);api.fresh(controller,record.revoke);api.fresh(controller,record.result);
+    const node={kind:'proxy',target:api.copy(record.target),handler:api.copy(record.handler),properties:new Map()};
+    route(controller,node,api);
+    const revoker={kind:'closure',code:'Proxy.revoke:'+record.proxy,captures:[],functionKind:'ordinary',
+      lexicalReceiver:null,prototype:'ordinary',properties:new Map([['length',['num',0]],['name',['str','']]]),
+      descriptors:new Map([['length',{kind:'data',writable:false,enumerable:false,configurable:true}],
+        ['name',{kind:'data',writable:false,enumerable:false,configurable:true}]]),keyOrder:['length','name']};
+    const result={kind:'object',prototype:'ordinary',properties:new Map([
+      ['proxy',['ref',record.proxy]],['revoke',['ref',record.revoke]]])};
+    controller.heap.set(record.proxy,node);controller.heap.set(record.revoke,revoker);
+    controller.heap.set(record.result,result);state(controller,api);return true;
   }
   const node=controller.heap.get(record.object);api.require(node?.kind==='proxy','known Proxy identity required');
   api.knownKey(controller,record.key);
