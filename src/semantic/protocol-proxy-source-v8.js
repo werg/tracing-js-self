@@ -1,6 +1,7 @@
 // Teacher-only allocation/access adapter. Traps enter the existing shared
 // invocation stack; no adapter executes a callback or supplies its result.
 import {stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
+import {ordinaryGet} from '../spec-operations.js';
 export const PROXY_SOURCE_PROFILE_V8='ordinary-data-proxy-source/1';
 const fields=['targetId','handlerId','properties','propertyVersions','shapeVersion'];
 const truthy=value=>value?.[0]==='ref'||value?.[0]==='symbol'||
@@ -47,6 +48,22 @@ export function createProxySourceAdapterV8(){
       'derived Proxy TypeError message differs from its source allocation');
   };
   const emit=(ctx,record,event)=>ctx.emit(record,event,'owned-proxy-operation/1');
+  const routeFor=(ctx,object,operation,event)=>{
+    const route=[],observations=[],visited=new Set();let identity=object?.[1],node=ctx.state.heap[identity],selected=['undefined'];
+    const name=operation==='delete'?'deleteProperty':operation;
+    while(node?.kind==='proxy'){
+      require(ctx,!visited.has(identity)&&route.length<64,'cyclic or excessive retained target route');visited.add(identity);
+      const target=['ref',node.targetId],handler=['ref',node.handlerId],found=ordinaryGet(ctx.state.heap,handler,name);
+      require(ctx,!!found,'handler trap getter requires its explicit continuation');
+      selected=ctx.tag(found.method.value,event);
+      route.push({object:identity,target,handler,method:selected});observations.push(found.observation);
+      if(!['undefined','null'].includes(selected[0]))break;
+      identity=node.targetId;node=ctx.state.heap[identity];
+    }
+    require(ctx,node&&['object','array','proxy'].includes(node.kind),'target internal method is not in the bounded route profile');
+    return {route,observations,owner:route.at(-1)?.object??null,
+      target:route.at(-1)?.target??['ref',node.id],handler:route.at(-1)?.handler??null,selected,terminal:node};
+  };
   return {id:PROXY_SOURCE_PROFILE_V8,
   captureState:()=>({active:[...active],callbacks:[...callbacks],faultEvidence:[...faultEvidence],next}),
   restoreState(state){active=new Map(state.active);callbacks=new Map(state.callbacks);faultEvidence=new Map(state.faultEvidence??[]);next=state.next;},
@@ -105,7 +122,9 @@ export function createProxySourceAdapterV8(){
         }
         require(ctx,freshTypeError(event,thrown),'strict direct Proxy deletion lacks a fresh TypeError identity');
         const sourceError=requireFaultError(ctx,event,row,thrown,event.eventId);
-        emit(ctx,{kind:'proxy.delete.fault',object:node.id,key,error:thrown[1]},event);
+        const routed=routeFor(ctx,base,'delete',event);
+        require(ctx,['undefined','null'].includes(routed.selected[0]),'direct strict deletion selected a trap');
+        emit(ctx,{kind:'proxy.delete.fault',object:node.id,key,error:thrown[1],route:routed.route},event);
         publicFaultMessage(ctx,thrown[1],sourceError.properties.message.value);ctx.markPublished(thrown[1]);
         return true;
       }
@@ -126,16 +145,23 @@ export function createProxySourceAdapterV8(){
           operation==='delete'?typeof pending.proxy.strict==='boolean'&&pending.proxy.strict===!!parentProgram?.strict&&
             parentInstruction?.op==='DELETE_PROP':pending.proxy.strict===false;
       require(ctx,sourceStrict,'Proxy source strict-delete context differs');
-      const receiver=pending.proxy.object?.[1]??node.id,strict=['delete','set'].includes(operation)?pending.proxy.strict===true:false,
-        entry={id,owner:parent.id,child:child.id,object:receiver,key,operation,strict,
-          value:operation==='set'?ctx.tag(row.operands[2],event):null};
-      emit(ctx,{kind:'proxy.'+operation+'.call',id,object:receiver,key,child:ctx.frame(child.id),
+      const objectRef=pending.proxy.object??base,receiver=pending.proxy.receiver??objectRef,
+        routed=routeFor(ctx,objectRef,operation,event),strict=['delete','set'].includes(operation)?pending.proxy.strict===true:false,
+        entry={id,owner:parent.id,child:child.id,object:objectRef[1],trapOwner:routed.owner,receiver,
+          route:routed.route,key,operation,strict,value:operation==='set'?ctx.tag(row.operands[2],event):null};
+      require(ctx,ctx.eq(pending.proxy.route,routed.route)&&pending.proxy.owner===routed.owner&&
+        ctx.eq(pending.proxy.target,routed.target)&&ctx.eq(pending.proxy.handler,routed.handler),
+        'runtime retained route differs from source entry lookups');
+      const sourceReceiver=ctx.tag(base,event);
+      require(ctx,ctx.eq(receiver,sourceReceiver),'Proxy original receiver differs from source base');
+      emit(ctx,{kind:'proxy.'+operation+'.call',id,object:entry.object,owner:entry.trapOwner,receiver,key,
+        child:ctx.frame(child.id),route:entry.route,
         ...(operation==='set'?{value:entry.value}:{}),...(['delete','set'].includes(operation)?{strict}:{})},event);
       require(ctx,ctx.eq(ctx.controller.receiver,child.thisValue),'trap effective receiver differs');
       const selected=ctx.controller.protocol.proxyCalls.pending.at(-1),fn=ctx.state.heap[selected.callee[1]],
         program=ctx.bundle.programs[fn?.codeId],environment=event.stateChanges.find(change=>change.table==='envs'&&change.id===child.envId)?.after,
         args=[selected.target,key,...(operation==='set'?[entry.value]:[]),
-          ...(['get','set'].includes(operation)?[['ref',receiver]]:[])];
+          ...(['get','set'].includes(operation)?[receiver]:[])];
       require(ctx,fn?.kind==='function'&&!fn.async&&!program.generator&&child.codeId===fn.codeId&&environment?.parent===fn.closureEnvId,
         'trap must retain its selected synchronous source function and closure');
       require(ctx,program.params.every((name,index)=>environment.bindings[name]?.initialized&&
@@ -145,12 +171,15 @@ export function createProxySourceAdapterV8(){
         ctx.bind(ctx.cell(environment.id,name),binding.token.value,event);
       return true;
     }
-    if(has)emit(ctx,{kind:'proxy.has',object:node.id,key,result:ctx.tag(row.result,event)},event);
-    else if(deletion)emit(ctx,{kind:'proxy.delete',object:node.id,key,success:row.result?.[1]===true},event);
+    const operation=has?'has':deletion?'delete':event.operation==='property.read'?'get':'set',
+      routed=routeFor(ctx,base,operation,event);
+    require(ctx,['undefined','null'].includes(routed.selected[0]),'direct Proxy operation selected a trap without its call continuation');
+    if(has)emit(ctx,{kind:'proxy.has',object:node.id,key,result:ctx.tag(row.result,event),route:routed.route},event);
+    else if(deletion)emit(ctx,{kind:'proxy.delete',object:node.id,key,success:row.result?.[1]===true,route:routed.route},event);
     else if(event.operation==='property.read'){
       const value=row.result?.[0]==='method'?row.result[1]:row.result;
-      emit(ctx,{kind:'proxy.get',object:node.id,key,result:ctx.tag(value,event)},event);
-    }else emit(ctx,{kind:'proxy.set',object:node.id,key,value:ctx.tag(row.operands[2],event),success:true},event);
+      emit(ctx,{kind:'proxy.get',object:node.id,key,result:ctx.tag(value,event),route:routed.route},event);
+    }else emit(ctx,{kind:'proxy.set',object:node.id,key,value:ctx.tag(row.operands[2],event),success:true,route:routed.route},event);
     return true;
   },
   completeFrame(ctx,change,event){
@@ -193,11 +222,14 @@ export function createProxySourceAdapterV8(){
       storage=entry.key[0]==='symbol'?symbolPropertyKey(entry.key[1]):stringPropertyKey(entry.key[1]);
     const actualStrict=entry.operation==='has'?false:!!ctx.bundle.programs[node.codeId]?.strict;
     require(ctx,current&&pending?.proxy&&pending.waitingFrameId===entry.child&&pending.kind===entry.operation&&
-      ctx.eq(pending.proxy.target,current.target)&&pending.proxy.key===storage&&pending.proxy.strict===actualStrict&&
+      ctx.eq(pending.proxy.target,current.target)&&ctx.eq(pending.proxy.handler,current.handler)&&
+      pending.proxy.owner===current.owner&&ctx.eq(pending.proxy.receiver,current.receiver)&&
+      ctx.eq(pending.proxy.route,current.route)&&pending.proxy.key===storage&&pending.proxy.strict===actualStrict&&
       current.parent===ctx.frame(node.id)&&current.child===ctx.frame(entry.child)&&current.object===entry.object&&
+      current.owner===entry.trapOwner&&ctx.eq(current.receiver,entry.receiver)&&ctx.eq(current.route,entry.route)&&
       current.strict===entry.strict&&ctx.eq(current.key,entry.key)&&ctx.eq(current.value,entry.value),
       'retained target, key, operand or call identity differs');
-    if(entry.operation==='get')require(ctx,ctx.eq(pending.receiver,['ref',entry.object])&&typeof pending.method==='boolean',
+    if(entry.operation==='get')require(ctx,ctx.eq(pending.receiver,entry.receiver)&&typeof pending.method==='boolean',
       'getter continuation receiver differs');
     else if(entry.operation==='set')require(ctx,ctx.eq(pending.value,entry.value),'setter continuation assignment value differs');
     else require(ctx,pending.value===undefined,'has/delete continuation has no assignment operand');

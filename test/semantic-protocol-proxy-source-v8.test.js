@@ -192,12 +192,39 @@ test('strict false-set callback errors are source-qualified with the native mess
     {kind:'return',value:['str',"'set' on proxy: trap returned falsish for property 'x'"]});
 });
 
+test('transparent nested target routes retain the original receiver and selected inner owner',async()=>{
+  const body='let order="";const target={x:2};let outer=null;'+
+    'const handler={get:function(t,k,r){order+="g";return r===outer?t[k]+1:-1;},'+
+    'has:function(t,k){order+="h";return k==="x";},'+
+    'deleteProperty:function(t,k){order+="d";return k==="y";}};'+
+    'const inner=new Proxy(target,handler);outer=new Proxy(inner,{});'+
+    'return outer.x+("x" in outer?10:0)+(delete outer.y?100:0)+target.x;';
+  const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
+  const artifact=result.exported,reference=artifact.sidecar.sourceArtifact.sidecar.reference,
+    replay=RegionExecutionHarness.replay(artifact);
+  assert.deepEqual(replay.controller.completion,{kind:'return',value:['num',115]});
+  assert.equal(reference.status,'agreed');assert.equal(reference.extensionAudit.status,'agreed');
+  assert.equal(reference.metadataAudit.status,'agreed');
+  assert(artifact.sidecar.protocolExtensions.includes('ordinary-data-proxy-source/1'));
+  const bundle=archive(source(body)),proxies=Object.values(bundle.finalState.heap).filter(node=>node.kind==='proxy'),
+    inner=proxies.find(node=>bundle.finalState.heap[node.targetId]?.kind==='object'),
+    outer=proxies.find(node=>node.targetId===inner?.id),
+    event=bundle.events.find(row=>row.operation==='property.read'&&row.stateChanges.some(change=>
+      change.table==='frames'&&change.after?.pendingProperty?.proxy)),
+    pending=event?.stateChanges.find(change=>change.table==='frames'&&change.after?.pendingProperty?.proxy)?.after.pendingProperty.proxy;
+  assert(inner&&outer&&pending);
+  assert.equal(pending.owner,inner.id);
+  assert.deepEqual(pending.object,['ref',outer.id]);
+  assert.deepEqual(pending.route.map(row=>row.object),[outer.id,inner.id]);
+});
+
 test('unsupported Proxy traps, accessor targets, nesting and callable profiles remain explicit source refusals',async()=>{
   for(const body of [
     'return new Proxy({x:2},{get:async function(){return 2;}}).x;',
     'return new Proxy({x:2},{get:function*(){yield 2;}}).x;',
     'return new Proxy({get x(){return 2;}},{}).x;',
-    'const target=new Proxy({x:2},{});return new Proxy(target,{}).x;',
+    'const target=new Proxy({x:2},{get:function(){return 3;}});return new Proxy(target,{get:function(){return 4;}}).x;',
+    'return new Proxy({x:2},{get get(){return function(){return 2;};}}).x;',
     'return new Proxy(function(){return 2;},{})();'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert.equal(result.status,'unsupported',result.reason);

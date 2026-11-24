@@ -256,23 +256,27 @@ function propertyAccessor(heap, receiver, key) {
 }
 function proxyRoute(heap,receiver,operation) {
   let obj=heap[receiver[1]];
-  const visited=new Set();
+  const visited=new Set(),route=[],observations=[];
   while(obj?.kind==='proxy'){
     if(visited.has(obj.id))throw new TypeError('Cyclic proxy target chain');
+    if(route.length>=64)throw new TypeError('Proxy target route bound exceeded');
     visited.add(obj.id);
     const handler=heap[obj.handlerId];
     if(!handler||!['object','array'].includes(handler.kind))
       throw new TypeError('Unsupported proxy handler identity');
     const trap=ordinaryGet(heap,['ref',handler.id],operation);
     if(!trap)throw new TypeError('Proxy handler accessor trap unmodeled');
-    if(!['undefined','null'].includes(trap.method.value[0]))
-      return {kind:'trap',method:trap.method.value,observation:trap.observation,
-        object:['ref',obj.id],target:['ref',obj.targetId],handler:['ref',handler.id],receiver};
+    const method=copy(trap.method.value),entry={object:obj.id,target:['ref',obj.targetId],
+      handler:['ref',handler.id],method};
+    route.push(entry);observations.push(trap.observation);
+    if(!['undefined','null'].includes(method[0]))
+      return {kind:'trap',method,observations,object:['ref',obj.id],owner:obj.id,
+        target:['ref',obj.targetId],handler:['ref',handler.id],receiver,route};
     obj=heap[obj.targetId];
   }
   if(!obj||!['object','array'].includes(obj.kind))
     throw new TypeError('Unmodeled proxy target internal method');
-  return {kind:'ordinary',target:['ref',obj.id],receiver};
+  return {kind:'ordinary',target:['ref',obj.id],receiver,route,observations};
 }
 function ownPropertyKeys(obj){
   if(obj.kind==='module-namespace')
@@ -2104,10 +2108,11 @@ export class Runtime {
               if(!this.callableGuest(s,route.method))guestFault('TypeError','Proxy deleteProperty trap is not callable');
               const fn=s.heap[route.method[1]],id=this.newFrame(s,fn.codeId,fn.closureEnvId,f.id,null,
                 [token(route.target,eventId),key],this.functionThis(fn,route.handler),fn.id);
-              f.pendingProperty={kind:'delete',waitingFrameId:id,proxy:{object:route.object,target:route.target,
-                handler:route.handler,key:property,strict:!!this.programs[f.codeId].strict}};
+              f.pendingProperty={kind:'delete',waitingFrameId:id,proxy:{object:base.value,owner:route.owner,
+                receiver:base.value,target:route.target,handler:route.handler,route:route.route,
+                key:property,strict:!!this.programs[f.codeId].strict}};
               s.control.a0.activeFrameId=id;
-              return {...operands(base,key),causes:[{kind:'invocation',frameId:id}],reads:[route.observation]};
+              return {...operands(base,key),causes:[{kind:'invocation',frameId:id}],reads:route.observations};
             }
             const target=ownedObjectStorage(s,route.target);
             if(!['object','array'].includes(target?.kind))
@@ -2118,7 +2123,7 @@ export class Runtime {
               guestFault('TypeError',"Cannot delete property '"+proxyDeletePropertyDisplay(s.heap,property)+"' of "+brand);
             }
             const present=outcome.present,slot=Object.hasOwn(target.properties??{},property)?target.properties[property]:null;
-            return {...operands(base,key),...result(['bool',outcome.success]),reads:[{
+            return {...operands(base,key),...result(['bool',outcome.success]),reads:[...route.observations,{
               kind:'property',objectId:target.id,key:property,present,
               version:Object.hasOwn(target.propertyVersions??{},property)?target.propertyVersions[property]:0,
               shapeVersion:target.shapeVersion??0,value:slot?.value??U,supplyingEvent:slot?.origin??null}]};
@@ -2268,12 +2273,12 @@ export class Runtime {
                 if(!this.callableGuest(s,route.method))guestFault('TypeError','Proxy has trap is not callable');
                 const fn=s.heap[route.method[1]],id=this.newFrame(s,fn.codeId,fn.closureEnvId,f.id,null,
                   [token(route.target,eventId),a],this.functionThis(fn,route.handler),fn.id);
-                f.pendingProperty={kind:'has',waitingFrameId:id,proxy:{object:route.object,target:route.target,
-                  handler:route.handler,key:property,strict:false}};
+                f.pendingProperty={kind:'has',waitingFrameId:id,proxy:{object:b.value,owner:route.owner,
+                  receiver:b.value,target:route.target,handler:route.handler,route:route.route,key:property,strict:false}};
                 s.control.a0.activeFrameId=id;
-                return {...operands(a,b),causes:[{kind:'invocation',frameId:id}],reads:[route.observation]};
+                return {...operands(a,b),causes:[{kind:'invocation',frameId:id}],reads:route.observations};
               }
-              return {...operands(a,b),...result(['bool',ownedHasProperty(ownedObjectHeap(s),route.target,property)])};
+              return {...operands(a,b),...result(['bool',ownedHasProperty(ownedObjectHeap(s),route.target,property)]),reads:route.observations};
             }
             return {...operands(a,b),...result(['bool',ownedHasProperty(ownedObjectHeap(s),b.value,property)])};
           }
@@ -2698,7 +2703,7 @@ if(obj.kind==='set'){
                throw new TypeError('Unmodeled Set property '+property);
              }
              const route=obj.kind==='proxy'?proxyRoute(s.heap,base.value,'get'):
-               {kind:'ordinary',target:base.value,receiver:base.value};
+               {kind:'ordinary',target:base.value,receiver:base.value,route:[],observations:[]};
              if(route.kind==='trap'){
                const target=s.heap[route.target[1]];
                if(!['object','array'].includes(target?.kind))
@@ -2710,10 +2715,11 @@ if(obj.kind==='set'){
                const id=this.newFrame(s,fn.codeId,fn.closureEnvId,
                  f.id,null,[token(route.target),key,token(base.value)],this.functionThis(fn,route.handler),fn.id);
                f.pendingProperty={kind:'get',receiver:base.value,method:op==='GET_METHOD',waitingFrameId:id,
-                 proxy:{target:route.target,key:property,strict:!!this.programs[f.codeId].strict}};
+                 proxy:{object:base.value,owner:route.owner,receiver:base.value,target:route.target,
+                   handler:route.handler,route:route.route,key:property,strict:!!this.programs[f.codeId].strict}};
                s.control.a0.activeFrameId=id;
                return {...operands(base,key),causes:[{kind:'invocation',frameId:id}],
-                 reads:[route.observation]};
+                 reads:route.observations};
              }
              const accessor=propertyAccessor(ownedObjectHeap(s),route.target,property);
              if(accessor){
@@ -2731,14 +2737,14 @@ if(obj.kind==='set'){
              }else{
                const found=ordinaryGet(ownedObjectHeap(s),route.target,property);
                if(!found)throw new TypeError('Unmodeled ordinary [[Get]] or exotic property');
-               v=found.method.value;read=found.observation;
+               v=found.method.value;read=[...route.observations,found.observation];
              }
            }
           else if(['null','undefined'].includes(base.value[0]))
              guestFault('TypeError',`Cannot read properties of ${base.value[0]}`);
            else throw new TypeError('Unsupported property receiver (no host fallback)');
           const output=op==='GET_METHOD'?['method',v,base.value]:v;
-          return {...operands(base,key),...result(output),reads:read?[read]:[]};
+          return {...operands(base,key),...result(output),reads:Array.isArray(read)?read:read?[read]:[]};
         }
         case 'PENDING_THROW':{
           const handler=f.handlers.findLast(item=>item.phase==='finally');
@@ -3054,7 +3060,7 @@ if(object.kind==='regexp'){
           if(object.kind==='set')
             throw new TypeError('Owned intrinsic internal slots are not guest-writable properties');
           const route=object.kind==='proxy'?proxyRoute(s.heap,base.value,'set'):
-            {kind:'ordinary',target:base.value,receiver:base.value};
+            {kind:'ordinary',target:base.value,receiver:base.value,route:[],observations:[]};
           if(route.kind==='trap'){
             const target=s.heap[route.target[1]];
             if(!['object','array'].includes(target?.kind))
@@ -3065,10 +3071,11 @@ if(object.kind==='regexp'){
             const id=this.newFrame(s,fn.codeId,fn.closureEnvId,
               f.id,null,[token(route.target),key,v,token(base.value)],this.functionThis(fn,route.handler),fn.id);
             f.pendingProperty={kind:'set',value:v.value,waitingFrameId:id,
-              proxy:{target:route.target,key:property,strict:!!this.programs[f.codeId].strict}};
+              proxy:{object:base.value,owner:route.owner,receiver:base.value,target:route.target,
+                handler:route.handler,route:route.route,key:property,strict:!!this.programs[f.codeId].strict}};
             s.control.a0.activeFrameId=id;
             return {...operands(base,key,v),causes:[{kind:'invocation',frameId:id}],
-              reads:[route.observation]};
+              reads:route.observations};
           }
           const obj=ownedObjectStorage(s,route.target),heap=ownedObjectHeap(s);
           const described=['object','array','promise'].includes(obj.kind)?functionProperty(heap,obj,property):null,
@@ -3085,7 +3092,7 @@ if(object.kind==='regexp'){
                   objectPrototype(obj)===null?'[object Object]':'#<Object>';
                 guestFault('TypeError',`Cannot set property ${property} of ${receiverKind} which has only a getter`);
               }
-              return {...operands(base,key,v),...result(v.value)};
+              return {...operands(base,key,v),...result(v.value),reads:route.observations};
             }
             if(!this.callableGuest(s,setter)||s.heap[setter[1]].async)
               throw new TypeError('Unsupported accessor setter continuation');
@@ -3098,7 +3105,7 @@ if(object.kind==='regexp'){
           const failure=ordinaryDataWriteFailure(s.heap,obj,property,described?.attributes);
           if(failure){
             if(this.programs[f.codeId].strict)guestFault('TypeError',failure);
-            return {...operands(base,key,v),...result(v.value)};
+            return {...operands(base,key,v),...result(v.value),reads:route.observations};
           }
           if(this.entrySpec?.kind==='function' && obj.kind==='array') {
             const oldLength=decode(obj.properties.length.value);
@@ -3114,7 +3121,7 @@ if(object.kind==='regexp'){
           obj.propertyVersions ??= {};
           obj.shapeVersion ??= 0;
           putOwn(obj,property,v.value,eventId);
-          return {...operands(base,key,v),...result(v.value)};
+          return {...operands(base,key,v),...result(v.value),reads:route.observations};
         }
         case 'CALL':{
           const count=typeof arg==='number'?arg:arg.count;

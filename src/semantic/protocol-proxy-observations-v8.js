@@ -5,6 +5,7 @@
 import {parse} from 'acorn';
 import {types} from 'node:util';
 import {encode,decode} from '../values.js';
+import {ordinaryGet} from '../spec-operations.js';
 
 export const PROXY_OBSERVATION_PROFILE_V8='ordinary-data-proxy-metadata/1';
 const hook='__tracingProtocolProxyConstructor',construct=Reflect.construct,apply=Reflect.apply,own=Object.getOwnPropertyDescriptors;
@@ -45,29 +46,46 @@ function ownedObservations(bundle,allocations){
       base=has?event.operands[1]:event.operands[0],node=base?.[0]==='ref'?state.heap[base[1]]:null;
     if(node?.kind==='proxy'&&(property||has||deletion)){
       const operation=has?'has':deletion?'delete':event.operation==='property.read'?'get':'set',
-        trapName=operation==='delete'?'deleteProperty':operation,handler=state.heap[node.handlerId],
+        trapName=operation==='delete'?'deleteProperty':operation,
         key=(has?event.operands[0]:event.operands[1])?.[0]==='symbol'?(has?event.operands[0]:event.operands[1]):
           ['str',String(decode(has?event.operands[0]:event.operands[1]))],
-        method=handler?.properties?.[trapName]?.value??['undefined'];
-      const parent=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId)?.after,
+        route=[],visited=new Set();let ownerId=base[1],owner=state.heap[ownerId],selected=['undefined'];
+      while(owner?.kind==='proxy'){
+        if(visited.has(ownerId)||route.length>=64)fail('cyclic or excessive proxy route');
+        visited.add(ownerId);
+        const handler=state.heap[owner.handlerId],found=ordinaryGet(state.heap,['ref',owner.handlerId],trapName);
+        if(!handler||!found)fail('handler accessor lookup requires its call boundary');
+        selected=found.method.value;
+        route.push({object:ownerId,target:['ref',owner.targetId],handler:['ref',owner.handlerId],method:selected});
+        if(!['undefined','null'].includes(selected[0]))break;
+        ownerId=owner.targetId;owner=state.heap[ownerId];
+      }
+      if(!owner||!['object','array','proxy'].includes(owner.kind))fail('unmodeled nested target internal method');
+      const trapOwner=route.at(-1)?.object;
+      if(!trapOwner)fail('proxy route lacks an owner');
+      const ownerNode=state.heap[trapOwner],handler=state.heap[ownerNode.handlerId],
+        parent=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId)?.after,
         pending=parent?.pendingProperty;
-      if(!['undefined','null'].includes(method[0]))add('select',{operation,object:value(base),key:value(key),method:value(method)});
+      if(!['undefined','null'].includes(selected[0]))
+        add('select',{operation,object:value(['ref',trapOwner]),key:value(key),method:value(selected)});
       if(pending?.proxy){
         const child=event.stateChanges.find(change=>change.table==='frames'&&change.id===pending.waitingFrameId)?.after;
-        if(!child||method[0]!=='ref')fail('missing selected trap frame');
-        const args=[['ref',node.targetId],key,...(operation==='set'?[event.operands[2]]:[]),
-            ...(['get','set'].includes(operation)?[base]:[])],fn=state.heap[method[1]],
+        if(!child||selected[0]!=='ref'||JSON.stringify(pending.proxy.route)!==JSON.stringify(route))
+          fail('missing selected trap frame or retained route');
+        const receiver=base,args=[['ref',ownerNode.targetId],key,...(operation==='set'?[event.operands[2]]:[]),
+            ...(['get','set'].includes(operation)?[receiver]:[])],fn=state.heap[selected[1]],
           environment=event.stateChanges.find(change=>change.table==='envs'&&change.id===child.envId)?.after;
         if(fn?.kind!=='function'||child.codeId!==fn.codeId||environment?.parent!==fn.closureEnvId)
           fail('selected trap source function or closure differs');
-        const receiver=fn.arrow?(fn.lexicalThisFrameId?state.frames[fn.lexicalThisFrameId]?.thisValue:fn.lexicalThis):['ref',node.handlerId];
-        if(JSON.stringify(child.thisValue)!==JSON.stringify(receiver))fail('trap effective receiver differs');
+        const effective=fn.arrow?(fn.lexicalThisFrameId?state.frames[fn.lexicalThisFrameId]?.thisValue:fn.lexicalThis):['ref',ownerNode.handlerId];
+        if(JSON.stringify(child.thisValue)!==JSON.stringify(effective))fail('trap effective receiver differs');
         if(!bundle.programs[fn.codeId].params.every((name,index)=>environment.bindings[name]?.initialized&&
           JSON.stringify(environment.bindings[name].token?.value)===JSON.stringify(args[index]??['undefined'])))
           fail('trap parameter values differ from native call arguments');
-        add('call',{operation,object:value(base),method:value(method),receiver:value(['ref',node.handlerId]),arguments:args.map(value)});
-        children.set(child.id,{operation,object:base,method});
-      }else if(!['undefined','null'].includes(method[0]))fail('selected trap has no invocation');
+        add('call',{operation,object:value(['ref',trapOwner]),method:value(selected),
+          receiver:value(['ref',ownerNode.handlerId]),arguments:args.map(value)});
+        children.set(child.id,{operation,object:['ref',trapOwner],method:selected});
+      }else if(!['undefined','null'].includes(selected[0]))fail('selected trap has no invocation');
     }
     for(const change of event.stateChanges)if(change.table==='frames'&&children.has(change.id)&&
       !['completed','thrown'].includes(change.before?.status)&&['completed','thrown'].includes(change.after?.status)){
@@ -106,6 +124,18 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
     if(!allowAccessors&&Reflect.ownKeys(descriptors).some(key=>!Object.hasOwn(descriptors[key],'value')))ctx.fail(label+' accessor');
     return descriptors;
   }
+  function nativeTarget(value,ctx,label,{allowAccessors=false}={}){
+    if(types.isProxy(value)){
+      if(!registered.has(value))ctx.fail(label+' is an unregistered Proxy');
+      return null;
+    }
+    return nativeOrdinary(value,ctx,label,{allowAccessors});
+  }
+  function ownedTarget(tag,ctx,label,{allowAccessors=false}={}){
+    const node=tag?.[0]==='ref'?ctx.state.heap[tag[1]]:null;
+    if(node?.kind==='proxy')return node;
+    return ownedOrdinary(tag,ctx,label,{allowAccessors});
+  }
   function ownedOrdinary(tag,ctx,label,{allowAccessors=false}={}){
     const node=tag?.[0]==='ref'?ctx.state.heap[tag[1]]:null;
     if(node?.kind!=='object'||![undefined,null,'Object.prototype'].includes(node.prototype)||
@@ -114,12 +144,41 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
   }
   function nativeHandler(value,ctx){return nativeOrdinary(value,ctx,'Proxy handler');}
   function ownedHandler(value,ctx){return ownedOrdinary(value,ctx,'Proxy handler');}
+  const metadataTraps=['getOwnPropertyDescriptor','ownKeys','getPrototypeOf','isExtensible'];
+  function ownedMetadataTarget(tag,ctx){
+    let current=tag,node=current?.[0]==='ref'?ctx.state.heap[current[1]]:null,seen=new Set();
+    while(node?.kind==='proxy'){
+      if(seen.has(current[1]))ctx.fail('cyclic target metadata route');seen.add(current[1]);
+      const handler=ownedHandler(['ref',node.handlerId],ctx);
+      for(const name of metadataTraps){
+        const slot=handler.properties?.[name]?.value;
+        if(slot&&!['undefined','null'].includes(slot[0]))ctx.fail('nested target metadata trap requires its internal-method boundary');
+      }
+      current=['ref',node.targetId];node=ctx.state.heap[current[1]];
+    }
+    if(!node||!['object','array'].includes(node.kind))ctx.fail('nested target metadata storage');
+    return current;
+  }
+  function nativeMetadataTarget(raw,ctx){
+    let current=raw,seen=new Set();
+    while(types.isProxy(current)){
+      if(seen.has(current))ctx.fail('cyclic target metadata route');seen.add(current);
+      const captured=registered.get(current);if(!captured)ctx.fail('unregistered nested target Proxy');
+      const descriptors=nativeHandler(captured.handler,ctx);
+      for(const name of metadataTraps){
+        const method=descriptors[name]?.value;
+        if(method!=null)ctx.fail('nested target metadata trap requires its internal-method boundary');
+      }
+      current=captured.target;
+    }
+    return current;
+  }
   return {id:PROXY_OBSERVATION_PROFILE_V8,
     setCallObserver(observer){invoke=observer;},
     ownedAssignmentValue({object,key,state}){
       if(object.kind!=='proxy')return undefined;
       const ctx={state,fail(message){throw new TypeError('Proxy assignment observation: '+message);}},
-        target=ownedOrdinary(['ref',object.targetId],ctx,'Proxy target'),handler=ownedHandler(['ref',object.handlerId],ctx);
+        target=ownedTarget(['ref',object.targetId],ctx,'Proxy target'),handler=ownedHandler(['ref',object.handlerId],ctx);
       if(handler.properties.set&&!['undefined','null'].includes(handler.properties.set.value[0]))ctx.fail('setter trap lacks its completion observer');
       return target.properties?.[key]?.value??['missing-storage'];
     },
@@ -127,11 +186,11 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
     globals:{[hook]:(site,callee)=>(...args)=>{
       if(callee!==nativeProxy)return construct(callee,args);
       const ctx={fail,intrinsicPrototype:value=>ordinaryPrototypes.has(value)?'Object.prototype':value},target=args[0],handler=args[1];
-      nativeOrdinary(target,ctx,'Proxy target');nativeHandler(handler,ctx);
+      nativeTarget(target,ctx,'Proxy target');nativeHandler(handler,ctx);
       let result;
       const observedHandler=new Proxy({}, {get(_target,operation){
         const descriptors=nativeHandler(handler,ctx),method=descriptors[operation]?.value;
-        nativeOrdinary(target,ctx,'Proxy target',{allowAccessors:['has','deleteProperty'].includes(operation)});
+        nativeTarget(target,ctx,'Proxy target',{allowAccessors:['has','deleteProperty'].includes(operation)});
         if(!['get','set','has','deleteProperty'].includes(operation)||method==null||typeof method!=='function')return method;
         const semanticOperation=operation==='deleteProperty'?'delete':operation;
         return (...trapArgs)=>{
@@ -159,15 +218,16 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
     },
     metadataAdapter:side==='owned'?{ownedNode(value,ctx){
       const node=value[0]==='ref'?ctx.state.heap[value[1]]:null;if(node?.kind!=='proxy')return null;
-      const target=['ref',node.targetId],handler=['ref',node.handlerId];ownedOrdinary(target,ctx,'Proxy target',{allowAccessors:true});
-      ownedHandler(handler,ctx);
+      const target=['ref',node.targetId],handler=['ref',node.handlerId];ownedTarget(target,ctx,'Proxy target',{allowAccessors:true});
+      ownedHandler(handler,ctx);const metadataTarget=ownedMetadataTarget(target,ctx);
       if(Object.keys(node.properties??{}).length||Object.keys(node.propertyVersions??{}).length||node.shapeVersion!==0)
         ctx.fail('Proxy has invented own state');
-      return {...ctx.defaultNode(target),kind:'proxy',annotations:[{name:'proxy-target-handler/1',values:[target,handler],data:{}}]};
+      return {...ctx.defaultNode(metadataTarget),kind:'proxy',annotations:[{name:'proxy-target-handler/1',values:[target,handler],data:{}}]};
     }}:{nativeProxyNode(value,ctx){
       const captured=registered.get(value);if(!captured)return null;
-      nativeOrdinary(captured.target,ctx,'Proxy target',{allowAccessors:true});nativeHandler(captured.handler,ctx);
-      return {...ctx.defaultNode(captured.target),kind:'proxy',annotations:[{
+      nativeTarget(captured.target,ctx,'Proxy target',{allowAccessors:true});nativeHandler(captured.handler,ctx);
+      const metadataTarget=nativeMetadataTarget(captured.target,ctx);
+      return {...ctx.defaultNode(metadataTarget),kind:'proxy',annotations:[{
         name:'proxy-target-handler/1',values:[captured.target,captured.handler],data:{}}]};
     }},
     observations(){if(side==='owned')return ownedObservations(bundle,original);if(failures.length)fail(failures[0]);return rows;}

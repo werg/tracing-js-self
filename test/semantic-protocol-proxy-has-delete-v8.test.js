@@ -7,7 +7,22 @@ const ref=id=>['ref',id],key=name=>['str',name];
 function fixture(){
   const controller={heap:new Map(),locals:new Map(),captureAliases:new Map(),receiver:['undefined'],stack:['root'],
     frameFunctions:new Map([['root','run']]),pending:null,lastReturn:null,completion:null,protocol:createProtocolStateV8()};
-  const apply=record=>applyProtocolRecordV8(controller,record);
+  const apply=record=>{
+    if(record.kind?.startsWith('proxy.')&&!['proxy.create','proxy.finish','proxy.fault'].includes(record.kind)){
+      const operation=record.kind.split('.')[1],trapName=operation==='delete'?'deleteProperty':operation,
+        route=[];let current=record.object,node=controller.heap.get(current),seen=new Set();
+      while(node?.kind==='proxy'){
+        if(seen.has(current))throw new TypeError('cyclic test Proxy route');seen.add(current);
+        const handler=controller.heap.get(node.handler[1]),method=handler?.properties.get(trapName)??['undefined'];
+        route.push({object:current,target:structuredClone(node.target),handler:structuredClone(node.handler),method:structuredClone(method)});
+        if(!['undefined','null'].includes(method[0]))break;
+        current=node.target[1];node=controller.heap.get(current);
+      }
+      record={...record,route};
+      if(record.kind.endsWith('.call'))record={...record,owner:route.at(-1).object,receiver:ref(record.object)};
+    }
+    return applyProtocolRecordV8(controller,record);
+  };
   for(const name of ['target','handler'])apply({kind:'allocate',name,objectKind:'object',length:null,properties:[],code:null,
     captures:[],functionKind:null,lexicalReceiver:null});
   apply({kind:'property.set',object:'target',key:key('x'),receiver:ref('target'),value:['num',2],success:true});
