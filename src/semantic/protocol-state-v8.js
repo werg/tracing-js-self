@@ -47,6 +47,14 @@ export function initializeRetainedProtocolStateV8(controller){
   controller.protocol=protocol;
 }
 function state(controller){return controller.protocol??=createProtocolStateV8();}
+export function protocolCallReceiverV8(controller,callee,receiver){
+  let effective=copy(receiver);
+  for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.callReceiver){
+    const adapted=adapter.callReceiver(controller,callee,effective,PROTOCOL_MACHINE_API_V8);
+    if(adapted!==undefined)effective=copy(adapted);
+  }
+  return effective;
+}
 export function protocolReservedIdentitiesV8(controller){
   return new Set([...controller.heap.keys(),...state(controller).symbols.map(row=>row.id),
     ...PROTOCOL_MACHINE_ADAPTERS_V8.flatMap(adapter=>adapter.reservedIdentities?.(controller)??[])]);
@@ -230,12 +238,8 @@ function call(controller,record,options={}){
   protocol.callFrames.push({child:record.child,parent:controller.stack.at(-1),callee:copy(record.callee),
     priorReceiver:copy(controller.receiver??['undefined']),priorAliases:[...(controller.captureAliases??new Map())],
     arguments:copy(record.arguments)});
-  let receiver=copy(node.functionKind==='arrow'?node.lexicalReceiver:record.receiver);
-  for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.callReceiver){
-    const adapted=adapter.callReceiver(controller,record.callee,receiver,PROTOCOL_MACHINE_API_V8);
-    if(adapted!==undefined)receiver=copy(adapted);
-  }
-  controller.receiver=receiver;
+  controller.receiver=protocolCallReceiverV8(controller,record.callee,
+    node.functionKind==='arrow'?node.lexicalReceiver:record.receiver);
   controller.captureAliases=new Map(node.captures.map(row=>[row.binding,row.cell]));
   controller.locals.set(record.child+':this',copy(controller.receiver));
   record.arguments.forEach((value,index)=>controller.locals.set(record.child+':argument:'+index,copy(value)));
@@ -460,8 +464,8 @@ export function restoreProtocolStateV8(controller,snapshot){
     require(controller.frameFunctions.has(pending.child)&&controller.frameFunctions.has(pending.parent),'pending call frames');
     if(pending.operation==='get')require(pending.value===null,'getter has no assignment operand');else known(temporary,pending.value);
     const callee=heapNode(temporary,pending.callee[1]),receiver=callee.functionKind==='arrow'?
-      PROTOCOL_MACHINE_ADAPTERS_V8.find(adapter=>adapter.callReceiver)?.callReceiver(controller,pending.callee,callee.lexicalReceiver,PROTOCOL_MACHINE_API_V8)??callee.lexicalReceiver:
-      pending.receiver,active=snapshot.callFrames.find(frame=>frame.child===pending.child);
+      protocolCallReceiverV8(controller,pending.callee,callee.lexicalReceiver):pending.receiver,
+      active=snapshot.callFrames.find(frame=>frame.child===pending.child);
     require(controller.frameFunctions.get(pending.child)===callee.code&&
       eq(controller.locals.get(pending.child+':this'),receiver),'pending accessor receiver or callable differs from its activation');
     if(active)require(eq(active.callee,pending.callee)&&active.parent===pending.parent&&
@@ -482,8 +486,7 @@ export function restoreProtocolStateV8(controller,snapshot){
       controller.frameFunctions.get(frame.child)===heapNode(temporary,frame.callee[1]).code,'call frame callee identity');
     const called=heapNode(temporary,frame.callee[1]);
     if(called.functionKind==='arrow'){
-      const captured=PROTOCOL_MACHINE_ADAPTERS_V8.find(adapter=>adapter.callReceiver)?.callReceiver(
-        controller,frame.callee,called.lexicalReceiver,PROTOCOL_MACHINE_API_V8)??called.lexicalReceiver;
+      const captured=protocolCallReceiverV8(controller,frame.callee,called.lexicalReceiver);
       require(eq(controller.locals.get(frame.child+':this'),captured),'call frame arrow receiver/callee identity');
       if(called.callable?.lexicalConstruction){
         const observedTarget=controller.locals.get(frame.child+':lexical-newTarget'),capture=called.callable.lexicalConstruction,
@@ -684,4 +687,5 @@ export function describeProtocolObjectV8(controller,id){
 /** Trusted component interface. Public records never carry options or adapters. */
 export const PROTOCOL_MACHINE_API_V8=Object.freeze({require,fail,copy,eq,state,known,knownKey,heapNode,
   ownDescriptor,installDescriptor,resolveProperty,directSet,order,fresh,call,complete,allocate,setLocal,truthy,
+  callReceiver:protocolCallReceiverV8,
   validatePendingScope:validateProtocolPendingScopeV8});

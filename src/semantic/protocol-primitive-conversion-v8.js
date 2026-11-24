@@ -237,9 +237,11 @@ export function restorePrimitiveConversionStateV8(controller,snapshot,api){
         controller.frameFunctions.get(row.child)===api.heapNode(controller,row.method[1]).code,'conversion callback source identity');
       if(controller.stack.includes(row.child)){
         api.require(controller.stack.indexOf(row.child)===controller.stack.indexOf(row.parent)+1,'conversion callback stack');
-        const frame=controller.protocol.callFrames.find(frame=>frame.child===row.child),getter=row.phase==='getter-waiting',node=api.heapNode(controller,row.method[1]);
-        api.require(frame?.parent===row.parent&&api.eq(frame.arguments,!getter&&row.index===-1?[['str',hint(row)]]:[])&&
-          api.eq(controller.locals.get(row.child+':this'),node.functionKind==='arrow'?node.lexicalReceiver:row.input),'conversion callback receiver or hint');
+        const frame=controller.protocol.callFrames.find(frame=>frame.child===row.child),getter=row.phase==='getter-waiting',node=api.heapNode(controller,row.method[1]),
+          expectedReceiver=node.functionKind==='arrow'?api.callReceiver(controller,row.method,node.lexicalReceiver):row.input;
+        api.require(frame?.callee&&api.eq(frame.callee,row.method)&&frame.parent===row.parent&&
+          api.eq(frame.arguments,!getter&&row.index===-1?[['str',hint(row)]]:[])&&
+          api.eq(controller.locals.get(row.child+':this'),expectedReceiver),'conversion callback callee, receiver or hint');
       }else if(row.phase!=='abrupt'){
         api.require(controller.stack.at(-1)===row.parent&&['return','throw'].includes(controller.lastReturn?.kind),
           'completed conversion child requires its immediately pending result');api.known(controller,controller.lastReturn.value);
