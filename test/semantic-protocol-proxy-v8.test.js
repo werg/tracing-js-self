@@ -39,18 +39,18 @@ test('Proxy descriptors and extensibility reuse ordinary assignment failure atom
   apply({kind:'proxy.set',object:'proxy',key:key('new'),value:['num',1],success:false});
   assert.throws(()=>apply({kind:'proxy.get',object:'proxy',key:key('x'),result:['num',7]}),/false Proxy data read/);
 });
-test('live handler traps, accessor targets, exotic chains and forged Proxy aliases are refused',()=>{
+test('selected Proxy trap values are checked at use while accessor targets, exotic chains and forged aliases are bounded',()=>{
   const {controller,apply}=fixture();
   apply({kind:'property.set',object:'handler',key:key('get'),receiver:ref('handler'),value:['num',1],success:true});
   const before=structuredClone(controller.heap);
   assert.throws(()=>apply({kind:'proxy.get',object:'proxy',key:key('x'),result:['num',2]}),/explicit call boundary/);
   assert.deepEqual(controller.heap,before);
-  assert.throws(()=>restore(controller),/explicit call boundary/);
+  assert.equal(restore(controller).proxies,1,'unused handler trap values are retained as data');
   const clean=fixture();clean.controller.heap.get('proxy').target=ref('proxy');
   assert.throws(()=>restore(clean.controller),/ordinary object/);
   const accessor=fixture();accessor.apply({kind:'property.define',object:'target',key:key('x'),
     descriptor:{kind:'accessor',get:['undefined'],set:['undefined'],enumerable:true,configurable:true},success:true});
-  assert.throws(()=>accessor.apply({kind:'proxy.get',object:'proxy',key:key('x'),result:['undefined']}),/accessors/);
+  assert.throws(()=>accessor.apply({kind:'proxy.get',object:'proxy',key:key('x'),result:['undefined']}),/call boundary/);
   const forged=fixture();forged.controller.heap.get('proxy').properties.set('x',['num',2]);
   assert.throws(()=>restore(forged.controller),/invented own storage/);
 });
@@ -122,7 +122,7 @@ test('Proxy completion checks reject false setters and honor SameValue for froze
     writable:false,enumerable:true,configurable:false},success:true});
   bad.apply({kind:'return',invocation:'reader',value:['num',0]});
   const before=structuredClone(bad.controller);
-  assert.throws(()=>bad.apply({kind:'proxy.finish',id:'read',completion:{kind:'normal',value:['num',0]}}),/frozen target/);
+  assert.throws(()=>bad.apply({kind:'proxy.finish',id:'read',completion:{kind:'normal',value:['num',0]}}),/derived abrupt boundary/);
   assert.deepEqual(bad.controller,before);
   const falseSet=fixture();trap(falseSet,'set');
   falseSet.apply({kind:'proxy.set.call',id:'write',object:'proxy',key:key('x'),value:['num',7],child:'writer'});

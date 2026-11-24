@@ -90,6 +90,13 @@ function lookup(draft, envId, name) {
   }
   guestFault('ReferenceError',`${name} is not defined`);
 }
+function proxyDeletePropertyDisplay(heap,key) {
+  const property=propertyKeyValue(key);
+  if(property[0]==='str')return property[1];
+  const identity=property[1],description=identity.startsWith('well-known:')?
+    ['str','Symbol.'+identity.slice('well-known:'.length)]:heap[identity]?.description;
+  return 'Symbol('+(description?.[0]==='str'?description[1]:'')+')';
+}
 function valueKey(tagged) {
   if(tagged[0]==='symbol')return symbolPropertyKey(tagged[1]);
   if (!['str','num','bool','null','undefined','bigint'].includes(tagged[0]))
@@ -259,7 +266,7 @@ function proxyRoute(heap,receiver,operation) {
     if(!trap)throw new TypeError('Proxy handler accessor trap unmodeled');
     if(!['undefined','null'].includes(trap.method.value[0]))
       return {kind:'trap',method:trap.method.value,observation:trap.observation,
-        target:['ref',obj.targetId],handler:['ref',handler.id],receiver};
+        object:['ref',obj.id],target:['ref',obj.targetId],handler:['ref',handler.id],receiver};
     obj=heap[obj.targetId];
   }
   if(!obj||!['object','array'].includes(obj.kind))
@@ -1210,20 +1217,42 @@ export class Runtime {
       if(pending?.waitingFrameId===frame.id){
         caller.pendingProperty=null;
         if(pending.proxy){
-          // Proxy invariants inspect the target after the trap has returned:
+          // Proxy invariants inspect the target after the trap has returned;
           // the callback may have changed its descriptor in the meantime.
-          // The trap frame still completed normally; any invariant failure
-          // belongs to the waiting property access in its caller.
           const target=draft.heap[pending.proxy.target[1]],key=pending.proxy.key,
             data=target.properties[key],attributes=target.dataAttributes?.[key],
-            accessor=target.accessors?.[key];
+            accessor=target.accessors?.[key],present=!!data||!!accessor;
           let message=null;
-          if(pending.kind==='set'&&!truthy(value)){
+          if(pending.kind==='has'){
+            const result=truthy(value);
+            if(!result&&present&&((accessor??attributes)?.configurable===false||target.extensible===false)){
+              const display=proxyDeletePropertyDisplay(draft.heap,key);
+              message=(accessor??attributes)?.configurable===false?
+                "'has' on proxy: trap returned falsish for property '"+display+
+                  "' which exists in the proxy target as non-configurable":
+                "'has' on proxy: trap returned falsish for property '"+display+"' but the proxy target is not extensible";
+            }
+            value=['bool',result];
+          }else if(pending.kind==='delete'){
+            const result=truthy(value);
+            if(result&&present&&((accessor??attributes)?.configurable===false||target.extensible===false)){
+              const display=proxyDeletePropertyDisplay(draft.heap,key);
+              message=(accessor??attributes)?.configurable===false?
+                "'deleteProperty' on proxy: trap returned truish for property '"+display+
+                  "' which is non-configurable in the proxy target":
+                "'deleteProperty' on proxy: trap returned truish for property '"+display+
+                  "' but the proxy target is non-extensible";
+            }
+            value=['bool',result];
+            if(!message&&!result&&pending.proxy.strict)
+              message="'deleteProperty' on proxy: trap returned falsish for property '"+
+                proxyDeletePropertyDisplay(draft.heap,key)+"'";
+          }else if(pending.kind==='set'&&!truthy(value)){
             if(pending.proxy.strict)message="'set' on proxy: trap returned falsish for property '"+key+"'";
           }else if(data&&attributes?.configurable===false&&attributes.writable===false&&
               !ownedSameValue(data.value,pending.kind==='get'?value:pending.value))
             message='Proxy '+pending.kind+' trap contradicted a non-configurable, non-writable target property';
-          else if(accessor?.configurable===false&&accessor[pending.kind].value[0]==='undefined'&&
+          else if(accessor?.configurable===false&&accessor[pending.kind]?.value?.[0]==='undefined'&&
               (pending.kind==='set'||value[0]!=='undefined'))
             message='Proxy '+pending.kind+' trap contradicted a non-configurable target accessor';
           if(message){
@@ -2086,7 +2115,34 @@ export class Runtime {
           }
           if(!obj||!['object','array','function','promise','proxy'].includes(obj.kind))
             throw new TypeError('Delete requires an owned ordinary object');
-          if(obj.kind==='proxy')throw new TypeError('Proxy deleteProperty trap requires its owned call boundary');
+          if(obj.kind==='proxy'){
+            const route=proxyRoute(s.heap,base.value,'deleteProperty');
+            if(route.kind==='trap'){
+              const target=ownedObjectStorage(s,route.target);
+              if(!['object','array'].includes(target?.kind))
+                throw new TypeError('Proxy delete target invariants require ordinary storage');
+              if(!this.callableGuest(s,route.method))guestFault('TypeError','Proxy deleteProperty trap is not callable');
+              const fn=s.heap[route.method[1]],id=this.newFrame(s,fn.codeId,fn.closureEnvId,f.id,null,
+                [token(route.target,eventId),key],this.functionThis(fn,route.handler),fn.id);
+              f.pendingProperty={kind:'delete',waitingFrameId:id,proxy:{object:route.object,target:route.target,
+                handler:route.handler,key:property,strict:!!this.programs[f.codeId].strict}};
+              s.control.a0.activeFrameId=id;
+              return {...operands(base,key),causes:[{kind:'invocation',frameId:id}],reads:[route.observation]};
+            }
+            const target=ownedObjectStorage(s,route.target);
+            if(!['object','array'].includes(target?.kind))
+              throw new TypeError('Proxy delete target requires ordinary storage');
+            const outcome=deleteOrdinaryOwn(target,property);
+            if(!outcome.success&&this.programs[f.codeId].strict){
+              const brand=target.kind==='array'?'[object Array]':target.prototype===null?'[object Object]':'#<Object>';
+              guestFault('TypeError',"Cannot delete property '"+proxyDeletePropertyDisplay(s.heap,property)+"' of "+brand);
+            }
+            const present=outcome.present,slot=Object.hasOwn(target.properties??{},property)?target.properties[property]:null;
+            return {...operands(base,key),...result(['bool',outcome.success]),reads:[{
+              kind:'property',objectId:target.id,key:property,present,
+              version:Object.hasOwn(target.propertyVersions??{},property)?target.propertyVersions[property]:0,
+              shapeVersion:target.shapeVersion??0,value:slot?.value??U,supplyingEvent:slot?.origin??null}]};
+          }
           if(obj.kind==='function'&&['name','length'].includes(property)&&
              !Object.hasOwn(obj.properties??{},property)&&!Object.hasOwn(obj.accessors??{},property))
             throw new TypeError('Function name/length deletion requires owned function-property storage');
@@ -2222,8 +2278,24 @@ export class Runtime {
           if(arg==='in'){
             if(!['ref','promise','intrinsic','builtinfn','hostfn','host'].includes(b.value[0]))
               guestFault('TypeError','Right-hand side of in is not an object');
-            const key=valueKey(a.value);
-            return {...operands(a,b),...result(['bool',ownedHasProperty(ownedObjectHeap(s),b.value,key)])};
+            const property=valueKey(a.value),object=ownedObjectStorage(s,b.value);
+            if(object?.kind==='proxy'){
+              const route=proxyRoute(s.heap,b.value,'has');
+              if(route.kind==='trap'){
+                const target=ownedObjectStorage(s,route.target);
+                if(!['object','array'].includes(target?.kind))
+                  throw new TypeError('Proxy has target invariants require ordinary storage');
+                if(!this.callableGuest(s,route.method))guestFault('TypeError','Proxy has trap is not callable');
+                const fn=s.heap[route.method[1]],id=this.newFrame(s,fn.codeId,fn.closureEnvId,f.id,null,
+                  [token(route.target,eventId),a],this.functionThis(fn,route.handler),fn.id);
+                f.pendingProperty={kind:'has',waitingFrameId:id,proxy:{object:route.object,target:route.target,
+                  handler:route.handler,key:property,strict:false}};
+                s.control.a0.activeFrameId=id;
+                return {...operands(a,b),causes:[{kind:'invocation',frameId:id}],reads:[route.observation]};
+              }
+              return {...operands(a,b),...result(['bool',ownedHasProperty(ownedObjectHeap(s),route.target,property)])};
+            }
+            return {...operands(a,b),...result(['bool',ownedHasProperty(ownedObjectHeap(s),b.value,property)])};
           }
           if([a,b].some(value=>value.value[0]==='symbol')&&!isOwnedArithmetic(arg)&&!['===','!==','==','!='].includes(arg))
             guestFault('TypeError','Cannot convert a Symbol value to a number');
