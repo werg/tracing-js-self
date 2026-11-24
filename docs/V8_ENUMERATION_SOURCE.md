@@ -67,9 +67,13 @@ are ignored; candidates that no longer exist anywhere on the live chain are
 skipped. Value writes are visible. Prototype replacement and enumerable-flag
 changes keep the captured candidate order; the next step checks live property
 existence without rebuilding that order. A checkpoint immediately after such a
-write remains a legitimate prefix, including a loop that then breaks. Restore
-validates the stored snapshot's shape, key order, shadowing, links and cursor
-bounds; exact public prefix replay binds its provenance.
+write remains a legitimate prefix, including a loop that then breaks. These
+prototype-replacement and enumerability-mutation cases were checked on Node
+v24.22.3 in the [issue51 source tests](../test/semantic-protocol-enumeration-source-v8.test.js),
+with runtime version recorded in the [issue51 verification receipt](evidence/issue51-20261124/objects-verification.json);
+this does not qualify other engines. Restore validates the stored snapshot's
+shape, key order, shadowing, links and cursor bounds; exact public prefix replay
+binds its provenance.
 
 Stable transparent Proxy enumeration retains the original Proxy identity and
 captured target keys/descriptors/prototype when the relevant traps are absent.
