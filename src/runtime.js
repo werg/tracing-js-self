@@ -290,6 +290,20 @@ function enumerableOwn(obj,key){
   return Object.hasOwn(obj.accessors??{},key)?obj.accessors[key].enumerable:
     Object.hasOwn(obj.properties??{},key)&&obj.dataAttributes?.[key]?.enumerable!==false&&!(obj.kind==='array'&&key==='length');
 }
+function enumerationProxyTarget(heap,identity){
+  let object=heap[identity];const seen=new Set();
+  while(object?.kind==='proxy'){
+    if(seen.has(object.id)||seen.size>=64)throw new TypeError('Enumeration Proxy route cycle/bound');seen.add(object.id);
+    if(!object.targetId||!object.handlerId)throw new TypeError('Revoked Proxy enumeration requires its abrupt boundary');
+    for(const name of ['ownKeys','getOwnPropertyDescriptor','getPrototypeOf']){
+      const selected=ordinaryGet(heap,['ref',object.handlerId],name);
+      if(!selected||!['undefined','null'].includes(selected.method.value[0]))
+        throw new TypeError('Proxy enumeration trap requires ordered owned internal-method continuation');
+    }
+    object=heap[object.targetId];
+  }
+  return object;
+}
 function enumerationSnapshot(heap,source){
   const chain=[],keys=[],visited=new Set(),objects=new Set();
   if(source[0]==='str')return {chain,keys:Array.from({length:source[1].length},(_,i)=>String(i))};
@@ -297,12 +311,13 @@ function enumerationSnapshot(heap,source){
   if(source[0]!=='ref')throw new TypeError('For-in requires owned ordinary storage');
   let object=heap[source[1]];
   while(object){
-    if(!['object','array','function'].includes(object.kind))throw new TypeError('For-in exotic enumeration is outside the ordinary profile');
-    if(objects.has(object.id)||chain.length===128)throw new TypeError('For-in prototype chain exceeds owned budget');objects.add(object.id);
+    const identity=object.id;object=enumerationProxyTarget(heap,identity);
+    if(!object||!['object','array','function'].includes(object.kind))throw new TypeError('For-in exotic enumeration is outside the ordinary profile');
+    if(objects.has(identity)||chain.length===128)throw new TypeError('For-in prototype chain exceeds owned budget');objects.add(identity);
     const own=ownPropertyKeys(object).filter(key=>!isSymbolPropertyKey(key)).map(key=>[key,!!enumerableOwn(object,key)]);
     if(object.kind==='function')for(const key of ['name','length','prototype','caller','arguments'])
       if(!own.some(row=>row[0]===key))own.push([key,false]);
-    const prototype=objectPrototype(object);chain.push({id:object.id,prototype,keys:own});
+    const prototype=objectPrototype(object);chain.push({id:identity,prototype,keys:own});
     for(const [key,enumerable] of own)if(!visited.has(key)){
       visited.add(key);if(enumerable)keys.push(propertyKeyValue(key)[1]);
       if(visited.size>10000)throw new RangeError('For-in key budget exceeded');
@@ -1924,10 +1939,14 @@ export class Runtime {
           if(cursor.done)return {...operands(value),...result(this.iteratorResult(s,U,true,eventId))};
           // Pinned V8 retains initial candidates across prototype and flag changes.
           // Existence is checked on the current chain without recapturing keys.
+          const proxy=cursor.chain.some(row=>s.heap[row.id]?.kind==='proxy');
+          if(proxy&&JSON.stringify(enumerationSnapshot(s.heap,cursor.source).chain)!==JSON.stringify(cursor.chain))
+            throw new TypeError('Proxy enumeration descriptor/prototype mutation requires its ordered continuation');
+          const liveSource=cursor.source[0]==='ref'?['ref',enumerationProxyTarget(s.heap,cursor.source[1]).id]:cursor.source;
           let key;
           while(cursor.nextIndex<cursor.keys.length){
             const candidate=cursor.keys[cursor.nextIndex++];
-            if(cursor.source[0]==='str'||ownedHasProperty(ownedObjectHeap(s),cursor.source,stringPropertyKey(candidate))){key=candidate;break;}
+            if(cursor.source[0]==='str'||ownedHasProperty(ownedObjectHeap(s),liveSource,stringPropertyKey(candidate))){key=candidate;break;}
           }
           cursor.done=key===undefined;
           return {...operands(value),...result(this.iteratorResult(s,cursor.done?U:['str',key],cursor.done,eventId))};

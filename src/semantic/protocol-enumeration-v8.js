@@ -29,6 +29,20 @@ function selectedKeys(chain,api){
   }
   return keys;
 }
+function enumerationTarget(controller,identity,api){
+  const seen=new Set();let current=identity,node=controller.heap.get(current);
+  while(node?.kind==='proxy'){
+    api.require(!seen.has(current)&&seen.size<64,'enumeration Proxy route cycle/bound');seen.add(current);
+    api.require(node.target?.[0]==='ref'&&node.handler?.[0]==='ref','revoked Proxy enumeration requires its abrupt boundary');
+    for(const name of ['ownKeys','getOwnPropertyDescriptor','getPrototypeOf']){
+      const descriptor=api.resolveProperty(controller,node.handler[1],['str',name],{forHas:true}).descriptor;
+      api.require(!descriptor||descriptor.kind==='data'&&['undefined','null'].includes(descriptor.value[0]),
+        'Proxy enumeration trap requires its ordered internal-method continuation');
+    }
+    current=node.target[1];node=controller.heap.get(current);
+  }
+  return {identity:current,node:api.heapNode(controller,current)};
+}
 function snapshot(controller,source,api){
   api.known(controller,source);const chain=[];
   if(source[0]==='str'){
@@ -39,7 +53,7 @@ function snapshot(controller,source,api){
   const seen=new Set();let current=source[1];
   for(;;){
     api.require(!seen.has(current)&&chain.length<ENUMERATION_LIMITS_V8.chain,'cyclic or excessive enumeration prototype chain');seen.add(current);
-    const node=api.heapNode(controller,current);api.require(ordinary.has(node.kind),'enumeration requires ordinary storage');
+    const {node}=enumerationTarget(controller,current,api);api.require(ordinary.has(node.kind),'enumeration requires ordinary storage');
     const keys=api.order(node).filter(key=>typeof key==='string').map(key=>[key,api.ownDescriptor(node,['str',key]).enumerable]);
     api.require(keys.length<=ENUMERATION_LIMITS_V8.keys,'enumeration own-key bound');
     const prototype=node.prototype===undefined?'ordinary':api.copy(node.prototype);chain.push({id:current,prototype,keys});
@@ -64,8 +78,12 @@ export function applyEnumerationRecordV8(controller,record,api){
     // keep captured order, ignore additions and skip names no longer present
     // anywhere on the current live chain, without ever reading a property value.
     if(!node.done){
-      if(node.source[0]==='ref')while(node.nextIndex<node.keys.length&&
-        !api.resolveProperty(controller,node.source[1],['str',node.keys[node.nextIndex]],{forHas:true}).descriptor)node.nextIndex++;
+      const proxy=node.chain.some(row=>controller.heap.get(row.id)?.kind==='proxy');
+      if(proxy)api.require(api.eq(snapshot(controller,node.source,api).chain,node.chain),
+        'Proxy enumeration descriptor/prototype mutation requires its ordered continuation');
+      const source=node.source[0]==='ref'?enumerationTarget(controller,node.source[1],api).identity:null;
+      if(source!==null)while(node.nextIndex<node.keys.length&&
+        !api.resolveProperty(controller,source,['str',node.keys[node.nextIndex]],{forHas:true}).descriptor)node.nextIndex++;
     }
     const done=node.nextIndex>=node.keys.length,result=done?['undefined']:['str',node.keys[node.nextIndex]];
     api.require(record.done===done&&api.eq(record.result,result),'false enumeration next result');
@@ -92,7 +110,7 @@ export function restoreEnumerationStateV8(controller,api){
     const seen=new Set();
     for(const [index,row]of node.chain.entries()){
       assertAlgorithmFields(row,['id','prototype','keys'],'enumeration chain entry');id(row.id);
-      api.require(!seen.has(row.id)&&ordinary.has(api.heapNode(controller,row.id).kind),'enumeration chain identity');seen.add(row.id);
+      api.require(!seen.has(row.id)&&ordinary.has(enumerationTarget(controller,row.id,api).node.kind),'enumeration chain identity');seen.add(row.id);
       assertAlgorithmDataArray(row.keys,'enumeration own keys');const own=new Set();
       api.require(row.keys.length<=ENUMERATION_LIMITS_V8.keys,'enumeration own-key bound');
       let stringSeen=false,previousIndex=-1;

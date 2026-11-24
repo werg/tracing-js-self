@@ -33,6 +33,13 @@ export function prepareProtocolObservationExtensionsV8({source,mode='completions
     return next();
   };
   for(const adapter of selected)adapter.setCallObserver?.(invoke);
+  const proxyEnumerationTarget=value=>{
+    const owners=selected.filter(adapter=>typeof adapter.nativeEnumerationTarget==='function');
+    if(owners.length!==1)throw new TypeError('Proxy enumeration requires one independent constructor registry');
+    return owners[0].nativeEnumerationTarget(value);
+  };
+  for(const adapter of selected)adapter.setProxyEnumerationTarget?.(proxyEnumerationTarget);
+
   return {ids,globals,metadataAdapters,observations(){
     const results=[];
     for(const adapter of selected)if(adapter.observations){

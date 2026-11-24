@@ -10,9 +10,15 @@ const withIssue51Lineage=rows=>Object.freeze(rows.map(row=>Object.freeze({...row
   ancestorIds:Object.freeze(['issue51-original-objects'])})));
 
 export const issue51ObjectFixtures=withIssue51Lineage([
+  Object.freeze({id:'issue51-control-for-in-proxy',family:'issue51-unsupported-control',
+    source:'"use strict";function run(x){const object=new Proxy({a:1},{});for(const key in object){}return 7;}',
+    entry:'run',args:[4]}),
   ...issue51ConstructionFixtures,
   ...issue51ErrorFixtures,
   ...issue51EnumerationFixtures,
+  Object.freeze({"id":"issue51-for-in-transparent-proxy-value-writes","family":"issue51-mutation-for-in","source":"\"use strict\";function run(x){const target={a:1,b:2};const object=new Proxy(target,{});const seen=[];for(const key in object){seen.push(key);target[key]++;}return [seen,target.a,target.b];}","entry":"run","args":[4]}),
+  Object.freeze({"id":"issue51-for-in-nested-transparent-proxy","family":"issue51-mutation-for-in","source":"\"use strict\";function run(x){const target={b:1};Object.setPrototypeOf(target,{a:2,b:3});const object=new Proxy(new Proxy(target,{}),{});const seen=[];for(const key in object)seen.push(key);return seen;}","entry":"run","args":[4]}),
+
   Object.freeze({id:'issue51-control-for-in-prototype-replacement',family:'issue51-unsupported-control',
     source:'"use strict";function run(x){const object={a:1,b:2};for(const key in object)Object.setPrototypeOf(object,{p:1});return 7;}',
     entry:'run',args:[4]}),
@@ -109,8 +115,5 @@ export const issue51ObjectFixtures=withIssue51Lineage([
 export const issue51UnsupportedControls=withIssue51Lineage([
   ...issue51ConstructionUnsupportedControls,
   ...issue51ProxyUnsupportedControls,
-  Object.freeze({id:'issue51-control-for-in-proxy',family:'issue51-unsupported-control',
-    source:'"use strict";function run(x){const object=new Proxy({a:1},{});for(const key in object){}return 7;}',
-    entry:'run',args:[4]}),
 
 ]);

@@ -184,6 +184,24 @@ export function createProxyObservationAdapterV8({source,side='native',bundle=nul
   }
   return {id:PROXY_OBSERVATION_PROFILE_V8,
     setCallObserver(observer){invoke=observer;},
+    nativeEnumerationTarget(raw){
+      if(!types.isProxy(raw))return undefined;
+      const ctx={fail,intrinsicPrototype:value=>ordinaryPrototypes.has(value)?'Object.prototype':value};
+      let current=raw;const seen=new Set();
+      while(types.isProxy(current)){
+        if(seen.has(current)||seen.size>=64)fail('enumeration Proxy route cycle/bound');seen.add(current);
+        const entry=registered.get(current);if(!entry)fail('unregistered enumeration Proxy');
+        const descriptors=nativeHandler(entry.handler,ctx);
+        for(const name of ['ownKeys','getOwnPropertyDescriptor','getPrototypeOf']){
+          const descriptor=descriptors[name];
+          if(descriptor&&(!Object.hasOwn(descriptor,'value')||descriptor.value!=null))
+            fail('enumeration Proxy trap requires its internal-method continuation');
+        }
+        current=entry.target;
+      }
+      return current;
+    },
+
     ownedAssignmentValue({object,key,state}){
       if(object.kind!=='proxy')return undefined;
       const ctx={state,fail(message){throw new TypeError('Proxy assignment observation: '+message);}},
