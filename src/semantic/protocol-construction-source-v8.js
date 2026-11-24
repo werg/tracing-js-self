@@ -205,7 +205,7 @@ export function createConstructionSourceAdapterV8({bundle,source}){
       if(lexicalCapture)emit(ctx,{kind:'callable.capture',object:node.id,...lexicalCapture},event);
       return true;
     },
-    beforeEvent(ctx,event){initializeOrdinaryPrototypes(ctx,event);},
+    beforeEvent(ctx,event){if(event)initializeOrdinaryPrototypes(ctx,event);},
     event(ctx,event,row){
       const inst=instruction(ctx,event);if(!inst)return false;const op=inst.op;
       const ordinaryPrototypeInitialized=event.stateChanges.some(change=>change.table==='heap'&&change.after?.kind==='function'&&

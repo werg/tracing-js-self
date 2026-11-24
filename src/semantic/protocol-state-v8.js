@@ -249,8 +249,26 @@ function call(controller,record,options={}){
   record.arguments.forEach((value,index)=>controller.locals.set(record.child+':argument:'+index,copy(value)));
   controller.frameFunctions.set(record.child,node.code);controller.stack.push(record.child);
 }
-function complete(controller,record){
-  const protocol=state(controller);
+function scheduledCallback(job){
+  if(job?.promise){
+    if(job.reaction==='then'&&job.originalStatus==='rejected')return job.rejectionClosure??null;
+    if(job.reaction==='catch'&&job.originalStatus==='fulfilled')return null;
+  }
+  return job?.closure??null;
+}
+function scheduledChild(controller,identity,job){
+  if(job?.reaction==='adopt'){
+    const row=[...controller.heap.values()].map(node=>node.adoption)
+      .find(adoption=>adoption?.job===identity&&adoption.phase==='reading');
+    if(row?.lookup?.child)return row.lookup.child;
+  }
+  return 'job:'+identity;
+}
+export function activateProtocolCallV8(controller,record){
+  call(controller,record);
+  return copy(state(controller).callFrames.at(-1));
+}
+function complete(controller,record){  const protocol=state(controller);
   require(['return','throw'].includes(record.kind),'call completion kind');
   require(controller.stack.at(-1)===record.invocation,'completion has wrong active invocation');known(controller,record.value);
   if(controller.stack.length>1){
@@ -258,6 +276,17 @@ function complete(controller,record){
     require(frame?.child===record.invocation&&frame.parent===controller.stack.at(-2),'call scope completion mismatch');
     controller.stack.pop();protocol.callFrames.pop();
     controller.receiver=copy(frame.priorReceiver);controller.captureAliases=new Map(frame.priorAliases);
+    if(controller.activeJob&&frame.child===scheduledChild(controller,controller.activeJob,
+      controller.jobs?.get(controller.activeJob))){
+      const job=controller.jobs?.get(controller.activeJob),callback=scheduledCallback(job);
+      require(job?.status==='running'&&job.owner===controller.rootInvocation&&
+        controller.stack.length===1&&controller.stack[0]===controller.rootInvocation&&
+        frame.parent===controller.rootInvocation&&callback&&eq(frame.callee,['ref',callback])&&
+        job.returned===undefined,'scheduled callback completion differs from its retained job');
+      controller.stack.pop();
+      job.returned={kind:record.kind,value:copy(record.value)};
+    }else require(!controller.activeJob||controller.stack.length>1,
+      'scheduled callback must complete through its retained call frame');
     controller.lastReturn={kind:record.kind,value:copy(record.value)};
   }else{
     require(!controller.activeJob,'job completion needs its declared scheduler profile');
@@ -510,6 +539,39 @@ export function restoreProtocolStateV8(controller,snapshot){
       require(pair.length===2&&pair.every(value=>typeof value==='string')&&!aliases.has(pair[0])&&controller.locals.has(pair[1]),'capture alias binding');aliases.add(pair[0]);}
     assertAlgorithmDataArray(frame.arguments,'call arguments');frame.arguments.forEach(value=>known(temporary,value));
   }
+  if(controller.activeJob!==null&&controller.activeJob!==undefined){
+    const job=controller.jobs?.get(controller.activeJob),callback=scheduledCallback(job),
+      child=scheduledChild(controller,controller.activeJob,job),frame=snapshot.callFrames.find(row=>row.child===child);
+    require(job?.status==='running'&&job.owner===controller.rootInvocation&&callback&&
+      Object.hasOwn(job,'priorPending')&&Object.hasOwn(job,'priorLastReturn'),
+      'active scheduler job lacks its selected callback or saved caller completion');
+    const priorPending=job.priorPending;
+    if(priorPending!==null){
+      assertAlgorithmFields(priorPending,['kind','value',...(Object.hasOwn(priorPending,'handler')?['handler']:[])],
+        'scheduled caller completion');
+      require(['return','throw','cleanup'].includes(priorPending.kind),'scheduled caller completion kind');
+      known(temporary,priorPending.value);
+    }
+    const priorLastReturn=job.priorLastReturn;
+    if(priorLastReturn!==null){
+      assertAlgorithmFields(priorLastReturn,['kind','value'],'scheduled caller return');
+      require(['return','throw'].includes(priorLastReturn.kind),'scheduled caller return kind');
+      known(temporary,priorLastReturn.value);
+    }
+    if(job.returned!==undefined){
+      assertAlgorithmFields(job.returned,['kind','value'],'scheduled callback completion');
+      require(['return','throw'].includes(job.returned.kind)&&!frame&&!controller.stack.includes(child),
+        'completed scheduler callback retains an active call frame');
+      known(temporary,job.returned.value);
+    }else{
+      const expectedArguments=job.promise&&job.reaction!=='finally'?[job.originalResult]:[];
+      require(frame&&frame.parent===controller.rootInvocation&&eq(frame.callee,['ref',callback])&&
+        eq(frame.arguments,expectedArguments)&&eq(job.priorReceiver,frame.priorReceiver)&&
+        eq(job.priorAliases,frame.priorAliases)&&controller.stack.includes(child)&&
+        controller.stack.indexOf(child)===controller.stack.indexOf(controller.rootInvocation)+1,
+        'active scheduler callback differs from its retained call frame');
+    }
+  }
   for(const row of snapshot.symbols)require(!controller.heap.has(row.id),'Symbol/object identity collision');
   for(const [id,node]of controller.heap){
     if(!ordinaryHeapKinds.has(node.kind)){
@@ -657,8 +719,11 @@ export function assertProtocolDetailCompatible(controller,record){
     require(keys.size<=PROTOCOL_V8_LIMITS.properties,'ordinary property count bound');
   }
   if(controller.protocol&&(record.kind==='call'||['return','throw'].includes(record.kind)&&(controller.protocol.callFrames.length||controller.stack.length>1))){
-    const scheduler=allowsProtocolInternalSchedulerV8(controller,record)&&!controller.protocol.callFrames.length&&
-      !controller.protocol.pendingCalls.length;
+    const activeFrame=controller.protocol.callFrames.at(-1),scopedJobCompletion=controller.activeJob!==null&&
+      ['return','throw'].includes(record.kind)&&activeFrame?.child===record.fields?.invocation&&
+      controller.stack.at(-1)===activeFrame.child;
+    const scheduler=scopedJobCompletion||allowsProtocolInternalSchedulerV8(controller,record)&&
+      !controller.protocol.callFrames.length&&!controller.protocol.pendingCalls.length;
     const detailedCall=record.kind!=='call'||PROTOCOL_MACHINE_ADAPTERS_V8.some(adapter=>
       adapter.allowsDetailedCall?.(controller,record)===true);
     require(scheduler&&detailedCall,'active protocol calls require scoped call/completion records');

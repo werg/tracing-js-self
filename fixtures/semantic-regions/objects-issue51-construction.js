@@ -14,10 +14,15 @@ export const issue51ConstructionFixtures=withIssue51Lineage([
   Object.freeze({id:'issue51-constructor-arrow-conversion-callback',
     family:'issue51-constructor-lexical-arrow',
     source:'"use strict";function run(){let observed;class A{}class D extends A{#x=9;constructor(){const capture=()=>{observed=[this,new.target,this.#x];return 7;};super();return {valueOf:capture};}}const result=new D();const number=Number(result);return [number,observed[0]!==result,observed[1]===D,observed[2]===9];}',
-    entry:'run',args:[]})
-]);
-
-export const issue51ConstructionFaultFixtures=withIssue51Lineage([
+    entry:'run',args:[]}),
+  Object.freeze({id:'issue51-control-constructor-arrow-in-promise-reaction',
+    family:'issue51-unsupported-control',
+    source:'"use strict";function run(){const report={};function C(){this.x=3;const capture=()=>{report.result=[this.x,new.target===C];};Promise.resolve(1).then(capture);}new C();return report;}',
+    entry:'run',args:[]}),
+  Object.freeze({id:'issue51-derived-constructor-arrow-in-promise-reaction',
+    family:'issue51-constructor-lexical-arrow',
+    source:'"use strict";function run(){const report={};class A{}class D extends A{constructor(){const capture=()=>{report.result=[this.x,new.target===D];};super();this.x=9;Promise.resolve(1).then(capture);}}new D();return report;}',
+    entry:'run',args:[]}),
   Object.freeze({id:'issue51-derived-this-before-super-reference-error',
     family:'issue51-derived-this-fault',
     source:'"use strict";function run(){class A{}class D extends A{constructor(){return this;}}return new D();}',
@@ -28,9 +33,7 @@ export const issue51ConstructionFaultFixtures=withIssue51Lineage([
     entry:'run',args:[]})
 ]);
 
-export const issue51ConstructionUnsupportedControls=withIssue51Lineage([
-  Object.freeze({id:'issue51-control-constructor-arrow-in-promise-reaction',
-    family:'issue51-unsupported-control',
-    source:'"use strict";function run(){const report={};function C(){this.x=3;const capture=()=>{report.result=[this.x,new.target===C];};Promise.resolve(1).then(capture);}new C();return report;}',
-    entry:'run',args:[]})
-]);
+export const issue51ConstructionFaultFixtures=Object.freeze(
+  issue51ConstructionFixtures.filter(row=>row.family==='issue51-derived-this-fault'));
+
+export const issue51ConstructionUnsupportedControls=withIssue51Lineage([]);

@@ -3,7 +3,7 @@ import {issue51ProxyReflectionFixtures} from './objects-issue51-proxy-reflection
 import {issue51EnumerationFixtures} from './objects-issue51-enumeration.js';
 import {issue51ErrorFixtures} from './objects-issue51-errors.js';
 import {issue51ProxyFixtures,issue51ProxyUnsupportedControls} from './objects-issue51-proxy.js';
-import {issue51ConstructionFixtures,issue51ConstructionFaultFixtures,issue51ConstructionUnsupportedControls} from './objects-issue51-construction.js';
+import {issue51ConstructionFixtures,issue51ConstructionUnsupportedControls} from './objects-issue51-construction.js';
 
 // Original-source fixtures for issue 51. These exact source strings are also
 // the entries exported by tools/export-issue51-evidence.mjs.
@@ -25,7 +25,6 @@ export const issue51ObjectFixtures=withIssue51Lineage([
     source:'"use strict";function run(x){const object={a:1,b:2};for(const key in object)Object.setPrototypeOf(object,{p:1});return 7;}',
     entry:'run',args:[4]}),
 
-  ...issue51ConstructionFaultFixtures,
   ...issue51ProxyFixtures,
   ...issue51ProxyReflectionFixtures,
   Object.freeze({id:'issue51-has-in-reflect-symbol-accessor',family:'issue51-property-existence',

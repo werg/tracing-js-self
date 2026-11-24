@@ -1207,7 +1207,10 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
         const reaction=reactionFrames.get(exit.invocation),adoptedTarget=regionAdapter&&reaction&&kind==='return'&&
           value[0]==='ref'&&controller(owner).heap.get(value[1])?.kind==='promise'?value[1]:null;
         if(adoptedTarget!==null)extensionContext.preparePromiseAdoption(event,owner,reaction.target,adoptedTarget);
-        emit(owner,kind,{value,invocation:frameId(exit.invocation)},event,'completion');
+        const scopedCall=controller(owner).protocol?.callFrames.at(-1);
+        if(regionAdapter&&scopedCall?.child===frameId(exit.invocation))
+          emitProtocol(owner,{kind,invocation:frameId(exit.invocation),value},event,'owned-source-completion/1');
+        else emit(owner,kind,{value,invocation:frameId(exit.invocation)},event,'completion');
         if(reactionFrames.has(exit.invocation)){
           const job=reactionFrames.get(exit.invocation);
           if(adoptedTarget!==null){

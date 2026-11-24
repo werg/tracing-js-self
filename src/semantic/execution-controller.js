@@ -8,6 +8,7 @@ import {analyzeSemanticProgram} from '../training/semantic-program.js';
 import {materializeHostArguments,decodeHostPayload} from '../host/materialize.js';
 import {hostOperation} from '../host/operations.js';
 import {checkSemanticRegionClaim} from '../training/semantic-regions.js';
+import {activateProtocolCallV8} from './protocol-state-v8.js';
 
 const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 function arrayIndex(key){
@@ -127,8 +128,6 @@ export class SemanticExecutionController {
     if(closure?.kind!=='closure')fail('capture','Scheduler requires an owned closure');
     if(closure.generatorFunction||closure.promiseResolver||closure.asyncFunction)
       fail('capture','Generator, async and resolving functions require their explicit call protocol');
-    if(closure.callable?.lexicalConstruction)
-      fail('capture','Constructor-captured arrows require an authenticated synchronous call frame');
     return closure;
   }
   refreshReady(){
@@ -530,13 +529,23 @@ export class SemanticExecutionController {
             if(job.reaction!=='finally')argument=promise.result;
           }
           if(callback){
-              const closure=this.schedulerClosure(callback);
-              job.priorAliases=[...this.captureAliases];
+              const closure=this.schedulerClosure(callback),child='job:'+f.job;
               if(this.protocol){
-                job.priorReceiver=structuredClone(this.receiver);
-                this.receiver=structuredClone(closure.functionKind==='arrow'?closure.lexicalReceiver:['undefined']);
+                if(this.stack.length)fail('job','Owned jobs cannot inherit an active invocation');
+                job.priorPending=structuredClone(this.pending??null);
+                job.priorLastReturn=structuredClone(this.lastReturn??null);
+                this.pending=null;this.lastReturn=null;
+                this.stack.push(this.rootInvocation);
+                const frame=activateProtocolCallV8(this,{child,callee:['ref',callback],
+                  receiver:closure.functionKind==='arrow'?closure.lexicalReceiver:['undefined'],
+                  arguments:job.promise&&job.reaction!=='finally'?[argument]:[]});
+                job.priorAliases=structuredClone(frame.priorAliases);
+                job.priorReceiver=structuredClone(frame.priorReceiver);
+              }else{
+                job.priorAliases=[...this.captureAliases];
+                this.captureAliases=new Map((closure.captures??[]).map(c=>[c.binding,c.cell]));
+                this.stack.push(child);this.frameFunctions.set(child,closure.code);
               }
-              this.captureAliases=new Map((closure.captures??[]).map(c=>[c.binding,c.cell]));
               const fn=analyzeSemanticProgram(this.source.source).functions.find(fn=>
                 fn.name===closure.code||'function:'+fn.start===closure.code);
               if(!fn)fail('capture','Promise reaction closure has no source site');
@@ -547,8 +556,7 @@ export class SemanticExecutionController {
                 this.captureAliases.set(name,cell);
                 this.locals.set(cell,index===0?structuredClone(argument):['undefined']);
               }
-              this.activeJob=f.job;this.stack.push('job:'+f.job);
-              this.frameFunctions.set('job:'+f.job,closure.code);
+              this.activeJob=f.job;
           }
         }else{
           if(this.jobs.get(f.job)?.owner!==f.owner)fail('job','Job owner mismatch');
@@ -564,6 +572,8 @@ export class SemanticExecutionController {
           if(this.activeJob===f.job){
             this.captureAliases=new Map(job.priorAliases);
             if(Object.hasOwn(job,'priorReceiver'))this.receiver=structuredClone(job.priorReceiver);
+            if(Object.hasOwn(job,'priorPending'))this.pending=structuredClone(job.priorPending);
+            if(Object.hasOwn(job,'priorLastReturn'))this.lastReturn=structuredClone(job.priorLastReturn);
             this.activeJob=null;
           }
           if(job.promise){

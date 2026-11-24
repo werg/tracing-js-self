@@ -12,13 +12,15 @@ function inspectHeap(node,before,{boundary=false,protocolProfiles=[],exceptionPr
   if(exceptionProfile&&node.declaredError){ownedExceptionFields(node);return;}
   const generator=protocolProfiles.includes('synchronous-generator-source/1')&&
     (node.generatorFunction===true||node.kind==='generator'||node.kind==='object'&&node.prototype==='Generator.prototype');
+  const construction=protocolProfiles.includes('class-private-source/1');
   const ordinaryObject=protocolProfiles.includes('promise-object-source/1')&&['object','array'].includes(node.kind);
   if(node.kind==='proxy'&&!protocolProfiles.includes('ordinary-data-proxy-source/1'))
     reject('Proxy target/handler state requires an explicit v8 protocol profile');
-  if(node.classConstructor||node.instanceInitializer||node.staticInitializer||
-    ['privateSlots','privateKinds','privateVersions'].some(key=>Object.hasOwn(node,key)))
+  if(!construction&&(node.classConstructor||node.instanceInitializer||node.staticInitializer||
+    ['privateSlots','privateKinds','privateVersions'].some(key=>Object.hasOwn(node,key))))
     reject('class/private state requires an explicit v8 behavioral-state profile');
-  if(!generator&&!ordinaryObject&&(node.prototypeInitialized||Object.keys(node.dataAttributes??{}).length))
+  if(!generator&&!ordinaryObject&&!construction&&
+    (node.prototypeInitialized||Object.keys(node.dataAttributes??{}).length))
     reject('constructor/prototype descriptors require an explicit v8 behavioral-state profile');
   if((!generator&&!ordinaryObject&&node.extensible===false)||node.templateSite||node.templateRawOf)
     reject('frozen template identity and descriptors require an explicit v8 behavioral-state profile');
@@ -28,19 +30,20 @@ function inspectHeap(node,before,{boundary=false,protocolProfiles=[],exceptionPr
     // Observed ordinary null-prototype objects are already represented by the
     // input/result graph contract. A guest operation changing that link is not.
     const observedNull=node.kind==='object'&&node.prototype===null&&(boundary||before?.prototype===null);
-    if(node.prototype!==ordinary&&!observedNull&&!generator&&!ordinaryObject)
+    if(node.prototype!==ordinary&&!observedNull&&!generator&&!ordinaryObject&&!construction)
       reject('guest custom/null prototype state requires an explicit v8 behavioral-state profile');
   }
 }
 
 /** Inspect committed owned snapshots only; never materialize or execute them. */
 export function checkEffectfulProjectionState(bundle,{protocolProfiles=[],exceptionProfile=false}={}){
-  const conversion=protocolProfiles.includes('primitive-conversion-source/1'),
+  const construction=protocolProfiles.includes('class-private-source/1'),
+    conversion=protocolProfiles.includes('primitive-conversion-source/1'),
     number=conversion||protocolProfiles.includes('number-conversion-source/1');
   let snapshots=0;
   for(const node of Object.values(bundle.initialState?.heap??{})){inspectHeap(node,null,{boundary:true,protocolProfiles,exceptionProfile});snapshots++;}
   for(const frame of Object.values(bundle.initialState?.frames??{}))
-    if(frame.constructReceiver||frame.newTarget||frame.afterInstanceInitialization||frame.classStaticResult||
+    if(!construction&&(frame.constructReceiver||frame.newTarget||frame.afterInstanceInitialization||frame.classStaticResult)||
       (frame.pendingNumberConversion&&!number)||(frame.pendingPropertyKeyConversion&&!conversion))
       reject('construction completion state requires an explicit v8 protocol profile');
   for(const control of Object.values(bundle.initialState?.control??{}))
@@ -66,8 +69,9 @@ export function checkEffectfulProjectionState(bundle,{protocolProfiles=[],except
       inspectHeap(change.after,change.before,{boundary:change.before===null&&
         (event.operation==='external.input.deliver'||callbackInput),protocolProfiles,exceptionProfile});snapshots++;
     }
-    if(change.table==='frames'&&change.after&&(change.after.constructReceiver||change.after.newTarget||
-      change.after.afterInstanceInitialization||change.after.classStaticResult||
+    if(change.table==='frames'&&change.after&&(
+      !construction&&(change.after.constructReceiver||change.after.newTarget||
+        change.after.afterInstanceInitialization||change.after.classStaticResult)||
       (change.after.pendingNumberConversion&&!number)||(change.after.pendingPropertyKeyConversion&&!conversion)))
       reject('construction completion state requires an explicit v8 protocol profile');
     if(change.table==='control'&&Object.keys(change.after?.templateObjects??{}).length)

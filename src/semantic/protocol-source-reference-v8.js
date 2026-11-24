@@ -67,8 +67,10 @@ function sourceSites(source){
   }visit(parse(source,{ecmaVersion:'latest'}));return {operations,branches,logicalAssignments,inOperators,deletes};
 }
 export async function auditProtocolSourceV8({bundle,referenceInput,outcome,timeoutMs=10000}){
-  const modes=['original','operations','branches','completions'];
-  const settled=await Promise.allSettled(modes.map(mode=>independentProtocolSourceReference({...referenceInput,mode},{timeoutMs})));
+  const modes=['original','operations','branches','completions'],awaitReturnedPromise=bundle.events.some(event=>
+    event.operation==='job.enter'&&event.causes?.some(cause=>cause.kind==='promise'));
+  const settled=await Promise.allSettled(modes.map(mode=>independentProtocolSourceReference(
+    {...referenceInput,mode,...(awaitReturnedPromise?{awaitReturnedPromise:true}:{})},{timeoutMs})));
   for(const item of settled)if(item.status==='rejected')throw item.reason;
   const [original,operations,branches,completions]=settled.map(item=>item.value);
   for(const reference of [original,operations,branches,completions])

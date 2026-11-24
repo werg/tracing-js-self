@@ -5,6 +5,7 @@ import {createRuntime,Runtime} from '../src/runtime.js';
 import {encodeNativeGraph} from '../src/host/graph-codec.js';
 import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-v8.js';
 import {createConstructionSourceAdapterV8} from '../src/semantic/protocol-construction-source-v8.js';
+import {PROTOCOL_SOURCE_ADAPTERS_V8} from '../src/semantic/protocol-source-extensions-v8.js';
 import {auditProtocolSourceV8} from '../src/semantic/protocol-source-reference-v8.js';
 import {verifyProtocolRegionTrainingCase} from '../src/semantic/protocol-source-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
@@ -17,13 +18,13 @@ import {issue51ConstructionFixtures,issue51ConstructionFaultFixtures,issue51Cons
 import {SemanticExecutionController} from '../src/semantic/execution-controller.js';
 import {restorePromiseAdoptionStateV8} from '../src/semantic/protocol-promise-adoption-v8.js';
 
-function build(source,args=[]){
+function build(source,args=[],adapters=[createConstructionSourceAdapterV8]){
   const runtime=createRuntime({maxSteps:10000}).startEntry({text:source,functionName:'run',args});runtime.drive();
-  const bundle=runtime.exportRun(),compiled=compileProtocolSourceV8(bundle,{adapters:[createConstructionSourceAdapterV8]});
+  const bundle=runtime.exportRun(),compiled=compileProtocolSourceV8(bundle,{adapters});
   return {bundle,compiled};
 }
-async function checked(source,args=[]){
-  const {bundle,compiled}=build(source,args),audit=await auditProtocolSourceV8({bundle,
+async function checked(source,args=[],adapters=[createConstructionSourceAdapterV8]){
+  const {bundle,compiled}=build(source,args,adapters),audit=await auditProtocolSourceV8({bundle,
     referenceInput:{source,entry:'run',inputGraph:encodeNativeGraph(args)},outcome:compiled.outcome});
   assert.equal(audit.status,'agreed');assert(audit.metadataAudit.checked>0);
   return {bundle,compiled,audit};
@@ -51,12 +52,13 @@ function replay(compiled,{checkpoints=false}={}){
 
 test('issue51 retained constructor arrows source-qualify after super substitution and conversion',async()=>{
   assert.deepEqual(issue51ConstructionFixtures.map(row=>row.ancestorIds),issue51ConstructionFixtures.map(()=>['issue51-original-objects']));
-  for(const fixture of issue51ConstructionFixtures){
+  for(const fixture of issue51ConstructionFixtures.filter(row=>!row.id.includes('promise-reaction'))){
     const result=await verifyProtocolRegionTrainingCase(structuredClone(fixture));
     assert(result.exported,result.reason);
     const reference=result.exported.sidecar.sourceArtifact.sidecar.reference;
     assert.equal(reference.status,'agreed',fixture.id);
-    assert.equal(result.exported.sidecar.sourceArtifact.sidecar.outcome.kind,'return',fixture.id);
+    assert.equal(result.exported.sidecar.sourceArtifact.sidecar.outcome.kind,
+      fixture.family==='issue51-derived-this-fault'?'throw':'return',fixture.id);
   }
 });
 
@@ -77,22 +79,45 @@ test('derived this reads before super allocate a native ReferenceError directly 
   }
 });
 
-test('constructor-captured arrows refuse unauthenticated scheduled callbacks at selection and restore',async()=>{
-  const fixture=issue51ConstructionUnsupportedControls[0];
-  const native=vm.runInNewContext(fixture.source+'\nrun()');
-  await new Promise(resolve=>setImmediate(resolve));
-  assert.deepEqual(Array.from(native.result),[3,true]);
-  const refusal=await verifyProtocolRegionTrainingCase(structuredClone(fixture));
-  assert.equal(refusal.exported,undefined);
-  assert.match(refusal.reason,/profile|unsupported|outside/i);
+test('constructor-captured arrows dispatch as Promise reactions with their retained receiver and newTarget',async()=>{
+  for(const id of ['issue51-control-constructor-arrow-in-promise-reaction',
+    'issue51-derived-constructor-arrow-in-promise-reaction']){
+    const fixture=issue51ConstructionFixtures.find(row=>row.id===id);
+    assert(fixture,id);
+    const native=vm.runInNewContext(fixture.source+'\nrun()');
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.deepEqual(Array.from(native.result),id.startsWith('issue51-control')?[3,true]:[9,true],id);
+    const {compiled,audit}=await checked(fixture.source,fixture.args,PROTOCOL_SOURCE_ADAPTERS_V8);
+    assert.equal(audit.status,'agreed',id);
+    const dispatch=compiled.claims.find(row=>row.record.kind==='job'&&row.record.fields.action==='dispatch');
+    assert(dispatch,id);
+    assert(compiled.claims.some(row=>row.record.kind==='construct.target'&&
+      row.record.result[0]==='ref'&&row.record.result[1]),id);
+    const harness=replay(compiled,{checkpoints:true});
+    assert.equal(harness.controller.jobs.get(dispatch.record.fields.job).status,'completed',id);
+    assert.deepEqual(harness.controller.jobs.get(dispatch.record.fields.job).returned,
+      {kind:'return',value:['undefined']},id);
+  }
+});
 
-  const captured={kind:'closure',functionKind:'arrow',callable:{lexicalConstruction:{frame:'ctor',thisCell:'body:this'}}},
-    controller=Object.create(SemanticExecutionController.prototype);
-  controller.heap=new Map([['callback',captured]]);
-  assert.throws(()=>controller.schedulerClosure('callback'),/authenticated synchronous call frame/);
-  controller.jobs=new Map([['job',{closure:'callback'}]]);
-  const api={require(condition,message){if(!condition)throw new Error(message);}};
-  assert.throws(()=>restorePromiseAdoptionStateV8(controller,api),/unauthenticated constructor capture/);
+test('caught guest throws in Promise reactions restore the caller completion after dispatch',async()=>{
+  const source='"use strict";function run(){return Promise.resolve(1).then(()=>{try{throw 7;}catch(error){return [error];}});}',
+    native=vm.runInNewContext(source+'\nrun()'),nativeResult=await native,
+    {compiled,audit}=await checked(source,[],PROTOCOL_SOURCE_ADAPTERS_V8);
+  assert.equal(audit.status,'agreed');assert.deepEqual(Array.from(nativeResult),[7]);
+  const dispatch=compiled.claims.find(row=>row.record.kind==='job'&&row.record.fields.action==='dispatch');
+  assert(dispatch);const completionIndex=compiled.claims.findIndex(row=>row.record.kind==='job'&&
+    row.record.fields.action==='complete'&&row.record.fields.job===dispatch.record.fields.job);
+  const endIndex=compiled.claims.findIndex(row=>row.record.kind==='end');
+  assert(completionIndex>=0&&endIndex>completionIndex);
+  const harness=startHarness(compiled);
+  for(let index=0;index<endIndex;index++)harness.select('invocation1',compiled.claims[index].line);
+  const controller=harness.activation('invocation1').controller,job=controller.jobs.get(dispatch.record.fields.job);
+  assert.equal(job.status,'completed');assert.equal(job.returned.kind,'return');
+  assert.deepEqual(controller.materialize(job.returned.value),[7]);
+  assert.deepEqual(controller.pending,job.priorPending);
+  assert.deepEqual(controller.lastReturn,job.priorLastReturn);
+  assert.equal(job.priorPending.kind,'return');
 });
 
 test('base class fields and private writes source-qualify and replay through public constructor records',async()=>{
