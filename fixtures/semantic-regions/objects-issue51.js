@@ -52,6 +52,9 @@ export const issue51ObjectFixtures=withIssue51Lineage([
   Object.freeze({id:'issue51-in-object-key-to-primitive-order',family:'issue51-property-existence',
     source:'"use strict";function run(x){const events=[];const object=Object.create({present:1});const key={[Symbol.toPrimitive](hint){events.push(hint);return "present";}};function receiver(){events.push("receiver");return object;}return [key in receiver(),events];}',
     entry:'run',args:[4]}),
+  Object.freeze({id:'issue51-control-in-invalid-rhs-before-key-coercion',family:'issue51-unsupported-control',
+    source:'"use strict";function run(x){const events=[];const key={[Symbol.toPrimitive](){events.push("key");return "p";}};let threw=false;try{key in null;}catch(error){threw=true;}return [threw,events];}',
+    entry:'run',args:[4]}),
   Object.freeze({id:'issue51-invalid-in-rhs-caught-error-identity-partial-effects',family:'issue51-intrinsic-error',
     source:'"use strict";function run(x){const events=[];const key={[Symbol.toPrimitive](hint){events.push("key");return "p";}};const left=(events.push("left"),key);const right=(events.push("right"),null);let same=false,name="";try{left in right;events.push("after");}catch(error){const alias=error;same=alias===error;name=error.name;events.push("caught");}return [same,name,events];}',
     entry:'run',args:[4]}),
@@ -94,7 +97,5 @@ export const issue51UnsupportedControls=withIssue51Lineage([
   Object.freeze({id:'issue51-control-for-in-proxy',family:'issue51-unsupported-control',
     source:'"use strict";function run(x){const object=new Proxy({a:1},{});for(const key in object){}return 7;}',
     entry:'run',args:[4]}),
-  Object.freeze({id:'issue51-control-in-invalid-rhs-before-key-coercion',family:'issue51-unsupported-control',
-    source:'"use strict";function run(x){const events=[];const key={[Symbol.toPrimitive](){events.push("key");return "p";}};let threw=false;try{key in null;}catch(error){threw=true;}return [threw,events];}',
-    entry:'run',args:[4]})
+
 ]);

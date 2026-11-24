@@ -107,7 +107,7 @@ test('Reflect object keys project conversion and property operations at the orig
 });
 
 test('invalid in RHS projects an authenticated TypeError before key coercion',async()=>{
-  const fixture=issue51UnsupportedControls.find(row=>row.id==='issue51-control-in-invalid-rhs-before-key-coercion');
+  const fixture=fixtureById.get('issue51-control-in-invalid-rhs-before-key-coercion');
   assert(fixture);
   const oracle=vm.runInNewContext(fixture.source+';run(4)');
   assert.deepEqual(structuredClone(oracle),[true,[]]);
@@ -121,7 +121,7 @@ test('invalid in RHS projects an authenticated TypeError before key coercion',as
   const controller=RegionExecutionHarness.replay(artifact).controller;
   assert.equal(controller.heap.get(faults[0].error)?.declaredError,'TypeError');
   assert.deepEqual(controller.materialize(completion(artifact).value),[true,[]]);
-  assert(artifact.sidecar.sourceArtifact.sidecar.reference.metadata.some(row=>row.objects
+  assert(artifact.sidecar.sourceArtifact.sidecar.reference.observations.metadata.some(row=>row.objects
     .some(node=>node.kind==='error'&&node.errorType==='TypeError')));
   assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
 });
