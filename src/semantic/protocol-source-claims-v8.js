@@ -203,9 +203,18 @@ function completionOwners(view,change){
     ...[[construction,'roles'],[number,'callbacks'],[proxy,'callbacks'],[reflection,'callbacks'],[map,'callbacks'],[custom,'accessors']]
       .filter(([id,key])=>has(state(view,id)[key],change.id)).map(([id])=>id)];
 }
+function constructionCallable(view,node){
+  if(node.kind!=='function'||node.generatorFunction||node.async)return false;
+  const component=view.components?.[construction]??{},roles=new Map(component.roles??[]),
+    definitions=new Map(component.functionDefinitions??[]),placement=definitions.get(node.codeId),
+    lexicalRole=node.arrow&&node.lexicalThisFrameId?roles.get(node.lexicalThisFrameId):null;
+  if(node.classConstructor===true||node.derivedConstructor===true||
+     ['constructor','method','object-method','instance','static'].includes(placement)||lexicalRole?.kind==='body')return true;
+  return !node.async&&!node.generatorFunction&&!node.arrow&&!node.nonConstructible;
+}
 function allocationOwner(view,node){
   if(node.generatorFunction||node.kind==='generator')return generator;
-  if(node.kind==='function'&&enabled(view,construction))return construction;
+  if(enabled(view,construction)&&constructionCallable(view,node))return construction;
   if(memoryKinds.has(node.kind))return memory;
   if(node.kind==='set'||node.kind==='map')return collection;
   if(node.kind==='iterator')return iterator;

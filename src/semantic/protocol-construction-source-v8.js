@@ -4,6 +4,7 @@ import {propertyKeyValue,stringPropertyKey,symbolPropertyKey} from '../property-
 import {decode,encode} from '../values.js';
 import {constructionSourceInventoryV8} from './protocol-construction-source-inventory-v8.js';
 import {describeConstructionObjectV8} from './protocol-construction-v8.js';
+import {protocolSourceClaimsV8} from './protocol-source-claims-v8.js';
 
 export const CONSTRUCTION_SOURCE_PROFILE_V8='class-private-source/1';
 const U=['undefined'],ref=id=>['ref',id],literal=value=>({op:'literal',value});
@@ -64,9 +65,17 @@ export function createConstructionSourceAdapterV8({bundle,source}){
     for(const key of ctx.orderedKeys(node))if(['name','length'].includes(key))
       emit(ctx,{kind:'property.define',object:node.id,key:propertyKeyValue(key),descriptor:ctx.descriptor(node,key),success:true},event);
   }
-  function capability(node){const definition=definitions.get(node.codeId),isClass=definition?.placement==='constructor';
+  function capability(node){const definition=definitions.get(node.codeId),isClass=definition?.placement==='constructor',
+    nonConstructible=definition?.placement==='object-method'||node.arrow||node.nonConstructible||node.async||node.generatorFunction;
     return {constructorKind:isClass?(definition.classNode.superClass?'derived':'base'):
-      definition?.placement==='object-method'||node.arrow||node.nonConstructible?null:'base',classConstructor:isClass};
+      nonConstructible?null:'base',classConstructor:isClass};
+  }
+  function constructionFunction(node){
+    if(node.kind!=='function'||node.generatorFunction||node.async)return false;
+    const definition=definitions.get(node.codeId),lexicalRole=node.arrow&&node.lexicalThisFrameId?roles.get(node.lexicalThisFrameId):null,
+      method=['constructor','method','object-method','instance','static'].includes(definition?.placement);
+    if(node.classConstructor===true||node.derivedConstructor===true||method||lexicalRole?.kind==='body')return true;
+    return !node.async&&!node.generatorFunction&&!node.arrow&&!node.nonConstructible;
   }
   function initializeOrdinaryPrototypes(ctx,event){
     let initialized=false;
@@ -178,8 +187,9 @@ export function createConstructionSourceAdapterV8({bundle,source}){
     ctx.markPublished(errorId);
     return true;
   }
-  return {id:CONSTRUCTION_SOURCE_PROFILE_V8,
-    captureState:()=>({roles:[...roles]}),
+  const baseClaims=protocolSourceClaimsV8(CONSTRUCTION_SOURCE_PROFILE_V8);
+  return {id:CONSTRUCTION_SOURCE_PROFILE_V8,claims:baseClaims,
+    captureState:()=>({roles:[...roles],functionDefinitions:[...definitions].map(([code,definition])=>[code,definition.placement])}),
     restoreState(state){roles=new Map(state.roles);},
     syntax(node){
       if(['ClassDeclaration','ClassExpression'].includes(node.type)){
@@ -190,7 +200,7 @@ export function createConstructionSourceAdapterV8({bundle,source}){
       return node.type==='NewExpression';
     },
     functionDefinition(instruction){const definition=definitions.get(instruction.arg.codeId);return definition?.code?{code:definition.code,node:definition.node}:null;},
-    heapFields(node){return node.kind==='function'||Object.keys(node).some(key=>heapFields.includes(key))?heapFields:null;},
+    heapFields(node){return node.kind==='function'?(constructionFunction(node)?heapFields:null):Object.keys(node).some(key=>heapFields.includes(key))?heapFields:null;},
     frameFields(node){return Object.keys(node).some(key=>specialFrames.has(key))?frameFields:null;},
     allocate(ctx,node,event){
       if(node.kind!=='function')return false;
