@@ -107,14 +107,15 @@ const eventClaims={
       const key=row?.operands?.[1],methods=kind==='set'?['add','has','delete','clear']:['get','set','has','delete','clear'];
       return key?.[0]==='str'&&(key[1]==='size'||methods.includes(key[1]));
     }
-    return event.operation==='call.enter'&&
+    return Boolean(event.operation==='call.enter'&&
       (name?.startsWith('Set.prototype.')&&['add','has','delete','clear'].includes(name.slice(14))||
        name?.startsWith('Map.prototype.')&&['get','set','has','delete','clear'].includes(name.slice(14)))&&
-      ['set','map'].includes(heap(view,raw?.[0]==='method'?raw[2]:null)?.kind);
+      ['set','map'].includes(heap(view,raw?.[0]==='method'?raw[2]:null)?.kind));
   },
   [iterator](view,{event,row}){
     const inst=view.instruction;
-    if(inst?.op==='ITERATOR_ARRAY_GUARD')return true;
+    if(inst?.op==='ITERATOR_ARRAY_GUARD'||inst?.op==='SPREAD')return true;
+    if(inst?.op==='APPEND_ARRAY'&&view.sourceNode?.type==='ArrayExpression')return true;
     if(!row)return false;
     if(event.operation==='primitive.binary'&&inst?.op==='BINARY'&&inst.arg==='>'&&
       state(view,iterator).arrayLoops?.includes(event.invocationId+':'+row.source?.start+':'+row.source?.end))return true;

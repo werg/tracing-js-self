@@ -9,7 +9,8 @@ export const ITERATOR_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.entr
   'iterator.next':['kind','object','name','entry','result','done'],
   'iterator.identity':['kind','object','result'],
   'iterator.read':['kind','object','key','result'],
-  'iterator.arrayGuard':['kind','iterated','result']
+  'iterator.arrayGuard':['kind','iterated','result'],
+  'iterator.spread':['kind','iterated','values']
 }).map(([kind,fields])=>[kind,Object.freeze(fields)])));
 export const ITERATOR_HEAP_FIELDS=Object.freeze(['kind','iterated','iterationKind','nextIndex','done','properties']);
 const arrayKinds=new Set(['values','keys','entries']), collectionKinds=new Set([
@@ -34,6 +35,10 @@ export function validateIteratorRecordV8(record,{value}){
     id(record.name);value(record.iterated);if(!kinds.has(record.iterationKind))throw new TypeError('Iterator kind');
   }else if(record.kind==='iterator.arrayGuard'){
     value(record.iterated);if(typeof record.result!=='boolean')throw new TypeError('Iterator guard boolean');
+  }else if(record.kind==='iterator.spread'){
+    value(record.iterated);assertAlgorithmDataArray(record.values,'iterator spread values');
+    if(record.values.length>bound)throw new TypeError('Iterator spread bound');
+    record.values.forEach(value);
   }else{
     value(record.result);if(record.kind==='iterator.next'&&typeof record.done!=='boolean')throw new TypeError('Iterator completion boolean');
   }
@@ -87,6 +92,27 @@ function readIndex(controller,id,index,api){
     api.known(controller,prototype);api.require(prototype[0]==='ref','iterator source prototype');id=prototype[1];
   }
 }
+function spreadValues(controller,iterable,api){
+  api.known(controller,iterable);
+  if(iterable[0]==='str'){
+    const result=[],text=iterable[1];
+    for(let offset=0;offset<text.length;){
+      api.require(result.length<bound,'spread element bound');
+      const first=text.charCodeAt(offset),next=text.charCodeAt(offset+1),
+        width=first>=0xd800&&first<=0xdbff&&next>=0xdc00&&next<=0xdfff?2:1;
+      result.push(['str',text.slice(offset,offset+width)]);offset+=width;
+    }
+    return result;
+  }
+  api.require(standardArray(controller,iterable,api),'spread requires a bounded ordinary array or primitive string');
+  const count=length(controller,iterable[1],api),array=api.heapNode(controller,iterable[1]),result=[];
+  for(let index=0;index<count;index++){
+    const descriptor=api.ownDescriptor(array,['str',String(index)]);
+    api.require(descriptor?.kind==='data','sparse or accessor spread needs its own iterator profile');
+    api.known(controller,descriptor.value);result.push(api.copy(descriptor.value));
+  }
+  return result;
+}
 function allocationEntry(controller,iterationKind,raw,api){
   const value=iterationKind==='set-values'||iterationKind==='set-keys'?raw:
     iterationKind==='map-keys'?raw[0]:iterationKind==='map-values'?raw[1]:null;
@@ -106,6 +132,10 @@ export function applyIteratorRecordV8(controller,record,api){
     api.require(selectedMethod(controller,record.receiver,record.key,api)===record.method,'false iterator builtin selection');
   }else if(record.kind==='iterator.arrayGuard'){
     api.require(record.result===standardArray(controller,record.iterated,api),'false standard array iterator guard');
+  }else if(record.kind==='iterator.spread'){
+    const expected=spreadValues(controller,record.iterated,api);
+    api.require(expected.length===record.values.length&&expected.every((value,index)=>api.eq(value,record.values[index])),
+      'spread snapshot differs from its live iterable');
   }else if(record.kind==='iterator.create'){
     api.known(controller,record.iterated);api.fresh(controller,record.name);
     if(record.iterationKind==='string')api.require(record.iterated[0]==='str'&&record.iterated[1].length<=bound,'bounded primitive string iterator');

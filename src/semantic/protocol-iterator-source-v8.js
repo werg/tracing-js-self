@@ -35,7 +35,42 @@ export function createIteratorSourceAdapterV8(){let arrayLoops=new Set();return 
       return true;
     }
     if(!row)return false;
-    if(event.operation==='primitive.binary'&&instruction(ctx,event)?.op==='BINARY'&&instruction(ctx,event).arg==='>'&&
+    const inst=instruction(ctx,event);
+    if(inst?.op==='SPREAD'&&event.operation==='property.read'){
+      const snapshot=row.result;
+      if(snapshot?.[0]!=='spread'||!Array.isArray(snapshot[1]))ctx.refuse('spread lacks its bounded iterable snapshot');
+      const iterated=ctx.tag(row.operands[0],event),values=snapshot[1].map(value=>ctx.tag(value,event));
+      ctx.emit({kind:'iterator.spread',iterated,values},event,'source-builtin-iterator-spread/1');return true;
+    }
+    if(inst?.op==='APPEND_ARRAY'&&event.operation==='property.write'){
+      const base=row.operands[0],input=row.operands[1],spread=inst.arg.spread===true,
+        values=spread&&input?.[0]==='spread'?input[1]:spread?null:[input],
+        before=base?.[0]==='ref'?ctx.state.heap[base[1]]:null,
+        after=event.stateChanges.find(change=>change.table==='heap'&&change.id===base?.[1])?.after??before,
+        rawLength=before?.properties?.length?.value,start=rawLength?.[0]==='num'?rawLength[1]:NaN,
+        hole=inst.arg.hole===true,count=hole?0:values?.length;
+      if(!Number.isSafeInteger(start)||start<0||!Number.isSafeInteger(count)||start+count+(hole?1:0)>10000||
+        before?.kind!=='array'||after?.kind!=='array'||!ctx.eq(event.result,base))
+        ctx.refuse('array literal append is outside its bounded result profile');
+      const afterLength=after.properties.length?.value,expectedLength=start+count+(hole?1:0);
+      if(afterLength?.[0]!=='num'||afterLength[1]!==expectedLength)
+        ctx.refuse('array literal append changed an unexpected length');
+      if(hole){
+        if(Object.hasOwn(after.properties,String(start)))ctx.refuse('array literal hole acquired an indexed value');
+        ctx.emit({kind:'property.set',object:base[1],key:['str','length'],receiver:ctx.tag(base,event),
+          value:['num',expectedLength],success:true},event,'source-array-literal-hole/1');
+      }else{
+        for(let index=0;index<count;index++){
+          const descriptor=after.properties[String(start+index)];
+          if(!descriptor||!ctx.eq(descriptor.value,values[index])||after.accessors?.[String(start+index)])
+            ctx.refuse('array literal append output differs from its evaluated item');
+          ctx.emit({kind:'property.set',object:base[1],key:['str',String(start+index)],receiver:ctx.tag(base,event),
+            value:ctx.tag(values[index],event),success:true},event,spread?'source-array-literal-spread-element/1':'source-array-literal-element/1');
+        }
+      }
+      return true;
+    }
+    if(event.operation==='primitive.binary'&&inst?.op==='BINARY'&&inst.arg==='>'&&
       arrayLoops.has(event.invocationId+':'+row.source?.start+':'+row.source?.end)){
       if(row.operands.length!==2||row.operands.some(value=>value[0]!=='num'))ctx.refuse('array loop comparison requires numeric length and index');
       ctx.emit({kind:'compute',fields:{expr:{op:'binary',operator:'>',left:{op:'literal',value:row.operands[0]},
