@@ -265,7 +265,7 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
         else{
           const [base,property]=event.operands??[];
           const ordinaryReceiver=base?.[0]==='ref'||base?.[0]==='promise'||
-            base?.[0]==='intrinsic'&&base[1]==='Promise.prototype';
+            base?.[0]==='intrinsic'&&['Promise.prototype','Error.prototype','EvalError.prototype','RangeError.prototype','ReferenceError.prototype','SyntaxError.prototype','TypeError.prototype','URIError.prototype'].includes(base[1]);
           if(!ordinaryReceiver||!['str','num','bool','null','undefined','bigint','symbol'].includes(property?.[0]))
             throw new TypeError('Source assignment storage is outside the independently observed property profile');
           const object=base[0]==='promise'?state.promises[base[1]]:state.heap[base[1]];

@@ -1,3 +1,4 @@
+import {ownedIntrinsicError} from './owned-error-objects.js';
 import {validateGeneratorState,validateGeneratorEvent} from './generator-validation.js';
 import {validatePrivateEvent} from './private-validation.js';
 import {validateTemplateEvent} from './template-validation.js';
@@ -40,9 +41,7 @@ function typeErrorAllocations(event,message){
   const {id,after}=changes[0],origin=event.eventId;
   return event.completion?.message===message&&event.completion.origin===origin&&
     eq(event.completion.value,{value:['ref',id],origin})&&
-    eq(after,{id,kind:'object',declaredError:'TypeError',
-      properties:{name:{value:['str','TypeError'],origin},message:{value:['str',message],origin}},
-      propertyVersions:{name:1,message:1},shapeVersion:2,version:1});
+    eq(after,{...ownedIntrinsicError(id,'TypeError',message,origin),version:1});
 }
 function validatePropertyDeleteEvent(state,event,programs){
   const direct=event.operation==='property.delete',frame=state.frames[event.invocationId],
@@ -250,8 +249,7 @@ export function reconstruct(bundle,{throughEventId=null}={}) {
          !eq(c.parameterTdz,{environment,name})||
          c.message!==`Cannot access '${name}' before initialization`||
          allocation?.after?.kind!=='object'||allocation.after.declaredError!=='ReferenceError'||
-         !eq(allocation.after.properties,{name:{value:['str','ReferenceError'],origin:e.eventId},
-           message:{value:['str',c.message],origin:e.eventId}}))
+         !eq(allocation.after,{...ownedIntrinsicError(value[1],'ReferenceError',c.message,e.eventId),version:1}))
         fail('Invalid committed parameter TDZ exception',e.eventId);
       parameterTdzOrigins.set(e.eventId,clone(c));
     }

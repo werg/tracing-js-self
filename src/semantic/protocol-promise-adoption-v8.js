@@ -1,3 +1,4 @@
+import {allocateIntrinsicErrorV8} from './protocol-intrinsic-error-v8.js';
 // Promise resolution has two observable FIFO turns: the intrinsic then call
 // registers a forwarding reaction, which subsequently settles the result. Both
 // use the controller's existing jobs, dependency sequence and ready queue.
@@ -154,9 +155,8 @@ export function applyPromiseAdoptionRecordV8(controller,record,api){
     api.require(adoption.owner===controller.rootInvocation&&adoption.phase==='intent'&&adoption.target===record.promise,
       'self resolution requires the exact original resolution intent');
     freshJob(controller,record.error,api);
-    controller.heap.set(record.error,{kind:'object',code:null,captures:[],prototype:'ordinary',properties:new Map([
-      ['name',['str','TypeError']],['message',['str','Chaining cycle detected for promise']]
-    ])});adoption.phase='self';adoption.error=record.error;
+    allocateIntrinsicErrorV8(controller,{identity:record.error,errorType:'TypeError',message:'Chaining cycle detected for promise'},api);
+    adoption.phase='self';adoption.error=record.error;
     controller.settlePromise(record.promise,'rejected',['ref',record.error]);return true;
   }
   if(record.kind==='promise.adopt.enqueue'){

@@ -3,6 +3,7 @@
 // independently derived its operation may call it.
 import {assertAlgorithmFields,assertAlgorithmDataArray} from './ir.js';
 import {invalidInMessage} from '../intrinsic-error-diagnostics.js';
+import {initializePromiseObjectsV8,promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
 
 export const INTRINSIC_ERROR_PROFILE_V8='intrinsic-errors/1';
 export const INTRINSIC_ERROR_STATE_V8_SCHEMA='semantic-intrinsic-error-state/1';
@@ -50,16 +51,17 @@ export function allocateIntrinsicErrorV8(controller,{identity:id,errorType,messa
   api.require(typeof message==='string'&&message.length<=4096,'intrinsic Error message');
   const registry=intrinsicErrorRowsV8(controller,controller.protocol?.intrinsicErrors,api);
   api.require(registry.length<maxErrors,'intrinsic Error count bound');
+  if(!controller.protocol?.promiseObjects?.initialized)initializePromiseObjectsV8(controller,api);
   api.allocate(controller,{name:id,objectKind:'object',length:null,code:null,captures:[],
     functionKind:null,lexicalReceiver:null,properties:[
-      {key:['str','name'],value:['str',errorType]},
       {key:['str','message'],value:['str',message]}
     ]});
   const node=controller.heap.get(id);
   api.require(node?.kind==='object'&&node.properties instanceof Map&&
-    node.properties.get('name')?.[1]===errorType&&node.properties.get('message')?.[1]===message,
+    node.properties.get('message')?.[1]===message,
     'intrinsic Error allocation identity');
-  node.declaredError=errorType;
+  node.declaredError=errorType;node.prototype=['ref',promiseIntrinsicIdV8(errorType+'.prototype')];
+  api.installDescriptor(node,['str','message'],{kind:'data',value:['str',message],writable:true,enumerable:false,configurable:true});
   controller.protocol.intrinsicErrors={schema:INTRINSIC_ERROR_STATE_V8_SCHEMA,
     errors:[...registry,{id,errorType}]};
   return ['ref',id];

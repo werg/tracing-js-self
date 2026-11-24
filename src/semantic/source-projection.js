@@ -17,6 +17,7 @@ import {verifyExperimentalModuleNamespacePlan} from './module-namespace-state-v8
 import {sourceLinkedComputation,sourceLinkedDecision} from '../training/semantic-source.js';
 import {DECLARED_EXCEPTION_PROFILE} from '../training/exception-profile.js';
 import {inspectSemanticRegion,evaluateSemanticRegion,checkSemanticRegionClaim} from '../training/semantic-regions.js';
+import {ownedExceptionFields} from '../training/owned-exception-profile.js';
 import {checkEffectfulProjectionState} from '../training/projection-state-profile.js';
 import {inspectOwnedDataEntity} from '../training/data-graph-contract.js';
 import {asyncIterationSourceSitesV8,asyncIterationSourceCodeV8} from './async-iteration-source-v8.js';
@@ -101,7 +102,7 @@ export function ownedEffectfulOutcome(bundle){
   }
   if(!graphValue(value))refuse('completion is outside the declared data boundary');
   return {kind,graph:describeGraph(realizeGraph(bundle.finalState.heap,
-    [...bundle.entrySpec.arguments,value]))};
+    [...bundle.entrySpec.arguments,value],{exceptionProfile:true}))};
 }
 
 export function compileSourceProjection(bundle,{sessionId='teacher1',programId='program1',
@@ -130,7 +131,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     refuse('compact expressions require an operator bound from 1 through 8');
   validateBundle(bundle);replayExact(bundle);
   assertPromiseSourceObjectProfileV8(bundle);
-  checkEffectfulProjectionState(bundle,{protocolProfiles:regionAdapter?.projectionStateProfiles??[]});
+  checkEffectfulProjectionState(bundle,{protocolProfiles:regionAdapter?.projectionStateProfiles??[],exceptionProfile:regionAdapter===null});
   const semantic=normalizeJournal(bundle);validateSemantic(bundle,semantic);
   const entry=bundle.entrySpec;
   if(entry?.kind!=='function')refuse('an explicit owned function entry is required');
@@ -551,8 +552,10 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
   function allocations(row,owner,event,{initial=null}={}){
     for(const allocation of row.allocations??[]){
       if(controller(owner).heap.has(identity(allocation.identity)))continue;
+      const committed=event.stateChanges.find(change=>change.table==='heap'&&change.id===allocation.identity)?.after,
+        projectedError=regionAdapter===null?ownedExceptionFields(committed):null;
       const fields={name:identity(allocation.identity),kind:allocation.kind==='function'?'closure':allocation.kind,
-        properties:allocation.kind==='function'?[]:allocation.properties.filter(p=>p.key!=='length'||allocation.kind!=='array')
+        properties:allocation.kind==='function'?[]:(projectedError??allocation.properties).filter(p=>p.key!=='length'||allocation.kind!=='array')
           .map(({key,value})=>({key,value:tag(value)}))};
       if(allocation.kind==='array')fields.length=allocation.properties.find(p=>p.key==='length')?.value?.[1];
       if(allocation.kind==='function'){
@@ -1116,7 +1119,13 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       }else writes(row,owner,event);
       handled=true;
     }else if(row?.op==='read'){
-      for(const read of row.reads??[])if(read.kind==='property'&&controller(owner).heap.has(identity(read.objectId??read.object))){
+      const base=event.operands?.[0],exception=regionAdapter===null&&base?.[0]==='ref'?
+        ownedExceptionFields(state.heap[base[1]]):null;
+      if(exception&&event.operation==='property.read'){
+        const key=event.operands[1]?.[1],selected=exception.find(field=>field.key===key);
+        if(!selected||!isDeepStrictEqual(event.result,selected.value))refuse('Error name/message read differs from its declared exception boundary');
+        emit(owner,'read',{object:identity(base[1]),key,present:true,value:tag(selected.value)},event,'declared-error-boundary-read');
+      }else for(const read of row.reads??[])if(read.kind==='property'&&controller(owner).heap.has(identity(read.objectId??read.object))){
         const object=identity(read.objectId??read.object),key=read.key??read.property;
         if(typeof key==='string'&&sourceValue(read.value))emit(owner,'read',{object,key,
           present:read.present??true,value:tag(read.value)},event,'read');

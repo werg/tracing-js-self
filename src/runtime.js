@@ -23,7 +23,7 @@ import {invalidInMessage} from './intrinsic-error-diagnostics.js';
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
 const isPrimitiveValue=value=>['undefined','null','bool','num','str','bigint','symbol'].includes(value[0]);
-const ERROR_CONSTRUCTORS=['Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError'];
+import {ERROR_CONSTRUCTORS,ERROR_PROTOTYPES,ensureErrorPrototype,ownedIntrinsicError} from './owned-error-objects.js';
 function binaryGuest(operation){
   try{return operation();}catch(error){
     if(error instanceof BinaryProfileError)throw error;
@@ -378,8 +378,7 @@ function putOwn(obj,key,value,eventId,{literal=false}={}) {
   if(!literal&&obj.dataAttributes?.[key]?.writable===false)guestFault('TypeError','Cannot assign to read only property');
   if(obj.extensible===false&&!Object.hasOwn(obj.properties,key)&&!Object.hasOwn(obj.accessors??{},key))
     guestFault('TypeError','Cannot add property to non-extensible object');
-  if(obj.declaredError&&!['name','message'].includes(key))
-    throw new TypeError('Declared error exposes only mutable name and message fields');
+  if(obj.declaredError&&key==='stack')throw new TypeError('Error stack requires its engine diagnostic profile');
   if (key === '__proto__'&&!literal) throw new TypeError('Prototype mutation is not implemented by the bounded profile');
   if (obj.kind === 'array' && key === 'length') {
     if (value[0] !== 'num') throw new TypeError('Array length coercion is outside the profile');
@@ -1689,12 +1688,8 @@ export class Runtime {
     if(completion.value)return completion.value;
     if(!completion.errorType)throw new Error('Unrepresentable guest throw completion');
     const id=this.next(draft,'obj');
-    draft.heap[id]={id,kind:'object',declaredError:completion.errorType,properties:{
-      name:token(['str',completion.errorType],eventId),
-      message:token(['str',completion.message??''],eventId)
-    },propertyVersions:{name:1,message:1},shapeVersion:2,version:0};
-    // Declared constructor identity is modeled without importing a native
-    // Error. Mutable Error prototypes, stacks and instanceof remain separate.
+    draft.heap[id]=ownedIntrinsicError(id,completion.errorType,completion.message??'',eventId,
+      {omitMessage:completion.omitMessage===true});
     return token(['ref',id],eventId);
   }
   newDeclaredError(draft,name,args,eventId){
@@ -1702,7 +1697,7 @@ export class Runtime {
     const value=args[0]?.value??U;
     if(!['undefined','null','bool','str','num','bigint'].includes(value[0]))
       throw new TypeError('Error message requires owned scalar coercion');
-    return this.caughtError(draft,{errorType:name,
+    return this.caughtError(draft,{errorType:name,omitMessage:value[0]==='undefined',
       message:value[0]==='undefined'?'':String(decode(value))},eventId).value;
   }
   routeCompletion(draft,frame,completion,eventId) {
@@ -2520,8 +2515,10 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
           else if(['intrinsic','builtinfn','hostfn'].includes(base.value[0])&&
             primitiveUnary('typeof',base.value,s.heap)[1]==='function'&&['call','apply'].includes(property))
             v=['builtinfn','Function.prototype.'+property];
-          else if(base.value[0]==='intrinsic'&&ERROR_CONSTRUCTORS.includes(base.value[1])&&property==='name')
-            v=['str',base.value[1]];
+          else if(base.value[0]==='intrinsic'&&ERROR_CONSTRUCTORS.includes(base.value[1])&&['name','length','prototype'].includes(property)){
+            if(property==='prototype'){ensureErrorPrototype(s,base.value[1]+'.prototype');v=['intrinsic',base.value[1]+'.prototype'];}
+            else v=property==='name'?['str',base.value[1]]:['num',1];
+          }
           else if(base.value[0]==='intrinsic' &&
              ((base.value[1]==='Math' &&
                ['abs','ceil','floor','trunc','round','max','min','pow','sign','sqrt','hypot','random'].includes(property)) ||
@@ -2551,7 +2548,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
             v=['intrinsic','Object.prototype'];
           else if(base.value[0]==='intrinsic'&&base.value[1]==='Object.prototype'&&property==='hasOwnProperty')
             v=['builtinfn','Object.prototype.hasOwnProperty'];
-          else if(base.value[0]==='promise'||base.value[0]==='intrinsic'&&base.value[1]==='Promise.prototype'){
+          else if(base.value[0]==='promise'||base.value[0]==='intrinsic'&&(base.value[1]==='Promise.prototype'||ERROR_PROTOTYPES.includes(base.value[1]))){
             const object=ownedObjectStorage(s,base.value),heap=ownedObjectHeap(s);
             if(!object)throw new ReferenceError('Unknown guest promise');
             const found=ordinaryGet(heap,base.value,property,{accessors:true});
@@ -2614,12 +2611,7 @@ if(fn.value[0]!=='intrinsic'||fn.value[1]!=='Set'){
                  kind:'property',objectId:obj.id,key:property,present:!!slot,version:obj.propertyVersions[property]??0,
                  shapeVersion:obj.shapeVersion,value:v,supplyingEvent:slot?.origin??null}]};
              }
-             if(obj.declaredError&&property==='constructor'){
-               const constructor=['intrinsic',obj.declaredError];
-               return {...operands(base,key),...result(op==='GET_METHOD'?['method',constructor,base.value]:constructor)};
-             }
-             if(obj.declaredError&&!['name','message'].includes(property))
-               throw new TypeError('Declared error exposes only name and message');
+             if(obj.declaredError&&property==='stack')throw new TypeError('Error stack requires its engine diagnostic profile');
              if(obj.kind==='iterator'){
                const slot=Object.hasOwn(obj.properties,property)?obj.properties[property]:null;
                if(slot)v=slot.value;
@@ -3380,9 +3372,6 @@ if(object.kind==='regexp'){
             }
             return {...operands(fn,...args),...result(encode(converted))};
           }
-          if(callable[0]==='builtinfn'&&callable[1].startsWith('Object.')&&
-             callable[1]!=='Object.is'&&args.some(item=>item.value[0]==='ref'&&s.heap[item.value[1]]?.declaredError))
-            throw new TypeError('Object descriptor and prototype operations on declared errors are outside the bounded error profile');
           if(callable[0]==='intrinsic'&&callable[1]==='Promise')
              guestFault('TypeError','Promise must be constructed with new');
           if(callable[0]==='builtinfn'&&/^Promise[.](resolve|reject|all|race|allSettled|any|withResolvers)$/.test(callable[1])&&
@@ -4247,8 +4236,9 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
            if(callable[0]==='builtinfn' && ['Object.create','Object.setPrototypeOf','Object.getPrototypeOf','Object.defineProperty'].includes(callable[1])){
             const primitiveProto=v=>{
               if(v?.[0]==='null')return null;
-              if(v?.[0]==='intrinsic' && ['Object.prototype','Array.prototype','Function.prototype','Promise.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(v[1])){
+              if(v?.[0]==='intrinsic' && ['Object.prototype','Array.prototype','Function.prototype','Promise.prototype',...ERROR_PROTOTYPES,...GENERATOR_INTRINSIC_PROTOTYPES].includes(v[1])){
                 if(v[1]==='Promise.prototype')ensurePromisePrototype(s);
+                if(ERROR_PROTOTYPES.includes(v[1]))ensureErrorPrototype(s,v[1]);
                 return v[1];
               }
               if(v?.[0]==='promise'&&s.promises[v[1]])return v[1];
@@ -4389,7 +4379,7 @@ if(callable[0]==='builtinfn' && callable[1].startsWith('Set.prototype.')){
                 throw new TypeError('Object.getPrototypeOf requires owned ordinary storage');
               const proto=objectPrototype(obj);
               const out=proto===null?['null']:
-                ['Object.prototype','Array.prototype','Function.prototype','Promise.prototype',...GENERATOR_INTRINSIC_PROTOTYPES].includes(proto)?['intrinsic',proto]:ownedObjectValue(s,proto);
+                ['Object.prototype','Array.prototype','Function.prototype','Promise.prototype',...ERROR_PROTOTYPES,...GENERATOR_INTRINSIC_PROTOTYPES].includes(proto)?['intrinsic',proto]:ownedObjectValue(s,proto);
               return {...operands(fn,...args),...result(out)};
             }
             const proto=primitiveProto(args[1]?.value??U);

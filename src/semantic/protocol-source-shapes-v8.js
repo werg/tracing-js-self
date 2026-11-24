@@ -1,6 +1,8 @@
 // Shared exact shape checks for direct and composed source protocols.
 import {propertyKeyValue} from '../property-keys.js';
 import {PROTOCOL_INTRINSIC_PROTOTYPES_V8} from './protocol-codec-v8.js';
+import {ERROR_PROTOTYPES} from '../owned-error-objects.js';
+import {promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
 const copy=structuredClone;
 const refuse=message=>{const error=new TypeError('Protocol source projection: '+message);
   error.category='unsupported.protocol-source';throw error;};
@@ -17,6 +19,7 @@ export function guardHeap(node,{extraFields=[],allowUnknown=false,allowFunctionM
   if(node.kind==='function'&&node.async)refuse('async function state needs the scheduler protocol');
 }
 export function prototype(node){const p=node.prototype;
+  if(ERROR_PROTOTYPES.includes(p))return ['ref',promiseIntrinsicIdV8(p)];
   if(p===undefined||['Object.prototype','Array.prototype','Function.prototype'].includes(p))return 'ordinary';
   if(PROTOCOL_INTRINSIC_PROTOTYPES_V8.includes(p))return p;
   if(p===null)return null;if(typeof p==='string')return ['ref',p];

@@ -1,3 +1,6 @@
+import {ERROR_PROTOTYPES,errorPrototypeRecord} from './owned-error-objects.js';
+import {ordinaryGet} from './spec-operations.js';
+import {ownedObjectHeap} from './owned-object-storage.js';
 // Independent checks for the narrow original-Test262 host observations.
 import {symbolPropertyKey,stringPropertyKey} from './property-keys.js';
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -34,12 +37,12 @@ function hasProperty(state,receiver,key,fail){
     seen.add(object.id);
     if(Object.hasOwn(object.properties??{},key)||Object.hasOwn(object.accessors??{},key))return true;
     if(object.kind==='function'&&(['name','length'].includes(key)||key==='prototype'&&!object.arrow&&!object.async&&!object.nonConstructible))return true;
-    if(object.declaredError&&key==='constructor')return true;
     const parent=Object.hasOwn(object,'prototype')?object.prototype:
       object.kind==='array'?'Array.prototype':object.kind==='function'?'Function.prototype':
         object.kind==='promise'?'Promise.prototype':'Object.prototype';
     if(parent===null)return false;
     if(parent==='Promise.prototype'&&state.heap[parent]){object=state.heap[parent];continue;}
+    if(ERROR_PROTOTYPES.includes(parent)){object=state.heap[parent]??errorPrototypeRecord(parent);continue;}
     if(Object.hasOwn(prototypeKeys,parent))return prototypeKeys[parent].has(key);
     object=state.heap[parent]??state.promises[parent];if(!object)fail('Unknown in-operator prototype');
   }
@@ -81,8 +84,8 @@ export function validateScriptHostEvent(state,event,programs,fail){
     const object=base?.[0]==='ref'?state.heap[base[1]]:null;
     if(object?.declaredError&&same(key,['str','constructor'])){
       if(!errorKinds.has(object.declaredError)||!same(event.operands,[base,key]))fail('Unknown owned error constructor');
-      const value=['intrinsic',object.declaredError];
-      expectStackResult(event,frame,instruction.op==='GET_METHOD'?['method',value,base]:value,fail);
+      const found=ordinaryGet(ownedObjectHeap(state),base,'constructor',{accessors:true});
+      if(found?.method){const value=found.method.value;expectStackResult(event,frame,instruction.op==='GET_METHOD'?['method',value,base]:value,fail);}
     }
   }
 }

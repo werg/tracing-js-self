@@ -127,5 +127,5 @@ export function ownedOutcome(runtime) {
   if(!spec || !completion)return {kind:'pending'};
   if(!['return','throw'].includes(completion.kind))return {kind:completion.kind};
   return {kind:completion.kind,graph:describeGraph(realizeGraph(runtime.state.heap,
-    [...spec.arguments,completion.value]))};
+    [...spec.arguments,completion.value],{exceptionProfile:true}))};
 }

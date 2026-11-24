@@ -21,7 +21,9 @@ test('property.fault derives invalid in target and authenticates a fresh mutable
   assert.deepEqual(c.protocol.intrinsicErrors,{schema:'semantic-intrinsic-error-state/1',
     errors:[{id:'error',errorType:'TypeError'}]});
   assert.equal(error.declaredError,'TypeError');
-  assert.deepEqual(error.properties.get('name'),['str','TypeError']);
+  assert.equal(error.properties.has('name'),false);
+  apply(c,{kind:'property.get',object:'error',key:key('name'),receiver:ref('error'),result:['str','TypeError']});
+  assert.equal(error.descriptors.get('message').enumerable,false);
   assert.deepEqual(error.properties.get('message'),['str',"Cannot use 'in' operator to search for '#<Object>' in null"]);
   assert.deepEqual(c.lastReturn,{kind:'throw',value:ref('error')});
   apply(c,{kind:'property.set',object:'error',key:key('name'),receiver:ref('error'),value:['str','changed'],success:true},

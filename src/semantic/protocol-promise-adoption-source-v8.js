@@ -71,7 +71,7 @@ export function prepareSourcePromiseAdoptionV8(ctx,event,owner,promise,target){
     return; // A previously consumed resolving pair remains a no-op.
   const allocation=event.stateChanges.find(change=>change.table==='heap'&&change.before===null&&change.id===error[1]);
   if(allocation?.after?.declaredError!=='TypeError'||
-    !eq(allocation.after.properties.name?.value,['str','TypeError'])||
+    allocation.after.prototype!=='TypeError.prototype'||Object.hasOwn(allocation.after.properties,'name')||
     !eq(allocation.after.properties.message?.value,['str','Chaining cycle detected for promise']))
     ctx.refuse('self resolution lacks its current source TypeError allocation');
   if(ctx.controller(owner).heap.has(ctx.identity(error[1])))ctx.refuse('source self error identity was already allocated');

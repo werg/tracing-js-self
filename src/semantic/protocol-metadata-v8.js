@@ -44,7 +44,7 @@ function tracker(adapter){
       const {id,raw}=objects[index],node=adapter.object(raw);
       if(node.kind==='error'){
         if(!errorTypes.includes(node.errorType))fail('unknown intrinsic Error type');
-        rows.push({id,kind:'error',errorType:node.errorType});continue;
+        if(!Array.isArray(node.properties)){rows.push({id,kind:'error',errorType:node.errorType});continue;}
       }
       if(node.kind==='function'&&!Array.isArray(node.properties)){
         const annotations=annotationRows(node);rows.push({id,kind:'function',...(annotations?{annotations}:{})});continue;
@@ -54,7 +54,7 @@ function tracker(adapter){
         {kind:'data',value:value(d.value),writable:d.writable,enumerable:d.enumerable,configurable:d.configurable}:
         {kind:'accessor',get:value(d.get),set:value(d.set),enumerable:d.enumerable,configurable:d.configurable}}));
       const annotations=annotationRows(node);
-      rows.push({id,kind:node.kind,prototype,extensible:node.extensible,properties,...(annotations?{annotations}:{})});
+      rows.push({id,kind:node.kind,...(node.kind==='error'?{errorType:node.errorType}:{}),prototype,extensible:node.extensible,properties,...(annotations?{annotations}:{})});
     }
     return {objects:rows,symbols:copy(symbolRows)};
   }
@@ -70,7 +70,7 @@ function extended(adapters,method,value,context){
 export function createNativeProtocolMetadata({initialValues=[],intrinsicPrototypes=[],adapters=[]}={}){
   const names=['Object.prototype','Array.prototype','Function.prototype'];
   const ordinaryPrototypes=new Map([[Object.prototype,names[0]],[Array.prototype,names[1]],[Function.prototype,names[2]]]);
-  const errorPrototypes=new Map();
+  const errorPrototypes=new Map(),errorIdentities=new WeakMap();
   for(const errorType of errorTypes){const prototype=globalThis[errorType]?.prototype;
     if(prototype){ordinaryPrototypes.set(prototype,errorType+'.prototype');errorPrototypes.set(prototype,errorType);}}
   intrinsicPrototypes.forEach((value,index)=>ordinaryPrototypes.set(value,names[index%3]));
@@ -78,15 +78,17 @@ export function createNativeProtocolMetadata({initialValues=[],intrinsicPrototyp
   const intrinsicPrototype=value=>value===null?null:ordinaryPrototypes.get(value)??value;
   function defaultNode(value,{includeFunctions=false}={}){
     if(types.isProxy(value))fail('Proxy metadata is outside the profile');
-    if(types.isNativeError(value)){
-      const errorType=errorPrototypes.get(Object.getPrototypeOf(value));
-      if(!errorType)fail('native Error prototype is outside the registered intrinsic profile');
-      return {kind:'error',errorType};
+    const isError=types.isNativeError(value);
+    let errorType;
+    if(isError){
+      errorType=errorIdentities.get(value)??errorPrototypes.get(Object.getPrototypeOf(value));
+      if(!errorType)fail('native Error origin was not observed before its prototype changed');
+      errorIdentities.set(value,errorType);
     }
     if(typeof value==='function'&&!includeFunctions)return {kind:'function'};
     const descriptors=Object.getOwnPropertyDescriptors(value),prototype=Object.getPrototypeOf(value);
-    return {kind:typeof value==='function'?'function':Array.isArray(value)?'array':'object',prototype:intrinsicPrototype(prototype),
-      extensible:Object.isExtensible(value),properties:Reflect.ownKeys(descriptors).map(key=>{
+    return {kind:isError?'error':typeof value==='function'?'function':Array.isArray(value)?'array':'object',...(isError?{errorType}:{}),prototype:intrinsicPrototype(prototype),
+      extensible:Object.isExtensible(value),properties:Reflect.ownKeys(descriptors).filter(key=>!isError||key!=='stack').map(key=>{
         const d=descriptors[key];return {key,descriptor:Object.hasOwn(d,'value')?
           {kind:'data',value:d.value,writable:d.writable,enumerable:d.enumerable,configurable:d.configurable}:
           {kind:'accessor',get:d.get,set:d.set,enumerable:d.enumerable,configurable:d.configurable}};
@@ -138,7 +140,7 @@ export function createOwnedProtocolMetadata(bundle,{adapters=[]}={}){
     if(!node||!['object','array','function','promise'].includes(node.kind))fail('nonordinary owned object');
     if(node.declaredError!==undefined){
       if(node.kind!=='object'||!errorTypes.includes(node.declaredError))fail('invalid owned intrinsic Error brand');
-      return {kind:'error',errorType:node.declaredError};
+      // Continue through ordinary descriptors; the immutable origin brand is additional metadata.
     }
     if(node.kind==='function'&&!includeFunctions){
       if(Object.keys(node.properties??{}).length||Object.keys(node.accessors??{}).length||node.prototypeInitialized||node.classConstructor)
@@ -147,9 +149,9 @@ export function createOwnedProtocolMetadata(bundle,{adapters=[]}={}){
     }
     const reference=id=>id==='Promise.prototype'?['intrinsic',id]:currentState.promises[id]?['promise',id]:['ref',id];
     const prototype=node.prototype===undefined?(node.kind==='array'?'Array.prototype':node.kind==='function'?'Function.prototype':node.kind==='promise'?['intrinsic','Promise.prototype']:'Object.prototype'):
-      ['Object.prototype','Array.prototype','Function.prototype'].includes(node.prototype)?node.prototype:
+      ['Object.prototype','Array.prototype','Function.prototype',...errorTypes.map(name=>name+'.prototype')].includes(node.prototype)?node.prototype:
       node.prototype===null?null:typeof node.prototype==='string'?reference(node.prototype):fail('unmodeled owned prototype');
-    return {kind:node.kind,prototype,extensible:node.extensible!==false,properties:ownedKeys(node).map(key=>{
+    return {kind:node.declaredError?'error':node.kind,...(node.declaredError?{errorType:node.declaredError}:{}),prototype,extensible:node.extensible!==false,properties:ownedKeys(node).map(key=>{
       const accessor=Object.hasOwn(node.accessors??{},key)?node.accessors[key]:null;
       const descriptor=accessor?{kind:'accessor',get:accessor.get?.value??['undefined'],set:accessor.set?.value??['undefined'],
         enumerable:accessor.enumerable,configurable:accessor.configurable}:
@@ -185,7 +187,7 @@ export function compareProtocolMetadata(expected,observed){
   for(let index=0;index<Math.max(expected.length,observed.length);index++)if(!isDeepStrictEqual(expected[index],observed[index]))
     return {schema:PROTOCOL_METADATA_SCHEMA,status:'mismatch',checked:index,index,expected:expected[index]??null,observed:observed[index]??null};
   return {schema:PROTOCOL_METADATA_SCHEMA,status:'agreed',checked:expected.length,
-    coverage:['ordinary-own-key-order','data-descriptor-values-and-flags','accessor-identities-and-flags','prototype-identity','extensibility','Symbol-identity-description-registry','intrinsic-error-type-and-identity'],
+    coverage:['ordinary-own-key-order','data-descriptor-values-and-flags','accessor-identities-and-flags','prototype-identity','extensibility','Symbol-identity-description-registry','intrinsic-error-type-identity-and-standard-properties'],
     extensionAnnotations:[...new Set(expected.flatMap(row=>row.objects??[]).flatMap(node=>node.annotations??[]).map(row=>row.name))].sort(),
-    scope:'Observed ordinary descriptors and declared annotations; intrinsic Error nodes carry type identity only, and unregistered exotic state is refused'};
+    scope:'Observed ordinary descriptors, Error standard properties and declared annotations; engine-specific Error stack fields and unregistered exotic state are excluded'};
 }

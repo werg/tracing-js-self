@@ -28,10 +28,10 @@ export function createProxySourceAdapterV8(){
         change.table==='frames'&&change.id===event.invocationId)?.after?.completion?.value?.origin:event.eventId;
     const nativeCompletion=event.completion;
     require(ctx,changes.length===1&&allocation.length===1&&node.kind==='object'&&
-      properties.name?.value?.[0]==='str'&&properties.name.value[1]==='TypeError'&&
-      properties.message?.value?.[0]==='str'&&properties.name.origin===origin&&properties.message.origin===origin&&
-      currentOrigin===origin&&allocation[0].kind==='object'&&allocation[0].properties?.length===2&&
-      allocation[0].properties.some(item=>item.key==='name'&&ctx.eq(item.value,properties.name.value))&&
+      node.prototype==='TypeError.prototype'&&!Object.hasOwn(properties,'name')&&
+      ctx.eq(node.dataAttributes?.message,{writable:true,enumerable:false,configurable:true})&&
+      properties.message?.value?.[0]==='str'&&properties.message.origin===origin&&
+      currentOrigin===origin&&allocation[0].kind==='object'&&allocation[0].properties?.length===1&&
       allocation[0].properties.some(item=>item.key==='message'&&ctx.eq(item.value,properties.message.value))&&
       (event.operation==='call.return'?origin===event.stateChanges.find(change=>
         change.table==='frames'&&change.id===event.invocationId)?.after?.completion?.value?.origin:
