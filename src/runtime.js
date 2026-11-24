@@ -1203,7 +1203,7 @@ export class Runtime {
         value=['str',replacing.output+replacing.text.slice(replacing.lastEnd)];
         delete caller.pendingStringReplace;
       }
-      const reflected=finishOwnedProxyReflection(this,draft,caller,frame,value,origin,{objectPrototype,truthy});
+      const reflected=finishOwnedProxyReflection(this,draft,caller,frame,value,origin,{objectPrototype,truthy,valueKey,ownPropertyKeys,putOwn,proxyDeletePropertyDisplay});
       if(reflected?.abrupt)return;
       if(reflected)value=reflected.value;
       const pending=caller.pendingProperty;
@@ -2553,7 +2553,7 @@ if(fn.value[0]!=='intrinsic'||!['Set','Map'].includes(fn.value[1])){
             else throw new TypeError('Unmodeled Symbol static property');
           }
           else if(base.value[0]==='intrinsic'&&base.value[1]==='Reflect'&&
-             ['ownKeys','apply','set','deleteProperty','defineProperty','has','getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions'].includes(property))v=['builtinfn','Reflect.'+property];
+             ['ownKeys','apply','set','deleteProperty','defineProperty','has','getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor'].includes(property))v=['builtinfn','Reflect.'+property];
           else if(base.value[0]==='symbol'){
             if(property==='description')v=this.symbolDescription(s,base.value);
             else if(['toString','valueOf'].includes(property))v=['builtinfn','Symbol.prototype.'+property];
@@ -3981,7 +3981,7 @@ if(callable[0]==='builtinfn'&&/^(?:Set|Map)\.prototype\./.test(callable[1])){
             return {...operands(fn,...args),...result(ref)};
           }
           if(callable[0]==='builtinfn'){
-            const reflection=startOwnedProxyReflection(this,s,f,callable[1],args,eventId,{proxyRoute,objectPrototype,truthy,guestFault});
+            const reflection=startOwnedProxyReflection(this,s,f,callable[1],args,eventId,{proxyRoute,objectPrototype,truthy,guestFault,valueKey,ownPropertyKeys,putOwn,proxyDeletePropertyDisplay});
             if(reflection)return {...operands(fn,...args),reads:reflection.reads,
               ...(reflection.child?{causes:[{kind:'invocation',frameId:reflection.child}]}:result(reflection.value))};
           }

@@ -31,8 +31,13 @@ export function createProxyReflectionSourceAdapterV8(){
     frameFields:frame=>frame.pendingProxyReflection?['pendingProxyReflection']:null,
     event(ctx,event,row){
       if(event.operation==='call.return'&&callbacks.has(event.invocationId)){
-        for(const change of event.stateChanges.filter(c=>c.table==='heap'&&c.before===null&&c.after?.declaredError!=='TypeError'))
+        const entry=callbacks.get(event.invocationId),owner=event.stateChanges.find(c=>c.table==='frames'&&c.id===entry.parent)?.after,
+          output=owner?.stack?.at(-1)?.value,child=event.stateChanges.find(c=>c.table==='frames'&&c.id===event.invocationId)?.after;
+        for(const change of event.stateChanges.filter(c=>c.table==='heap'&&c.before===null&&c.after?.declaredError!=='TypeError')){
+          if(['getOwnPropertyDescriptor','ownKeys'].includes(entry.operation)&&output?.[0]==='ref'&&change.id===output[1]&&
+            !ctx.eq(output,child?.completion?.value?.value))continue;
           ctx.publish(change.after,event);
+        }
         return true;
       }
       const caller=builtin(row?.operands?.[0]??event.operands?.[0]),operation=caller?.split('.')[1];
@@ -41,10 +46,12 @@ export function createProxyReflectionSourceAdapterV8(){
       if(node?.kind!=='proxy')return false;
       require(ctx,event.completion?.type!=='throw','direct reflection fault requires its explicit source boundary');
       ctx.tag(['intrinsic','Object.prototype'],event);
-      const args=operation==='setPrototypeOf'?[ctx.tag(row.operands[2]??['undefined'],event)]:[],selectedRoute=route(ctx,node.id,operation,event);
+      const args=operation==='setPrototypeOf'?[ctx.tag(row.operands[2]??['undefined'],event)]:
+        operation==='getOwnPropertyDescriptor'?[ctx.key(row.operands[2]??['undefined'])]:[],selectedRoute=route(ctx,node.id,operation,event);
       if(!row.child){
-        emit(ctx,{kind:'proxy.reflect.direct',object:node.id,operation,caller,arguments:args,
-          result:ctx.tag(row.result,event),route:selectedRoute},event);return true;
+        const creates=['getOwnPropertyDescriptor','ownKeys'].includes(operation),value=creates?row.result:ctx.tag(row.result,event);
+        emit(ctx,{kind:'proxy.reflect.direct',object:node.id,operation,caller,arguments:args,result:value,route:selectedRoute},event);
+        if(creates&&value[0]==='ref')ctx.markPublished(value[1]);return true;
       }
       const parent=event.stateChanges.find(c=>c.table==='frames'&&c.id===event.invocationId)?.after,
         child=event.stateChanges.find(c=>c.table==='frames'&&c.id===row.child)?.after,pending=parent?.pendingProxyReflection,
@@ -86,10 +93,13 @@ export function createProxyReflectionSourceAdapterV8(){
         require(ctx,ctx.eq(ctx.controller.heap.get(node.id)?.properties.get('message'),properties.message.value),'derived native fault message differs');
         ctx.markPublished(node.id);
       }else{
-        const normal=entry.operation==='getPrototypeOf'?value:
+        const creates=['getOwnPropertyDescriptor','ownKeys'].includes(entry.operation),
+          normal=creates?owner?.stack?.at(-1)?.value:entry.operation==='getPrototypeOf'?value:
           entry.operation==='isExtensible'||entry.caller.startsWith('Reflect.')?['bool',truthy(raw)]:['ref',entry.object];
+        require(ctx,normal,'normal reflection output');
         emit(ctx,{kind:'proxy.reflect.finish',id:entry.id,completion:{kind:completion.type==='throw'?'throw':'normal',
           value:completion.type==='throw'?value:normal}},event);
+        if(creates&&completion.type==='return'&&normal[0]==='ref')ctx.markPublished(normal[1]);
       }
       active.delete(entry.parent);callbacks.delete(change.id);return true;
     },

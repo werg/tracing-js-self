@@ -1,6 +1,10 @@
+import {proxyDescriptorTrapResult,proxyOwnKeysTrapResult,proxyDescriptorFields} from './proxy-reflection-descriptors.js';
+import {ordinaryGet} from './spec-operations.js';
+import {ownedHasProperty} from './owned-has-property.js';
+import {propertyKeyValue} from './property-keys.js';
 // Owned Proxy reflection. Selected callbacks are ordinary guest frames.
 // This module performs no host operation on guest values.
-const operations=new Set(['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions']);
+const operations=new Set(['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys']);
 const primitive=value=>!['ref','intrinsic','builtinfn','promise'].includes(value?.[0]);
 const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 function prototype(state,node,api){
@@ -14,7 +18,42 @@ function target(state,pending){
   if(node?.kind!=='object')throw new TypeError('Proxy reflection requires its ordinary target internal-method boundary');
   return node;
 }
+function reflectData(state,pending,value,api,direct=false){
+  const storage=target(state,pending),context={
+    eq:equal,truthy:api.truthy,extensible:()=>storage.extensible!==false,
+    ownDescriptor(key){
+      const name=api.valueKey(key),accessor=storage.accessors?.[name],slot=storage.properties?.[name];
+      if(accessor)return {kind:'accessor',get:accessor.get.value,set:accessor.set.value,
+        enumerable:accessor.enumerable,configurable:accessor.configurable};
+      if(!slot)return null;
+      return {kind:'data',value:slot.value,writable:true,enumerable:true,configurable:true,...storage.dataAttributes?.[name]};
+    },
+    keys:()=>api.ownPropertyKeys(storage).map(propertyKeyValue),
+    callable:value=>value[0]==='builtinfn'||value[0]==='ref'&&state.heap[value[1]]?.kind==='function',
+    read(object,key){
+      const name=api.valueKey(key),found=ordinaryGet(state.heap,object,name);
+      if(!found)throw new TypeError('Proxy descriptor/list getter requires its owned continuation');
+      return {present:ownedHasProperty(state.heap,object,name),value:found.method.value};
+    },
+    display:key=>api.proxyDeletePropertyDisplay(state.heap,api.valueKey(key))
+  };
+  if(pending.operation==='getOwnPropertyDescriptor')
+    return direct?{descriptor:context.ownDescriptor(pending.arguments[0])}:proxyDescriptorTrapResult(value,pending.arguments[0],context);
+  return direct?{keys:context.keys()}:proxyOwnKeysTrapResult(value,context);
+}
+function materialize(runtime,state,pending,value,origin,api,direct=false){
+  const computed=reflectData(state,pending,value,api,direct);
+  if(computed.fault)return {fault:computed.fault};
+  if(pending.operation==='getOwnPropertyDescriptor'&&!computed.descriptor)return {value:['undefined']};
+  const array=pending.operation==='ownKeys',id=runtime.next(state,'obj'),
+    node=state.heap[id]={id,kind:array?'array':'object',properties:{},propertyVersions:{},shapeVersion:0,version:0},
+    fields=array?computed.keys.map((value,index)=>[String(index),value]):proxyDescriptorFields(computed.descriptor);
+  if(array){node.properties.length={value:['num',0],origin};node.propertyVersions.length=0;}
+  for(const [key,value]of fields)api.putOwn(node,key,value,origin);
+  return {value:['ref',id]};
+}
 function fault(state,pending,value,api){
+  if(['getOwnPropertyDescriptor','ownKeys'].includes(pending.operation))return reflectData(state,pending,value,api).fault??null;
   const node=target(state,pending),extensible=node.extensible!==false,truth=api.truthy(value),op=pending.operation;
   if(op==='getPrototypeOf'){
     if(primitive(value)&&value[0]!=='null')return "'getPrototypeOf' on proxy: trap returned neither object nor null";
@@ -38,7 +77,8 @@ function normal(pending,value,api){
 export function startOwnedProxyReflection(runtime,state,frame,caller,args,origin,api){
   const operation=caller.split('.')[1],object=args[0]?.value??['undefined'],node=object[0]==='ref'?state.heap[object[1]]:null;
   if(!operations.has(operation)||!['Object','Reflect'].includes(caller.split('.')[0])||node?.kind!=='proxy')return null;
-  const parameters=operation==='setPrototypeOf'?[args[1]?.value??['undefined']]:[];
+  const parameters=['setPrototypeOf','getOwnPropertyDescriptor'].includes(operation)?[args[1]?.value??['undefined']]:[];
+  if(operation==='getOwnPropertyDescriptor')parameters[0]=propertyKeyValue(api.valueKey(parameters[0]));
   if(operation==='setPrototypeOf'&&primitive(parameters[0])&&parameters[0][0]!=='null')
     api.guestFault('TypeError','Object prototype may only be an Object or null: '+String(parameters[0][1]));
   const routed=api.proxyRoute(state.heap,object,operation);
@@ -52,6 +92,9 @@ export function startOwnedProxyReflection(runtime,state,frame,caller,args,origin
       [routed.target,...parameters].map(value=>({value,origin})),runtime.functionThis(callable,routed.handler),callable.id);
     pending.waitingFrameId=child;frame.pendingProxyReflection=pending;state.control.a0.activeFrameId=child;
     return {child,reads:routed.observations};
+  }
+  if(['getOwnPropertyDescriptor','ownKeys'].includes(operation)){
+    const output=materialize(runtime,state,pending,null,origin,api,true);return {...output,reads:routed.observations};
   }
   let value;
   if(operation==='getPrototypeOf')value=prototype(state,storage,api);
@@ -86,5 +129,6 @@ export function finishOwnedProxyReflection(runtime,state,frame,child,value,origi
     state.control.a0.activeFrameId=frame.id;runtime.routeCompletion(state,frame,completion,origin);
     return {abrupt:true};
   }
-  return {value:normal(pending,value,api)};
+  return ['getOwnPropertyDescriptor','ownKeys'].includes(pending.operation)?
+    materialize(runtime,state,pending,value,origin,api):{value:normal(pending,value,api)};
 }

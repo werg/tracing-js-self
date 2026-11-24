@@ -13,7 +13,7 @@ function fixture(operation){
   apply({kind:'proxy.create',name:'proxy',target:ref('target'),handler:ref('handler')});
   if(operation){allocate('trap','closure');apply({kind:'property.set',object:'handler',key:str(operation),receiver:ref('handler'),value:ref('trap'),success:true});}
   const start=(op=operation,caller='Reflect.'+op,args=[])=>apply({kind:'proxy.reflect.call',id:'reflection',object:'proxy',operation:op,
-    caller,arguments:args,child:'callback',route:deriveProxyRouteV8(c,'proxy',op,PROTOCOL_MACHINE_API_V8).rows});
+    caller,arguments:args,child:'callback',route:deriveProxyRouteV8(c,'proxy',op,PROTOCOL_MACHINE_API_V8).route});
   const finish=value=>apply({kind:'proxy.reflect.finish',id:'reflection',completion:{kind:'normal',value}});
   const restore=(controller=c)=>restoreProxyReflectionV8(controller,controller.protocol.proxyReflection,PROTOCOL_MACHINE_API_V8);
   return {c,apply,start,finish,restore};
@@ -73,7 +73,7 @@ test('transparent reflection forwards prototype and extension operations without
     ['isExtensible',[],['bool',false]],
     ['setPrototypeOf',[['null']],['bool',false]]
   ])f.apply({kind:'proxy.reflect.direct',object:'proxy',operation,caller:'Reflect.'+operation,arguments:args,result,
-    route:deriveProxyRouteV8(f.c,'proxy',operation,PROTOCOL_MACHINE_API_V8).rows});
+    route:deriveProxyRouteV8(f.c,'proxy',operation,PROTOCOL_MACHINE_API_V8).route});
 });
 test('thrown trap values retain identity and suppress normal invariant checks',()=>{
   const f=fixture('getPrototypeOf');f.start();f.apply({kind:'throw',invocation:'callback',value:ref('other')});
