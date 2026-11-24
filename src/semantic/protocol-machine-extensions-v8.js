@@ -35,11 +35,17 @@ import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_RECORD_FIELDS,validatePromi
 import {hasAsyncIterationSourceCallableV8} from './async-iteration-source-v8.js';
 import {PROMISE_OBJECT_PROFILE_V8,PROMISE_OBJECT_RECORD_FIELDS,validatePromiseObjectRecordV8,
   applyPromiseObjectRecordV8,restorePromiseObjectStateV8} from './protocol-promise-object-v8.js';
+import {INTRINSIC_ERROR_PROFILE_V8,INTRINSIC_ERROR_RECORD_FIELDS,validateIntrinsicErrorRecordV8,
+  applyIntrinsicErrorRecordV8,validateIntrinsicErrorNodeV8} from './protocol-intrinsic-error-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:PROMISE_OBJECT_PROFILE_V8,recordFields:PROMISE_OBJECT_RECORD_FIELDS,
   validateRecord:validatePromiseObjectRecordV8,applyRecord:applyPromiseObjectRecordV8,
   stateField:'promiseObjects',ordinaryHeapKinds:['promise'],
   hasRichState:node=>node.kind==='intrinsic',restoreState:restorePromiseObjectStateV8
+}),Object.freeze({
+  id:INTRINSIC_ERROR_PROFILE_V8,recordFields:INTRINSIC_ERROR_RECORD_FIELDS,
+  validateRecord:validateIntrinsicErrorRecordV8,applyRecord:applyIntrinsicErrorRecordV8,
+  validateHeapNode:validateIntrinsicErrorNodeV8
 }),Object.freeze({
   id:MODULE_SCHEDULER_PROFILE_V8,recordFields:MODULE_SCHEDULER_RECORD_FIELDS,
   validateRecord:validateModuleSchedulerRecordV8,applyRecord:applyModuleSchedulerRecordV8,

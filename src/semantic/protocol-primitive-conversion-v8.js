@@ -4,6 +4,7 @@
 import {encode,decode} from '../values.js';
 import {assertAlgorithmFields,assertAlgorithmDataArray} from './ir.js';
 import {lookupConversionPropertyV8 as lookup,assertSupportedConversionMethodV8} from './protocol-conversion-lookup-v8.js';
+import {allocateIntrinsicErrorV8} from './protocol-intrinsic-error-v8.js';
 
 export const PRIMITIVE_CONVERSION_PROFILE_V8='primitive-conversion/1';
 export const PRIMITIVE_CONVERSION_STATE_V8_SCHEMA='semantic-primitive-conversion-state/1';
@@ -179,9 +180,9 @@ export function applyPrimitiveConversionRecordV8(controller,record,api){
     known(controller,record.value);row.candidate=null;row.result=copy(record.value);row.phase='abrupt';
   }else if(record.kind==='conversion.fault'){
     require(row.phase==='fault','conversion fault requires a derived cause');assertDerivedFault(controller,row,api);
-    api.allocate(controller,{name:record.error,objectKind:'object',length:null,code:null,captures:[],functionKind:null,lexicalReceiver:null,
-      properties:[{key:['str','name'],value:['str','TypeError']},{key:['str','message'],value:['str',PRIMITIVE_CONVERSION_FAULTS_V8[row.fault]]}]});
-    row.result=['ref',record.error];row.phase='abrupt';controller.lastReturn={kind:'throw',value:copy(row.result)};
+    row.result=allocateIntrinsicErrorV8(controller,{identity:record.error,errorType:'TypeError',
+      message:PRIMITIVE_CONVERSION_FAULTS_V8[row.fault]},api);
+    row.phase='abrupt';controller.lastReturn={kind:'throw',value:copy(row.result)};
   }else{
     require(row.phase==='finish','conversion finish requires a primitive candidate');const expected=scalarResult(row,api);known(controller,record.result);
     require(eq(record.result,expected),'false primitive scalar conversion');row.result=copy(expected);row.phase='complete';
@@ -251,7 +252,13 @@ export function restorePrimitiveConversionStateV8(controller,snapshot,api){
     if(row.phase==='complete')api.require(api.eq(row.result,scalarResult(row,api)),'false completed primitive conversion');
     if(row.phase==='fault'||row.phase==='abrupt'&&row.fault!==null){
       api.require(row.child===null,'derived conversion fault cannot retain a callback');assertDerivedFault(controller,row,api);
-      if(row.phase==='abrupt')api.require(row.result?.[0]==='ref'&&api.heapNode(controller,row.result[1]).kind==='object','conversion fault error identity');
+      if(row.phase==='abrupt'){
+        const error=row.result?.[0]==='ref'?api.heapNode(controller,row.result[1]):null;
+        api.require(error?.kind==='object'&&error.declaredError==='TypeError'&&
+          api.eq(error.properties.get('name'),['str','TypeError'])&&
+          api.eq(error.properties.get('message'),['str',PRIMITIVE_CONVERSION_FAULTS_V8[row.fault]]),
+          'conversion fault error identity/brand');
+      }
     }
     if(!terminal(row))api.require(row.result===null,'unfinished primitive conversion has a result');
     if(!['fault','abrupt'].includes(row.phase))api.require(row.fault===null,'conversion phase cannot have a fault');
