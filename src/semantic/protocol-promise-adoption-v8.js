@@ -202,8 +202,9 @@ export function applyPromiseAdoptionRecordV8(controller,record,api){
     if(record.kind==='promise.adopt.get'){
       const descriptor=constructorDescriptor(controller,record.target,api),callee=descriptor?.kind==='accessor'?descriptor.get:null,
         closure=callee?.[0]==='ref'?controller.heap.get(callee[1]):null;
-      api.require(closure?.kind==='closure'&&!closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver,
-        'adoption constructor requires its selected synchronous owned getter');
+      api.require(closure?.kind==='closure'&&!closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver&&
+        !closure.callable?.lexicalConstruction,
+        'adoption getter cannot use an unauthenticated constructor capture');
       api.require(!controller.protocol.callFrames.length&&!controller.protocol.pendingCalls.length,
         'adoption getter cannot inherit another call continuation');
       // A job has no guest caller. Use the common checked activation machinery,
@@ -253,6 +254,11 @@ export function allowsPromiseAdoptionInternalSchedulerV8(controller,record){
 }
 export function restorePromiseAdoptionStateV8(controller,api){
   const ownedJobs=new Set(),pending=[],reading=[];
+  for(const job of controller.jobs.values())for(const identity of [job.closure,job.rejectionClosure])if(identity){
+    const closure=controller.heap.get(identity);
+    api.require(!closure?.callable?.lexicalConstruction,
+      'scheduled callback cannot use an unauthenticated constructor capture');
+  }
   for(const [identity,node]of entries(controller)){
     const adoption=node.adoption,lookup=adoption.lookup;
     assertAlgorithmFields(adoption,['schema','owner','target','phase','cause','job','forwarding','error',
@@ -279,7 +285,8 @@ export function restorePromiseAdoptionStateV8(controller,api){
       const closure=lookup.callee?.[0]==='ref'?controller.heap.get(lookup.callee[1]):null,
         receiver=closure?.functionKind==='arrow'?closure.lexicalReceiver:['ref',adoption.target];
       api.require(['reading','observing','completed','rejected'].includes(adoption.phase)&&closure?.kind==='closure'&&
-        !closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver,'retained adoption getter identity');
+        !closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver&&
+        !closure.callable?.lexicalConstruction,'retained adoption getter identity or unauthenticated constructor capture');
       if(adoption.owner===controller.rootInvocation){
         api.require(controller.frameFunctions.get(lookup.child)===closure.code&&
           api.eq(controller.locals.get(lookup.child+':this'),receiver),'retained adoption getter identity or receiver');

@@ -126,6 +126,8 @@ export class SemanticExecutionController {
     if(closure?.kind!=='closure')fail('capture','Scheduler requires an owned closure');
     if(closure.generatorFunction||closure.promiseResolver||closure.asyncFunction)
       fail('capture','Generator, async and resolving functions require their explicit call protocol');
+    if(closure.callable?.lexicalConstruction)
+      fail('capture','Constructor-captured arrows require an authenticated synchronous call frame');
     return closure;
   }
   refreshReady(){

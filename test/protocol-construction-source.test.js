@@ -1,3 +1,4 @@
+import vm from 'node:vm';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRuntime,Runtime} from '../src/runtime.js';
@@ -5,12 +6,16 @@ import {encodeNativeGraph} from '../src/host/graph-codec.js';
 import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-v8.js';
 import {createConstructionSourceAdapterV8} from '../src/semantic/protocol-construction-source-v8.js';
 import {auditProtocolSourceV8} from '../src/semantic/protocol-source-reference-v8.js';
+import {verifyProtocolRegionTrainingCase} from '../src/semantic/protocol-source-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {sharedRegionState} from '../src/semantic/regions.js';
 import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
 import {decodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
 import {restoreProtocolStateV8} from '../src/semantic/protocol-state-v8.js';
 import {LANGUAGE_EXPANSION_FAMILIES} from '../fixtures/language-expansion/benchmark.js';
+import {issue51ConstructionFixtures,issue51ConstructionUnsupportedControls} from '../fixtures/semantic-regions/objects-issue51-construction.js';
+import {SemanticExecutionController} from '../src/semantic/execution-controller.js';
+import {restorePromiseAdoptionStateV8} from '../src/semantic/protocol-promise-adoption-v8.js';
 
 function build(source,args=[]){
   const runtime=createRuntime({maxSteps:10000}).startEntry({text:source,functionName:'run',args});runtime.drive();
@@ -43,6 +48,35 @@ function replay(compiled,{checkpoints=false}={}){
   assert.deepEqual({kind:harness.controller.completion.kind,graph:harness.controller.observedGraph()},compiled.outcome);
   return harness;
 }
+
+test('issue51 retained constructor arrows source-qualify after super substitution and conversion',async()=>{
+  assert.deepEqual(issue51ConstructionFixtures.map(row=>row.ancestorIds),issue51ConstructionFixtures.map(()=>['issue51-original-objects']));
+  for(const fixture of issue51ConstructionFixtures){
+    const result=await verifyProtocolRegionTrainingCase(structuredClone(fixture));
+    assert(result.exported,result.reason);
+    const reference=result.exported.sidecar.sourceArtifact.sidecar.reference;
+    assert.equal(reference.status,'agreed',fixture.id);
+    assert.equal(result.exported.sidecar.sourceArtifact.sidecar.outcome.kind,'return',fixture.id);
+  }
+});
+
+test('constructor-captured arrows refuse unauthenticated scheduled callbacks at selection and restore',async()=>{
+  const fixture=issue51ConstructionUnsupportedControls[0];
+  const native=vm.runInNewContext(fixture.source+'\nrun()');
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(Array.from(native.result),[3,true]);
+  const refusal=await verifyProtocolRegionTrainingCase(structuredClone(fixture));
+  assert.equal(refusal.exported,undefined);
+  assert.match(refusal.reason,/profile|unsupported|outside/i);
+
+  const captured={kind:'closure',functionKind:'arrow',callable:{lexicalConstruction:{frame:'ctor',thisCell:'body:this'}}},
+    controller=Object.create(SemanticExecutionController.prototype);
+  controller.heap=new Map([['callback',captured]]);
+  assert.throws(()=>controller.schedulerClosure('callback'),/authenticated synchronous call frame/);
+  controller.jobs=new Map([['job',{closure:'callback'}]]);
+  const api={require(condition,message){if(!condition)throw new Error(message);}};
+  assert.throws(()=>restorePromiseAdoptionStateV8(controller,api),/unauthenticated constructor capture/);
+});
 
 test('base class fields and private writes source-qualify and replay through public constructor records',async()=>{
   const source='"use strict";function run(n){const before=n+1;class C{#x=2;y=3;constructor(v){this.#x=v;}m(){return this.#x+this.y;}}const o=new C(before);return o.m();}',
