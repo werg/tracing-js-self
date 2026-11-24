@@ -138,6 +138,46 @@ export function createConstructionSourceAdapterV8({bundle,source}){
     }
     require(ctx,ctx.eq(node.thisValue,entry.receiver),'retained receiver differs from shared construction state');return true;
   }
+  function projectThisFault(ctx,event,row){
+    const inst=instruction(ctx,event),current=ctx.state.frames[event.invocationId],
+      ownerId=current?.thisBindingFrameId??event.invocationId,owner=ctx.state.frames[ownerId],role=roles.get(ownerId),
+      entry=role?.kind==='body'?construction(ctx,role.id):null,
+      activation=ctx.controller.protocol?.callFrames?.findLast(call=>call.child===ctx.publicInvocation),
+      message="Must call super constructor in derived class before accessing 'this' or returning from derived constructor";
+    require(ctx,event.operation==='reference.this'&&inst?.op==='THIS'&&
+      ctx.inventory.nodes.get(inst.start+':'+inst.end)?.type==='ThisExpression','fault is not the source this read');
+    require(ctx,current&&owner&&entry&&role.kind==='body'&&entry.phase==='body'&&entry.bodyInvocation===ctx.frame(ownerId)&&
+      entry.initialized===false&&ctx.state.frames[ownerId].constructKind==='derived'&&
+      ctx.state.frames[ownerId].thisInitialized===false&&ctx.state.frames[ownerId].constructorId===entry.callee[1],
+      'uninitialized receiver is not an active derived constructor');
+    require(ctx,activation?.child===ctx.publicInvocation&&
+      (ownerId===event.invocationId
+        ? activation.parent===entry.parent&&ctx.eq(activation.callee,entry.callee)
+        : activation.parent===ctx.frame(ownerId)&&activation.callee?.[0]==='ref'&&
+          ctx.state.heap[activation.callee[1]]?.kind==='function'&&
+          ctx.state.heap[activation.callee[1]]?.arrow===true&&
+          ctx.state.heap[activation.callee[1]]?.lexicalThisFrameId===ownerId&&
+          current.thisBindingFrameId===ownerId),
+      'faulting activation does not retain the constructor or its lexical arrow');
+    const cellName=entry.bodyInvocation+':this';
+    require(ctx,ctx.controller.locals.has(cellName)&&ctx.eq(ctx.controller.locals.get(cellName),U)&&
+      ctx.eq(ctx.controller.receiver,U)&&ctx.eq(current.thisValue,U),
+      'uninitialized constructor receiver cell or active receiver changed');
+    const completion=event.completion,allocation=event.stateChanges.filter(change=>change.table==='heap'),
+      errorId=completion?.value?.value?.[1],error=allocation.length===1&&allocation[0].before===null&&
+        allocation[0].id===errorId?allocation[0].after:null;
+    require(ctx,completion?.type==='throw'&&completion.errorType==='ReferenceError'&&completion.message===message&&
+      completion.origin===event.eventId&&completion.value?.origin===event.eventId&&
+      completion.value.value?.[0]==='ref'&&error?.kind==='object'&&error.declaredError==='ReferenceError'&&
+      Object.keys(error.properties??{}).sort().join(',')==='message,name'&&
+      ctx.eq(error.properties.name?.value,['str','ReferenceError'])&&
+      ctx.eq(error.properties.message?.value,['str',message])&&
+      error.properties.name?.origin===event.eventId&&error.properties.message?.origin===event.eventId,
+      'fault lacks the exact current ReferenceError allocation');
+    emit(ctx,{kind:'construct.this.fault',invocation:ctx.publicInvocation,error:errorId},event,'owned-derived-this-fault/1');
+    ctx.markPublished(errorId);
+    return true;
+  }
   return {id:CONSTRUCTION_SOURCE_PROFILE_V8,
     captureState:()=>({roles:[...roles]}),
     restoreState(state){roles=new Map(state.roles);},
@@ -170,10 +210,12 @@ export function createConstructionSourceAdapterV8({bundle,source}){
       const inst=instruction(ctx,event);if(!inst)return false;const op=inst.op;
       const ordinaryPrototypeInitialized=event.stateChanges.some(change=>change.table==='heap'&&change.after?.kind==='function'&&
         change.after.prototypeInitialized&&!change.before?.prototypeInitialized&&!change.after.classConstructor&&!change.after.generatorFunction);
+      const derivedThisFault=op==='THIS'&&event.completion?.type==='throw';
       if(['CLASS_CREATE','SET_HOME_OBJECT','CLASS_INITIALIZER','CLASS_FINISH','CLASS_CONSTRUCTOR_GUARD','CONSTRUCT',
         'SUPER_CONSTRUCTOR','SUPER_CALL','SUPER_FORWARD_CALL','SUPER_BIND','THIS','NEW_TARGET','PROPERTY_KEY',
         'PRIVATE_DEFINE','PRIVATE_GET','PRIVATE_GET_METHOD','PRIVATE_SET','PRIVATE_HAS','PRIVATE_UPDATE'].includes(op))
-        require(ctx,event.completion?.type!=='throw','guest abrupt construction/private operation requires its own public record');
+        require(ctx,event.completion?.type!=='throw'||derivedThisFault,
+          'guest abrupt construction/private operation requires its own public record');
       if(ordinaryPrototypeInitialized&&['GET_PROP','GET_METHOD'].includes(op)){
         const [object,key]=event.operands;
         require(ctx,object?.[0]==='ref'&&ctx.eq(key,['str','prototype'])&&!row?.child,'ordinary prototype read shape');
@@ -229,7 +271,12 @@ export function createConstructionSourceAdapterV8({bundle,source}){
         const role=roles.get(event.invocationId),child=addedFrame(event);require(ctx,role?.kind==='body','super binding owner');
         emit(ctx,{kind:'super.bind',owner:role.id,receiver:ctx.tag(event.operands[0],event),child:child?ctx.frame(child.id):null},event);
         if(child){roles.set(child.id,{kind:'derived-initializer',id:role.id});bindFrame(ctx,event,child);}
-      }else if(op==='THIS'||op==='NEW_TARGET')emit(ctx,{kind:op==='THIS'?'construct.this':'construct.target',invocation:ctx.publicInvocation,result:ctx.tag(event.result,event)},event);
+      }else if(op==='THIS'||op==='NEW_TARGET'){
+        if(event.completion?.type==='throw'){
+          require(ctx,op==='THIS','only a derived this read may use the owned abrupt constructor transition');
+          projectThisFault(ctx,event,row);
+        }else emit(ctx,{kind:op==='THIS'?'construct.this':'construct.target',invocation:ctx.publicInvocation,result:ctx.tag(event.result,event)},event);
+      }
       else if(op==='PROPERTY_KEY'){
         const key=ctx.key(event.operands[0]);require(ctx,ctx.eq(key,event.result),'primitive property key conversion');
         emit(ctx,{kind:'compute',expr:literal(key),result:ctx.tag(event.result,event),bind:null},event);

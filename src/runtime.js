@@ -1967,7 +1967,7 @@ export class Runtime {
         }
         case 'THIS':{
           const owner=f.thisBindingFrameId?s.frames[f.thisBindingFrameId]:f;
-          if(owner.thisInitialized===false)guestFault('ReferenceError','Must call super constructor before accessing this');
+          if(owner.thisInitialized===false)guestFault('ReferenceError',"Must call super constructor in derived class before accessing 'this' or returning from derived constructor");
           if(owner.thisValue[0]==='undefined'&&!this.programs[f.codeId].strict)
             throw new TypeError('Global sloppy this is not modeled by the bounded object profile');
           return result(owner.thisValue);

@@ -17,6 +17,17 @@ export const issue51ConstructionFixtures=withIssue51Lineage([
     entry:'run',args:[]})
 ]);
 
+export const issue51ConstructionFaultFixtures=withIssue51Lineage([
+  Object.freeze({id:'issue51-derived-this-before-super-reference-error',
+    family:'issue51-derived-this-fault',
+    source:'"use strict";function run(){class A{}class D extends A{constructor(){return this;}}return new D();}',
+    entry:'run',args:[]}),
+  Object.freeze({id:'issue51-derived-this-captured-arrow-before-super-reference-error',
+    family:'issue51-derived-this-fault',
+    source:'"use strict";function run(){class A{}class D extends A{constructor(){const read=()=>this;read();super();}}return new D();}',
+    entry:'run',args:[]})
+]);
+
 export const issue51ConstructionUnsupportedControls=withIssue51Lineage([
   Object.freeze({id:'issue51-control-constructor-arrow-in-promise-reaction',
     family:'issue51-unsupported-control',

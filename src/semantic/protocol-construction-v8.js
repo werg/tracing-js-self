@@ -1,6 +1,7 @@
 // Explicit class/private operations on the shared public heap. No owned VM
 // archive, bytecode, event patch or host execution is an input to this module.
 import {assertAlgorithmFields,assertAlgorithmDataArray} from './ir.js';
+import {allocateIntrinsicErrorV8} from './protocol-intrinsic-error-v8.js';
 
 export const CONSTRUCTION_STATE_V8_SCHEMA='semantic-construction-state/1';
 export const CONSTRUCTION_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.entries({
@@ -19,6 +20,7 @@ export const CONSTRUCTION_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.
   'construct.finish':['kind','id','completion'],
   'construct.target':['kind','invocation','result'],
   'construct.this':['kind','invocation','result'],
+  'construct.this.fault':['kind','invocation','error'],
   'super.select':['kind','owner','callee'],
   'super.bind':['kind','owner','receiver','child'],
   'super.finish':['kind','owner','completion']
@@ -31,7 +33,8 @@ const ref=(value,validate)=>{validate(value);if(value[0]!=='ref')throw new TypeE
 export function validateConstructionRecordV8(record,{value:validateValue}){
   const fields=CONSTRUCTION_RECORD_FIELDS[record?.kind];if(!fields)return false;
   assertAlgorithmFields(record,fields,'construction protocol record');
-  for(const field of ['object','id','owner','privateId','child','invocation'])if(Object.hasOwn(record,field)&&record[field]!==null)id(record[field]);
+  for(const field of ['object','id','owner','privateId','child','invocation','error'])if(Object.hasOwn(record,field)&&record[field]!==null)id(record[field]);
+  if(record.kind==='construct.this.fault')id(record.error);
   if(record.kind==='callable.define'){
     if(![null,'base','derived'].includes(record.constructorKind)||typeof record.classConstructor!=='boolean'||
        record.classConstructor&&record.constructorKind===null||!record.classConstructor&&record.constructorKind==='derived')
@@ -60,9 +63,10 @@ export function validateConstructionRecordV8(record,{value:validateValue}){
   }else if(record.kind==='construct.finish'||record.kind==='super.finish'){
     assertAlgorithmFields(record.completion,['kind','value'],'constructor completion');
     if(!['normal','throw'].includes(record.completion.kind))throw new TypeError('Constructor completion kind');validateValue(record.completion.value);
-  }else if(record.kind==='super.select')validateValue(record.callee);
+  }else if(record.kind==='construct.this.fault')id(record.error);
+  else if(record.kind==='super.select')validateValue(record.callee);
   else if(record.kind==='super.bind')ref(record.receiver,validateValue);
-  else if(record.kind!=='construct.body')validateValue(record.kind==='private.set'?record.value:record.result);
+  else if(!['construct.body','construct.this.fault'].includes(record.kind))validateValue(record.kind==='private.set'?record.value:record.result);
   return true;
 }
 export function createConstructionStateV8(){return {schema:CONSTRUCTION_STATE_V8_SCHEMA,privateNames:[],frames:[],lastCompletion:null};}
@@ -184,6 +188,29 @@ function applyContinuation(controller,record,api){
     if(record.kind==='construct.this')require(!entry||entry.initialized,'uninitialized this requires a guest abrupt-construction record');
     known(controller,record.result);require(eq(record.result,expected),'false receiver/newTarget read');
     if(record.kind==='construct.target'&&capture)controller.locals.set(record.invocation+':lexical-newTarget',copy(record.result));
+  }else if(record.kind==='construct.this.fault'){
+    const invocation=record.invocation;
+    require(controller.stack.at(-1)===invocation&&controller.stack.length>=2,'derived this fault invocation');
+    const activation=controller.protocol.callFrames.findLast(call=>call.child===invocation);
+    require(activation&&activation.parent===controller.stack.at(-2),'derived this fault call frame');
+    const arrow=activation.callee?.[0]==='ref'?heapNode(controller,activation.callee[1]):null,
+      capture=arrow?.callable?.lexicalConstruction,
+      entry=capture?constructionCapture(controller,capture,api):construction.frames.findLast(row=>
+        row.bodyInvocation===invocation&&row.phase==='body');
+    require(entry&&entry.phase==='body'&&entry.bodyInvocation!==null&&entry.activeChild===entry.bodyInvocation&&
+      metadata(controller,entry.callee[1],api).constructorKind==='derived'&&!entry.initialized&&
+      controller.locals.get(entry.bodyInvocation+':this')?.[0]==='undefined'&&controller.receiver?.[0]==='undefined',
+      'fault requires an active uninitialized derived receiver');
+    if(capture){
+      require(arrow.functionKind==='arrow'&&activation.parent===entry.bodyInvocation&&
+        capture.frame===entry.id&&capture.thisCell===entry.bodyInvocation+':this'&&
+        arrow.lexicalReceiver?.[0]==='undefined','faulting arrow capture differs from constructor');
+    }else{
+      require(invocation===entry.bodyInvocation&&activation.parent===entry.parent&&eq(activation.callee,entry.callee),
+        'faulting constructor activation differs');
+    }
+    allocateIntrinsicErrorV8(controller,{identity:record.error,errorType:'ReferenceError',
+      message:"Must call super constructor in derived class before accessing 'this' or returning from derived constructor"},api);
   }else if(record.kind==='super.select'){
     const owner=frame(controller,record.owner,api);
     require(owner.phase==='body'&&owner.bodyInvocation===controller.stack.at(-1)&&metadata(controller,owner.callee[1],api).constructorKind==='derived'&&owner.selectedSuper===null,

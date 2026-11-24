@@ -13,7 +13,7 @@ import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
 import {decodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
 import {restoreProtocolStateV8} from '../src/semantic/protocol-state-v8.js';
 import {LANGUAGE_EXPANSION_FAMILIES} from '../fixtures/language-expansion/benchmark.js';
-import {issue51ConstructionFixtures,issue51ConstructionUnsupportedControls} from '../fixtures/semantic-regions/objects-issue51-construction.js';
+import {issue51ConstructionFixtures,issue51ConstructionFaultFixtures,issue51ConstructionUnsupportedControls} from '../fixtures/semantic-regions/objects-issue51-construction.js';
 import {SemanticExecutionController} from '../src/semantic/execution-controller.js';
 import {restorePromiseAdoptionStateV8} from '../src/semantic/protocol-promise-adoption-v8.js';
 
@@ -40,7 +40,7 @@ function replay(compiled,{checkpoints=false}={}){
   for(const claim of compiled.claims){
     harness.select('invocation1',claim.line);
     if(checkpoints&&['callable.capture','construct.enter','construct.body','construct.finish','construct.target',
-      'construct.this','super.bind','super.finish'].includes(claim.record.kind)){
+      'construct.this','construct.this.fault','super.bind','super.finish'].includes(claim.record.kind)){
       const restored=RegionExecutionHarness.restore(harness.checkpoint());
       assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(harness.controller));harness=restored;
     }
@@ -57,6 +57,23 @@ test('issue51 retained constructor arrows source-qualify after super substitutio
     const reference=result.exported.sidecar.sourceArtifact.sidecar.reference;
     assert.equal(reference.status,'agreed',fixture.id);
     assert.equal(result.exported.sidecar.sourceArtifact.sidecar.outcome.kind,'return',fixture.id);
+  }
+});
+
+test('derived this reads before super allocate a native ReferenceError directly and through a captured arrow',async()=>{
+  assert.deepEqual(issue51ConstructionFaultFixtures.map(row=>row.ancestorIds),
+    issue51ConstructionFaultFixtures.map(()=>['issue51-original-objects']));
+  for(const fixture of issue51ConstructionFaultFixtures){
+    const {compiled,audit}=await checked(fixture.source,fixture.args);
+    assert.equal(audit.status,'agreed',fixture.id);
+    assert.equal(compiled.outcome.kind,'throw',fixture.id);
+    const records=compiled.claims.map(row=>row.record),fault=records.find(row=>row.kind==='construct.this.fault');
+    assert(fault,fixture.id);
+    assert(records.some(row=>row.kind==='construct.finish'&&row.completion.kind==='throw'&&
+      row.completion.value[0]==='ref'&&row.completion.value[1]===fault.error),fixture.id);
+    const harness=replay(compiled,{checkpoints:true}),error=harness.controller.heap.get(fault.error);
+    assert.equal(error.declaredError,'ReferenceError',fixture.id);
+    assert.equal(harness.controller.completion.kind,'throw',fixture.id);
   }
 });
 
