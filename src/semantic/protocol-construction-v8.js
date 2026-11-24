@@ -5,6 +5,7 @@ import {assertAlgorithmFields,assertAlgorithmDataArray} from './ir.js';
 export const CONSTRUCTION_STATE_V8_SCHEMA='semantic-construction-state/1';
 export const CONSTRUCTION_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.entries({
   'callable.define':['kind','object','constructorKind','classConstructor'],
+  'callable.capture':['kind','object','frame','thisCell'],
   'callable.home':['kind','object','home'],
   'class.link':['kind','object','prototype','heritage'],
   'class.initializer':['kind','object','placement','initializer'],
@@ -23,7 +24,7 @@ export const CONSTRUCTION_RECORD_FIELDS=Object.freeze(Object.fromEntries(Object.
   'super.finish':['kind','owner','completion']
 }).map(([kind,fields])=>[kind,Object.freeze(fields)])));
 export const CONSTRUCTION_STATE_V8_FIELDS=Object.freeze(['schema','privateNames','frames','lastCompletion']);
-export const CALLABLE_STATE_V8_FIELDS=Object.freeze(['constructorKind','classConstructor','homeObject','instanceInitializer','staticInitializer']);
+export const CALLABLE_STATE_V8_FIELDS=Object.freeze(['constructorKind','classConstructor','homeObject','instanceInitializer','staticInitializer','lexicalConstruction']);
 export const CONSTRUCTION_FRAME_V8_FIELDS=Object.freeze(['id','parent','bodyInvocation','activeChild','callee','newTarget','arguments','receiver','initialized','phase','superParent','selectedSuper']);
 const id=value=>{if(typeof value!=='string'||!value||value.length>256)throw new TypeError('Construction identity must be a bounded string');};
 const ref=(value,validate)=>{validate(value);if(value[0]!=='ref')throw new TypeError('Construction requires an owned reference');};
@@ -35,6 +36,8 @@ export function validateConstructionRecordV8(record,{value:validateValue}){
     if(![null,'base','derived'].includes(record.constructorKind)||typeof record.classConstructor!=='boolean'||
        record.classConstructor&&record.constructorKind===null||!record.classConstructor&&record.constructorKind==='derived')
       throw new TypeError('Invalid callable construction capability');
+  }else if(record.kind==='callable.capture'){
+    id(record.frame);id(record.thisCell);
   }else if(record.kind==='callable.home')ref(record.home,validateValue);
   else if(record.kind==='class.link'){
     ref(record.prototype,validateValue);validateValue(record.heritage);
@@ -95,7 +98,25 @@ export function assertConstructionNextV8(controller,record,api){
 export function assertConstructionCallV8(controller,callee,{construction=false}={},api){
   const info=api.heapNode(controller,callee[1]).callable;
   api.require(!info?.classConstructor||construction,'class constructor cannot be called without construction');
+  if(info?.lexicalConstruction)constructionCapture(controller,info.lexicalConstruction,api);
   return true;
+}
+function constructionCapture(controller,capture,api){
+  assertAlgorithmFields(capture,['frame','thisCell'],'lexical constructor capture');id(capture.frame);id(capture.thisCell);
+  const entry=controller.protocol?.construction?.frames.find(row=>row.id===capture.frame);
+  api.require(entry,'captured constructor frame is absent');
+  api.require(entry.bodyInvocation!==null&&capture.thisCell===entry.bodyInvocation+':this',
+    'captured constructor receiver cell changed');
+  api.require(controller.locals.has(capture.thisCell),'captured constructor receiver cell is absent');
+  api.require(api.eq(controller.locals.get(capture.thisCell),entry.initialized?entry.receiver:['undefined']),
+    'captured constructor receiver cell differs from its frame');
+  return entry;
+}
+export function constructionCallReceiverV8(controller,callee,receiver,api){
+  const node=controller.heap.get(callee[1]),capture=node?.callable?.lexicalConstruction;
+  if(!capture)return undefined;
+  constructionCapture(controller,capture,api);
+  return api.copy(controller.locals.get(capture.thisCell));
 }
 
 function applyContinuation(controller,record,api){
@@ -154,10 +175,15 @@ function applyContinuation(controller,record,api){
     controller.lastReturn={kind:expected.kind==='normal'?'return':'throw',value:copy(expected.value)};
   }else if(record.kind==='construct.target'||record.kind==='construct.this'){
     require(controller.stack.at(-1)===record.invocation,'receiver/newTarget read has wrong active invocation');
-    const entry=construction.frames.findLast(row=>row.bodyInvocation===record.invocation&&row.phase!=='complete');
+    const activation=controller.protocol.callFrames.findLast(row=>row.child===record.invocation),
+      callee=activation?.callee?.[0]==='ref'?heapNode(controller,activation.callee[1]):null,
+      capture=callee?.callable?.lexicalConstruction,
+      entry=capture?constructionCapture(controller,capture,api):construction.frames.findLast(row=>row.bodyInvocation===record.invocation&&row.phase!=='complete');
+    if(capture)require(callee.functionKind==='arrow','captured constructor context belongs to a non-arrow');
     const expected=record.kind==='construct.target'?entry?.newTarget??['undefined']:controller.receiver;
     if(record.kind==='construct.this')require(!entry||entry.initialized,'uninitialized this requires a guest abrupt-construction record');
     known(controller,record.result);require(eq(record.result,expected),'false receiver/newTarget read');
+    if(record.kind==='construct.target'&&capture)controller.locals.set(record.invocation+':lexical-newTarget',copy(record.result));
   }else if(record.kind==='super.select'){
     const owner=frame(controller,record.owner,api);
     require(owner.phase==='body'&&owner.bodyInvocation===controller.stack.at(-1)&&metadata(controller,owner.callee[1],api).constructorKind==='derived'&&owner.selectedSuper===null,
@@ -206,7 +232,16 @@ export function applyConstructionRecordV8(controller,record,api){
     callable(controller,record.object,api);require(!node.callable,'callable capability already declared');
     require(node.functionKind!=='arrow'||record.constructorKind===null&&!record.classConstructor,'arrow cannot be a constructor');
     node.callable={constructorKind:record.constructorKind,classConstructor:record.classConstructor,
-      homeObject:null,instanceInitializer:null,staticInitializer:null};
+      homeObject:null,instanceInitializer:null,staticInitializer:null,lexicalConstruction:null};
+  }else if(record.kind==='callable.capture'){
+    const info=metadata(controller,record.object,api);
+    require(node.functionKind==='arrow'&&info.lexicalConstruction===null,'constructor capture requires an uncaptured arrow');
+    const entry=frame(controller,record.frame,api);
+    require(entry.phase==='body'&&entry.bodyInvocation===controller.stack.at(-1)&&
+      record.thisCell===entry.bodyInvocation+':this','constructor capture must come from its active body receiver');
+    require(controller.locals.has(record.thisCell)&&eq(controller.locals.get(record.thisCell),entry.initialized?entry.receiver:['undefined']),
+      'constructor capture receiver cell differs from its live frame');
+    info.lexicalConstruction={frame:record.frame,thisCell:record.thisCell};
   }else if(record.kind==='callable.home'){
     const info=metadata(controller,record.object,api);known(controller,record.home);heapNode(controller,record.home[1]);
     require(node.functionKind!=='arrow'&&info.constructorKind===null&&info.homeObject===null,'home object is immutable and belongs to a nonconstructible method');
@@ -289,6 +324,10 @@ export function restoreConstructionStateV8(controller,snapshot,api){
       callable(controller,object,api);const info=node.callable;assertAlgorithmFields(info,CALLABLE_STATE_V8_FIELDS,'callable state');
       validateConstructionRecordV8({kind:'callable.define',object,constructorKind:info.constructorKind,classConstructor:info.classConstructor},{value:api.known.bind(null,controller)});
       api.require(node.functionKind!=='arrow'||info.constructorKind===null&&!info.classConstructor,'invalid arrow capability');
+      if(info.lexicalConstruction!==null){
+        api.require(node.functionKind==='arrow','constructor lexical context requires an arrow');
+        constructionCapture(controller,info.lexicalConstruction,api);
+      }
       if(info.homeObject!==null){api.known(controller,info.homeObject);api.require(info.homeObject[0]==='ref','home object reference');api.heapNode(controller,info.homeObject[1]);}
       for(const placement of ['instance','static'])if(info[placement+'Initializer']!==null){
         const initializer=info[placement+'Initializer'];api.known(controller,initializer);api.require(initializer[0]==='ref','initializer reference');

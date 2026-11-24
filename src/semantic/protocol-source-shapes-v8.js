@@ -7,7 +7,7 @@ const refuse=message=>{const error=new TypeError('Protocol source projection: '+
 const ordinaryFields=new Set(['id','kind','properties','propertyVersions','shapeVersion','version','propertyOrder','prototype','accessors','dataAttributes','extensible']);
 const functionFields=new Set([...ordinaryFields,'codeId','closureEnvId','async','arrow','lexicalThis','nonConstructible']);
 const symbolFields=new Set(['id','kind','description','registeredKey','properties','propertyVersions','shapeVersion','version']);
-export const frameFields=new Set(['id','codeId','pc','stack','envId','callerFrameId','asyncPromiseId','status','blockedOn','awaiting','operationId','pendingCoercionThrow','handlers','loops','thisValue','version','pendingProperty','completion']);
+export const frameFields=new Set(['id','codeId','pc','stack','envId','callerFrameId','asyncPromiseId','status','blockedOn','awaiting','operationId','pendingCoercionThrow','handlers','loops','thisValue','version','pendingProperty','completion','thisBindingFrameId']);
 export function guardHeap(node,{extraFields=[],allowUnknown=false,allowFunctionMetadata=false}={}){
   const fields=node.kind==='symbol'?symbolFields:node.kind==='function'?functionFields:
     ['object','array'].includes(node.kind)?ordinaryFields:null;

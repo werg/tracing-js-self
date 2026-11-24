@@ -227,10 +227,15 @@ function call(controller,record,options={}){
     'resumed invocation must be inactive and retain the same source callable');
   else require(!controller.frameFunctions.has(record.child),'duplicate invocation');
   const protocol=state(controller);require(protocol.callFrames.length<PROTOCOL_V8_LIMITS.calls,'call stack bound');
-  protocol.callFrames.push({child:record.child,parent:controller.stack.at(-1),
+  protocol.callFrames.push({child:record.child,parent:controller.stack.at(-1),callee:copy(record.callee),
     priorReceiver:copy(controller.receiver??['undefined']),priorAliases:[...(controller.captureAliases??new Map())],
     arguments:copy(record.arguments)});
-  controller.receiver=copy(node.functionKind==='arrow'?node.lexicalReceiver:record.receiver);
+  let receiver=copy(node.functionKind==='arrow'?node.lexicalReceiver:record.receiver);
+  for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.callReceiver){
+    const adapted=adapter.callReceiver(controller,record.callee,receiver,PROTOCOL_MACHINE_API_V8);
+    if(adapted!==undefined)receiver=copy(adapted);
+  }
+  controller.receiver=receiver;
   controller.captureAliases=new Map(node.captures.map(row=>[row.binding,row.cell]));
   controller.locals.set(record.child+':this',copy(controller.receiver));
   record.arguments.forEach((value,index)=>controller.locals.set(record.child+':argument:'+index,copy(value)));
@@ -454,12 +459,14 @@ export function restoreProtocolStateV8(controller,snapshot){
     heapNode(temporary,pending.object);knownKey(temporary,pending.key);known(temporary,pending.receiver);callable(temporary,pending.callee);
     require(controller.frameFunctions.has(pending.child)&&controller.frameFunctions.has(pending.parent),'pending call frames');
     if(pending.operation==='get')require(pending.value===null,'getter has no assignment operand');else known(temporary,pending.value);
-    const callee=heapNode(temporary,pending.callee[1]),receiver=callee.functionKind==='arrow'?callee.lexicalReceiver:pending.receiver,
-      active=snapshot.callFrames.find(frame=>frame.child===pending.child);
+    const callee=heapNode(temporary,pending.callee[1]),receiver=callee.functionKind==='arrow'?
+      PROTOCOL_MACHINE_ADAPTERS_V8.find(adapter=>adapter.callReceiver)?.callReceiver(controller,pending.callee,callee.lexicalReceiver,PROTOCOL_MACHINE_API_V8)??callee.lexicalReceiver:
+      pending.receiver,active=snapshot.callFrames.find(frame=>frame.child===pending.child);
     require(controller.frameFunctions.get(pending.child)===callee.code&&
       eq(controller.locals.get(pending.child+':this'),receiver),'pending accessor receiver or callable differs from its activation');
-    if(active)require(active.parent===pending.parent&&eq(active.arguments,pending.operation==='get'?[]:[pending.value]),
-      'pending accessor arguments or parent differ from its activation');
+    if(active)require(eq(active.callee,pending.callee)&&active.parent===pending.parent&&
+      eq(active.arguments,pending.operation==='get'?[]:[pending.value]),
+      'pending accessor callee, arguments or parent differ from its activation');
     if(controller.stack.at(-1)===pending.child)require(eq(controller.receiver,receiver),
       'active accessor receiver differs from its retained call');
   }
@@ -467,10 +474,23 @@ export function restoreProtocolStateV8(controller,snapshot){
   require(snapshot.callFrames.length<=PROTOCOL_V8_LIMITS.calls,'call frame bound');
   for(let i=0;i<snapshot.callFrames.length;i++){
     const frame=snapshot.callFrames[i];
-    assertAlgorithmFields(frame,['child','parent','priorReceiver','priorAliases','arguments'],'protocol call frame');
+    assertAlgorithmFields(frame,['child','parent','callee','priorReceiver','priorAliases','arguments'],'protocol call frame');
     require(typeof frame.child==='string'&&typeof frame.parent==='string'&&
       controller.stack.indexOf(frame.child)===controller.stack.indexOf(frame.parent)+1&&
       controller.stack.includes(frame.child)&&(!i||snapshot.callFrames[i-1].child===frame.parent),'call frame stack relationship');
+    known(temporary,frame.callee);require(frame.callee[0]==='ref'&&
+      controller.frameFunctions.get(frame.child)===heapNode(temporary,frame.callee[1]).code,'call frame callee identity');
+    const called=heapNode(temporary,frame.callee[1]);
+    if(called.functionKind==='arrow'){
+      const captured=PROTOCOL_MACHINE_ADAPTERS_V8.find(adapter=>adapter.callReceiver)?.callReceiver(
+        controller,frame.callee,called.lexicalReceiver,PROTOCOL_MACHINE_API_V8)??called.lexicalReceiver;
+      require(eq(controller.locals.get(frame.child+':this'),captured),'call frame arrow receiver/callee identity');
+      if(called.callable?.lexicalConstruction){
+        const observedTarget=controller.locals.get(frame.child+':lexical-newTarget'),capture=called.callable.lexicalConstruction,
+          owner=snapshot.construction?.frames.find(row=>row.id===capture.frame);
+        if(observedTarget!==undefined)require(owner&&eq(observedTarget,owner.newTarget),'call frame lexical newTarget/callee identity');
+      }
+    }
     known(temporary,frame.priorReceiver);assertAlgorithmDataArray(frame.priorAliases,'prior capture aliases');
     const aliases=new Set();for(const pair of frame.priorAliases){assertAlgorithmDataArray(pair,'capture alias');
       require(pair.length===2&&pair.every(value=>typeof value==='string')&&!aliases.has(pair[0])&&controller.locals.has(pair[1]),'capture alias binding');aliases.add(pair[0]);}

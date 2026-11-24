@@ -9,6 +9,7 @@ import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {sharedRegionState} from '../src/semantic/regions.js';
 import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
 import {decodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
+import {restoreProtocolStateV8} from '../src/semantic/protocol-state-v8.js';
 import {LANGUAGE_EXPANSION_FAMILIES} from '../fixtures/language-expansion/benchmark.js';
 
 function build(source,args=[]){
@@ -22,14 +23,19 @@ async function checked(source,args=[]){
   assert.equal(audit.status,'agreed');assert(audit.metadataAudit.checked>0);
   return {bundle,compiled,audit};
 }
-function replay(compiled,{checkpoints=false}={}){
-  let harness=new RegionExecutionHarness({sessionId:'construction-source',automaticDelivery:false,now:()=>-Infinity,maxGenerated:16384});
+function startHarness(compiled){
+  const harness=new RegionExecutionHarness({sessionId:'construction-source',automaticDelivery:false,now:()=>-Infinity,maxGenerated:16384});
   harness.publishProgram({programId:'program1',source:compiled.source,entry:compiled.entry,capabilities:[]});
   harness.admitInvocation({programId:'program1',invocationId:'invocation1',trackId:'worker1',realmId:'realm1',
     triggerId:'construction-entry',inputGraph:compiled.inputGraph,realmPolicy:'fresh',completionPolicy:'call-return'});
+  return harness;
+}
+function replay(compiled,{checkpoints=false}={}){
+  let harness=startHarness(compiled);
   for(const claim of compiled.claims){
     harness.select('invocation1',claim.line);
-    if(checkpoints&&['construct.enter','construct.body','construct.finish','super.bind','super.finish'].includes(claim.record.kind)){
+    if(checkpoints&&['callable.capture','construct.enter','construct.body','construct.finish','construct.target',
+      'construct.this','super.bind','super.finish'].includes(claim.record.kind)){
       const restored=RegionExecutionHarness.restore(harness.checkpoint());
       assert.deepEqual(sharedRegionState(restored.controller),sharedRegionState(harness.controller));harness=restored;
     }
@@ -60,6 +66,59 @@ test('derived super retains actual newTarget and private initializer state acros
   const enters=records.filter(row=>row.kind==='construct.enter');assert.equal(enters.length,2);
   assert.deepEqual(enters[0].newTarget,enters[1].newTarget);assert.notDeepEqual(enters[0].callee,enters[1].callee);
   replay(compiled,{checkpoints:true});
+});
+
+test('constructor arrows retain pre-super this, new.target and private brand through super and completion',async()=>{
+  const source='"use strict";function run(){class A{}class D extends A{#x=5;constructor(){'+
+    'const capture=()=>[this,new.target,this.#x];super();const during=capture();this.capture=capture;this.during=during;}}'+
+    'const d=new D();const after=d.capture();return [d.during[0]===after[0],d.during[1]===D,after[1]===D,'+
+    'd.during[2]===5,after[2]===5];}',
+    {compiled,audit}=await checked(source);
+  assert.equal(audit.status,'agreed');
+  const completed=replay(compiled);
+  assert.deepEqual(completed.controller.materialize(completed.controller.completion.value),[true,true,true,true,true]);
+  const records=compiled.claims.map(row=>row.record);
+  assert.equal(records.filter(row=>row.kind==='callable.capture').length,1);
+  const capture=records.find(row=>row.kind==='callable.capture');
+  assert.equal(capture.thisCell.endsWith(':this'),true);
+  assert(records.some(row=>row.kind==='construct.target'));
+  assert(records.some(row=>row.kind==='construct.this'));
+  replay(compiled,{checkpoints:true});
+});
+
+test('derived constructor substitution preserves a captured arrow receiver and private brand',async()=>{
+  const source='"use strict";function run(){class A{}class D extends A{#x=5;constructor(){'+
+    'const capture=()=>[this,new.target,this.#x];super();return {capture};}}const result=new D();'+
+    'const captured=result.capture();return [captured[0]!==result,captured[1]===D,captured[2]===5];}',
+    {compiled}=await checked(source),harness=replay(compiled);
+  assert.deepEqual(harness.controller.materialize(harness.controller.completion.value),[true,true,true]);
+  replay(compiled,{checkpoints:true});
+});
+
+test('retained constructor frame, receiver cell and active arrow callee reject forged checkpoint state',async()=>{
+  const source='"use strict";function run(){class A{}class D extends A{constructor(){'+
+    'const capture=()=>[this,new.target];super();this.capture=capture;}}const first=new D();const second=new D();'+
+    'const result=first.capture();return result[0]===first&&result[1]===D;}',
+    {compiled}=await checked(source),claims=compiled.claims,captures=claims.filter(row=>row.record.kind==='callable.capture');
+  assert.equal(captures.length,2);
+  const targetAt=claims.findIndex(row=>row.record.kind==='construct.target'&&row.record.invocation!==null);
+  assert(targetAt>0,'the retained arrow reads new.target while active');
+  let harness=startHarness(compiled);
+  for(let i=0;i<=targetAt;i++)harness.select('invocation1',claims[i].line);
+  const packet=harness.checkpoint(),state=packet.selected.invocations[0][1].state,
+    callable=captures[0].record.object,heapEntry=state.heap.find(([id])=>id===callable),
+    lexical=heapEntry[1].callable.lexicalConstruction,frames=state.protocol.construction.frames,
+    alternate=frames.find(row=>row.id!==lexical.frame);
+  assert(alternate,'a second constructor has a distinct retained frame');
+  const restoreForged=mutate=>{
+    const restored=RegionExecutionHarness.restore(packet),controller=restored.controller,
+      protocol=structuredClone(controller.protocol);
+    mutate(controller,protocol);
+    assert.throws(()=>restoreProtocolStateV8(controller,protocol),/construction|call frame|lexical|receiver cell|callee/i);
+  };
+  restoreForged((controller)=>{controller.heap.get(callable).callable.lexicalConstruction.frame=alternate.id;});
+  restoreForged((controller)=>{controller.heap.get(callable).callable.lexicalConstruction.thisCell=alternate.bodyInvocation+':this';});
+  restoreForged((_controller,protocol)=>{protocol.callFrames.at(-1).callee=['ref',captures[1].record.object];});
 });
 
 test('default derived constructors and separately branded private methods share public identities',async()=>{
@@ -121,7 +180,6 @@ test('abrupt field initialization preserves thrown values and skips the remainin
 test('unmodeled class continuations remain explicit source refusals even with a scalar result',()=>{
   for(const [source,reason]of [
     ['"use strict";function run(){class C{get #x(){return 1;}}return 3;}',/private accessor/i],
-    ['"use strict";function run(){class C{constructor(){this.f=()=>new.target;}}const o=new C();return 3;}',/heap kind or metadata|lexical constructor/],
     ['"use strict";function run(){class A{m(){return 1;}}class B extends A{m(){return super.m();}}const o=new B();return o.m();}',/super property references/],
   ])assert.throws(()=>build(source),reason,source);
 });

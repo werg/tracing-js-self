@@ -8,7 +8,7 @@ import {describeConstructionObjectV8} from './protocol-construction-v8.js';
 export const CONSTRUCTION_SOURCE_PROFILE_V8='class-private-source/1';
 const U=['undefined'],ref=id=>['ref',id],literal=value=>({op:'literal',value});
 const heapFields=['prototypeInitialized','classConstructor','derivedConstructor','homeObject','instanceInitializer','staticInitializer',
-  'privateSlots','privateKinds','privateVersions'];
+  'privateSlots','privateKinds','privateVersions','lexicalThisFrameId'];
 const frameFields=['constructReceiver','newTarget','constructorId','constructKind','thisInitialized','constructorArguments',
   'afterInstanceInitialization','classStaticResult','superInitializedResult'];
 const specialFrames=new Set(frameFields);
@@ -154,8 +154,16 @@ export function createConstructionSourceAdapterV8({bundle,source}){
     frameFields(node){return Object.keys(node).some(key=>specialFrames.has(key))?frameFields:null;},
     allocate(ctx,node,event){
       if(node.kind!=='function')return false;
-      require(ctx,!node.lexicalThisFrameId,'lexical constructor arrow context needs its public continuation');
-      ctx.baseAllocate(node,event);emit(ctx,{kind:'callable.define',object:node.id,...capability(node)},event);return true;
+      let lexicalCapture=null;
+      if(node.lexicalThisFrameId){
+        const role=roles.get(node.lexicalThisFrameId),entry=role?.kind==='body'?construction(ctx,role.id):null;
+        require(ctx,node.arrow&&entry?.phase==='body'&&entry.bodyInvocation===ctx.publicInvocation&&
+          entry.activeChild===ctx.publicInvocation,'lexical constructor arrow has no active public body');
+        lexicalCapture={frame:role.id,thisCell:entry.bodyInvocation+':this'};
+      }
+      ctx.baseAllocate(node,event);emit(ctx,{kind:'callable.define',object:node.id,...capability(node)},event);
+      if(lexicalCapture)emit(ctx,{kind:'callable.capture',object:node.id,...lexicalCapture},event);
+      return true;
     },
     beforeEvent(ctx,event){initializeOrdinaryPrototypes(ctx,event);},
     event(ctx,event,row){
@@ -286,8 +294,14 @@ export function createConstructionSourceAdapterV8({bundle,source}){
       if(node.kind==='function'){
         if(definitions.get(node.codeId)?.placement==='object-method')
           require(ctx,node.nonConstructible===true&&!node.arrow,'object method construction capability differs from source');
-        const expected={...capability(node),homeObject:node.homeObject??null,instanceInitializer:node.instanceInitializer??null,staticInitializer:node.staticInitializer??null};
-        require(ctx,ctx.eq(described.callable,expected),'callable capability, home or initializer state differs');
+        const lexicalRole=node.arrow&&node.lexicalThisFrameId?roles.get(node.lexicalThisFrameId):null,
+          lexicalOwner=lexicalRole?.kind==='body'?construction(ctx,lexicalRole.id):null,
+          lexicalConstruction=lexicalOwner?{frame:lexicalRole.id,thisCell:lexicalOwner.bodyInvocation+':this'}:null,
+          expected={...capability(node),homeObject:node.homeObject??null,instanceInitializer:node.instanceInitializer??null,
+            staticInitializer:node.staticInitializer??null,lexicalConstruction};
+        if(node.lexicalThisFrameId)require(ctx,node.arrow&&lexicalConstruction!==null,
+          'lexical this frame must be an admitted constructor arrow');
+        require(ctx,ctx.eq(described.callable,expected),'callable capability, home, initializer or lexical-construction state differs');
         if(Object.hasOwn(node,'classConstructor'))require(ctx,node.classConstructor===expected.classConstructor,'owned class capability differs from source');
         if(expected.classConstructor&&node.homeObject)require(ctx,node.classConstructor===true&&node.prototypeInitialized===true,
           'linked class constructor metadata is incomplete');
