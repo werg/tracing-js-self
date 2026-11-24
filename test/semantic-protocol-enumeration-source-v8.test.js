@@ -86,15 +86,23 @@ test('enumeration checkpoint replay binds every prefix and rejects false keys wi
   assert.equal((await recheckProtocolRegionEvidence(artifact)).sourceValidated,true);
 });
 
-test('structural mutation callable chains proxies and complex loop bindings stay outside the source profile',async()=>{
+test('callable chains proxies and complex loop bindings stay outside the source profile',async()=>{
   for(const body of [
-    'const o={a:1,b:2};for(const key in o)Object.defineProperty(o,"b",{enumerable:false});return 7;',
-    'const o={a:1,b:2};for(const key in o)Object.setPrototypeOf(o,{p:1});return 7;',
     'const o=new Proxy({a:1},{});for(const key in o){}return 7;',
     'const f=()=>1;Object.setPrototypeOf(f,{prototype:3});for(const key in f){}return 7;',
     'const f=()=>1;f.p=1;const o=Object.create(f);for(const key in o){}return 7;',
     'for(const [key] in {a:1}){}return 7;'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert.equal(result.exported,undefined,body);assert.notEqual(result.status,'locally_verified');
+  }
+});
+
+test('the original structural-mutation controls now admit exact source/native evidence',async()=>{
+  for(const body of [
+    'const o={a:1,b:2};for(const key in o)Object.defineProperty(o,"b",{enumerable:false});return 7;',
+    'const o={a:1,b:2};for(const key in o)Object.setPrototypeOf(o,{p:1});return 7;',
+  ]){
+    const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
+    assert.equal((await recheckProtocolRegionEvidence(result.exported)).valid,true);
   }
 });

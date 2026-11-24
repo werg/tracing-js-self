@@ -22,7 +22,7 @@ test('property.fault derives invalid in target and authenticates a fresh mutable
     errors:[{id:'error',errorType:'TypeError'}]});
   assert.equal(error.declaredError,'TypeError');
   assert.deepEqual(error.properties.get('name'),['str','TypeError']);
-  assert.deepEqual(error.properties.get('message'),['str','Right-hand side of in is not an object']);
+  assert.deepEqual(error.properties.get('message'),['str',"Cannot use 'in' operator to search for '#<Object>' in null"]);
   assert.deepEqual(c.lastReturn,{kind:'throw',value:ref('error')});
   apply(c,{kind:'property.set',object:'error',key:key('name'),receiver:ref('error'),value:['str','changed'],success:true},
     {kind:'property.set',object:'error',key:key('message'),receiver:ref('error'),value:['str','changed message'],success:true});

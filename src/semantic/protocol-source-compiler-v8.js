@@ -24,6 +24,7 @@ import {createSharedProtocolSourceComponentsV8} from './protocol-source-bridge-v
 import {createPromiseExecutorTeacherV8} from './protocol-promise-executor-source-v8.js';
 import {assertPromiseSourceObjectProfileV8} from './protocol-promise-adoption-source-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
+import {invalidInMessage} from '../intrinsic-error-diagnostics.js';
 import {bindModuleSchedulerSourceProjectionV8} from './module-scheduler-source-bridge-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual,lit=value=>({op:'literal',value:copy(value)});
@@ -236,7 +237,7 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       row.allocations?.length!==1||row.allocations[0].identity!==error.id||heapChanges.length!==1||
       heapChanges[0].before!==null||heapChanges[0].id!==error.id||heapChanges[0].after!==error||
       event.completion?.type!=='throw'||event.completion.errorType!=='TypeError'||
-      event.completion.message!=='Right-hand side of in is not an object'||
+      event.completion.message!==invalidInMessage(left,right,{node:id=>state.heap[id],symbolDescription:id=>state.heap[id]?.description})||
       event.completion.origin!==event.eventId||event.completion.value?.origin!==event.eventId||
       !eq(event.completion.value?.value,['ref',error.id])||error.kind!=='object'||
       error.declaredError!=='TypeError'||!eq(Object.keys(error.properties??{}).sort(),['message','name'])||

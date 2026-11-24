@@ -48,17 +48,6 @@ function snapshot(controller,source,api){
   }
   return {chain,keys:selectedKeys(chain,api)};
 }
-function liveCandidates(controller,cursor,api){
-  const current=snapshot(controller,cursor.source,api);
-  api.require(current.chain.length===cursor.chain.length,'enumeration prototype changed');
-  for(const [index,captured]of cursor.chain.entries()){
-    const live=current.chain[index];
-    api.require(live.id===captured.id&&api.eq(live.prototype,captured.prototype),'enumeration prototype changed');
-    const descriptors=new Map(live.keys);
-    for(const [key,enumerable]of captured.keys)
-      api.require(!descriptors.has(key)||descriptors.get(key)===enumerable,'enumeration key descriptor changed');
-  }
-}
 export function applyEnumerationRecordV8(controller,record,api){
   if(!Object.hasOwn(ENUMERATION_RECORD_FIELDS,record.kind))return false;
   if(record.kind==='enumeration.create'){
@@ -73,9 +62,8 @@ export function applyEnumerationRecordV8(controller,record,api){
     const node=controller.heap.get(record.object);api.require(node?.kind==='enumerator','enumeration cursor identity required');
     // Once exhausted, later mutations cannot revive a cursor. Before that,
     // keep captured order, ignore additions and skip names no longer present
-    // anywhere on the same live chain, without ever reading a property value.
+    // anywhere on the current live chain, without ever reading a property value.
     if(!node.done){
-      liveCandidates(controller,node,api);
       if(node.source[0]==='ref')while(node.nextIndex<node.keys.length&&
         !api.resolveProperty(controller,node.source[1],['str',node.keys[node.nextIndex]],{forHas:true}).descriptor)node.nextIndex++;
     }
@@ -118,7 +106,7 @@ export function restoreEnumerationStateV8(controller,api){
     }
     api.require(api.eq(node.keys,selectedKeys(node.chain,api)),'enumeration snapshot key order or shadowing');
     // A checkpoint may follow a source write before the next step (or a break).
-    // Preserve that exact prefix; next checks compatible live descriptors and
+    // Preserve that exact prefix; next checks current live existence and
     // skips removed candidates. It never reconstructs a cursor from new keys.
   }
   return {valid:true,enumerators:count};

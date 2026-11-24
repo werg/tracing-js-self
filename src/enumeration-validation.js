@@ -27,19 +27,6 @@ function expectedSnapshot(heap,source,fail){
   }
   return {chain,keys};
 }
-function compatible(heap,cursor,snapshot,fail){
-  if(snapshot.chain.length!==cursor.chain.length||snapshot.chain.some((row,index)=>
-    row.id!==cursor.chain[index].id||row.prototype!==cursor.chain[index].prototype))
-    fail('For-in prototype chain changed');
-  for(const captured of cursor.chain){
-    const live=snapshot.chain.find(row=>row.id===captured.id);
-    if(!live)fail('For-in prototype chain changed');
-    for(const [key,enumerable]of captured.keys){
-      const current=live.keys.find(row=>row[0]===key);
-      if(current&&current[1]!==enumerable)fail('For-in surviving key enumerability changed');
-    }
-  }
-}
 export function validateEnumerationEvent(state,event,programs,fail){
   const frame=state.frames[event.invocationId],instruction=programs[frame?.codeId]?.instructions[frame?.pc],op=instruction?.op;
   const cursors=event.stateChanges.filter(p=>p.table==='heap'&&(p.before?.kind==='enumerator'||p.after?.kind==='enumerator'));
@@ -53,8 +40,6 @@ export function validateEnumerationEvent(state,event,programs,fail){
     const ref=frame.stack.at(-1)?.value,cursor=ref?.[0]==='ref'?state.heap[ref[1]]:null;
     if(cursor?.kind!=='enumerator')
       fail('For-in advance has an invalid or changed source');
-    const snapshot=expectedSnapshot(state.heap,cursor.source,fail);
-    if(!cursor.done)compatible(state.heap,cursor,snapshot,fail);
     let nextIndex=cursor.nextIndex,selected;
     while(!cursor.done&&nextIndex<cursor.keys.length){
       const key=cursor.keys[nextIndex++];

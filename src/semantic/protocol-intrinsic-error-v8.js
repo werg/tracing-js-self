@@ -2,6 +2,7 @@
 // helper is never a public protocol record; only a fault adapter that has
 // independently derived its operation may call it.
 import {assertAlgorithmFields,assertAlgorithmDataArray} from './ir.js';
+import {invalidInMessage} from '../intrinsic-error-diagnostics.js';
 
 export const INTRINSIC_ERROR_PROFILE_V8='intrinsic-errors/1';
 export const INTRINSIC_ERROR_STATE_V8_SCHEMA='semantic-intrinsic-error-state/1';
@@ -88,7 +89,8 @@ export function applyIntrinsicErrorRecordV8(controller,record,api){
   api.require(['undefined','null','bool','str','num','bigint','symbol'].includes(record.target[0]),
     'property fault target is outside the primitive value profile');
   const thrown=allocateIntrinsicErrorV8(controller,{identity:record.error,errorType:'TypeError',
-    message:'Right-hand side of in is not an object'},api);
+    message:invalidInMessage(record.key,record.target,{node:id=>controller.heap.get(id),
+      symbolDescription:id=>controller.protocol.symbols.find(row=>row.id===id)?.description})},api);
   controller.lastReturn={kind:'throw',value:api.copy(thrown)};
   return true;
 }

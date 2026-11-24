@@ -51,15 +51,16 @@ test('own-property checks distinguish inherited missing and undefined values wit
   assert.throws(()=>applyProtocolRecordV8(c,{kind:'property.hasOwn',object:'object',key:['str','inherited'],result:['bool',true]}),/own-property/);
 });
 
-test('enumeration permits value writes and refuses changed descriptors or prototype on the next step',()=>{
+test('enumeration retains candidates across descriptor and prototype changes after restoration',()=>{
   for(const mutate of [
-    c=>define(c,'object',['str','a'],['num',4],{enumerable:false}),
+    c=>define(c,'object',['str','b'],['num',4],{enumerable:false}),
     c=>applyProtocolRecordV8(c,{kind:'property.prototype',object:'object',prototype:null,success:true})
   ]){
-    const c=controller();allocate(c,'object',[property('a',1)]);create(c,'cursor',['ref','object']);
+    const c=controller();allocate(c,'object',[property('a',1),property('b',2)]);create(c,'cursor',['ref','object']);
     write(c,'object','a',['num',3]);next(c,'cursor','r0','a');mutate(c);
-    assert.equal(restoreEnumerationStateV8(c,api).valid,true);const before=structuredClone(c);
-    assert.throws(()=>next(c,'cursor','end',undefined),/descriptor changed|prototype changed/);assert.deepEqual(c,before);
+    const restored=structuredClone(c);assert.equal(restoreEnumerationStateV8(restored,api).valid,true);
+    next(restored,'cursor','r1','b');next(restored,'cursor','end',undefined);
+    assert.deepEqual(restored.heap.get('cursor').keys,['a','b']);
   }
 });
 

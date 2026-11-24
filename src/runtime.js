@@ -18,6 +18,7 @@ import {ownedHasProperty,ownedHasOwnProperty} from './owned-has-property.js';
 import {ensurePromisePrototype,ownedObjectStorage,ownedObjectHeap,ownedObjectValue} from './owned-object-storage.js';
 import {validateExternalCallbackJob} from './external-callback-validation.js';
 import {ownedGlobalProperty} from './owned-global-object.js';
+import {invalidInMessage} from './intrinsic-error-diagnostics.js';
 
 class GuestFault extends Error {constructor(name,message){super(message);this.name=name;}}
 const guestFault=(name,message)=>{throw new GuestFault(name,message);};
@@ -305,22 +306,6 @@ function enumerationSnapshot(heap,source){
     object=heap[prototype];if(!object)throw new Error('For-in prototype identity missing');
   }
   return {chain,keys};
-}
-function enumerationStillCompatible(heap,cursor,snapshot){
-  if(snapshot.chain.length!==cursor.chain.length||snapshot.chain.some((row,index)=>
-    row.id!==cursor.chain[index].id||row.prototype!==cursor.chain[index].prototype))return false;
-  // Deletions are observed when a key is reached. Surviving captured
-  // descriptors must keep their enumerability; additions are ignored because
-  // the candidate sequence was fixed when the cursor was created.
-  for(const captured of cursor.chain){
-    const live=snapshot.chain.find(row=>row.id===captured.id);
-    if(!live)return false;
-    for(const [key,enumerable] of captured.keys){
-      const current=live.keys.find(row=>row[0]===key);
-      if(current&&current[1]!==enumerable)return false;
-    }
-  }
-  return true;
 }
 function functionProperty(heap,object,key){
   const seen=new Set();
@@ -1932,9 +1917,8 @@ export class Runtime {
           const value=pop(),cursor=value.value[0]==='ref'?s.heap[value.value[1]]:null;
           if(cursor?.kind!=='enumerator')throw new Error('For-in cursor identity missing');
           if(cursor.done)return {...operands(value),...result(this.iteratorResult(s,U,true,eventId))};
-          const live=enumerationSnapshot(s.heap,cursor.source);
-          if(!enumerationStillCompatible(s.heap,cursor,live))
-            throw new TypeError('For-in surviving key descriptor or prototype mutation outside the owned profile');
+          // Pinned V8 retains initial candidates across prototype and flag changes.
+          // Existence is checked on the current chain without recapturing keys.
           let key;
           while(cursor.nextIndex<cursor.keys.length){
             const candidate=cursor.keys[cursor.nextIndex++];
@@ -2277,7 +2261,7 @@ export class Runtime {
           const b=pop(),a=pop();
           if(arg==='in'){
             if(!['ref','promise','intrinsic','builtinfn','hostfn','host'].includes(b.value[0]))
-              guestFault('TypeError','Right-hand side of in is not an object');
+              guestFault('TypeError',invalidInMessage(a.value,b.value,{node:id=>s.heap[id],symbolDescription:id=>s.heap[id]?.description}));
             const property=valueKey(a.value),object=ownedObjectStorage(s,b.value);
             if(object?.kind==='proxy'){
               const route=proxyRoute(s.heap,b.value,'has');

@@ -48,10 +48,15 @@ test('enumeration cursor is serialized independently and forged order is rejecte
   event.stateChanges.find(p=>p.after?.kind==='enumerator').after.keys.reverse();
   assert.throws(()=>validateBundle(forged),/lost key order/);
 });
-test('proxy and enumeration shape mutations are explicit profile refusals',()=>{
-  for(const body of ['for(const k in new Proxy({a:1},{})){}',
-    'const o={a:1,b:2};for(const k in o){Object.setPrototypeOf(o,null);}']){
+test('proxy enumeration requires its trap protocol',()=>{
+  for(const body of ['for(const k in new Proxy({a:1},{})){}']){
     const runtime=createRuntime().startEntry({text:'"use strict";function run(){'+body+'}',functionName:'run'});
     assert.throws(()=>runtime.drive(),/For-in/);
   }
+});
+
+test('for-in retains V8 candidates when prototypes or enumerability change',()=>{
+  runtimeDifferential('const p={b:3,c:4};const o=Object.create(p);o.a=1;o.b=2;const out=[];for(const k in o){out.push(k);if(k==="a")Object.setPrototypeOf(o,{b:8,c:9,newKey:10});}return out;');
+  runtimeDifferential('const p={c:4};const o=Object.create(p);o.a=1;o.b=2;const out=[];for(const k in o){out.push(k);if(k==="a")Object.setPrototypeOf(o,null);}return out;');
+  runtimeDifferential('const p={b:3,c:4};const o=Object.create(p);o.a=1;o.b=2;const out=[];for(const k in o){out.push(k);if(k==="a"){delete o.b;Object.defineProperty(p,"b",{enumerable:false});Object.defineProperty(p,"c",{enumerable:false});}}return out;');
 });

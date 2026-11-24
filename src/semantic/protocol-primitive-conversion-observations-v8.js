@@ -9,7 +9,7 @@ import {propertyKeyValue,symbolPropertyKey} from '../property-keys.js';
 
 export const PRIMITIVE_CONVERSION_OBSERVATION_PROFILE_V8='primitive-conversion-observations/1';
 const numberHook='__tracingProtocolConversionNumber',keyHook='__tracingProtocolConversionKey',
-  reflectHook='__tracingProtocolConversionReflect';
+  reflectHook='__tracingProtocolConversionReflect',inHook='__tracingProtocolConversionIn';
 const apply=Reflect.apply,getOwn=Object.getOwnPropertyDescriptor,getPrototype=Object.getPrototypeOf,
   functionSource=Function.prototype.toString;
 const reference=value=>value!==null&&['object','function'].includes(typeof value);
@@ -31,7 +31,7 @@ function inventory(source,{reserved=false}={}){
       node.callee.object.name==='Reflect'&&['has','deleteProperty'].includes(node.callee.property.name))
       reflects.push(node);
     if(node.type==='BinaryExpression'&&node.operator==='in'&&node.left.type!=='PrivateIdentifier')
-      keys.push({key:node.left,site:site(node),unsupported:null});
+      keys.push({key:node.left,inNode:node,site:site(node),unsupported:null});
     if(node.type==='MemberExpression'&&node.computed){
       const assignment=parent?.type==='AssignmentExpression'&&parent.left===node,
         update=parent?.type==='UpdateExpression'&&parent.argument===node,
@@ -216,7 +216,7 @@ export function createPrimitiveConversionObservationAdapterV8({source,side='nati
   const original=inventory(source,{reserved:true});if(!original.numbers.length&&!original.keys.length&&!original.reflects.length)return null;
   if(side==='owned')return {id:PRIMITIVE_CONVERSION_OBSERVATION_PROFILE_V8,observations:()=>ownedObservations(bundle,original)};
   const rows=[],identities=new Map(),builtins=new Map(),builtinHomes=new Set(),failures=[];
-  let next=0,nativeNumber=null,nativePropertyKey=null,nativeArrayJoin=null,nativeReflect=null,nativeLookup=null,
+  let next=0,nativeNumber=null,nativePropertyKey=null,nativeArrayJoin=null,nativeReflect=null,nativeLookup=null,nativeIn=null,
     invoke=call=>apply(call.callee,call.receiver,call.arguments);
   const fail=message=>{failures.push(message);throw new TypeError('Independent native conversion observation: '+message);};
   function value(raw){
@@ -315,6 +315,15 @@ export function createPrimitiveConversionObservationAdapterV8({source,side='nati
         const callee=nativeLookup(receiver,name);
         return (...args)=>invoke({callee,receiver,arguments:args,site:location});
       },
+      [inHook]:(index,input,target)=>{
+        const selected=original.keys[index];if(!selected?.inNode)fail('unanchored in operator');
+        // Evaluate both operands before deciding whether ToPropertyKey runs.
+        // On an invalid RHS pass the original key into this realm's native in
+        // operator: wrapping it changes V8's diagnostic object display.
+        if(!reference(target)||!reference(input))return nativeIn(input,target);
+        const property=convert('PropertyKey',selected.site,input,raw=>nativePropertyKey(raw));
+        return nativeIn(property,target);
+      },
       [keyHook]:(index,input)=>{
         if(!reference(input))return input;
         const key=original.keys[index];if(!key)fail('unanchored property key');
@@ -334,6 +343,7 @@ export function createPrimitiveConversionObservationAdapterV8({source,side='nati
       for(const [fn,name]of [[intrinsics.valueOf,'Object.valueOf'],[intrinsics.toString,'Object.toString'],[intrinsics.arrayToString,'Array.toString'],
         [Object.prototype.valueOf,'Object.valueOf'],[Object.prototype.toString,'Object.toString'],[Array.prototype.toString,'Array.toString']])builtins.set(fn,name);
       for(const home of [intrinsics.object,intrinsics.array,Object.prototype,Array.prototype])builtinHomes.add(home);
+      nativeIn=evaluate('(key,target)=>key in target');
       nativePropertyKey=evaluate('(()=>{const keys=Reflect.ownKeys;return value=>keys({[value]:0})[0];})()');
     },
     instrument(text){
@@ -348,8 +358,12 @@ export function createPrimitiveConversionObservationAdapterV8({source,side='nati
           text:reflectHook+'('+JSON.stringify(site(originalNode))+',Reflect,'+JSON.stringify(name)+')'});
       }
       for(let index=0;index<current.keys.length;index++){
-        const key=current.keys[index].key;
-        edits.push({start:key.start,end:key.start,text:keyHook+'('+index+',('}, {start:key.end,end:key.end,text:'))'});
+        const {key,inNode}=current.keys[index];
+        if(inNode){
+          edits.push({start:inNode.start,end:inNode.start,text:inHook+'('+index+',('},
+            {start:key.end,end:inNode.right.start,text:'),('},
+            {start:inNode.end,end:inNode.end,text:'))'});
+        }else edits.push({start:key.start,end:key.start,text:keyHook+'('+index+',('}, {start:key.end,end:key.end,text:'))'});
       }
       edits.sort((left,right)=>right.start-left.start||right.end-left.end);
       for(const edit of edits)text=text.slice(0,edit.start)+edit.text+text.slice(edit.end);return text;

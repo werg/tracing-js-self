@@ -221,3 +221,22 @@ test('issue51 original fixtures preserve sparse length, delete failure, key orde
     assert.deepEqual(actual,expected,id);
   }
 });
+
+for(const id of ['issue51-invalid-in-message-object-no-conversion','issue51-invalid-in-message-symbol',
+  'issue51-invalid-in-message-negative-zero','issue51-invalid-in-message-null-prototype'])
+  test(id+' derives the native diagnostic from authenticated operands',async()=>{
+    const artifact=await checkedFixture(id),controller=RegionExecutionHarness.replay(artifact).controller;
+    const row=fixtureById.get(id),expected=structuredClone(vm.runInNewContext(row.source+';run(4)'));
+    assert.deepEqual(controller.materialize(controller.completion.value),expected);
+    assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+  });
+
+for(const id of ['issue51-control-for-in-prototype-replacement','issue51-for-in-replaced-prototype-live-existence',
+  'issue51-for-in-removed-prototype-skips-candidate','issue51-for-in-flags-retain-original-candidates',
+  'issue51-for-in-initial-nonenumerable-shadow-survives'])
+  test(id+' preserves captured order with live prototype existence',async()=>{
+    const artifact=await checkedFixture(id),controller=RegionExecutionHarness.replay(artifact).controller;
+    const row=fixtureById.get(id),expected=structuredClone(vm.runInNewContext(row.source+';run(4)'));
+    assert.deepEqual(controller.materialize(controller.completion.value),expected);
+    assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+  });
