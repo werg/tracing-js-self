@@ -365,6 +365,13 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       const described=descriptor(target,storage);if(!described)refuse('defined property missing');
       emit({kind:'property.define',object,key:encoded,descriptor:described,success:true},event,'owned-source-descriptor/1');return;
     }
+    if(name==='Object.preventExtensions'){
+      const object=args[0]?.[0]==='ref'?args[0][1]:null,
+        changed=changes.find(change=>change.id===object)?.after??state.heap[object];
+      if(object===null||changes.some(change=>change.id!==object)||changed?.extensible!==false||
+        !eq(row.result,['ref',object]))refuse('preventExtensions requires one exact ordinary object result');
+      emit({kind:'property.preventExtensions',object},event,'owned-source-object-prevent-extensions/1');return;
+    }
     if(name==='Object.setPrototypeOf'){
       if(args[0]?.[0]!=='ref'||!['null','ref'].includes(args[1]?.[0]))refuse('ordinary prototype operands required');
       emit({kind:'property.prototype',object:args[0][1],prototype:args[1][0]==='null'?null:tag(args[1],event),success:true},event);return;

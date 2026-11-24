@@ -72,6 +72,8 @@ export function validateScriptHostEvent(state,event,programs,fail){
   if(instruction?.op==='BINARY'&&instruction.arg==='in'){
     const operands=frame.stack.slice(-2).map(item=>item.value);
     if(!same(event.operands,operands))fail('Ordinary in-operator operands changed');
+    const right=operands[1]?.[0]==='ref'?state.heap[operands[1][1]]:null;
+    if(right?.kind==='proxy')return;
     expectStackResult(event,frame,['bool',hasProperty(state,operands[1],keyOf(operands[0],fail),fail)],fail);
   }
   if(['GET_PROP','GET_METHOD'].includes(instruction?.op)){

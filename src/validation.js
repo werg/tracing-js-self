@@ -95,8 +95,11 @@ function validatePropertyDeleteEvent(state,event,programs){
   if(!['ref','promise'].includes(target?.[0]))fail('Property deletion target is not an object',event.eventId);
   const object=state.heap[target[1]]??state.promises[target[1]],
     key=keyValue[0]==='symbol'?symbolPropertyKey(keyValue[1]):stringPropertyKey(String(decode(keyValue)));
-  if(!object||!['object','array','function','promise','module-namespace'].includes(object.kind))
+  if(!object||!['object','array','function','promise','module-namespace','proxy'].includes(object.kind))
     fail('Property deletion target is not owned ordinary storage',event.eventId);
+  // Proxy [[Delete]] is validated by its retained call/invariant protocol.
+  // Its event may include an owned trap child or mutate the original target.
+  if(object.kind==='proxy')return;
   if(reflect&&object.kind==='module-namespace'){
     const present=Object.hasOwn(object.accessors??{},key)||Object.hasOwn(object.properties??{},key);
     if(event.completion||event.result?.[0]!=='bool'||event.result[1]===present||

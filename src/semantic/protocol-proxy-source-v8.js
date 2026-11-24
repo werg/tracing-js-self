@@ -3,13 +3,53 @@
 import {stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
 export const PROXY_SOURCE_PROFILE_V8='ordinary-data-proxy-source/1';
 const fields=['targetId','handlerId','properties','propertyVersions','shapeVersion'];
+const truthy=value=>value?.[0]==='ref'||value?.[0]==='symbol'||
+  !['undefined','null'].includes(value?.[0])&&(value?.[0]==='bool'?value[1]:
+    value?.[0]==='num'?Number(value[1])!==0&&!Number.isNaN(Number(value[1])):
+    value?.[0]==='bigint'?BigInt(value[1])!==0n:value?.[0]==='str'?value[1].length>0:true);
 export function createProxySourceAdapterV8(){
-  let active=new Map(),callbacks=new Map(),next=0;
+  let active=new Map(),callbacks=new Map(),faultEvidence=new Map(),next=0;
   const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('Proxy source: '+message);};
+  const freshTypeError=(event,value)=>value?.[0]==='ref'&&event.stateChanges.some(change=>
+    change.table==='heap'&&change.id===value[1]&&change.before===null&&change.after?.declaredError==='TypeError');
+  const faultToken=owner=>{
+    if(owner?.completion?.type==='throw'&&owner.completion.value?.value?.[0]==='ref')return owner.completion.value;
+    for(const handler of [...(owner?.handlers??[])].reverse()){
+      if(handler.caught?.value?.[0]==='ref')return handler.caught;
+      if(handler.pending?.type==='throw'&&handler.pending.value?.value?.[0]==='ref')return handler.pending.value;
+    }
+    return null;
+  };
+  const requireFaultError=(ctx,event,row,error,origin)=>{
+    const changes=event.stateChanges.filter(change=>change.table==='heap'&&change.before===null&&
+      change.id===error[1]&&change.after?.declaredError==='TypeError'),node=changes[0]?.after,
+      allocation=row?.allocations?.filter(item=>item.identity===error[1])??[],properties=node?.properties??{},
+      currentOrigin=event.operation==='call.return'?event.stateChanges.find(change=>
+        change.table==='frames'&&change.id===event.invocationId)?.after?.completion?.value?.origin:event.eventId;
+    const nativeCompletion=event.completion;
+    require(ctx,changes.length===1&&allocation.length===1&&node.kind==='object'&&
+      properties.name?.value?.[0]==='str'&&properties.name.value[1]==='TypeError'&&
+      properties.message?.value?.[0]==='str'&&properties.name.origin===origin&&properties.message.origin===origin&&
+      currentOrigin===origin&&allocation[0].kind==='object'&&allocation[0].properties?.length===2&&
+      allocation[0].properties.some(item=>item.key==='name'&&ctx.eq(item.value,properties.name.value))&&
+      allocation[0].properties.some(item=>item.key==='message'&&ctx.eq(item.value,properties.message.value))&&
+      (event.operation==='call.return'?origin===event.stateChanges.find(change=>
+        change.table==='frames'&&change.id===event.invocationId)?.after?.completion?.value?.origin:
+        nativeCompletion?.type==='throw'&&nativeCompletion.errorType==='TypeError'&&
+        nativeCompletion.origin===event.eventId&&nativeCompletion.value?.origin===event.eventId&&
+        ctx.eq(nativeCompletion.value?.value,error)),
+      'operation fault lacks its exact fresh TypeError allocation and source origin');
+    return node;
+  };
+  const publicFaultMessage=(ctx,id,message)=>{
+    const node=ctx.controller.heap.get(id),actual=node?.properties instanceof Map?node.properties.get('message'):null;
+    require(ctx,node?.kind==='object'&&node.declaredError==='TypeError'&&ctx.eq(actual,message),
+      'derived Proxy TypeError message differs from its source allocation');
+  };
   const emit=(ctx,record,event)=>ctx.emit(record,event,'owned-proxy-operation/1');
   return {id:PROXY_SOURCE_PROFILE_V8,
-  captureState:()=>({active:[...active],callbacks:[...callbacks],next}),
-  restoreState(state){active=new Map(state.active);callbacks=new Map(state.callbacks);next=state.next;},
+  captureState:()=>({active:[...active],callbacks:[...callbacks],faultEvidence:[...faultEvidence],next}),
+  restoreState(state){active=new Map(state.active);callbacks=new Map(state.callbacks);faultEvidence=new Map(state.faultEvidence??[]);next=state.next;},
   syntax(node){return node.type==='NewExpression'&&node.callee.type==='Identifier'&&node.callee.name==='Proxy';},
   heapFields(node){return node.kind==='proxy'?fields:null;},
   frameFields(node){return node.pendingProperty?.proxy?['pendingProperty']:null;},
@@ -20,6 +60,23 @@ export function createProxySourceAdapterV8(){
   },
   allocate(ctx,node){if(node.kind==='proxy')ctx.refuse('Proxy allocation must follow its source constructor');return false;},
   event(ctx,event,row){
+    if(event.operation==='call.return'&&callbacks.has(event.invocationId)){
+      const entry=callbacks.get(event.invocationId),owner=event.stateChanges.find(item=>
+        item.table==='frames'&&item.id===entry.owner)?.after,token=faultToken(owner),
+        child=event.stateChanges.find(item=>item.table==='frames'&&item.id===event.invocationId)?.after;
+      if(token?.value?.[0]==='ref'&&freshTypeError(event,token.value)){
+        const returned=child?.completion?.type==='return'?child.completion.value:null,
+          retained=ctx.getOwnedFrame(event.invocationId)?.stack?.at(-1);
+        require(ctx,returned&&ctx.eq(retained,returned)&&token.origin===returned.origin&&event.operandOrigins?.[0]===returned.origin,
+          'Proxy fault is not tied to its retained normal callback completion');
+        const node=requireFaultError(ctx,event,row,token.value,returned.origin);
+        faultEvidence.set(entry.id,{error:token.value[1],origin:returned.origin,
+          message:ctx.copy(node.properties.message.value)});
+      }
+      for(const change of event.stateChanges.filter(item=>item.table==='heap'&&item.before===null&&
+        item.after?.declaredError!=='TypeError'))ctx.publish(change.after,event);
+      return true;
+    }
     if(event.operation==='proxy.allocate'){
       const node=event.stateChanges.find(change=>change.table==='heap'&&change.before===null&&change.id===event.result?.[1])?.after;
       if(node?.kind!=='proxy'||event.operands.length!==2||event.completion?.type==='throw')
@@ -27,24 +84,56 @@ export function createProxySourceAdapterV8(){
       emit(ctx,{kind:'proxy.create',name:node.id,target:ctx.tag(event.operands[0],event),handler:ctx.tag(event.operands[1],event)},event);
       ctx.markPublished(node.id);return true;
     }
-    const base=row?.operands?.[0],node=base?.[0]==='ref'?ctx.state.heap[base[1]]:null;
-    if(node?.kind!=='proxy'||!['property.read','property.write'].includes(event.operation))return false;
-    require(ctx,event.completion?.type!=='throw','abrupt property access needs its explicit completion boundary');
-    const key=ctx.key(row.operands[1]);
+    const sourceFrame=ctx.getOwnedFrame(event.invocationId),instruction=ctx.bundle.programs[sourceFrame?.codeId]?.instructions[sourceFrame?.pc],
+      has=event.operation==='primitive.binary'&&instruction?.op==='BINARY'&&instruction.arg==='in',
+      deletion=event.operation==='property.delete',property=event.operation==='property.read'||event.operation==='property.write',
+      directStack=deletion&&event.completion?.type==='throw'&&instruction?.op==='DELETE_PROP'?sourceFrame?.stack??[]:[],
+      base=has?row?.operands?.[1]:row?.operands?.[0]??directStack.at(-2)?.value,
+      node=base?.[0]==='ref'?ctx.state.heap[base[1]]:null;
+    if(node?.kind!=='proxy'||!property&&!has&&!deletion)return false;
+    const key=ctx.key(has?row.operands[0]:row?.operands?.[1]??directStack.at(-1)?.value);
+    if(event.completion?.type==='throw'){
+      const program=ctx.bundle.programs[ctx.getOwnedFrame(event.invocationId)?.codeId];
+      if(deletion&&!row.child&&instruction?.op==='DELETE_PROP'&&program?.strict===true){
+        const owner=event.stateChanges.find(item=>item.table==='frames'&&item.id===event.invocationId)?.after;
+        let thrown=owner?.completion?.type==='throw'?owner.completion.value?.value:null;
+        if(!thrown)for(const handler of [...(owner?.handlers??[])].reverse()){
+          if(handler.caught?.value?.[0]==='ref'){thrown=handler.caught.value;break;}
+          if(handler.pending?.type==='throw'&&handler.pending.value?.value?.[0]==='ref'){
+            thrown=handler.pending.value.value;break;
+          }
+        }
+        require(ctx,freshTypeError(event,thrown),'strict direct Proxy deletion lacks a fresh TypeError identity');
+        const sourceError=requireFaultError(ctx,event,row,thrown,event.eventId);
+        emit(ctx,{kind:'proxy.delete.fault',object:node.id,key,error:thrown[1]},event);
+        publicFaultMessage(ctx,thrown[1],sourceError.properties.message.value);ctx.markPublished(thrown[1]);
+        return true;
+      }
+      ctx.refuse('Proxy source: abrupt Proxy operation needs its explicit error boundary');
+    }
     if(row.child){
-      const operation=event.operation==='property.read'?'get':'set',id='proxy'+(++next),
+      const operation=has?'has':deletion?'delete':event.operation==='property.read'?'get':'set',id='proxy'+(++next),
         child=event.stateChanges.find(change=>change.table==='frames'&&change.id===row.child)?.after,
         parent=event.stateChanges.find(change=>change.table==='frames'&&change.id===event.invocationId)?.after,
         pending=parent?.pendingProperty;
       require(ctx,child&&pending?.proxy&&pending.waitingFrameId===child.id&&pending.kind===operation&&!active.has(parent.id),
         'callback lacks its owned Proxy continuation');
-      const entry={id,owner:parent.id,child:child.id,object:node.id,key,operation,value:operation==='set'?ctx.tag(row.operands[2],event):null};
-      emit(ctx,{kind:'proxy.'+operation+'.call',id,object:node.id,key,child:ctx.frame(child.id),
-        ...(operation==='set'?{value:entry.value}:{})},event);
+      const parentProgram=ctx.bundle.programs[parent.codeId],parentInstruction=parentProgram?.instructions[
+        ctx.getOwnedFrame(parent.id)?.pc],
+        sourceStrict=['get','set'].includes(operation)?pending.proxy.strict===!!parentProgram?.strict:
+          operation==='delete'?typeof pending.proxy.strict==='boolean'&&pending.proxy.strict===!!parentProgram?.strict&&
+            parentInstruction?.op==='DELETE_PROP':pending.proxy.strict===false;
+      require(ctx,sourceStrict,'Proxy source strict-delete context differs');
+      const receiver=pending.proxy.object?.[1]??node.id,strict=operation==='delete'?pending.proxy.strict===true:false,
+        entry={id,owner:parent.id,child:child.id,object:receiver,key,operation,strict,
+          value:operation==='set'?ctx.tag(row.operands[2],event):null};
+      emit(ctx,{kind:'proxy.'+operation+'.call',id,object:receiver,key,child:ctx.frame(child.id),
+        ...(operation==='set'?{value:entry.value}:{}),...(operation==='delete'?{strict}:{})},event);
       require(ctx,ctx.eq(ctx.controller.receiver,child.thisValue),'trap effective receiver differs');
       const selected=ctx.controller.protocol.proxyCalls.pending.at(-1),fn=ctx.state.heap[selected.callee[1]],
         program=ctx.bundle.programs[fn?.codeId],environment=event.stateChanges.find(change=>change.table==='envs'&&change.id===child.envId)?.after,
-        args=[selected.target,key,...(operation==='set'?[entry.value]:[]),['ref',node.id]];
+        args=[selected.target,key,...(operation==='set'?[entry.value]:[]),
+          ...(['get','set'].includes(operation)?[['ref',receiver]]:[])];
       require(ctx,fn?.kind==='function'&&!fn.async&&!program.generator&&child.codeId===fn.codeId&&environment?.parent===fn.closureEnvId,
         'trap must retain its selected synchronous source function and closure');
       require(ctx,program.params.every((name,index)=>environment.bindings[name]?.initialized&&
@@ -54,7 +143,9 @@ export function createProxySourceAdapterV8(){
         ctx.bind(ctx.cell(environment.id,name),binding.token.value,event);
       return true;
     }
-    if(event.operation==='property.read'){
+    if(has)emit(ctx,{kind:'proxy.has',object:node.id,key,result:ctx.tag(row.result,event)},event);
+    else if(deletion)emit(ctx,{kind:'proxy.delete',object:node.id,key,success:row.result?.[1]===true},event);
+    else if(event.operation==='property.read'){
       const value=row.result?.[0]==='method'?row.result[1]:row.result;
       emit(ctx,{kind:'proxy.get',object:node.id,key,result:ctx.tag(value,event)},event);
     }else emit(ctx,{kind:'proxy.set',object:node.id,key,value:ctx.tag(row.operands[2],event),success:true},event);
@@ -66,23 +157,47 @@ export function createProxySourceAdapterV8(){
     require(ctx,['return','throw'].includes(completion?.type)&&value&&ctx.publicInvocation===invocation,
       'trap completion differs from its active invocation');
     const tag=ctx.tag(value,event);emit(ctx,{kind:completion.type,invocation,value:tag},event);
-    emit(ctx,{kind:'proxy.finish',id:entry.id,completion:{kind:completion.type==='throw'?'throw':'normal',
-      value:completion.type==='throw'||entry.operation==='get'?tag:entry.value}},event);
+    const owner=event.stateChanges.find(item=>item.table==='frames'&&item.id===entry.owner)?.after;
+    let boundaryError=owner?.completion?.type==='throw'?owner.completion.value?.value:null;
+    if(!boundaryError)for(const handler of [...(owner?.handlers??[])].reverse()){
+      if(handler.caught?.value?.[0]==='ref'){boundaryError=handler.caught.value;break;}
+      if(handler.pending?.type==='throw'&&handler.pending.value?.value?.[0]==='ref'){
+        boundaryError=handler.pending.value.value;break;
+      }
+    }
+    const operationFault=completion.type==='return'&&['has','delete'].includes(entry.operation)&&
+      freshTypeError(event,boundaryError),evidence=faultEvidence.get(entry.id);
+    if(operationFault){
+      require(ctx,evidence?.error===boundaryError[1]&&evidence.origin===completion.value.origin&&
+        ctx.eq(evidence.message,event.stateChanges.find(item=>item.table==='heap'&&item.id===boundaryError[1])?.after?.properties?.message?.value),
+        'Proxy fault lacks its retained child error evidence');
+      emit(ctx,{kind:'proxy.fault',id:entry.id,error:boundaryError[1]},event);
+      publicFaultMessage(ctx,boundaryError[1],evidence.message);ctx.markPublished(boundaryError[1]);faultEvidence.delete(entry.id);
+    }
+    else{
+      const normalValue=entry.operation==='has'||entry.operation==='delete'?['bool',truthy(value)]:tag;
+      emit(ctx,{kind:'proxy.finish',id:entry.id,completion:{kind:completion.type==='throw'?'throw':'normal',
+        value:completion.type==='throw'?tag:entry.operation==='get'?tag:entry.operation==='set'?entry.value:normalValue}},event);
+    }
     active.delete(entry.owner);callbacks.delete(change.id);return true;
   },
   checkFrame(ctx,node){
     const entry=active.get(node.id),pending=node.pendingProperty;
     if(!entry){require(ctx,!pending?.proxy,'unregistered Proxy continuation');return true;}
-    require(ctx,!node.handlers?.length&&!node.awaiting&&!node.asyncPromiseId,'cleanup or async Proxy caller needs its own profile');
+    require(ctx,(!node.handlers?.length||ctx.extensionState.has('ordinary-completions-source/1'))&&
+      !node.awaiting&&!node.asyncPromiseId,'async or unowned cleanup Proxy caller needs its own profile');
     const current=ctx.controller.protocol.proxyCalls.pending.find(row=>row.id===entry.id),
       storage=entry.key[0]==='symbol'?symbolPropertyKey(entry.key[1]):stringPropertyKey(entry.key[1]);
+    const actualStrict=entry.operation==='has'?false:!!ctx.bundle.programs[node.codeId]?.strict;
     require(ctx,current&&pending?.proxy&&pending.waitingFrameId===entry.child&&pending.kind===entry.operation&&
-      ctx.eq(pending.proxy.target,current.target)&&pending.proxy.key===storage&&pending.proxy.strict===true&&
+      ctx.eq(pending.proxy.target,current.target)&&pending.proxy.key===storage&&pending.proxy.strict===actualStrict&&
       current.parent===ctx.frame(node.id)&&current.child===ctx.frame(entry.child)&&current.object===entry.object&&
-      ctx.eq(current.key,entry.key)&&ctx.eq(current.value,entry.value),'retained target, key, operand or call identity differs');
+      current.strict===entry.strict&&ctx.eq(current.key,entry.key)&&ctx.eq(current.value,entry.value),
+      'retained target, key, operand or call identity differs');
     if(entry.operation==='get')require(ctx,ctx.eq(pending.receiver,['ref',entry.object])&&typeof pending.method==='boolean',
       'getter continuation receiver differs');
-    else require(ctx,ctx.eq(pending.value,entry.value),'setter continuation assignment value differs');
+    else if(entry.operation==='set')require(ctx,ctx.eq(pending.value,entry.value),'setter continuation assignment value differs');
+    else require(ctx,pending.value===undefined,'has/delete continuation has no assignment operand');
     return true;
   }
 };}

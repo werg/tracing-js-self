@@ -13,7 +13,7 @@ const iteratorNames=new Set(['Array.prototype.values','Array.prototype.keys','Ar
   'String.prototype.iterator','Iterator.next','Iterator.identity']);
 const baseBuiltins=new Set(['Array.prototype.push','Array.prototype.pop','Symbol','Symbol.for','Symbol.keyFor',
   'Symbol.prototype.toString','Symbol.prototype.valueOf','Object.hasOwn','Reflect.has','Reflect.deleteProperty','Reflect.ownKeys','Object.keys',
-  'Object.getOwnPropertyNames','Object.getOwnPropertySymbols','Object.entries','Object.values','Object.defineProperty',
+  'Object.getOwnPropertyNames','Object.getOwnPropertySymbols','Object.entries','Object.values','Object.defineProperty','Object.preventExtensions',
   'Object.setPrototypeOf','Object.create']);
 const constructionOps=new Set(['CLASS_CREATE','SET_HOME_OBJECT','CLASS_INITIALIZER','CLASS_FINISH','CLASS_CONSTRUCTOR_GUARD',
   'SUPER_CONSTRUCTOR','SUPER_CALL','SUPER_FORWARD_CALL','SUPER_BIND','THIS','NEW_TARGET','PROPERTY_KEY',
@@ -57,7 +57,13 @@ const eventClaims={
   [number](_view,{event}){return ['intrinsic.number.resume','property.key.convert','property.key.resume'].includes(event.operation)||
     event.operation==='call.enter'&&builtin(callee(event.operands[0]))==='Number';},
   [proxy](view,{event,row}){return event.operation==='proxy.allocate'||
-    ['property.read','property.write'].includes(event.operation)&&heap(view,row?.operands[0])?.kind==='proxy';},
+    ['property.read','property.write'].includes(event.operation)&&heap(view,row?.operands[0])?.kind==='proxy'||
+    event.operation==='primitive.binary'&&view.instruction?.op==='BINARY'&&view.instruction.arg==='in'&&
+      heap(view,row?.operands[1])?.kind==='proxy'||
+    event.operation==='property.delete'&&(heap(view,row?.operands[0])?.kind==='proxy'||
+      event.completion?.type==='throw'&&view.instruction?.op==='DELETE_PROP'&&
+      heap(view,frame(view)?.stack?.at(-2)?.value)?.kind==='proxy')||
+    event.operation==='call.return'&&has(state(view,proxy).callbacks,event.invocationId);},
   [map](view,{event,row}){
     const own=state(view,map),plan=at(own.plans,event.invocationId),callback=at(own.callbacks,event.invocationId);
     return has(own.callbacks,event.invocationId)&&event.stateChanges.some(change=>change.table==='frames'&&
