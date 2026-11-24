@@ -5,6 +5,8 @@ const fixture=(id,family,body)=>Object.freeze({
 });
 
 export const issue51ProxyFixtures=Object.freeze([
+  fixture('issue51-control-proxy-nested-target','issue51-unsupported-control',
+    'const target=new Proxy({x:2},{});return new Proxy(target,{}).x;'),
   fixture('issue51-proxy-key-order-and-trap-replacement','issue51-proxy-has-delete',
     'let order="";const target={x:1},handler={};const key={get [Symbol.toPrimitive](){order+="g";'+
     'return function(hint){order+="c"+hint;return "x";};}};'+
@@ -57,8 +59,6 @@ export const issue51ProxyFixtures=Object.freeze([
 ]);
 
 export const issue51ProxyUnsupportedControls=Object.freeze([
-  fixture('issue51-control-proxy-nested-target','issue51-unsupported-control',
-    'const target=new Proxy({x:2},{});return new Proxy(target,{}).x;'),
   fixture('issue51-control-proxy-trap-getter','issue51-unsupported-control',
     'const proxy=new Proxy({x:1},{get has(){return function(){return true;};}});return "x" in proxy;')
 ]);

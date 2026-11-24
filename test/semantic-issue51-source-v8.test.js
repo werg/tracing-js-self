@@ -78,6 +78,17 @@ test('in and Reflect.has preserve receiver, effectful operand order, Symbols and
   assert.deepEqual(value,[true,true,['key','receiver','receiver']]);
 });
 
+test('original transparent nested-target control now follows both Proxy internal slots',async()=>{
+  const artifact=await checkedFixture('issue51-control-proxy-nested-target'),
+    controller=RegionExecutionHarness.replay(artifact).controller,
+    records=artifact.sidecar.sourceArtifact.sidecar.compiler.claims.map(row=>row.record),
+    read=records.find(row=>row.kind==='proxy.get');
+  assert.equal(controller.materialize(completion(artifact).value),2);
+  assert(read);assert.equal(read.route.length,2);
+  assert.deepEqual(read.route.map(row=>row.method),[['undefined'],['undefined']]);
+  assert.equal((await recheckProtocolRegionEvidence(artifact)).valid,true);
+});
+
 test('object-valued in keys convert once after evaluating a valid right operand',async()=>{
   const artifact=await checkedFixture('issue51-in-object-key-to-primitive-order');
   const value=RegionExecutionHarness.replay(artifact).controller.materialize(completion(artifact).value);
