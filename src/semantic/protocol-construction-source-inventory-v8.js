@@ -62,7 +62,8 @@ export function hasConstructionSourceCallableV8(source,code){
   try{
     const inventory=constructionSourceInventoryV8(source);
     if(/^class:(0|[1-9][0-9]*):(constructor|instance|static)$/.test(code)&&inventory.synthetic.has(code))return true;
-    return inventory.classes.some(({node})=>node.type==='ClassDeclaration'||node.type==='ClassExpression'&&
-      (node.id?.name===code||code==='function:'+node.start));
+    return inventory.classes.some(({node})=>
+      (node.type==='ClassDeclaration'||node.type==='ClassExpression')&&
+      (node.id?.name===code||node.type==='ClassExpression'&&code==='function:'+node.start));
   }catch{return false;}
 }

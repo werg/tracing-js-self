@@ -150,6 +150,11 @@ export function createEffectfulRegionAdapterV8({extensions=[],allowHost=false}={
       return facade(bridge,prefix.contexts.slice(),allowHost);
     },
     encodeProtocol:encodeProtocolRecordV8,
+    sourceFunctionCode(codeId){
+      const codes=extensions.map(extension=>extension.sourceFunctionCode?.(codeId)).filter(code=>typeof code==='string');
+      if(new Set(codes).size>1)fail('source function identity is ambiguous');
+      return codes[0]??null;
+    },
     setup(ctx){context=ctx;
       const visit=node=>{if(!node||typeof node!=='object')return;
         if(Array.isArray(node)){node.forEach(visit);return;}

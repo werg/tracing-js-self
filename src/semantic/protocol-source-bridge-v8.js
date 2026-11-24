@@ -32,7 +32,7 @@ function sharedSyntax(adapter,node){
       node.property.property?.name==='iterator');
   return false;
 }
-function inventory(source,bundle){
+function inventory(source,bundle,adapters){
   const nodes=new Map(),functions=new Map(),codes=new Map(),asyncSites=asyncIterationSourceSitesV8(source);
   function visit(node){
     if(!node||typeof node!=='object')return;
@@ -43,10 +43,13 @@ function inventory(source,bundle){
   }
   visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
-    if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op))
-      codes.set(instruction.arg.codeId,bundle.programs[instruction.arg.codeId]?.sourceRole?
+    if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op)){
+      const sourceDefinitions=adapters.map(adapter=>adapter.functionDefinition?.(instruction)).filter(definition=>definition?.code);
+      if(sourceDefinitions.length>1)throw new TypeError('Ambiguous shared source function definition');
+      codes.set(instruction.arg.codeId,sourceDefinitions[0]?.code??(bundle.programs[instruction.arg.codeId]?.sourceRole?
         asyncIterationSourceCodeV8(bundle.programs[instruction.arg.codeId].sourceRole,instruction.start,instruction.end,asyncSites):
-        instruction.op==='DEF_FN'?instruction.arg.name:'function:'+instruction.start);
+        instruction.op==='DEF_FN'?instruction.arg.name:'function:'+instruction.start));
+    }
   return {nodes,functions,codes};
 }
 function selected(adapter,input){
@@ -66,7 +69,7 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
   if(chosen.some(adapter=>adapter.id==='synchronous-generator-source/1')&&
     sourceHasSyntaxV8({source,bundle},node=>node.type==='YieldExpression'&&node.delegate))
     throw new TypeError('Shared generator source: yield delegation requires its explicit composition profile');
-  const syntax=inventory(source,bundle);
+  const syntax=inventory(source,bundle,chosen);
   // Setup declares source capabilities shared by the direct adapters (for
   // example, the exact destructuring patterns and cleanup scope profile).
   // Preserve those declarations when the same adapters join the coordinator.
@@ -219,6 +222,7 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
       }finally{if(stateful)adapter.restoreState(prior);}
     }
     return {id,
+      sourceFunctionCode:codeId=>syntax.codes.get(codeId)??null,
       completionWritesHandled:adapter.completionWritesHandled===true,
       initialize:()=>copy(adapter.captureState?.()??{}),
       claims:{

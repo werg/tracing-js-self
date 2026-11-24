@@ -257,9 +257,9 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
     if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op)){
       const helper=bundle.programs[instruction.arg.codeId]?.sourceRole;
-      functionNames.set(instruction.arg.codeId,helper?
+      functionNames.set(instruction.arg.codeId,regionAdapter?.sourceFunctionCode?.(instruction.arg.codeId)??(helper?
         asyncIterationSourceCodeV8(helper,instruction.start,instruction.end,asyncIterationSites):instruction.op==='DEF_FN'?
-        instruction.arg.name:'function:'+instruction.start);
+        instruction.arg.name:'function:'+instruction.start));
       functionReferences.set(instruction.arg.codeId,helper?new Set(bundle.programs[instruction.arg.codeId].instructions
         .filter(row=>row.op==='GET'&&/^\[\[(?:async iterator|sync iterator next) [0-9]+\]\]$/.test(row.arg))
         .map(row=>row.arg)):sourceReferences.get(instruction.start)??new Set());
