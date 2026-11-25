@@ -1,0 +1,58 @@
+{
+  "schema": "tinker-local-runtime-budget-diagnosis/1",
+  "model_performance_evidence": false,
+  "actual_model_samples": 0,
+  "optimizer_updates": 0,
+  "task_id": "real-exercism-8b979a00871f99a9f68a610e",
+  "family": "exercism/javascript:collatz-conjecture",
+  "input_description": "Recursive Collatz steps(1000000)",
+  "node": "v24.22.3",
+  "original_bridge_timeout_seconds": 60,
+  "pilot_bridge_timeout_seconds": 300,
+  "observed_admission_wall_ms": 126151,
+  "isolated_export_wall_ms": 86221.16,
+  "serialized_bytes": 59434,
+  "serialization_and_write_ms": 0.258,
+  "user_cpu_seconds": 87.63,
+  "system_cpu_seconds": 0.34,
+  "ending_rss_mb": 425.6,
+  "cpu_profile_approximate_seconds": {
+    "structuredClone": 51.6,
+    "runtime_equal": 25.7,
+    "runtime_diff": 4.4
+  },
+  "export_audit": {
+    "replayVerified": true,
+    "canonicalCausalNarration": true,
+    "observationsMatched": true,
+    "traceFormat": "full",
+    "messages": 3,
+    "calls": 0,
+    "narrationLines": 1274,
+    "assistantBytes": 50160,
+    "observationBytes": 0
+  },
+  "evidence": {
+    ".cache/tinker-pilot-plan-timeout60.log": {
+      "bytes": 111,
+      "sha256": "366c8a24e44c784fe84af5a9bd0e60b4f760066bb63211a906d30bc9f6f67633"
+    },
+    ".cache/tinker-export-blocker-task.json": {
+      "bytes": 2657,
+      "sha256": "a7d93b26ce30e70b00ac4fb814e090c59de7b7a3e94ffe9c8d7e7e79ef069a5a"
+    },
+    ".cache/tinker-export-blocker-diagnosis.log": {
+      "bytes": 2885,
+      "sha256": "bb8985c7b3dcc60f81d797ae86768fa464aaafe525f901ccdf9f84e8b126e162"
+    },
+    ".cache/tinker-export-blocker.cpuprofile.json": {
+      "bytes": 156174,
+      "sha256": "ca651d91f166a8bdd7c96c22bab746834b5820c0f51c377569b801fed0fd8227"
+    },
+    ".cache/tinker-export-blocker-export.json": {
+      "bytes": 59435,
+      "sha256": "342b1a433f9f0a6eda9769f64ceca638e170b3af6a03b698221891f64fb3f337"
+    }
+  },
+  "interpretation": "The complete export succeeded and its teacher audit passed. Local snapshot cloning/equality/diff exceeded the original outer bridge deadline. The pilot now uses a measured 300-second request bound. Inner task timers are cooperative and do not interrupt synchronous work. No source or dataset was changed for this configuration adjustment."
+}

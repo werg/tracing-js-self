@@ -1,0 +1,218 @@
+{
+  "schema": "tinker-followup-local-checks/1",
+  "capturedAt": "2026-11-25T17:27:40.669446+00:00",
+  "repositoryPath": "/home/werg/tracing-js-self",
+  "capturedGitRevision": "817408d6b8bba2c7887f55f1a4c0223cd8268aab",
+  "evidenceKind": "local-preparation-validation",
+  "modelPerformanceEvidence": false,
+  "modelComputePerformed": false,
+  "actualModelSamples": 0,
+  "optimizerUpdates": 0,
+  "sourceLogs": {
+    "pythonWithInstalledSdk": {
+      "path": ".cache/tinker-followup-python-final.log",
+      "absolutePath": "/home/werg/tracing-js-self/.cache/tinker-followup-python-final.log",
+      "sha256": "cf7a2f485f5866ea01ec9dd48077e5584c0cda99dcf83ded99aa2530cdcb4865",
+      "bytes": 22724
+    },
+    "combinedSuiteWithoutSdk": {
+      "path": ".cache/tinker-followup-suite-final.log",
+      "absolutePath": "/home/werg/tracing-js-self/.cache/tinker-followup-suite-final.log",
+      "sha256": "68290e12b7c254a2c0d365d4a0bfdb4b158622784d618c5272151a76ad36f607",
+      "bytes": 28662
+    },
+    "repositoryContracts": {
+      "path": ".cache/tinker-followup-contracts.log",
+      "absolutePath": "/home/werg/tracing-js-self/.cache/tinker-followup-contracts.log",
+      "sha256": "bbe903778426e18594f1eb27c9cd2e5465d7ee580da23518fc18bf976caaf404",
+      "bytes": 10209
+    },
+    "editableInstall": {
+      "path": ".cache/tinker-followup-install.log",
+      "absolutePath": "/home/werg/tracing-js-self/.cache/tinker-followup-install.log",
+      "sha256": "643dbda15d30f71f43db76c5de303a75d2f93512633de5757219e0efa72a7d71",
+      "bytes": 341
+    },
+    "studyCliHelp": {
+      "path": ".cache/tinker-followup-cli.log",
+      "absolutePath": "/home/werg/tracing-js-self/.cache/tinker-followup-cli.log",
+      "sha256": "886bb96a64e429fbd69d99ebfcecd5d8f5cb33eaf7f82d977208b413f6a75766",
+      "bytes": 1569
+    },
+    "capabilityPreflight": {
+      "path": ".cache/tinker-followup-auth.json",
+      "absolutePath": "/home/werg/tracing-js-self/.cache/tinker-followup-auth.json",
+      "sha256": "fafaacf750b2b061d7930a0256bacbc8ce20c37f3214390de07abc43aff9c430",
+      "bytes": 341
+    },
+    "authenticationCheck": {
+      "path": ".cache/tinker-verification/auth-check.json",
+      "absolutePath": "/home/werg/tracing-js-self/.cache/tinker-verification/auth-check.json",
+      "sha256": "636ac499458b69a7dca72f6d9d106ca3d475608576dd8f759eb0d800af9fa8e3",
+      "bytes": 245
+    },
+    "miniPreflight": {
+      "path": "runs/tinker-followup-smoke/check.json",
+      "absolutePath": "/home/werg/tracing-js-self/runs/tinker-followup-smoke/check.json",
+      "sha256": "0ad7ec1371327465a38fbd2801bede92e44ca630b6c03fbd79ea96d0dc4a3126",
+      "bytes": 10647
+    },
+    "miniPreflightLog": {
+      "path": ".cache/tinker-followup-check-final.log",
+      "absolutePath": "/home/werg/tracing-js-self/.cache/tinker-followup-check-final.log",
+      "sha256": "05532919016738a20448990ac8c48051f1299dc2e231077a1d670c62cea4902e",
+      "bytes": 6893
+    }
+  },
+  "results": {
+    "pythonWithInstalledSdk": {
+      "tests": 133,
+      "passed": 133,
+      "skipped": 0,
+      "outcome": "passed",
+      "basis": "Observed unittest summary in hashed log"
+    },
+    "combinedSuiteWithoutSdk": {
+      "javascript": {
+        "tests": 52,
+        "pass": 52,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "python": {
+        "tests": 133,
+        "passed": 127,
+        "skipped": 6,
+        "outcome": "passed"
+      },
+      "basis": "Observed Node and unittest summaries in hashed log"
+    },
+    "repositoryContracts": {
+      "outcome": "passed",
+      "observedJsonSummaries": [
+        {
+          "valid": true,
+          "path": "contracts/npm-lock.json",
+          "sha256": "951a0286f32416f73e72b9fd05af80cf86ded5fbed16fbfde5ff0a2aef3fdc88"
+        },
+        {
+          "schema": "semantic-harness-contract/6",
+          "digest": "51bec54b28aae99f644e01aca8948815850e4917a35dcc2604a191d2996a8b2b",
+          "fixtureDigest": "8c7c086e3b69624365c2c437a15765a214752ad9d77dfcf723bc54d314faba95"
+        },
+        {
+          "schema": "semantic-algorithm-contract/1",
+          "digest": "dcb76c95605ac50b0648a83214111b7905347a79c7d57d4f4da9fa7fbf7a0eec",
+          "fixtureDigest": "12078b6b63853ac7ad1016a872480fa997ee90dd6afa7d216bdad91a92655d99"
+        },
+        {
+          "schema": "semantic-execution-contract/7",
+          "digest": "3b5a818c93f78d5982650229e92eefd791edb8cdd0f4e04d4ec0b5c9bb23c1f1",
+          "fixtureDigest": "2f34d35060fde7e15fdf8bb0f5fcc25429b0697fcc02df3d45b26968aad0e196"
+        },
+        {
+          "valid": true,
+          "contractDigest": "ef501aa5c4e5a41b77a7c7c58e0f38dc2ee6d0ae3ef1aa6b6c91e304ddbf6c2f",
+          "interoperabilityDigest": "aa3c9077e4627e90d81ea7534635ffc3b168051db1c02463c3b5fe9e989f1677",
+          "mode": "checked"
+        }
+      ]
+    },
+    "editableInstall": {
+      "outcome": "completed",
+      "basis": "Observed completed editable installation in hashed log"
+    },
+    "studyCliHelp": {
+      "outcome": "available",
+      "basis": "Observed tinker-study help output in hashed log"
+    },
+    "capabilityPreflight": {
+      "operation": "capability_preflight",
+      "model_compute_performed": false,
+      "optimizer_updates": 0,
+      "status": "blocked",
+      "error_type": "TinkerError",
+      "error": "The api_key client option must be set by passing api_key to the client, by setting the TINKER_API_KEY environment variable, or by storing a key with `tinker auth login`"
+    },
+    "authenticationCheck": {
+      "authenticated": false,
+      "error_type": "TinkerError",
+      "message": "The api_key client option must be set by passing api_key to the client, by setting the TINKER_API_KEY environment variable, or by storing a key with `tinker auth login`"
+    },
+    "miniPreflight": {
+      "fixtures": {
+        "kind": "offline_fixture_validation",
+        "model_sampled": false,
+        "training_performed": false,
+        "scope": "attached_executor_tasks",
+        "agentObjectiveVerified": false,
+        "imported_agent_rows": 0,
+        "valid": 36,
+        "total": 36,
+        "failures": []
+      },
+      "sdk": {
+        "model": "thinkingmachines/Inkling-2-Mini:peft:65536:free",
+        "renderer": "tml_v0",
+        "effort": 0.5,
+        "max_context_tokens": 65536,
+        "versions": {
+          "tinker": "0.40.0",
+          "tinker-cookbook": "0.7.1",
+          "tml-renderers": "0.4.2",
+          "torch": "2.15.0+cpu"
+        }
+      },
+      "localSetupReady": true,
+      "credentialsStatus": "unverified",
+      "readyForLiveTraining": false
+    }
+  },
+  "archivedArtifacts": {
+    "auth-preflight.json": {
+      "path": "docs/evidence/tinker-followup-20261125/auth-preflight.json",
+      "absolutePath": "/home/werg/tracing-js-self/docs/evidence/tinker-followup-20261125/auth-preflight.json",
+      "sha256": "fafaacf750b2b061d7930a0256bacbc8ce20c37f3214390de07abc43aff9c430",
+      "bytes": 341
+    },
+    "census-report.json": {
+      "path": "docs/evidence/tinker-followup-20261125/census-report.json",
+      "absolutePath": "/home/werg/tracing-js-self/docs/evidence/tinker-followup-20261125/census-report.json",
+      "sha256": "e3679abdd098a0c9e5b4964ffee62525a12abc2bc35ed115ddd0172c4922ab50",
+      "bytes": 21779
+    },
+    "mini-preflight.json": {
+      "path": "docs/evidence/tinker-followup-20261125/mini-preflight.json",
+      "absolutePath": "/home/werg/tracing-js-self/docs/evidence/tinker-followup-20261125/mini-preflight.json",
+      "sha256": "0ad7ec1371327465a38fbd2801bede92e44ca630b6c03fbd79ea96d0dc4a3126",
+      "bytes": 10647
+    },
+    "supervision-audit-summary.json": {
+      "path": "docs/evidence/tinker-followup-20261125/supervision-audit-summary.json",
+      "absolutePath": "/home/werg/tracing-js-self/docs/evidence/tinker-followup-20261125/supervision-audit-summary.json",
+      "sha256": "4e5fbc96caaf3fd33143f25b191fcc3fd88514db99031df76c14502a10b0ecdd",
+      "bytes": 4922
+    },
+    "verifier-append-receipt.json": {
+      "path": "docs/evidence/tinker-followup-20261125/verifier-append-receipt.json",
+      "absolutePath": "/home/werg/tracing-js-self/docs/evidence/tinker-followup-20261125/verifier-append-receipt.json",
+      "sha256": "87e7a6693110559f80e9d1e4646664d3c3cdf8f1600f0b514abc62a4ad5305f9",
+      "bytes": 228
+    },
+    "verifier-report.json": {
+      "path": "docs/evidence/tinker-followup-20261125/verifier-report.json",
+      "absolutePath": "/home/werg/tracing-js-self/docs/evidence/tinker-followup-20261125/verifier-report.json",
+      "sha256": "4f940e070e62e8171741de4fe3abab251ebabebbaeeca1888b8178f4a85011de",
+      "bytes": 1668
+    },
+    "verifier-run.json": {
+      "path": "docs/evidence/tinker-followup-20261125/verifier-run.json",
+      "absolutePath": "/home/werg/tracing-js-self/docs/evidence/tinker-followup-20261125/verifier-run.json",
+      "sha256": "90e86d491c4f423db217ac76bb6800af6102913688e88783b9d256f2b6b26dea",
+      "bytes": 272
+    }
+  },
+  "interpretation": "These are local software, fixture, supervision, and preparation checks. They do not establish learned model accuracy, compression quality, task success, live authentication, or successful optimizer updates. Log hashes identify the exact captured evidence; the capture revision is not asserted to be the revision at which every log was produced."
+}

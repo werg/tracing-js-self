@@ -1,0 +1,600 @@
+{
+  "started": "2026-11-25T17:12:55.963Z",
+  "finished": "2026-11-25T17:14:29.635Z",
+  "implementation": {
+    "schema": "tinker-local-verification-identity/1",
+    "sha256": "d7509068d530f508529249f528aff30dd44e65c1b0a271895d51439723937905",
+    "files": 559,
+    "node": "v24.22.3"
+  },
+  "implementationAtFinish": {
+    "schema": "tinker-local-verification-identity/1",
+    "sha256": "d7509068d530f508529249f528aff30dd44e65c1b0a271895d51439723937905",
+    "files": 559,
+    "node": "v24.22.3"
+  },
+  "codeChangedDuringRun": false,
+  "actualModelSamples": 0,
+  "schema": "tinker-workload-admission-census/1",
+  "seed": 17,
+  "limited": false,
+  "requestedCandidates": 466,
+  "inventory": {
+    "streams": [
+      "pinned-utilities",
+      "pinned-exercism",
+      "pinned-production",
+      "existing-engineering",
+      "existing-semantic-recipes",
+      "existing-algorithm-recipes"
+    ],
+    "perPinnedFamily": 2,
+    "agentTrajectoriesIncluded": false,
+    "scope": "the enumerated repository inventories; not a claim to census every file or deployment workload"
+  },
+  "summary": {
+    "candidateExecutions": 466,
+    "candidateFamilies": 183,
+    "statuses": {
+      "admitted": 390,
+      "refused": 76
+    },
+    "refusals": {
+      "source-or-runtime-profile": 12,
+      "source_unsupported": 2,
+      "concurrent-observation-profile": 1,
+      "callback-profile": 60,
+      "subscription-profile": 1
+    },
+    "byOrigin": {
+      "utilities": {
+        "candidates": 156,
+        "admitted": 156
+      },
+      "exercism": {
+        "candidates": 40,
+        "admitted": 26
+      },
+      "production": {
+        "candidates": 14,
+        "admitted": 14
+      },
+      "repository-fixture": {
+        "candidates": 256,
+        "admitted": 194
+      }
+    },
+    "byFeature": {
+      "real-source": {
+        "candidates": 210,
+        "admitted": 196
+      },
+      "branch": {
+        "candidates": 270,
+        "admitted": 229
+      },
+      "array": {
+        "candidates": 252,
+        "admitted": 212
+      },
+      "exception": {
+        "candidates": 18,
+        "admitted": 14
+      },
+      "loop": {
+        "candidates": 275,
+        "admitted": 229
+      },
+      "external": {
+        "candidates": 197,
+        "admitted": 135
+      },
+      "repository-fixture": {
+        "candidates": 256,
+        "admitted": 194
+      }
+    },
+    "admissionFraction": 0.8369098712446352,
+    "modelExecutionAccuracy": null,
+    "agentTaskSuccess": null,
+    "denominator": "every candidate in the declared inventory, including missing inputs and refusals"
+  },
+  "recordsSha256": "cf1080d29b48c88475eead22ce49474bbe567d0df2a4797f1373e2cfdd763fe7",
+  "refusalExamples": [
+    {
+      "id": "real-exercism-08b9b5e84f33a86106fde7ba",
+      "family": "exercism/javascript:anagram",
+      "sourceSha256": "4a9f1c02d54e919bbc89ebf5f9244f70017c836895357ce29baf53e50d823841",
+      "taskSha256": "bfd925d0b89b95eb0d9a1b1047d2c2f52c87b238604e42b5c624da69d684afef",
+      "split": null,
+      "features": [
+        "array",
+        "branch",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:anagram",
+      "lineage": [
+        "exercism/javascript:anagram",
+        "upstream:exercism/javascript:exercises/practice/anagram/.meta/proof.ci.js",
+        "near-clone:988bd442c2e369f315505caae0394edaeb51a41bc71fbe75d40e099052cf6ed7"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source-or-runtime-profile",
+      "reason": "Only owned line RegExp splitting is supported",
+      "elapsedMs": 20
+    },
+    {
+      "id": "real-exercism-30a2bddd0e3a36a52691ed0f",
+      "family": "exercism/javascript:anagram",
+      "sourceSha256": "4a9f1c02d54e919bbc89ebf5f9244f70017c836895357ce29baf53e50d823841",
+      "taskSha256": "33f04803a1f551d26eb007f79e7c8220455fd88f20f62ffb9327ea59de4fffe5",
+      "split": null,
+      "features": [
+        "array",
+        "branch",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:anagram",
+      "lineage": [
+        "exercism/javascript:anagram",
+        "upstream:exercism/javascript:exercises/practice/anagram/.meta/proof.ci.js",
+        "near-clone:988bd442c2e369f315505caae0394edaeb51a41bc71fbe75d40e099052cf6ed7"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source-or-runtime-profile",
+      "reason": "Only owned line RegExp splitting is supported",
+      "elapsedMs": 21
+    },
+    {
+      "id": "real-exercism-0cdabcf9f12611ef7045a716",
+      "family": "exercism/javascript:isogram",
+      "sourceSha256": "c25939e31d755c2bddb164d83af7232e01640faf7c919037db2cda6625cc13b7",
+      "taskSha256": "194ef2a418e2e3034c4d25db1f7fe868f1b1380983ef964dfae493dff09e4eab",
+      "split": null,
+      "features": [
+        "array",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:isogram",
+      "lineage": [
+        "exercism/javascript:isogram",
+        "upstream:exercism/javascript:exercises/practice/isogram/.meta/proof.ci.js",
+        "near-clone:ae2c16f9b302d843ca9c77c91f1c5ec5fa665ac8355c5af346e9132f69455b17"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source-or-runtime-profile",
+      "reason": "Unsupported owned execution: RegExp execution requires owned matching semantics",
+      "elapsedMs": 7
+    },
+    {
+      "id": "real-exercism-369add577462ec91a6c82797",
+      "family": "exercism/javascript:isogram",
+      "sourceSha256": "c25939e31d755c2bddb164d83af7232e01640faf7c919037db2cda6625cc13b7",
+      "taskSha256": "df2b84619a2b298bb65b7aab7bb2e7dec9ebfd46b21ce63890dfc90eb24c89e2",
+      "split": null,
+      "features": [
+        "array",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:isogram",
+      "lineage": [
+        "exercism/javascript:isogram",
+        "upstream:exercism/javascript:exercises/practice/isogram/.meta/proof.ci.js",
+        "near-clone:ae2c16f9b302d843ca9c77c91f1c5ec5fa665ac8355c5af346e9132f69455b17"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source-or-runtime-profile",
+      "reason": "Unsupported owned execution: RegExp execution requires owned matching semantics",
+      "elapsedMs": 6
+    },
+    {
+      "id": "real-exercism-7b0bea94823ff2216f37a18c",
+      "family": "exercism/javascript:largest-series-product",
+      "sourceSha256": "521737a2ed22384aef4a4fbaf7cfc1be9729557696a680a394fec0848f62dd82",
+      "taskSha256": "e89c3a749ff175e587d3377c7d7361fd535b15d0088a366ee326190930a12dd0",
+      "split": null,
+      "features": [
+        "array",
+        "branch",
+        "exception",
+        "loop",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:largest-series-product",
+      "lineage": [
+        "exercism/javascript:largest-series-product",
+        "upstream:exercism/javascript:exercises/practice/largest-series-product/.meta/proof.ci.js",
+        "near-clone:33d4995f02d3978087cfb46ffb4abd5cf7825c99fc0ba1772130a105651d3f73"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source-or-runtime-profile",
+      "reason": "Unsupported owned execution: RegExp execution requires owned matching semantics",
+      "elapsedMs": 6
+    },
+    {
+      "id": "real-exercism-742fe12f3754a0e1a507063f",
+      "family": "exercism/javascript:largest-series-product",
+      "sourceSha256": "521737a2ed22384aef4a4fbaf7cfc1be9729557696a680a394fec0848f62dd82",
+      "taskSha256": "8469f72ced529f9581dab8de6e767889d343cabad6c6e82e3ccd4f71c19f0c03",
+      "split": null,
+      "features": [
+        "array",
+        "branch",
+        "exception",
+        "loop",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:largest-series-product",
+      "lineage": [
+        "exercism/javascript:largest-series-product",
+        "upstream:exercism/javascript:exercises/practice/largest-series-product/.meta/proof.ci.js",
+        "near-clone:33d4995f02d3978087cfb46ffb4abd5cf7825c99fc0ba1772130a105651d3f73"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source-or-runtime-profile",
+      "reason": "Unsupported owned execution: RegExp execution requires owned matching semantics",
+      "elapsedMs": 6
+    },
+    {
+      "id": "real-exercism-9632776974d012361a4792c9",
+      "family": "exercism/javascript:luhn",
+      "sourceSha256": "553f0448b5082bad2cacbf958641221405a46de4fdd841c79d0c0c3d561d341b",
+      "taskSha256": "6d2153d59127cf9d5691fe445c946f02adfa4641a1e7d06743fd227ba01fbeab",
+      "split": null,
+      "features": [
+        "array",
+        "branch",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:luhn",
+      "lineage": [
+        "exercism/javascript:luhn",
+        "upstream:exercism/javascript:exercises/practice/luhn/.meta/proof.ci.js",
+        "near-clone:08c3a08b72f048e506e78baab1b74728628d3fdfe6eb39d2e465be4ac2de4525"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source-or-runtime-profile",
+      "reason": "Unsupported owned execution: RegExp execution requires owned matching semantics",
+      "elapsedMs": 12
+    },
+    {
+      "id": "real-exercism-e46d6b7dc9748fe8ac4f5b30",
+      "family": "exercism/javascript:luhn",
+      "sourceSha256": "553f0448b5082bad2cacbf958641221405a46de4fdd841c79d0c0c3d561d341b",
+      "taskSha256": "87ba0dac630490b91ef7871bd5279e054e86b2d37ab8c6974ba8fb492eb856be",
+      "split": null,
+      "features": [
+        "array",
+        "branch",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:luhn",
+      "lineage": [
+        "exercism/javascript:luhn",
+        "upstream:exercism/javascript:exercises/practice/luhn/.meta/proof.ci.js",
+        "near-clone:08c3a08b72f048e506e78baab1b74728628d3fdfe6eb39d2e465be4ac2de4525"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source-or-runtime-profile",
+      "reason": "Unsupported owned execution: RegExp execution requires owned matching semantics",
+      "elapsedMs": 5
+    },
+    {
+      "id": "real-exercism-8a3d3354c2e3676fcf8b443e",
+      "family": "exercism/javascript:matching-brackets",
+      "sourceSha256": "af71f8a397bdccdb7eb301a91a37baf6892fcb44577829fbce6befebd893561a",
+      "taskSha256": "80c5c039926b6efb4288bdcce406750ca7db506400b834ccff69201c65e666cc",
+      "split": null,
+      "features": [
+        "array",
+        "branch",
+        "loop",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:matching-brackets",
+      "lineage": [
+        "exercism/javascript:matching-brackets",
+        "upstream:exercism/javascript:exercises/practice/matching-brackets/.meta/proof.ci.js",
+        "near-clone:279d7ab4cf1b8e46e6c1c9ce4fad14738a7530507f5e740a9b0d602659697619"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source-or-runtime-profile",
+      "reason": "Unsupported owned execution: RegExp execution requires owned matching semantics",
+      "elapsedMs": 8
+    },
+    {
+      "id": "real-exercism-b8d2ee4feaeda8ca65edc4a3",
+      "family": "exercism/javascript:matching-brackets",
+      "sourceSha256": "af71f8a397bdccdb7eb301a91a37baf6892fcb44577829fbce6befebd893561a",
+      "taskSha256": "375b2bca2c0144eb676fa038427e1cc68aa93be506ba7603c6455756f4e23f0e",
+      "split": null,
+      "features": [
+        "array",
+        "branch",
+        "loop",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:matching-brackets",
+      "lineage": [
+        "exercism/javascript:matching-brackets",
+        "upstream:exercism/javascript:exercises/practice/matching-brackets/.meta/proof.ci.js",
+        "near-clone:279d7ab4cf1b8e46e6c1c9ce4fad14738a7530507f5e740a9b0d602659697619"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source-or-runtime-profile",
+      "reason": "Unsupported owned execution: RegExp execution requires owned matching semantics",
+      "elapsedMs": 7
+    },
+    {
+      "id": "real-exercism-866ddf8933173ebe35d6c3a6",
+      "family": "exercism/javascript:run-length-encoding",
+      "sourceSha256": "73eaabf0bd034382d739c699b971e099121f132b212f800140aa9a4214ca2b9e",
+      "taskSha256": "c9564a0d75d2294357efebe70aa0c31a42448c568711717b3181fed1f272ec48",
+      "split": null,
+      "features": [
+        "array",
+        "branch",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:run-length-encoding",
+      "lineage": [
+        "exercism/javascript:run-length-encoding",
+        "upstream:exercism/javascript:exercises/practice/run-length-encoding/.meta/proof.ci.js",
+        "near-clone:3ad7794948a391401d58e66bb71f58717ed0a3d021491521c28128337d5771e1"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source-or-runtime-profile",
+      "reason": "Unsupported owned execution: RegExp execution requires owned matching semantics",
+      "elapsedMs": 3
+    },
+    {
+      "id": "real-exercism-0fe8d3adafe63d122fb655f3",
+      "family": "exercism/javascript:run-length-encoding",
+      "sourceSha256": "73eaabf0bd034382d739c699b971e099121f132b212f800140aa9a4214ca2b9e",
+      "taskSha256": "1159dfb1f2394e519881df06ba94166bb5b32a22a1141786ede40ba8fd1289a6",
+      "split": null,
+      "features": [
+        "array",
+        "branch",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:run-length-encoding",
+      "lineage": [
+        "exercism/javascript:run-length-encoding",
+        "upstream:exercism/javascript:exercises/practice/run-length-encoding/.meta/proof.ci.js",
+        "near-clone:3ad7794948a391401d58e66bb71f58717ed0a3d021491521c28128337d5771e1"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source-or-runtime-profile",
+      "reason": "Unsupported owned execution: RegExp execution requires owned matching semantics",
+      "elapsedMs": 2
+    },
+    {
+      "id": "real-exercism-3bf0ccc4a3e489dbe3c4e54b",
+      "family": "exercism/javascript:space-age",
+      "sourceSha256": "79ddf44065b134012fd1f0db5b06485d7697207e61f2623329362cfa4feeb0f4",
+      "taskSha256": "bd0c2a95fff33e72171e862502a2c9e685ae61b3a308a10418ea918c8d31fd32",
+      "split": null,
+      "features": [
+        "array",
+        "branch",
+        "exception",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:space-age",
+      "lineage": [
+        "exercism/javascript:space-age",
+        "upstream:exercism/javascript:exercises/practice/space-age/.meta/proof.ci.js",
+        "near-clone:3e625f200901290ece2fa682a2c744f27ad5bf8243759717ed86e0c34156ff53"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source_unsupported",
+      "reason": "Top-level non-function initialization is not owned"
+    },
+    {
+      "id": "real-exercism-9505cae7b4370cf895644ac0",
+      "family": "exercism/javascript:space-age",
+      "sourceSha256": "79ddf44065b134012fd1f0db5b06485d7697207e61f2623329362cfa4feeb0f4",
+      "taskSha256": "6bb902b08fc8b13aa24b35d7184f08457002bf123dbb9a205241d6cbfaf2f278",
+      "split": null,
+      "features": [
+        "array",
+        "branch",
+        "exception",
+        "real-source"
+      ],
+      "tier": 3,
+      "template": "exercism/javascript:space-age",
+      "lineage": [
+        "exercism/javascript:space-age",
+        "upstream:exercism/javascript:exercises/practice/space-age/.meta/proof.ci.js",
+        "near-clone:3e625f200901290ece2fa682a2c744f27ad5bf8243759717ed86e0c34156ff53"
+      ],
+      "sourceOrigin": "exercism",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "source_unsupported",
+      "reason": "Top-level non-function initialization is not owned"
+    },
+    {
+      "id": "existing-two-pending-reversed",
+      "family": "two-outstanding",
+      "sourceSha256": "19cf51da0ac04c1750c8c5317b567ebe92987d579517328a3402b33bfdabd6d3",
+      "taskSha256": "8a56234d114699c3d00e194fef9e82745fd5363a7c15ec6e088c042cbab37262",
+      "split": null,
+      "features": [
+        "external",
+        "repository-fixture"
+      ],
+      "tier": 3,
+      "template": "two-outstanding",
+      "lineage": [
+        "two-outstanding",
+        "near-clone:fae497688f24d066adc3f9af9184efcd4ad460d5e04f58250b7cf2c06ea1adca"
+      ],
+      "sourceOrigin": "repository-fixture",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "concurrent-observation-profile",
+      "reason": "Out-of-order concurrent observations require a separate execution profile",
+      "elapsedMs": 0
+    },
+    {
+      "id": "existing-callback-captured-write",
+      "family": "owned-callback",
+      "sourceSha256": "5420f516a01b66ccf06ccc9e83a2935bfc2cd3e13dee62316a27b52ec60cee83",
+      "taskSha256": "3db4f318f0d6b8f1b2225db5f5c924f72622db686d7865b56a7cbe9786d04069",
+      "split": null,
+      "features": [
+        "external",
+        "repository-fixture"
+      ],
+      "tier": 3,
+      "template": "owned-callback",
+      "lineage": [
+        "owned-callback",
+        "near-clone:5d9df4efd834063952943d2905ea510cb371454bfd1bd61726c7612fbb650096"
+      ],
+      "sourceOrigin": "repository-fixture",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "callback-profile",
+      "reason": "Callback fixtures require a separate execution profile",
+      "elapsedMs": 0
+    },
+    {
+      "id": "existing-long-callback-retained-tail",
+      "family": "long-callback-retained-tail",
+      "sourceSha256": "ea8ff314898004fd34fddb657ee8bdaed2fa7f742488ef64fc4f6d1739c994d0",
+      "taskSha256": "71d77432095852f7978bb8cb4389504e80967318c253bcd466ab66080c347405",
+      "split": null,
+      "features": [
+        "external",
+        "loop",
+        "repository-fixture"
+      ],
+      "tier": 3,
+      "template": "long-callback-retained-tail",
+      "lineage": [
+        "long-callback-retained-tail",
+        "near-clone:03f5cc127996b68cc508426592c031d6dac93047158a9972ed8efd1d041f649c"
+      ],
+      "sourceOrigin": "repository-fixture",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "callback-profile",
+      "reason": "Callback fixtures require a separate execution profile",
+      "elapsedMs": 0
+    },
+    {
+      "id": "existing-persistent-external-trigger",
+      "family": "persistent-external-trigger",
+      "sourceSha256": "93a8f0b65add29cc6846e215f00bc7894e7ce50ac358ec97555cf106dbdff0f3",
+      "taskSha256": "5e5f7359c8a23a4315cbfbec4c61ce6a1d117dd6392583b689c2c3005382891d",
+      "split": null,
+      "features": [
+        "external",
+        "repository-fixture"
+      ],
+      "tier": 3,
+      "template": "persistent-external-trigger",
+      "lineage": [
+        "persistent-external-trigger",
+        "near-clone:d0848fb91b3a548f27f1ac38b432650f7a778474ba6b0f4b2d0736f36ea6f784"
+      ],
+      "sourceOrigin": "repository-fixture",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "subscription-profile",
+      "reason": "Subscription fixtures require a separate execution profile",
+      "elapsedMs": 0
+    },
+    {
+      "id": "existing-rectangle-perimeter-callbacks-recovery",
+      "family": "semantic-recipe:rectangle-perimeter",
+      "sourceSha256": "597c1c9038f5b7bcd821eb77d4f827d6f13c38d4dee4639b898a7bb36abe5c65",
+      "taskSha256": "2bc509ac3ccc27ebb2b3b73f6feae057be7c53e0d6633758e499b375acb8375c",
+      "split": null,
+      "features": [
+        "external",
+        "repository-fixture"
+      ],
+      "tier": 3,
+      "template": "semantic-recipe:rectangle-perimeter",
+      "lineage": [
+        "semantic-recipe:rectangle-perimeter",
+        "source-template:rectangle-perimeter",
+        "near-clone:3002982fd0fc7c22bbad48b97dc04bfc1cd5e80322857ff27a5157092301086d"
+      ],
+      "sourceOrigin": "repository-fixture",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "callback-profile",
+      "reason": "Callback fixtures require a separate execution profile",
+      "elapsedMs": 0
+    },
+    {
+      "id": "existing-rectangular-capacity-callbacks-recovery",
+      "family": "semantic-recipe:rectangular-capacity",
+      "sourceSha256": "962e2739677a36ad2b46166c1ba20792812d2728291d72e4b1a6e1915518993d",
+      "taskSha256": "0d201891f9a4c52c9119d8f88f31d3730f3f37c04939934f3c43f4902917579d",
+      "split": null,
+      "features": [
+        "external",
+        "repository-fixture"
+      ],
+      "tier": 3,
+      "template": "semantic-recipe:rectangular-capacity",
+      "lineage": [
+        "semantic-recipe:rectangular-capacity",
+        "source-template:rectangular-capacity",
+        "near-clone:6959d57972dc099449699265b080bdd460f0df0fcaa26fd611eee185d98c4925"
+      ],
+      "sourceOrigin": "repository-fixture",
+      "agentTaskSuccessVerified": false,
+      "status": "refused",
+      "category": "callback-profile",
+      "reason": "Callback fixtures require a separate execution profile",
+      "elapsedMs": 0
+    }
+  ]
+}

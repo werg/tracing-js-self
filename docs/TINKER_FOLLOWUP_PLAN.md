@@ -22,6 +22,25 @@ from live model evidence. No CPU replay or scripted model is a learning result.
 | Workload coverage | Reproducible admission census over existing programs/trajectories with full candidate denominator and refusal reasons; execution coverage kept distinct from agent objective success. |
 | Reproducibility | Locked runtime/dependencies, deterministic plans and hashes, resumable results, regression gates, launch instructions and honest validation record. |
 
+## Implementation map
+
+| Work | Main implementation |
+| --- | --- |
+| Reward control and curriculum | [learning.py](../training/tinker_js/learning.py) |
+| Tinker controls, exact tokens and loss diagnostics | [adapter.py](../training/tinker_js/adapter.py) |
+| Evaluation, validation selection and update recovery | [runner.py](../training/tinker_js/runner.py) |
+| Paired metrics and component-cluster uncertainty | [metrics.py](../training/tinker_js/metrics.py) |
+| Staged studies, live probes and learnability gate | [experiments.py](../training/tinker_js/experiments.py) |
+| Causal traces and supplied-conversation audits | [tinker-execution.js](../src/training/tinker-execution.js), [tinker-supervision.js](../src/training/tinker-supervision.js) |
+| Corpus, source lineage and diagnostic separation | [tinker-benchmark.js](../src/training/tinker-benchmark.js) |
+| Independent native boundary and adversarial controls | [tinker-independent.js](../src/training/tinker-independent.js), [tinker-verification.js](../src/training/tinker-verification.js) |
+| Build, census and fuzz commands | [tinker-benchmark.mjs](../tools/tinker-benchmark.mjs) |
+| Prepared pilot settings and CI | [inkling-pilot.json](../training/configs/inkling-pilot.json), [tinker-training.yml](../.github/workflows/tinker-training.yml) |
+
+Each deliverable has implementation and regression coverage. The current
+[validation record](TINKER_VALIDATION.md) records the executed checks and the
+remaining live prerequisites; it does not treat local fixtures as model results.
+
 ## Implementation boundaries
 
 The existing bounded sequential execution profile remains the initial model task.

@@ -1,0 +1,74 @@
+{
+  "schema": "tinker-followup-evidence-index/1",
+  "captured_at_utc": "2026-11-25T18:30:48.043863+00:00",
+  "capture_revision": "6afbe17d742e4c1162fb2980a87c667dda9d8e6c",
+  "model_performance_evidence": false,
+  "actual_model_samples": 0,
+  "optimizer_updates": 0,
+  "runner_implementation_hash": "73d130ae89df1fcb47e18d6076265ce695a9fb052241ffb106bdf662d7ef277d",
+  "verifier_implementation_hash": "d7509068d530f508529249f528aff30dd44e65c1b0a271895d51439723937905",
+  "study_plan_hash": "9736288205f08a49e2e1816692dcf7c004323d2c0c2bc49e3f0c2c51fa91fbcf",
+  "files": {
+    "README.md": {
+      "sha256": "f2c103cafa60d1e528f0336474bfea833b869f284c89fe5b28801a548b306390",
+      "bytes": 2747
+    },
+    "auth-preflight-final.json": {
+      "sha256": "f597a8f976a7094b927b7bfb195df43725ac0d4eb3fb5ef5d2b014a63319aaf0",
+      "bytes": 397
+    },
+    "auth-preflight.json": {
+      "sha256": "fafaacf750b2b061d7930a0256bacbc8ce20c37f3214390de07abc43aff9c430",
+      "bytes": 341
+    },
+    "census-report.json": {
+      "sha256": "e3679abdd098a0c9e5b4964ffee62525a12abc2bc35ed115ddd0172c4922ab50",
+      "bytes": 21779
+    },
+    "local-checks.json": {
+      "sha256": "2bbcec0fee2cd1d76c56ba26657a9d71e470c504e08368e9d11169ed66c35d40",
+      "bytes": 9362
+    },
+    "manual-supervision-review.json": {
+      "sha256": "0de5df1c0075de622a91e23ae00c4dfcc9173ca93943e1abeb9996b81efb2724",
+      "bytes": 1513
+    },
+    "mini-preflight.json": {
+      "sha256": "0ad7ec1371327465a38fbd2801bede92e44ca630b6c03fbd79ea96d0dc4a3126",
+      "bytes": 10647
+    },
+    "pilot-plan.json": {
+      "sha256": "97fa0d5adc52e0f52f1e49a9b6cebd727e2ca72bd4eab5cb27952b976a7aa804",
+      "bytes": 3466077
+    },
+    "pilot-preflight.json": {
+      "sha256": "1cbdd144cf13c6d2c96f000d510dc77d66296a4691fe208cc5ad9bb1b0490342",
+      "bytes": 271401
+    },
+    "pilot-preparation.json": {
+      "sha256": "c80004188813dbaa46efd1448a0f84bc630c4c5362935373c6146ca7eb4ec2b3",
+      "bytes": 10789
+    },
+    "runtime-budget-diagnosis.json": {
+      "sha256": "225b4452d78fff164666c88f5b017e99fd8dbf55ac1bf144b8dc99aa25756c22",
+      "bytes": 2238
+    },
+    "supervision-audit-summary.json": {
+      "sha256": "4e5fbc96caaf3fd33143f25b191fcc3fd88514db99031df76c14502a10b0ecdd",
+      "bytes": 4922
+    },
+    "verifier-append-receipt.json": {
+      "sha256": "87e7a6693110559f80e9d1e4646664d3c3cdf8f1600f0b514abc62a4ad5305f9",
+      "bytes": 228
+    },
+    "verifier-report.json": {
+      "sha256": "4f940e070e62e8171741de4fe3abab251ebabebbaeeca1888b8178f4a85011de",
+      "bytes": 1668
+    },
+    "verifier-run.json": {
+      "sha256": "90e86d491c4f423db217ac76bb6800af6102913688e88783b9d256f2b6b26dea",
+      "bytes": 272
+    }
+  },
+  "scope": "All other files in this evidence directory; the index does not hash itself. Runtime source identities are separate from capture commit metadata."
+}

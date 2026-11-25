@@ -1,0 +1,11 @@
+{
+  "schema": "tinker-fuzz-run/1",
+  "seed": 17,
+  "count": 10000,
+  "implementation": {
+    "schema": "tinker-local-verification-identity/1",
+    "sha256": "d7509068d530f508529249f528aff30dd44e65c1b0a271895d51439723937905",
+    "files": 559,
+    "node": "v24.22.3"
+  }
+}

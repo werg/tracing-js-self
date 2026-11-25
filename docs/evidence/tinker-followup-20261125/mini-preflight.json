@@ -1,0 +1,354 @@
+{
+  "api_key_present": false,
+  "dataset": {
+    "schema": "tinker-js-dataset-v1",
+    "input_sha256": "821424ef51597d6c7e12d37f8c266c64c83f94f15b248a792a224e2fee85f1d1",
+    "export_settings": {
+      "trace_format": "full",
+      "prompt_style": "standard",
+      "evaluation_only": false,
+      "diagnostic_only": false
+    },
+    "implementation_hash": "73d130ae89df1fcb47e18d6076265ce695a9fb052241ffb106bdf662d7ef277d",
+    "implementation_files": 327,
+    "git_revision": "0bc8d12c6abdb9a214612e62dbfea1ea9101f836",
+    "dataset_hash": "9ce7d892cf5d06611689f0d83802e2fc0c395eac5885f359f5232ffb098ee49f",
+    "split_manifest": {
+      "seed": 17,
+      "holdout_fraction": 0.2,
+      "evaluation_only": false,
+      "validation_fraction": 0.2,
+      "components": [
+        {
+          "split": "validation",
+          "ids": [
+            "await-transform-1",
+            "await-transform-2"
+          ],
+          "component": "cf566f69d2bde6720c1fc4634027ed88a31e033cc43b2d74cf6be58a1b810ed3",
+          "families": [
+            "await-transform"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "8b71d87f820df6341e9efd80e609b5e56299ce04ab60fc66334ed762d637aa6f"
+          ]
+        },
+        {
+          "split": "train",
+          "ids": [
+            "bounded-branch-1",
+            "bounded-branch-2"
+          ],
+          "component": "041c73fdb11910b16dd536c415302c8f4aa48af937f352e78f20dfb898d80edf",
+          "families": [
+            "bounded-branch"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "fff325ee6ca5add94c9dd97c763d74a8c081c832e26de5c1ad9fe2867081a4ee"
+          ]
+        },
+        {
+          "split": "train",
+          "ids": [
+            "console-effect-1",
+            "console-effect-2"
+          ],
+          "component": "78937d41f4d9b21edaa5c8aa83a9a56ba037d950352866ab4ea6506f46f87b65",
+          "families": [
+            "console-effect"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "c41346950e4e32c2486948d935658abba1db60a88ff8cdfc297f56af59e3ca36"
+          ]
+        },
+        {
+          "split": "validation",
+          "ids": [
+            "external-clock-1",
+            "external-clock-2"
+          ],
+          "component": "0f1fe1a46ec81733e4ff3abf2147770c0aad7bb5dab4c59dd928806a1c8c222e",
+          "families": [
+            "external-clock"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "461aa51d842fa4fbdf8c0b2535f2be883e2de9d76fbec84ae314b3973e99275f"
+          ]
+        },
+        {
+          "split": "train",
+          "ids": [
+            "filesystem-copy-1",
+            "filesystem-copy-2"
+          ],
+          "component": "436038cf3cf608fcb5c42f5c797668e7578cdeae41e9762cea333f81efbd4ae9",
+          "families": [
+            "filesystem-copy"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "7e58f598c41a80c52ae3d45318ccdabe09a82fec7e78cd9c15489f2f3815fe46"
+          ]
+        },
+        {
+          "split": "train",
+          "ids": [
+            "finally-mutation-1",
+            "finally-mutation-2"
+          ],
+          "component": "73a5c87c5645c2f22c1c41699522560d9add8cdcd615da0a09c672372f3c3ac4",
+          "families": [
+            "finally-mutation"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "23e4b9a57f0d7f61da5e65717ad777690d2ace76c792b7bbd3a4b9616d9d6cf5"
+          ]
+        },
+        {
+          "split": "test",
+          "ids": [
+            "fresh-randomness-1",
+            "fresh-randomness-2"
+          ],
+          "component": "ed28e8e3e7550b9850fab2ce57a626e739e5058157fc352b5caae6779efb7741",
+          "families": [
+            "fresh-randomness"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "d8077b96755780de2608a5a80f58b35526f179f99e016a3997274e08dc3e01d6"
+          ]
+        },
+        {
+          "split": "test",
+          "ids": [
+            "integer-arithmetic-1",
+            "integer-arithmetic-2"
+          ],
+          "component": "26c641c25c53e9364563a8e482927f122c58e72c7076176af0e3382d3e569911",
+          "families": [
+            "integer-arithmetic"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "022a88b42947215b04ce3b05e10cfc9c8935b2aeac7d1ea29d249bb43f2fabdb"
+          ]
+        },
+        {
+          "split": "train",
+          "ids": [
+            "map-elements-1",
+            "map-elements-2"
+          ],
+          "component": "b82b9f499c0911c9ae5825f2585b06a787a7e2a487aeb93d540482cfeda95b7d",
+          "families": [
+            "map-elements"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "ef221e816346267cce7b39d642fa822885bc001920f2d12bf41fd1d28bb25378"
+          ]
+        },
+        {
+          "split": "train",
+          "ids": [
+            "mutate-counter-1",
+            "mutate-counter-2"
+          ],
+          "component": "e237989dac4bb067298e78987fbc85571f04bd7c5cc5151c3d80abcbb91a435b",
+          "families": [
+            "mutate-counter"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "3ec7037f58599d2c6580ea26c9f95b13b372e2257a968922c96138e0c6f512b5"
+          ]
+        },
+        {
+          "split": "validation",
+          "ids": [
+            "native-lookup-1",
+            "native-lookup-2"
+          ],
+          "component": "e13b77dd04116b7b04124ff0d481c25ce590d7b7089194a65163e3755863b03a",
+          "families": [
+            "native-lookup"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "6bf9741e819477af2e85610c23a8534390505b951c7903ce208416f38aec4358"
+          ]
+        },
+        {
+          "split": "train",
+          "ids": [
+            "ordered-sum-1",
+            "ordered-sum-2"
+          ],
+          "component": "f0989bbe6cdade07c7e115d81615c33a2d0f8810164adbfcbea6cc58b5bc6db2",
+          "families": [
+            "ordered-sum"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "ac44e447d74f66526096da1ef66a3e262c7d3d11d5f213c08b4d91ac78561573"
+          ]
+        },
+        {
+          "split": "test",
+          "ids": [
+            "read-update-write-1",
+            "read-update-write-2"
+          ],
+          "component": "42cb6aac8525dc12da9dbe023688adca3f8f009ca16b83b790c03267949d51aa",
+          "families": [
+            "read-update-write"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "d61e4ff3b87116fd6ed1e377180e663a5e8411a6336f4ac13ae71b1e0bc9ae29"
+          ]
+        },
+        {
+          "split": "train",
+          "ids": [
+            "rejected-read-cleanup-1",
+            "rejected-read-cleanup-2"
+          ],
+          "component": "938966674ba5787f55fc21ed70aa9a0cdecadead04cba0997fa326fa821817e1",
+          "families": [
+            "rejected-read-cleanup"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "b37d1d8d2786bf55c7b41de3facbce3222cdc118f5ed172d3f9757f01f67ba22"
+          ]
+        },
+        {
+          "split": "validation",
+          "ids": [
+            "return-input-alias-1",
+            "return-input-alias-2"
+          ],
+          "component": "deea29946d137cb8cd0045e0ad709d9fdb923e1211cd631fce8ade26055fdc66",
+          "families": [
+            "return-input-alias"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "4fa4e9e48aa345d26e9d37136a902414311486d153970ec949ce56f554c57d3e"
+          ]
+        },
+        {
+          "split": "test",
+          "ids": [
+            "string-slice-1",
+            "string-slice-2"
+          ],
+          "component": "691adf5fbb214471380ade5b089adeb11e58cc38180a0dce6a94079ca025aa82",
+          "families": [
+            "string-slice"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "128c2f0fd13403a09c4a1572f5156a3d4d42cb3246aeffac172013d099e296af"
+          ]
+        },
+        {
+          "split": "train",
+          "ids": [
+            "throw-or-return-1",
+            "throw-or-return-2"
+          ],
+          "component": "b72f69f47e05cd1c70ccf880bbe3a90f81c6e5ff21886fd373fe29548b2de618",
+          "families": [
+            "throw-or-return"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "94ee633f9ffbd021475a61aaefa02fa6660a7c1c5cc7ef7096a642d290a5a86d"
+          ]
+        },
+        {
+          "split": "train",
+          "ids": [
+            "typescript-fold-1",
+            "typescript-fold-2"
+          ],
+          "component": "2a63f2e59ded397af56d72e8adb3ecc260436f7c02aca3ecc5cf12a217714b19",
+          "families": [
+            "typescript-fold"
+          ],
+          "templates": [],
+          "ancestor_families": [],
+          "source_hashes": [
+            "c69a08e9b8e7ade386fa9cfbccd6b7538c9bcdc3ab3f61cdbbb4ef667e8aa48f"
+          ]
+        }
+      ],
+      "hash": "597ded6b4abc0a05eadd121f2fbfff82b45f1e4a63780e47d5ae8064e9a69f73"
+    },
+    "counts": {
+      "train": 20,
+      "validation": 8,
+      "test": 8
+    }
+  },
+  "fixtures": {
+    "kind": "offline_fixture_validation",
+    "model_sampled": false,
+    "training_performed": false,
+    "scope": "attached_executor_tasks",
+    "agentObjectiveVerified": false,
+    "imported_agent_rows": 0,
+    "valid": 36,
+    "total": 36,
+    "failures": []
+  },
+  "sdk": {
+    "model": "thinkingmachines/Inkling-2-Mini:peft:65536:free",
+    "renderer": "tml_v0",
+    "effort": 0.5,
+    "max_context_tokens": 65536,
+    "versions": {
+      "tinker": "0.40.0",
+      "tinker-cookbook": "0.7.1",
+      "tml-renderers": "0.4.2",
+      "torch": "2.15.0+cpu"
+    }
+  },
+  "token_budgets": {
+    "training_datums": 20,
+    "max_training_tokens": 981,
+    "initial_prompts": 36,
+    "max_initial_prompt_tokens": 707,
+    "reserved_output_tokens": 2048,
+    "context_limit": 65536,
+    "model_sampled": false
+  },
+  "local_setup_ready": true,
+  "credentials_status": "unverified",
+  "ready_for_live_training": false
+}

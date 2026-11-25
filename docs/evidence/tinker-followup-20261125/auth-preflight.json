@@ -1,0 +1,8 @@
+{
+  "operation": "capability_preflight",
+  "model_compute_performed": false,
+  "optimizer_updates": 0,
+  "status": "blocked",
+  "error_type": "TinkerError",
+  "error": "The api_key client option must be set by passing api_key to the client, by setting the TINKER_API_KEY environment variable, or by storing a key with `tinker auth login`"
+}
