@@ -119,11 +119,23 @@ def implementation_identity(repo: Path) -> dict:
     return {"hash": digest(entries), "files": len(entries), "git_revision": commit}
 
 
+def _sync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
 def atomic_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
-    temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + "\n")
+    with temporary.open("w") as handle:
+        handle.write(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
     temporary.replace(path)
+    _sync_directory(path.parent)
 
 
 def write_jsonl(path: Path, rows: list[dict]) -> None:
@@ -132,14 +144,21 @@ def write_jsonl(path: Path, rows: list[dict]) -> None:
     with temporary.open("w") as handle:
         for row in rows:
             handle.write(json_text(row) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
     temporary.replace(path)
+    _sync_directory(path.parent)
 
 
-def append_jsonl(path: Path, row: dict) -> None:
+def append_jsonl(path: Path, row: dict, *, durable: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a") as handle:
         handle.write(json_text(row) + "\n")
         handle.flush()
+        if durable:
+            os.fsync(handle.fileno())
+    if durable:
+        _sync_directory(path.parent)
 
 
 def read_jsonl(path: Path) -> list[dict]:
@@ -623,6 +642,9 @@ def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int) -> d
         grade = copy.deepcopy(grade)
         grade["environmentReward"] = grade.get("reward")
         if forced_failure:
+            # The CPU session is merely unfinished; the sampler/budget failure
+            # is the more specific cause and must not inherit that category.
+            grade.pop("failureCategory", None)
             grade.update(success=False, reason=forced_failure)
         grade["success"] = bool(done and grade.get("success") and not forced_failure)
         grade["reward"] = compression_reward(grade["success"], total, config)
@@ -792,6 +814,226 @@ def config_fingerprint(config: dict) -> str:
     return digest({key: value for key, value in config.items() if key != "output_dir"})
 
 
+class UpdateRecoveryError(RuntimeError):
+    """An optimizer attempt cannot safely be repeated or silently abandoned."""
+
+
+def _optimizer_lineage(state: dict) -> dict:
+    return copy.deepcopy(state.get("optimizer_lineage") or {
+        "origin_training_path": state.get("training_path"),
+        "sft_updates": 0, "rl_updates": 0, "last_update_id": None,
+    })
+
+
+def _update_attempts(output_dir: Path) -> dict[str, dict]:
+    path = output_dir / "update-ledger.jsonl"
+    attempts: dict[str, dict] = {}
+    allowed = {"submitted", "optimizer_confirmed", "outcome_unknown", "recovery_error",
+               "checkpoint_persisted", "state_committed", "resume_recovered"}
+    for row in read_jsonl(path) if path.exists() else []:
+        attempt_id, event = row.get("attempt_id"), row.get("event")
+        if not isinstance(attempt_id, str) or event not in allowed:
+            raise UpdateRecoveryError("invalid optimizer update ledger; refusing to infer or repeat updates")
+        if event == "submitted":
+            if attempt_id in attempts or digest(row.get("identity")) != row.get("identity_hash"):
+                raise UpdateRecoveryError("duplicate or changed optimizer submission identity")
+            attempts[attempt_id] = {"submission": row, "events": {}}
+        attempt = attempts.get(attempt_id)
+        if attempt is None or row.get("identity_hash") != attempt["submission"]["identity_hash"]:
+            raise UpdateRecoveryError("optimizer outcome has no matching submission identity")
+        if event in attempt["events"] and event != "recovery_error":
+            raise UpdateRecoveryError("duplicate optimizer update outcome")
+        if event in {"checkpoint_persisted", "state_committed", "resume_recovered"} and (
+                "optimizer_confirmed" not in attempt["events"]):
+            raise UpdateRecoveryError("optimizer recovery was recorded without a confirmed update")
+        if event == "state_committed" and "checkpoint_persisted" not in attempt["events"]:
+            raise UpdateRecoveryError("optimizer progress was recorded before a recovery checkpoint")
+        attempt["events"][event] = row
+    return attempts
+
+
+def _update_event(output_dir: Path, pending: dict, event: str, **values: Any) -> None:
+    append_jsonl(output_dir / "update-ledger.jsonl", {
+        "event": event, "attempt_id": pending["attempt_id"],
+        "identity_hash": pending["identity_hash"], "recorded_at": time.time(), **values,
+    }, durable=True)
+
+
+def optimizer_update_accounting(output_dir: Path) -> dict:
+    """Count durable attempts, not the progress of a selected/rolled-back model.
+
+    A pre-dispatch record cannot establish server acceptance. Unknown attempts
+    may have committed, including when the process died before an acknowledgement.
+    """
+    attempts = _update_attempts(output_dir)
+    def counts(items: list[dict]) -> dict:
+        confirmed = sum("optimizer_confirmed" in item["events"] for item in items)
+        recovered = sum("checkpoint_persisted" in item["events"] for item in items)
+        return {"submission_attempts": len(items), "confirmed_optimizer_updates": confirmed,
+                "unknown_outcome_attempts": len(items) - confirmed,
+                "recovery_checkpointed_updates": recovered,
+                "confirmed_without_recovery_checkpoint": confirmed - recovered,
+                "state_committed_updates": sum("state_committed" in item["events"] for item in items),
+                "repaired_on_resume": sum("resume_recovered" in item["events"] for item in items)}
+    pending_path = output_dir / "pending-update.json"
+    pending = json.loads(pending_path.read_text()) if pending_path.exists() else None
+    values = list(attempts.values())
+    by_stage = {stage: counts([item for item in values if item["submission"]["identity"]["stage"] == stage])
+                for stage in sorted({item["submission"]["identity"]["stage"] for item in values})}
+    backends = sorted({item["submission"]["identity"]["backend"] for item in values})
+    return {**counts(values), "by_stage": by_stage, "backends": backends,
+            "pending_attempt": pending["attempt_id"] if pending else None,
+            "prepared_without_submission_record": int(bool(pending and pending["attempt_id"] not in attempts)),
+            "ledger": "update-ledger.jsonl",
+            "scope": "Durable adapter dispatch attempts, including work later rolled back. A dispatch record does not prove server acceptance; confirmed updates are a lower bound when any outcome is unknown. These are not billing totals or the number of updates retained by the selected model."}
+
+
+def _unresolved_update(output_dir: Path, pending: dict, attempts: dict) -> UpdateRecoveryError:
+    attempt = attempts.get(pending["attempt_id"])
+    confirmed = bool(attempt and "optimizer_confirmed" in attempt["events"])
+    status = "confirmed but missing a durable recovery checkpoint" if confirmed else "of unknown optimizer outcome"
+    safe = pending["identity"]["policy"]["training_path"]
+    return UpdateRecoveryError(
+        f"Optimizer attempt {pending['attempt_id']} is {status}; automatic resume is refused. "
+        f"Last safe optimizer checkpoint: {safe!r}. Preserve state.json, pending-update.json, updates/, "
+        "update-ledger.jsonl and rollouts/. Resolve the original service operation/checkpoint, or explicitly "
+        "start a separate recovery lineage from this saved state and checkpoint, without copying later rollouts. "
+        "Deleting the marker or repeating this update would discard evidence and may repeat committed work.")
+
+
+def _finish_update_recovery(output_dir: Path, pending: dict, *, resumed: bool = False) -> dict:
+    """Install an acknowledged recovery receipt without issuing any model call."""
+    attempts = _update_attempts(output_dir)
+    attempt = attempts.get(pending["attempt_id"])
+    receipt_path = output_dir / "updates" / f"{pending['attempt_id']}.recovery.json"
+    if not receipt_path.exists():
+        if attempt and "optimizer_confirmed" not in attempt["events"] and "outcome_unknown" not in attempt["events"]:
+            _update_event(output_dir, pending, "outcome_unknown", error_type="InterruptedBeforeAcknowledgement")
+        raise _unresolved_update(output_dir, pending, attempts)
+    receipt = json.loads(receipt_path.read_text())
+    checksum = receipt.pop("hash", None)
+    state = receipt.get("state", {})
+    if (attempt is None or "optimizer_confirmed" not in attempt["events"]
+            or attempt["submission"]["identity_hash"] != pending["identity_hash"]
+            or digest(receipt) != checksum or receipt.get("attempt_id") != pending["attempt_id"]
+            or receipt.get("identity_hash") != pending["identity_hash"]
+            or digest(pending["identity"]) != pending["identity_hash"]
+            or digest(state) != receipt.get("state_hash")
+            or state.get("last_recovered_update") != pending["attempt_id"]
+            or any(not receipt.get("checkpoint", {}).get(key)
+                   or state.get(key) != receipt["checkpoint"][key] for key in ("training_path", "sampler_path"))):
+        raise UpdateRecoveryError("optimizer recovery receipt identity/checksum is invalid")
+    persisted = attempt["events"].get("checkpoint_persisted")
+    if persisted and (persisted.get("receipt_hash") != checksum
+                      or persisted.get("checkpoint") != receipt["checkpoint"]):
+        raise UpdateRecoveryError("optimizer checkpoint ledger differs from its recovery receipt")
+    input_path = output_dir / "updates" / f"{pending['attempt_id']}.input.json"
+    inputs = json.loads(input_path.read_text())
+    if (digest(inputs) != pending["identity"]["input_hash"]
+            or digest(inputs["before_state"]) != pending["identity"]["before_state_hash"]
+            or any(state.get(key) != inputs["before_state"].get(key)
+                   for key in ("config_hash", "dataset_hash", "implementation_hash"))):
+        raise UpdateRecoveryError("optimizer recovery inputs or run identity changed")
+    current = json.loads((output_dir / "state.json").read_text())
+    if digest(current) not in {pending["identity"]["before_state_hash"], receipt["state_hash"]}:
+        raise UpdateRecoveryError("local state is neither the before-update state nor its recovery receipt")
+    if "checkpoint_persisted" not in attempt["events"]:
+        _update_event(output_dir, pending, "checkpoint_persisted", checkpoint=receipt["checkpoint"],
+                      receipt_hash=checksum)
+    if digest(current) != receipt["state_hash"]:
+        atomic_json(output_dir / "state.json", state)
+    if "state_committed" not in attempt["events"]:
+        _update_event(output_dir, pending, "state_committed", state_hash=receipt["state_hash"])
+    if resumed and "resume_recovered" not in attempt["events"]:
+        _update_event(output_dir, pending, "resume_recovered", state_hash=receipt["state_hash"])
+    if receipt.get("published_name"):
+        path = output_dir / "checkpoints.jsonl"
+        published = read_jsonl(path) if path.exists() else []
+        if not any(item.get("recovery_attempt") == pending["attempt_id"] for item in published):
+            append_jsonl(path, {"name": receipt["published_name"], "recovery_attempt": pending["attempt_id"],
+                               **copy.deepcopy(state)}, durable=True)
+    (output_dir / "pending-update.json").unlink()
+    _sync_directory(output_dir)
+    return state
+
+
+def _recover_updates(output_dir: Path, state: dict) -> dict:
+    pending_path = output_dir / "pending-update.json"
+    if pending_path.exists():
+        state = _finish_update_recovery(output_dir, json.loads(pending_path.read_text()), resumed=True)
+    if any("state_committed" not in item["events"] for item in _update_attempts(output_dir).values()):
+        raise UpdateRecoveryError("unfinished optimizer ledger entry has no pending marker; automatic resume is refused")
+    return state
+
+
+def _require_clean_updates(output_dir: Path, state: dict, rng: random.Random) -> None:
+    if (output_dir / "pending-update.json").exists() or any(
+            "state_committed" not in item["events"] for item in _update_attempts(output_dir).values()):
+        raise UpdateRecoveryError("unfinished optimizer attempt; use --resume to check its durable recovery receipt")
+    if not (output_dir / "state.json").exists():
+        save_state(output_dir, state, rng)
+
+
+def _submit_update(adapter: Any, output_dir: Path, state: dict, config: dict, *, stage: str,
+                   step: int, payload: dict, context: dict, call: Any) -> tuple[dict, dict]:
+    """Write intent before dispatch; an exception never licenses another update."""
+    attempt_id = f"{stage}-{step:06d}"
+    input_path = output_dir / "updates" / f"{attempt_id}.input.json"
+    if input_path.exists() or (output_dir / "pending-update.json").exists():
+        raise UpdateRecoveryError("optimizer attempt already has durable evidence; refusing to repeat it")
+    before_state = json.loads((output_dir / "state.json").read_text())
+    policy = {"training_path": state.get("training_path"), "sampler_path": state.get("sampler_path"),
+              "lineage": _optimizer_lineage(state), "model": config["model"],
+              "training_identity": copy.deepcopy(getattr(adapter, "training_identity", None))}
+    inputs = {"call": payload, "context": context, "policy": policy, "before_state": before_state}
+    identity = {"stage": stage, "step": step, "backend": getattr(adapter, "backend_name", "unknown"),
+                "input_hash": digest(inputs), "before_state_hash": digest(before_state), "policy": policy,
+                "config_hash": config_fingerprint(config), "dataset_hash": state.get("dataset_hash"),
+                "implementation_hash": state.get("implementation_hash")}
+    pending = {"attempt_id": attempt_id, "identity": identity, "identity_hash": digest(identity)}
+    atomic_json(input_path, inputs)
+    atomic_json(output_dir / "pending-update.json", pending)
+    _update_event(output_dir, pending, "submitted", identity=identity)
+    try:
+        metrics = call()
+    except BaseException as error:
+        _update_event(output_dir, pending, "outcome_unknown", error_type=type(error).__name__)
+        raise
+    _update_event(output_dir, pending, "optimizer_confirmed", metrics_hash=digest(metrics))
+    return metrics, pending
+
+
+def _commit_update(adapter: Any, output_dir: Path, state: dict, rng: random.Random,
+                   pending: dict, *, published: bool, validation_pending: bool = False) -> None:
+    attempt_id = pending["attempt_id"]
+    name = attempt_id if published else f"recovery-{attempt_id}"
+    saved = None
+    try:
+        saved = adapter.checkpoint(name)
+        if not saved.get("training_path") or not saved.get("sampler_path"):
+            raise RuntimeError("recovery checkpoint must include optimizer state and sampler weights")
+        recovered = copy.deepcopy(state)
+        recovered.update(saved)
+        lineage = _optimizer_lineage(state)
+        lineage[pending["identity"]["stage"] + "_updates"] += 1
+        lineage["last_update_id"] = attempt_id
+        recovered.update(optimizer_lineage=lineage, last_recovered_update=attempt_id, rng_state=rng.getstate())
+        if validation_pending:
+            recovered["pending_validation"] = {"stage": attempt_id, "training_path": saved["training_path"],
+                                                "sampler_path": saved["sampler_path"]}
+        receipt = {"attempt_id": attempt_id, "identity_hash": pending["identity_hash"],
+                   "checkpoint": saved, "state": recovered, "state_hash": digest(recovered),
+                   "published_name": attempt_id if published else None}
+        atomic_json(output_dir / "updates" / f"{attempt_id}.recovery.json", {**receipt, "hash": digest(receipt)})
+    except BaseException as error:
+        _update_event(output_dir, pending, "recovery_error", error_type=type(error).__name__,
+                      acknowledged_checkpoint=saved)
+        raise
+    recovered = _finish_update_recovery(output_dir, pending)
+    state.clear()
+    state.update(recovered)
+
+
 def load_state(output_dir: Path, config: dict, manifest: dict, resume: bool) -> tuple[dict, random.Random]:
     path = output_dir / "state.json"
     rng = random.Random(config["seed"])
@@ -805,9 +1047,12 @@ def load_state(output_dir: Path, config: dict, manifest: dict, resume: bool) -> 
             raise ValueError("dataset differs from the checkpoint")
         if state.get("implementation_hash") != manifest.get("implementation_hash"):
             raise ValueError("implementation differs from the checkpoint")
+        state = _recover_updates(output_dir, state)
         if state.get("rng_state"):
             rng.setstate(_restore_tuples(state["rng_state"]))
         return state, rng
+    if (output_dir / "pending-update.json").exists() or (output_dir / "update-ledger.jsonl").exists():
+        raise UpdateRecoveryError("optimizer evidence exists without state.json; refusing to start a fresh learner")
     state = {"schema": "tinker-js-run-v1", "config_hash": config_fingerprint(config),
              "dataset_hash": manifest["dataset_hash"], "split_hash": manifest["split_manifest"]["hash"],
              "implementation_hash": manifest.get("implementation_hash"), "git_revision": manifest.get("git_revision"),
@@ -819,6 +1064,8 @@ def load_state(output_dir: Path, config: dict, manifest: dict, resume: bool) -> 
         state.update(training_path=initial["training_path"], sampler_path=initial["sampler_path"],
                      sft_training_path=initial["training_path"], sft_sampler_path=initial["sampler_path"],
                      phase="sft_done", initial_sft_checkpoint=copy.deepcopy(initial))
+    state["optimizer_lineage"] = _optimizer_lineage(state)
+    save_state(output_dir, state, rng)
     return state, rng
 
 
@@ -840,6 +1087,18 @@ def save_checkpoint(adapter: Any, output_dir: Path, state: dict, rng: random.Ran
                                        "sampler_path": saved["sampler_path"]}
     save_state(output_dir, state, rng)
     append_jsonl(output_dir / "checkpoints.jsonl", {"name": name, **copy.deepcopy(state)})
+
+
+def _ensure_initial_checkpoint(adapter: Any, output_dir: Path, state: dict,
+                               rng: random.Random, stage: str) -> None:
+    # Bind even a newly initialized learner to retrievable, exact weights before
+    # the first rollout/update. A seed or process-local training-step label is
+    # not a durable sampling-policy identity.
+    state.setdefault("optimizer_lineage", _optimizer_lineage(state))
+    if not state.get("training_path") or not state.get("sampler_path"):
+        save_checkpoint(adapter, output_dir, state, rng, f"{stage}-initial")
+    else:
+        save_state(output_dir, state, rng)
 
 
 def record_validation(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_dir: Path,
@@ -866,7 +1125,9 @@ def record_validation(bridge: Any, adapter: Any, rows: list[dict], config: dict,
                        checkpoint=sampler_path)
     candidate = {**pending, "split": "validation", "summary": summary,
                  "sft_batches_completed": state.get("sft_batches_completed", 0),
-                 "rl_steps_completed": state.get("rl_steps_completed", 0)}
+                 "rl_steps_completed": state.get("rl_steps_completed", 0),
+                 "optimizer_lineage": _optimizer_lineage(state) if training_path
+                 and training_path == state.get("training_path") else _optimizer_lineage({"training_path": training_path})}
     candidates = state.setdefault("validation_candidates", [])
     existing = next((item for item in candidates if item["stage"] == stage), None)
     if existing is not None and existing != candidate:
@@ -898,7 +1159,8 @@ def record_validation(bridge: Any, adapter: Any, rows: list[dict], config: dict,
                  "from": state.get("training_path"), "to": best["training_path"],
                  "reason": "validation accuracy below compression gate; restore selected optimizer state"}
         adapter.create_training_client(checkpoint=best["training_path"])
-        state.update(training_path=best["training_path"], sampler_path=best["sampler_path"])
+        state.update(training_path=best["training_path"], sampler_path=best["sampler_path"],
+                     optimizer_lineage=_optimizer_lineage(best))
         state.setdefault("rollback_events", []).append(event)
         append_jsonl(output_dir / "metrics.jsonl", {"stage": "rollback", **event})
     save_state(output_dir, state, rng)
@@ -930,6 +1192,7 @@ def require_training_data(rows: list[dict], config: dict) -> None:
 def train_sft(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_dir: Path,
               state: dict, rng: random.Random) -> None:
     require_training_data(rows, config)
+    _require_clean_updates(output_dir, state, rng)
     resume_validation(bridge, adapter, rows, config, output_dir, state, rng)
     if state["phase"] in ("rl", "rl_done"):
         raise ValueError("cannot restart the SFT stage after RL in the same run directory")
@@ -940,6 +1203,7 @@ def train_sft(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_
     if not train_rows:
         raise ValueError("no training rows")
     adapter.create_training_client(checkpoint=state.get("training_path"))
+    _ensure_initial_checkpoint(adapter, output_dir, state, rng, "sft")
     batch_index = 0
     for epoch in range(config["sft_epochs"]):
         ordered = sft_epoch_rows(train_rows, config, epoch)
@@ -948,21 +1212,27 @@ def train_sft(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_
             if batch_index <= state["sft_batches_completed"]:
                 continue
             batch = ordered[start:start + config["batch_size"]]
-            metrics = adapter.sft_train([{"messages": row["messages"],
-                                          "metadata": task_metadata(row)} for row in batch],
-                                        learning_rate=config["sft_learning_rate"])
+            examples = [{"messages": row["messages"], "metadata": task_metadata(row)} for row in batch]
+            options = {"learning_rate": config["sft_learning_rate"]}
+            metrics, pending = _submit_update(adapter, output_dir, state, config, stage="sft", step=batch_index,
+                payload={"method": "sft_train", "examples": examples, "options": options},
+                context={"epoch": epoch, "ids": [row["id"] for row in batch],
+                         "source_hashes": [row["sourceHash"] for row in batch]},
+                call=lambda: adapter.sft_train(examples, **options))
             state.update(sft_batches_completed=batch_index, phase="sft")
             append_jsonl(output_dir / "metrics.jsonl", {"stage": "sft", "batch": batch_index,
+                         "update_attempt_id": pending["attempt_id"],
                          "epoch": epoch, "ids": [row["id"] for row in batch], "metrics": metrics,
                          "learning_rate": config["sft_learning_rate"], "weighting": config["sft_weighting"],
                          "tiers": [task_metadata(row)["tier"] for row in batch],
                          "features": sorted({feature for row in batch for feature in task_metadata(row)["features"]})})
             validate = bool(config["validation_every"] and batch_index % config["validation_every"] == 0)
-            if batch_index % config["checkpoint_every"] == 0 or validate:
-                name = f"sft-{batch_index:06d}"
-                save_checkpoint(adapter, output_dir, state, rng, name, validation_pending=validate)
-                if validate:
-                    maybe_validate_checkpoint(bridge, adapter, rows, config, output_dir, state, rng, name)
+            _commit_update(adapter, output_dir, state, rng, pending,
+                           published=batch_index % config["checkpoint_every"] == 0 or validate,
+                           validation_pending=validate)
+            if validate:
+                maybe_validate_checkpoint(bridge, adapter, rows, config, output_dir, state, rng,
+                                          f"sft-{batch_index:06d}")
     state["phase"] = "sft_done"
     final_name = f"sft-final-{batch_index:06d}"
     save_checkpoint(adapter, output_dir, state, rng, final_name, validation_pending=True)
@@ -977,7 +1247,8 @@ def finish_sft_selection(adapter: Any, config: dict, output_dir: Path, state: di
     selected = choose_validation_checkpoint(sft_candidates, config)
     if selected:
         state.update(sft_training_path=selected["training_path"], sft_sampler_path=selected["sampler_path"],
-                     training_path=selected["training_path"], sampler_path=selected["sampler_path"])
+                     training_path=selected["training_path"], sampler_path=selected["sampler_path"],
+                     optimizer_lineage=_optimizer_lineage(selected))
         adapter.create_training_client(checkpoint=state["training_path"])
         save_state(output_dir, state, rng)
 
@@ -985,6 +1256,7 @@ def finish_sft_selection(adapter: Any, config: dict, output_dir: Path, state: di
 def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_dir: Path,
              state: dict, rng: random.Random, training_ready: bool = False) -> None:
     require_training_data(rows, config)
+    _require_clean_updates(output_dir, state, rng)
     resume_validation(bridge, adapter, rows, config, output_dir, state, rng)
     if state["phase"] == "rl_done":
         return
@@ -993,6 +1265,7 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         raise ValueError("no training rows")
     if not training_ready:
         adapter.create_training_client(checkpoint=state.get("training_path"))
+    _ensure_initial_checkpoint(adapter, output_dir, state, rng, "rl")
     if (state.get("sft_sampler_path") and not any(candidate["sampler_path"] == state["sft_sampler_path"]
             for candidate in state.get("validation_candidates", []))):
         record_validation(bridge, adapter, rows, config, output_dir, state, rng, "sft-initial",
@@ -1001,8 +1274,10 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         if not state.get("sft_sampler_path"):
             raise ValueError("reference KL requires the recorded SFT sampler checkpoint")
         adapter.set_reference_checkpoint(state["sft_sampler_path"])
-    adapter.refresh_sampler()
     for step in range(state["rl_steps_completed"], config["rl_steps"]):
+        adapter.create_sampling_client(checkpoint=state["sampler_path"])
+        policy = {"training_path": state["training_path"], "sampler_path": state["sampler_path"],
+                  "lineage": _optimizer_lineage(state)}
         row, curriculum_selection = curriculum_pick(train_rows, config, state, rng)
         seeds = [rng.randrange(2147483647) for _ in range(config["group_size"])]
         coefficient = compression_coefficient(config, step, gate_open=state.get("compression_gate_open", False))
@@ -1010,13 +1285,13 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                                 "config_hash": config_fingerprint(config), "compression_coefficient": coefficient,
                                 "curriculum": curriculum_selection,
                                 "implementation_hash": state.get("implementation_hash"),
-                                "training_checkpoint": state.get("training_path"),
-                                "optimizer_updates": state.get("rl_optimizer_updates", 0)})
+                                "policy": policy})
         destination = output_dir / "rollouts" / f"rl-{step + 1:06d}.jsonl"
         partial = destination.with_suffix(".partial.jsonl")
         records = read_jsonl(destination if destination.exists() else partial) if destination.exists() or partial.exists() else []
         if len(records) > config["group_size"] or any(
                 record.get("group_context") != group_context or record.get("seed") != seeds[index]
+                or record.get("policy") != policy
                 for index, record in enumerate(records)):
             raise ValueError("saved RL group differs in task, seeds, configuration, or policy checkpoint")
         write_jsonl(partial, records)
@@ -1030,10 +1305,14 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                 raise
             record.update(group_context=group_context, task_id=row["id"], family=row["family"],
                           source_hash=row["sourceHash"], split="train", step=step + 1,
+                          policy=copy.deepcopy(policy),
                           split_component=row.get("split_component"), features=task_metadata(row)["features"],
                           tier=task_metadata(row)["tier"])
             records.append(record)
             append_jsonl(partial, record)
+        if any(sample.get("sampler_revision", policy["sampler_path"]) != policy["sampler_path"]
+               for record in records for sample in record["samples"]):
+            raise ValueError("sampled RL sequence does not match the durable sampler checkpoint")
         signals = execution_advantages(records, config, coefficient)
         for index, record in enumerate(records):
             record.update(advantage=signals["advantages"][index],
@@ -1048,14 +1327,21 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         nonzero = [record for record in records if abs(record["advantage"]) > 1e-12]
         update_records = records if config["reference_kl_coef"] else nonzero
         regularization_only = bool(update_records) and not nonzero
+        pending = None
         if update_records:
-            metrics = adapter.rl_train([{"samples": record["samples"], "advantage": record["advantage"]}
-                                        for record in update_records], loss_fn=config["rl_loss_fn"],
-                                        loss_fn_config=config["rl_loss_fn_config"], learning_rate=config["rl_learning_rate"])
+            trajectories = [{"samples": record["samples"], "advantage": record["advantage"]}
+                            for record in update_records]
+            options = {"loss_fn": config["rl_loss_fn"], "loss_fn_config": config["rl_loss_fn_config"],
+                       "learning_rate": config["rl_learning_rate"]}
+            metrics, pending = _submit_update(adapter, output_dir, state, config, stage="rl", step=step + 1,
+                payload={"method": "rl_train", "trajectories": trajectories, "options": options},
+                context={"group_context": group_context, "rollout_hash": digest(records),
+                         "rollout_path": str(destination.relative_to(output_dir)), "policy": policy,
+                         "reference_checkpoint": state.get("sft_sampler_path") if config["reference_kl_coef"] else None},
+                call=lambda: adapter.rl_train(trajectories, **options))
             state["rl_optimizer_updates"] = state.get("rl_optimizer_updates", 0) + 1
             if regularization_only:
                 state["rl_regularization_only_updates"] = state.get("rl_regularization_only_updates", 0) + 1
-            adapter.refresh_sampler()
         else:
             metrics = {"skipped": True, "reason": "zero correctness and controlled length advantages"}
         counters = state.setdefault("rl_group_counts", {"all_failure": 0, "mixed_success": 0,
@@ -1066,6 +1352,7 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         curriculum_result = update_curriculum(train_rows, config, state, curriculum_selection, records)
         state.update(rl_steps_completed=step + 1, phase="rl")
         append_jsonl(output_dir / "metrics.jsonl", {"stage": "rl", "step": step + 1,
+                     "update_attempt_id": pending["attempt_id"] if pending else None,
                      "task_id": row["id"], **summarize_records(records), "metrics": metrics,
                      "group_kind": signals["group_kind"], "zero_advantage_group": signals["zero_advantage_group"],
                      "compression_coefficient": coefficient, "length_signal": signals["length_signal"],
@@ -1075,12 +1362,19 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                      "useful_groups_per_thousand_tokens": 1000 * counters["useful"] / state["rl_generated_tokens"]
                      if state["rl_generated_tokens"] else None})
         validate = bool(config["validation_every"] and (step + 1) % config["validation_every"] == 0)
-        if (step + 1) % config["checkpoint_every"] == 0 or validate:
-            name = f"rl-{step + 1:06d}"
+        published = (step + 1) % config["checkpoint_every"] == 0 or validate
+        name = f"rl-{step + 1:06d}"
+        if pending:
+            _commit_update(adapter, output_dir, state, rng, pending, published=published,
+                           validation_pending=validate)
+        elif published:
             save_checkpoint(adapter, output_dir, state, rng, name, validation_pending=validate)
-            if validate:
-                maybe_validate_checkpoint(bridge, adapter, rows, config, output_dir, state, rng, name)
-                adapter.refresh_sampler()
+        else:
+            # No model mutation happened. Persist the consumed group/RNG once;
+            # replaying an interrupted group may reuse only its exact sampler.
+            save_state(output_dir, state, rng)
+        if validate:
+            maybe_validate_checkpoint(bridge, adapter, rows, config, output_dir, state, rng, name)
     state["phase"] = "rl_done"
     name = f"rl-final-{state['rl_steps_completed']:06d}"
     save_checkpoint(adapter, output_dir, state, rng, name, validation_pending=True)
@@ -1121,6 +1415,13 @@ def make_report(output_dir: Path, config: dict | None = None) -> dict:
     report["interrupted_attempts"] = {"attempts": len(errors),
         "received_generated_tokens": sum(record["generated_tokens"] for record in errors),
         "note": "Infrastructure failures abort updates and are excluded from model accuracy; all received sample tokens remain in the audit."}
+    report["optimizer_attempts"] = optimizer_update_accounting(output_dir)
+    update_backends = report["optimizer_attempts"]["backends"]
+    if any(backend != "tinker" for backend in update_backends):
+        if stages or validation_stages or "tinker" in update_backends:
+            raise ValueError("a Tinker performance report cannot mix fixture optimizer evidence with model evaluations")
+        report.update(backend="fixture", model_performance_evidence=False,
+                      evidence_kind="infrastructure tests; no model performance evidence")
     for name, records in stages.items():
         if name != "baseline" and "baseline" in stages:
             report["paired"][name] = paired_statistics(stages["baseline"], records, config)
@@ -1138,7 +1439,10 @@ def make_report(output_dir: Path, config: dict | None = None) -> dict:
                       training_updates={"sft_batches": state.get("sft_batches_completed", 0),
                                         "rl_optimizer_steps": state.get("rl_optimizer_updates", 0),
                                         "rl_regularization_only_steps": state.get("rl_regularization_only_updates", 0),
-                                        "sampled_rl_groups": state.get("rl_steps_completed", 0)},
+                                        "sampled_rl_groups": state.get("rl_steps_completed", 0),
+                                        "scope": "Durably recovered execution progress; cumulative optimizer attempts are reported separately"},
+                      active_checkpoint_optimizer_lineage=_optimizer_lineage(state),
+                      selected_checkpoint_optimizer_lineage=(state.get("selected_checkpoint") or {}).get("optimizer_lineage"),
                       rl_group_counts=state.get("rl_group_counts", {}),
                       rl_generated_tokens=state.get("rl_generated_tokens", 0))
     selections = {}
@@ -1164,6 +1468,15 @@ def make_report(output_dir: Path, config: dict | None = None) -> dict:
                      f"{cost if cost is not None else 'undefined: no successes'} |")
     if not stages:
         lines.extend(["", "No final test evaluation has been recorded. Validation-only results are development evidence."])
+    attempts = report["optimizer_attempts"]
+    lines.extend(["", f"Optimizer dispatch attempts: {attempts['submission_attempts']}; "
+                  f"confirmed optimizer updates: {attempts['confirmed_optimizer_updates']}; "
+                  f"unknown outcomes: {attempts['unknown_outcome_attempts']}; "
+                  f"confirmed updates without a recovery checkpoint: {attempts['confirmed_without_recovery_checkpoint']}.", "",
+                  "These cumulative attempts include work later rolled back and are separate from recovered progress "
+                  "and the selected model's update lineage. Dispatch records do not establish server acceptance or billing; "
+                  "unknown outcomes may include committed updates. Every confirmed update requires a durable recovery "
+                  "checkpoint before another update may run."])
     selected = report.get("selected_checkpoint")
     if selected:
         lines.extend(["", f"Selected on validation: `{selected['stage']}`. "
@@ -1345,6 +1658,8 @@ def main(argv: list[str] | None = None) -> int:
             if args.checkpoint:
                 if state.get("training_path") and state["training_path"] != args.checkpoint:
                     raise ValueError("explicit checkpoint disagrees with resumed optimizer state")
+                if not state.get("training_path"):
+                    state["optimizer_lineage"] = _optimizer_lineage({"training_path": args.checkpoint})
                 state["training_path"] = args.checkpoint
             atomic_json(output_dir / "config.json", config)
             if args.command == "run":

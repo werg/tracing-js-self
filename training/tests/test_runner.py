@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 from tinker_js.runner import (
-    BridgeError, RolloutError, compression_reward, config_fingerprint, digest, evaluate, export_dataset,
+    BridgeError, RolloutError, UpdateRecoveryError, compression_reward, config_fingerprint, digest, evaluate, export_dataset,
     group_advantages, load_config, load_state, make_report, rollout,
     save_state, split_examples, summarize_records, train_rl, train_sft, write_jsonl,
 )
@@ -43,6 +43,9 @@ class ScriptedAdapter:
 
     def create_training_client(self, checkpoint=None):
         pass
+
+    def create_sampling_client(self, checkpoint=None):
+        self.sampling_checkpoint = checkpoint
 
     def refresh_sampler(self):
         pass
@@ -345,7 +348,7 @@ class RecoveryTests(unittest.TestCase):
             self.assertFalse(partial.exists())
             self.assertEqual(state["rl_optimizer_updates"], 1)
 
-    def test_interrupted_sft_restarts_at_durable_optimizer_checkpoint(self):
+    def test_interrupted_sft_checkpoint_refuses_to_repeat_confirmed_update(self):
         class TrainingAdapter(ScriptedAdapter):
             def __init__(self, fail_checkpoint=None):
                 super().__init__([])
@@ -377,21 +380,25 @@ class RecoveryTests(unittest.TestCase):
             first = TrainingAdapter(fail_checkpoint="sft-000002")
             with self.assertRaisesRegex(RuntimeError, "interrupted checkpoint"):
                 train_sft(None, first, rows, config, output, state, rng)
-            state, rng = load_state(output, config, manifest, True)
-            self.assertEqual(state["sft_batches_completed"], 1)
-            second = TrainingAdapter()
-            train_sft(None, second, rows, config, output, state, rng)
-            self.assertEqual(second.restored, "tinker://fixture/state/sft-000001")
-            self.assertNotIn(first.batch_ids[0], second.batch_ids)
-            self.assertEqual(first.batch_ids[1], second.batch_ids[0])
-            self.assertEqual(state["sft_batches_completed"], 3)
+            self.assertEqual(len(first.batch_ids), 2)
             on_disk = json.loads((output / "state.json").read_text())
-            self.assertEqual(on_disk["phase"], "sft_done")
-            self.assertEqual(on_disk["sft_sampler_path"], on_disk["sampler_path"])
-            completed = TrainingAdapter()
-            train_sft(None, completed, rows, config, output, state, rng)
-            self.assertEqual(completed.batch_ids, [])
-            self.assertEqual(completed.saved, [])
+            self.assertEqual(on_disk["sft_batches_completed"], 1)
+            self.assertEqual(on_disk["training_path"], "tinker://fixture/state/sft-000001")
+            pending = json.loads((output / "pending-update.json").read_text())
+            self.assertEqual(pending["attempt_id"], "sft-000002")
+            self.assertFalse((output / "updates/sft-000002.recovery.json").exists())
+            ledger = [json.loads(line) for line in (output / "update-ledger.jsonl").read_text().splitlines()]
+            self.assertEqual(sum(event["event"] == "optimizer_confirmed" for event in ledger), 2)
+            self.assertEqual(sum(event["event"] == "checkpoint_persisted" for event in ledger), 1)
+            with self.assertRaisesRegex(UpdateRecoveryError, "confirmed but missing a durable recovery checkpoint"):
+                load_state(output, config, manifest, True)
+            second = TrainingAdapter()
+            with self.assertRaisesRegex(UpdateRecoveryError, "unfinished optimizer attempt"):
+                train_sft(None, second, rows, config, output, on_disk, rng)
+            self.assertEqual(second.batch_ids, [])
+            self.assertEqual(second.saved, [])
+            self.assertIsNone(second.restored)
+            self.assertEqual(json.loads((output / "state.json").read_text()), on_disk)
 
     def test_interrupted_evaluation_resumes_without_resampling_completed_tasks(self):
         config = load_config()
