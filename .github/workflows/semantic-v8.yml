@@ -15,7 +15,9 @@ jobs:
       group: semantic-v8-${{ github.ref }}-${{ matrix.population }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    # The paired consumer run 45532216199 reached 120 minutes before packing
+    # and lifecycle checks finished. This gate also runs the full support cohort.
+    timeout-minutes: 240
     strategy:
       fail-fast: false
       matrix:
