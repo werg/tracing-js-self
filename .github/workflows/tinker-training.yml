@@ -1,11 +1,17 @@
 name: Tinker execution training infrastructure
 on:
+  workflow_dispatch:
+    inputs:
+      fuzz_count:
+        description: Bounded independent and adversarial verification cases
+        type: number
+        default: 10000
   push:
     branches: [main]
     paths:
       - 'training/**'
       - 'src/**'
-      - 'tools/tinker-execution.mjs'
+      - 'tools/tinker-*.mjs'
       - 'test/tinker-*.test.js'
       - 'package*.json'
       - '.github/workflows/tinker-training.yml'
@@ -13,7 +19,7 @@ on:
     paths:
       - 'training/**'
       - 'src/**'
-      - 'tools/tinker-execution.mjs'
+      - 'tools/tinker-*.mjs'
       - 'test/tinker-*.test.js'
       - 'package*.json'
       - '.github/workflows/tinker-training.yml'
@@ -25,12 +31,12 @@ concurrency:
 jobs:
   offline-integration:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -50,3 +56,26 @@ jobs:
         run: uv run --project training --locked tinker-js --config training/configs/inkling-mini.json export
       - name: Offline SDK and dataset preflight
         run: uv run --project training --locked tinker-js --config training/configs/inkling-mini.json check
+      - name: Freeze a study and prepare the live diagnostic without compute
+        run: |
+          uv run --project training --locked tinker-study plan --config training/configs/inkling-mini.json --output-dir runs/ci-study
+          uv run --project training --locked tinker-study probe --config training/configs/inkling-mini.json --output-dir runs/ci-probe
+      - name: Independent boundary and adversarial grader controls
+        env:
+          FUZZ_COUNT: ${{ github.event_name == 'workflow_dispatch' && inputs.fuzz_count || 64 }}
+        run: node tools/tinker-benchmark.mjs fuzz --count "$FUZZ_COUNT" --jobs 2 --output-dir runs/ci-tinker-fuzz
+      - name: Audit expanded teacher formats and causal conversations
+        run: node tools/tinker-supervision.mjs --dataset training/fixtures/expanded/main.jsonl --sample-per-feature 1 --output runs/ci-supervision.json
+      - name: Preserve local verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tinker-local-verification
+          path: |
+            runs/ci-tinker-fuzz/report.json
+            runs/ci-tinker-fuzz/failure-*.json
+            runs/ci-supervision.json
+            runs/tinker-followup-smoke/check.json
+            runs/ci-study/plan.json
+            runs/ci-study/study-report.json
+            runs/ci-probe/contract-probe.json
