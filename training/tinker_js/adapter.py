@@ -10,6 +10,8 @@ from __future__ import annotations
 import copy
 import importlib.metadata
 import math
+import re
+import statistics
 from collections.abc import Mapping, Sequence
 from types import SimpleNamespace
 from typing import Any
@@ -74,6 +76,32 @@ def assistant_text(message: Mapping[str, Any]) -> str:
     return ""
 
 
+def _tensor_values(value: Any) -> list:
+    """Accept both SDK TensorData and injected test arrays."""
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    if hasattr(value, "tolist"):
+        return list(value.tolist())
+    if hasattr(value, "data"):
+        return list(value.data)
+    raise ValueError("Expected a one-dimensional token tensor")
+
+
+def _log_ratio_metrics(sampling: Sequence[float], comparison: Sequence[float], prefix: str) -> dict:
+    """Sample-based divergence diagnostics, never an exact distribution KL."""
+    if len(sampling) != len(comparison) or not sampling:
+        raise ValueError("Divergence requires aligned nonempty log probabilities")
+    ratios = [_finite(p, "sampling logprob") - _finite(q, "comparison logprob")
+              for p, q in zip(sampling, comparison)]
+    # k3 = exp(-log(p/q)) - 1 + log(p/q). Clip only the exponential's
+    # diagnostic domain, report it, and do not confuse this with PPO clipping.
+    clipped = [max(-20.0, min(20.0, ratio)) for ratio in ratios]
+    return {f"{prefix}_sampled_log_ratio_mean": statistics.fmean(ratios),
+            f"{prefix}_kl_k3_estimate": statistics.fmean(math.exp(-x) - 1 + x for x in clipped),
+            f"{prefix}_diagnostic_clipped_tokens": sum(a != b for a, b in zip(ratios, clipped)),
+            f"{prefix}_scored_tokens": len(ratios)}
+
+
 def rl_token_arrays(sample: Mapping[str, Any], advantage: float) -> dict[str, list]:
     """Build the next-token shift from the *actual* rollout, never from text.
 
@@ -134,6 +162,13 @@ class TinkerAdapter:
         self.learning_rate = _finite(self.config.get("learning_rate", 1e-4), "learning_rate")
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be positive")
+        self.sft_weighting = self.config.get("sft_weighting", "example")
+        if self.sft_weighting not in {"example", "token"}:
+            raise ValueError("sft_weighting must be example or token")
+        self.reference_kl_coef = _finite(self.config.get("reference_kl_coef", 0.0), "reference_kl_coef")
+        self.reference_kl_clip = _finite(self.config.get("reference_kl_clip", 20.0), "reference_kl_clip")
+        if self.reference_kl_coef < 0 or self.reference_kl_clip <= 0:
+            raise ValueError("reference_kl_coef must be nonnegative and reference_kl_clip positive")
         self.lora_rank = _positive_int(self.config.get("lora_rank", 32), "lora_rank")
         self.seed = _seed(self.config.get("seed", 0))
         self.timeout = _finite(self.config.get("request_timeout_seconds", 300), "request_timeout_seconds")
@@ -145,6 +180,9 @@ class TinkerAdapter:
         self.sampling_client = None
         self.training_steps = 0
         self.sampling_revision = "base"
+        self.reference_client = None
+        self.reference_checkpoint = None
+        self._token_pieces: dict[int, str] = {}
 
     def _sdk(self):
         if self._runtime is None:
@@ -268,6 +306,112 @@ class TinkerAdapter:
         self.sampling_revision = f"training-step-{self.training_steps}"
         return self.sampling_client
 
+    def set_reference_checkpoint(self, checkpoint: str):
+        """Bind optional KL shaping to one fixed SFT sampler, independently of refreshes."""
+        if not isinstance(checkpoint, str) or not checkpoint.startswith("tinker://"):
+            raise ValueError("reference checkpoint must be a Tinker sampler checkpoint")
+        if self.reference_checkpoint is not None and self.reference_checkpoint != checkpoint:
+            raise ValueError("The fixed reference checkpoint cannot change within a run")
+        if self.reference_client is None:
+            self.reference_client = self._wait(
+                self._client().create_sampling_client(model_path=checkpoint), "reference sampler creation")
+        self.reference_checkpoint = checkpoint
+        return self.reference_client
+
+    def score_sample(self, sample: Mapping[str, Any], *, sampler=None) -> list[float]:
+        """Score the actual prompt + completion IDs; never reconstruct them from text."""
+        rl_token_arrays(sample, 0.0)  # Validate complete original provenance first.
+        prompt = list(sample["prompt_tokens"])
+        tokens = list(sample["token_ids"])
+        self._budget(len(prompt) + len(tokens))
+        client = sampler or self.sampling_client
+        if client is None:
+            client = self.create_sampling_client()
+        values = self._wait(client.compute_logprobs(
+            self._sdk().types.ModelInput.from_ints(prompt + tokens),
+            prompt_logprobs_last_n=len(tokens)), "completion logprob scoring")
+        if len(values) != len(prompt) + len(tokens):
+            raise AdapterError("Scoring returned misaligned prompt/completion log probabilities")
+        return [_finite(value, "scored completion logprob") for value in values[len(prompt):]]
+
+    def token_accounting(self, tokens: Sequence[int]) -> dict[str, int]:
+        """Partition original TML tokens, conservatively retaining unknown boundaries.
+
+        No re-tokenized length is ever substituted for actual generated tokens.
+        A token crossing prose/action boundaries is 'other'. Unicode segments
+        whose individual decoding is not additive remain unclassified.
+        """
+        counts = {name: 0 for name in ("reasoning", "trace", "protocol", "other", "unclassified")}
+        tokenizer = self._sdk().tokenizer
+        if tokenizer is None or not hasattr(tokenizer, "decode"):
+            counts["unclassified"] = len(tokens)
+            return counts
+        try:
+            pieces = []
+            for token in tokens:
+                if token not in self._token_pieces:
+                    if len(self._token_pieces) >= 65536:
+                        self._token_pieces.clear()
+                    self._token_pieces[token] = tokenizer.decode([token])
+                pieces.append(self._token_pieces[token])
+            mode = "unclassified"
+            text_tokens: list[int] = []
+            text_pieces: list[str] = []
+
+            def flush_text():
+                if not text_tokens:
+                    return
+                text = tokenizer.decode(text_tokens)
+                if "".join(text_pieces) != text:
+                    counts["unclassified"] += len(text_tokens)
+                else:
+                    spans = []
+                    import json
+                    for match in re.finditer(r"```(?:json)?\s*\n?([\s\S]*?)```", text):
+                        try:
+                            value = json.loads(match.group(1))
+                            if isinstance(value, dict) and value.get("type") in {"call", "complete"}:
+                                spans.append((match.start(), match.end()))
+                        except ValueError:
+                            pass
+                    if not spans:
+                        try:
+                            value = json.loads(text)
+                            if isinstance(value, dict) and value.get("type") in {"call", "complete"}:
+                                spans = [(0, len(text))]
+                        except ValueError:
+                            pass
+                    offset = 0
+                    for piece in text_pieces:
+                        end = offset + len(piece)
+                        inside = any(offset >= a and end <= b for a, b in spans)
+                        overlap = any(offset < b and end > a for a, b in spans)
+                        counts["protocol" if inside else "other" if overlap else "trace"] += 1
+                        offset = end
+                text_tokens.clear()
+                text_pieces.clear()
+
+            for token, piece in zip(tokens, pieces):
+                if piece in {"<|message_model|>", "<|end_message|>", "<|content_model_end_sampling|>"}:
+                    flush_text()
+                    counts["protocol"] += 1
+                    mode = "unclassified"
+                elif piece in {"<|content_thinking|>", "<|content_text|>"}:
+                    flush_text()
+                    counts["protocol"] += 1
+                    mode = "reasoning" if piece == "<|content_thinking|>" else "text"
+                elif mode == "text":
+                    text_tokens.append(token)
+                    text_pieces.append(piece)
+                else:
+                    counts[mode] += 1
+            flush_text()
+            if sum(counts.values()) != len(tokens):
+                raise ValueError("Token partition does not sum to the sampled length")
+            return counts
+        except Exception:
+            return {name: len(tokens) if name == "unclassified" else 0 for name in counts}
+
     @staticmethod
     def _messages(messages: Sequence[Mapping[str, Any]], *, training: bool = False) -> list[dict]:
         if not isinstance(messages, (list, tuple)) or not messages:
@@ -307,7 +451,8 @@ class TinkerAdapter:
                 raise ValueError("Rendered example has no trainable target tokens")
             # No max_length: the helper's optional truncation would create an
             # incomplete teacher execution, which must be rejected instead.
-            datums.append(sdk.datum_builder(model_input, weights, reduction="mean"))
+            datums.append(sdk.datum_builder(model_input, weights,
+                                           reduction="mean" if self.sft_weighting == "example" else "none"))
         return datums
 
     def _generation_prompt(self, messages: Sequence[Mapping[str, Any]], max_tokens: int | None = None):
@@ -381,6 +526,7 @@ class TinkerAdapter:
             "generated_tokens": len(tokens),
             "model": self.model,
             "sampler_revision": self.sampling_revision,
+            "token_accounting": self.token_accounting(tokens),
         }
         if provenance_errors:
             record["provenance_error"] = "; ".join(provenance_errors)
@@ -388,7 +534,9 @@ class TinkerAdapter:
             record["parse_error"] = parse_error
         return record
 
-    def _update(self, datums: list, loss_fn: str, learning_rate: float | None) -> dict:
+    def _update(self, datums: list, loss_fn: str, learning_rate: float | None,
+                loss_fn_config: Mapping[str, float | str] | None = None,
+                diagnostic_samples: Sequence[Mapping[str, Any]] | None = None) -> dict:
         if not datums:
             raise ValueError("Cannot update with an empty training batch")
         rate = self.learning_rate if learning_rate is None else _finite(learning_rate, "learning_rate")
@@ -398,12 +546,35 @@ class TinkerAdapter:
             self.create_training_client()
         # Submit in order before waiting, as required by SDK pipelining. SDK
         # futures handle retry/idempotency; never resubmit a timed-out update.
-        forward = self.training_client.forward_backward(datums, loss_fn=loss_fn)
+        options = {"loss_fn_config": dict(loss_fn_config)} if loss_fn_config else {}
+        forward = self.training_client.forward_backward(datums, loss_fn=loss_fn, **options)
         optimizer = self.training_client.optim_step(self._sdk().types.AdamParams(learning_rate=rate))
         forward_result = self._wait(forward, "forward/backward")
         self._wait(optimizer, "optimizer step")
         self.training_steps += 1
-        return {"step": self.training_steps, "examples": len(datums), "loss_fn": loss_fn, "metrics": _json_value(forward_result.metrics)}
+        metrics = _json_value(forward_result.metrics)
+        if diagnostic_samples:
+            try:
+                outputs = forward_result.loss_fn_outputs
+                if len(outputs) != len(diagnostic_samples):
+                    raise ValueError("Learner output count differs from sampled turns")
+                sampling, learner = [], []
+                for output, sample in zip(outputs, diagnostic_samples):
+                    values = _tensor_values(output["logprobs"])
+                    prefix = len(sample["prompt_tokens"]) - 1
+                    if len(values) != prefix + len(sample["token_ids"]):
+                        raise ValueError("Learner log probabilities are misaligned")
+                    sampling.extend(sample["logprobs"])
+                    learner.extend(values[prefix:])
+                metrics.update(_log_ratio_metrics(sampling, learner, "sampler_learner"))
+                metrics["sampled_surprisal_mean"] = -statistics.fmean(sampling)
+                metrics["learner_diagnostics_available"] = True
+            except (AttributeError, KeyError, TypeError, ValueError):
+                # The optimizer has already committed. Report unavailable diagnostics
+                # without converting a completed update into a retryable failure.
+                metrics["learner_diagnostics_available"] = False
+        return {"step": self.training_steps, "examples": len(datums), "loss_fn": loss_fn,
+                "loss_fn_config": dict(loss_fn_config or {}), "learning_rate": rate, "metrics": metrics}
 
     def sft_train(self, examples: Sequence[Mapping[str, Any]], learning_rate: float | None = None) -> dict:
         datums = []
@@ -411,21 +582,79 @@ class TinkerAdapter:
             datums.extend(self.render_sft(example["messages"]))
         return self._update(datums, "cross_entropy", learning_rate)
 
-    def rl_train(self, trajectories: Sequence[Mapping[str, Any]], learning_rate: float | None = None, loss_fn: str = "importance_sampling") -> dict:
+    def score_supervision(self, examples: Sequence[Mapping[str, Any]]) -> dict:
+        """Forward-only live learnability diagnostic with exactly the SFT target mask."""
+        datums = [datum for example in examples for datum in self.render_sft(example["messages"])]
+        if not datums:
+            raise ValueError("Cannot score empty supervision")
+        if self.training_client is None:
+            self.create_training_client()
+        result = self._wait(self.training_client.forward(datums, loss_fn="cross_entropy"),
+                            "supervision forward scoring")
+        if len(result.loss_fn_outputs) != len(datums):
+            raise AdapterError("Supervision scoring returned a different number of examples")
+        scores, count = [], 0
+        for datum, output in zip(datums, result.loss_fn_outputs):
+            weights = _tensor_values(datum.loss_fn_inputs["weights"])
+            logprobs = _tensor_values(output["logprobs"])
+            if len(weights) != len(logprobs):
+                raise AdapterError("Supervision scoring returned misaligned log probabilities")
+            total = sum(weights)
+            if total <= 0:
+                raise AdapterError("Supervision scoring has no weighted targets")
+            scores.append(sum(_finite(lp, "learner logprob") * w for lp, w in zip(logprobs, weights)) / total)
+            count += sum(w > 0 for w in weights)
+        return {"mean_example_target_logprob": statistics.fmean(scores), "per_example": scores,
+                "examples": len(scores), "trainable_tokens": count, "model_compute": True}
+
+    def rl_train(self, trajectories: Sequence[Mapping[str, Any]], learning_rate: float | None = None,
+                 loss_fn: str = "importance_sampling",
+                 loss_fn_config: Mapping[str, float | str] | None = None) -> dict:
         if loss_fn not in {"importance_sampling", "ppo", "cispo"}:
             raise ValueError("RL loss_fn must be importance_sampling, ppo, or cispo")
+        loss_fn_config = dict(loss_fn_config or {})
+        allowed = {"clip_low_threshold", "clip_high_threshold"} if loss_fn == "ppo" else set()
+        if set(loss_fn_config) - allowed:
+            raise ValueError("Unsupported loss configuration for the selected RL loss")
+        for key, value in loss_fn_config.items():
+            value = _finite(value, key)
+            if (key == "clip_low_threshold" and not 0 < value <= 1
+                    or key == "clip_high_threshold" and value < 1):
+                raise ValueError("PPO thresholds must bracket an importance ratio of one")
+            loss_fn_config[key] = value
+        if self.reference_kl_coef and self.reference_client is None:
+            raise AdapterError("Set a fixed SFT reference checkpoint before using reference KL")
         sdk = self._sdk()
-        datums = []
+        datums, samples, reference_values, sampling_values = [], [], [], []
+        shaping_clipped = 0
         for trajectory in trajectories:
             advantage = _finite(trajectory["advantage"], "advantage")
             for sample in trajectory["samples"]:
                 arrays = rl_token_arrays(sample, advantage)
                 self._budget(len(arrays["input_tokens"]) + 1)
+                if self.reference_kl_coef:
+                    reference = self.score_sample(sample, sampler=self.reference_client)
+                    prefix = len(sample["prompt_tokens"]) - 1
+                    for offset, (old, ref) in enumerate(zip(sample["logprobs"], reference)):
+                        ratio = old - ref
+                        bounded = max(-self.reference_kl_clip, min(self.reference_kl_clip, ratio))
+                        shaping_clipped += ratio != bounded
+                        arrays["advantages"][prefix + offset] -= self.reference_kl_coef * bounded
+                    reference_values.extend(reference)
+                    sampling_values.extend(sample["logprobs"])
+                samples.append(sample)
                 datums.append(sdk.types.Datum(
                     model_input=sdk.types.ModelInput.from_ints(arrays.pop("input_tokens")),
                     loss_fn_inputs=arrays,
                 ))
-        return self._update(datums, loss_fn, learning_rate)
+        result = self._update(datums, loss_fn, learning_rate, loss_fn_config, samples)
+        if reference_values:
+            result["metrics"].update(_log_ratio_metrics(sampling_values, reference_values, "sft_reference"))
+            result["metrics"].update({"reference_kl_coef": self.reference_kl_coef,
+                "reference_kl_shaping_clipped_tokens": shaping_clipped,
+                "reference_checkpoint": self.reference_checkpoint,
+                "reference_scoring_requests": len(samples)})
+        return result
 
     def checkpoint(self, name: str) -> dict:
         if self.training_client is None:

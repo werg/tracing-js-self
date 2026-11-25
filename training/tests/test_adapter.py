@@ -78,6 +78,11 @@ class Sampler:
         self.calls.append(kwargs)
         return Future(SimpleNamespace(sequences=[self.sequence]))
 
+    def compute_logprobs(self, prompt, prompt_logprobs_last_n=None):
+        self.last_scored_tokens = prompt.to_ints()
+        self.last_scored_suffix = prompt_logprobs_last_n
+        return Future([None] + [-0.2] * (len(prompt.to_ints()) - 1))
+
 
 class Trainer:
     def __init__(self, sampler):
@@ -85,9 +90,15 @@ class Trainer:
         self.calls = []
         self.failure = None
 
-    def forward_backward(self, datums, loss_fn):
+    def forward_backward(self, datums, loss_fn, loss_fn_config=None):
         self.calls.append(("forward_backward", datums, loss_fn))
-        return Future(SimpleNamespace(metrics={"loss:sum": 0.5}), self.failure)
+        self.loss_fn_config = loss_fn_config
+        return Future(SimpleNamespace(metrics={"loss:sum": 0.5}, loss_fn_outputs=[
+            {"logprobs": [-0.2] * len(getattr(d.loss_fn_inputs["target_tokens"], "data", d.loss_fn_inputs["target_tokens"]))} for d in datums]), self.failure)
+
+    def forward(self, datums, loss_fn):
+        return Future(SimpleNamespace(metrics={}, loss_fn_outputs=[
+            {"logprobs": [-0.3] * len(getattr(d.loss_fn_inputs["target_tokens"], "data", d.loss_fn_inputs["target_tokens"]))} for d in datums]))
 
     def optim_step(self, params):
         self.calls.append(("optim_step", params))
@@ -134,7 +145,8 @@ def fake_adapter(config=None):
         total = sum(weights[1:])
         return SimpleNamespace(
             model_input=ModelInput(tokens[:-1]),
-            loss_fn_inputs={"target_tokens": tokens[1:], "weights": [w / total for w in weights[1:]]},
+            loss_fn_inputs={"target_tokens": tokens[1:],
+                            "weights": [w / total if reduction == "mean" else w for w in weights[1:]]},
         )
 
     runtime = SimpleNamespace(
@@ -323,6 +335,76 @@ class AdapterTests(unittest.TestCase):
         self.assertTrue(adapter.check(remote=True)["model_available"])
         self.assertEqual(service.calls, [])
 
+    def test_weighting_changes_only_assistant_weight_scale(self):
+        equal, _, _ = fake_adapter({"sft_weighting": "example"})
+        tokens, _, _ = fake_adapter({"sft_weighting": "token"})
+        messages = [{"role": "user", "content": "observation", "trainable": True},
+                    {"role": "assistant", "content": "answer"}]
+        a, b = equal.render_sft(messages)[0], tokens.render_sft(messages)[0]
+        self.assertEqual(a.loss_fn_inputs["target_tokens"], b.loss_fn_inputs["target_tokens"])
+        self.assertEqual(a.loss_fn_inputs["weights"], [0, 0, 0.5, 0.5])
+        self.assertEqual(b.loss_fn_inputs["weights"], [0, 0, 1, 1])
+
+    def test_separate_stage_rates_and_ppo_configuration_reach_sdk(self):
+        adapter, service, _ = fake_adapter()
+        adapter.sft_train([{"messages": [{"role": "assistant", "content": "x"}]}], learning_rate=0.003)
+        self.assertEqual(service.trainer.calls[1][1].learning_rate, 0.003)
+        sample = {"prompt_tokens": [10, 11], "token_ids": [12], "logprobs": [-0.4]}
+        result = adapter.rl_train([{"samples": [sample], "advantage": 1}], learning_rate=0.00002,
+                                  loss_fn="ppo", loss_fn_config={"clip_low_threshold": 0.9,
+                                                                 "clip_high_threshold": 1.1})
+        self.assertEqual(service.trainer.loss_fn_config, {"clip_low_threshold": 0.9, "clip_high_threshold": 1.1})
+        self.assertEqual(result["learning_rate"], 0.00002)
+        self.assertTrue(result["metrics"]["learner_diagnostics_available"])
+        self.assertEqual(result["metrics"]["sampler_learner_scored_tokens"], 1)
+        self.assertAlmostEqual(result["metrics"]["sampler_learner_sampled_log_ratio_mean"], -0.2)
+        with self.assertRaises(ValueError):
+            adapter.rl_train([], loss_fn="ppo", loss_fn_config={"clip_high_threshold": 0.9})
+        with self.assertRaises(ValueError):
+            adapter.rl_train([], loss_fn_config={"clip_low_threshold": 0.9})
+
+    def test_reference_shaping_scores_actual_tokens_and_never_prompt_positions(self):
+        adapter, service, _ = fake_adapter({"reference_kl_coef": 0.1, "reference_kl_clip": 0.25})
+        adapter.set_reference_checkpoint("tinker://sft/sampler_weights/fixed")
+        sample = {"prompt_tokens": [9, 8, 7], "token_ids": [6, 5], "logprobs": [-0.1, -0.8]}
+        result = adapter.rl_train([{"samples": [sample], "advantage": 0.5}])
+        self.assertEqual(service.sampler.last_scored_tokens, [9, 8, 7, 6, 5])
+        self.assertEqual(service.sampler.last_scored_suffix, 2)
+        advantages = service.trainer.calls[0][1][0].loss_fn_inputs["advantages"]
+        self.assertEqual(advantages[:2], [0, 0])
+        self.assertAlmostEqual(advantages[2], 0.49)
+        self.assertAlmostEqual(advantages[3], 0.525)
+        self.assertEqual(result["metrics"]["reference_kl_shaping_clipped_tokens"], 1)
+        self.assertEqual(result["metrics"]["reference_checkpoint"], "tinker://sft/sampler_weights/fixed")
+        self.assertEqual(result["metrics"]["sft_reference_scored_tokens"], 2)
+        adapter.refresh_sampler()
+        with self.assertRaisesRegex(ValueError, "cannot change"):
+            adapter.set_reference_checkpoint("tinker://other/sampler_weights/new")
+
+    def test_reference_is_required_and_misalignment_fails_before_update(self):
+        adapter, service, _ = fake_adapter({"reference_kl_coef": 0.1})
+        sample = {"prompt_tokens": [1, 2], "token_ids": [3], "logprobs": [-0.1]}
+        with self.assertRaisesRegex(AdapterError, "fixed SFT"):
+            adapter.rl_train([{"samples": [sample], "advantage": 1}])
+        adapter.set_reference_checkpoint("tinker://sft/sampler_weights/fixed")
+        service.sampler.compute_logprobs = lambda *args, **kwargs: Future([-0.1])
+        with self.assertRaisesRegex(AdapterError, "misaligned"):
+            adapter.rl_train([{"samples": [sample], "advantage": 1}])
+        self.assertEqual(service.trainer.calls, [])
+
+    def test_score_supervision_is_forward_only_with_masked_targets(self):
+        adapter, service, _ = fake_adapter()
+        result = adapter.score_supervision([{"messages": [{"role": "assistant", "content": "x"}]}])
+        self.assertAlmostEqual(result["mean_example_target_logprob"], -0.3)
+        self.assertEqual(result["trainable_tokens"], 2)
+        self.assertEqual(adapter.training_steps, 0)
+        self.assertEqual(service.trainer.calls, [])
+
+    def test_unknown_tokenizer_keeps_all_tokens_unclassified(self):
+        adapter, _, _ = fake_adapter()
+        self.assertEqual(adapter.token_accounting([1, 2, 3]), {
+            "reasoning": 0, "trace": 0, "protocol": 0, "other": 0, "unclassified": 3})
+
 
 @unittest.skipUnless(importlib.util.find_spec("tinker") and importlib.util.find_spec("tinker_cookbook"), "optional pinned Tinker SDK is not installed")
 class InstalledSdkTests(unittest.TestCase):
@@ -371,6 +453,9 @@ class InstalledSdkTests(unittest.TestCase):
         self.assertTrue(record["complete"])
         self.assertEqual(record["message"], assistant)
         self.assertEqual(record["generated_tokens"], len(sampled))
+        self.assertEqual(sum(record["token_accounting"].values()), len(sampled))
+        self.assertGreater(record["token_accounting"]["reasoning"], 0)
+        self.assertGreater(record["token_accounting"]["protocol"], 0)
         # Real SDK Datum coerces list-valued inputs to aligned TensorData.
         trainer = Trainer(sampler)
         adapter.training_client = trainer
