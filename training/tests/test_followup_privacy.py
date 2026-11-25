@@ -207,10 +207,14 @@ class RenderedSupervisionPrivacyTests(unittest.TestCase):
             with self.subTest(trace_format=trace_format):
                 exported = self.export(trace_format)
                 base = exported["messages"][:-1]
-                assistant = {"role": "assistant", "content": [
-                    {"type": "thinking", "thinking": "The external result is unused, so return seven."},
-                    {"type": "text", "text": exported["messages"][-1]["content"]},
-                ]}
+                last = exported["messages"][-1]
+                if isinstance(last["content"], list):
+                    assistant = copy.deepcopy(last)
+                else:
+                    assistant = {"role": "assistant", "content": [
+                        {"type": "thinking", "thinking": "The external result is unused, so return seven."},
+                        {"type": "text", "text": last["content"]},
+                    ]}
                 prompt = sdk.renderer.build_generation_prompt(base, effort=self.adapter.effort).to_ints()
                 full = sdk.renderer.build_supervised_examples(base + [assistant], effort=self.adapter.effort)[0][0].to_ints()
                 self.assertEqual(full[:len(prompt)], prompt)
@@ -227,8 +231,6 @@ class RenderedSupervisionPrivacyTests(unittest.TestCase):
                 self.assertEqual(sum(accounting.values()), len(generated))
                 self.assertGreater(accounting["reasoning"], 0)
                 self.assertGreater(accounting["protocol"], 0)
-                if trace_format != "actions-only":
-                    self.assertGreater(accounting["trace"], 0)
                 arrays = rl_token_arrays(record, 0.5)
                 self.assertEqual(arrays["target_tokens"], (prompt + generated)[1:])
                 self.assertEqual(arrays["advantages"][:len(prompt) - 1], [0.0] * (len(prompt) - 1))

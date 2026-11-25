@@ -188,6 +188,28 @@ class InstalledRendererDiagnosticsTests(unittest.TestCase):
             self.assertAlmostEqual(sum(bucket[field] for bucket in diagnostic["by_action"].values()), diagnostic["total"][field])
         self.assertEqual([call[0] for call in adapter.training_client.calls], ["forward_backward", "optim_step"])
 
+    def test_inkling_thinking_and_text_frames_inherit_turn_action_label(self):
+        adapter = TinkerAdapter({"effort": .5})
+        sdk = adapter._sdk()
+        thinking_messages = [
+            {"role": "user", "content": "Program"},
+            {"role": "assistant", "content": [
+                {"type": "thinking", "thinking": "x = 1\nreturn 3"},
+                {"type": "text", "text": "```json\n" + json.dumps(COMPLETE) + "\n```"},
+            ]},
+        ]
+        class ActualTensorTrainer(Trainer):
+            def forward_backward(self, datums, loss_fn, **kwargs):
+                self.calls.append(("forward_backward", datums, loss_fn))
+                return Future(SimpleNamespace(metrics={}, loss_fn_outputs=[
+                    {"logprobs": sdk.types.TensorData(data=[-.5] * len(_tensor_values(datum.loss_fn_inputs["weights"])),
+                                                     dtype="float32", shape=[len(_tensor_values(datum.loss_fn_inputs["weights"]))])}
+                    for datum in datums]))
+        adapter.training_client = ActualTensorTrainer(None)
+        diagnostic = adapter.sft_train([{"messages": thinking_messages, "metadata": {"tier": 1}}])["metrics"]["sft_diagnostics"]
+        self.assertEqual(set(diagnostic["by_action"]), {"completion"})
+        self.assertAlmostEqual(diagnostic["by_action"]["completion"]["weighted_mean_nll"], .5, places=6)
+
 
 if __name__ == "__main__":
     unittest.main()

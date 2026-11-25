@@ -19,6 +19,17 @@ from typing import Any
 
 DEFAULT_MODEL = "thinkingmachines/Inkling-2-Mini:peft:65536:free"
 FREE_CONTEXT_TOKENS = 65536
+MAX_CONTEXT_TOKENS = 1_048_576
+
+
+def model_context_limit(model: str) -> int:
+    """Infer the model's declared context limit from its Tinker model ID."""
+    match = re.search(r":peft:(\d+)(?::|$)", model)
+    if match:
+        return int(match.group(1))
+    if model == DEFAULT_MODEL:
+        return FREE_CONTEXT_TOKENS
+    return MAX_CONTEXT_TOKENS
 
 
 class AdapterError(RuntimeError):
@@ -243,10 +254,14 @@ class TinkerAdapter:
         if not 0 <= self.effort < 1:
             raise ValueError("effort must be in [0, 1)")
         self.max_context_tokens = _positive_int(
-            self.config.get("max_context_tokens", FREE_CONTEXT_TOKENS), "max_context_tokens"
+            self.config.get("max_context_tokens", model_context_limit(self.model)), "max_context_tokens"
         )
-        if self.model == DEFAULT_MODEL and self.max_context_tokens > FREE_CONTEXT_TOKENS:
-            raise ValueError("The configured free model has a 65536-token context limit")
+        limit = model_context_limit(self.model)
+        if self.max_context_tokens > limit:
+            raise ValueError(f"Configured model {self.model!r} has a {limit}-token context limit")
+        self.rl_token_normalization = self.config.get("rl_token_normalization", "none")
+        if self.rl_token_normalization not in {"none", "trajectory"}:
+            raise ValueError("rl_token_normalization must be none or trajectory")
         self.max_tokens = _positive_int(self.config.get("max_tokens", 4096), "max_tokens")
         self.temperature = _finite(self.config.get("temperature", 1.0), "temperature")
         if self.temperature < 0:
@@ -536,8 +551,7 @@ class TinkerAdapter:
         except Exception:
             return {name: len(tokens) if name == "unclassified" else 0 for name in counts}
 
-    @staticmethod
-    def _messages(messages: Sequence[Mapping[str, Any]], *, training: bool = False) -> list[dict]:
+    def _messages(self, messages: Sequence[Mapping[str, Any]], *, training: bool = False) -> list[dict]:
         if not isinstance(messages, (list, tuple)) or not messages:
             raise ValueError("messages must be a nonempty list")
         result = []
@@ -549,6 +563,16 @@ class TinkerAdapter:
                 # External observations NEVER carry loss, even if an imported
                 # dataset mistakenly marks a tool/user message as trainable.
                 item["trainable"] = item["role"] == "assistant" and item.get("trainable", True) is not False
+                # At effort == 0.0, Inkling disables thinking; flatten structured
+                # thinking+text parts so SFT never conflicts with effort=0.
+                if self.effort == 0.0 and item["role"] == "assistant" and isinstance(item.get("content"), list):
+                    parts = []
+                    for part in item["content"]:
+                        if isinstance(part, Mapping) and part.get("type") == "thinking" and part.get("thinking"):
+                            parts.append(part["thinking"])
+                        elif isinstance(part, Mapping) and part.get("type") == "text" and part.get("text"):
+                            parts.append(part["text"])
+                    item["content"] = "\n".join(parts)
             result.append(item)
         if training and not any(item["trainable"] for item in result):
             raise ValueError("Supervised examples require a trainable assistant message")
@@ -602,18 +626,32 @@ class TinkerAdapter:
                           if re.fullmatch(r"<\|message_[a-z_]+\|>", piece)]
                 full_actions, full_roles = ["unknown"] * len(tokens), ["unknown"] * len(tokens)
                 available = any(role == "model" for _, role in starts)
-                for ordinal, (start, role) in enumerate(starts):
+                # Inkling encodes one assistant turn with thinking as consecutive
+                # <|message_model|> frames (<|content_thinking|> then <|content_text|>)
+                # ending at <|content_model_end_sampling|>. Group them into one turn so
+                # thinking tokens inherit their turn's action classification.
+                ordinal = 0
+                while ordinal < len(starts):
+                    start, role = starts[ordinal]
                     end = starts[ordinal + 1][0] if ordinal + 1 < len(starts) else len(tokens)
-                    full_roles[start:end] = [role] * (end - start)
                     if role != "model":
+                        full_roles[start:end] = [role] * (end - start)
+                        ordinal += 1
                         continue
+                    turn_end_ordinal = ordinal
+                    while (turn_end_ordinal + 1 < len(starts)
+                           and starts[turn_end_ordinal + 1][1] == "model"
+                           and "<|content_model_end_sampling|>" not in pieces[starts[turn_end_ordinal][0]:starts[turn_end_ordinal + 1][0]]):
+                        turn_end_ordinal += 1
+                    turn_end = starts[turn_end_ordinal + 1][0] if turn_end_ordinal + 1 < len(starts) else len(tokens)
+                    full_roles[start:turn_end] = ["model"] * (turn_end - start)
                     text_parts, text_ids = [], []
                     in_text = False
                     def flush():
                         if text_ids:
                             text_parts.append(tokenizer.decode(text_ids))
                             text_ids.clear()
-                    for token, piece in zip(tokens[start + 1:end], pieces[start + 1:end]):
+                    for token, piece in zip(tokens[start + 1:turn_end], pieces[start + 1:turn_end]):
                         if re.fullmatch(r"<\|[^|]+\|>", piece):
                             flush()
                             in_text = piece == "<|content_text|>"
@@ -621,7 +659,8 @@ class TinkerAdapter:
                             text_ids.append(token)
                     flush()
                     kind = _supervised_action_kind("".join(text_parts))
-                    full_actions[start:end] = [kind] * (end - start)
+                    full_actions[start:turn_end] = [kind] * (turn_end - start)
+                    ordinal = turn_end_ordinal + 1
                 actions, roles = full_actions[1:], full_roles[1:]
             except (AttributeError, KeyError, TypeError, ValueError, UnicodeError):
                 available = False
@@ -827,8 +866,12 @@ class TinkerAdapter:
         sdk = self._sdk()
         datums, samples, reference_values, sampling_values = [], [], [], []
         shaping_clipped = 0
-        for trajectory in trajectories:
+        traj_lengths = [sum(len(s.get("token_ids", [])) for s in trajectory["samples"]) for trajectory in trajectories]
+        mean_traj_len = statistics.fmean(traj_lengths) if traj_lengths else 1.0
+        for trajectory, traj_len in zip(trajectories, traj_lengths):
             advantage = _finite(trajectory["advantage"], "advantage")
+            if self.rl_token_normalization == "trajectory" and traj_len > 0:
+                advantage = advantage * (mean_traj_len / traj_len)
             for sample in trajectory["samples"]:
                 arrays = rl_token_arrays(sample, advantage)
                 self._budget(len(arrays["input_tokens"]) + 1)
@@ -856,11 +899,20 @@ class TinkerAdapter:
                 "reference_scoring_requests": len(samples)})
         return result
 
-    def checkpoint(self, name: str) -> dict:
+    def checkpoint(self, name: str, *, ttl_seconds: int | None = None) -> dict:
         if self.training_client is None:
             raise AdapterError("Create a training client before saving a checkpoint")
         if not isinstance(name, str) or not name.strip():
             raise ValueError("checkpoint name must be nonempty")
-        training = self._wait(self.training_client.save_state(name=name), "training checkpoint save")
-        sampler = self._wait(self.training_client.save_weights_for_sampler(name=name), "sampler checkpoint save")
+        import inspect
+        save_kwargs = {}
+        if ttl_seconds is not None:
+            ttl = _positive_int(ttl_seconds, "ttl_seconds")
+            if "ttl_seconds" in inspect.signature(self.training_client.save_state).parameters:
+                save_kwargs["ttl_seconds"] = ttl
+        sampler_kwargs = {}
+        if ttl_seconds is not None and "ttl_seconds" in inspect.signature(self.training_client.save_weights_for_sampler).parameters:
+            sampler_kwargs["ttl_seconds"] = ttl
+        training = self._wait(self.training_client.save_state(name=name, **save_kwargs), "training checkpoint save")
+        sampler = self._wait(self.training_client.save_weights_for_sampler(name=name, **sampler_kwargs), "sampler checkpoint save")
         return {"training_path": training.path, "sampler_path": sampler.path, "step": self.training_steps}

@@ -79,11 +79,24 @@ DEFAULTS: dict[str, Any] = {
     "diagnostic_only": False,
     "initial_sft_checkpoint": None,
     "trace_format": "full",
+    "reasoning_channel": "auto",
     "prompt_style": "standard",
+    "rl_prompts_per_step": 1,
+    "rl_token_normalization": "none",
+    "checkpoint_every_update": True,
+    "recovery_checkpoint_ttl_seconds": 86400,
+    "enforce_turn_budget": False,
     "curriculum": {"enabled": False, "retention_fraction": 0.25, "groups_per_tier": 20,
                    "window_groups": 20, "minimum_groups": 4, "advance_success_rate": 0.25},
     "bridge_timeout_seconds": 60,
 }
+
+
+def resolve_reasoning_channel(config: dict) -> str:
+    channel = config.get("reasoning_channel", "auto")
+    if channel == "auto":
+        return "thinking" if config.get("effort", 0.5) > 0 else "text"
+    return channel
 
 
 def json_text(value: Any) -> str:
@@ -95,16 +108,30 @@ def digest(value: Any) -> str:
 
 
 def implementation_identity(repo: Path) -> dict:
-    """Bind experiments to executable sources and locked dependencies.
+    """Bind experiments to Tinker-relevant executable sources and locked dependencies.
 
-    Commit metadata is informational: committing unchanged files must not
-    invalidate a corpus. Documentation, tests and generated run files are not
-    part of the enforced fingerprint.
+    Scoped to the runtime, host boundary, Tinker JS modules, and Python trainer
+    so unrelated documentation or legacy repo cleanups do not invalidate studies.
     """
-    paths = {path for path in (repo / "src").rglob("*")
-             if path.is_file() and path.suffix in (".js", ".json")}
+    paths: set[Path] = set()
     paths.update((repo / "training/tinker_js").glob("*.py"))
-    for relative in ("tools/tinker-execution.mjs", "package-lock.json", "training/uv.lock"):
+    paths.update((repo / "src/training").glob("tinker-*.js"))
+    paths.update((repo / "src/host").glob("*.js"))
+    for relative in (
+        "tools/tinker-execution.mjs",
+        "src/runtime.js",
+        "src/frontend.js",
+        "src/values.js",
+        "src/typescript.js",
+        "src/semantic/normalize.js",
+        "src/semantic/source-reference.js",
+        "src/training/fixture-broker.js",
+        "src/training/graph.js",
+        "src/training/data-graph-contract.js",
+        "src/training/profile.js",
+        "package-lock.json",
+        "training/uv.lock",
+    ):
         path = repo / relative
         if path.is_file():
             paths.add(path)
@@ -205,10 +232,14 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
             raise ValueError("initial_sft_checkpoint requires Tinker training_path and sampler_path")
     for name in ("max_context_tokens", "max_tokens", "batch_size", "group_size", "max_turns",
                  "max_generated_tokens", "evaluation_samples", "checkpoint_every", "length_scale_tokens",
-                 "bootstrap_samples", "minimum_evaluation_families"):
+                 "bootstrap_samples", "minimum_evaluation_families", "rl_prompts_per_step",
+                 "recovery_checkpoint_ttl_seconds"):
         value = config[name]
         if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
             raise ValueError(f"{name} must be a positive integer")
+    for name in ("checkpoint_every_update", "enforce_turn_budget"):
+        if not isinstance(config[name], bool):
+            raise ValueError(f"{name} must be a boolean")
     for name in ("sft_epochs", "rl_steps", "validation_every", "compression_warmup_steps", "compression_ramp_steps"):
         if isinstance(config[name], bool) or not isinstance(config[name], int) or config[name] < 0:
             raise ValueError(f"{name} must be a nonnegative integer")
@@ -242,6 +273,8 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
                           ("sft_weighting", {"example", "token"}),
                           ("rl_loss_fn", {"importance_sampling", "ppo"}),
                           ("trace_format", {"full", "compact", "actions-only"}),
+                          ("reasoning_channel", {"auto", "thinking", "text"}),
+                          ("rl_token_normalization", {"none", "trajectory"}),
                           ("prompt_style", {"standard", "concise"})):
         if config[name] not in choices:
             raise ValueError(f"{name} must be one of {sorted(choices)}")
@@ -487,6 +520,7 @@ def export_dataset(repo: Path, config: dict, output_dir: Path, bridge: Any,
     input_hash = hashlib.sha256(source.read_bytes()).hexdigest()
     implementation = implementation_identity(repo)
     export_settings = {key: config[key] for key in ("trace_format", "prompt_style", "evaluation_only", "diagnostic_only")}
+    export_settings["reasoning_channel"] = resolve_reasoning_channel(config)
     state_path = output_dir / "state.json"
     state = json.loads(state_path.read_text()) if state_path.exists() else None
     if state and state.get("config_hash") != config_fingerprint(config):
@@ -525,9 +559,10 @@ def export_dataset(repo: Path, config: dict, output_dir: Path, bridge: Any,
     elif any(diagnostic_flags):
         raise ValueError("diagnosticOnly tasks require a separate diagnostic_only evaluation dataset")
     exported = []
+    channel = resolve_reasoning_channel(config)
     for task in tasks:
         try:
-            row = bridge.request("export", task=task, traceFormat=config["trace_format"])
+            row = bridge.request("export", task=task, traceFormat=config["trace_format"], reasoningChannel=channel)
             row["metadata"] = {**task.get("metadata", {}), **row.get("metadata", {})}
             if task.get("diagnosticOnly"):
                 row["metadata"]["diagnosticOnly"] = True
@@ -846,7 +881,7 @@ def _update_attempts(output_dir: Path) -> dict[str, dict]:
         if event in {"checkpoint_persisted", "state_committed", "resume_recovered"} and (
                 "optimizer_confirmed" not in attempt["events"]):
             raise UpdateRecoveryError("optimizer recovery was recorded without a confirmed update")
-        if event == "state_committed" and "checkpoint_persisted" not in attempt["events"]:
+        if event == "state_committed" and "checkpoint_persisted" not in attempt["events"] and not row.get("checkpoint_skipped"):
             raise UpdateRecoveryError("optimizer progress was recorded before a recovery checkpoint")
         attempt["events"][event] = row
     return attempts
@@ -1004,12 +1039,25 @@ def _submit_update(adapter: Any, output_dir: Path, state: dict, config: dict, *,
 
 
 def _commit_update(adapter: Any, output_dir: Path, state: dict, rng: random.Random,
-                   pending: dict, *, published: bool, validation_pending: bool = False) -> None:
+                   pending: dict, *, published: bool, validation_pending: bool = False,
+                   config: dict | None = None) -> None:
     attempt_id = pending["attempt_id"]
+    checkpoint_every_update = True if config is None else config.get("checkpoint_every_update", True)
+    if not published and not checkpoint_every_update:
+        lineage = _optimizer_lineage(state)
+        lineage[pending["identity"]["stage"] + "_updates"] += 1
+        lineage["last_update_id"] = attempt_id
+        state.update(optimizer_lineage=lineage, last_recovered_update=attempt_id)
+        save_state(output_dir, state, rng)
+        _update_event(output_dir, pending, "state_committed", state_hash=digest(state), checkpoint_skipped=True)
+        (output_dir / "pending-update.json").unlink()
+        _sync_directory(output_dir)
+        return
     name = attempt_id if published else f"recovery-{attempt_id}"
+    ttl = None if published or config is None else config.get("recovery_checkpoint_ttl_seconds")
     saved = None
     try:
-        saved = adapter.checkpoint(name)
+        saved = adapter.checkpoint(name, ttl_seconds=ttl) if ttl is not None and _accepts_kwarg(adapter.checkpoint, "ttl_seconds") else adapter.checkpoint(name)
         if not saved.get("training_path") or not saved.get("sampler_path"):
             raise RuntimeError("recovery checkpoint must include optimizer state and sampler weights")
         recovered = copy.deepcopy(state)
@@ -1032,6 +1080,15 @@ def _commit_update(adapter: Any, output_dir: Path, state: dict, rng: random.Rand
     recovered = _finish_update_recovery(output_dir, pending)
     state.clear()
     state.update(recovered)
+
+
+def _accepts_kwarg(func: Any, name: str) -> bool:
+    import inspect
+    try:
+        params = inspect.signature(func).parameters
+        return name in params or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
+    except (TypeError, ValueError):
+        return False
 
 
 def load_state(output_dir: Path, config: dict, manifest: dict, resume: bool) -> tuple[dict, random.Random]:
@@ -1154,7 +1211,11 @@ def record_validation(bridge: Any, adapter: Any, rows: list[dict], config: dict,
     # partially completed validation must perform the same restoration as an
     # uninterrupted run, even when the RL step itself was already checkpointed.
     best = state.get("best_trained_checkpoint")
-    if stage.startswith("rl-") and not gate and best and best["training_path"] != state.get("training_path"):
+    # Roll back on compression-gate failure during compression RL, or on a real
+    # accuracy regression beyond accuracy_tolerance during correctness RL (never
+    # merely because accuracy is still climbing below compression_min_accuracy).
+    regressed = (not gate) if config.get("rl_objective", "compression") == "compression" else (accuracy < anchor - config["accuracy_tolerance"])
+    if stage.startswith("rl-") and regressed and best and best["training_path"] != state.get("training_path"):
         event = {"step": state.get("rl_steps_completed", 0), "validation_stage": stage,
                  "from": state.get("training_path"), "to": best["training_path"],
                  "reason": "validation accuracy below compression gate; restore selected optimizer state"}
@@ -1229,7 +1290,7 @@ def train_sft(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_
             validate = bool(config["validation_every"] and batch_index % config["validation_every"] == 0)
             _commit_update(adapter, output_dir, state, rng, pending,
                            published=batch_index % config["checkpoint_every"] == 0 or validate,
-                           validation_pending=validate)
+                           validation_pending=validate, config=config)
             if validate:
                 maybe_validate_checkpoint(bridge, adapter, rows, config, output_dir, state, rng,
                                           f"sft-{batch_index:06d}")
@@ -1274,28 +1335,46 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         if not state.get("sft_sampler_path"):
             raise ValueError("reference KL requires the recorded SFT sampler checkpoint")
         adapter.set_reference_checkpoint(state["sft_sampler_path"])
+    prompts_per_step = config.get("rl_prompts_per_step", 1)
+    ephemeral_sampler_active = False
     for step in range(state["rl_steps_completed"], config["rl_steps"]):
-        adapter.create_sampling_client(checkpoint=state["sampler_path"])
-        policy = {"training_path": state["training_path"], "sampler_path": state["sampler_path"],
+        if not ephemeral_sampler_active:
+            adapter.create_sampling_client(checkpoint=state["sampler_path"])
+        active_sampler = getattr(adapter, "sampling_revision", state["sampler_path"]) if ephemeral_sampler_active else state["sampler_path"]
+        policy = {"training_path": state["training_path"], "sampler_path": active_sampler,
                   "lineage": _optimizer_lineage(state)}
-        row, curriculum_selection = curriculum_pick(train_rows, config, state, rng)
-        seeds = [rng.randrange(2147483647) for _ in range(config["group_size"])]
         coefficient = compression_coefficient(config, step, gate_open=state.get("compression_gate_open", False))
-        group_context = digest({"step": step + 1, "task": row["task"], "seeds": seeds,
-                                "config_hash": config_fingerprint(config), "compression_coefficient": coefficient,
-                                "curriculum": curriculum_selection,
-                                "implementation_hash": state.get("implementation_hash"),
-                                "policy": policy})
+        batch_groups = []
+        for _ in range(prompts_per_step):
+            row, curriculum_selection = curriculum_pick(train_rows, config, state, rng)
+            seeds = [rng.randrange(2147483647) for _ in range(config["group_size"])]
+            batch_groups.append((row, curriculum_selection, seeds))
+        if prompts_per_step == 1:
+            row, curriculum_selection, seeds = batch_groups[0]
+            group_context = digest({"step": step + 1, "task": row["task"], "seeds": seeds,
+                                    "config_hash": config_fingerprint(config), "compression_coefficient": coefficient,
+                                    "curriculum": curriculum_selection,
+                                    "implementation_hash": state.get("implementation_hash"),
+                                    "policy": policy})
+        else:
+            group_context = digest({"step": step + 1,
+                                    "groups": [{"task": r["task"], "seeds": s, "curriculum": c}
+                                               for r, c, s in batch_groups],
+                                    "config_hash": config_fingerprint(config), "compression_coefficient": coefficient,
+                                    "implementation_hash": state.get("implementation_hash"),
+                                    "policy": policy})
+        expected_total = prompts_per_step * config["group_size"]
+        flat_plan = [(r, c, s) for r, c, seeds in batch_groups for s in seeds]
         destination = output_dir / "rollouts" / f"rl-{step + 1:06d}.jsonl"
         partial = destination.with_suffix(".partial.jsonl")
         records = read_jsonl(destination if destination.exists() else partial) if destination.exists() or partial.exists() else []
-        if len(records) > config["group_size"] or any(
-                record.get("group_context") != group_context or record.get("seed") != seeds[index]
+        if len(records) > expected_total or any(
+                record.get("group_context") != group_context or record.get("seed") != flat_plan[index][2]
                 or record.get("policy") != policy
                 for index, record in enumerate(records)):
             raise ValueError("saved RL group differs in task, seeds, configuration, or policy checkpoint")
         write_jsonl(partial, records)
-        for seed in seeds[len(records):]:
+        for row, _curriculum_selection, seed in flat_plan[len(records):]:
             try:
                 record = rollout(bridge, adapter, row["task"], config, seed)
             except RolloutError as error:
@@ -1313,13 +1392,30 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         if any(sample.get("sampler_revision", policy["sampler_path"]) != policy["sampler_path"]
                for record in records for sample in record["samples"]):
             raise ValueError("sampled RL sequence does not match the durable sampler checkpoint")
-        signals = execution_advantages(records, config, coefficient)
-        for index, record in enumerate(records):
-            record.update(advantage=signals["advantages"][index],
-                          correctness_advantage=signals["correctness_advantages"][index],
-                          length_advantage=signals["length_advantages"][index],
-                          length_contribution=signals["length_contributions"][index],
-                          compression_coefficient=coefficient)
+        group_size = config["group_size"]
+        all_signals = []
+        counters = state.setdefault("rl_group_counts", {"all_failure": 0, "mixed_success": 0,
+                                                         "all_success": 0, "zero_advantage": 0, "useful": 0})
+        curriculum_results = []
+        for group_idx, (row, curriculum_selection, _seeds) in enumerate(batch_groups):
+            group_records = records[group_idx * group_size:(group_idx + 1) * group_size]
+            sig = execution_advantages(group_records, config, coefficient)
+            all_signals.append(sig)
+            for index, record in enumerate(group_records):
+                record.update(advantage=sig["advantages"][index],
+                              correctness_advantage=sig["correctness_advantages"][index],
+                              length_advantage=sig["length_advantages"][index],
+                              length_contribution=sig["length_contributions"][index],
+                              compression_coefficient=coefficient)
+            counters[sig["group_kind"]] += 1
+            counters["zero_advantage" if sig["zero_advantage_group"] else "useful"] += 1
+            curriculum_results.append(update_curriculum(train_rows, config, state, curriculum_selection, group_records))
+        signals = all_signals[0] if prompts_per_step == 1 else {
+            "group_kind": "batched",
+            "zero_advantage_group": all(s["zero_advantage_group"] for s in all_signals),
+            "length_signal": any(s["length_signal"] for s in all_signals),
+            "correctness_signal": any(s["correctness_signal"] for s in all_signals),
+        }
         write_jsonl(destination, records)
         partial.unlink(missing_ok=True)
         if any(sample.get("provenance_error") for record in records for sample in record["samples"]):
@@ -1344,16 +1440,14 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                 state["rl_regularization_only_updates"] = state.get("rl_regularization_only_updates", 0) + 1
         else:
             metrics = {"skipped": True, "reason": "zero correctness and controlled length advantages"}
-        counters = state.setdefault("rl_group_counts", {"all_failure": 0, "mixed_success": 0,
-                                                         "all_success": 0, "zero_advantage": 0, "useful": 0})
-        counters[signals["group_kind"]] += 1
-        counters["zero_advantage" if signals["zero_advantage_group"] else "useful"] += 1
         state["rl_generated_tokens"] = state.get("rl_generated_tokens", 0) + sum(record["generated_tokens"] for record in records)
-        curriculum_result = update_curriculum(train_rows, config, state, curriculum_selection, records)
+        curriculum_result = curriculum_results[-1]
         state.update(rl_steps_completed=step + 1, phase="rl")
         append_jsonl(output_dir / "metrics.jsonl", {"stage": "rl", "step": step + 1,
                      "update_attempt_id": pending["attempt_id"] if pending else None,
-                     "task_id": row["id"], **summarize_records(records), "metrics": metrics,
+                     "task_id": batch_groups[0][0]["id"] if prompts_per_step == 1 else [g[0]["id"] for g in batch_groups],
+                     "prompts_in_step": prompts_per_step,
+                     **summarize_records(records), "metrics": metrics,
                      "group_kind": signals["group_kind"], "zero_advantage_group": signals["zero_advantage_group"],
                      "compression_coefficient": coefficient, "length_signal": signals["length_signal"],
                      "correctness_signal": signals["correctness_signal"], "curriculum": curriculum_result,
@@ -1366,15 +1460,20 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         name = f"rl-{step + 1:06d}"
         if pending:
             _commit_update(adapter, output_dir, state, rng, pending, published=published,
-                           validation_pending=validate)
+                           validation_pending=validate, config=config)
+            if not published and not config.get("checkpoint_every_update", True):
+                adapter.refresh_sampler()
+                ephemeral_sampler_active = True
+            else:
+                ephemeral_sampler_active = False
         elif published:
             save_checkpoint(adapter, output_dir, state, rng, name, validation_pending=validate)
+            ephemeral_sampler_active = False
         else:
-            # No model mutation happened. Persist the consumed group/RNG once;
-            # replaying an interrupted group may reuse only its exact sampler.
             save_state(output_dir, state, rng)
         if validate:
             maybe_validate_checkpoint(bridge, adapter, rows, config, output_dir, state, rng, name)
+            ephemeral_sampler_active = False
     state["phase"] = "rl_done"
     name = f"rl-final-{state['rl_steps_completed']:06d}"
     save_checkpoint(adapter, output_dir, state, rng, name, validation_pending=True)
@@ -1531,17 +1630,41 @@ def validate_fixtures(bridge: Any, rows: list[dict]) -> dict:
 
 
 def validate_token_budgets(bridge: Any, adapter: Any, rows: list[dict], config: dict) -> dict:
-    """Render actual SFT data and initial rollout prompts without model compute."""
+    """Render actual SFT data and initial rollout prompts without model compute.
+
+    Also verifies that supervised teacher target lengths are compatible with the
+    configured rollout generation budgets when enforce_turn_budget is enabled.
+    """
     train_examples = 0
     train_tokens = []
+    episode_assistant_tokens = []
+    single_turn_assistant_tokens = []
+    over_turn_budget: list[dict] = []
+    over_episode_budget: list[dict] = []
     prompt_tokens = []
     for row in rows:
         try:
             if row["split"] == "train":
                 datums = adapter.render_sft(row["messages"])
                 train_examples += len(datums)
+                assistant_turns = sum(1 for message in row["messages"] if message.get("role") == "assistant")
+                episode_trainable = 0
                 for datum in datums:
-                    train_tokens.append(len(datum.loss_fn_inputs["target_tokens"].data))
+                    target_data = datum.loss_fn_inputs["target_tokens"]
+                    weight_data = datum.loss_fn_inputs["weights"]
+                    targets = target_data.data if hasattr(target_data, "data") else list(target_data)
+                    weights = weight_data.data if hasattr(weight_data, "data") else list(weight_data)
+                    train_tokens.append(len(targets))
+                    episode_trainable += sum(1 for w in weights if w > 0)
+                episode_assistant_tokens.append(episode_trainable)
+                if episode_trainable > config["max_generated_tokens"]:
+                    over_episode_budget.append({"id": row["id"], "tokens": episode_trainable,
+                                                "limit": config["max_generated_tokens"]})
+                if assistant_turns == 1:
+                    single_turn_assistant_tokens.append(episode_trainable)
+                    if episode_trainable > config["max_tokens"]:
+                        over_turn_budget.append({"id": row["id"], "tokens": episode_trainable,
+                                                 "limit": config["max_tokens"]})
             started = bridge.request("start", task=row["task"])
             try:
                 checked = adapter.validate_prompt(prompt_messages(started["messages"], config), max_tokens=config["max_tokens"])
@@ -1550,10 +1673,21 @@ def validate_token_budgets(bridge: Any, adapter: Any, rows: list[dict], config: 
                 bridge.request("close", sessionId=started["sessionId"])
         except Exception as error:
             raise ValueError(f"token preflight for task {row['id']}: {error}") from error
+    if config.get("enforce_turn_budget", False) and (over_turn_budget or over_episode_budget):
+        detail = over_turn_budget[:3] or over_episode_budget[:3]
+        raise ValueError(
+            f"SFT teacher trace exceeds rollout generation budget ({len(over_turn_budget)} turns > "
+            f"max_tokens={config['max_tokens']}, {len(over_episode_budget)} episodes > "
+            f"max_generated_tokens={config['max_generated_tokens']}): {detail}"
+        )
     return {"training_datums": train_examples, "max_training_tokens": max(train_tokens, default=0),
+            "max_episode_assistant_tokens": max(episode_assistant_tokens, default=0),
+            "max_single_turn_assistant_tokens": max(single_turn_assistant_tokens, default=0),
+            "turns_exceeding_max_tokens": len(over_turn_budget),
+            "episodes_exceeding_max_generated_tokens": len(over_episode_budget),
             "initial_prompts": len(prompt_tokens), "max_initial_prompt_tokens": max(prompt_tokens, default=0),
-            "reserved_output_tokens": config["max_tokens"], "context_limit": config["max_context_tokens"],
-            "model_sampled": False}
+            "reserved_output_tokens": config["max_tokens"], "max_generated_tokens": config["max_generated_tokens"],
+            "context_limit": config["max_context_tokens"], "model_sampled": False}
 
 
 def _backend(config: dict) -> Any:

@@ -210,6 +210,22 @@ class AdapterTests(unittest.TestCase):
             adapter.sft_train([{"messages": [{"role": "assistant", "content": "result"}]}])
         self.assertEqual(service.calls, [])
 
+    def test_dynamic_model_context_limits_and_trajectory_normalization(self):
+        long_256k = TinkerAdapter({"model": "thinkingmachines/Inkling-2-Mini:peft:262144", "max_context_tokens": 262144})
+        self.assertEqual(long_256k.max_context_tokens, 262144)
+        with self.assertRaisesRegex(ValueError, "262144"):
+            TinkerAdapter({"model": "thinkingmachines/Inkling-2-Mini:peft:262144", "max_context_tokens": 262145})
+        long_1m = TinkerAdapter({"model": "thinkingmachines/Inkling-2-Mini", "max_context_tokens": 1048576})
+        self.assertEqual(long_1m.max_context_tokens, 1048576)
+        adapter, service, _ = fake_adapter({"rl_token_normalization": "trajectory"})
+        short = {"prompt_tokens": [1, 2], "token_ids": [10, 11], "logprobs": [-0.1, -0.1]}
+        long = {"prompt_tokens": [1, 2], "token_ids": [10, 11, 12, 13, 14, 15], "logprobs": [-0.1] * 6}
+        adapter.rl_train([{"samples": [short], "advantage": 1.0}, {"samples": [long], "advantage": -1.0}])
+        datums = service.trainer.calls[0][1]
+        short_adv = sum(datums[0].loss_fn_inputs["advantages"])
+        long_adv = sum(datums[1].loss_fn_inputs["advantages"])
+        self.assertAlmostEqual(short_adv, -long_adv)
+
     def test_sample_retains_reasoning_and_every_token(self):
         adapter, service, renderer = fake_adapter()
         result = adapter.sample([{"role": "user", "content": "program"}], seed=7)

@@ -37,6 +37,11 @@ class RecordingAdapter(ScriptedAdapter):
         self.sft_calls = []
         self.rl_options = []
         self.reference = None
+        self.saved_checkpoints = []
+
+    def checkpoint(self, name, **kwargs):
+        self.saved_checkpoints.append(name)
+        return super().checkpoint(name)
 
     def create_sampling_client(self, checkpoint=None):
         self.sampling_paths.append(checkpoint)
@@ -354,6 +359,42 @@ class ValidationSelectionTests(unittest.TestCase):
             self.assertEqual(second.trained, [])
             self.assertEqual(state["rollback_events"][0]["to"], sft["training_path"])
             self.assertEqual(state["rollback_events"][0]["validation_stage"], "rl-000001")
+
+    def test_correctness_rl_does_not_rollback_below_compression_min_accuracy(self):
+        config = load_config(overrides={"rl_steps": 1, "group_size": 2, "validation_every": 1,
+                                       "rl_objective": "correctness", "compression_min_accuracy": 0.5,
+                                       "accuracy_tolerance": 0.1})
+        rows = [row("train", split="train"), row("val", split="validation")]
+        sft = candidate("sft-final", 0.4, 10)
+        state = {"phase": "sft_done", "rl_steps_completed": 0, "training_path": sft["training_path"],
+                 "sampler_path": sft["sampler_path"], "sft_sampler_path": sft["sampler_path"],
+                 "compression_gate_open": False, "validation_candidates": [sft], "evaluations": []}
+        # Validation gets 0.4 -> 0.0 would exceed tolerance, so test 2 val tasks: 1/2 = 0.5 or 0.4->0.4 no rollback
+        val_rows = [row("train", split="train")] + [row(f"val-{i}", split="validation") for i in range(10)]
+        # 2 RL rollout samples (1 pass, 1 fail), then 10 val samples (4 pass = 0.4, matching anchor within tolerance)
+        adapter = RecordingAdapter([sample("complete", 10), sample("wrong", 2)]
+                                   + [sample("complete", 10)] * 4 + [sample("wrong", 10)] * 6
+                                   + [sample("complete", 10)] * 4 + [sample("wrong", 10)] * 6)
+        with tempfile.TemporaryDirectory() as directory:
+            train_rl(ControlledBridge(), adapter, val_rows, config, Path(directory), state, random.Random(1))
+            self.assertEqual(state.get("rollback_events", []), [])
+
+    def test_batched_rl_and_ephemeral_sampler_reduce_checkpoints(self):
+        config = load_config(overrides={"rl_steps": 2, "rl_prompts_per_step": 2, "group_size": 2,
+                                       "checkpoint_every": 10, "checkpoint_every_update": False,
+                                       "validation_every": 0})
+        rows = [row("a", split="train"), row("b", split="train")]
+        state = {"phase": "sft_done", "rl_steps_completed": 0, "training_path": "tinker://training/sft",
+                 "sampler_path": "tinker://sampler/sft", "sft_sampler_path": "tinker://sampler/sft",
+                 "evaluations": []}
+        adapter = RecordingAdapter([sample("complete", 10), sample("wrong", 10)] * 4)
+        with tempfile.TemporaryDirectory() as directory:
+            train_rl(ControlledBridge(), adapter, rows, config, Path(directory), state, random.Random(1))
+            self.assertEqual(state["rl_optimizer_updates"], 2)
+            # Each batched step combined 2 prompts * 2 samples = 4 trajectories
+            self.assertEqual(len(adapter.trained[0]), 4)
+            # Only the final checkpoint was saved (no recovery checkpoint spam per step)
+            self.assertEqual(adapter.saved_checkpoints, ["rl-final-000002"])
 
 
 class DiagnosticsTests(unittest.TestCase):

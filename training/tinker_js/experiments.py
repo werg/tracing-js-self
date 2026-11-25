@@ -11,6 +11,7 @@ import copy
 import hashlib
 import json
 import math
+import shutil
 import statistics
 from pathlib import Path
 import subprocess
@@ -366,6 +367,43 @@ def validate_result_evidence(result: dict, plan: dict) -> None:
         raise ValueError("Study summary differs from original evaluation records")
 
 
+def _seed_job_export(root: Path, job_config: dict, output: Path) -> Path:
+    """Reuse an already-verified study export when export settings and input match.
+
+    Prevents ~30 staged study jobs from re-exporting all tasks from scratch.
+    """
+    key = runner.digest({
+        "dataset": str(Path(job_config["dataset"]).resolve()),
+        "trace_format": job_config.get("trace_format", "full"),
+        "reasoning_channel": runner.resolve_reasoning_channel(job_config),
+        "prompt_style": job_config.get("prompt_style", "standard"),
+        "evaluation_only": job_config.get("evaluation_only", False),
+        "diagnostic_only": job_config.get("diagnostic_only", False),
+        "split_seed": job_config.get("split_seed", 17),
+        "holdout_fraction": job_config.get("holdout_fraction", 0.2),
+        "validation_fraction": job_config.get("validation_fraction", 0.2),
+    })[:16]
+    cache_dir = root / "exports" / key
+    files = ("dataset.jsonl", "dataset-manifest.json", "train.jsonl", "validation.jsonl", "test.jsonl")
+    if not (output / "dataset-manifest.json").exists() and (cache_dir / "dataset-manifest.json").exists():
+        for name in files:
+            src = cache_dir / name
+            if src.exists():
+                shutil.copy2(src, output / name)
+    return cache_dir
+
+
+def _save_job_export(cache_dir: Path, output: Path) -> None:
+    files = ("dataset.jsonl", "dataset-manifest.json", "train.jsonl", "validation.jsonl", "test.jsonl")
+    if (cache_dir / "dataset-manifest.json").exists() or not (output / "dataset-manifest.json").exists():
+        return
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    for name in files:
+        src = output / name
+        if src.exists():
+            shutil.copy2(src, cache_dir / name)
+
+
 def execute_job(repo: Path, plan: dict, root: Path, job: dict, *, resume=False) -> dict:
     output = Path(job["config"]["output_dir"])
     output.mkdir(parents=True, exist_ok=True)
@@ -396,6 +434,7 @@ def execute_job(repo: Path, plan: dict, root: Path, job: dict, *, resume=False) 
         validate_result_evidence(result, plan)
         runner.atomic_json(result_path, result)
         return result
+    cache_dir = _seed_job_export(root, job["config"], output)
     evaluate = job["kind"] in {"evaluate", "test", "diagnostic"}
     split = "test" if job["kind"] in {"test", "diagnostic"} else "validation"
     command = [sys.executable, str(repo / "training/run.py"),
@@ -416,6 +455,7 @@ def execute_job(repo: Path, plan: dict, root: Path, job: dict, *, resume=False) 
         runner.atomic_json(progress_path, {"job_hash": identity, "status": "interrupted_or_failed",
                                           "returncode": completed.returncode})
         raise RuntimeError(f"Study job {job['id']} failed; inspect {output / 'stderr.log'} before resuming")
+    _save_job_export(cache_dir, output)
     if evaluate:
         records = runner.read_jsonl(output / "evaluations" / f"{job['id']}-{split}.jsonl")
         if any(row.get("backend") != "tinker" for row in records):
